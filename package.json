@@ -38,7 +38,8 @@
         "onCommand:cmake.cleanConfigure",
         "onCommand:cmake.clean",
         "onCommand:cmake.cleanRebuild",
-        "onCommand:cmake.ctest"
+        "onCommand:cmake.ctest",
+        "onCommand:cmake.jumpToCacheFile"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -66,6 +67,9 @@
         }, {
             "command": "cmake.ctest",
             "title": "CTest: Run tests"
+        }, {
+            "command": "cmake.jumpToCacheFile",
+            "title": "CMake: Edit the CMake Cache"
         }],
         "configuration": {
             "type": "object",

@@ -17,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
     function cmakeConfig(): vscode.WorkspaceConfiguration {
         return vscode.workspace.getConfiguration('cmake');
     }
+
     // Get the value of a CMake configuration setting
     function config<T>(path: string, defaultValue?: T): T {
         return cmakeConfig().get<T>(path, defaultValue);
@@ -44,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }
 
-    // Given a list of CMake generators, returns the first on available
+    // Given a list of CMake generators, returns the first one available
     const pickGenerator = async function (candidates: string[]): Promise<string> {
         for (const gen of candidates) {
             const delegate = {
@@ -71,81 +72,81 @@ export function activate(context: vscode.ExtensionContext) {
         return null;
     }
 
-    function executeCMake(args: string[]): void {
-        console.info('Execute cmake with arguments:', args);
-        const pipe = proc.spawn('cmake', args);
-        const status = vscode.window.setStatusBarMessage;
-        status('Executing CMake...', 1000);
-        channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
-        let stderr_acc = '';
-        pipe.stdout.on('data', (data: Uint8Array) => {
-            const str = data.toString();
-            console.log('cmake [stdout]: ' + str.trim());
-            channel.append(str);
-            status('cmake: ' + str.trim(), 1000);
-        });
-        pipe.stderr.on('data', (data: Uint8Array) => {
-            const str = data.toString();
-            console.log('cmake [stderr]: ' + str.trim());
-            stderr_acc += str;
-            channel.append(str);
-            status('cmake: ' + str.trim(), 1000);
-        });
-        pipe.on('close', (retc: Number) => {
-            console.log('cmake exited with return code ' + retc);
-            channel.appendLine('[vscode] CMake exited with status ' + retc);
-            status('CMake exited with status ' + retc, 3000);
-            if (retc !== 0) {
-                vscode.window.showErrorMessage('CMake exited with non-zero return code ' + retc + '. See CMake/Build output for details');
-            }
-
-            let rest = stderr_acc;
-            const diag_re = /CMake (.*?) at (.*?):(\d+) .*?:\s+(.*?)\s*\n\n\n((.|\n)*)/;
-            const diags: Object = {};
-            while (true) {
-                if (!rest.length) break;
-                const found = diag_re.exec(rest);
-                if (!found) break;
-                const [level, filename, linestr, what, tail] = found.slice(1);
-                const filepath =
-                    path.isAbsolute(filename)
-                        ? filename
-                        : path.join(vscode.workspace.rootPath, filename);
-
-                const line = Number.parseInt(linestr) - 1;
-                if (!(filepath in diags)) {
-                    diags[filepath] = [];
+    function executeCMake(args: string[]): Promise<void> {
+        return new Promise<void>((resolve, _) => {
+            console.info('Execute cmake with arguments:', args);
+            const pipe = proc.spawn('cmake', args);
+            const status = vscode.window.setStatusBarMessage;
+            status('Executing CMake...', 1000);
+            channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
+            let stderr_acc = '';
+            pipe.stdout.on('data', (data: Uint8Array) => {
+                const str = data.toString();
+                console.log('cmake [stdout]: ' + str.trim());
+                channel.append(str);
+                status('cmake: ' + str.trim(), 1000);
+            });
+            pipe.stderr.on('data', (data: Uint8Array) => {
+                const str = data.toString();
+                console.log('cmake [stderr]: ' + str.trim());
+                stderr_acc += str;
+                channel.append(str);
+                status('cmake: ' + str.trim(), 1000);
+            });
+            pipe.on('close', (retc: Number) => {
+                console.log('cmake exited with return code ' + retc);
+                channel.appendLine('[vscode] CMake exited with status ' + retc);
+                status('CMake exited with status ' + retc, 3000);
+                if (retc !== 0) {
+                    vscode.window.showErrorMessage('CMake exited with non-zero return code ' + retc + '. See CMake/Build output for details');
                 }
-                const file_diags: vscode.Diagnostic[] = diags[filepath];
-                const diag = new vscode.Diagnostic(
-                    new vscode.Range(
-                        line,
-                        0,
-                        line,
-                        Number.POSITIVE_INFINITY
-                    ),
-                    what,
-                    {
-                        "Warning": vscode.DiagnosticSeverity.Warning,
-                        "Error": vscode.DiagnosticSeverity.Error,
-                    }[level]
-                );
-                diag.source = 'CMake';
-                file_diags.push(diag);
-                rest = tail;
-            }
 
-            cmake_diagnostics.clear();
-            for (const filepath in diags) {
-                cmake_diagnostics.set(vscode.Uri.file(filepath), diags[filepath]);
-            }
+                let rest = stderr_acc;
+                const diag_re = /CMake (.*?) at (.*?):(\d+) .*?:\s+(.*?)\s*\n\n\n((.|\n)*)/;
+                const diags: Object = {};
+                while (true) {
+                    if (!rest.length) break;
+                    const found = diag_re.exec(rest);
+                    if (!found) break;
+                    const [level, filename, linestr, what, tail] = found.slice(1);
+                    const filepath =
+                        path.isAbsolute(filename)
+                            ? filename
+                            : path.join(vscode.workspace.rootPath, filename);
+
+                    const line = Number.parseInt(linestr) - 1;
+                    if (!(filepath in diags)) {
+                        diags[filepath] = [];
+                    }
+                    const file_diags: vscode.Diagnostic[] = diags[filepath];
+                    const diag = new vscode.Diagnostic(
+                        new vscode.Range(
+                            line,
+                            0,
+                            line,
+                            Number.POSITIVE_INFINITY
+                        ),
+                        what,
+                        {
+                            "Warning": vscode.DiagnosticSeverity.Warning,
+                            "Error": vscode.DiagnosticSeverity.Error,
+                        }[level]
+                    );
+                    diag.source = 'CMake';
+                    file_diags.push(diag);
+                    rest = tail;
+                }
+
+                cmake_diagnostics.clear();
+                for (const filepath in diags) {
+                    cmake_diagnostics.set(vscode.Uri.file(filepath), diags[filepath]);
+                }
+                resolve();
+            });
         });
-    }
+    };
 
-    const configure = vscode.commands.registerCommand('cmake.configure', async function (extra_args: string[] = []) {
-        if (!(extra_args instanceof Array)) {
-            extra_args = [];
-        }
+    const cmakeConfigure = async function(extra_args: string[] = []): Promise<void> {
         const source_dir = vscode.workspace.rootPath;
         if (!source_dir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
@@ -187,6 +188,10 @@ export function activate(context: vscode.ExtensionContext) {
                 .concat(settings_args)
                 .concat(extra_args)
         );
+    }
+
+    const configure = vscode.commands.registerCommand('cmake.configure', async function (extra_args: string[] = []) {
+        return cmakeConfigure();
     });
 
     const build = vscode.commands.registerCommand('cmake.build', async function (target = 'all') {
@@ -261,7 +266,31 @@ export function activate(context: vscode.ExtensionContext) {
         executeCMake(['-E', 'chdir', buildDirectory(), 'ctest', '-j8', '--output-on-failure']);
     });
 
-    for (const item of [configure, build, build_target, set_build_type, clean_configure, clean, clean_rebuild])
+    const jump_to_cache = vscode.commands.registerCommand('cmake.jumpToCacheFile', async function() {
+        const cache_file = path.join(buildDirectory(), 'CMakeCache.txt');
+
+        if (!(await doAsync(fs.exists, cache_file))) {
+            const do_conf = !!(await vscode.window.showErrorMessage('This project has not yet been configured.', 'Configure Now'));
+            if (do_conf)
+                await cmakeConfigure();
+        }
+
+        const cache = await vscode.workspace.openTextDocument(cache_file);
+        await vscode.window.showTextDocument(cache);
+    });
+
+    // const ctest = vscode.commands.register
+
+    for (const item of [
+            configure,
+            build,
+            build_target,
+            set_build_type,
+            clean_configure,
+            clean,
+            clean_rebuild,
+            jump_to_cache,
+        ])
         context.subscriptions.push(item);
 }
 
