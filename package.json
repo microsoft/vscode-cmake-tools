@@ -14,10 +14,9 @@
     "keywords": [
         "cmake",
         "tools",
-        "tooling",
         "build",
-        "c",
-        "c++"
+        "c++",
+        "native"
     ],
     "engines": {
         "vscode": "^0.10.10"
