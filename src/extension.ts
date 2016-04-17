@@ -102,13 +102,13 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 let rest = stderr_acc;
-                const diag_re = /CMake (.*?) at (.*?):(\d+) .*?:\s+(.*?)\s*\n\n\n((.|\n)*)/;
+                const diag_re = /CMake (.*?) at (.*?):(\d+) \((.*?)\):\s+((?:.|\n)*?)\s*\n\n\n((?:.|\n)*)/;
                 const diags: Object = {};
                 while (true) {
                     if (!rest.length) break;
                     const found = diag_re.exec(rest);
                     if (!found) break;
-                    const [level, filename, linestr, what, tail] = found.slice(1);
+                    const [level, filename, linestr, command, what, tail] = found.slice(1);
                     const filepath =
                         path.isAbsolute(filename)
                             ? filename
@@ -132,7 +132,7 @@ export function activate(context: vscode.ExtensionContext) {
                             "Error": vscode.DiagnosticSeverity.Error,
                         }[level]
                     );
-                    diag.source = 'CMake';
+                    diag.source = 'CMake (' + command + ')';
                     file_diags.push(diag);
                     rest = tail;
                 }
