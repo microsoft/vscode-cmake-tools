@@ -162,13 +162,24 @@ export class CMakeTools {
             vscode.window.showErrorMessage('You do not have a source directory open');
             return;
         }
-        const cmake_list = path.join(_this.sourceDir, 'CMakeLists.txt');
+
+        const cmake_list = _this.mainListFile;
+        if (!(await doAsync(fs.exists, cmake_list))) {
+            const do_quickstart = !!(
+                await vscode.window.showErrorMessage(
+                    'You do not have a CMakeLists.txt',
+                    "Quickstart a new CMake project"
+                )
+            );
+            if (do_quickstart)
+                await _this.quickStart();
+            return;
+        }
+
         const binary_dir = _this.binaryDir;
-
-        const cmake_cache = path.join(binary_dir, "CMakeCache.txt");
+        const cmake_cache = _this.cachePath;
         _this.channel.show();
-
-        const settings_args = ['--no-warn-unused-cli'];
+        const settings_args = [];
         if (!(await doAsync(fs.exists, cmake_cache))) {
             this.channel.appendLine("[vscode] Setting up initial CMake configuration");
             const generator = await _this.pickGenerator(_this.config<string[]>("preferredGenerators"));
