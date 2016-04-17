@@ -338,10 +338,17 @@ export class CMakeTools {
             'cmake_minimum_required(VERSION 3.0.0)',
             `project(${project_name} VERSION 0.0.0)`,
             '',
+            'include(CTest)',
+            'enable_testing()',
+            '',
             {
                 Library: `add_library(${project_name} ${project_name}.cpp)`,
                 Executable: `add_executable(${project_name} main.cpp)`,
             }[type],
+            '',
+            'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
+            'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
+            'include(CPack)',
             '',
         ].join('\n');
 
