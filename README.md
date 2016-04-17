@@ -16,3 +16,16 @@ Issues? Questions? Feature requests? Create an issue on
 - Provides diagnostics for CMake scripts.
 - Quickly jump the CMakeCache.txt
 - Run CTest.
+
+## Command Listing:
+
+- CMake: Configure
+- CMake: Build
+- CMake: Build a target [Builds a target by name]
+- CMake: Set build type [Change the build type, ie "Debug", "Release", etc.]
+- CMake: Delete cached build settings and reconfigure
+- CMake: Clean
+- CMake: Clean rebuild
+- CMake: Edit the cache fiel
+- CTest: Run tests
+- CMake: Quickstart [Quickly generate a very simple CMakeLists.txt]

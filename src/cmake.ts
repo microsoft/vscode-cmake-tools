@@ -30,6 +30,12 @@ export class CMakeTools {
         return vscode.workspace.rootPath;
     }
 
+
+    public get mainListFile() : string {
+        return path.join(this.sourceDir, 'CMakeLists.txt');
+    }
+
+
     public get binaryDir(): string {
         const build_dir = this.config<string>('buildDirectory');
         return build_dir.replace('${workspaceRoot}', vscode.workspace.rootPath);
@@ -284,5 +290,83 @@ export class CMakeTools {
     public ctest = async function(): Promise<Number> {
         const _this: CMakeTools = this;
         return await _this.execute(['-E', 'chdir', _this.binaryDir, 'ctest', '-j8', '--output-on-failure']);
+    }
+
+    public quickStart = async function(): Promise<Number> {
+        const _this: CMakeTools = this;
+        if (await doAsync<Boolean>(fs.exists, _this.mainListFile)) {
+            vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
+            return -1;
+        }
+
+        const project_name = await vscode.window.showInputBox({
+            prompt: 'Enter a name for the new project',
+            validateInput: (value: string): string => {
+                if (!value.length)
+                    return 'A project name is required';
+                return null;
+            },
+        });
+        if (!project_name)
+            return -1;
+
+        const target_type = (await vscode.window.showQuickPick([{
+            label: 'Library',
+            description: 'Create a library',
+        }, {
+            label: 'Executable',
+            description: 'Create an executable'
+        }]));
+
+        if (!target_type)
+            return -1;
+
+        const type = target_type.label;
+
+        const init = [
+            'cmake_minimum_required(VERSION 3.0.0)',
+            `project(${project_name} VERSION 0.0.0)`,
+            '',
+            {
+                Library: `add_library(${project_name} ${project_name}.cpp)`,
+                Executable: `add_executable(${project_name} main.cpp)`,
+            }[type],
+            '',
+        ].join('\n');
+
+        if (type === 'Library') {
+            if (!(await doAsync(fs.exists, path.join(_this.sourceDir, project_name + '.cpp')))) {
+                await doAsync(
+                    fs.writeFile,
+                    path.join(_this.sourceDir, project_name + '.cpp'),
+                    [
+                        '#include <iostream>',
+                        '',
+                        `void say_hello(){ std::cout << "Hello, from ${project_name}!\\n"; }`,
+                        '',
+                    ].join('\n')
+                );
+            }
+        } else {
+            if (!(await doAsync(fs.exists, path.join(_this.sourceDir, 'main.cpp')))) {
+                await doAsync(
+                    fs.writeFile,
+                    path.join(_this.sourceDir, 'main.cpp'),
+                    [
+                        '#include <iostream>',
+                        '',
+                        'int main(int, char**)',
+                        '{',
+                        '   std::cout << "Hello, world!\\n";',
+                        '}',
+                        '',
+                    ].join('\n')
+                );
+            }
+        }
+        await doAsync(fs.writeFile, _this.mainListFile, init);
+        const doc = await vscode.workspace.openTextDocument(_this.mainListFile);
+        await vscode.window.showTextDocument(doc);
+        await _this.configure();
     }
 }

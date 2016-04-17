@@ -39,7 +39,8 @@
         "onCommand:cmake.clean",
         "onCommand:cmake.cleanRebuild",
         "onCommand:cmake.ctest",
-        "onCommand:cmake.jumpToCacheFile"
+        "onCommand:cmake.jumpToCacheFile",
+        "onCommand:cmake.quickStart"
     ],
     "main": "./out/src/extension",
     "contributes": {
@@ -79,6 +80,10 @@
             {
                 "command": "cmake.jumpToCacheFile",
                 "title": "CMake: Edit the CMake Cache"
+            },
+            {
+                "command": "cmake.quickStart",
+                "title": "CMake: Quick Start"
             }
         ],
         "configuration": {
