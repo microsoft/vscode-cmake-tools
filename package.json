@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -43,34 +43,44 @@
     ],
     "main": "./out/src/extension",
     "contributes": {
-        "commands": [{
-            "command": "cmake.configure",
-            "title": "CMake: Configure"
-        }, {
-            "command": "cmake.build",
-            "title": "CMake: Build"
-        }, {
-            "command": "cmake.buildWithTarget",
-            "title": "CMake: Build a target"
-        }, {
-            "command": "cmake.setBuildType",
-            "title": "CMake: Set build type"
-        }, {
-            "command": "cmake.cleanConfigure",
-            "title": "CMake: Delete cached build settings and reconfigure"
-        }, {
-            "command": "cmake.clean",
-            "title": "CMake: Clean"
-        }, {
-            "command": "cmake.cleanRebuild",
-            "title": "CMake: Clean rebuild"
-        }, {
-            "command": "cmake.ctest",
-            "title": "CTest: Run tests"
-        }, {
-            "command": "cmake.jumpToCacheFile",
-            "title": "CMake: Edit the CMake Cache"
-        }],
+        "commands": [
+            {
+                "command": "cmake.configure",
+                "title": "CMake: Configure"
+            },
+            {
+                "command": "cmake.build",
+                "title": "CMake: Build"
+            },
+            {
+                "command": "cmake.buildWithTarget",
+                "title": "CMake: Build a target"
+            },
+            {
+                "command": "cmake.setBuildType",
+                "title": "CMake: Set build type"
+            },
+            {
+                "command": "cmake.cleanConfigure",
+                "title": "CMake: Delete cached build settings and reconfigure"
+            },
+            {
+                "command": "cmake.clean",
+                "title": "CMake: Clean"
+            },
+            {
+                "command": "cmake.cleanRebuild",
+                "title": "CMake: Clean rebuild"
+            },
+            {
+                "command": "cmake.ctest",
+                "title": "CTest: Run tests"
+            },
+            {
+                "command": "cmake.jumpToCacheFile",
+                "title": "CMake: Edit the CMake Cache"
+            }
+        ],
         "configuration": {
             "type": "object",
             "title": "CMake Tools configuration",
