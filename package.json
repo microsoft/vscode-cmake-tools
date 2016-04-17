@@ -104,7 +104,13 @@
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 }
             }
-        }
+        },
+        "keybindings": [
+            {
+                "key": "f7",
+                "command": "cmake.build"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
