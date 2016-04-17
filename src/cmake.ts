@@ -6,11 +6,7 @@ import * as proc from 'child_process';
 
 import * as vscode from 'vscode';
 
-function doAsync<T>(fn: Function, ...args): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-        fn(...args, resolve);
-    });
-}
+import * as async from './async';
 
 export class CMakeTools {
     private channel: vscode.OutputChannel;
@@ -164,7 +160,7 @@ export class CMakeTools {
         }
 
         const cmake_list = _this.mainListFile;
-        if (!(await doAsync(fs.exists, cmake_list))) {
+        if (!(await async.exists(cmake_list))) {
             const do_quickstart = !!(
                 await vscode.window.showErrorMessage(
                     'You do not have a CMakeLists.txt',
@@ -180,7 +176,7 @@ export class CMakeTools {
         const cmake_cache = _this.cachePath;
         _this.channel.show();
         const settings_args = [];
-        if (!(await doAsync(fs.exists, cmake_cache))) {
+        if (!(await async.exists(cmake_cache))) {
             this.channel.appendLine("[vscode] Setting up initial CMake configuration");
             const generator = await _this.pickGenerator(_this.config<string[]>("preferredGenerators"));
             if (generator) {
@@ -218,7 +214,7 @@ export class CMakeTools {
             return;
         }
         const cachepath = _this.cachePath;
-        if (!(await doAsync(fs.exists, cachepath))) {
+        if (!(await async.exists(cachepath))) {
             const do_configure = !!(await vscode.window.showErrorMessage('You must conifigure your project before building', 'Configure Now'));
             if (!do_configure || await _this.configure() !== 0)
                 return -1;
@@ -237,20 +233,20 @@ export class CMakeTools {
         const build_dir = _this.binaryDir;
         const cache = _this.cachePath;
         const cmake_files = path.join(build_dir, 'CMakeFiles');
-        if (await doAsync(fs.exists, cache)) {
+        if (await async.exists(cache)) {
             _this.channel.appendLine('[vscode] Removing ' + cache);
-            await doAsync(fs.unlink, cache);
+            await async.unlink(cache);
         }
-        if (await doAsync(fs.exists, cmake_files)) {
+        if (await async.exists(cmake_files)) {
             _this.channel.appendLine('[vscode] Removing ' + cmake_files);
-            await doAsync(fs.unlink, cmake_files);
+            await async.unlink(cmake_files);
         }
         return await _this.configure();
     }
 
     public jumpToCacheFile = async function(): Promise<vscode.TextEditor> {
         const _this: CMakeTools = this;
-        if (!(await doAsync(fs.exists, _this.cachePath))) {
+        if (!(await async.exists(_this.cachePath))) {
             const do_conf = !!(await vscode.window.showErrorMessage('This project has not yet been configured.', 'Configure Now'));
             if (do_conf)
             {
@@ -305,7 +301,7 @@ export class CMakeTools {
 
     public quickStart = async function(): Promise<Number> {
         const _this: CMakeTools = this;
-        if (await doAsync<Boolean>(fs.exists, _this.mainListFile)) {
+        if (await async.exists(_this.mainListFile)) {
             vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
             return -1;
         }
@@ -353,8 +349,8 @@ export class CMakeTools {
         ].join('\n');
 
         if (type === 'Library') {
-            if (!(await doAsync(fs.exists, path.join(_this.sourceDir, project_name + '.cpp')))) {
-                await doAsync(
+            if (!(await async.exists(path.join(_this.sourceDir, project_name + '.cpp')))) {
+                await async.doAsync(
                     fs.writeFile,
                     path.join(_this.sourceDir, project_name + '.cpp'),
                     [
@@ -366,8 +362,8 @@ export class CMakeTools {
                 );
             }
         } else {
-            if (!(await doAsync(fs.exists, path.join(_this.sourceDir, 'main.cpp')))) {
-                await doAsync(
+            if (!(await async.exists(path.join(_this.sourceDir, 'main.cpp')))) {
+                await async.doAsync(
                     fs.writeFile,
                     path.join(_this.sourceDir, 'main.cpp'),
                     [
@@ -382,7 +378,7 @@ export class CMakeTools {
                 );
             }
         }
-        await doAsync(fs.writeFile, _this.mainListFile, init);
+        await async.doAsync(fs.writeFile, _this.mainListFile, init);
         const doc = await vscode.workspace.openTextDocument(_this.mainListFile);
         await vscode.window.showTextDocument(doc);
         await _this.configure();
