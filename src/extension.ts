@@ -203,7 +203,7 @@ export function activate(context: vscode.ExtensionContext) {
             if (do_configure)
                 await cmakeConfigure();
             else
-            return;
+                return;
         }
 
         channel.show();
@@ -299,6 +299,7 @@ export function activate(context: vscode.ExtensionContext) {
             clean,
             clean_rebuild,
             jump_to_cache,
+            cmake_diagnostics,
         ])
         context.subscriptions.push(item);
 }
