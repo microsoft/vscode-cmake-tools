@@ -190,27 +190,36 @@ export function activate(context: vscode.ExtensionContext) {
         );
     }
 
-    const configure = vscode.commands.registerCommand('cmake.configure', async function (extra_args: string[] = []) {
-        return cmakeConfigure();
-    });
-
-    const build = vscode.commands.registerCommand('cmake.build', async function (target = 'all') {
-        if (target instanceof Object) {
-            target = 'all';
-        }
+    const cmakeBuild = async function(target: string = 'all') {
         const source_dir = vscode.workspace.rootPath;
         if (!source_dir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
             return;
         }
         const binary_dir = buildDirectory();
-        if (!(await doAsync(fs.exists, binary_dir))) {
-            vscode.window.showErrorMessage('You do not yet have a build directory. Configure your project first');
+        const cmake_cache = path.join(binary_dir, 'CMakeCache.txt');
+        if (!(await doAsync(fs.exists, cmake_cache))) {
+            const do_configure = !!(await vscode.window.showErrorMessage('You must configure your project before building', 'Configure Now'));
+            if (do_configure)
+                await cmakeConfigure();
+            else
             return;
         }
 
         channel.show();
         await executeCMake(['--build', binary_dir, '--target', target]);
+    };
+
+    const cmakeClean = async function() {
+        await cmakeBuild('clean');
+    };
+
+    const configure = vscode.commands.registerCommand('cmake.configure', async function (extra_args: string[] = []) {
+        return cmakeConfigure();
+    });
+
+    const build = vscode.commands.registerCommand('cmake.build', async function () {
+        await cmakeBuild();
     });
 
     const build_target = vscode.commands.registerCommand('cmake.buildWithTarget', async function () {
@@ -254,12 +263,12 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     const clean = vscode.commands.registerCommand("cmake.clean", async function () {
-        await vscode.commands.executeCommand('cmake.build', 'clean');
+        await cmakeClean();
     });
 
     const clean_rebuild = vscode.commands.registerCommand('cmake.cleanRebuild', async function () {
-        await vscode.commands.executeCommand('cmake.clean');
-        await vscode.commands.executeCommand('cmake.build');
+        await cmakeClean();
+        await cmakeBuild();
     });
 
     const ctest = vscode.commands.registerCommand('cmake.ctest', async function () {
