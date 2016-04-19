@@ -165,14 +165,25 @@ export class CMakeTools {
         return path.join(this.sourceDir, 'CMakeLists.txt');
     }
 
-
     public get binaryDir(): string {
         const build_dir = this.config<string>('buildDirectory');
         return build_dir.replace('${workspaceRoot}', vscode.workspace.rootPath);
     }
 
-    public get cachePath() : string {
+    public get cachePath(): string {
         return path.join(this.binaryDir, 'CMakeCache.txt');
+    }
+
+    public activeGenerator = async function(): Promise<string> {
+        const _this: CMakeTools = this;
+        return (await _this.cache.get('CMAKE_GENERATOR')).as<string>();
+    }
+
+    public allTargetName = async function(): Promise<string> {
+        const _this: CMakeTools = this;
+        const gen = await _this.activeGenerator();
+        // Visual Studio generators generate a target called ALL_BUILD, while other generators have an 'all' target
+        return /Visual Studio/.test(gen) ? 'ALL_BUILD': 'all';
     }
 
     public execute(args: string[]): Promise<Number> {
@@ -343,8 +354,11 @@ export class CMakeTools {
         );
     }
 
-    public build = async function(target: string = 'all'): Promise<Number> {
+    public build = async function(target: string = null): Promise<Number> {
         const _this: CMakeTools = this;
+        if (target === null) {
+            target = await _this.allTargetName();
+        }
         if (!_this.sourceDir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
             return;
