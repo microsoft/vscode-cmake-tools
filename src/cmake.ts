@@ -129,7 +129,9 @@ export class CMakeTools {
         const _this: CMakeTools = this;
         for (const gen of candidates) {
             const delegate = {
-                Ninja: async function () { return await _this.testHaveCommand('ninja'); },
+                Ninja: async function () {
+                    return await _this.testHaveCommand('ninja-build') || await _this.testHaveCommand('ninja');
+                },
                 "MinGW Makefiles": async function () {
                     return process.platform === 'win32' && await _this.testHaveCommand('make');
                 },
