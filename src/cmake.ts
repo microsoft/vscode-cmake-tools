@@ -8,13 +8,17 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 
-export function truthy(value) {
+export function isTruthy(value) {
     if (typeof value === 'string') {
         return !(
             value === '' ||
             value === 'FALSE' ||
             value === 'OFF' ||
             value === '0' ||
+            value === 'NOTFOUND' ||
+            value === 'NO' ||
+            value === 'N' ||
+            value === 'IGNORE' ||
             value.endsWith('-NOTFOUND')
         );
     }
@@ -110,7 +114,7 @@ export class CacheReader {
                     docs_acc = '';
                     let value: any = valuestr;
                     if (type === EntryType.Bool)
-                        value = truthy(value);
+                        value = isTruthy(value);
 
                     console.assert(type !== undefined, `Unknown cache entry type: ${type}`);
                     newdata[name] = new CacheEntry(key, value, type, docs);

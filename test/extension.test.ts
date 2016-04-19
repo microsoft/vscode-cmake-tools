@@ -52,4 +52,34 @@ suite("Utility tests", () => {
             true
         );
     });
+    test('Falsey values', () => {
+        for (const thing of [
+            '0',
+            '',
+            'NO',
+            'FALSE',
+            'OFF',
+            'NOTFOUND',
+            'IGNORE',
+            'N',
+            'SOMETHING-NOTFOUND',
+            null,
+            false,
+        ]) {
+            assert.strictEqual(cmake.isTruthy(thing), false, 'Testing truthiness of ' + thing);
+        }
+    });
+    test('Truthy values', () => {
+        for (const thing of [
+            '1',
+            'ON',
+            'YES',
+            'Y',
+            '112',
+            12,
+            'SOMETHING'
+        ]) {
+            assert.strictEqual(cmake.isTruthy(thing), true, 'Testing truthiness of ' + thing);
+        }
+    })
 });
