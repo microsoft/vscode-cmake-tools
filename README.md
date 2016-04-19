@@ -11,6 +11,7 @@ Issues? Questions? Feature requests? Create an issue on
 
 ## Change History
 
+- **v0.1.2** - Fix bug when building before configuring.
 - **v0.1.1** - Fixes:
   - Fix issue where we fail to detect the presence of Ninja when the command is
     ``ninja-build``.
