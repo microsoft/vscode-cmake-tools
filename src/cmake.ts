@@ -8,13 +8,147 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 
+export function truthy(value) {
+    if (typeof value === 'string') {
+        return !(
+            value === '' ||
+            value === 'FALSE' ||
+            value === 'OFF' ||
+            value === '0' ||
+            value.endsWith('-NOTFOUND')
+        );
+    }
+    return !!value;
+}
+
+export enum EntryType {
+    Bool,
+    String,
+    Path,
+    Filepath,
+    Internal,
+    Uninitialized,
+    Static,
+};
+
+export class CacheEntry {
+    private _type: EntryType = EntryType.Uninitialized;
+    private _docs: string = '';
+    private _key: string = '';
+    private _value: any = null;
+
+    public get type() {
+        return this._type;
+    }
+
+    public get docs() {
+        return this._docs;
+    }
+
+
+    public get key() {
+        return this._key;
+    }
+
+    public get value() {
+        return this._value;
+    }
+
+    public as<T>(): T { return this.value; }
+
+    constructor(key?: string, value?: string, type?: EntryType, docs?: string) {
+        this._key = key;
+        this._value = value;
+        this._type = type;
+        this._docs = docs;
+    }
+    // public advanced: boolean = false;
+};
+
+export class CacheReader {
+    public path: string;
+    public data: Object;
+
+    private _lastModifiedTime: Date = null;
+
+    constructor(path: string) {
+        this.path = path;
+    }
+
+    private _reloadData = async function(): Promise<void> {
+        const _this: CacheReader = this;
+        console.info('Reloading CMake cache data from', _this.path);
+        const newdata = {};
+        _this._lastModifiedTime = (await async.stat(_this.path)).mtime;
+        const buf = await async.readFile(_this.path);
+        const contents = buf.toString();
+        const all_lines = contents.split('\n');
+        const filtered_lines = all_lines
+            .filter(line => !!line.length)
+            .filter(line => !/^\s*#/.test(line));
+
+        let docs_acc = '';
+        for (const line of filtered_lines) {
+            if (line.startsWith('//')) {
+                docs_acc += /^\/\/(.*)/.exec(line)[1] + ' ';
+            } else {
+                const [_, name, typename, valuestr] = /^(.*?):(.*?)=(.*)/.exec(line);
+                if (name.endsWith('-ADVANCED') && valuestr == '1') {
+                    // We skip the ADVANCED property variables. They're a little odd.
+                } else {
+                    const key = name;
+                    const type = {
+                        BOOL: EntryType.Bool,
+                        STRING: EntryType.String,
+                        PATH: EntryType.Path,
+                        FILEPATH: EntryType.Filepath,
+                        INTERNAL: EntryType.Internal,
+                        UNINITIALIZED: EntryType.Uninitialized,
+                        STATIC: EntryType.Static,
+                    }[typename];
+                    const docs = docs_acc.trim();
+                    docs_acc = '';
+                    let value: any = valuestr;
+                    if (type === EntryType.Bool)
+                        value = truthy(value);
+
+                    console.assert(type !== undefined, `Unknown cache entry type: ${type}`);
+                    newdata[name] = new CacheEntry(key, value, type, docs);
+                }
+            }
+        }
+
+        _this.data = newdata;
+    }
+
+    public needsReloading = async function(): Promise<boolean> {
+        const _this: CacheReader = this;
+        const curstat = await async.stat(_this.path);
+        console.log(_this._lastModifiedTime);
+        return !_this._lastModifiedTime || (await async.stat(_this.path)).mtime.getTime() > _this._lastModifiedTime.getTime();
+    }
+
+    public get = async function<T>(key: string, defaultValue?: any): Promise<CacheEntry> {
+        const _this: CacheReader = this;
+        if (await _this.needsReloading()) {
+            await _this._reloadData();
+        }
+        if (!(key in _this.data))
+            return null;
+        const ret = _this.data[key];
+        return ret;
+    }
+}
+
 export class CMakeTools {
     private channel: vscode.OutputChannel;
     private diagnostics: vscode.DiagnosticCollection;
+    private cache: CacheReader;
 
     constructor() {
         this.channel = vscode.window.createOutputChannel('CMake/Build');
         this.diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
+        this.cache = new CacheReader(this.cachePath);
     }
 
     public config<T>(key: string, defaultValue?: any): T {
