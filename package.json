@@ -1,0 +1,139 @@
+{
+    "name": "cmake-tools",
+    "displayName": "CMake Tools",
+    "description": "Extended CMake support in Visual Studio Code",
+    "version": "0.1.1",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
+    },
+    "bugs": {
+        "url": "https://github.com/vector-of-bool/vscode-cmake-tools/issues"
+    },
+    "homepage": "https://github.com/vector-of-bool/vscode-cmake-tools",
+    "keywords": [
+        "cmake",
+        "tools",
+        "build",
+        "c++",
+        "native"
+    ],
+    "publisher": "vector-of-bool",
+    "engines": {
+        "vscode": "^0.10.10"
+    },
+    "categories": [
+        "Other"
+    ],
+    "galleryBanner": {
+        "color": "#13578c",
+        "theme": "dark"
+    },
+    "icon": "res/icon.svg",
+    "activationEvents": [
+        "onCommand:cmake.configure",
+        "onCommand:cmake.build",
+        "onCommand:cmake.buildWithTarget",
+        "onCommand:cmake.setBuildType",
+        "onCommand:cmake.cleanConfigure",
+        "onCommand:cmake.clean",
+        "onCommand:cmake.cleanRebuild",
+        "onCommand:cmake.ctest",
+        "onCommand:cmake.jumpToCacheFile",
+        "onCommand:cmake.quickStart"
+    ],
+    "main": "./out/src/extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "cmake.configure",
+                "title": "CMake: Configure"
+            },
+            {
+                "command": "cmake.build",
+                "title": "CMake: Build"
+            },
+            {
+                "command": "cmake.buildWithTarget",
+                "title": "CMake: Build a target"
+            },
+            {
+                "command": "cmake.setBuildType",
+                "title": "CMake: Set build type"
+            },
+            {
+                "command": "cmake.cleanConfigure",
+                "title": "CMake: Delete cached build settings and reconfigure"
+            },
+            {
+                "command": "cmake.clean",
+                "title": "CMake: Clean"
+            },
+            {
+                "command": "cmake.cleanRebuild",
+                "title": "CMake: Clean rebuild"
+            },
+            {
+                "command": "cmake.ctest",
+                "title": "CTest: Run tests"
+            },
+            {
+                "command": "cmake.jumpToCacheFile",
+                "title": "CMake: Edit the CMake Cache"
+            },
+            {
+                "command": "cmake.quickStart",
+                "title": "CMake: Quick Start"
+            }
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "CMake Tools configuration",
+            "properties": {
+                "cmake.buildDirectory": {
+                    "type": "string",
+                    "default": "${workspaceRoot}/build",
+                    "description": "The directory where CMake build files will go"
+                },
+                "cmake.configureSettings": {
+                    "type": "object",
+                    "default": {
+                        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+                        "BUILD_TESTING": true
+                    },
+                    "description": "CMake variables to set on the command line"
+                },
+                "cmake.initialBuildType": {
+                    "type": "string",
+                    "default": "Debug",
+                    "description": "The default build type on first configuration"
+                },
+                "cmake.preferredGenerators": {
+                    "type": "array",
+                    "default": [
+                        "Ninja",
+                        "Unix Makefiles",
+                        "MinGW Makefiles",
+                        "NMake Makefiles"
+                    ],
+                    "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
+                }
+            }
+        },
+        "keybindings": [
+            {
+                "key": "f7",
+                "command": "cmake.build"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "node ./node_modules/vscode/bin/compile",
+        "compile": "node ./node_modules/vscode/bin/compile -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install"
+    },
+    "devDependencies": {
+        "typescript": "^1.8.5",
+        "vscode": "^0.11.0"
+    }
+}
