@@ -79,7 +79,7 @@ export class CacheReader {
         this.path = path;
     }
 
-    private _reloadData = async function(): Promise<void> {
+    private _reloadData = async function (): Promise<void> {
         const _this: CacheReader = this;
         console.info('Reloading CMake cache data from', _this.path);
         const newdata = {};
@@ -125,14 +125,14 @@ export class CacheReader {
         _this.data = newdata;
     }
 
-    public needsReloading = async function(): Promise<boolean> {
+    public needsReloading = async function (): Promise<boolean> {
         const _this: CacheReader = this;
         const curstat = await async.stat(_this.path);
         console.log(_this._lastModifiedTime);
         return !_this._lastModifiedTime || (await async.stat(_this.path)).mtime.getTime() > _this._lastModifiedTime.getTime();
     }
 
-    public get = async function<T>(key: string, defaultValue?: any): Promise<CacheEntry> {
+    public get = async function <T>(key: string, defaultValue?: any): Promise<CacheEntry> {
         const _this: CacheReader = this;
         if (await _this.needsReloading()) {
             await _this._reloadData();
@@ -160,12 +160,12 @@ export class CMakeTools {
         return cmake_conf.get<T>(key, defaultValue);
     }
 
-    public get sourceDir() : string {
+    public get sourceDir(): string {
         return vscode.workspace.rootPath;
     }
 
 
-    public get mainListFile() : string {
+    public get mainListFile(): string {
         return path.join(this.sourceDir, 'CMakeLists.txt');
     }
 
@@ -178,16 +178,16 @@ export class CMakeTools {
         return path.join(this.binaryDir, 'CMakeCache.txt');
     }
 
-    public activeGenerator = async function(): Promise<string> {
+    public activeGenerator = async function (): Promise<string> {
         const _this: CMakeTools = this;
         return (await _this.cache.get('CMAKE_GENERATOR')).as<string>();
     }
 
-    public allTargetName = async function(): Promise<string> {
+    public allTargetName = async function (): Promise<string> {
         const _this: CMakeTools = this;
         const gen = await _this.activeGenerator();
         // Visual Studio generators generate a target called ALL_BUILD, while other generators have an 'all' target
-        return /Visual Studio/.test(gen) ? 'ALL_BUILD': 'all';
+        return /Visual Studio/.test(gen) ? 'ALL_BUILD' : 'all';
     }
 
     public execute(args: string[]): Promise<Number> {
@@ -303,7 +303,7 @@ export class CMakeTools {
         return null;
     }
 
-    public configure = async function(extra_args: string[] = []): Promise<Number> {
+    public configure = async function (extra_args: string[] = []): Promise<Number> {
         const _this: CMakeTools = this;
         if (!_this.sourceDir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
@@ -358,7 +358,7 @@ export class CMakeTools {
         );
     }
 
-    public build = async function(target: string = null): Promise<Number> {
+    public build = async function (target: string = null): Promise<Number> {
         const _this: CMakeTools = this;
         if (target === null) {
             target = await _this.allTargetName();
@@ -377,12 +377,12 @@ export class CMakeTools {
         return await _this.execute(['--build', _this.binaryDir, '--target', target]);
     }
 
-    public clean = async function(): Promise<Number> {
+    public clean = async function (): Promise<Number> {
         const _this: CMakeTools = this;
         return await _this.build('clean');
     }
 
-    public cleanConfigure = async function(): Promise<Number> {
+    public cleanConfigure = async function (): Promise<Number> {
         const _this: CMakeTools = this;
         const build_dir = _this.binaryDir;
         const cache = _this.cachePath;
@@ -398,12 +398,11 @@ export class CMakeTools {
         return await _this.configure();
     }
 
-    public jumpToCacheFile = async function(): Promise<vscode.TextEditor> {
+    public jumpToCacheFile = async function (): Promise<vscode.TextEditor> {
         const _this: CMakeTools = this;
         if (!(await async.exists(_this.cachePath))) {
             const do_conf = !!(await vscode.window.showErrorMessage('This project has not yet been configured.', 'Configure Now'));
-            if (do_conf)
-            {
+            if (do_conf) {
                 if (await _this.configure() !== 0)
                     return;
             }
@@ -413,7 +412,7 @@ export class CMakeTools {
         return await vscode.window.showTextDocument(cache);
     }
 
-    public cleanRebuild = async function(): Promise<Number> {
+    public cleanRebuild = async function (): Promise<Number> {
         const _this: CMakeTools = this;
         const clean_result = await _this.clean();
         if (clean_result)
@@ -421,7 +420,7 @@ export class CMakeTools {
         return await _this.build();
     }
 
-    public buildWithTarget = async function(): Promise<Number> {
+    public buildWithTarget = async function (): Promise<Number> {
         const _this: CMakeTools = this;
         const target = await vscode.window.showInputBox({
             prompt: 'Enter a target name',
@@ -429,31 +428,31 @@ export class CMakeTools {
         return await _this.build(target);
     }
 
-    public setBuildType = async function(): Promise<Number> {
+    public setBuildType = async function (): Promise<Number> {
         const _this: CMakeTools = this;
         const chosen = await vscode.window.showQuickPick([{
             label: 'Release',
             description: 'Optimized build with no debugging information',
         }, {
-            label: 'Debug',
-            description: 'Default build type. No optimizations. Contains debug information',
-        }, {
-            label: 'MinSizeRel',
-            description: 'Release build tweaked for minimum binary code size',
-        }, {
-            label: 'RelWithDebInfo',
-            description: 'Same as "Release", but also generates debugging information',
-        }]);
+                label: 'Debug',
+                description: 'Default build type. No optimizations. Contains debug information',
+            }, {
+                label: 'MinSizeRel',
+                description: 'Release build tweaked for minimum binary code size',
+            }, {
+                label: 'RelWithDebInfo',
+                description: 'Same as "Release", but also generates debugging information',
+            }]);
 
         return await _this.configure(['-DCMAKE_BUILD_TYPE=' + chosen.label]);
     }
 
-    public ctest = async function(): Promise<Number> {
+    public ctest = async function (): Promise<Number> {
         const _this: CMakeTools = this;
         return await _this.execute(['-E', 'chdir', _this.binaryDir, 'ctest', '-j8', '--output-on-failure']);
     }
 
-    public quickStart = async function(): Promise<Number> {
+    public quickStart = async function (): Promise<Number> {
         const _this: CMakeTools = this;
         if (await async.exists(_this.mainListFile)) {
             vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
@@ -475,9 +474,9 @@ export class CMakeTools {
             label: 'Library',
             description: 'Create a library',
         }, {
-            label: 'Executable',
-            description: 'Create an executable'
-        }]));
+                label: 'Executable',
+                description: 'Create an executable'
+            }]));
 
         if (!target_type)
             return -1;

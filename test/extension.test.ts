@@ -12,16 +12,15 @@ function testFilePath(filename: string): string {
     return path.join(process.cwd(), 'test', filename);
 }
 
-
 suite("Utility tests", () => {
-    test("Reloads only when needed", async function() {
+    test("Reloads only when needed", async function () {
         const reader = new cmake.CacheReader(testFilePath('TestCMakeCache.txt'));
         assert.strictEqual(await reader.needsReloading(), true);
         assert.strictEqual(await reader.needsReloading(), true);
         await reader.get("CMAKE_GENERATOR");
         assert.strictEqual(await reader.needsReloading(), false);
     });
-    test("Read CMake Cache", async function() {
+    test("Read CMake Cache", async function () {
         const reader = new cmake.CacheReader(testFilePath("TestCMakeCache.txt"));
         const generator = await reader.get("CMAKE_GENERATOR");
         assert.strictEqual(
