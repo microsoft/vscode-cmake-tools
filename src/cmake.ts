@@ -75,7 +75,11 @@ export class CacheReader {
         this.path = path;
     }
 
-    private _reloadData = async function(): Promise<void> {
+    public exists = async function (): Promise<boolean> {
+        return await async.exists(this.path);
+    }
+
+    private _reloadData = async function (): Promise<void> {
         const _this: CacheReader = this;
         console.info('Reloading CMake cache data from', _this.path);
         const newdata = {};
@@ -176,6 +180,8 @@ export class CMakeTools {
 
     public activeGenerator = async function(): Promise<string> {
         const _this: CMakeTools = this;
+        if (!(await _this.cache.exists()))
+            return 'all';
         return (await _this.cache.get('CMAKE_GENERATOR')).as<string>();
     }
 
