@@ -479,13 +479,15 @@ export class CMakeTools {
         if (!project_name)
             return -1;
 
-        const target_type = (await vscode.window.showQuickPick([{
+        const target_type = (await vscode.window.showQuickPick([
+            {
             label: 'Library',
             description: 'Create a library',
         }, {
                 label: 'Executable',
                 description: 'Create an executable'
-            }]));
+            }
+        ]));
 
         if (!target_type)
             return -1;
