@@ -134,7 +134,7 @@ export class CacheReader {
         return !_this._lastModifiedTime || (await async.stat(_this.path)).mtime.getTime() > _this._lastModifiedTime.getTime();
     }
 
-    public getData = async function(): Promise<Map<string, CacheEntry>> {
+    public getData = async function (): Promise<Map<string, CacheEntry>> {
         const _this: CacheReader = this;
         if (await _this.needsReloading()) {
             await _this._reloadData();
