@@ -29,7 +29,14 @@ settings can be stored as part of the project in ``settings.json`` in the
 
 ## Change History
 
-- **v0.2.0** - Status bar for viewing build status.
+- **v0.2.0** - Various:
+  - Features:
+    - Added a status bar with some useful controls:
+      - Change build type/configuration
+      - Start and stop the build with a single click
+    - Better support for multi-configuration generators
+  - Fixes:
+    - Fix some issues when building on Windows
 - **v0.1.2** - Fix bug when building before configuring.
 - **v0.1.1** - Fixes:
   - Fix issue where we fail to detect the presence of Ninja when the command is
