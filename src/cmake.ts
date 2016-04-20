@@ -153,13 +153,13 @@ export class CacheReader {
 }
 
 export class CMakeTools {
-    private channel: vscode.OutputChannel;
-    private diagnostics: vscode.DiagnosticCollection;
-    private cache: CacheReader;
+    private _channel: vscode.OutputChannel;
+    private _diagnostics: vscode.DiagnosticCollection;
+    public cache: CacheReader;
 
     constructor() {
-        this.channel = vscode.window.createOutputChannel('CMake/Build');
-        this.diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
+        this._channel = vscode.window.createOutputChannel('CMake/Build');
+        this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this.cache = new CacheReader(this.cachePath);
     }
 
@@ -205,24 +205,24 @@ export class CMakeTools {
             const pipe = proc.spawn('cmake', args);
             const status = vscode.window.setStatusBarMessage;
             status('Executing CMake...', 1000);
-            this.channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
+            this._channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
             let stderr_acc = '';
             pipe.stdout.on('data', (data: Uint8Array) => {
                 const str = data.toString();
                 console.log('cmake [stdout]: ' + str.trim());
-                this.channel.append(str);
+                this._channel.append(str);
                 status('cmake: ' + str.trim(), 1000);
             });
             pipe.stderr.on('data', (data: Uint8Array) => {
                 const str = data.toString();
                 console.log('cmake [stderr]: ' + str.trim());
                 stderr_acc += str;
-                this.channel.append(str);
+                this._channel.append(str);
                 status('cmake: ' + str.trim(), 1000);
             });
             pipe.on('close', (retc: Number) => {
                 console.log('cmake exited with return code ' + retc);
-                this.channel.appendLine('[vscode] CMake exited with status ' + retc);
+                this._channel.appendLine('[vscode] CMake exited with status ' + retc);
                 status('CMake exited with status ' + retc, 3000);
                 if (retc !== 0) {
                     vscode.window.showErrorMessage('CMake exited with non-zero return code ' + retc + '. See CMake/Build output for details');
@@ -264,9 +264,9 @@ export class CMakeTools {
                     rest = tail;
                 }
 
-                this.diagnostics.clear();
+                this._diagnostics.clear();
                 for (const filepath in diags) {
-                    this.diagnostics.set(vscode.Uri.file(filepath), diags[filepath]);
+                    this._diagnostics.set(vscode.Uri.file(filepath), diags[filepath]);
                 }
                 resolve(retc);
             });
@@ -334,13 +334,13 @@ export class CMakeTools {
 
         const binary_dir = _this.binaryDir;
         const cmake_cache = _this.cachePath;
-        _this.channel.show();
+        _this._channel.show();
         const settings_args = [];
         if (!(await async.exists(cmake_cache))) {
-            this.channel.appendLine("[vscode] Setting up initial CMake configuration");
+            _this._channel.appendLine("[vscode] Setting up initial CMake configuration");
             const generator = await _this.pickGenerator(_this.config<string[]>("preferredGenerators"));
             if (generator) {
-                this.channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
+                _this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
                 settings_args.push("-G" + generator);
             }
             else {
@@ -382,7 +382,7 @@ export class CMakeTools {
             if (!do_configure || await _this.configure() !== 0)
                 return -1;
         }
-        _this.channel.show();
+        _this._channel.show();
         return await _this.execute(['--build', _this.binaryDir, '--target', target]);
     }
 
@@ -397,11 +397,11 @@ export class CMakeTools {
         const cache = _this.cachePath;
         const cmake_files = path.join(build_dir, 'CMakeFiles');
         if (await async.exists(cache)) {
-            _this.channel.appendLine('[vscode] Removing ' + cache);
+            _this._channel.appendLine('[vscode] Removing ' + cache);
             await async.unlink(cache);
         }
         if (await async.exists(cmake_files)) {
-            _this.channel.appendLine('[vscode] Removing ' + cmake_files);
+            _this._channel.appendLine('[vscode] Removing ' + cmake_files);
             await async.unlink(cmake_files);
         }
         return await _this.configure();
