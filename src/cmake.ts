@@ -718,7 +718,7 @@ export class CMakeTools {
         await _this.configure();
     }
 
-    public stop = async function() {
+    public stop() {
         const child: proc.ChildProcess = this.currentChildProcess;
         if (!child)
             return;
@@ -726,15 +726,20 @@ export class CMakeTools {
         // spawn child processes, and CMake won't forward signals to its
         // children. As a workaround, we list the children of the cmake process
         // and also send signals to them.
+        this._killTree(child.pid);
+    }
+
+    public _killTree = async function(pid: number) {
         let children: number[] = [];
         if (process.platform !== 'win32') {
-            const out = (await async.execute('pgrep', ['-P', child.pid.toString()])).stdout.trim().split('\n');
-            children = out.map(line => Number.parseInt(line));
+            const stdout = (await async.execute('pgrep', ['-P', pid.toString()])).stdout.trim();
+            if (!!stdout.length) {
+                children = stdout.split('\n').map(line => Number.parseInt(line));
+            }
         }
-        if (child)
-            child.kill('SIGINT');
         for (const other of children) {
-            process.kill(other, 'SIGINT');
+            await this._killTree(other);
         }
+        process.kill(pid, 'SIGINT');
     }
 }
