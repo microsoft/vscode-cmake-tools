@@ -26,6 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
         'setBuildType',
         'ctest',
         'quickStart',
+        'stop',
     ]) {
         context.subscriptions.push(register('cmake.' + key, cmake[key]));
     }
