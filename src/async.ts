@@ -1,5 +1,6 @@
 'use strict';
 
+import * as proc from 'child_process';
 import * as fs from 'fs';
 
 export function doAsync<T>(fn: Function, ...args): Promise<T> {
@@ -34,6 +35,32 @@ export function stat(path: string): Promise<fs.Stats> {
                 reject(err);
             else
                 resolve(stats);
+        });
+    });
+}
+
+export interface IExecutionResult {
+    retc: Number;
+    stdout: string;
+    stderr: string;
+}
+
+export function execute(command: string, args: string[], options?: proc.SpawnOptions): Promise<IExecutionResult> {
+    return new Promise<IExecutionResult>((resolve, reject) => {
+        const child = proc.spawn(command, args, options);
+        child.on('error', (err) => {
+            reject(err);
+        });
+        let stdout_acc = '';
+        let stderr_acc = '';
+        child.stdout.on('data', (data: Uint8Array) => {
+            stdout_acc += data.toString();
+        });
+        child.stderr.on('data', (data: Uint8Array) => {
+            stderr_acc += data.toString();
+        })
+        child.on('exit', (retc) => {
+            resolve({retc: retc, stdout: stdout_acc, stderr: stderr_acc});
         });
     });
 }
