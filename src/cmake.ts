@@ -98,7 +98,9 @@ export class CacheReader {
             if (line.startsWith('//')) {
                 docs_acc += /^\/\/(.*)/.exec(line)[1] + ' ';
             } else {
-                const [_, name, typename, valuestr] = /^(.*?):(.*?)=(.*)/.exec(line);
+                const match = /^(.*?):(.*?)=(.*)/.exec(line);
+                console.assert(!!match, "Couldn't handle reading cache entry: " + line);
+                const [_, name, typename, valuestr] = match;
                 if (name.endsWith('-ADVANCED') && valuestr == '1') {
                     // We skip the ADVANCED property variables. They're a little odd.
                 } else {
