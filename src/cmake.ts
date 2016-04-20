@@ -49,7 +49,6 @@ export class CacheEntry {
         return this._docs;
     }
 
-
     public get key() {
         return this._key;
     }
@@ -71,7 +70,7 @@ export class CacheEntry {
 
 export class CacheReader {
     public path: string;
-    public data: Object;
+    public data = new Map<string, CacheEntry>();
 
     private _lastModifiedTime: Date = null;
 
@@ -83,10 +82,10 @@ export class CacheReader {
         return await async.exists(this.path);
     }
 
-    private _reloadData = async function (): Promise<void> {
+    private _reloadData = async function (): Promise<Map<string, CacheEntry>> {
         const _this: CacheReader = this;
         console.info('Reloading CMake cache data from', _this.path);
-        const newdata = {};
+        const newdata = new Map<string, CacheEntry>();
         _this._lastModifiedTime = (await async.stat(_this.path)).mtime;
         const buf = await async.readFile(_this.path);
         const contents = buf.toString();
@@ -121,29 +120,34 @@ export class CacheReader {
                         value = isTruthy(value);
 
                     console.assert(type !== undefined, `Unknown cache entry type: ${type}`);
-                    newdata[name] = new CacheEntry(key, value, type, docs);
+                    newdata.set(name, new CacheEntry(key, value, type, docs));
                 }
             }
         }
 
-        _this.data = newdata;
+        return _this.data = newdata;
     }
 
     public needsReloading = async function (): Promise<boolean> {
         const _this: CacheReader = this;
         const curstat = await async.stat(_this.path);
-        console.log(_this._lastModifiedTime);
         return !_this._lastModifiedTime || (await async.stat(_this.path)).mtime.getTime() > _this._lastModifiedTime.getTime();
     }
 
-    public get = async function <T>(key: string, defaultValue?: any): Promise<CacheEntry> {
+    public getData = async function(): Promise<Map<string, CacheEntry>> {
         const _this: CacheReader = this;
         if (await _this.needsReloading()) {
             await _this._reloadData();
         }
-        if (!(key in _this.data))
+        return _this.data;
+    }
+
+    public get = async function (key: string, defaultValue?: any): Promise<CacheEntry> {
+        const _this: CacheReader = this;
+        const data = await _this.getData();
+        if (!data.has(key))
             return null;
-        const ret = _this.data[key];
+        const ret = data.get(key);
         return ret;
     }
 }
@@ -168,7 +172,6 @@ export class CMakeTools {
         return vscode.workspace.rootPath;
     }
 
-
     public get mainListFile(): string {
         return path.join(this.sourceDir, 'CMakeLists.txt');
     }
@@ -184,13 +187,13 @@ export class CMakeTools {
 
     public activeGenerator = async function (): Promise<string> {
         const _this: CMakeTools = this;
-        if (!(await _this.cache.exists()))
-            return 'all';
         return (await _this.cache.get('CMAKE_GENERATOR')).as<string>();
     }
 
     public allTargetName = async function (): Promise<string> {
         const _this: CMakeTools = this;
+        if (!(await _this.cache.exists()))
+            return 'all';
         const gen = await _this.activeGenerator();
         // Visual Studio generators generate a target called ALL_BUILD, while other generators have an 'all' target
         return /Visual Studio/.test(gen) ? 'ALL_BUILD' : 'all';
