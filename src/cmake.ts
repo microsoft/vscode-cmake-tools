@@ -155,12 +155,77 @@ export class CacheReader {
 export class CMakeTools {
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
+    private _statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1.1);
+    private _currentBuildTypeButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
+    private _selectedMultiConfBuildType = '';
+
+    private _statusMessage: string = '';
+    public get statusMessage(): string {
+        return this._statusMessage;
+    }
+    public set statusMessage(v: string) {
+        this._statusMessage = v;
+        this._refreshStatusBarItems();
+    }
+
+    private _selectedBuildType: string = 'Not Configured';
+    public get selectedBuildType(): string {
+        return this._selectedBuildType;
+    }
+    public set selectedBuildType(v: string) {
+        this._selectedBuildType = v;
+        this._refreshStatusBarItems();
+    }
+
     public cache: CacheReader;
 
     constructor() {
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this.cache = new CacheReader(this.cachePath);
+
+        this._currentBuildTypeButton.command = 'cmake.setBuildType';
+        this._currentBuildTypeButton.show();
+        this._statusBarItem.show();
+
+        this._refreshStatusBarItems();
+        this._postInit();
+
+        this.statusMessage = 'Ready';
+    }
+
+    private _postInit = async function () {
+        const _this: CMakeTools = this;
+        if (await _this.isMultiConf)
+            _this.selectedBuildType = 'Debug';
+        else
+            _this.selectedBuildType = await _this.getCurrentBuildType();
+    }
+
+    private _refreshStatusBarItems = async function () {
+        const _this: CMakeTools = this;
+
+        const bt_bar = _this._currentBuildTypeButton;
+
+        const bar = _this._statusBarItem;
+        let text = 'CMake Tools';
+        const name = await _this.projectName();
+        if (!!name) {
+            text += `: ${name}`;
+        }
+        if (!!_this.statusMessage.length)
+            text += ': ' + _this.statusMessage;
+        bar.text = text;
+
+        _this._currentBuildTypeButton.text = `Configuration: ${this.selectedBuildType}`;
+    }
+
+    public projectName = async function (): Promise<string> {
+        const _this: CMakeTools = this;
+        if (!(await _this.cache.exists())) {
+            return null;
+        }
+        return (await _this.cache.get('CMAKE_PROJECT_NAME')).as<string>();
     }
 
     public config<T>(key: string, defaultValue?: any): T {
@@ -183,6 +248,21 @@ export class CMakeTools {
 
     public get cachePath(): string {
         return path.join(this.binaryDir, 'CMakeCache.txt');
+    }
+
+    public isMultiConf = async function (): Promise<boolean> {
+        const _this: CMakeTools = this;
+        return !!(await _this.cache.get('CMAKE_CONFIGURATION_TYPES'));
+    }
+
+    public getCurrentBuildType = async function (): Promise<string> {
+        const _this: CMakeTools = this;
+        if (!(await _this.cache.exists()))
+            return 'Not configured';
+        if (await _this.isMultiConf())
+            return _this._selectedMultiConfBuildType;
+        else
+            return (await _this.cache.get('CMAKE_BUILD_TYPE')).as<string>();
     }
 
     public activeGenerator = async function (): Promise<string> {
@@ -342,13 +422,12 @@ export class CMakeTools {
             if (generator) {
                 _this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
                 settings_args.push("-G" + generator);
-            }
-            else {
+            } else {
                 console.error("None of the preferred generators was selected");
             }
-
-            settings_args.push("-DCMAKE_BUILD_TYPE=" + _this.config<string>("initialBuildType"));
         }
+
+        settings_args.push('-DCMAKE_BUILD_TYPE=' + _this.selectedBuildType);
 
         const settings = _this.config<Object>("configureSettings");
         for (const key in settings) {
@@ -360,11 +439,15 @@ export class CMakeTools {
             settings_args.push("-D" + key + "=" + value);
         }
 
-        return await _this.execute(
+        _this.statusMessage = 'Configuring...';
+        const result = await _this.execute(
             ['-H' + _this.sourceDir, '-B' + binary_dir]
                 .concat(settings_args)
                 .concat(extra_args)
         );
+        _this.selectedBuildType = await _this.getCurrentBuildType();
+        _this.statusMessage = 'Ready';
+        return result;
     }
 
     public build = async function (target: string = null): Promise<Number> {
@@ -383,7 +466,7 @@ export class CMakeTools {
                 return -1;
         }
         _this._channel.show();
-        return await _this.execute(['--build', _this.binaryDir, '--target', target]);
+        return await _this.execute(['--build', _this.binaryDir, '--target', target, '--config', _this.selectedBuildType]);
     }
 
     public clean = async function (): Promise<Number> {
@@ -434,26 +517,42 @@ export class CMakeTools {
         const target = await vscode.window.showInputBox({
             prompt: 'Enter a target name',
         });
+        if (target === null)
+            return -1;
         return await _this.build(target);
     }
 
     public setBuildType = async function (): Promise<Number> {
         const _this: CMakeTools = this;
-        const chosen = await vscode.window.showQuickPick([{
-            label: 'Release',
-            description: 'Optimized build with no debugging information',
-        }, {
-                label: 'Debug',
-                description: 'Default build type. No optimizations. Contains debug information',
-            }, {
-                label: 'MinSizeRel',
-                description: 'Release build tweaked for minimum binary code size',
-            }, {
-                label: 'RelWithDebInfo',
-                description: 'Same as "Release", but also generates debugging information',
-            }]);
+        let chosen = null;
+        if (await _this.isMultiConf()) {
+            const types = (await _this.cache.get('CMAKE_CONFIGURATION_TYPES')).as<string>().split(';');
+            chosen = await vscode.window.showQuickPick(types);
+            if (chosen)
+                _this._selectedMultiConfBuildType = chosen;
+        } else {
+            chosen = await vscode.window.showQuickPick([
+                {
+                    label: 'Release',
+                    description: 'Optimized build with no debugging information',
+                }, {
+                    label: 'Debug',
+                    description: 'Default build type. No optimizations. Contains debug information',
+                }, {
+                    label: 'MinSizeRel',
+                    description: 'Release build tweaked for minimum binary code size',
+                }, {
+                    label: 'RelWithDebInfo',
+                    description: 'Same as "Release", but also generates debugging information',
+                }
+            ]);
+            chosen = chosen ? chosen.label : null;
+        }
+        if (chosen === null)
+            return -1;
 
-        return await _this.configure(['-DCMAKE_BUILD_TYPE=' + chosen.label]);
+        _this.selectedBuildType = chosen;
+        return await _this.configure();
     }
 
     public ctest = async function (): Promise<Number> {
@@ -481,9 +580,9 @@ export class CMakeTools {
 
         const target_type = (await vscode.window.showQuickPick([
             {
-            label: 'Library',
-            description: 'Create a library',
-        }, {
+                label: 'Library',
+                description: 'Create a library',
+            }, {
                 label: 'Executable',
                 description: 'Create an executable'
             }
