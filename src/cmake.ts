@@ -86,7 +86,6 @@ export class CacheReader {
         const _this: CacheReader = this;
         console.info('Reloading CMake cache data from', _this.path);
         const newdata = new Map<string, CacheEntry>();
-        _this._lastModifiedTime = (await async.stat(_this.path)).mtime;
         const buf = await async.readFile(_this.path);
         const contents = buf.toString();
         const all_lines = contents.split('\n');
@@ -125,6 +124,7 @@ export class CacheReader {
             }
         }
 
+        _this._lastModifiedTime = (await async.stat(_this.path)).mtime;
         return _this.data = newdata;
     }
 
