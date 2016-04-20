@@ -9,15 +9,6 @@ This extension can be installed with ``ext install cmake-tools``.
 Issues? Questions? Feature requests? Create an issue on
 [the github page](https://github.com/vector-of-bool/vscode-cmake-tools).
 
-## Change History
-
-- **v0.1.2** - Fix bug when building before configuring.
-- **v0.1.1** - Fixes:
-  - Fix issue where we fail to detect the presence of Ninja when the command is
-    ``ninja-build``.
-  - Fix failure to build when configured with a Visual Studio generator.
-- **v0.1.0** - First useful release
-
 ## Getting Started
 
 CMake Tools provides several pieces of functionality to make it easier to work
@@ -35,6 +26,16 @@ CMake Tools uses a configuration setting ``cmake.configureSettings`` to define
 options to pass to CMake when configuring the project. In this way, build
 settings can be stored as part of the project in ``settings.json`` in the
 ``.vscode`` directory.
+
+## Change History
+
+- **v0.2.0** - Status bar for viewing build status.
+- **v0.1.2** - Fix bug when building before configuring.
+- **v0.1.1** - Fixes:
+  - Fix issue where we fail to detect the presence of Ninja when the command is
+    ``ninja-build``.
+  - Fix failure to build when configured with a Visual Studio generator.
+- **v0.1.0** - First useful release
 
 ## Features
 
