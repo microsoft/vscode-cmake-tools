@@ -7,10 +7,12 @@ import * as cmake_tools_ext from '../src/extension';
 
 import * as cmake from '../src/cmake';
 
+const here = __dirname;
 
 function testFilePath(filename: string): string {
-    return path.join(process.cwd(), 'test', filename);
+    return path.normalize(path.join(here, '../..', 'test', filename));
 }
+
 
 suite("Utility tests", () => {
     test("Reloads only when needed", async function () {
@@ -51,6 +53,24 @@ suite("Utility tests", () => {
             true
         );
     });
+    test("Read cache with various newlines", async function() {
+        for (const newline of ['\n', '\r\n', '\r']) {
+            const str = [
+                '# This line is ignored',
+                '// This line is docs',
+                'SOMETHING:STRING=foo',
+                ''
+            ].join(newline);
+            const entries = cmake.CacheReader.parseCache(str);
+            const message = `Using newline ${JSON.stringify(newline)}`
+            assert.strictEqual(entries.size, 1, message);
+            assert.strictEqual(entries.has('SOMETHING'), true);
+            const entry = entries.get('SOMETHING');
+            assert.strictEqual(entry.value, 'foo');
+            assert.strictEqual(entry.type, cmake.EntryType.String);
+            assert.strictEqual(entry.docs, 'This line is docs');
+        }
+    });
     test('Falsey values', () => {
         for (const thing of [
             '0',
@@ -80,5 +100,5 @@ suite("Utility tests", () => {
         ]) {
             assert.strictEqual(cmake.isTruthy(thing), true, 'Testing truthiness of ' + thing);
         }
-    })
+    });
 });
