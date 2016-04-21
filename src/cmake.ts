@@ -160,9 +160,8 @@ export class CacheReader {
 export class CMakeTools {
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
-    private _projectNameBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.03);
-    private _currentBuildTypeButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.02);
-    private _cmakeStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.01);
+    private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0010);
+    private _currentBuildTypeButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0005);
     private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
 
     public cache: CacheReader;
@@ -177,6 +176,10 @@ export class CMakeTools {
         this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
     }
 
+    /**
+     * A property that determines whether we are currently running a job
+     * or not.
+     */
     public get isBusy(): boolean {
         return !!this.currentChildProcess;
     }
@@ -195,7 +198,7 @@ export class CMakeTools {
     }
     public set projectName(v: string) {
         this._projectName = v;
-        this._projectNameBarItem.text = `Project: ${v}`
+        this._refreshStatusBarItems();
     }
 
     /**
@@ -211,7 +214,7 @@ export class CMakeTools {
     }
     public set statusMessage(v: string) {
         this._statusMessage = v;
-        this._cmakeStatusBarItem.text = `CMake: ${v}`;
+        this._refreshStatusBarItems();
     }
 
     /**
@@ -240,12 +243,14 @@ export class CMakeTools {
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this.cache = new CacheReader(this.cachePath);
 
-        this._projectNameBarItem.show();
+        vscode.workspace.onDidChangeConfiguration(() => {
+            console.log('Reloading CMakeTools after configuration change');
+            this.cache = new CacheReader(this.cachePath);
+        });
+
         this._currentBuildTypeButton.command = 'cmake.setBuildType';
-        this._currentBuildTypeButton.show();
-        this._cmakeStatusBarItem.show();
         this.currentChildProcess = null; // Inits the content of the buildButton
-        this._buildButton.show();
+
 
         // Start by loading the current CMake build type from the cache
         this._initSelectedBuildType();
@@ -253,6 +258,21 @@ export class CMakeTools {
         this._refreshProjectName();
 
         this.statusMessage = 'Ready';
+    }
+
+    private _refreshStatusBarItems = async function() {
+        const self: CMakeTools = this;
+        self._cmakeToolsStatusItem.text = `CMake: ${self.projectName}: ${self.statusMessage}`;
+
+        if (await async.exists(path.join(self.sourceDir, 'CMakeLists.txt'))) {
+            self._cmakeToolsStatusItem.show();
+            self._currentBuildTypeButton.show();
+            self._buildButton.show();
+        } else {
+            self._cmakeToolsStatusItem.hide();
+            self._currentBuildTypeButton.hide();
+            self._buildButton.hide();
+        }
     }
 
     /**
@@ -279,6 +299,14 @@ export class CMakeTools {
         return self.selectedBuildType;
     }
 
+    /**
+     * @brief Reload the project name from the CMake cache
+     *
+     * Because the user can change the project name when we rerun cmake, we
+     * need to be smart and reload the project name after we execute any
+     * cmake commands which might rerun the configure. The setter for
+     * projectName updates the status bar accordingly
+     */
     private _refreshProjectName = async function () {
         const self: CMakeTools = this;
         if (!(await self.cache.exists())) {

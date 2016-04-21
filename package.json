@@ -40,7 +40,8 @@
         "onCommand:cmake.cleanRebuild",
         "onCommand:cmake.ctest",
         "onCommand:cmake.jumpToCacheFile",
-        "onCommand:cmake.quickStart"
+        "onCommand:cmake.quickStart",
+        "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
     "contributes": {
