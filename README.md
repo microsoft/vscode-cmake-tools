@@ -6,8 +6,9 @@ itself *does not* provide language support. For that I recommend
 
 This extension can be installed with ``ext install cmake-tools``.
 
-Issues? Questions? Feature requests? Create an issue on
-[the github page](https://github.com/vector-of-bool/vscode-cmake-tools).
+### Issues? Questions? Feature requests?
+
+Create an issue on [the github page](https://github.com/vector-of-bool/vscode-cmake-tools).
 
 ## Getting Started
 
@@ -29,20 +30,31 @@ settings can be stored as part of the project in ``settings.json`` in the
 
 ## Change History
 
-- **v0.2.0** - Various:
-  - Features:
-    - Added a status bar with some useful controls:
-      - Change build type/configuration
-      - Start and stop the build with a single click
-    - Better support for multi-configuration generators
-  - Fixes:
-    - Fix some issues when building on Windows
-- **v0.1.2** - Fix bug when building before configuring.
-- **v0.1.1** - Fixes:
-  - Fix issue where we fail to detect the presence of Ninja when the command is
-    ``ninja-build``.
-  - Fix failure to build when configured with a Visual Studio generator.
-- **v0.1.0** - First useful release
+### Version 0.2.1
+
+- Fix failure to run on Windows due to line-endings issues
+
+### Version 0.2.0
+
+- Added a status bar with some useful controls:
+  - Change build type/configuration
+  - Start and stop the build with a single click
+- Better support for multi-configuration generators
+- Fix some issues when building on Windows
+
+### Version 0.1.2
+
+- Fix bug when building before configuring.
+
+### Version 0.1.1
+
+- Fix issue where we fail to detect the presence of Ninja when the command is
+  ``ninja-build``.
+- Fix failure to build when configured with a Visual Studio generator.
+
+### Version 0.1.0
+
+- First useful release
 
 ## Features
 
