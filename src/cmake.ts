@@ -82,19 +82,14 @@ export class CacheReader {
         return await async.exists(this.path);
     }
 
-    private _reloadData = async function (): Promise<Map<string, CacheEntry>> {
-        const _this: CacheReader = this;
-        console.info('Reloading CMake cache data from', _this.path);
-        const newdata = new Map<string, CacheEntry>();
-        const buf = await async.readFile(_this.path);
-        const contents = buf.toString();
-        const all_lines = contents.split('\n');
-        const filtered_lines = all_lines
+    public static parseCache(content: string): Map<string, CacheEntry> {
+        const lines = content.split(/\r\n|\n|\r/)
             .filter(line => !!line.length)
             .filter(line => !/^\s*#/.test(line));
 
+        const entries = new Map<string, CacheEntry>();
         let docs_acc = '';
-        for (const line of filtered_lines) {
+        for (const line of lines) {
             if (line.startsWith('//')) {
                 docs_acc += /^\/\/(.*)/.exec(line)[1] + ' ';
             } else {
@@ -121,13 +116,21 @@ export class CacheReader {
                         value = isTruthy(value);
 
                     console.assert(type !== undefined, `Unknown cache entry type: ${type}`);
-                    newdata.set(name, new CacheEntry(key, value, type, docs));
+                    entries.set(name, new CacheEntry(key, value, type, docs));
                 }
             }
         }
 
+        return entries;
+    }
+
+    private _reloadData = async function (): Promise<Map<string, CacheEntry>> {
+        const _this: CacheReader = this;
+        console.info('Reloading CMake cache data from', _this.path);
+        const buf = await async.readFile(_this.path);
+        _this.data = CacheReader.parseCache(buf.toString());
         _this._lastModifiedTime = (await async.stat(_this.path)).mtime;
-        return _this.data = newdata;
+        return _this.data;
     }
 
     public needsReloading = async function (): Promise<boolean> {
@@ -729,7 +732,7 @@ export class CMakeTools {
         this._killTree(child.pid);
     }
 
-    public _killTree = async function(pid: number) {
+    public _killTree = async function (pid: number) {
         let children: number[] = [];
         if (process.platform !== 'win32') {
             const stdout = (await async.execute('pgrep', ['-P', pid.toString()])).stdout.trim();
