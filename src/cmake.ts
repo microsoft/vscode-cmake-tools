@@ -161,8 +161,9 @@ export class CMakeTools {
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
     private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0010);
-    private _currentBuildTypeButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0005);
     private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+    private _lastConfigureSettings = {};
+    private _needsReconfigure = false;
 
     public cache: CacheReader;
 
@@ -238,6 +239,13 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    private _reloadSettings() {
+        this.cache = new CacheReader(this.cachePath);
+        const new_settings = this.config<Object>('configureSettings');
+        this._needsReconfigure = JSON.stringify(new_settings) !== JSON.stringify(this._lastConfigureSettings);
+        this._lastConfigureSettings = new_settings;
+    }
+
     constructor() {
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
@@ -245,8 +253,11 @@ export class CMakeTools {
 
         vscode.workspace.onDidChangeConfiguration(() => {
             console.log('Reloading CMakeTools after configuration change');
-            this.cache = new CacheReader(this.cachePath);
+            this._reloadSettings();
         });
+
+        this._lastConfigureSettings = this.config<Object>('configureSettings');
+        this._needsReconfigure = true;
 
         this._cmakeToolsStatusItem.command = 'cmake.setBuildType';
         this.currentChildProcess = null; // Inits the content of the buildButton
@@ -538,6 +549,7 @@ export class CMakeTools {
                 .concat(extra_args)
         );
         self.statusMessage = 'Ready';
+        self._reloadSettings();
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         return result;
     }
@@ -562,6 +574,11 @@ export class CMakeTools {
             const do_configure = !!(await vscode.window.showErrorMessage('You must configure your project before building', 'Configure Now'));
             if (!do_configure || await self.configure() !== 0)
                 return -1;
+        }
+        if (self._needsReconfigure) {
+            const retc = await self.configure();
+            if (!!retc)
+                return retc;
         }
         self._channel.show();
         self.statusMessage = 'Building...';
