@@ -235,7 +235,7 @@ export class CMakeTools {
     }
     public set selectedBuildType(v: string) {
         this._selectedBuildType = v;
-        this._currentBuildTypeButton.text = `Configuration: ${this.selectedBuildType}`;
+        this._refreshStatusBarItems();
     }
 
     constructor() {
@@ -248,7 +248,7 @@ export class CMakeTools {
             this.cache = new CacheReader(this.cachePath);
         });
 
-        this._currentBuildTypeButton.command = 'cmake.setBuildType';
+        this._cmakeToolsStatusItem.command = 'cmake.setBuildType';
         this.currentChildProcess = null; // Inits the content of the buildButton
 
 
@@ -260,17 +260,15 @@ export class CMakeTools {
         this.statusMessage = 'Ready';
     }
 
-    private _refreshStatusBarItems = async function() {
+    private _refreshStatusBarItems = async function () {
         const self: CMakeTools = this;
-        self._cmakeToolsStatusItem.text = `CMake: ${self.projectName}: ${self.statusMessage}`;
+        self._cmakeToolsStatusItem.text = `CMake: ${self.projectName}: ${self.selectedBuildType || 'Unknown'}: ${self.statusMessage}`;
 
         if (await async.exists(path.join(self.sourceDir, 'CMakeLists.txt'))) {
             self._cmakeToolsStatusItem.show();
-            self._currentBuildTypeButton.show();
             self._buildButton.show();
         } else {
             self._cmakeToolsStatusItem.hide();
-            self._currentBuildTypeButton.hide();
             self._buildButton.hide();
         }
     }
@@ -366,28 +364,28 @@ export class CMakeTools {
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn('cmake', args);
             this.currentChildProcess = pipe;
-            const status = vscode.window.setStatusBarMessage;
-            status('Executing CMake...', 1000);
+            const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
+            status('Executing CMake...');
             this._channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
             let stderr_acc = '';
             pipe.stdout.on('data', (data: Uint8Array) => {
                 const str = data.toString();
                 console.log('cmake [stdout]: ' + str.trim());
                 this._channel.append(str);
-                status(str.trim(), 1000);
+                status(str.trim());
             });
             pipe.stderr.on('data', (data: Uint8Array) => {
                 const str = data.toString();
                 console.log('cmake [stderr]: ' + str.trim());
                 stderr_acc += str;
                 this._channel.append(str);
-                status(str.trim(), 1000);
+                status(str.trim());
             });
             pipe.on('close', (retc: Number) => {
                 console.log('cmake exited with return code ' + retc);
                 this._channel.appendLine('[vscode] CMake exited with status ' + retc);
                 if (retc !== null) {
-                    status('CMake exited with status ' + retc, 3000);
+                    status('CMake exited with status ' + retc);
                     if (retc !== 0) {
                         vscode.window.showWarningMessage('CMake exited with non-zero return code ' + retc + '. See CMake/Build output for details');
                     }
