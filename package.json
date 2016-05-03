@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -40,7 +40,8 @@
         "onCommand:cmake.cleanRebuild",
         "onCommand:cmake.ctest",
         "onCommand:cmake.jumpToCacheFile",
-        "onCommand:cmake.quickStart"
+        "onCommand:cmake.quickStart",
+        "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
     "contributes": {
