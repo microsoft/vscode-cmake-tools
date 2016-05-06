@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -95,6 +95,16 @@
                     "type": "string",
                     "default": "${workspaceRoot}/build",
                     "description": "The directory where CMake build files will go"
+                },
+                "cmake.saveBeforeBuild": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Save open files before building"
+                },
+                "cmake.clearOutputBeforeBuild": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Clear build output before each build"
                 },
                 "cmake.configureSettings": {
                     "type": "object",

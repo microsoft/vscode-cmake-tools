@@ -3,6 +3,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as proc from 'child_process';
+import * as os from 'os';
 
 import * as vscode from 'vscode';
 
@@ -487,7 +488,19 @@ export class CMakeTools {
         return null;
     }
 
-    public configure = async function (extra_args: string[] = []): Promise<Number> {
+    private _prebuild = async function () {
+        const self: CMakeTools = this;
+        if (self.config<boolean>("clearOutputBeforeBuild")) {
+            self._channel.clear();
+        }
+
+        if (self.config<boolean>("saveBeforeBuild") && vscode.workspace.textDocuments.some(doc => doc.isDirty)) {
+            self._channel.appendLine("[vscode] Saving unsaved text documents...");
+            await vscode.workspace.saveAll();
+        }
+    }
+
+    public configure = async function (extra_args: string[] = [], run_prebuild = true): Promise<Number> {
         const self: CMakeTools = this;
 
         if (self.isBusy) {
@@ -512,6 +525,9 @@ export class CMakeTools {
                 await self.quickStart();
             return;
         }
+
+        if (run_prebuild)
+            await self._prebuild();
 
         const binary_dir = self.binaryDir;
         const cmake_cache = self.cachePath;
@@ -575,14 +591,29 @@ export class CMakeTools {
             if (!do_configure || await self.configure() !== 0)
                 return -1;
         }
+        await self._prebuild();
         if (self._needsReconfigure) {
-            const retc = await self.configure();
+            const retc = await self.configure([], false);
             if (!!retc)
                 return retc;
         }
+        // Determine the argument to start parallel builds
+        const gen = await self.activeGenerator();
+        const parallel_args = (() => {
+            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen))
+                return ['-j', os.cpus().length + 2 + ''];
+            else if (/Visual Studio/.test(gen))
+                return ['/m'];
+            else
+                return [];
+        })();
         self._channel.show();
         self.statusMessage = 'Building...';
-        const retc = await self.execute(['--build', self.binaryDir, '--target', target, '--config', self.selectedBuildType]);
+        const retc = await self.execute([
+            '--build', self.binaryDir,
+            '--target', target,
+            '--config', self.selectedBuildType,
+            '--'].concat(parallel_args));
         self.statusMessage = 'Ready';
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         return retc;
