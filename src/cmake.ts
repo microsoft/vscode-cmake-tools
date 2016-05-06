@@ -613,13 +613,13 @@ export class CMakeTools {
             if (!!retc)
                 return retc;
         }
-        // Determine the argument to start parallel builds
+        // Pass arguments based on a particular generator
         const gen = await self.activeGenerator();
-        const parallel_args = (() => {
+        const generator_args = (() => {
             if (/(Unix|MinGW) Makefiles|Ninja/.test(gen))
                 return ['-j', os.cpus().length + 2 + ''];
             else if (/Visual Studio/.test(gen))
-                return ['/m'];
+                return ['/m', '/property:GenerateFullPaths=true'];
             else
                 return [];
         })();
@@ -629,7 +629,7 @@ export class CMakeTools {
             '--build', self.binaryDir,
             '--target', target,
             '--config', self.selectedBuildType,
-            '--'].concat(parallel_args));
+            '--'].concat(generator_args));
         self.statusMessage = 'Ready';
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         return retc;
