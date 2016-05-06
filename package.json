@@ -96,6 +96,11 @@
                     "default": "${workspaceRoot}/build",
                     "description": "The directory where CMake build files will go"
                 },
+                "cmake.clearOutputBeforeBuild": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Clear build output before each build"
+                },
                 "cmake.configureSettings": {
                     "type": "object",
                     "default": {
