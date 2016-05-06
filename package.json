@@ -96,6 +96,11 @@
                     "default": "${workspaceRoot}/build",
                     "description": "The directory where CMake build files will go"
                 },
+                "cmake.saveBeforeBuild": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Save open files before building"
+                },
                 "cmake.clearOutputBeforeBuild": {
                     "type": "boolean",
                     "default": true,

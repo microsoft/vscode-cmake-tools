@@ -493,6 +493,10 @@ export class CMakeTools {
             self._channel.clear();
         }
 
+        if (self.config<boolean>("saveBeforeBuild") && vscode.workspace.textDocuments.some(doc => doc.isDirty)) {
+            self._channel.appendLine("[vscode] Saving unsaved text documents...");
+            await vscode.workspace.saveAll();
+    }
     }
 
     public configure = async function (extra_args: string[] = [], run_prebuild = true): Promise<Number> {
