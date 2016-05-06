@@ -30,6 +30,23 @@ settings can be stored as part of the project in ``settings.json`` in the
 
 ## Change History
 
+### Version 0.2.3
+
+- New option: ``cmake.clearOutputBeforeBuild`` enables clearing the contents of
+  the *CMake/Build* output channel before configuring/building the project each
+  time.
+- New option: ``cmake.saveBeforeBuild`` enables the extension to automatically
+  save any unsaved documents when the build command is invoked.
+- Makefile and MSBuild generators now build in parallel with the number of cores
+  on the system plus two.
+
+### Version 0.2.2
+
+- Properly detect when a reconfigure is required based on changes to workspace
+  settings.
+- Improve automatic extension loading.
+- Tweak appearence of the status bar item.
+
 ### Version 0.2.1
 
 - Fix failure to run on Windows due to line-endings issues
