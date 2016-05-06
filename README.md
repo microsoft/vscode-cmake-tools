@@ -33,7 +33,7 @@ settings can be stored as part of the project in ``settings.json`` in the
 ### Version 0.2.4
 
 - Set a target to be built by default when invoking the ``build`` command. This
-  option only persists for a single sesion, so must be set each time Visual
+  option only persists for a single session, so must be set each time Visual
   Studio Code is opened.
 - MSBuild building now outputs full paths, enabling jumping to error locations.
 
