@@ -23,6 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
         'clean',
         'cleanRebuild',
         'buildWithTarget',
+        'setDefaultTarget',
         'setBuildType',
         'ctest',
         'quickStart',

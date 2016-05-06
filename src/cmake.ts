@@ -174,8 +174,7 @@ export class CMakeTools {
     }
     public set currentChildProcess(v: proc.ChildProcess) {
         this._currentChildProcess = v;
-        this._buildButton.text = this.isBusy ? '$(x) Stop' : '$(gear) Build';
-        this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
+        this._refreshStatusBarItems();
     }
 
     /**
@@ -240,6 +239,19 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    /**
+     * @brief The default target to build when no target is specified
+     */
+    private _defaultBuildTarget: string;
+    public get defaultBuildTarget(): string {
+        return this._defaultBuildTarget;
+    }
+    public set defaultBuildTarget(v: string) {
+        this._defaultBuildTarget = v;
+        this._refreshStatusBarItems();
+    }
+
+
     private _reloadSettings() {
         this.cache = new CacheReader(this.cachePath);
         const new_settings = this.config<Object>('configureSettings');
@@ -283,6 +295,10 @@ export class CMakeTools {
             self._cmakeToolsStatusItem.hide();
             self._buildButton.hide();
         }
+
+        const target = self.defaultBuildTarget || await self.allTargetName();
+        this._buildButton.text = this.isBusy ? '$(x) Stop' : `$(gear) Build (${target})`;
+        this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
     }
 
     /**
@@ -573,7 +589,7 @@ export class CMakeTools {
     public build = async function (target: string = null): Promise<Number> {
         const self: CMakeTools = this;
         if (target === null) {
-            target = await self.allTargetName();
+            target = self.defaultBuildTarget || await self.allTargetName();
         }
         if (!self.sourceDir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
@@ -597,13 +613,13 @@ export class CMakeTools {
             if (!!retc)
                 return retc;
         }
-        // Determine the argument to start parallel builds
+        // Pass arguments based on a particular generator
         const gen = await self.activeGenerator();
-        const parallel_args = (() => {
+        const generator_args = (() => {
             if (/(Unix|MinGW) Makefiles|Ninja/.test(gen))
                 return ['-j', os.cpus().length + 2 + ''];
             else if (/Visual Studio/.test(gen))
-                return ['/m'];
+                return ['/m', '/property:GenerateFullPaths=true'];
             else
                 return [];
         })();
@@ -613,7 +629,7 @@ export class CMakeTools {
             '--build', self.binaryDir,
             '--target', target,
             '--config', self.selectedBuildType,
-            '--'].concat(parallel_args));
+            '--'].concat(generator_args));
         self.statusMessage = 'Ready';
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         return retc;
@@ -670,6 +686,17 @@ export class CMakeTools {
         if (target === null)
             return -1;
         return await self.build(target);
+    }
+
+    public setDefaultTarget = async function () {
+        const self: CMakeTools = this;
+        const new_default = await vscode.window.showInputBox({
+            prompt: 'Input the name of the new default target to build',
+            placeHolder: '(eg. "install", "all", "my-executable")',
+        });
+        if (!new_default)
+            return;
+        self.defaultBuildTarget = new_default;
     }
 
     public setBuildType = async function (): Promise<Number> {
