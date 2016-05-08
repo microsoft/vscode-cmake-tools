@@ -390,7 +390,7 @@ export class CMakeTools {
     public execute(args: string[]): Promise<Number> {
         return new Promise<Number>((resolve, _) => {
             console.info('Execute cmake with arguments:', args);
-            const pipe = proc.spawn('cmake', args);
+            const pipe = proc.spawn(this.config<string>('cmakePath', 'cmake'), args);
             this.currentChildProcess = pipe;
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
             status('Executing CMake...');
