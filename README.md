@@ -52,7 +52,7 @@ settings can be stored as part of the project in ``settings.json`` in the
 - Properly detect when a reconfigure is required based on changes to workspace
   settings.
 - Improve automatic extension loading.
-- Tweak appearence of the status bar item.
+- Tweak appearance of the status bar item.
 
 ### Version 0.2.1
 
