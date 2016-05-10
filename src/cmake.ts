@@ -493,13 +493,16 @@ export class CMakeTools {
                 }
             }[gen];
             if (delegate === undefined) {
+                const vsMatcher = /^Visual Studio (\d{2}) (\d{4})($|\sWin64$|\sARM$)/;
+                if (vsMatcher.test(gen) && process.platform === 'win32')
+                    return gen;
                 vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
                 continue;
             }
             if (await delegate())
                 return gen;
             else
-                console.log('Genereator "' + gen + '" is not supported');
+                console.log('Generator "' + gen + '" is not supported');
         }
         return null;
     }
