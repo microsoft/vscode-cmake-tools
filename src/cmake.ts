@@ -36,6 +36,17 @@ export enum EntryType {
     Static,
 };
 
+interface ExecutionResult {
+    retc: Number;
+    stdout: string;
+    stderr: string;
+}
+
+interface FileDiagnostic {
+    filepath: string;
+    diag: vscode.Diagnostic;
+}
+
 export class CacheEntry {
     private _type: EntryType = EntryType.Uninitialized;
     private _docs: string = '';
@@ -165,6 +176,7 @@ export class CMakeTools {
     private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
+    private _buildDiags: vscode.DiagnosticCollection;
 
     public cache: CacheReader;
 
@@ -262,6 +274,7 @@ export class CMakeTools {
     constructor() {
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
+        this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
         this.cache = new CacheReader(this.cachePath);
 
         vscode.workspace.onDidChangeConfiguration(() => {
@@ -346,6 +359,110 @@ export class CMakeTools {
         }
     }
 
+    public parseGCCDiagnostic(line: string): FileDiagnostic {
+        const gcc_re = /^(.*):(\d+):(\d+):\s+(warning|error|note):\s+(.*)$/;
+        const res = gcc_re.exec(line);
+        if (!res)
+            return null;
+        const file = res[1];
+        const lineno = Number.parseInt(res[2]) - 1;
+        const column = Number.parseInt(res[3]) - 1;
+        const severity = res[4];
+        const message = res[5];
+        const abspath = path.isAbsolute(file)
+            ? file
+            : path.normalize(path.join(this.binaryDir, file));
+        const diag = new vscode.Diagnostic(
+            new vscode.Range(lineno, column, lineno, column),
+            message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                note: vscode.DiagnosticSeverity.Information,
+            }[severity]
+        );
+        diag.source = 'GCC';
+        return {
+            filepath: abspath,
+            diag: diag,
+        };
+    }
+
+    public parseMSVCDiagnostic(line: string): FileDiagnostic {
+        const msvc_re = /^([^\s].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
+        const res = msvc_re.exec(line);
+        if (!res)
+            return null;
+        const file = res[1];
+        const location = res[2];
+        const severity = res[3];
+        const code = res[4];
+        const message = res[6];
+        const abspath = path.isAbsolute(file)
+            ? file
+            : path.normalize(path.join(this.binaryDir, file));
+        const loc = (() => {
+            const parts = location.split(',');
+            if (parts.length === 1)
+                return new vscode.Range(Number.parseInt(parts[0]), 0, Number.parseInt(parts[0]), 0);
+            if (parseFloat.length === 2)
+                return new vscode.Range(
+                    Number.parseInt(parts[0]) - 1,
+                    Number.parseInt(parts[1]) - 1,
+                    Number.parseInt(parts[0]) - 1,
+                    Number.parseInt(parts[1]) - 1
+                );
+            if (parseFloat.length === 4)
+                return new vscode.Range(
+                    Number.parseInt(parts[0]) - 1,
+                    Number.parseInt(parts[1]) - 1,
+                    Number.parseInt(parts[2]) - 1,
+                    Number.parseInt(parts[3]) - 1
+                );
+        })();
+        const diag = new vscode.Diagnostic(
+            loc,
+            message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                info: vscode.DiagnosticSeverity.Information,
+            }[severity]
+        );
+        diag.code = code;
+        diag.source = 'MSVC';
+        return {
+            filepath: abspath,
+            diag: diag,
+        };
+    }
+
+    public parseDiagnosticLine(line: string): FileDiagnostic {
+        return this.parseGCCDiagnostic(line) ||
+            this.parseMSVCDiagnostic(line);
+    }
+
+    public parseDiagnostics = async function (result: ExecutionResult) {
+        const self: CMakeTools = this;
+        const compiler = await self.cache.get('CMAKE_CXX_COMPILER_ID') || await self.cache.get('CMAKE_C_COMPILER_ID');
+        const lines = result.stdout.split('\n').map(line => line.trim());
+        const diags = lines.map(line => {
+            return self.parseDiagnosticLine(line);
+
+        }).filter(item => !!item);
+        const diags_acc = {};
+        for (const diag of diags) {
+            if (!(diag.filepath in diags_acc))
+                diags_acc[diag.filepath] = [];
+            diags_acc[diag.filepath].push(diag.diag);
+        }
+
+        self._buildDiags.clear();
+        for (const filepath in diags_acc) {
+            self._buildDiags.set(vscode.Uri.file(filepath), diags_acc[filepath]);
+        }
+    }
+
     public config<T>(key: string, defaultValue?: any): T {
         const cmake_conf = vscode.workspace.getConfiguration('cmake');
         return cmake_conf.get<T>(key, defaultValue);
@@ -387,8 +504,8 @@ export class CMakeTools {
         return /Visual Studio/.test(gen) ? 'ALL_BUILD' : 'all';
     }
 
-    public execute(args: string[]): Promise<Number> {
-        return new Promise<Number>((resolve, _) => {
+    public execute(args: string[]): Promise<ExecutionResult> {
+        return new Promise<ExecutionResult>((resolve, _) => {
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config<string>('cmakePath', 'cmake'), args);
             this.currentChildProcess = pipe;
@@ -396,9 +513,11 @@ export class CMakeTools {
             status('Executing CMake...');
             this._channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
             let stderr_acc = '';
+            let stdout_acc = '';
             pipe.stdout.on('data', (data: Uint8Array) => {
                 const str = data.toString();
                 console.log('cmake [stdout]: ' + str.trim());
+                stdout_acc += str;
                 this._channel.append(str);
                 status(str.trim());
             });
@@ -460,7 +579,11 @@ export class CMakeTools {
                     this._diagnostics.set(vscode.Uri.file(filepath), diags[filepath]);
                 }
                 this.currentChildProcess = null;
-                resolve(retc);
+                resolve({
+                    retc: retc,
+                    stdout: stdout_acc,
+                    stderr: stderr_acc
+                });
             });
         });
     };
@@ -586,7 +709,7 @@ export class CMakeTools {
         self.statusMessage = 'Ready';
         self._reloadSettings();
         self._refreshProjectName(); // The user may have changed the project name in the configure step
-        return result;
+        return result.retc;
     }
 
     public build = async function (target: string = null): Promise<Number> {
@@ -628,14 +751,15 @@ export class CMakeTools {
         })();
         self._channel.show();
         self.statusMessage = 'Building...';
-        const retc = await self.execute([
+        const result = await self.execute([
             '--build', self.binaryDir,
             '--target', target,
             '--config', self.selectedBuildType,
             '--'].concat(generator_args));
         self.statusMessage = 'Ready';
         self._refreshProjectName(); // The user may have changed the project name in the configure step
-        return retc;
+        await self.parseDiagnostics(result);
+        return result.retc;
     }
 
     public clean = async function (): Promise<Number> {
@@ -735,7 +859,7 @@ export class CMakeTools {
 
     public ctest = async function (): Promise<Number> {
         const self: CMakeTools = this;
-        return await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j8', '--output-on-failure']);
+        return (await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j8', '--output-on-failure'])).retc;
     }
 
     public quickStart = async function (): Promise<Number> {
