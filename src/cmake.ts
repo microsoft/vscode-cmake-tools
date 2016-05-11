@@ -389,11 +389,11 @@ export class CMakeTools {
     }
 
 
-    private getTextDocumentByFileName(file: string) : TextDocument {
+    private getTextDocumentByFileName(file: string): vscode.TextDocument {
         const documents = vscode.workspace.textDocuments;
-        let document : TextDocument = null;
+        let document: vscode.TextDocument = null;
         if (documents.length != 0) {
-            const filtered = documents.filter((doc:TextDocument){
+            const filtered = documents.filter((doc: vscode.TextDocument) => {
                 return doc.fileName.toUpperCase() === file.toUpperCase()
             });
             if (filtered.length != 0) {
@@ -403,15 +403,15 @@ export class CMakeTools {
         return document;
     }
 
-    private getTrimmedLineRange(file : string, line:Number) : Range {
+    private getTrimmedLineRange(file: string, line: number): vscode.Range {
         const document = this.getTextDocumentByFileName(file);
         if (document && (line < document.lineCount)) {
             const text = document.lineAt(line).text + '\n';
             let start = 0;
-            let end = text.length-1;
-            let is_space = (i) => {return /\s/.test(text[i]); };
-            while((start < text.length) && is_space(start) ) ++start;
-            while((end >= start) && is_space(end) ) --end;
+            let end = text.length - 1;
+            let is_space = (i) => { return /\s/.test(text[i]); };
+            while ((start < text.length) && is_space(start))++start;
+            while ((end >= start) && is_space(end))--end;
 
             return new vscode.Range(line, start, line, end);
         } else
@@ -434,7 +434,7 @@ export class CMakeTools {
         const loc = (() => {
             const parts = location.split(',');
             if (parts.length === 1)
-                return this.getTrimmedLineRange(file, Number.parseInt(parts[0])-1);
+                return this.getTrimmedLineRange(file, Number.parseInt(parts[0]) - 1);
             if (parseFloat.length === 2)
                 return new vscode.Range(
                     Number.parseInt(parts[0]) - 1,
@@ -683,7 +683,7 @@ export class CMakeTools {
         if (!self.sourceDir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
             return;
-        }
+        }/**/
 
         const cmake_list = self.mainListFile;
         if (!(await async.exists(cmake_list))) {
