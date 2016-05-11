@@ -388,8 +388,38 @@ export class CMakeTools {
         };
     }
 
+
+    private getTextDocumentByFileName(file: string) : TextDocument {
+        const documents = vscode.workspace.textDocuments;
+        let document : TextDocument = null;
+        if (documents.length != 0) {
+            const filtered = documents.filter((doc:TextDocument){
+                return doc.fileName.toUpperCase() === file.toUpperCase()
+            });
+            if (filtered.length != 0) {
+                document = filtered[0];
+            }
+        }
+        return document;
+    }
+
+    private getTrimmedLineRange(file : string, line:Number) : Range {
+        const document = this.getTextDocumentByFileName(file);
+        if (document && (line < document.lineCount)) {
+            const text = document.lineAt(line).text + '\n';
+            let start = 0;
+            let end = text.length-1;
+            let is_space = (i) => {return /\s/.test(text[i]); };
+            while((start < text.length) && is_space(start) ) ++start;
+            while((end >= start) && is_space(end) ) --end;
+
+            return new vscode.Range(line, start, line, end);
+        } else
+            return new vscode.Range(line, 0, line, 0);
+    }
+
     public parseMSVCDiagnostic(line: string): FileDiagnostic {
-        const msvc_re = /^([^\s].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
+        const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
         const res = msvc_re.exec(line);
         if (!res)
             return null;
@@ -397,14 +427,14 @@ export class CMakeTools {
         const location = res[2];
         const severity = res[3];
         const code = res[4];
-        const message = res[6];
+        const message = res[5];
         const abspath = path.isAbsolute(file)
             ? file
             : path.normalize(path.join(this.binaryDir, file));
         const loc = (() => {
             const parts = location.split(',');
             if (parts.length === 1)
-                return new vscode.Range(Number.parseInt(parts[0]), 0, Number.parseInt(parts[0]), 0);
+                return this.getTrimmedLineRange(file, Number.parseInt(parts[0])-1);
             if (parseFloat.length === 2)
                 return new vscode.Range(
                     Number.parseInt(parts[0]) - 1,
