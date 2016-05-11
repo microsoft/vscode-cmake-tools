@@ -30,10 +30,16 @@ settings can be stored as part of the project in ``settings.json`` in the
 
 ## Change History
 
+### Version 0.2.5
+
+- Option to set the path of the CMake executable via the ``cmake.cmakePath``
+  setting. ([Thanks, stanionascu!](https://github.com/vector-of-bool/vscode-cmake-tools/pull/9))
+- Support for using a Visual Studio generator as a ``preferredGenerator``. [Thanks again, stanionascu!](https://github.com/vector-of-bool/vscode-cmake-tools/pull/10)
+
 ### Version 0.2.4
 
 - Set a target to be built by default when invoking the ``build`` command. This
-  option only persists for a single sesion, so must be set each time Visual
+  option only persists for a single session, so must be set each time Visual
   Studio Code is opened.
 - MSBuild building now outputs full paths, enabling jumping to error locations.
 
@@ -52,7 +58,7 @@ settings can be stored as part of the project in ``settings.json`` in the
 - Properly detect when a reconfigure is required based on changes to workspace
   settings.
 - Improve automatic extension loading.
-- Tweak appearence of the status bar item.
+- Tweak appearance of the status bar item.
 
 ### Version 0.2.1
 

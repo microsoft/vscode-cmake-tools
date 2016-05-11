@@ -390,7 +390,7 @@ export class CMakeTools {
     public execute(args: string[]): Promise<Number> {
         return new Promise<Number>((resolve, _) => {
             console.info('Execute cmake with arguments:', args);
-            const pipe = proc.spawn('cmake', args);
+            const pipe = proc.spawn(this.config<string>('cmakePath', 'cmake'), args);
             this.currentChildProcess = pipe;
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
             status('Executing CMake...');
@@ -493,13 +493,16 @@ export class CMakeTools {
                 }
             }[gen];
             if (delegate === undefined) {
+                const vsMatcher = /^Visual Studio (\d{2}) (\d{4})($|\sWin64$|\sARM$)/;
+                if (vsMatcher.test(gen) && process.platform === 'win32')
+                    return gen;
                 vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
                 continue;
             }
             if (await delegate())
                 return gen;
             else
-                console.log('Genereator "' + gen + '" is not supported');
+                console.log('Generator "' + gen + '" is not supported');
         }
         return null;
     }

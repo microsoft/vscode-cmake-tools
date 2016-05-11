@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -133,6 +133,11 @@
                         "NMake Makefiles"
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
+                },
+                "cmake.cmakePath": {
+                    "type": "string",
+                    "default": "cmake",
+                    "description": "The path to CMake generator executable"
                 }
             }
         },
