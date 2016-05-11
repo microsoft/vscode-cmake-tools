@@ -30,6 +30,11 @@ settings can be stored as part of the project in ``settings.json`` in the
 
 ## Change History
 
+### Version 0.3.0
+
+- Build output is now parsed for diagnostics, so errors can be jumped to quickly
+  and easily. [Thanks to twxs!](https://github.com/vector-of-bool/vscode-cmake-tools/issues/2)
+
 ### Version 0.2.5
 
 - Option to set the path of the CMake executable via the ``cmake.cmakePath``
