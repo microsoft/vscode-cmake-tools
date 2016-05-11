@@ -30,6 +30,12 @@ settings can be stored as part of the project in ``settings.json`` in the
 
 ## Change History
 
+### Version 0.2.5
+
+- Option to set the path of the CMake executable via the ``cmake.cmakePath``
+  setting. ([Thanks, stanionascu!](https://github.com/vector-of-bool/vscode-cmake-tools/pull/9))
+- Support for using a Visual Studio generator as a ``preferredGenerator``. [Thanks again, stanionascu!](https://github.com/vector-of-bool/vscode-cmake-tools/pull/10)
+
 ### Version 0.2.4
 
 - Set a target to be built by default when invoking the ``build`` command. This
