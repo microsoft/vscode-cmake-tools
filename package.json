@@ -101,6 +101,11 @@
                     "default": "${workspaceRoot}/build",
                     "description": "The directory where CMake build files will go"
                 },
+                "cmake.sourceDirectory": {
+                    "type": "string",
+                    "default": "${workspaceRoot}",
+                    "description": "The directory of the root CMakeLists.txt file"
+                },
                 "cmake.saveBeforeBuild": {
                     "type": "boolean",
                     "default": true,
