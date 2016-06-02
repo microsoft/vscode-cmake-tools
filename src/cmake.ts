@@ -499,7 +499,8 @@ export class CMakeTools {
     }
 
     public get sourceDir(): string {
-        return vscode.workspace.rootPath;
+        const source_dir = this.config<string>('sourceDirectory');
+        return source_dir.replace('${workspaceRoot}', vscode.workspace.rootPath);
     }
 
     public get mainListFile(): string {
