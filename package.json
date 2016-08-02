@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -49,47 +49,58 @@
         "commands": [
             {
                 "command": "cmake.configure",
-                "title": "CMake: Configure"
+                "title": "Configure",
+                "category": "CMake"
             },
             {
                 "command": "cmake.build",
-                "title": "CMake: Build"
+                "title": "Build",
+                "category": "CMake"
             },
             {
                 "command": "cmake.buildWithTarget",
-                "title": "CMake: Build a target"
+                "title": "Build a target",
+                "category": "CMake"
             },
             {
                 "command": "cmake.setBuildType",
-                "title": "CMake: Set build type"
+                "title": "Set build type",
+                "category": "CMake"
             },
             {
                 "command": "cmake.setDefaultTarget",
-                "title": "CMake: Set the default build target"
+                "title": "Set the default build target",
+                "category": "CMake"
             },
             {
                 "command": "cmake.cleanConfigure",
-                "title": "CMake: Delete cached build settings and reconfigure"
+                "title": "Delete cached build settings and reconfigure",
+                "category": "CMake"
             },
             {
                 "command": "cmake.clean",
-                "title": "CMake: Clean"
+                "title": "Clean",
+                "category": "CMake"
             },
             {
                 "command": "cmake.cleanRebuild",
-                "title": "CMake: Clean rebuild"
+                "title": "Clean rebuild",
+                "category": "CMake"
             },
             {
                 "command": "cmake.ctest",
-                "title": "CTest: Run tests"
+                "title": "Run tests",
+                "category": "CMake"
             },
             {
                 "command": "cmake.jumpToCacheFile",
-                "title": "CMake: Edit the CMake Cache"
+                "title": "Edit the CMake Cache",
+                "category": "CMake"
             },
             {
                 "command": "cmake.quickStart",
-                "title": "CMake: Quick Start"
+                "title": "Quick Start",
+                "category": "CMake"
             }
         ],
         "configuration": {
@@ -100,6 +111,11 @@
                     "type": "string",
                     "default": "${workspaceRoot}/build",
                     "description": "The directory where CMake build files will go"
+                },
+                "cmake.sourceDirectory": {
+                    "type": "string",
+                    "default": "${workspaceRoot}",
+                    "description": "The directory of the root CMakeLists.txt file"
                 },
                 "cmake.saveBeforeBuild": {
                     "type": "boolean",
@@ -133,6 +149,16 @@
                         "NMake Makefiles"
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
+                },
+                "cmake.parallelJobs": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "The number of parallel build/test jobs. Use zero to automatically detect the number of CPUs."
+                },
+                "cmake.setClangFlags": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Set the C and C++ flags for Clang for the vscode-clang extension"
                 },
                 "cmake.cmakePath": {
                     "type": "string",
