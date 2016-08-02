@@ -139,6 +139,16 @@
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },
+                "cmake.parallelJobs": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "The number of parallel build/test jobs. Use zero to automatically detect the number of CPUs."
+                },
+                "cmake.setClangFlags": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Set the C and C++ flags for Clang for the vscode-clang extension"
+                },
                 "cmake.cmakePath": {
                     "type": "string",
                     "default": "cmake",

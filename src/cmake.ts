@@ -673,6 +673,14 @@ export class CMakeTools {
         }
     }
 
+    public get numJobs(): number {
+        const jobs = this.config<number>("parallelJobs");
+        if (!!jobs) {
+            return jobs;
+        }
+        return os.cpus().length + 2;
+    }
+
     public configure = async function (extra_args: string[] = [], run_prebuild = true): Promise<Number> {
         const self: CMakeTools = this;
 
@@ -684,7 +692,7 @@ export class CMakeTools {
         if (!self.sourceDir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
             return;
-        }/**/
+        }
 
         const cmake_list = self.mainListFile;
         if (!(await async.exists(cmake_list))) {
@@ -774,7 +782,7 @@ export class CMakeTools {
         const gen = await self.activeGenerator();
         const generator_args = (() => {
             if (/(Unix|MinGW) Makefiles|Ninja/.test(gen))
-                return ['-j', os.cpus().length + 2 + ''];
+                return ['-j', self.numJobs.toString()];
             else if (/Visual Studio/.test(gen))
                 return ['/m', '/property:GenerateFullPaths=true'];
             else
@@ -890,7 +898,7 @@ export class CMakeTools {
 
     public ctest = async function (): Promise<Number> {
         const self: CMakeTools = this;
-        return (await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j8', '--output-on-failure'])).retc;
+        return (await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j' + self.numJobs.toString(), '--output-on-failure'])).retc;
     }
 
     public quickStart = async function (): Promise<Number> {
