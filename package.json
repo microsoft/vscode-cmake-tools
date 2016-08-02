@@ -49,47 +49,58 @@
         "commands": [
             {
                 "command": "cmake.configure",
-                "title": "CMake: Configure"
+                "title": "Configure",
+                "category": "CMake"
             },
             {
                 "command": "cmake.build",
-                "title": "CMake: Build"
+                "title": "Build",
+                "category": "CMake"
             },
             {
                 "command": "cmake.buildWithTarget",
-                "title": "CMake: Build a target"
+                "title": "Build a target",
+                "category": "CMake"
             },
             {
                 "command": "cmake.setBuildType",
-                "title": "CMake: Set build type"
+                "title": "Set build type",
+                "category": "CMake"
             },
             {
                 "command": "cmake.setDefaultTarget",
-                "title": "CMake: Set the default build target"
+                "title": "Set the default build target",
+                "category": "CMake"
             },
             {
                 "command": "cmake.cleanConfigure",
-                "title": "CMake: Delete cached build settings and reconfigure"
+                "title": "Delete cached build settings and reconfigure",
+                "category": "CMake"
             },
             {
                 "command": "cmake.clean",
-                "title": "CMake: Clean"
+                "title": "Clean",
+                "category": "CMake"
             },
             {
                 "command": "cmake.cleanRebuild",
-                "title": "CMake: Clean rebuild"
+                "title": "Clean rebuild",
+                "category": "CMake"
             },
             {
                 "command": "cmake.ctest",
-                "title": "CTest: Run tests"
+                "title": "Run tests",
+                "category": "CMake"
             },
             {
                 "command": "cmake.jumpToCacheFile",
-                "title": "CMake: Edit the CMake Cache"
+                "title": "Edit the CMake Cache",
+                "category": "CMake"
             },
             {
                 "command": "cmake.quickStart",
-                "title": "CMake: Quick Start"
+                "title": "Quick Start",
+                "category": "CMake"
             }
         ],
         "configuration": {

@@ -116,5 +116,5 @@ settings can be stored as part of the project in ``settings.json`` in the
 - CMake: Clean
 - CMake: Clean rebuild
 - CMake: Edit the cache file
-- CTest: Run tests
+- CMake: Run tests
 - CMake: Quickstart [Quickly generate a very simple CMakeLists.txt]
