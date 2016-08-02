@@ -30,6 +30,11 @@ settings can be stored as part of the project in ``settings.json`` in the
 
 ## Change History
 
+### Version 0.3.1
+
+- Option to configure number of parallel jobs to run when building.
+- Fix issue with the ``clean`` target when using the Ninja generator.
+
 ### Version 0.3.0
 
 - Build output is now parsed for diagnostics, so errors can be jumped to quickly
