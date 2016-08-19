@@ -169,6 +169,31 @@ export class CacheReader {
     }
 }
 
+// cache for cmake-tools extension
+// JSON file with path ${workspaceRoot}/.vscode/.cmaketools.json
+interface ExtCache {
+    selectedBuildType: string;
+}
+
+export class ExtCacheFile {
+
+    public static getCacheSync(path: string, defaultVal: ExtCache): ExtCache {
+        console.info('Reloading cmake-tools extension cache data from', path);
+        try {
+            let buf = fs.readFileSync(path);
+            if (!buf) return defaultVal;
+            return JSON.parse(buf.toString());
+        }
+        catch(err) {
+            return defaultVal;
+        }
+    }
+
+    public static setCache = async function(path: string, cache: ExtCache) {
+        await fs.writeFile(path, JSON.stringify(cache));
+    }
+}
+
 export class CMakeTools {
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
@@ -177,6 +202,8 @@ export class CMakeTools {
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
+    private _extCache: ExtCache;
+    private _extCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
 
     public cache: CacheReader;
 
@@ -242,12 +269,12 @@ export class CMakeTools {
      * configuration. This value is also reflected on the status bar item that
      * the user can click to change the build type.
      */
-    private _selectedBuildType: string = 'None';
     public get selectedBuildType(): string {
-        return this._selectedBuildType;
+        return this._extCache.selectedBuildType;
     }
     public set selectedBuildType(v: string) {
-        this._selectedBuildType = v;
+        this._extCache.selectedBuildType = v;
+        this._updateExtCache();
         this._refreshStatusBarItems();
     }
 
@@ -271,10 +298,17 @@ export class CMakeTools {
         this._lastConfigureSettings = new_settings;
     }
 
+    private _updateExtCache() {
+        ExtCacheFile.setCache(this._extCachePath, this._extCache);
+    }
+
     constructor() {
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+        this._extCache = ExtCacheFile.getCacheSync(this._extCachePath, {
+            selectedBuildType: 'None'
+        });
         this.cache = new CacheReader(this.cachePath);
 
         vscode.workspace.onDidChangeConfiguration(() => {
