@@ -533,7 +533,9 @@ export class CMakeTools {
 
     public get binaryDir(): string {
         const build_dir = this.config<string>('buildDirectory');
-        return build_dir.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        return build_dir
+            .replace('${workspaceRoot}', vscode.workspace.rootPath)
+            .replace('${buildType}', this.selectedBuildType);
     }
 
     public get cachePath(): string {
@@ -734,12 +736,11 @@ export class CMakeTools {
         if (run_prebuild)
             await self._prebuild();
 
-        const binary_dir = self.binaryDir;
         const cmake_cache = self.cachePath;
         self._channel.show();
         const settings_args = [];
         if (!(await async.exists(cmake_cache))) {
-            self._channel.appendLine("[vscode] Setting up initial CMake configuration");
+            self._channel.appendLine("[vscode] Setting up new CMake configuration");
             const generator = await self.pickGenerator(self.config<string[]>("preferredGenerators"));
             if (generator) {
                 self._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
@@ -747,8 +748,9 @@ export class CMakeTools {
             } else {
                 console.error("None of the preferred generators was selected");
             }
-
-            self.selectedBuildType = self.config<string>("inititalBuildType", "Debug");
+            if (self.selectedBuildType == 'None') {
+                self.selectedBuildType = self.config<string>("inititalBuildType", "Debug");
+            }
         }
 
         settings_args.push('-DCMAKE_BUILD_TYPE=' + self.selectedBuildType);
@@ -760,9 +762,13 @@ export class CMakeTools {
                 value = value ? "TRUE" : "FALSE";
             if (value instanceof Array)
                 value = value.join(';');
+            value = value
+                .replace('${workspaceRoot}', vscode.workspace.rootPath)
+                .replace('${buildType}', this.selectedBuildType);
             settings_args.push("-D" + key + "=" + value);
         }
 
+        const binary_dir = self.binaryDir;
         self.statusMessage = 'Configuring...';
         const result = await self.execute(
             ['-H' + self.sourceDir, '-B' + binary_dir]
