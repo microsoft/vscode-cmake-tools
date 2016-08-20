@@ -189,8 +189,8 @@ export class ExtCacheFile {
         }
     }
 
-    public static setCache = async function(path: string, cache: ExtCache) {
-        await fs.writeFile(path, JSON.stringify(cache));
+    public static setCacheSync(path: string, cache: ExtCache) {
+        fs.writeFileSync(path, JSON.stringify(cache));
     }
 }
 
@@ -299,7 +299,7 @@ export class CMakeTools {
     }
 
     private _updateExtCache() {
-        ExtCacheFile.setCache(this._extCachePath, this._extCache);
+        ExtCacheFile.setCacheSync(this._extCachePath, this._extCache);
     }
 
     constructor() {
