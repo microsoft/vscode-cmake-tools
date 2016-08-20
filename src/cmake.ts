@@ -351,24 +351,14 @@ export class CMakeTools {
     /**
      * @brief Initializes the 'selectedBuildType' attribute.
      *
-     * The 'selectedBuildType' attribute is a bit of a tricky thing. On initial
-     * load, we want to read it from the CMake cache, unless we are in a
-     * multiconf generator like Visual Studio. In that case, we will default to
-     * 'Debug'.
-     *
-     * This should only be called when the build type is completely impossible
-     * to determine without looking into the CMake cache.
-     *
      * @returns A promise resolving to the selectedBuildType
      */
     public _initSelectedBuildType = async function (): Promise<string> {
         const self: CMakeTools = this;
-        if (!(await self.cache.exists()))
-            self.selectedBuildType = 'None';
-        if (await self.isMultiConf())
-            self.selectedBuildType = 'Debug';
-        else
-            self.selectedBuildType = (await self.cache.get('CMAKE_BUILD_TYPE')).as<string>();
+        if (await self.cache.exists() && await self.isMultiConf())
+            if (self.selectedBuildType === 'None')
+                self.selectedBuildType = 'Debug';
+
         return self.selectedBuildType;
     }
 
