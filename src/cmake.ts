@@ -892,7 +892,7 @@ export class CMakeTools {
     public setBuildType = async function (): Promise<Number> {
         const self: CMakeTools = this;
         let chosen = null;
-        if (await self.isMultiConf()) {
+        if (await self.cache.exists() && await self.isMultiConf()) {
             const types = (await self.cache.get('CMAKE_CONFIGURATION_TYPES')).as<string>().split(';');
             chosen = await vscode.window.showQuickPick(types);
         } else {
