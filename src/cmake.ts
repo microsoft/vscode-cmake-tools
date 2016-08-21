@@ -335,6 +335,13 @@ export class CMakeTools {
         const self: CMakeTools = this;
         self._cmakeToolsStatusItem.text = `CMake: ${self.projectName}: ${self.selectedBuildType || 'Unknown'}: ${self.statusMessage}`;
 
+        if (await self.cache.exists() && await self.isMultiConf()) {
+            let bd = self.config<string>('buildDirectory');
+            if (bd.includes('${buildType}')) {
+                vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
+            }
+        }
+
         if (await async.exists(path.join(self.sourceDir, 'CMakeLists.txt'))) {
             self._cmakeToolsStatusItem.show();
             self._buildButton.show();
