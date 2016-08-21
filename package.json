@@ -33,6 +33,7 @@
     "activationEvents": [
         "onCommand:cmake.configure",
         "onCommand:cmake.build",
+        "onCommand:cmake.install",
         "onCommand:cmake.buildWithTarget",
         "onCommand:cmake.setBuildType",
         "onCommand:cmake.setDefaultTarget",
@@ -55,6 +56,11 @@
             {
                 "command": "cmake.build",
                 "title": "Build",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.install",
+                "title": "Install",
                 "category": "CMake"
             },
             {
@@ -111,6 +117,11 @@
                     "type": "string",
                     "default": "${workspaceRoot}/build",
                     "description": "The directory where CMake build files will go"
+                },
+                "cmake.installPrefix": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The directory where CMake installed files will go."
                 },
                 "cmake.sourceDirectory": {
                     "type": "string",

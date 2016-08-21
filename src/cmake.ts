@@ -774,6 +774,15 @@ export class CMakeTools {
                 .replace('${buildType}', this.selectedBuildType);
             settings_args.push("-D" + key + "=" + value);
         }
+        let prefix = self.config<string>("installPrefix");
+        if (prefix && prefix !== "") {
+            prefix = prefix
+                .replace('${workspaceRoot}', vscode.workspace.rootPath)
+                .replace('${buildType}', this.selectedBuildType);
+            if (prefix.includes(' '))
+                prefix = '"' + prefix + '"';
+            settings_args.push("-DCMAKE_INSTALL_PREFIX=" + prefix);
+        }
 
         const binary_dir = self.binaryDir;
         self.statusMessage = 'Configuring...';
@@ -818,7 +827,7 @@ export class CMakeTools {
         // Pass arguments based on a particular generator
         const gen = await self.activeGenerator();
         const generator_args = (() => {
-            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
+            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean' && target !== 'install')
                 return ['-j', self.numJobs.toString()];
             else if (/Visual Studio/.test(gen))
                 return ['/m', '/property:GenerateFullPaths=true'];
@@ -836,6 +845,11 @@ export class CMakeTools {
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         await self.parseDiagnostics(result);
         return result.retc;
+    }
+
+    public install = async function (target: string = null): Promise<Number> {
+        const self: CMakeTools = this;
+        return await self.build('install');
     }
 
     public clean = async function (): Promise<Number> {
