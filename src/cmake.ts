@@ -714,6 +714,14 @@ export class CMakeTools {
         return os.cpus().length + 2;
     }
 
+    public get numCTestJobs(): number {
+        const ctest_jobs = this.config<number>("ctest.parallelJobs");
+        if (ctest_jobs === 0) {
+            return this.numJobs;
+        }
+        return ctest_jobs;
+    }
+
     public configure = async function (extra_args: string[] = [], run_prebuild = true): Promise<Number> {
         const self: CMakeTools = this;
 
@@ -949,7 +957,8 @@ export class CMakeTools {
 
     public ctest = async function (): Promise<Number> {
         const self: CMakeTools = this;
-        return (await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j' + self.numJobs.toString(), '--output-on-failure'])).retc;
+        self._channel.show();
+        return (await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j' + self.numCTestJobs, '--output-on-failure'])).retc;
     }
 
     public quickStart = async function (): Promise<Number> {
