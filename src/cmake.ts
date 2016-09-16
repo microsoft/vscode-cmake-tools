@@ -787,8 +787,6 @@ export class CMakeTools {
             prefix = prefix
                 .replace('${workspaceRoot}', vscode.workspace.rootPath)
                 .replace('${buildType}', this.selectedBuildType);
-            if (prefix.includes(' '))
-                prefix = '"' + prefix + '"';
             settings_args.push("-DCMAKE_INSTALL_PREFIX=" + prefix);
         }
 
