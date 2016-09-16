@@ -153,7 +153,12 @@
                 "cmake.parallelJobs": {
                     "type": "number",
                     "default": 0,
-                    "description": "The number of parallel build/test jobs. Use zero to automatically detect the number of CPUs."
+                    "description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs."
+                },
+                "cmake.ctest.parallelJobs": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs"
                 },
                 "cmake.setClangFlags": {
                     "type": "boolean",
