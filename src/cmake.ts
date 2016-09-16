@@ -906,6 +906,7 @@ export class CMakeTools {
 
     public ctest = async function (): Promise<Number> {
         const self: CMakeTools = this;
+        self._channel.show();
         return (await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j' + self.numCTestJobs, '--output-on-failure'])).retc;
     }
 
