@@ -362,10 +362,13 @@ export class CMakeTools {
      */
     public _initSelectedBuildType = async function (): Promise<string> {
         const self: CMakeTools = this;
-        if (await self.cache.exists() && await self.isMultiConf())
-            if (self.selectedBuildType === 'None')
+        if (await self.cache.exists() && self.selectedBuildType === 'None') {
+            if (await self.isMultiConf())
                 self.selectedBuildType = 'Debug';
-
+            else {
+                self.selectedBuildType = (await self.cache.get('CMAKE_BUILD_TYPE')).as<string>();
+            }
+        }
         return self.selectedBuildType;
     }
 
