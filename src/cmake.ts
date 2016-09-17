@@ -857,7 +857,7 @@ export class CMakeTools {
         const target = await vscode.window.showInputBox({
             prompt: 'Enter a target name',
         });
-        if (target === null)
+        if (target === null || target === undefined)
             return -1;
         return await self.build(target);
     }
