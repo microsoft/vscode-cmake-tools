@@ -18,6 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
     for (const key of [
         'configure',
         'build',
+        'install',
         'cleanConfigure',
         'jumpToCacheFile',
         'clean',

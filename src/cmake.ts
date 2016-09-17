@@ -169,6 +169,31 @@ export class CacheReader {
     }
 }
 
+// cache for cmake-tools extension
+// JSON file with path ${workspaceRoot}/.vscode/.cmaketools.json
+interface ExtCache {
+    selectedBuildType: string;
+}
+
+export class ExtCacheFile {
+
+    public static getCacheSync(path: string, defaultVal: ExtCache): ExtCache {
+        console.info('Reloading cmake-tools extension cache data from', path);
+        try {
+            let buf = fs.readFileSync(path);
+            if (!buf) return defaultVal;
+            return JSON.parse(buf.toString());
+        }
+        catch(err) {
+            return defaultVal;
+        }
+    }
+
+    public static setCacheSync(path: string, cache: ExtCache) {
+        fs.writeFileSync(path, JSON.stringify(cache));
+    }
+}
+
 export class CMakeTools {
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
@@ -177,6 +202,8 @@ export class CMakeTools {
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
+    private _extCache: ExtCache;
+    private _extCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
 
     public cache: CacheReader;
 
@@ -242,12 +269,12 @@ export class CMakeTools {
      * configuration. This value is also reflected on the status bar item that
      * the user can click to change the build type.
      */
-    private _selectedBuildType: string = 'None';
     public get selectedBuildType(): string {
-        return this._selectedBuildType;
+        return this._extCache.selectedBuildType;
     }
     public set selectedBuildType(v: string) {
-        this._selectedBuildType = v;
+        this._extCache.selectedBuildType = v;
+        this._updateExtCache();
         this._refreshStatusBarItems();
     }
 
@@ -271,10 +298,17 @@ export class CMakeTools {
         this._lastConfigureSettings = new_settings;
     }
 
+    private _updateExtCache() {
+        ExtCacheFile.setCacheSync(this._extCachePath, this._extCache);
+    }
+
     constructor() {
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+        this._extCache = ExtCacheFile.getCacheSync(this._extCachePath, {
+            selectedBuildType: 'None'
+        });
         this.cache = new CacheReader(this.cachePath);
 
         vscode.workspace.onDidChangeConfiguration(() => {
@@ -301,6 +335,13 @@ export class CMakeTools {
         const self: CMakeTools = this;
         self._cmakeToolsStatusItem.text = `CMake: ${self.projectName}: ${self.selectedBuildType || 'Unknown'}: ${self.statusMessage}`;
 
+        if (await self.cache.exists() && await self.isMultiConf()) {
+            let bd = self.config<string>('buildDirectory');
+            if (bd.includes('${buildType}')) {
+                vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
+            }
+        }
+
         if (await async.exists(path.join(self.sourceDir, 'CMakeLists.txt'))) {
             self._cmakeToolsStatusItem.show();
             self._buildButton.show();
@@ -317,24 +358,17 @@ export class CMakeTools {
     /**
      * @brief Initializes the 'selectedBuildType' attribute.
      *
-     * The 'selectedBuildType' attribute is a bit of a tricky thing. On initial
-     * load, we want to read it from the CMake cache, unless we are in a
-     * multiconf generator like Visual Studio. In that case, we will default to
-     * 'Debug'.
-     *
-     * This should only be called when the build type is completely impossible
-     * to determine without looking into the CMake cache.
-     *
      * @returns A promise resolving to the selectedBuildType
      */
     public _initSelectedBuildType = async function (): Promise<string> {
         const self: CMakeTools = this;
-        if (!(await self.cache.exists()))
-            self.selectedBuildType = 'None';
-        if (await self.isMultiConf())
-            self.selectedBuildType = 'Debug';
-        else
-            self.selectedBuildType = (await self.cache.get('CMAKE_BUILD_TYPE')).as<string>();
+        if (await self.cache.exists() && self.selectedBuildType === 'None') {
+            if (await self.isMultiConf())
+                self.selectedBuildType = 'Debug';
+            else {
+                self.selectedBuildType = (await self.cache.get('CMAKE_BUILD_TYPE')).as<string>();
+            }
+        }
         return self.selectedBuildType;
     }
 
@@ -509,7 +543,9 @@ export class CMakeTools {
 
     public get binaryDir(): string {
         const build_dir = this.config<string>('buildDirectory');
-        return build_dir.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        return build_dir
+            .replace('${workspaceRoot}', vscode.workspace.rootPath)
+            .replace('${buildType}', this.selectedBuildType);
     }
 
     public get cachePath(): string {
@@ -718,12 +754,11 @@ export class CMakeTools {
         if (run_prebuild)
             await self._prebuild();
 
-        const binary_dir = self.binaryDir;
         const cmake_cache = self.cachePath;
         self._channel.show();
         const settings_args = [];
         if (!(await async.exists(cmake_cache))) {
-            self._channel.appendLine("[vscode] Setting up initial CMake configuration");
+            self._channel.appendLine("[vscode] Setting up new CMake configuration");
             const generator = await self.pickGenerator(self.config<string[]>("preferredGenerators"));
             if (generator) {
                 self._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
@@ -731,8 +766,9 @@ export class CMakeTools {
             } else {
                 console.error("None of the preferred generators was selected");
             }
-
-            self.selectedBuildType = self.config<string>("inititalBuildType", "Debug");
+            if (self.selectedBuildType == 'None') {
+                self.selectedBuildType = self.config<string>("inititalBuildType", "Debug");
+            }
         }
 
         settings_args.push('-DCMAKE_BUILD_TYPE=' + self.selectedBuildType);
@@ -744,9 +780,20 @@ export class CMakeTools {
                 value = value ? "TRUE" : "FALSE";
             if (value instanceof Array)
                 value = value.join(';');
+            value = value
+                .replace('${workspaceRoot}', vscode.workspace.rootPath)
+                .replace('${buildType}', this.selectedBuildType);
             settings_args.push("-D" + key + "=" + value);
         }
+        let prefix = self.config<string>("installPrefix");
+        if (prefix && prefix !== "") {
+            prefix = prefix
+                .replace('${workspaceRoot}', vscode.workspace.rootPath)
+                .replace('${buildType}', this.selectedBuildType);
+            settings_args.push("-DCMAKE_INSTALL_PREFIX=" + prefix);
+        }
 
+        const binary_dir = self.binaryDir;
         self.statusMessage = 'Configuring...';
         const result = await self.execute(
             ['-H' + self.sourceDir, '-B' + binary_dir]
@@ -789,7 +836,7 @@ export class CMakeTools {
         // Pass arguments based on a particular generator
         const gen = await self.activeGenerator();
         const generator_args = (() => {
-            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
+            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean' && target !== 'install')
                 return ['-j', self.numJobs.toString()];
             else if (/Visual Studio/.test(gen))
                 return ['/m', '/property:GenerateFullPaths=true'];
@@ -807,6 +854,11 @@ export class CMakeTools {
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         await self.parseDiagnostics(result);
         return result.retc;
+    }
+
+    public install = async function (target: string = null): Promise<Number> {
+        const self: CMakeTools = this;
+        return await self.build('install');
     }
 
     public clean = async function (): Promise<Number> {
@@ -876,7 +928,7 @@ export class CMakeTools {
     public setBuildType = async function (): Promise<Number> {
         const self: CMakeTools = this;
         let chosen = null;
-        if (await self.isMultiConf()) {
+        if (await self.cache.exists() && await self.isMultiConf()) {
             const types = (await self.cache.get('CMAKE_CONFIGURATION_TYPES')).as<string>().split(';');
             chosen = await vscode.window.showQuickPick(types);
         } else {
@@ -906,6 +958,7 @@ export class CMakeTools {
 
     public ctest = async function (): Promise<Number> {
         const self: CMakeTools = this;
+        self._channel.show();
         return (await self.execute(['-E', 'chdir', self.binaryDir, 'ctest', '-j' + self.numCTestJobs, '--output-on-failure'])).retc;
     }
 
