@@ -176,11 +176,10 @@ interface ExtCache {
 }
 
 export class ExtCacheFile {
-
-    public static getCacheSync(path: string, defaultVal: ExtCache): ExtCache {
+    public static readCache = async function(path: string, defaultVal: ExtCache): Promise<ExtCache> {
         console.info('Reloading cmake-tools extension cache data from', path);
         try {
-            let buf = fs.readFileSync(path);
+            const buf = await async.readFile(path);
             if (!buf) return defaultVal;
             return JSON.parse(buf.toString());
         }
@@ -189,8 +188,8 @@ export class ExtCacheFile {
         }
     }
 
-    public static setCacheSync(path: string, cache: ExtCache) {
-        fs.writeFileSync(path, JSON.stringify(cache));
+    public static writeCache(path: string, cache: ExtCache) {
+        return async.doAsync(fs.writeFile, path, JSON.stringify(cache));
     }
 }
 
