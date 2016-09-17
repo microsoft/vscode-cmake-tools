@@ -1,10 +1,9 @@
 # VSCode CMake Tools
 
-This is a simple Visual Studio Code extension that offers CMake integration. This extension
-itself *does not* provide language support. For that I recommend
+This extension provides project build and configuration tooling for CMake users
+within Visual Studio Code. This extension itself *does not* provide language
+support for the CMake scripting language.  For that I recommend
 [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
-
-This extension can be installed with ``ext install cmake-tools``.
 
 ### Issues? Questions? Feature requests?
 
@@ -15,7 +14,7 @@ Create an issue on [the github page](https://github.com/vector-of-bool/vscode-cm
 CMake Tools provides several pieces of functionality to make it easier to work
 with CMake-based projects within Visual Studio Code. For example, it adds a
 "CMake: Build" command to the command palette, which is bound to the ``F7``
-key.
+key by default.
 
 By default, CMake Tools assumes that you place your CMake build tree in a
 subdirectory of the source tree called ``build``. This can be configured with
@@ -28,7 +27,94 @@ options to pass to CMake when configuring the project. In this way, build
 settings can be stored as part of the project in ``settings.json`` in the
 ``.vscode`` directory.
 
+## Configuration
+
+CMake tools has a good set of defaults for its configuration options. Here is a
+quick summary of options that can be tweaked, should you wish to do so:
+
+- ``cmake.configureSettings`` sets additional options to be passed to the CMake
+  command line when configuring the project. This should just be a mapping between
+  keys and values. Each entry will correspond to a ``-D`` argument to CMake. Arrays
+  will automatically be joined as semicolon-serperated strings.
+- ``cmake.buildDirectory`` allows you to specify where CMake should generate its
+  metadata and build files. The default, ``${workspaceRoot}/build`` tells CMake
+  Tools to configure into the ``build`` subdirectory of your projet. Use
+  ``${buildType}`` to set the build directory based on the CMake build type. For
+  example, ``${workspaceroot}/build/${buildType}`` will create subdirectories
+  ``build/Debug``, ``build/Release``, etc. when you configure using those build
+  types.
+- ``cmake.installPrefix`` tells CMake Tools what to set for your
+  ``CMAKE_INSTALL_PREFIX`` when you configure. This also supports variable
+  substitutions. By default, CMake Tools will not specify a
+  ``CMAKE_INSTALL_PREFIX``.
+- ``cmake.parallelJobs`` tells CMake Tools how many jobs to pass to the command
+  line of build tools and CTest. The default, zero, tells CMake Tools to automatically
+  pick a good number based on the hardware parallelism available on the machine.
+- ``cmake.ctest.parallelJobs`` allows you to override the parallelism _just_ for
+  running CTest. The default, zero, tells CMake Tools to use the same value as
+  ``cmake.parallelJobs``.
+- ``cmake.sourceDirectory`` tells CMake Tools where the root ``CMakeLists.txt``
+  file is. The default is ``${workspaceRoot}``.
+- ``cmake.saveBeforeBuild`` tells CMake Tools to save all open text documents
+  after the build command is invoked, but before performing the build. This
+  defaults to being _enabled_.
+- ``cmake.initialBuildType`` tells CMake Tools what to set the initial build type
+  to if it detects that the project has not yet been configured.
+- ``cmake.preferredGenerator`` tells CMake Tools what CMake genertors to prefer.
+  The first supported generator in this list is used when configuring a project
+  for the first time. If a project is already configured, the generator will not
+  be overriden by CMake Tools unless a _Clean rebuild/reconfigure_ is invoked.
+- ``cmake.clearOutputBeforeBuild`` clears the _CMake/Build_ output channel before
+  running the CMake build command. Default is _enabled_
+- ``cmake.cmakePath`` allows you to specify a different CMake executable to use,
+  rather than the default system one.
+
+## The Status bar
+
+![CMake Status Bar Items](images/statusbar_marked.png)
+
+CMake Tools provides three buttons on the statusbar:
+
+1.  The name of the current project, the current build type (Debug, Release, etc.),
+    and the current status of CMake Tools.
+2.  A build button. Click this button to build the default target. Quickly invoking
+    a build is also bound to the ``F7`` key by default. While building, this button
+    changes into a _stop_ button. Clicking the stop button will cancel the
+    currently running build/configure process.
+3.  The default/active target. This is the target that will be invoked if run
+    the build command. Clicking on this button will let you select a different
+    target to be built by default.
+
+CMake Tools will also show the most recent line of CMake output as a status message
+to the right of the buttons. Invoking a command will open the CMake/Build output
+channel, where the progress and output of the build/configure commands can be
+seen.
+
+## Other Features
+
+CMake Tools also parses the compiler output of GCC, Clang, and MSVC looking for
+diagnostics. It will populate the diagnostics for files which produce any warnings
+or errors.
+
+CMake Tools also provides a command for running CTest tests.
+
 ## Change History
+
+## Version 0.4.0
+
+- New stuff!
+  - Now parses list of targets and shows them when selecting a target to build.
+  - Tweak the default target with a single button in the status bar.
+  - Command to invoke the ``install`` target*
+  - Dedicated configuration setting for ``CMAKE_INSTALL_PREFIX``*
+  - Certain configuration options can now be parameterized on the selected build
+    type.*
+
+\* Thanks to [rtbo](https://github.com/vector-of-bool/vscode-cmake-tools/commits/develop?author=rtbo)!
+
+## Version 0.3.2
+
+- Option ``cmake.ctest.parallelJobs``.
 
 ### Version 0.3.1
 
@@ -109,12 +195,15 @@ settings can be stored as part of the project in ``settings.json`` in the
 ## Command Listing:
 
 - CMake: Configure
-- CMake: Build
+- CMake: Build [default keybinding is ``F7``]
+- CMake: Install
 - CMake: Build a target [Builds a target by name]
 - CMake: Set build type [Change the build type, ie "Debug", "Release", etc.]
+- CMake: Set the default build target
 - CMake: Delete cached build settings and reconfigure
 - CMake: Clean
 - CMake: Clean rebuild
+- CMake: Run tests
 - CMake: Edit the cache file
 - CMake: Run tests
 - CMake: Quickstart [Quickly generate a very simple CMakeLists.txt]
