@@ -129,10 +129,7 @@
                 },
                 "cmake.configureSettings": {
                     "type": "object",
-                    "default": {
-                        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-                        "BUILD_TESTING": true
-                    },
+                    "default": {},
                     "description": "CMake variables to set on the command line"
                 },
                 "cmake.initialBuildType": {
