@@ -920,14 +920,12 @@ export class CMakeTools {
         return result.retc;
     }
 
-    public install = async function (target: string = null): Promise<Number> {
-        const self: CMakeTools = this;
-        return await self.build('install');
+    public install() {
+        return this.build('install');
     }
 
-    public clean = async function (): Promise<Number> {
-        const self: CMakeTools = this;
-        return await self.build('clean');
+    public clean() {
+        return this.build('clean');
     }
 
     public cleanConfigure = async function (): Promise<Number> {
