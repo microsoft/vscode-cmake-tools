@@ -26,6 +26,10 @@ export function isTruthy(value) {
     return !!value;
 }
 
+interface ExecuteOptions {
+    silent: boolean;
+};
+
 export enum EntryType {
     Bool,
     String,
@@ -177,6 +181,7 @@ export class CMakeTools {
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
+    private _targets: string[];
 
     public cache: CacheReader;
 
@@ -293,6 +298,8 @@ export class CMakeTools {
         this._initSelectedBuildType();
         // Load the current project name from the cache
         this._refreshProjectName();
+        // Load the current targets
+        this._refreshTargetList();
 
         this.statusMessage = 'Ready';
     }
@@ -357,6 +364,33 @@ export class CMakeTools {
         } else {
             self.projectName = cached.as<string>();
         }
+    }
+
+    /**
+     * @brief Reload the list of available targets
+     */
+    private _refreshTargetList = async function() {
+        const self: CMakeTools = this;
+        self.statusMessage = 'Refreshing targets...';
+        self._targets = [];
+        const cachepath = self.cachePath;
+        if (!(await async.exists(cachepath))) {
+            self._targets = [];
+        }
+        const generator = await self.activeGenerator();
+        if (/(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
+            const result = await self.execute(['--build', self.binaryDir, '--target', 'help'], {
+                silent: true
+            });
+            const lines = result.stdout.split('\n');
+            const important_lines = generator.endsWith('Makefiles')
+                ? lines.filter(l => l.startsWith('... '))
+                : lines.filter(l => l.indexOf(': ') !== -1);
+            self._targets = important_lines
+                .map(l => l.substr(4))
+                .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l);
+        }
+        self.statusMessage = 'Ready';
     }
 
     public parseGCCDiagnostic(line: string): FileDiagnostic {
@@ -535,32 +569,47 @@ export class CMakeTools {
         return /Visual Studio/.test(gen) ? 'ALL_BUILD' : 'all';
     }
 
-    public execute(args: string[]): Promise<ExecutionResult> {
+    public execute(args: string[], options?: ExecuteOptions): Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
+            const silent: boolean = options && options.silent;
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config<string>('cmakePath', 'cmake'), args);
-            this.currentChildProcess = pipe;
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
-            status('Executing CMake...');
-            this._channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
+            if (!silent) {
+                this.currentChildProcess = pipe;
+                status('Executing CMake...');
+                this._channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
+            }
             let stderr_acc = '';
             let stdout_acc = '';
             pipe.stdout.on('data', (data: Uint8Array) => {
                 const str = data.toString();
                 console.log('cmake [stdout]: ' + str.trim());
+                if (!silent) {
+                    this._channel.append(str);
+                    status(str.trim());
+                }
                 stdout_acc += str;
-                this._channel.append(str);
-                status(str.trim());
             });
             pipe.stderr.on('data', (data: Uint8Array) => {
                 const str = data.toString();
                 console.log('cmake [stderr]: ' + str.trim());
+                if (!silent) {
+                    status(str.trim());
+                    this._channel.append(str);
+                }
                 stderr_acc += str;
-                this._channel.append(str);
-                status(str.trim());
             });
             pipe.on('close', (retc: Number) => {
                 console.log('cmake exited with return code ' + retc);
+                if (silent) {
+                    resolve({
+                        retc: retc,
+                        stdout: stdout_acc,
+                        stderr: stderr_acc
+                    });
+                    return;
+                }
                 this._channel.appendLine('[vscode] CMake exited with status ' + retc);
                 if (retc !== null) {
                     status('CMake exited with status ' + retc);
@@ -756,6 +805,7 @@ export class CMakeTools {
         self.statusMessage = 'Ready';
         self._reloadSettings();
         self._refreshProjectName(); // The user may have changed the project name in the configure step
+        self._refreshTargetList();
         return result.retc;
     }
 
@@ -805,6 +855,7 @@ export class CMakeTools {
             '--'].concat(generator_args));
         self.statusMessage = 'Ready';
         self._refreshProjectName(); // The user may have changed the project name in the configure step
+        self._refreshTargetList();
         await self.parseDiagnostics(result);
         return result.retc;
     }
@@ -852,11 +903,17 @@ export class CMakeTools {
         return await self.build();
     }
 
+    public showTargetSelector(): Thenable<string> {
+        return this._targets
+            ? vscode.window.showQuickPick(this._targets)
+            : vscode.window.showInputBox({
+                prompt: 'Enter a target name'
+            });
+    }
+
     public buildWithTarget = async function (): Promise<Number> {
         const self: CMakeTools = this;
-        const target = await vscode.window.showInputBox({
-            prompt: 'Enter a target name',
-        });
+        const target = await self.showTargetSelector();
         if (target === null || target === undefined)
             return -1;
         return await self.build(target);
@@ -864,10 +921,7 @@ export class CMakeTools {
 
     public setDefaultTarget = async function () {
         const self: CMakeTools = this;
-        const new_default = await vscode.window.showInputBox({
-            prompt: 'Input the name of the new default target to build',
-            placeHolder: '(eg. "install", "all", "my-executable")',
-        });
+        const new_default = await self.showTargetSelector();
         if (!new_default)
             return;
         self.defaultBuildTarget = new_default;
