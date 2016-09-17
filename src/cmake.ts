@@ -177,7 +177,8 @@ export class CMakeTools {
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
     private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0010);
-    private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+    private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0005);
+    private _targetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
@@ -311,14 +312,18 @@ export class CMakeTools {
         if (await async.exists(path.join(self.sourceDir, 'CMakeLists.txt'))) {
             self._cmakeToolsStatusItem.show();
             self._buildButton.show();
+            self._targetButton.show();
         } else {
             self._cmakeToolsStatusItem.hide();
             self._buildButton.hide();
+            self._targetButton.hide();
         }
 
         const target = self.defaultBuildTarget || await self.allTargetName();
-        this._buildButton.text = this.isBusy ? '$(x) Stop' : `$(gear) Build (${target})`;
-        this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
+        self._buildButton.text = self.isBusy ? '$(x) Stop' : `$(gear) Build:`;
+        self._buildButton.command = self.isBusy ? 'cmake.stop' : 'cmake.build';
+        self._targetButton.text = target;
+        self._targetButton.command = 'cmake.setDefaultTarget';
     }
 
     /**
