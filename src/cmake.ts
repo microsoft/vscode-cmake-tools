@@ -280,8 +280,9 @@ export class CMakeTools {
     public set selectedBuildType(v: string) {
         this._extCacheContent.selectedBuildType = v;
         this._writeCacheContent();
-        this._reloadSettings();
+        this._refreshSettings();
         this._refreshStatusBarItems();
+        this._refreshTargetList();
     }
 
     /**
@@ -296,7 +297,7 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    private _reloadSettings() {
+    private _refreshSettings() {
         this.cache = new CacheReader(this.cachePath);
         const new_settings = this.config<Object>('configureSettings');
         this._needsReconfigure = JSON.stringify(new_settings) !== JSON.stringify(this._lastConfigureSettings);
@@ -312,9 +313,9 @@ export class CMakeTools {
         self._extCacheContent = await ExtCacheFile.readCache(self._extCachePath, {
             selectedBuildType: 'None'
         });
-        self._reloadSettings();
-        // self._refreshStatusBarItems();
+        self._refreshSettings();
         self._refreshProjectName();
+        self._refreshTargetList();
     }
 
     constructor() {
@@ -327,7 +328,7 @@ export class CMakeTools {
 
         vscode.workspace.onDidChangeConfiguration(() => {
             console.log('Reloading CMakeTools after configuration change');
-            this._reloadSettings();
+            this._refreshSettings();
         });
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
@@ -373,6 +374,7 @@ export class CMakeTools {
         self._buildButton.command = self.isBusy ? 'cmake.stop' : 'cmake.build';
         self._targetButton.text = target;
         self._targetButton.command = 'cmake.setDefaultTarget';
+        self._targetButton.tooltip = 'Click to change the default target'
     }
 
     /**
@@ -863,7 +865,7 @@ export class CMakeTools {
                 .concat(extra_args)
         );
         self.statusMessage = 'Ready';
-        self._reloadSettings();
+        self._refreshSettings();
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         self._refreshTargetList();
         return result.retc;
@@ -914,6 +916,7 @@ export class CMakeTools {
             '--config', self.selectedBuildType,
             '--'].concat(generator_args));
         self.statusMessage = 'Ready';
+        self._refreshSettings();
         self._refreshProjectName(); // The user may have changed the project name in the configure step
         self._refreshTargetList();
         await self.parseDiagnostics(result);
