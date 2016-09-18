@@ -168,6 +168,11 @@
                     "default": 0,
                     "description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs"
                 },
+                "cmake.parseBuildDiagnostics": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Parse compiler output for warnings and errors"
+                },
                 "cmake.cmakePath": {
                     "type": "string",
                     "default": "cmake",

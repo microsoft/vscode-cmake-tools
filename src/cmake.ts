@@ -312,6 +312,10 @@ export class CMakeTools {
         this._lastConfigureSettings = new_settings;
         // A config change could require reloading the CMake Cache (ie. changing the build path)
         this._setupCMakeCacheWatcher();
+        // Use may have disabled build diagnostics.
+        if (!this.config<boolean>('parseBuildDiagnostics')) {
+            this._buildDiags.clear();
+        }
     }
 
     private _writeCacheContent() {
@@ -585,7 +589,6 @@ export class CMakeTools {
             diags_acc[diag.filepath].push(diag.diag);
         }
 
-        this._buildDiags.clear();
         for (const filepath in diags_acc) {
             this._buildDiags.set(vscode.Uri.file(filepath), diags_acc[filepath]);
         }
@@ -948,7 +951,9 @@ export class CMakeTools {
             '--config', self.selectedBuildType,
             '--'].concat(generator_args));
         self.statusMessage = 'Ready';
-        await self.parseDiagnostics(result);
+        if (self.config<boolean>('parseBuildDiagnostics')) {
+            await self.parseDiagnostics(result);
+        }
         return result.retc;
     }
 
