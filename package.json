@@ -168,11 +168,6 @@
                     "default": 0,
                     "description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs"
                 },
-                // "cmake.setClangFlags": {
-                //     "type": "boolean",
-                //     "default": true,
-                //     "description": "Set the C and C++ flags for Clang for the vscode-clang extension"
-                // },
                 "cmake.cmakePath": {
                     "type": "string",
                     "default": "cmake",
