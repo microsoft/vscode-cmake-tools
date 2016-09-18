@@ -5,9 +5,31 @@ within Visual Studio Code. This extension itself *does not* provide language
 support for the CMake scripting language.  For that I recommend
 [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
 
+## What's New?
+
+## Version 0.4.0
+
+- Huge refactor of code. **If you find that something has broken for you, PLEASE
+  feel free to open an issue on GitHub! I really appreciate it, thanks!**
+
+- New stuff!
+  - Now parses list of targets and shows them when selecting a target to build.
+  - Tweak the default target with a single button in the status bar.
+  - Command to invoke the ``install`` target*
+  - Dedicated configuration setting for ``CMAKE_INSTALL_PREFIX``*
+  - Certain configuration options can now be parameterized on the selected build
+    type.*
+
+\* Thanks to [rtbo](https://github.com/vector-of-bool/vscode-cmake-tools/commits/develop?author=rtbo)!
+
+
 ### Issues? Questions? Feature requests?
 
-Create an issue on [the github page](https://github.com/vector-of-bool/vscode-cmake-tools).
+**PLEASE**, if you experience any issues, create an issue on
+[the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools)!
+I'm only one person with no QA team, so I can't test all the different possible
+configurations you may have, but I'll gladly help anyone fix issues relating to
+this extension.
 
 ## Getting Started
 
@@ -101,6 +123,9 @@ CMake Tools also provides a command for running CTest tests.
 ## Change History
 
 ## Version 0.4.0
+
+- Huge refactor of code. **If you find that something has broken for you, PLEASE
+  feel free to open an issue on GitHub! I really appreciate it, thanks!**
 
 - New stuff!
   - Now parses list of targets and shows them when selecting a target to build.
