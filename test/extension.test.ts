@@ -15,16 +15,9 @@ function testFilePath(filename: string): string {
 
 
 suite("Utility tests", () => {
-    test("Reloads only when needed", async function () {
-        const reader = new cmake.CacheReader(testFilePath('TestCMakeCache.txt'));
-        assert.strictEqual(await reader.needsReloading(), true);
-        assert.strictEqual(await reader.needsReloading(), true);
-        await reader.get("CMAKE_GENERATOR");
-        assert.strictEqual(await reader.needsReloading(), false);
-    });
     test("Read CMake Cache", async function () {
-        const reader = new cmake.CacheReader(testFilePath("TestCMakeCache.txt"));
-        const generator = await reader.get("CMAKE_GENERATOR");
+        const cache = await cmake.CMakeCache.fromPath(testFilePath('TestCMakeCache.txt'));
+        const generator = cache.get("CMAKE_GENERATOR");
         assert.strictEqual(
             generator.type,
             cmake.EntryType.Internal
@@ -43,7 +36,7 @@ suite("Utility tests", () => {
         );
         assert.strictEqual(typeof generator.value === 'string', true);
 
-        const build_testing = await reader.get('BUILD_TESTING');
+        const build_testing = await cache.get('BUILD_TESTING');
         assert.strictEqual(
             build_testing.type,
             cmake.EntryType.Bool
@@ -61,7 +54,7 @@ suite("Utility tests", () => {
                 'SOMETHING:STRING=foo',
                 ''
             ].join(newline);
-            const entries = cmake.CacheReader.parseCache(str);
+            const entries = cmake.CMakeCache.parseCache(str);
             const message = `Using newline ${JSON.stringify(newline)}`
             assert.strictEqual(entries.size, 1, message);
             assert.strictEqual(entries.has('SOMETHING'), true);
