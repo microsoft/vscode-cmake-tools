@@ -109,6 +109,16 @@
                 "command": "cmake.quickStart",
                 "title": "Quick Start",
                 "category": "CMake"
+            },
+            {
+                "command": "cmake.debugTarget",
+                "title": "Debug Target",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.selectDebugTarget",
+                "title": "Select a Target to Debug",
+                "category": "CMake"
             }
         ],
         "configuration": {
@@ -198,6 +208,11 @@
                         }
                     },
                     "description": "The base debug configuration to use when debugging a target"
+                },
+                "cmake.experimental.enableDebugTargets": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable experimental target debugging features"
                 }
             }
         },

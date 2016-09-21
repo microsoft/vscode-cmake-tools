@@ -18,70 +18,70 @@ endif()
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
 if(NOT is_set_up)
     set_property(GLOBAL PROPERTY _CMAKETOOLS_SET_UP TRUE)
-macro(_cmt_invoke fn)
-    file(WRITE "\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" "
-        set(_args \\"\${ARGN}\\")
-        \${fn}(\\\${_args})
-    ")
-    include("\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" NO_POLICY_SCOPE)
-endmacro()
+    macro(_cmt_invoke fn)
+        file(WRITE "\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" "
+            set(_args \\"\${ARGN}\\")
+            \${fn}(\\\${_args})
+        ")
+        include("\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" NO_POLICY_SCOPE)
+    endmacro()
 
-set(_cmt_add_executable add_executable)
-set(_previous_cmt_add_executable _add_executable)
-while(COMMAND "\${_previous_cmt_add_executable}")
-    set(_cmt_add_executable "_\${_cmt_add_executable}")
-    set(_previous_cmt_add_executable _\${_previous_cmt_add_executable})
-endwhile()
-macro(\${_cmt_add_executable} target)
-    _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
-    file(APPEND
-        "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-        "executable;\${target};$<TARGET_FILE:\${target}>\n"
-        )
-    _cmt_generate_system_info()
-endmacro()
-
-set(_cmt_add_library add_library)
-set(_previous_cmt_add_library _add_library)
-while(COMMAND "\${_previous_cmt_add_library}")
-    set(_cmt_add_library "_\${_cmt_add_library}")
-    set(_previous_cmt_add_library "_\${_previous_cmt_add_library}")
-endwhile()
-macro(\${_cmt_add_library} target)
-    _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
-    get_target_property(type \${target} TYPE)
-    if(NOT type STREQUAL "INTERFACE_LIBRARY")
-        get_target_property(imported \${target} IMPORTED)
-        get_target_property(alias \${target} ALIAS)
-        if(NOT imported AND NOT alias)
-            file(APPEND
-                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-                "library;\${target};$<TARGET_FILE:\${target}>\n"
-                )
-        endif()
-    else()
+    set(_cmt_add_executable add_executable)
+    set(_previous_cmt_add_executable _add_executable)
+    while(COMMAND "\${_previous_cmt_add_executable}")
+        set(_cmt_add_executable "_\${_cmt_add_executable}")
+        set(_previous_cmt_add_executable _\${_previous_cmt_add_executable})
+    endwhile()
+    macro(\${_cmt_add_executable} target)
+        _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
         file(APPEND
             "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-            "interface-library;\${target}\n"
+            "executable;\${target};$<TARGET_FILE:\${target}>\n"
             )
-    endif()
-    _cmt_generate_system_info()
-endmacro()
+        _cmt_generate_system_info()
+    endmacro()
 
-file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
-file(GENERATE
-    OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
-    INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-    )
+    set(_cmt_add_library add_library)
+    set(_previous_cmt_add_library _add_library)
+    while(COMMAND "\${_previous_cmt_add_library}")
+        set(_cmt_add_library "_\${_cmt_add_library}")
+        set(_previous_cmt_add_library "_\${_previous_cmt_add_library}")
+    endwhile()
+    macro(\${_cmt_add_library} target)
+        _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
+        get_target_property(type \${target} TYPE)
+        if(NOT type STREQUAL "INTERFACE_LIBRARY")
+            get_target_property(imported \${target} IMPORTED)
+            get_target_property(alias \${target} ALIAS)
+            if(NOT imported AND NOT alias)
+                file(APPEND
+                    "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                    "library;\${target};$<TARGET_FILE:\${target}>\n"
+                    )
+            endif()
+        else()
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "interface-library;\${target}\n"
+                )
+        endif()
+        _cmt_generate_system_info()
+    endmacro()
 
-function(_cmt_generate_system_info)
-    get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
+    file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
+    file(GENERATE
+        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
+        INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+        )
+
+    function(_cmt_generate_system_info)
+        get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
         if(NOT done)
-        file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+            file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
     "system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${CMAKE_CXX_COMPILER_ID}\n")
-    endif()
-    set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
-endfunction()
+        endif()
+        set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
+    endfunction()
 endif()
 `
 
@@ -370,6 +370,10 @@ export class CMakeTools {
         }
     }
 
+    public get debugTargetsEnabled(): boolean {
+        return this.config<boolean>('experimental.enableDebugTargets');
+    }
+
     /**
      * @brief The default target to build when no target is specified
      */
@@ -450,6 +454,7 @@ export class CMakeTools {
         if (!this.config<boolean>('parseBuildDiagnostics')) {
             this._buildDiags.clear();
         }
+        this._refreshStatusBarItems();
     }
 
     private _writeCacheContent() {
@@ -503,7 +508,10 @@ export class CMakeTools {
             this.cmakeCache = cache;
             this.currentChildProcess = null; // Inits the content of the buildButton
             this.statusMessage = 'Ready';
-            this._setupMetaWatcher();
+            if (this.debugTargetsEnabled) {
+                this._setupMetaWatcher();
+            }
+            this._reloadConfiguration();
         });
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
@@ -536,8 +544,10 @@ export class CMakeTools {
                 this._cmakeToolsStatusItem.show();
                 this._buildButton.show();
                 this._targetButton.show();
-                this._debugButton.show();
-                this._debugTargetButton.show();
+                if (this.debugTargetsEnabled) {
+                    this._debugButton.show();
+                    this._debugTargetButton.show();
+                }
             } else {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
@@ -545,8 +555,11 @@ export class CMakeTools {
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
             }
-        })
-
+            if (!this.debugTargetsEnabled) {
+                this._debugButton.hide();
+                this._debugTargetButton.hide();
+            }
+        });
 
         this._buildButton.text = this.isBusy ? '$(x) Stop' : `$(gear) Build:`;
         this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
@@ -1053,11 +1066,13 @@ export class CMakeTools {
             await fs.mkdir(self.binaryDir);
         }
 
-        const old_toolchain = settings['CMAKE_TOOLCHAIN_FILE'] || false;
-        settings['_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE'] = old_toolchain;
-        const helpers = path.join(self.binaryDir, 'CMakeToolsHelpers.cmake')
-        // settings['CMAKE_TOOLCHAIN_FILE'] = helpers;
-        await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
+        if (self.debugTargetsEnabled) {
+            const old_toolchain = settings['CMAKE_TOOLCHAIN_FILE'] || false;
+            settings['_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE'] = old_toolchain;
+            const helpers = path.join(self.binaryDir, 'CMakeToolsHelpers.cmake')
+            settings['CMAKE_TOOLCHAIN_FILE'] = helpers;
+            await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
+        }
 
         for (const key in settings) {
             let value = settings[key];
@@ -1246,6 +1261,10 @@ export class CMakeTools {
 
     public debugTarget = async function() {
         const self: CMakeTools = this;
+        if (!self.debugTargetsEnabled) {
+            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
+            return;
+        }
         const target = self.executableTargets.find(e => e.name === self.currentDebugTarget);
         if (!target) {
             vscode.window.showErrorMessage(`The current debug target ${self.currentDebugTarget} no longer exists. Select a new target to debug.`);
@@ -1268,6 +1287,10 @@ export class CMakeTools {
 
     public selectDebugTarget = async function() {
         const self: CMakeTools = this;
+        if (!self.debugTargetsEnabled) {
+            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
+            return;
+        }
         const target = await vscode.window.showQuickPick(
             self.executableTargets.map(e => ({
                 label: e.name,
