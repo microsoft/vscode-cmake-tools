@@ -1049,6 +1049,10 @@ export class CMakeTools {
 
         const settings = Object.assign({}, self.config<Object>("configureSettings"));
 
+        if (!(await async.exists(self.binaryDir))) {
+            await fs.mkdir(self.binaryDir);
+        }
+
         const old_toolchain = settings['CMAKE_TOOLCHAIN_FILE'] || false;
         settings['_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE'] = old_toolchain;
         const helpers = path.join(self.binaryDir, 'CMakeToolsHelpers.cmake')
