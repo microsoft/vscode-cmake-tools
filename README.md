@@ -7,7 +7,15 @@ support for the CMake scripting language.  For that I recommend
 
 ## What's New?
 
-## Version 0.4.0
+### Version 0.4.1
+
+- Ability to disable compiler diagnostic parsing, in the case of some better
+  diagnostic providers being present.
+- No longer prompt to configure before invoking the build command, just
+  configure and build.
+- Various fixes and tweaks.
+
+### Version 0.4.0
 
 - Huge refactor of code. **If you find that something has broken for you, PLEASE
   feel free to open an issue on GitHub! I really appreciate it, thanks!**
@@ -122,12 +130,13 @@ CMake Tools also provides a command for running CTest tests.
 
 ## Change History
 
-### Version 0.4.1 (Unreleased)
+### Version 0.4.1
 
 - Ability to disable compiler diagnostic parsing, in the case of some better
   diagnostic providers being present.
 - No longer prompt to configure before invoking the build command, just
   configure and build.
+- Various fixes and tweaks.
 
 ### Version 0.4.0
 
