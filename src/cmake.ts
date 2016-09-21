@@ -937,7 +937,7 @@ export class CMakeTools {
         // Pass arguments based on a particular generator
         const gen = self.activeGenerator;
         const generator_args = (() => {
-            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean' && target !== 'install')
+            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
                 return ['-j', self.numJobs.toString()];
             else if (/Visual Studio/.test(gen))
                 return ['/m', '/property:GenerateFullPaths=true'];
