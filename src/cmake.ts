@@ -889,6 +889,8 @@ export class CMakeTools {
             let value = settings[key];
             if (value === true || value === false)
                 value = value ? "TRUE" : "FALSE";
+            if (typeof(value) === 'string')
+                value = (value as string).replace(';', '\\;');
             if (value instanceof Array)
                 value = value.join(';');
             value = value
