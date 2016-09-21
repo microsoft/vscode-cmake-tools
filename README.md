@@ -122,7 +122,14 @@ CMake Tools also provides a command for running CTest tests.
 
 ## Change History
 
-## Version 0.4.0
+### Version 0.4.1 (Unreleased)
+
+- Ability to disable compiler diagnostic parsing, in the case of some better
+  diagnostic providers being present.
+- No longer prompt to configure before invoking the build command, just
+  configure and build.
+
+### Version 0.4.0
 
 - Huge refactor of code. **If you find that something has broken for you, PLEASE
   feel free to open an issue on GitHub! I really appreciate it, thanks!**
@@ -137,7 +144,7 @@ CMake Tools also provides a command for running CTest tests.
 
 \* Thanks to [rtbo](https://github.com/vector-of-bool/vscode-cmake-tools/commits/develop?author=rtbo)!
 
-## Version 0.3.2
+### Version 0.3.2
 
 - Option ``cmake.ctest.parallelJobs``.
 
