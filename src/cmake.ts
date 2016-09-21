@@ -9,6 +9,81 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 
+const CMAKETOOLS_HELPER_SCRIPT =
+`if(_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE)
+    include("\${_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE}")
+endif()
+
+macro(_cmt_invoke fn)
+    message(STATUS "Writing stuff to \${CMAKE_BINARY_DIR}/_cmt_tmp.cmake")
+    file(WRITE "\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" "
+        set(_args \\"\${ARGN}\\")
+        message(STATUS \\"Invoking command: \${fn}\\")
+        \${fn}(\\\${_args})
+    ")
+    include("\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" NO_POLICY_SCOPE)
+endmacro()
+
+set(_cmt_add_executable add_executable)
+set(_previous_cmt_add_executable _add_executable)
+while(COMMAND "\${_previous_cmt_add_executable}")
+    set(_cmt_add_executable "_\${_cmt_add_executable}")
+    set(_previous_cmt_add_executable _\${_previous_cmt_add_executable})
+endwhile()
+message(STATUS "Command is \${_cmt_add_executable}")
+macro(\${_cmt_add_executable} target)
+    _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
+    file(APPEND
+        "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+        "executable;\${target};$<TARGET_FILE:\${target}>\n"
+        )
+    _cmt_generate_system_info()
+endmacro()
+
+set(_cmt_add_library add_library)
+set(_previous_cmt_add_library _add_library)
+while(COMMAND "\${_previous_cmt_add_library}")
+    set(_cmt_add_library "_\${_cmt_add_library}")
+    set(_previous_cmt_add_library "_\${_previous_cmt_add_library}")
+endwhile()
+macro(\${_cmt_add_library} target)
+    _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
+    get_target_property(type \${target} TYPE)
+    if(NOT type STREQUAL "INTERFACE_LIBRARY")
+        get_target_property(imported \${target} IMPORTED)
+        get_target_property(alias \${target} ALIAS)
+        if(NOT imported AND NOT alias)
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "library;\${target};$<TARGET_FILE:\${target}>\n"
+                )
+        endif()
+    else()
+        file(APPEND
+            "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+            "interface-library;\${target}\n"
+            )
+    endif()
+    _cmt_generate_system_info()
+endmacro()
+
+file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
+file(GENERATE
+    OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
+    INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+    )
+
+function(_cmt_generate_system_info)
+    get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
+    if(done)
+        file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+"system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${CMAKE_CXX_COMPILER_ID}
+")
+    endif()
+    set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
+endfunction()
+`
+
 export function isTruthy(value) {
     if (typeof value === 'string') {
         return !(
@@ -29,6 +104,11 @@ export function isTruthy(value) {
 interface ExecuteOptions {
     silent: boolean;
 };
+
+interface ExecutableTarget {
+    name: string;
+    path: string;
+}
 
 export enum EntryType {
     Bool,
@@ -196,15 +276,20 @@ export class ToolsCacheFile {
 export class CMakeTools {
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
-    private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0010);
-    private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.0005);
-    private _targetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+    private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.010);
+    private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.005);
+    private _targetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.003);
+    private _debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.002);
+    private _debugTargetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
     private _extCacheContent: ToolsCacheData;
     private _extCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
     private _targets: string[];
+    public os: string;
+    public systemProcessor: string;
+    public compilerId: string;
 
     private _cmakeCache: CMakeCache;
     public get cmakeCache() {
@@ -306,6 +391,54 @@ export class CMakeTools {
         });
     }
 
+    private _executableTargets: ExecutableTarget[];
+    public get executableTargets() {
+        return this._executableTargets;
+    }
+
+    public set executableTargets(value: ExecutableTarget[]) {
+        this._executableTargets = value;
+        // Check if the currently selected debug target is no longer a target
+        if (value.findIndex(e => e.name === this.currentDebugTarget) < 0) {
+            if (value.length) {
+                this.currentDebugTarget = value[0].name;
+            } else {
+                this.currentDebugTarget = null;
+            }
+        }
+        if (this.currentDebugTarget === null && value.length) {
+            this.currentDebugTarget = value[0].name;
+        }
+    }
+
+    private _currentDebugTarget: string;
+    public get currentDebugTarget(): string {
+        return this._currentDebugTarget;
+    }
+    public set currentDebugTarget(v: string) {
+        this._currentDebugTarget = v;
+        this._refreshStatusBarItems();
+    }
+
+    private _reloadMetaData() {
+        async.readFile(this.metaPath).then(buffer => {
+            const content = buffer.toString();
+            const tuples = content
+                .split('\n')
+                .map(l => l.trim())
+                .filter(l => !!l.length)
+                .map(l => l.split(';'));
+            this.executableTargets = tuples
+                .filter(tup => tup[0] === 'executable')
+                .map(tup => ({
+                    name: tup[1],
+                    path: tup[2],
+                }));
+            var _;
+            [_, this.os, this.systemProcessor, this.compilerId] = tuples.find(tup => tup[0] === 'system');
+        });
+    }
+
     private _reloadConfiguration() {
         const new_settings = this.config<Object>('configureSettings');
         this._needsReconfigure = JSON.stringify(new_settings) !== JSON.stringify(this._lastConfigureSettings);
@@ -343,6 +476,19 @@ export class CMakeTools {
         this.reloadCMakeCache();
     }
 
+    private _metaWatcher: vscode.FileSystemWatcher;
+
+    private _setupMetaWatcher() {
+        if (this._metaWatcher) {
+            this._metaWatcher.dispose();
+        }
+        this._metaWatcher = vscode.workspace.createFileSystemWatcher(this.metaPath);
+        this._metaWatcher.onDidChange(this._reloadMetaData.bind(this));
+        this._metaWatcher.onDidCreate(this._reloadMetaData.bind(this));
+        this._metaWatcher.onDidDelete(this._reloadMetaData.bind(this));
+        this._reloadMetaData();
+    }
+
     constructor() {
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
@@ -356,6 +502,7 @@ export class CMakeTools {
             this.cmakeCache = cache;
             this.currentChildProcess = null; // Inits the content of the buildButton
             this.statusMessage = 'Ready';
+            this._setupMetaWatcher();
         });
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
@@ -364,7 +511,6 @@ export class CMakeTools {
             console.log('Reloading CMakeTools after configuration change');
             this._reloadConfiguration();
         });
-
     }
 
     /**
@@ -389,10 +535,14 @@ export class CMakeTools {
                 this._cmakeToolsStatusItem.show();
                 this._buildButton.show();
                 this._targetButton.show();
+                this._debugButton.show();
+                this._debugTargetButton.show();
             } else {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
                 this._targetButton.hide();
+                this._debugButton.hide();
+                this._debugTargetButton.hide();
             }
         })
 
@@ -402,6 +552,11 @@ export class CMakeTools {
         this._targetButton.text = this.defaultBuildTarget || this.allTargetName;
         this._targetButton.command = 'cmake.setDefaultTarget';
         this._targetButton.tooltip = 'Click to change the default target'
+        this._debugButton.text = '$(bug)';
+        this._debugButton.command = 'cmake.debugTarget';
+        this._debugButton.tooltip = 'Run the debugger on the selected target executable';
+        this._debugTargetButton.text = this.currentDebugTarget || '[No target selected for debugging]';
+        this._debugTargetButton.command = 'cmake.selectDebugTarget';
     }
 
     public get projectName() {
@@ -632,6 +787,13 @@ export class CMakeTools {
      */
     public get cachePath(): string {
         return path.join(this.binaryDir, 'CMakeCache.txt');
+    }
+
+    /**
+     * @brief Get the path to the metadata file
+     */
+    public get metaPath(): string {
+        return path.join(this.binaryDir, 'CMakeToolsMeta.txt');
     }
 
     /**
@@ -885,6 +1047,13 @@ export class CMakeTools {
         settings_args.push('-DCMAKE_BUILD_TYPE=' + self.selectedBuildType);
 
         const settings = self.config<Object>("configureSettings");
+
+        const old_toolchain = settings['CMAKE_TOOLCHAIN_FILE'] || false;
+        settings['_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE'] = old_toolchain;
+        const helpers = path.join(self.binaryDir, 'CMakeToolsHelpers.cmake')
+        // settings['CMAKE_TOOLCHAIN_FILE'] = helpers;
+        await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
+
         for (const key in settings) {
             let value = settings[key];
             if (value === true || value === false)
@@ -937,7 +1106,7 @@ export class CMakeTools {
             const retc = await self.configure();
             if (retc !== 0) {
                 return retc;
-        }
+            }
         }
         await self._prebuild();
         if (self._needsReconfigure) {
@@ -1068,6 +1237,41 @@ export class CMakeTools {
 
         self.selectedBuildType = chosen;
         return await self.configure();
+    }
+
+    public debugTarget = async function() {
+        const self: CMakeTools = this;
+        const target = self.executableTargets.find(e => e.name === self.currentDebugTarget);
+        if (!target) {
+            vscode.window.showErrorMessage(`The current debug target ${self.currentDebugTarget} no longer exists. Select a new target to debug.`);
+            return;
+        }
+        const config = {
+            name: `Debugging Target ${target.name}`,
+            targetArchitecture: /64/.test(self.systemProcessor)
+                ? 'x64'
+                : 'x86',
+            type: self.compilerId.includes('MSVC')
+                ? 'cppvsdbg'
+                : 'cppdbg',
+        }
+        const configs = self.config<any>("debugConfig");
+        Object.assign(config, configs.all);
+        config['program'] = target.path;
+        vscode.commands.executeCommand('vscode.startDebug', config);
+    }
+
+    public selectDebugTarget = async function() {
+        const self: CMakeTools = this;
+        const target = await vscode.window.showQuickPick(
+            self.executableTargets.map(e => ({
+                label: e.name,
+                description: e.path,
+            })));
+        if (!target) {
+            return;
+        }
+        self.currentDebugTarget = target.label;
     }
 
     public ctest = async function (): Promise<Number> {
