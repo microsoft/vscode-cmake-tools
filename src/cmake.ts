@@ -10,15 +10,17 @@ import * as vscode from 'vscode';
 import * as async from './async';
 
 const CMAKETOOLS_HELPER_SCRIPT =
-`if(_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE)
+`
+if(_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE)
     include("\${_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE}")
 endif()
 
+get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
+if(NOT is_set_up)
+    set_property(GLOBAL PROPERTY _CMAKETOOLS_SET_UP TRUE)
 macro(_cmt_invoke fn)
-    message(STATUS "Writing stuff to \${CMAKE_BINARY_DIR}/_cmt_tmp.cmake")
     file(WRITE "\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" "
         set(_args \\"\${ARGN}\\")
-        message(STATUS \\"Invoking command: \${fn}\\")
         \${fn}(\\\${_args})
     ")
     include("\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" NO_POLICY_SCOPE)
@@ -30,7 +32,6 @@ while(COMMAND "\${_previous_cmt_add_executable}")
     set(_cmt_add_executable "_\${_cmt_add_executable}")
     set(_previous_cmt_add_executable _\${_previous_cmt_add_executable})
 endwhile()
-message(STATUS "Command is \${_cmt_add_executable}")
 macro(\${_cmt_add_executable} target)
     _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
     file(APPEND
@@ -75,13 +76,13 @@ file(GENERATE
 
 function(_cmt_generate_system_info)
     get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
-    if(done)
+        if(NOT done)
         file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-"system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${CMAKE_CXX_COMPILER_ID}
-")
+    "system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${CMAKE_CXX_COMPILER_ID}\n")
     endif()
     set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
 endfunction()
+endif()
 `
 
 export function isTruthy(value) {
