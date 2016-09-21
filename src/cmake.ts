@@ -923,9 +923,10 @@ export class CMakeTools {
 
         const cachepath = self.cachePath;
         if (!(await async.exists(cachepath))) {
-            const do_configure = !!(await vscode.window.showErrorMessage('You must configure your project before building', 'Configure Now'));
-            if (!do_configure || await self.configure() !== 0)
-                return -1;
+            const retc = await self.configure();
+            if (retc !== 0) {
+                return retc;
+        }
         }
         await self._prebuild();
         if (self._needsReconfigure) {
