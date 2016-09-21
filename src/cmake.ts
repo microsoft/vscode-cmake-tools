@@ -669,7 +669,16 @@ export class CMakeTools {
             if (!silent) {
                 this.currentChildProcess = pipe;
                 status('Executing CMake...');
-                this._channel.appendLine('[vscode] Executing cmake command: cmake ' + args.join(' '));
+                this._channel.appendLine(
+                    '[vscode] Executing cmake command: cmake '
+                    // We do simple quoting of arguments with spaces.
+                    // This is only shown to the user,
+                    // and doesn't have to be 100% correct.
+                    + args
+                        .map(a => a.replace('"', '\"'))
+                        .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
+                        .join(' ')
+                );
             }
             let stderr_acc = '';
             let stdout_acc = '';
