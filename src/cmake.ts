@@ -1047,7 +1047,7 @@ export class CMakeTools {
 
         settings_args.push('-DCMAKE_BUILD_TYPE=' + self.selectedBuildType);
 
-        const settings = self.config<Object>("configureSettings");
+        const settings = Object.assign({}, self.config<Object>("configureSettings"));
 
         const old_toolchain = settings['CMAKE_TOOLCHAIN_FILE'] || false;
         settings['_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE'] = old_toolchain;
