@@ -217,8 +217,6 @@ export class CMakeTools {
             const bt = cache.get('CMAKE_BUILD_TYPE');
             if (bt) {
                 this.selectedBuildType = bt.as<string>();
-            } else {
-                this.selectedBuildType = 'None';
             }
         }
     }
@@ -327,6 +325,7 @@ export class CMakeTools {
         self._extCacheContent = await ToolsCacheFile.readCache(self._extCachePath, {
             selectedBuildType: self.config<string>('initialBuildType')
         });
+        self._writeCacheContent();
         self._setupCMakeCacheWatcher();
     }
 
@@ -339,7 +338,11 @@ export class CMakeTools {
         this._cmCacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
         this._cmCacheWatcher.onDidChange(this.reloadCMakeCache.bind(this));
         this._cmCacheWatcher.onDidCreate(this.reloadCMakeCache.bind(this));
-        this._cmCacheWatcher.onDidDelete(this.reloadCMakeCache.bind(this));
+        this._cmCacheWatcher.onDidDelete(() => {
+            this.reloadCMakeCache().then(() => {
+                this.selectedBuildType = this.config<string>('initialBuildType');
+            });
+        });
         this.reloadCMakeCache();
     }
 
@@ -348,15 +351,22 @@ export class CMakeTools {
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
         this._extCacheContent = {selectedBuildType: null};
-        this._refreshToolsCacheContent();
 
         // Load up the CMake cache
         CMakeCache.fromPath(this.cachePath).then(cache => {
             this._setupCMakeCacheWatcher();
-            this.cmakeCache = cache;
+            this._cmakeCache = cache; // Here we explicitly work around our setter
             this.currentChildProcess = null; // Inits the content of the buildButton
-            this.statusMessage = 'Ready';
-        });
+            const prom: Promise<any> = (cache.exists && !this.isMultiConf
+                ? Promise.resolve(this.selectedBuildType = cache.get('CMAKE_BUILD_TYPE').as<string>())
+                : this._refreshToolsCacheContent().then(cache => {
+                    this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config<string>('initialBuildType');
+                }));
+            prom.then(() => {
+                this.statusMessage = 'Ready';
+            });
+        })
+
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
         this._needsReconfigure = true;
@@ -377,11 +387,11 @@ export class CMakeTools {
         this._cmakeToolsStatusItem.command = 'cmake.setBuildType';
         this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${this.selectedBuildType || 'Unknown'}: ${this.statusMessage}`;
 
-        if (this.cmakeCache.exists && this.isMultiConf) {
-            let bd = this.config<string>('buildDirectory');
-            if (bd.includes('${buildType}')) {
-                vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
-            }
+        if (this.cmakeCache.exists &&
+                this.isMultiConf &&
+                this.config<string>('buildDirectory').includes('${buildType}')
+            ) {
+            vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
         }
 
         async.exists(path.join(this.sourceDir, 'CMakeLists.txt')).then(exists => {
