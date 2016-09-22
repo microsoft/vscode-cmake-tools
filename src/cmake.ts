@@ -964,6 +964,7 @@ export class CMakeTools {
             '--'].concat(generator_args));
         self.statusMessage = 'Ready';
         if (self.config<boolean>('parseBuildDiagnostics')) {
+            self._buildDiags.clear();
             await self.parseDiagnostics(result);
         }
         return result.retc;
