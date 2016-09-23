@@ -303,8 +303,6 @@ export class CMakeTools {
             const bt = cache.get('CMAKE_BUILD_TYPE');
             if (bt) {
                 this.selectedBuildType = bt.as<string>();
-            } else {
-                this.selectedBuildType = 'None';
             }
         }
     }
@@ -454,6 +452,9 @@ export class CMakeTools {
         if (!this.config<boolean>('parseBuildDiagnostics')) {
             this._buildDiags.clear();
         }
+        if (this.debugTargetsEnabled && !this._metaWatcher) {
+            this._setupMetaWatcher();
+        }
         this._refreshStatusBarItems();
     }
 
@@ -466,6 +467,7 @@ export class CMakeTools {
         self._extCacheContent = await ToolsCacheFile.readCache(self._extCachePath, {
             selectedBuildType: self.config<string>('initialBuildType')
         });
+        self._writeCacheContent();
         self._setupCMakeCacheWatcher();
     }
 
@@ -478,7 +480,11 @@ export class CMakeTools {
         this._cmCacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
         this._cmCacheWatcher.onDidChange(this.reloadCMakeCache.bind(this));
         this._cmCacheWatcher.onDidCreate(this.reloadCMakeCache.bind(this));
-        this._cmCacheWatcher.onDidDelete(this.reloadCMakeCache.bind(this));
+        this._cmCacheWatcher.onDidDelete(() => {
+            this.reloadCMakeCache().then(() => {
+                this.selectedBuildType = this.config<string>('initialBuildType');
+            });
+        });
         this.reloadCMakeCache();
     }
 
@@ -500,19 +506,25 @@ export class CMakeTools {
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
         this._extCacheContent = {selectedBuildType: null};
-        this._refreshToolsCacheContent();
 
         // Load up the CMake cache
         CMakeCache.fromPath(this.cachePath).then(cache => {
             this._setupCMakeCacheWatcher();
-            this.cmakeCache = cache;
+            this._cmakeCache = cache; // Here we explicitly work around our setter
             this.currentChildProcess = null; // Inits the content of the buildButton
-            this.statusMessage = 'Ready';
             if (this.debugTargetsEnabled) {
                 this._setupMetaWatcher();
             }
             this._reloadConfiguration();
-        });
+            const prom: Promise<any> = (cache.exists && !this.isMultiConf
+                ? Promise.resolve(this.selectedBuildType = cache.get('CMAKE_BUILD_TYPE').as<string>())
+                : this._refreshToolsCacheContent().then(cache => {
+                    this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config<string>('initialBuildType');
+                }));
+            prom.then(() => {
+                this.statusMessage = 'Ready';
+            });
+        })
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
         this._needsReconfigure = true;
@@ -532,11 +544,11 @@ export class CMakeTools {
         this._cmakeToolsStatusItem.command = 'cmake.setBuildType';
         this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${this.selectedBuildType || 'Unknown'}: ${this.statusMessage}`;
 
-        if (this.cmakeCache.exists && this.isMultiConf) {
-            let bd = this.config<string>('buildDirectory');
-            if (bd.includes('${buildType}')) {
-                vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
-            }
+        if (this.cmakeCache.exists &&
+                this.isMultiConf &&
+                this.config<string>('buildDirectory').includes('${buildType}')
+            ) {
+            vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
         }
 
         async.exists(path.join(this.sourceDir, 'CMakeLists.txt')).then(exists => {
@@ -1067,11 +1079,16 @@ export class CMakeTools {
         }
 
         if (self.debugTargetsEnabled) {
-            const old_toolchain = settings['CMAKE_TOOLCHAIN_FILE'] || false;
-            settings['_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE'] = old_toolchain;
-            const helpers = path.join(self.binaryDir, 'CMakeToolsHelpers.cmake')
-            settings['CMAKE_TOOLCHAIN_FILE'] = helpers;
+            const helpers_dir = path.join(self.binaryDir, 'CMakeTools');
+            if (!(await async.exists(helpers_dir))) {
+                await fs.mkdir(helpers_dir);
+            }
+            const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
             await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
+            const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string>;
+            if (helpers_dir in old_path) {
+                old_path.push(helpers_dir);
+            }
         }
 
         for (const key in settings) {
@@ -1153,6 +1170,7 @@ export class CMakeTools {
             '--'].concat(generator_args));
         self.statusMessage = 'Ready';
         if (self.config<boolean>('parseBuildDiagnostics')) {
+            self._buildDiags.clear();
             await self.parseDiagnostics(result);
         }
         return result.retc;

@@ -7,12 +7,14 @@ support for the CMake scripting language.  For that I recommend
 
 ## What's New?
 
-### Version 0.4.1
+### Version 0.4.1/2
 
 - Ability to disable compiler diagnostic parsing, in the case of some better
   diagnostic providers being present.
 - No longer prompt to configure before invoking the build command, just
   configure and build.
+- Fixed breaking of configure process, and fixed more issues with
+  initialBuildType (See [this](https://github.com/vector-of-bool/vscode-cmake-tools/issues/34))
 - Various fixes and tweaks.
 
 ### Version 0.4.0
