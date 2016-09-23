@@ -11,10 +11,6 @@ import * as async from './async';
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
-if(_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE)
-    include("\${_CMAKETOOLS_CMAKE_TOOLCHAIN_FILE}")
-endif()
-
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
 if(NOT is_set_up)
     set_property(GLOBAL PROPERTY _CMAKETOOLS_SET_UP TRUE)
