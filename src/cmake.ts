@@ -364,10 +364,6 @@ export class CMakeTools {
         }
     }
 
-    public get debugTargetsEnabled(): boolean {
-        return this.config<boolean>('experimental.enableDebugTargets');
-    }
-
     /**
      * @brief The default target to build when no target is specified
      */
@@ -461,9 +457,7 @@ export class CMakeTools {
         if (!this.config<boolean>('parseBuildDiagnostics')) {
             this._buildDiags.clear();
         }
-        if (this.debugTargetsEnabled && !this._metaWatcher) {
-            this._setupMetaWatcher();
-        }
+        this._setupMetaWatcher();
         this._refreshStatusBarItems();
     }
 
@@ -521,9 +515,7 @@ export class CMakeTools {
             this._setupCMakeCacheWatcher();
             this._cmakeCache = cache; // Here we explicitly work around our setter
             this.currentChildProcess = null; // Inits the content of the buildButton
-            if (this.debugTargetsEnabled) {
-                this._setupMetaWatcher();
-            }
+            this._setupMetaWatcher();
             this._reloadConfiguration();
             const prom: Promise<any> = (cache.exists && !this.isMultiConf
                 ? Promise.resolve(this.selectedBuildType = cache.get('CMAKE_BUILD_TYPE').as<string>())
@@ -565,18 +557,12 @@ export class CMakeTools {
                 this._cmakeToolsStatusItem.show();
                 this._buildButton.show();
                 this._targetButton.show();
-                if (this.debugTargetsEnabled) {
-                    this._debugButton.show();
-                    this._debugTargetButton.show();
-                }
+                this._debugButton.show();
+                this._debugTargetButton.show();
             } else {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
                 this._targetButton.hide();
-                this._debugButton.hide();
-                this._debugTargetButton.hide();
-            }
-            if (!this.debugTargetsEnabled) {
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
             }
@@ -587,7 +573,7 @@ export class CMakeTools {
         this._targetButton.text = this.defaultBuildTarget || this.allTargetName;
         this._targetButton.command = 'cmake.setDefaultTarget';
         this._targetButton.tooltip = 'Click to change the default target'
-        this._debugButton.text = '$(bug)';
+        this._debugButton.text = '$(bug) Debug:';
         this._debugButton.command = 'cmake.debugTarget';
         this._debugButton.tooltip = 'Run the debugger on the selected target executable';
         this._debugTargetButton.text = this.currentDebugTarget || '[No target selected for debugging]';
@@ -1087,16 +1073,14 @@ export class CMakeTools {
             await fs.mkdir(self.binaryDir);
         }
 
-        if (self.debugTargetsEnabled) {
-            const helpers_dir = path.join(self.binaryDir, 'CMakeTools');
-            if (!(await async.exists(helpers_dir))) {
-                await fs.mkdir(helpers_dir);
-            }
-            const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
-            await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
-            const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
-            settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([helpers_dir]);
+        const helpers_dir = path.join(self.binaryDir, 'CMakeTools');
+        if (!(await async.exists(helpers_dir))) {
+            await fs.mkdir(helpers_dir);
         }
+        const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
+        await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
+        const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
+        settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([helpers_dir]);
 
         for (const key in settings) {
             let value = settings[key];
@@ -1286,10 +1270,6 @@ export class CMakeTools {
 
     public debugTarget = async function() {
         const self: CMakeTools = this;
-        if (!self.debugTargetsEnabled) {
-            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
-            return;
-        }
         if (!self.executableTargets) {
             vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsHelpers in your CMake project.');
             return;
@@ -1319,10 +1299,6 @@ export class CMakeTools {
 
     public selectDebugTarget = async function() {
         const self: CMakeTools = this;
-        if (!self.debugTargetsEnabled) {
-            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
-            return;
-        }
         if (!self.executableTargets) {
             vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsHelpers in your CMake project.');
             return;
