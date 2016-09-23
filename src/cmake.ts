@@ -1095,7 +1095,9 @@ export class CMakeTools {
             const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
             await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
             const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
-            settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([helpers_dir]);
+            settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
+                helpers_dir.replace(/\\/g, path.posix.sep)
+            ]);
         }
 
         for (const key in settings) {
@@ -1122,7 +1124,8 @@ export class CMakeTools {
         const binary_dir = self.binaryDir;
         self.statusMessage = 'Configuring...';
         const result = await self.execute(
-            ['-H' + self.sourceDir, '-B' + binary_dir]
+            ['-H' + self.sourceDir.replace(/\\/g, path.posix.sep),
+             '-B' + binary_dir.replace(/\\/g, path.posix.sep)]
                 .concat(settings_args)
                 .concat(extra_args)
         );
