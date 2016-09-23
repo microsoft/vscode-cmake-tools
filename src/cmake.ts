@@ -401,6 +401,10 @@ export class CMakeTools {
 
     public set executableTargets(value: ExecutableTarget[]) {
         this._executableTargets = value;
+        if (!value) {
+            this.currentDebugTarget = null;
+            return;
+        }
         // Check if the currently selected debug target is no longer a target
         if (value.findIndex(e => e.name === this.currentDebugTarget) < 0) {
             if (value.length) {
@@ -424,21 +428,30 @@ export class CMakeTools {
     }
 
     private _reloadMetaData() {
-        async.readFile(this.metaPath).then(buffer => {
-            const content = buffer.toString();
-            const tuples = content
-                .split('\n')
-                .map(l => l.trim())
-                .filter(l => !!l.length)
-                .map(l => l.split(';'));
-            this.executableTargets = tuples
-                .filter(tup => tup[0] === 'executable')
-                .map(tup => ({
-                    name: tup[1],
-                    path: tup[2],
-                }));
-            var _;
-            [_, this.os, this.systemProcessor, this.compilerId] = tuples.find(tup => tup[0] === 'system');
+        return async.exists(this.metaPath).then(exists => {
+            if (exists) {
+                return async.readFile(this.metaPath).then(buffer => {
+                    const content = buffer.toString();
+                    const tuples = content
+                        .split('\n')
+                        .map(l => l.trim())
+                        .filter(l => !!l.length)
+                        .map(l => l.split(';'));
+                    this.executableTargets = tuples
+                        .filter(tup => tup[0] === 'executable')
+                        .map(tup => ({
+                            name: tup[1],
+                            path: tup[2],
+                        }));
+                    var _;
+                    [_, this.os, this.systemProcessor, this.compilerId] = tuples.find(tup => tup[0] === 'system');
+                });
+            } else {
+                this.executableTargets = null;
+                this.os = null;
+                this.systemProcessor = null;
+                this.compilerId = null;
+            }
         });
     }
 
@@ -1085,10 +1098,8 @@ export class CMakeTools {
             }
             const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
             await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
-            const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string>;
-            if (helpers_dir in old_path) {
-                old_path.push(helpers_dir);
-            }
+            const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
+            settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([helpers_dir]);
         }
 
         for (const key in settings) {
@@ -1283,11 +1294,18 @@ export class CMakeTools {
             vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
             return;
         }
-        const target = self.executableTargets.find(e => e.name === self.currentDebugTarget);
-        if (!target) {
-            vscode.window.showErrorMessage(`The current debug target ${self.currentDebugTarget} no longer exists. Select a new target to debug.`);
+        if (!self.executableTargets) {
+            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsHelpers in your CMake project.');
             return;
         }
+        const target = self.executableTargets.find(e => e.name === self.currentDebugTarget);
+        if (!target) {
+            vscode.window.showErrorMessage(`The current debug target "${self.currentDebugTarget}" no longer exists. Select a new target to debug.`);
+            return;
+        }
+        const build_retc = await self.build(target.name);
+        if (build_retc !== 0)
+            return;
         const config = {
             name: `Debugging Target ${target.name}`,
             targetArchitecture: /64/.test(self.systemProcessor)
@@ -1307,6 +1325,10 @@ export class CMakeTools {
         const self: CMakeTools = this;
         if (!self.debugTargetsEnabled) {
             vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
+            return;
+        }
+        if (!self.executableTargets) {
+            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsHelpers in your CMake project.');
             return;
         }
         const target = await vscode.window.showQuickPick(
