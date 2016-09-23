@@ -1077,7 +1077,7 @@ export class CMakeTools {
         if (!(await async.exists(helpers_dir))) {
             await fs.mkdir(helpers_dir);
         }
-        const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
+        const helpers = path.join(helpers_dir, 'CMakeToolsProject.cmake')
         await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
         const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
         settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([helpers_dir]);
@@ -1271,7 +1271,7 @@ export class CMakeTools {
     public debugTarget = async function() {
         const self: CMakeTools = this;
         if (!self.executableTargets) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsHelpers in your CMake project.');
+            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
             return;
         }
         const target = self.executableTargets.find(e => e.name === self.currentDebugTarget);
@@ -1300,7 +1300,7 @@ export class CMakeTools {
     public selectDebugTarget = async function() {
         const self: CMakeTools = this;
         if (!self.executableTargets) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsHelpers in your CMake project.');
+            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
             return;
         }
         const target = await vscode.window.showQuickPick(
