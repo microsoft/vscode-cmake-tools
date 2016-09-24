@@ -7,33 +7,16 @@ support for the CMake scripting language.  For that I recommend
 
 ## What's New?
 
-### Version 0.4.1/2
+### Version 0.5.0
 
-- Ability to disable compiler diagnostic parsing, in the case of some better
-  diagnostic providers being present.
-- No longer prompt to configure before invoking the build command, just
-  configure and build.
-- Fixed breaking of configure process, and fixed more issues with
-  initialBuildType (See [this](https://github.com/vector-of-bool/vscode-cmake-tools/issues/34))
-- Various fixes and tweaks.
+- **NEW** Target Debugging feature. This feature is still experimental, and
+  is disabled by default. [Click here to learn about how to enable and use
+  this new feature](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md),
+  and [click here to provide feedback.](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
+- Updated to use TypeScript 2.0, which brings more stability and code simplicity
+  behind the scenes.
 
-### Version 0.4.0
-
-- Huge refactor of code. **If you find that something has broken for you, PLEASE
-  feel free to open an issue on GitHub! I really appreciate it, thanks!**
-
-- New stuff!
-  - Now parses list of targets and shows them when selecting a target to build.
-  - Tweak the default target with a single button in the status bar.
-  - Command to invoke the ``install`` target*
-  - Dedicated configuration setting for ``CMAKE_INSTALL_PREFIX``*
-  - Certain configuration options can now be parameterized on the selected build
-    type.*
-
-\* Thanks to [rtbo](https://github.com/vector-of-bool/vscode-cmake-tools/commits/develop?author=rtbo)!
-
-
-### Issues? Questions? Feature requests?
+## Issues? Questions? Feature requests?
 
 **PLEASE**, if you experience any issues, create an issue on
 [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools)!
