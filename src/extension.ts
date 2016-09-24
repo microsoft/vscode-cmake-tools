@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
         'quickStart',
         'stop',
     ]) {
-        context.subscriptions.push(register('cmake.' + key, cmake[key]));
+        context.subscriptions.push(register('cmake.' + key, cmake[key as string]));
     }
 }
 

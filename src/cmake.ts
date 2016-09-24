@@ -9,7 +9,9 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 
-export function isTruthy(value) {
+type Maybe<T> = (T | null);
+
+export function isTruthy(value: (boolean | string | null | undefined | number)) {
     if (typeof value === 'string') {
         return !(
             value === '' ||
@@ -75,8 +77,8 @@ export class CacheEntry {
 
     public as<T>(): T { return this.value; }
 
-    constructor(key?: string, value?: string, type?: EntryType, docs?: string) {
-        this._key = key;
+    constructor(key: string, value: string, type: EntryType, docs: string) {
+        this._key = key ;
         this._value = value;
         this._type = type;
         this._docs = docs;
@@ -86,8 +88,6 @@ export class CacheEntry {
 
 export class CMakeCache {
     private _entries: Map<string, CacheEntry>;
-
-    private _lastModifiedTime: Date = null;
 
     public static fromPath = async function(path: string): Promise<CMakeCache> {
         const exists = await async.exists(path);
@@ -128,17 +128,21 @@ export class CMakeCache {
         const entries = new Map<string, CacheEntry>();
         let docs_acc = '';
         for (const line of lines) {
+            if (!line)
+                continue;
             if (line.startsWith('//')) {
                 docs_acc += /^\/\/(.*)/.exec(line)[1] + ' ';
             } else {
                 const match = /^(.*?):(.*?)=(.*)/.exec(line);
                 console.assert(!!match, "Couldn't handle reading cache entry: " + line);
                 const [_, name, typename, valuestr] = match;
+                if (!name || !typename)
+                    continue;
                 if (name.endsWith('-ADVANCED') && valuestr == '1') {
                     // We skip the ADVANCED property variables. They're a little odd.
                 } else {
                     const key = name;
-                    const type = {
+                    const type: EntryType = {
                         BOOL: EntryType.Bool,
                         STRING: EntryType.String,
                         PATH: EntryType.Path,
@@ -162,7 +166,7 @@ export class CMakeCache {
         return entries;
     }
 
-    public get(key: string, defaultValue?: any): CacheEntry {
+    public get(key: string, defaultValue?: any): Maybe<CacheEntry> {
         if (!this._entries.has(key))
             return null;
         return this._entries.get(key);
@@ -172,7 +176,7 @@ export class CMakeCache {
 // cache for cmake-tools extension
 // JSON file with path ${workspaceRoot}/.vscode/.cmaketools.json
 interface ToolsCacheData {
-    selectedBuildType: string;
+    selectedBuildType: Maybe<string>;
 }
 
 export class ToolsCacheFile {
@@ -221,11 +225,11 @@ export class CMakeTools {
         }
     }
 
-    private _currentChildProcess: proc.ChildProcess;
-    public get currentChildProcess(): proc.ChildProcess {
+    private _currentChildProcess: Maybe<proc.ChildProcess>;
+    public get currentChildProcess(): Maybe<proc.ChildProcess> {
         return this._currentChildProcess;
     }
-    public set currentChildProcess(v: proc.ChildProcess) {
+    public set currentChildProcess(v: Maybe<proc.ChildProcess>) {
         this._currentChildProcess = v;
         this._refreshStatusBarItems();
     }
@@ -265,10 +269,10 @@ export class CMakeTools {
      * configuration. This value is also reflected on the status bar item that
      * the user can click to change the build type.
      */
-    public get selectedBuildType(): string {
+    public get selectedBuildType(): Maybe<string> {
         return this._extCacheContent.selectedBuildType;
     }
-    public set selectedBuildType(v: string) {
+    public set selectedBuildType(v: Maybe<string>) {
         const changed = this.selectedBuildType !== v;
         this._extCacheContent.selectedBuildType = v;
         if (changed) {
@@ -357,8 +361,9 @@ export class CMakeTools {
             this._setupCMakeCacheWatcher();
             this._cmakeCache = cache; // Here we explicitly work around our setter
             this.currentChildProcess = null; // Inits the content of the buildButton
-            const prom: Promise<any> = (cache.exists && !this.isMultiConf
-                ? Promise.resolve(this.selectedBuildType = cache.get('CMAKE_BUILD_TYPE').as<string>())
+            const bt = cache.get('CMAKE_BUILD_TYPE');
+            const prom: Promise<any> = (bt && !this.isMultiConf
+                ? Promise.resolve(this.selectedBuildType = bt.as<string>())
                 : this._refreshToolsCacheContent().then(cache => {
                     this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config<string>('initialBuildType');
                 }));
@@ -434,7 +439,7 @@ export class CMakeTools {
         }
         self.statusMessage = 'Refreshing targets...';
         const generator = self.activeGenerator;
-        if (/(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
+        if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
             const result = await self.execute(['--build', self.binaryDir, '--target', 'help'], {
                 silent: true
             });
@@ -456,7 +461,7 @@ export class CMakeTools {
      * @returns A FileDiagnostic obtained from the message, or null if no
      *      message could be decoded.
      */
-    public parseGCCDiagnostic(line: string): FileDiagnostic {
+    public parseGCCDiagnostic(line: string): Maybe<FileDiagnostic> {
         const gcc_re = /^(.*):(\d+):(\d+):\s+(warning|error|note):\s+(.*)$/;
         const res = gcc_re.exec(line);
         if (!res)
@@ -488,9 +493,9 @@ export class CMakeTools {
     /**
      * @brief Obtains a reference to a TextDocument given the name of the file
      */
-    private getTextDocumentByFileName(file: string): vscode.TextDocument {
+    private getTextDocumentByFileName(file: string): Maybe<vscode.TextDocument> {
         const documents = vscode.workspace.textDocuments;
-        let document: vscode.TextDocument = null;
+        let document: Maybe<vscode.TextDocument> = null;
         if (documents.length != 0) {
             const filtered = documents.filter((doc: vscode.TextDocument) => {
                 return doc.fileName.toUpperCase() === file.toUpperCase()
@@ -526,7 +531,7 @@ export class CMakeTools {
      * @returns a FileDiagnostic from the given line, or null if no diagnostic
      *      could be parsed
      */
-    public parseMSVCDiagnostic(line: string): FileDiagnostic {
+    public parseMSVCDiagnostic(line: string): Maybe<FileDiagnostic> {
         const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
         const res = msvc_re.exec(line);
         if (!res)
@@ -557,6 +562,7 @@ export class CMakeTools {
                     Number.parseInt(parts[2]) - 1,
                     Number.parseInt(parts[3]) - 1
                 );
+            throw new Error('Unable to determine location of MSVC error');
         })();
         const diag = new vscode.Diagnostic(
             loc,
@@ -579,7 +585,7 @@ export class CMakeTools {
      * @brief Parses a line of compiler output to try and find a diagnostic
      *      message.
      */
-    public parseDiagnosticLine(line: string): FileDiagnostic {
+    public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         return this.parseGCCDiagnostic(line) ||
             this.parseMSVCDiagnostic(line);
     }
@@ -594,6 +600,8 @@ export class CMakeTools {
         const diags = lines.map(line => this.parseDiagnosticLine(line)).filter(item => !!item);
         const diags_acc = {};
         for (const diag of diags) {
+            if (!diag)
+                continue;
             if (!(diag.filepath in diags_acc))
                 diags_acc[diag.filepath] = [];
             diags_acc[diag.filepath].push(diag.diag);
@@ -634,7 +642,7 @@ export class CMakeTools {
     public get binaryDir(): string {
         return this.config<string>('buildDirectory')
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
-            .replace('${buildType}', this.selectedBuildType);
+            .replace('${buildType}', this.selectedBuildType || 'Unknown');
     }
 
     /**
@@ -651,7 +659,7 @@ export class CMakeTools {
         return !!this.cmakeCache.get('CMAKE_CONFIGURATION_TYPES');
     }
 
-    public get activeGenerator() {
+    public get activeGenerator(): Maybe<string> {
         const gen = this.cmakeCache.get('CMAKE_GENERATOR');
         return gen
             ? gen.as<string>()
@@ -664,7 +672,8 @@ export class CMakeTools {
     public get allTargetName() {
         if (!this.cmakeCache.exists)
             return 'all';
-        return /Visual Studio/.test(this.activeGenerator) ? 'ALL_BUILD' : 'all';
+        const gen = this.activeGenerator;
+        return (gen && /Visual Studio/.test(gen)) ? 'ALL_BUILD' : 'all';
     }
 
     /**
@@ -672,7 +681,7 @@ export class CMakeTools {
      */
     public execute(args: string[], options?: ExecuteOptions): Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
-            const silent: boolean = options && options.silent;
+            const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config<string>('cmakePath', 'cmake'), args);
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
@@ -736,6 +745,8 @@ export class CMakeTools {
                     const found = diag_re.exec(rest);
                     if (!found) break;
                     const [level, filename, linestr, command, what, tail] = found.slice(1);
+                    if (!filename || !linestr || !what || !level)
+                        continue;
                     const filepath =
                         path.isAbsolute(filename)
                             ? filename
@@ -761,7 +772,7 @@ export class CMakeTools {
                     );
                     diag.source = 'CMake (' + command + ')';
                     file_diags.push(diag);
-                    rest = tail;
+                    rest = tail || '';
                 }
 
                 this._diagnostics.clear();
@@ -788,9 +799,11 @@ export class CMakeTools {
     }
 
     // Given a list of CMake generators, returns the first one available on this system
-    public pickGenerator = async function (candidates: string[]): Promise<string> {
+    public pickGenerator = async function (candidates: string[]): Promise<Maybe<string>> {
         const self: CMakeTools = this;
         for (const gen of candidates) {
+            if (!gen)
+                continue;
             const delegate = {
                 Ninja: async function () {
                     return await self.testHaveCommand('ninja-build') || await self.testHaveCommand('ninja');
@@ -853,12 +866,12 @@ export class CMakeTools {
 
         if (self.isBusy) {
             vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to configure.');
-            return;
+            return -1;
         }
 
         if (!self.sourceDir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
-            return;
+            return -1;
         }
 
         const cmake_list = self.mainListFile;
@@ -871,7 +884,7 @@ export class CMakeTools {
             );
             if (do_quickstart)
                 await self.quickStart();
-            return;
+            return -1;
         }
 
         if (run_prebuild)
@@ -879,7 +892,7 @@ export class CMakeTools {
 
         const cmake_cache = self.cachePath;
         self._channel.show();
-        const settings_args = [];
+        const settings_args: string[] = [];
         if (!self.cmakeCache.exists) {
             self._channel.appendLine("[vscode] Setting up new CMake configuration");
             const generator = await self.pickGenerator(self.config<string[]>("preferredGenerators"));
@@ -927,19 +940,19 @@ export class CMakeTools {
         return result.retc;
     }
 
-    public build = async function (target: string = null): Promise<Number> {
+    public build = async function (target: Maybe<string> = null): Promise<Number> {
         const self: CMakeTools = this;
         if (target === null) {
             target = self.defaultBuildTarget || self.allTargetName;
         }
         if (!self.sourceDir) {
             vscode.window.showErrorMessage('You do not have a source directory open');
-            return;
+            return -1;
         }
 
         if (self.isBusy) {
             vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to build.');
-            return;
+            return -1;
         }
 
         const cachepath = self.cachePath;
@@ -958,7 +971,9 @@ export class CMakeTools {
         // Pass arguments based on a particular generator
         const gen = self.activeGenerator;
         const generator_args = (() => {
-            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
+            if (!gen)
+                return [];
+            else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
                 return ['-j', self.numJobs.toString()];
             else if (/Visual Studio/.test(gen))
                 return ['/m', '/property:GenerateFullPaths=true'];
@@ -970,7 +985,7 @@ export class CMakeTools {
         const result = await self.execute([
             '--build', self.binaryDir,
             '--target', target,
-            '--config', self.selectedBuildType,
+            '--config', self.selectedBuildType || 'Debug',
             '--'].concat(generator_args));
         self.statusMessage = 'Ready';
         if (self.config<boolean>('parseBuildDiagnostics')) {
@@ -1004,13 +1019,13 @@ export class CMakeTools {
         return await self.configure();
     }
 
-    public jumpToCacheFile = async function (): Promise<vscode.TextEditor> {
+    public jumpToCacheFile = async function (): Promise<Maybe<vscode.TextEditor>> {
         const self: CMakeTools = this;
         if (!(await async.exists(self.cachePath))) {
             const do_conf = !!(await vscode.window.showErrorMessage('This project has not yet been configured.', 'Configure Now'));
             if (do_conf) {
                 if (await self.configure() !== 0)
-                    return;
+                    return null;
             }
         }
 
@@ -1052,12 +1067,13 @@ export class CMakeTools {
 
     public setBuildType = async function (): Promise<Number> {
         const self: CMakeTools = this;
-        let chosen = null;
-        if (self.cmakeCache.exists && self.isMultiConf) {
-            const types = self.cmakeCache.get('CMAKE_CONFIGURATION_TYPES').as<string>().split(';');
+        let chosen: Maybe<string> = null;
+        const config_types = self.cmakeCache.get('CMAKE_CONFIGURATION_TYPES');
+        if (self.cmakeCache.exists && self.isMultiConf && config_types) {
+            const types = config_types.as<string>().split(';');
             chosen = await vscode.window.showQuickPick(types);
         } else {
-            chosen = await vscode.window.showQuickPick([
+            const picked = await vscode.window.showQuickPick([
                 {
                     label: 'Release',
                     description: 'Optimized build with no debugging information',
@@ -1072,7 +1088,7 @@ export class CMakeTools {
                     description: 'Same as "Release", but also generates debugging information',
                 }
             ]);
-            chosen = chosen ? chosen.label : null;
+            chosen = picked ? picked.label : null;
         }
         if (chosen === null)
             return -1;
@@ -1099,7 +1115,7 @@ export class CMakeTools {
             validateInput: (value: string): string => {
                 if (!value.length)
                     return 'A project name is required';
-                return null;
+                return '';
             },
         });
         if (!project_name)
@@ -1171,11 +1187,11 @@ export class CMakeTools {
         await async.doAsync(fs.writeFile, self.mainListFile, init);
         const doc = await vscode.workspace.openTextDocument(self.mainListFile);
         await vscode.window.showTextDocument(doc);
-        await self.configure();
+        return self.configure();
     }
 
     public stop() {
-        const child: proc.ChildProcess = this.currentChildProcess;
+        const child = this.currentChildProcess;
         if (!child)
             return;
         // Stopping the process isn't as easy as it may seem. cmake --build will

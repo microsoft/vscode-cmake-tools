@@ -17,7 +17,7 @@ function testFilePath(filename: string): string {
 suite("Utility tests", () => {
     test("Read CMake Cache", async function () {
         const cache = await cmake.CMakeCache.fromPath(testFilePath('TestCMakeCache.txt'));
-        const generator = cache.get("CMAKE_GENERATOR");
+        const generator = cache.get("CMAKE_GENERATOR") as cmake.CacheEntry;
         assert.strictEqual(
             generator.type,
             cmake.EntryType.Internal
@@ -36,7 +36,7 @@ suite("Utility tests", () => {
         );
         assert.strictEqual(typeof generator.value === 'string', true);
 
-        const build_testing = await cache.get('BUILD_TESTING');
+        const build_testing = await cache.get('BUILD_TESTING') as cmake.CacheEntry;
         assert.strictEqual(
             build_testing.type,
             cmake.EntryType.Bool
