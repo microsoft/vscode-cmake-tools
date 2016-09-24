@@ -369,7 +369,7 @@ export class CMakeTools {
     }
 
     public get debugTargetsEnabled(): boolean {
-        return this.config<boolean>('experimental.enableDebugTargets');
+        return this.config<boolean>('experimental.enableTargetDebugging');
     }
 
     /**
