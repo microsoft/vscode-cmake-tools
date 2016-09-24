@@ -453,6 +453,7 @@ export class CMakeTools {
                 this.os = null;
                 this.systemProcessor = null;
                 this.compilerId = null;
+                return Promise.resolve();
             }
         });
     }
