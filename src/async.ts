@@ -3,7 +3,7 @@
 import * as proc from 'child_process';
 import * as fs from 'fs';
 
-export function doAsync<T>(fn: Function, ...args): Promise<T> {
+export function doAsync<T>(fn: Function, ...args: any[]): Promise<T> {
     return new Promise<T>((resolve, reject) => {
         fn(...args, resolve);
     });

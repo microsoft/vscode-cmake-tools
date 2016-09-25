@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.4.2",
+    "version": "0.5.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -109,6 +109,16 @@
                 "command": "cmake.quickStart",
                 "title": "Quick Start",
                 "category": "CMake"
+            },
+            {
+                "command": "cmake.debugTarget",
+                "title": "Debug Target",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.selectDebugTarget",
+                "title": "Select a Target to Debug",
+                "category": "CMake"
             }
         ],
         "configuration": {
@@ -198,6 +208,11 @@
                         }
                     },
                     "description": "The base debug configuration to use when debugging a target"
+                },
+                "cmake.experimental.enableTargetDebugging": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable experimental target debugging features"
                 }
             }
         },
@@ -214,7 +229,7 @@
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "typescript": "^1.8.5",
+        "typescript": "^2.0",
         "vscode": "^0.11.0"
     }
 }

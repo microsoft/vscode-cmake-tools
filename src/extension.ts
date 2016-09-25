@@ -29,8 +29,10 @@ export function activate(context: vscode.ExtensionContext) {
         'ctest',
         'quickStart',
         'stop',
+        'debugTarget',
+        'selectDebugTarget',
     ]) {
-        context.subscriptions.push(register('cmake.' + key, cmake[key]));
+        context.subscriptions.push(register('cmake.' + key, cmake[key as string]));
     }
 }
 
