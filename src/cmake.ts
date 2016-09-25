@@ -1301,7 +1301,11 @@ export class CMakeTools {
         if (chosen === null)
             return -1;
 
+        const old_build_path = this.binaryDir;
         this.selectedBuildType = chosen;
+        if (this.binaryDir !== old_build_path) {
+            await this._setupCMakeCacheWatcher();
+        }
         return await this.configure();
     }
 
