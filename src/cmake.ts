@@ -1147,7 +1147,9 @@ export class CMakeTools {
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
-            this._refreshTargetList();
+            this.reloadCMakeCache()
+                .then(this._refreshTargetList.bind(this))
+                .then(this._reloadMetaData.bind(this));
         }
         return result.retc;
     }
@@ -1204,7 +1206,9 @@ export class CMakeTools {
             await this.parseDiagnostics(result);
         }
         if (!result.retc) {
-            this._refreshTargetList();
+            this.reloadCMakeCache()
+                .then(this._refreshTargetList.bind(this))
+                .then(this._reloadMetaData.bind(this));
         }
         return result.retc;
     }
