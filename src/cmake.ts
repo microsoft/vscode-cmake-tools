@@ -1118,7 +1118,7 @@ export class CMakeTools {
                 value = (value as string)
                     .replace(';', '\\;')
                     .replace('${workspaceRoot}', vscode.workspace.rootPath)
-                    .replace('${buildType}', this.selectedBuildType);
+                    .replace('${buildType}', this.selectedBuildType || 'Unknown');
             if (value instanceof Array)
                 value = value.join(';');
             settings_args.push("-D" + key + "=" + value.toString());
