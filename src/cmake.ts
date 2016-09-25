@@ -362,8 +362,9 @@ export class CMakeTools {
                 .then(this._refreshStatusBarItems.bind(this))
                 .then(() => {
                     if (this.cachePath !== this.cmakeCache.path) {
-                        this._refreshTargetList.bind(this)
+                        return this._refreshTargetList().then(() => null);
                     }
+                    return Promise.resolve();
                 });
         }
     }
@@ -537,7 +538,8 @@ export class CMakeTools {
                 : this._refreshToolsCacheContent().then(cache => {
                     this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config<string>('initialBuildType');
                 }));
-            prom.then(() => {
+            prom.then(this._refreshTargetList.bind(this))
+                .then(() => {
                 this.statusMessage = 'Ready';
             });
         })
@@ -625,12 +627,16 @@ export class CMakeTools {
                 silent: true
             });
             const lines = result.stdout.split('\n');
-            const important_lines = generator.endsWith('Makefiles')
+            const important_lines = (generator.endsWith('Makefiles')
                 ? lines.filter(l => l.startsWith('... '))
-                : lines.filter(l => l.indexOf(': ') !== -1);
+                : lines.filter(l => l.indexOf(': ') !== -1))
+                    .filter(l => !l.includes('All primary targets'));
             this._targets = important_lines
-                .map(l => l.substr(4))
-                .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l);
+                .map(l => generator.endsWith('Makefiles')
+                        ? l.substr(4)
+                        : l)
+                .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
+                .map(l => l.replace(':', ''));
         }
         this.statusMessage = 'Ready';
         return this._targets;
@@ -1140,6 +1146,9 @@ export class CMakeTools {
                 .concat(extra_args)
         );
         this.statusMessage = 'Ready';
+        if (!result.retc) {
+            this._refreshTargetList();
+        }
         return result.retc;
     }
 
@@ -1193,6 +1202,9 @@ export class CMakeTools {
         if (this.config<boolean>('parseBuildDiagnostics')) {
             this._buildDiags.clear();
             await this.parseDiagnostics(result);
+        }
+        if (!result.retc) {
+            this._refreshTargetList();
         }
         return result.retc;
     }
