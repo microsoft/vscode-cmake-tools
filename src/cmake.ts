@@ -385,14 +385,16 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    private reloadCMakeCache() {
-        return (
-        (this.cmakeCache && this.cmakeCache.path === this.cachePath)
-            ? this.cmakeCache.getReloaded()
-            : CMakeCache.fromPath(this.cachePath)
-        ).then(cache => {
-            this.cmakeCache = cache;
-        });
+    private async reloadCMakeCache() {
+        if (this.cmakeCache && this.cmakeCache.path === this.cachePath) {
+            this.cmakeCache = await this.cmakeCache.getReloaded();
+        } else {
+            this.cmakeCache = await CMakeCache.fromPath(this.cachePath);
+        }
+        if (this.cmakeCache.exists) {
+            await this._refreshTargetList();
+        }
+        return this.cmakeCache;
     }
 
     private _executableTargets: ExecutableTarget[];
@@ -428,35 +430,31 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    private _reloadMetaData() {
-        return async.exists(this.metaPath).then(exists => {
-            if (exists) {
-                return async.readFile(this.metaPath).then(buffer => {
-                    const content = buffer.toString();
-                    const tuples = content
-                        .split('\n')
-                        .map(l => l.trim())
-                        .filter(l => !!l.length)
-                        .map(l => l.split(';'));
-                    this.executableTargets = tuples
-                        .filter(tup => tup[0] === 'executable')
-                        .map(tup => ({
-                            name: tup[1],
-                            path: tup[2],
-                        }));
-                    const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system');
-                    this.os = os || null;
-                    this.systemProcessor = proc || null;
-                    this.compilerId = cid || null;
-                });
-            } else {
-                this.executableTargets = [];
-                this.os = null;
-                this.systemProcessor = null;
-                this.compilerId = null;
-                return Promise.resolve();
-            }
-        });
+    private async _reloadMetaData() {
+        if (await async.exists(this.metaPath)) {
+            const buffer = await async.readFile(this.metaPath);
+            const content = buffer.toString();
+            const tuples = content
+                .split('\n')
+                .map(l => l.trim())
+                .filter(l => !!l.length)
+                .map(l => l.split(';'));
+            this.executableTargets = tuples
+                .filter(tup => tup[0] === 'executable')
+                .map(tup => ({
+                    name: tup[1],
+                    path: tup[2],
+                }));
+            const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system');
+            this.os = os || null;
+            this.systemProcessor = proc || null;
+            this.compilerId = cid || null;
+        } else {
+            this.executableTargets = [];
+            this.os = null;
+            this.systemProcessor = null;
+            this.compilerId = null;
+        }
     }
 
     private _reloadConfiguration() {
@@ -1148,8 +1146,7 @@ export class CMakeTools {
         this.statusMessage = 'Ready';
         if (!result.retc) {
             this.reloadCMakeCache()
-                .then(this._refreshTargetList.bind(this))
-                .then(this._reloadMetaData.bind(this));
+            this._reloadMetaData();
         }
         return result.retc;
     }
@@ -1207,8 +1204,7 @@ export class CMakeTools {
         }
         if (!result.retc) {
             this.reloadCMakeCache()
-                .then(this._refreshTargetList.bind(this))
-                .then(this._reloadMetaData.bind(this));
+            this._reloadMetaData();
         }
         return result.retc;
     }
