@@ -83,6 +83,8 @@ endif()
 
 type Maybe<T> = (T | null);
 
+const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
+
 export function isTruthy(value: (boolean | string | null | undefined | number)) {
     if (typeof value === 'string') {
         return !(
@@ -275,6 +277,7 @@ export class ToolsCacheFile {
 }
 
 export class CMakeTools {
+    private _context: vscode.ExtensionContext;
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
     private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.010);
@@ -515,7 +518,8 @@ export class CMakeTools {
         this._reloadMetaData();
     }
 
-    constructor() {
+    constructor(ctx: vscode.ExtensionContext) {
+        this._context = ctx;
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
@@ -541,6 +545,26 @@ export class CMakeTools {
                     this.statusMessage = 'Ready';
                 });
         })
+
+        const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
+        if (!dontBother && Math.random() < 0.1) {
+            vscode.window.showInformationMessage(
+                'Did you know CMake Tools now provides experimental debugger integration?',
+                {
+                    title: 'Don\'t bother me again',
+                    action: 'never'
+                },
+                {
+                    title: 'Tell me more',
+                    action: 'open_link'
+                }).then(chosen => {
+                    if (chosen.action === 'never') {
+                        ctx.globalState.update('debugTargets.neverBother', true);
+                    } else if (chosen.action === 'open_link') {
+                        open('https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md');
+                    }
+                });
+        }
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
         this._needsReconfigure = true;

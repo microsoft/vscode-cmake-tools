@@ -231,5 +231,8 @@
     "devDependencies": {
         "typescript": "^2.0",
         "vscode": "^0.11.0"
+    },
+    "dependencies": {
+        "open": "0.0.5"
     }
 }

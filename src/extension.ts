@@ -8,7 +8,7 @@ import * as path from 'path';
 import * as cmake_mod from './cmake';
 
 export function activate(context: vscode.ExtensionContext) {
-    const cmake = new cmake_mod.CMakeTools();
+    const cmake = new cmake_mod.CMakeTools(context);
 
     function register(name, fn) {
         fn = fn.bind(cmake);
