@@ -499,7 +499,7 @@ export class CMakeTools {
                 this.selectedBuildType = this.config<string>('initialBuildType');
             });
         });
-        this.reloadCMakeCache();
+        return this.reloadCMakeCache();
     }
 
     private _metaWatcher: vscode.FileSystemWatcher;
@@ -1090,7 +1090,7 @@ export class CMakeTools {
             } else {
                 console.error("None of the preferred generators was selected");
             }
-            this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
+            // this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
         }
 
         settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
