@@ -46,7 +46,8 @@ if(NOT is_set_up)
     macro(\${_cmt_add_library} target)
         _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
         get_target_property(type \${target} TYPE)
-        if(NOT type STREQUAL "INTERFACE_LIBRARY")
+        message(STATUS "\${target}: \${type}")
+        if(NOT type MATCHES "^(INTERFACE_LIBRARY|OBJECT_LIBRARY)$")
             get_target_property(imported \${target} IMPORTED)
             get_target_property(alias \${target} ALIAS)
             if(NOT imported AND NOT alias)
@@ -540,8 +541,8 @@ export class CMakeTools {
                 }));
             prom.then(this._refreshTargetList.bind(this))
                 .then(() => {
-                this.statusMessage = 'Ready';
-            });
+                    this.statusMessage = 'Ready';
+                });
         })
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
