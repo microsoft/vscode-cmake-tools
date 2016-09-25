@@ -105,6 +105,12 @@ to the right of the buttons. Invoking a command will open the CMake/Build output
 channel, where the progress and output of the build/configure commands can be
 seen.
 
+## Target Debugging
+
+An experimental, *Target Debugging*, allows developers to easily use the Visual
+Studio Code Debugger with their CMake targets without having to write a
+``launch.json``. [Read about enabling and using the feature here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md).
+
 ## Other Features
 
 CMake Tools also parses the compiler output of GCC, Clang, and MSVC looking for
@@ -114,6 +120,15 @@ or errors.
 CMake Tools also provides a command for running CTest tests.
 
 ## Change History
+
+### Version 0.5.0
+
+- **NEW** Target Debugging feature. This feature is still experimental, and
+  is disabled by default. [Click here to learn about how to enable and use
+  this new feature](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md),
+  and [click here to provide feedback.](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
+- Updated to use TypeScript 2.0, which brings more stability and code simplicity
+  behind the scenes.
 
 ### Version 0.4.1
 

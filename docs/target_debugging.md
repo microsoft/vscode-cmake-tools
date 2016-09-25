@@ -67,3 +67,9 @@ CMake Tools will discover them each time you re-configure the project. CMake
 Tools will also rebuild the target associated with the executables when
 that target is about to be debugged, so there is no need to worry about ensuring
 the target is built before debugging.
+
+## Configuring the debugger
+
+CMake Tools generates a debugging configuration object on-the-fly, when
+debugging is requested. To set some additional parameters to this debug
+configuration, use the ``cmake.debugConfig``.
