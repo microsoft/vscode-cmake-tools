@@ -1012,7 +1012,7 @@ export class CMakeTools {
                 vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
                 continue;
             }
-            if (await delegate())
+            if (await delegate.bind(this)())
                 return gen;
             else
                 console.log('Generator "' + gen + '" is not supported');
@@ -1115,13 +1115,13 @@ export class CMakeTools {
             if (value === true || value === false)
                 value = value ? "TRUE" : "FALSE";
             if (typeof(value) === 'string')
-                value = (value as string).replace(';', '\\;');
+                value = (value as string)
+                    .replace(';', '\\;')
+                    .replace('${workspaceRoot}', vscode.workspace.rootPath)
+                    .replace('${buildType}', this.selectedBuildType);
             if (value instanceof Array)
                 value = value.join(';');
-            value = value
-                .replace('${workspaceRoot}', vscode.workspace.rootPath)
-                .replace('${buildType}', this.selectedBuildType);
-            settings_args.push("-D" + key + "=" + value);
+            settings_args.push("-D" + key + "=" + value.toString());
         }
         let prefix = this.config<string>("installPrefix");
         if (prefix && prefix !== "") {
