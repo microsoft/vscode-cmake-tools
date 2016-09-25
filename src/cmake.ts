@@ -547,7 +547,7 @@ export class CMakeTools {
         })
 
         const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
-        if (!dontBother && Math.random() < 0.1) {
+        if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.1) {
             vscode.window.showInformationMessage(
                 'Did you know CMake Tools now provides experimental debugger integration?',
                 {
