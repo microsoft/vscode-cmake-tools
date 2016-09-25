@@ -16,6 +16,10 @@ automatically by CMake Tools when a target-based debug is invoked.
 
 This feature is experimental, and may or may not work with all CMake versions.
 As such, it is opt-in for now, until the feature's stability can be determined.
+To help accelerate this feature's development, please [provide feedback on
+the associated GitHub issue here](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
+Simply leaving a +1 is very useful to see how many people successfully use
+the feature! Thanks!
 
 ## Enabling Target Debugging
 
