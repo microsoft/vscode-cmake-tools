@@ -46,7 +46,7 @@ if(NOT is_set_up)
     macro(\${_cmt_add_library} target)
         _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
         get_target_property(type \${target} TYPE)
-        if(NOT type STREQUAL "INTERFACE_LIBRARY")
+        if(NOT type MATCHES "^(INTERFACE_LIBRARY|OBJECT_LIBRARY)$")
             get_target_property(imported \${target} IMPORTED)
             get_target_property(alias \${target} ALIAS)
             if(NOT imported AND NOT alias)
@@ -82,6 +82,8 @@ endif()
 `
 
 type Maybe<T> = (T | null);
+
+const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 export function isTruthy(value: (boolean | string | null | undefined | number)) {
     if (typeof value === 'string') {
@@ -275,6 +277,7 @@ export class ToolsCacheFile {
 }
 
 export class CMakeTools {
+    private _context: vscode.ExtensionContext;
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
     private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.010);
@@ -362,8 +365,9 @@ export class CMakeTools {
                 .then(this._refreshStatusBarItems.bind(this))
                 .then(() => {
                     if (this.cachePath !== this.cmakeCache.path) {
-                        this._refreshTargetList.bind(this)
+                        return this._refreshTargetList().then(() => null);
                     }
+                    return Promise.resolve();
                 });
         }
     }
@@ -384,14 +388,16 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    private reloadCMakeCache() {
-        return (
-        (this.cmakeCache && this.cmakeCache.path === this.cachePath)
-            ? this.cmakeCache.getReloaded()
-            : CMakeCache.fromPath(this.cachePath)
-        ).then(cache => {
-            this.cmakeCache = cache;
-        });
+    private async reloadCMakeCache() {
+        if (this.cmakeCache && this.cmakeCache.path === this.cachePath) {
+            this.cmakeCache = await this.cmakeCache.getReloaded();
+        } else {
+            this.cmakeCache = await CMakeCache.fromPath(this.cachePath);
+        }
+        if (this.cmakeCache.exists) {
+            await this._refreshTargetList();
+        }
+        return this.cmakeCache;
     }
 
     private _executableTargets: ExecutableTarget[];
@@ -427,35 +433,31 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    private _reloadMetaData() {
-        return async.exists(this.metaPath).then(exists => {
-            if (exists) {
-                return async.readFile(this.metaPath).then(buffer => {
-                    const content = buffer.toString();
-                    const tuples = content
-                        .split('\n')
-                        .map(l => l.trim())
-                        .filter(l => !!l.length)
-                        .map(l => l.split(';'));
-                    this.executableTargets = tuples
-                        .filter(tup => tup[0] === 'executable')
-                        .map(tup => ({
-                            name: tup[1],
-                            path: tup[2],
-                        }));
-                    const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system');
-                    this.os = os || null;
-                    this.systemProcessor = proc || null;
-                    this.compilerId = cid || null;
-                });
-            } else {
-                this.executableTargets = [];
-                this.os = null;
-                this.systemProcessor = null;
-                this.compilerId = null;
-                return Promise.resolve();
-            }
-        });
+    private async _reloadMetaData() {
+        if (await async.exists(this.metaPath)) {
+            const buffer = await async.readFile(this.metaPath);
+            const content = buffer.toString();
+            const tuples = content
+                .split('\n')
+                .map(l => l.trim())
+                .filter(l => !!l.length)
+                .map(l => l.split(';'));
+            this.executableTargets = tuples
+                .filter(tup => tup[0] === 'executable')
+                .map(tup => ({
+                    name: tup[1],
+                    path: tup[2],
+                }));
+            const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system');
+            this.os = os || null;
+            this.systemProcessor = proc || null;
+            this.compilerId = cid || null;
+        } else {
+            this.executableTargets = [];
+            this.os = null;
+            this.systemProcessor = null;
+            this.compilerId = null;
+        }
     }
 
     private _reloadConfiguration() {
@@ -500,7 +502,7 @@ export class CMakeTools {
                 this.selectedBuildType = this.config<string>('initialBuildType');
             });
         });
-        this.reloadCMakeCache();
+        return this.reloadCMakeCache();
     }
 
     private _metaWatcher: vscode.FileSystemWatcher;
@@ -516,7 +518,8 @@ export class CMakeTools {
         this._reloadMetaData();
     }
 
-    constructor() {
+    constructor(ctx: vscode.ExtensionContext) {
+        this._context = ctx;
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
@@ -537,10 +540,31 @@ export class CMakeTools {
                 : this._refreshToolsCacheContent().then(cache => {
                     this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config<string>('initialBuildType');
                 }));
-            prom.then(() => {
-                this.statusMessage = 'Ready';
-            });
+            prom.then(this._refreshTargetList.bind(this))
+                .then(() => {
+                    this.statusMessage = 'Ready';
+                });
         })
+
+        const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
+        if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.1) {
+            vscode.window.showInformationMessage(
+                'Did you know CMake Tools now provides experimental debugger integration?',
+                {
+                    title: 'Don\'t bother me again',
+                    action: 'never'
+                },
+                {
+                    title: 'Tell me more',
+                    action: 'open_link'
+                }).then(chosen => {
+                    if (chosen.action === 'never') {
+                        ctx.globalState.update('debugTargets.neverBother', true);
+                    } else if (chosen.action === 'open_link') {
+                        open('https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md');
+                    }
+                });
+        }
 
         this._lastConfigureSettings = this.config<Object>('configureSettings');
         this._needsReconfigure = true;
@@ -625,12 +649,16 @@ export class CMakeTools {
                 silent: true
             });
             const lines = result.stdout.split('\n');
-            const important_lines = generator.endsWith('Makefiles')
+            const important_lines = (generator.endsWith('Makefiles')
                 ? lines.filter(l => l.startsWith('... '))
-                : lines.filter(l => l.indexOf(': ') !== -1);
+                : lines.filter(l => l.indexOf(': ') !== -1))
+                    .filter(l => !l.includes('All primary targets'));
             this._targets = important_lines
-                .map(l => l.substr(4))
-                .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l);
+                .map(l => generator.endsWith('Makefiles')
+                        ? l.substr(4)
+                        : l)
+                .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
+                .map(l => l.replace(':', ''));
         }
         this.statusMessage = 'Ready';
         return this._targets;
@@ -1086,7 +1114,7 @@ export class CMakeTools {
             } else {
                 console.error("None of the preferred generators was selected");
             }
-            this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
+            // this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
         }
 
         settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
@@ -1140,6 +1168,10 @@ export class CMakeTools {
                 .concat(extra_args)
         );
         this.statusMessage = 'Ready';
+        if (!result.retc) {
+            this.reloadCMakeCache()
+            this._reloadMetaData();
+        }
         return result.retc;
     }
 
@@ -1193,6 +1225,10 @@ export class CMakeTools {
         if (this.config<boolean>('parseBuildDiagnostics')) {
             this._buildDiags.clear();
             await this.parseDiagnostics(result);
+        }
+        if (!result.retc) {
+            this.reloadCMakeCache()
+            this._reloadMetaData();
         }
         return result.retc;
     }
@@ -1289,7 +1325,11 @@ export class CMakeTools {
         if (chosen === null)
             return -1;
 
+        const old_build_path = this.binaryDir;
         this.selectedBuildType = chosen;
+        if (this.binaryDir !== old_build_path) {
+            await this._setupCMakeCacheWatcher();
+        }
         return await this.configure();
     }
 
