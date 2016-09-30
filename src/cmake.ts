@@ -276,6 +276,91 @@ export class ToolsCacheFile {
     }
 }
 
+export class ConfigurationReader {
+    public readConfig<T>(key: string) : Maybe<T> {
+        const config = vscode.workspace.getConfiguration('cmake');
+        const value = config.get(key);
+        return (value !== undefined) ? value as T : null;
+    }
+
+    get buildDirectory(): string {
+        return this.readConfig<string>('buildDirectory') as string;
+    }
+
+    get installPrefix(): Maybe<string> {
+        return this.readConfig<string>('installPrefix');
+    }
+
+    get sourceDirectory(): string {
+        return this.readConfig<string>('sourceDirectory') as string;
+    }
+
+    get saveBeforeBuild(): boolean {
+        return !!this.readConfig<boolean>('saveBeforeBuild');
+    }
+
+    get clearOutputBeforeBuild(): boolean {
+        return !!this.readConfig<boolean>('clearOutputBeforeBuild');
+    }
+
+    get configureSettings(): any {
+        return this.readConfig<Object>('configureSettings');
+    }
+
+    get initialBuildType(): Maybe<string> {
+        return this.readConfig<string>('initialBuildType');
+    }
+
+    get preferredGenerators(): string[] {
+        return this.readConfig<string[]>('preferredGenerators') || [];
+    }
+
+    get generator(): Maybe<string> {
+        return this.readConfig<string>('generator');
+    }
+
+    get toolset(): Maybe<string> {
+        return this.readConfig<string>('toolset');
+    }
+
+    get configureArgs(): string[] {
+        return this.readConfig<string[]>('configureArgs') as string[];
+    }
+
+    get buildArgs(): string[] {
+        return this.readConfig<string[]>('buildArgs') as string[];
+    }
+
+    get buildToolArgs(): string[] {
+        return this.readConfig<string[]>('buildToolArgs') as string[];
+    }
+
+    get parallelJobs(): Maybe<number> {
+        return this.readConfig<number>('parallelJobs');
+    }
+
+    get ctest_parallelJobs(): Maybe<number> {
+        return this.readConfig<number>('ctest.parallelJobs');
+    }
+
+    get parseBuildDiagnostics(): boolean {
+        return !!this.readConfig<boolean>('parseBuildDiagnostics');
+    }
+
+    get cmakePath(): string {
+        return this.readConfig<string>('cmakePath') as string;
+    }
+
+    // TODO: Implement a DebugConfig interface type
+    // get debugConfig(): DebugConfig {
+    //     return this._read<DebugConfig>('debugConfig');
+    // }
+
+    get experimental_enableTargetDebugging(): boolean {
+        return !!this.readConfig<boolean>('experimental.enableTargetDebugging');
+    }
+}
+
 export class CMakeTools {
     private _context: vscode.ExtensionContext;
     private _channel: vscode.OutputChannel;
@@ -294,6 +379,7 @@ export class CMakeTools {
     public os: Maybe<string>;
     public systemProcessor: Maybe<string>;
     public compilerId: Maybe<string>;
+    public config: ConfigurationReader = new ConfigurationReader();
 
     private _cmakeCache: CMakeCache;
     public get cmakeCache() {
@@ -373,7 +459,7 @@ export class CMakeTools {
     }
 
     public get debugTargetsEnabled(): boolean {
-        return this.config<boolean>('experimental.enableTargetDebugging');
+        return this.config.experimental_enableTargetDebugging;
     }
 
     /**
@@ -461,13 +547,13 @@ export class CMakeTools {
     }
 
     private _reloadConfiguration() {
-        const new_settings = this.config<Object>('configureSettings');
+        const new_settings = this.config.configureSettings;
         this._needsReconfigure = JSON.stringify(new_settings) !== JSON.stringify(this._lastConfigureSettings);
         this._lastConfigureSettings = new_settings;
         // A config change could require reloading the CMake Cache (ie. changing the build path)
         this._setupCMakeCacheWatcher();
         // Use may have disabled build diagnostics.
-        if (!this.config<boolean>('parseBuildDiagnostics')) {
+        if (!this.config.parseBuildDiagnostics) {
             this._buildDiags.clear();
         }
         if (this.debugTargetsEnabled && !this._metaWatcher) {
@@ -482,7 +568,7 @@ export class CMakeTools {
 
     private async _refreshToolsCacheContent() {
         this._extCacheContent = await ToolsCacheFile.readCache(this._extCachePath, {
-            selectedBuildType: this.config<string>('initialBuildType')
+            selectedBuildType: this.config.initialBuildType
         });
         this._writeCacheContent();
         this._setupCMakeCacheWatcher();
@@ -499,7 +585,7 @@ export class CMakeTools {
         this._cmCacheWatcher.onDidCreate(this.reloadCMakeCache.bind(this));
         this._cmCacheWatcher.onDidDelete(() => {
             this.reloadCMakeCache().then(() => {
-                this.selectedBuildType = this.config<string>('initialBuildType');
+                this.selectedBuildType = this.config.initialBuildType;
             });
         });
         return this.reloadCMakeCache();
@@ -538,7 +624,7 @@ export class CMakeTools {
             const prom: Promise<any> = (bt && !this.isMultiConf
                 ? Promise.resolve(this.selectedBuildType = bt.as<string>())
                 : this._refreshToolsCacheContent().then(cache => {
-                    this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config<string>('initialBuildType');
+                    this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config.initialBuildType;
                 }));
             prom.then(this._refreshTargetList.bind(this))
                 .then(() => {
@@ -566,7 +652,7 @@ export class CMakeTools {
                 });
         }
 
-        this._lastConfigureSettings = this.config<Object>('configureSettings');
+        this._lastConfigureSettings = this.config.configureSettings;
         this._needsReconfigure = true;
         vscode.workspace.onDidChangeConfiguration(() => {
             console.log('Reloading CMakeTools after configuration change');
@@ -586,7 +672,7 @@ export class CMakeTools {
 
         if (this.cmakeCache.exists &&
                 this.isMultiConf &&
-                this.config<string>('buildDirectory').includes('${buildType}')
+                this.config.buildDirectory.includes('${buildType}')
             ) {
             vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
         }
@@ -822,20 +908,10 @@ export class CMakeTools {
     }
 
     /**
-     * @brief Obtain a configuration entry from the cmake section.
-     *
-     * @tparam T The type that will be taken from the config
-     * @param defaultValue The default value to return if the config entry does not exist
-     */
-    public config<T>(key: string, defaultValue?: any): T {
-        return vscode.workspace.getConfiguration('cmake').get<T>(key, defaultValue);
-    }
-
-    /**
      * @brief Read the source directory from the config
      */
     public get sourceDir(): string {
-        return this.config<string>('sourceDirectory').replace('${workspaceRoot}', vscode.workspace.rootPath);
+        return this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
     }
 
     /**
@@ -849,7 +925,7 @@ export class CMakeTools {
      * @brief Get the path to the binary dir
      */
     public get binaryDir(): string {
-        return this.config<string>('buildDirectory')
+        return this.config.buildDirectory
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
             .replace('${buildType}', this.selectedBuildType || 'Unknown');
     }
@@ -899,7 +975,7 @@ export class CMakeTools {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
-            const pipe = proc.spawn(this.config<string>('cmakePath', 'cmake'), args);
+            const pipe = proc.spawn(this.config.cmakePath, args);
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
             if (!silent) {
                 this.currentChildProcess = pipe;
@@ -1016,6 +1092,12 @@ export class CMakeTools {
 
     // Given a list of CMake generators, returns the first one available on this system
     public async pickGenerator(candidates: string[]): Promise<Maybe<string>> {
+        // The user can override our automatic selection logic in their config
+        const generator = this.config.generator;
+        if (generator) {
+            // User has explicitly requested a certain generator. Use that one.
+            return generator;
+        }
         for (const gen of candidates) {
             if (!gen)
                 continue;
@@ -1049,18 +1131,18 @@ export class CMakeTools {
     }
 
     private async _prebuild() {
-        if (this.config<boolean>("clearOutputBeforeBuild")) {
+        if (this.config.clearOutputBeforeBuild) {
             this._channel.clear();
         }
 
-        if (this.config<boolean>("saveBeforeBuild") && vscode.workspace.textDocuments.some(doc => doc.isDirty)) {
+        if (this.config.saveBeforeBuild && vscode.workspace.textDocuments.some(doc => doc.isDirty)) {
             this._channel.appendLine("[vscode] Saving unsaved text documents...");
             await vscode.workspace.saveAll();
         }
     }
 
     public get numJobs(): number {
-        const jobs = this.config<number>("parallelJobs");
+        const jobs = this.config.parallelJobs;
         if (!!jobs) {
             return jobs;
         }
@@ -1068,8 +1150,8 @@ export class CMakeTools {
     }
 
     public get numCTestJobs(): number {
-        const ctest_jobs = this.config<number>("ctest.parallelJobs");
-        if (ctest_jobs === 0) {
+        const ctest_jobs = this.config.ctest_parallelJobs;
+        if (!ctest_jobs) {
             return this.numJobs;
         }
         return ctest_jobs;
@@ -1107,7 +1189,7 @@ export class CMakeTools {
         const settings_args: string[] = [];
         if (!this.cmakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
-            const generator = await this.pickGenerator(this.config<string[]>("preferredGenerators"));
+            const generator = await this.pickGenerator(this.config.preferredGenerators);
             if (generator) {
                 this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
                 settings_args.push("-G" + generator);
@@ -1117,9 +1199,14 @@ export class CMakeTools {
             // this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
         }
 
+        const toolset = this.config.toolset;
+        if (toolset) {
+            settings_args.push('-T' + toolset);
+        }
+
         settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
 
-        const settings = Object.assign({}, this.config<Object>("configureSettings"));
+        const settings = Object.assign({}, this.config.configureSettings);
 
         if (!(await async.exists(this.binaryDir))) {
             await fs.mkdir(this.binaryDir);
@@ -1151,7 +1238,7 @@ export class CMakeTools {
                 value = value.join(';');
             settings_args.push("-D" + key + "=" + value.toString());
         }
-        let prefix = this.config<string>("installPrefix");
+        let prefix = this.config.installPrefix;
         if (prefix && prefix !== "") {
             prefix = prefix
                 .replace('${workspaceRoot}', vscode.workspace.rootPath)
@@ -1166,6 +1253,7 @@ export class CMakeTools {
              '-B' + binary_dir.replace(/\\/g, path.posix.sep)]
                 .concat(settings_args)
                 .concat(extra_args)
+                .concat(this.config.configureArgs)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1220,9 +1308,17 @@ export class CMakeTools {
             '--build', this.binaryDir,
             '--target', target,
             '--config', this.selectedBuildType || 'Debug',
-            '--'].concat(generator_args));
+        ]
+            .concat(this.config.buildArgs)
+            .concat([
+                '--'
+            ]
+                .concat(generator_args)
+                .concat(this.config.buildToolArgs)
+            )
+        );
         this.statusMessage = 'Ready';
-        if (this.config<boolean>('parseBuildDiagnostics')) {
+        if (this.config.parseBuildDiagnostics) {
             this._buildDiags.clear();
             await this.parseDiagnostics(result);
         }
@@ -1359,7 +1455,7 @@ export class CMakeTools {
                 ? 'cppvsdbg'
                 : 'cppdbg',
         }
-        const configs = this.config<any>("debugConfig");
+        const configs = this.config.readConfig<any>("debugConfig");
         Object.assign(config, configs.all);
         config['program'] = target.path;
         vscode.commands.executeCommand('vscode.startDebug', config);
