@@ -175,6 +175,11 @@
                     "default": null,
                     "description": "The CMake generator to use"
                 },
+                "cmake.toolset": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
                 "cmake.parallelJobs": {
                     "type": "number",
                     "default": 0,

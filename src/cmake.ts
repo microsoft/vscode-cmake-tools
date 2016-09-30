@@ -1180,11 +1180,16 @@ export class CMakeTools {
             const generator = await this.pickGenerator(this.config.preferredGenerators);
             if (generator) {
                 this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
-                settings_args.push("-G", generator);
+                settings_args.push("-G" + generator);
             } else {
                 console.error("None of the preferred generators was selected");
             }
             // this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
+        }
+
+        const toolset = this.config.toolset;
+        if (toolset) {
+            settings_args.push('-T' + toolset);
         }
 
         settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
