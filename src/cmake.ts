@@ -963,7 +963,7 @@ export class CMakeTools {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
-            const pipe = proc.spawn(this.config.cmakePath);
+            const pipe = proc.spawn(this.config.cmakePath, args);
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
             if (!silent) {
                 this.currentChildProcess = pipe;
