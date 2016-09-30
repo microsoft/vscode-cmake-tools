@@ -1016,6 +1016,12 @@ export class CMakeTools {
 
     // Given a list of CMake generators, returns the first one available on this system
     public async pickGenerator(candidates: string[]): Promise<Maybe<string>> {
+        // The user can override our automatic selection logic in their config
+        const generator = this.config<Maybe<string>>('generator');
+        if (generator) {
+            // User has explicitly requested a certain generator. Use that one.
+            return generator;
+        }
         for (const gen of candidates) {
             if (!gen)
                 continue;
