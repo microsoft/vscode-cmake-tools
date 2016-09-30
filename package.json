@@ -180,6 +180,31 @@
                     "default": null,
                     "description": "The CMake toolset to use when configuring"
                 },
+                "cmake.configureArgs": {
+                    "type": "array",
+                    "description": "Additional arguments to pass to CMake when configuring",
+                    "items": {
+                        "type": "string",
+                        "title": "CMake Arguments"
+                    },
+                    "default": []
+                },
+                "cmake.buildArgs": {
+                    "type": "array",
+                    "description": "Additional arguments to pass to CMake when building",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": []
+                },
+                "cmake.buildToolArgs": {
+                    "type": "array",
+                    "description": "Additional arguments to pass to the underlying build tool when building",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": []
+                },
                 "cmake.parallelJobs": {
                     "type": "number",
                     "default": 0,

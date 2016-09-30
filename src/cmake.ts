@@ -323,6 +323,18 @@ export class ConfigurationReader {
         return this.readConfig<string>('toolset');
     }
 
+    get configureArgs(): string[] {
+        return this.readConfig<string[]>('configureArgs') as string[];
+    }
+
+    get buildArgs(): string[] {
+        return this.readConfig<string[]>('buildArgs') as string[];
+    }
+
+    get buildToolArgs(): string[] {
+        return this.readConfig<string[]>('buildToolArgs') as string[];
+    }
+
     get parallelJobs(): Maybe<number> {
         return this.readConfig<number>('parallelJobs');
     }
@@ -1241,6 +1253,7 @@ export class CMakeTools {
              '-B' + binary_dir.replace(/\\/g, path.posix.sep)]
                 .concat(settings_args)
                 .concat(extra_args)
+                .concat(this.config.configureArgs)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1295,7 +1308,15 @@ export class CMakeTools {
             '--build', this.binaryDir,
             '--target', target,
             '--config', this.selectedBuildType || 'Debug',
-            '--'].concat(generator_args));
+        ]
+            .concat(this.config.buildArgs)
+            .concat([
+                '--'
+            ]
+                .concat(generator_args)
+                .concat(this.config.buildToolArgs)
+            )
+        );
         this.statusMessage = 'Ready';
         if (this.config.parseBuildDiagnostics) {
             this._buildDiags.clear();
