@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import * as cmake_tools_ext from '../src/extension';
 
 import * as cmake from '../src/cmake';
+import * as diagnostics from '../src/diagnostics';
 
 const here = __dirname;
 
@@ -94,4 +95,18 @@ suite("Utility tests", () => {
             assert.strictEqual(cmake.isTruthy(thing), true, 'Testing truthiness of ' + thing);
         }
     });
+    test('Parsing Apple Clang Diagnostics', () => {
+        const line = '/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h:85:15: warning: comparison of unsigned expression >= 0 is always true [-Wtautological-compare]';
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 84);
+            assert.strictEqual(diag.message, 'comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
+            assert.strictEqual(diag.column, 14);
+            assert.strictEqual(diag.file, '/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h');
+            assert.strictEqual(diag.severity, 'warning');
+            assert.strictEqual(path.normalize(diag.file), diag.file);
+            assert(path.isAbsolute(diag.file));
+        }
+    })
 });

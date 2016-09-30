@@ -8,6 +8,8 @@ import * as os from 'os';
 import * as vscode from 'vscode';
 
 import * as async from './async';
+import * as diagnostics from './diagnostics';
+import {Maybe} from './util';
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
@@ -80,8 +82,6 @@ if(NOT is_set_up)
     endfunction()
 endif()
 `
-
-type Maybe<T> = (T | null);
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
