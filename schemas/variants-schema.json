@@ -1,0 +1,88 @@
+{
+    "type": "object",
+    "description": "Objects of sub-variants",
+    "additionalProperties": false,
+    "patternProperties": {
+        "^\\w+$": {
+            "type": "object",
+            "properties": {
+                "-description": {
+                    "description": "A description of this sub-variant",
+                    "type": "string"
+                },
+                "-default": {
+                    "description": "The default setting for this sub-variant",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "-description",
+                "-default"
+            ],
+            "minProperties": 4,
+            "additionalProperties": false,
+            "patternProperties": {
+                "^\\w+$": {
+                    "type": "object",
+                    "description": "A sub-variant",
+                    "properties": {
+                        "oneWordSummary": {
+                            "type": "string",
+                            "description": "A simple one-word description of this option"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "A lengthier description of what this setting does"
+                        },
+                        "buildType": {
+                            "type": "string",
+                            "default": "Debug",
+                            "description": "The value of CMAKE_BUILD_TYPE for this variant"
+                        },
+                        "linkage": {
+                            "type": "string",
+                            "enum": [
+                                "static",
+                                "shared"
+                            ],
+                            "default": "static",
+                            "description": "Sets the value of BUILD_SHARED on the CMake command line"
+                        },
+                        "settings": {
+                            "type": "object",
+                            "description": "The -D arguments to pass to CMake for this variant",
+                            "additionalProperties": {
+                                "anyOf": [
+                                    {
+                                        "type": "string"
+                                    },
+                                    {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    {
+                                        "type": "integer"
+                                    },
+                                    {
+                                        "type": "boolean"
+                                    }
+                                ]
+                            }
+                        },
+                        "generator": {
+                            "type": "string",
+                            "description": "The CMake generator to use for this variant",
+                            "default": "Ninja"
+                        },
+                        "toolset": {
+                            "type": "string",
+                            "description": "The generator toolset to use for this variant"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

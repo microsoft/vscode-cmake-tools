@@ -256,6 +256,12 @@
                 "key": "f7",
                 "command": "cmake.build"
             }
+        ],
+        "jsonValidation": [
+            {
+                "fileMatch": "cmake-variants.json",
+                "url": "./schemas/variants-schema.json"
+            }
         ]
     },
     "scripts": {
@@ -268,6 +274,10 @@
         "vscode": "^0.11.0"
     },
     "dependencies": {
-        "open": "0.0.5"
+        "open": "0.0.5",
+        "js-yaml": "^3.6.1",
+        "@types/js-yaml": "^3.5.28",
+        "ajv": "^4.7.5",
+        "@types/ajv": "^0.0.3"
     }
 }
