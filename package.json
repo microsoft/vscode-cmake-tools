@@ -175,6 +175,21 @@
                     "default": null,
                     "description": "The CMake generator to use"
                 },
+                "cmake.generator.windows": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake generator to use on Windows"
+                },
+                "cmake.generator.linux": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake generator to use on Linux"
+                },
+                "cmake.generator.osx": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake generator to use on OSX/macOS"
+                },
                 "cmake.toolset": {
                     "type": "string",
                     "default": null,

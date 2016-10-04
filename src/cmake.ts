@@ -304,10 +304,10 @@ export namespace WorkspaceCacheFile {
 }
 
 export class ConfigurationReader {
-    public readConfig<T>(key: string) : Maybe<T> {
+    public readConfig<T>(key: string, default_: Maybe<T> = null) : Maybe<T> {
         const config = vscode.workspace.getConfiguration('cmake');
         const value = config.get(key);
-        return (value !== undefined) ? value as T : null;
+        return (value !== undefined) ? value as T : default_;
     }
 
     get buildDirectory(): string {
@@ -343,7 +343,12 @@ export class ConfigurationReader {
     }
 
     get generator(): Maybe<string> {
-        return this.readConfig<string>('generator');
+        const platform = {
+            win32: 'windows',
+            darwin: 'osx',
+            linux: 'linux'
+        }[os.platform()];
+        return this.readConfig<string>(`generator.${platform}`, this.readConfig<string>('generator'));
     }
 
     get toolset(): Maybe<string> {
@@ -392,11 +397,12 @@ export class CMakeTools {
     private _context: vscode.ExtensionContext;
     private _channel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
-    private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.010);
-    private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.005);
-    private _targetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.003);
-    private _debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.002);
-    private _debugTargetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+    private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
+    private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
+    private _targetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
+    private _debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.2);
+    private _debugTargetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
+    private _warningMessage = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
@@ -1174,7 +1180,10 @@ export class CMakeTools {
                 if (retc !== null) {
                     status('CMake exited with status ' + retc);
                     if (retc !== 0) {
-                        vscode.window.showWarningMessage('CMake exited with non-zero return code ' + retc + '. See CMake/Build output for details');
+                        this._warningMessage.color = 'yellow';
+                        this._warningMessage.text = `$(alert) CMake failed with status ${retc}. See CMake/Build output for details`;
+                        this._warningMessage.show();
+                        setTimeout(() => this._warningMessage.hide(), 5000);
                     }
                 }
 
