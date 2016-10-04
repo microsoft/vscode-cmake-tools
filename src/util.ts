@@ -23,17 +23,17 @@ export namespace Util {
 
   type Maybe<T> = (T|null);
 
-  export interface ConfigureSetting {
+  export interface ConfigureArguments {
     key: string;
     value: (string|string[]|number|boolean);
   }
 
-  export interface VariantSettingOption {
+  export interface VariantConfigurationOptions {
     oneWordSummary?: string;
     description?: string;
     buildType?: Maybe<string>;
     linkage?: Maybe<string>;
-    settings?: ConfigureSetting[];
+    settings?: ConfigureArguments[];
     generator?: Maybe<string>;
     toolset?: Maybe<string>;
   }
@@ -44,13 +44,13 @@ export namespace Util {
     description: string;
     default:
       string;
-    choices: Map<string, VariantSettingOption>;
+    choices: Map<string, VariantConfigurationOptions>;
   }
 
   export type VariantSet = Map<string, VariantSetting>;
 
   export interface VariantCombination extends vscode.QuickPickItem {
-    settings: VariantSettingOption;
+    keywordSettings: Map<string, string>;
   }
 
   export const DEFAULT_VARIANTS = {
@@ -93,5 +93,9 @@ export namespace Util {
     //     description: 'Emit shared libraries/DLLs'
     //   }
     // }
-  }
+  };
+
+  export interface WorkspaceCache {
+    variant?: Maybe<VariantCombination>;
+  };
 }
