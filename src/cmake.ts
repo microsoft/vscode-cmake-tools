@@ -277,10 +277,10 @@ export class ToolsCacheFile {
 }
 
 export class ConfigurationReader {
-    public readConfig<T>(key: string) : Maybe<T> {
+    public readConfig<T>(key: string, default_: Maybe<T> = null) : Maybe<T> {
         const config = vscode.workspace.getConfiguration('cmake');
         const value = config.get(key);
-        return (value !== undefined) ? value as T : null;
+        return (value !== undefined) ? value as T : default_;
     }
 
     get buildDirectory(): string {
@@ -316,7 +316,12 @@ export class ConfigurationReader {
     }
 
     get generator(): Maybe<string> {
-        return this.readConfig<string>('generator');
+        const platform = {
+            win32: 'windows',
+            darwin: 'osx',
+            linux: 'linux'
+        }[os.platform()];
+        return this.readConfig<string>(`generator.${platform}`, this.readConfig<string>('generator'));
     }
 
     get toolset(): Maybe<string> {
