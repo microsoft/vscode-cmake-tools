@@ -569,14 +569,28 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    private _writeCacheContent() {
+    private _wsCacheWatcher: vscode.FileSystemWatcher;
+    private _setupWorkspaceCacheWatcher() {
+        if (this._wsCacheWatcher) {
+            this._wsCacheWatcher.dispose();
+        }
+        const watch = this._wsCacheWatcher = vscode.workspace.createFileSystemWatcher(this._workspaceCachePath);
+        watch.onDidChange(this._refreshWorkspaceCacheContent.bind(this));
+        watch.onDidCreate(this._refreshWorkspaceCacheContent.bind(this));
+    }
+
+    private _writeWorkspaceCacheContent() {
         return WorkspaceCacheFile.writeCache(this._workspaceCachePath, this._workspaceCacheContent);
     }
 
     private async _refreshWorkspaceCacheContent() {
         this._workspaceCacheContent = await WorkspaceCacheFile.readCache(this._workspaceCachePath, {variant:null});
-        this._writeCacheContent();
+        this._writeWorkspaceCacheContent();
         this._setupCMakeCacheWatcher();
+        if (this._workspaceCacheContent.variant) {
+            this.activeVariantCombination = this._workspaceCacheContent.variant;
+        }
+        this._refreshStatusBarItems();
     }
 
     private _cmCacheWatcher: vscode.FileSystemWatcher;
@@ -673,7 +687,7 @@ export class CMakeTools {
     }
     public set buildVariants(v : Util.VariantSet) {
         this._buildVariants = v;
-        // this._refreshStatusBarItems();
+        this._refreshStatusBarItems();
     }
 
     public get activeVariant() : Util.VariantConfigurationOptions {
@@ -728,7 +742,7 @@ export class CMakeTools {
     public set activeVariantCombination(v : Util.VariantCombination) {
         this._activeVariantCombination = v;
         this._workspaceCacheContent.variant = v;
-        this._writeCacheContent();
+        this._writeWorkspaceCacheContent();
         this._refreshStatusBarItems();
     }
 
@@ -804,7 +818,8 @@ export class CMakeTools {
         const varset = this.activeVariantCombination || {label: 'Unknown'}
         this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${varset.label || 'Unknown'}: ${this.statusMessage}`;
 
-        if (this.cmakeCache.exists &&
+        if (this.cmakeCache &&
+                this.cmakeCache.exists &&
                 this.isMultiConf &&
                 this.config.buildDirectory.includes('${buildType}')
             ) {
@@ -1096,7 +1111,7 @@ export class CMakeTools {
      * @brief Get the name of the "all" target
      */
     public get allTargetName() {
-        if (!this.cmakeCache.exists)
+        if (!this.cmakeCache || !this.cmakeCache.exists)
             return 'all';
         const gen = this.activeGenerator;
         return (gen && /Visual Studio/.test(gen)) ? 'ALL_BUILD' : 'all';
