@@ -190,7 +190,22 @@
                     "default": null,
                     "description": "The CMake generator to use on OSX/macOS"
                 },
-                "cmake.toolset": {
+                "cmake.toolset.all": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.windows": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.linux": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.osx": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake toolset to use when configuring"

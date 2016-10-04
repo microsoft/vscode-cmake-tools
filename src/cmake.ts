@@ -325,7 +325,12 @@ export class ConfigurationReader {
     }
 
     get toolset(): Maybe<string> {
-        return this.readConfig<string>('toolset');
+        const platform = {
+            win32: 'windows',
+            darwin: 'osx',
+            linux: 'linux'
+        }[os.platform()];
+        return this.readConfig<string>(`toolset.${platform}`, this.readConfig<string>(`toolset.all`));
     }
 
     get configureArgs(): string[] {
