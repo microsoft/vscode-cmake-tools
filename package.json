@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.5.4",
+    "version": "0.5.5",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -170,12 +170,42 @@
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },
-                "cmake.generator": {
+                "cmake.generator.all": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake generator to use"
                 },
-                "cmake.toolset": {
+                "cmake.generator.windows": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake generator to use on Windows"
+                },
+                "cmake.generator.linux": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake generator to use on Linux"
+                },
+                "cmake.generator.osx": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake generator to use on OSX/macOS"
+                },
+                "cmake.toolset.all": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.windows": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.linux": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.osx": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake toolset to use when configuring"
