@@ -170,7 +170,7 @@
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },
-                "cmake.generator": {
+                "cmake.generator.all": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake generator to use"

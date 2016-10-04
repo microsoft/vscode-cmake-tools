@@ -348,7 +348,7 @@ export class ConfigurationReader {
             darwin: 'osx',
             linux: 'linux'
         }[os.platform()];
-        return this.readConfig<string>(`generator.${platform}`, this.readConfig<string>('generator'));
+        return this.readConfig<string>(`generator.${platform}`, this.readConfig<string>('generator.all'));
     }
 
     get toolset(): Maybe<string> {
