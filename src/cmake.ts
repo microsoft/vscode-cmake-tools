@@ -792,6 +792,31 @@ export class CMakeTools {
     }
 
     /**
+     * @brief Parse GNU-style linker errors
+     */
+    public parseGNULDDiagnostic(line: string): Maybe<FileDiagnostic> {
+        const diag = diagnostics.parseGNULDDiagnostic(line);
+        if (!diag) {
+            return null;
+        }
+        const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, 0, diag.line, Number.POSITIVE_INFINITY),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                note: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'Link';
+        return {
+            filepath: abspath,
+            diag: vsdiag,
+        };
+    }
+
+    /**
      * @brief Obtains a reference to a TextDocument given the name of the file
      */
     private getTextDocumentByFileName(file: string): Maybe<vscode.TextDocument> {
@@ -888,6 +913,7 @@ export class CMakeTools {
      */
     public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         return this.parseGCCDiagnostic(line) ||
+            this.parseGNULDDiagnostic(line) ||
             this.parseMSVCDiagnostic(line);
     }
 
