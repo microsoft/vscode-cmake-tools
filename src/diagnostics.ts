@@ -27,3 +27,23 @@ export function parseGCCDiagnostic(line: string): Maybe<RawDiagnostic> {
         return null;
     }
 }
+
+export function parseGNULDDiagnostic(line): Maybe<RawDiagnostic> {
+    const ld_re = /^(.*):(\d+):\s+(.*)$/;
+    const res = ld_re.exec(line);
+    if (!res) {
+        return null;
+    }
+    const [_, file, lineno, message] = res;
+    if (file && lineno && message) {
+        return {
+            file: file,
+            line: parseInt(lineno) - 1,
+            column: 0,
+            severity: 'error',
+            message: message,
+        };
+    } else {
+        return null;
+    }
+}

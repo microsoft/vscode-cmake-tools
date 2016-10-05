@@ -113,7 +113,7 @@ suite("Utility tests", () => {
         const line = '/some/path/here:4:26: fatal error: some_header.h: No such file or directory';
         const diag = diagnostics.parseGCCDiagnostic(line);
         assert(diag);
-        if( diag) {
+        if (diag) {
             assert.strictEqual(diag.line, 3);
             assert.strictEqual(diag.message, 'some_header.h: No such file or directory');
             assert.strictEqual(diag.column, 25);
@@ -122,5 +122,18 @@ suite("Utility tests", () => {
             assert.strictEqual(path.posix.normalize(diag.file), diag.file);
             assert(path.posix.isAbsolute(diag.file));
         }
-    })
+    });
+    test('Parsing linker error', () => {
+        const line = "/some/path/here:101: undefined reference to `some_function'";
+        const diag = diagnostics.parseGNULDDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 100);
+            assert.strictEqual(diag.message, "undefined reference to `some_function'");
+            assert.strictEqual(diag.file, '/some/path/here');
+            assert.strictEqual(diag.severity, 'error');
+            assert.strictEqual(path.posix.normalize(diag.file), diag.file);
+            assert(path.posix.isAbsolute(diag.file));
+        }
+    });
 });
