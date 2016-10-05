@@ -105,8 +105,22 @@ suite("Utility tests", () => {
             assert.strictEqual(diag.column, 14);
             assert.strictEqual(diag.file, '/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h');
             assert.strictEqual(diag.severity, 'warning');
-            assert.strictEqual(path.normalize(diag.file), diag.file);
-            assert(path.isAbsolute(diag.file));
+            assert.strictEqual(path.posix.normalize(diag.file), diag.file);
+            assert(path.posix.isAbsolute(diag.file));
+        }
+    });
+    test('Parsing fatal error diagnostics', () => {
+        const line = '/some/path/here:4:26: fatal error: some_header.h: No such file or directory';
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        assert(diag);
+        if( diag) {
+            assert.strictEqual(diag.line, 3);
+            assert.strictEqual(diag.message, 'some_header.h: No such file or directory');
+            assert.strictEqual(diag.column, 25);
+            assert.strictEqual(diag.file, '/some/path/here');
+            assert.strictEqual(diag.severity, 'error');
+            assert.strictEqual(path.posix.normalize(diag.file), diag.file);
+            assert(path.posix.isAbsolute(diag.file));
         }
     })
 });
