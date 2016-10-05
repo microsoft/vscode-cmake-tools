@@ -1,9 +1,11 @@
 # VSCode CMake Tools
 
-This extension provides project build and configuration tooling for CMake users
-within Visual Studio Code. This extension itself *does not* provide language
-support for the CMake scripting language.  For that I recommend
-[this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+CMake Tools provided the native developer a full-featured, convenient, and
+powerful configure+build workflow for CMake-based projects within the
+Visual Studio Code editor.
+
+This extension itself *does not* provide language support for the CMake
+scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
 
 ## What's New?
 
@@ -22,6 +24,9 @@ support for the CMake scripting language.  For that I recommend
   - Arbitrary arguments can be passed to CMake during configure, build, and to the
     underlying build tool using the ``cmake.{configureArgs,buildArgs,buildToolArgs}``
     set of configuration options.
+- **0.5.6**: Tweaks to diagnostic parsing:
+  - Now parses for GNU ld-style linker errors
+  - Recognizes "fatal error" in addition to regular errors.
 
 ## Issues? Questions? Feature requests?
 
