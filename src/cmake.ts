@@ -8,6 +8,8 @@ import * as os from 'os';
 import * as vscode from 'vscode';
 
 import * as async from './async';
+import * as diagnostics from './diagnostics';
+import {Maybe} from './util';
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
@@ -80,8 +82,6 @@ if(NOT is_set_up)
     endfunction()
 endif()
 `
-
-type Maybe<T> = (T | null);
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
@@ -768,31 +768,51 @@ export class CMakeTools {
      *      message could be decoded.
      */
     public parseGCCDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const gcc_re = /^(.*):(\d+):(\d+):\s+(warning|error|note):\s+(.*)$/;
-        const res = gcc_re.exec(line);
-        if (!res)
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        if (!diag) {
             return null;
-        const file = res[1];
-        const lineno = Number.parseInt(res[2]) - 1;
-        const column = Number.parseInt(res[3]) - 1;
-        const severity = res[4];
-        const message = res[5];
-        const abspath = path.isAbsolute(file)
-            ? file
-            : path.normalize(path.join(this.binaryDir, file));
-        const diag = new vscode.Diagnostic(
-            new vscode.Range(lineno, column, lineno, column),
-            message,
+        }
+        const abspath = path.isAbsolute(diag.file)
+            ? diag.file
+            : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
+            diag.message,
             {
                 error: vscode.DiagnosticSeverity.Error,
                 warning: vscode.DiagnosticSeverity.Warning,
                 note: vscode.DiagnosticSeverity.Information,
-            }[severity]
+            }[diag.severity]
         );
-        diag.source = 'GCC';
+        vsdiag.source = 'GCC';
         return {
             filepath: abspath,
-            diag: diag,
+            diag: vsdiag,
+        };
+    }
+
+    /**
+     * @brief Parse GNU-style linker errors
+     */
+    public parseGNULDDiagnostic(line: string): Maybe<FileDiagnostic> {
+        const diag = diagnostics.parseGNULDDiagnostic(line);
+        if (!diag) {
+            return null;
+        }
+        const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, 0, diag.line, Number.POSITIVE_INFINITY),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                note: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'Link';
+        return {
+            filepath: abspath,
+            diag: vsdiag,
         };
     }
 
@@ -893,6 +913,7 @@ export class CMakeTools {
      */
     public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         return this.parseGCCDiagnostic(line) ||
+            this.parseGNULDDiagnostic(line) ||
             this.parseMSVCDiagnostic(line);
     }
 
