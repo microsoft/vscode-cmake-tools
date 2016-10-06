@@ -70,6 +70,7 @@ if(NOT is_set_up)
     file(GENERATE
         OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
         INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+        CONDITION "$<CONFIG:Debug>"
         )
 
     function(_cmt_generate_system_info)
