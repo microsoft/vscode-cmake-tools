@@ -1299,8 +1299,9 @@ export class CMakeTools {
         return result.retc;
     }
 
-    public async build(target: Maybe<string> = null): Promise<Number> {
-        if (target === null) {
+    public async build(target_: Maybe<string> = null): Promise<Number> {
+        let target = target_;
+        if (!target_) {
             target = this.defaultBuildTarget || this.allTargetName;
         }
         if (!this.sourceDir) {
@@ -1319,6 +1320,14 @@ export class CMakeTools {
             if (retc !== 0) {
                 return retc;
             }
+            await this.reloadCMakeCache();
+            // We just configured which may change what the "all" target is.
+            if (!target_) {
+                target = this.defaultBuildTarget || this.allTargetName;
+            }
+        }
+        if (!target) {
+            throw new Error('Unable to determine target to build. Something has gone horribly wrong!');
         }
         await this._prebuild();
         if (this._needsReconfigure) {
