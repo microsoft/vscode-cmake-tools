@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 import * as diagnostics from './diagnostics';
-import {Maybe} from './util';
+import {Maybe, util} from './util';
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
@@ -944,37 +944,42 @@ export class CMakeTools {
      * @brief Read the source directory from the config
      */
     public get sourceDir(): string {
-        return this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        const dir = this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        return util.normalizePath(dir);
     }
 
     /**
      * @brief Get the path to the root CMakeLists.txt
      */
     public get mainListFile(): string {
-        return path.join(this.sourceDir, 'CMakeLists.txt');
+        const listfile = path.join(this.sourceDir, 'CMakeLists.txt');
+        return util.normalizePath(listfile);
     }
 
     /**
      * @brief Get the path to the binary dir
      */
     public get binaryDir(): string {
-        return this.config.buildDirectory
+        const dir = this.config.buildDirectory
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
             .replace('${buildType}', this.selectedBuildType || 'Unknown');
+        return util.normalizePath(dir);
     }
 
     /**
      * @brief Get the path to the CMakeCache file in the build directory
      */
     public get cachePath(): string {
-        return path.join(this.binaryDir, 'CMakeCache.txt');
+        const file = path.join(this.binaryDir, 'CMakeCache.txt');
+        return util.normalizePath(file);
     }
 
     /**
      * @brief Get the path to the metadata file
      */
     public get metaPath(): string {
-        return path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        const meta = path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        return util.normalizePath(meta);
     }
 
     /**
