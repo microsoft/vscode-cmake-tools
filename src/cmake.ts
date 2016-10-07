@@ -11,6 +11,8 @@ import * as async from './async';
 import * as diagnostics from './diagnostics';
 import {Maybe, util} from './util';
 
+import {cmake} from './server-client';
+
 const CMAKETOOLS_HELPER_SCRIPT =
 `
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
@@ -616,12 +618,54 @@ export class CMakeTools {
         this._reloadMetaData();
     }
 
+    private _connection: cmake.Client;
+
+    private async _doHandshake(m: cmake.HelloMessage) {
+        console.log('Got a message!');
+        try
+        {
+            let generator = this.activeGenerator;
+            if (!generator) {
+                generator = await this.pickGenerator(this.config.preferredGenerators);
+                if (!generator) {
+                    generator = 'Ninja';
+                }
+            }
+            const res = await this._connection.sendRequest({
+                type: 'handshake',
+                protocolVersion: m.supportedProtocolVersions[0],
+                sourceDirectory: this.sourceDir,
+                buildDirectory: this.binaryDir,
+                generator: generator,
+            });
+            const conf = await this._connection.sendRequest({
+                type: 'configure',
+            });
+            debugger;
+        } catch (e) {
+            debugger;
+        }
+    }
+
     constructor(ctx: vscode.ExtensionContext) {
         this._context = ctx;
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
         this._extCacheContent = {selectedBuildType: null};
+
+        const cl = this._connection = new cmake.Client({
+            cmakePath: this.config.cmakePath,
+            onHello: this._doHandshake.bind(this),
+            onMessage: (m: cmake.MessageMessage) => {
+                console.log(m.message);
+                this._channel.appendLine(m.message);
+            },
+            onProgress: (m: cmake.ProgressMessage) => {
+                console.log(m.progressMessage);
+                this._channel.appendLine(`${m.progressMessage}: ${m.progressCurrent}/${m.progressMaximum}`);
+            }
+        });
 
         // Load up the CMake cache
         CMakeCache.fromPath(this.cachePath).then(cache => {
