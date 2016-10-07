@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 import * as diagnostics from './diagnostics';
-import {Maybe} from './util';
+import {Maybe, util} from './util';
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
@@ -70,6 +70,7 @@ if(NOT is_set_up)
     file(GENERATE
         OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
         INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+        CONDITION "$<CONFIG:Debug>"
         )
 
     function(_cmt_generate_system_info)
@@ -943,37 +944,42 @@ export class CMakeTools {
      * @brief Read the source directory from the config
      */
     public get sourceDir(): string {
-        return this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        const dir = this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        return util.normalizePath(dir);
     }
 
     /**
      * @brief Get the path to the root CMakeLists.txt
      */
     public get mainListFile(): string {
-        return path.join(this.sourceDir, 'CMakeLists.txt');
+        const listfile = path.join(this.sourceDir, 'CMakeLists.txt');
+        return util.normalizePath(listfile);
     }
 
     /**
      * @brief Get the path to the binary dir
      */
     public get binaryDir(): string {
-        return this.config.buildDirectory
+        const dir = this.config.buildDirectory
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
             .replace('${buildType}', this.selectedBuildType || 'Unknown');
+        return util.normalizePath(dir);
     }
 
     /**
      * @brief Get the path to the CMakeCache file in the build directory
      */
     public get cachePath(): string {
-        return path.join(this.binaryDir, 'CMakeCache.txt');
+        const file = path.join(this.binaryDir, 'CMakeCache.txt');
+        return util.normalizePath(file);
     }
 
     /**
      * @brief Get the path to the metadata file
      */
     public get metaPath(): string {
-        return path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        const meta = path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        return util.normalizePath(meta);
     }
 
     /**
@@ -1298,8 +1304,9 @@ export class CMakeTools {
         return result.retc;
     }
 
-    public async build(target: Maybe<string> = null): Promise<Number> {
-        if (target === null) {
+    public async build(target_: Maybe<string> = null): Promise<Number> {
+        let target = target_;
+        if (!target_) {
             target = this.defaultBuildTarget || this.allTargetName;
         }
         if (!this.sourceDir) {
@@ -1318,6 +1325,14 @@ export class CMakeTools {
             if (retc !== 0) {
                 return retc;
             }
+            await this.reloadCMakeCache();
+            // We just configured which may change what the "all" target is.
+            if (!target_) {
+                target = this.defaultBuildTarget || this.allTargetName;
+            }
+        }
+        if (!target) {
+            throw new Error('Unable to determine target to build. Something has gone horribly wrong!');
         }
         await this._prebuild();
         if (this._needsReconfigure) {
