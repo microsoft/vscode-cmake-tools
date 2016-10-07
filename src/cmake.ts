@@ -4,12 +4,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as proc from 'child_process';
 import * as os from 'os';
-
+import * as yaml from 'js-yaml';
+import * as ajv from 'ajv';
 import * as vscode from 'vscode';
 
 import * as async from './async';
 import * as diagnostics from './diagnostics';
-import {Maybe, util} from './util';
+import {util} from './util';
+
+type Maybe<T> = util.Maybe<T>;
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
@@ -253,27 +256,52 @@ export class CMakeCache {
     }
 }
 
-// cache for cmake-tools extension
-// JSON file with path ${workspaceRoot}/.vscode/.cmaketools.json
-interface ToolsCacheData {
-    selectedBuildType: Maybe<string>;
-}
-
-export class ToolsCacheFile {
-    public static async readCache(path: string, defaultVal: ToolsCacheData): Promise<ToolsCacheData> {
+export namespace WorkspaceCacheFile {
+    export async function readCache(path: string, defaultVal: util.WorkspaceCache): Promise<util.WorkspaceCache> {
         console.info('Reloading cmake-tools extension cache data from', path);
         try {
             const buf = await async.readFile(path);
             if (!buf) return defaultVal;
-            return JSON.parse(buf.toString());
+            return JSON.parse(
+                buf.toString(),
+                (key: string, val) => {
+                    if (key === 'keywordSettings') {
+                        const acc = new Map<string, string>();
+                        for (const key in val) {
+                            acc.set(key, val[key]);
+                        }
+                        return acc;
+                    }
+                    return val;
+                }
+            );
         }
         catch(err) {
             return defaultVal;
         }
     }
 
-    public static writeCache(path: string, cache: ToolsCacheData) {
-        return async.doAsync(fs.writeFile, path, JSON.stringify(cache));
+    export function writeCache(path: string, cache: util.WorkspaceCache) {
+        return async.doAsync(
+            fs.writeFile,
+            path,
+            JSON.stringify(
+                cache,
+                (key, value) => {
+                    if (key === 'keywordSettings' && value instanceof Map) {
+                        return Array.from((value as Map<string, string>).entries()).reduce(
+                            (acc, el) => {
+                                acc[el[0]] = el[1];
+                                return acc;
+                            },
+                            {}
+                        );
+                    }
+                    return value;
+                },
+                2
+            )
+        );
     }
 }
 
@@ -385,9 +413,10 @@ export class CMakeTools {
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
-    private _extCacheContent: ToolsCacheData;
-    private _extCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
+    private _workspaceCacheContent: util.WorkspaceCache;
+    private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
     private _targets: string[];
+    private _variantWatcher: vscode.FileSystemWatcher;
     public os: Maybe<string>;
     public systemProcessor: Maybe<string>;
     public compilerId: Maybe<string>;
@@ -400,12 +429,6 @@ export class CMakeTools {
     public set cmakeCache(cache: CMakeCache) {
         this._cmakeCache = cache;
         this._refreshStatusBarItems();
-        if (!this.isMultiConf) {
-            const bt = cache.get('CMAKE_BUILD_TYPE');
-            if (bt) {
-                this.selectedBuildType = bt.as<string>();
-            }
-        }
     }
 
     private _currentChildProcess: Maybe<proc.ChildProcess>;
@@ -453,21 +476,8 @@ export class CMakeTools {
      * the user can click to change the build type.
      */
     public get selectedBuildType(): Maybe<string> {
-        return this._extCacheContent.selectedBuildType;
-    }
-    public set selectedBuildType(v: Maybe<string>) {
-        const changed = this.selectedBuildType !== v;
-        this._extCacheContent.selectedBuildType = v;
-        if (changed) {
-            this._writeCacheContent()
-                .then(this._refreshStatusBarItems.bind(this))
-                .then(() => {
-                    if (this.cachePath !== this.cmakeCache.path) {
-                        return this._refreshTargetList().then(() => null);
-                    }
-                    return Promise.resolve();
-                });
-        }
+        const cached = this.activeVariant.buildType;
+        return cached ? cached : null;
     }
 
     public get debugTargetsEnabled(): boolean {
@@ -492,9 +502,6 @@ export class CMakeTools {
         } else {
             this.cmakeCache = await CMakeCache.fromPath(this.cachePath);
         }
-        if (this.cmakeCache.exists) {
-            await this._refreshTargetList();
-        }
         return this.cmakeCache;
     }
 
@@ -517,6 +524,7 @@ export class CMakeTools {
                 this.currentDebugTarget = null;
             }
         }
+        // If we didn't have a debug target, set the debug target to the first target
         if (this.currentDebugTarget === null && value.length) {
             this.currentDebugTarget = value[0].name;
         }
@@ -574,16 +582,28 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    private _writeCacheContent() {
-        return ToolsCacheFile.writeCache(this._extCachePath, this._extCacheContent);
+    private _wsCacheWatcher: vscode.FileSystemWatcher;
+    private _setupWorkspaceCacheWatcher() {
+        if (this._wsCacheWatcher) {
+            this._wsCacheWatcher.dispose();
+        }
+        const watch = this._wsCacheWatcher = vscode.workspace.createFileSystemWatcher(this._workspaceCachePath);
+        watch.onDidChange(this._refreshWorkspaceCacheContent.bind(this));
+        watch.onDidCreate(this._refreshWorkspaceCacheContent.bind(this));
     }
 
-    private async _refreshToolsCacheContent() {
-        this._extCacheContent = await ToolsCacheFile.readCache(this._extCachePath, {
-            selectedBuildType: this.config.initialBuildType
-        });
-        this._writeCacheContent();
+    private _writeWorkspaceCacheContent() {
+        return WorkspaceCacheFile.writeCache(this._workspaceCachePath, this._workspaceCacheContent);
+    }
+
+    private async _refreshWorkspaceCacheContent() {
+        this._workspaceCacheContent = await WorkspaceCacheFile.readCache(this._workspaceCachePath, {variant:null});
+        this._writeWorkspaceCacheContent();
         this._setupCMakeCacheWatcher();
+        if (this._workspaceCacheContent.variant) {
+            this.activeVariantCombination = this._workspaceCacheContent.variant;
+        }
+        this._refreshStatusBarItems();
     }
 
     private _cmCacheWatcher: vscode.FileSystemWatcher;
@@ -597,7 +617,7 @@ export class CMakeTools {
         this._cmCacheWatcher.onDidCreate(this.reloadCMakeCache.bind(this));
         this._cmCacheWatcher.onDidDelete(() => {
             this.reloadCMakeCache().then(() => {
-                this.selectedBuildType = this.config.initialBuildType;
+                this._refreshStatusBarItems();
             });
         });
         return this.reloadCMakeCache();
@@ -616,33 +636,166 @@ export class CMakeTools {
         this._reloadMetaData();
     }
 
-    constructor(ctx: vscode.ExtensionContext) {
-        this._context = ctx;
+    private async _reloadVariants() {
+        const schema_path = this._context.asAbsolutePath('schemas/variants-schema.json');
+        const schema = JSON.parse((await async.readFile(schema_path)).toString());
+        const validate = new ajv({
+            allErrors: true,
+            format: 'full',
+        }).compile(schema);
+
+        const workdir = vscode.workspace.rootPath;
+        const yaml_file = path.join(workdir, 'cmake-variants.yaml');
+        const json_file = path.join(workdir, 'cmake-variants.json');
+        let variants: any;
+        if (await async.exists(yaml_file)) {
+            const content = (await async.readFile(yaml_file)).toString();
+            try {
+                variants = yaml.load(content);
+            } catch(e) {
+                vscode.window.showErrorMessage(`${yaml_file} is syntactically invalid.`);
+                variants = util.DEFAULT_VARIANTS;
+            }
+        } else if (await async.exists(json_file)) {
+            const content = (await async.readFile(json_file)).toString();
+            try {
+                variants = JSON.parse(content);
+            } catch(e) {
+                vscode.window.showErrorMessage(`${json_file} is syntactically invalid.`);
+                variants = util.DEFAULT_VARIANTS;
+            }
+        } else {
+            variants = util.DEFAULT_VARIANTS;
+        }
+        const validated = validate(variants);
+        if (!validated) {
+            const errors = validate.errors as ajv.ErrorObject[];
+            const error_strings = errors.map(err => `${err.dataPath}: ${err.message}`);
+            vscode.window.showErrorMessage(`Invalid cmake-variants: ${error_strings.join('; ')}`);
+            variants = util.DEFAULT_VARIANTS;
+        }
+        const sets = new Map() as util.VariantSet;
+        for (const key in variants) {
+            const sub = variants[key];
+            const def = sub['default$'];
+            const desc = sub['description$'];
+            const choices = new Map<string, util.VariantConfigurationOptions>();
+            for (const name in sub) {
+                if (!name || ['default$', 'description$'].indexOf(name) !== -1) {
+                    continue;
+                }
+                const settings = sub[name] as util.VariantConfigurationOptions;
+                choices.set(name, settings);
+            }
+            sets.set(key, {
+                description: desc,
+                default: def,
+                choices: choices
+            });
+        }
+        this.buildVariants = sets;
+    }
+
+    private _buildVariants : util.VariantSet;
+    public get buildVariants() : util.VariantSet {
+        return this._buildVariants;
+    }
+    public set buildVariants(v : util.VariantSet) {
+        this._buildVariants = v;
+        this._needsReconfigure = true;
+        this._refreshStatusBarItems();
+    }
+
+    public get activeVariant() : util.VariantConfigurationOptions {
+        const vari = this._workspaceCacheContent.variant;
+        if (!vari) {
+            return {};
+        }
+        const kws = vari.keywordSettings;
+        if (!kws) {
+            return {};
+        }
+        const vars = this.buildVariants;
+        if (!vars) {
+            return {};
+        }
+        const data = Array.from(kws.entries()).map(
+            ([param, setting]) => {
+                if (!vars.has(param)) {
+                    debugger;
+                    throw 12;
+                }
+                const choices = vars.get(param).choices;
+                if (!choices.has(setting)) {
+                    debugger;
+                    throw 12;
+                }
+                return choices.get(setting);
+            }
+        );
+        const result: util.VariantConfigurationOptions = data.reduce(
+            (el, acc) => ({
+                buildType: el.buildType || acc.buildType,
+                generator: el.generator || acc.generator,
+                linkage: el.linkage || acc.linkage,
+                toolset: el.toolset || acc.toolset,
+                settings: Object.assign(acc.settings || {}, el.settings || {})
+            }),
+            {}
+        )
+        return result;
+    }
+
+    private _activeVariantCombination : util.VariantCombination;
+    public get activeVariantCombination() : util.VariantCombination {
+        return this._activeVariantCombination;
+    }
+    public set activeVariantCombination(v : util.VariantCombination) {
+        this._activeVariantCombination = v;
+        this._needsReconfigure = true;
+        this._workspaceCacheContent.variant = v;
+        this._writeWorkspaceCacheContent();
+        this._refreshStatusBarItems();
+    }
+
+    private async _init(ctx: vscode.ExtensionContext): Promise<void> {
+        this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
-        this._extCacheContent = {selectedBuildType: null};
+
+        const watcher = this._variantWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, 'cmake-variants.*'));
+        watcher.onDidChange(this._reloadVariants.bind(this));
+        watcher.onDidCreate(this._reloadVariants.bind(this));
+        watcher.onDidDelete(this._reloadVariants.bind(this));
+        await this._reloadVariants();
+
+        this._workspaceCacheContent = await WorkspaceCacheFile.readCache(this._workspaceCachePath, {variant: null});
+        if (this._workspaceCacheContent.variant) {
+            this._activeVariantCombination = this._workspaceCacheContent.variant;
+        }
 
         // Load up the CMake cache
-        CMakeCache.fromPath(this.cachePath).then(cache => {
-            this._setupCMakeCacheWatcher();
-            this._cmakeCache = cache; // Here we explicitly work around our setter
-            this.currentChildProcess = null; // Inits the content of the buildButton
-            if (this.debugTargetsEnabled) {
-                this._setupMetaWatcher();
-            }
+        await this._setupCMakeCacheWatcher();
+        this._currentChildProcess = null;
+        if (this.debugTargetsEnabled) {
+            this._setupMetaWatcher();
+        }
+        this._reloadConfiguration();
+
+        await this._refreshTargetList();
+        this.statusMessage = 'Ready';
+
+        this._lastConfigureSettings = this.config.configureSettings;
+        this._needsReconfigure = true;
+        vscode.workspace.onDidChangeConfiguration(() => {
+            console.log('Reloading CMakeTools after configuration change');
             this._reloadConfiguration();
-            const bt = cache.get('CMAKE_BUILD_TYPE');
-            const prom: Promise<any> = (bt && !this.isMultiConf
-                ? Promise.resolve(this.selectedBuildType = bt.as<string>())
-                : this._refreshToolsCacheContent().then(cache => {
-                    this.selectedBuildType = this._extCacheContent.selectedBuildType || this.config.initialBuildType;
-                }));
-            prom.then(this._refreshTargetList.bind(this))
-                .then(() => {
-                    this.statusMessage = 'Ready';
-                });
-        })
+        });
+
+        if (this.config.initialBuildType !== null) {
+            vscode.window.showWarningMessage('The "cmake.intiialBuildType" setting is now deprecated and will no longer be used.');
+        }
 
         const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
         if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.1) {
@@ -663,13 +816,11 @@ export class CMakeTools {
                     }
                 });
         }
+    }
 
-        this._lastConfigureSettings = this.config.configureSettings;
-        this._needsReconfigure = true;
-        vscode.workspace.onDidChangeConfiguration(() => {
-            console.log('Reloading CMakeTools after configuration change');
-            this._reloadConfiguration();
-        });
+    constructor(ctx: vscode.ExtensionContext) {
+        this._context = ctx;
+        this._init(ctx);
     }
 
     /**
@@ -680,9 +831,11 @@ export class CMakeTools {
      */
     private _refreshStatusBarItems() {
         this._cmakeToolsStatusItem.command = 'cmake.setBuildType';
-        this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${this.selectedBuildType || 'Unknown'}: ${this.statusMessage}`;
+        const varset = this.activeVariantCombination || {label: 'Unconfigured'};
+        this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${varset.label}: ${this.statusMessage}`;
 
-        if (this.cmakeCache.exists &&
+        if (this.cmakeCache &&
+                this.cmakeCache.exists &&
                 this.isMultiConf &&
                 this.config.buildDirectory.includes('${buildType}')
             ) {
@@ -1000,7 +1153,7 @@ export class CMakeTools {
      * @brief Get the name of the "all" target
      */
     public get allTargetName() {
-        if (!this.cmakeCache.exists)
+        if (!this.cmakeCache || !this.cmakeCache.exists)
             return 'all';
         const gen = this.activeGenerator;
         return (gen && /Visual Studio/.test(gen)) ? 'ALL_BUILD' : 'all';
@@ -1222,6 +1375,13 @@ export class CMakeTools {
             return -1;
         }
 
+        if (!this.activeVariantCombination) {
+            const ok = await this.setBuildTypeWithoutConfigure();
+            if (!ok) {
+                return -1;
+            }
+        }
+
         if (run_prebuild)
             await this._prebuild();
 
@@ -1237,7 +1397,6 @@ export class CMakeTools {
             } else {
                 console.error("None of the preferred generators was selected");
             }
-            // this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
         }
 
         const toolset = this.config.toolset;
@@ -1245,9 +1404,17 @@ export class CMakeTools {
             settings_args.push('-T' + toolset);
         }
 
-        settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
+        if (!await this.isMultiConf) {
+            settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
+        }
 
         const settings = Object.assign({}, this.config.configureSettings);
+
+        const variant = this.activeVariant;
+        if (variant) {
+            Object.assign(settings, variant.settings || {});
+            settings.BUILD_SHARED_LIBS = variant.linkage === 'shared';
+        }
 
         if (!(await async.exists(this.binaryDir))) {
             await fs.mkdir(this.binaryDir);
@@ -1299,6 +1466,7 @@ export class CMakeTools {
         this.statusMessage = 'Ready';
         if (!result.retc) {
             this.reloadCMakeCache()
+            this._refreshTargetList();
             this._reloadMetaData();
         }
         return result.retc;
@@ -1373,7 +1541,8 @@ export class CMakeTools {
             await this.parseDiagnostics(result);
         }
         if (!result.retc) {
-            this.reloadCMakeCache()
+            this.reloadCMakeCache();
+            this._refreshTargetList();
             this._reloadMetaData();
         }
         return result.retc;
@@ -1444,38 +1613,47 @@ export class CMakeTools {
         this.defaultBuildTarget = new_default;
     }
 
-    public async setBuildType(): Promise<Number> {
-        let chosen: Maybe<string> = null;
-        const config_types = this.cmakeCache.get('CMAKE_CONFIGURATION_TYPES');
-        if (this.cmakeCache.exists && this.isMultiConf && config_types) {
-            const types = config_types.as<string>().split(';');
-            chosen = await vscode.window.showQuickPick(types);
-        } else {
-            const picked = await vscode.window.showQuickPick([
-                {
-                    label: 'Release',
-                    description: 'Optimized build with no debugging information',
-                }, {
-                    label: 'Debug',
-                    description: 'Default build type. No optimizations. Contains debug information',
-                }, {
-                    label: 'MinSizeRel',
-                    description: 'Release build tweaked for minimum binary code size',
-                }, {
-                    label: 'RelWithDebInfo',
-                    description: 'Same as "Release", but also generates debugging information',
-                }
-            ]);
-            chosen = picked ? picked.label : null;
-        }
-        if (chosen === null)
-            return -1;
-
+    public async setBuildTypeWithoutConfigure(): Promise<boolean> {
+        const variants =
+            Array.from(this.buildVariants.entries()).map(
+                ([key, variant]) =>
+                    Array.from(variant.choices.entries()).map(
+                        ([value_name, value]) => ({
+                            settingKey: key,
+                            settingValue: value_name,
+                            settings: value
+                        })
+                    )
+            );
+        const product = util.product(variants);
+        const items = product.map(
+            optionset => ({
+                label: optionset.map(
+                    o => o.settings['oneWordSummary$']
+                        ? o.settings['oneWordSummary$']
+                        : `${o.settingKey}=${o.settingValue}`
+                ).join('+'),
+                keywordSettings: new Map<string, string>(
+                    optionset.map(
+                        param => [param.settingKey, param.settingValue] as [string, string]
+                    )
+                ),
+                description: optionset.map(o => o.settings['description$']).join(' + '),
+            })
+        );
+        const chosen: util.VariantCombination = await vscode.window.showQuickPick(items);
+        if (!chosen)
+            return false; // User cancelled
+        this.activeVariantCombination = chosen;
         const old_build_path = this.binaryDir;
-        this.selectedBuildType = chosen;
         if (this.binaryDir !== old_build_path) {
             await this._setupCMakeCacheWatcher();
         }
+        return true;
+    }
+
+    public async setBuildType(): Promise<Number> {
+        const ok = await this.setBuildTypeWithoutConfigure();
         return await this.configure();
     }
 
