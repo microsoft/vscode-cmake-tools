@@ -7,11 +7,12 @@ import * as os from 'os';
 import * as yaml from 'js-yaml';
 import * as ajv from 'ajv';
 import * as vscode from 'vscode';
-import {Util} from './util';
 
 import * as async from './async';
 import * as diagnostics from './diagnostics';
-import {Maybe, util} from './util';
+import {util} from './util';
+
+type Maybe<T> = util.Maybe<T>;
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
@@ -256,7 +257,7 @@ export class CMakeCache {
 }
 
 export namespace WorkspaceCacheFile {
-    export async function readCache(path: string, defaultVal: Util.WorkspaceCache): Promise<Util.WorkspaceCache> {
+    export async function readCache(path: string, defaultVal: util.WorkspaceCache): Promise<util.WorkspaceCache> {
         console.info('Reloading cmake-tools extension cache data from', path);
         try {
             const buf = await async.readFile(path);
@@ -280,7 +281,7 @@ export namespace WorkspaceCacheFile {
         }
     }
 
-    export function writeCache(path: string, cache: Util.WorkspaceCache) {
+    export function writeCache(path: string, cache: util.WorkspaceCache) {
         return async.doAsync(
             fs.writeFile,
             path,
@@ -412,7 +413,7 @@ export class CMakeTools {
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
-    private _workspaceCacheContent: Util.WorkspaceCache;
+    private _workspaceCacheContent: util.WorkspaceCache;
     private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
     private _targets: string[];
     private _variantWatcher: vscode.FileSystemWatcher;
@@ -652,17 +653,17 @@ export class CMakeTools {
             try {
                 variants = JSON.parse(content);
             } catch(e) {
-                variants = Util.DEFAULT_VARIANTS;
+                variants = util.DEFAULT_VARIANTS;
             }
         } else if (await async.exists(json_file)) {
             const content = (await async.readFile(json_file)).toString();
             try {
                 variants = JSON.parse(content);
             } catch(e) {
-                variants = Util.DEFAULT_VARIANTS;
+                variants = util.DEFAULT_VARIANTS;
             }
         } else {
-            variants = Util.DEFAULT_VARIANTS;
+            variants = util.DEFAULT_VARIANTS;
         }
         const validated = validate(variants);
         if (!validated) {
@@ -670,17 +671,17 @@ export class CMakeTools {
             const error_strings = errors.map(err => `${err.dataPath}: ${err.message}`);
             vscode.window.showErrorMessage(`Invalid cmake-variants: ${error_strings.join('; ')}`);
         } else {
-            const sets = new Map() as Util.VariantSet;
+            const sets = new Map() as util.VariantSet;
             for (const key in variants) {
                 const sub = variants[key];
                 const def = sub['-default'];
                 const desc = sub['-description'];
-                const choices = new Map<string, Util.VariantConfigurationOptions>();
+                const choices = new Map<string, util.VariantConfigurationOptions>();
                 for (const name in sub) {
                     if (!name || ['-default', '-description'].indexOf(name) !== -1) {
                         continue;
                     }
-                    const settings = sub[name] as Util.VariantConfigurationOptions;
+                    const settings = sub[name] as util.VariantConfigurationOptions;
                     choices.set(name, settings);
                 }
                 sets.set(key, {
@@ -693,16 +694,16 @@ export class CMakeTools {
         }
     }
 
-    private _buildVariants : Util.VariantSet;
-    public get buildVariants() : Util.VariantSet {
+    private _buildVariants : util.VariantSet;
+    public get buildVariants() : util.VariantSet {
         return this._buildVariants;
     }
-    public set buildVariants(v : Util.VariantSet) {
+    public set buildVariants(v : util.VariantSet) {
         this._buildVariants = v;
         this._refreshStatusBarItems();
     }
 
-    public get activeVariant() : Util.VariantConfigurationOptions {
+    public get activeVariant() : util.VariantConfigurationOptions {
         const vari = this._workspaceCacheContent.variant;
         if (!vari) {
             return {};
@@ -726,7 +727,7 @@ export class CMakeTools {
                 return choices.get(setting);
             }
         );
-        const result: Util.VariantConfigurationOptions = data.reduce(
+        const result: util.VariantConfigurationOptions = data.reduce(
             (el, acc) => ({
                 buildType: el.buildType || acc.buildType,
                 generator: el.generator || acc.generator,
@@ -747,11 +748,11 @@ export class CMakeTools {
         this._variantKeywordSettings = v;
     }
 
-    private _activeVariantCombination : Util.VariantCombination;
-    public get activeVariantCombination() : Util.VariantCombination {
+    private _activeVariantCombination : util.VariantCombination;
+    public get activeVariantCombination() : util.VariantCombination {
         return this._activeVariantCombination;
     }
-    public set activeVariantCombination(v : Util.VariantCombination) {
+    public set activeVariantCombination(v : util.VariantCombination) {
         this._activeVariantCombination = v;
         this._workspaceCacheContent.variant = v;
         this._writeWorkspaceCacheContent();
@@ -1613,7 +1614,7 @@ export class CMakeTools {
                         })
                     )
             );
-        const product = Util.product(variants);
+        const product = util.product(variants);
         const items = product.map(
             optionset => ({
                 label: optionset.map(
@@ -1629,7 +1630,7 @@ export class CMakeTools {
                 description: optionset.map(o => o.settings.description).join(' + '),
             })
         );
-        const chosen: Util.VariantCombination = await vscode.window.showQuickPick(items);
+        const chosen: util.VariantCombination = await vscode.window.showQuickPick(items);
         if (!chosen)
             return -1; // User cancelled
         this.activeVariantCombination = chosen;

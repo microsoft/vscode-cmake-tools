@@ -1,4 +1,6 @@
-import {Maybe} from './util';
+import {util} from './util';
+
+type Maybe<T> = util.Maybe<T>;
 
 export interface RawDiagnostic {
     file: string;

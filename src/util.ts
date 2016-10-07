@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-export namespace Util {
+export namespace util {
   export function product<T>(arrays: T[][]): T[][] {
     // clang-format off
     return arrays.reduce((acc, curr) =>
@@ -22,7 +22,7 @@ export namespace Util {
     // clang-format on
   }
 
-  type Maybe<T> = (T|null);
+  export type Maybe<T> = (T|null);
 
   export interface ConfigureArguments {
     key: string;
