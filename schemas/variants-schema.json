@@ -1,38 +1,38 @@
 {
     "type": "object",
-    "description": "Objects of sub-variants",
+    "description": "Variant options",
     "additionalProperties": false,
     "patternProperties": {
         "^\\w+$": {
             "type": "object",
             "properties": {
-                "-description": {
-                    "description": "A description of this sub-variant",
+                "@description": {
+                    "description": "A description of this option",
                     "type": "string"
                 },
-                "-default": {
-                    "description": "The default setting for this sub-variant",
+                "@default": {
+                    "description": "The default setting for this option",
                     "type": "string"
                 }
             },
             "required": [
-                "-description",
-                "-default"
+                "@description",
+                "@default"
             ],
             "minProperties": 4,
             "additionalProperties": false,
             "patternProperties": {
                 "^\\w+$": {
                     "type": "object",
-                    "description": "A sub-variant",
+                    "description": "A possible option value",
                     "properties": {
-                        "oneWordSummary": {
+                        "@oneWordSummary": {
                             "type": "string",
-                            "description": "A simple one-word description of this option"
+                            "description": "A simple one-word description of this value"
                         },
-                        "description": {
+                        "@description": {
                             "type": "string",
-                            "description": "A lengthier description of what this setting does"
+                            "description": "A lengthier description of what this value does"
                         },
                         "buildType": {
                             "type": "string",

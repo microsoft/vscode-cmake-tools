@@ -676,11 +676,11 @@ export class CMakeTools {
             const sets = new Map() as util.VariantSet;
             for (const key in variants) {
                 const sub = variants[key];
-                const def = sub['-default'];
-                const desc = sub['-description'];
+                const def = sub['@default'];
+                const desc = sub['@description'];
                 const choices = new Map<string, util.VariantConfigurationOptions>();
                 for (const name in sub) {
-                    if (!name || ['-default', '-description'].indexOf(name) !== -1) {
+                    if (!name || ['@default', '@description'].indexOf(name) !== -1) {
                         continue;
                     }
                     const settings = sub[name] as util.VariantConfigurationOptions;
@@ -702,6 +702,7 @@ export class CMakeTools {
     }
     public set buildVariants(v : util.VariantSet) {
         this._buildVariants = v;
+        this._needsReconfigure = true;
         this._refreshStatusBarItems();
     }
 
@@ -748,6 +749,7 @@ export class CMakeTools {
     }
     public set activeVariantCombination(v : util.VariantCombination) {
         this._activeVariantCombination = v;
+        this._needsReconfigure = true;
         this._workspaceCacheContent.variant = v;
         this._writeWorkspaceCacheContent();
         this._refreshStatusBarItems();
@@ -1408,7 +1410,7 @@ export class CMakeTools {
         const variant = this.activeVariant;
         if (variant) {
             Object.assign(settings, variant.settings || {});
-            settings.BUILD_SHARED = variant.linkage === 'shared';
+            settings.BUILD_SHARED_LIBS = variant.linkage === 'shared';
         }
 
         if (!(await async.exists(this.binaryDir))) {
@@ -1624,8 +1626,8 @@ export class CMakeTools {
         const items = product.map(
             optionset => ({
                 label: optionset.map(
-                    o => o.settings.oneWordSummary
-                        ? o.settings.oneWordSummary
+                    o => o.settings['@oneWordSummary']
+                        ? o.settings['@oneWordSummary']
                         : `${o.settingKey}=${o.settingValue}`
                 ).join('+'),
                 keywordSettings: new Map<string, string>(
@@ -1633,7 +1635,7 @@ export class CMakeTools {
                         param => [param.settingKey, param.settingValue] as [string, string]
                     )
                 ),
-                description: optionset.map(o => o.settings.description).join(' + '),
+                description: optionset.map(o => o.settings['@description']).join(' + '),
             })
         );
         const chosen: util.VariantCombination = await vscode.window.showQuickPick(items);

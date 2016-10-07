@@ -56,42 +56,42 @@ export namespace util {
 
   export const DEFAULT_VARIANTS = {
     buildType: {
-      '-default': 'debug',
-      '-description': 'The build type to use',
+      '@default': 'debug',
+      '@description': 'The build type to use',
       debug: {
-        oneWordSummary: 'Debug',
+        '@oneWordSummary': 'Debug',
+        '@description': 'Emit debug information without performing optimizations',
         buildType: 'Debug',
-        description: 'Emit debug information without performing optimizations'
       },
       release: {
-        oneWordSummary: 'Release',
+        '@oneWordSummary': 'Release',
+        '@description': 'Enable optimizations, omit debug info',
         buildType: 'Release',
-        description: 'Enable optimizations, omit debug info'
       },
       minsize: {
-        oneWordSummary: 'MinSizeRel',
+        '@oneWordSummary': 'MinSizeRel',
+        '@description': 'Optimize for smallest binary size',
         buildType: 'MinSizeRel',
-        description: 'Optimize for smallest binary size'
       },
       reldeb: {
-        oneWordSummary: 'RelWithDebInfo',
+        '@oneWordSummary': 'RelWithDebInfo',
+        '@description': 'Perform optimizations AND include debugging information',
         buildType: 'RelWithDebInfo',
-        description: 'Perform optimizations AND include debugging information'
       }
     },
     // The world isn't ready...
     // link: {
-    //   '-default': 'static',
-    //   '-description': 'The link usage of build libraries',
+    //   '@'@description'': 'The link usage of build libraries',,
+    //   '@default': 'static',
     //   static: {
-    //     oneWordSummary: 'Static',
+    //     '@oneWordSummary': 'Static',
+    //     '@description': 'Emit Static Libraries',
     //     linkage: 'static',
-    //     description: 'Emit Static Libraries'
     //   },
     //   shared: {
-    //     oneWordSummary: 'Shared',
+    //     '@oneWordSummary': 'Shared',
+    //     '@description': 'Emit shared libraries/DLLs',
     //     linkage: 'shared',
-    //     description: 'Emit shared libraries/DLLs'
     //   }
     // }
   };
