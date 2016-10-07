@@ -651,8 +651,9 @@ export class CMakeTools {
         if (await async.exists(yaml_file)) {
             const content = (await async.readFile(yaml_file)).toString();
             try {
-                variants = JSON.parse(content);
+                variants = yaml.load(content);
             } catch(e) {
+                vscode.window.showErrorMessage(`${yaml_file} is syntactically invalid.`);
                 variants = util.DEFAULT_VARIANTS;
             }
         } else if (await async.exists(json_file)) {
@@ -660,6 +661,7 @@ export class CMakeTools {
             try {
                 variants = JSON.parse(content);
             } catch(e) {
+                vscode.window.showErrorMessage(`${json_file} is syntactically invalid.`);
                 variants = util.DEFAULT_VARIANTS;
             }
         } else {
@@ -1395,7 +1397,9 @@ export class CMakeTools {
             settings_args.push('-T' + toolset);
         }
 
-        settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
+        if (!await this.isMultiConf) {
+            settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
+        }
 
         const settings = Object.assign({}, this.config.configureSettings);
 
