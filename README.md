@@ -27,6 +27,10 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 - **0.5.6**: Tweaks to diagnostic parsing:
   - Now parses for GNU ld-style linker errors
   - Recognizes "fatal error" in addition to regular errors.
+- **0.5.7**:
+  - Fix issues with filepath normalization
+  - Fix the helper script generating many errors when using VS generator
+  - Fix for the initial default target being 'all' for VS generators
 
 ## Issues? Questions? Feature requests?
 
