@@ -1,9 +1,11 @@
 # VSCode CMake Tools
 
-This extension provides project build and configuration tooling for CMake users
-within Visual Studio Code. This extension itself *does not* provide language
-support for the CMake scripting language.  For that I recommend
-[this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+CMake Tools provided the native developer a full-featured, convenient, and
+powerful configure+build workflow for CMake-based projects within the
+Visual Studio Code editor.
+
+This extension itself *does not* provide language support for the CMake
+scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
 
 ## What's New?
 
@@ -15,12 +17,20 @@ support for the CMake scripting language.  For that I recommend
   and [click here to provide feedback.](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
 - Updated to use TypeScript 2.0, which brings more stability and code simplicity
   behind the scenes.
-- **0.5.4**:
-  - Now the generator can be forced using the ``cmake.generator`` configuration setting.
-  - The CMake toolset (the ``-T`` option) can be set using the ``cmake.toolset`` setting.
+- **0.5.5**:
+  - Generator can be forced using the ``cmake.generator.<platform>`` settings, or
+    ``cmake.generator.all`` to apply one generator to all platforms.
+  - The CMake toolset (the ``-T`` option) can be set using the ``cmake.toolset.<platform.`` settings.
   - Arbitrary arguments can be passed to CMake during configure, build, and to the
     underlying build tool using the ``cmake.{configureArgs,buildArgs,buildToolArgs}``
     set of configuration options.
+- **0.5.6**: Tweaks to diagnostic parsing:
+  - Now parses for GNU ld-style linker errors
+  - Recognizes "fatal error" in addition to regular errors.
+- **0.5.7**:
+  - Fix issues with filepath normalization
+  - Fix the helper script generating many errors when using VS generator
+  - Fix for the initial default target being 'all' for VS generators
 
 ## Issues? Questions? Feature requests?
 

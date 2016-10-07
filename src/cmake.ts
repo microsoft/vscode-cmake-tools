@@ -10,6 +10,8 @@ import * as vscode from 'vscode';
 import {Util} from './util';
 
 import * as async from './async';
+import * as diagnostics from './diagnostics';
+import {Maybe, util} from './util';
 
 const CMAKETOOLS_HELPER_SCRIPT =
 `
@@ -70,6 +72,7 @@ if(NOT is_set_up)
     file(GENERATE
         OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
         INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+        CONDITION "$<CONFIG:Debug>"
         )
 
     function(_cmt_generate_system_info)
@@ -82,8 +85,6 @@ if(NOT is_set_up)
     endfunction()
 endif()
 `
-
-type Maybe<T> = (T | null);
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
@@ -352,7 +353,12 @@ export class ConfigurationReader {
     }
 
     get toolset(): Maybe<string> {
-        return this.readConfig<string>('toolset');
+        const platform = {
+            win32: 'windows',
+            darwin: 'osx',
+            linux: 'linux'
+        }[os.platform()];
+        return this.readConfig<string>(`toolset.${platform}`, this.readConfig<string>(`toolset.all`));
     }
 
     get configureArgs(): string[] {
@@ -912,31 +918,51 @@ export class CMakeTools {
      *      message could be decoded.
      */
     public parseGCCDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const gcc_re = /^(.*):(\d+):(\d+):\s+(warning|error|note):\s+(.*)$/;
-        const res = gcc_re.exec(line);
-        if (!res)
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        if (!diag) {
             return null;
-        const file = res[1];
-        const lineno = Number.parseInt(res[2]) - 1;
-        const column = Number.parseInt(res[3]) - 1;
-        const severity = res[4];
-        const message = res[5];
-        const abspath = path.isAbsolute(file)
-            ? file
-            : path.normalize(path.join(this.binaryDir, file));
-        const diag = new vscode.Diagnostic(
-            new vscode.Range(lineno, column, lineno, column),
-            message,
+        }
+        const abspath = path.isAbsolute(diag.file)
+            ? diag.file
+            : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
+            diag.message,
             {
                 error: vscode.DiagnosticSeverity.Error,
                 warning: vscode.DiagnosticSeverity.Warning,
                 note: vscode.DiagnosticSeverity.Information,
-            }[severity]
+            }[diag.severity]
         );
-        diag.source = 'GCC';
+        vsdiag.source = 'GCC';
         return {
             filepath: abspath,
-            diag: diag,
+            diag: vsdiag,
+        };
+    }
+
+    /**
+     * @brief Parse GNU-style linker errors
+     */
+    public parseGNULDDiagnostic(line: string): Maybe<FileDiagnostic> {
+        const diag = diagnostics.parseGNULDDiagnostic(line);
+        if (!diag) {
+            return null;
+        }
+        const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, 0, diag.line, Number.POSITIVE_INFINITY),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                note: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'Link';
+        return {
+            filepath: abspath,
+            diag: vsdiag,
         };
     }
 
@@ -1037,6 +1063,7 @@ export class CMakeTools {
      */
     public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         return this.parseGCCDiagnostic(line) ||
+            this.parseGNULDDiagnostic(line) ||
             this.parseMSVCDiagnostic(line);
     }
 
@@ -1066,37 +1093,42 @@ export class CMakeTools {
      * @brief Read the source directory from the config
      */
     public get sourceDir(): string {
-        return this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        const dir = this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        return util.normalizePath(dir);
     }
 
     /**
      * @brief Get the path to the root CMakeLists.txt
      */
     public get mainListFile(): string {
-        return path.join(this.sourceDir, 'CMakeLists.txt');
+        const listfile = path.join(this.sourceDir, 'CMakeLists.txt');
+        return util.normalizePath(listfile);
     }
 
     /**
      * @brief Get the path to the binary dir
      */
     public get binaryDir(): string {
-        return this.config.buildDirectory
+        const dir = this.config.buildDirectory
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
             .replace('${buildType}', this.selectedBuildType || 'Unknown');
+        return util.normalizePath(dir);
     }
 
     /**
      * @brief Get the path to the CMakeCache file in the build directory
      */
     public get cachePath(): string {
-        return path.join(this.binaryDir, 'CMakeCache.txt');
+        const file = path.join(this.binaryDir, 'CMakeCache.txt');
+        return util.normalizePath(file);
     }
 
     /**
      * @brief Get the path to the metadata file
      */
     public get metaPath(): string {
-        return path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        const meta = path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        return util.normalizePath(meta);
     }
 
     /**
@@ -1428,8 +1460,9 @@ export class CMakeTools {
         return result.retc;
     }
 
-    public async build(target: Maybe<string> = null): Promise<Number> {
-        if (target === null) {
+    public async build(target_: Maybe<string> = null): Promise<Number> {
+        let target = target_;
+        if (!target_) {
             target = this.defaultBuildTarget || this.allTargetName;
         }
         if (!this.sourceDir) {
@@ -1448,6 +1481,14 @@ export class CMakeTools {
             if (retc !== 0) {
                 return retc;
             }
+            await this.reloadCMakeCache();
+            // We just configured which may change what the "all" target is.
+            if (!target_) {
+                target = this.defaultBuildTarget || this.allTargetName;
+            }
+        }
+        if (!target) {
+            throw new Error('Unable to determine target to build. Something has gone horribly wrong!');
         }
         await this._prebuild();
         if (this._needsReconfigure) {

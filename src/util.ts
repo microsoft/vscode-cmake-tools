@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 export namespace Util {
   export function product<T>(arrays: T[][]): T[][] {
@@ -98,4 +99,12 @@ export namespace Util {
   export interface WorkspaceCache {
     variant?: Maybe<VariantCombination>;
   };
+
+  export function normalizePath(p: string): string {
+    let norm = path.normalize(p);
+    while (path.sep !== path.posix.sep && norm.includes(path.sep)) {
+        norm = norm.replace(path.sep, path.posix.sep);
+    }
+    return norm
+  }
 }

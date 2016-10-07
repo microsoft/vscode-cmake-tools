@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.5.4",
+    "version": "0.5.7",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -190,7 +190,22 @@
                     "default": null,
                     "description": "The CMake generator to use on OSX/macOS"
                 },
-                "cmake.toolset": {
+                "cmake.toolset.all": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.windows": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.linux": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.toolset.osx": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake toolset to use when configuring"
