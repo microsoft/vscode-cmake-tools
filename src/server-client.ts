@@ -26,8 +26,9 @@ export namespace cmake {
 
   export interface ErrorMessage extends BasicMessage {
     type: 'error';
-    errorMessage: string;
-    inReplyTo: string;
+    cookie: string
+    errorMessage: string
+    inReplyTo: string
   }
 
   export interface HelloMessage extends BasicMessage {
@@ -57,6 +58,7 @@ export namespace cmake {
 
   export interface ProgressMessage extends BasicMessage {
     type: 'progress'
+    cookie: string
     progressMessage: string
     progressMinimum: number
     progressMaximum: number
@@ -68,27 +70,33 @@ export namespace cmake {
     cacheArguments?: string[]
   }
 
+  export interface ComputeMessage extends BasicMessage {
+    type: 'compute'
+  }
+
   export type Message = HelloMessage | HandshakeMessage | MessageMessage |
-      ConfigureMessage | UnknownMessage | ErrorMessage;
+      ConfigureMessage | ErrorMessage | ProgressMessage | ReplyMessage | ComputeMessage;
 
   interface ClientInit {
     cmakePath: string;
-    onHello: (HelloMessage) => void;
-    onMessage: (MessageMessage) => void;
-    onProgress: (ProgressMessage) => void;
+    onHello: (m: HelloMessage) => void;
+    onMessage: (m: MessageMessage) => void;
+    onProgress: (m: ProgressMessage) => void;
   }
 
   interface MessageResolutionCallbacks {
-    resolve: (Message) => void;
-    reject: (ErrorMessage) => void;
+    resolve: (a: Message) => void;
+    reject: (b: ErrorMessage) => void;
   }
 
   export class Error extends global.Error implements ErrorMessage {
     type: 'error'
+    cookie: string;
     errorMessage: string;
     inReplyTo: string;
     constructor(e: ErrorMessage) {
       super(e.errorMessage);
+      this.cookie = e.cookie;
       this.errorMessage = e.errorMessage;
       this.inReplyTo = e.inReplyTo;
     }
@@ -123,27 +131,37 @@ export namespace cmake {
 
     private _dispatchProgress(m: ProgressMessage) {}
 
+    private _takePromiseForCookie(cookie: string): MessageResolutionCallbacks {
+      const item = this._promisesResolvers.get(cookie);
+      if (!item) {
+        throw new global.Error('Invalid cookie: ' + cookie);
+      }
+      this._promisesResolvers.delete(cookie);
+      return item;
+    }
+
     private _onMessage(m: Message) {
       if (m.cookie) {
-        const pr = this._promisesResolvers.get(m.cookie);
-        if (pr) {
-          this._promisesResolvers.delete(m.cookie);
-        }
         if (m.type === 'reply') {
-          pr.resolve(m);
+          this._takePromiseForCookie(m.cookie).resolve(m);
         } else if (m.type === 'error') {
-          pr.reject(m);
+          this._takePromiseForCookie(m.cookie).reject(m);
         } else if (m.type === 'message') {
           this._params.onMessage(m);
         } else if (m.type === 'progress') {
           this._params.onProgress(m);
+          if (m.progressCurrent === m.progressMaximum) {
+            // this._takePromiseForCookie(m.cookie).resolve(m);
+          }
         } else {
+          debugger;
           console.warn(`Can't yet handle the ${m.type} messages`);
         }
       } else if (m.type === 'error' && m.cookie) {
       } else if (m.type === 'hello') {
         this._params.onHello(m);
       } else {
+        debugger;
         console.warn(
             'Unexpected message from cmake-server:',
             JSON.stringify(m, (_, v) => v, 2));

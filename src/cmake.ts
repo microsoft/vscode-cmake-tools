@@ -638,13 +638,28 @@ export class CMakeTools {
                 buildDirectory: this.binaryDir,
                 generator: generator,
             });
+            debugger;
             const conf = await this._connection.sendRequest({
                 type: 'configure',
+            });
+            debugger;
+            const compute = await this._connection.sendRequest({
+                type: 'compute',
             });
             debugger;
         } catch (e) {
             debugger;
         }
+    }
+
+    private _setProgressValue(prog: number) {
+        const len = 100;
+        const bars = Math.floor(len * prog);
+        const hyphens = Math.floor(len - bars);
+        vscode.window.setStatusBarMessage(
+            Array(bars).join('|') + Array(hyphens).join('-'),
+            20000
+        );
     }
 
     constructor(ctx: vscode.ExtensionContext) {
@@ -662,8 +677,10 @@ export class CMakeTools {
                 this._channel.appendLine(m.message);
             },
             onProgress: (m: cmake.ProgressMessage) => {
-                console.log(m.progressMessage);
-                this._channel.appendLine(`${m.progressMessage}: ${m.progressCurrent}/${m.progressMaximum}`);
+                const msg = `${m.progressMessage}: ${m.progressCurrent}/${m.progressMaximum}`;
+                console.log(msg);
+                this._channel.appendLine(msg);
+                this._setProgressValue((m.progressCurrent - m.progressMinimum) / (m.progressMaximum - m.progressMinimum));
             }
         });
 
