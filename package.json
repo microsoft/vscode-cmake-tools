@@ -156,9 +156,9 @@
                     "description": "CMake variables to set on the command line"
                 },
                 "cmake.initialBuildType": {
-                    "type": "string",
-                    "default": "Debug",
-                    "description": "The default build type on first configuration"
+                    "type": "null",
+                    "default": null,
+                    "description": "[[This option is deprecated and will no longer be used]]"
                 },
                 "cmake.preferredGenerators": {
                     "type": "array",

@@ -742,14 +742,6 @@ export class CMakeTools {
         return result;
     }
 
-    private _variantKeywordSettings : Map<string, string>;
-    public get variantKeywordSettings() : Map<string, string> {
-        return this._variantKeywordSettings;
-    }
-    public set variantKeywordSettings(v : Map<string, string>) {
-        this._variantKeywordSettings = v;
-    }
-
     private _activeVariantCombination : util.VariantCombination;
     public get activeVariantCombination() : util.VariantCombination {
         return this._activeVariantCombination;
@@ -796,6 +788,10 @@ export class CMakeTools {
             this._reloadConfiguration();
         });
 
+        if (this.config.initialBuildType !== null) {
+            vscode.window.showWarningMessage('The "cmake.intiialBuildType" setting is now deprecated and will no longer be used.');
+        }
+
         const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
         if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.1) {
             vscode.window.showInformationMessage(
@@ -830,8 +826,8 @@ export class CMakeTools {
      */
     private _refreshStatusBarItems() {
         this._cmakeToolsStatusItem.command = 'cmake.setBuildType';
-        const varset = this.activeVariantCombination || {label: 'Unknown'}
-        this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${varset.label || 'Unknown'}: ${this.statusMessage}`;
+        const varset = this.activeVariantCombination || {label: 'Unconfigured'};
+        this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${varset.label}: ${this.statusMessage}`;
 
         if (this.cmakeCache &&
                 this.cmakeCache.exists &&
@@ -1374,6 +1370,13 @@ export class CMakeTools {
             return -1;
         }
 
+        if (!this.activeVariantCombination) {
+            const ok = await this.setBuildTypeWithoutConfigure();
+            if (!ok) {
+                return -1;
+            }
+        }
+
         if (run_prebuild)
             await this._prebuild();
 
@@ -1389,7 +1392,6 @@ export class CMakeTools {
             } else {
                 console.error("None of the preferred generators was selected");
             }
-            // this.selectedBuildType = this.config<string>("initialBuildType", "Debug");
         }
 
         const toolset = this.config.toolset;
@@ -1606,7 +1608,7 @@ export class CMakeTools {
         this.defaultBuildTarget = new_default;
     }
 
-    public async setBuildType(): Promise<Number> {
+    public async setBuildTypeWithoutConfigure(): Promise<boolean> {
         const variants =
             Array.from(this.buildVariants.entries()).map(
                 ([key, variant]) =>
@@ -1636,13 +1638,17 @@ export class CMakeTools {
         );
         const chosen: util.VariantCombination = await vscode.window.showQuickPick(items);
         if (!chosen)
-            return -1; // User cancelled
+            return false; // User cancelled
         this.activeVariantCombination = chosen;
         const old_build_path = this.binaryDir;
         if (this.binaryDir !== old_build_path) {
             await this._setupCMakeCacheWatcher();
         }
+        return true;
+    }
 
+    public async setBuildType(): Promise<Number> {
+        const ok = await this.setBuildTypeWithoutConfigure();
         return await this.configure();
     }
 
