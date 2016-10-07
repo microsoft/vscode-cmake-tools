@@ -9,28 +9,25 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 
 ## What's New?
 
+## Version 0.6.0
+
+- **NEW** Build variants. This makes working with complex projects simpler, and
+  simpler projects are still simple. [Read about it here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/build_variants.md).
+  **please remember:** If you find an issue or have a question/request,
+  feel free to open an issue on [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools). Thanks!
+- **No more ``initialBuildType``**. This option was buggy and surprisingly hard
+  to implement correctly. Now, if CMake Tools doesn't know how you would like to
+  configure your project, it will ask you on the first configure what [build
+  variant](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/build_variants.md) you would like to configure with.
+  The default variants are the same old CMake build types most users are familiar with.
+- Many smaller fixes and tweaks.
+
 ### Version 0.5.0
 
 - **NEW** Target Debugging feature. This feature is still experimental, and
   is disabled by default. [Click here to learn about how to enable and use
   this new feature](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md),
   and [click here to provide feedback.](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
-- Updated to use TypeScript 2.0, which brings more stability and code simplicity
-  behind the scenes.
-- **0.5.5**:
-  - Generator can be forced using the ``cmake.generator.<platform>`` settings, or
-    ``cmake.generator.all`` to apply one generator to all platforms.
-  - The CMake toolset (the ``-T`` option) can be set using the ``cmake.toolset.<platform.`` settings.
-  - Arbitrary arguments can be passed to CMake during configure, build, and to the
-    underlying build tool using the ``cmake.{configureArgs,buildArgs,buildToolArgs}``
-    set of configuration options.
-- **0.5.6**: Tweaks to diagnostic parsing:
-  - Now parses for GNU ld-style linker errors
-  - Recognizes "fatal error" in addition to regular errors.
-- **0.5.7**:
-  - Fix issues with filepath normalization
-  - Fix the helper script generating many errors when using VS generator
-  - Fix for the initial default target being 'all' for VS generators
 
 ## Issues? Questions? Feature requests?
 
@@ -139,12 +136,26 @@ CMake Tools also provides a command for running CTest tests.
 
 ### Version 0.5.0
 
-- **NEW** Target Debugging feature. This feature is still experimental, and
+- Target Debugging feature. This feature is still experimental, and
   is disabled by default. [Click here to learn about how to enable and use
   this new feature](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md),
   and [click here to provide feedback.](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
 - Updated to use TypeScript 2.0, which brings more stability and code simplicity
   behind the scenes.
+- **0.5.5**:
+  - Generator can be forced using the ``cmake.generator.<platform>`` settings, or
+    ``cmake.generator.all`` to apply one generator to all platforms.
+  - The CMake toolset (the ``-T`` option) can be set using the ``cmake.toolset.<platform.`` settings.
+  - Arbitrary arguments can be passed to CMake during configure, build, and to the
+    underlying build tool using the ``cmake.{configureArgs,buildArgs,buildToolArgs}``
+    set of configuration options.
+- **0.5.6**: Tweaks to diagnostic parsing:
+  - Now parses for GNU ld-style linker errors
+  - Recognizes "fatal error" in addition to regular errors.
+- **0.5.7**:
+  - Fix issues with filepath normalization
+  - Fix the helper script generating many errors when using VS generator
+  - Fix for the initial default target being 'all' for VS generators
 
 ### Version 0.4.1
 
