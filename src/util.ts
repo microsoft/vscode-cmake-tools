@@ -4,6 +4,10 @@ import * as path from 'path';
 
 export namespace util {
   export function normalizePath(p: string): string {
-    return path.normalize(p).replace(path.sep, path.posix.sep);
+    let norm = path.normalize(p);
+    while (path.sep !== path.posix.sep && norm.includes(path.sep)) {
+        norm = norm.replace(path.sep, path.posix.sep);
+    }
+    return norm
   }
 }
