@@ -6,18 +6,18 @@
         "^\\w+$": {
             "type": "object",
             "properties": {
-                "@description": {
+                "description$": {
                     "description": "A description of this option",
                     "type": "string"
                 },
-                "@default": {
+                "default$": {
                     "description": "The default setting for this option",
                     "type": "string"
                 }
             },
             "required": [
-                "@description",
-                "@default"
+                "description$",
+                "default$"
             ],
             "minProperties": 4,
             "additionalProperties": false,
@@ -26,11 +26,11 @@
                     "type": "object",
                     "description": "A possible option value",
                     "properties": {
-                        "@oneWordSummary": {
+                        "oneWordSummary$": {
                             "type": "string",
                             "description": "A simple one-word description of this value"
                         },
-                        "@description": {
+                        "description$": {
                             "type": "string",
                             "description": "A lengthier description of what this value does"
                         },

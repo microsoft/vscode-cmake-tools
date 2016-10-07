@@ -56,41 +56,41 @@ export namespace util {
 
   export const DEFAULT_VARIANTS = {
     buildType: {
-      '@default': 'debug',
-      '@description': 'The build type to use',
+      'default$': 'debug',
+      'description$': 'The build type to use',
       debug: {
-        '@oneWordSummary': 'Debug',
-        '@description': 'Emit debug information without performing optimizations',
+        'oneWordSummary$': 'Debug',
+        'description$': 'Emit debug information without performing optimizations',
         buildType: 'Debug',
       },
       release: {
-        '@oneWordSummary': 'Release',
-        '@description': 'Enable optimizations, omit debug info',
+        'oneWordSummary$': 'Release',
+        'description$': 'Enable optimizations, omit debug info',
         buildType: 'Release',
       },
       minsize: {
-        '@oneWordSummary': 'MinSizeRel',
-        '@description': 'Optimize for smallest binary size',
+        'oneWordSummary$': 'MinSizeRel',
+        'description$': 'Optimize for smallest binary size',
         buildType: 'MinSizeRel',
       },
       reldeb: {
-        '@oneWordSummary': 'RelWithDebInfo',
-        '@description': 'Perform optimizations AND include debugging information',
+        'oneWordSummary$': 'RelWithDebInfo',
+        'description$': 'Perform optimizations AND include debugging information',
         buildType: 'RelWithDebInfo',
       }
     },
     // The world isn't ready...
     // link: {
-    //   '@'@description'': 'The link usage of build libraries',,
-    //   '@default': 'static',
+    //   ''$description$'': 'The link usage of build libraries',,
+    //   'default$': 'static',
     //   static: {
-    //     '@oneWordSummary': 'Static',
-    //     '@description': 'Emit Static Libraries',
+    //     'oneWordSummary$': 'Static',
+    //     'description$': 'Emit Static Libraries',
     //     linkage: 'static',
     //   },
     //   shared: {
-    //     '@oneWordSummary': 'Shared',
-    //     '@description': 'Emit shared libraries/DLLs',
+    //     'oneWordSummary$': 'Shared',
+    //     'description$': 'Emit shared libraries/DLLs',
     //     linkage: 'shared',
     //   }
     // }

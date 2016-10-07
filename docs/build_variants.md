@@ -17,26 +17,26 @@ created by CMake Tools when one is not present in a project directory:
 ~~~json
 {
   "buildType": {
-    "@default": "debug",
-    "@description": "the build type to use",
+    "default$": "debug",
+    "description$": "the build type to use",
     "debug": {
-      "@oneWordSummary": "Debug",
-      "@description": "Emit debug information without performing optimizations",
+      "oneWordSummary$": "Debug",
+      "description$": "Emit debug information without performing optimizations",
       "buildType": "Debug"
     },
     "release": {
-      "@oneWordSummary": "Release",
-      "@description": "Enable optimizations, omit debug info",
+      "oneWordSummary$": "Release",
+      "description$": "Enable optimizations, omit debug info",
       "buildType": "Release"
     },
     "minsize": {
-      "@oneWordSummary": "MinSizeRel",
-      "@description": "Optimize for smallest binary size",
+      "oneWordSummary$": "MinSizeRel",
+      "description$": "Optimize for smallest binary size",
       "buildType": "MinSizeRel"
     },
     "reldeb": {
-      "@oneWordSummary": "RelWithDebInfo",
-      "@description": "Perform optimizations AND include debugging information",
+      "oneWordSummary$": "RelWithDebInfo",
+      "description$": "Perform optimizations AND include debugging information",
       "buildType": "RelWithDebInfo"
     }
   }
@@ -54,9 +54,9 @@ change the build variant:
 In short, the variants file specifies a set of _options_ and the corresponding
 _values_ that they can assume. In the above example, there is one _option_
 called ``buildType``. The inner keys describe the option and the values it can
-assume. Special keys are prefixed by the ``@`` symbol, and are not valid
-values for variant option. The special ``@default`` key specifies what the
-default value for that option will be. The ``@description`` property will
+assume. Special keys are suffixed by the ``$`` symbol, and are not valid
+values for variant option. The special ``default$`` key specifies what the
+default value for that option will be. The ``description$`` property will
 describe what aspects of the build that the option controls.
 
 All other properties are values available for that key. In the above example,
@@ -80,16 +80,16 @@ the above ``cmake-variants.json`` file:
     /* ... */
   },
   "linkage": {
-      "@default": "static",
-      "@description": "The link usage of build libraries",
+      "default$": "static",
+      "description$": "The link usage of build libraries",
       "static": {
-        "@oneWordSummary": "Static",
-        "@description": "Emit Static Libraries",
+        "oneWordSummary$": "Static",
+        "description$": "Emit Static Libraries",
         "linkage": "static"
       },
       "shared": {
-        "@oneWordSummary": "Shared",
-        "@description": "Emit shared libraries/DLLs",
+        "oneWordSummary$": "Shared",
+        "description$": "Emit shared libraries/DLLs",
         "linkage": "shared"
       }
     }
@@ -115,13 +115,13 @@ or tool, the resulting settings correspond to the result of merging the
 settings specified in each chosen value. Here is a short listing of the settings
 which can be provided:
 
-- ``@oneWordSummary`` is a one-word summary of the value. This should be short and
+- ``oneWordSummary$`` is a one-word summary of the value. This should be short and
   on-point. This is displayed to the user when a variant is given a name. Good
   examples might be "Debug", "Optimized", "DebugAssertions", "UseSuperAwefulHack",
   "UseExtremelySuperAwefulHack". *Bad* values might be "Emit debug symbols",
-  "Link with shared libraries". Those should go in ``@description``.
+  "Link with shared libraries". Those should go in ``description$``.
 
-- ``@description`` is a lengthier description about what a setting does. Users can
+- ``description$`` is a lengthier description about what a setting does. Users can
   inspect this value for more information about why they may or may not want
   to use the given value.
 

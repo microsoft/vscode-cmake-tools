@@ -672,28 +672,28 @@ export class CMakeTools {
             const errors = validate.errors as ajv.ErrorObject[];
             const error_strings = errors.map(err => `${err.dataPath}: ${err.message}`);
             vscode.window.showErrorMessage(`Invalid cmake-variants: ${error_strings.join('; ')}`);
-        } else {
-            const sets = new Map() as util.VariantSet;
-            for (const key in variants) {
-                const sub = variants[key];
-                const def = sub['@default'];
-                const desc = sub['@description'];
-                const choices = new Map<string, util.VariantConfigurationOptions>();
-                for (const name in sub) {
-                    if (!name || ['@default', '@description'].indexOf(name) !== -1) {
-                        continue;
-                    }
-                    const settings = sub[name] as util.VariantConfigurationOptions;
-                    choices.set(name, settings);
-                }
-                sets.set(key, {
-                    description: desc,
-                    default: def,
-                    choices: choices
-                });
-            }
-            this.buildVariants = sets;
+            variants = util.DEFAULT_VARIANTS;
         }
+        const sets = new Map() as util.VariantSet;
+        for (const key in variants) {
+            const sub = variants[key];
+            const def = sub['default$'];
+            const desc = sub['description$'];
+            const choices = new Map<string, util.VariantConfigurationOptions>();
+            for (const name in sub) {
+                if (!name || ['default$', 'description$'].indexOf(name) !== -1) {
+                    continue;
+                }
+                const settings = sub[name] as util.VariantConfigurationOptions;
+                choices.set(name, settings);
+            }
+            sets.set(key, {
+                description: desc,
+                default: def,
+                choices: choices
+            });
+        }
+        this.buildVariants = sets;
     }
 
     private _buildVariants : util.VariantSet;
@@ -716,6 +716,9 @@ export class CMakeTools {
             return {};
         }
         const vars = this.buildVariants;
+        if (!vars) {
+            return {};
+        }
         const data = Array.from(kws.entries()).map(
             ([param, setting]) => {
                 if (!vars.has(param)) {
@@ -1626,8 +1629,8 @@ export class CMakeTools {
         const items = product.map(
             optionset => ({
                 label: optionset.map(
-                    o => o.settings['@oneWordSummary']
-                        ? o.settings['@oneWordSummary']
+                    o => o.settings['oneWordSummary$']
+                        ? o.settings['oneWordSummary$']
                         : `${o.settingKey}=${o.settingValue}`
                 ).join('+'),
                 keywordSettings: new Map<string, string>(
@@ -1635,7 +1638,7 @@ export class CMakeTools {
                         param => [param.settingKey, param.settingValue] as [string, string]
                     )
                 ),
-                description: optionset.map(o => o.settings['@description']).join(' + '),
+                description: optionset.map(o => o.settings['description$']).join(' + '),
             })
         );
         const chosen: util.VariantCombination = await vscode.window.showQuickPick(items);
