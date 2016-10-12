@@ -417,9 +417,9 @@ export class CMakeTools {
     private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
-    public os: Maybe<string>;
-    public systemProcessor: Maybe<string>;
-    public compilerId: Maybe<string>;
+    public os: Maybe<string> = null;
+    public systemProcessor: Maybe<string> = null;
+    public compilerId: Maybe<string> = null;
     public config: ConfigurationReader = new ConfigurationReader();
 
     private _cmakeCache: CMakeCache;
