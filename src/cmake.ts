@@ -108,6 +108,7 @@ export function isTruthy(value: (boolean | string | null | undefined | number)) 
 
 interface ExecuteOptions {
     silent: boolean;
+    environment: Object;
 };
 
 interface ExecutableTarget {
@@ -397,6 +398,22 @@ export class ConfigurationReader {
 
     get experimental_enableTargetDebugging(): boolean {
         return !!this.readConfig<boolean>('experimental.enableTargetDebugging');
+    }
+
+    get environment(): Object {
+        return this.readConfig<Object>('environment') || {};
+    }
+
+    get configureEnvironment(): Object {
+        return this.readConfig<Object>('configureEnvironment') || {};
+    }
+
+    get buildEnvironment(): Object {
+        return this.readConfig<Object>('buildEnvironment') || {};
+    }
+
+    get testEnvironment(): Object {
+        return this.readConfig<Object>('testEnvironment') || {};
     }
 }
 
@@ -897,7 +914,8 @@ export class CMakeTools {
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
             const result = await this.execute(['--build', this.binaryDir, '--target', 'help'], {
-                silent: true
+                silent: true,
+                environment: {}
             });
             const lines = result.stdout.split('\n');
             const important_lines = (generator.endsWith('Makefiles')
@@ -1162,11 +1180,16 @@ export class CMakeTools {
     /**
      * @brief Execute a CMake command. Resolves to the result of the execution.
      */
-    public execute(args: string[], options?: ExecuteOptions): Promise<ExecutionResult> {
+    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}): Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
-            const pipe = proc.spawn(this.config.cmakePath, args);
+            const pipe = proc.spawn(this.config.cmakePath, args, {
+                env: Object.assign(
+                    Object.assign({}, options.environment),
+                    this.config.environment
+                )
+            });
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
             if (!silent) {
                 this.currentChildProcess = pipe;
@@ -1476,7 +1499,11 @@ export class CMakeTools {
              '-C' + init_cache_path]
                 .concat(settings_args)
                 .concat(extra_args)
-                .concat(this.config.configureArgs)
+                .concat(this.config.configureArgs),
+            {
+                silent: false,
+                environment: this.config.configureEnvironment,
+            }
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1548,7 +1575,11 @@ export class CMakeTools {
             ]
                 .concat(generator_args)
                 .concat(this.config.buildToolArgs)
-            )
+            ),
+            {
+                silent: false,
+                environment: this.config.buildEnvironment,
+            }
         );
         this.statusMessage = 'Ready';
         if (this.config.parseBuildDiagnostics) {
@@ -1726,7 +1757,19 @@ export class CMakeTools {
 
     public async ctest (): Promise<Number> {
         this._channel.show();
-        return (await this.execute(['-E', 'chdir', this.binaryDir, 'ctest', '-j' + this.numCTestJobs, '--output-on-failure'])).retc;
+        return (
+            await this.execute(
+                [
+                    '-E', 'chdir', this.binaryDir,
+                    'ctest', '-j' + this.numCTestJobs,
+                    '--output-on-failure'
+                ],
+                {
+                    silent: false,
+                    environment: this.config.testEnvironment,
+                }
+            )
+        ).retc;
     }
 
     public async quickStart (): Promise<Number> {
