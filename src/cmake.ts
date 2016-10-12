@@ -1420,32 +1420,46 @@ export class CMakeTools {
             await fs.mkdir(this.binaryDir);
         }
 
+        const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
+        if (!(await async.exists(cmt_dir))) {
+            await fs.mkdir(cmt_dir);
+        }
+
         if (this.debugTargetsEnabled) {
-            const helpers_dir = path.join(this.binaryDir, 'CMakeTools');
-            if (!(await async.exists(helpers_dir))) {
-                await fs.mkdir(helpers_dir);
-            }
-            const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
+            const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake')
             await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
             const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
             settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
-                helpers_dir.replace(/\\/g, path.posix.sep)
+                cmt_dir.replace(/\\/g, path.posix.sep)
             ]);
         }
+        let initial_cache_content = [] as string[];
 
         for (const key in settings) {
             let value = settings[key];
-            if (value === true || value === false)
+            let typestr = 'UNKNOWN';
+            if (value === true || value === false) {
+                typestr = 'BOOL';
                 value = value ? "TRUE" : "FALSE";
-            if (typeof(value) === 'string')
+            }
+            if (typeof(value) === 'string') {
+                typestr = 'STRING';
                 value = (value as string)
                     .replace(';', '\\;')
                     .replace('${workspaceRoot}', vscode.workspace.rootPath)
                     .replace('${buildType}', this.selectedBuildType || 'Unknown');
-            if (value instanceof Array)
+            }
+            if (value instanceof Number || typeof value === 'number') {
+                typestr = 'STRING';
+            }
+            if (value instanceof Array) {
+                typestr = 'STRING';
                 value = value.join(';');
-            settings_args.push("-D" + key + "=" + value.toString());
+            }
+            initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`)
         }
+        const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
+        await async.doAsync(fs.writeFile, init_cache_path, initial_cache_content.join('\n'));
         let prefix = this.config.installPrefix;
         if (prefix && prefix !== "") {
             prefix = prefix
@@ -1458,7 +1472,8 @@ export class CMakeTools {
         this.statusMessage = 'Configuring...';
         const result = await this.execute(
             ['-H' + this.sourceDir.replace(/\\/g, path.posix.sep),
-             '-B' + binary_dir.replace(/\\/g, path.posix.sep)]
+             '-B' + binary_dir.replace(/\\/g, path.posix.sep),
+             '-C' + init_cache_path]
                 .concat(settings_args)
                 .concat(extra_args)
                 .concat(this.config.configureArgs)
