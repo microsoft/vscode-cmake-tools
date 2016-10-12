@@ -415,7 +415,7 @@ export class CMakeTools {
     private _buildDiags: vscode.DiagnosticCollection;
     private _workspaceCacheContent: util.WorkspaceCache;
     private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
-    private _targets: string[];
+    private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
     public os: Maybe<string>;
     public systemProcessor: Maybe<string>;
@@ -1592,7 +1592,7 @@ export class CMakeTools {
     }
 
     public showTargetSelector(): Thenable<string> {
-        return this._targets
+        return this._targets.length
             ? vscode.window.showQuickPick(this._targets)
             : vscode.window.showInputBox({
                 prompt: 'Enter a target name'
