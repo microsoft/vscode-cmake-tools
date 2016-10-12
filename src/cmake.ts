@@ -794,7 +794,7 @@ export class CMakeTools {
         });
 
         if (this.config.initialBuildType !== null) {
-            vscode.window.showWarningMessage('The "cmake.intiialBuildType" setting is now deprecated and will no longer be used.');
+            vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
         }
 
         const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
