@@ -1410,6 +1410,12 @@ export class CMakeTools {
 
         const cmake_cache = this.cachePath;
         this._channel.show();
+
+        if (!(await async.exists(cmake_cache))
+         || (this.cmakeCache.exists && this.cachePath !== this.cmakeCache.path)) {
+            await this.reloadCMakeCache();
+        }
+
         const settings_args: string[] = [];
         if (!this.cmakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
