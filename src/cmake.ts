@@ -561,7 +561,7 @@ export class CMakeTools {
             const buffer = await async.readFile(this.metaPath);
             const content = buffer.toString();
             const tuples = content
-                .split('\n')
+                .split(/\r?\n/)
                 .map(l => l.trim())
                 .filter(l => !!l.length)
                 .map(l => l.split(';'));
@@ -917,7 +917,7 @@ export class CMakeTools {
                 silent: true,
                 environment: {}
             });
-            const lines = result.stdout.split('\n');
+            const lines = result.stdout.split(/\r?\n/);
             const important_lines = (generator.endsWith('Makefiles')
                 ? lines.filter(l => l.startsWith('... '))
                 : lines.filter(l => l.indexOf(': ') !== -1))
@@ -1095,7 +1095,7 @@ export class CMakeTools {
      */
     public parseDiagnostics(result: ExecutionResult) {
         const compiler = this.cmakeCache.get('CMAKE_CXX_COMPILER_ID') || this.cmakeCache.get('CMAKE_C_COMPILER_ID');
-        const lines = result.stdout.split('\n').map(line => line.trim());
+        const lines = result.stdout.split(/\r?\n/).map(line => line.trim());
         const diags = lines.map(line => this.parseDiagnosticLine(line)).filter(item => !!item);
         const diags_acc = {};
         for (const diag of diags) {
@@ -1880,7 +1880,7 @@ export class CMakeTools {
         if (process.platform !== 'win32') {
             const stdout = (await async.execute('pgrep', ['-P', pid.toString()])).stdout.trim();
             if (!!stdout.length) {
-                children = stdout.split('\n').map(line => Number.parseInt(line));
+                children = stdout.split(/\r?\n/).map(line => Number.parseInt(line));
             }
         }
         for (const other of children) {
