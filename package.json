@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -278,6 +278,42 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Enable experimental target debugging features"
+                },
+                "cmake.environment": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Environment variables to set when running CMake commands",
+                    "additionalProperties": {
+                        "type": "string",
+                        "description": "Value for the environment variable"
+                    }
+                },
+                "cmake.configureEnvironment": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Environment variables to pass to CMake during configure",
+                    "additionalProperties": {
+                        "type": "string",
+                        "description": "Value for the environment variable"
+                    }
+                },
+                "cmake.buildEnvironment": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Environment variables to pass to CMake during build",
+                    "additionalProperties": {
+                        "type": "string",
+                        "description": "Value for the environment variable"
+                    }
+                },
+                "cmake.testEnvironment": {
+                    "type": "object",
+                    "default": {},
+                    "description": "Environment variables to pass to CTest",
+                    "additionalProperties": {
+                        "type": "string",
+                        "description": "Value for the environment variable"
+                    }
                 }
             }
         },

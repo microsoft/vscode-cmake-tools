@@ -108,6 +108,7 @@ export function isTruthy(value: (boolean | string | null | undefined | number)) 
 
 interface ExecuteOptions {
     silent: boolean;
+    environment: Object;
 };
 
 interface ExecutableTarget {
@@ -398,6 +399,22 @@ export class ConfigurationReader {
     get experimental_enableTargetDebugging(): boolean {
         return !!this.readConfig<boolean>('experimental.enableTargetDebugging');
     }
+
+    get environment(): Object {
+        return this.readConfig<Object>('environment') || {};
+    }
+
+    get configureEnvironment(): Object {
+        return this.readConfig<Object>('configureEnvironment') || {};
+    }
+
+    get buildEnvironment(): Object {
+        return this.readConfig<Object>('buildEnvironment') || {};
+    }
+
+    get testEnvironment(): Object {
+        return this.readConfig<Object>('testEnvironment') || {};
+    }
 }
 
 export class CMakeTools {
@@ -415,11 +432,11 @@ export class CMakeTools {
     private _buildDiags: vscode.DiagnosticCollection;
     private _workspaceCacheContent: util.WorkspaceCache;
     private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
-    private _targets: string[];
+    private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
-    public os: Maybe<string>;
-    public systemProcessor: Maybe<string>;
-    public compilerId: Maybe<string>;
+    public os: Maybe<string> = null;
+    public systemProcessor: Maybe<string> = null;
+    public compilerId: Maybe<string> = null;
     public config: ConfigurationReader = new ConfigurationReader();
 
     private _cmakeCache: CMakeCache;
@@ -794,7 +811,7 @@ export class CMakeTools {
         });
 
         if (this.config.initialBuildType !== null) {
-            vscode.window.showWarningMessage('The "cmake.intiialBuildType" setting is now deprecated and will no longer be used.');
+            vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
         }
 
         const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
@@ -897,9 +914,10 @@ export class CMakeTools {
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
             const result = await this.execute(['--build', this.binaryDir, '--target', 'help'], {
-                silent: true
+                silent: true,
+                environment: {}
             });
-            const lines = result.stdout.split('\n');
+            const lines = result.stdout.split(/\r?\n/);
             const important_lines = (generator.endsWith('Makefiles')
                 ? lines.filter(l => l.startsWith('... '))
                 : lines.filter(l => l.indexOf(': ') !== -1))
@@ -1162,11 +1180,16 @@ export class CMakeTools {
     /**
      * @brief Execute a CMake command. Resolves to the result of the execution.
      */
-    public execute(args: string[], options?: ExecuteOptions): Promise<ExecutionResult> {
+    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}): Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
-            const pipe = proc.spawn(this.config.cmakePath, args);
+            const pipe = proc.spawn(this.config.cmakePath, args, {
+                env: Object.assign(
+                    Object.assign({}, options.environment),
+                    this.config.environment
+                )
+            });
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
             if (!silent) {
                 this.currentChildProcess = pipe;
@@ -1387,6 +1410,12 @@ export class CMakeTools {
 
         const cmake_cache = this.cachePath;
         this._channel.show();
+
+        if (!(await async.exists(cmake_cache))
+         || (this.cmakeCache.exists && this.cachePath !== this.cmakeCache.path)) {
+            await this.reloadCMakeCache();
+        }
+
         const settings_args: string[] = [];
         if (!this.cmakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
@@ -1420,32 +1449,46 @@ export class CMakeTools {
             await fs.mkdir(this.binaryDir);
         }
 
+        const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
+        if (!(await async.exists(cmt_dir))) {
+            await fs.mkdir(cmt_dir);
+        }
+
         if (this.debugTargetsEnabled) {
-            const helpers_dir = path.join(this.binaryDir, 'CMakeTools');
-            if (!(await async.exists(helpers_dir))) {
-                await fs.mkdir(helpers_dir);
-            }
-            const helpers = path.join(helpers_dir, 'CMakeToolsHelpers.cmake')
+            const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake')
             await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
             const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
             settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
-                helpers_dir.replace(/\\/g, path.posix.sep)
+                cmt_dir.replace(/\\/g, path.posix.sep)
             ]);
         }
+        let initial_cache_content = ['# This file is generated by CMake Tools! DO NOT EDIT!'];
 
         for (const key in settings) {
             let value = settings[key];
-            if (value === true || value === false)
+            let typestr = 'UNKNOWN';
+            if (value === true || value === false) {
+                typestr = 'BOOL';
                 value = value ? "TRUE" : "FALSE";
-            if (typeof(value) === 'string')
+            }
+            if (typeof(value) === 'string') {
+                typestr = 'STRING';
                 value = (value as string)
                     .replace(';', '\\;')
                     .replace('${workspaceRoot}', vscode.workspace.rootPath)
                     .replace('${buildType}', this.selectedBuildType || 'Unknown');
-            if (value instanceof Array)
+            }
+            if (value instanceof Number || typeof value === 'number') {
+                typestr = 'STRING';
+            }
+            if (value instanceof Array) {
+                typestr = 'STRING';
                 value = value.join(';');
-            settings_args.push("-D" + key + "=" + value.toString());
+            }
+            initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`)
         }
+        const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
+        await async.doAsync(fs.writeFile, init_cache_path, initial_cache_content.join('\n'));
         let prefix = this.config.installPrefix;
         if (prefix && prefix !== "") {
             prefix = prefix
@@ -1458,10 +1501,15 @@ export class CMakeTools {
         this.statusMessage = 'Configuring...';
         const result = await this.execute(
             ['-H' + this.sourceDir.replace(/\\/g, path.posix.sep),
-             '-B' + binary_dir.replace(/\\/g, path.posix.sep)]
+             '-B' + binary_dir.replace(/\\/g, path.posix.sep),
+             '-C' + init_cache_path]
                 .concat(settings_args)
                 .concat(extra_args)
-                .concat(this.config.configureArgs)
+                .concat(this.config.configureArgs),
+            {
+                silent: false,
+                environment: this.config.configureEnvironment,
+            }
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1533,7 +1581,11 @@ export class CMakeTools {
             ]
                 .concat(generator_args)
                 .concat(this.config.buildToolArgs)
-            )
+            ),
+            {
+                silent: false,
+                environment: this.config.buildEnvironment,
+            }
         );
         this.statusMessage = 'Ready';
         if (this.config.parseBuildDiagnostics) {
@@ -1592,7 +1644,7 @@ export class CMakeTools {
     }
 
     public showTargetSelector(): Thenable<string> {
-        return this._targets
+        return this._targets.length
             ? vscode.window.showQuickPick(this._targets)
             : vscode.window.showInputBox({
                 prompt: 'Enter a target name'
@@ -1711,7 +1763,19 @@ export class CMakeTools {
 
     public async ctest (): Promise<Number> {
         this._channel.show();
-        return (await this.execute(['-E', 'chdir', this.binaryDir, 'ctest', '-j' + this.numCTestJobs, '--output-on-failure'])).retc;
+        return (
+            await this.execute(
+                [
+                    '-E', 'chdir', this.binaryDir,
+                    'ctest', '-j' + this.numCTestJobs,
+                    '--output-on-failure'
+                ],
+                {
+                    silent: false,
+                    environment: this.config.testEnvironment,
+                }
+            )
+        ).retc;
     }
 
     public async quickStart (): Promise<Number> {
