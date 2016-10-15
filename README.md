@@ -21,6 +21,9 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   variant](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/build_variants.md) you would like to configure with.
   The default variants are the same old CMake build types most users are familiar with.
 - Many smaller fixes and tweaks.
+- **0.6.1**:
+  - Can now specify environment variables for CMake configure/build
+  - Bug fixes and tweaks
 
 ### Version 0.5.0
 
