@@ -1187,7 +1187,8 @@ export class CMakeTools {
             const pipe = proc.spawn(this.config.cmakePath, args, {
                 env: Object.assign(
                     Object.assign({}, options.environment),
-                    this.config.environment
+                    this.config.environment,
+                    process.env
                 )
             });
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
