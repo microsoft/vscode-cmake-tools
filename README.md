@@ -24,6 +24,7 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 - **0.6.1**:
   - Can now specify environment variables for CMake configure/build
   - Bug fixes and tweaks
+- **0.6.2** HOTFIX: Fix issues passing environment variables to child processes
 
 ### Version 0.5.0
 
