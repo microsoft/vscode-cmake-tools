@@ -1689,6 +1689,7 @@ export class CMakeTools {
         this.statusMessage = 'Ready';
         if (!result.retc) {
             this._refreshAll();
+            this._reloadConfiguration();
         }
         return result.retc;
     }
