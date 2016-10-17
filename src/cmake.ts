@@ -1018,7 +1018,7 @@ export class CMakeTools {
                 (acc, test) => acc + (test.Status != 'failed' ? 1 : 0)
                 , 0);
             const passing = test_count == good_count;
-            this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${test_count === 1 ? 'test' : 'tests'} passing`;
+            this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${good_count === 1 ? 'test' : 'tests'} passing`;
             this._testStatusButton.color = good_count == test_count ? 'lightgreen' : 'yellow';
         } else if (test_count) {
             this._testStatusButton.color = '';
@@ -1249,7 +1249,16 @@ export class CMakeTools {
      */
     public parseDiagnostics(result: ExecutionResult) {
         const compiler = this.cmakeCache.get('CMAKE_CXX_COMPILER_ID') || this.cmakeCache.get('CMAKE_C_COMPILER_ID');
-        const lines = result.stdout.split('\n').map(line => line.trim());
+        const lines = result
+            .stdout
+            .split('\n')
+            .map(line => line.trim())
+            .concat(
+                result
+                .stderr
+                .split('\n')
+                .map(line => line.trim())
+            );
         const diags = lines.map(line => this.parseDiagnosticLine(line)).filter(item => !!item);
         const diags_acc = {};
         for (const diag of diags) {
