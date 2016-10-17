@@ -133,14 +133,12 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
             const res = /^(.*)\((\d+)\): FAILED:/.exec(line);
             const [_, file, lineno_] = res!;
             const lineno = parseInt(lineno_) - 1;
-            const lhs = lines[cursor + 3];
-            const op = lines[cursor + 4];
-            const rhs = lines[cursor + 5];
+            const expr = lines[cursor + 3];
 
             decorations.push({
                 fileName: file,
                 lineNumber: lineno,
-                hoverMessage: `${lhs} ${op} ${rhs}`,
+                hoverMessage: `${expr}`,
             });
         }
     }
