@@ -19,14 +19,14 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 - Updated to new vscode/Node APIs for TypeScript 2.0.
 - Various bug fixes and tweaks.
 
-\* If you would like to see integration witht he output from your favourite
+\* If you would like to see integration with the output from your favourite
 testing framework, please make a [pull request](https://github.com/vector-of-bool/vscode-cmake-tools). Thanks!
 
 ### Version 0.6.0
 
-**NEW** Build variants. This makes working with complex projects simpler, and
-simpler projects are still simple. [Read about it here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/build_variants.md).
-**please remember:** If you find an issue or have a question/request,
+**NEW** Build variants. This makes working with complex projects simpler while
+simple projects remain simple. [Read about it here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/build_variants.md).
+**Please Remember:** If you find an issue or have a question/request,
 feel free to open an issue on [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools). Thanks!
 
 ### Version 0.5.0
