@@ -105,6 +105,9 @@ export namespace util {
     while (path.sep !== path.posix.sep && norm.includes(path.sep)) {
         norm = norm.replace(path.sep, path.posix.sep);
     }
+    if (process.platform === 'win32') {
+      norm = norm.toLocaleLowerCase().normalize();
+    }
     return norm
   }
 }
