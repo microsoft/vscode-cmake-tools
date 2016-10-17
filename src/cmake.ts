@@ -1249,7 +1249,16 @@ export class CMakeTools {
      */
     public parseDiagnostics(result: ExecutionResult) {
         const compiler = this.cmakeCache.get('CMAKE_CXX_COMPILER_ID') || this.cmakeCache.get('CMAKE_C_COMPILER_ID');
-        const lines = result.stdout.split('\n').map(line => line.trim());
+        const lines = result
+            .stdout
+            .split('\n')
+            .map(line => line.trim())
+            .concat(
+                result
+                .stderr
+                .split('\n')
+                .map(line => line.trim())
+            );
         const diags = lines.map(line => this.parseDiagnosticLine(line)).filter(item => !!item);
         const diags_acc = {};
         for (const diag of diags) {
