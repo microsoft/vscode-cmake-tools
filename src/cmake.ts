@@ -1018,7 +1018,7 @@ export class CMakeTools {
                 (acc, test) => acc + (test.Status != 'failed' ? 1 : 0)
                 , 0);
             const passing = test_count == good_count;
-            this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${test_count === 1 ? 'test' : 'tests'} passing`;
+            this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${good_count === 1 ? 'test' : 'tests'} passing`;
             this._testStatusButton.color = good_count == test_count ? 'lightgreen' : 'yellow';
         } else if (test_count) {
             this._testStatusButton.color = '';
