@@ -9,6 +9,7 @@ import * as ajv from 'ajv';
 import * as vscode from 'vscode';
 
 import * as async from './async';
+import {ctest} from './ctest';
 import * as diagnostics from './diagnostics';
 import {util} from './util';
 
@@ -137,6 +138,11 @@ interface FileDiagnostic {
     diag: vscode.Diagnostic;
 }
 
+interface Test {
+    id: number;
+    name: string;
+}
+
 export class CacheEntry {
     private _type: EntryType = EntryType.Uninitialized;
     private _docs: string = '';
@@ -212,14 +218,12 @@ export class CMakeCache {
         const entries = new Map<string, CacheEntry>();
         let docs_acc = '';
         for (const line of lines) {
-            if (!line)
-                continue;
             if (line.startsWith('//')) {
-                docs_acc += /^\/\/(.*)/.exec(line)[1] + ' ';
+                docs_acc += /^\/\/(.*)/.exec(line)![1] + ' ';
             } else {
                 const match = /^(.*?):(.*?)=(.*)/.exec(line);
                 console.assert(!!match, "Couldn't handle reading cache entry: " + line);
-                const [_, name, typename, valuestr] = match;
+                const [_, name, typename, valuestr] = match!;
                 if (!name || !typename)
                     continue;
                 if (name.endsWith('-ADVANCED') && valuestr == '1') {
@@ -251,9 +255,7 @@ export class CMakeCache {
     }
 
     public get(key: string, defaultValue?: any): Maybe<CacheEntry> {
-        if (!this._entries.has(key))
-            return null;
-        return this._entries.get(key);
+        return this._entries.get(key) || null;
     }
 }
 
@@ -420,13 +422,30 @@ export class ConfigurationReader {
 export class CMakeTools {
     private _context: vscode.ExtensionContext;
     private _channel: vscode.OutputChannel;
+    private _ctestChannel: vscode.OutputChannel;
     private _diagnostics: vscode.DiagnosticCollection;
     private _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
     private _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
     private _targetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
     private _debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.2);
     private _debugTargetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
+    private _testStatusButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.05);
     private _warningMessage = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+    private _failingTestDecorationType = vscode.window.createTextEditorDecorationType({
+        borderColor: 'rgba(255, 0, 0, 0.2)',
+        borderWidth: '1px',
+        borderRadius: '3px',
+        borderStyle: 'solid',
+        cursor: 'pointer',
+        backgroundColor: 'rgba(255, 0, 0, 0.1)',
+        overviewRulerColor: 'red',
+        overviewRulerLane: vscode.OverviewRulerLane.Center,
+        after: {
+            contentText: 'Failed',
+            backgroundColor: 'darkred',
+            margin: '10px',
+        },
+    });
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
@@ -547,6 +566,111 @@ export class CMakeTools {
         }
     }
 
+    private _tests : Test[] = [];
+    public get tests() : Test[] {
+        return this._tests;
+    }
+    public set tests(v : Test[]) {
+        this._tests = v;
+        this._refreshStatusBarItems();
+    }
+
+    /**
+     * @brief Reload the list of CTest tests
+     */
+    private async _refreshTests(): Promise<Test[]> {
+        const ctest_file = path.join(this.binaryDir, 'CTestTestfile.cmake');
+        if (!(await async.exists(ctest_file))) {
+            return this.tests = [];
+        }
+        const bt = this.selectedBuildType || 'Debug';
+        const result = await async.execute('ctest', ['-N', '-C', bt], {cwd: this.binaryDir});
+        if (result.retc !== 0) {
+            // There was an error running CTest. Odd...
+            this._channel.appendLine('[vscode] There was an error running ctest to determine available test executables');
+            return this.tests = [];
+        }
+        const tests = result.stdout.split('\n')
+            .map(l => l.trim())
+            .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
+            .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
+            .map(([_, id, tname]) => ({
+                id: parseInt(id!),
+                name: tname!
+            }));
+        const tagfile = path.join(this.binaryDir, 'Testing', 'TAG');
+        const tag = (await async.exists(tagfile)) ? (await async.readFile(tagfile)).toString().split('\n')[0].trim() : null;
+        const tagdir = tag ? path.join(this.binaryDir, 'Testing', tag) : null;
+        const results_file = tagdir ? path.join(tagdir, 'Test.xml') : null;
+        if (results_file && await async.exists(results_file)) {
+            await this._refreshTestResults(results_file);
+        } else {
+            this.testResults = null;
+        }
+        return this.tests = tests;
+    }
+
+    private _testResults : Maybe<ctest.Results>;
+    public get testResults() : Maybe<ctest.Results> {
+        return this._testResults;
+    }
+    public set testResults(v : Maybe<ctest.Results>) {
+        this._testResults = v;
+        this._refreshStatusBarItems();
+    }
+
+
+    private _failingTestDecorations : ctest.FailingTestDecoration[] = [];
+    clearFailingTestDecorations() {
+        this.failingTestDecorations = [];
+    }
+    addFailingTestDecoration(dec: ctest.FailingTestDecoration) {
+        this._failingTestDecorations.push(dec)
+        this._refreshActiveEditorDecorations();
+    }
+    public get failingTestDecorations() : ctest.FailingTestDecoration[] {
+        return this._failingTestDecorations;
+    }
+    public set failingTestDecorations(v : ctest.FailingTestDecoration[]) {
+        this._failingTestDecorations = v;
+        for (const editor of vscode.window.visibleTextEditors) {
+            this._refreshEditorDecorations(editor);
+        }
+    }
+
+    private _refreshActiveEditorDecorations() {
+        this._refreshEditorDecorations(vscode.window.activeTextEditor);
+    }
+
+    private _refreshEditorDecorations(editor: vscode.TextEditor) {
+        const to_apply: vscode.DecorationOptions[] = [];
+        for (const decor of this.failingTestDecorations) {
+            const editor_file = util.normalizePath(editor.document.fileName);
+            const decor_file = util.normalizePath(decor.fileName);
+            if (editor_file !== decor_file) {
+                continue;
+            }
+            const file_line = vscode.window.activeTextEditor.document.lineAt(decor.lineNumber);
+            const range = new vscode.Range(decor.lineNumber, file_line.firstNonWhitespaceCharacterIndex, decor.lineNumber, file_line.range.end.character);
+            to_apply.push({
+                hoverMessage: decor.hoverMessage,
+                range: range,
+            });
+        }
+        editor.setDecorations(this._failingTestDecorationType, to_apply);
+    }
+
+    private async _refreshTestResults(test_xml: string): Promise<void> {
+        this.testResults = await ctest.readTestResultsFile(test_xml);
+        const failing = this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed');
+        this.clearFailingTestDecorations();
+        let new_decors = [] as ctest.FailingTestDecoration[];
+        for (const t of failing) {
+            new_decors.push(...await ctest.parseTestOutput(t.Output));
+        }
+        this.failingTestDecorations = new_decors;
+    }
+
     private _currentDebugTarget: Maybe<string>;
     public get currentDebugTarget(): Maybe<string> {
         return this._currentDebugTarget;
@@ -571,7 +695,7 @@ export class CMakeTools {
                     name: tup[1],
                     path: tup[2],
                 }));
-            const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system');
+            const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
             this.os = os || null;
             this.systemProcessor = proc || null;
             this.compilerId = cid || null;
@@ -742,12 +866,12 @@ export class CMakeTools {
                     debugger;
                     throw 12;
                 }
-                const choices = vars.get(param).choices;
+                const choices = vars.get(param)!.choices;
                 if (!choices.has(setting)) {
                     debugger;
                     throw 12;
                 }
-                return choices.get(setting);
+                return choices.get(setting)!;
             }
         );
         const result: util.VariantConfigurationOptions = data.reduce(
@@ -777,7 +901,7 @@ export class CMakeTools {
 
     private async _init(ctx: vscode.ExtensionContext): Promise<void> {
         this._channel = vscode.window.createOutputChannel('CMake/Build');
-        this._channel = vscode.window.createOutputChannel('CMake/Build');
+        this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
@@ -792,6 +916,10 @@ export class CMakeTools {
             this._activeVariantCombination = this._workspaceCacheContent.variant;
         }
 
+        vscode.window.onDidChangeActiveTextEditor(_ => {
+            this._refreshActiveEditorDecorations();
+        })
+
         // Load up the CMake cache
         await this._setupCMakeCacheWatcher();
         this._currentChildProcess = null;
@@ -800,6 +928,7 @@ export class CMakeTools {
         }
         this._reloadConfiguration();
 
+        await this._refreshTests();
         await this._refreshTargetList();
         this.statusMessage = 'Ready';
 
@@ -864,6 +993,7 @@ export class CMakeTools {
                 this._cmakeToolsStatusItem.show();
                 this._buildButton.show();
                 this._targetButton.show();
+                this._testStatusButton.show();
                 if (this.debugTargetsEnabled) {
                     this._debugButton.show();
                     this._debugTargetButton.show();
@@ -872,6 +1002,7 @@ export class CMakeTools {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
                 this._targetButton.hide();
+                this._testStatusButton.hide();
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
             }
@@ -880,6 +1011,22 @@ export class CMakeTools {
                 this._debugTargetButton.hide();
             }
         });
+
+        const test_count = this.tests.length;
+        if (this.testResults) {
+            const good_count = this.testResults.Site.Testing.Test.reduce(
+                (acc, test) => acc + (test.Status != 'failed' ? 1 : 0)
+                , 0);
+            const passing = test_count == good_count;
+            this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${good_count === 1 ? 'test' : 'tests'} passing`;
+            this._testStatusButton.color = good_count == test_count ? 'lightgreen' : 'yellow';
+        } else if (test_count) {
+            this._testStatusButton.color = '';
+            this._testStatusButton.text = 'Run CTest';
+        } else {
+            this._testStatusButton.hide();
+        }
+        this._testStatusButton.command = 'cmake.ctest';
 
         this._buildButton.text = this.isBusy ? '$(x) Stop' : `$(gear) Build:`;
         this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
@@ -899,6 +1046,13 @@ export class CMakeTools {
         }
         const cached = this.cmakeCache.get('CMAKE_PROJECT_NAME');
         return cached ? cached.as<string>() : 'Unnamed Project';
+    }
+
+    private async _refreshAll() {
+        await this.reloadCMakeCache();
+        await this._refreshTargetList();
+        await this._reloadMetaData();
+        await this._refreshTests();
     }
 
     /**
@@ -1095,7 +1249,16 @@ export class CMakeTools {
      */
     public parseDiagnostics(result: ExecutionResult) {
         const compiler = this.cmakeCache.get('CMAKE_CXX_COMPILER_ID') || this.cmakeCache.get('CMAKE_C_COMPILER_ID');
-        const lines = result.stdout.split('\n').map(line => line.trim());
+        const lines = result
+            .stdout
+            .split('\n')
+            .map(line => line.trim())
+            .concat(
+                result
+                .stderr
+                .split('\n')
+                .map(line => line.trim())
+            );
         const diags = lines.map(line => this.parseDiagnosticLine(line)).filter(item => !!item);
         const diags_acc = {};
         for (const diag of diags) {
@@ -1317,8 +1480,6 @@ export class CMakeTools {
             return generator;
         }
         for (const gen of candidates) {
-            if (!gen)
-                continue;
             const delegate = {
                 Ninja: async function () {
                     return await this.testHaveCommand('ninja-build') || await this.testHaveCommand('ninja');
@@ -1514,9 +1675,8 @@ export class CMakeTools {
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
-            this.reloadCMakeCache()
-            this._refreshTargetList();
-            this._reloadMetaData();
+            this._refreshAll();
+            this._reloadConfiguration();
         }
         return result.retc;
     }
@@ -1594,9 +1754,7 @@ export class CMakeTools {
             await this.parseDiagnostics(result);
         }
         if (!result.retc) {
-            this.reloadCMakeCache();
-            this._refreshTargetList();
-            this._reloadMetaData();
+            this._refreshAll();
         }
         return result.retc;
     }
@@ -1764,11 +1922,18 @@ export class CMakeTools {
 
     public async ctest (): Promise<Number> {
         this._channel.show();
-        return (
+        this.failingTestDecorations = [];
+        const build_retc = await this.build();
+        if (build_retc !== 0) {
+            return build_retc;
+        }
+        const retc = (
             await this.execute(
                 [
                     '-E', 'chdir', this.binaryDir,
                     'ctest', '-j' + this.numCTestJobs,
+                    '-C', this.selectedBuildType || 'Debug',
+                    '-T', 'test',
                     '--output-on-failure'
                 ],
                 {
@@ -1777,6 +1942,20 @@ export class CMakeTools {
                 }
             )
         ).retc;
+        await this._refreshTests();
+        this._ctestChannel.clear();
+        if (this.testResults) {
+            for (const test of this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed')) {
+                this._ctestChannel.append(
+                    `The test "${test.Name}" failed with the following output:\n` +
+                    '----------' +        '-----------------------------------' + Array(test.Name.length).join('-') +
+                    `\n${test.Output.trim().split('\n').map(line => '    ' + line).join('')}\n`
+                );
+                // Only show the channel when a test fails
+                this._ctestChannel.show();
+            }
+        }
+        return retc;
     }
 
     public async quickStart (): Promise<Number> {

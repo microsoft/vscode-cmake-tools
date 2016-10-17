@@ -59,7 +59,7 @@ suite("Utility tests", () => {
             const message = `Using newline ${JSON.stringify(newline)}`
             assert.strictEqual(entries.size, 1, message);
             assert.strictEqual(entries.has('SOMETHING'), true);
-            const entry = entries.get('SOMETHING');
+            const entry = entries.get('SOMETHING')!;
             assert.strictEqual(entry.value, 'foo');
             assert.strictEqual(entry.type, cmake.EntryType.String);
             assert.strictEqual(entry.docs, 'This line is docs');
