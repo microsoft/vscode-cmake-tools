@@ -633,7 +633,9 @@ export class CMakeTools {
     }
     public set failingTestDecorations(v : ctest.FailingTestDecoration[]) {
         this._failingTestDecorations = v;
-        this._refreshActiveEditorDecorations();
+        for (const editor of vscode.window.visibleTextEditors) {
+            this._refreshEditorDecorations(editor);
+        }
     }
 
     private _refreshActiveEditorDecorations() {
@@ -658,40 +660,15 @@ export class CMakeTools {
         editor.setDecorations(this._failingTestDecorationType, to_apply);
     }
 
-
     private async _refreshTestResults(test_xml: string): Promise<void> {
         this.testResults = await ctest.readTestResultsFile(test_xml);
         const failing = this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed');
         this.clearFailingTestDecorations();
+        let new_decors = [] as ctest.FailingTestDecoration[];
         for (const t of failing) {
-            if (/is a Catch .* host application\./.test(t.Output)) {
-                const lines = t.Output.split('\n').map(l => l.trim());
-                const decorations: ctest.FailingTestDecoration[] = [];
-                for (let cursor = 0; cursor < lines.length; ++cursor) {
-                    const line = lines[cursor];
-                    if (/: FAILED:$/.test(line)) {
-                        const res = /^(.*)\((\d+)\): FAILED:/.exec(line);
-                        const [_, file, lineno_] = res!;
-                        const lineno = parseInt(lineno_) - 1;
-                        const lhs = lines[cursor + 3];
-                        const op = lines[cursor + 4];
-                        const rhs = lines[cursor + 5];
-                        const file_line = vscode.window.activeTextEditor.document.lineAt(lineno);
-                        const range = new vscode.Range(lineno, file_line.firstNonWhitespaceCharacterIndex, lineno, file_line.range.end.character);
-
-                        this.addFailingTestDecoration({
-                            fileName: file,
-                            lineNumber: lineno,
-                            hoverMessage: `${lhs} ${op} ${rhs}`,
-                        });
-                    }
-                }
-            }
+            new_decors.push(...await ctest.parseTestOutput(t.Output));
         }
-        // Refresh decors for non-active editors
-        for (const editor of vscode.window.visibleTextEditors) {
-            this._refreshEditorDecorations(editor);
-        }
+        this.failingTestDecorations = new_decors;
     }
 
     private _currentDebugTarget: Maybe<string>;
@@ -1040,8 +1017,9 @@ export class CMakeTools {
             const good_count = this.testResults.Site.Testing.Test.reduce(
                 (acc, test) => acc + (test.Status != 'failed' ? 1 : 0)
                 , 0);
-            this._testStatusButton.text = `${good_count}/${test_count} ${test_count === 1 ? 'test' : 'tests'} passing`;
-            this._testStatusButton.color = good_count == test_count ? '' : 'yellow';
+            const passing = test_count == good_count;
+            this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${test_count === 1 ? 'test' : 'tests'} passing`;
+            this._testStatusButton.color = good_count == test_count ? 'lightgreen' : 'yellow';
         } else if (test_count) {
             this._testStatusButton.color = '';
             this._testStatusButton.text = 'Run CTest';

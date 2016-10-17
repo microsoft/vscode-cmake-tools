@@ -124,4 +124,35 @@ export async function readTestResultsFile(test_xml: string): Promise<Results> {
     return clean;
 }
 
+export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
+    const lines = output.split('\n').map(l => l.trim());
+    const decorations: FailingTestDecoration[] = [];
+    for (let cursor = 0; cursor < lines.length; ++cursor) {
+        const line = lines[cursor];
+        if (/: FAILED:$/.test(line)) {
+            const res = /^(.*)\((\d+)\): FAILED:/.exec(line);
+            const [_, file, lineno_] = res!;
+            const lineno = parseInt(lineno_) - 1;
+            const lhs = lines[cursor + 3];
+            const op = lines[cursor + 4];
+            const rhs = lines[cursor + 5];
+
+            decorations.push({
+                fileName: file,
+                lineNumber: lineno,
+                hoverMessage: `${lhs} ${op} ${rhs}`,
+            });
+        }
+    }
+    return decorations;
+}
+
+export async function parseTestOutput(output: string): Promise<FailingTestDecoration[]> {
+    if (/is a Catch .* host application\./.test(output)) {
+        return parseCatchTestOutput(output);
+    } else {
+        return [];
+    }
+}
+
 }
