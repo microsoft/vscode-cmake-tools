@@ -2056,17 +2056,19 @@ export class CMakeTools {
     }
 
     public async _killTree(pid: number) {
-        let children: number[] = [];
         if (process.platform !== 'win32') {
+            let children: number[] = [];
             const stdout = (await async.execute('pgrep', ['-P', pid.toString()])).stdout.trim();
             if (!!stdout.length) {
                 children = stdout.split('\n').map(line => Number.parseInt(line));
             }
+            for (const other of children) {
+                if (other)
+                    await this._killTree(other);
+            }
+            process.kill(pid, 'SIGINT');
+        } else {
+            proc.exec('taskkill /pid ' + pid.toString() + ' /T /F')
         }
-        for (const other of children) {
-            if (other)
-                await this._killTree(other);
-        }
-        process.kill(pid, 'SIGINT');
     }
 }
