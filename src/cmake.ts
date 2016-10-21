@@ -36,11 +36,14 @@ if(NOT is_set_up)
     endwhile()
     macro(\${_cmt_add_executable} target)
         _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
-        file(APPEND
-            "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-            "executable;\${target};$<TARGET_FILE:\${target}>\n"
-            )
-        _cmt_generate_system_info()
+        get_target_property(is_imported \${target} IMPORTED)
+        if(NOT is_imported)
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "executable;\${target};$<TARGET_FILE:\${target}>\n"
+                )
+            _cmt_generate_system_info()
+        endif()
     endmacro()
 
     set(_cmt_add_library add_library)
