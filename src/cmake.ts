@@ -650,7 +650,7 @@ export class CMakeTools {
             if (editor_file !== decor_file) {
                 continue;
             }
-            const file_line = vscode.window.activeTextEditor.document.lineAt(decor.lineNumber);
+            const file_line = editor.document.lineAt(decor.lineNumber);
             const range = new vscode.Range(decor.lineNumber, file_line.firstNonWhitespaceCharacterIndex, decor.lineNumber, file_line.range.end.character);
             to_apply.push({
                 hoverMessage: decor.hoverMessage,
