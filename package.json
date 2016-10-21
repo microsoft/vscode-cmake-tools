@@ -250,11 +250,6 @@
                     "default": true,
                     "description": "Parse compiler output for warnings and errors"
                 },
-                "cmake.cmakePath": {
-                    "type": "string",
-                    "default": "cmake",
-                    "description": "The path to CMake generator executable"
-                },
                 "cmake.debugConfig": {
                     "type": "object",
                     "default": {
