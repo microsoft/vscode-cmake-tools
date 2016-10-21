@@ -36,11 +36,14 @@ if(NOT is_set_up)
     endwhile()
     macro(\${_cmt_add_executable} target)
         _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
-        file(APPEND
-            "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-            "executable;\${target};$<TARGET_FILE:\${target}>\n"
-            )
-        _cmt_generate_system_info()
+        get_target_property(is_imported \${target} IMPORTED)
+        if(NOT is_imported)
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "executable;\${target};$<TARGET_FILE:\${target}>\n"
+                )
+            _cmt_generate_system_info()
+        endif()
     endmacro()
 
     set(_cmt_add_library add_library)
@@ -650,7 +653,7 @@ export class CMakeTools {
             if (editor_file !== decor_file) {
                 continue;
             }
-            const file_line = vscode.window.activeTextEditor.document.lineAt(decor.lineNumber);
+            const file_line = editor.document.lineAt(decor.lineNumber);
             const range = new vscode.Range(decor.lineNumber, file_line.firstNonWhitespaceCharacterIndex, decor.lineNumber, file_line.range.end.character);
             to_apply.push({
                 hoverMessage: decor.hoverMessage,
@@ -944,16 +947,16 @@ export class CMakeTools {
         }
 
         const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
-        if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.1) {
+        if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.2) {
             vscode.window.showInformationMessage(
                 'Did you know CMake Tools now provides experimental debugger integration?',
                 {
-                    title: 'Don\'t bother me again',
-                    action: 'never'
-                },
-                {
                     title: 'Tell me more',
                     action: 'open_link'
+                },
+                {
+                    title: 'Don\'t bother me again',
+                    action: 'never'
                 }).then(chosen => {
                     if (chosen.action === 'never') {
                         ctx.globalState.update('debugTargets.neverBother', true);
@@ -2056,17 +2059,22 @@ export class CMakeTools {
     }
 
     public async _killTree(pid: number) {
-        let children: number[] = [];
         if (process.platform !== 'win32') {
+            let children: number[] = [];
             const stdout = (await async.execute('pgrep', ['-P', pid.toString()])).stdout.trim();
             if (!!stdout.length) {
                 children = stdout.split('\n').map(line => Number.parseInt(line));
             }
+            for (const other of children) {
+                if (other)
+                    await this._killTree(other);
+            }
+            process.kill(pid, 'SIGINT');
+        } else {
+            // Because reasons, Node's proc.kill doesn't work on killing child
+            // processes transitively. We have to do a sad and manually kill the
+            // task using taskkill.
+            proc.exec('taskkill /pid ' + pid.toString() + ' /T /F')
         }
-        for (const other of children) {
-            if (other)
-                await this._killTree(other);
-        }
-        process.kill(pid, 'SIGINT');
     }
 }
