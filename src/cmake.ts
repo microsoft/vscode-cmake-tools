@@ -2068,6 +2068,9 @@ export class CMakeTools {
             }
             process.kill(pid, 'SIGINT');
         } else {
+            // Because reasons, Node's proc.kill doesn't work on killing child
+            // processes transitively. We have to do a sad and manually kill the
+            // task using taskkill.
             proc.exec('taskkill /pid ' + pid.toString() + ' /T /F')
         }
     }
