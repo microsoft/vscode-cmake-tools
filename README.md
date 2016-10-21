@@ -18,6 +18,7 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   assertions along with failure information.*
 - Updated to new vscode/Node APIs for TypeScript 2.0.
 - Various bug fixes and tweaks.
+- **0.7.1**: Bug fixes and tweaks.
 
 \* If you would like to see integration with the output from your favourite
 testing framework, please make a [pull request](https://github.com/vector-of-bool/vscode-cmake-tools). Thanks!
