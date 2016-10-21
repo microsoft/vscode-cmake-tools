@@ -951,12 +951,12 @@ export class CMakeTools {
             vscode.window.showInformationMessage(
                 'Did you know CMake Tools now provides experimental debugger integration?',
                 {
-                    title: 'Don\'t bother me again',
-                    action: 'never'
-                },
-                {
                     title: 'Tell me more',
                     action: 'open_link'
+                },
+                {
+                    title: 'Don\'t bother me again',
+                    action: 'never'
                 }).then(chosen => {
                     if (chosen.action === 'never') {
                         ctx.globalState.update('debugTargets.neverBother', true);
