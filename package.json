@@ -350,5 +350,8 @@
         "js-yaml": "^3.6.1",
         "ajv": "^4.7.5",
         "xml2js": "^0.4.17"
-    }
+    },
+    "extensionDependencies": [
+        "twxs.cmake"
+    ]
 }
