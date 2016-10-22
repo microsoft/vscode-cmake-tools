@@ -129,9 +129,12 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
     const decorations: FailingTestDecoration[] = [];
     for (let cursor = 0; cursor < lines.length; ++cursor) {
         const line = lines[cursor];
-        if (/: FAILED:$/.test(line)) {
-            const res = /^(.*)\((\d+)\): FAILED:/.exec(line);
-            const [_, file, lineno_] = res!;
+        const regex = process.platform === 'win32'
+            ? new RegExp(/^(.*)\((\d+)\): FAILED:/)
+            : new RegExp(/^(.*):(\d+): FAILED:/);
+        const res = regex.exec(line);
+        if (res) {
+            const [_, file, lineno_] = res;
             const lineno = parseInt(lineno_) - 1;
             const expr = lines[cursor + 3];
 

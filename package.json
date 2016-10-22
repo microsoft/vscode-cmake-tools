@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.7.0",
+    "version": "0.7.1",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -250,11 +250,6 @@
                     "default": true,
                     "description": "Parse compiler output for warnings and errors"
                 },
-                "cmake.cmakePath": {
-                    "type": "string",
-                    "default": "cmake",
-                    "description": "The path to CMake generator executable"
-                },
                 "cmake.debugConfig": {
                     "type": "object",
                     "default": {
@@ -350,5 +345,8 @@
         "js-yaml": "^3.6.1",
         "ajv": "^4.7.5",
         "xml2js": "^0.4.17"
-    }
+    },
+    "extensionDependencies": [
+        "twxs.cmake"
+    ]
 }
