@@ -422,6 +422,56 @@ export class ConfigurationReader {
     }
 }
 
+class TrottledOutputChannel implements vscode.OutputChannel{
+    private _channel: vscode.OutputChannel;
+    private _data_acc: string;
+    private _throttler: async.Throttler<void>;
+
+    constructor(name: string) {
+        this._channel = vscode.window.createOutputChannel(name);
+        this._data_acc = '';
+        this._throttler = new async.Throttler();
+    }
+
+	get name(): string {
+		return this._channel.name;
+	}
+
+	dispose(): void {
+        this._data_acc = '';
+		this._channel.dispose();
+	}
+
+	append(value: string): void {
+        this._data_acc += value;
+        this._throttler.queue(() => {
+            if (this._data_acc) {
+                const data = this._data_acc;
+                this._data_acc = '';
+                this._channel.append(data);
+            }
+            return Promise.resolve();
+        });
+	}
+
+	appendLine(value: string): void {
+		this.append(value + '\n');
+	}
+
+	clear(): void {
+        this._data_acc = '';
+		this._channel.clear();
+	}
+
+	show(columnOrPreserveFocus?, preserveFocus?): void {
+		this._channel.show(columnOrPreserveFocus, preserveFocus);
+	}
+
+	hide(): void {
+		this._channel.hide();
+	}
+}
+
 export class CMakeTools {
     private _context: vscode.ExtensionContext;
     private _channel: vscode.OutputChannel;
@@ -903,7 +953,8 @@ export class CMakeTools {
     }
 
     private async _init(ctx: vscode.ExtensionContext): Promise<void> {
-        this._channel = vscode.window.createOutputChannel('CMake/Build');
+        this._channel = new TrottledOutputChannel('CMake/Build');
+        //this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
         this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
