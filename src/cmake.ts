@@ -1237,13 +1237,42 @@ export class CMakeTools {
     }
 
     /**
+     * Parses a diagnostic message from Green Hills Compiler.
+     * Use single line error reporting when invoking GHS compiler (--no_wrap_diagnostics --brief_diagnostics).
+     */
+    public parseGHSDiagnostic(line: string): Maybe<FileDiagnostic> {
+        const diag = diagnostics.parseGHSDiagnostic(line);
+        if (!diag) {
+            return null;
+        }
+        const abspath = path.isAbsolute(diag.file)
+            ? diag.file
+            : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                remark: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'GHS';
+        return {
+            filepath: abspath,
+            diag: vsdiag,
+        };
+    }
+
+    /**
      * @brief Parses a line of compiler output to try and find a diagnostic
      *      message.
      */
     public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         return this.parseGCCDiagnostic(line) ||
             this.parseGNULDDiagnostic(line) ||
-            this.parseMSVCDiagnostic(line);
+            this.parseMSVCDiagnostic(line) ||
+            this.parseGHSDiagnostic(line);
     }
 
     /**
