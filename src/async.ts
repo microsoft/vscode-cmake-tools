@@ -64,8 +64,9 @@ export function execute(command: string, args: string[], options?: proc.SpawnOpt
         });
     });
 }
+
 export interface ITask<T> {
-	(): T;
+    (): T;
 }
 
 /**
@@ -90,50 +91,50 @@ export interface ITask<T> {
  */
 export class Throttler<T> {
 
-	private activePromise: Promise<T>;
-	private queuedPromise: Promise<T>;
-	private queuedPromiseFactory: ITask<Promise<T>>;
+    private activePromise: Promise<T>;
+    private queuedPromise: Promise<T>;
+    private queuedPromiseFactory: ITask<Promise<T>>;
 
-	constructor() {
-		this.activePromise = null;
-		this.queuedPromise = null;
-		this.queuedPromiseFactory = null;
-	}
+    constructor() {
+        this.activePromise = null;
+        this.queuedPromise = null;
+        this.queuedPromiseFactory = null;
+    }
 
-	public queue(promiseFactory: ITask<Promise<T>>): Promise<T> {
-		if (this.activePromise) {
-			this.queuedPromiseFactory = promiseFactory;
+    public queue(promiseFactory: ITask<Promise<T>>): Promise<T> {
+        if (this.activePromise) {
+            this.queuedPromiseFactory = promiseFactory;
 
-			if (!this.queuedPromise) {
-				var onComplete = () => {
-					this.queuedPromise = null;
+            if (!this.queuedPromise) {
+                var onComplete = () => {
+                    this.queuedPromise = null;
 
-					var result = this.queue(this.queuedPromiseFactory);
-					this.queuedPromiseFactory = null;
+                    var result = this.queue(this.queuedPromiseFactory);
+                    this.queuedPromiseFactory = null;
 
-					return result;
-				};
+                    return result;
+                };
 
-				this.queuedPromise = new Promise<T>((resolve, reject) => {
-					this.activePromise.then(onComplete, onComplete).then(resolve);
-				});
-			}
+                this.queuedPromise = new Promise<T>((resolve, reject) => {
+                    this.activePromise.then(onComplete, onComplete).then(resolve);
+                });
+            }
 
-			return new Promise<T>((resolve, reject) => {
-				this.queuedPromise.then(resolve, reject);
-			});
-		}
+            return new Promise<T>((resolve, reject) => {
+                this.queuedPromise.then(resolve, reject);
+            });
+        }
 
-		this.activePromise = promiseFactory();
+        this.activePromise = promiseFactory();
 
-		return new Promise<T>((resolve, reject) => {
-			this.activePromise.then((result: T) => {
-				this.activePromise = null;
-				resolve(result);
-			}, (err: any) => {
-				this.activePromise = null;
-				reject(err);
-			});
-		});
-	}
+        return new Promise<T>((resolve, reject) => {
+            this.activePromise.then((result: T) => {
+                this.activePromise = null;
+                resolve(result);
+            }, (err: any) => {
+                this.activePromise = null;
+                reject(err);
+            });
+        });
+    }
 }

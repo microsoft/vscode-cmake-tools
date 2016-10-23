@@ -132,12 +132,11 @@ export enum EntryType {
 
 interface ExecutionResult {
     retc: Number;
-    stdout: string;
-    stderr: string;
 }
 
 interface FileDiagnostic {
     filepath: string;
+    key: string;
     diag: vscode.Diagnostic;
 }
 
@@ -422,7 +421,404 @@ export class ConfigurationReader {
     }
 }
 
-class TrottledOutputChannel implements vscode.OutputChannel{
+abstract class OutputParser {
+    constructor() { }
+    public parseStdOut(line: string): void { }
+    public parseStdErr(line: string): void { }
+    public finished(): void { }
+}
+
+class NoneErrorParser extends OutputParser { }
+
+class TargetParser extends OutputParser {
+    private lines: string[];
+
+    constructor() {
+        super();
+        this.lines = [];
+    }
+
+    public parseStdOut(line: string): void {
+        this.lines.push(line);
+    }
+
+    public getTargets(generator: string) {
+        const important_lines = (generator.endsWith('Makefiles')
+            ? this.lines.filter(l => l.startsWith('... '))
+            : this.lines.filter(l => l.indexOf(': ') !== -1))
+                .filter(l => !l.includes('All primary targets'));
+        return important_lines
+            .map(l => generator.endsWith('Makefiles')
+                ? l.substr(4)
+                : l)
+            .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
+            .map(l => l.replace(':', ''));
+    }
+}
+
+abstract class DiagnosticParser {
+    protected binaryDir: string;
+    constructor(binaryDir: string) {
+        this.binaryDir = binaryDir;
+    }
+
+    public abstract parse(line: string): [boolean, Maybe<FileDiagnostic>];
+}
+
+class CMAKEDiagnosticParser extends DiagnosticParser {
+    private cmdiag: Maybe<FileDiagnostic>;
+
+    constructor(binaryDir: string) {
+        super(binaryDir);
+        this.cmdiag = null;
+    }
+
+    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+        if (!line) {
+            const r = this.cmdiag;
+            this.cmdiag = null;
+            return [!!r, r];
+        }
+
+        const cmake_re = /CMake (.*?) at (.*?):(\d+) \((.*?)\):\s*(.*)/;
+        const res = cmake_re.exec(line);
+        if (!res) {
+            if (this.cmdiag) {
+                this.cmdiag.diag.message = '\n' + line;
+                return [true, null];
+            }
+            return [false, null];
+        }
+
+        const [full, level, filename, linestr, command, what] = res;
+        if (!filename || !linestr || !level) {
+            if (this.cmdiag) {
+                this.cmdiag.diag.message = '\n' + line;
+                return [true, null];
+            }
+            return [false, null];
+        }
+
+        this.cmdiag = <FileDiagnostic>{};
+        this.cmdiag.filepath = path.isAbsolute(filename)
+                             ? filename
+                             : path.join(vscode.workspace.rootPath, filename);
+        this.cmdiag.key = full;
+        const lineNr = Number.parseInt(linestr) - 1;
+
+        this.cmdiag.diag = new vscode.Diagnostic(
+            new vscode.Range(
+                lineNr,
+                0,
+                lineNr,
+                Number.POSITIVE_INFINITY
+            ),
+            what,
+            {
+                "Warning": vscode.DiagnosticSeverity.Warning,
+                "Error": vscode.DiagnosticSeverity.Error,
+            }[level]
+        );
+        this.cmdiag.diag.source = 'CMake (' + command + ')';
+        return [true, null];
+    }
+}
+
+/**
+ * Parses a diagnostic message from GCC
+ *
+ * @class GCCDiagnosticParser
+ * @extends {DiagnosticParser}
+ */
+class GCCDiagnosticParser extends DiagnosticParser {
+    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        if (!diag) {
+            return [false, null];
+        }
+        const abspath = path.isAbsolute(diag.file)
+            ? diag.file
+            : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                note: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'GCC';
+        return [true, {
+            filepath: abspath,
+            key: diag.full,
+            diag: vsdiag,
+        }];
+    }
+}
+
+/**
+ * Parses a diagnostic message from GCC
+ *
+ * @class GNULDDiagnosticParser
+ * @extends {DiagnosticParser}
+ */
+class GNULDDiagnosticParser extends DiagnosticParser {
+    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+        const diag = diagnostics.parseGNULDDiagnostic(line);
+        if (!diag) {
+            return [false, null];
+        }
+        const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, 0, diag.line, Number.POSITIVE_INFINITY),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                note: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'Link';
+        return [true, {
+            filepath: abspath,
+            key: diag.full,
+            diag: vsdiag,
+        }];
+    }
+}
+
+/**
+ * Parses an MSVC diagnostic.
+ *
+ * @class MSVCDiagnosticParser
+ * @extends {DiagnosticParser}
+ */
+class MSVCDiagnosticParser extends DiagnosticParser {
+    /**
+     * @brief Obtains a reference to a TextDocument given the name of the file
+     */
+    private getTextDocumentByFileName(file: string): Maybe<vscode.TextDocument> {
+        const documents = vscode.workspace.textDocuments;
+        let document: Maybe<vscode.TextDocument> = null;
+        if (documents.length !== 0) {
+            const filtered = documents.filter((doc: vscode.TextDocument) => {
+                return doc.fileName.toUpperCase() === file.toUpperCase();
+            });
+            if (filtered.length !== 0) {
+                document = filtered[0];
+            }
+        }
+        return document;
+    }
+
+    /**
+     * @brief Gets the range of the text of a specific line in the given file.
+     */
+    private getTrimmedLineRange(file: string, line: number): vscode.Range {
+        const document = this.getTextDocumentByFileName(file);
+        if (document && (line < document.lineCount)) {
+            const text = document.lineAt(line).text + '\n';
+            let start = 0;
+            let end = text.length - 1;
+            let is_space = (i) => { return /\s/.test(text[i]); };
+            while ((start < text.length) && is_space(start))++start;
+            while ((end >= start) && is_space(end))--end;
+
+            return new vscode.Range(line, start, line, end);
+        } else
+            return new vscode.Range(line, 0, line, 0);
+    }
+
+    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+        const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
+        const res = msvc_re.exec(line);
+        if (!res)
+            return [false, null];
+        const full = res[0];
+        const file = res[1];
+        const location = res[2];
+        const severity = res[3];
+        const code = res[4];
+        const message = res[5];
+        const abspath = path.isAbsolute(file)
+            ? file
+            : path.normalize(path.join(this.binaryDir, file));
+        const loc = (() => {
+            const parts = location.split(',');
+            if (parts.length === 1)
+                this.getTrimmedLineRange(file, Number.parseInt(parts[0]) - 1);
+            if (parseFloat.length === 2)
+                return new vscode.Range(
+                    Number.parseInt(parts[0]) - 1,
+                    Number.parseInt(parts[1]) - 1,
+                    Number.parseInt(parts[0]) - 1,
+                    Number.parseInt(parts[1]) - 1
+                );
+            if (parseFloat.length === 4)
+                return new vscode.Range(
+                    Number.parseInt(parts[0]) - 1,
+                    Number.parseInt(parts[1]) - 1,
+                    Number.parseInt(parts[2]) - 1,
+                    Number.parseInt(parts[3]) - 1
+                );
+            throw new Error('Unable to determine location of MSVC error');
+        })();
+        const diag = new vscode.Diagnostic(
+            loc,
+            message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                info: vscode.DiagnosticSeverity.Information,
+            }[severity]
+        );
+        diag.code = code;
+        diag.source = 'MSVC';
+        return [true, {
+            filepath: abspath,
+            key: full,
+            diag: diag,
+        }];
+    }
+}
+
+/**
+ * Parses a diagnostic message from Green Hills Compiler.
+ * Use single line error reporting when invoking GHS compiler (--no_wrap_diagnostics --brief_diagnostics).
+ *
+ * @class GHSDiagnosticParser
+ * @extends {DiagnosticParser}
+ */
+class GHSDiagnosticParser extends DiagnosticParser {
+    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+        const diag = diagnostics.parseGHSDiagnostic(line);
+        if (!diag) {
+            return [false, null];
+        }
+        const abspath = path.isAbsolute(diag.file)
+            ? diag.file
+            : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                remark: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'GHS';
+        return [true, {
+            filepath: abspath,
+            key: diag.full,
+            diag: vsdiag,
+        }];
+    }
+}
+
+interface IParserCollection {
+    [parser: string]: DiagnosticParser;
+}
+
+class ErrorParser extends OutputParser {
+    private buildDiagnostic: Maybe<vscode.DiagnosticCollection>;
+    private diagDiagnostic: Maybe<vscode.DiagnosticCollection>;
+    private binaryDir: string;
+    private diags_acc: Object;
+    private filepath_last: Maybe<string>;
+
+    private active_parser: string;
+    private ParserCollection: IParserCollection;
+
+    constructor(binaryDir: string, diagDiagnostic: Maybe<vscode.DiagnosticCollection> = null, buildDiagnostic: Maybe<vscode.DiagnosticCollection> = null) {
+        super();
+        this.binaryDir = binaryDir;
+        this.diags_acc = {};
+        this.filepath_last = null;
+        this.buildDiagnostic = buildDiagnostic;
+        this.diagDiagnostic = diagDiagnostic;
+        this.active_parser = '';
+        this.ParserCollection = {};
+        if (this.diagDiagnostic) {
+            this.diagDiagnostic.clear();
+            this.ParserCollection['CMAKE'] = new CMAKEDiagnosticParser(binaryDir);
+        }
+        if (this.buildDiagnostic) {
+            this.buildDiagnostic.clear();
+            this.ParserCollection['GCC'] = new GCCDiagnosticParser(binaryDir);
+            this.ParserCollection['GNULD'] = new GNULDDiagnosticParser(binaryDir);
+            this.ParserCollection['MSVC'] = new MSVCDiagnosticParser(binaryDir);
+            this.ParserCollection['GHS'] = new GHSDiagnosticParser(binaryDir);
+        }
+    }
+
+    private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
+        if (this.active_parser) {
+            console.log('PARSER: Try active parser: ' + this.active_parser);
+            var [match, diag] = this.ParserCollection[this.active_parser].parse(line);
+            if (match) {
+                return diag;
+            }
+            console.log('PARSER: Active parser faild: ' + this.active_parser + ': ' + line);
+        }
+
+        for (let parserKey in this.ParserCollection) {
+            if (parserKey !== this.active_parser) {
+                console.log('PARSER: Try parser: ' + parserKey);
+                var [match, diag] = this.ParserCollection[parserKey].parse(line);
+                if (match) {
+                    console.log('PARSER: New active parser: ' + parserKey);
+                    this.active_parser = parserKey;
+                    return diag;
+                }
+            }
+        }
+        console.log('PARSER: no match: ' + line);
+        /* Most likely new generator progress message or new compiler command. Set diagnostic. */
+        this.setDiags();
+        return null;
+    }
+
+    private setDiags() {
+        if (this.filepath_last) {
+            if (this.diagDiagnostic && this.active_parser === "CMAKE")
+                this.diagDiagnostic.set(vscode.Uri.file(this.filepath_last), [...this.diags_acc[this.filepath_last].values()]);
+            else if (this.buildDiagnostic)
+                this.buildDiagnostic.set(vscode.Uri.file(this.filepath_last), [...this.diags_acc[this.filepath_last].values()]);
+            this.filepath_last = null;
+        }
+    }
+
+    private parseDiags(line: string) {
+        let diag = this.parseDiagnosticLine(line);
+        if (diag) {
+            if (!(diag.filepath in this.diags_acc)) {
+                this.diags_acc[diag.filepath] = new Map();
+            }
+            if (this.filepath_last !== diag.filepath) {
+                /* File is changed. Set diagnostic. */
+                this.setDiags();
+            }
+            if (!this.diags_acc[diag.filepath].has(diag.key)) {
+                this.diags_acc[diag.filepath].set(diag.key, diag.diag);
+                this.filepath_last = diag.filepath;
+            }
+        }
+    }
+
+    public parseStdOut(line: string): void {
+        this.parseDiags(line);
+    }
+    public parseStdErr(line: string): void {
+        this.parseDiags(line);
+    }
+    public finished(): void {
+        this.setDiags();
+    }
+}
+
+class TrottledOutputChannel implements vscode.OutputChannel {
     private _channel: vscode.OutputChannel;
     private _data_acc: string;
     private _throttler: async.Throttler<void>;
@@ -433,16 +829,16 @@ class TrottledOutputChannel implements vscode.OutputChannel{
         this._throttler = new async.Throttler();
     }
 
-	get name(): string {
-		return this._channel.name;
-	}
+    get name(): string {
+        return this._channel.name;
+    }
 
-	dispose(): void {
+    dispose(): void {
         this._data_acc = '';
-		this._channel.dispose();
-	}
+        this._channel.dispose();
+    }
 
-	append(value: string): void {
+    append(value: string): void {
         this._data_acc += value;
         this._throttler.queue(() => {
             if (this._data_acc) {
@@ -452,24 +848,24 @@ class TrottledOutputChannel implements vscode.OutputChannel{
             }
             return Promise.resolve();
         });
-	}
+    }
 
-	appendLine(value: string): void {
-		this.append(value + '\n');
-	}
+    appendLine(value: string): void {
+        this.append(value + '\n');
+    }
 
-	clear(): void {
+    clear(): void {
         this._data_acc = '';
-		this._channel.clear();
-	}
+        this._channel.clear();
+    }
 
-	show(columnOrPreserveFocus?, preserveFocus?): void {
-		this._channel.show(columnOrPreserveFocus, preserveFocus);
-	}
+    show(columnOrPreserveFocus?, preserveFocus?): void {
+        this._channel.show(columnOrPreserveFocus, preserveFocus);
+    }
 
-	hide(): void {
-		this._channel.hide();
-	}
+    hide(): void {
+        this._channel.hide();
+    }
 }
 
 export class CMakeTools {
@@ -1035,10 +1431,9 @@ export class CMakeTools {
         this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${varset.label}: ${this.statusMessage}`;
 
         if (this.cmakeCache &&
-                this.cmakeCache.exists &&
-                this.isMultiConf &&
-                this.config.buildDirectory.includes('${buildType}')
-            ) {
+            this.cmakeCache.exists &&
+            this.isMultiConf &&
+            this.config.buildDirectory.includes('${buildType}')) {
             vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
         }
 
@@ -1121,240 +1516,15 @@ export class CMakeTools {
         this.statusMessage = 'Refreshing targets...';
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
+            let parser = new TargetParser();
             const result = await this.execute(['--build', this.binaryDir, '--target', 'help'], {
                 silent: true,
                 environment: {}
-            });
-            const lines = result.stdout.split(/\r?\n/);
-            const important_lines = (generator.endsWith('Makefiles')
-                ? lines.filter(l => l.startsWith('... '))
-                : lines.filter(l => l.indexOf(': ') !== -1))
-                    .filter(l => !l.includes('All primary targets'));
-            this._targets = important_lines
-                .map(l => generator.endsWith('Makefiles')
-                        ? l.substr(4)
-                        : l)
-                .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
-                .map(l => l.replace(':', ''));
+            }, parser);
+            this._targets = parser.getTargets(generator);
         }
         this.statusMessage = 'Ready';
         return this._targets;
-    }
-
-    /**
-     * @brief Parses a diagnostic message from GCC
-     *
-     * @returns A FileDiagnostic obtained from the message, or null if no
-     *      message could be decoded.
-     */
-    public parseGCCDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const diag = diagnostics.parseGCCDiagnostic(line);
-        if (!diag) {
-            return null;
-        }
-        const abspath = path.isAbsolute(diag.file)
-            ? diag.file
-            : path.normalize(path.join(this.binaryDir, diag.file));
-        const vsdiag = new vscode.Diagnostic(
-            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
-            diag.message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                note: vscode.DiagnosticSeverity.Information,
-            }[diag.severity]
-        );
-        vsdiag.source = 'GCC';
-        return {
-            filepath: abspath,
-            diag: vsdiag,
-        };
-    }
-
-    /**
-     * @brief Parse GNU-style linker errors
-     */
-    public parseGNULDDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const diag = diagnostics.parseGNULDDiagnostic(line);
-        if (!diag) {
-            return null;
-        }
-        const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
-        const vsdiag = new vscode.Diagnostic(
-            new vscode.Range(diag.line, 0, diag.line, Number.POSITIVE_INFINITY),
-            diag.message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                note: vscode.DiagnosticSeverity.Information,
-            }[diag.severity]
-        );
-        vsdiag.source = 'Link';
-        return {
-            filepath: abspath,
-            diag: vsdiag,
-        };
-    }
-
-    /**
-     * @brief Obtains a reference to a TextDocument given the name of the file
-     */
-    private getTextDocumentByFileName(file: string): Maybe<vscode.TextDocument> {
-        const documents = vscode.workspace.textDocuments;
-        let document: Maybe<vscode.TextDocument> = null;
-        if (documents.length != 0) {
-            const filtered = documents.filter((doc: vscode.TextDocument) => {
-                return doc.fileName.toUpperCase() === file.toUpperCase()
-            });
-            if (filtered.length != 0) {
-                document = filtered[0];
-            }
-        }
-        return document;
-    }
-
-    /**
-     * @brief Gets the range of the text of a specific line in the given file.
-     */
-    private getTrimmedLineRange(file: string, line: number): vscode.Range {
-        const document = this.getTextDocumentByFileName(file);
-        if (document && (line < document.lineCount)) {
-            const text = document.lineAt(line).text + '\n';
-            let start = 0;
-            let end = text.length - 1;
-            let is_space = (i) => { return /\s/.test(text[i]); };
-            while ((start < text.length) && is_space(start))++start;
-            while ((end >= start) && is_space(end))--end;
-
-            return new vscode.Range(line, start, line, end);
-        } else
-            return new vscode.Range(line, 0, line, 0);
-    }
-
-    /**
-     * @brief Parses an MSVC diagnostic.
-     *
-     * @returns a FileDiagnostic from the given line, or null if no diagnostic
-     *      could be parsed
-     */
-    public parseMSVCDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
-        const res = msvc_re.exec(line);
-        if (!res)
-            return null;
-        const file = res[1];
-        const location = res[2];
-        const severity = res[3];
-        const code = res[4];
-        const message = res[5];
-        const abspath = path.isAbsolute(file)
-            ? file
-            : path.normalize(path.join(this.binaryDir, file));
-        const loc = (() => {
-            const parts = location.split(',');
-            if (parts.length === 1)
-                return this.getTrimmedLineRange(file, Number.parseInt(parts[0]) - 1);
-            if (parseFloat.length === 2)
-                return new vscode.Range(
-                    Number.parseInt(parts[0]) - 1,
-                    Number.parseInt(parts[1]) - 1,
-                    Number.parseInt(parts[0]) - 1,
-                    Number.parseInt(parts[1]) - 1
-                );
-            if (parseFloat.length === 4)
-                return new vscode.Range(
-                    Number.parseInt(parts[0]) - 1,
-                    Number.parseInt(parts[1]) - 1,
-                    Number.parseInt(parts[2]) - 1,
-                    Number.parseInt(parts[3]) - 1
-                );
-            throw new Error('Unable to determine location of MSVC error');
-        })();
-        const diag = new vscode.Diagnostic(
-            loc,
-            message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                info: vscode.DiagnosticSeverity.Information,
-            }[severity]
-        );
-        diag.code = code;
-        diag.source = 'MSVC';
-        return {
-            filepath: abspath,
-            diag: diag,
-        };
-    }
-
-    /**
-     * Parses a diagnostic message from Green Hills Compiler.
-     * Use single line error reporting when invoking GHS compiler (--no_wrap_diagnostics --brief_diagnostics).
-     */
-    public parseGHSDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const diag = diagnostics.parseGHSDiagnostic(line);
-        if (!diag) {
-            return null;
-        }
-        const abspath = path.isAbsolute(diag.file)
-            ? diag.file
-            : path.normalize(path.join(this.binaryDir, diag.file));
-        const vsdiag = new vscode.Diagnostic(
-            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
-            diag.message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                remark: vscode.DiagnosticSeverity.Information,
-            }[diag.severity]
-        );
-        vsdiag.source = 'GHS';
-        return {
-            filepath: abspath,
-            diag: vsdiag,
-        };
-    }
-
-    /**
-     * @brief Parses a line of compiler output to try and find a diagnostic
-     *      message.
-     */
-    public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
-        return this.parseGCCDiagnostic(line) ||
-            this.parseGNULDDiagnostic(line) ||
-            this.parseMSVCDiagnostic(line) ||
-            this.parseGHSDiagnostic(line);
-    }
-
-    /**
-     * @brief Takes a reference to a compiler execution output and parses
-     *      the diagnostics therein.
-     */
-    public parseDiagnostics(result: ExecutionResult) {
-        const compiler = this.cmakeCache.get('CMAKE_CXX_COMPILER_ID') || this.cmakeCache.get('CMAKE_C_COMPILER_ID');
-        const lines = result
-            .stdout
-            .split('\n')
-            .map(line => line.trim())
-            .concat(
-                result
-                .stderr
-                .split('\n')
-                .map(line => line.trim())
-            );
-        const diags = lines.map(line => this.parseDiagnosticLine(line)).filter(item => !!item);
-        const diags_acc = {};
-        for (const diag of diags) {
-            if (!diag)
-                continue;
-            if (!(diag.filepath in diags_acc))
-                diags_acc[diag.filepath] = [];
-            diags_acc[diag.filepath].push(diag.diag);
-        }
-
-        for (const filepath in diags_acc) {
-            this._buildDiags.set(vscode.Uri.file(filepath), diags_acc[filepath]);
-        }
     }
 
     /**
@@ -1426,7 +1596,7 @@ export class CMakeTools {
     /**
      * @brief Execute a CMake command. Resolves to the result of the execution.
      */
-    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}): Promise<ExecutionResult> {
+    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}, parser: OutputParser = new NoneErrorParser()): Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
@@ -1452,33 +1622,50 @@ export class CMakeTools {
                         .join(' ')
                 );
             }
-            let stderr_acc = '';
-            let stdout_acc = '';
-            pipe.stdout.on('data', (data: Uint8Array) => {
-                const str = data.toString();
-                console.log('cmake [stdout]: ' + str.trim());
+
+            const emitLines = (stream) => {
+                var backlog = '';
+                stream.on('data', (data: Uint8Array) => {
+                    backlog += data.toString();
+                    var n = backlog.indexOf('\n');
+                    // got a \n? emit one or more 'line' events
+                    while (n >= 0) {
+                        stream.emit('line', backlog.substring(0, n).replace(/\r+$/, ''));
+                        backlog = backlog.substring(n + 1);
+                        n = backlog.indexOf('\n');
+                    }
+                });
+                stream.on('end', () => {
+                    if (backlog) {
+                        stream.emit('line', backlog.replace(/\r+$/, ''));
+                    }
+                });
+            };
+            emitLines(pipe.stdout);
+            emitLines(pipe.stderr);
+
+            pipe.stdout.on('line', (line: string) => {
+                console.log('cmake [stdout]: ' + line);
                 if (!silent) {
-                    this._channel.append(str);
-                    status(str.trim());
+                    this._channel.appendLine(line);
+                    status(line.trim());
                 }
-                stdout_acc += str;
+                parser.parseStdOut(line);
             });
-            pipe.stderr.on('data', (data: Uint8Array) => {
-                const str = data.toString();
-                console.log('cmake [stderr]: ' + str.trim());
+            pipe.stderr.on('line', (line: string) => {
+                console.log('cmake [stderr]: ' + line);
                 if (!silent) {
-                    status(str.trim());
-                    this._channel.append(str);
+                    status(line.trim());
+                    this._channel.appendLine(line);
                 }
-                stderr_acc += str;
+                parser.parseStdErr(line);
             });
             pipe.on('close', (retc: Number) => {
+                parser.finished();
                 console.log('cmake exited with return code ' + retc);
                 if (silent) {
                     resolve({
                         retc: retc,
-                        stdout: stdout_acc,
-                        stderr: stderr_acc
                     });
                     return;
                 }
@@ -1493,53 +1680,9 @@ export class CMakeTools {
                     }
                 }
 
-                let rest = stderr_acc;
-                const diag_re = /CMake (.*?) at (.*?):(\d+) \((.*?)\):\s+((?:.|\n)*?)\s*\n\n\n((?:.|\n)*)/;
-                const diags: Object = {};
-                while (true) {
-                    if (!rest.length) break;
-                    const found = diag_re.exec(rest);
-                    if (!found) break;
-                    const [level, filename, linestr, command, what, tail] = found.slice(1);
-                    if (!filename || !linestr || !what || !level)
-                        continue;
-                    const filepath =
-                        path.isAbsolute(filename)
-                            ? filename
-                            : path.join(vscode.workspace.rootPath, filename);
-
-                    const line = Number.parseInt(linestr) - 1;
-                    if (!(filepath in diags)) {
-                        diags[filepath] = [];
-                    }
-                    const file_diags: vscode.Diagnostic[] = diags[filepath];
-                    const diag = new vscode.Diagnostic(
-                        new vscode.Range(
-                            line,
-                            0,
-                            line,
-                            Number.POSITIVE_INFINITY
-                        ),
-                        what,
-                        {
-                            "Warning": vscode.DiagnosticSeverity.Warning,
-                            "Error": vscode.DiagnosticSeverity.Error,
-                        }[level]
-                    );
-                    diag.source = 'CMake (' + command + ')';
-                    file_diags.push(diag);
-                    rest = tail || '';
-                }
-
-                this._diagnostics.clear();
-                for (const filepath in diags) {
-                    this._diagnostics.set(vscode.Uri.file(filepath), diags[filepath]);
-                }
                 this.currentChildProcess = null;
                 resolve({
                     retc: retc,
-                    stdout: stdout_acc,
-                    stderr: stderr_acc
                 });
             });
         });
@@ -1754,7 +1897,8 @@ export class CMakeTools {
             {
                 silent: false,
                 environment: this.config.configureEnvironment,
-            }
+            },
+            new ErrorParser(this.binaryDir, this._diagnostics)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1829,13 +1973,12 @@ export class CMakeTools {
             {
                 silent: false,
                 environment: this.config.buildEnvironment,
-            }
+            },
+            (this.config.parseBuildDiagnostics ?
+                new ErrorParser(this.binaryDir, this._diagnostics, this._buildDiags) :
+                new ErrorParser(this.binaryDir, this._diagnostics))
         );
         this.statusMessage = 'Ready';
-        if (this.config.parseBuildDiagnostics) {
-            this._buildDiags.clear();
-            await this.parseDiagnostics(result);
-        }
         if (!result.retc) {
             this._refreshAll();
         }
@@ -2003,7 +2146,7 @@ export class CMakeTools {
         this.currentDebugTarget = target.label;
     }
 
-    public async ctest (): Promise<Number> {
+    public async ctest(): Promise<Number> {
         this._channel.show();
         this.failingTestDecorations = [];
         const build_retc = await this.build();
@@ -2022,7 +2165,8 @@ export class CMakeTools {
                 {
                     silent: false,
                     environment: this.config.testEnvironment,
-                }
+                },
+                new ErrorParser(this.binaryDir, this._diagnostics)
             )
         ).retc;
         await this._refreshTests();
@@ -2031,7 +2175,7 @@ export class CMakeTools {
             for (const test of this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed')) {
                 this._ctestChannel.append(
                     `The test "${test.Name}" failed with the following output:\n` +
-                    '----------' +        '-----------------------------------' + Array(test.Name.length).join('-') +
+                    '----------' + '-----------------------------------' + Array(test.Name.length).join('-') +
                     `\n${test.Output.trim().split('\n').map(line => '    ' + line).join('')}\n`
                 );
                 // Only show the channel when a test fails
@@ -2041,7 +2185,7 @@ export class CMakeTools {
         return retc;
     }
 
-    public async quickStart (): Promise<Number> {
+    public async quickStart(): Promise<Number> {
         if (await async.exists(this.mainListFile)) {
             vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
             return -1;
