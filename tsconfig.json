@@ -9,7 +9,7 @@
         "sourceMap": true,
         "rootDir": ".",
         "noImplicitReturns": true,
-        "strictNullChecks": false
+        "strictNullChecks": true
     },
     "exclude": [
         "node_modules",

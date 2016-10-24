@@ -96,9 +96,9 @@ export class Throttler<T> {
     private queuedPromiseFactory: ITask<Promise<T>>;
 
     constructor() {
-        this.activePromise = null;
-        this.queuedPromise = null;
-        this.queuedPromiseFactory = null;
+        this.activePromise = null!;
+        this.queuedPromise = null!;
+        this.queuedPromiseFactory = null!;
     }
 
     public queue(promiseFactory: ITask<Promise<T>>): Promise<T> {
@@ -107,10 +107,10 @@ export class Throttler<T> {
 
             if (!this.queuedPromise) {
                 var onComplete = () => {
-                    this.queuedPromise = null;
+                    this.queuedPromise = null!;
 
                     var result = this.queue(this.queuedPromiseFactory);
-                    this.queuedPromiseFactory = null;
+                    this.queuedPromiseFactory = null!;
 
                     return result;
                 };
@@ -129,10 +129,10 @@ export class Throttler<T> {
 
         return new Promise<T>((resolve, reject) => {
             this.activePromise.then((result: T) => {
-                this.activePromise = null;
+                this.activePromise = null!;
                 resolve(result);
             }, (err: any) => {
-                this.activePromise = null;
+                this.activePromise = null!;
                 reject(err);
             });
         });
