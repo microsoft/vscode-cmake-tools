@@ -946,17 +946,27 @@ export class CMakeTools {
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
         }
 
-        const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
-        if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.2) {
+        const dontBotherDebugTargets = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
+        if (!this.debugTargetsEnabled && !dontBotherDebugTargets && Math.random() < 0.2) {
             vscode.window.showInformationMessage(
                 'Did you know CMake Tools now provides experimental debugger integration?',
                 {
                     title: 'Tell me more',
-                    action: 'open_link'
+                    action: () => {
+                        open('https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md');
+                    }
                 },
                 {
                     title: 'Don\'t bother me again',
-                    action: 'never'
+                    action: () => {
+                        ctx.globalState.update('debugTargets.neverBother', true);
+                    }
+                }).then(chosen => {
+                    if (chosen.action) {
+                        chosen.action();
+                    }
+                });
+        }
                 }).then(chosen => {
                     if (chosen.action === 'never') {
                         ctx.globalState.update('debugTargets.neverBother', true);
