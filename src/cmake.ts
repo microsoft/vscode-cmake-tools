@@ -748,7 +748,6 @@ class ErrorParser extends OutputParser {
     }
 
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
-        console.log('TEST: active_parser: ' + (this.active_parser instanceof CMAKEDiagnosticParser));
         if (this.active_parser) {
             console.log('PARSER: Try active parser: ' + this.active_parser.constructor.name);
             var [match, diag] = this.active_parser.parse(line);
