@@ -457,9 +457,7 @@ class TargetParser extends OutputParser {
 }
 
 abstract class DiagnosticParser {
-    protected binaryDir: string;
-    constructor(binaryDir: string) {
-        this.binaryDir = binaryDir;
+    constructor(protected readonly binaryDir: string) {
     }
 
     public abstract parse(line: string): [boolean, Maybe<FileDiagnostic>];
@@ -717,10 +715,6 @@ class GHSDiagnosticParser extends DiagnosticParser {
     }
 }
 
-interface IParserCollection {
-    [parser: string]: DiagnosticParser;
-}
-
 class ErrorParser extends OutputParser {
     private buildDiagnostic: Maybe<vscode.DiagnosticCollection>;
     private diagDiagnostic: Maybe<vscode.DiagnosticCollection>;
@@ -728,8 +722,8 @@ class ErrorParser extends OutputParser {
     private diags_acc: Object;
     private filepath_last: Maybe<string>;
 
-    private active_parser: string;
-    private ParserCollection: IParserCollection;
+    private active_parser: Maybe<DiagnosticParser>;
+    private ParserCollection: Set<DiagnosticParser>;
 
     constructor(binaryDir: string, diagDiagnostic: Maybe<vscode.DiagnosticCollection> = null, buildDiagnostic: Maybe<vscode.DiagnosticCollection> = null) {
         super();
@@ -738,38 +732,39 @@ class ErrorParser extends OutputParser {
         this.filepath_last = null;
         this.buildDiagnostic = buildDiagnostic;
         this.diagDiagnostic = diagDiagnostic;
-        this.active_parser = '';
-        this.ParserCollection = {};
+        this.active_parser = null;
+        this.ParserCollection = new Set();
         if (this.diagDiagnostic) {
             this.diagDiagnostic.clear();
-            this.ParserCollection['CMAKE'] = new CMAKEDiagnosticParser(binaryDir);
+            this.ParserCollection.add(new CMAKEDiagnosticParser(binaryDir));
         }
         if (this.buildDiagnostic) {
             this.buildDiagnostic.clear();
-            this.ParserCollection['GCC'] = new GCCDiagnosticParser(binaryDir);
-            this.ParserCollection['GNULD'] = new GNULDDiagnosticParser(binaryDir);
-            this.ParserCollection['MSVC'] = new MSVCDiagnosticParser(binaryDir);
-            this.ParserCollection['GHS'] = new GHSDiagnosticParser(binaryDir);
+            this.ParserCollection.add(new GCCDiagnosticParser(binaryDir));
+            this.ParserCollection.add(new GNULDDiagnosticParser(binaryDir));
+            this.ParserCollection.add(new MSVCDiagnosticParser(binaryDir));
+            this.ParserCollection.add(new GHSDiagnosticParser(binaryDir));
         }
     }
 
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
+        console.log('TEST: active_parser: ' + (this.active_parser instanceof CMAKEDiagnosticParser));
         if (this.active_parser) {
-            console.log('PARSER: Try active parser: ' + this.active_parser);
-            var [match, diag] = this.ParserCollection[this.active_parser].parse(line);
+            console.log('PARSER: Try active parser: ' + this.active_parser.constructor.name);
+            var [match, diag] = this.active_parser.parse(line);
             if (match) {
                 return diag;
             }
-            console.log('PARSER: Active parser faild: ' + this.active_parser + ': ' + line);
+            console.log('PARSER: Active parser faild: ' + this.active_parser.constructor.name + ': ' + line);
         }
 
-        for (let parserKey in this.ParserCollection) {
-            if (parserKey !== this.active_parser) {
-                console.log('PARSER: Try parser: ' + parserKey);
-                var [match, diag] = this.ParserCollection[parserKey].parse(line);
+        for (let parser of this.ParserCollection.values()) {
+            if (parser !== this.active_parser) {
+                console.log('PARSER: Try parser: ' + parser.constructor.name);
+                var [match, diag] = parser.parse(line);
                 if (match) {
-                    console.log('PARSER: New active parser: ' + parserKey);
-                    this.active_parser = parserKey;
+                    console.log('PARSER: New active parser: ' + parser.constructor.name);
+                    this.active_parser = parser;
                     return diag;
                 }
             }
@@ -782,7 +777,7 @@ class ErrorParser extends OutputParser {
 
     private setDiags() {
         if (this.filepath_last) {
-            if (this.diagDiagnostic && this.active_parser === "CMAKE")
+            if (this.diagDiagnostic && this.active_parser instanceof CMAKEDiagnosticParser)
                 this.diagDiagnostic.set(vscode.Uri.file(this.filepath_last), [...this.diags_acc[this.filepath_last].values()]);
             else if (this.buildDiagnostic)
                 this.buildDiagnostic.set(vscode.Uri.file(this.filepath_last), [...this.diags_acc[this.filepath_last].values()]);
