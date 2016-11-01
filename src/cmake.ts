@@ -431,21 +431,21 @@ abstract class OutputParser {
 class NoneErrorParser extends OutputParser { }
 
 class TargetParser extends OutputParser {
-    private lines: string[];
+    private _accumulatedLines: string[];
 
     constructor() {
         super();
-        this.lines = [];
+        this._accumulatedLines = [];
     }
 
     public parseStdOut(line: string): void {
-        this.lines.push(line);
+        this._accumulatedLines.push(line);
     }
 
     public getTargets(generator: string) {
         const important_lines = (generator.endsWith('Makefiles')
-            ? this.lines.filter(l => l.startsWith('... '))
-            : this.lines.filter(l => l.indexOf(': ') !== -1))
+            ? this._accumulatedLines.filter(l => l.startsWith('... '))
+            : this._accumulatedLines.filter(l => l.indexOf(': ') !== -1))
                 .filter(l => !l.includes('All primary targets'));
         return important_lines
             .map(l => generator.endsWith('Makefiles')
@@ -464,25 +464,25 @@ abstract class DiagnosticParser {
 }
 
 class CMAKEDiagnosticParser extends DiagnosticParser {
-    private cmdiag: Maybe<FileDiagnostic>;
+    private _cmakeDiag: Maybe<FileDiagnostic>;
 
     constructor(binaryDir: string) {
         super(binaryDir);
-        this.cmdiag = null;
+        this._cmakeDiag = null;
     }
 
     public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
         if (!line) {
-            const r = this.cmdiag;
-            this.cmdiag = null;
+            const r = this._cmakeDiag;
+            this._cmakeDiag = null;
             return [!!r, r];
         }
 
         const cmake_re = /CMake (.*?) at (.*?):(\d+) \((.*?)\):\s*(.*)/;
         const res = cmake_re.exec(line);
         if (!res) {
-            if (this.cmdiag) {
-                this.cmdiag.diag.message = '\n' + line;
+            if (this._cmakeDiag) {
+                this._cmakeDiag.diag.message = '\n' + line;
                 return [true, null];
             }
             return [false, null];
@@ -490,21 +490,21 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
 
         const [full, level, filename, linestr, command, what] = res;
         if (!filename || !linestr || !level) {
-            if (this.cmdiag) {
-                this.cmdiag.diag.message = '\n' + line;
+            if (this._cmakeDiag) {
+                this._cmakeDiag.diag.message = '\n' + line;
                 return [true, null];
             }
             return [false, null];
         }
 
-        this.cmdiag = <FileDiagnostic>{};
-        this.cmdiag.filepath = path.isAbsolute(filename)
+        this._cmakeDiag = <FileDiagnostic>{};
+        this._cmakeDiag.filepath = path.isAbsolute(filename)
                              ? filename
                              : path.join(vscode.workspace.rootPath, filename);
-        this.cmdiag.key = full;
+        this._cmakeDiag.key = full;
         const lineNr = Number.parseInt(linestr) - 1;
 
-        this.cmdiag.diag = new vscode.Diagnostic(
+        this._cmakeDiag.diag = new vscode.Diagnostic(
             new vscode.Range(
                 lineNr,
                 0,
@@ -517,7 +517,7 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
                 "Error": vscode.DiagnosticSeverity.Error,
             }[level]
         );
-        this.cmdiag.diag.source = 'CMake (' + command + ')';
+        this._cmakeDiag.diag.source = 'CMake (' + command + ')';
         return [true, null];
     }
 }
@@ -716,54 +716,52 @@ class GHSDiagnosticParser extends DiagnosticParser {
 }
 
 class ErrorParser extends OutputParser {
-    private buildDiagnostic: Maybe<vscode.DiagnosticCollection>;
-    private diagDiagnostic: Maybe<vscode.DiagnosticCollection>;
-    private binaryDir: string;
-    private diags_acc: Object;
-    private filepath_last: Maybe<string>;
+    private _buildDiagnostic: Maybe<vscode.DiagnosticCollection>;
+    private _diagDiagnostic: Maybe<vscode.DiagnosticCollection>;
+    private _accumulatedDiags: Object;
+    private _lastFile: Maybe<string>;
 
-    private active_parser: Maybe<DiagnosticParser>;
-    private ParserCollection: Set<DiagnosticParser>;
+    private _activeParser: Maybe<DiagnosticParser>;
+    private _parserCollection: Set<DiagnosticParser>;
 
     constructor(binaryDir: string, diagDiagnostic: Maybe<vscode.DiagnosticCollection> = null, buildDiagnostic: Maybe<vscode.DiagnosticCollection> = null) {
         super();
-        this.binaryDir = binaryDir;
-        this.diags_acc = {};
-        this.filepath_last = null;
-        this.buildDiagnostic = buildDiagnostic;
-        this.diagDiagnostic = diagDiagnostic;
-        this.active_parser = null;
-        this.ParserCollection = new Set();
-        if (this.diagDiagnostic) {
-            this.diagDiagnostic.clear();
-            this.ParserCollection.add(new CMAKEDiagnosticParser(binaryDir));
+        this._accumulatedDiags = {};
+        this._lastFile = null;
+        this._buildDiagnostic = buildDiagnostic;
+        this._diagDiagnostic = diagDiagnostic;
+        this._activeParser = null;
+        this._parserCollection = new Set();
+        if (this._diagDiagnostic) {
+            this._diagDiagnostic.clear();
+            this._parserCollection.add(new CMAKEDiagnosticParser(binaryDir));
         }
-        if (this.buildDiagnostic) {
-            this.buildDiagnostic.clear();
-            this.ParserCollection.add(new GCCDiagnosticParser(binaryDir));
-            this.ParserCollection.add(new GNULDDiagnosticParser(binaryDir));
-            this.ParserCollection.add(new MSVCDiagnosticParser(binaryDir));
-            this.ParserCollection.add(new GHSDiagnosticParser(binaryDir));
+        if (this._buildDiagnostic) {
+            this._buildDiagnostic.clear();
+            this._parserCollection.add(new GCCDiagnosticParser(binaryDir));
+            this._parserCollection.add(new GNULDDiagnosticParser(binaryDir));
+            this._parserCollection.add(new MSVCDiagnosticParser(binaryDir));
+            this._parserCollection.add(new GHSDiagnosticParser(binaryDir));
         }
     }
 
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
-        if (this.active_parser) {
-            console.log('PARSER: Try active parser: ' + this.active_parser.constructor.name);
-            var [match, diag] = this.active_parser.parse(line);
+        if (this._activeParser) {
+            console.log('PARSER: Try active parser: ' + this._activeParser.constructor.name);
+            var [match, diag] = this._activeParser.parse(line);
             if (match) {
                 return diag;
             }
-            console.log('PARSER: Active parser faild: ' + this.active_parser.constructor.name + ': ' + line);
+            console.log('PARSER: Active parser faild: ' + this._activeParser.constructor.name + ': ' + line);
         }
 
-        for (let parser of this.ParserCollection.values()) {
-            if (parser !== this.active_parser) {
+        for (let parser of this._parserCollection.values()) {
+            if (parser !== this._activeParser) {
                 console.log('PARSER: Try parser: ' + parser.constructor.name);
                 var [match, diag] = parser.parse(line);
                 if (match) {
                     console.log('PARSER: New active parser: ' + parser.constructor.name);
-                    this.active_parser = parser;
+                    this._activeParser = parser;
                     return diag;
                 }
             }
@@ -775,28 +773,28 @@ class ErrorParser extends OutputParser {
     }
 
     private setDiags() {
-        if (this.filepath_last) {
-            if (this.diagDiagnostic && this.active_parser instanceof CMAKEDiagnosticParser)
-                this.diagDiagnostic.set(vscode.Uri.file(this.filepath_last), [...this.diags_acc[this.filepath_last].values()]);
-            else if (this.buildDiagnostic)
-                this.buildDiagnostic.set(vscode.Uri.file(this.filepath_last), [...this.diags_acc[this.filepath_last].values()]);
-            this.filepath_last = null;
+        if (this._lastFile) {
+            if (this._diagDiagnostic && this._activeParser instanceof CMAKEDiagnosticParser)
+                this._diagDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags[this._lastFile].values()]);
+            else if (this._buildDiagnostic)
+                this._buildDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags[this._lastFile].values()]);
+            this._lastFile = null;
         }
     }
 
     private parseDiags(line: string) {
         let diag = this.parseDiagnosticLine(line);
         if (diag) {
-            if (!(diag.filepath in this.diags_acc)) {
-                this.diags_acc[diag.filepath] = new Map();
+            if (!(diag.filepath in this._accumulatedDiags)) {
+                this._accumulatedDiags[diag.filepath] = new Map();
             }
-            if (this.filepath_last !== diag.filepath) {
+            if (this._lastFile !== diag.filepath) {
                 /* File is changed. Set diagnostic. */
                 this.setDiags();
             }
-            if (!this.diags_acc[diag.filepath].has(diag.key)) {
-                this.diags_acc[diag.filepath].set(diag.key, diag.diag);
-                this.filepath_last = diag.filepath;
+            if (!this._accumulatedDiags[diag.filepath].has(diag.key)) {
+                this._accumulatedDiags[diag.filepath].set(diag.key, diag.diag);
+                this._lastFile = diag.filepath;
             }
         }
     }
@@ -814,12 +812,12 @@ class ErrorParser extends OutputParser {
 
 class TrottledOutputChannel implements vscode.OutputChannel {
     private _channel: vscode.OutputChannel;
-    private _data_acc: string;
+    private _accumulatedData: string;
     private _throttler: async.Throttler<void>;
 
     constructor(name: string) {
         this._channel = vscode.window.createOutputChannel(name);
-        this._data_acc = '';
+        this._accumulatedData = '';
         this._throttler = new async.Throttler();
     }
 
@@ -828,16 +826,16 @@ class TrottledOutputChannel implements vscode.OutputChannel {
     }
 
     dispose(): void {
-        this._data_acc = '';
+        this._accumulatedData = '';
         this._channel.dispose();
     }
 
     append(value: string): void {
-        this._data_acc += value;
+        this._accumulatedData += value;
         this._throttler.queue(() => {
-            if (this._data_acc) {
-                const data = this._data_acc;
-                this._data_acc = '';
+            if (this._accumulatedData) {
+                const data = this._accumulatedData;
+                this._accumulatedData = '';
                 this._channel.append(data);
             }
             return Promise.resolve();
@@ -849,7 +847,7 @@ class TrottledOutputChannel implements vscode.OutputChannel {
     }
 
     clear(): void {
-        this._data_acc = '';
+        this._accumulatedData = '';
         this._channel.clear();
     }
 
