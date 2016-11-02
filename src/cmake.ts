@@ -783,7 +783,7 @@ class ErrorParser extends OutputParser {
     }
 
     private parseDiags(line: string) {
-        let diag = this.parseDiagnosticLine(line);
+        const diag = this.parseDiagnosticLine(line);
         if (diag) {
             if (!this._accumulatedDiags.has(diag.filepath)) {
                 this._accumulatedDiags.set(diag.filepath, new Map());
@@ -1508,7 +1508,7 @@ export class CMakeTools {
         this.statusMessage = 'Refreshing targets...';
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
-            let parser = new TargetParser();
+            const parser = new TargetParser();
             const result = await this.execute(['--build', this.binaryDir, '--target', 'help'], {
                 silent: true,
                 environment: {}
