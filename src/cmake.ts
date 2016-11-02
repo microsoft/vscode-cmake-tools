@@ -718,7 +718,7 @@ class GHSDiagnosticParser extends DiagnosticParser {
 class ErrorParser extends OutputParser {
     private _buildDiagnostic: Maybe<vscode.DiagnosticCollection>;
     private _diagDiagnostic: Maybe<vscode.DiagnosticCollection>;
-    private _accumulatedDiags: Object;
+    private _accumulatedDiags: Map<string, Map<string, vscode.Diagnostic>>;
     private _lastFile: Maybe<string>;
 
     private _activeParser: Maybe<DiagnosticParser>;
@@ -726,7 +726,7 @@ class ErrorParser extends OutputParser {
 
     constructor(binaryDir: string, diagDiagnostic: Maybe<vscode.DiagnosticCollection> = null, buildDiagnostic: Maybe<vscode.DiagnosticCollection> = null) {
         super();
-        this._accumulatedDiags = {};
+        this._accumulatedDiags = new Map();
         this._lastFile = null;
         this._buildDiagnostic = buildDiagnostic;
         this._diagDiagnostic = diagDiagnostic;
@@ -775,9 +775,9 @@ class ErrorParser extends OutputParser {
     private setDiags() {
         if (this._lastFile) {
             if (this._diagDiagnostic && this._activeParser instanceof CMAKEDiagnosticParser)
-                this._diagDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags[this._lastFile].values()]);
+                this._diagDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile)!.values()]);
             else if (this._buildDiagnostic)
-                this._buildDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags[this._lastFile].values()]);
+                this._buildDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile)!.values()]);
             this._lastFile = null;
         }
     }
@@ -785,15 +785,15 @@ class ErrorParser extends OutputParser {
     private parseDiags(line: string) {
         let diag = this.parseDiagnosticLine(line);
         if (diag) {
-            if (!(diag.filepath in this._accumulatedDiags)) {
-                this._accumulatedDiags[diag.filepath] = new Map();
+            if (!this._accumulatedDiags.has(diag.filepath)) {
+                this._accumulatedDiags.set(diag.filepath, new Map());
             }
             if (this._lastFile !== diag.filepath) {
                 /* File is changed. Set diagnostic. */
                 this.setDiags();
             }
-            if (!this._accumulatedDiags[diag.filepath].has(diag.key)) {
-                this._accumulatedDiags[diag.filepath].set(diag.key, diag.diag);
+            if (!this._accumulatedDiags.get(diag.filepath)!.has(diag.key)) {
+                this._accumulatedDiags.get(diag.filepath)!.set(diag.key, diag.diag);
                 this._lastFile = diag.filepath;
             }
         }
