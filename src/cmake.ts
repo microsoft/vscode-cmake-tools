@@ -422,25 +422,22 @@ export class ConfigurationReader {
 }
 
 abstract class OutputParser {
-    constructor() { }
-    public parseStdOut(line: string): void { }
-    public parseStdErr(line: string): void { }
-    public finished(): void { }
+    public abstract parseLine(line: string): void;
+    public finished(): void {}
 }
 
-class NoneErrorParser extends OutputParser { }
+class NullErrorParser extends OutputParser {
+    public parseLine(line: string): void {}
+}
 
-class TargetParser extends OutputParser {
-    private _accumulatedLines: string[];
+class CMakeTargetListParser extends OutputParser {
+    private _accumulatedLines: string[] = [];
 
-    constructor() {
-        super();
-        this._accumulatedLines = [];
-    }
-
-    public parseStdOut(line: string): void {
+    public parseLine(line: string): void {
         this._accumulatedLines.push(line);
     }
+
+    public finished(): void {}
 
     public getTargets(generator: string) {
         const important_lines = (generator.endsWith('Makefiles')
@@ -456,19 +453,32 @@ class TargetParser extends OutputParser {
     }
 }
 
-interface IDiagnosticParseResult {
-    lineMatch: boolean;
+enum LineParseStatus {
+    Done = 0,
+    NeedMore = 1,
+}
+
+interface LineParsingNeedsMore {
+    status: LineParseStatus.NeedMore;
+}
+
+const PARSER_NEEDS_MORE: LineParsingNeedsMore = { status: LineParseStatus.NeedMore };
+
+interface LineParseWithDiagnostic {
+    status: LineParseStatus.Done;
     diagnostic: Maybe<FileDiagnostic>;
 }
 
-abstract class DiagnosticParser {
-    constructor(protected readonly binaryDir: string) {
-    }
+type LineParseResult = LineParsingNeedsMore | LineParseWithDiagnostic;
 
-    public abstract parse(line: string): IDiagnosticParseResult;
+abstract class DiagnosticParser extends OutputParser {
+    constructor(protected readonly binaryDir: string) {
+        super();
+    }
+    public abstract parseLine(line: string): LineParseResult;
 }
 
-class CMAKEDiagnosticParser extends DiagnosticParser {
+class CMakeDiagnosticParser extends DiagnosticParser {
     private _cmakeDiag: Maybe<FileDiagnostic>;
 
     constructor(binaryDir: string) {
@@ -476,11 +486,18 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
         this._cmakeDiag = null;
     }
 
-    public parse(line: string) {
+    public parseLine(line: string): LineParseResult {
         if (!line) {
             const diagnostic = this._cmakeDiag;
             this._cmakeDiag = null;
-            return { lineMatch: !!diagnostic, diagnostic };
+            if (diagnostic) {
+                return {
+                    status: LineParseStatus.Done,
+                    diagnostic
+                };
+            } else {
+                return PARSER_NEEDS_MORE;
+            }
         }
 
         const cmake_re = /CMake (.*?) at (.*?):(\d+) \((.*?)\):\s*(.*)/;
@@ -488,18 +505,18 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
         if (!res) {
             if (this._cmakeDiag) {
                 this._cmakeDiag.diag.message = '\n' + line;
-                return { lineMatch: true, diagnostic: null };
+                return { status: LineParseStatus.Done, diagnostic: null };
             }
-            return { lineMatch: false, diagnostic: null };
+            return PARSER_NEEDS_MORE;
         }
 
         const [full, level, filename, linestr, command, what] = res;
         if (!filename || !linestr || !level) {
             if (this._cmakeDiag) {
                 this._cmakeDiag.diag.message = '\n' + line;
-                return { lineMatch: true, diagnostic: null };
+                return { status: LineParseStatus.Done, diagnostic: null };
             }
-            return { lineMatch: false, diagnostic: null };
+            return { status: LineParseStatus.NeedMore };
         }
 
         this._cmakeDiag = <FileDiagnostic>{};
@@ -523,7 +540,7 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
             }[level]
         );
         this._cmakeDiag.diag.source = 'CMake (' + command + ')';
-        return { lineMatch: true, diagnostic: null };
+        return { status: LineParseStatus.Done, diagnostic: null };
     }
 }
 
@@ -534,10 +551,10 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
  * @extends {DiagnosticParser}
  */
 class GCCDiagnosticParser extends DiagnosticParser {
-    public parse(line: string): IDiagnosticParseResult {
+    public parseLine(line: string): LineParseResult {
         const diag = diagnostics.parseGCCDiagnostic(line);
         if (!diag) {
-            return { lineMatch: false, diagnostic: null };
+            return { status: LineParseStatus.NeedMore };
         }
         const abspath = path.isAbsolute(diag.file)
             ? diag.file
@@ -553,7 +570,7 @@ class GCCDiagnosticParser extends DiagnosticParser {
         );
         vsdiag.source = 'GCC';
         return {
-            lineMatch: true,
+            status: LineParseStatus.Done,
             diagnostic: {
                 filepath: abspath,
                 key: diag.full,
@@ -570,10 +587,10 @@ class GCCDiagnosticParser extends DiagnosticParser {
  * @extends {DiagnosticParser}
  */
 class GNULDDiagnosticParser extends DiagnosticParser {
-    public parse(line: string): IDiagnosticParseResult {
+    public parseLine(line: string): LineParseResult {
         const diag = diagnostics.parseGNULDDiagnostic(line);
         if (!diag) {
-            return { lineMatch: false, diagnostic: null };
+            return { status: LineParseStatus.NeedMore };
         }
         const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
         const vsdiag = new vscode.Diagnostic(
@@ -587,7 +604,7 @@ class GNULDDiagnosticParser extends DiagnosticParser {
         );
         vsdiag.source = 'Link';
         return {
-            lineMatch: true,
+            status: LineParseStatus.Done,
             diagnostic: {
                 filepath: abspath,
                 key: diag.full,
@@ -639,11 +656,11 @@ class MSVCDiagnosticParser extends DiagnosticParser {
             return new vscode.Range(line, 0, line, 0);
     }
 
-    public parse(line: string): IDiagnosticParseResult {
+    public parseLine(line: string): LineParseResult {
         const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
         const res = msvc_re.exec(line);
         if (!res)
-            return { lineMatch: false, diagnostic: null };
+            return PARSER_NEEDS_MORE;
         const full = res[0];
         const file = res[1];
         const location = res[2];
@@ -656,15 +673,15 @@ class MSVCDiagnosticParser extends DiagnosticParser {
         const loc = (() => {
             const parts = location.split(',');
             if (parts.length === 1)
-                this.getTrimmedLineRange(file, Number.parseInt(parts[0]) - 1);
-            if (parseFloat.length === 2)
+                return this.getTrimmedLineRange(file, Number.parseInt(parts[0]) - 1);
+            if (parts.length === 2)
                 return new vscode.Range(
                     Number.parseInt(parts[0]) - 1,
                     Number.parseInt(parts[1]) - 1,
                     Number.parseInt(parts[0]) - 1,
                     Number.parseInt(parts[1]) - 1
                 );
-            if (parseFloat.length === 4)
+            if (parts.length === 4)
                 return new vscode.Range(
                     Number.parseInt(parts[0]) - 1,
                     Number.parseInt(parts[1]) - 1,
@@ -685,7 +702,7 @@ class MSVCDiagnosticParser extends DiagnosticParser {
         diag.code = code;
         diag.source = 'MSVC';
         return {
-            lineMatch: true,
+            status: LineParseStatus.Done,
             diagnostic: {
                 filepath: abspath,
                 key: full,
@@ -703,11 +720,10 @@ class MSVCDiagnosticParser extends DiagnosticParser {
  * @extends {DiagnosticParser}
  */
 class GHSDiagnosticParser extends DiagnosticParser {
-    public parse(line: string): IDiagnosticParseResult {
+    public parseLine(line: string): LineParseResult {
         const diag = diagnostics.parseGHSDiagnostic(line);
-        if (!diag) {
-            return { lineMatch: false, diagnostic: null };
-        }
+        if (!diag)
+            return PARSER_NEEDS_MORE;
         const abspath = path.isAbsolute(diag.file)
             ? diag.file
             : path.normalize(path.join(this.binaryDir, diag.file));
@@ -722,7 +738,7 @@ class GHSDiagnosticParser extends DiagnosticParser {
         );
         vsdiag.source = 'GHS';
         return {
-            lineMatch: true,
+            status: LineParseStatus.Done,
             diagnostic: {
                 filepath: abspath,
                 key: diag.full,
@@ -751,7 +767,7 @@ class ErrorParser extends OutputParser {
         this._parserCollection = new Set();
         if (this._diagDiagnostic) {
             this._diagDiagnostic.clear();
-            this._parserCollection.add(new CMAKEDiagnosticParser(binaryDir));
+            this._parserCollection.add(new CMakeDiagnosticParser(binaryDir));
         }
         if (this._buildDiagnostic) {
             this._buildDiagnostic.clear();
@@ -765,9 +781,9 @@ class ErrorParser extends OutputParser {
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         if (this._activeParser) {
             console.log('PARSER: Try active parser: ' + this._activeParser.constructor.name);
-            var {lineMatch, diagnostic} = this._activeParser.parse(line);
-            if (lineMatch) {
-                return diagnostic;
+            const res = this._activeParser.parseLine(line);
+            if (res.status == LineParseStatus.Done) {
+                return res.diagnostic;
             }
             console.log('PARSER: Active parser faild: ' + this._activeParser.constructor.name + ': ' + line);
         }
@@ -775,11 +791,11 @@ class ErrorParser extends OutputParser {
         for (let parser of this._parserCollection.values()) {
             if (parser !== this._activeParser) {
                 console.log('PARSER: Try parser: ' + parser.constructor.name);
-                var {lineMatch, diagnostic} = parser.parse(line);
-                if (lineMatch) {
+                const res = parser.parseLine(line);
+                if (res.status == LineParseStatus.Done) {
                     console.log('PARSER: New active parser: ' + parser.constructor.name);
                     this._activeParser = parser;
-                    return diagnostic;
+                    return res.diagnostic;
                 }
             }
         }
@@ -791,7 +807,7 @@ class ErrorParser extends OutputParser {
 
     private setDiags() {
         if (this._lastFile) {
-            if (this._diagDiagnostic && this._activeParser instanceof CMAKEDiagnosticParser)
+            if (this._diagDiagnostic && this._activeParser instanceof CMakeDiagnosticParser)
                 this._diagDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile) !.values()]);
             else if (this._buildDiagnostic)
                 this._buildDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile) !.values()]);
@@ -799,7 +815,7 @@ class ErrorParser extends OutputParser {
         }
     }
 
-    private parseDiags(line: string) {
+    public parseLine(line: string) {
         const diag = this.parseDiagnosticLine(line);
         if (diag) {
             if (!this._accumulatedDiags.has(diag.filepath)) {
@@ -816,12 +832,6 @@ class ErrorParser extends OutputParser {
         }
     }
 
-    public parseStdOut(line: string): void {
-        this.parseDiags(line);
-    }
-    public parseStdErr(line: string): void {
-        this.parseDiags(line);
-    }
     public finished(): void {
         this.setDiags();
     }
@@ -1525,7 +1535,7 @@ export class CMakeTools {
         this.statusMessage = 'Refreshing targets...';
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
-            const parser = new TargetParser();
+            const parser = new CMakeTargetListParser();
             const result = await this.execute(['--build', this.binaryDir, '--target', 'help'], {
                 silent: true,
                 environment: {}
@@ -1605,7 +1615,7 @@ export class CMakeTools {
     /**
      * @brief Execute a CMake command. Resolves to the result of the execution.
      */
-    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}, parser: OutputParser = new NoneErrorParser()): Promise<ExecutionResult> {
+    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}, parser: OutputParser = new NullErrorParser()): Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
@@ -1659,7 +1669,7 @@ export class CMakeTools {
                     this._channel.appendLine(line);
                     status(line.trim());
                 }
-                parser.parseStdOut(line);
+                parser.parseLine(line);
             });
             pipe.stderr.on('line', (line: string) => {
                 console.log('cmake [stderr]: ' + line);
@@ -1667,7 +1677,7 @@ export class CMakeTools {
                     status(line.trim());
                     this._channel.appendLine(line);
                 }
-                parser.parseStdErr(line);
+                parser.parseLine(line);
             });
             pipe.on('close', (retc: Number) => {
                 parser.finished();
