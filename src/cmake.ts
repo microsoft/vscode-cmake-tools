@@ -458,33 +458,23 @@ class CMakeTargetListParser extends util.OutputParser {
 }
 
 class ErrorParser extends util.OutputParser {
-    private _buildDiagnostic: Maybe<vscode.DiagnosticCollection>;
-    private _diagDiagnostic: Maybe<vscode.DiagnosticCollection>;
     private _accumulatedDiags: Map<string, Map<string, vscode.Diagnostic>>;
     private _lastFile: Maybe<string>;
 
     private _activeParser: Maybe<DiagnosticParser>;
     private _parserCollection: Set<DiagnosticParser>;
 
-    constructor(binaryDir: string, diagDiagnostic: Maybe<vscode.DiagnosticCollection> = null, buildDiagnostic: Maybe<vscode.DiagnosticCollection> = null) {
+    constructor(binaryDir: string) {
         super();
         this._accumulatedDiags = new Map();
         this._lastFile = null;
-        this._buildDiagnostic = buildDiagnostic;
-        this._diagDiagnostic = diagDiagnostic;
         this._activeParser = null;
         this._parserCollection = new Set();
-        if (this._diagDiagnostic) {
-            this._diagDiagnostic.clear();
-            this._parserCollection.add(new CMakeDiagnosticParser(binaryDir));
-        }
-        if (this._buildDiagnostic) {
-            this._buildDiagnostic.clear();
-            this._parserCollection.add(new GCCDiagnosticParser(binaryDir));
-            this._parserCollection.add(new GNULDDiagnosticParser(binaryDir));
-            this._parserCollection.add(new MSVCDiagnosticParser(binaryDir));
-            this._parserCollection.add(new GHSDiagnosticParser(binaryDir));
-        }
+        this._parserCollection.add(new CMakeDiagnosticParser(binaryDir));
+        this._parserCollection.add(new GCCDiagnosticParser(binaryDir));
+        this._parserCollection.add(new GNULDDiagnosticParser(binaryDir));
+        this._parserCollection.add(new MSVCDiagnosticParser(binaryDir));
+        this._parserCollection.add(new GHSDiagnosticParser(binaryDir));
     }
 
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
@@ -509,18 +499,14 @@ class ErrorParser extends util.OutputParser {
             }
         }
         console.log('PARSER: no match: ' + line);
-        /* Most likely new generator progress message or new compiler command. Set diagnostic. */
-        this.setDiags();
+        /* Most likely new generator progress message or new compiler command. */
         return null;
     }
 
-    private setDiags() {
-        if (this._lastFile) {
-            if (this._diagDiagnostic && this._activeParser instanceof CMakeDiagnosticParser)
-                this._diagDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile) !.values()]);
-            else if (this._buildDiagnostic)
-                this._buildDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile) !.values()]);
-            this._lastFile = null;
+    public fillDiagnosticCollection(diagset: vscode.DiagnosticCollection) {
+        diagset.clear();
+        for (const [filepath, diags] of this._accumulatedDiags) {
+            diagset.set(vscode.Uri.file(filepath), [...diags.values()]);
         }
     }
 
@@ -528,21 +514,12 @@ class ErrorParser extends util.OutputParser {
         const diag = this.parseDiagnosticLine(line);
         if (diag) {
             if (!this._accumulatedDiags.has(diag.filepath)) {
+                // First diagnostic of this file. Add a new map to hold our diags
                 this._accumulatedDiags.set(diag.filepath, new Map());
             }
-            if (this._lastFile !== diag.filepath) {
-                /* File is changed. Set diagnostic. */
-                this.setDiags();
-            }
-            if (!this._accumulatedDiags.get(diag.filepath)!.has(diag.key)) {
-                this._accumulatedDiags.get(diag.filepath)!.set(diag.key, diag.diag);
-                this._lastFile = diag.filepath;
-            }
+            const diags = this._accumulatedDiags.get(diag.filepath)!;
+            diags.set(diag.key, diag.diag);
         }
-    }
-
-    public finished(): void {
-        this.setDiags();
     }
 }
 
@@ -625,7 +602,6 @@ export class CMakeTools {
     });
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
-    private _buildDiags: vscode.DiagnosticCollection;
     private _workspaceCacheContent: util.WorkspaceCache;
     private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
@@ -892,7 +868,7 @@ export class CMakeTools {
         this._setupCMakeCacheWatcher();
         // Use may have disabled build diagnostics.
         if (!this.config.parseBuildDiagnostics) {
-            this._buildDiags.clear();
+            this._diagnostics.clear();
         }
         if (this.debugTargetsEnabled && !this._metaWatcher) {
             this._setupMetaWatcher();
@@ -1080,8 +1056,7 @@ export class CMakeTools {
         this._channel = new TrottledOutputChannel('CMake/Build');
         //this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
-        this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
-        this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+        this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
         const watcher = this._variantWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, 'cmake-variants.*'));
         watcher.onDidChange(this._reloadVariants.bind(this));
@@ -1392,7 +1367,9 @@ export class CMakeTools {
                 parser.parseLine(line);
             });
             pipe.on('close', (retc: Number) => {
-                parser.finished();
+                if (parser instanceof ErrorParser) {
+                    parser.fillDiagnosticCollection(this._diagnostics);
+                }
                 console.log('cmake exited with return code ' + retc);
                 if (silent) {
                     resolve({
@@ -1629,7 +1606,7 @@ export class CMakeTools {
                 silent: false,
                 environment: this.config.configureEnvironment,
             },
-            new ErrorParser(this.binaryDir, this._diagnostics)
+            new ErrorParser(this.binaryDir)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1705,9 +1682,7 @@ export class CMakeTools {
                 silent: false,
                 environment: this.config.buildEnvironment,
             },
-            (this.config.parseBuildDiagnostics ?
-                new ErrorParser(this.binaryDir, this._diagnostics, this._buildDiags) :
-                new ErrorParser(this.binaryDir, this._diagnostics))
+            new ErrorParser(this.binaryDir)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1897,7 +1872,7 @@ export class CMakeTools {
                     silent: false,
                     environment: this.config.testEnvironment,
                 },
-                new ErrorParser(this.binaryDir, this._diagnostics)
+                new ErrorParser(this.binaryDir)
             )
         ).retc;
         await this._refreshTests();
