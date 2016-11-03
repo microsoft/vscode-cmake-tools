@@ -110,4 +110,9 @@ export namespace util {
     }
     return norm
   }
+
+  export abstract class OutputParser {
+    public abstract parseLine(line: string): void;
+    public finished(): void {}
+  }
 }

@@ -11,6 +11,11 @@ import * as vscode from 'vscode';
 import * as async from './async';
 import {ctest} from './ctest';
 import * as diagnostics from './diagnostics';
+import {FileDiagnostic,
+        DiagnosticParser,
+        LineParseResult,
+        LineParseStatus,
+        PARSER_NEEDS_MORE} from './diagnostics';
 import {util} from './util';
 
 type Maybe<T> = util.Maybe<T>;
@@ -132,12 +137,6 @@ export enum EntryType {
 
 interface ExecutionResult {
     retc: Number;
-}
-
-interface FileDiagnostic {
-    filepath: string;
-    key: string;
-    diag: vscode.Diagnostic;
 }
 
 interface Test {
@@ -421,16 +420,14 @@ export class ConfigurationReader {
     }
 }
 
-abstract class OutputParser {
-    public abstract parseLine(line: string): void;
-    public finished(): void {}
-}
-
-class NullErrorParser extends OutputParser {
+/**
+ * An OutputParser that doesn't do anything when it parses
+ */
+class NullParser extends util.OutputParser {
     public parseLine(line: string): void {}
 }
 
-class CMakeTargetListParser extends OutputParser {
+class CMakeTargetListParser extends util.OutputParser {
     private _accumulatedLines: string[] = [];
 
     public parseLine(line: string): void {
@@ -451,31 +448,6 @@ class CMakeTargetListParser extends OutputParser {
             .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
             .map(l => l.replace(':', ''));
     }
-}
-
-enum LineParseStatus {
-    Done = 0,
-    NeedMore = 1,
-}
-
-interface LineParsingNeedsMore {
-    status: LineParseStatus.NeedMore;
-}
-
-const PARSER_NEEDS_MORE: LineParsingNeedsMore = { status: LineParseStatus.NeedMore };
-
-interface LineParseWithDiagnostic {
-    status: LineParseStatus.Done;
-    diagnostic: Maybe<FileDiagnostic>;
-}
-
-type LineParseResult = LineParsingNeedsMore | LineParseWithDiagnostic;
-
-abstract class DiagnosticParser extends OutputParser {
-    constructor(protected readonly binaryDir: string) {
-        super();
-    }
-    public abstract parseLine(line: string): LineParseResult;
 }
 
 class CMakeDiagnosticParser extends DiagnosticParser {
@@ -748,7 +720,7 @@ class GHSDiagnosticParser extends DiagnosticParser {
     }
 }
 
-class ErrorParser extends OutputParser {
+class ErrorParser extends util.OutputParser {
     private _buildDiagnostic: Maybe<vscode.DiagnosticCollection>;
     private _diagDiagnostic: Maybe<vscode.DiagnosticCollection>;
     private _accumulatedDiags: Map<string, Map<string, vscode.Diagnostic>>;
@@ -1615,7 +1587,10 @@ export class CMakeTools {
     /**
      * @brief Execute a CMake command. Resolves to the result of the execution.
      */
-    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}, parser: OutputParser = new NullErrorParser()): Promise<ExecutionResult> {
+    public execute(args: string[],
+                   options: ExecuteOptions = {silent: false, environment: {}},
+                   parser: util.OutputParser = new NullParser())
+    : Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
