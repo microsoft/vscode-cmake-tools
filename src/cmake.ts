@@ -456,11 +456,16 @@ class TargetParser extends OutputParser {
     }
 }
 
+interface IDiagnosticParseResult {
+    lineMatch: boolean;
+    diagnostic: Maybe<FileDiagnostic>;
+}
+
 abstract class DiagnosticParser {
     constructor(protected readonly binaryDir: string) {
     }
 
-    public abstract parse(line: string): [boolean, Maybe<FileDiagnostic>];
+    public abstract parse(line: string): IDiagnosticParseResult;
 }
 
 class CMAKEDiagnosticParser extends DiagnosticParser {
@@ -471,11 +476,11 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
         this._cmakeDiag = null;
     }
 
-    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+    public parse(line: string) {
         if (!line) {
-            const r = this._cmakeDiag;
+            const diagnostic = this._cmakeDiag;
             this._cmakeDiag = null;
-            return [!!r, r];
+            return { lineMatch: !!diagnostic, diagnostic };
         }
 
         const cmake_re = /CMake (.*?) at (.*?):(\d+) \((.*?)\):\s*(.*)/;
@@ -483,24 +488,24 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
         if (!res) {
             if (this._cmakeDiag) {
                 this._cmakeDiag.diag.message = '\n' + line;
-                return [true, null];
+                return { lineMatch: true, diagnostic: null };
             }
-            return [false, null];
+            return { lineMatch: false, diagnostic: null };
         }
 
         const [full, level, filename, linestr, command, what] = res;
         if (!filename || !linestr || !level) {
             if (this._cmakeDiag) {
                 this._cmakeDiag.diag.message = '\n' + line;
-                return [true, null];
+                return { lineMatch: true, diagnostic: null };
             }
-            return [false, null];
+            return { lineMatch: false, diagnostic: null };
         }
 
         this._cmakeDiag = <FileDiagnostic>{};
         this._cmakeDiag.filepath = path.isAbsolute(filename)
-                             ? filename
-                             : path.join(vscode.workspace.rootPath, filename);
+            ? filename
+            : path.join(vscode.workspace.rootPath, filename);
         this._cmakeDiag.key = full;
         const lineNr = Number.parseInt(linestr) - 1;
 
@@ -518,7 +523,7 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
             }[level]
         );
         this._cmakeDiag.diag.source = 'CMake (' + command + ')';
-        return [true, null];
+        return { lineMatch: true, diagnostic: null };
     }
 }
 
@@ -529,10 +534,10 @@ class CMAKEDiagnosticParser extends DiagnosticParser {
  * @extends {DiagnosticParser}
  */
 class GCCDiagnosticParser extends DiagnosticParser {
-    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+    public parse(line: string): IDiagnosticParseResult {
         const diag = diagnostics.parseGCCDiagnostic(line);
         if (!diag) {
-            return [false, null];
+            return { lineMatch: false, diagnostic: null };
         }
         const abspath = path.isAbsolute(diag.file)
             ? diag.file
@@ -547,11 +552,14 @@ class GCCDiagnosticParser extends DiagnosticParser {
             }[diag.severity]
         );
         vsdiag.source = 'GCC';
-        return [true, {
-            filepath: abspath,
-            key: diag.full,
-            diag: vsdiag,
-        }];
+        return {
+            lineMatch: true,
+            diagnostic: {
+                filepath: abspath,
+                key: diag.full,
+                diag: vsdiag,
+            }
+        };
     }
 }
 
@@ -562,10 +570,10 @@ class GCCDiagnosticParser extends DiagnosticParser {
  * @extends {DiagnosticParser}
  */
 class GNULDDiagnosticParser extends DiagnosticParser {
-    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+    public parse(line: string): IDiagnosticParseResult {
         const diag = diagnostics.parseGNULDDiagnostic(line);
         if (!diag) {
-            return [false, null];
+            return { lineMatch: false, diagnostic: null };
         }
         const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
         const vsdiag = new vscode.Diagnostic(
@@ -578,11 +586,14 @@ class GNULDDiagnosticParser extends DiagnosticParser {
             }[diag.severity]
         );
         vsdiag.source = 'Link';
-        return [true, {
-            filepath: abspath,
-            key: diag.full,
-            diag: vsdiag,
-        }];
+        return {
+            lineMatch: true,
+            diagnostic: {
+                filepath: abspath,
+                key: diag.full,
+                diag: vsdiag,
+            }
+        };
     }
 }
 
@@ -628,11 +639,11 @@ class MSVCDiagnosticParser extends DiagnosticParser {
             return new vscode.Range(line, 0, line, 0);
     }
 
-    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+    public parse(line: string): IDiagnosticParseResult {
         const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
         const res = msvc_re.exec(line);
         if (!res)
-            return [false, null];
+            return { lineMatch: false, diagnostic: null };
         const full = res[0];
         const file = res[1];
         const location = res[2];
@@ -673,11 +684,14 @@ class MSVCDiagnosticParser extends DiagnosticParser {
         );
         diag.code = code;
         diag.source = 'MSVC';
-        return [true, {
-            filepath: abspath,
-            key: full,
-            diag: diag,
-        }];
+        return {
+            lineMatch: true,
+            diagnostic: {
+                filepath: abspath,
+                key: full,
+                diag: diag,
+            }
+        };
     }
 }
 
@@ -689,10 +703,10 @@ class MSVCDiagnosticParser extends DiagnosticParser {
  * @extends {DiagnosticParser}
  */
 class GHSDiagnosticParser extends DiagnosticParser {
-    public parse(line: string): [boolean, Maybe<FileDiagnostic>] {
+    public parse(line: string): IDiagnosticParseResult {
         const diag = diagnostics.parseGHSDiagnostic(line);
         if (!diag) {
-            return [false, null];
+            return { lineMatch: false, diagnostic: null };
         }
         const abspath = path.isAbsolute(diag.file)
             ? diag.file
@@ -707,11 +721,14 @@ class GHSDiagnosticParser extends DiagnosticParser {
             }[diag.severity]
         );
         vsdiag.source = 'GHS';
-        return [true, {
-            filepath: abspath,
-            key: diag.full,
-            diag: vsdiag,
-        }];
+        return {
+            lineMatch: true,
+            diagnostic: {
+                filepath: abspath,
+                key: diag.full,
+                diag: vsdiag,
+            }
+        };
     }
 }
 
@@ -748,9 +765,9 @@ class ErrorParser extends OutputParser {
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         if (this._activeParser) {
             console.log('PARSER: Try active parser: ' + this._activeParser.constructor.name);
-            var [match, diag] = this._activeParser.parse(line);
-            if (match) {
-                return diag;
+            var {lineMatch, diagnostic} = this._activeParser.parse(line);
+            if (lineMatch) {
+                return diagnostic;
             }
             console.log('PARSER: Active parser faild: ' + this._activeParser.constructor.name + ': ' + line);
         }
@@ -758,11 +775,11 @@ class ErrorParser extends OutputParser {
         for (let parser of this._parserCollection.values()) {
             if (parser !== this._activeParser) {
                 console.log('PARSER: Try parser: ' + parser.constructor.name);
-                var [match, diag] = parser.parse(line);
-                if (match) {
+                var {lineMatch, diagnostic} = parser.parse(line);
+                if (lineMatch) {
                     console.log('PARSER: New active parser: ' + parser.constructor.name);
                     this._activeParser = parser;
-                    return diag;
+                    return diagnostic;
                 }
             }
         }
@@ -775,9 +792,9 @@ class ErrorParser extends OutputParser {
     private setDiags() {
         if (this._lastFile) {
             if (this._diagDiagnostic && this._activeParser instanceof CMAKEDiagnosticParser)
-                this._diagDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile)!.values()]);
+                this._diagDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile) !.values()]);
             else if (this._buildDiagnostic)
-                this._buildDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile)!.values()]);
+                this._buildDiagnostic.set(vscode.Uri.file(this._lastFile), [...this._accumulatedDiags.get(this._lastFile) !.values()]);
             this._lastFile = null;
         }
     }
