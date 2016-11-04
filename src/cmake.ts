@@ -1871,7 +1871,7 @@ export class CMakeTools {
                     silent: false,
                     environment: this.config.testEnvironment,
                 },
-                new NullParser()
+                (this.config.parseBuildDiagnostics ? new ErrorParser(this.binaryDir, ["cmae"]) : new NullParser())
             )
         ).retc;
         await this._refreshTests();
