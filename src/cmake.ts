@@ -10,18 +10,10 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 import {ctest} from './ctest';
-import * as diagnostics from './diagnostics';
 import {FileDiagnostic,
         DiagnosticParser,
-        LineParseResult,
         LineParseStatus,
-        PARSER_NEEDS_MORE,
-        PARSER_FAIL,
-        CMakeDiagnosticParser,
-        GCCDiagnosticParser,
-        GNULDDiagnosticParser,
-        MSVCDiagnosticParser,
-        GHSDiagnosticParser,
+        diagnosticParsers,
         } from './diagnostics';
 import {util} from './util';
 
@@ -464,17 +456,24 @@ class ErrorParser extends util.OutputParser {
     private _activeParser: Maybe<DiagnosticParser>;
     private _parserCollection: Set<DiagnosticParser>;
 
-    constructor(binaryDir: string) {
+    constructor(binaryDir: string, parsers: Maybe<string[]>) {
         super();
         this._accumulatedDiags = new Map();
         this._lastFile = null;
         this._activeParser = null;
         this._parserCollection = new Set();
-        this._parserCollection.add(new CMakeDiagnosticParser(binaryDir));
-        this._parserCollection.add(new GCCDiagnosticParser(binaryDir));
-        this._parserCollection.add(new GNULDDiagnosticParser(binaryDir));
-        this._parserCollection.add(new MSVCDiagnosticParser(binaryDir));
-        this._parserCollection.add(new GHSDiagnosticParser(binaryDir));
+        if (parsers) {
+            for (let parser of parsers) {
+                if (parser in diagnosticParsers) {
+                    this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
+                }
+            }
+        } else {
+            /* No parser specified. Use all implemented. */
+            for (let parser in diagnosticParsers) {
+                this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
+            }
+        }
     }
 
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
@@ -1606,7 +1605,7 @@ export class CMakeTools {
                 silent: false,
                 environment: this.config.configureEnvironment,
             },
-            new ErrorParser(this.binaryDir)
+            new ErrorParser(this.binaryDir, null)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1682,7 +1681,7 @@ export class CMakeTools {
                 silent: false,
                 environment: this.config.buildEnvironment,
             },
-            new ErrorParser(this.binaryDir)
+            (this.config.parseBuildDiagnostics ? new ErrorParser(this.binaryDir, null) : new NullParser())
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1872,7 +1871,7 @@ export class CMakeTools {
                     silent: false,
                     environment: this.config.testEnvironment,
                 },
-                new ErrorParser(this.binaryDir)
+                new NullParser()
             )
         ).retc;
         await this._refreshTests();

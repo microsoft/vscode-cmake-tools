@@ -391,3 +391,12 @@ export class GHSDiagnosticParser extends DiagnosticParser {
         };
     }
 }
+
+export const diagnosticParsers =
+{
+    cmake: CMakeDiagnosticParser,
+    gcc: GCCDiagnosticParser,
+    gnuld: GNULDDiagnosticParser,
+    msvc: MSVCDiagnosticParser,
+    ghs: GHSDiagnosticParser,
+};
