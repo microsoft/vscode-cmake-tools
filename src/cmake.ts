@@ -292,8 +292,7 @@ export namespace WorkspaceCacheFile {
     }
 
     export function writeCache(path: string, cache: util.WorkspaceCache) {
-        return async.doAsync(
-            fs.writeFile,
+        return util.writeFile(
             path,
             JSON.stringify(
                 cache,
@@ -1654,7 +1653,7 @@ export class CMakeTools {
 
         if (this.debugTargetsEnabled) {
             const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake')
-            await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
+            await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
             const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
             settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
                 cmt_dir.replace(/\\/g, path.posix.sep)
@@ -1686,7 +1685,7 @@ export class CMakeTools {
             initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`)
         }
         const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
-        await async.doAsync(fs.writeFile, init_cache_path, initial_cache_content.join('\n'));
+        await util.writeFile(init_cache_path, initial_cache_content.join('\n'));
         let prefix = this.config.installPrefix;
         if (prefix && prefix !== "") {
             prefix = prefix
@@ -2046,8 +2045,7 @@ export class CMakeTools {
 
         if (type === 'Library') {
             if (!(await async.exists(path.join(this.sourceDir, project_name + '.cpp')))) {
-                await async.doAsync(
-                    fs.writeFile,
+                await util.writeFile(
                     path.join(this.sourceDir, project_name + '.cpp'),
                     [
                         '#include <iostream>',
@@ -2059,8 +2057,7 @@ export class CMakeTools {
             }
         } else {
             if (!(await async.exists(path.join(this.sourceDir, 'main.cpp')))) {
-                await async.doAsync(
-                    fs.writeFile,
+                await util.writeFile(
                     path.join(this.sourceDir, 'main.cpp'),
                     [
                         '#include <iostream>',
@@ -2074,7 +2071,7 @@ export class CMakeTools {
                 );
             }
         }
-        await async.doAsync(fs.writeFile, this.mainListFile, init);
+        await util.writeFile(this.mainListFile, init);
         const doc = await vscode.workspace.openTextDocument(this.mainListFile);
         await vscode.window.showTextDocument(doc);
         return this.configure();
