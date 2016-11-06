@@ -116,13 +116,14 @@ export namespace util {
 
   export async function ensureDirectory(dirpath: string): Promise<void> {
     const abs = path.normalize(path.resolve(dirpath));
-    let curdir = dirpath;
-    while (!(await async.isDirectory(curdir))) {
-      if (await async.exists(dirpath)) {
-        throw new Error(`Failed to create directory "${dirpath}": "${curdir}" is an existing file and is not a directory`);
+    if (!(await async.exists(dirpath))) {
+      const parent = path.dirname(dirpath);
+      await ensureDirectory(parent);
+      await async.doVoidAsync(fs.mkdir, dirpath);
+    } else {
+      if (!(await async.isDirectory(dirpath))) {
+        throw new Error(`Failed to create directory: "${dirpath}" is an existing file and is not a directory`);
       }
-      await async.doVoidAsync(fs.mkdir, curdir);
-      curdir = path.dirname(curdir);
     }
   }
 
