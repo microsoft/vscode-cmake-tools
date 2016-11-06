@@ -3,18 +3,60 @@
 import * as proc from 'child_process';
 import * as fs from 'fs';
 
-export function doAsync<T>(fn: Function, ...args: any[]): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-        fn(...args, resolve);
+
+export function doAsync<Result, Param, ErrorType>(
+        fn: (param: Param, callback: (error: NodeJS.ErrnoException, res: Result) => void) => void,
+        p: Param
+): Promise<Result> {
+    return new Promise<Result>((resolve, reject) => {
+        fn(p, (err, res) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(res);
+            }
+        });
+    });
+}
+
+export function doVoidAsync<Result, Param, ErrorType>(
+        fn: (param: Param, callback: (error: NodeJS.ErrnoException) => void) => void,
+        p: Param
+): Promise<Result> {
+    return new Promise<Result>((resolve, reject) => {
+        fn(p, (er) => {
+            if (er) {
+                reject(er);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+export function doNoErrorAsync<Result, Param>(
+        fn: (param: Param, callback: (result: Result) => void) => void,
+        p: Param
+): Promise<Result> {
+    return new Promise<Result>((resolve) => {
+        fn(p, (res) => {
+            resolve(res);
+        });
     });
 }
 
 export function exists(filepath: string): Promise<boolean> {
-    return doAsync<Boolean>(fs.exists, filepath);
+    return doNoErrorAsync(fs.exists, filepath);
+}
+
+export function isDirectory(filepath: string): Promise<boolean> {
+    return doAsync(fs.stat, filepath).then(stat => {
+        return stat.isDirectory();
+    });
 }
 
 export function unlink(filepath: string): Promise<void> {
-    return doAsync<void>(fs.unlink, filepath);
+    return doVoidAsync(fs.unlink, filepath);
 }
 
 export function readFile(filepath: string) {
