@@ -73,11 +73,15 @@ if(NOT is_set_up)
         _cmt_generate_system_info()
     endmacro()
 
+    if(NOT DEFINED CMAKE_BUILD_TYPE AND DEFINED CMAKE_CONFIGURATION_TYPES)
+        set(condition "$<CONFIG:Debug>")
+    endif()
+
     file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
     file(GENERATE
         OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
         INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-        CONDITION "$<CONFIG:Debug>"
+        \${condition}
         )
 
     function(_cmt_generate_system_info)
