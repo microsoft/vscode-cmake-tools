@@ -136,4 +136,46 @@ suite("Utility tests", () => {
             assert(path.posix.isAbsolute(diag.file));
         }
     });
+    test('Parsing GHS Diagnostics', () => {
+        const line = '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): warning #68-D: integer conversion resulted in a change of sign';
+        const diag = diagnostics.parseGHSDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 630);
+            assert.strictEqual(diag.message, '#68-D: integer conversion resulted in a change of sign');
+            assert.strictEqual(diag.column, 2);
+            assert.strictEqual(diag.file, 'C:\\path\\source\\debug\\debug.c');
+            assert.strictEqual(diag.severity, 'warning');
+            assert.strictEqual(path.win32.normalize(diag.file), diag.file);
+            assert(path.win32.isAbsolute(diag.file));
+        }
+    });
+    test('Parsing GHS Diagnostics At end of source', () => {
+        const line = '"C:\\path\\source\\debug\\debug.c", At end of source: remark #96-D: a translation unit must contain at least one declaration';
+        const diag = diagnostics.parseGHSDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 0);
+            assert.strictEqual(diag.message, '#96-D: a translation unit must contain at least one declaration');
+            assert.strictEqual(diag.column, 0);
+            assert.strictEqual(diag.file, 'C:\\path\\source\\debug\\debug.c');
+            assert.strictEqual(diag.severity, 'remark');
+            assert.strictEqual(path.win32.normalize(diag.file), diag.file);
+            assert(path.win32.isAbsolute(diag.file));
+        }
+    });
+    test('Parsing GHS Diagnostics fatal error', () => {
+        const line = '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): fatal error #68: some fatal error';
+        const diag = diagnostics.parseGHSDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 630);
+            assert.strictEqual(diag.message, '#68: some fatal error');
+            assert.strictEqual(diag.column, 2);
+            assert.strictEqual(diag.file, 'C:\\path\\source\\debug\\debug.c');
+            assert.strictEqual(diag.severity, 'error');
+            assert.strictEqual(path.win32.normalize(diag.file), diag.file);
+            assert(path.win32.isAbsolute(diag.file));
+        }
+    });
 });

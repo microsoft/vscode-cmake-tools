@@ -73,11 +73,15 @@ if(NOT is_set_up)
         _cmt_generate_system_info()
     endmacro()
 
+    if(NOT DEFINED CMAKE_BUILD_TYPE AND DEFINED CMAKE_CONFIGURATION_TYPES)
+        set(condition "$<CONFIG:Debug>")
+    endif()
+
     file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
     file(GENERATE
         OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
         INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-        CONDITION "$<CONFIG:Debug>"
+        \${condition}
         )
 
     function(_cmt_generate_system_info)
@@ -288,8 +292,7 @@ export namespace WorkspaceCacheFile {
     }
 
     export function writeCache(path: string, cache: util.WorkspaceCache) {
-        return async.doAsync(
-            fs.writeFile,
+        return util.writeFile(
             path,
             JSON.stringify(
                 cache,
@@ -1237,13 +1240,42 @@ export class CMakeTools {
     }
 
     /**
+     * Parses a diagnostic message from Green Hills Compiler.
+     * Use single line error reporting when invoking GHS compiler (--no_wrap_diagnostics --brief_diagnostics).
+     */
+    public parseGHSDiagnostic(line: string): Maybe<FileDiagnostic> {
+        const diag = diagnostics.parseGHSDiagnostic(line);
+        if (!diag) {
+            return null;
+        }
+        const abspath = path.isAbsolute(diag.file)
+            ? diag.file
+            : path.normalize(path.join(this.binaryDir, diag.file));
+        const vsdiag = new vscode.Diagnostic(
+            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
+            diag.message,
+            {
+                error: vscode.DiagnosticSeverity.Error,
+                warning: vscode.DiagnosticSeverity.Warning,
+                remark: vscode.DiagnosticSeverity.Information,
+            }[diag.severity]
+        );
+        vsdiag.source = 'GHS';
+        return {
+            filepath: abspath,
+            diag: vsdiag,
+        };
+    }
+
+    /**
      * @brief Parses a line of compiler output to try and find a diagnostic
      *      message.
      */
     public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         return this.parseGCCDiagnostic(line) ||
             this.parseGNULDDiagnostic(line) ||
-            this.parseMSVCDiagnostic(line);
+            this.parseMSVCDiagnostic(line) ||
+            this.parseGHSDiagnostic(line);
     }
 
     /**
@@ -1621,7 +1653,7 @@ export class CMakeTools {
 
         if (this.debugTargetsEnabled) {
             const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake')
-            await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
+            await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
             const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
             settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
                 cmt_dir.replace(/\\/g, path.posix.sep)
@@ -1653,7 +1685,7 @@ export class CMakeTools {
             initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`)
         }
         const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
-        await async.doAsync(fs.writeFile, init_cache_path, initial_cache_content.join('\n'));
+        await util.writeFile(init_cache_path, initial_cache_content.join('\n'));
         let prefix = this.config.installPrefix;
         if (prefix && prefix !== "") {
             prefix = prefix
@@ -2013,8 +2045,7 @@ export class CMakeTools {
 
         if (type === 'Library') {
             if (!(await async.exists(path.join(this.sourceDir, project_name + '.cpp')))) {
-                await async.doAsync(
-                    fs.writeFile,
+                await util.writeFile(
                     path.join(this.sourceDir, project_name + '.cpp'),
                     [
                         '#include <iostream>',
@@ -2026,8 +2057,7 @@ export class CMakeTools {
             }
         } else {
             if (!(await async.exists(path.join(this.sourceDir, 'main.cpp')))) {
-                await async.doAsync(
-                    fs.writeFile,
+                await util.writeFile(
                     path.join(this.sourceDir, 'main.cpp'),
                     [
                         '#include <iostream>',
@@ -2041,7 +2071,7 @@ export class CMakeTools {
                 );
             }
         }
-        await async.doAsync(fs.writeFile, this.mainListFile, init);
+        await util.writeFile(this.mainListFile, init);
         const doc = await vscode.workspace.openTextDocument(this.mainListFile);
         await vscode.window.showTextDocument(doc);
         return this.configure();
