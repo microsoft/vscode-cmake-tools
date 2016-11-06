@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
+
+import * as async from './async';
 
 export namespace util {
   export function product<T>(arrays: T[][]): T[][] {
@@ -109,5 +112,30 @@ export namespace util {
       norm = norm.toLocaleLowerCase().normalize();
     }
     return norm
+  }
+
+  export async function ensureDirectory(dirpath: string): Promise<void> {
+    const abs = path.normalize(path.resolve(dirpath));
+    let curdir = dirpath;
+    while (!(await async.isDirectory(curdir))) {
+      if (await async.exists(dirpath)) {
+        throw new Error(`Failed to create directory "${dirpath}": "${curdir}" is an existing file and is not a directory`);
+      }
+      await async.doVoidAsync(fs.mkdir, curdir);
+      curdir = path.dirname(curdir);
+    }
+  }
+
+  export async function writeFile(filepath: string, content: string): Promise<void> {
+    await ensureDirectory(path.dirname(filepath));
+    return new Promise<void>((resolve, reject) => {
+      fs.writeFile(filepath, content, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      })
+    })
   }
 }
