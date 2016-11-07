@@ -15,6 +15,17 @@
   - Support for error message parsing for the Green Hills Compilers, special
     thanks goes to [bbosnjak](https://github.com/bbosnjak)!
   - Various fixes and tweaks.
+- **0.7.3**:
+  - Many small fixes and tweaks
+  - More thorough tests, this will lead to faster development and less bugs in
+    the future.
+  - **NEW**: After being frequently asked to add the ability to do
+    platform-granular configuration, the configuration system has been changes
+    so that *virtually all* configuration options now allow different values
+    based on platform. For any given `cmake.<option>`, there are now three
+    options following the same format of `cmake.<platform>.<option>`, where
+    `platform` is one of `linux`, `osx`, or `windows`. Note that this deprecates
+    the old `cmake.generator.<platform>` settings.
 
 ### Version 0.6.0
 

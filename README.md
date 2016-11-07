@@ -9,6 +9,11 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 
 ## What's New?
 
+For users who were using the `cmake.generator.<platform>`-style configuration options,
+those options has been renamed to the form `cmake.<platform>.generator` to fit
+a new naming convention for config options. Read about the 0.7.3 update for more
+information.
+
 ### Version 0.7.0
 
 - **NEW** Greater CTest integration! Test output now has a dedicated output
@@ -18,7 +23,6 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   assertions along with failure information.*
 - Updated to new vscode/Node APIs for TypeScript 2.0.
 - Various bug fixes and tweaks.
-- **0.7.1**: Bug fixes and tweaks.
 
 \* If you would like to see integration with the output from your favourite
 testing framework, please make a [pull request](https://github.com/vector-of-bool/vscode-cmake-tools). Thanks!
