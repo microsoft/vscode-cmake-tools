@@ -201,13 +201,12 @@ suite("Utility tests", () => {
             }
         })
     });
-    test('Can access the extension API', () => {
+    test('Can access the extension API', async function() {
         interface CMakeToolsAPI {
             binaryDir: string;
         };
-        return getExtension().then((api: CMakeToolsAPI) => {
-            assert(api.binaryDir);
-        });
+        const api: CMakeToolsAPI = await getExtension();
+        assert(api.binaryDir);
     });
     suite('Extension smoke tests', function() {
         this.timeout(60 * 1000); // These tests are slower than just unit tests
