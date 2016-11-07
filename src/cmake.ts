@@ -1058,6 +1058,9 @@ export class CMakeTools {
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
             }
+            if (this._testStatusButton.text == '') {
+                this._testStatusButton.hide();
+            }
         });
 
         const test_count = this.tests.length;
