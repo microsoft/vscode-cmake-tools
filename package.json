@@ -125,9 +125,6 @@
             "type": "object",
             "title": "CMake Tools configuration",
             "properties": {
-                "cmake.something": {
-                    "$ref": "#/somthing"
-                },
                 "cmake.buildDirectory": {
                     "type": "string",
                     "default": "${workspaceRoot}/build",
