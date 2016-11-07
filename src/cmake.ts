@@ -652,7 +652,11 @@ export class CMakeTools {
         const to_apply: vscode.DecorationOptions[] = [];
         for (const decor of this.failingTestDecorations) {
             const editor_file = util.normalizePath(editor.document.fileName);
-            const decor_file = util.normalizePath(decor.fileName);
+            const decor_file = util.normalizePath(
+                path.isAbsolute(decor.fileName)
+                    ? decor.fileName
+                    : path.join(this.binaryDir, decor.fileName)
+            );
             if (editor_file !== decor_file) {
                 continue;
             }
