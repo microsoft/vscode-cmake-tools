@@ -214,14 +214,14 @@ suite("Utility tests", () => {
         setup(async function () {
             await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', false);
             const cmt = await getExtension();
-                this.cmt = cmt;
-                cmt.activeVariantCombination = {
-                    keywordSettings: new Map<string, string>([
-                        ['buildType', 'debug']
-                    ]),
-                    description: 'Smoke Testing configuration',
-                    label: 'Debug (Smoke Testing)'
-                };
+            this.cmt = cmt;
+            cmt.activeVariantCombination = {
+                keywordSettings: new Map<string, string>([
+                    ['buildType', 'debug']
+                ]),
+                description: 'Smoke Testing configuration',
+                label: 'Debug (Smoke Testing)'
+            };
             const exists = await new Promise<boolean>(resolve => {
                 fs.exists(cmt.binaryDir, resolve);
             });
@@ -250,6 +250,8 @@ suite("Utility tests", () => {
         test('Enable debugging targets', async function() {
             const cmt: cmake.CMakeTools = this.cmt;
             await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', true);
+            // It seems to take vscode a bit of time to propagate the config change...
+            await new Promise(resolve => setTimeout(resolve, 1000));
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0, 'Configure failed');
             const targets = cmt.executableTargets;
@@ -258,6 +260,7 @@ suite("Utility tests", () => {
         });
         teardown(function() {
             const cmt: cmake.CMakeTools = this.cmt;
+            vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', false);
             if (fs.existsSync(cmt.binaryDir)) {
                 rimraf.sync(cmt.binaryDir);
             }
