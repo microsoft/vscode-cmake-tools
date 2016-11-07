@@ -1763,8 +1763,8 @@ export class CMakeTools {
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
-            this._refreshAll();
-            this._reloadConfiguration();
+            await this._refreshAll();
+            await this._reloadConfiguration();
         }
         return result.retc;
     }
@@ -1842,7 +1842,7 @@ export class CMakeTools {
             await this.parseDiagnostics(result);
         }
         if (!result.retc) {
-            this._refreshAll();
+            await this._refreshAll();
         }
         return result.retc;
     }
