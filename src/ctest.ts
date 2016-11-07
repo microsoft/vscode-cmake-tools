@@ -125,7 +125,8 @@ export async function readTestResultsFile(test_xml: string): Promise<Results> {
 }
 
 export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
-    const lines = output.split('\n').map(l => l.trim());
+    const lines_with_ws = output.split('\n');
+    const lines = lines_with_ws.map(l => l.trim());
     const decorations: FailingTestDecoration[] = [];
     for (let cursor = 0; cursor < lines.length; ++cursor) {
         const line = lines[cursor];
@@ -136,12 +137,19 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
         if (res) {
             const [_, file, lineno_] = res;
             const lineno = parseInt(lineno_) - 1;
-            const expr = lines[cursor + 3];
+            let message = '~~~c++\n';
+            for (let i = 0;; ++i) {
+                const expr_line = lines_with_ws[cursor + i];
+                if (expr_line.startsWith('======') || expr_line.startsWith('------')) {
+                    break;
+                }
+                message += expr_line + '\n';
+            }
 
             decorations.push({
                 fileName: file,
                 lineNumber: lineno,
-                hoverMessage: `${expr}`,
+                hoverMessage: `${message}\n~~~`,
             });
         }
     }
