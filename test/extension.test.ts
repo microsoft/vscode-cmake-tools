@@ -211,8 +211,9 @@ suite("Utility tests", () => {
     });
     suite('Extension smoke tests', function() {
         this.timeout(60 * 1000); // These tests are slower than just unit tests
-        setup(function () {
-            return getExtension().then(cmt => {
+        setup(async function () {
+            await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', false);
+            const cmt = await getExtension();
                 this.cmt = cmt;
                 cmt.activeVariantCombination = {
                     keywordSettings: new Map<string, string>([
@@ -221,16 +222,10 @@ suite("Utility tests", () => {
                     description: 'Smoke Testing configuration',
                     label: 'Debug (Smoke Testing)'
                 };
-                return fs.exists(cmt.binaryDir, exists => {
-                    return new Promise<void>(resolve => {
-                        if (exists) {
-                            rimraf(cmt.binaryDir, err => resolve());
-                        } else {
-                            resolve();
-                        }
-                    })
-                })
+            const exists = await new Promise<boolean>(resolve => {
+                fs.exists(cmt.binaryDir, resolve);
             });
+            await new Promise(resolve => exists ? rimraf(cmt.binaryDir, resolve) : resolve());
         });
         test('Can configure', async function() {
             const cmt: cmake.CMakeTools = this.cmt;
