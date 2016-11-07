@@ -645,7 +645,11 @@ export class CMakeTools {
     }
 
     private _refreshActiveEditorDecorations() {
-        this._refreshEditorDecorations(vscode.window.activeTextEditor);
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            // Seems that sometimes the activeTextEditor is undefined. A VSCode bug?
+            this._refreshEditorDecorations(vscode.window.activeTextEditor);
+        }
     }
 
     private _refreshEditorDecorations(editor: vscode.TextEditor) {
@@ -954,7 +958,8 @@ export class CMakeTools {
         }
 
         const dontBotherDebugTargets = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
-        if (!this.debugTargetsEnabled && !dontBotherDebugTargets && Math.random() < 0.2) {
+        const random = Math.random();
+        if (!this.debugTargetsEnabled && !dontBotherDebugTargets && random < 0.2) {
             vscode.window.showInformationMessage(
                 'Did you know CMake Tools now provides experimental debugger integration?',
                 {
