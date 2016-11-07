@@ -321,82 +321,81 @@ export class ConfigurationReader {
         return (value !== undefined) ? value as T : default_;
     }
 
+    private _readPrefixed<T>(key): T | null {
+        const platform = {
+            win32: 'windows',
+            darwin: 'osx',
+            linux: 'linux'
+        }[os.platform()];
+        return this.readConfig<T>(`${platform}.${key}`, this.readConfig<T>(`${key}`));
+    }
+
     get buildDirectory(): string {
-        return this.readConfig<string>('buildDirectory') as string;
+        return this._readPrefixed<string>('buildDirectory')!;
     }
 
     get installPrefix(): Maybe<string> {
-        return this.readConfig<string>('installPrefix');
+        return this._readPrefixed<string>('installPrefix')!;
     }
 
     get sourceDirectory(): string {
-        return this.readConfig<string>('sourceDirectory') as string;
+        return this._readPrefixed<string>('sourceDirectory') as string;
     }
 
     get saveBeforeBuild(): boolean {
-        return !!this.readConfig<boolean>('saveBeforeBuild');
+        return !!this._readPrefixed<boolean>('saveBeforeBuild');
     }
 
     get clearOutputBeforeBuild(): boolean {
-        return !!this.readConfig<boolean>('clearOutputBeforeBuild');
+        return !!this._readPrefixed<boolean>('clearOutputBeforeBuild');
     }
 
     get configureSettings(): any {
-        return this.readConfig<Object>('configureSettings');
+        return this._readPrefixed<Object>('configureSettings');
     }
 
     get initialBuildType(): Maybe<string> {
-        return this.readConfig<string>('initialBuildType');
+        return this._readPrefixed<string>('initialBuildType');
     }
 
     get preferredGenerators(): string[] {
-        return this.readConfig<string[]>('preferredGenerators') || [];
+        return this._readPrefixed<string[]>('preferredGenerators') || [];
     }
 
     get generator(): Maybe<string> {
-        const platform = {
-            win32: 'windows',
-            darwin: 'osx',
-            linux: 'linux'
-        }[os.platform()];
-        return this.readConfig<string>(`generator.${platform}`, this.readConfig<string>('generator.all'));
+        return this._readPrefixed<string>('generator');
     }
 
     get toolset(): Maybe<string> {
-        const platform = {
-            win32: 'windows',
-            darwin: 'osx',
-            linux: 'linux'
-        }[os.platform()];
-        return this.readConfig<string>(`toolset.${platform}`, this.readConfig<string>(`toolset.all`));
+        return this._readPrefixed<string>('toolset');
     }
 
     get configureArgs(): string[] {
-        return this.readConfig<string[]>('configureArgs') as string[];
+        return this._readPrefixed<string[]>('configureArgs')!;
     }
 
     get buildArgs(): string[] {
-        return this.readConfig<string[]>('buildArgs') as string[];
+        return this._readPrefixed<string[]>('buildArgs')!;
     }
 
     get buildToolArgs(): string[] {
-        return this.readConfig<string[]>('buildToolArgs') as string[];
+        return this._readPrefixed<string[]>('buildToolArgs')!;
     }
 
     get parallelJobs(): Maybe<number> {
-        return this.readConfig<number>('parallelJobs');
+        return this._readPrefixed<number>('parallelJobs');
     }
 
     get ctest_parallelJobs(): Maybe<number> {
-        return this.readConfig<number>('ctest.parallelJobs');
+        return this._readPrefixed<number>('ctest.parallelJobs');
     }
 
     get parseBuildDiagnostics(): boolean {
-        return !!this.readConfig<boolean>('parseBuildDiagnostics');
+        return !!this._readPrefixed<boolean>('parseBuildDiagnostics');
     }
 
     get cmakePath(): string {
-        return this.readConfig<string>('cmakePath') as string;
+        return this._readPrefixed<string>('cmakePath')!;
     }
 
     // TODO: Implement a DebugConfig interface type
@@ -409,19 +408,19 @@ export class ConfigurationReader {
     }
 
     get environment(): Object {
-        return this.readConfig<Object>('environment') || {};
+        return this._readPrefixed<Object>('environment') || {};
     }
 
     get configureEnvironment(): Object {
-        return this.readConfig<Object>('configureEnvironment') || {};
+        return this._readPrefixed<Object>('configureEnvironment') || {};
     }
 
     get buildEnvironment(): Object {
-        return this.readConfig<Object>('buildEnvironment') || {};
+        return this._readPrefixed<Object>('buildEnvironment') || {};
     }
 
     get testEnvironment(): Object {
-        return this.readConfig<Object>('testEnvironment') || {};
+        return this._readPrefixed<Object>('testEnvironment') || {};
     }
 }
 
@@ -456,7 +455,7 @@ export class CMakeTools {
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
     private _workspaceCacheContent: util.WorkspaceCache;
-    private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
+    private _workspaceCachePath = path.join(vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
     public os: Maybe<string> = null;
@@ -480,6 +479,12 @@ export class CMakeTools {
     public set currentChildProcess(v: Maybe<proc.ChildProcess>) {
         this._currentChildProcess = v;
         this._refreshStatusBarItems();
+    }
+
+
+    private _initFinished : Promise<void>;
+    public get initFinished() : Promise<void> {
+        return this._initFinished;
     }
 
     /**
@@ -645,14 +650,22 @@ export class CMakeTools {
     }
 
     private _refreshActiveEditorDecorations() {
-        this._refreshEditorDecorations(vscode.window.activeTextEditor);
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            // Seems that sometimes the activeTextEditor is undefined. A VSCode bug?
+            this._refreshEditorDecorations(vscode.window.activeTextEditor);
+        }
     }
 
     private _refreshEditorDecorations(editor: vscode.TextEditor) {
         const to_apply: vscode.DecorationOptions[] = [];
         for (const decor of this.failingTestDecorations) {
             const editor_file = util.normalizePath(editor.document.fileName);
-            const decor_file = util.normalizePath(decor.fileName);
+            const decor_file = util.normalizePath(
+                path.isAbsolute(decor.fileName)
+                    ? decor.fileName
+                    : path.join(this.binaryDir, decor.fileName)
+            );
             if (editor_file !== decor_file) {
                 continue;
             }
@@ -949,22 +962,50 @@ export class CMakeTools {
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
         }
 
-        const dontBother = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
-        if (!this.debugTargetsEnabled && !dontBother && Math.random() < 0.2) {
+        const dontBotherDebugTargets = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
+        const random = Math.random();
+        if (!this.debugTargetsEnabled && !dontBotherDebugTargets && random < 0.2) {
             vscode.window.showInformationMessage(
                 'Did you know CMake Tools now provides experimental debugger integration?',
                 {
                     title: 'Tell me more',
-                    action: 'open_link'
+                    action: () => {
+                        open('https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md');
+                    }
                 },
                 {
                     title: 'Don\'t bother me again',
-                    action: 'never'
-                }).then(chosen => {
-                    if (chosen.action === 'never') {
+                    action: () => {
                         ctx.globalState.update('debugTargets.neverBother', true);
-                    } else if (chosen.action === 'open_link') {
-                        open('https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md');
+                    }
+                }).then(chosen => {
+                    if (chosen.action) {
+                        chosen.action();
+                    }
+                });
+        }
+
+        const last_nag_time = ctx.globalState.get('feedbackWanted.lastNagTime', 0);
+        const now = new Date().getTime();
+        const time_since_nag = now - last_nag_time;
+        // Ask for feedback once every thirty days
+        const do_nag = time_since_nag > 1000 * 60 * 60 * 24 * 30;
+        if (do_nag && Math.random() < 0.1) {
+            ctx.globalState.update('feedbackWanted.lastNagTime', now);
+            vscode.window.showInformationMessage<{title: string, action?: () => void, isCloseAffordance?: boolean}>(
+                'Like CMake Tools? I need your feedback to help make this extension better! Submitting feedback should only take a few seconds.',
+                {
+                    title: 'I\'ve got a few seconds',
+                    action: () => {
+                        open('https://github.com/vector-of-bool/vscode-cmake-tools/issues?q=is%3Aopen+is%3Aissue+label%3A%22feedback+wanted%21%22');
+                    },
+                },
+                {
+                    title: 'Not now',
+                    isCloseAffordance: true,
+                }).then(chosen => {
+                    if (chosen.action) {
+                        chosen.action();
                     }
                 });
         }
@@ -972,7 +1013,7 @@ export class CMakeTools {
 
     constructor(ctx: vscode.ExtensionContext) {
         this._context = ctx;
-        this._init(ctx);
+        this._initFinished = this._init(ctx);
     }
 
     /**
@@ -1015,6 +1056,9 @@ export class CMakeTools {
             if (!this.debugTargetsEnabled) {
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
+            }
+            if (this._testStatusButton.text == '') {
+                this._testStatusButton.hide();
             }
         });
 
@@ -1635,6 +1679,7 @@ export class CMakeTools {
         }
 
         const settings = Object.assign({}, this.config.configureSettings);
+        settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
 
         const variant = this.activeVariant;
         if (variant) {
@@ -1659,7 +1704,13 @@ export class CMakeTools {
                 cmt_dir.replace(/\\/g, path.posix.sep)
             ]);
         }
-        let initial_cache_content = ['# This file is generated by CMake Tools! DO NOT EDIT!'];
+        let initial_cache_content = [
+            '# This file is generated by CMake Tools! DO NOT EDIT!',
+            'cmake_policy(PUSH)',
+            'if(POLICY CMP0053)',
+            '   cmake_policy(SET CMP0053 NEW)',
+            'endif()',
+        ];
 
         for (const key in settings) {
             let value = settings[key];
@@ -1684,6 +1735,7 @@ export class CMakeTools {
             }
             initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`)
         }
+        initial_cache_content.push('cmake_policy(POP)')
         const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
         await util.writeFile(init_cache_path, initial_cache_content.join('\n'));
         let prefix = this.config.installPrefix;
@@ -1710,8 +1762,8 @@ export class CMakeTools {
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
-            this._refreshAll();
-            this._reloadConfiguration();
+            await this._refreshAll();
+            await this._reloadConfiguration();
         }
         return result.retc;
     }
@@ -1789,7 +1841,7 @@ export class CMakeTools {
             await this.parseDiagnostics(result);
         }
         if (!result.retc) {
-            this._refreshAll();
+            await this._refreshAll();
         }
         return result.retc;
     }
