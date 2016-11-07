@@ -456,7 +456,7 @@ export class CMakeTools {
     private _needsReconfigure = false;
     private _buildDiags: vscode.DiagnosticCollection;
     private _workspaceCacheContent: util.WorkspaceCache;
-    private _workspaceCachePath = path.join(vscode.workspace.rootPath, '.vscode', '.cmaketools.json');
+    private _workspaceCachePath = path.join(vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
     public os: Maybe<string> = null;
@@ -480,6 +480,12 @@ export class CMakeTools {
     public set currentChildProcess(v: Maybe<proc.ChildProcess>) {
         this._currentChildProcess = v;
         this._refreshStatusBarItems();
+    }
+
+
+    private _initFinished : Promise<void>;
+    public get initFinished() : Promise<void> {
+        return this._initFinished;
     }
 
     /**
@@ -1008,7 +1014,7 @@ export class CMakeTools {
 
     constructor(ctx: vscode.ExtensionContext) {
         this._context = ctx;
-        this._init(ctx);
+        this._initFinished = this._init(ctx);
     }
 
     /**

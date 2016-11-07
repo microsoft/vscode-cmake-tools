@@ -1,12 +1,15 @@
 import * as path from 'path';
+import * as fs from 'fs';
 
 import * as assert from 'assert';
 
 import * as vscode from 'vscode';
-import * as cmake_tools_ext from '../src/extension';
 
 import * as cmake from '../src/cmake';
 import * as diagnostics from '../src/diagnostics';
+import * as compdb from '../src/compdb';
+
+import * as rimraf from 'rimraf';
 
 const here = __dirname;
 
@@ -14,6 +17,10 @@ function testFilePath(filename: string): string {
     return path.normalize(path.join(here, '../..', 'test', filename));
 }
 
+async function getExtension(): Promise<cmake.CMakeTools> {
+    const cmt = vscode.extensions.getExtension<cmake.CMakeTools>('vector-of-bool.cmake-tools');
+    return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
+}
 
 suite("Utility tests", () => {
     test("Read CMake Cache", async function () {
@@ -178,4 +185,88 @@ suite("Utility tests", () => {
             assert(path.win32.isAbsolute(diag.file));
         }
     });
+    test('Parsing compilation databases', () => {
+        const dbpath = testFilePath('test_compdb.json');
+        return compdb.CompilationDatabase.fromFilePath(dbpath).then(db => {
+            assert(db);
+            if (db) {
+                const source_path = "/home/clang-languageservice/main.cpp";
+                const info = db.getCompilationInfoForUri(vscode.Uri.file(source_path));
+                assert(info);
+                if (info) {
+                    assert.strictEqual(source_path, info.file);
+                    assert.strictEqual('/home/clang-languageservice/build', info.directory);
+                    assert.strictEqual(info.command, "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp")
+                }
+            }
+        })
+    });
+    test('Can access the extension API', () => {
+        interface CMakeToolsAPI {
+            binaryDir: string;
+        };
+        return getExtension().then((api: CMakeToolsAPI) => {
+            assert(api.binaryDir);
+        });
+    });
+    suite('Extension smoke tests', function() {
+        this.timeout(60 * 1000); // These tests are slower than just unit tests
+        setup(function () {
+            return getExtension().then(cmt => {
+                this.cmt = cmt;
+                cmt.activeVariantCombination = {
+                    keywordSettings: new Map<string, string>([
+                        ['buildType', 'debug']
+                    ]),
+                    description: 'Smoke Testing configuration',
+                    label: 'Debug (Smoke Testing)'
+                };
+                return fs.exists(cmt.binaryDir, exists => {
+                    return new Promise<void>(resolve => {
+                        if (exists) {
+                            rimraf(cmt.binaryDir, err => resolve());
+                        } else {
+                            resolve();
+                        }
+                    })
+                })
+            });
+        });
+        test('Can configure', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.configure();
+            assert.strictEqual(retc, 0);
+        });
+        test('Can build named target', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.build('MyExecutable');
+            assert.strictEqual(retc, 0);
+        });
+        test('Non-existent target fails', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.build('ThisIsNotAnExistingTarget');
+            assert.notStrictEqual(retc, 0);
+        });
+        test('Can execute CTest tests', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.ctest();
+            assert.strictEqual(retc, 0);
+        });
+        test('Enable debugging targets', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', true);
+            const retc = await cmt.configure();
+            assert.strictEqual(retc, 0, 'Configure failed');
+            const targets = cmt.executableTargets;
+            assert.strictEqual(targets.length, 1, 'Executable targets are missing');
+            assert.strictEqual(targets[0].name, 'MyExecutable');
+        });
+        teardown(function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            if (fs.existsSync(cmt.binaryDir)) {
+                rimraf.sync(cmt.binaryDir);
+            }
+        })
+    });
+    teardown
 });

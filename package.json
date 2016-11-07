@@ -338,7 +338,9 @@
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
         "mocha": "^3.1.2",
-        "@types/mocha": "^2.2.32"
+        "@types/mocha": "^2.2.32",
+        "rimraf": "^2.5.4",
+        "@types/rimraf": "^0.0.28"
     },
     "dependencies": {
         "open": "0.0.5",
