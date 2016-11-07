@@ -125,6 +125,9 @@
             "type": "object",
             "title": "CMake Tools configuration",
             "properties": {
+                "cmake.something": {
+                    "$ref": "#/somthing"
+                },
                 "cmake.buildDirectory": {
                     "type": "string",
                     "default": "${workspaceRoot}/build",
@@ -170,42 +173,12 @@
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },
-                "cmake.generator.all": {
+                "cmake.generator": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake generator to use"
                 },
-                "cmake.generator.windows": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake generator to use on Windows"
-                },
-                "cmake.generator.linux": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake generator to use on Linux"
-                },
-                "cmake.generator.osx": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake generator to use on OSX/macOS"
-                },
-                "cmake.toolset.all": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake toolset to use when configuring"
-                },
-                "cmake.toolset.windows": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake toolset to use when configuring"
-                },
-                "cmake.toolset.linux": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake toolset to use when configuring"
-                },
-                "cmake.toolset.osx": {
+                "cmake.toolset": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake toolset to use when configuring"
