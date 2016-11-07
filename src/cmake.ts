@@ -321,82 +321,81 @@ export class ConfigurationReader {
         return (value !== undefined) ? value as T : default_;
     }
 
+    private _readPrefixed<T>(key): T | null {
+        const platform = {
+            win32: 'windows',
+            darwin: 'osx',
+            linux: 'linux'
+        }[os.platform()];
+        return this.readConfig<T>(`${platform}.${key}`, this.readConfig<T>(`${key}`));
+    }
+
     get buildDirectory(): string {
-        return this.readConfig<string>('buildDirectory') as string;
+        return this._readPrefixed<string>('buildDirectory')!;
     }
 
     get installPrefix(): Maybe<string> {
-        return this.readConfig<string>('installPrefix');
+        return this._readPrefixed<string>('installPrefix')!;
     }
 
     get sourceDirectory(): string {
-        return this.readConfig<string>('sourceDirectory') as string;
+        return this._readPrefixed<string>('sourceDirectory') as string;
     }
 
     get saveBeforeBuild(): boolean {
-        return !!this.readConfig<boolean>('saveBeforeBuild');
+        return !!this._readPrefixed<boolean>('saveBeforeBuild');
     }
 
     get clearOutputBeforeBuild(): boolean {
-        return !!this.readConfig<boolean>('clearOutputBeforeBuild');
+        return !!this._readPrefixed<boolean>('clearOutputBeforeBuild');
     }
 
     get configureSettings(): any {
-        return this.readConfig<Object>('configureSettings');
+        return this._readPrefixed<Object>('configureSettings');
     }
 
     get initialBuildType(): Maybe<string> {
-        return this.readConfig<string>('initialBuildType');
+        return this._readPrefixed<string>('initialBuildType');
     }
 
     get preferredGenerators(): string[] {
-        return this.readConfig<string[]>('preferredGenerators') || [];
+        return this._readPrefixed<string[]>('preferredGenerators') || [];
     }
 
     get generator(): Maybe<string> {
-        const platform = {
-            win32: 'windows',
-            darwin: 'osx',
-            linux: 'linux'
-        }[os.platform()];
-        return this.readConfig<string>(`generator.${platform}`, this.readConfig<string>('generator.all'));
+        return this._readPrefixed<string>('generator');
     }
 
     get toolset(): Maybe<string> {
-        const platform = {
-            win32: 'windows',
-            darwin: 'osx',
-            linux: 'linux'
-        }[os.platform()];
-        return this.readConfig<string>(`toolset.${platform}`, this.readConfig<string>(`toolset.all`));
+        return this._readPrefixed<string>('toolset');
     }
 
     get configureArgs(): string[] {
-        return this.readConfig<string[]>('configureArgs') as string[];
+        return this._readPrefixed<string[]>('configureArgs')!;
     }
 
     get buildArgs(): string[] {
-        return this.readConfig<string[]>('buildArgs') as string[];
+        return this._readPrefixed<string[]>('buildArgs')!;
     }
 
     get buildToolArgs(): string[] {
-        return this.readConfig<string[]>('buildToolArgs') as string[];
+        return this._readPrefixed<string[]>('buildToolArgs')!;
     }
 
     get parallelJobs(): Maybe<number> {
-        return this.readConfig<number>('parallelJobs');
+        return this._readPrefixed<number>('parallelJobs');
     }
 
     get ctest_parallelJobs(): Maybe<number> {
-        return this.readConfig<number>('ctest.parallelJobs');
+        return this._readPrefixed<number>('ctest.parallelJobs');
     }
 
     get parseBuildDiagnostics(): boolean {
-        return !!this.readConfig<boolean>('parseBuildDiagnostics');
+        return !!this._readPrefixed<boolean>('parseBuildDiagnostics');
     }
 
     get cmakePath(): string {
-        return this.readConfig<string>('cmakePath') as string;
+        return this._readPrefixed<string>('cmakePath')!;
     }
 
     // TODO: Implement a DebugConfig interface type
@@ -409,19 +408,19 @@ export class ConfigurationReader {
     }
 
     get environment(): Object {
-        return this.readConfig<Object>('environment') || {};
+        return this._readPrefixed<Object>('environment') || {};
     }
 
     get configureEnvironment(): Object {
-        return this.readConfig<Object>('configureEnvironment') || {};
+        return this._readPrefixed<Object>('configureEnvironment') || {};
     }
 
     get buildEnvironment(): Object {
-        return this.readConfig<Object>('buildEnvironment') || {};
+        return this._readPrefixed<Object>('buildEnvironment') || {};
     }
 
     get testEnvironment(): Object {
-        return this.readConfig<Object>('testEnvironment') || {};
+        return this._readPrefixed<Object>('testEnvironment') || {};
     }
 }
 
