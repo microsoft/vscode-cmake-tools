@@ -20,7 +20,7 @@
     ],
     "publisher": "vector-of-bool",
     "engines": {
-        "vscode": "^1.4.0"
+        "vscode": "^1.7.0"
     },
     "categories": [
         "Other"
@@ -332,7 +332,7 @@
     },
     "devDependencies": {
         "typescript": "^2.0.3",
-        "vscode": "^1.0.0",
+        "vscode": "^1.0.3",
         "@types/node": "^6.0.45",
         "@types/js-yaml": "^3.5.28",
         "@types/ajv": "^0.0.3",
