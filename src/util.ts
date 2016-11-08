@@ -112,6 +112,6 @@ export namespace util {
   }
 
   export abstract class OutputParser {
-    public abstract parseLine(line: string): void;
+    public abstract parseLine(line: string): Maybe<number>;
   }
 }

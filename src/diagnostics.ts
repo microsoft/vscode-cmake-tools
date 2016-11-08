@@ -90,9 +90,8 @@ export interface LineParseResult {
 export const PARSER_FAIL: LineParseResult = { lineMatch: false, diagnostic: null };
 export const PARSER_NEEDS_MORE: LineParseResult = { lineMatch: true, diagnostic: null };
 
-export abstract class DiagnosticParser extends util.OutputParser {
+export abstract class DiagnosticParser {
     constructor(protected readonly binaryDir: string) {
-        super();
     }
     public abstract parseLine(line: string): LineParseResult;
 }

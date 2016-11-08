@@ -422,14 +422,15 @@ export class ConfigurationReader {
  * An OutputParser that doesn't do anything when it parses
  */
 class NullParser extends util.OutputParser {
-    public parseLine(line: string): void {}
+    public parseLine(line: string): Maybe<number> { return null; }
 }
 
 class CMakeTargetListParser extends util.OutputParser {
     private _accumulatedLines: string[] = [];
 
-    public parseLine(line: string): void {
+    public parseLine(line: string): Maybe<number> {
         this._accumulatedLines.push(line);
+        return null;
     }
 
     public getTargets(generator: string) {
@@ -446,14 +447,15 @@ class CMakeTargetListParser extends util.OutputParser {
     }
 }
 
-class ErrorParser extends util.OutputParser {
+class BuildParser extends util.OutputParser {
     private _accumulatedDiags: Map<string, Map<string, vscode.Diagnostic>>;
     private _lastFile: Maybe<string>;
 
+    private _progressParser(line): Maybe<number> { return null; };
     private _activeParser: Maybe<DiagnosticParser>;
     private _parserCollection: Set<DiagnosticParser>;
 
-    constructor(binaryDir: string, parsers: Maybe<string[]>) {
+    constructor(binaryDir: string, parsers: Maybe<string[]>, generator: Maybe<string>) {
         super();
         this._accumulatedDiags = new Map();
         this._lastFile = null;
@@ -471,6 +473,33 @@ class ErrorParser extends util.OutputParser {
                 this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
             }
         }
+        if (generator) {
+            if (/(Unix|MinGW) Makefiles/.test(generator)) {
+                this._progressParser = this.parseMakeProgress;
+            } else if (/Ninja/.test(generator)) {
+                this._progressParser = this.parseNinjaProgress;
+            }
+        }
+    }
+
+    private parseNinjaProgress(line): Maybe<number> {
+        const ninja_re = /^\[(\d+)\/(\d+)\]/;
+        const res = ninja_re.exec(line);
+        if (res) {
+            const [num, total] = res.splice(1);
+            return Math.floor(parseInt(num) * 100 / parseInt(total));
+        }
+        return null;
+    }
+
+    private parseMakeProgress(line): Maybe<number> {
+        const make_re = /^\[ *(\d+)\%\]/;
+        const res = make_re.exec(line);
+        if (res) {
+            const [total] = res.splice(1);
+            return Math.floor(parseInt(total));
+        }
+        return null;
     }
 
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
@@ -506,16 +535,20 @@ class ErrorParser extends util.OutputParser {
         }
     }
 
-    public parseLine(line: string) {
-        const diag = this.parseDiagnosticLine(line);
-        if (diag) {
-            if (!this._accumulatedDiags.has(diag.filepath)) {
-                // First diagnostic of this file. Add a new map to hold our diags
-                this._accumulatedDiags.set(diag.filepath, new Map());
+    public parseLine(line: string): Maybe<number> {
+        const progress = this._progressParser(line);
+        if (null === progress) {
+            const diag = this.parseDiagnosticLine(line);
+            if (diag) {
+                if (!this._accumulatedDiags.has(diag.filepath)) {
+                    // First diagnostic of this file. Add a new map to hold our diags
+                    this._accumulatedDiags.set(diag.filepath, new Map());
+                }
+                const diags = this._accumulatedDiags.get(diag.filepath) !;
+                diags.set(diag.key, diag.diag);
             }
-            const diags = this._accumulatedDiags.get(diag.filepath)!;
-            diags.set(diag.key, diag.diag);
         }
+        return progress;
     }
 }
 
@@ -1347,22 +1380,24 @@ export class CMakeTools {
 
             pipe.stdout.on('line', (line: string) => {
                 console.log('cmake [stdout]: ' + line);
+                const progres = parser.parseLine(line);
                 if (!silent) {
                     this._channel.appendLine(line);
-                    status(line.trim());
+                    if (progres)
+                        status(progres + ' %');
                 }
-                parser.parseLine(line);
             });
             pipe.stderr.on('line', (line: string) => {
                 console.log('cmake [stderr]: ' + line);
+                const progres = parser.parseLine(line);
                 if (!silent) {
-                    status(line.trim());
+                    if (progres)
+                        status(progres + ' %');
                     this._channel.appendLine(line);
                 }
-                parser.parseLine(line);
             });
             pipe.on('close', (retc: Number) => {
-                if (parser instanceof ErrorParser) {
+                if (parser instanceof BuildParser) {
                     parser.fillDiagnosticCollection(this._diagnostics);
                 }
                 console.log('cmake exited with return code ' + retc);
@@ -1601,7 +1636,7 @@ export class CMakeTools {
                 silent: false,
                 environment: this.config.configureEnvironment,
             },
-            new ErrorParser(this.binaryDir, null)
+            new BuildParser(this.binaryDir, null, this.activeGenerator)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1677,7 +1712,7 @@ export class CMakeTools {
                 silent: false,
                 environment: this.config.buildEnvironment,
             },
-            (this.config.parseBuildDiagnostics ? new ErrorParser(this.binaryDir, null) : new NullParser())
+            (this.config.parseBuildDiagnostics ? new BuildParser(this.binaryDir, null, this.activeGenerator) : new NullParser())
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1867,7 +1902,7 @@ export class CMakeTools {
                     silent: false,
                     environment: this.config.testEnvironment,
                 },
-                (this.config.parseBuildDiagnostics ? new ErrorParser(this.binaryDir, ["cmake"]) : new NullParser())
+                (this.config.parseBuildDiagnostics ? new BuildParser(this.binaryDir, ["cmake"], this.activeGenerator) : new NullParser())
             )
         ).retc;
         await this._refreshTests();
