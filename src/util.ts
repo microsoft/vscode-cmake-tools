@@ -1,5 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
+
+import * as async from './async';
 
 export namespace util {
   export function product<T>(arrays: T[][]): T[][] {
@@ -113,5 +116,31 @@ export namespace util {
 
   export abstract class OutputParser {
     public abstract parseLine(line: string): Maybe<number>;
+  }
+
+  export async function ensureDirectory(dirpath: string): Promise<void> {
+    const abs = path.normalize(path.resolve(dirpath));
+    if (!(await async.exists(dirpath))) {
+      const parent = path.dirname(dirpath);
+      await ensureDirectory(parent);
+      await async.doVoidAsync(fs.mkdir, dirpath);
+    } else {
+      if (!(await async.isDirectory(dirpath))) {
+        throw new Error(`Failed to create directory: "${dirpath}" is an existing file and is not a directory`);
+      }
+    }
+  }
+
+  export async function writeFile(filepath: string, content: string): Promise<void> {
+    await ensureDirectory(path.dirname(filepath));
+    return new Promise<void>((resolve, reject) => {
+      fs.writeFile(filepath, content, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      })
+    })
   }
 }

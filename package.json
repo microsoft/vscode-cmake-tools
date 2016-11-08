@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.7.1",
+    "version": "0.7.3",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -20,7 +20,7 @@
     ],
     "publisher": "vector-of-bool",
     "engines": {
-        "vscode": "^1.4.0"
+        "vscode": "^1.7.0"
     },
     "categories": [
         "Other"
@@ -170,42 +170,12 @@
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },
-                "cmake.generator.all": {
+                "cmake.generator": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake generator to use"
                 },
-                "cmake.generator.windows": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake generator to use on Windows"
-                },
-                "cmake.generator.linux": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake generator to use on Linux"
-                },
-                "cmake.generator.osx": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake generator to use on OSX/macOS"
-                },
-                "cmake.toolset.all": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake toolset to use when configuring"
-                },
-                "cmake.toolset.windows": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake toolset to use when configuring"
-                },
-                "cmake.toolset.linux": {
-                    "type": "string",
-                    "default": null,
-                    "description": "The CMake toolset to use when configuring"
-                },
-                "cmake.toolset.osx": {
+                "cmake.toolset": {
                     "type": "string",
                     "default": null,
                     "description": "The CMake toolset to use when configuring"
@@ -332,13 +302,15 @@
     },
     "devDependencies": {
         "typescript": "^2.0.3",
-        "vscode": "^1.0.0",
+        "vscode": "^1.0.3",
         "@types/node": "^6.0.45",
         "@types/js-yaml": "^3.5.28",
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
         "mocha": "^3.1.2",
-        "@types/mocha": "^2.2.32"
+        "@types/mocha": "^2.2.32",
+        "rimraf": "^2.5.4",
+        "@types/rimraf": "^0.0.28"
     },
     "dependencies": {
         "open": "0.0.5",
