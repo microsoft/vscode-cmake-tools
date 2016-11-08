@@ -108,11 +108,10 @@ export namespace util {
     if (process.platform === 'win32') {
       norm = norm.toLocaleLowerCase().normalize();
     }
-    return norm
+    return norm;
   }
 
   export abstract class OutputParser {
     public abstract parseLine(line: string): void;
-    public finished(): void {}
   }
 }

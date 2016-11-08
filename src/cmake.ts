@@ -12,7 +12,6 @@ import * as async from './async';
 import {ctest} from './ctest';
 import {FileDiagnostic,
         DiagnosticParser,
-        LineParseStatus,
         diagnosticParsers,
         } from './diagnostics';
 import {util} from './util';
@@ -93,7 +92,7 @@ if(NOT is_set_up)
         set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
     endfunction()
 endif()
-`
+`;
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
@@ -226,7 +225,7 @@ export class CMakeCache {
                 const [_, name, typename, valuestr] = match!;
                 if (!name || !typename)
                     continue;
-                if (name.endsWith('-ADVANCED') && valuestr == '1') {
+                if (name.endsWith('-ADVANCED') && valuestr === '1') {
                     // We skip the ADVANCED property variables. They're a little odd.
                 } else {
                     const key = name;
@@ -433,8 +432,6 @@ class CMakeTargetListParser extends util.OutputParser {
         this._accumulatedLines.push(line);
     }
 
-    public finished(): void {}
-
     public getTargets(generator: string) {
         const important_lines = (generator.endsWith('Makefiles')
             ? this._accumulatedLines.filter(l => l.startsWith('... '))
@@ -479,9 +476,9 @@ class ErrorParser extends util.OutputParser {
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         if (this._activeParser) {
             console.log('PARSER: Try active parser: ' + this._activeParser.constructor.name);
-            const res = this._activeParser.parseLine(line);
-            if (res.status == LineParseStatus.Done) {
-                return res.diagnostic;
+            var {lineMatch, diagnostic} = this._activeParser.parseLine(line);
+            if (lineMatch) {
+                return diagnostic;
             }
             console.log('PARSER: Active parser faild: ' + this._activeParser.constructor.name + ': ' + line);
         }
@@ -489,11 +486,11 @@ class ErrorParser extends util.OutputParser {
         for (let parser of this._parserCollection.values()) {
             if (parser !== this._activeParser) {
                 console.log('PARSER: Try parser: ' + parser.constructor.name);
-                const res = parser.parseLine(line);
-                if (res.status == LineParseStatus.Done) {
+                var {lineMatch, diagnostic} = parser.parseLine(line);
+                if (lineMatch) {
                     console.log('PARSER: New active parser: ' + parser.constructor.name);
                     this._activeParser = parser;
-                    return res.diagnostic;
+                    return diagnostic;
                 }
             }
         }
@@ -777,7 +774,7 @@ export class CMakeTools {
         this.failingTestDecorations = [];
     }
     addFailingTestDecoration(dec: ctest.FailingTestDecoration) {
-        this._failingTestDecorations.push(dec)
+        this._failingTestDecorations.push(dec);
         this._refreshActiveEditorDecorations();
     }
     public get failingTestDecorations() : ctest.FailingTestDecoration[] {
@@ -814,7 +811,7 @@ export class CMakeTools {
 
     private async _refreshTestResults(test_xml: string): Promise<void> {
         this.testResults = await ctest.readTestResultsFile(test_xml);
-        const failing = this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed');
+        const failing = this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
         this.clearFailingTestDecorations();
         let new_decors = [] as ctest.FailingTestDecoration[];
         for (const t of failing) {
@@ -1035,7 +1032,7 @@ export class CMakeTools {
                 settings: Object.assign(acc.settings || {}, el.settings || {})
             }),
             {}
-        )
+        );
         return result;
     }
 
@@ -1070,7 +1067,7 @@ export class CMakeTools {
 
         vscode.window.onDidChangeActiveTextEditor(_ => {
             this._refreshActiveEditorDecorations();
-        })
+        });
 
         // Load up the CMake cache
         await this._setupCMakeCacheWatcher();
@@ -1166,11 +1163,11 @@ export class CMakeTools {
         const test_count = this.tests.length;
         if (this.testResults) {
             const good_count = this.testResults.Site.Testing.Test.reduce(
-                (acc, test) => acc + (test.Status != 'failed' ? 1 : 0)
+                (acc, test) => acc + (test.Status !== 'failed' ? 1 : 0)
                 , 0);
-            const passing = test_count == good_count;
+            const passing = test_count === good_count;
             this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${good_count === 1 ? 'test' : 'tests'} passing`;
-            this._testStatusButton.color = good_count == test_count ? 'lightgreen' : 'yellow';
+            this._testStatusButton.color = good_count === test_count ? 'lightgreen' : 'yellow';
         } else if (test_count) {
             this._testStatusButton.color = '';
             this._testStatusButton.text = 'Run CTest';
@@ -1183,7 +1180,7 @@ export class CMakeTools {
         this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
         this._targetButton.text = this.defaultBuildTarget || this.allTargetName;
         this._targetButton.command = 'cmake.setDefaultTarget';
-        this._targetButton.tooltip = 'Click to change the default target'
+        this._targetButton.tooltip = 'Click to change the default target';
         this._debugButton.text = '$(bug)';
         this._debugButton.command = 'cmake.debugTarget';
         this._debugButton.tooltip = 'Run the debugger on the selected target executable';
@@ -1211,7 +1208,6 @@ export class CMakeTools {
      */
     private async _refreshTargetList(): Promise<string[]> {
         this._targets = [];
-        const cachepath = this.cachePath;
         if (!this.cmakeCache.exists) {
             return this._targets;
         }
@@ -1219,7 +1215,7 @@ export class CMakeTools {
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
             const parser = new CMakeTargetListParser();
-            const result = await this.execute(['--build', this.binaryDir, '--target', 'help'], {
+            await this.execute(['--build', this.binaryDir, '--target', 'help'], {
                 silent: true,
                 environment: {}
             }, parser);
@@ -1550,7 +1546,7 @@ export class CMakeTools {
         }
 
         if (this.debugTargetsEnabled) {
-            const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake')
+            const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
             await async.doAsync(fs.writeFile, helpers, CMAKETOOLS_HELPER_SCRIPT);
             const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
             settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
@@ -1580,7 +1576,7 @@ export class CMakeTools {
                 typestr = 'STRING';
                 value = value.join(';');
             }
-            initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`)
+            initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`);
         }
         const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
         await async.doAsync(fs.writeFile, init_cache_path, initial_cache_content.join('\n'));
@@ -1795,7 +1791,7 @@ export class CMakeTools {
     }
 
     public async setBuildType(): Promise<Number> {
-        const ok = await this.setBuildTypeWithoutConfigure();
+        await this.setBuildTypeWithoutConfigure();
         return await this.configure();
     }
 
@@ -1824,7 +1820,7 @@ export class CMakeTools {
             type: (this.compilerId && this.compilerId.includes('MSVC'))
                 ? 'cppvsdbg'
                 : 'cppdbg',
-        }
+        };
         const configs = this.config.readConfig<any>("debugConfig");
         Object.assign(config, configs.all);
         config['program'] = target.path;
@@ -1871,13 +1867,13 @@ export class CMakeTools {
                     silent: false,
                     environment: this.config.testEnvironment,
                 },
-                (this.config.parseBuildDiagnostics ? new ErrorParser(this.binaryDir, ["cmae"]) : new NullParser())
+                (this.config.parseBuildDiagnostics ? new ErrorParser(this.binaryDir, ["cmake"]) : new NullParser())
             )
         ).retc;
         await this._refreshTests();
         this._ctestChannel.clear();
         if (this.testResults) {
-            for (const test of this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed')) {
+            for (const test of this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed')) {
                 this._ctestChannel.append(
                     `The test "${test.Name}" failed with the following output:\n` +
                     '----------' + '-----------------------------------' + Array(test.Name.length).join('-') +
@@ -2003,7 +1999,7 @@ export class CMakeTools {
             // Because reasons, Node's proc.kill doesn't work on killing child
             // processes transitively. We have to do a sad and manually kill the
             // task using taskkill.
-            proc.exec('taskkill /pid ' + pid.toString() + ' /T /F')
+            proc.exec('taskkill /pid ' + pid.toString() + ' /T /F');
         }
     }
 }

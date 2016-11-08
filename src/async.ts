@@ -58,7 +58,7 @@ export function execute(command: string, args: string[], options?: proc.SpawnOpt
         });
         child.stderr.on('data', (data: Uint8Array) => {
             stderr_acc += data.toString();
-        })
+        });
         child.on('exit', (retc) => {
             resolve({retc: retc, stdout: stdout_acc, stderr: stderr_acc});
         });
