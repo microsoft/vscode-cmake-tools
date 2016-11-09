@@ -1255,7 +1255,7 @@ export class CMakeTools {
         let progress_bar = '';
         if (this.buildProgress) {
             const bars = this.buildProgress * 0.4 | 0;
-            progress_bar = ` [${Array(bars).join('|')}${Array(40 - bars).join('-')}] ${this.buildProgress}%`;
+            progress_bar = ` [${Array(bars).join('█')}${Array(40 - bars).join('░')}] ${this.buildProgress}%`;
         }
 
         this._buildButton.text = this.isBusy ? `$(x) Stop${progress_bar}` : `$(gear) Build:`;
