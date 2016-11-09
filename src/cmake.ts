@@ -554,7 +554,7 @@ class BuildParser extends util.OutputParser {
     }
 }
 
-class TrottledOutputChannel implements vscode.OutputChannel {
+class ThrottledOutputChannel implements vscode.OutputChannel {
     private _channel: vscode.OutputChannel;
     private _accumulatedData: string;
     private _throttler: async.Throttler<void>;
@@ -1101,7 +1101,7 @@ export class CMakeTools {
     }
 
     private async _init(ctx: vscode.ExtensionContext): Promise<void> {
-        this._channel = new TrottledOutputChannel('CMake/Build');
+        this._channel = new ThrottledOutputChannel('CMake/Build');
         //this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
