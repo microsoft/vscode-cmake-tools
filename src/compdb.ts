@@ -23,20 +23,23 @@ export class CompilationDatabase {
   }
 
   private _replaceAll(str: string, needle: string, what: string) {
-    return str.replace(new RegExp(this._escapeStringForRegex(needle)), what);
+    const pattern = this._escapeStringForRegex(needle);
+    const re = new RegExp(pattern, 'g');
+    return str.replace(re, what);
   }
 
   private _removeAllPatterns(str: string, patterns: string[]): string {
-    return patterns.reduce((acc, [needle]) => {
+    return patterns.reduce((acc, needle) => {
       return this._replaceAll(acc, needle, '');
     }, str);
   }
 
   private _normalizeFilePath(fspath: string): string {
-    return this._removeAllPatterns(fspath, [
-      'source/', 'src/', 'include/', 'inc/', '.cpp', '.hpp', '.c', 'h', '.cc',
+    const no_detail = this._removeAllPatterns(fspath, [
+      'source/', 'src/', 'include/', 'inc/', '.cpp', '.hpp', '.c', '.h', '.cc',
       '.hh', '.cxx', '.hxx', '.c++', '.h++', 'build/', '.m'
     ]);
+    return this._replaceAll(no_detail, path.sep, path.posix.sep);
   }
 
   public getCompilationInfoForUri(uri: vscode.Uri): CompilationInfo | null {
