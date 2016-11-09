@@ -390,6 +390,10 @@ export class ConfigurationReader {
         return !!this._readPrefixed<boolean>('parseBuildDiagnostics');
     }
 
+    get buildDiagnosticsParsers(): Maybe<string[]> {
+        return this._readPrefixed<string[]>('buildDiagnosticsParsers');
+    }
+
     get cmakePath(): string {
         return this._readPrefixed<string>('cmakePath')!;
     }
@@ -1775,7 +1779,7 @@ export class CMakeTools {
                 silent: false,
                 environment: this.config.buildEnvironment,
             },
-            (this.config.parseBuildDiagnostics ? new BuildParser(this.binaryDir, null, this.activeGenerator) : new NullParser())
+            (this.config.parseBuildDiagnostics ? new BuildParser(this.binaryDir, this.config.buildDiagnosticsParsers, this.activeGenerator) : new NullParser())
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {

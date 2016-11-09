@@ -220,6 +220,14 @@
                     "default": true,
                     "description": "Parse compiler output for warnings and errors"
                 },
+                "cmake.buildDiagnosticsParsers": {
+                    "type": "array",
+                    "description": "Build diagnostic parsers to use. Supported parsers 'cmake', 'gcc', 'gnuld' GNU Linker, 'msvc' Microsoft Visual C++, 'ghs' Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": ["cmake", "gcc", "gnuld", "msvc", "ghs"]
+                },
                 "cmake.debugConfig": {
                     "type": "object",
                     "default": {
