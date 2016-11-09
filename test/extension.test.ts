@@ -266,6 +266,35 @@ suite("Utility tests", () => {
             assert.strictEqual(targets.length, 1, 'Executable targets are missing');
             assert.strictEqual(targets[0].name, 'MyExecutable');
         });
+        test('CMake Diagnostic Parsing', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.configure(['-DWARNING_COOKIE=this-is-a-warning-cookie']);
+            assert.strictEqual(retc, 0);
+            const diags: vscode.Diagnostic[] = [];
+            cmt.diagnostics.forEach((d, diags_) => diags.push(...diags_));
+            assert.strictEqual(diags.length, 1);
+            const diag = diags[0];
+            assert.strictEqual(diag.source, 'CMake (message)');
+            assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Warning);
+            assert(diag.message.includes('this-is-a-warning-cookie'));
+        });
+        test('Compile Error Parsing', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const config_retc = await cmt.configure(['-DCAUSE_BUILD_ERROR=TRUE']);
+            assert.strictEqual(config_retc, 0);
+            const build_retc = await cmt.build();
+            assert.notStrictEqual(build_retc, 0);
+            const diags: vscode.Diagnostic[] = [];
+            cmt.diagnostics.forEach((_d, diags_) => diags.push(...diags_));
+            assert.strictEqual(diags.length, 1);
+            const diag = diags[0];
+            // These lines are hardcoded purposefully. They are one less than
+            // the displayed line number in the main.cpp in the test_project
+            assert.strictEqual(diag.range.start.line, 6);
+            assert.strictEqual(diag.range.end.line, 6);
+            assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Error);
+            assert(diag.message.includes('special-error-cookie asdfqwerty'));
+        });
         teardown(function() {
             const cmt: cmake.CMakeTools = this.cmt;
             vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', false);
