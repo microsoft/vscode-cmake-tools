@@ -13,6 +13,10 @@ import * as rimraf from 'rimraf';
 
 const here = __dirname;
 
+function pause(time: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
+
 function testFilePath(filename: string): string {
     return path.normalize(path.join(here, '../..', 'test', filename));
 }
@@ -224,6 +228,11 @@ suite("Utility tests", () => {
             const exists = await new Promise<boolean>(resolve => {
                 fs.exists(cmt.binaryDir, resolve);
             });
+            // Pause before starting each test. There is trouble on NTFS because
+            // removing files doesn't actually remove them, which can cause
+            // spurious test failures when we are rapidly adding/removing files
+            // in the build directory
+            await pause(1000);
             await new Promise(resolve => exists ? rimraf(cmt.binaryDir, resolve) : resolve());
         });
         test('Can configure', async function() {
@@ -250,7 +259,7 @@ suite("Utility tests", () => {
             const cmt: cmake.CMakeTools = this.cmt;
             await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', true);
             // It seems to take vscode a bit of time to propagate the config change...
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await pause(1000);
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0, 'Configure failed');
             const targets = cmt.executableTargets;
