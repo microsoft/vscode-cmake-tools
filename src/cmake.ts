@@ -660,6 +660,9 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    public get diagnostics(): vscode.DiagnosticCollection {
+        return this._diagnostics;
+    }
 
     private _initFinished : Promise<void>;
     public get initFinished() : Promise<void> {
