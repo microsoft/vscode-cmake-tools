@@ -475,28 +475,13 @@ class BuildParser extends util.OutputParser {
                 this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
             }
         }
-        if (generator) {
-            if (/(Unix|MinGW) Makefiles/.test(generator)) {
-                this._progressParser = this.parseMakeProgress;
-            } else if (/Ninja/.test(generator)) {
-                this._progressParser = this.parseNinjaProgress;
-            }
-        }
     }
 
-    private parseNinjaProgress(line): Maybe<number> {
-        const ninja_re = /^\[(\d+)\/(\d+)\]/;
-        const res = ninja_re.exec(line);
-        if (res) {
-            const [num, total] = res.splice(1);
-            return Math.floor(parseInt(num) * 100 / parseInt(total));
-        }
-        return null;
-    }
-
-    private parseMakeProgress(line): Maybe<number> {
-        const make_re = /^\[ *(\d+)\%\]/;
-        const res = make_re.exec(line);
+    private parseBuildProgress(line): Maybe<number> {
+        // Parses out a percentage enclosed in square brackets Ignores other
+        // contents of the brackets
+        const percent_re = /\[.*?(\d+)\%.*?\]/;
+        const res = percent_re.exec(line);
         if (res) {
             const [total] = res.splice(1);
             return Math.floor(parseInt(total));
@@ -538,7 +523,7 @@ class BuildParser extends util.OutputParser {
     }
 
     public parseLine(line: string): Maybe<number> {
-        const progress = this._progressParser(line);
+        const progress = this.parseBuildProgress(line);
         if (null === progress) {
             const diag = this.parseDiagnosticLine(line);
             if (diag) {
@@ -812,6 +797,14 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    private _buildProgress: Maybe<number>;
+    public get buildProgress(): Maybe<number> {
+        return this._buildProgress;
+    }
+    public set buildProgress(v: Maybe<number>) {
+        this._buildProgress = v;
+        this._refreshStatusBarItems();
+    }
 
     private _failingTestDecorations : ctest.FailingTestDecoration[] = [];
     clearFailingTestDecorations() {
@@ -1259,7 +1252,13 @@ export class CMakeTools {
         }
         this._testStatusButton.command = 'cmake.ctest';
 
-        this._buildButton.text = this.isBusy ? '$(x) Stop' : `$(gear) Build:`;
+        let progress_bar = '';
+        if (this.buildProgress) {
+            const bars = this.buildProgress * 0.4 | 0;
+            progress_bar = ` [${Array(bars).join('|')}${Array(40 - bars).join('-')}] ${this.buildProgress}%`;
+        }
+
+        this._buildButton.text = this.isBusy ? `$(x) Stop${progress_bar}` : `$(gear) Build:`;
         this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
         this._targetButton.text = this.defaultBuildTarget || this.allTargetName;
         this._targetButton.command = 'cmake.setDefaultTarget';
@@ -1386,7 +1385,11 @@ export class CMakeTools {
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config.cmakePath, args, {
                 env: Object.assign(
-                    Object.assign({}, options.environment),
+                    Object.assign({
+                        // We set NINJA_STATUS to force Ninja to use the format
+                        // that we would like to parse
+                        NINJA_STATUS: '[%f/%t %p] '
+                    }, options.environment),
                     this.config.environment,
                     process.env
                 )
@@ -1430,23 +1433,25 @@ export class CMakeTools {
 
             pipe.stdout.on('line', (line: string) => {
                 console.log('cmake [stdout]: ' + line);
-                const progres = parser.parseLine(line);
+                const progress = parser.parseLine(line);
                 if (!silent) {
                     this._channel.appendLine(line);
-                    if (progres)
-                        status(progres + ' %');
+                    if (progress)
+                        this.buildProgress = progress;
                 }
             });
             pipe.stderr.on('line', (line: string) => {
                 console.log('cmake [stderr]: ' + line);
-                const progres = parser.parseLine(line);
+                const progress = parser.parseLine(line);
                 if (!silent) {
-                    if (progres)
-                        status(progres + ' %');
+                    if (progress)
+                        this.buildProgress = progress;
                     this._channel.appendLine(line);
                 }
             });
             pipe.on('close', (retc: Number) => {
+                // Reset build progress to null to disable the progress bar
+                this.buildProgress = null;
                 if (parser instanceof BuildParser) {
                     parser.fillDiagnosticCollection(this._diagnostics);
                 }
