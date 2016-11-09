@@ -269,7 +269,7 @@ export class MSVCDiagnosticParser extends DiagnosticParser {
     }
 
     public parseLine(line: string): LineParseResult {
-        const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
+        const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
         const res = msvc_re.exec(line);
         if (!res)
             return PARSER_FAIL;
