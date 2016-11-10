@@ -444,12 +444,18 @@ class CMakeTargetListParser extends util.OutputParser {
             ? this._accumulatedLines.filter(l => l.startsWith('... '))
             : this._accumulatedLines.filter(l => l.indexOf(': ') !== -1))
                 .filter(l => !l.includes('All primary targets'));
-        return important_lines
+        const targets = important_lines
             .map(l => generator.endsWith('Makefiles')
                 ? l.substr(4)
                 : l)
             .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
             .map(l => l.replace(':', ''));
+        // Sometimes the 'all' target isn't there. Not sure when or why, but we
+        // can just patch around it
+        if (targets.indexOf('all') < 0) {
+            targets.push('all');
+        }
+        return targets;
     }
 }
 
@@ -495,26 +501,21 @@ class BuildParser extends util.OutputParser {
 
     private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
         if (this._activeParser) {
-            console.log('PARSER: Try active parser: ' + this._activeParser.constructor.name);
             var {lineMatch, diagnostic} = this._activeParser.parseLine(line);
             if (lineMatch) {
                 return diagnostic;
             }
-            console.log('PARSER: Active parser faild: ' + this._activeParser.constructor.name + ': ' + line);
         }
 
         for (let parser of this._parserCollection.values()) {
             if (parser !== this._activeParser) {
-                console.log('PARSER: Try parser: ' + parser.constructor.name);
                 var {lineMatch, diagnostic} = parser.parseLine(line);
                 if (lineMatch) {
-                    console.log('PARSER: New active parser: ' + parser.constructor.name);
                     this._activeParser = parser;
                     return diagnostic;
                 }
             }
         }
-        console.log('PARSER: no match: ' + line);
         /* Most likely new generator progress message or new compiler command. */
         return null;
     }
