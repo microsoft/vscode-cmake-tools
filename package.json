@@ -220,6 +220,27 @@
                     "default": true,
                     "description": "Parse compiler output for warnings and errors"
                 },
+                "cmake.enabledOutputParsers": {
+                    "type": "array",
+                    "description": "Output parsers to use. Supported parsers 'cmake', 'gcc', 'gnuld' for GNULD-style inker output, 'msvc' for Microsoft Visual C++, and 'ghs' for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "cmake",
+                            "gcc",
+                            "gnuld",
+                            "msvc",
+                            "ghs"
+                        ]
+                    },
+                    "default": [
+                        "cmake",
+                        "gcc",
+                        "gnuld",
+                        "msvc",
+                        "ghs"
+                    ]
+                },
                 "cmake.debugConfig": {
                     "type": "object",
                     "default": {

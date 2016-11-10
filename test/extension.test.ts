@@ -13,6 +13,10 @@ import * as rimraf from 'rimraf';
 
 const here = __dirname;
 
+function pause(time: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
+
 function testFilePath(filename: string): string {
     return path.normalize(path.join(here, '../..', 'test', filename));
 }
@@ -224,6 +228,11 @@ suite("Utility tests", () => {
             const exists = await new Promise<boolean>(resolve => {
                 fs.exists(cmt.binaryDir, resolve);
             });
+            // Pause before starting each test. There is trouble on NTFS because
+            // removing files doesn't actually remove them, which can cause
+            // spurious test failures when we are rapidly adding/removing files
+            // in the build directory
+            await pause(1000);
             await new Promise(resolve => exists ? rimraf(cmt.binaryDir, resolve) : resolve());
         });
         test('Can configure', async function() {
@@ -250,12 +259,41 @@ suite("Utility tests", () => {
             const cmt: cmake.CMakeTools = this.cmt;
             await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', true);
             // It seems to take vscode a bit of time to propagate the config change...
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await pause(1000);
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0, 'Configure failed');
             const targets = cmt.executableTargets;
             assert.strictEqual(targets.length, 1, 'Executable targets are missing');
             assert.strictEqual(targets[0].name, 'MyExecutable');
+        });
+        test('CMake Diagnostic Parsing', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.configure(['-DWARNING_COOKIE=this-is-a-warning-cookie']);
+            assert.strictEqual(retc, 0);
+            const diags: vscode.Diagnostic[] = [];
+            cmt.diagnostics.forEach((d, diags_) => diags.push(...diags_));
+            assert.strictEqual(diags.length, 1);
+            const diag = diags[0];
+            assert.strictEqual(diag.source, 'CMake (message)');
+            assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Warning);
+            assert(diag.message.includes('this-is-a-warning-cookie'));
+        });
+        test('Compile Error Parsing', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const config_retc = await cmt.configure(['-DCAUSE_BUILD_ERROR=TRUE']);
+            assert.strictEqual(config_retc, 0);
+            const build_retc = await cmt.build();
+            assert.notStrictEqual(build_retc, 0);
+            const diags: vscode.Diagnostic[] = [];
+            cmt.diagnostics.forEach((_d, diags_) => diags.push(...diags_));
+            assert.strictEqual(diags.length, 1);
+            const diag = diags[0];
+            // These lines are hardcoded purposefully. They are one less than
+            // the displayed line number in the main.cpp in the test_project
+            assert.strictEqual(diag.range.start.line, 6);
+            assert.strictEqual(diag.range.end.line, 6);
+            assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Error);
+            assert(diag.message.includes('special-error-cookie asdfqwerty'));
         });
         teardown(function() {
             const cmt: cmake.CMakeTools = this.cmt;

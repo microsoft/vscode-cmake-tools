@@ -1,10 +1,6 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as proc from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-
 import * as cmake_mod from './cmake';
 
 export async function activate(context: vscode.ExtensionContext) {
