@@ -398,10 +398,9 @@ export class ConfigurationReader {
         return this._readPrefixed<string>('cmakePath')!;
     }
 
-    // TODO: Implement a DebugConfig interface type
-    // get debugConfig(): DebugConfig {
-    //     return this._read<DebugConfig>('debugConfig');
-    // }
+    get debugConfig(): any {
+        return this._readPrefixed<any>('debugConfig');
+    }
 
     get environment(): Object {
         return this._readPrefixed<Object>('environment') || {};
@@ -1878,16 +1877,18 @@ export class CMakeTools {
             return;
         const config = {
             name: `Debugging Target ${target.name}`,
-            targetArchitecture: /64/.test(this.systemProcessor || 'x64')
-                ? 'x64'
-                : 'x86',
             type: (this.compilerId && this.compilerId.includes('MSVC'))
                 ? 'cppvsdbg'
                 : 'cppdbg',
+            request: 'launch',
+            cwd: '${workspaceRoot}',
+            args: [],
+            MIMode: process.platform === 'darwin' ? 'lldb' : 'gdb',
         };
-        const configs = this.config.readConfig<any>("debugConfig");
-        Object.assign(config, configs.all);
+        const user_config = this.config.debugConfig;
+        Object.assign(config, user_config);
         config['program'] = target.path;
+        console.log(JSON.stringify(config));
         vscode.commands.executeCommand('vscode.startDebug', config);
     }
 
