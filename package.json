@@ -260,11 +260,6 @@
                     },
                     "description": "The base debug configuration to use when debugging a target"
                 },
-                "cmake.experimental.enableTargetDebugging": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Enable experimental target debugging features"
-                },
                 "cmake.environment": {
                     "type": "object",
                     "default": {},

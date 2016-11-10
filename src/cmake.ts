@@ -403,10 +403,6 @@ export class ConfigurationReader {
     //     return this._read<DebugConfig>('debugConfig');
     // }
 
-    get experimental_enableTargetDebugging(): boolean {
-        return !!this.readConfig<boolean>('experimental.enableTargetDebugging');
-    }
-
     get environment(): Object {
         return this._readPrefixed<Object>('environment') || {};
     }
@@ -699,10 +695,6 @@ export class CMakeTools {
         return cached ? cached : null;
     }
 
-    public get debugTargetsEnabled(): boolean {
-        return this.config.experimental_enableTargetDebugging;
-    }
-
     /**
      * @brief The default target to build when no target is specified
      */
@@ -916,7 +908,7 @@ export class CMakeTools {
         if (!this.config.parseBuildDiagnostics) {
             this._diagnostics.clear();
         }
-        if (this.debugTargetsEnabled && !this._metaWatcher) {
+        if (!this._metaWatcher) {
             this._setupMetaWatcher();
         }
         this._refreshStatusBarItems();
@@ -1122,9 +1114,7 @@ export class CMakeTools {
         // Load up the CMake cache
         await this._setupCMakeCacheWatcher();
         this._currentChildProcess = null;
-        if (this.debugTargetsEnabled) {
-            this._setupMetaWatcher();
-        }
+        this._setupMetaWatcher();
         this._reloadConfiguration();
 
         await this._refreshTests();
@@ -1140,29 +1130,6 @@ export class CMakeTools {
 
         if (this.config.initialBuildType !== null) {
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
-        }
-
-        const dontBotherDebugTargets = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
-        const random = Math.random();
-        if (!this.debugTargetsEnabled && !dontBotherDebugTargets && random < 0.2) {
-            vscode.window.showInformationMessage(
-                'Did you know CMake Tools now provides experimental debugger integration?',
-                {
-                    title: 'Tell me more',
-                    action: () => {
-                        open('https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md');
-                    }
-                },
-                {
-                    title: 'Don\'t bother me again',
-                    action: () => {
-                        ctx.globalState.update('debugTargets.neverBother', true);
-                    }
-                }).then(chosen => {
-                    if (chosen.action) {
-                        chosen.action();
-                    }
-                });
         }
 
         const last_nag_time = ctx.globalState.get('feedbackWanted.lastNagTime', 0);
@@ -1215,24 +1182,24 @@ export class CMakeTools {
         }
 
         async.exists(path.join(this.sourceDir, 'CMakeLists.txt')).then(exists => {
+            const have_exe_targets = this.executableTargets.length !== 0;
             if (exists) {
                 this._cmakeToolsStatusItem.show();
                 this._buildButton.show();
                 this._targetButton.show();
                 this._testStatusButton.show();
-                if (this.debugTargetsEnabled) {
+                if (have_exe_targets) {
                     this._debugButton.show();
                     this._debugTargetButton.show();
+                } else {
+                    this._debugButton.hide();
+                    this._debugTargetButton.hide();
                 }
             } else {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
                 this._targetButton.hide();
                 this._testStatusButton.hide();
-                this._debugButton.hide();
-                this._debugTargetButton.hide();
-            }
-            if (!this.debugTargetsEnabled) {
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
             }
@@ -1268,7 +1235,7 @@ export class CMakeTools {
         this._targetButton.text = this.defaultBuildTarget || this.allTargetName;
         this._targetButton.command = 'cmake.setDefaultTarget';
         this._targetButton.tooltip = 'Click to change the default target';
-        this._debugButton.text = '$(bug)';
+        this._debugButton.text = '$(bug) Debug';
         this._debugButton.command = 'cmake.debugTarget';
         this._debugButton.tooltip = 'Run the debugger on the selected target executable';
         this._debugTargetButton.text = this.currentDebugTarget || '[No target selected for debugging]';
@@ -1641,15 +1608,13 @@ export class CMakeTools {
             await fs.mkdir(cmt_dir);
         }
 
-        if (this.debugTargetsEnabled) {
-            const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
-            await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
-            const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
-            settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
-                cmt_dir.replace(/\\/g, path.posix.sep)
-            ]);
-        }
-        let initial_cache_content = [
+        const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
+        await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
+        const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
+        settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
+            cmt_dir.replace(/\\/g, path.posix.sep)
+        ]);
+        const initial_cache_content = [
             '# This file is generated by CMake Tools! DO NOT EDIT!',
             'cmake_policy(PUSH)',
             'if(POLICY CMP0053)',
@@ -1899,12 +1864,8 @@ export class CMakeTools {
     }
 
     public async debugTarget() {
-        if (!this.debugTargetsEnabled) {
-            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
-            return;
-        }
-        if (!this.executableTargets) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
+        if (!this.executableTargets.length) {
+            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included CMakeToolsHelpers in your CMake project.');
             return;
         }
         const target = this.executableTargets.find(e => e.name === this.currentDebugTarget);
@@ -1931,10 +1892,6 @@ export class CMakeTools {
     }
 
     public async selectDebugTarget() {
-        if (!this.debugTargetsEnabled) {
-            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
-            return;
-        }
         if (!this.executableTargets) {
             vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
             return;
