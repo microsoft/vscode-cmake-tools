@@ -14,32 +14,17 @@ those options has been renamed to the form `cmake.<platform>.generator` to fit
 a new naming convention for config options. Read about the 0.7.3 update for more
 information.
 
-### Version 0.7.0
+### **0.7.4**:
+  - **Target debugging is now enabled by default, and has been assigned a
+    `ctrl+f5` keybinding**
+  - Fix issue with being able to switch back to the `all` target
+  - Fix issue with CTest output being garbled without line breaks
+  - Fix hang when build tools generate large amounts of output.*
+  - **New** make-shift progress bar for build progress (supports Make and Ninja).*
+  - Options to control what output parsers are enabled*
 
-- **NEW** Greater CTest integration! Test output now has a dedicated output
-  channel and statusbar entry. Pressing the statusbar entry will execute tests
-  and show the number of failing/passing tests. Additionally, [Catch](https://github.com/philsquared/Catch) test
-  output is now parsed and generates inline decorations to mark failing
-  assertions along with failure information.*
-- Updated to new vscode/Node APIs for TypeScript 2.0.
-- Various bug fixes and tweaks.
+  \* Special thanks goes to [bbosnjak](https://github.com/bbosnjak) for these ones!
 
-\* If you would like to see integration with the output from your favourite
-testing framework, please make a [pull request](https://github.com/vector-of-bool/vscode-cmake-tools). Thanks!
-
-### Version 0.6.0
-
-**NEW** Build variants. This makes working with complex projects simpler while
-simple projects remain simple. [Read about it here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/build_variants.md).
-**Please Remember:** If you find an issue or have a question/request,
-feel free to open an issue on [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools). Thanks!
-
-### Version 0.5.0
-
-**NEW** Target Debugging feature. This feature is still experimental, and
-is disabled by default. [Click here to learn about how to enable and use
-this new feature](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md),
-and [click here to provide feedback.](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
 
 ## Issues? Questions? Feature requests?
 
@@ -103,7 +88,7 @@ seen.
 
 ## Target Debugging
 
-An experimental, *Target Debugging*, allows developers to easily use the Visual
+*Target Debugging*, allows developers to easily use the Visual
 Studio Code Debugger with their CMake targets without having to write a
 ``launch.json``. [Read about enabling and using the feature here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md).
 

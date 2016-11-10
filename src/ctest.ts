@@ -11,31 +11,31 @@ interface SiteAttributes {
 type TestStatus = ('failed');
 
 export interface FailingTestDecoration {
-    fileName: string
-    lineNumber: number
-    hoverMessage: string
+    fileName: string;
+    lineNumber: number;
+    hoverMessage: string;
 }
 
 export interface TestMeasurement {
-    type: string
-    name: string
-    value: any
+    type: string;
+    name: string;
+    value: any;
 }
 
 export interface Test {
-    Status: TestStatus
-    FullCommandLine: string
-    FullName: string
-    Name: string
-    Path: string
-    Measurements: Map<string, TestMeasurement>
-    Output: string
+    Status: TestStatus;
+    FullCommandLine: string;
+    FullName: string;
+    Name: string;
+    Path: string;
+    Measurements: Map<string, TestMeasurement>;
+    Output: string;
 }
 
 export interface TestingData {
     // Fill out when we need all the attributes
     TestList: string[];
-    Test: Test[]
+    Test: Test[];
 }
 
 export interface SiteData {
@@ -79,7 +79,7 @@ interface MessyResults {
                 }[]
             }[]
         }[]
-    }
+    };
 }
 
 function cleanupResultsXML(messy: MessyResults): Results {
@@ -101,7 +101,7 @@ function cleanupResultsXML(messy: MessyResults): Results {
                 )
             }
         }
-    }
+    };
 }
 
 function parseXMLString(xml: string): Promise<any> {
@@ -113,8 +113,8 @@ function parseXMLString(xml: string): Promise<any> {
             } else {
                 resolve(result);
             }
-        })
-    })
+        });
+    });
 }
 
 export async function readTestResultsFile(test_xml: string): Promise<Results> {

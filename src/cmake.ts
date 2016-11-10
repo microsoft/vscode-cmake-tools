@@ -10,7 +10,10 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 import {ctest} from './ctest';
-import * as diagnostics from './diagnostics';
+import {FileDiagnostic,
+        DiagnosticParser,
+        diagnosticParsers,
+        } from './diagnostics';
 import {util} from './util';
 
 type Maybe<T> = util.Maybe<T>;
@@ -74,7 +77,7 @@ if(NOT is_set_up)
     endmacro()
 
     if(NOT DEFINED CMAKE_BUILD_TYPE AND DEFINED CMAKE_CONFIGURATION_TYPES)
-        set(condition "$<CONFIG:Debug>")
+        set(condition CONDITION "$<CONFIG:Debug>")
     endif()
 
     file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
@@ -93,7 +96,7 @@ if(NOT is_set_up)
         set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
     endfunction()
 endif()
-`
+`;
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
@@ -136,13 +139,6 @@ export enum EntryType {
 
 interface ExecutionResult {
     retc: Number;
-    stdout: string;
-    stderr: string;
-}
-
-interface FileDiagnostic {
-    filepath: string;
-    diag: vscode.Diagnostic;
 }
 
 interface Test {
@@ -233,7 +229,7 @@ export class CMakeCache {
                 const [_, name, typename, valuestr] = match!;
                 if (!name || !typename)
                     continue;
-                if (name.endsWith('-ADVANCED') && valuestr == '1') {
+                if (name.endsWith('-ADVANCED') && valuestr === '1') {
                     // We skip the ADVANCED property variables. They're a little odd.
                 } else {
                     const key = name;
@@ -394,17 +390,16 @@ export class ConfigurationReader {
         return !!this._readPrefixed<boolean>('parseBuildDiagnostics');
     }
 
+    get enableOutputParsers(): Maybe<string[]> {
+        return this._readPrefixed<string[]>('enableOutputParsers');
+    }
+
     get cmakePath(): string {
         return this._readPrefixed<string>('cmakePath')!;
     }
 
-    // TODO: Implement a DebugConfig interface type
-    // get debugConfig(): DebugConfig {
-    //     return this._read<DebugConfig>('debugConfig');
-    // }
-
-    get experimental_enableTargetDebugging(): boolean {
-        return !!this.readConfig<boolean>('experimental.enableTargetDebugging');
+    get debugConfig(): any {
+        return this._readPrefixed<any>('debugConfig');
     }
 
     get environment(): Object {
@@ -421,6 +416,176 @@ export class ConfigurationReader {
 
     get testEnvironment(): Object {
         return this._readPrefixed<Object>('testEnvironment') || {};
+    }
+}
+
+/**
+ * An OutputParser that doesn't do anything when it parses
+ */
+class NullParser extends util.OutputParser {
+    public parseLine(line: string): Maybe<number> { return null; }
+}
+
+class CMakeTargetListParser extends util.OutputParser {
+    private _accumulatedLines: string[] = [];
+
+    public parseLine(line: string): Maybe<number> {
+        this._accumulatedLines.push(line);
+        return null;
+    }
+
+    public getTargets(generator: string) {
+        const important_lines = (generator.endsWith('Makefiles')
+            ? this._accumulatedLines.filter(l => l.startsWith('... '))
+            : this._accumulatedLines.filter(l => l.indexOf(': ') !== -1))
+                .filter(l => !l.includes('All primary targets'));
+        const targets = important_lines
+            .map(l => generator.endsWith('Makefiles')
+                ? l.substr(4)
+                : l)
+            .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
+            .map(l => l.replace(':', ''));
+        // Sometimes the 'all' target isn't there. Not sure when or why, but we
+        // can just patch around it
+        if (targets.indexOf('all') < 0) {
+            targets.push('all');
+        }
+        return targets;
+    }
+}
+
+class BuildParser extends util.OutputParser {
+    private _accumulatedDiags: Map<string, Map<string, vscode.Diagnostic>>;
+    private _lastFile: Maybe<string>;
+
+    private _progressParser(line): Maybe<number> { return null; };
+    private _activeParser: Maybe<DiagnosticParser>;
+    private _parserCollection: Set<DiagnosticParser>;
+
+    constructor(binaryDir: string, parsers: Maybe<string[]>, generator: Maybe<string>) {
+        super();
+        this._accumulatedDiags = new Map();
+        this._lastFile = null;
+        this._activeParser = null;
+        this._parserCollection = new Set();
+        if (parsers) {
+            for (let parser of parsers) {
+                if (parser in diagnosticParsers) {
+                    this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
+                }
+            }
+        } else {
+            /* No parser specified. Use all implemented. */
+            for (let parser in diagnosticParsers) {
+                this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
+            }
+        }
+    }
+
+    private parseBuildProgress(line): Maybe<number> {
+        // Parses out a percentage enclosed in square brackets Ignores other
+        // contents of the brackets
+        const percent_re = /\[.*?(\d+)\%.*?\]/;
+        const res = percent_re.exec(line);
+        if (res) {
+            const [total] = res.splice(1);
+            return Math.floor(parseInt(total));
+        }
+        return null;
+    }
+
+    private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
+        if (this._activeParser) {
+            var {lineMatch, diagnostic} = this._activeParser.parseLine(line);
+            if (lineMatch) {
+                return diagnostic;
+            }
+        }
+
+        for (let parser of this._parserCollection.values()) {
+            if (parser !== this._activeParser) {
+                var {lineMatch, diagnostic} = parser.parseLine(line);
+                if (lineMatch) {
+                    this._activeParser = parser;
+                    return diagnostic;
+                }
+            }
+        }
+        /* Most likely new generator progress message or new compiler command. */
+        return null;
+    }
+
+    public fillDiagnosticCollection(diagset: vscode.DiagnosticCollection) {
+        diagset.clear();
+        for (const [filepath, diags] of this._accumulatedDiags) {
+            diagset.set(vscode.Uri.file(filepath), [...diags.values()]);
+        }
+    }
+
+    public parseLine(line: string): Maybe<number> {
+        const progress = this.parseBuildProgress(line);
+        if (null === progress) {
+            const diag = this.parseDiagnosticLine(line);
+            if (diag) {
+                if (!this._accumulatedDiags.has(diag.filepath)) {
+                    // First diagnostic of this file. Add a new map to hold our diags
+                    this._accumulatedDiags.set(diag.filepath, new Map());
+                }
+                const diags = this._accumulatedDiags.get(diag.filepath) !;
+                diags.set(diag.key, diag.diag);
+            }
+        }
+        return progress;
+    }
+}
+
+class ThrottledOutputChannel implements vscode.OutputChannel {
+    private _channel: vscode.OutputChannel;
+    private _accumulatedData: string;
+    private _throttler: async.Throttler<void>;
+
+    constructor(name: string) {
+        this._channel = vscode.window.createOutputChannel(name);
+        this._accumulatedData = '';
+        this._throttler = new async.Throttler();
+    }
+
+    get name(): string {
+        return this._channel.name;
+    }
+
+    dispose(): void {
+        this._accumulatedData = '';
+        this._channel.dispose();
+    }
+
+    append(value: string): void {
+        this._accumulatedData += value;
+        this._throttler.queue(() => {
+            if (this._accumulatedData) {
+                const data = this._accumulatedData;
+                this._accumulatedData = '';
+                this._channel.append(data);
+            }
+            return Promise.resolve();
+        });
+    }
+
+    appendLine(value: string): void {
+        this.append(value + '\n');
+    }
+
+    clear(): void {
+        this._accumulatedData = '';
+        this._channel.clear();
+    }
+
+    show(columnOrPreserveFocus?, preserveFocus?): void {
+        this._channel.show(columnOrPreserveFocus, preserveFocus);
+    }
+
+    hide(): void {
+        this._channel.hide();
     }
 }
 
@@ -453,7 +618,6 @@ export class CMakeTools {
     });
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
-    private _buildDiags: vscode.DiagnosticCollection;
     private _workspaceCacheContent: util.WorkspaceCache;
     private _workspaceCachePath = path.join(vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
@@ -481,6 +645,9 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    public get diagnostics(): vscode.DiagnosticCollection {
+        return this._diagnostics;
+    }
 
     private _initFinished : Promise<void>;
     public get initFinished() : Promise<void> {
@@ -525,10 +692,6 @@ export class CMakeTools {
     public get selectedBuildType(): Maybe<string> {
         const cached = this.activeVariant.buildType;
         return cached ? cached : null;
-    }
-
-    public get debugTargetsEnabled(): boolean {
-        return this.config.experimental_enableTargetDebugging;
     }
 
     /**
@@ -630,13 +793,21 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    private _buildProgress: Maybe<number>;
+    public get buildProgress(): Maybe<number> {
+        return this._buildProgress;
+    }
+    public set buildProgress(v: Maybe<number>) {
+        this._buildProgress = v;
+        this._refreshStatusBarItems();
+    }
 
     private _failingTestDecorations : ctest.FailingTestDecoration[] = [];
     clearFailingTestDecorations() {
         this.failingTestDecorations = [];
     }
     addFailingTestDecoration(dec: ctest.FailingTestDecoration) {
-        this._failingTestDecorations.push(dec)
+        this._failingTestDecorations.push(dec);
         this._refreshActiveEditorDecorations();
     }
     public get failingTestDecorations() : ctest.FailingTestDecoration[] {
@@ -681,7 +852,7 @@ export class CMakeTools {
 
     private async _refreshTestResults(test_xml: string): Promise<void> {
         this.testResults = await ctest.readTestResultsFile(test_xml);
-        const failing = this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed');
+        const failing = this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
         this.clearFailingTestDecorations();
         let new_decors = [] as ctest.FailingTestDecoration[];
         for (const t of failing) {
@@ -734,9 +905,9 @@ export class CMakeTools {
         this._setupCMakeCacheWatcher();
         // Use may have disabled build diagnostics.
         if (!this.config.parseBuildDiagnostics) {
-            this._buildDiags.clear();
+            this._diagnostics.clear();
         }
-        if (this.debugTargetsEnabled && !this._metaWatcher) {
+        if (!this._metaWatcher) {
             this._setupMetaWatcher();
         }
         this._refreshStatusBarItems();
@@ -902,7 +1073,7 @@ export class CMakeTools {
                 settings: Object.assign(acc.settings || {}, el.settings || {})
             }),
             {}
-        )
+        );
         return result;
     }
 
@@ -919,10 +1090,10 @@ export class CMakeTools {
     }
 
     private async _init(ctx: vscode.ExtensionContext): Promise<void> {
-        this._channel = vscode.window.createOutputChannel('CMake/Build');
+        this._channel = new ThrottledOutputChannel('CMake/Build');
+        //this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
-        this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-diags');
-        this._buildDiags = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+        this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
         const watcher = this._variantWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, 'cmake-variants.*'));
         watcher.onDidChange(this._reloadVariants.bind(this));
@@ -937,14 +1108,12 @@ export class CMakeTools {
 
         vscode.window.onDidChangeActiveTextEditor(_ => {
             this._refreshActiveEditorDecorations();
-        })
+        });
 
         // Load up the CMake cache
         await this._setupCMakeCacheWatcher();
         this._currentChildProcess = null;
-        if (this.debugTargetsEnabled) {
-            this._setupMetaWatcher();
-        }
+        this._setupMetaWatcher();
         this._reloadConfiguration();
 
         await this._refreshTests();
@@ -960,29 +1129,6 @@ export class CMakeTools {
 
         if (this.config.initialBuildType !== null) {
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
-        }
-
-        const dontBotherDebugTargets = ctx.globalState.get<Maybe<boolean>>('debugTargets.neverBother');
-        const random = Math.random();
-        if (!this.debugTargetsEnabled && !dontBotherDebugTargets && random < 0.2) {
-            vscode.window.showInformationMessage(
-                'Did you know CMake Tools now provides experimental debugger integration?',
-                {
-                    title: 'Tell me more',
-                    action: () => {
-                        open('https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/target_debugging.md');
-                    }
-                },
-                {
-                    title: 'Don\'t bother me again',
-                    action: () => {
-                        ctx.globalState.update('debugTargets.neverBother', true);
-                    }
-                }).then(chosen => {
-                    if (chosen.action) {
-                        chosen.action();
-                    }
-                });
         }
 
         const last_nag_time = ctx.globalState.get('feedbackWanted.lastNagTime', 0);
@@ -1028,32 +1174,31 @@ export class CMakeTools {
         this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${varset.label}: ${this.statusMessage}`;
 
         if (this.cmakeCache &&
-                this.cmakeCache.exists &&
-                this.isMultiConf &&
-                this.config.buildDirectory.includes('${buildType}')
-            ) {
+            this.cmakeCache.exists &&
+            this.isMultiConf &&
+            this.config.buildDirectory.includes('${buildType}')) {
             vscode.window.showWarningMessage('It is not advised to use ${buildType} in the cmake.buildDirectory settings when the generator supports multiple build configurations.');
         }
 
         async.exists(path.join(this.sourceDir, 'CMakeLists.txt')).then(exists => {
+            const have_exe_targets = this.executableTargets.length !== 0;
             if (exists) {
                 this._cmakeToolsStatusItem.show();
                 this._buildButton.show();
                 this._targetButton.show();
                 this._testStatusButton.show();
-                if (this.debugTargetsEnabled) {
+                if (have_exe_targets) {
                     this._debugButton.show();
                     this._debugTargetButton.show();
+                } else {
+                    this._debugButton.hide();
+                    this._debugTargetButton.hide();
                 }
             } else {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
                 this._targetButton.hide();
                 this._testStatusButton.hide();
-                this._debugButton.hide();
-                this._debugTargetButton.hide();
-            }
-            if (!this.debugTargetsEnabled) {
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
             }
@@ -1065,11 +1210,11 @@ export class CMakeTools {
         const test_count = this.tests.length;
         if (this.testResults) {
             const good_count = this.testResults.Site.Testing.Test.reduce(
-                (acc, test) => acc + (test.Status != 'failed' ? 1 : 0)
+                (acc, test) => acc + (test.Status !== 'failed' ? 1 : 0)
                 , 0);
-            const passing = test_count == good_count;
+            const passing = test_count === good_count;
             this._testStatusButton.text = `$(${passing ? 'check' : 'x'}) ${good_count}/${test_count} ${good_count === 1 ? 'test' : 'tests'} passing`;
-            this._testStatusButton.color = good_count == test_count ? 'lightgreen' : 'yellow';
+            this._testStatusButton.color = good_count === test_count ? 'lightgreen' : 'yellow';
         } else if (test_count) {
             this._testStatusButton.color = '';
             this._testStatusButton.text = 'Run CTest';
@@ -1078,12 +1223,18 @@ export class CMakeTools {
         }
         this._testStatusButton.command = 'cmake.ctest';
 
-        this._buildButton.text = this.isBusy ? '$(x) Stop' : `$(gear) Build:`;
+        let progress_bar = '';
+        if (this.buildProgress) {
+            const bars = this.buildProgress * 0.4 | 0;
+            progress_bar = ` [${Array(bars).join('█')}${Array(40 - bars).join('░')}] ${this.buildProgress}%`;
+        }
+
+        this._buildButton.text = this.isBusy ? `$(x) Stop${progress_bar}` : `$(gear) Build:`;
         this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
         this._targetButton.text = this.defaultBuildTarget || this.allTargetName;
         this._targetButton.command = 'cmake.setDefaultTarget';
-        this._targetButton.tooltip = 'Click to change the default target'
-        this._debugButton.text = '$(bug)';
+        this._targetButton.tooltip = 'Click to change the default target';
+        this._debugButton.text = '$(bug) Debug';
         this._debugButton.command = 'cmake.debugTarget';
         this._debugButton.tooltip = 'Run the debugger on the selected target executable';
         this._debugTargetButton.text = this.currentDebugTarget || '[No target selected for debugging]';
@@ -1110,247 +1261,21 @@ export class CMakeTools {
      */
     private async _refreshTargetList(): Promise<string[]> {
         this._targets = [];
-        const cachepath = this.cachePath;
         if (!this.cmakeCache.exists) {
             return this._targets;
         }
         this.statusMessage = 'Refreshing targets...';
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
-            const result = await this.execute(['--build', this.binaryDir, '--target', 'help'], {
+            const parser = new CMakeTargetListParser();
+            await this.execute(['--build', this.binaryDir, '--target', 'help'], {
                 silent: true,
                 environment: {}
-            });
-            const lines = result.stdout.split(/\r?\n/);
-            const important_lines = (generator.endsWith('Makefiles')
-                ? lines.filter(l => l.startsWith('... '))
-                : lines.filter(l => l.indexOf(': ') !== -1))
-                    .filter(l => !l.includes('All primary targets'));
-            this._targets = important_lines
-                .map(l => generator.endsWith('Makefiles')
-                        ? l.substr(4)
-                        : l)
-                .map(l => / /.test(l) ? l.substr(0, l.indexOf(' ')) : l)
-                .map(l => l.replace(':', ''));
+            }, parser);
+            this._targets = parser.getTargets(generator);
         }
         this.statusMessage = 'Ready';
         return this._targets;
-    }
-
-    /**
-     * @brief Parses a diagnostic message from GCC
-     *
-     * @returns A FileDiagnostic obtained from the message, or null if no
-     *      message could be decoded.
-     */
-    public parseGCCDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const diag = diagnostics.parseGCCDiagnostic(line);
-        if (!diag) {
-            return null;
-        }
-        const abspath = path.isAbsolute(diag.file)
-            ? diag.file
-            : path.normalize(path.join(this.binaryDir, diag.file));
-        const vsdiag = new vscode.Diagnostic(
-            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
-            diag.message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                note: vscode.DiagnosticSeverity.Information,
-            }[diag.severity]
-        );
-        vsdiag.source = 'GCC';
-        return {
-            filepath: abspath,
-            diag: vsdiag,
-        };
-    }
-
-    /**
-     * @brief Parse GNU-style linker errors
-     */
-    public parseGNULDDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const diag = diagnostics.parseGNULDDiagnostic(line);
-        if (!diag) {
-            return null;
-        }
-        const abspath = path.isAbsolute(diag.file) ? diag.file : path.normalize(path.join(this.binaryDir, diag.file));
-        const vsdiag = new vscode.Diagnostic(
-            new vscode.Range(diag.line, 0, diag.line, Number.POSITIVE_INFINITY),
-            diag.message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                note: vscode.DiagnosticSeverity.Information,
-            }[diag.severity]
-        );
-        vsdiag.source = 'Link';
-        return {
-            filepath: abspath,
-            diag: vsdiag,
-        };
-    }
-
-    /**
-     * @brief Obtains a reference to a TextDocument given the name of the file
-     */
-    private getTextDocumentByFileName(file: string): Maybe<vscode.TextDocument> {
-        const documents = vscode.workspace.textDocuments;
-        let document: Maybe<vscode.TextDocument> = null;
-        if (documents.length != 0) {
-            const filtered = documents.filter((doc: vscode.TextDocument) => {
-                return doc.fileName.toUpperCase() === file.toUpperCase()
-            });
-            if (filtered.length != 0) {
-                document = filtered[0];
-            }
-        }
-        return document;
-    }
-
-    /**
-     * @brief Gets the range of the text of a specific line in the given file.
-     */
-    private getTrimmedLineRange(file: string, line: number): vscode.Range {
-        const document = this.getTextDocumentByFileName(file);
-        if (document && (line < document.lineCount)) {
-            const text = document.lineAt(line).text + '\n';
-            let start = 0;
-            let end = text.length - 1;
-            let is_space = (i) => { return /\s/.test(text[i]); };
-            while ((start < text.length) && is_space(start))++start;
-            while ((end >= start) && is_space(end))--end;
-
-            return new vscode.Range(line, start, line, end);
-        } else
-            return new vscode.Range(line, 0, line, 0);
-    }
-
-    /**
-     * @brief Parses an MSVC diagnostic.
-     *
-     * @returns a FileDiagnostic from the given line, or null if no diagnostic
-     *      could be parsed
-     */
-    public parseMSVCDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const msvc_re = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+(error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
-        const res = msvc_re.exec(line);
-        if (!res)
-            return null;
-        const file = res[1];
-        const location = res[2];
-        const severity = res[3];
-        const code = res[4];
-        const message = res[5];
-        const abspath = path.isAbsolute(file)
-            ? file
-            : path.normalize(path.join(this.binaryDir, file));
-        const loc = (() => {
-            const parts = location.split(',');
-            if (parts.length === 1)
-                return this.getTrimmedLineRange(file, Number.parseInt(parts[0]) - 1);
-            if (parseFloat.length === 2)
-                return new vscode.Range(
-                    Number.parseInt(parts[0]) - 1,
-                    Number.parseInt(parts[1]) - 1,
-                    Number.parseInt(parts[0]) - 1,
-                    Number.parseInt(parts[1]) - 1
-                );
-            if (parseFloat.length === 4)
-                return new vscode.Range(
-                    Number.parseInt(parts[0]) - 1,
-                    Number.parseInt(parts[1]) - 1,
-                    Number.parseInt(parts[2]) - 1,
-                    Number.parseInt(parts[3]) - 1
-                );
-            throw new Error('Unable to determine location of MSVC error');
-        })();
-        const diag = new vscode.Diagnostic(
-            loc,
-            message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                info: vscode.DiagnosticSeverity.Information,
-            }[severity]
-        );
-        diag.code = code;
-        diag.source = 'MSVC';
-        return {
-            filepath: abspath,
-            diag: diag,
-        };
-    }
-
-    /**
-     * Parses a diagnostic message from Green Hills Compiler.
-     * Use single line error reporting when invoking GHS compiler (--no_wrap_diagnostics --brief_diagnostics).
-     */
-    public parseGHSDiagnostic(line: string): Maybe<FileDiagnostic> {
-        const diag = diagnostics.parseGHSDiagnostic(line);
-        if (!diag) {
-            return null;
-        }
-        const abspath = path.isAbsolute(diag.file)
-            ? diag.file
-            : path.normalize(path.join(this.binaryDir, diag.file));
-        const vsdiag = new vscode.Diagnostic(
-            new vscode.Range(diag.line, diag.column, diag.line, diag.column),
-            diag.message,
-            {
-                error: vscode.DiagnosticSeverity.Error,
-                warning: vscode.DiagnosticSeverity.Warning,
-                remark: vscode.DiagnosticSeverity.Information,
-            }[diag.severity]
-        );
-        vsdiag.source = 'GHS';
-        return {
-            filepath: abspath,
-            diag: vsdiag,
-        };
-    }
-
-    /**
-     * @brief Parses a line of compiler output to try and find a diagnostic
-     *      message.
-     */
-    public parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
-        return this.parseGCCDiagnostic(line) ||
-            this.parseGNULDDiagnostic(line) ||
-            this.parseMSVCDiagnostic(line) ||
-            this.parseGHSDiagnostic(line);
-    }
-
-    /**
-     * @brief Takes a reference to a compiler execution output and parses
-     *      the diagnostics therein.
-     */
-    public parseDiagnostics(result: ExecutionResult) {
-        const compiler = this.cmakeCache.get('CMAKE_CXX_COMPILER_ID') || this.cmakeCache.get('CMAKE_C_COMPILER_ID');
-        const lines = result
-            .stdout
-            .split('\n')
-            .map(line => line.trim())
-            .concat(
-                result
-                .stderr
-                .split('\n')
-                .map(line => line.trim())
-            );
-        const diags = lines.map(line => this.parseDiagnosticLine(line)).filter(item => !!item);
-        const diags_acc = {};
-        for (const diag of diags) {
-            if (!diag)
-                continue;
-            if (!(diag.filepath in diags_acc))
-                diags_acc[diag.filepath] = [];
-            diags_acc[diag.filepath].push(diag.diag);
-        }
-
-        for (const filepath in diags_acc) {
-            this._buildDiags.set(vscode.Uri.file(filepath), diags_acc[filepath]);
-        }
     }
 
     /**
@@ -1422,13 +1347,20 @@ export class CMakeTools {
     /**
      * @brief Execute a CMake command. Resolves to the result of the execution.
      */
-    public execute(args: string[], options: ExecuteOptions = {silent: false, environment: {}}): Promise<ExecutionResult> {
+    public execute(args: string[],
+                   options: ExecuteOptions = {silent: false, environment: {}},
+                   parser: util.OutputParser = new NullParser())
+    : Promise<ExecutionResult> {
         return new Promise<ExecutionResult>((resolve, _) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config.cmakePath, args, {
                 env: Object.assign(
-                    Object.assign({}, options.environment),
+                    Object.assign({
+                        // We set NINJA_STATUS to force Ninja to use the format
+                        // that we would like to parse
+                        NINJA_STATUS: '[%f/%t %p] '
+                    }, options.environment),
                     this.config.environment,
                     process.env
                 )
@@ -1448,33 +1380,56 @@ export class CMakeTools {
                         .join(' ')
                 );
             }
-            let stderr_acc = '';
-            let stdout_acc = '';
-            pipe.stdout.on('data', (data: Uint8Array) => {
-                const str = data.toString();
-                console.log('cmake [stdout]: ' + str.trim());
+
+            const emitLines = (stream) => {
+                var backlog = '';
+                stream.on('data', (data: Uint8Array) => {
+                    backlog += data.toString();
+                    var n = backlog.indexOf('\n');
+                    // got a \n? emit one or more 'line' events
+                    while (n >= 0) {
+                        stream.emit('line', backlog.substring(0, n).replace(/\r+$/, ''));
+                        backlog = backlog.substring(n + 1);
+                        n = backlog.indexOf('\n');
+                    }
+                });
+                stream.on('end', () => {
+                    if (backlog) {
+                        stream.emit('line', backlog.replace(/\r+$/, ''));
+                    }
+                });
+            };
+            emitLines(pipe.stdout);
+            emitLines(pipe.stderr);
+
+            pipe.stdout.on('line', (line: string) => {
+                console.log('cmake [stdout]: ' + line);
+                const progress = parser.parseLine(line);
                 if (!silent) {
-                    this._channel.append(str);
-                    status(str.trim());
+                    this._channel.appendLine(line);
+                    if (progress)
+                        this.buildProgress = progress;
                 }
-                stdout_acc += str;
             });
-            pipe.stderr.on('data', (data: Uint8Array) => {
-                const str = data.toString();
-                console.log('cmake [stderr]: ' + str.trim());
+            pipe.stderr.on('line', (line: string) => {
+                console.log('cmake [stderr]: ' + line);
+                const progress = parser.parseLine(line);
                 if (!silent) {
-                    status(str.trim());
-                    this._channel.append(str);
+                    if (progress)
+                        this.buildProgress = progress;
+                    this._channel.appendLine(line);
                 }
-                stderr_acc += str;
             });
             pipe.on('close', (retc: Number) => {
+                // Reset build progress to null to disable the progress bar
+                this.buildProgress = null;
+                if (parser instanceof BuildParser) {
+                    parser.fillDiagnosticCollection(this._diagnostics);
+                }
                 console.log('cmake exited with return code ' + retc);
                 if (silent) {
                     resolve({
                         retc: retc,
-                        stdout: stdout_acc,
-                        stderr: stderr_acc
                     });
                     return;
                 }
@@ -1489,53 +1444,9 @@ export class CMakeTools {
                     }
                 }
 
-                let rest = stderr_acc;
-                const diag_re = /CMake (.*?) at (.*?):(\d+) \((.*?)\):\s+((?:.|\n)*?)\s*\n\n\n((?:.|\n)*)/;
-                const diags: Object = {};
-                while (true) {
-                    if (!rest.length) break;
-                    const found = diag_re.exec(rest);
-                    if (!found) break;
-                    const [level, filename, linestr, command, what, tail] = found.slice(1);
-                    if (!filename || !linestr || !what || !level)
-                        continue;
-                    const filepath =
-                        path.isAbsolute(filename)
-                            ? filename
-                            : path.join(vscode.workspace.rootPath, filename);
-
-                    const line = Number.parseInt(linestr) - 1;
-                    if (!(filepath in diags)) {
-                        diags[filepath] = [];
-                    }
-                    const file_diags: vscode.Diagnostic[] = diags[filepath];
-                    const diag = new vscode.Diagnostic(
-                        new vscode.Range(
-                            line,
-                            0,
-                            line,
-                            Number.POSITIVE_INFINITY
-                        ),
-                        what,
-                        {
-                            "Warning": vscode.DiagnosticSeverity.Warning,
-                            "Error": vscode.DiagnosticSeverity.Error,
-                        }[level]
-                    );
-                    diag.source = 'CMake (' + command + ')';
-                    file_diags.push(diag);
-                    rest = tail || '';
-                }
-
-                this._diagnostics.clear();
-                for (const filepath in diags) {
-                    this._diagnostics.set(vscode.Uri.file(filepath), diags[filepath]);
-                }
                 this.currentChildProcess = null;
                 resolve({
                     retc: retc,
-                    stdout: stdout_acc,
-                    stderr: stderr_acc
                 });
             });
         });
@@ -1696,15 +1607,13 @@ export class CMakeTools {
             await fs.mkdir(cmt_dir);
         }
 
-        if (this.debugTargetsEnabled) {
-            const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake')
-            await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
-            const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
-            settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
-                cmt_dir.replace(/\\/g, path.posix.sep)
-            ]);
-        }
-        let initial_cache_content = [
+        const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
+        await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
+        const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
+        settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
+            cmt_dir.replace(/\\/g, path.posix.sep)
+        ]);
+        const initial_cache_content = [
             '# This file is generated by CMake Tools! DO NOT EDIT!',
             'cmake_policy(PUSH)',
             'if(POLICY CMP0053)',
@@ -1733,7 +1642,7 @@ export class CMakeTools {
                 typestr = 'STRING';
                 value = value.join(';');
             }
-            initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`)
+            initial_cache_content.push(`set(${key} "${value.toString().replace(/"/g, '\\"')}" CACHE ${typestr} "Variable supplied by CMakeTools. Value is forced." FORCE)`);
         }
         initial_cache_content.push('cmake_policy(POP)')
         const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
@@ -1758,7 +1667,8 @@ export class CMakeTools {
             {
                 silent: false,
                 environment: this.config.configureEnvironment,
-            }
+            },
+            new BuildParser(this.binaryDir, null, this.activeGenerator)
         );
         this.statusMessage = 'Ready';
         if (!result.retc) {
@@ -1833,13 +1743,10 @@ export class CMakeTools {
             {
                 silent: false,
                 environment: this.config.buildEnvironment,
-            }
+            },
+            (this.config.parseBuildDiagnostics ? new BuildParser(this.binaryDir, this.config.enableOutputParsers, this.activeGenerator) : new NullParser())
         );
         this.statusMessage = 'Ready';
-        if (this.config.parseBuildDiagnostics) {
-            this._buildDiags.clear();
-            await this.parseDiagnostics(result);
-        }
         if (!result.retc) {
             await this._refreshAll();
         }
@@ -1951,17 +1858,13 @@ export class CMakeTools {
     }
 
     public async setBuildType(): Promise<Number> {
-        const ok = await this.setBuildTypeWithoutConfigure();
+        await this.setBuildTypeWithoutConfigure();
         return await this.configure();
     }
 
     public async debugTarget() {
-        if (!this.debugTargetsEnabled) {
-            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
-            return;
-        }
-        if (!this.executableTargets) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
+        if (!this.executableTargets.length) {
+            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included CMakeToolsHelpers in your CMake project.');
             return;
         }
         const target = this.executableTargets.find(e => e.name === this.currentDebugTarget);
@@ -1974,24 +1877,22 @@ export class CMakeTools {
             return;
         const config = {
             name: `Debugging Target ${target.name}`,
-            targetArchitecture: /64/.test(this.systemProcessor || 'x64')
-                ? 'x64'
-                : 'x86',
             type: (this.compilerId && this.compilerId.includes('MSVC'))
                 ? 'cppvsdbg'
                 : 'cppdbg',
-        }
-        const configs = this.config.readConfig<any>("debugConfig");
-        Object.assign(config, configs.all);
+            request: 'launch',
+            cwd: '${workspaceRoot}',
+            args: [],
+            MIMode: process.platform === 'darwin' ? 'lldb' : 'gdb',
+        };
+        const user_config = this.config.debugConfig;
+        Object.assign(config, user_config);
         config['program'] = target.path;
+        console.log(JSON.stringify(config));
         vscode.commands.executeCommand('vscode.startDebug', config);
     }
 
     public async selectDebugTarget() {
-        if (!this.debugTargetsEnabled) {
-            vscode.window.showErrorMessage('Debugging of targets is experimental and must be manually enabled in settings.json');
-            return;
-        }
         if (!this.executableTargets) {
             vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
             return;
@@ -2007,7 +1908,7 @@ export class CMakeTools {
         this.currentDebugTarget = target.label;
     }
 
-    public async ctest (): Promise<Number> {
+    public async ctest(): Promise<Number> {
         this._channel.show();
         this.failingTestDecorations = [];
         const build_retc = await this.build();
@@ -2026,17 +1927,18 @@ export class CMakeTools {
                 {
                     silent: false,
                     environment: this.config.testEnvironment,
-                }
+                },
+                (this.config.parseBuildDiagnostics ? new BuildParser(this.binaryDir, ["cmake"], this.activeGenerator) : new NullParser())
             )
         ).retc;
         await this._refreshTests();
         this._ctestChannel.clear();
         if (this.testResults) {
-            for (const test of this.testResults.Site.Testing.Test.filter(t => t.Status == 'failed')) {
+            for (const test of this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed')) {
                 this._ctestChannel.append(
                     `The test "${test.Name}" failed with the following output:\n` +
-                    '----------' +        '-----------------------------------' + Array(test.Name.length).join('-') +
-                    `\n${test.Output.trim().split('\n').map(line => '    ' + line).join('')}\n`
+                    '----------' + '-----------------------------------' + Array(test.Name.length).join('-') +
+                    `\n${test.Output.trim().split('\n').map(line => '    ' + line).join('\n')}\n`
                 );
                 // Only show the channel when a test fails
                 this._ctestChannel.show();
@@ -2045,7 +1947,7 @@ export class CMakeTools {
         return retc;
     }
 
-    public async quickStart (): Promise<Number> {
+    public async quickStart(): Promise<Number> {
         if (await async.exists(this.mainListFile)) {
             vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
             return -1;
@@ -2156,7 +2058,7 @@ export class CMakeTools {
             // Because reasons, Node's proc.kill doesn't work on killing child
             // processes transitively. We have to do a sad and manually kill the
             // task using taskkill.
-            proc.exec('taskkill /pid ' + pid.toString() + ' /T /F')
+            proc.exec('taskkill /pid ' + pid.toString() + ' /T /F');
         }
     }
 }

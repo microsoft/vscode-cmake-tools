@@ -8,4 +8,12 @@ add_executable(MyExecutable main.cpp)
 include(CTest)
 enable_testing()
 
+if(DEFINED WARNING_COOKIE)
+    message(WARNING "${WARNING_COOKIE}")
+endif()
+
 add_test(AnExampleTest MyExecutable)
+
+if(CAUSE_BUILD_ERROR)
+    target_compile_definitions(MyExecutable PRIVATE CMT_DO_BUILD_ERROR)
+endif()
