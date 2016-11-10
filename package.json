@@ -243,22 +243,150 @@
                 },
                 "cmake.debugConfig": {
                     "type": "object",
-                    "default": {
-                        "all": {
-                            "request": "launch",
-                            "cwd": "${workspaceRoot}",
-                            "linux": {
-                                "MIMode": "gdb"
-                            },
-                            "osx": {
-                                "MIMode": "lldb"
-                            },
-                            "windows": {
-                                "MIMode": "gdb"
+                    "description": "The debug configuration to use when debugging a target",
+                    "properties": {
+                        "symbolSearchPath": {
+                            "type": "string",
+                            "description": "Visual Studio debugger symbol search paths"
+                        },
+                        "additionalSOLibSearchPath": {
+                            "type": "string",
+                            "description": "Paths for GDB or LLDB to search for .so files"
+                        },
+                        "externalConsole": {
+                            "type": "boolean",
+                            "description": "Launch an external console for the program"
+                        },
+                        "logging": {
+                            "type": "object",
+                            "description": "Tell what types of messages should be logged to the console",
+                            "properties": {
+                                "exceptions": {
+                                    "type": "boolean",
+                                    "default": true
+                                },
+                                "moduleLoad": {
+                                    "type": "boolean",
+                                    "default": true
+                                },
+                                "programOutput": {
+                                    "type": "boolean",
+                                    "default": true
+                                },
+                                "engineLogging": {
+                                    "type": "boolean",
+                                    "default": false
+                                },
+                                "trace": {
+                                    "type": "boolean",
+                                    "default": false
+                                },
+                                "traceResponse": {
+                                    "type": "boolean",
+                                    "default": false
+                                }
                             }
+                        },
+                        "visualizerFile": {
+                            "type": "string",
+                            "description": ".natvis file to be used when debugging"
+                        },
+                        "args": {
+                            "type": "array",
+                            "description": "Arguments to pass to program command line",
+                            "items": {
+                                "type": "string"
+                            },
+                            "default": []
+                        },
+                        "cwd": {
+                            "type": "string",
+                            "description": "Set the working directory for the program"
+                        },
+                        "environment": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "Name of environment variant"
+                                    },
+                                    "value": {
+                                        "type": "string",
+                                        "description": "Value for the environment variable"
+                                    }
+                                }
+                            }
+                        },
+                        "MIMode": {
+                            "type": "string",
+                            "enum": [
+                                "gdb",
+                                "lldb"
+                            ]
+                        },
+                        "miDebuggerPath": {
+                            "type": "string",
+                            "description": "Path to gdb or lldb debugger"
+                        },
+                        "stopAtEntry": {
+                            "type": "boolean",
+                            "description": "Stop at the entry point of the target",
+                            "default": false
+                        },
+                        "setupCommands": {
+                            "type": "array",
+                            "description": "Command to set up gdb or lldb",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {
+                                        "type": "string",
+                                        "description": "Command to run"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the command"
+                                    },
+                                    "ignoreFailures": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                }
+                            }
+                        },
+                        "customLaunchSetupCommands": {
+                            "type": "array",
+                            "description": "Command to set up gdb or lldb",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {
+                                        "type": "string",
+                                        "description": "Command to run"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the command"
+                                    },
+                                    "ignoreFailures": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                }
+                            }
+                        },
+                        "launchCompleteCommand": {
+                            "type": "string"
+                        },
+                        "dumpPath": {
+                            "type": "string"
+                        },
+                        "coreDumpPath": {
+                            "type": "string"
                         }
-                    },
-                    "description": "The base debug configuration to use when debugging a target"
+                    }
                 },
                 "cmake.environment": {
                     "type": "object",
@@ -302,6 +430,15 @@
             {
                 "key": "f7",
                 "command": "cmake.build"
+            },
+            {
+                "key": "shift+f7",
+                "command": "cmake.buildWithTarget"
+            },
+            {
+                "key": "ctrl+f5",
+                "command": "cmake.debugTarget",
+                "when": "!inDebugMode"
             }
         ],
         "jsonValidation": [
