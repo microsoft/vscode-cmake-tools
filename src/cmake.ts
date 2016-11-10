@@ -74,7 +74,7 @@ if(NOT is_set_up)
     endmacro()
 
     if(NOT DEFINED CMAKE_BUILD_TYPE AND DEFINED CMAKE_CONFIGURATION_TYPES)
-        set(condition "$<CONFIG:Debug>")
+        set(condition CONDITION "$<CONFIG:Debug>")
     endif()
 
     file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
