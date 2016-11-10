@@ -20,12 +20,22 @@
   - More thorough tests, this will lead to faster development and less bugs in
     the future.
   - **NEW**: After being frequently asked to add the ability to do
-    platform-granular configuration, the configuration system has been changes
+    platform-granular configuration, the configuration system has been changed
     so that *virtually all* configuration options now allow different values
     based on platform. For any given `cmake.<option>`, there are now three
     options following the same format of `cmake.<platform>.<option>`, where
     `platform` is one of `linux`, `osx`, or `windows`. Note that this deprecates
     the old `cmake.generator.<platform>` settings.
+- **0.7.4**:
+  - **Target debugging is now enabled by default, and has been assigned a
+    `ctrl+f5` keybinding**
+  - Fix issue with being able to switch back to the `all` target
+  - Fix issue with CTest output being garbled without line breaks
+  - Fix hang when build tools generate large amounts of output.*
+  - **New** make-shift progress bar for build progress (supports Make and Ninja).*
+  - Options to control what output parsers are enabled*
+
+  \* Special thanks goes to [bbosnjak](https://github.com/bbosnjak) for these ones!
 
 ### Version 0.6.0
 
