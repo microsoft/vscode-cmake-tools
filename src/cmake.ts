@@ -1980,7 +1980,7 @@ export class CMakeTools {
                 this._ctestChannel.append(
                     `The test "${test.Name}" failed with the following output:\n` +
                     '----------' + '-----------------------------------' + Array(test.Name.length).join('-') +
-                    `\n${test.Output.trim().split('\n').map(line => '    ' + line).join('')}\n`
+                    `\n${test.Output.trim().split('\n').map(line => '    ' + line).join('\n')}\n`
                 );
                 // Only show the channel when a test fails
                 this._ctestChannel.show();
