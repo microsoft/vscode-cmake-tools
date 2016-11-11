@@ -1889,7 +1889,7 @@ export class CMakeTools {
         Object.assign(config, user_config);
         config['program'] = target.path;
         console.log(JSON.stringify(config));
-        vscode.commands.executeCommand('vscode.startDebug', config);
+        return vscode.commands.executeCommand('vscode.startDebug', config);
     }
 
     public async selectDebugTarget() {

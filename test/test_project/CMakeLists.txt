@@ -17,3 +17,7 @@ add_test(AnExampleTest MyExecutable)
 if(CAUSE_BUILD_ERROR)
     target_compile_definitions(MyExecutable PRIVATE CMT_DO_BUILD_ERROR)
 endif()
+
+if(MSVC)
+    target_compile_definitions(MyExecutable PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
