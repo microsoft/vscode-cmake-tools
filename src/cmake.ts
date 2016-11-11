@@ -1187,11 +1187,11 @@ export class CMakeTools {
                 this._buildButton.show();
                 this._targetButton.show();
                 this._testStatusButton.show();
+                this._debugButton.show();
                 if (have_exe_targets) {
-                    this._debugButton.show();
                     this._debugTargetButton.show();
                 } else {
-                    this._debugButton.hide();
+                    this._debugButton.text = '$(bug)';
                     this._debugTargetButton.hide();
                 }
             } else {
