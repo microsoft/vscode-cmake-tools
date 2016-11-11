@@ -310,7 +310,7 @@
                                 "properties": {
                                     "name": {
                                         "type": "string",
-                                        "description": "Name of environment variant"
+                                        "description": "Name of environment variable"
                                     },
                                     "value": {
                                         "type": "string",
