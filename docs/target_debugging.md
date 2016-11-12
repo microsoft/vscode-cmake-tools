@@ -1,4 +1,4 @@
-# [EXPERIMENTAL] Target Debugging
+# Target Debugging
 
 Most C and C++ development environments offer some integration with project
 configuration that requires awareness of the build system, including the
@@ -11,15 +11,6 @@ manage their debugging setup within VS Code. There is no need to write a
 ``launch.json`` file for Target Debugging, and no need to manually specify
 the path/architecture/debugger for an executable. All this is determined
 automatically by CMake Tools when a target-based debug is invoked.
-
-## NOTICE
-
-This feature is experimental, and may or may not work with all CMake versions.
-As such, it is opt-in for now, until the feature's stability can be determined.
-To help accelerate this feature's development, please [provide feedback on
-the associated GitHub issue here](https://github.com/vector-of-bool/vscode-cmake-tools/issues/37).
-Simply leaving a +1 is very useful to see how many people successfully use
-the feature! Thanks!
 
 ## Enabling Target Debugging
 
@@ -38,13 +29,6 @@ The keyword ``OPTIONAL`` here means that CMake won't complain if it fails to
 find the module. This is very useful, as the script itself isn't important to
 the build system. As such, this line can be committed to the project and no
 users will ever have to care about its presence.
-
-### Enable Target Debugging
-
-To use Target Debugging, the feature must first be enabled by setting the
-``cmake.experimental.enableTargetDebugging`` to ``true`` in ``settings.json``
-for Visual Studio Code. After this is done, the ``CMake: Configure`` command
-must be run at least once to generate the new metadata.
 
 ### Selecting a Debug Target
 
@@ -72,4 +56,42 @@ the target is built before debugging.
 
 CMake Tools generates a debugging configuration object on-the-fly, when
 debugging is requested. To set some additional parameters to this debug
-configuration, use the ``cmake.debugConfig``.
+configuration, use the ``cmake.debugConfig``. Under the hood, CMake Tools
+delegates to Microsoft's C and C++ extension to do debugging, so all options
+listed [here](https://github.com/Microsoft/vscode-cpptools/blob/master/launch.md)
+are available. CMake Tools will fill all required options for you, so you don't
+need to specify any of the required options outlined in the help document.
+
+# Troubleshooting
+
+## Q: CMake isn't finding the `CMakeToolsHelpers` script! Why is this?
+
+**A:** There are a few primary reasons why CMake might not find it. CMake Tools
+sets `CMAKE_MODULE_PATH` such that CMake will be able to find the generated
+helper module. This means that A) CMake will only find this module if it was
+invoked using CMake Tools within Visual Studio Code and B) destructive
+modifications of `CMAKE_MODULE_PATH` before the `include` line can cause CMake
+to not find the module. In the **B** case, instead of using writing:
+
+~~~cmake
+set(CMAKE_MODULE_PATH foo)
+~~~
+
+instead write:
+
+~~~cmake
+list(APPEND CMAKE_MODULE_PATH foo)
+~~~
+
+This will append a directory to the module path instead of wiping it out
+completely.
+
+## Q: When I `include(CMakeToolsHelpers)`, `add_executble` makes CMake crash!
+
+**A:** If you run into this issue, you probably know exactly why this happens.
+This is a known issue with the way CMake provides command hook functionality.
+Unfortunately, there's no good way to work around it until CMake server mode
+with the CMake 3.7 update. Once CMake Tools is upgraded to support CMake server
+mode, including this script manually won't be necessary. Until then, you can try
+moving the `include` command below the `add_executble` and `add_library`
+override that you've defined in your project.
