@@ -34,8 +34,11 @@
   - Fix hang when build tools generate large amounts of output.*
   - **New** make-shift progress bar for build progress (supports Make and Ninja).*
   - Options to control what output parsers are enabled*
-
   \* Special thanks goes to [bbosnjak](https://github.com/bbosnjak) for these ones!
+- **0.7.5**:
+  - Fix issue of repeated warnings regarding `${buildType}` in `buildDirectory`.
+  - Fix issue with `CMakeToolsHelpers` and Visual Studio generators.
+  - Fix clear reconfigure failing to clean the build directory.
 
 ### Version 0.6.0
 
