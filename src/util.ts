@@ -3,8 +3,20 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import * as async from './async';
+import * as rimraf from 'rimraf';
 
 export namespace util {
+  export function rmdir(dirpath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      rimraf(dirpath, err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
   export function isMultiConfGenerator(gen: string): boolean {
     return gen.includes('Visual Studio') || gen.includes('Xcode');
   }

@@ -1774,7 +1774,7 @@ export class CMakeTools {
         }
         if (await async.exists(cmake_files)) {
             this._channel.appendLine('[vscode] Removing ' + cmake_files);
-            await async.unlink(cmake_files);
+            await util.rmdir(cmake_files);
         }
         return await this.configure();
     }
