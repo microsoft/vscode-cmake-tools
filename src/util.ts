@@ -3,8 +3,23 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 import * as async from './async';
+import * as rimraf from 'rimraf';
 
 export namespace util {
+  export function rmdir(dirpath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      rimraf(dirpath, err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+  export function isMultiConfGenerator(gen: string): boolean {
+    return gen.includes('Visual Studio') || gen.includes('Xcode');
+  }
   export function product<T>(arrays: T[][]): T[][] {
     // clang-format off
     return arrays.reduce((acc, curr) =>
@@ -103,12 +118,12 @@ export namespace util {
     variant?: Maybe<VariantCombination>;
   };
 
-  export function normalizePath(p: string): string {
+  export function normalizePath(p: string, normalize_case=true): string {
     let norm = path.normalize(p);
     while (path.sep !== path.posix.sep && norm.includes(path.sep)) {
         norm = norm.replace(path.sep, path.posix.sep);
     }
-    if (process.platform === 'win32') {
+    if (normalize_case && process.platform === 'win32') {
       norm = norm.toLocaleLowerCase().normalize();
     }
     return norm;

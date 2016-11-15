@@ -6,6 +6,8 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 
 import * as cmake from '../src/cmake';
+import * as util from '../src/util';
+import * as async from '../src/async';
 import * as diagnostics from '../src/diagnostics';
 import * as compdb from '../src/compdb';
 
@@ -215,7 +217,6 @@ suite("Utility tests", () => {
     suite('Extension smoke tests', function() {
         this.timeout(60 * 1000); // These tests are slower than just unit tests
         setup(async function () {
-            await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', false);
             const cmt = await getExtension();
             this.cmt = cmt;
             cmt.activeVariantCombination = {
@@ -255,11 +256,8 @@ suite("Utility tests", () => {
             const retc = await cmt.ctest();
             assert.strictEqual(retc, 0);
         });
-        test('Enable debugging targets', async function() {
+        test('Finds executable targets', async function() {
             const cmt: cmake.CMakeTools = this.cmt;
-            await vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', true);
-            // It seems to take vscode a bit of time to propagate the config change...
-            await pause(1000);
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0, 'Configure failed');
             const targets = cmt.executableTargets;
@@ -295,11 +293,75 @@ suite("Utility tests", () => {
             assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Error);
             assert(diag.message.includes('special-error-cookie asdfqwerty'));
         });
+        test('Pass arguments to debugger', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.build();
+            assert.strictEqual(retc, 0);
+            const outfile = testFilePath('output-file.txt');
+            const test_string = 'ceacrybuhksrvniruc48o7dvz';
+            await vscode.workspace.getConfiguration('cmake').update('debugConfig', {
+                args: [
+                    '--write-file', outfile,
+                    '--content', test_string,
+                ]
+            });
+            await pause(1000);
+            await cmt.debugTarget();
+            // Debugging doesn't wait for it to finish. We must pause for a
+            // while
+            await pause(1000);
+            const content = (await async.readFile(outfile)).toString();
+            assert.strictEqual(content, test_string);
+        });
+        test('Debugger gets environment variables', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.build();
+            assert.strictEqual(retc, 0);
+            const home = process.env['HOME'];
+            const outfile = testFilePath('output-file.txt');
+            await vscode.workspace.getConfiguration('cmake').update('debugConfig', {
+                args: [
+                    '--write-file', outfile,
+                    '--env', 'HOME',
+                ]
+            });
+            await pause(1000);
+            await cmt.debugTarget();
+            await pause(1000);
+            const content = (await async.readFile(outfile)).toString();
+            assert.strictEqual(content, home);
+        });
+        test('Debugger gets custom environment variables', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.build();
+            assert.strictEqual(retc, 0);
+            const outfile = testFilePath('output-file.txt');
+            const test_string = 'ceacrybuhksrvniruc48o7dvz';
+            const varname = 'CMTTestEnvironmentVariable';
+            await vscode.workspace.getConfiguration('cmake').update('debugConfig', {
+                args: [
+                    '--write-file', outfile,
+                    '--env', varname,
+                ],
+                environment: [{
+                    name: varname,
+                    value: test_string,
+                }]
+            });
+            await pause(1000);
+            await cmt.debugTarget();
+            await pause(1000);
+            const content = (await async.readFile(outfile)).toString();
+            assert.strictEqual(content, test_string);
+        });
         teardown(function() {
             const cmt: cmake.CMakeTools = this.cmt;
-            vscode.workspace.getConfiguration('cmake.experimental').update('enableTargetDebugging', false);
             if (fs.existsSync(cmt.binaryDir)) {
                 rimraf.sync(cmt.binaryDir);
+            }
+            const output_file = testFilePath('output-file.txt');
+            if (fs.existsSync(output_file)) {
+                fs.unlinkSync(output_file);
             }
         })
     });

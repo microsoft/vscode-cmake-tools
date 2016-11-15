@@ -1187,11 +1187,11 @@ export class CMakeTools {
                 this._buildButton.show();
                 this._targetButton.show();
                 this._testStatusButton.show();
+                this._debugButton.show();
                 if (have_exe_targets) {
-                    this._debugButton.show();
                     this._debugTargetButton.show();
                 } else {
-                    this._debugButton.hide();
+                    this._debugButton.text = '$(bug)';
                     this._debugTargetButton.hide();
                 }
             } else {
@@ -1301,7 +1301,7 @@ export class CMakeTools {
         const dir = this.config.buildDirectory
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
             .replace('${buildType}', this.selectedBuildType || 'Unknown');
-        return util.normalizePath(dir);
+        return util.normalizePath(dir, false);
     }
 
     /**
@@ -1324,7 +1324,8 @@ export class CMakeTools {
      * @brief Determine if the project is using a multi-config generator
      */
     public get isMultiConf() {
-        return !!this.cmakeCache.get('CMAKE_CONFIGURATION_TYPES');
+        const gen = this.activeGenerator;
+        return gen && util.isMultiConfGenerator(gen);
     }
 
     public get activeGenerator(): Maybe<string> {
@@ -1569,12 +1570,14 @@ export class CMakeTools {
         }
 
         const settings_args: string[] = [];
+        let is_multi_conf = this.isMultiConf;
         if (!this.cmakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
             const generator = await this.pickGenerator(this.config.preferredGenerators);
             if (generator) {
                 this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
                 settings_args.push("-G" + generator);
+                is_multi_conf = util.isMultiConfGenerator(generator);
             } else {
                 console.error("None of the preferred generators was selected");
             }
@@ -1585,7 +1588,7 @@ export class CMakeTools {
             settings_args.push('-T' + toolset);
         }
 
-        if (!await this.isMultiConf) {
+        if (!is_multi_conf) {
             settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
         }
 
@@ -1771,7 +1774,7 @@ export class CMakeTools {
         }
         if (await async.exists(cmake_files)) {
             this._channel.appendLine('[vscode] Removing ' + cmake_files);
-            await async.unlink(cmake_files);
+            await util.rmdir(cmake_files);
         }
         return await this.configure();
     }
@@ -1889,7 +1892,7 @@ export class CMakeTools {
         Object.assign(config, user_config);
         config['program'] = target.path;
         console.log(JSON.stringify(config));
-        vscode.commands.executeCommand('vscode.startDebug', config);
+        return vscode.commands.executeCommand('vscode.startDebug', config);
     }
 
     public async selectDebugTarget() {
