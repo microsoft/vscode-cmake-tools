@@ -1569,12 +1569,14 @@ export class CMakeTools {
         }
 
         const settings_args: string[] = [];
+        let is_multi_conf = this.isMultiConf;
         if (!this.cmakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
             const generator = await this.pickGenerator(this.config.preferredGenerators);
             if (generator) {
                 this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
                 settings_args.push("-G" + generator);
+                is_multi_conf = util.isMultiConfGenerator(generator);
             } else {
                 console.error("None of the preferred generators was selected");
             }
@@ -1585,7 +1587,7 @@ export class CMakeTools {
             settings_args.push('-T' + toolset);
         }
 
-        if (!await this.isMultiConf) {
+        if (!is_multi_conf) {
             settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
         }
 
