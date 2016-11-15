@@ -1324,7 +1324,8 @@ export class CMakeTools {
      * @brief Determine if the project is using a multi-config generator
      */
     public get isMultiConf() {
-        return !!this.cmakeCache.get('CMAKE_CONFIGURATION_TYPES');
+        const gen = this.activeGenerator;
+        return gen && util.isMultiConfGenerator(gen);
     }
 
     public get activeGenerator(): Maybe<string> {

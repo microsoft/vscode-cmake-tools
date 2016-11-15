@@ -5,6 +5,9 @@ import * as fs from 'fs';
 import * as async from './async';
 
 export namespace util {
+  export function isMultiConfGenerator(gen: string): boolean {
+    return gen.includes('Visual Studio') || gen.includes('Xcode');
+  }
   export function product<T>(arrays: T[][]): T[][] {
     // clang-format off
     return arrays.reduce((acc, curr) =>
