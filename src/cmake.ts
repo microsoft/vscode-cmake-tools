@@ -1483,7 +1483,7 @@ export class CMakeTools {
         const dir = this.config.buildDirectory
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
             .replace('${buildType}', this.selectedBuildType || 'Unknown');
-        return util.normalizePath(dir);
+        return util.normalizePath(dir, false);
     }
 
     /**
@@ -1506,7 +1506,8 @@ export class CMakeTools {
      * @brief Determine if the project is using a multi-config generator
      */
     public get isMultiConf() {
-        return !!this.getCacheEntryByKey('CMAKE_CONFIGURATION_TYPES');
+        const gen = this.activeGenerator;
+        return gen && util.isMultiConfGenerator(gen);
     }
 
     public get activeGenerator(): Maybe<string> {
@@ -1770,12 +1771,14 @@ export class CMakeTools {
         }
 
         const settings_args: string[] = [];
+        let is_multi_conf = this.isMultiConf;
         if (!this.serverClient && !this.legacyCMakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
             const generator = await this.pickGenerator(this.config.preferredGenerators);
             if (generator) {
                 this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
                 settings_args.push("-G" + generator);
+                is_multi_conf = util.isMultiConfGenerator(generator);
             } else {
                 console.error("None of the preferred generators was selected");
             }
@@ -1785,7 +1788,7 @@ export class CMakeTools {
             }
         }
 
-        if (!this.isMultiConf) {
+        if (!is_multi_conf) {
             settings_args.push('-DCMAKE_BUILD_TYPE=' + this.selectedBuildType);
         }
 
@@ -2001,7 +2004,7 @@ export class CMakeTools {
         }
         if (await async.exists(cmake_files)) {
             this._channel.appendLine('[vscode] Removing ' + cmake_files);
-            await async.unlink(cmake_files);
+            await util.rmdir(cmake_files);
         }
         return await this.configure();
     }
