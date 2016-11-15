@@ -4,6 +4,8 @@ import * as fs from 'fs';
 
 import * as async from './async';
 
+import {CodeModelConfiguration} from './server-client'
+
 export namespace util {
   export function product<T>(arrays: T[][]): T[][] {
     // clang-format off
@@ -101,6 +103,7 @@ export namespace util {
 
   export interface WorkspaceCache {
     variant?: Maybe<VariantCombination>;
+    codeModel?: Maybe<CodeModelConfiguration[]>;
   };
 
   export function normalizePath(p: string): string {
@@ -142,5 +145,48 @@ export namespace util {
         }
       })
     })
+  }
+  export interface Version {
+    major: number;
+    minor: number;
+    patch: number;
+  }
+  export function parserVersion(str: string): Version {
+    const version_re = /(\d+)\.(\d+).(\d+)/;
+    const mat = version_re.exec(str);
+    if (!mat) {
+      throw new Error(`Invalid version string ${str}`);
+    }
+    const [major, minor, patch] = mat!;
+    return {
+      major: parseInt(major),
+      minor: parseInt(minor),
+      patch: parseInt(patch),
+    };
+  }
+
+  export function versionGreater(lhs: Version, rhs: Version | string): boolean {
+    if (typeof(rhs) === 'string') {
+      return versionGreater(lhs, parserVersion(rhs));
+    }
+    return lhs.major > rhs.major || (
+      lhs.major == rhs.major &&
+      lhs.minor > rhs.minor
+    ) || (
+      lhs.major == rhs.major &&
+      lhs.minor == rhs.major &&
+      lhs.patch == lhs.patch
+    );
+  }
+
+  export function versionEquals(lhs: Version, rhs: Version | string): boolean {
+    if (typeof(rhs) === 'string') {
+      return versionEquals(lhs, parserVersion(rhs));
+    }
+    return lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch == rhs.patch;
+  }
+
+  export function versionLess(lhs: Version, rhs: Version | string): boolean {
+    return !versionGreater(lhs, rhs) && versionEquals(lhs, rhs);
   }
 }
