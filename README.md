@@ -14,17 +14,10 @@ those options has been renamed to the form `cmake.<platform>.generator` to fit
 a new naming convention for config options. Read about the 0.7.3 update for more
 information.
 
-### **0.7.4**:
-  - **Target debugging is now enabled by default, and has been assigned a
-    `ctrl+f5` keybinding**
-  - Fix issue with being able to switch back to the `all` target
-  - Fix issue with CTest output being garbled without line breaks
-  - Fix hang when build tools generate large amounts of output.*
-  - **New** make-shift progress bar for build progress (supports Make and Ninja).*
-  - Options to control what output parsers are enabled*
-
-  \* Special thanks goes to [bbosnjak](https://github.com/bbosnjak) for these ones!
-
+### **0.7.5**:
+  - Fix issue of repeated warnings regarding `${buildType}` in `buildDirectory`.
+  - Fix issue with `CMakeToolsHelpers` and Visual Studio generators.
+  - Fix clear reconfigure failing to clean the build directory.
 
 ## Issues? Questions? Feature requests?
 
