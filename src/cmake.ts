@@ -1301,7 +1301,7 @@ export class CMakeTools {
         const dir = this.config.buildDirectory
             .replace('${workspaceRoot}', vscode.workspace.rootPath)
             .replace('${buildType}', this.selectedBuildType || 'Unknown');
-        return util.normalizePath(dir);
+        return util.normalizePath(dir, false);
     }
 
     /**

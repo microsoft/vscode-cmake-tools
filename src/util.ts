@@ -106,12 +106,12 @@ export namespace util {
     variant?: Maybe<VariantCombination>;
   };
 
-  export function normalizePath(p: string): string {
+  export function normalizePath(p: string, normalize_case=true): string {
     let norm = path.normalize(p);
     while (path.sep !== path.posix.sep && norm.includes(path.sep)) {
         norm = norm.replace(path.sep, path.posix.sep);
     }
-    if (process.platform === 'win32') {
+    if (normalize_case && process.platform === 'win32') {
       norm = norm.toLocaleLowerCase().normalize();
     }
     return norm;
