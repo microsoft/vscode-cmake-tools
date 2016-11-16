@@ -9,6 +9,7 @@ import * as ajv from 'ajv';
 import * as vscode from 'vscode';
 
 import * as async from './async';
+import * as environment from './environment';
 import {ctest} from './ctest';
 import {FileDiagnostic,
         DiagnosticParser,
@@ -1090,6 +1091,15 @@ export class CMakeTools {
     }
 
     private async _init(ctx: vscode.ExtensionContext): Promise<void> {
+        environment.availableEnvironments().map(
+            pr => pr.then(env => {
+                if (env.variables) {
+                    console.log(`Detected env ${env.name}`);
+                }
+            }).catch(e => {
+                console.error(e);
+            })
+        );
         this._channel = new ThrottledOutputChannel('CMake/Build');
         //this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
