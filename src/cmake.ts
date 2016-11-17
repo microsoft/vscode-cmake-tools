@@ -1733,12 +1733,12 @@ export class CMakeTools {
         }
 
         if (!(await async.exists(this.binaryDir))) {
-            await fs.mkdir(this.binaryDir);
+            await util.ensureDirectory(this.binaryDir);
         }
 
         const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
         if (!(await async.exists(cmt_dir))) {
-            await fs.mkdir(cmt_dir);
+            await util.ensureDirectory(cmt_dir);
         }
 
         const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');

@@ -155,7 +155,15 @@ export namespace util {
     if (!(await async.exists(dirpath))) {
       const parent = path.dirname(dirpath);
       await ensureDirectory(parent);
-      await async.doVoidAsync(fs.mkdir, dirpath);
+      try {
+        await async.doVoidAsync(fs.mkdir, dirpath);
+      } catch(e) {
+        if (e.code == 'EEXIST') {
+          // It already exists, but that's ok
+          return;
+        }
+        throw e;
+      }
     } else {
       if (!(await async.isDirectory(dirpath))) {
         throw new Error(`Failed to create directory: "${dirpath}" is an existing file and is not a directory`);
