@@ -424,6 +424,14 @@
                         }
                     }
                 },
+                "cmake.ctestArgs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Arguments to pass to CTest",
+                    "default": []
+                },
                 "cmake.environment": {
                     "type": "object",
                     "default": {},

@@ -422,6 +422,10 @@ export class ConfigurationReader {
     get defaultVariants(): Object {
         return this._readPrefixed<Object>('defaultVariants') || {};
     }
+
+    get ctestArgs(): string[] {
+        return this._readPrefixed<string[]>('ctestArgs') || [];
+    }
 }
 
 /**
@@ -2062,8 +2066,8 @@ export class CMakeTools {
                     'ctest', '-j' + this.numCTestJobs,
                     '-C', this.selectedBuildType || 'Debug',
                     '-T', 'test',
-                    '--output-on-failure'
-                ],
+                    '--output-on-failure',
+                ].concat(this.config.ctestArgs),
                 {
                     silent: false,
                     environment: this.config.testEnvironment,
