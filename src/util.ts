@@ -116,6 +116,7 @@ export namespace util {
 
   export interface WorkspaceCache {
     variant?: Maybe<VariantCombination>;
+    activeEnvironments?: string[];
   };
 
   export function normalizePath(p: string, normalize_case=true): string {
