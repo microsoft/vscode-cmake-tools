@@ -77,7 +77,7 @@ if(NOT is_set_up)
         _cmt_generate_system_info()
     endmacro()
 
-    if(NOT DEFINED CMAKE_BUILD_TYPE AND DEFINED CMAKE_CONFIGURATION_TYPES)
+    if({{{IS_MULTICONF}}})
         set(condition CONDITION "$<CONFIG:Debug>")
     endif()
 
@@ -1431,9 +1431,9 @@ export class CMakeTools {
     /**
      * @brief Determine if the project is using a multi-config generator
      */
-    public get isMultiConf() {
+    public get isMultiConf(): boolean {
         const gen = this.activeGenerator;
-        return gen && util.isMultiConfGenerator(gen);
+        return !!gen && util.isMultiConfGenerator(gen);
     }
 
     public get activeGenerator(): Maybe<string> {
@@ -1733,7 +1733,13 @@ export class CMakeTools {
         }
 
         const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
-        await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
+        const helper_content = util.replaceAll(CMAKETOOLS_HELPER_SCRIPT,
+                                        '{{{IS_MULTICONF}}}',
+                                        is_multi_conf
+                                            ? '1'
+                                            : '0'
+                                        );
+        await util.writeFile(helpers, helper_content);
         const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
         settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
             cmt_dir.replace(/\\/g, path.posix.sep)
