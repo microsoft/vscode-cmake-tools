@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as proc from 'child_process';
+import * as fs from 'fs';
 
 import * as vscode from 'vscode';
 
@@ -8,7 +9,7 @@ import {util} from './util';
 
 type Maybe<T> = util.Maybe<T>;
 
-interface Environment {
+export interface Environment {
   name: string;
   variables: Maybe<Map<string, string>>;
 }
@@ -22,7 +23,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
   // Detect Visual C++ environments
   async tryCreateEnvironment(progfiles, dist, arch): Promise<Environment> {
     const vcvarsall = path.join(progfiles, dist, 'VC/vcvarsall.bat');
-    const name = `${dist} ${arch}`;
+    const name = `${dist} - ${arch}`;
     if (!await async.exists(vcvarsall)) {
       return {name, variables: null};
     }
@@ -40,7 +41,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
     await util.ensureDirectory(path.dirname(batpath));
     await util.writeFile(batpath, bat.join('\r\n'));
     const prom = new Promise<Maybe<string>>((resolve, reject) => {
-      const pipe = proc.spawn(batpath, [], {shell: true, env: {}});
+      const pipe = proc.spawn(batpath, [], {shell: true});
       let stdout_acc = '';
       pipe.stdout.on('data', (data) => {
         stdout_acc += data.toString();
@@ -49,10 +50,15 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
         resolve(stdout_acc);
       });
       pipe.on('exit', (code) => {
+        fs.unlink(batpath, err => {
+          if (err) {
+            console.error(`Error removing temporary batch file!`, err);
+          }
+        });
         if (code) {
           resolve(null);
         }
-      })
+      });
     });
     const output = await prom;
     if (!output) {
@@ -79,7 +85,10 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
       return [];
     }
     const progfile_dirs = [`C:\\Program Files`, `C:\\Program Files (x86)`];
-    const dists = ['Microsoft Visual Studio 14.0'];
+    const dists = [
+      'Microsoft Visual Studio 12.0',
+      'Microsoft Visual Studio 14.0',
+    ];
     const archs = ['x86', 'amd64'];
     type PEnv = Promise<Maybe<Environment>>;
     const prom_environments = progfile_dirs.reduce<PEnv[]>(

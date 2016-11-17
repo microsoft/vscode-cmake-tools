@@ -45,6 +45,7 @@
         "onCommand:cmake.quickStart",
         "onCommand:cmake.debugTarget",
         "onCommand:cmake.selectDebugTarget",
+        "onCommand:cmake.selectEnvironments",
         "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
@@ -118,6 +119,11 @@
             {
                 "command": "cmake.selectDebugTarget",
                 "title": "Select a Target to Debug",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.selectEnvironments",
+                "title": "Select active build environments",
                 "category": "CMake"
             }
         ],

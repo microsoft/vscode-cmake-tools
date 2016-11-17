@@ -602,6 +602,7 @@ export class CMakeTools {
     private _debugTargetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
     private _testStatusButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.05);
     private _warningMessage = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+    private _environmentSelectionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 200);
     private _failingTestDecorationType = vscode.window.createTextEditorDecorationType({
         borderColor: 'rgba(255, 0, 0, 0.2)',
         borderWidth: '1px',
@@ -1090,20 +1091,79 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    public activeEnvironments : Maybe<string[]> = null;
+    public activateEnvironment(name: string) {
+        const env = this.availableEnvironments.get(name);
+        if (!env) {
+            throw new Error(`Invalid environment named ${name}`);
+        }
+        if (!this.activeEnvironments) {
+            throw new Error(`Invalid state: Environments not yet loaded!`);
+        }
+        this.activeEnvironments.push(name);
+        this._refreshStatusBarItems();
+        this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
+        this._writeWorkspaceCacheContent();
+    }
+
+    public deactivateEnvironment(name: string) {
+        if (!this.activeEnvironments) {
+            throw new Error('Invalid state: Environments not yet loaded!');
+        }
+        const idx = this.activeEnvironments.indexOf(name);
+        if (idx >= 0) {
+            this.activeEnvironments.splice(idx, 1);
+            this._refreshStatusBarItems();
+        }
+        this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
+        this._writeWorkspaceCacheContent();
+    }
+
+    private _availableEnvironments : Map<string, Map<string, string>> = new Map();
+    public get availableEnvironments() : Map<string, Map<string, string>> {
+        return this._availableEnvironments;
+    }
+
+    private _loadingEnvironments: Promise<void>;
+    public get loadingEnvironments() : Promise<void> {
+        return this._loadingEnvironments;
+    }
+
+    public async selectEnvironments(): Promise<void> {
+        await this.loadingEnvironments;
+        const entries = Array.from(this.availableEnvironments.keys())
+            .map(name => ({
+                name: name,
+                label: this.activeEnvironments!.indexOf(name) >= 0
+                    ? `$(check) ${name}`
+                    : name,
+                description: '',
+            }));
+        const chosen = await vscode.window.showQuickPick(entries);
+        if (!chosen) {
+            return;
+        }
+        this.activeEnvironments!.indexOf(chosen.name) >= 0
+            ? this.deactivateEnvironment(chosen.name)
+            : this.activateEnvironment(chosen.name);
+    }
+
     private async _init(ctx: vscode.ExtensionContext): Promise<void> {
-        environment.availableEnvironments().map(
-            pr => pr.then(env => {
-                if (env.variables) {
-                    console.log(`Detected env ${env.name}`);
-                }
-            }).catch(e => {
-                console.error(e);
-            })
-        );
         this._channel = new ThrottledOutputChannel('CMake/Build');
         //this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+
+        // Start loading up available environments early, this may take a few seconds
+        const env_promises = environment.availableEnvironments();
+        for (const pr of env_promises) {
+            pr.then(env => {
+                if (env.variables) {
+                    console.log(`Detected available environemt "${env.name}"`);
+                    this._availableEnvironments.set(env.name, env.variables);
+                }
+            });
+        }
 
         const watcher = this._variantWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, 'cmake-variants.*'));
         watcher.onDidChange(this._reloadVariants.bind(this));
@@ -1136,6 +1196,19 @@ export class CMakeTools {
             console.log('Reloading CMakeTools after configuration change');
             this._reloadConfiguration();
         });
+
+        this._loadingEnvironments = Promise.all(env_promises);
+        this._loadingEnvironments.then(() => {
+            // All environments have been detected, now we can update the UI
+            this.activeEnvironments = [];
+            const envs = this._workspaceCacheContent.activeEnvironments || [];
+            envs.map(e => {
+                if (this.availableEnvironments.has(e)) {
+                    this.activateEnvironment(e);
+                }
+            });
+            this._refreshStatusBarItems();
+        }).catch(e => console.error(e));
 
         if (this.config.initialBuildType !== null) {
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
@@ -1204,6 +1277,7 @@ export class CMakeTools {
                     this._debugButton.text = '$(bug)';
                     this._debugTargetButton.hide();
                 }
+                this._environmentSelectionButton.show();
             } else {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
@@ -1211,6 +1285,7 @@ export class CMakeTools {
                 this._testStatusButton.hide();
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
+                this._environmentSelectionButton.hide();
             }
             if (this._testStatusButton.text == '') {
                 this._testStatusButton.hide();
@@ -1249,6 +1324,22 @@ export class CMakeTools {
         this._debugButton.tooltip = 'Run the debugger on the selected target executable';
         this._debugTargetButton.text = this.currentDebugTarget || '[No target selected for debugging]';
         this._debugTargetButton.command = 'cmake.selectDebugTarget';
+        this._environmentSelectionButton.command = 'cmake.selectEnvironments';
+
+        if (this.activeEnvironments !== null) {
+            if (this.activeEnvironments.length) {
+                this._environmentSelectionButton.text = `Working in ${this.activeEnvironments.join(', ')}`;
+            } else {
+                if (this.availableEnvironments.size !== 0) {
+                    this._environmentSelectionButton.text = 'Select a build environment...';
+                } else {
+                    // No environments available. No need to show this button
+                    this._environmentSelectionButton.hide();
+                }
+            }
+        } else {
+            this._environmentSelectionButton.text = 'Detecting available build environments...';
+        }
     }
 
     public get projectName() {
@@ -1362,17 +1453,31 @@ export class CMakeTools {
                    options: ExecuteOptions = {silent: false, environment: {}},
                    parser: util.OutputParser = new NullParser())
     : Promise<ExecutionResult> {
-        return new Promise<ExecutionResult>((resolve, _) => {
+        return new Promise<ExecutionResult>(async (resolve, _) => {
+            await this.loadingEnvironments;
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config.cmakePath, args, {
                 env: Object.assign(
-                    Object.assign({
+                    {
                         // We set NINJA_STATUS to force Ninja to use the format
                         // that we would like to parse
                         NINJA_STATUS: '[%f/%t %p] '
-                    }, options.environment),
+                    },
+                    options.environment,
                     this.config.environment,
+                    this.activeEnvironments!.reduce<any>(
+                        (acc, name) => {
+                            const env_ = this.availableEnvironments.get(name);
+                            console.assert(env_);
+                            const env = env_!;
+                            for (const entry of env.entries()) {
+                                acc[entry[0]] = entry[1];
+                            }
+                            return acc;
+                        },
+                        {}
+                    ),
                     process.env
                 )
             });
