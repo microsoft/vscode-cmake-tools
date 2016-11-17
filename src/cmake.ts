@@ -913,6 +913,13 @@ export class CMakeTools {
             this._setupMetaWatcher();
         }
         this._refreshStatusBarItems();
+        this.testHaveCommand(this.config.cmakePath).then(exists => {
+            if (!exists) {
+                vscode.window.showErrorMessage(
+                    `Bad CMake executable "${this.config.cmakePath}". Is it installed and a valid executable?`
+                );
+            }
+        })
     }
 
     private _wsCacheWatcher: vscode.FileSystemWatcher;
