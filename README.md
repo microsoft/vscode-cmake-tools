@@ -9,11 +9,6 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 
 ## What's New?
 
-For users who were using the `cmake.generator.<platform>`-style configuration options,
-those options has been renamed to the form `cmake.<platform>.generator` to fit
-a new naming convention for config options. Read about the 0.7.3 update for more
-information.
-
 ### **0.7.5**:
   - Fix issue of repeated warnings regarding `${buildType}` in `buildDirectory`.
   - Fix issue with `CMakeToolsHelpers` and Visual Studio generators.

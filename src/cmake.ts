@@ -418,6 +418,10 @@ export class ConfigurationReader {
     get testEnvironment(): Object {
         return this._readPrefixed<Object>('testEnvironment') || {};
     }
+
+    get defaultVariants(): Object {
+        return this._readPrefixed<Object>('defaultVariants') || {};
+    }
 }
 
 /**
@@ -912,6 +916,7 @@ export class CMakeTools {
         if (!this._metaWatcher) {
             this._setupMetaWatcher();
         }
+        this._reloadVariants();
         this._refreshStatusBarItems();
         this.testHaveCommand(this.config.cmakePath).then(exists => {
             if (!exists) {
@@ -919,7 +924,7 @@ export class CMakeTools {
                     `Bad CMake executable "${this.config.cmakePath}". Is it installed and a valid executable?`
                 );
             }
-        })
+        });
     }
 
     private _wsCacheWatcher: vscode.FileSystemWatcher;
@@ -994,7 +999,7 @@ export class CMakeTools {
                 variants = yaml.load(content);
             } catch(e) {
                 vscode.window.showErrorMessage(`${yaml_file} is syntactically invalid.`);
-                variants = util.DEFAULT_VARIANTS;
+                variants = this.config.defaultVariants;
             }
         } else if (await async.exists(json_file)) {
             const content = (await async.readFile(json_file)).toString();
@@ -1002,17 +1007,17 @@ export class CMakeTools {
                 variants = JSON.parse(content);
             } catch(e) {
                 vscode.window.showErrorMessage(`${json_file} is syntactically invalid.`);
-                variants = util.DEFAULT_VARIANTS;
+                variants = this.config.defaultVariants;
             }
         } else {
-            variants = util.DEFAULT_VARIANTS;
+            variants = this.config.defaultVariants;
         }
         const validated = validate(variants);
         if (!validated) {
             const errors = validate.errors as ajv.ErrorObject[];
             const error_strings = errors.map(err => `${err.dataPath}: ${err.message}`);
             vscode.window.showErrorMessage(`Invalid cmake-variants: ${error_strings.join('; ')}`);
-            variants = util.DEFAULT_VARIANTS;
+            variants = this.config.defaultVariants;
         }
         const sets = new Map() as util.VariantSet;
         for (const key in variants) {
@@ -1989,8 +1994,12 @@ export class CMakeTools {
     }
 
     public async setBuildType(): Promise<Number> {
-        await this.setBuildTypeWithoutConfigure();
-        return await this.configure();
+        const do_configure = await this.setBuildTypeWithoutConfigure();
+        if (do_configure) {
+            return await this.configure();
+        } else {
+            return -1;
+        }
     }
 
     public async debugTarget() {
