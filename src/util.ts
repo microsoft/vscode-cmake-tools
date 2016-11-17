@@ -119,6 +119,22 @@ export namespace util {
     activeEnvironments?: string[];
   };
 
+  export function escapeStringForRegex(str: string): string {
+    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+  }
+
+  export function replaceAll(str: string, needle: string, what: string) {
+    const pattern = escapeStringForRegex(needle);
+    const re = new RegExp(pattern, 'g');
+    return str.replace(re, what);
+  }
+
+  export function removeAllPatterns(str: string, patterns: string[]): string {
+    return patterns.reduce((acc, needle) => {
+      return replaceAll(acc, needle, '');
+    }, str);
+  }
+
   export function normalizePath(p: string, normalize_case=true): string {
     let norm = path.normalize(p);
     while (path.sep !== path.posix.sep && norm.includes(path.sep)) {
