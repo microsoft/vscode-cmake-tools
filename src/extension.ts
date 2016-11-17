@@ -27,6 +27,7 @@ export async function activate(context: vscode.ExtensionContext) {
         'stop',
         'debugTarget',
         'selectDebugTarget',
+        'selectEnvironments',
     ]) {
         context.subscriptions.push(register('cmake.' + key, cmake[key as string]));
     }

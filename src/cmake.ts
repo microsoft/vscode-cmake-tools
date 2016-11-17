@@ -9,6 +9,7 @@ import * as ajv from 'ajv';
 import * as vscode from 'vscode';
 
 import * as async from './async';
+import * as environment from './environment';
 import {ctest} from './ctest';
 import {FileDiagnostic,
         DiagnosticParser,
@@ -76,7 +77,7 @@ if(NOT is_set_up)
         _cmt_generate_system_info()
     endmacro()
 
-    if(NOT DEFINED CMAKE_BUILD_TYPE AND DEFINED CMAKE_CONFIGURATION_TYPES)
+    if({{{IS_MULTICONF}}})
         set(condition CONDITION "$<CONFIG:Debug>")
     endif()
 
@@ -417,6 +418,14 @@ export class ConfigurationReader {
     get testEnvironment(): Object {
         return this._readPrefixed<Object>('testEnvironment') || {};
     }
+
+    get defaultVariants(): Object {
+        return this._readPrefixed<Object>('defaultVariants') || {};
+    }
+
+    get ctestArgs(): string[] {
+        return this._readPrefixed<string[]>('ctestArgs') || [];
+    }
 }
 
 /**
@@ -601,6 +610,7 @@ export class CMakeTools {
     private _debugTargetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
     private _testStatusButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.05);
     private _warningMessage = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+    private _environmentSelectionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 200);
     private _failingTestDecorationType = vscode.window.createTextEditorDecorationType({
         borderColor: 'rgba(255, 0, 0, 0.2)',
         borderWidth: '1px',
@@ -910,7 +920,15 @@ export class CMakeTools {
         if (!this._metaWatcher) {
             this._setupMetaWatcher();
         }
+        this._reloadVariants();
         this._refreshStatusBarItems();
+        this.testHaveCommand(this.config.cmakePath).then(exists => {
+            if (!exists) {
+                vscode.window.showErrorMessage(
+                    `Bad CMake executable "${this.config.cmakePath}". Is it installed and a valid executable?`
+                );
+            }
+        });
     }
 
     private _wsCacheWatcher: vscode.FileSystemWatcher;
@@ -985,7 +1003,7 @@ export class CMakeTools {
                 variants = yaml.load(content);
             } catch(e) {
                 vscode.window.showErrorMessage(`${yaml_file} is syntactically invalid.`);
-                variants = util.DEFAULT_VARIANTS;
+                variants = this.config.defaultVariants;
             }
         } else if (await async.exists(json_file)) {
             const content = (await async.readFile(json_file)).toString();
@@ -993,17 +1011,17 @@ export class CMakeTools {
                 variants = JSON.parse(content);
             } catch(e) {
                 vscode.window.showErrorMessage(`${json_file} is syntactically invalid.`);
-                variants = util.DEFAULT_VARIANTS;
+                variants = this.config.defaultVariants;
             }
         } else {
-            variants = util.DEFAULT_VARIANTS;
+            variants = this.config.defaultVariants;
         }
         const validated = validate(variants);
         if (!validated) {
             const errors = validate.errors as ajv.ErrorObject[];
             const error_strings = errors.map(err => `${err.dataPath}: ${err.message}`);
             vscode.window.showErrorMessage(`Invalid cmake-variants: ${error_strings.join('; ')}`);
-            variants = util.DEFAULT_VARIANTS;
+            variants = this.config.defaultVariants;
         }
         const sets = new Map() as util.VariantSet;
         for (const key in variants) {
@@ -1089,11 +1107,79 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
+    public activeEnvironments : Maybe<string[]> = null;
+    public activateEnvironment(name: string) {
+        const env = this.availableEnvironments.get(name);
+        if (!env) {
+            throw new Error(`Invalid environment named ${name}`);
+        }
+        if (!this.activeEnvironments) {
+            throw new Error(`Invalid state: Environments not yet loaded!`);
+        }
+        this.activeEnvironments.push(name);
+        this._refreshStatusBarItems();
+        this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
+        this._writeWorkspaceCacheContent();
+    }
+
+    public deactivateEnvironment(name: string) {
+        if (!this.activeEnvironments) {
+            throw new Error('Invalid state: Environments not yet loaded!');
+        }
+        const idx = this.activeEnvironments.indexOf(name);
+        if (idx >= 0) {
+            this.activeEnvironments.splice(idx, 1);
+            this._refreshStatusBarItems();
+        }
+        this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
+        this._writeWorkspaceCacheContent();
+    }
+
+    private _availableEnvironments : Map<string, Map<string, string>> = new Map();
+    public get availableEnvironments() : Map<string, Map<string, string>> {
+        return this._availableEnvironments;
+    }
+
+    private _loadingEnvironments: Promise<void>;
+    public get loadingEnvironments() : Promise<void> {
+        return this._loadingEnvironments;
+    }
+
+    public async selectEnvironments(): Promise<void> {
+        await this.loadingEnvironments;
+        const entries = Array.from(this.availableEnvironments.keys())
+            .map(name => ({
+                name: name,
+                label: this.activeEnvironments!.indexOf(name) >= 0
+                    ? `$(check) ${name}`
+                    : name,
+                description: '',
+            }));
+        const chosen = await vscode.window.showQuickPick(entries);
+        if (!chosen) {
+            return;
+        }
+        this.activeEnvironments!.indexOf(chosen.name) >= 0
+            ? this.deactivateEnvironment(chosen.name)
+            : this.activateEnvironment(chosen.name);
+    }
+
     private async _init(ctx: vscode.ExtensionContext): Promise<void> {
         this._channel = new ThrottledOutputChannel('CMake/Build');
         //this._channel = vscode.window.createOutputChannel('CMake/Build');
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+
+        // Start loading up available environments early, this may take a few seconds
+        const env_promises = environment.availableEnvironments();
+        for (const pr of env_promises) {
+            pr.then(env => {
+                if (env.variables) {
+                    console.log(`Detected available environemt "${env.name}"`);
+                    this._availableEnvironments.set(env.name, env.variables);
+                }
+            });
+        }
 
         const watcher = this._variantWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, 'cmake-variants.*'));
         watcher.onDidChange(this._reloadVariants.bind(this));
@@ -1126,6 +1212,19 @@ export class CMakeTools {
             console.log('Reloading CMakeTools after configuration change');
             this._reloadConfiguration();
         });
+
+        this._loadingEnvironments = Promise.all(env_promises);
+        this._loadingEnvironments.then(() => {
+            // All environments have been detected, now we can update the UI
+            this.activeEnvironments = [];
+            const envs = this._workspaceCacheContent.activeEnvironments || [];
+            envs.map(e => {
+                if (this.availableEnvironments.has(e)) {
+                    this.activateEnvironment(e);
+                }
+            });
+            this._refreshStatusBarItems();
+        }).catch(e => console.error(e));
 
         if (this.config.initialBuildType !== null) {
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
@@ -1194,6 +1293,7 @@ export class CMakeTools {
                     this._debugButton.text = '$(bug)';
                     this._debugTargetButton.hide();
                 }
+                this._environmentSelectionButton.show();
             } else {
                 this._cmakeToolsStatusItem.hide();
                 this._buildButton.hide();
@@ -1201,6 +1301,7 @@ export class CMakeTools {
                 this._testStatusButton.hide();
                 this._debugButton.hide();
                 this._debugTargetButton.hide();
+                this._environmentSelectionButton.hide();
             }
             if (this._testStatusButton.text == '') {
                 this._testStatusButton.hide();
@@ -1239,6 +1340,22 @@ export class CMakeTools {
         this._debugButton.tooltip = 'Run the debugger on the selected target executable';
         this._debugTargetButton.text = this.currentDebugTarget || '[No target selected for debugging]';
         this._debugTargetButton.command = 'cmake.selectDebugTarget';
+        this._environmentSelectionButton.command = 'cmake.selectEnvironments';
+
+        if (this.activeEnvironments !== null) {
+            if (this.activeEnvironments.length) {
+                this._environmentSelectionButton.text = `Working in ${this.activeEnvironments.join(', ')}`;
+            } else {
+                if (this.availableEnvironments.size !== 0) {
+                    this._environmentSelectionButton.text = 'Select a build environment...';
+                } else {
+                    // No environments available. No need to show this button
+                    this._environmentSelectionButton.hide();
+                }
+            }
+        } else {
+            this._environmentSelectionButton.text = 'Detecting available build environments...';
+        }
     }
 
     public get projectName() {
@@ -1323,9 +1440,9 @@ export class CMakeTools {
     /**
      * @brief Determine if the project is using a multi-config generator
      */
-    public get isMultiConf() {
+    public get isMultiConf(): boolean {
         const gen = this.activeGenerator;
-        return gen && util.isMultiConfGenerator(gen);
+        return !!gen && util.isMultiConfGenerator(gen);
     }
 
     public get activeGenerator(): Maybe<string> {
@@ -1352,17 +1469,31 @@ export class CMakeTools {
                    options: ExecuteOptions = {silent: false, environment: {}},
                    parser: util.OutputParser = new NullParser())
     : Promise<ExecutionResult> {
-        return new Promise<ExecutionResult>((resolve, _) => {
+        return new Promise<ExecutionResult>(async (resolve, _) => {
+            await this.loadingEnvironments;
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config.cmakePath, args, {
                 env: Object.assign(
-                    Object.assign({
+                    {
                         // We set NINJA_STATUS to force Ninja to use the format
                         // that we would like to parse
                         NINJA_STATUS: '[%f/%t %p] '
-                    }, options.environment),
+                    },
+                    options.environment,
                     this.config.environment,
+                    this.activeEnvironments!.reduce<any>(
+                        (acc, name) => {
+                            const env_ = this.availableEnvironments.get(name);
+                            console.assert(env_);
+                            const env = env_!;
+                            for (const entry of env.entries()) {
+                                acc[entry[0]] = entry[1];
+                            }
+                            return acc;
+                        },
+                        {}
+                    ),
                     process.env
                 )
             });
@@ -1602,16 +1733,22 @@ export class CMakeTools {
         }
 
         if (!(await async.exists(this.binaryDir))) {
-            await fs.mkdir(this.binaryDir);
+            await util.ensureDirectory(this.binaryDir);
         }
 
         const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
         if (!(await async.exists(cmt_dir))) {
-            await fs.mkdir(cmt_dir);
+            await util.ensureDirectory(cmt_dir);
         }
 
         const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
-        await util.writeFile(helpers, CMAKETOOLS_HELPER_SCRIPT);
+        const helper_content = util.replaceAll(CMAKETOOLS_HELPER_SCRIPT,
+                                        '{{{IS_MULTICONF}}}',
+                                        is_multi_conf
+                                            ? '1'
+                                            : '0'
+                                        );
+        await util.writeFile(helpers, helper_content);
         const old_path = settings['CMAKE_PREFIX_PATH'] as Array<string> || [];
         settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
             cmt_dir.replace(/\\/g, path.posix.sep)
@@ -1861,8 +1998,12 @@ export class CMakeTools {
     }
 
     public async setBuildType(): Promise<Number> {
-        await this.setBuildTypeWithoutConfigure();
-        return await this.configure();
+        const do_configure = await this.setBuildTypeWithoutConfigure();
+        if (do_configure) {
+            return await this.configure();
+        } else {
+            return -1;
+        }
     }
 
     public async debugTarget() {
@@ -1925,8 +2066,8 @@ export class CMakeTools {
                     'ctest', '-j' + this.numCTestJobs,
                     '-C', this.selectedBuildType || 'Debug',
                     '-T', 'test',
-                    '--output-on-failure'
-                ],
+                    '--output-on-failure',
+                ].concat(this.config.ctestArgs),
                 {
                     silent: false,
                     environment: this.config.testEnvironment,

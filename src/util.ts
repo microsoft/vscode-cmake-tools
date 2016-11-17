@@ -116,7 +116,24 @@ export namespace util {
 
   export interface WorkspaceCache {
     variant?: Maybe<VariantCombination>;
+    activeEnvironments?: string[];
   };
+
+  export function escapeStringForRegex(str: string): string {
+    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+  }
+
+  export function replaceAll(str: string, needle: string, what: string) {
+    const pattern = escapeStringForRegex(needle);
+    const re = new RegExp(pattern, 'g');
+    return str.replace(re, what);
+  }
+
+  export function removeAllPatterns(str: string, patterns: string[]): string {
+    return patterns.reduce((acc, needle) => {
+      return replaceAll(acc, needle, '');
+    }, str);
+  }
 
   export function normalizePath(p: string, normalize_case=true): string {
     let norm = path.normalize(p);
@@ -138,7 +155,15 @@ export namespace util {
     if (!(await async.exists(dirpath))) {
       const parent = path.dirname(dirpath);
       await ensureDirectory(parent);
-      await async.doVoidAsync(fs.mkdir, dirpath);
+      try {
+        await async.doVoidAsync(fs.mkdir, dirpath);
+      } catch(e) {
+        if (e.code == 'EEXIST') {
+          // It already exists, but that's ok
+          return;
+        }
+        throw e;
+      }
     } else {
       if (!(await async.isDirectory(dirpath))) {
         throw new Error(`Failed to create directory: "${dirpath}" is an existing file and is not a directory`);
