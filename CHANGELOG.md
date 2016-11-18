@@ -10,6 +10,7 @@
   workspace.
 - Configuration options for the default build variants.
 - Configuration option for CTest command line arguments.
+- **0.8.1**: Fix deadlock on startup.
 
 ### Version 0.7.0
 

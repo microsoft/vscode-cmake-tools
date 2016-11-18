@@ -18,6 +18,7 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
     workspace.
   - Configuration options for the default build variants.
   - Configuration option for CTest command line arguments.
+  - **0.8.1**: Fix deadlock on startup.
 
 ## Issues? Questions? Feature requests?
 

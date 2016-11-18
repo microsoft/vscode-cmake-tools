@@ -628,7 +628,7 @@ export class CMakeTools {
     });
     private _lastConfigureSettings = {};
     private _needsReconfigure = false;
-    private _workspaceCacheContent: util.WorkspaceCache;
+    private _workspaceCacheContent: util.WorkspaceCache = {};
     private _workspaceCachePath = path.join(vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
@@ -725,7 +725,7 @@ export class CMakeTools {
         return this.cmakeCache;
     }
 
-    private _executableTargets: ExecutableTarget[];
+    private _executableTargets: ExecutableTarget[] = [];
     public get executableTargets() {
         return this._executableTargets;
     }
@@ -1107,7 +1107,7 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    public activeEnvironments : Maybe<string[]> = null;
+    public activeEnvironments : string[] = [];
     public activateEnvironment(name: string) {
         const env = this.availableEnvironments.get(name);
         if (!env) {
@@ -1140,17 +1140,11 @@ export class CMakeTools {
         return this._availableEnvironments;
     }
 
-    private _loadingEnvironments: Promise<void>;
-    public get loadingEnvironments() : Promise<void> {
-        return this._loadingEnvironments;
-    }
-
     public async selectEnvironments(): Promise<void> {
-        await this.loadingEnvironments;
         const entries = Array.from(this.availableEnvironments.keys())
             .map(name => ({
                 name: name,
-                label: this.activeEnvironments!.indexOf(name) >= 0
+                label: this.activeEnvironments.indexOf(name) >= 0
                     ? `$(check) ${name}`
                     : name,
                 description: '',
@@ -1159,7 +1153,7 @@ export class CMakeTools {
         if (!chosen) {
             return;
         }
-        this.activeEnvironments!.indexOf(chosen.name) >= 0
+        this.activeEnvironments.indexOf(chosen.name) >= 0
             ? this.deactivateEnvironment(chosen.name)
             : this.activateEnvironment(chosen.name);
     }
@@ -1170,6 +1164,8 @@ export class CMakeTools {
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
+        await this._refreshWorkspaceCacheContent();
+
         // Start loading up available environments early, this may take a few seconds
         const env_promises = environment.availableEnvironments();
         for (const pr of env_promises) {
@@ -1178,8 +1174,20 @@ export class CMakeTools {
                     console.log(`Detected available environemt "${env.name}"`);
                     this._availableEnvironments.set(env.name, env.variables);
                 }
+            }).catch(e => {
+                debugger;
+                console.log('Error detecting environment', e);
             });
         }
+        await Promise.all(env_promises);
+        // All environments have been detected, now we can update the UI
+        this.activeEnvironments = [];
+        const envs = this._workspaceCacheContent.activeEnvironments || [];
+        envs.map(e => {
+            if (this.availableEnvironments.has(e)) {
+                this.activateEnvironment(e);
+            }
+        });
 
         const watcher = this._variantWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, 'cmake-variants.*'));
         watcher.onDidChange(this._reloadVariants.bind(this));
@@ -1212,19 +1220,6 @@ export class CMakeTools {
             console.log('Reloading CMakeTools after configuration change');
             this._reloadConfiguration();
         });
-
-        this._loadingEnvironments = Promise.all(env_promises);
-        this._loadingEnvironments.then(() => {
-            // All environments have been detected, now we can update the UI
-            this.activeEnvironments = [];
-            const envs = this._workspaceCacheContent.activeEnvironments || [];
-            envs.map(e => {
-                if (this.availableEnvironments.has(e)) {
-                    this.activateEnvironment(e);
-                }
-            });
-            this._refreshStatusBarItems();
-        }).catch(e => console.error(e));
 
         if (this.config.initialBuildType !== null) {
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
@@ -1469,8 +1464,7 @@ export class CMakeTools {
                    options: ExecuteOptions = {silent: false, environment: {}},
                    parser: util.OutputParser = new NullParser())
     : Promise<ExecutionResult> {
-        return new Promise<ExecutionResult>(async (resolve, _) => {
-            await this.loadingEnvironments;
+        return new Promise<ExecutionResult>(async (resolve) => {
             const silent: boolean = options && options.silent || false;
             console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config.cmakePath, args, {
@@ -1482,7 +1476,7 @@ export class CMakeTools {
                     },
                     options.environment,
                     this.config.environment,
-                    this.activeEnvironments!.reduce<any>(
+                    this.activeEnvironments.reduce<any>(
                         (acc, name) => {
                             const env_ = this.availableEnvironments.get(name);
                             console.assert(env_);
