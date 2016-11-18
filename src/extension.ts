@@ -5,7 +5,12 @@ import * as cmake_mod from './cmake';
 
 export async function activate(context: vscode.ExtensionContext) {
     const cmake = new cmake_mod.CMakeTools(context);
-    await cmake.initFinished;
+    try {
+        await cmake.initFinished;
+    } catch (e) {
+        debugger;
+        console.error('Error during CMake Tools initialization!', e);
+    }
     function register(name, fn) {
         fn = fn.bind(cmake);
         return vscode.commands.registerCommand(name, _ => fn());
