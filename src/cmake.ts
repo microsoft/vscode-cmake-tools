@@ -1164,6 +1164,8 @@ export class CMakeTools {
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
+        await this._refreshWorkspaceCacheContent();
+
         // Start loading up available environments early, this may take a few seconds
         const env_promises = environment.availableEnvironments();
         for (const pr of env_promises) {
