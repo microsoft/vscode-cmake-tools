@@ -1239,6 +1239,44 @@ export class CMakeTools {
         this._writeWorkspaceCacheContent();
     }
 
+    public get currentEnvironmentVariables() : {[key: string]: string} {
+        const active_env = this.activeEnvironments.reduce<any>(
+            (acc, name) => {
+                const env_ = this.availableEnvironments.get(name);
+                console.assert(env_);
+                const env = env_!;
+                for (const entry of env.variables.entries()) {
+                    acc[entry[0]] = entry[1];
+                }
+                return acc;
+            },
+            {}
+        );
+        const proc_env = process.env;
+        if (process.platform == 'win32') {
+            // Env vars on windows are case insensitive, so we take the ones from
+            // active env and overwrite the ones in our current process env
+            const norm_active_env = Object.getOwnPropertyNames(active_env).reduce<Object>(
+                (acc, key: string) => {
+                    acc[key.toUpperCase()] = active_env[key];
+                    return acc;
+                },
+                {}
+            );
+            const norm_proc_env = Object.getOwnPropertyNames(proc_env).reduce<Object>(
+                (acc, key: string) => {
+                    acc[key.toUpperCase()] = proc_env[key];
+                    return acc;
+                },
+                {}
+            );
+            return Object.assign({}, norm_proc_env, norm_active_env);
+        } else {
+            return Object.assign({}, proc_env, active_env);
+        }
+    }
+
+
     public deactivateEnvironment(name: string) {
         if (!this.activeEnvironments) {
             throw new Error('Invalid state: Environments not yet loaded!');
@@ -1681,19 +1719,7 @@ export class CMakeTools {
                     },
                     options.environment,
                     this.config.environment,
-                    this.activeEnvironments.reduce<any>(
-                        (acc, name) => {
-                            const env_ = this.availableEnvironments.get(name);
-                            console.assert(env_);
-                            const env = env_!;
-                            for (const entry of env.variables.entries()) {
-                                acc[entry[0]] = entry[1];
-                            }
-                            return acc;
-                        },
-                        {}
-                    ),
-                    process.env
+                    this.currentEnvironmentVariables,
                 )
             });
             const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
