@@ -3,6 +3,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import {util} from './util';
+
 export interface CompilationInfo {
   file: string;
   directory: string;
@@ -18,28 +20,12 @@ export class CompilationDatabase {
     }, new Map<string, CompilationInfo>());
   }
 
-  private _escapeStringForRegex(str: string): string {
-    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-  }
-
-  private _replaceAll(str: string, needle: string, what: string) {
-    const pattern = this._escapeStringForRegex(needle);
-    const re = new RegExp(pattern, 'g');
-    return str.replace(re, what);
-  }
-
-  private _removeAllPatterns(str: string, patterns: string[]): string {
-    return patterns.reduce((acc, needle) => {
-      return this._replaceAll(acc, needle, '');
-    }, str);
-  }
-
   private _normalizeFilePath(fspath: string): string {
-    const no_detail = this._removeAllPatterns(fspath, [
+    const no_detail = util.removeAllPatterns(fspath, [
       'source/', 'src/', 'include/', 'inc/', '.cpp', '.hpp', '.c', '.h', '.cc',
       '.hh', '.cxx', '.hxx', '.c++', '.h++', 'build/', '.m'
     ]);
-    return this._replaceAll(no_detail, path.sep, path.posix.sep);
+    return util.replaceAll(no_detail, path.sep, path.posix.sep);
   }
 
   public getCompilationInfoForUri(uri: vscode.Uri): CompilationInfo | null {

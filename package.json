@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.7.5",
+    "version": "0.8.2",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -45,6 +45,7 @@
         "onCommand:cmake.quickStart",
         "onCommand:cmake.debugTarget",
         "onCommand:cmake.selectDebugTarget",
+        "onCommand:cmake.selectEnvironments",
         "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
@@ -118,6 +119,11 @@
             {
                 "command": "cmake.selectDebugTarget",
                 "title": "Select a Target to Debug",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.selectEnvironments",
+                "title": "Select active build environments",
                 "category": "CMake"
             }
         ],
@@ -387,6 +393,44 @@
                             "type": "string"
                         }
                     }
+                },
+                "cmake.defaultVariants": {
+                    "type": "object",
+                    "$schema": "schemas/variants-schema.json",
+                    "default": {
+                        "buildType": {
+                            "default$": "debug",
+                            "description$": "The build type to use",
+                            "debug": {
+                                "oneWordSummary$": "Debug",
+                                "description$": "Emit debug information without performing optimizations",
+                                "buildType": "Debug"
+                            },
+                            "release": {
+                                "oneWordSummary$": "Release",
+                                "description$": "Enable optimizations, omit debug info",
+                                "buildType": "Release"
+                            },
+                            "minsize": {
+                                "oneWordSummary$": "MinSizeRel",
+                                "description$": "Optimize for smallest binary size",
+                                "buildType": "MinSizeRel"
+                            },
+                            "reldeb": {
+                                "oneWordSummary$": "RelWithDebInfo",
+                                "description$": "Perform optimizations AND include debugging information",
+                                "buildType": "RelWithDebInfo"
+                            }
+                        }
+                    }
+                },
+                "cmake.ctestArgs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Arguments to pass to CTest",
+                    "default": []
                 },
                 "cmake.environment": {
                     "type": "object",

@@ -1,6 +1,18 @@
 
 ## Change History
 
+### **0.8.0**:
+- **Automatic Environment Selection**. CMake Tools will now automatically
+  detect available build environments and let you select them using a
+  quick-pick. This means *no more starting Code from a Visual Studio
+  developer command prompt!* Currently supports Visual Studio 2013 and 2015
+  for x86 and amd64. The environment chosen will be saved and persisted to the
+  workspace.
+- Configuration options for the default build variants.
+- Configuration option for CTest command line arguments.
+- **0.8.1**: Fix deadlock on startup.
+- **0.8.2**: More reliable MSVC environment loading.
+
 ### Version 0.7.0
 
 - **NEW** Greater CTest integration! Test output now has a dedicated output

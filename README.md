@@ -9,32 +9,26 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 
 ## What's New?
 
-For users who were using the `cmake.generator.<platform>`-style configuration options,
-those options has been renamed to the form `cmake.<platform>.generator` to fit
-a new naming convention for config options. Read about the 0.7.3 update for more
-information.
-
-### **0.7.5**:
-  - Fix issue of repeated warnings regarding `${buildType}` in `buildDirectory`.
-  - Fix issue with `CMakeToolsHelpers` and Visual Studio generators.
-  - Fix clear reconfigure failing to clean the build directory.
+### **0.8.0**:
+  - **Automatic Environment Selection**. CMake Tools will now automatically
+    detect available build environments and let you select them using a
+    quick-pick. This means *no more starting Code from a Visual Studio
+    developer command prompt!* Currently supports Visual Studio 2013 and 2015
+    for x86 and amd64. The environment chosen will be saved and persisted to the
+    workspace.
+  - Configuration options for the default build variants.
+  - Configuration option for CTest command line arguments.
+  - **0.8.1**: Fix deadlock on startup.
+  - **0.8.2**: More reliable MSVC environment loading.
 
 ## Issues? Questions? Feature requests?
 
-**PLEASE**, if you experience any issues, create an issue on
+**PLEASE**, if you experience any problems, have any questions, or have an idea
+for a new feature, create an issue on
 [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools)!
 I'm only one person with no QA team, so I can't test all the different possible
 configurations you may have, but I'll gladly help anyone fix issues relating to
 this extension.
-
-## `initialBuildType` Deprecation Notice:
-
-- **The ``initialBuildType`` configuration option is no longer supported**. This
-  option was buggy and surprisingly hard to implement correctly. Now, if CMake
-  Tools doesn't know how you would like to configure your project, it will ask
-  you on the first configure what [build variant](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/docs/build_variants.md) you would
-  like to configure with. The default variants are the same old CMake build
-  types most users are familiar with.
 
 # Getting Started
 
