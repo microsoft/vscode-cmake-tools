@@ -146,6 +146,10 @@ export namespace util {
     if (normalize_case && process.platform === 'win32') {
       norm = norm.toLocaleLowerCase().normalize();
     }
+    norm = norm.replace(/\/$/, '');
+    while (norm.includes('//')) {
+      norm = replaceAll(norm, '//', '/');
+    }
     return norm;
   }
 
