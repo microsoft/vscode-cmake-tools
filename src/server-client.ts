@@ -1,4 +1,8 @@
 import * as proc from 'child_process';
+import * as net from 'net';
+import *  as path from 'path';
+
+import * as util from './util';
 
 const MESSAGE_WRAPPER_RE =
     /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" ==\]\s*([^]*)/;
@@ -217,6 +221,8 @@ interface ClientInit {
   onProgress: (m: ProgressMessage) => Promise<void>;
   onDirty: () => Promise<void>;
   onCrash: (retc: number, signal: string) => Promise<void>;
+  environment: {[key: string]: string};
+  tmpdir: string;
 }
 
 interface MessageResolutionCallbacks {
@@ -242,9 +248,13 @@ export class CMakeServerClient {
   private _accInput: string = '';
   private _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
   private _params: ClientInit;
+  private _endPromise: Promise<void>;
+  private _pipe: net.Socket;
 
   private _onMoreData(data: Uint8Array) {
-    this._accInput += data.toString();
+    const str = data.toString();
+    console.log(`Got data: ${str}`);
+    this._accInput += str;
     while (1) {
       const input = this._accInput;
       let mat = MESSAGE_WRAPPER_RE.exec(input);
@@ -321,9 +331,9 @@ export class CMakeServerClient {
       this._promisesResolvers.set(cookie, {resolve: resolve, reject: reject});
     });
     console.log(`Sending message to cmake-server: ${JSON.stringify(cp)}`);
-    this._proc.stdin.write('\n[== "CMake Server" ==[\n');
-    this._proc.stdin.write(JSON.stringify(cp));
-    this._proc.stdin.write('\n]== "CMake Server" ==]\n');
+    this._pipe.write('\n[== "CMake Server" ==[\n');
+    this._pipe.write(JSON.stringify(cp));
+    this._pipe.write('\n]== "CMake Server" ==]\n');
     return pr;
   }
 
@@ -343,35 +353,53 @@ export class CMakeServerClient {
   }
 
   private _onErrorData(data: Uint8Array) {
-    console.log(data);
+    console.error(data.toString());
   }
 
-  public shutdown(): Promise<number> {
-    return new Promise<number>(resolve => {
-      this._proc.on('exit', (retc: number) => {
-        resolve(retc);
-      });
-      this._proc.stdin.end();
-      // this._proc.kill('SIGTERM');
-    });
+  public async shutdown(): Promise<void> {
+    this._pipe.end();
+    await this._endPromise;
   }
 
   constructor(params: ClientInit) {
     this._params = params;
+    let pipe_file = path.join(params.tmpdir, '.cmserver-pipe');
+    if (process.platform == 'win32') {
+      pipe_file = '\\\\?\\pipe\\' + pipe_file;
+    }
     const child = this._proc = proc.spawn(
-        params.cmakePath, ['-E', 'server', '--experimental', '--debug']);
-    this._proc = child;
-    child.stdout.on('data', this._onMoreData.bind(this));
-    child.stderr.on('data', this._onErrorData.bind(this));
-    child.on('close', (retc: number, signal: string) => {
-      console.error('The connection to cmake-server was terminated unexpectedly');
-      console.error(`cmake-server exited with status ${retc} (${signal})`);
-      if (retc !== 0) {
-        params.onCrash(retc, signal).catch(e => {
-          console.error('Unhandled error in onCrash', e);
+        params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`],
+        {
+          env: params.environment,
         });
-      }
-    });
+    setTimeout(() => {
+      const end_promise = new Promise(resolve => {
+        const pipe = this._pipe = net.createConnection(pipe_file);
+        pipe.on('data', this._onMoreData.bind(this)),
+        pipe.on('end', () => {
+          pipe.end();
+          resolve();
+        });
+      });
+      const exit_promise = new Promise(resolve => {
+        child.on('exit', () => {
+          resolve();
+        });
+      });
+      this._endPromise = Promise.all([end_promise, exit_promise]);
+      this._proc = child;
+      child.stdout.on('data', this._onErrorData.bind(this));
+      child.stderr.on('data', this._onErrorData.bind(this));
+      child.on('close', (retc: number, signal: string) => {
+        console.error('The connection to cmake-server was terminated unexpectedly');
+        console.error(`cmake-server exited with status ${retc} (${signal})`);
+        if (retc !== 0) {
+          params.onCrash(retc, signal).catch(e => {
+            console.error('Unhandled error in onCrash', e);
+          });
+        }
+      });
+    }, 500);
   }
 
 }

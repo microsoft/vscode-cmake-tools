@@ -949,12 +949,16 @@ export class CMakeTools {
         }
     }
 
-    private _reloadConfiguration() {
+    private async _reloadConfiguration() {
         const new_settings = this.config.configureSettings;
         this._needsReconfigure = JSON.stringify(new_settings) !== JSON.stringify(this._lastConfigureSettings);
         this._lastConfigureSettings = new_settings;
         // A config change could require reloading the CMake Cache (ie. changing the build path)
-        this._setupCMakeCacheWatcher();
+        if (!this.serverClient) {
+            this._setupCMakeCacheWatcher();
+        } else if (this._needsReconfigure) {
+            this.restartServerClient();
+        }
         // Use may have disabled build diagnostics.
         if (!this.config.parseBuildDiagnostics) {
             this._diagnostics.clear();
@@ -991,7 +995,9 @@ export class CMakeTools {
 
     private async _refreshWorkspaceCacheContent() {
         this._workspaceCacheContent = await WorkspaceCacheFile.readCache(this._workspaceCachePath, {variant:null});
-        this._setupCMakeCacheWatcher();
+        if (!this.serverClient) {
+            this._setupCMakeCacheWatcher();
+        }
         if (this._workspaceCacheContent.variant) {
             this._activeVariantCombination = this._workspaceCacheContent.variant;
         }
@@ -1169,13 +1175,20 @@ export class CMakeTools {
         return this._globalSettings;
     }
 
-    public restartServerClient(): Promise<CMakeServerClient> {
+    public async restartServerClient(): Promise<CMakeServerClient> {
+        if (this.serverClient) {
+            await this.shutdownServerClient();
+        }
         return this._setupServerClient().then(cl => this._serverClient = cl);
     }
 
-    private _setupServerClient(): Promise<CMakeServerClient> {
+    private async _setupServerClient(): Promise<CMakeServerClient> {
+        console.assert(!this.serverClient, '_setupServerClient called while client is already running');
+        const tmpdir = path.join(vscode.workspace.rootPath, '.vscode');
+        await util.ensureDirectory(tmpdir);
         return new Promise<CMakeServerClient>((resolve, reject) => {
             const client = new CMakeServerClient({
+                tmpdir,
                 cmakePath: this.config.cmakePath,
                 onCrash: async (retc, signal) => {
                     vscode.window.showErrorMessage(`cmake-server crashed with exit code ${retc} (${signal})`);
@@ -1189,10 +1202,24 @@ export class CMakeTools {
                         vscode.window.showErrorMessage('Unable to determine CMake Generator to use');
                         throw new Error('No generator!');
                     }
+                    let src_dir = this.sourceDir;
+                    // Work-around: CMake Server checks that CMAKE_HOME_DIRECTORY
+                    // in the cmake cache is the same as what we provide when we
+                    // set up the connection. Because CMake may normalize the
+                    // path differently than we would, we should make sure that
+                    // we pass the value that is specified in the cache exactly
+                    // to avoid causing CMake server to spuriously fail.
+                    if (await async.exists(this.cachePath)) {
+                        const cache = await CMakeCache.fromPath(this.cachePath);
+                        const home = cache.get('CMAKE_HOME_DIRECTORY');
+                        if (home && util.normalizePath(home.as<string>()) == util.normalizePath(src_dir)) {
+                            src_dir = home.as<string>();
+                        }
+                    }
                     const hs: HandshakeMessage = {
                         type: 'handshake',
                         buildDirectory: this.binaryDir,
-                        sourceDirectory: this.sourceDir,
+                        sourceDirectory: src_dir,
                         extraGenerator: this.config.toolset,
                         generator: generator,
                         protocolVersion: m.supportedProtocolVersions[0]
@@ -1212,6 +1239,10 @@ export class CMakeTools {
                     this.statusMessage = p.progressMessage;
                     this.buildProgress = (p.progressCurrent - p.progressMinimum) / (p.progressMaximum - p.progressMinimum);
                 },
+                environment: Object.assign(
+                    this.config.environment,
+                    this.currentEnvironmentVariables,
+                )
             });
         });
     }
@@ -1237,6 +1268,9 @@ export class CMakeTools {
         this._refreshStatusBarItems();
         this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
         this._writeWorkspaceCacheContent();
+        if (this.serverClient) {
+            this.restartServerClient();
+        }
     }
 
     public get currentEnvironmentVariables() : {[key: string]: string} {
@@ -1382,7 +1416,7 @@ export class CMakeTools {
         if (!this.serverClient) {
             await this._setupCMakeCacheWatcher();
             this._setupMetaWatcher();
-            this._reloadConfiguration();
+            await this._reloadConfiguration();
             await this._refreshTargetList();
         }
 
@@ -1393,7 +1427,7 @@ export class CMakeTools {
         this._needsReconfigure = true;
         vscode.workspace.onDidChangeConfiguration(() => {
             console.log('Reloading CMakeTools after configuration change');
-            this._reloadConfiguration();
+            return this._reloadConfiguration();
         });
 
         if (this.config.initialBuildType !== null) {
@@ -2120,7 +2154,9 @@ export class CMakeTools {
             if (retc !== 0) {
                 return retc;
             }
-            await this.reloadCMakeCache();
+            if (!this.serverClient) {
+                await this.reloadCMakeCache();
+            }
             // We just configured which may change what the "all" target is.
             if (!target_) {
                 target = this.defaultBuildTarget || this.allTargetName;
@@ -2189,6 +2225,10 @@ export class CMakeTools {
         const build_dir = this.binaryDir;
         const cache = this.cachePath;
         const cmake_files = path.join(build_dir, 'CMakeFiles');
+        const have_server = !!this.serverClient;
+        if (have_server) {
+            await this.shutdownServerClient();
+        }
         if (await async.exists(cache)) {
             this._channel.appendLine('[vscode] Removing ' + cache);
             await async.unlink(cache);
@@ -2196,6 +2236,9 @@ export class CMakeTools {
         if (await async.exists(cmake_files)) {
             this._channel.appendLine('[vscode] Removing ' + cmake_files);
             await util.rmdir(cmake_files);
+        }
+        if (have_server) {
+            await this.restartServerClient();
         }
         return await this.configure();
     }
