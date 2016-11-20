@@ -19,6 +19,31 @@ interface EnvironmentProvider {
   [_: string]: any;
 }
 
+const MSVC_ENVIRONMENT_VARIABLES = [
+  'CL',
+  '_CL_',
+  'INCLUDE',
+  'LIBPATH',
+  'LINK',
+  '_LINK_',
+  'LIB',
+  'PATH',
+  'TMP',
+  'FRAMEWORKDIR',
+  'FRAMEWORKDIR64',
+  'FRAMEWORKVERSION',
+  'FRAMEWORKVERSION64',
+  'UCRTCONTEXTROOT',
+  'UCRTVERSION',
+  'UNIVERSALCRTSDKDIR',
+  'VCINSTALLDIR',
+  'VCTARGETSPATH',
+  'WINDOWSLIBPATH',
+  'WINDOWSSDKDIR',
+  'WINDOWSSDKLIBVERSION',
+  'WINDOWSSDKVERSION',
+];
+
 const ENVIRONMENTS: EnvironmentProvider[] = [{
   // Detect Visual C++ environments
   async tryCreateEnvironment(progfiles, dist, arch): Promise<Environment> {
@@ -31,11 +56,10 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
       `@echo off`,
       `call "${vcvarsall}" ${arch}`,
       `if NOT ERRORLEVEL 0 exit 1`,
-      `echo PATH := %PATH%`,
-      `echo LIB := %LIB%`,
-      `echo INCLUDE := %INCLUDE%`,
-      `:end`
     ];
+    for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
+      bat.push(`echo ${envvar} := %${envvar}%`);
+    }
     const fname = Math.random().toString() + '.bat';
     const batpath = path.join(vscode.workspace.rootPath, '.vscode', fname);
     await util.ensureDirectory(path.dirname(batpath));
@@ -70,7 +94,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
       .filter(l => l.length != 0)
       .reduce<Map<string, string>>(
         (acc, line) => {
-          const mat = /(\w+) := (.*)/.exec(line);
+          const mat = /(\w+) := ?(.*)/.exec(line);
           console.assert(!!mat, line);
           acc.set(mat![1], mat![2]);
           return acc;
