@@ -1,9 +1,12 @@
+
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
 import * as async from './async';
 import * as rimraf from 'rimraf';
+
+import {CodeModelConfiguration} from './server-client';
 
 export namespace util {
   export function rmdir(dirpath: string): Promise<void> {
@@ -117,6 +120,7 @@ export namespace util {
   export interface WorkspaceCache {
     variant?: Maybe<VariantCombination>;
     activeEnvironments?: string[];
+    codeModel?: Maybe<CodeModelConfiguration[]>;
   };
 
   export function escapeStringForRegex(str: string): string {
@@ -142,6 +146,10 @@ export namespace util {
     }
     if (normalize_case && process.platform === 'win32') {
       norm = norm.toLocaleLowerCase().normalize();
+    }
+    norm = norm.replace(/\/$/, '');
+    while (norm.includes('//')) {
+      norm = replaceAll(norm, '//', '/');
     }
     return norm;
   }
@@ -182,5 +190,50 @@ export namespace util {
         }
       })
     })
+  }
+
+
+  export interface Version {
+    major: number;
+    minor: number;
+    patch: number;
+  }
+  export function parserVersion(str: string): Version {
+    const version_re = /(\d+)\.(\d+).(\d+)/;
+    const mat = version_re.exec(str);
+    if (!mat) {
+      throw new Error(`Invalid version string ${str}`);
+    }
+    const [major, minor, patch] = mat!;
+    return {
+      major: parseInt(major),
+      minor: parseInt(minor),
+      patch: parseInt(patch),
+    };
+  }
+
+  export function versionGreater(lhs: Version, rhs: Version | string): boolean {
+    if (typeof(rhs) === 'string') {
+      return versionGreater(lhs, parserVersion(rhs));
+    }
+    return lhs.major > rhs.major || (
+      lhs.major == rhs.major &&
+      lhs.minor > rhs.minor
+    ) || (
+      lhs.major == rhs.major &&
+      lhs.minor == rhs.major &&
+      lhs.patch == lhs.patch
+    );
+  }
+
+  export function versionEquals(lhs: Version, rhs: Version | string): boolean {
+    if (typeof(rhs) === 'string') {
+      return versionEquals(lhs, parserVersion(rhs));
+    }
+    return lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch == rhs.patch;
+  }
+
+  export function versionLess(lhs: Version, rhs: Version | string): boolean {
+    return !versionGreater(lhs, rhs) && versionEquals(lhs, rhs);
   }
 }
