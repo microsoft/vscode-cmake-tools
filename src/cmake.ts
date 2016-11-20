@@ -1050,8 +1050,9 @@ export class CMakeTools {
         return this._buildVariants;
     }
     public set buildVariants(v : util.VariantSet) {
+        const before = this.activeVariant;
         this._buildVariants = v;
-        this._needsReconfigure = true;
+        this._needsReconfigure = JSON.stringify(this.activeVariant) !== JSON.stringify(before);
         this._refreshStatusBarItems();
     }
 
@@ -1101,7 +1102,6 @@ export class CMakeTools {
     }
     public set activeVariantCombination(v : util.VariantCombination) {
         this._activeVariantCombination = v;
-        this._needsReconfigure = true;
         this._workspaceCacheContent.variant = v;
         this._writeWorkspaceCacheContent();
         this._refreshStatusBarItems();
@@ -1808,6 +1808,7 @@ export class CMakeTools {
         if (!result.retc) {
             await this._refreshAll();
             await this._reloadConfiguration();
+            this._needsReconfigure = false;
         }
         return result.retc;
     }
