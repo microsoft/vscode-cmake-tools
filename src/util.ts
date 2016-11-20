@@ -6,8 +6,6 @@ import * as fs from 'fs';
 import * as async from './async';
 import * as rimraf from 'rimraf';
 
-import {CodeModelConfiguration} from './server-client';
-
 export namespace util {
   export function rmdir(dirpath: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -120,7 +118,6 @@ export namespace util {
   export interface WorkspaceCache {
     variant?: Maybe<VariantCombination>;
     activeEnvironments?: string[];
-    codeModel?: Maybe<CodeModelConfiguration[]>;
   };
 
   export function escapeStringForRegex(str: string): string {
