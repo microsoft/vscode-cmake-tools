@@ -1625,15 +1625,29 @@ export class CMakeTools {
         return null;
     }
 
-    private async _prebuild() {
+    private async _prebuild(): Promise<boolean> {
         if (this.config.clearOutputBeforeBuild) {
             this._channel.clear();
         }
 
         if (this.config.saveBeforeBuild && vscode.workspace.textDocuments.some(doc => doc.isDirty)) {
             this._channel.appendLine("[vscode] Saving unsaved text documents...");
-            await vscode.workspace.saveAll();
+            const is_good = await vscode.workspace.saveAll();
+            if (!is_good) {
+                const chosen = await vscode.window.showErrorMessage<vscode.MessageItem>(
+                    'Not all open documents were saved. Would you like to build anyway?',
+                    {
+                        title: 'Yes',
+                        isCloseAffordance: false,
+                    },
+                    {
+                        title: 'No',
+                        isCloseAffordance: true,
+                    });
+                return chosen.title === 'Yes';
+            }
         }
+        return true;
     }
 
     public get numJobs(): number {
@@ -1683,8 +1697,12 @@ export class CMakeTools {
             }
         }
 
-        if (run_prebuild)
-            await this._prebuild();
+        if (run_prebuild) {
+            const ok = await this._prebuild();
+            if (!ok) {
+                return -1;
+            }
+        }
 
         const cmake_cache = this.cachePath;
         this._channel.show();
@@ -1843,7 +1861,10 @@ export class CMakeTools {
         if (!target) {
             throw new Error('Unable to determine target to build. Something has gone horribly wrong!');
         }
-        await this._prebuild();
+        const ok = await this._prebuild();
+        if (!ok) {
+            return -1;
+        }
         if (this._needsReconfigure) {
             const retc = await this.configure([], false);
             if (!!retc)
