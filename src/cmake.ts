@@ -1050,8 +1050,9 @@ export class CMakeTools {
         return this._buildVariants;
     }
     public set buildVariants(v : util.VariantSet) {
+        const before = this.activeVariant;
         this._buildVariants = v;
-        this._needsReconfigure = true;
+        this._needsReconfigure = JSON.stringify(this.activeVariant) !== JSON.stringify(before);
         this._refreshStatusBarItems();
     }
 
@@ -1101,7 +1102,6 @@ export class CMakeTools {
     }
     public set activeVariantCombination(v : util.VariantCombination) {
         this._activeVariantCombination = v;
-        this._needsReconfigure = true;
         this._workspaceCacheContent.variant = v;
         this._writeWorkspaceCacheContent();
         this._refreshStatusBarItems();
@@ -1115,6 +1115,14 @@ export class CMakeTools {
         }
         if (!this.activeEnvironments) {
             throw new Error(`Invalid state: Environments not yet loaded!`);
+        }
+        for (const other of this.availableEnvironments.values()) {
+            if (other.mutex === env.mutex && env.mutex !== undefined) {
+                const other_idx = this.activeEnvironments.indexOf(other.name);
+                if (other_idx >= 0) {
+                    this.activeEnvironments.splice(other_idx, 1);
+                }
+            }
         }
         this.activeEnvironments.push(name);
         this._refreshStatusBarItems();
@@ -1135,8 +1143,8 @@ export class CMakeTools {
         this._writeWorkspaceCacheContent();
     }
 
-    private _availableEnvironments : Map<string, Map<string, string>> = new Map();
-    public get availableEnvironments() : Map<string, Map<string, string>> {
+    private _availableEnvironments : Map<string, environment.Environment> = new Map();
+    public get availableEnvironments() : Map<string, environment.Environment> {
         return this._availableEnvironments;
     }
 
@@ -1172,7 +1180,11 @@ export class CMakeTools {
             pr.then(env => {
                 if (env.variables) {
                     console.log(`Detected available environemt "${env.name}"`);
-                    this._availableEnvironments.set(env.name, env.variables);
+                    this._availableEnvironments.set(env.name, {
+                        name: env.name,
+                        variables: env.variables,
+                        mutex: env.mutex
+                    });
                 }
             }).catch(e => {
                 debugger;
@@ -1481,7 +1493,7 @@ export class CMakeTools {
                             const env_ = this.availableEnvironments.get(name);
                             console.assert(env_);
                             const env = env_!;
-                            for (const entry of env.entries()) {
+                            for (const entry of env.variables.entries()) {
                                 acc[entry[0]] = entry[1];
                             }
                             return acc;
@@ -1625,15 +1637,29 @@ export class CMakeTools {
         return null;
     }
 
-    private async _prebuild() {
+    private async _prebuild(): Promise<boolean> {
         if (this.config.clearOutputBeforeBuild) {
             this._channel.clear();
         }
 
         if (this.config.saveBeforeBuild && vscode.workspace.textDocuments.some(doc => doc.isDirty)) {
             this._channel.appendLine("[vscode] Saving unsaved text documents...");
-            await vscode.workspace.saveAll();
+            const is_good = await vscode.workspace.saveAll();
+            if (!is_good) {
+                const chosen = await vscode.window.showErrorMessage<vscode.MessageItem>(
+                    'Not all open documents were saved. Would you like to build anyway?',
+                    {
+                        title: 'Yes',
+                        isCloseAffordance: false,
+                    },
+                    {
+                        title: 'No',
+                        isCloseAffordance: true,
+                    });
+                return chosen.title === 'Yes';
+            }
         }
+        return true;
     }
 
     public get numJobs(): number {
@@ -1683,8 +1709,12 @@ export class CMakeTools {
             }
         }
 
-        if (run_prebuild)
-            await this._prebuild();
+        if (run_prebuild) {
+            const ok = await this._prebuild();
+            if (!ok) {
+                return -1;
+            }
+        }
 
         const cmake_cache = this.cachePath;
         this._channel.show();
@@ -1808,6 +1838,7 @@ export class CMakeTools {
         if (!result.retc) {
             await this._refreshAll();
             await this._reloadConfiguration();
+            this._needsReconfigure = false;
         }
         return result.retc;
     }
@@ -1842,7 +1873,10 @@ export class CMakeTools {
         if (!target) {
             throw new Error('Unable to determine target to build. Something has gone horribly wrong!');
         }
-        await this._prebuild();
+        const ok = await this._prebuild();
+        if (!ok) {
+            return -1;
+        }
         if (this._needsReconfigure) {
             const retc = await this.configure([], false);
             if (!!retc)
