@@ -1116,6 +1116,14 @@ export class CMakeTools {
         if (!this.activeEnvironments) {
             throw new Error(`Invalid state: Environments not yet loaded!`);
         }
+        for (const other of this.availableEnvironments.values()) {
+            if (other.mutex === env.mutex && env.mutex !== undefined) {
+                const other_idx = this.activeEnvironments.indexOf(other.name);
+                if (other_idx >= 0) {
+                    this.activeEnvironments.splice(other_idx, 1);
+                }
+            }
+        }
         this.activeEnvironments.push(name);
         this._refreshStatusBarItems();
         this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
@@ -1135,8 +1143,8 @@ export class CMakeTools {
         this._writeWorkspaceCacheContent();
     }
 
-    private _availableEnvironments : Map<string, Map<string, string>> = new Map();
-    public get availableEnvironments() : Map<string, Map<string, string>> {
+    private _availableEnvironments : Map<string, environment.Environment> = new Map();
+    public get availableEnvironments() : Map<string, environment.Environment> {
         return this._availableEnvironments;
     }
 
@@ -1172,7 +1180,11 @@ export class CMakeTools {
             pr.then(env => {
                 if (env.variables) {
                     console.log(`Detected available environemt "${env.name}"`);
-                    this._availableEnvironments.set(env.name, env.variables);
+                    this._availableEnvironments.set(env.name, {
+                        name: env.name,
+                        variables: env.variables,
+                        mutex: env.mutex
+                    });
                 }
             }).catch(e => {
                 debugger;
@@ -1481,7 +1493,7 @@ export class CMakeTools {
                             const env_ = this.availableEnvironments.get(name);
                             console.assert(env_);
                             const env = env_!;
-                            for (const entry of env.entries()) {
+                            for (const entry of env.variables.entries()) {
                                 acc[entry[0]] = entry[1];
                             }
                             return acc;
