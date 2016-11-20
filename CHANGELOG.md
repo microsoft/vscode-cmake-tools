@@ -11,6 +11,7 @@
 - Configuration options for the default build variants.
 - Configuration option for CTest command line arguments.
 - **0.8.1**: Fix deadlock on startup.
+- **0.8.2**: More reliable MSVC environment loading.
 
 ### Version 0.7.0
 
