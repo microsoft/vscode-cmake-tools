@@ -16,7 +16,7 @@ export interface RawDiagnostic {
 
 
 export function parseGCCDiagnostic(line: string): Maybe<RawDiagnostic> {
-    const gcc_re = /^(.*):(\d+):(\d+):\s+(?:fatal )?(warning|error|note):\s+(.*)$/;
+    const gcc_re = /^(.*):(\d+):(\d+):\s+(?:fatal )?(.*):\s+(.*)$/;
     const res = gcc_re.exec(line);
     if (!res)
         return null;
@@ -36,7 +36,7 @@ export function parseGCCDiagnostic(line: string): Maybe<RawDiagnostic> {
 }
 
 export function parseGNULDDiagnostic(line): Maybe<RawDiagnostic> {
-    const ld_re = /^(.*):(\d+):(\d+):\s+(.*)$/;
+    const ld_re = /^(.*):(\d+)\s+:\s+(.*)$/;
     const res = ld_re.exec(line);
     if (!res) {
         return null;
