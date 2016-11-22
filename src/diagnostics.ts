@@ -36,7 +36,7 @@ export function parseGCCDiagnostic(line: string): Maybe<RawDiagnostic> {
 }
 
 export function parseGNULDDiagnostic(line): Maybe<RawDiagnostic> {
-    const ld_re = /^(.*):(\d+):\s+(.*)$/;
+    const ld_re = /^(.*):(\d+):(\d+):\s+(.*)$/;
     const res = ld_re.exec(line);
     if (!res) {
         return null;
