@@ -1107,7 +1107,7 @@ export class CMakeTools {
         this._refreshStatusBarItems();
     }
 
-    public activeEnvironments : string[] = [];
+    public activeEnvironments: string[] = [];
     public activateEnvironment(name: string) {
         const env = this.availableEnvironments.get(name);
         if (!env) {
@@ -1213,9 +1213,8 @@ export class CMakeTools {
         await this._refreshWorkspaceCacheContent();
 
         // Start loading up available environments early, this may take a few seconds
-        const env_promises = environment.availableEnvironments();
-        for (const pr of env_promises) {
-            pr.then(env => {
+        const env_promises = environment.availableEnvironments().map(
+            pr => pr.then(env => {
                 if (env.variables) {
                     console.log(`Detected available environemt "${env.name}"`);
                     this._availableEnvironments.set(env.name, {
@@ -1226,9 +1225,9 @@ export class CMakeTools {
                 }
             }).catch(e => {
                 debugger;
-                console.log('Error detecting environment', e);
-            });
-        }
+                console.error('Error detecting environment', e);
+            })
+        );
         await Promise.all(env_promises);
         // All environments have been detected, now we can update the UI
         this.activeEnvironments = [];
