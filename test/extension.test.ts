@@ -372,19 +372,19 @@ suite("Utility tests", () => {
             const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
-            const home = process.env['HOME'];
+            const pathvar = process.env['PATH'];
             const outfile = testFilePath('output-file.txt');
             await vscode.workspace.getConfiguration('cmake').update('debugConfig', {
                 args: [
                     '--write-file', outfile,
-                    '--env', 'HOME',
+                    '--env', 'PATH',
                 ]
             });
             await pause(1000);
             await cmt.debugTarget();
             await pause(1000);
             const content = (await async.readFile(outfile)).toString();
-            assert.strictEqual(content, home);
+            assert.strictEqual(content, pathvar);
         });
         test('Debugger gets custom environment variables', async function() {
             const cmt: cmake.CMakeTools = this.cmt;
