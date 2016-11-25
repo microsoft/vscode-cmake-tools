@@ -12,6 +12,9 @@
 - Configuration option for CTest command line arguments.
 - **0.8.1**: Fix deadlock on startup.
 - **0.8.2-4**: More fixes for environment loading.
+- **0.8.5**:
+  - New `${workspaceRootFolderName}` available in config substitution.
+  - New API exported for other extensions. See [here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/src/api.ts).
 
 ### Version 0.7.0
 
