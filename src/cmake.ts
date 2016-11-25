@@ -16,6 +16,8 @@ import {FileDiagnostic,
         diagnosticParsers,
         } from './diagnostics';
 import {util} from './util';
+import {CompilationDatabase} from './compdb';
+import {ExecuteOptions, ExecutionResult, CompilationInfo, CMakeToolsAPI} from './api';
 
 type Maybe<T> = util.Maybe<T>;
 
@@ -118,11 +120,6 @@ export function isTruthy(value: (boolean | string | null | undefined | number)) 
     return !!value;
 }
 
-interface ExecuteOptions {
-    silent: boolean;
-    environment: Object;
-};
-
 interface ExecutableTarget {
     name: string;
     path: string;
@@ -137,10 +134,6 @@ export enum EntryType {
     Uninitialized,
     Static,
 };
-
-interface ExecutionResult {
-    retc: Number;
-}
 
 interface Test {
     id: number;
@@ -598,7 +591,7 @@ class ThrottledOutputChannel implements vscode.OutputChannel {
     }
 }
 
-export class CMakeTools {
+export class CMakeTools implements CMakeToolsAPI {
     private _context: vscode.ExtensionContext;
     private _channel: vscode.OutputChannel;
     private _ctestChannel: vscode.OutputChannel;
@@ -632,6 +625,7 @@ export class CMakeTools {
     private _workspaceCachePath = path.join(vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
+    private _compilationDatabase: Promise<Maybe<CompilationDatabase>> = Promise.resolve(null);
     public os: Maybe<string> = null;
     public systemProcessor: Maybe<string> = null;
     public compilerId: Maybe<string> = null;
@@ -1410,11 +1404,20 @@ export class CMakeTools {
         return cached ? cached.as<string>() : 'Unnamed Project';
     }
 
+    public async compilationInfoForFile(filepath: string): Promise<CompilationInfo|null> {
+        const db = await this._compilationDatabase;
+        if (!db) {
+            return null;
+        }
+        return db.getCompilationInfoForUri(vscode.Uri.file(filepath));
+    }
+
     private async _refreshAll() {
         await this.reloadCMakeCache();
         await this._refreshTargetList();
         await this._reloadMetaData();
         await this._refreshTests();
+        this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
     }
 
     /**
@@ -1429,7 +1432,7 @@ export class CMakeTools {
         const generator = this.activeGenerator;
         if (generator && /(Unix|MinGW|NMake) Makefiles|Ninja/.test(generator)) {
             const parser = new CMakeTargetListParser();
-            await this.execute(['--build', this.binaryDir, '--target', 'help'], {
+            await this.executeCMakeCommand(['--build', this.binaryDir, '--target', 'help'], {
                 silent: true,
                 environment: {}
             }, parser);
@@ -1439,11 +1442,23 @@ export class CMakeTools {
         return this._targets;
     }
 
+    public replaceVars(str: string): string {
+        const replacements = [
+            ['${buildType}', this.selectedBuildType || 'Unknown'],
+            ['${workspaceRoot}', vscode.workspace.rootPath],
+            ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
+        ] as [string, string][];
+        return replacements.reduce(
+            (accdir, [needle, what]) => util.replaceAll(accdir, needle, what),
+            str,
+        );
+    }
+
     /**
      * @brief Read the source directory from the config
      */
     public get sourceDir(): string {
-        const dir = this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        const dir = this.replaceVars(this.config.sourceDirectory);
         return util.normalizePath(dir);
     }
 
@@ -1459,9 +1474,7 @@ export class CMakeTools {
      * @brief Get the path to the binary dir
      */
     public get binaryDir(): string {
-        const dir = this.config.buildDirectory
-            .replace('${workspaceRoot}', vscode.workspace.rootPath)
-            .replace('${buildType}', this.selectedBuildType || 'Unknown');
+        const dir = this.replaceVars(this.config.buildDirectory);
         return util.normalizePath(dir, false);
     }
 
@@ -1506,16 +1519,24 @@ export class CMakeTools {
         return (gen && /Visual Studio/.test(gen)) ? 'ALL_BUILD' : 'all';
     }
 
+    public executeCMakeCommand(args: string[],
+                               options: ExecuteOptions = {silent: false, environment: {}},
+                               parser: util.OutputParser = new NullParser)
+    : Promise<ExecutionResult> {
+        console.info('Execute cmake with arguments:', args);
+        return this.execute(this.config.cmakePath, args, options, parser);
+    }
+
     /**
      * @brief Execute a CMake command. Resolves to the result of the execution.
      */
-    public execute(args: string[],
+    public execute(program: string,
+                   args: string[],
                    options: ExecuteOptions = {silent: false, environment: {}},
                    parser: util.OutputParser = new NullParser())
     : Promise<ExecutionResult> {
         return new Promise<ExecutionResult>(async (resolve) => {
             const silent: boolean = options && options.silent || false;
-            console.info('Execute cmake with arguments:', args);
             const pipe = proc.spawn(this.config.cmakePath, args, {
                 env: Object.assign(
                     {
@@ -1528,16 +1549,14 @@ export class CMakeTools {
                     this.currentEnvironmentVariables,
                 )
             });
-            const status = msg => vscode.window.setStatusBarMessage(msg, 4000);
             if (!silent) {
                 this.currentChildProcess = pipe;
-                status('Executing CMake...');
                 this._channel.appendLine(
-                    '[vscode] Executing cmake command: cmake '
+                    '[vscode] Executing command: '
                     // We do simple quoting of arguments with spaces.
                     // This is only shown to the user,
                     // and doesn't have to be 100% correct.
-                    + args
+                    + [program].concat(args)
                         .map(a => a.replace('"', '\"'))
                         .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
                         .join(' ')
@@ -1598,7 +1617,7 @@ export class CMakeTools {
                 }
                 this._channel.appendLine('[vscode] CMake exited with status ' + retc);
                 if (retc !== null) {
-                    status('CMake exited with status ' + retc);
+                    vscode.window.setStatusBarMessage('CMake exited with status ' + retc, 4000);
                     if (retc !== 0) {
                         this._warningMessage.color = 'yellow';
                         this._warningMessage.text = `$(alert) CMake failed with status ${retc}. See CMake/Build output for details`;
@@ -1819,10 +1838,8 @@ export class CMakeTools {
             }
             if (typeof(value) === 'string') {
                 typestr = 'STRING';
-                value = (value as string)
-                    .replace(';', '\\;')
-                    .replace('${workspaceRoot}', vscode.workspace.rootPath)
-                    .replace('${buildType}', this.selectedBuildType || 'Unknown');
+                value = this.replaceVars(value)
+                value = util.replaceAll(value, ';', '\\;');
             }
             if (value instanceof Number || typeof value === 'number') {
                 typestr = 'STRING';
@@ -1838,15 +1855,13 @@ export class CMakeTools {
         await util.writeFile(init_cache_path, initial_cache_content.join('\n'));
         let prefix = this.config.installPrefix;
         if (prefix && prefix !== "") {
-            prefix = prefix
-                .replace('${workspaceRoot}', vscode.workspace.rootPath)
-                .replace('${buildType}', this.selectedBuildType || 'Unknown');
+            prefix = this.replaceVars(prefix);
             settings_args.push("-DCMAKE_INSTALL_PREFIX=" + prefix);
         }
 
         const binary_dir = this.binaryDir;
         this.statusMessage = 'Configuring...';
-        const result = await this.execute(
+        const result = await this.executeCMakeCommand(
             ['-H' + this.sourceDir.replace(/\\/g, path.posix.sep),
              '-B' + binary_dir.replace(/\\/g, path.posix.sep),
              '-C' + init_cache_path]
@@ -1921,7 +1936,7 @@ export class CMakeTools {
         })();
         this._channel.show();
         this.statusMessage = 'Building...';
-        const result = await this.execute([
+        const result = await this.executeCMakeCommand([
             '--build', this.binaryDir,
             '--target', target,
             '--config', this.selectedBuildType || 'Debug',
@@ -2113,7 +2128,7 @@ export class CMakeTools {
             return build_retc;
         }
         const retc = (
-            await this.execute(
+            await this.executeCMakeCommand(
                 [
                     '-E', 'chdir', this.binaryDir,
                     'ctest', '-j' + this.numCTestJobs,

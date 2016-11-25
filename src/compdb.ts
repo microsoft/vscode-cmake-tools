@@ -5,11 +5,7 @@ import * as path from 'path';
 
 import {util} from './util';
 
-export interface CompilationInfo {
-  file: string;
-  directory: string;
-  command: string;
-}
+import {CompilationInfo} from './api';
 
 export class CompilationDatabase {
   private _info_by_filepath: Map<string, CompilationInfo>;
@@ -25,7 +21,7 @@ export class CompilationDatabase {
       'source/', 'src/', 'include/', 'inc/', '.cpp', '.hpp', '.c', '.h', '.cc',
       '.hh', '.cxx', '.hxx', '.c++', '.h++', 'build/', '.m'
     ]);
-    return util.replaceAll(no_detail, path.sep, path.posix.sep);
+    return util.normalizePath(no_detail);
   }
 
   public getCompilationInfoForUri(uri: vscode.Uri): CompilationInfo | null {
