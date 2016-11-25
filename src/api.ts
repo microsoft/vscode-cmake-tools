@@ -5,7 +5,13 @@ export interface ExecutionResult {
 export interface ExecuteOptions {
     silent: boolean;
     environment: Object;
-};
+}
+
+export interface CompilationInfo {
+    command: string;
+    directory: string;
+    file: string;
+}
 
 export interface CMakeToolsAPI {
     sourceDir: string;
@@ -16,4 +22,6 @@ export interface CMakeToolsAPI {
     execute(program: string,
             args: string[],
             options?: ExecuteOptions): Promise<ExecutionResult>;
+
+    compilationInfoForFile(filepath: string): Promise<CompilationInfo | null>;
 }

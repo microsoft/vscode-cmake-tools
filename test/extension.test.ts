@@ -409,6 +409,13 @@ suite("Utility tests", () => {
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, test_string);
         });
+        test('Get compilation info for a file', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.configure();
+            assert.strictEqual(retc, 0);
+            const info = await cmt.compilationInfoForFile(testFilePath('test_project/main.cpp'));
+            assert(info);
+        });
         teardown(function() {
             const cmt: cmake.CMakeTools = this.cmt;
             if (fs.existsSync(cmt.binaryDir)) {

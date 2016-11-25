@@ -16,7 +16,8 @@ import {FileDiagnostic,
         diagnosticParsers,
         } from './diagnostics';
 import {util} from './util';
-import {ExecuteOptions, ExecutionResult, CMakeToolsAPI} from './api';
+import {CompilationDatabase} from './compdb';
+import {ExecuteOptions, ExecutionResult, CompilationInfo, CMakeToolsAPI} from './api';
 
 type Maybe<T> = util.Maybe<T>;
 
@@ -624,6 +625,7 @@ export class CMakeTools implements CMakeToolsAPI {
     private _workspaceCachePath = path.join(vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
     private _targets: string[] = [];
     private _variantWatcher: vscode.FileSystemWatcher;
+    private _compilationDatabase: Promise<Maybe<CompilationDatabase>> = Promise.resolve(null);
     public os: Maybe<string> = null;
     public systemProcessor: Maybe<string> = null;
     public compilerId: Maybe<string> = null;
@@ -1402,11 +1404,20 @@ export class CMakeTools implements CMakeToolsAPI {
         return cached ? cached.as<string>() : 'Unnamed Project';
     }
 
+    public async compilationInfoForFile(filepath: string): Promise<CompilationInfo|null> {
+        const db = await this._compilationDatabase;
+        if (!db) {
+            return null;
+        }
+        return db.getCompilationInfoForUri(vscode.Uri.file(filepath));
+    }
+
     private async _refreshAll() {
         await this.reloadCMakeCache();
         await this._refreshTargetList();
         await this._reloadMetaData();
         await this._refreshTests();
+        this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
     }
 
     /**
