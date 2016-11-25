@@ -1439,11 +1439,23 @@ export class CMakeTools {
         return this._targets;
     }
 
+    public replaceVars(str: string): string {
+        const replacements = [
+            ['${buildType}', this.selectedBuildType || 'Unknown'],
+            ['${workspaceRoot}', vscode.workspace.rootPath],
+            ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
+        ] as [string, string][];
+        return replacements.reduce(
+            (accdir, [needle, what]) => util.replaceAll(accdir, needle, what),
+            str,
+        );
+    }
+
     /**
      * @brief Read the source directory from the config
      */
     public get sourceDir(): string {
-        const dir = this.config.sourceDirectory.replace('${workspaceRoot}', vscode.workspace.rootPath);
+        const dir = this.replaceVars(this.config.sourceDirectory);
         return util.normalizePath(dir);
     }
 
@@ -1459,16 +1471,7 @@ export class CMakeTools {
      * @brief Get the path to the binary dir
      */
     public get binaryDir(): string {
-        const config_bd = this.config.buildDirectory;
-        const replacements = [
-            ['${buildType}', this.selectedBuildType || 'Unknown'],
-            ['${workspaceRoot}', vscode.workspace.rootPath],
-            ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
-        ] as [string, string][];
-        const dir = replacements.reduce(
-            (accdir, [needle, what]) => util.replaceAll(accdir, needle, what),
-            this.config.buildDirectory,
-        );
+        const dir = this.replaceVars(this.config.buildDirectory);
         return util.normalizePath(dir, false);
     }
 
@@ -1826,10 +1829,8 @@ export class CMakeTools {
             }
             if (typeof(value) === 'string') {
                 typestr = 'STRING';
-                value = (value as string)
-                    .replace(';', '\\;')
-                    .replace('${workspaceRoot}', vscode.workspace.rootPath)
-                    .replace('${buildType}', this.selectedBuildType || 'Unknown');
+                value = this.replaceVars(value)
+                value = util.replaceAll(value, ';', '\\;');
             }
             if (value instanceof Number || typeof value === 'number') {
                 typestr = 'STRING';
@@ -1845,9 +1846,7 @@ export class CMakeTools {
         await util.writeFile(init_cache_path, initial_cache_content.join('\n'));
         let prefix = this.config.installPrefix;
         if (prefix && prefix !== "") {
-            prefix = prefix
-                .replace('${workspaceRoot}', vscode.workspace.rootPath)
-                .replace('${buildType}', this.selectedBuildType || 'Unknown');
+            prefix = this.replaceVars(prefix);
             settings_args.push("-DCMAKE_INSTALL_PREFIX=" + prefix);
         }
 
