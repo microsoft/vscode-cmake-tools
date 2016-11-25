@@ -1459,9 +1459,16 @@ export class CMakeTools {
      * @brief Get the path to the binary dir
      */
     public get binaryDir(): string {
-        const dir = this.config.buildDirectory
-            .replace('${workspaceRoot}', vscode.workspace.rootPath)
-            .replace('${buildType}', this.selectedBuildType || 'Unknown');
+        const config_bd = this.config.buildDirectory;
+        const replacements = [
+            ['${buildType}', this.selectedBuildType || 'Unknown'],
+            ['${workspaceRoot}', vscode.workspace.rootPath],
+            ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
+        ] as [string, string][];
+        const dir = replacements.reduce(
+            (accdir, [needle, what]) => util.replaceAll(accdir, needle, what),
+            this.config.buildDirectory,
+        );
         return util.normalizePath(dir, false);
     }
 
