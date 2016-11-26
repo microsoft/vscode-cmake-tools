@@ -1537,7 +1537,7 @@ export class CMakeTools implements CMakeToolsAPI {
     : Promise<ExecutionResult> {
         return new Promise<ExecutionResult>(async (resolve) => {
             const silent: boolean = options && options.silent || false;
-            const pipe = proc.spawn(this.config.cmakePath, args, {
+            const pipe = proc.spawn(program, args, {
                 env: Object.assign(
                     {
                         // We set NINJA_STATUS to force Ninja to use the format
@@ -1585,7 +1585,7 @@ export class CMakeTools implements CMakeToolsAPI {
             emitLines(pipe.stderr);
 
             pipe.stdout.on('line', (line: string) => {
-                console.log('cmake [stdout]: ' + line);
+                console.log(program + ' [stdout]: ' + line);
                 const progress = parser.parseLine(line);
                 if (!silent) {
                     this._channel.appendLine(line);
@@ -1594,7 +1594,7 @@ export class CMakeTools implements CMakeToolsAPI {
                 }
             });
             pipe.stderr.on('line', (line: string) => {
-                console.log('cmake [stderr]: ' + line);
+                console.log(program + ' [stderr]: ' + line);
                 const progress = parser.parseLine(line);
                 if (!silent) {
                     if (progress)
@@ -1608,19 +1608,20 @@ export class CMakeTools implements CMakeToolsAPI {
                 if (parser instanceof BuildParser) {
                     parser.fillDiagnosticCollection(this._diagnostics);
                 }
-                console.log('cmake exited with return code ' + retc);
+                console.log(program + ' exited with return code ' + retc);
                 if (silent) {
                     resolve({
                         retc: retc,
                     });
                     return;
                 }
-                this._channel.appendLine('[vscode] CMake exited with status ' + retc);
+                const msg = `${program} existed with status ${retc}`;
+                this._channel.appendLine('[vscode] ' + msg);
                 if (retc !== null) {
-                    vscode.window.setStatusBarMessage('CMake exited with status ' + retc, 4000);
+                    vscode.window.setStatusBarMessage(msg, 4000);
                     if (retc !== 0) {
                         this._warningMessage.color = 'yellow';
-                        this._warningMessage.text = `$(alert) CMake failed with status ${retc}. See CMake/Build output for details`;
+                        this._warningMessage.text = `$(alert) ${program} failed with status ${retc}. See CMake/Build output for details`;
                         this._warningMessage.show();
                         setTimeout(() => this._warningMessage.hide(), 5000);
                     }
