@@ -136,6 +136,48 @@ suite("Utility tests", () => {
             assert(path.posix.isAbsolute(diag.file));
         }
     });
+    test('Parsing fatal error diagnostics in french', () => {
+        const line = '/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type';
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 1);
+            assert.strictEqual(diag.message, 'bonjour.h : Aucun fichier ou dossier de ce type');
+            assert.strictEqual(diag.column, 20);
+            assert.strictEqual(diag.file, '/home/romain/TL/test/base.c');
+            assert.strictEqual(diag.severity, 'erreur');
+            assert.strictEqual(path.posix.normalize(diag.file), diag.file);
+            assert(path.posix.isAbsolute(diag.file));
+        }
+    });
+    test('Parsing warning diagnostics', () => {
+        const line = "/some/path/here:4:26: warning: unused parameter 'data'";
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 3);
+            assert.strictEqual(diag.message, "unused parameter 'data'");
+            assert.strictEqual(diag.column, 25);
+            assert.strictEqual(diag.file, '/some/path/here');
+            assert.strictEqual(diag.severity, 'warning');
+            assert.strictEqual(path.posix.normalize(diag.file), diag.file);
+            assert(path.posix.isAbsolute(diag.file));
+        }
+    });
+    test('Parsing warning diagnostics in french', () => {
+        const line = '/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’';
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 154);
+            assert.strictEqual(diag.message, 'déclaration implicite de la fonction ‘create’');
+            assert.strictEqual(diag.column, 1);
+            assert.strictEqual(diag.file, '/home/romain/TL/test/base.c');
+            assert.strictEqual(diag.severity, 'attention');
+            assert.strictEqual(path.posix.normalize(diag.file), diag.file);
+            assert(path.posix.isAbsolute(diag.file));
+        }
+    });
     test('Parsing linker error', () => {
         const line = "/some/path/here:101: undefined reference to `some_function'";
         const diag = diagnostics.parseGNULDDiagnostic(line);
@@ -144,6 +186,19 @@ suite("Utility tests", () => {
             assert.strictEqual(diag.line, 100);
             assert.strictEqual(diag.message, "undefined reference to `some_function'");
             assert.strictEqual(diag.file, '/some/path/here');
+            assert.strictEqual(diag.severity, 'error');
+            assert.strictEqual(path.posix.normalize(diag.file), diag.file);
+            assert(path.posix.isAbsolute(diag.file));
+        }
+    });
+    test('Parsing linker error in french', () => {
+        const line = "/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »";
+        const diag = diagnostics.parseGNULDDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 8);
+            assert.strictEqual(diag.message, "référence indéfinie vers « create_automaton_product56 »");
+            assert.strictEqual(diag.file, '/home/romain/TL/test/test_fa_tp4.c');
             assert.strictEqual(diag.severity, 'error');
             assert.strictEqual(path.posix.normalize(diag.file), diag.file);
             assert(path.posix.isAbsolute(diag.file));
@@ -321,19 +376,19 @@ suite("Utility tests", () => {
             const cmt: cmake.CMakeTools = store.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
-            const home = process.env['HOME'];
+            const pathvar = process.env['PATH'];
             const outfile = testFilePath('output-file.txt');
             await vscode.workspace.getConfiguration('cmake').update('debugConfig', {
                 args: [
                     '--write-file', outfile,
-                    '--env', 'HOME',
+                    '--env', 'PATH',
                 ]
             });
             await pause(1000);
             await cmt.debugTarget();
             await pause(1000);
             const content = (await async.readFile(outfile)).toString();
-            assert.strictEqual(content, home);
+            assert.strictEqual(content, pathvar);
         });
         test(`Debugger gets custom environment variables (${subDescription})`, async () => {
             const cmt: cmake.CMakeTools = store.cmt;
@@ -358,8 +413,15 @@ suite("Utility tests", () => {
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, test_string);
         });
-        teardown(() => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Get compilation info for a file', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
+            const retc = await cmt.configure();
+            assert.strictEqual(retc, 0);
+            const info = await cmt.compilationInfoForFile(testFilePath('test_project/main.cpp'));
+            assert(info);
+        });
+        teardown(function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const using_server = !!cmt.serverClient;
             if (using_server) {
                 cmt.shutdownServerClient();

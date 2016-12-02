@@ -132,7 +132,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
       name: 'Visual C++ 14.0',
       variable: 'VS140COMNTOOLS',
     }];
-    const archs = ['x86', 'amd64', 'x64_arm'];
+    const archs = ['x86', 'amd64', 'amd64_arm'];
     type PEnv = Promise<Maybe<Environment>>;
     const prom_environments =
       dists.reduce<PEnv[]>(

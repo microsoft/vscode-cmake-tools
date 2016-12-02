@@ -19,8 +19,11 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   - Configuration options for the default build variants.
   - Configuration option for CTest command line arguments.
   - **0.8.1**: Fix deadlock on startup.
-  - **0.8.2**: More reliable MSVC environment loading.
-  - **0.8.3**: More fixes for environment loading.
+  - **0.8.2-4**: More fixes for environment loading.
+  - **0.8.5**:
+    - New `${workspaceRootFolderName}` available in config substitution.
+    - New API exported for other extensions. See [here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/src/api.ts).
+
 
 ## Issues? Questions? Feature requests?
 
