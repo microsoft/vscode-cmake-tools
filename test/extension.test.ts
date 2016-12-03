@@ -272,86 +272,85 @@ suite("Utility tests", () => {
 
     const store: any = {};
     function smokeTests(subDescription: string, preSetup: () => Promise<any>) {
-        // debugger;
-        // this.timeout(60 * 1000); // These tests are slower than just unit tests
-        // setup(async () => {
-        //     await preSetup();
-        //     const cmt = await getExtension();
-        //     store.cmt = cmt;
-        //     cmt.activeVariantCombination = {
-        //         keywordSettings: new Map<string, string>([
-        //             ['buildType', 'debug']
-        //         ]),
-        //         description: 'Smoke Testing configuration',
-        //         label: 'Debug (Smoke Testing)'
-        //     };
-        //     const exists = await new Promise<boolean>(resolve => {
-        //         fs.exists(cmt.binaryDir, resolve);
-        //     });
-        //     // Pause before starting each test. There is trouble on NTFS because
-        //     // removing files doesn't actually remove them, which can cause
-        //     // spurious test failures when we are rapidly adding/removing files
-        //     // in the build directory
-        //     await pause(1000);
-        //     await new Promise(resolve => exists ? rimraf(cmt.binaryDir, resolve) : resolve());
-        // });
-        // test(`Can configure (${subDescription})`, async () => {
-        //     const cmt: cmake.CMakeTools = store.cmt;
-        //     const retc = await cmt.configure();
-        //     assert.strictEqual(retc, 0);
-        // });
-        // test(`Can build named target (${subDescription})`, async () => {
-        //     const cmt: cmake.CMakeTools = store.cmt;
-        //     const retc = await cmt.build('MyExecutable');
-        //     assert.strictEqual(retc, 0);
-        // });
-        // test(`Non-existent target fails (${subDescription})`, async () => {
-        //     const cmt: cmake.CMakeTools = store.cmt;
-        //     const retc = await cmt.build('ThisIsNotAnExistingTarget');
-        //     assert.notStrictEqual(retc, 0);
-        // });
-        // test(`Can execute CTest tests (${subDescription})`, async () => {
-        //     const cmt: cmake.CMakeTools = store.cmt;
-        //     const retc = await cmt.ctest();
-        //     assert.strictEqual(retc, 0);
-        // });
-        // test(`Finds executable targets (${subDescription})`, async () => {
-        //     const cmt: cmake.CMakeTools = store.cmt;
-        //     const retc = await cmt.configure();
-        //     assert.strictEqual(retc, 0, 'Configure failed');
-        //     const targets = cmt.executableTargets;
-        //     assert.strictEqual(targets.length, 1, 'Executable targets are missing');
-        //     assert.strictEqual(targets[0].name, 'MyExecutable');
-        // });
-        // test(`CMake Diagnostic Parsing (${subDescription})`, async () => {
-        //     const cmt: cmake.CMakeTools = store.cmt;
-        //     const retc = await cmt.configure(['-DWARNING_COOKIE=this-is-a-warning-cookie']);
-        //     assert.strictEqual(retc, 0);
-        //     const diags: vscode.Diagnostic[] = [];
-        //     cmt.diagnostics.forEach((d, diags_) => diags.push(...diags_));
-        //     assert.strictEqual(diags.length, 1);
-        //     const diag = diags[0];
-        //     assert.strictEqual(diag.source, 'CMake (message)');
-        //     assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Warning);
-        //     assert(diag.message.includes('this-is-a-warning-cookie'));
-        // });
-        // test(`Compile Error Parsing (${subDescription})`, async () => {
-        //     const cmt: cmake.CMakeTools = store.cmt;
-        //     const config_retc = await cmt.configure(['-DCAUSE_BUILD_ERROR=TRUE']);
-        //     assert.strictEqual(config_retc, 0);
-        //     const build_retc = await cmt.build();
-        //     assert.notStrictEqual(build_retc, 0);
-        //     const diags: vscode.Diagnostic[] = [];
-        //     cmt.diagnostics.forEach((_d, diags_) => diags.push(...diags_));
-        //     assert.strictEqual(diags.length, 1);
-        //     const diag = diags[0];
-        //     // These lines are hardcoded purposefully. They are one less than
-        //     // the displayed line number in the main.cpp in the test_project
-        //     assert.strictEqual(diag.range.start.line, 6);
-        //     assert.strictEqual(diag.range.end.line, 6);
-        //     assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Error);
-        //     assert(diag.message.includes('special-error-cookie asdfqwerty'));
-        // });
+        this.timeout(60 * 1000); // These tests are slower than just unit tests
+        setup(async () => {
+            await preSetup();
+            const cmt = await getExtension();
+            store.cmt = cmt;
+            cmt.activeVariantCombination = {
+                keywordSettings: new Map<string, string>([
+                    ['buildType', 'debug']
+                ]),
+                description: 'Smoke Testing configuration',
+                label: 'Debug (Smoke Testing)'
+            };
+            const exists = await new Promise<boolean>(resolve => {
+                fs.exists(cmt.binaryDir, resolve);
+            });
+            // Pause before starting each test. There is trouble on NTFS because
+            // removing files doesn't actually remove them, which can cause
+            // spurious test failures when we are rapidly adding/removing files
+            // in the build directory
+            await pause(500);
+            await new Promise(resolve => exists ? rimraf(cmt.binaryDir, resolve) : resolve());
+        });
+        test(`Can configure (${subDescription})`, async () => {
+            const cmt: cmake.CMakeTools = store.cmt;
+            const retc = await cmt.configure();
+            assert.strictEqual(retc, 0);
+        });
+        test(`Can build named target (${subDescription})`, async () => {
+            const cmt: cmake.CMakeTools = store.cmt;
+            const retc = await cmt.build('MyExecutable');
+            assert.strictEqual(retc, 0);
+        });
+        test(`Non-existent target fails (${subDescription})`, async () => {
+            const cmt: cmake.CMakeTools = store.cmt;
+            const retc = await cmt.build('ThisIsNotAnExistingTarget');
+            assert.notStrictEqual(retc, 0);
+        });
+        test(`Can execute CTest tests (${subDescription})`, async () => {
+            const cmt: cmake.CMakeTools = store.cmt;
+            const retc = await cmt.ctest();
+            assert.strictEqual(retc, 0);
+        });
+        test(`Finds executable targets (${subDescription})`, async () => {
+            const cmt: cmake.CMakeTools = store.cmt;
+            const retc = await cmt.configure();
+            assert.strictEqual(retc, 0, 'Configure failed');
+            const targets = cmt.executableTargets;
+            assert.strictEqual(targets.length, 1, 'Executable targets are missing');
+            assert.strictEqual(targets[0].name, 'MyExecutable');
+        });
+        test(`CMake Diagnostic Parsing (${subDescription})`, async () => {
+            const cmt: cmake.CMakeTools = store.cmt;
+            const retc = await cmt.configure(['-DWARNING_COOKIE=this-is-a-warning-cookie']);
+            assert.strictEqual(retc, 0);
+            const diags: vscode.Diagnostic[] = [];
+            cmt.diagnostics.forEach((d, diags_) => diags.push(...diags_));
+            assert.strictEqual(diags.length, 1);
+            const diag = diags[0];
+            assert.strictEqual(diag.source, 'CMake (message)');
+            assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Warning);
+            assert(diag.message.includes('this-is-a-warning-cookie'));
+        });
+        test(`Compile Error Parsing (${subDescription})`, async () => {
+            const cmt: cmake.CMakeTools = store.cmt;
+            const config_retc = await cmt.configure(['-DCAUSE_BUILD_ERROR=TRUE']);
+            assert.strictEqual(config_retc, 0);
+            const build_retc = await cmt.build();
+            assert.notStrictEqual(build_retc, 0);
+            const diags: vscode.Diagnostic[] = [];
+            cmt.diagnostics.forEach((_d, diags_) => diags.push(...diags_));
+            assert.strictEqual(diags.length, 1);
+            const diag = diags[0];
+            // These lines are hardcoded purposefully. They are one less than
+            // the displayed line number in the main.cpp in the test_project
+            assert.strictEqual(diag.range.start.line, 6);
+            assert.strictEqual(diag.range.end.line, 6);
+            assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Error);
+            assert(diag.message.includes('special-error-cookie asdfqwerty'));
+        });
         test(`Pass arguments to debugger (${subDescription})`, async () => {
             const cmt: cmake.CMakeTools = store.cmt;
             const retc = await cmt.build();
@@ -414,14 +413,17 @@ suite("Utility tests", () => {
             assert.strictEqual(content, test_string);
         });
         test('Get compilation info for a file', async function() {
-            const cmt: cmake.CMakeTools = this.cmt;
+            const cmt: cmake.CMakeTools = store.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
             const info = await cmt.compilationInfoForFile(testFilePath('test_project/main.cpp'));
             assert(info);
         });
         teardown(function() {
-            const cmt: cmake.CMakeTools = this.cmt;
+            const cmt: cmake.CMakeTools = store.cmt;
+            if (!cmt) {
+                return;
+            }
             const using_server = !!cmt.serverClient;
             if (using_server) {
                 cmt.shutdownServerClient();
@@ -439,15 +441,18 @@ suite("Utility tests", () => {
         });
     };
     suite('Tests without cmake-server', function() {
-        // const cmt = await getExtension();
-        // cmt.shutdownServerClient();
-        // smokeTests.bind(this)('No cmake-server', async () => {
-        //     const cmt = await getExtension();
-        //     await cmt.shutdownServerClient();
-        // });
+        smokeTests.bind(this)('No cmake-server', async () => {
+            const cmt = await getExtension();
+            cmt.shutdownServerClient();
+            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
+            await pause(1000);
+            await cmt.shutdownServerClient();
+        });
     });
-    suite('Extension smoke tests', function() {
+    suite('Tests with cmake-server', function() {
         smokeTests.bind(this)('Using cmake-server', async() => {
+            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
+            await pause(500);
             const cmt = await getExtension();
             if (!cmt.serverClient) {
                 await cmt.restartServerClient();

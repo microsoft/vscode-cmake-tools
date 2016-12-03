@@ -432,6 +432,10 @@ export class ConfigurationReader {
     get ctestArgs(): string[] {
         return this._readPrefixed<string[]>('ctestArgs') || [];
     }
+
+    get experimental_useCMakeServer(): boolean {
+        return this._readPrefixed<boolean>('experimental.useCMakeServer') || false;
+    }
 }
 
 /**
@@ -644,18 +648,18 @@ export class CMakeTools implements CMakeToolsAPI {
     public compilerId: Maybe<string> = null;
     public config: ConfigurationReader = new ConfigurationReader();
 
-    private _cmakeVersion : util.Version;
+    private _cmakeVersion : util.Version = util.parseVersion('0.0.0');
     public get cmakeVersion() : util.Version {
         return this._cmakeVersion;
     }
 
     private _legacyCMakeCache: CMakeCache;
     public get legacyCMakeCache() {
-        console.assert(!this.serverClient, 'usage of legacyCMakeCache in server mode');
+        console.assert(!this.cmakeServerEnabled, 'usage of legacyCMakeCache in server mode');
         return this._legacyCMakeCache;
     }
     public set legacyCMakeCache(cache: CMakeCache) {
-        console.assert(!this.serverClient, 'usage of legacyCMakeCache in server mode');
+        console.assert(!this.cmakeServerEnabled, 'usage of legacyCMakeCache in server mode');
         this._legacyCMakeCache = cache;
         this._refreshStatusBarItems();
     }
@@ -663,7 +667,7 @@ export class CMakeTools implements CMakeToolsAPI {
     private _cacheEntries: CMakeCacheEntry[] = [];
 
     public getCacheEntryByKey(key: string, defaultValue = null): Maybe<CMakeCacheEntry | LegacyCacheEntry> {
-        if (this.serverClient) {
+        if (this.cmakeServerEnabled) {
             const entry = this._cacheEntries.find(entry => entry.key === key);
             return entry ? entry : defaultValue;
         } else {
@@ -672,7 +676,7 @@ export class CMakeTools implements CMakeToolsAPI {
     }
 
     public get haveCMakeCache(): boolean {
-        if (this.serverClient) {
+        if (this.cmakeServerEnabled) {
             return this._cacheEntries.length != 0;
         } else {
             return this.legacyCMakeCache && this.legacyCMakeCache.exists;
@@ -750,7 +754,7 @@ export class CMakeTools implements CMakeToolsAPI {
     }
 
     private async reloadCMakeCache() {
-        console.assert(!this.serverClient, 'reloadCMakeCache called in server mode');
+        console.assert(!this.cmakeServerEnabled, 'reloadCMakeCache called in server mode');
         if (this.legacyCMakeCache && this.legacyCMakeCache.path === this.cachePath) {
             this.legacyCMakeCache = await this.legacyCMakeCache.getReloaded();
         } else {
@@ -758,6 +762,16 @@ export class CMakeTools implements CMakeToolsAPI {
         }
         return this.legacyCMakeCache;
     }
+
+
+    private _richTargets : CodeModelTarget[] = [];
+    public get richTargets() : CodeModelTarget[] {
+        return this._richTargets;
+    }
+    public set richTargets(v : CodeModelTarget[]) {
+        this._richTargets = v;
+    }
+
 
     private _executableTargets: ExecutableTarget[] = [];
     public get executableTargets() {
@@ -941,12 +955,16 @@ export class CMakeTools implements CMakeToolsAPI {
         }
     }
 
+    public get cmakeServerEnabled(): boolean {
+        return util.versionGreater(this.cmakeVersion, '3.7.0') && this.config.experimental_useCMakeServer;
+    }
+
     private async _reloadConfiguration() {
         const new_settings = this.config.configureSettings;
         this._needsReconfigure = JSON.stringify(new_settings) !== JSON.stringify(this._lastConfigureSettings);
         this._lastConfigureSettings = new_settings;
         // A config change could require reloading the CMake Cache (ie. changing the build path)
-        if (!this.serverClient) {
+        if (!this.cmakeServerEnabled) {
             this._setupCMakeCacheWatcher();
         } else if (this._needsReconfigure) {
             this.restartServerClient();
@@ -987,7 +1005,7 @@ export class CMakeTools implements CMakeToolsAPI {
 
     private async _refreshWorkspaceCacheContent() {
         this._workspaceCacheContent = await WorkspaceCacheFile.readCache(this._workspaceCachePath, {variant:null});
-        if (!this.serverClient) {
+        if (!this.cmakeServerEnabled) {
             this._setupCMakeCacheWatcher();
         }
         if (this._workspaceCacheContent.variant) {
@@ -1167,58 +1185,67 @@ export class CMakeTools implements CMakeToolsAPI {
         return this._globalSettings;
     }
 
-    public async restartServerClient(): Promise<CMakeServerClient> {
+    public async restartServerClient(): Promise<Maybe<CMakeServerClient>> {
         if (this.serverClient) {
             await this.shutdownServerClient();
         }
-        return this._setupServerClient().then(cl => this._serverClient = cl);
+        if (this.config.experimental_useCMakeServer) {
+            return this._setupServerClient().then(cl => this._serverClient = cl);
+        } else {
+            return null;
+        }
     }
 
+    private _lastServerClientSetup: Maybe<Promise<CMakeServerClient>>
     private async _setupServerClient(): Promise<CMakeServerClient> {
         console.assert(!this.serverClient, '_setupServerClient called while client is already running');
         const tmpdir = path.join(vscode.workspace.rootPath, '.vscode');
         await util.ensureDirectory(tmpdir);
-        return new Promise<CMakeServerClient>((resolve, reject) => {
+        if (this._lastServerClientSetup) {
+            try {
+                await this._lastServerClientSetup;
+            } catch (e) {
+                // Do nothing
+            }
+        }
+        return this._lastServerClientSetup = new Promise<CMakeServerClient>((resolve, reject) => {
             const client = new CMakeServerClient({
-                tmpdir,
-                cmakePath: this.config.cmakePath,
-                onCrash: async (retc, signal) => {
-                    vscode.window.showErrorMessage(`cmake-server crashed with exit code ${retc} (${signal})`);
-                },
-                onDirty: async () => {
-                    this._needsReconfigure = true;
-                },
                 onHello: async (m: HelloMessage) => {
-                    const generator = await this.pickGenerator(this.config.preferredGenerators);
-                    if (!generator) {
-                        vscode.window.showErrorMessage('Unable to determine CMake Generator to use');
-                        throw new Error('No generator!');
-                    }
-                    let src_dir = this.sourceDir;
-                    // Work-around: CMake Server checks that CMAKE_HOME_DIRECTORY
-                    // in the cmake cache is the same as what we provide when we
-                    // set up the connection. Because CMake may normalize the
-                    // path differently than we would, we should make sure that
-                    // we pass the value that is specified in the cache exactly
-                    // to avoid causing CMake server to spuriously fail.
-                    if (await async.exists(this.cachePath)) {
-                        const cache = await CMakeCache.fromPath(this.cachePath);
-                        const home = cache.get('CMAKE_HOME_DIRECTORY');
-                        if (home && util.normalizePath(home.as<string>()) == util.normalizePath(src_dir)) {
-                            src_dir = home.as<string>();
+                    try {
+                        const generator = await this.pickGenerator(this.config.preferredGenerators);
+                        if (!generator) {
+                            vscode.window.showErrorMessage('Unable to determine CMake Generator to use');
+                            reject(new Error('No generator!'));
+                            throw new Error('No generator!');
                         }
+                        let src_dir = this.sourceDir;
+                        // Work-around: CMake Server checks that CMAKE_HOME_DIRECTORY
+                        // in the cmake cache is the same as what we provide when we
+                        // set up the connection. Because CMake may normalize the
+                        // path differently than we would, we should make sure that
+                        // we pass the value that is specified in the cache exactly
+                        // to avoid causing CMake server to spuriously fail.
+                        if (await async.exists(this.cachePath)) {
+                            const cache = await CMakeCache.fromPath(this.cachePath);
+                            const home = cache.get('CMAKE_HOME_DIRECTORY');
+                            if (home && util.normalizePath(home.as<string>()) == util.normalizePath(src_dir)) {
+                                src_dir = home.as<string>();
+                            }
+                        }
+                        const hs: HandshakeMessage = {
+                            type: 'handshake',
+                            buildDirectory: this.binaryDir,
+                            sourceDirectory: src_dir,
+                            extraGenerator: this.config.toolset,
+                            generator: generator,
+                            protocolVersion: m.supportedProtocolVersions[0]
+                        };
+                        const res = await client.sendRequest(hs);
+                        this._globalSettings = await client.getGlobalSettings();
+                        resolve(client);
+                    } catch (e) {
+                        reject(e);
                     }
-                    const hs: HandshakeMessage = {
-                        type: 'handshake',
-                        buildDirectory: this.binaryDir,
-                        sourceDirectory: src_dir,
-                        extraGenerator: this.config.toolset,
-                        generator: generator,
-                        protocolVersion: m.supportedProtocolVersions[0]
-                    };
-                    const res = await client.sendRequest(hs);
-                    this._globalSettings = await client.getGlobalSettings();
-                    resolve(client);
                 },
                 onMessage: async (m: MessageMessage) => {
                     if (m.title) {
@@ -1234,7 +1261,15 @@ export class CMakeTools implements CMakeToolsAPI {
                 environment: Object.assign(
                     this.config.environment,
                     this.currentEnvironmentVariables,
-                )
+                ),
+                cmakePath: this.config.cmakePath,
+                onCrash: async (retc, signal) => {
+                    vscode.window.showErrorMessage(`cmake-server crashed with exit code ${retc} (${signal})`);
+                },
+                onDirty: async () => {
+                    this._needsReconfigure = true;
+                },
+                tmpdir,
             });
         });
     }
@@ -1260,7 +1295,7 @@ export class CMakeTools implements CMakeToolsAPI {
         this._refreshStatusBarItems();
         this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
         this._writeWorkspaceCacheContent();
-        if (this.serverClient) {
+        if (this.cmakeServerEnabled) {
             this.restartServerClient();
         }
     }
@@ -1345,6 +1380,15 @@ export class CMakeTools implements CMakeToolsAPI {
         this._ctestChannel = vscode.window.createOutputChannel('CTest Results');
         this._diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
+        const version_out = (await this.executeCMakeCommand(['--version'], {
+            silent: true,
+            environment: {},
+            collectOutput: true
+        })).stdout;
+        console.assert(version_out);
+        const version_re = /cmake version (.*?)\n/;
+        this._cmakeVersion = util.parseVersion(version_re.exec(version_out!)![1]);
+
         await this._refreshWorkspaceCacheContent();
 
         // Start loading up available environments early, this may take a few seconds
@@ -1364,23 +1408,6 @@ export class CMakeTools implements CMakeToolsAPI {
             })
         );
         await Promise.all(env_promises);
-        // All environments have been detected, now we can update the UI
-        this.activeEnvironments = [];
-        const envs = this._workspaceCacheContent.activeEnvironments || [];
-        envs.map(e => {
-            if (this.availableEnvironments.has(e)) {
-                this.activateEnvironment(e);
-            }
-        });
-
-        const version_out = (await this.executeCMakeCommand(['--version'], {
-            silent: true,
-            environment: {},
-            collectOutput: true
-        })).stdout;
-        console.assert(version_out);
-        const version_re = /cmake version (.*?)\n/;
-        this._cmakeVersion = util.parserVersion(version_re.exec(version_out!)![1]);
 
         const watcher = this._variantWatcher = vscode.workspace.createFileSystemWatcher(path.join(vscode.workspace.rootPath, 'cmake-variants.*'));
         watcher.onDidChange(this._reloadVariants.bind(this));
@@ -1396,15 +1423,27 @@ export class CMakeTools implements CMakeToolsAPI {
         this._setupWorkspaceCacheWatcher();
         await this._refreshWorkspaceCacheContent();
 
-        if (util.versionGreater(this.cmakeVersion, '3.6.999')) {
+        // Check for CMake server support. We purposfully skip over version 3.7.0,
+        // since we have required bugfixes in 3.7.1
+        if (util.versionGreater(this.cmakeVersion, '3.7.0')) {
             // We have cmake-server support!
-            await this.restartServerClient();
-            this._refreshCacheContent().catch(CMakeTools._printUnhandledException);
+            const have_server = !!await this.restartServerClient();
+            if (have_server) {
+                this._refreshCacheContent().catch(CMakeTools._printUnhandledException);
+            }
         }
         this._currentChildProcess = null;
 
+        // this.activeEnvironments = [];
+        const envs = this._workspaceCacheContent.activeEnvironments || [];
+        envs.map(e => {
+            if (this.availableEnvironments.has(e)) {
+                this.activateEnvironment(e);
+            }
+        });
+
         // Fallback logic for pre-cmake-server support
-        if (!this.serverClient) {
+        if (!this.cmakeServerEnabled) {
             await this._setupCMakeCacheWatcher();
             this._setupMetaWatcher();
             await this._reloadConfiguration();
@@ -1467,7 +1506,7 @@ export class CMakeTools implements CMakeToolsAPI {
         const varset = this.activeVariantCombination || {label: 'Unconfigured'};
         this._cmakeToolsStatusItem.text = `CMake: ${this.projectName}: ${varset.label}: ${this.statusMessage}`;
 
-        if (!this.serverClient &&
+        if (!this.cmakeServerEnabled &&
             this.legacyCMakeCache &&
             this.legacyCMakeCache.exists &&
             this.isMultiConf &&
@@ -1562,7 +1601,7 @@ export class CMakeTools implements CMakeToolsAPI {
         if (!entry) {
             return 'Unnamed Project';
         }
-        return this.serverClient
+        return this.cmakeServerEnabled
             ? (entry as CMakeCacheEntry).value
             : (entry as LegacyCacheEntry).as<string>();
     }
@@ -1576,7 +1615,7 @@ export class CMakeTools implements CMakeToolsAPI {
     }
 
     private async _refreshAll() {
-        if (!this.serverClient) {
+        if (!this.cmakeServerEnabled) {
             await this.reloadCMakeCache();
             await this._refreshTargetList();
             await this._reloadMetaData();
@@ -1611,7 +1650,7 @@ export class CMakeTools implements CMakeToolsAPI {
     }
 
     private _putCodeModel(configs: CodeModelConfiguration[]) {
-        const targets = configs.reduce(
+        const targets = this.richTargets = configs.reduce(
             (acc, config) =>
                 acc.concat(config.projects.reduce(
                     (acc, project) =>
@@ -1622,12 +1661,13 @@ export class CMakeTools implements CMakeToolsAPI {
             ),
             [] as CodeModelTarget[]
         );
+        this._targets = targets.map(t => t.name);
         this.executableTargets = targets
             .filter(t => t.type === 'EXECUTABLE')
             .map(t => ({
                 path: path.isAbsolute(t.fullName)
                     ? t.fullName
-                    : path.join(this.binaryDir, t.fullName),
+                    : path.join(t.buildDirectory, t.fullName),
                 name: t.name,
             }));
         // debugger;
@@ -1637,7 +1677,7 @@ export class CMakeTools implements CMakeToolsAPI {
      * @brief Reload the list of available targets
      */
     private async _refreshTargetList(): Promise<string[]> {
-        console.assert(!this.serverClient, '_refreshTargetList called in server mode');
+        console.assert(!this.cmakeServerEnabled, '_refreshTargetList called in server mode');
         this._targets = [];
         if (!this.legacyCMakeCache.exists) {
             return this._targets;
@@ -1717,8 +1757,8 @@ export class CMakeTools implements CMakeToolsAPI {
     }
 
     public get activeGenerator(): Maybe<string> {
-        if (this.serverClient) {
-            return this.globalSettings!.generator;
+        if (this.cmakeServerEnabled) {
+            return this.globalSettings ? this.globalSettings.generator : null;
         } else {
             const entry = this.getCacheEntryByKey('CMAKE_GENERATOR');
             const gen = this.legacyCMakeCache.get('CMAKE_GENERATOR');
@@ -1732,7 +1772,7 @@ export class CMakeTools implements CMakeToolsAPI {
      * @brief Get the name of the "all" target
      */
     public get allTargetName() {
-        if (!this.serverClient && (!this.legacyCMakeCache || !this.legacyCMakeCache.exists))
+        if (!this.cmakeServerEnabled && (!this.legacyCMakeCache || !this.legacyCMakeCache.exists))
             return 'all';
         const gen = this.activeGenerator;
         return (gen && /Visual Studio/.test(gen)) ? 'ALL_BUILD' : 'all';
@@ -1994,7 +2034,7 @@ export class CMakeTools implements CMakeToolsAPI {
         const cmake_cache = this.cachePath;
         this._channel.show();
 
-        if (!this.serverClient) {
+        if (!this.cmakeServerEnabled) {
             if (!(await async.exists(cmake_cache)) ||
                 (this.legacyCMakeCache.exists &&
                     this.cachePath !== this.legacyCMakeCache.path)) {
@@ -2004,7 +2044,7 @@ export class CMakeTools implements CMakeToolsAPI {
 
         const settings_args: string[] = [];
         let is_multi_conf = this.isMultiConf;
-        if (!this.serverClient && !this.legacyCMakeCache.exists) {
+        if (!this.cmakeServerEnabled && !this.legacyCMakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
             const generator = await this.pickGenerator(this.config.preferredGenerators);
             if (generator) {
@@ -2042,7 +2082,7 @@ export class CMakeTools implements CMakeToolsAPI {
             await util.ensureDirectory(cmt_dir);
         }
 
-        if (!this.serverClient) {
+        if (!this.cmakeServerEnabled) {
             // We only need to generate our own metadata if we do not have
             // CMake Server support
             const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
@@ -2167,7 +2207,7 @@ export class CMakeTools implements CMakeToolsAPI {
             if (retc !== 0) {
                 return retc;
             }
-            if (!this.serverClient) {
+            if (!this.cmakeServerEnabled) {
                 await this.reloadCMakeCache();
             }
             // We just configured which may change what the "all" target is.
@@ -2276,17 +2316,30 @@ export class CMakeTools implements CMakeToolsAPI {
         return await this.build();
     }
 
-    public showTargetSelector(): Thenable<string> {
-        return this._targets.length
-            ? vscode.window.showQuickPick(this._targets)
-            : vscode.window.showInputBox({
-                prompt: 'Enter a target name'
-            });
+    public async showTargetSelector(): Promise<Maybe<string>> {
+        if (this.cmakeServerEnabled) {
+            const choices = this.richTargets.map(
+                t => ({
+                    target: t,
+                    label: t.name,
+                    description: t.fullName,
+                    detail: t.type.toLowerCase(),
+                })
+            );
+            const chosen = await vscode.window.showQuickPick(choices);
+            return chosen ? chosen.target.name : null;
+        } else {
+            return this._targets.length
+                ? vscode.window.showQuickPick(this._targets)
+                : vscode.window.showInputBox({
+                    prompt: 'Enter a target name'
+                });
+        }
     }
 
     public async buildWithTarget(): Promise<Number> {
         const target = await this.showTargetSelector();
-        if (target === null || target === undefined)
+        if (!target)
             return -1;
         return await this.build(target);
     }
@@ -2360,11 +2413,9 @@ export class CMakeTools implements CMakeToolsAPI {
         if (build_retc !== 0)
             return;
         let is_msvc = this.compilerId && this.compilerId.includes('MSVC')
-        if (this.serverClient) {
-            let entry = this.getCacheEntryByKey('CMAKE_CXX_COMPILER') || this.getCacheEntryByKey('CMAKE_C_COMPILER');
-            if (entry) {
-                is_msvc = (entry.value as string).endsWith('cl.exe');
-            }
+        let entry = this.getCacheEntryByKey('CMAKE_CXX_COMPILER') || this.getCacheEntryByKey('CMAKE_C_COMPILER');
+        if (entry) {
+            is_msvc = (entry.value as string).endsWith('cl.exe');
         }
         const config = {
             name: `Debugging Target ${target.name}`,

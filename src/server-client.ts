@@ -253,7 +253,6 @@ export class CMakeServerClient {
 
   private _onMoreData(data: Uint8Array) {
     const str = data.toString();
-    console.log(`Got data: ${str}`);
     this._accInput += str;
     while (1) {
       const input = this._accInput;
@@ -372,10 +371,15 @@ export class CMakeServerClient {
         {
           env: params.environment,
         });
+    console.log('Started new CMake Server instance with PID', child.pid);
     setTimeout(() => {
       const end_promise = new Promise(resolve => {
         const pipe = this._pipe = net.createConnection(pipe_file);
-        pipe.on('data', this._onMoreData.bind(this)),
+        pipe.on('data', this._onMoreData.bind(this));
+        pipe.on('error', (e) => {
+          debugger;
+          pipe.end();
+        });
         pipe.on('end', () => {
           pipe.end();
           resolve();
@@ -391,9 +395,9 @@ export class CMakeServerClient {
       child.stdout.on('data', this._onErrorData.bind(this));
       child.stderr.on('data', this._onErrorData.bind(this));
       child.on('close', (retc: number, signal: string) => {
-        console.error('The connection to cmake-server was terminated unexpectedly');
-        console.error(`cmake-server exited with status ${retc} (${signal})`);
         if (retc !== 0) {
+          console.error('The connection to cmake-server was terminated unexpectedly');
+          console.error(`cmake-server exited with status ${retc} (${signal})`);
           params.onCrash(retc, signal).catch(e => {
             console.error('Unhandled error in onCrash', e);
           });

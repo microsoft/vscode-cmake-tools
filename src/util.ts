@@ -197,7 +197,7 @@ export namespace util {
     minor: number;
     patch: number;
   }
-  export function parserVersion(str: string): Version {
+  export function parseVersion(str: string): Version {
     const version_re = /(\d+)\.(\d+).(\d+)/;
     const mat = version_re.exec(str);
     if (!mat) {
@@ -213,7 +213,7 @@ export namespace util {
 
   export function versionGreater(lhs: Version, rhs: Version | string): boolean {
     if (typeof(rhs) === 'string') {
-      return versionGreater(lhs, parserVersion(rhs));
+      return versionGreater(lhs, parseVersion(rhs));
     }
     return lhs.major > rhs.major || (
       lhs.major == rhs.major &&
@@ -227,7 +227,7 @@ export namespace util {
 
   export function versionEquals(lhs: Version, rhs: Version | string): boolean {
     if (typeof(rhs) === 'string') {
-      return versionEquals(lhs, parserVersion(rhs));
+      return versionEquals(lhs, parseVersion(rhs));
     }
     return lhs.major == rhs.major && lhs.minor == rhs.minor && lhs.patch == rhs.patch;
   }
