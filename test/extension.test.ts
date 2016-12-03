@@ -31,7 +31,7 @@ async function getExtension(): Promise<cmake.CMakeTools> {
 suite("Utility tests", () => {
     test("Read CMake Cache", async function () {
         const cache = await cmake.CMakeCache.fromPath(testFilePath('TestCMakeCache.txt'));
-        const generator = cache.get("CMAKE_GENERATOR") as cmake.LegacyCacheEntry;
+        const generator = cache.get("CMAKE_GENERATOR") as cmake.CacheEntry;
         assert.strictEqual(
             generator.type,
             cmake.EntryType.Internal
@@ -50,7 +50,7 @@ suite("Utility tests", () => {
         );
         assert.strictEqual(typeof generator.value === 'string', true);
 
-        const build_testing = await cache.get('BUILD_TESTING') as cmake.LegacyCacheEntry;
+        const build_testing = await cache.get('BUILD_TESTING') as cmake.CacheEntry;
         assert.strictEqual(
             build_testing.type,
             cmake.EntryType.Bool
@@ -75,7 +75,7 @@ suite("Utility tests", () => {
             const entry = entries.get('SOMETHING')!;
             assert.strictEqual(entry.value, 'foo');
             assert.strictEqual(entry.type, cmake.EntryType.String);
-            assert.strictEqual(entry.helpString, 'This line is docs');
+            assert.strictEqual(entry.docs, 'This line is docs');
         }
     });
     test('Falsey values', () => {
@@ -269,14 +269,11 @@ suite("Utility tests", () => {
         const api: CMakeToolsAPI = await getExtension();
         assert(api.binaryDir);
     });
-
-    const store: any = {};
-    function smokeTests(subDescription: string, preSetup: () => Promise<any>) {
+    suite('Extension smoke tests', function() {
         this.timeout(60 * 1000); // These tests are slower than just unit tests
-        setup(async () => {
-            await preSetup();
+        setup(async function () {
             const cmt = await getExtension();
-            store.cmt = cmt;
+            this.cmt = cmt;
             cmt.activeVariantCombination = {
                 keywordSettings: new Map<string, string>([
                     ['buildType', 'debug']
@@ -291,39 +288,39 @@ suite("Utility tests", () => {
             // removing files doesn't actually remove them, which can cause
             // spurious test failures when we are rapidly adding/removing files
             // in the build directory
-            await pause(500);
+            await pause(1000);
             await new Promise(resolve => exists ? rimraf(cmt.binaryDir, resolve) : resolve());
         });
-        test(`Can configure (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Can configure', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
         });
-        test(`Can build named target (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Can build named target', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.build('MyExecutable');
             assert.strictEqual(retc, 0);
         });
-        test(`Non-existent target fails (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Non-existent target fails', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.build('ThisIsNotAnExistingTarget');
             assert.notStrictEqual(retc, 0);
         });
-        test(`Can execute CTest tests (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Can execute CTest tests', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.ctest();
             assert.strictEqual(retc, 0);
         });
-        test(`Finds executable targets (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Finds executable targets', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0, 'Configure failed');
             const targets = cmt.executableTargets;
             assert.strictEqual(targets.length, 1, 'Executable targets are missing');
             assert.strictEqual(targets[0].name, 'MyExecutable');
         });
-        test(`CMake Diagnostic Parsing (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('CMake Diagnostic Parsing', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.configure(['-DWARNING_COOKIE=this-is-a-warning-cookie']);
             assert.strictEqual(retc, 0);
             const diags: vscode.Diagnostic[] = [];
@@ -334,8 +331,8 @@ suite("Utility tests", () => {
             assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Warning);
             assert(diag.message.includes('this-is-a-warning-cookie'));
         });
-        test(`Compile Error Parsing (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Compile Error Parsing', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const config_retc = await cmt.configure(['-DCAUSE_BUILD_ERROR=TRUE']);
             assert.strictEqual(config_retc, 0);
             const build_retc = await cmt.build();
@@ -351,8 +348,8 @@ suite("Utility tests", () => {
             assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Error);
             assert(diag.message.includes('special-error-cookie asdfqwerty'));
         });
-        test(`Pass arguments to debugger (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Pass arguments to debugger', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
             const outfile = testFilePath('output-file.txt');
@@ -371,8 +368,8 @@ suite("Utility tests", () => {
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, test_string);
         });
-        test(`Debugger gets environment variables (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Debugger gets environment variables', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
             const pathvar = process.env['PATH'];
@@ -389,8 +386,8 @@ suite("Utility tests", () => {
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, pathvar);
         });
-        test(`Debugger gets custom environment variables (${subDescription})`, async () => {
-            const cmt: cmake.CMakeTools = store.cmt;
+        test('Debugger gets custom environment variables', async function() {
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
             const outfile = testFilePath('output-file.txt');
@@ -413,21 +410,14 @@ suite("Utility tests", () => {
             assert.strictEqual(content, test_string);
         });
         test('Get compilation info for a file', async function() {
-            const cmt: cmake.CMakeTools = store.cmt;
+            const cmt: cmake.CMakeTools = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
             const info = await cmt.compilationInfoForFile(testFilePath('test_project/main.cpp'));
             assert(info);
         });
         teardown(function() {
-            const cmt: cmake.CMakeTools = store.cmt;
-            if (!cmt) {
-                return;
-            }
-            const using_server = !!cmt.serverClient;
-            if (using_server) {
-                cmt.shutdownServerClient();
-            }
+            const cmt: cmake.CMakeTools = this.cmt;
             if (fs.existsSync(cmt.binaryDir)) {
                 rimraf.sync(cmt.binaryDir);
             }
@@ -435,28 +425,7 @@ suite("Utility tests", () => {
             if (fs.existsSync(output_file)) {
                 fs.unlinkSync(output_file);
             }
-            if (using_server) {
-                cmt.restartServerClient();
-            }
-        });
-    };
-    suite('Tests without cmake-server', function() {
-        smokeTests.bind(this)('No cmake-server', async () => {
-            const cmt = await getExtension();
-            cmt.shutdownServerClient();
-            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
-            await pause(1000);
-            await cmt.shutdownServerClient();
-        });
+        })
     });
-    suite('Tests with cmake-server', function() {
-        smokeTests.bind(this)('Using cmake-server', async() => {
-            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
-            await pause(500);
-            const cmt = await getExtension();
-            if (!cmt.serverClient) {
-                await cmt.restartServerClient();
-            }
-        });
-    });
+    teardown
 });
