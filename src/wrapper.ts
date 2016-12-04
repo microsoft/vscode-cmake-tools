@@ -4,6 +4,9 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as legacy from './legacy';
+import * as client from './client';
+import * as util from './util';
+import {config} from './config';
 
 export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   private _impl: Promise<api.CMakeToolsAPI>;
@@ -54,6 +57,13 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   }
   get diagnostics() {
     return this._diagnostics();
+  }
+
+  private async _targets() {
+    return (await this._impl).targets;
+  }
+  get targets() {
+    return this._targets();
   }
 
   async executeCMakeCommand(args: string[], options?: api.ExecuteOptions) {
@@ -137,6 +147,21 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   }
 
   public async reload(): Promise<CMakeToolsWrapper> {
+    // if (config.experimental_useCMakeServer) {
+    //   const version_out =
+    //       (await util.execute(config.cmakePath, ['--version']).onComplete)
+    //           .stdout;
+    //   console.assert(version_out);
+    //   const version_re = /cmake version (.*?)\n/;
+    //   const version = util.parseVersion(version_re.exec(version_out!)![1]);
+    //   // We purposefully exclude version 3.7.0, which had some major CMake server
+    //   // bugs
+    //   if (util.versionGreater(version, '3.7.0')) {
+    //     return this._impl = new client.ServerClientCMakeTools.startup();
+    //   }
+    //   vscode.window.showWarningMessage('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.1 or newer first.');
+    // }
+    // Fall back to use the legacy plugin
     const cmt = new legacy.CMakeTools(this._ctx);
     this._impl = cmt.initFinished;
     await this._impl;

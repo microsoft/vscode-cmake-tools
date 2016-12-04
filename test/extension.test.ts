@@ -6,7 +6,6 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 
 import * as api from '../src/api';
-import * as cmake from '../src/cmake';
 import * as legacy from '../src/legacy';
 import * as util from '../src/util';
 import * as async from '../src/async';
@@ -291,6 +290,7 @@ suite("Utility tests", () => {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
+            assert((await cmt.targets).findIndex(t => t.name == 'MyExecutable') >= 0);
         });
         test('Can build named target', async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;

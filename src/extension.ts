@@ -2,12 +2,12 @@
 
 import * as vscode from 'vscode';
 import * as api from './api';
-import * as cmake_mod from './cmake';
+import * as wrapper from './wrapper';
 
 export async function activate(context: vscode.ExtensionContext): Promise<api.CMakeToolsAPI | null> {
-    let cmake: cmake_mod.CMakeToolsWrapper | null = null;
+    let cmake: wrapper.CMakeToolsWrapper | null = null;
     try {
-        cmake = await cmake_mod.CMakeToolsWrapper.startup(context);
+        cmake = await wrapper.CMakeToolsWrapper.startup(context);
     } catch (e) {
         debugger;
         console.error('Error during CMake Tools initialization!', e);

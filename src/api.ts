@@ -10,6 +10,7 @@ export interface ExecuteOptions {
   silent: boolean;
   environment: Object;
   collectOutput?: boolean;
+  workingDirectory?: string;
 }
 
 export interface CompilationInfo {
@@ -47,9 +48,19 @@ export interface ExecutableTarget {
   path: string;
 }
 
-export interface VariantKeywordSettings {
-  [key: string]: string;
+export interface VariantKeywordSettings { [key: string]: string; }
+
+export interface NamedTarget {
+  type: 'named';
+  name: string;
 }
+
+export interface RichTarget {
+  type: 'rich';
+  name: string;
+}
+
+export type Target = NamedTarget | RichTarget
 
 export interface CMakeToolsAPI extends Disposable {
   // Get the root source directory
@@ -64,6 +75,8 @@ export interface CMakeToolsAPI extends Disposable {
   readonly executableTargets: Promise<ExecutableTarget[]>|ExecutableTarget[];
   // Diagnostics obtained from configure/build
   readonly diagnostics: Promise<DiagnosticCollection>|DiagnosticCollection;
+  // Targets available for building
+  readonly targets: Promise<Target[]>|Target[];
 
   // Execute a command using the CMake executable
   executeCMakeCommand(args: string[], options?: ExecuteOptions):

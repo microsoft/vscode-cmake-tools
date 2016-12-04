@@ -2,8 +2,6 @@ import * as xml2js from 'xml2js';
 
 import * as async from './async';
 
-export namespace ctest {
-
 interface SiteAttributes {
 
 };
@@ -162,6 +160,4 @@ export async function parseTestOutput(output: string): Promise<FailingTestDecora
     } else {
         return [];
     }
-}
-
 }
