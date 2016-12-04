@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import {util} from './util';
+import * as util from './util';
 
 type Maybe<T> = util.Maybe<T>;
 

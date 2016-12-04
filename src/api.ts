@@ -1,11 +1,10 @@
-import {TextEditor} from 'vscode';
+import {DiagnosticCollection, Disposable, TextEditor} from 'vscode';
 
 export interface ExecutionResult {
   retc: number;
   stdout: string|null;
   stderr: string|null;
 }
-
 
 export interface ExecuteOptions {
   silent: boolean;
@@ -19,15 +18,52 @@ export interface CompilationInfo {
   file: string;
 }
 
-export interface CMakeToolsAPI {
+export enum EntryType {
+  Bool,
+  String,
+  Path,
+  FilePath,
+  Internal,
+  Uninitialized,
+  Static,
+}
+
+export interface Test {
+  id: number;
+  name: string;
+}
+
+export interface CacheEntry {
+  type: EntryType;
+  helpString: string;
+  key: string;
+  value: any;
+  as<T>(): T;
+  advanced: boolean;
+}
+
+export interface ExecutableTarget {
+  name: string;
+  path: string;
+}
+
+export interface VariantKeywordSettings {
+  [key: string]: string;
+}
+
+export interface CMakeToolsAPI extends Disposable {
   // Get the root source directory
-  sourceDir: string;
+  readonly sourceDir: Promise<string>|string;
   // Get the main CMake File
-  mainListFile: string;
+  readonly mainListFile: Promise<string>|string;
   // Get the binary directory for the project
-  binaryDir: string;
+  readonly binaryDir: Promise<string>|string;
   // Get the path to the CMake cache
-  cachePath: string;
+  readonly cachePath: Promise<string>|string;
+  // Targets which are executable
+  readonly executableTargets: Promise<ExecutableTarget[]>|ExecutableTarget[];
+  // Diagnostics obtained from configure/build
+  readonly diagnostics: Promise<DiagnosticCollection>|DiagnosticCollection;
 
   // Execute a command using the CMake executable
   executeCMakeCommand(args: string[], options?: ExecuteOptions):
@@ -71,4 +107,6 @@ export interface CMakeToolsAPI {
   selectDebugTarget(): Promise<string|null>;
   // Show the environment selection quickpick
   selectEnvironments(): Promise<string[]|null>;
+  // Sets the variant based on keyword settings
+  setActiveVariantCombination(settings: VariantKeywordSettings): Promise<void>;
 }

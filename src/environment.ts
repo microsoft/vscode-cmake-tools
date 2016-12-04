@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 
 import * as async from './async'
-import {util} from './util';
+import * as util from './util';
 
 type Maybe<T> = util.Maybe<T>;
 

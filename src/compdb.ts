@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {util} from './util';
+import * as util from './util';
 
 import {CompilationInfo} from './api';
 
