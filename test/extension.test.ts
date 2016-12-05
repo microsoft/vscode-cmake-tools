@@ -11,6 +11,7 @@ import * as util from '../src/util';
 import * as async from '../src/async';
 import * as diagnostics from '../src/diagnostics';
 import * as compdb from '../src/compdb';
+import {CMakeCache} from '../src/cache';
 
 import * as rimraf from 'rimraf';
 
@@ -31,7 +32,7 @@ async function getExtension(): Promise<api.CMakeToolsAPI> {
 
 suite("Utility tests", () => {
     test("Read CMake Cache", async function () {
-        const cache = await legacy.CMakeCache.fromPath(testFilePath('TestCMakeCache.txt'));
+        const cache = await CMakeCache.fromPath(testFilePath('TestCMakeCache.txt'));
         const generator = cache.get("CMAKE_GENERATOR") as api.CacheEntry;
         assert.strictEqual(
             generator.type,
@@ -69,7 +70,7 @@ suite("Utility tests", () => {
                 'SOMETHING:STRING=foo',
                 ''
             ].join(newline);
-            const entries = legacy.CMakeCache.parseCache(str);
+            const entries = CMakeCache.parseCache(str);
             const message = `Using newline ${JSON.stringify(newline)}`
             assert.strictEqual(entries.size, 1, message);
             assert.strictEqual(entries.has('SOMETHING'), true);

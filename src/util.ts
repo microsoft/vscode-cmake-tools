@@ -299,3 +299,12 @@ export function execute(
     onComplete: pr,
   };
 }
+
+export async function testHaveCommand(
+    program: string, args: string[] = ['--version']): Promise<Boolean> {
+  return await new Promise<Boolean>((resolve, _) => {
+    const pipe = proc.spawn(program, args);
+    pipe.on('error', () => resolve(false));
+    pipe.on('exit', () => resolve(true));
+  });
+}
