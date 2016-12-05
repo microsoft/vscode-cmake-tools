@@ -1,10 +1,12 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-
 import * as xml2js from 'xml2js';
 
+import * as api from './api';
 import * as async from './async';
+import {config} from './config';
 import * as util from './util';
+import {Maybe} from './util';
 
 interface SiteAttributes {}
 ;
@@ -150,6 +152,11 @@ export async function parseTestOutput(output: string):
   }
 }
 
+interface TestResults {
+  passing: number;
+  total: number;
+}
+
 export class DecorationManager {
   constructor() {
     vscode.window.onDidChangeActiveTextEditor(_ => {
@@ -172,7 +179,6 @@ export class DecorationManager {
           margin: '10px',
         },
       });
-
 
   private _binaryDir: string;
   public get binaryDir(): string {
@@ -231,5 +237,156 @@ export class DecorationManager {
     for (const editor of vscode.window.visibleTextEditors) {
       this._refreshEditorDecorations(editor);
     }
+  }
+}
+
+export class CTestController {
+  private readonly _decorationManager = new DecorationManager();
+
+  public async executeCTest(
+      binarydir: string, configuration: string, extraArgs: string[] = [],
+      environment: {[key: string]: string} = {},
+      numJobs: number = config.numCTestJobs,
+      outputChannel: vscode.OutputChannel): Promise<number> {
+    // Reset test decorations
+    outputChannel.clear();
+    outputChannel.show();
+    this._decorationManager.failingTestDecorations = [];
+    const pr = util.execute(
+        'ctest',
+        [
+          '-j' + numJobs, '-C', configuration, '-T', 'test',
+          '--output-on-failure'
+        ].concat(extraArgs),
+        environment, binarydir, outputChannel);
+    const rp = pr.onComplete.then(res => res.retc);
+    rp.then(async() => {
+      await this.reloadTests(binarydir, configuration);
+      if (this.testResults) {
+        for (const test of this.testResults.Site.Testing.Test.filter(
+                 t => t.Status === 'failed')) {
+          outputChannel.append(
+              `The test "${test.Name}" failed with the following output:\n` +
+              '----------' +
+              '-----------------------------------' +
+              Array(test.Name.length).join('-') +
+              `\n${test.Output.trim()
+                  .split('\n')
+                  .map(line => '    ' + line)
+                  .join('\n')}\n`);
+          // Only show the channel when a test fails
+          outputChannel.show();
+        }
+      }
+    });
+
+    return rp;
+  }
+
+  /**
+   * @brief Reload the list of CTest tests
+   */
+  public async reloadTests(binaryDir: string, config: string):
+      Promise<api.Test[]> {
+    const ctest_file = path.join(binaryDir, 'CTestTestfile.cmake');
+    if (!(await async.exists(ctest_file))) {
+      this.testingEnabled = false;
+      return this.tests = [];
+    }
+    this.testingEnabled = true;
+    const bt = config;
+    const result =
+        await async.execute('ctest', ['-N', '-C', bt], {cwd: binaryDir});
+    if (result.retc !== 0) {
+      // There was an error running CTest. Odd...
+      console.error(
+          '[vscode] There was an error running ctest to determine available test executables');
+      return this.tests = [];
+    }
+    const tests =
+        result.stdout.split('\n')
+            .map(l => l.trim())
+            .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
+            .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
+            .map(([_, id, tname]) => ({id: parseInt(id!), name: tname!}));
+    const tagfile = path.join(binaryDir, 'Testing', 'TAG');
+    const tag = (await async.exists(tagfile)) ?
+        (await async.readFile(tagfile)).toString().split('\n')[0].trim() :
+        null;
+    const tagdir = tag ? path.join(binaryDir, 'Testing', tag) : null;
+    const results_file = tagdir ? path.join(tagdir, 'Test.xml') : null;
+    this.tests = tests;
+    if (results_file && await async.exists(results_file)) {
+      await this._reloadTestResults(results_file);
+    } else {
+      this.testResults = null;
+    }
+    this._decorationManager.binaryDir = binaryDir;
+    return tests;
+  }
+
+  private async _reloadTestResults(test_xml: string): Promise<void> {
+    this.testResults = await readTestResultsFile(test_xml);
+    const failing =
+        this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
+    this._decorationManager.clearFailingTestDecorations();
+    let new_decors = [] as FailingTestDecoration[];
+    for (const t of failing) {
+      new_decors.push(...await parseTestOutput(t.Output));
+    }
+    this._decorationManager.failingTestDecorations = new_decors;
+  }
+
+  /**
+   * Hods the most recent test informations
+   */
+  private _tests: api.Test[] = [];
+  public get tests(): api.Test[] {
+    return this._tests;
+  }
+  public set tests(v: api.Test[]) {
+    this._tests = v;
+    this._testsChangedEmitter.fire(v);
+    ;
+  }
+
+  private readonly _testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();
+  public readonly onTestsChanged = this._testsChangedEmitter.event;
+
+  private _testResults: Maybe<Results>;
+  public get testResults(): Maybe<Results> {
+    return this._testResults;
+  }
+  public set testResults(v: Maybe<Results>) {
+    this._testResults = v;
+    if (v) {
+      const total = this.tests.length;
+      const passing = v.Site.Testing.Test.reduce(
+          (acc, test) => acc + (test.Status !== 'failed' ? 1 : 0), 0);
+      this._resultsChangedEmitter.fire({passing, total});
+    } else {
+      this._resultsChangedEmitter.fire(null);
+    }
+  }
+
+  private readonly _resultsChangedEmitter =
+      new vscode.EventEmitter<TestResults|null>();
+  public readonly onResultsChanged = this._resultsChangedEmitter.event;
+
+
+  private _testingEnabled : boolean = false;
+  public get testingEnabled() : boolean {
+    return this._testingEnabled;
+  }
+  public set testingEnabled(v : boolean) {
+    this._testingEnabled = v;
+    this._testingEnabledEmitter.fire(v);
+  }
+
+  private readonly _testingEnabledEmitter = new vscode.EventEmitter<boolean>();
+  public readonly onTestingEnabledChanged = this._testingEnabledEmitter.event;
+
+  public setBinaryDir(dir: string) {
+    this._decorationManager.binaryDir = dir;
   }
 }

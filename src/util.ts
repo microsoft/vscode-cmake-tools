@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import * as async from './async';
 import {CodeModelConfiguration} from './server-client';
+import {VariantCombination} from './variants';
 
 export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
@@ -53,84 +54,11 @@ export function product<T>(arrays: T[][]): T[][] {
 
 export type Maybe<T> = (T | null);
 
-export interface ConfigureArguments {
-  key: string;
-  value: (string|string[]|number|boolean);
-}
-
-export interface VariantConfigurationOptions {
-  oneWordSummary$?: string;
-  description$?: string;
-  buildType?: Maybe<string>;
-  linkage?: Maybe<string>;
-  settings?: ConfigureArguments[];
-  generator?: Maybe<string>;
-  toolset?: Maybe<string>;
-}
-
-// export type VariantOptionChoices = Map<string, VariantOption>;
-
-export interface VariantSetting {
-  description: string;
-  default:
-    string;
-    choices: Map<string, VariantConfigurationOptions>;
-}
-
-export type VariantSet = Map<string, VariantSetting>;
-
-export interface VariantCombination extends vscode.QuickPickItem {
-  keywordSettings: Map<string, string>;
-}
-
-export const DEFAULT_VARIANTS = {
-  buildType: {
-    'default$': 'debug',
-    'description$': 'The build type to use',
-    debug: {
-      'oneWordSummary$': 'Debug',
-      'description$': 'Emit debug information without performing optimizations',
-      buildType: 'Debug',
-    },
-    release: {
-      'oneWordSummary$': 'Release',
-      'description$': 'Enable optimizations, omit debug info',
-      buildType: 'Release',
-    },
-    minsize: {
-      'oneWordSummary$': 'MinSizeRel',
-      'description$': 'Optimize for smallest binary size',
-      buildType: 'MinSizeRel',
-    },
-    reldeb: {
-      'oneWordSummary$': 'RelWithDebInfo',
-      'description$': 'Perform optimizations AND include debugging information',
-      buildType: 'RelWithDebInfo',
-    }
-  },
-  // The world isn't ready...
-  // link: {
-  //   ''$description$'': 'The link usage of build libraries',,
-  //   'default$': 'static',
-  //   static: {
-  //     'oneWordSummary$': 'Static',
-  //     'description$': 'Emit Static Libraries',
-  //     linkage: 'static',
-  //   },
-  //   shared: {
-  //     'oneWordSummary$': 'Shared',
-  //     'description$': 'Emit shared libraries/DLLs',
-  //     linkage: 'shared',
-  //   }
-  // }
-};
-
 export interface WorkspaceCache {
   variant?: Maybe<VariantCombination>;
   activeEnvironments?: string[];
   codeModel?: Maybe<CodeModelConfiguration[]>;
 }
-;
 
 export function escapeStringForRegex(str: string): string {
   return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
@@ -261,9 +189,22 @@ export interface ExecutionInformation {
 export function execute(
     program: string, args: string[], env: {[key: string]: string} = {},
     workingDirectory?: string,
-    parser: OutputParser = new NullParser): ExecutionInformation {
+    outputChannel: vscode.OutputChannel | null = null): ExecutionInformation {
   let stdout = '';
   let stderr = '';
+  if (outputChannel) {
+    outputChannel.appendLine(
+        '[vscode] Executing command: '
+        // We do simple quoting of arguments with spaces.
+        // This is only shown to the user,
+        // and doesn't have to be 100% correct.
+        +
+        [program]
+            .concat(args)
+            .map(a => a.replace('"', '\"'))
+            .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
+            .join(' '));
+  }
   const pipe = proc.spawn(program, args, {
     env,
     cwd: workingDirectory,
@@ -283,13 +224,26 @@ export function execute(
     stream.on('end', () => {
       if (backlog) {
         stream.emit('line', backlog.replace(/\r+$/, ''));
+        if (outputChannel) {
+          outputChannel.appendLine(backlog.replace(/\r+$/, ''));
+        }
+      }
+    });
+    stream.on('line', (line: string) => {
+      console.log(`[${program} output]: ${line}`);
+      if (outputChannel) {
+        outputChannel.appendLine(line);
       }
     });
   }
   const pr = new Promise<api.ExecutionResult>((resolve, reject) => {
     pipe.on('error', reject);
     pipe.on('close', (retc: number) => {
-      console.log(`${program} existed with return code ${retc}`);
+      const msg = `${program} exited with return code ${retc}`;
+      console.log(msg);
+      if (outputChannel) {
+        outputChannel.appendLine(`[vscode] ${msg}`)
+      }
       resolve({retc, stdout, stderr});
     })
   });

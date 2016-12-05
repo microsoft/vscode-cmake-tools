@@ -245,7 +245,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         if (!this._metaWatcher) {
             this._setupMetaWatcher();
         }
-        this._reloadVariants();
         util.testHaveCommand(config.cmakePath).then(exists => {
             if (!exists) {
                 vscode.window.showErrorMessage(
@@ -253,15 +252,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                 );
             }
         });
-    }
-
-    private async _refreshWorkspaceCacheContent() {
-        // this._workspaceCacheContent = await WorkspaceCacheFile.readCache(this._workspaceCachePath, {variant:null});
-        // this._writeWorkspaceCacheContent();
-        this._setupCMakeCacheWatcher();
-        if (this._workspaceCacheContent.variant) {
-            this.activeVariantCombination = this._workspaceCacheContent.variant;
-        }
     }
 
     private _cmCacheWatcher: vscode.FileSystemWatcher;
@@ -362,7 +352,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         await this.reloadCMakeCache();
         await this._refreshTargetList();
         await this._reloadMetaData();
-        await this._refreshTests();
+        await this.ctestController.reloadTests(this.binaryDir, this.selectedBuildType || 'Debug');
         this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
     }
 
@@ -478,7 +468,8 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             return -1;
         }
 
-        if (!this.activeVariantCombination) {
+        // If no build variant has been chosen, ask the user now
+        if (!this.variants.activeVariantCombination) {
             const ok = await this.setBuildTypeWithoutConfigure();
             if (!ok) {
                 return -1;
@@ -526,10 +517,10 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         const settings = Object.assign({}, config.configureSettings);
         settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
 
-        const variant = this.activeVariant;
-        if (variant) {
-            Object.assign(settings, variant.settings || {});
-            settings.BUILD_SHARED_LIBS = variant.linkage === 'shared';
+        const variant_options = this.variants.activeConfigurationOptions;
+        if (variant_options) {
+            Object.assign(settings, variant_options.settings || {});
+            settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
         }
 
         if (!(await async.exists(this.binaryDir))) {
@@ -660,7 +651,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             if (!gen)
                 return [];
             else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-                return ['-j', this.numJobs.toString()];
+                return ['-j', config.numJobs.toString()];
             else if (/Visual Studio/.test(gen))
                 return ['/m', '/property:GenerateFullPaths=true'];
             else

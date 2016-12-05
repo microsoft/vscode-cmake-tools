@@ -1,7 +1,7 @@
+import * as os from 'os';
 import * as vscode from 'vscode';
 
 import {Maybe} from './util';
-import * as os from 'os';
 
 export class ConfigurationReader {
   public readConfig<T>(key: string, default_: Maybe<T> = null): Maybe<T> {
@@ -120,6 +120,22 @@ export class ConfigurationReader {
 
   get experimental_useCMakeServer(): boolean {
     return this._readPrefixed<boolean>('experimental.useCMakeServer') || false;
+  }
+
+  public get numJobs(): number {
+    const jobs = this.parallelJobs;
+    if (!!jobs) {
+      return jobs;
+    }
+    return os.cpus().length + 2;
+  }
+
+  public get numCTestJobs(): number {
+    const ctest_jobs = this.ctest_parallelJobs;
+    if (!ctest_jobs) {
+      return this.numJobs;
+    }
+    return ctest_jobs;
   }
 }
 

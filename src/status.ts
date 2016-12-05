@@ -185,19 +185,28 @@ export class StatusBar {
   }
 
   public _reloadTestButton() {
-    const passing = this.testResults.passing;
-    const total = this.testResults.total;
-    if (total == 0) {
-      this._testStatusButton.text = 'Run CTest';
-      this._testStatusButton.color = '';
-    } else if (this.visible) {
-      const good = passing == total;
-      const icon = good ? 'check' : 'x';
-      this._testStatusButton.text = `$(${icon}) ${passing}/${total} ` +
-          (total == 1 ? 'test' : 'tests') + ' passing';
-      this._testStatusButton.color = good ? 'lightgreen' : 'yellow';
+    if (!this.ctestEnabled) {
+      this._testStatusButton.hide();
+      return;
+    }
+
+    if (this.visible) {
       this._testStatusButton.show();
     }
+
+    if (!this.haveTestResults) {
+      this._testStatusButton.text = 'Run CTest';
+      this._testStatusButton.color = '';
+      return;
+    }
+
+    const passing = this.testResults.passing;
+    const total = this.testResults.total;
+    const good = passing == total;
+    const icon = good ? 'check' : 'x';
+    this._testStatusButton.text = `$(${icon}) ${passing}/${total} ` +
+        (total == 1 ? 'test' : 'tests') + ' passing';
+    this._testStatusButton.color = good ? 'lightgreen' : 'yellow';
   }
 
   private _testResults: {passing: number,
@@ -207,6 +216,24 @@ export class StatusBar {
   }
   public set testResults(v: {passing: number, total: number}) {
     this._testResults = v;
+    this._reloadTestButton();
+  }
+
+  private _ctestEnabled: boolean = false;
+  public get ctestEnabled(): boolean {
+    return this._ctestEnabled;
+  }
+  public set ctestEnabled(v: boolean) {
+    this._ctestEnabled = v;
+    this._reloadTestButton();
+  }
+
+  private _haveTestResults: boolean = false;
+  public get haveTestResults(): boolean {
+    return this._haveTestResults;
+  }
+  public set haveTestResults(v: boolean) {
+    this._haveTestResults = v;
     this._reloadTestButton();
   }
 
