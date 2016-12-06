@@ -9,11 +9,10 @@ import * as util from './util';
 import {Maybe} from './util';
 
 interface SiteAttributes {}
-;
 
-type TestStatus = ('failed');
+type TestStatus = ('failed')
 
-export interface FailingTestDecoration {
+    export interface FailingTestDecoration {
   fileName: string;
   lineNumber: number;
   hoverMessage: string;
@@ -242,30 +241,28 @@ export class DecorationManager {
 
 export class CTestController {
   private readonly _decorationManager = new DecorationManager();
+  protected readonly _channel = new util.ThrottledOutputChannel('CMake/Build');
 
-  public async executeCTest(
-      binarydir: string, configuration: string, extraArgs: string[] = [],
-      environment: {[key: string]: string} = {},
-      numJobs: number = config.numCTestJobs,
-      outputChannel: vscode.OutputChannel): Promise<number> {
+  public async executeCTest(binarydir: string, configuration: string):
+      Promise<number> {
     // Reset test decorations
-    outputChannel.clear();
-    outputChannel.show();
+    this._channel.clear();
+    this._channel.show();
     this._decorationManager.failingTestDecorations = [];
     const pr = util.execute(
         'ctest',
         [
-          '-j' + numJobs, '-C', configuration, '-T', 'test',
+          '-j' + config.numCTestJobs, '-C', configuration, '-T', 'test',
           '--output-on-failure'
-        ].concat(extraArgs),
-        environment, binarydir, outputChannel);
+        ].concat(config.ctestArgs),
+        config.testEnvironment as any, binarydir, this._channel);
     const rp = pr.onComplete.then(res => res.retc);
     rp.then(async() => {
       await this.reloadTests(binarydir, configuration);
       if (this.testResults) {
         for (const test of this.testResults.Site.Testing.Test.filter(
                  t => t.Status === 'failed')) {
-          outputChannel.append(
+          this._channel.append(
               `The test "${test.Name}" failed with the following output:\n` +
               '----------' +
               '-----------------------------------' +
@@ -275,7 +272,7 @@ export class CTestController {
                   .map(line => '    ' + line)
                   .join('\n')}\n`);
           // Only show the channel when a test fails
-          outputChannel.show();
+          this._channel.show();
         }
       }
     });
@@ -374,11 +371,11 @@ export class CTestController {
   public readonly onResultsChanged = this._resultsChangedEmitter.event;
 
 
-  private _testingEnabled : boolean = false;
-  public get testingEnabled() : boolean {
+  private _testingEnabled: boolean = false;
+  public get testingEnabled(): boolean {
     return this._testingEnabled;
   }
-  public set testingEnabled(v : boolean) {
+  public set testingEnabled(v: boolean) {
     this._testingEnabled = v;
     this._testingEnabledEmitter.fire(v);
   }

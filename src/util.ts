@@ -9,6 +9,57 @@ import * as async from './async';
 import {CodeModelConfiguration} from './server-client';
 import {VariantCombination} from './variants';
 
+export class ThrottledOutputChannel implements vscode.OutputChannel {
+  private _channel: vscode.OutputChannel;
+  private _accumulatedData: string;
+  private _throttler: async.Throttler<void>;
+
+  constructor(name: string) {
+    this._channel = vscode.window.createOutputChannel(name);
+    this._accumulatedData = '';
+    this._throttler = new async.Throttler();
+  }
+
+  get name(): string {
+    return this._channel.name;
+  }
+
+  dispose(): void {
+    this._accumulatedData = '';
+    this._channel.dispose();
+  }
+
+  append(value: string): void {
+    this._accumulatedData += value;
+    this._throttler.queue(() => {
+      if (this._accumulatedData) {
+        const data = this._accumulatedData;
+        this._accumulatedData = '';
+        this._channel.append(data);
+      }
+      return Promise.resolve();
+    });
+  }
+
+  appendLine(value: string): void {
+    this.append(value + '\n');
+  }
+
+  clear(): void {
+    this._accumulatedData = '';
+    this._channel.clear();
+  }
+
+  show(columnOrPreserveFocus?, preserveFocus?): void {
+    this._channel.show(columnOrPreserveFocus, preserveFocus);
+  }
+
+  hide(): void {
+    this._channel.hide();
+  }
+}
+
+
 export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
     return !(

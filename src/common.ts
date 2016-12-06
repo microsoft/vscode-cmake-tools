@@ -56,55 +56,6 @@ writeWorkspaceCache(path: string, content: util.WorkspaceCache) {
   }, 2));
 }
 
-class ThrottledOutputChannel implements vscode.OutputChannel {
-  private _channel: vscode.OutputChannel;
-  private _accumulatedData: string;
-  private _throttler: async.Throttler<void>;
-
-  constructor(name: string) {
-    this._channel = vscode.window.createOutputChannel(name);
-    this._accumulatedData = '';
-    this._throttler = new async.Throttler();
-  }
-
-  get name(): string {
-    return this._channel.name;
-  }
-
-  dispose(): void {
-    this._accumulatedData = '';
-    this._channel.dispose();
-  }
-
-  append(value: string): void {
-    this._accumulatedData += value;
-    this._throttler.queue(() => {
-      if (this._accumulatedData) {
-        const data = this._accumulatedData;
-        this._accumulatedData = '';
-        this._channel.append(data);
-      }
-      return Promise.resolve();
-    });
-  }
-
-  appendLine(value: string): void {
-    this.append(value + '\n');
-  }
-
-  clear(): void {
-    this._accumulatedData = '';
-    this._channel.clear();
-  }
-
-  show(columnOrPreserveFocus?, preserveFocus?): void {
-    this._channel.show(columnOrPreserveFocus, preserveFocus);
-  }
-
-  hide(): void {
-    this._channel.hide();
-  }
-}
 
 
 export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
@@ -123,20 +74,54 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   abstract debugTarget();
   abstract selectDebugTarget();
 
+  /**
+   * A list of all the disposables we keep track of
+   */
   protected _disposables: vscode.Disposable[] = [];
-  public ctestController = new ctest.CTestController();
-  // protected _testDecorationManager = new ctest.DecorationManager();
+
+  /**
+   * The statusbar manager. Controls updating and refreshing the content of
+   * the statusbar.
+   */
   protected readonly _statusBar = new status.StatusBar();
+
+  /**
+   * The variant manager, controls and updates build variants
+   */
+  public readonly variants = new VariantManager(this._context);
+  public setActiveVariantCombination(settings: api.VariantKeywordSettings) {
+    return this.variants.setActiveVariantCombination(settings);
+  }
+  /**
+   * ctestController manages running ctest and reportrs ctest results via an
+   * event emitter.
+   */
+  public ctestController = new ctest.CTestController();
+  public async ctest(): Promise<Number> {
+    this._channel.show();
+    const build_retc = await this.build();
+    if (build_retc !== 0) {
+      return build_retc;
+    }
+    return this.ctestController.executeCTest(
+        this.binaryDir, this.selectedBuildType || 'Debug');
+  }
+
+  /**
+   * The main diagnostic collection for this extension. Contains both build
+   * errors and cmake diagnostics.
+   */
   protected readonly _diagnostics =
       vscode.languages.createDiagnosticCollection('cmake-build-diags');
-
   public get diagnostics(): vscode.DiagnosticCollection {
     return this._diagnostics;
   }
 
-  protected readonly _channel = new ThrottledOutputChannel('CMake/Build');
-  protected readonly _ctestChannel =
-      new ThrottledOutputChannel('CTest Results');
+  /**
+   * The primary build output channel. We use the ThrottledOutputChannel because
+   * large volumes of output can make VSCode choke
+   */
+  protected readonly _channel = new util.ThrottledOutputChannel('CMake/Build');
 
   private readonly _workspaceCachePath = path.join(
       vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
@@ -149,11 +134,14 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   }
 
   constructor(protected readonly _context: vscode.ExtensionContext) {
+    // We want to rewrite our workspace cache and updare our statusbar whenever
+    // the active build variant changes
     this.variants.onActiveVariantCombinationChanged(v => {
       this._workspaceCacheContent.variant = v;
       this._writeWorkspaceCacheContent();
       this._statusBar.buildTypeLabel = v.label;
     });
+    // These events are simply to update the statusbar
     this.ctestController.onTestingEnabledChanged(enabled => {
       this._statusBar.ctestEnabled = enabled;
     });
@@ -163,7 +151,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         this._statusBar.testResults = res;
       } else {
         this._statusBar.haveTestResults = false;
-        // TODO: ???
       }
     });
   }
@@ -389,14 +376,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   }
 
   /**
-   * The variant manager, controls and updates build variants
-   */
-  public readonly variants = new VariantManager(this._context);
-  public setActiveVariantCombination(settings: api.VariantKeywordSettings) {
-    return this.variants.setActiveVariantCombination(settings);
-  }
-
-  /**
    * @brief Get the name of the "all" target. This is used as the default build
    * target when none is already specified. We cannot simply use the name 'all'
    * because with Visual Studio the target is named ALL_BUILD.
@@ -533,18 +512,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return true;
   }
 
-  public async ctest(): Promise<Number> {
-    this._channel.show();
-    const build_retc = await this.build();
-    if (build_retc !== 0) {
-      return build_retc;
-    }
-    return this.ctestController.executeCTest(
-        this.binaryDir, this.selectedBuildType || 'Debug', config.ctestArgs,
-        config.testEnvironment as any, config.numCTestJobs, this._ctestChannel);
-  }
-
-
   public executeCMakeCommand(
       args: string[],
       options: api.ExecuteOptions = {silent: false, environment: {}},
@@ -660,7 +627,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const changed = await this.variants.showVariantSelector();
     if (changed) {
       // Changing the build type can affect the binary dir
-      this.ctestController.reloadTests(this.binaryDir, this.selectedBuildType || 'Debug');
+      this.ctestController.reloadTests(
+          this.binaryDir, this.selectedBuildType || 'Debug');
     }
     return changed;
   }
