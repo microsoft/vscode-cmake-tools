@@ -96,15 +96,26 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    * ctestController manages running ctest and reportrs ctest results via an
    * event emitter.
    */
-  public ctestController = new ctest.CTestController();
+  protected _ctestController = new ctest.CTestController();
   public async ctest(): Promise<Number> {
     this._channel.show();
     const build_retc = await this.build();
     if (build_retc !== 0) {
       return build_retc;
     }
-    return this.ctestController.executeCTest(
+    return this._ctestController.executeCTest(
         this.binaryDir, this.selectedBuildType || 'Debug');
+  }
+
+  /**
+   * Manages build environments
+   */
+  private readonly _environments = new environment.EnvironmentManager();
+  public selectEnvironments() {
+    return this._environments.selectEnvironments();
+  }
+  public get currentEnvironmentVariables() {
+    return this._environments.currentEnvironmentVariables;
   }
 
   /**
@@ -123,11 +134,15 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    */
   protected readonly _channel = new util.ThrottledOutputChannel('CMake/Build');
 
+  /**
+   * The workspace cache stores extension state that is convenient to remember
+   * between executions. Things like the active variant or enabled environments
+   * are stored here so that they may be recalled quickly upon extension
+   * restart.
+   */
   private readonly _workspaceCachePath = path.join(
       vscode.workspace.rootPath || '~', '.vscode', '.cmaketools.json');
-
   protected _workspaceCacheContent: util.WorkspaceCache = {};
-
   protected _writeWorkspaceCacheContent() {
     return writeWorkspaceCache(
         this._workspaceCachePath, this._workspaceCacheContent);
@@ -142,10 +157,10 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       this._statusBar.buildTypeLabel = v.label;
     });
     // These events are simply to update the statusbar
-    this.ctestController.onTestingEnabledChanged(enabled => {
+    this._ctestController.onTestingEnabledChanged(enabled => {
       this._statusBar.ctestEnabled = enabled;
     });
-    this.ctestController.onResultsChanged((res) => {
+    this._ctestController.onResultsChanged((res) => {
       if (res) {
         this._statusBar.haveTestResults = true;
         this._statusBar.testResults = res;
@@ -153,106 +168,11 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         this._statusBar.haveTestResults = false;
       }
     });
-  }
-
-  private _availableEnvironments = new Map<string, environment.Environment>();
-  public get availableEnvironments(): Map<string, environment.Environment> {
-    return this._availableEnvironments;
-  }
-
-  /**
-   * The environments (by name) which are currently active in the workspace
-   */
-  public activeEnvironments: string[] = [];
-  public activateEnvironments(...names: string[]) {
-    for (const name of names) {
-      const env = this.availableEnvironments.get(name);
-      if (!env) {
-        const msg = `Invalid build environment named ${name}`;
-        vscode.window.showErrorMessage(msg);
-        console.error(msg);
-        continue;
-      }
-      for (const other of this.availableEnvironments.values()) {
-        if (other.mutex === env.mutex && env.mutex !== undefined) {
-          const other_idx = this.activeEnvironments.indexOf(other.name);
-          if (other_idx >= 0) {
-            this.activeEnvironments.splice(other_idx, 1);
-          }
-        }
-      }
-      this.activeEnvironments.push(name);
-    }
-    this._statusBar.activeEnvironments = this.activeEnvironments;
-    this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
-    this._writeWorkspaceCacheContent();
-  }
-
-  public deactivateEnvironment(name: string): Promise<void> {
-    const idx = this.activeEnvironments.indexOf(name);
-    if (idx >= 0) {
-      this.activeEnvironments.splice(idx, 1);
-      this._statusBar.activeEnvironments = this.activeEnvironments;
-      this._workspaceCacheContent.activeEnvironments = this.activeEnvironments;
-      return this._writeWorkspaceCacheContent();
-    } else {
-      throw new Error(`Attempted to deactivate environment ${name
-                      } which is not yet active!`);
-    }
-  }
-
-  public async selectEnvironments(): Promise<void> {
-    const entries =
-        Array.from(this.availableEnvironments.keys())
-            .map(name => ({
-                   name: name,
-                   label: this.activeEnvironments.indexOf(name) >= 0 ?
-                       `$(check) ${name}` :
-                       name,
-                   description: '',
-                 }));
-    const chosen = await vscode.window.showQuickPick(entries);
-    if (!chosen) {
-      return;
-    }
-    this.activeEnvironments.indexOf(chosen.name) >= 0 ?
-        this.deactivateEnvironment(chosen.name) :
-        this.activateEnvironments(chosen.name);
-  }
-
-  /**
-   * @brief The current environment variables to use when executing commands,
-   *    as specified by the active build environments.
-   */
-  public get currentEnvironmentVariables(): {[key: string]: string} {
-    const active_env = this.activeEnvironments.reduce<Object>((acc, name) => {
-      const env_ = this.availableEnvironments.get(name);
-      console.assert(env_);
-      const env = env_!;
-      for (const entry of env.variables.entries()) {
-        acc[entry[0]] = entry[1];
-      }
-      return acc;
-    }, {});
-    const proc_env = process.env;
-    if (process.platform == 'win32') {
-      // Env vars on windows are case insensitive, so we take the ones from
-      // active env and overwrite the ones in our current process env
-      const norm_active_env = Object.getOwnPropertyNames(active_env)
-                                  .reduce<Object>((acc, key: string) => {
-                                    acc[key.toUpperCase()] = active_env[key];
-                                    return acc;
-                                  }, {});
-      const norm_proc_env = Object.getOwnPropertyNames(proc_env).reduce<Object>(
-          (acc, key: string) => {
-            acc[key.toUpperCase()] = proc_env[key];
-            return acc;
-          },
-          {});
-      return Object.assign({}, norm_proc_env, norm_active_env);
-    } else {
-      return Object.assign({}, proc_env, active_env);
-    }
+    this._environments.onActiveEnvironmentsChanges(envs => {
+      this._statusBar.activeEnvironments = envs;
+      this._workspaceCacheContent.activeEnvironments = envs;
+      this._writeWorkspaceCacheContent();
+    });
   }
 
   public get projectName(): string {
@@ -267,24 +187,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    * @brief Performs asynchronous extension initialization
    */
   protected async _init(): Promise<CommonCMakeToolsBase> {
-    // Start loading up available environments early, this may take a few
-    // seconds
-    const env_promises = environment.availableEnvironments().map(async(pr) => {
-      try {
-        const env = await pr;
-        if (env.variables) {
-          console.log(`Detected available environment "${env.name}`);
-          this._availableEnvironments.set(env.name, {
-            name: env.name,
-            variables: env.variables,
-            mutex: env.mutex,
-          });
-        }
-      } catch (e) {
-        console.error('Error detecting an environment', e);
-      }
-    });
-
     this._statusBar.targetName = this.defaultBuildTarget;
 
     async.exists(this.mainListFile).then(e => this._statusBar.visible = e);
@@ -297,14 +199,12 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           this._workspaceCacheContent.variant;
     }
 
-    await Promise.all(env_promises);
-    this._statusBar.environmentsAvailable =
-        this.availableEnvironments.size !== 0;
-
+    await this._environments.environmentsLoaded;
+    this._statusBar.environmentsAvailable = this._environments.availableEnvironments.size !== 0;
     const envs = this._workspaceCacheContent.activeEnvironments || [];
     for (const e of envs) {
-      if (this.availableEnvironments.has(e)) {
-        this.activateEnvironments(e);
+      if (this._environments.availableEnvironments.has(e)) {
+        this._environments.activateEnvironments(e);
       }
     }
 
@@ -314,7 +214,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     }
 
     // Refresh any test results that may be left aroud from a previous run
-    this.ctestController.reloadTests(
+    this._ctestController.reloadTests(
         this.binaryDir, this.selectedBuildType || 'Debug');
 
     return this;
@@ -627,7 +527,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const changed = await this.variants.showVariantSelector();
     if (changed) {
       // Changing the build type can affect the binary dir
-      this.ctestController.reloadTests(
+      this._ctestController.reloadTests(
           this.binaryDir, this.selectedBuildType || 'Debug');
     }
     return changed;
