@@ -64,15 +64,17 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   abstract get activeGenerator(): Maybe<string>;
   abstract get executableTargets(): api.ExecutableTarget[];
   abstract get targets(): api.Target[];
+  abstract get compilerId(): string|null;
   abstract markDirty(): void;
-  abstract configure(): Promise<number>;
-  abstract build(target?: string): Promise<number>;
+  abstract configure(extraArgs?: string[], runPrebuild?: boolean):
+      Promise<number>;
   abstract compilationInfoForFile(filepath: string):
       Promise<api.CompilationInfo>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
-  abstract debugTarget();
   abstract selectDebugTarget();
+
+  protected _refreshAfterConfigure() {}
 
   /**
    * A list of all the disposables we keep track of
@@ -200,7 +202,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     }
 
     await this._environments.environmentsLoaded;
-    this._statusBar.environmentsAvailable = this._environments.availableEnvironments.size !== 0;
+    this._statusBar.environmentsAvailable =
+        this._environments.availableEnvironments.size !== 0;
     const envs = this._workspaceCacheContent.activeEnvironments || [];
     for (const e of envs) {
       if (this._environments.availableEnvironments.has(e)) {
@@ -614,5 +617,113 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const doc = await vscode.workspace.openTextDocument(this.mainListFile);
     await vscode.window.showTextDocument(doc);
     return this.configure();
+  }
+
+  public async debugTarget() {
+    if (!this.executableTargets.length) {
+      vscode.window.showWarningMessage(
+          'No targets are available for debugging. Be sure you have included CMakeToolsHelpers in your CMake project.');
+      return;
+    }
+    const target =
+        this.executableTargets.find(e => e.name === this.currentDebugTarget);
+    if (!target) {
+      vscode.window.showErrorMessage(
+          `The current debug target "${this.currentDebugTarget
+          }" no longer exists. Select a new target to debug.`);
+          return;
+    }
+    const build_retc = await this.build(target.name);
+    if (build_retc !== 0) return;
+    const real_config = {
+      name: `Debugging Target ${target.name}`,
+      type: (this.compilerId && this.compilerId.includes('MSVC')) ? 'cppvsdbg' :
+                                                                    'cppdbg',
+      request: 'launch',
+      cwd: '${workspaceRoot}',
+      args: [],
+      MIMode: process.platform === 'darwin' ? 'lldb' : 'gdb',
+    };
+    const user_config = config.debugConfig;
+    Object.assign(real_config, user_config);
+    real_config['program'] = target.path;
+    console.log(JSON.stringify(real_config));
+    return vscode.commands.executeCommand('vscode.startDebug', real_config);
+  }
+
+  public async build(target_: Maybe<string> = null): Promise<Number> {
+    let target = target_;
+    if (!target_) {
+      target = this.defaultBuildTarget || this.allTargetName;
+    }
+    if (!this.sourceDir) {
+      vscode.window.showErrorMessage('You do not have a source directory open');
+      return -1;
+    }
+
+    if (this.isBusy) {
+      vscode.window.showErrorMessage(
+          'A CMake task is already running. Stop it before trying to build.');
+      return -1;
+    }
+
+    const cachepath = this.cachePath;
+    if (!(await async.exists(cachepath))) {
+      const retc = await this.configure();
+      if (retc !== 0) {
+        return retc;
+      }
+      // We just configured which may change what the "all" target is.
+      if (!target_) {
+        target = this.defaultBuildTarget || this.allTargetName;
+      }
+    }
+    if (!target) {
+      throw new Error(
+          'Unable to determine target to build. Something has gone horribly wrong!');
+    }
+    const ok = await this._prebuild();
+    if (!ok) {
+      return -1;
+    }
+    if (this.needsReconfigure) {
+      const retc = await this.configure([], false);
+      if (!!retc) return retc;
+    }
+    // Pass arguments based on a particular generator
+    const gen = this.activeGenerator;
+    const generator_args = (() => {
+      if (!gen)
+        return [];
+      else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
+        return ['-j', config.numJobs.toString()];
+      else if (/Visual Studio/.test(gen))
+        return ['/m', '/property:GenerateFullPaths=true'];
+      else
+        return [];
+    })();
+    this._channel.show();
+    this.statusMessage = `Building ${target}...`;
+    const result = await this.executeCMakeCommand(
+        [
+          '--build',
+          this.binaryDir,
+          '--target',
+          target,
+          '--config',
+          this.selectedBuildType || 'Debug',
+        ].concat(config.buildArgs)
+            .concat(['--'].concat(generator_args).concat(config.buildToolArgs)),
+        {
+          silent: false,
+          environment: config.buildEnvironment,
+        },
+        (config.parseBuildDiagnostics ?
+             new BuildParser(
+                 this.binaryDir, config.enableOutputParsers,
+                 this.activeGenerator) :
+             new util.NullParser()));
+    this.statusMessage = 'Ready';
+    return result.retc;
   }
 }

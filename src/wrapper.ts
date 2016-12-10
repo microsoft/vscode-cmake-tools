@@ -157,7 +157,8 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     //   // We purposefully exclude version 3.7.0, which had some major CMake server
     //   // bugs
     //   if (util.versionGreater(version, '3.7.0')) {
-    //     return this._impl = new client.ServerClientCMakeTools.startup();
+    //     this._impl = client.ServerClientCMakeTools.startup(this._ctx);
+    //     return this;
     //   }
     //   vscode.window.showWarningMessage('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.1 or newer first.');
     // }

@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as async from './async';
+import {config} from './config';
 import {CodeModelConfiguration} from './server-client';
 import {VariantCombination} from './variants';
 
@@ -312,4 +313,45 @@ export async function testHaveCommand(
     pipe.on('error', () => resolve(false));
     pipe.on('exit', () => resolve(true));
   });
+}
+
+// Given a list of CMake generators, returns the first one available on this
+// system
+export async function pickGenerator(candidates: string[]):
+    Promise<Maybe<string>> {
+  // The user can override our automatic selection logic in their config
+  const generator = config.generator;
+  if (generator) {
+    // User has explicitly requested a certain generator. Use that one.
+    return generator;
+  }
+  for (const gen of candidates) {
+    const delegate = {
+      Ninja: async() => {
+        return await testHaveCommand('ninja-build') ||
+            await testHaveCommand('ninja');
+      },
+      'MinGW Makefiles': async() => {
+        return process.platform === 'win32' && await testHaveCommand('make');
+      },
+      'NMake Makefiles': async() => {
+        return process.platform === 'win32' &&
+            await testHaveCommand('nmake', ['/?']);
+      },
+      'Unix Makefiles': async() => {
+        return process.platform !== 'win32' && await testHaveCommand('make');
+      }
+    }[gen];
+    if (delegate === undefined) {
+      const vsMatcher = /^Visual Studio (\d{2}) (\d{4})($|\sWin64$|\sARM$)/;
+      if (vsMatcher.test(gen) && process.platform === 'win32') return gen;
+      vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
+      continue;
+    }
+    if (await delegate.bind(this)())
+      return gen;
+    else
+      console.log('Generator "' + gen + '" is not supported');
+  }
+  return null;
 }

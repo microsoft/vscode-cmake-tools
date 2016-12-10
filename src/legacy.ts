@@ -139,7 +139,11 @@ class CMakeTargetListParser extends util.OutputParser {
 export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAPI {
     private _lastConfigureSettings = {};
     private _compilationDatabase: Promise<Maybe<CompilationDatabase>> = Promise.resolve(null);
-    public compilerId: Maybe<string> = null;
+
+    private _compilerId: Maybe<string> = null;
+    get compilerId() {
+        return this._compilerId;
+    }
 
     private _targets: api.NamedTarget[] = [];
     get targets() { return this._targets; }
@@ -225,10 +229,10 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                     path: tup[2],
                 }));
             const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
-            this.compilerId = cid || null;
+            this._compilerId = cid || null;
         } else {
             this.executableTargets = [];
-            this.compilerId = null;
+            this._compilerId = null;
         }
     }
 
@@ -406,44 +410,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             : null;
     }
 
-    // Given a list of CMake generators, returns the first one available on this system
-    public async pickGenerator(candidates: string[]): Promise<Maybe<string>> {
-        // The user can override our automatic selection logic in their config
-        const generator = config.generator;
-        if (generator) {
-            // User has explicitly requested a certain generator. Use that one.
-            return generator;
-        }
-        for (const gen of candidates) {
-            const delegate = {
-                Ninja: async () => {
-                    return await util.testHaveCommand('ninja-build') || await util.testHaveCommand('ninja');
-                },
-                "MinGW Makefiles": async () => {
-                    return process.platform === 'win32' && await util.testHaveCommand('make');
-                },
-                "NMake Makefiles": async () => {
-                    return process.platform === 'win32' && await util.testHaveCommand('nmake', ['/?']);
-                },
-                'Unix Makefiles': async () => {
-                    return process.platform !== 'win32' && await util.testHaveCommand('make');
-                }
-            }[gen];
-            if (delegate === undefined) {
-                const vsMatcher = /^Visual Studio (\d{2}) (\d{4})($|\sWin64$|\sARM$)/;
-                if (vsMatcher.test(gen) && process.platform === 'win32')
-                    return gen;
-                vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
-                continue;
-            }
-            if (await delegate.bind(this)())
-                return gen;
-            else
-                console.log('Generator "' + gen + '" is not supported');
-        }
-        return null;
-    }
-
     public async configure(extra_args: string[] = [], run_prebuild = true): Promise<Number> {
         if (this.isBusy) {
             vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to configure.');
@@ -495,7 +461,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         let is_multi_conf = this.isMultiConf;
         if (!this.cmakeCache.exists) {
             this._channel.appendLine("[vscode] Setting up new CMake configuration");
-            const generator = await this.pickGenerator(config.preferredGenerators);
+            const generator = await util.pickGenerator(config.preferredGenerators);
             if (generator) {
                 this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
                 settings_args.push("-G" + generator);
@@ -601,91 +567,22 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         if (!result.retc) {
             await this._refreshAll();
             await this._reloadConfiguration();
+            await this.reloadCMakeCache();
             this._needsReconfigure = false;
         }
         return result.retc;
     }
 
-    public async build(target_: Maybe<string> = null): Promise<Number> {
-        let target = target_;
-        if (!target_) {
-            target = this.defaultBuildTarget || this.allTargetName;
-        }
-        if (!this.sourceDir) {
-            vscode.window.showErrorMessage('You do not have a source directory open');
-            return -1;
-        }
+    protected _refreshAfterConfigure() {
+        return this._refreshAll();
+    }
 
-        if (this.isBusy) {
-            vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to build.');
-            return -1;
-        }
-
-        const cachepath = this.cachePath;
-        if (!(await async.exists(cachepath))) {
-            const retc = await this.configure();
-            if (retc !== 0) {
-                return retc;
-            }
-            await this.reloadCMakeCache();
-            // We just configured which may change what the "all" target is.
-            if (!target_) {
-                target = this.defaultBuildTarget || this.allTargetName;
-            }
-        }
-        if (!target) {
-            throw new Error('Unable to determine target to build. Something has gone horribly wrong!');
-        }
-        const ok = await this._prebuild();
-        if (!ok) {
-            return -1;
-        }
-        if (this._needsReconfigure) {
-            const retc = await this.configure([], false);
-            if (!!retc)
-                return retc;
-        }
-        // Pass arguments based on a particular generator
-        const gen = this.activeGenerator;
-        const generator_args = (() => {
-            if (!gen)
-                return [];
-            else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-                return ['-j', config.numJobs.toString()];
-            else if (/Visual Studio/.test(gen))
-                return ['/m', '/property:GenerateFullPaths=true'];
-            else
-                return [];
-        })();
-        this._channel.show();
-        this.statusMessage = `Building ${target}...`;
-        const result = await this.executeCMakeCommand([
-            '--build', this.binaryDir,
-            '--target', target,
-            '--config', this.selectedBuildType || 'Debug',
-        ]
-            .concat(config.buildArgs)
-            .concat([
-                '--'
-            ]
-                .concat(generator_args)
-                .concat(config.buildToolArgs)
-            ),
-            {
-                silent: false,
-                environment: config.buildEnvironment,
-            },
-            (config.parseBuildDiagnostics
-                ? new BuildParser(this.binaryDir,
-                                  config.enableOutputParsers,
-                                  this.activeGenerator)
-                : new util.NullParser())
-        );
-        this.statusMessage = 'Ready';
-        if (!result.retc) {
+    public async build(target: Maybe<string> = null): Promise<Number> {
+        const res = await super.build(target);
+        if (res == 0) {
             await this._refreshAll();
         }
-        return result.retc;
+        return res;
     }
 
     public async cleanConfigure(): Promise<Number> {
@@ -700,7 +597,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             this._channel.appendLine('[vscode] Removing ' + cmake_files);
             await util.rmdir(cmake_files);
         }
-        return await this.configure();
+        return this.configure();
     }
 
     public async setBuildTypeWithoutConfigure() {
@@ -710,36 +607,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             await this._setupCMakeCacheWatcher();
         }
         return ret;
-    }
-
-    public async debugTarget() {
-        if (!this.executableTargets.length) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included CMakeToolsHelpers in your CMake project.');
-            return;
-        }
-        const target = this.executableTargets.find(e => e.name === this.currentDebugTarget);
-        if (!target) {
-            vscode.window.showErrorMessage(`The current debug target "${this.currentDebugTarget}" no longer exists. Select a new target to debug.`);
-            return;
-        }
-        const build_retc = await this.build(target.name);
-        if (build_retc !== 0)
-            return;
-        const real_config = {
-            name: `Debugging Target ${target.name}`,
-            type: (this.compilerId && this.compilerId.includes('MSVC'))
-                ? 'cppvsdbg'
-                : 'cppdbg',
-            request: 'launch',
-            cwd: '${workspaceRoot}',
-            args: [],
-            MIMode: process.platform === 'darwin' ? 'lldb' : 'gdb',
-        };
-        const user_config = config.debugConfig;
-        Object.assign(real_config, user_config);
-        real_config['program'] = target.path;
-        console.log(JSON.stringify(real_config));
-        return vscode.commands.executeCommand('vscode.startDebug', real_config);
     }
 
     public async selectDebugTarget() {
