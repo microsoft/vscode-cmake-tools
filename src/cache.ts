@@ -1,10 +1,10 @@
-import {CacheEntry, EntryType} from './api';
+import * as api from './api';
 import * as async from './async';
 import * as util from './util';
 import {Maybe} from './util';
 
-export class CMakeCacheEntry implements CacheEntry {
-  private _type: EntryType = EntryType.Uninitialized;
+export class Entry implements api.CacheEntry {
+  private _type: api.EntryType = api.EntryType.Uninitialized;
   private _docs: string = '';
   private _key: string = '';
   private _value: any = null;
@@ -29,7 +29,7 @@ export class CMakeCacheEntry implements CacheEntry {
     return this.value;
   }
 
-  constructor(key: string, value: string, type: EntryType, docs: string) {
+  constructor(key: string, value: string, type: api.EntryType, docs: string) {
     this._key = key;
     this._value = value;
     this._type = type;
@@ -39,7 +39,7 @@ export class CMakeCacheEntry implements CacheEntry {
 };
 
 export class CMakeCache {
-  private _entries: Map<string, CMakeCacheEntry>;
+  private _entries: Map<string, Entry>;
 
   public static async fromPath(path: string): Promise<CMakeCache> {
     const exists = await async.exists(path);
@@ -53,7 +53,7 @@ export class CMakeCache {
   }
 
   constructor(
-      path: string, exists: boolean, entries: Map<string, CMakeCacheEntry>) {
+      path: string, exists: boolean, entries: Map<string, Entry>) {
     this._entries = entries;
     this._path = path;
     this._exists = exists;
@@ -73,12 +73,12 @@ export class CMakeCache {
     return CMakeCache.fromPath(this.path);
   }
 
-  public static parseCache(content: string): Map<string, CMakeCacheEntry> {
+  public static parseCache(content: string): Map<string, Entry> {
     const lines = content.split(/\r\n|\n|\r/)
                       .filter(line => !!line.length)
                       .filter(line => !/^\s*#/.test(line));
 
-    const entries = new Map<string, CMakeCacheEntry>();
+    const entries = new Map<string, Entry>();
     let docs_acc = '';
     for (const line of lines) {
       if (line.startsWith('//')) {
@@ -93,23 +93,23 @@ export class CMakeCache {
           // We skip the ADVANCED property variables. They're a little odd.
         } else {
           const key = name;
-          const type: EntryType = {
-            BOOL: EntryType.Bool,
-            STRING: EntryType.String,
-            PATH: EntryType.Path,
-            FILEPATH: EntryType.FilePath,
-            INTERNAL: EntryType.Internal,
-            UNINITIALIZED: EntryType.Uninitialized,
-            STATIC: EntryType.Static,
+          const type: api.EntryType = {
+            BOOL: api.EntryType.Bool,
+            STRING: api.EntryType.String,
+            PATH: api.EntryType.Path,
+            FILEPATH: api.EntryType.FilePath,
+            INTERNAL: api.EntryType.Internal,
+            UNINITIALIZED: api.EntryType.Uninitialized,
+            STATIC: api.EntryType.Static,
           }[typename];
           const docs = docs_acc.trim();
           docs_acc = '';
           let value: any = valuestr;
-          if (type === EntryType.Bool) value = util.isTruthy(value);
+          if (type === api.EntryType.Bool) value = util.isTruthy(value);
 
           console.assert(
               type !== undefined, `Unknown cache entry type: ${type}`);
-          entries.set(name, new CMakeCacheEntry(key, value, type, docs));
+          entries.set(name, new Entry(key, value, type, docs));
         }
       }
     }
@@ -117,7 +117,7 @@ export class CMakeCache {
     return entries;
   }
 
-  public get(key: string, defaultValue?: any): Maybe<CMakeCacheEntry> {
+  public get(key: string, defaultValue?: any): Maybe<Entry> {
     return this._entries.get(key) || null;
   }
 }

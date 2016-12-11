@@ -15,7 +15,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   private _client: cms.CMakeServerClient;
   private _globalSettings: cms.GlobalSettingsContent;
   private _dirty = true;
-  private _cacheEntires = new Map<string, cache.CMakeCacheEntry>();
+  private _cacheEntries = new Map<string, cache.Entry>();
 
   private _executableTargets: api.ExecutableTarget[] = [];
   get executableTargets() {
@@ -31,7 +31,21 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   }
 
   get compilerId() {
-    return 'TODO ???';
+    for (const lang of ['CXX', 'C']) {
+      const entry = this.cacheEntry(`CMAKE_${lang}_COMPILER`);
+      if (!entry) {
+        continue;
+      }
+      const compiler = entry.as<string>();
+      if (compiler.endsWith('cl.exe')) {
+        return 'MSVC';
+      } else if (/g(cc|++)[^/]*/.test(compiler)) {
+        return 'GNU';
+      } else if (/clang(++)?[^/]*/.test(compiler)) {
+        return 'Clang';
+      }
+    }
+    return null;
   }
 
   get needsReconfigure() {
@@ -43,7 +57,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   }
 
   cacheEntry(key: string) {
-    return this._cacheEntires.get(key) || null;
+    return this._cacheEntries.get(key) || null;
   }
 
   async cleanConfigure() {
@@ -116,6 +130,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     this._workspaceCacheContent.codeModel =
         await this._client.sendRequest('codemodel');
     await this._writeWorkspaceCacheContent();
+    await this._refreshCacheEntries();
     return 0;
   }
 
@@ -130,6 +145,14 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       return;
     }
     this.currentDebugTarget = chosen.label;
+  }
+
+  async build(target?: string | null) {
+    const retc = await super.build(target);
+    if (retc >= 0) {
+      await this._refreshCacheEntries();
+    }
+    return retc;
   }
 
   stop(): Promise<boolean> {
@@ -153,13 +176,13 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       return [];
     }
     return config.projects.reduce<Ret>(
-        (acc, project) =>
-            acc.concat(project.targets.map(t => ({
-                                             type: 'rich' as 'rich',
-                                             name: t.name,
-                                             filepath: t.fullName,
-                                             targetType: t.type,
-                                           }))),
+        (acc, project) => acc.concat(project.targets.map(
+            t => ({
+              type: 'rich' as 'rich',
+              name: t.name,
+              filepath: path.join(t.buildDirectory, t.fullName),
+              targetType: t.type,
+            }))),
         []);
   }
 
@@ -188,15 +211,50 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     });
   }
 
+  private async _refreshCacheEntries() {
+    const clcache = await this._client.getCMakeCacheContent();
+    return this._cacheEntries = clcache.cache.reduce((acc, el) => {
+      const type: api.EntryType = {
+        BOOL: api.EntryType.Bool,
+        STRING: api.EntryType.String,
+        PATH: api.EntryType.Path,
+        FILEPATH: api.EntryType.FilePath,
+        INTERNAL: api.EntryType.Internal,
+        UNINITIALIZED: api.EntryType.Uninitialized,
+        STATIC: api.EntryType.Static,
+      }[el.type];
+      console.assert(type !== undefined, `Unknown cache type ${el.type}`);
+      acc.set(
+          el.key,
+          new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING));
+      return acc;
+    }, new Map<string, cache.Entry>());
+  }
+
   protected async _init(): Promise<ServerClientCMakeTools> {
     await super._init();
     const cl = this._client = await this._restartClient();
     this._globalSettings = await cl.getGlobalSettings();
+    this._statusBar.statusMessage = 'Ready';
+    this._statusBar.isBusy = false;
+    if (this.executableTargets.length >= 0) {
+      this.currentDebugTarget = this.executableTargets[0].name;
+    }
+    try {
+      await this._refreshCacheEntries();
+    } catch (e) {
+      if (e instanceof cms.ServerError) {
+        // Do nothing
+      } else {
+        throw e;
+      }
+    }
     return this;
   }
 
   static startup(ct: vscode.ExtensionContext): Promise<ServerClientCMakeTools> {
     const cmt = new ServerClientCMakeTools(ct);
+    cmt._statusBar.statusMessage = 'Ready';
     return cmt._init();
   }
 }

@@ -20,7 +20,7 @@ import * as util from './util';
 import {CompilationDatabase} from './compdb';
 import * as api from './api';
 import {config} from './config';
-import {CMakeCacheEntry, CMakeCache} from './cache';
+import {Entry, CMakeCache} from './cache';
 
 import {CommonCMakeToolsBase} from './common';
 
