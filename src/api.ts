@@ -58,6 +58,8 @@ export interface NamedTarget {
 export interface RichTarget {
   type: 'rich';
   name: string;
+  filepath: string;
+  targetType: string;
 }
 
 export type Target = NamedTarget | RichTarget

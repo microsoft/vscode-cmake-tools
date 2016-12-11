@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import * as async from './async';
 import {config} from './config';
-import {CodeModelConfiguration} from './server-client';
+import {CodeModelContent} from './server-client';
 import {VariantCombination} from './variants';
 
 export class ThrottledOutputChannel implements vscode.OutputChannel {
@@ -109,7 +109,7 @@ export type Maybe<T> = (T | null);
 export interface WorkspaceCache {
   variant?: Maybe<VariantCombination>;
   activeEnvironments?: string[];
-  codeModel?: Maybe<CodeModelConfiguration[]>;
+  codeModel?: Maybe<CodeModelContent>;
 }
 
 export function escapeStringForRegex(str: string): string {
@@ -242,8 +242,7 @@ export function execute(
     program: string, args: string[], env: {[key: string]: string} = {},
     workingDirectory?: string,
     outputChannel: vscode.OutputChannel | null = null): ExecutionInformation {
-  let stdout = '';
-  let stderr = '';
+  const acc = {stdout: '', stderr: ''};
   if (outputChannel) {
     outputChannel.appendLine(
         '[vscode] Executing command: '
@@ -261,10 +260,13 @@ export function execute(
     env,
     cwd: workingDirectory,
   });
-  for (const stream of [pipe.stdout, pipe.stderr]) {
+  for (const [acckey, stream] of [
+           ['stdout', pipe.stdout],
+           ['stderr', pipe.stderr]] as [string, NodeJS.ReadableStream][]) {
     let backlog = '';
     stream.on('data', (data: Uint8Array) => {
       backlog += data.toString();
+      acc[acckey] += data.toString();
       let n = backlog.indexOf('\n');
       // got a \n? emit one or more 'line' events
       while (n >= 0) {
@@ -296,7 +298,7 @@ export function execute(
       if (outputChannel) {
         outputChannel.appendLine(`[vscode] ${msg}`)
       }
-      resolve({retc, stdout, stderr});
+      resolve({retc, stdout: acc.stdout, stderr: acc.stderr});
     })
   });
 
@@ -354,4 +356,33 @@ export async function pickGenerator(candidates: string[]):
       console.log('Generator "' + gen + '" is not supported');
   }
   return null;
+}
+
+export async function termProc(child: proc.ChildProcess) {
+  // Stopping the process isn't as easy as it may seem. cmake --build will
+  // spawn child processes, and CMake won't forward signals to its
+  // children. As a workaround, we list the children of the cmake process
+  // and also send signals to them.
+  await this._killTree(child.pid);
+  return true;
+}
+
+async function _killTree(pid: number) {
+  if (process.platform !== 'win32') {
+    let children: number[] = [];
+    const stdout =
+        (await async.execute('pgrep', ['-P', pid.toString()])).stdout.trim();
+    if (!!stdout.length) {
+      children = stdout.split('\n').map(line => Number.parseInt(line));
+    }
+    for (const other of children) {
+      if (other) await this._killTree(other);
+    }
+    process.kill(pid, 'SIGINT');
+  } else {
+    // Because reasons, Node's proc.kill doesn't work on killing child
+    // processes transitively. We have to do a sad and manually kill the
+    // task using taskkill.
+    proc.exec('taskkill /pid ' + pid.toString() + ' /T /F');
+  }
 }
