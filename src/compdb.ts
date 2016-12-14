@@ -5,7 +5,7 @@ import * as path from 'path';
 
 import * as util from './util';
 
-import {CompilationInfo} from './api';
+import {CompilationInfo, RawCompilationInfo} from './api';
 
 export class CompilationDatabase {
   private _info_by_filepath: Map<string, CompilationInfo>;
@@ -50,9 +50,9 @@ export class CompilationDatabase {
               resolve(null);
             } else {
               try {
-                const content = JSON.parse(data.toString());
-                resolve(
-                    new CompilationDatabase(content as CompilationInfo[]));
+                const content = JSON.parse(data.toString()) as RawCompilationInfo[];
+                resolve(new CompilationDatabase(
+                    content.map(util.parseRawCompilationInfo)));
               } catch (e) {
                 console.warn(
                     `Error parsing compilation database "${dbpath}": ${e}`);

@@ -248,8 +248,8 @@ export interface CodeModelRequest extends CookiedMessage, CodeModelParams {
 export interface CodeModelFileGroup {
   language: string;
   compileFlags: string;
-  includePath: {path: string; isSystem?: boolean;}[];
-  defines: string[];
+  includePath?: {path: string; isSystem?: boolean;}[];
+  defines?: string[];
   sources: string[];
 }
 
@@ -418,7 +418,6 @@ export class CMakeServerClient {
             'Protocol error talking to CMake! Got this input: ' + input);
       }
       this._accInput = tail;
-      console.log(`Got message from cmake-server: ${content.trim()}`);
       const message: SomeMessage = JSON.parse(content);
       this._onMessage(message);
     }
@@ -482,7 +481,6 @@ export class CMakeServerClient {
             return;
           }
           case 'fileChange': {
-            console.log('File change', sig.path);
             return;
           }
         }
@@ -534,11 +532,15 @@ export class CMakeServerClient {
     return this.sendRequest('compute', params);
   }
 
+  codemodel(params?: CodeModelParams): Promise<CodeModelContent> {
+    return this.sendRequest('codemodel', params);
+  }
+
   private _onErrorData(data: Uint8Array) {
     console.error(data.toString());
   }
 
-  public async shutdown(): Promise<void> {
+  public async shutdown() {
     this._pipe.end();
     await this._endPromise;
   }
@@ -554,6 +556,9 @@ export class CMakeServerClient {
         ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
           env: params.environment,
         });
+    child.stderr.on('data', (dat) => {
+      console.error('Error from cmake-server process:', dat.toString());
+    });
     console.log('Started new CMake Server instance with PID', child.pid);
     setTimeout(() => {
       const end_promise = new Promise(resolve => {

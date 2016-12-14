@@ -147,6 +147,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   }
 
   public async reload(): Promise<CMakeToolsWrapper> {
+    await this.shutdown();
     if (config.experimental_useCMakeServer) {
       const cmpath = config.cmakePath;
       const version_ex = await util.execute(config.cmakePath, ['--version']).onComplete;
@@ -166,6 +167,13 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     this._impl = cmt.initFinished;
     await this._impl;
     return this;
+  }
+
+  public async shutdown() {
+    const impl = await this._impl;
+    if (impl instanceof client.ServerClientCMakeTools) {
+      await impl.dangerousShutdownClient();
+    }
   }
 
   static startup(ct: vscode.ExtensionContext): Promise<CMakeToolsWrapper> {

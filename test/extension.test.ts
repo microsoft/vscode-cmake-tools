@@ -6,7 +6,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 
 import * as api from '../src/api';
-import * as legacy from '../src/legacy';
+import * as wrapper from '../src/wrapper';
 import * as util from '../src/util';
 import * as async from '../src/async';
 import * as diagnostics from '../src/diagnostics';
@@ -258,19 +258,70 @@ suite("Utility tests", () => {
                 assert(info);
                 if (info) {
                     assert.strictEqual(source_path, info.file);
-                    assert.strictEqual('/home/clang-languageservice/build', info.directory);
-                    assert.strictEqual(info.command, "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp")
+                    assert.strictEqual('/home/clang-languageservice/build', info.compile!.directory);
+                    assert.strictEqual(info.compile!.command, "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp")
                 }
             }
         })
+    });
+    test('Parsing gnu-style compile info', () => {
+        const raw: api.RawCompilationInfo = {
+            command: 'clang++ -I/foo/bar -isystem /system/path -fsome-compile-flag -DMACRO=DEFINITION -I ../relative/path "-I/path\\"with\\" embedded quotes/foo"',
+            directory: '/some/dir',
+            file: 'meow.cpp'
+        };
+        const info = util.parseRawCompilationInfo(raw);
+        assert.strictEqual(raw.command, info.compile!.command);
+        assert.strictEqual(raw.directory, info.compile!.directory);
+        assert.strictEqual(raw.file, info.file);
+        let idx = info.includeDirectories.findIndex(i => i.path == '/system/path');
+        assert(idx >= 0);
+        let inc = info.includeDirectories[idx];
+        assert(inc.isSystem);
+        assert.strictEqual(inc.path, '/system/path');
+        idx = info.includeDirectories.findIndex(i => i.path == '/some/relative/path');
+        assert(idx >= 0);
+        inc = info.includeDirectories[idx];
+        assert(!inc.isSystem);
+        inc = info.includeDirectories[3];
+        assert.strictEqual(inc.path, '/path"with" embedded quotes/foo');
+        assert.strictEqual(info.compileDefinitions['MACRO'], 'DEFINITION');
+        assert.strictEqual(info.compileFlags[0], '-fsome-compile-flag');
+        assert.strictEqual(info.compiler, 'clang++');
+    });
+    test('Parsing MSVC-style compile info', () => {
+        const raw: api.RawCompilationInfo = {
+            command: 'cl.exe -I/foo/bar /I/system/path /Z+:some-compile-flag /DMACRO=DEFINITION -I ../relative/path "/I/path\\"with\\" embedded quotes/foo"',
+            directory: '/some/dir',
+            file: 'meow.cpp'
+        };
+        const info = util.parseRawCompilationInfo(raw);
+        assert.strictEqual(raw.command, info.compile!.command);
+        assert.strictEqual(raw.directory, info.compile!.directory);
+        assert.strictEqual(raw.file, info.file);
+        let idx = info.includeDirectories.findIndex(i => i.path == '/system/path');
+        assert(idx >= 0);
+        let inc = info.includeDirectories[idx];
+        assert(!inc.isSystem);
+        assert.strictEqual(inc.path, '/system/path');
+        idx = info.includeDirectories.findIndex(i => i.path == '/some/relative/path');
+        assert(idx >= 0);
+        inc = info.includeDirectories[idx];
+        assert(!inc.isSystem);
+        inc = info.includeDirectories[3];
+        assert.strictEqual(inc.path, '/path"with" embedded quotes/foo');
+        assert.strictEqual(info.compileDefinitions['MACRO'], 'DEFINITION');
+        assert.strictEqual(info.compileFlags[0], '/Z+:some-compile-flag');
+        assert.strictEqual(info.compiler, 'cl.exe');
     });
     test('Can access the extension API', async function() {
         const api = await getExtension();
         assert(await api.binaryDir);
     });
-    suite('Extension smoke tests', function() {
-        this.timeout(60 * 1000); // These tests are slower than just unit tests
+    function smokeTests(context, tag, setupHelper) {
+        context.timeout(60 * 1000); // These tests are slower than just unit tests
         setup(async function () {
+            await setupHelper();
             const cmt = await getExtension();
             this.cmt = cmt;
             await cmt.setActiveVariantCombination({
@@ -287,28 +338,28 @@ suite("Utility tests", () => {
             await pause(1000);
             await new Promise(resolve => exists ? rimraf(bd, resolve) : resolve());
         });
-        test('Can configure', async function() {
+        test(`Can configure [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
             assert((await cmt.targets).findIndex(t => t.name == 'MyExecutable') >= 0);
         });
-        test('Can build named target', async function() {
+        test(`Can build named target [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build('MyExecutable');
             assert.strictEqual(retc, 0);
         });
-        test('Non-existent target fails', async function() {
+        test(`Non-existent target fails [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build('ThisIsNotAnExistingTarget');
             assert.notStrictEqual(retc, 0);
         });
-        test('Can execute CTest tests', async function() {
+        test(`Can execute CTest tests [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.ctest();
             assert.strictEqual(retc, 0);
         });
-        test('Finds executable targets', async function() {
+        test(`Finds executable targets [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0, 'Configure failed');
@@ -316,7 +367,7 @@ suite("Utility tests", () => {
             assert.strictEqual(targets.length, 1, 'Executable targets are missing');
             assert.strictEqual(targets[0].name, 'MyExecutable');
         });
-        test('CMake Diagnostic Parsing', async function() {
+        test(`CMake Diagnostic Parsing [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure(['-DWARNING_COOKIE=this-is-a-warning-cookie']);
             assert.strictEqual(retc, 0);
@@ -328,7 +379,7 @@ suite("Utility tests", () => {
             assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Warning);
             assert(diag.message.includes('this-is-a-warning-cookie'));
         });
-        test('Compile Error Parsing', async function() {
+        test(`Compile Error Parsing [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const config_retc = await cmt.configure(['-DCAUSE_BUILD_ERROR=TRUE']);
             assert.strictEqual(config_retc, 0);
@@ -345,7 +396,7 @@ suite("Utility tests", () => {
             assert.strictEqual(diag.severity, vscode.DiagnosticSeverity.Error);
             assert(diag.message.includes('special-error-cookie asdfqwerty'));
         });
-        test('Pass arguments to debugger', async function() {
+        test(`Pass arguments to debugger [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
@@ -365,7 +416,7 @@ suite("Utility tests", () => {
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, test_string);
         });
-        test('Debugger gets environment variables', async function() {
+        test(`Debugger gets environment variables [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
@@ -383,7 +434,7 @@ suite("Utility tests", () => {
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, pathvar);
         });
-        test('Debugger gets custom environment variables', async function() {
+        test(`Debugger gets custom environment variables [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
@@ -406,7 +457,7 @@ suite("Utility tests", () => {
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, test_string);
         });
-        test('Get compilation info for a file', async function() {
+        test(`Get compilation info for a file [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
@@ -414,7 +465,8 @@ suite("Utility tests", () => {
             assert(info);
         });
         teardown(async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
+            const cmt: wrapper.CMakeToolsWrapper = this.cmt;
+            await cmt.shutdown();
             if (fs.existsSync(await cmt.binaryDir)) {
                 rimraf.sync(await cmt.binaryDir);
             }
@@ -422,6 +474,17 @@ suite("Utility tests", () => {
             if (fs.existsSync(output_file)) {
                 fs.unlinkSync(output_file);
             }
-        })
+            await cmt.reload();
+        });
+    };
+    suite('Extension smoke tests [without cmake-server]', function() {
+        smokeTests(this, 'without cmake-server', async() => {
+            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
+        });
+    });
+    suite('Extension smoke tests [with cmake-server]', function() {
+        smokeTests(this, 'with cmake-server', async() => {
+            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
+        });
     });
 });

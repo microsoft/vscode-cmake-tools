@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import * as api from './api';
+import * as diagnostics from './diagnostics';
 import * as async from './async';
 import * as cache from './cache';
 import * as util from './util';
@@ -16,6 +17,8 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   private _globalSettings: cms.GlobalSettingsContent;
   private _dirty = true;
   private _cacheEntries = new Map<string, cache.Entry>();
+  private _accumulatedMessages: string[] = [];
+  private _codeModel: null|cms.CodeModelContent;
 
   private _executableTargets: api.ExecutableTarget[] = [];
   get executableTargets() {
@@ -60,6 +63,14 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return this._cacheEntries.get(key) || null;
   }
 
+  async dangerousShutdownClient() {
+    await this._client.shutdown();
+  }
+
+  async dangerousRestartClient() {
+    await this._restartClient();
+  }
+
   async cleanConfigure() {
     const build_dir = this.binaryDir;
     const cache = this.cachePath;
@@ -77,8 +88,50 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return this.configure();
   }
 
-  async compilationInfoForFile(filepath: string) {
-    // TODO
+  async compilationInfoForFile(filepath: string):
+      Promise<api.CompilationInfo|null> {
+    if (!this._codeModel) {
+      return null;
+    }
+    const config = this._codeModel.configurations.length == 1 ?
+        this._codeModel.configurations[0] :
+        this._codeModel.configurations.find(
+            c => c.name == this.selectedBuildType);
+    if (!config) {
+      return null;
+    }
+    for (const project of config.projects) {
+      for (const target of project.targets) {
+        for (const group of target.fileGroups) {
+          const found = group.sources.find(source => {
+            const abs_source = path.isAbsolute(source) ?
+                source :
+                path.join(target.sourceDirectory, source);
+            const abs_filepath = path.isAbsolute(filepath) ?
+                filepath :
+                path.join(this.sourceDir, filepath);
+            return util.normalizePath(abs_source) ==
+                util.normalizePath(abs_filepath);
+          });
+          if (found) {
+            const defs = (group.defines || []).map(util.parseCompileDefinition);
+            const defs_o = defs.reduce((acc, el) => {
+              acc[el[0]] = el[1];
+              return acc;
+            }, {});
+            return {
+              file: found,
+              compileDefinitions: defs_o,
+              compileFlags: util.splitCommandLine(group.compileFlags),
+              includeDirectories:
+                  (group.includePath ||
+                   [
+                   ]).map(p => ({path: p.path, isSystem: p.isSystem || false})),
+            };
+          }
+        }
+      }
+    }
     return null;
   }
 
@@ -117,11 +170,26 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     await util.writeFile(init_cache_path, init_cache_content);
 
     this.statusMessage = 'Configuring...';
+    const parser = new diagnostics.BuildParser(
+        this.binaryDir, ['cmake'], this.activeGenerator);
+    const parseMessages = () => {
+      for (const msg of this._accumulatedMessages) {
+        const lines = msg.split('\n');
+        for (const line of lines) {
+          parser.parseLine(line);
+        }
+      }
+      parser.fillDiagnosticCollection(this._diagnostics);
+    };
     try {
-      await this._client.configure({cacheArguments: ['-C', init_cache_path]});
+      this._accumulatedMessages = [];
+      await this._client.configure(
+          {cacheArguments: ['-C', init_cache_path].concat(extraArgs)});
       await this._client.compute();
+      parseMessages();
     } catch (e) {
       if (e instanceof cms.ServerError) {
+        parseMessages();
         this._channel.appendLine(`[vscode] Configure failed: ${e}`);
       } else {
         throw e;
@@ -130,7 +198,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     this._workspaceCacheContent.codeModel =
         await this._client.sendRequest('codemodel');
     await this._writeWorkspaceCacheContent();
-    await this._refreshCacheEntries();
+    await this._refreshAfterConfigure();
     return 0;
   }
 
@@ -147,10 +215,10 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     this.currentDebugTarget = chosen.label;
   }
 
-  async build(target?: string | null) {
+  async build(target?: string|null) {
     const retc = await super.build(target);
     if (retc >= 0) {
-      await this._refreshCacheEntries();
+      await this._refreshAfterConfigure();
     }
     return retc;
   }
@@ -201,7 +269,9 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         this._dirty = true;
       },
       onMessage: async(msg) => {
-        this._channel.appendLine(msg.message);
+        const line = `-- ${msg.message}`;
+        this._accumulatedMessages.push(line);
+        this._channel.appendLine(line);
       },
       onProgress: async(prog) => {
         this.buildProgress = (prog.progressCurrent - prog.progressMinimum) /
@@ -209,6 +279,16 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         this.statusMessage = prog.progressMessage;
       },
     });
+  }
+
+  protected async _refreshAfterConfigure() {
+    return Promise.all([this._refreshCacheEntries(), this._refreshCodeModel()]);
+  }
+
+  private async _refreshCodeModel() {
+    this._codeModel = await this._client.codemodel();
+    this._workspaceCacheContent.codeModel = this._codeModel;
+    await this._writeWorkspaceCacheContent();
   }
 
   private async _refreshCacheEntries() {
@@ -235,13 +315,14 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     await super._init();
     const cl = this._client = await this._restartClient();
     this._globalSettings = await cl.getGlobalSettings();
+    this._codeModel = this._workspaceCacheContent.codeModel || null;
     this._statusBar.statusMessage = 'Ready';
     this._statusBar.isBusy = false;
     if (this.executableTargets.length >= 0) {
       this.currentDebugTarget = this.executableTargets[0].name;
     }
     try {
-      await this._refreshCacheEntries();
+      await this._refreshAfterConfigure();
     } catch (e) {
       if (e instanceof cms.ServerError) {
         // Do nothing

@@ -13,10 +13,22 @@ export interface ExecuteOptions {
   workingDirectory?: string;
 }
 
-export interface CompilationInfo {
-  command: string;
-  directory: string;
+export interface RawCompilationInfo {
   file: string;
+  directory: string;
+  command: string;
+}
+
+export interface CompilationInfo {
+  file: string;
+  compile?: RawCompilationInfo;
+  includeDirectories: {
+    path: string;
+    isSystem: boolean;
+  }[];
+  compileDefinitions: {[define: string]: string|null};
+  compileFlags: string[];
+  compiler?: string;
 }
 
 export enum EntryType {
