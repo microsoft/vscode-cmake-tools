@@ -467,6 +467,11 @@
                         "type": "string",
                         "description": "Value for the environment variable"
                     }
+                },
+                "cmake.experimental.useCMakeServer": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable CMake server [experimental]"
                 }
             }
         },

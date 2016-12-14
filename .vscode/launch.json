@@ -15,7 +15,8 @@
                 "${workspaceRoot}/out/src/*",
                 "${workspaceRoot}/out/test/*"
             ],
-            "preLaunchTask": "npm"
+            "preLaunchTask": "npm",
+            "smartStep": true
         },
         {
             "name": "Launch Tests",
@@ -31,6 +32,7 @@
                 "${workspaceRoot}/out/test/*"
             ],
             "preLaunchTask": "npm"
+            // "smartStep": true
         }
     ]
 }
