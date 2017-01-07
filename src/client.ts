@@ -191,6 +191,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       if (e instanceof cms.ServerError) {
         parseMessages();
         this._channel.appendLine(`[vscode] Configure failed: ${e}`);
+        return 1;
       } else {
         throw e;
       }
@@ -318,7 +319,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     this._codeModel = this._workspaceCacheContent.codeModel || null;
     this._statusBar.statusMessage = 'Ready';
     this._statusBar.isBusy = false;
-    if (this.executableTargets.length >= 0) {
+    if (this.executableTargets.length > 0) {
       this.currentDebugTarget = this.executableTargets[0].name;
     }
     try {
