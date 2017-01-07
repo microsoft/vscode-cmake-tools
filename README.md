@@ -1,6 +1,6 @@
 # CMake Tools
 
-CMake Tools provides the native developer a full-featured, convenient, and
+[CMake Tools](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools) provides the native developer a full-featured, convenient, and
 powerful configure+build workflow for CMake-based projects within the
 Visual Studio Code editor.
 
@@ -23,13 +23,18 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   - **0.8.5**:
     - New `${workspaceRootFolderName}` available in config substitution.
     - New API exported for other extensions. See [here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/src/api.ts).
-
+  - **0.8.6**: Tweaking output
+  - **0.8.7**:
+    - This version contains an enormous refactor of the codebase in preparation
+      for CMake Server support. If you find _any_ issues or regressions from
+      prior extension versions, **please** create an issue on the GitHub
+      project.
 
 ## Issues? Questions? Feature requests?
 
 **PLEASE**, if you experience any problems, have any questions, or have an idea
-for a new feature, create an issue on
-[the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools)!
+for a new feature, create an issue on [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools)!
+
 I'm only one person with no QA team, so I can't test all the different possible
 configurations you may have, but I'll gladly help anyone fix issues relating to
 this extension.
