@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 import {Maybe} from './util';
 
-export class StatusBar {
+export class StatusBar implements vscode.Disposable {
   private readonly _cmakeToolsStatusItem =
       vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
   private readonly _buildButton =
@@ -19,6 +19,21 @@ export class StatusBar {
       vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
   private readonly _environmentSelectionButton =
       vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 200);
+
+  public dispose() {
+    for (const item of [
+      this._cmakeToolsStatusItem,
+      this._buildButton,
+      this._targetButton,
+      this._debugButton,
+      this._debugTargetButton,
+      this._testStatusButton,
+      this._warningMessage,
+      this._environmentSelectionButton,
+    ]) {
+      item.dispose();
+    }
+  }
 
   constructor() {
     this._cmakeToolsStatusItem.command = 'cmake.setBuildType';

@@ -175,6 +175,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       this._workspaceCacheContent.activeEnvironments = envs;
       this._writeWorkspaceCacheContent();
     });
+    this._disposables.push(this._statusBar);
   }
 
   public get projectName(): string {
@@ -666,7 +667,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const user_config = config.debugConfig;
     Object.assign(real_config, user_config);
     real_config['program'] = target.path;
-    console.log(JSON.stringify(real_config));
     return vscode.commands.executeCommand('vscode.startDebug', real_config);
   }
 
