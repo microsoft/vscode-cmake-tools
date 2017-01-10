@@ -3,13 +3,9 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {util} from './util';
+import * as util from './util';
 
-export interface CompilationInfo {
-  file: string;
-  directory: string;
-  command: string;
-}
+import {CompilationInfo, RawCompilationInfo} from './api';
 
 export class CompilationDatabase {
   private _info_by_filepath: Map<string, CompilationInfo>;
@@ -25,7 +21,7 @@ export class CompilationDatabase {
       'source/', 'src/', 'include/', 'inc/', '.cpp', '.hpp', '.c', '.h', '.cc',
       '.hh', '.cxx', '.hxx', '.c++', '.h++', 'build/', '.m'
     ]);
-    return util.replaceAll(no_detail, path.sep, path.posix.sep);
+    return util.normalizePath(no_detail);
   }
 
   public getCompilationInfoForUri(uri: vscode.Uri): CompilationInfo | null {
@@ -54,9 +50,9 @@ export class CompilationDatabase {
               resolve(null);
             } else {
               try {
-                const content = JSON.parse(data.toString());
-                resolve(
-                    new CompilationDatabase(content as CompilationInfo[]));
+                const content = JSON.parse(data.toString()) as RawCompilationInfo[];
+                resolve(new CompilationDatabase(
+                    content.map(util.parseRawCompilationInfo)));
               } catch (e) {
                 console.warn(
                     `Error parsing compilation database "${dbpath}": ${e}`);
