@@ -106,7 +106,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       return build_retc;
     }
     return this._ctestController.executeCTest(
-        this.binaryDir, this.selectedBuildType || 'Debug');
+        this.binaryDir, this.selectedBuildType || 'Debug',
+        this.executionEnvironmentVariables);
   }
 
   /**
@@ -275,10 +276,10 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    */
   public showTargetSelector(): Thenable<Maybe<string>> {
     if (!this.targets.length) {
-      return  vscode.window.showInputBox({prompt: 'Enter a target name'});
+      return vscode.window.showInputBox({prompt: 'Enter a target name'});
     } else {
       const choices = this.targets.map((t): vscode.QuickPickItem => {
-        switch(t.type) {
+        switch (t.type) {
           case 'rich': {
             return {
               label: t.name,
@@ -294,7 +295,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           }
         }
       });
-      return vscode.window.showQuickPick(choices).then(sel => sel ? sel.label : null);
+      return vscode.window.showQuickPick(choices).then(
+          sel => sel ? sel.label : null);
     }
   }
 
@@ -816,7 +818,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           '\\"')}" CACHE ${typestr
                 } "Variable supplied by CMakeTools. Value is forced." FORCE)`);
     }
-    initial_cache_content.push('cmake_policy(POP)')
+    initial_cache_content.push('cmake_policy(POP)');
     return initial_cache_content.join('\n');
   }
 }
