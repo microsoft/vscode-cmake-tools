@@ -90,7 +90,7 @@ if(NOT is_set_up)
 
     file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
     file(GENERATE
-        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
+        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta-$<CONFIG>.txt"
         INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
         \${condition}
         )
@@ -406,7 +406,8 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
      * @brief Get the path to the metadata file
      */
     public get metaPath(): string {
-        const meta = path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        const bt = this.selectedBuildType;
+        const meta = path.join(this.binaryDir, `CMakeToolsMeta-${bt}.txt`);
         return util.normalizePath(meta);
     }
 
