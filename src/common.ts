@@ -444,6 +444,11 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return this.execute(config.cmakePath, args, options, parser);
   }
 
+
+  public get executionEnvironmentVariables(): {[key: string]: string} {
+    return Object.assign(config.environment, this.currentEnvironmentVariables)
+  }
+
   /**
    * @brief Execute a CMake command. Resolves to the result of the execution.
    */
@@ -460,8 +465,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           // that we would like to parse
           NINJA_STATUS: '[%f/%t %p] '
         },
-        options.environment, config.environment,
-        this.currentEnvironmentVariables, );
+        options.environment, this.executionEnvironmentVariables);
     const info = util.execute(
         program, args, final_env, options.workingDirectory,
         silent ? null : this._channel);
