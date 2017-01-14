@@ -15,6 +15,10 @@
 - **0.8.5**:
   - New `${workspaceRootFolderName}` available in config substitution.
   - New API exported for other extensions. See [here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/src/api.ts).
+- **0.8.6**: Tweaking output
+- **0.8.7**:
+  - This version contains an enormous refactor of the codebase in preparation
+    for CMake Server support.
 
 ### Version 0.7.0
 
