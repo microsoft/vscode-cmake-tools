@@ -191,7 +191,9 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    * @brief Performs asynchronous extension initialization
    */
   protected async _init(): Promise<CommonCMakeToolsBase> {
-    this._statusBar.targetName = this.defaultBuildTarget;
+    // Setting this will set the string in the statusbar, so we set it here even
+    // though it has the correct default value.
+    this.defaultBuildTarget = null;
 
     async.exists(this.mainListFile).then(e => this._statusBar.visible = e);
 
@@ -374,13 +376,13 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * @brief The default target to build when no target is specified
    */
-  private _defaultBuildTarget: string = 'all';
-  public get defaultBuildTarget(): string {
+  private _defaultBuildTarget: string|null = null;
+  public get defaultBuildTarget(): string|null {
     return this._defaultBuildTarget;
   }
-  public set defaultBuildTarget(v: string) {
+  public set defaultBuildTarget(v: string|null) {
     this._defaultBuildTarget = v;
-    this._statusBar.targetName = v;
+    this._statusBar.targetName = v || this.allTargetName;
   }
 
   /**
