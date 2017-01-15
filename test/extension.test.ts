@@ -124,6 +124,18 @@ suite("Utility tests", () => {
             assert(path.posix.isAbsolute(diag.file));
         }
     });
+    test('Parse more GCC diagnostics', () => {
+        const line = `/Users/Tobias/Code/QUIT/Source/qidespot1.cpp:303:49: error: expected ';' after expression`;
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.file, '/Users/Tobias/Code/QUIT/Source/qidespot1.cpp');
+            assert.strictEqual(diag.line, 302);
+            assert.strictEqual(diag.column, 48);
+            assert.strictEqual(diag.message, `expected ';' after expression`);
+            assert.strictEqual(diag.severity, 'error');
+        }
+    });
     test('Parsing fatal error diagnostics', () => {
         const line = '/some/path/here:4:26: fatal error: some_header.h: No such file or directory';
         const diag = diagnostics.parseGCCDiagnostic(line);
@@ -488,11 +500,11 @@ suite("Utility tests", () => {
             await cmt.reload();
         });
     };
-    suite('Extension smoke tests [without cmake-server]', function() {
-        smokeTests(this, 'without cmake-server', async() => {
-            // await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
-        });
-    });
+    // suite('Extension smoke tests [without cmake-server]', function() {
+    //     smokeTests(this, 'without cmake-server', async() => {
+    //         // await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
+    //     });
+    // });
     // suite('Extension smoke tests [with cmake-server]', function() {
     //     smokeTests(this, 'with cmake-server', async() => {
     //         await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
