@@ -59,3 +59,9 @@ quick summary of options that can be tweaked, should you wish to do so:
 - ``cmake.configureEnvironment`` sets environment for CMake configure
 - ``cmake.buildEnvironment`` sets environment for build execution
 - ``cmake.testEnvironment`` sets environment variables when running CTest
+- ``cmake.mingwSearchDirs`` is a list of directories where CMake Tools will
+  search for an installed MinGW environment. A search directory will match if it
+  contains the `bin/`, `include/`, etc. directories with the MinGW binaries,
+  headers, and libraries. There is currently one default search directory,
+  `C:\MinGW`. If more than one directory in this list matches, each matching
+  directory will be an available MinGW environment.
