@@ -106,7 +106,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       return build_retc;
     }
     return this._ctestController.executeCTest(
-        this.binaryDir, this.selectedBuildType || 'Debug');
+        this.binaryDir, this.selectedBuildType || 'Debug',
+        this.executionEnvironmentVariables);
   }
 
   /**
@@ -190,7 +191,9 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    * @brief Performs asynchronous extension initialization
    */
   protected async _init(): Promise<CommonCMakeToolsBase> {
-    this._statusBar.targetName = this.defaultBuildTarget;
+    // Setting this will set the string in the statusbar, so we set it here even
+    // though it has the correct default value.
+    this.defaultBuildTarget = null;
 
     async.exists(this.mainListFile).then(e => this._statusBar.visible = e);
 
@@ -275,10 +278,10 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    */
   public showTargetSelector(): Thenable<Maybe<string>> {
     if (!this.targets.length) {
-      return  vscode.window.showInputBox({prompt: 'Enter a target name'});
+      return vscode.window.showInputBox({prompt: 'Enter a target name'});
     } else {
       const choices = this.targets.map((t): vscode.QuickPickItem => {
-        switch(t.type) {
+        switch (t.type) {
           case 'rich': {
             return {
               label: t.name,
@@ -294,7 +297,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           }
         }
       });
-      return vscode.window.showQuickPick(choices).then(sel => sel ? sel.label : null);
+      return vscode.window.showQuickPick(choices).then(
+          sel => sel ? sel.label : null);
     }
   }
 
@@ -372,13 +376,13 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * @brief The default target to build when no target is specified
    */
-  private _defaultBuildTarget: string = 'all';
-  public get defaultBuildTarget(): string {
+  private _defaultBuildTarget: string|null = null;
+  public get defaultBuildTarget(): string|null {
     return this._defaultBuildTarget;
   }
-  public set defaultBuildTarget(v: string) {
+  public set defaultBuildTarget(v: string|null) {
     this._defaultBuildTarget = v;
-    this._statusBar.targetName = v;
+    this._statusBar.targetName = v || this.allTargetName;
   }
 
   /**
@@ -444,6 +448,11 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return this.execute(config.cmakePath, args, options, parser);
   }
 
+
+  public get executionEnvironmentVariables(): {[key: string]: string} {
+    return Object.assign(config.environment, this.currentEnvironmentVariables)
+  }
+
   /**
    * @brief Execute a CMake command. Resolves to the result of the execution.
    */
@@ -460,8 +469,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           // that we would like to parse
           NINJA_STATUS: '[%f/%t %p] '
         },
-        options.environment, config.environment,
-        this.currentEnvironmentVariables, );
+        options.environment, this.executionEnvironmentVariables);
     const info = util.execute(
         program, args, final_env, options.workingDirectory,
         silent ? null : this._channel);
@@ -812,7 +820,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           '\\"')}" CACHE ${typestr
                 } "Variable supplied by CMakeTools. Value is forced." FORCE)`);
     }
-    initial_cache_content.push('cmake_policy(POP)')
+    initial_cache_content.push('cmake_policy(POP)');
     return initial_cache_content.join('\n');
   }
 }

@@ -137,6 +137,10 @@ export class ConfigurationReader {
     }
     return ctest_jobs;
   }
+
+  public get mingwSearchDirs(): string[] {
+    return this._readPrefixed<string[]>('mingwSearchDirs') || [];
+  }
 }
 
 export const config = new ConfigurationReader();

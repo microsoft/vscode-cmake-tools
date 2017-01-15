@@ -90,7 +90,7 @@ if(NOT is_set_up)
 
     file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
     file(GENERATE
-        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
+        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta-$<CONFIG>.txt"
         INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
         \${condition}
         )
@@ -98,8 +98,12 @@ if(NOT is_set_up)
     function(_cmt_generate_system_info)
         get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
         if(NOT done)
+            set(_compiler_id "\${CMAKE_CXX_COMPILER_ID}")
+            if(MSVC AND CMAKE_CXX_COMPILER MATCHES ".*clang-cl.*")
+                set(_compiler_id "MSVC")
+            endif()
             file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-    "system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${CMAKE_CXX_COMPILER_ID}\n")
+    "system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${_compiler_id}\n")
         endif()
         set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
     endfunction()
@@ -402,7 +406,8 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
      * @brief Get the path to the metadata file
      */
     public get metaPath(): string {
-        const meta = path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        const bt = this.selectedBuildType;
+        const meta = path.join(this.binaryDir, `CMakeToolsMeta-${bt}.txt`);
         return util.normalizePath(meta);
     }
 

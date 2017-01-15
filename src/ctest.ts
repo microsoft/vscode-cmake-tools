@@ -243,8 +243,9 @@ export class CTestController {
   private readonly _decorationManager = new DecorationManager();
   protected readonly _channel = new util.ThrottledOutputChannel('CMake/Build');
 
-  public async executeCTest(binarydir: string, configuration: string):
-      Promise<number> {
+  public async executeCTest(
+      binarydir: string, configuration: string,
+      env: {[key: string]: string}): Promise<number> {
     // Reset test decorations
     this._channel.clear();
     this._channel.show();
@@ -255,7 +256,8 @@ export class CTestController {
           '-j' + config.numCTestJobs, '-C', configuration, '-T', 'test',
           '--output-on-failure'
         ].concat(config.ctestArgs),
-        config.testEnvironment as any, binarydir, this._channel);
+        Object.assign({}, config.testEnvironment as any, env), binarydir,
+        this._channel);
     const rp = pr.onComplete.then(res => res.retc);
     rp.then(async() => {
       await this.reloadTests(binarydir, configuration);

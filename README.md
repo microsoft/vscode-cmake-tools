@@ -29,6 +29,10 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
       for CMake Server support. If you find _any_ issues or regressions from
       prior extension versions, **please** create an issue on the GitHub
       project.
+  - **0.8.8**
+    - Many bugfixes
+    - Support for MinGW build environments. See documentation for
+      `cmake.mingwSearchDirs`.
 
 ## Issues? Questions? Feature requests?
 

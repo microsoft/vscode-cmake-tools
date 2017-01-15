@@ -4,12 +4,14 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as async from './async'
+import {config} from './config';
 import * as util from './util';
 
 type Maybe<T> = util.Maybe<T>;
 
 export interface PotentialEnvironment {
   name: string;
+  description?: string;
   variables?: Map<string, string>;
   mutex?: string;
 }
@@ -116,25 +118,70 @@ async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
       return {name, mutex, variables};
     }
 
+
+// Detect MinGW environments
+async function tryCreateMinGWEnvironment(dir: string):
+    Promise<PotentialEnvironment> {
+      const ret: PotentialEnvironment = {
+        name: `MinGW - ${dir}`,
+        mutex: 'mingw',
+        description: `Root at ${dir}`,
+      };
+      function prependEnv(key: string, ...values: string[]) {
+        let env_init: string = process.env[key] || '';
+        return values.reduce<string>((acc, val) => {
+          if (acc.length !== 0) {
+            return val + ';' + acc;
+          } else {
+            return val;
+          }
+        }, env_init);
+      };
+      const gcc_path = path.join(dir, 'bin', 'gcc.exe');
+      if (await async.exists(gcc_path)) {
+        ret.variables = new Map<string, string>([
+          [
+            'PATH',
+            prependEnv(
+                'PATH', path.join(dir, 'bin'), path.join(dir, 'git', 'cmd'))
+          ],
+          [
+            'C_INCLUDE_PATH', prependEnv(
+                                  'C_INCLUDE_PATH', path.join(dir, 'include'),
+                                  path.join(dir, 'include', 'freetype'))
+          ],
+          [
+            'CXX_INCLUDE_PATH',
+            prependEnv(
+                'CXX_INCLUDE_PATH', path.join(dir, 'include'),
+                path.join(dir, 'include', 'freetype'))
+          ]
+        ]);
+      }
+
+      return ret;
+    }
+
 const ENVIRONMENTS: EnvironmentProvider[] = [{
 
   getEnvironments(): Promise<Environment>[]{
     if (process.platform !== 'win32') {
       return [];
-    } const dists: VSDistribution[] =
-                       [
-                         {
-                           name: 'Visual C++ 12.0',
-                           variable: 'VS120COMNTOOLS',
-                         },
-                         {
-                           name: 'Visual C++ 14.0',
-                           variable: 'VS140COMNTOOLS',
-                         }
-                       ];
+    };
+    const dists: VSDistribution[] =
+                     [
+                       {
+                         name: 'Visual C++ 12.0',
+                         variable: 'VS120COMNTOOLS',
+                       },
+                       {
+                         name: 'Visual C++ 14.0',
+                         variable: 'VS140COMNTOOLS',
+                       }
+                     ];
     const archs = ['x86', 'amd64', 'amd64_arm'];
-    type PEnv = Promise<Maybe<Environment>>;
-    const prom_environments = dists.reduce<PEnv[]>(
+    type PEnv = Promise<PotentialEnvironment>;
+    const prom_vs_environments = dists.reduce<PEnv[]>(
         (acc, dist) => {
           return acc.concat(archs.reduce<PEnv[]>((acc, arch) => {
             const maybe_env = tryCreateVCEnvironment(dist, arch);
@@ -143,7 +190,9 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
           }, []));
         },
         []);
-    return prom_environments;
+    const prom_mingw_environments =
+        config.mingwSearchDirs.map(tryCreateMinGWEnvironment);
+    return prom_vs_environments.concat(prom_mingw_environments);
   }
 }];
 
@@ -174,6 +223,7 @@ export class EnvironmentManager {
               name: env.name,
               variables: env.variables,
               mutex: env.mutex,
+              description: env.description,
             });
           }
         } catch (e) {
@@ -224,13 +274,13 @@ export class EnvironmentManager {
 
   public async selectEnvironments(): Promise<void> {
     const entries =
-        Array.from(this.availableEnvironments.keys())
-            .map(name => ({
+        Array.from(this.availableEnvironments.entries())
+            .map(([name, env]) => ({
                    name: name,
                    label: this.activeEnvironments.indexOf(name) >= 0 ?
                        `$(check) ${name}` :
                        name,
-                   description: '',
+                   description: env.description || '',
                  }));
     const chosen = await vscode.window.showQuickPick(entries);
     if (!chosen) {
