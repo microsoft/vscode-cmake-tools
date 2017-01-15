@@ -19,6 +19,10 @@
 - **0.8.7**:
   - This version contains an enormous refactor of the codebase in preparation
     for CMake Server support.
+- **0.8.8**
+  - Many bugfixes
+  - Support for MinGW build environments. See documentation for
+    `cmake.mingwSearchDirs`.
 
 ### Version 0.7.0
 
