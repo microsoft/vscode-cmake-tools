@@ -123,7 +123,7 @@ async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
 async function tryCreateMinGWEnvironment(dir: string):
     Promise<PotentialEnvironment> {
       const ret: PotentialEnvironment = {
-        name: 'MinGW',
+        name: `MinGW - ${dir}`,
         mutex: 'mingw',
         description: `Root at ${dir}`,
       };
