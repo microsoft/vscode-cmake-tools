@@ -221,7 +221,7 @@ export function versionEquals(lhs: Version, rhs: Version|string): boolean {
 }
 
 export function versionLess(lhs: Version, rhs: Version|string): boolean {
-  return !versionGreater(lhs, rhs) && versionEquals(lhs, rhs);
+  return !versionGreater(lhs, rhs) && !versionEquals(lhs, rhs);
 }
 
 /**
