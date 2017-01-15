@@ -363,7 +363,7 @@ export async function termProc(child: proc.ChildProcess) {
   // spawn child processes, and CMake won't forward signals to its
   // children. As a workaround, we list the children of the cmake process
   // and also send signals to them.
-  await this._killTree(child.pid);
+  await _killTree(child.pid);
   return true;
 }
 
@@ -376,7 +376,7 @@ async function _killTree(pid: number) {
       children = stdout.split('\n').map(line => Number.parseInt(line));
     }
     for (const other of children) {
-      if (other) await this._killTree(other);
+      if (other) await _killTree(other);
     }
     process.kill(pid, 'SIGINT');
   } else {
