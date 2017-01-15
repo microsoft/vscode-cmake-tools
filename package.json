@@ -467,6 +467,17 @@
                         "type": "string",
                         "description": "Value for the environment variable"
                     }
+                },
+                "cmake.mingwSearchDirs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Path to a directory"
+                    },
+                    "default": [
+                        "C:\\MinGW"
+                    ],
+                    "description": "Directors where MinGW may be installed"
                 }
             }
         },
