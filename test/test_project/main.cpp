@@ -15,6 +15,8 @@
 
 typedef std::vector<std::string>::const_iterator iter;
 
+extern int get_num();
+
 int main(int argc, char** argv) {
     std::cout << "Hello, CMake Tools!\n";
     const std::vector<std::string> args(argv, argv + argc);
@@ -22,7 +24,7 @@ int main(int argc, char** argv) {
     if(write_file != args.end()) {
         const iter filename = write_file + 1;
         assert(filename != args.end());
-        std::ofstream outfile(*filename);
+        std::ofstream outfile(filename->data());
         const iter content_flag = std::find(args.begin(), args.end(), std::string("--content"));
         const iter env_flag = std::find(args.begin(), args.end(), std::string("--env"));
         if (content_flag != args.end()) {
@@ -33,10 +35,11 @@ int main(int argc, char** argv) {
             const iter env_var = env_flag + 1;
             assert(env_var != args.end());
             const char* const env = std::getenv(env_var->data());
-            outfile << env ? env : "";
+            outfile << (env ? env : "");
         } else {
             outfile << "This is the hardcoded string";
         }
     }
+    get_num();
     return 0;
 }

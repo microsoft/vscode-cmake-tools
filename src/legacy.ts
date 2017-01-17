@@ -363,7 +363,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         await this.reloadCMakeCache();
         await this._refreshTargetList();
         await this._reloadMetaData();
-        await this._ctestController.reloadTests(this.binaryDir, this.selectedBuildType || 'Debug');
+        await this._ctestController.reloadTests(this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
         this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
     }
 

@@ -105,7 +105,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     if (build_retc !== 0) {
       return build_retc;
     }
-    return this._ctestController.executeCTest(
+    return this._ctestController.executeCTest(this.sourceDir,
         this.binaryDir, this.selectedBuildType || 'Debug',
         this.executionEnvironmentVariables);
   }
@@ -221,7 +221,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     }
 
     // Refresh any test results that may be left aroud from a previous run
-    this._ctestController.reloadTests(
+    this._ctestController.reloadTests(this.sourceDir,
         this.binaryDir, this.selectedBuildType || 'Debug');
 
     return this;
@@ -558,7 +558,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const changed = await this.variants.showVariantSelector();
     if (changed) {
       // Changing the build type can affect the binary dir
-      this._ctestController.reloadTests(
+      this._ctestController.reloadTests(this.sourceDir,
           this.binaryDir, this.selectedBuildType || 'Debug');
     }
     return changed;
