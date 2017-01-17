@@ -149,6 +149,10 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     return (await this._impl).setActiveVariantCombination(settings);
   }
 
+  async toggleCoverageDecorations() {
+    return (await this._impl).toggleCoverageDecorations();
+  }
+
   public async reload(): Promise<CMakeToolsWrapper> {
     await this.shutdown();
     const impl = await this._impl;

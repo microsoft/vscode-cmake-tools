@@ -46,6 +46,7 @@
         "onCommand:cmake.debugTarget",
         "onCommand:cmake.selectDebugTarget",
         "onCommand:cmake.selectEnvironments",
+        "onCommand:cmake.toggleCoverageDecorations",
         "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
@@ -124,6 +125,11 @@
             {
                 "command": "cmake.selectEnvironments",
                 "title": "Select active build environments",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.toggleCoverageDecorations",
+                "title": "Toggle visibility of test coverage in the editor",
                 "category": "CMake"
             }
         ],

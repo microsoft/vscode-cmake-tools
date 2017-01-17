@@ -300,6 +300,21 @@ export class DecorationManager {
     this._refreshActiveEditorDecorations();
   }
 
+  private _showCoverageData : boolean = false;
+  public get showCoverageData() : boolean {
+    return this._showCoverageData;
+  }
+  public set showCoverageData(v : boolean) {
+    this._showCoverageData = v;
+    this._refreshAllEditorDecorations();
+  }
+
+  private _refreshAllEditorDecorations() {
+    for (const editor of vscode.window.visibleTextEditors) {
+      this._refreshEditorDecorations(editor);
+    }
+  }
+
   private _refreshActiveEditorDecorations() {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
@@ -330,29 +345,34 @@ export class DecorationManager {
     }
     editor.setDecorations(this._failingTestDecorationType, fails_acc);
 
-    const miss_acc: vscode.DecorationOptions[] = [];
-    const low_acc: vscode.DecorationOptions[] = [];
-    const high_acc: vscode.DecorationOptions[] = [];
-    for (const decor of this.coverageDecorations) {
-      const decor_file = util.normalizePath(decor.file);
-      if (editor_file !== decor_file) {
-        continue;
-      }
-      const start_line = editor.document.lineAt(decor.start);
-      const end_line = editor.document.lineAt(decor.end);
-      const range = new vscode.Range(decor.start, start_line.firstNonWhitespaceCharacterIndex, decor.end, end_line.range.end.character);
-      (decor.executionCounter == 0
-        ? miss_acc
-        : decor.executionCounter >= 3
-          ? high_acc
-          : low_acc).push({
-        range: range,
-        hoverMessage: decor.executionCounter.toString(),
-      });
+    for (const t of [this._coverageMissDecorationType, this._coverageHitLowDecorationType, this._coverageHitHighDecorationType]) {
+      editor.setDecorations(t, []);
     }
-    editor.setDecorations(this._coverageMissDecorationType, miss_acc);
-    editor.setDecorations(this._coverageHitLowDecorationType, low_acc);
-    editor.setDecorations(this._coverageHitHighDecorationType, high_acc);
+    if (this.showCoverageData) {
+      const miss_acc: vscode.DecorationOptions[] = [];
+      const low_acc: vscode.DecorationOptions[] = [];
+      const high_acc: vscode.DecorationOptions[] = [];
+      for (const decor of this.coverageDecorations) {
+        const decor_file = util.normalizePath(decor.file);
+        if (editor_file !== decor_file) {
+          continue;
+        }
+        const start_line = editor.document.lineAt(decor.start);
+        const end_line = editor.document.lineAt(decor.end);
+        const range = new vscode.Range(decor.start, start_line.firstNonWhitespaceCharacterIndex, decor.end, end_line.range.end.character);
+        (decor.executionCounter == 0
+          ? miss_acc
+          : decor.executionCounter >= 3
+            ? high_acc
+            : low_acc).push({
+          range: range,
+          hoverMessage: decor.executionCounter.toString(),
+        });
+      }
+      editor.setDecorations(this._coverageMissDecorationType, miss_acc);
+      editor.setDecorations(this._coverageHitLowDecorationType, low_acc);
+      editor.setDecorations(this._coverageHitHighDecorationType, high_acc);
+    }
   }
 
   private _failingTestDecorations: FailingTestDecoration[] = [];
@@ -368,9 +388,7 @@ export class DecorationManager {
   }
   public set failingTestDecorations(v: FailingTestDecoration[]) {
     this._failingTestDecorations = v;
-    for (const editor of vscode.window.visibleTextEditors) {
-      this._refreshEditorDecorations(editor);
-    }
+    this._refreshAllEditorDecorations();
   }
 
   private _coverageDecorations : CoverageDecoration[] = [];
@@ -379,9 +397,7 @@ export class DecorationManager {
   }
   public set coverageDecorations(v : CoverageDecoration[]) {
     this._coverageDecorations = v;
-    for (const editor of vscode.window.visibleTextEditors) {
-      this._refreshEditorDecorations(editor);
-    }
+    this._refreshAllEditorDecorations();
   }
 }
 
@@ -499,6 +515,16 @@ export class CTestController {
     this._tests = v;
     this._testsChangedEmitter.fire(v);
     ;
+  }
+
+  /**
+   * Whether we show coverage data in the editor or not
+   */
+  public get showCoverageData() : boolean {
+    return this._decorationManager.showCoverageData;
+  }
+  public set showCoverageData(v : boolean) {
+    this._decorationManager.showCoverageData = v;
   }
 
   private readonly _testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();

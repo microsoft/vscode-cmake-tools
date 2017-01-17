@@ -132,6 +132,19 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   }
 
   /**
+   * Toggle on/off highlighting of coverage data in the editor
+   */
+  public toggleCoverageDecorations() {
+    this.showCoverageData = !this.showCoverageData;
+  }
+  public get showCoverageData() : boolean {
+    return this._ctestController.showCoverageData;
+  }
+  public set showCoverageData(v : boolean) {
+    this._ctestController.showCoverageData = v;
+  }
+
+  /**
    * The primary build output channel. We use the ThrottledOutputChannel because
    * large volumes of output can make VSCode choke
    */
