@@ -136,4 +136,6 @@ export interface CMakeToolsAPI extends Disposable {
   selectEnvironments(): Promise<string[]|null>;
   // Sets the variant based on keyword settings
   setActiveVariantCombination(settings: VariantKeywordSettings): Promise<void>;
+  // Toggle code coverage view on/off
+  toggleCoverageDecorations(): void;
 }

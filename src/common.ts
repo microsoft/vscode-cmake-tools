@@ -105,7 +105,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     if (build_retc !== 0) {
       return build_retc;
     }
-    return this._ctestController.executeCTest(
+    return this._ctestController.executeCTest(this.sourceDir,
         this.binaryDir, this.selectedBuildType || 'Debug',
         this.executionEnvironmentVariables);
   }
@@ -129,6 +129,19 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       vscode.languages.createDiagnosticCollection('cmake-build-diags');
   public get diagnostics(): vscode.DiagnosticCollection {
     return this._diagnostics;
+  }
+
+  /**
+   * Toggle on/off highlighting of coverage data in the editor
+   */
+  public toggleCoverageDecorations() {
+    this.showCoverageData = !this.showCoverageData;
+  }
+  public get showCoverageData() : boolean {
+    return this._ctestController.showCoverageData;
+  }
+  public set showCoverageData(v : boolean) {
+    this._ctestController.showCoverageData = v;
   }
 
   /**
@@ -221,7 +234,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     }
 
     // Refresh any test results that may be left aroud from a previous run
-    this._ctestController.reloadTests(
+    this._ctestController.reloadTests(this.sourceDir,
         this.binaryDir, this.selectedBuildType || 'Debug');
 
     return this;
@@ -558,7 +571,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const changed = await this.variants.showVariantSelector();
     if (changed) {
       // Changing the build type can affect the binary dir
-      this._ctestController.reloadTests(
+      this._ctestController.reloadTests(this.sourceDir,
           this.binaryDir, this.selectedBuildType || 'Debug');
     }
     return changed;
