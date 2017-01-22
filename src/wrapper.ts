@@ -14,7 +14,10 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   constructor(private _ctx: vscode.ExtensionContext) {}
 
   async dispose() {
-    return (await this._impl).dispose();
+    const impl = await this._impl;
+    if (impl) {
+      impl.dispose();
+    }
   }
 
   private async _sourceDir() {
@@ -178,6 +181,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     if (impl instanceof client.ServerClientCMakeTools) {
       await impl.dangerousShutdownClient();
     }
+    await this.dispose();
   }
 
   static startup(ct: vscode.ExtensionContext): Promise<CMakeToolsWrapper> {
