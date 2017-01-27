@@ -1,4 +1,4 @@
-import {DiagnosticCollection, Disposable, TextEditor} from 'vscode';
+import {DiagnosticCollection, Disposable, TextEditor, Event} from 'vscode';
 
 export interface ExecutionResult {
   retc: number;
@@ -46,13 +46,16 @@ export interface Test {
   name: string;
 }
 
-export interface CacheEntry {
+export interface CacheEntryProperties {
   type: EntryType;
   helpString: string;
   key: string;
   value: any;
-  as<T>(): T;
   advanced: boolean;
+}
+
+export interface CacheEntry extends CacheEntryProperties{
+  as<T>(): T;
 }
 
 export interface ExecutableTarget {
@@ -91,6 +94,8 @@ export interface CMakeToolsAPI extends Disposable {
   readonly diagnostics: Promise<DiagnosticCollection>|DiagnosticCollection;
   // Targets available for building
   readonly targets: Promise<Target[]>|Target[];
+  // Event fired when configure completes
+  readonly reconfigured: Event<void>;
 
   // Execute a command using the CMake executable
   executeCMakeCommand(args: string[], options?: ExecuteOptions):
