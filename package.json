@@ -528,14 +528,16 @@
         "@types/js-yaml": "^3.5.28",
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
-        "@types/rimraf": "^0.0.28"
+        "@types/rimraf": "^0.0.28",
+        "@types/ws": "^0.0.38"
     },
     "dependencies": {
         "open": "0.0.5",
         "js-yaml": "^3.6.1",
         "ajv": "^4.7.5",
         "xml2js": "^0.4.17",
-        "rimraf": "^2.5.4"
+        "rimraf": "^2.5.4",
+        "ws": "^1.1.1"
     },
     "extensionDependencies": [
         "twxs.cmake"

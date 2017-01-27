@@ -8,6 +8,7 @@ export class Entry implements api.CacheEntry {
   private _docs: string = '';
   private _key: string = '';
   private _value: any = null;
+  private _advanced: boolean = false;
 
   public get type() {
     return this._type;
@@ -26,16 +27,22 @@ export class Entry implements api.CacheEntry {
   }
 
   public as<T>(): T {
-    return this.value;
+    return this.value as T;
   }
 
-  constructor(key: string, value: string, type: api.EntryType, docs: string) {
+  public get advanced() {
+    return this._advanced;
+  }
+
+  constructor(
+      key: string, value: string, type: api.EntryType, docs: string,
+      advanced: boolean) {
     this._key = key;
     this._value = value;
     this._type = type;
     this._docs = docs;
+    this._advanced = advanced;
   }
-  public advanced: boolean = false;
 };
 
 export class CMakeCache {
@@ -52,8 +59,11 @@ export class CMakeCache {
     }
   }
 
-  constructor(
-      path: string, exists: boolean, entries: Map<string, Entry>) {
+  allEntries(): Entry[] {
+    return Array.from(this._entries.values());
+  }
+
+  constructor(path: string, exists: boolean, entries: Map<string, Entry>) {
     this._entries = entries;
     this._path = path;
     this._exists = exists;
@@ -109,7 +119,7 @@ export class CMakeCache {
 
           console.assert(
               type !== undefined, `Unknown cache entry type: ${type}`);
-          entries.set(name, new Entry(key, value, type, docs));
+          entries.set(name, new Entry(key, value, type, docs, false));
         }
       }
     }

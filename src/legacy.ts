@@ -144,6 +144,12 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
     private _lastConfigureSettings = {};
     private _compilationDatabase: Promise<Maybe<CompilationDatabase>> = Promise.resolve(null);
 
+    private _reconfiguredEmitter = new vscode.EventEmitter<void>();
+    private readonly _reconfigured = this._reconfiguredEmitter.event;
+    get reconfigured() {
+        return this._reconfigured;
+    }
+
     private _compilerId: Maybe<string> = null;
     get compilerId() {
         return this._compilerId;
@@ -163,6 +169,16 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
     public set cmakeCache(cache: CMakeCache) {
         this._cmakeCache = cache;
         this._statusBar.projectName = this.projectName;
+    }
+
+    allCacheEntries(): api.CacheEntryProperties[] {
+        return this.cmakeCache.allEntries().map(e => ({
+            type: e.type,
+            key: e.key,
+            value: e.value,
+            advanced: e.advanced,
+            helpString: e.helpString,
+        }));
     }
 
     public cacheEntry(name: string) {
@@ -515,6 +531,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             await this.reloadCMakeCache();
             this._needsReconfigure = false;
         }
+        this._reconfiguredEmitter.fire();
         return result.retc;
     }
 

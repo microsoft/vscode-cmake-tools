@@ -14,10 +14,8 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   constructor(private _ctx: vscode.ExtensionContext) {}
 
   async dispose() {
-    const impl = await this._impl;
-    if (impl) {
-      impl.dispose();
-    }
+    await this.shutdown();
+    this._reconfiguredEmitter.dispose();
   }
 
   private async _sourceDir() {
@@ -153,6 +151,14 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     return (await this._impl).toggleCoverageDecorations();
   }
 
+  private _reconfiguredEmitter = new vscode.EventEmitter<void>();
+  readonly reconfigured = this._reconfiguredEmitter.event;
+
+  private async _setupEvents() {
+    const cmt = await this._impl;
+    cmt.reconfigured(this._reconfiguredEmitter.fire);
+  }
+
   public async reload(): Promise<CMakeToolsWrapper> {
     await this.shutdown();
     if (config.experimental_useCMakeServer) {
@@ -165,6 +171,8 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
       // server bugs
       if (util.versionGreater(version, '3.7.1')) {
         this._impl = client.ServerClientCMakeTools.startup(this._ctx);
+        await this._impl;
+        await this._setupEvents();
         return this;
       }
       vscode.window.showWarningMessage('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
@@ -173,6 +181,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     const cmt = new legacy.CMakeTools(this._ctx);
     this._impl = cmt.initFinished;
     await this._impl;
+    await this._setupEvents();
     return this;
   }
 
@@ -181,7 +190,9 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     if (impl instanceof client.ServerClientCMakeTools) {
       await impl.dangerousShutdownClient();
     }
-    await this.dispose();
+    if (impl) {
+      impl.dispose();
+    }
   }
 
   static startup(ct: vscode.ExtensionContext): Promise<CMakeToolsWrapper> {
