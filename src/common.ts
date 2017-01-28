@@ -885,15 +885,15 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         typestr = 'BOOL';
         value = value ? 'TRUE' : 'FALSE';
       }
-      if (typeof(value) === 'string') {
+      else if (typeof(value) === 'string') {
         typestr = 'STRING';
         value = this.replaceVars(value)
         value = util.replaceAll(value, ';', '\\;');
       }
-      if (value instanceof Number || typeof value === 'number') {
+      else if (value instanceof Number || typeof value === 'number') {
         typestr = 'STRING';
       }
-      if (value instanceof Array) {
+      else if (value instanceof Array) {
         typestr = 'STRING';
         value = value.join(';');
       }
