@@ -172,7 +172,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     const variant_options = this.variants.activeConfigurationOptions;
     if (variant_options) {
       Object.assign(settings, variant_options.settings || {});
-      settings.BUID_SHARED_LIBS = variant_options.linkage === 'shared';
+      settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
     }
 
     const inst_prefix = config.installPrefix;
