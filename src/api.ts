@@ -1,4 +1,4 @@
-import {DiagnosticCollection, Disposable, TextEditor, Event} from 'vscode';
+import {DiagnosticCollection, Disposable, Event, TextEditor} from 'vscode';
 
 export interface ExecutionResult {
   retc: number;
@@ -22,11 +22,8 @@ export interface RawCompilationInfo {
 export interface CompilationInfo {
   file: string;
   compile?: RawCompilationInfo;
-  includeDirectories: {
-    path: string;
-    isSystem: boolean;
-  }[];
-  compileDefinitions: {[define: string]: string|null};
+  includeDirectories: {path: string; isSystem: boolean;}[];
+  compileDefinitions: {[define: string]: string | null};
   compileFlags: string[];
   compiler?: string;
 }
@@ -54,9 +51,7 @@ export interface CacheEntryProperties {
   advanced: boolean;
 }
 
-export interface CacheEntry extends CacheEntryProperties{
-  as<T>(): T;
-}
+export interface CacheEntry extends CacheEntryProperties { as<T>(): T; }
 
 export interface ExecutableTarget {
   name: string;
