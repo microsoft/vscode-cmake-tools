@@ -54,8 +54,18 @@ export class CacheEditorContentProvider implements
                   margin-right: 10px;
                   line-height: 1.9em;
                 }
-                .input {
+                .control-base:not([hidden]) {
                   flex: 5;
+                  display: flex;
+                }
+                .check-container {
+                  align-items: center;
+                }
+                .array-container {
+                  flex-direction: column;
+                  align-items: stretch;
+                }
+                input {
                   font-family: Fira Code, Ubuntu Mono, Courier New, Courier, monospace;
                   background-color: rgb(60,60,60);
                   color: rgb(204,204,204);
@@ -65,18 +75,53 @@ export class CacheEditorContentProvider implements
                 .input[modified] {
                   outline: 1px solid #e44;
                 }
+
+                .array-item:not(:first-child) {
+                  margin-top: 3px;
+                }
               </style>
               <div class=key><span class=asterisk>*</span>[[key]]</div>
-              <input id=textInput class=input type="text" value="{{value::input}}" modified$=[[modified]] on-input=_modifiedValue>
+              <div class="control-base array-container" hidden$="[[!_isString(type)]]">
+                <template is="dom-repeat" items="[[arrayItems]]">
+                  <input
+                    class='input array-item'
+                    type="text"
+                    modified$=[[modified]]
+                    value=[[item]]
+                    on-input=_modifiedArrayItemValue
+                    hidden$=[[_isBool(type)]]
+                  >
+                </template>
+              </div>
+              <div
+                class="control-base check-container"
+                hidden$=[[!_isBool(type)]]
+              >
+                <input
+                  id=checkBox
+                  type="checkbox"
+                  checked={{checked::change}}
+                  class=check
+                >
+              </div>
             </template>
             <script>
+              const EntryType = {
+                Bool: 0,
+                String: 1,
+                Path: 2,
+                FilePath: 3,
+                Internal: 4,
+                Uninitialized: 5,
+                Static: 6,
+              };
               Polymer({
                 is: "cmt-cache-entry",
                 properties: {
                   key: String,
                   value: {
                     type: String,
-                    observer: '_valueChanged'
+                    observer: 'reinit',
                   },
                   modified: {
                     type: Boolean,
@@ -88,30 +133,88 @@ export class CacheEditorContentProvider implements
                     type: Boolean,
                     reflectToAttribute: true,
                   },
+                  checked: {
+                    type: Boolean,
+                    observer: '_checkedChanged',
+                  },
                   helpString: String,
                   showAdvanced: Boolean,
                   visible: {
                     type: Boolean,
                     reflectToAttribute: true,
-                    computed: '_isVisible(showAdvanced, advanced)'
+                    computed: '_isVisible(showAdvanced, advanced, type)'
+                  },
+                  arrayItems: {
+                    type: Array,
+                    value: [],
                   },
                 },
-                _valueChanged(v) {
-                  this.$.textInput.value = v;
+                _isBool(t) {
+                  return t == EntryType.Bool;
+                },
+                _isString(t) {
+                  return t === EntryType.String || t === EntryType.FilePath || t == EntryType.Path;
                 },
                 _isVisible() {
-                  return !this.advanced || this.showAdvanced;
+                  return (
+                    (this.type != EntryType.Internal && this.type != EntryType.Static)
+                    && (!this.advanced || this.showAdvanced)
+                  );
+                },
+                get typeString() {
+                  return {
+                    [EntryType.Bool]: 'BOOL',
+                    [EntryType.FilePath]: 'FILEPATH',
+                    [EntryType.Internal]: 'INTERNAL',
+                    [EntryType.Path]: 'PATH',
+                    [EntryType.Static]: 'STATIC',
+                    [EntryType.String]: 'STRING',
+                    [EntryType.Uninitialized]: 'UNINITIALIZED',
+                  }[this.type];
+                },
+                attached() {
+                  this.reinit();
+                },
+                reinit() {
+                  this.initing = true;
+                  if (this.type == EntryType.Bool) {
+                    this.checked = this.value != 'FALSE';
+                  } else if (this._isString(this.type)) {
+                    this.arrayItems = [];
+                    setTimeout(() => {
+                      this.arrayItems = this.value.split(';');
+                    }, 1);
+                  }
+                  this.modified = false;
+                  this.initing = false;
                 },
                 getEnteredValue() {
                   return this.$.textInput.value;
                 },
-                _modifiedValue() {
+                _modifiedArrayItemValue() {
                   this.modified = true;
+                  // Reconstitute the array items into a string
+                  console.log('Rebuilding array');
+                  const value = Array.from(this.querySelectorAll('.array-item'))
+                    .map(el => el.value)
+                    .filter(s => !!s.length)
+                    .join(';');
+                  console.log('Array content: ', value);
                   this.fire('modified', {
                     key: this.key,
-                    value: this.$.textInput.value,
+                    value: value,
+                    type: 'STRING',
                   });
                 },
+                _checkedChanged() {
+                  if (!this.initing) {
+                    this.fire('modified', {
+                      key: this.key,
+                      value: this.checked ? 'TRUE' : 'FALSE',
+                      type: 'BOOL',
+                    });
+                  }
+                }
               });
             </script>
           </dom-module>
@@ -246,7 +349,6 @@ export class CacheEditorContentProvider implements
                     console.debug('Got cache entries', entries);
                     this.splice('entries', 0, this.entries.length, ...entries);
                     this.entries = entries;
-                    Array.from(this.querySelectorAll('cmt-cache-entry')).map(e => e.modified = false);
                   }).catch(e => {
                     debugger;
                     console.error('Error getting cache entries ', e);
@@ -296,7 +398,7 @@ export class CacheEditorContentProvider implements
                 _onModified(ev) {
                   const det = ev.detail;
                   console.log('Set', det.key, 'to', det.value);
-                  this._modifications[det.key] = det.value;
+                  this._modifications[det.key + ':' + det.type] = det.value;
                 },
               })
             </script>

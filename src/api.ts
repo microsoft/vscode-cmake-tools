@@ -32,13 +32,13 @@ export interface CompilationInfo {
 }
 
 export enum EntryType {
-  Bool,
-  String,
-  Path,
-  FilePath,
-  Internal,
-  Uninitialized,
-  Static,
+  Bool = 0,
+  String = 1,
+  Path = 2,
+  FilePath = 3,
+  Internal = 4,
+  Uninitialized = 5,
+  Static = 6,
 }
 
 export interface Test {
