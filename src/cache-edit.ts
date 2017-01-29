@@ -32,18 +32,17 @@ export class CacheEditorContentProvider implements
           <dom-module id=cmt-cache-entry>
             <template>
               <style>
-                :host {
+                :host:not([hidden]) {
+                  display: flex;
+                  flex-direction: column;
+                  align-items: stretch;
+                }
+                div.main {
                   display: flex;
                   flex-direction: row;
                   font-family: Fira Code, Ubuntu Mono, Courier New, Courier, monospace;
                   margin: 2px;
                   margin-right: 10px;
-                }
-                :host(:not([advanced])) .key .asterisk {
-                  display: none;
-                }
-                :host(:not([visible])) {
-                  display: none;
                 }
                 .key {
                   white-space: nowrap;
@@ -79,31 +78,66 @@ export class CacheEditorContentProvider implements
                 .array-item:not(:first-child) {
                   margin-top: 3px;
                 }
+
+                div.help {
+                  font-style: italic;
+                  font-size: 10pt;
+                  transition:
+                    300ms max-height ease,
+                    300ms padding ease,
+                    300ms opacity ease;
+                  max-height: 0;
+                  opacity: 0;
+                  text-align: center;
+                  pointer-events: none;
+                }
+                div.help[show] {
+                  max-height: initial;
+                  padding: 10px;
+                  opacity: 1;
+                  overflow-y: auto;
+                }
+                div.whats-this {
+                  padding: 4.5px;
+                  border-left: 1px solid rgb(204,204,204);
+                  color: rgb(204,204,204);
+                  background-color: rgb(60,60,60);
+                  border-radius: 0 50px 50px 0;
+                  cursor: pointer;
+                  align-self: center;
+                  font-weight: bold;
+                  width: 12pt;
+                  text-align: center;
+                }
               </style>
-              <div class=key><span class=asterisk>*</span>[[key]]</div>
-              <div class="control-base array-container" hidden$="[[!_isString(type)]]">
-                <template is="dom-repeat" items="[[arrayItems]]">
-                  <input
-                    class='input array-item'
-                    type="text"
-                    modified$=[[modified]]
-                    value=[[item]]
-                    on-input=_modifiedArrayItemValue
-                    hidden$=[[_isBool(type)]]
-                  >
-                </template>
-              </div>
-              <div
-                class="control-base check-container"
-                hidden$=[[!_isBool(type)]]
-              >
-                <input
-                  id=checkBox
-                  type="checkbox"
-                  checked={{checked::change}}
-                  class=check
+              <div class="main">
+                <div class=key><span class=asterisk hidden$=[[!advanced]]>*</span>[[key]]</div>
+                <div class="control-base array-container" hidden$="[[!_isString(type)]]">
+                  <template is="dom-repeat" items="[[arrayItems]]">
+                    <input
+                      class='input array-item'
+                      type="text"
+                      modified$=[[modified]]
+                      value=[[item]]
+                      on-input=_modifiedArrayItemValue
+                      hidden$=[[_isBool(type)]]
+                    >
+                  </template>
+                </div>
+                <div
+                  class="control-base check-container"
+                  hidden$=[[!_isBool(type)]]
                 >
+                  <input
+                    id=checkBox
+                    type="checkbox"
+                    checked={{checked::change}}
+                    class=check
+                  >
+                </div>
+                <div on-tap="_toggleShowHelp" class=whats-this>?</div>
               </div>
+              <div class="help" show$=[[showHelp]]>[[helpString]]</div>
             </template>
             <script>
               const EntryType = {
@@ -139,26 +173,30 @@ export class CacheEditorContentProvider implements
                   },
                   helpString: String,
                   showAdvanced: Boolean,
-                  visible: {
+                  hidden: {
                     type: Boolean,
                     reflectToAttribute: true,
-                    computed: '_isVisible(showAdvanced, advanced, type)'
+                    computed: '_isHidden(showAdvanced, advanced, type)'
                   },
                   arrayItems: {
                     type: Array,
                     value: [],
                   },
                 },
+                _toggleShowHelp() {
+                  this.showHelp = !this.showHelp;
+                },
                 _isBool(t) {
-                  return t == EntryType.Bool;
+                  return t === EntryType.Bool;
                 },
                 _isString(t) {
-                  return t === EntryType.String || t === EntryType.FilePath || t == EntryType.Path;
+                  return t === EntryType.String || t === EntryType.FilePath || t == EntryType.Path || t == EntryType.Uninitialized;
                 },
-                _isVisible() {
+                _isHidden() {
                   return (
-                    (this.type != EntryType.Internal && this.type != EntryType.Static)
-                    && (!this.advanced || this.showAdvanced)
+                    this.type === EntryType.Internal
+                    || this.type === EntryType.Static
+                    || (this.advanced && !this.showAdvanced)
                   );
                 },
                 get typeString() {
@@ -177,7 +215,8 @@ export class CacheEditorContentProvider implements
                 },
                 reinit() {
                   this.initing = true;
-                  if (this.type == EntryType.Bool) {
+                  this.showHelp = false;
+                  if (this.type === EntryType.Bool) {
                     this.checked = this.value != 'FALSE';
                   } else if (this._isString(this.type)) {
                     this.arrayItems = [];
@@ -265,7 +304,7 @@ export class CacheEditorContentProvider implements
                   border-top: 1px solid rgb(70, 70, 70);
                   box-shadow: 0 -2px 5px rgba(0,0,0,0.4);
                 }
-                .buttons button {
+                button {
                   flex: 1;
                   margin: 10px;
                   cursor: pointer;
