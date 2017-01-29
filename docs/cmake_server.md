@@ -22,5 +22,28 @@ notable effects on the user experience:
   certainty when it must run a reconfigure. No more false positives when
   reconfiguring.
 
+## How to Enable CMake Server Support
+
+To use CMake Server in Visual Studio Code with CMake Tools, the following
+requirements must be met:
+
+1. You must be using CMake 3.7.2 or newer. Older 3.7 releases have bugs that
+   severely harm the user experience. Versions prior to CMake 3.7 do not have
+   CMake Server support.
+2. The configuration setting `cmake.experimental.useCMakeServer` must be set to
+   `true` (the default is `false`).
+3. After enabling, Visual Studio Code must be restarted for the changes to take
+   effect.
+
+Once these things have been done, CMake Tools will use CMake Server to manage
+your project configuration.
+
+# Remember!
+
 CMake Server is still very new and experimental. If you find issues when using
-CMake Tools with CMake Server, please feel free to open a GitHub issue.
+CMake Tools with CMake Server, please open a GitHub issue, including relevant
+information such as CMake version, operating system, and Visual Studio Code
+version.
+
+If a bug is inhibitting your workflow, `cmake.experimental.useCMakeServer` can
+be reset back to `false` to disable the CMake Server backend.
