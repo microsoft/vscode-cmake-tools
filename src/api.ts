@@ -1,4 +1,4 @@
-import {DiagnosticCollection, Disposable, TextEditor} from 'vscode';
+import {DiagnosticCollection, Disposable, Event, TextEditor} from 'vscode';
 
 export interface ExecutionResult {
   retc: number;
@@ -22,23 +22,20 @@ export interface RawCompilationInfo {
 export interface CompilationInfo {
   file: string;
   compile?: RawCompilationInfo;
-  includeDirectories: {
-    path: string;
-    isSystem: boolean;
-  }[];
-  compileDefinitions: {[define: string]: string|null};
+  includeDirectories: {path: string; isSystem: boolean;}[];
+  compileDefinitions: {[define: string]: string | null};
   compileFlags: string[];
   compiler?: string;
 }
 
 export enum EntryType {
-  Bool,
-  String,
-  Path,
-  FilePath,
-  Internal,
-  Uninitialized,
-  Static,
+  Bool = 0,
+  String = 1,
+  Path = 2,
+  FilePath = 3,
+  Internal = 4,
+  Uninitialized = 5,
+  Static = 6,
 }
 
 export interface Test {
@@ -46,14 +43,15 @@ export interface Test {
   name: string;
 }
 
-export interface CacheEntry {
+export interface CacheEntryProperties {
   type: EntryType;
   helpString: string;
   key: string;
   value: any;
-  as<T>(): T;
   advanced: boolean;
 }
+
+export interface CacheEntry extends CacheEntryProperties { as<T>(): T; }
 
 export interface ExecutableTarget {
   name: string;
@@ -91,6 +89,8 @@ export interface CMakeToolsAPI extends Disposable {
   readonly diagnostics: Promise<DiagnosticCollection>|DiagnosticCollection;
   // Targets available for building
   readonly targets: Promise<Target[]>|Target[];
+  // Event fired when configure completes
+  readonly reconfigured: Event<void>;
 
   // Execute a command using the CMake executable
   executeCMakeCommand(args: string[], options?: ExecuteOptions):
@@ -136,4 +136,6 @@ export interface CMakeToolsAPI extends Disposable {
   selectEnvironments(): Promise<string[]|null>;
   // Sets the variant based on keyword settings
   setActiveVariantCombination(settings: VariantKeywordSettings): Promise<void>;
+  // Toggle code coverage view on/off
+  toggleCoverageDecorations(): void;
 }

@@ -1,12 +1,15 @@
 import * as ajv from 'ajv';
 import * as proc from 'child_process';
+import * as http from 'http';
 import * as yaml from 'js-yaml';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as ws from 'ws';
 
 import * as api from './api';
 import * as async from './async';
+import {CacheEditorContentProvider} from './cache-edit';
 import {config} from './config';
 import * as ctest from './ctest';
 import {BuildParser} from './diagnostics';
@@ -15,6 +18,12 @@ import * as status from './status';
 import * as util from './util';
 import {Maybe} from './util';
 import {VariantManager} from './variants';
+
+interface WsMessage {
+  data: string;
+  target: ws;
+  type: string;
+}
 
 async function readWorkspaceCache(
     path: string, defaultContent: util.WorkspaceCache) {
@@ -59,6 +68,7 @@ writeWorkspaceCache(path: string, content: util.WorkspaceCache) {
 
 
 export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
+  abstract allCacheEntries(): api.CacheEntryProperties[];
   abstract cacheEntry(name: string): api.CacheEntry|null;
   abstract get needsReconfigure(): boolean;
   abstract get activeGenerator(): Maybe<string>;
@@ -73,6 +83,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
   abstract selectDebugTarget();
+  abstract get reconfigured(): vscode.Event<void>;
 
   protected _refreshAfterConfigure() {}
 
@@ -106,7 +117,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       return build_retc;
     }
     return this._ctestController.executeCTest(
-        this.binaryDir, this.selectedBuildType || 'Debug',
+        this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug',
         this.executionEnvironmentVariables);
   }
 
@@ -132,6 +143,19 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   }
 
   /**
+   * Toggle on/off highlighting of coverage data in the editor
+   */
+  public toggleCoverageDecorations() {
+    this.showCoverageData = !this.showCoverageData;
+  }
+  public get showCoverageData(): boolean {
+    return this._ctestController.showCoverageData;
+  }
+  public set showCoverageData(v: boolean) {
+    this._ctestController.showCoverageData = v;
+  }
+
+  /**
    * The primary build output channel. We use the ThrottledOutputChannel because
    * large volumes of output can make VSCode choke
    */
@@ -151,7 +175,56 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         this._workspaceCachePath, this._workspaceCacheContent);
   }
 
+  private _ws_server: ws.Server;
+  private _http_server: http.Server;
+
   constructor(protected readonly _context: vscode.ExtensionContext) {
+    const editor_server = this._http_server = http.createServer();
+    const ready = new Promise((resolve, reject) => {
+      editor_server.listen(0, 'localhost', undefined, (err) => {
+        if (err)
+          reject(err);
+        else
+          resolve();
+      });
+    });
+
+    ready.then(() => {
+      const websock_server = this._ws_server =
+          ws.createServer({server: editor_server});
+      websock_server.on('connection', (client) => {
+        const sub = this.reconfigured(() => {
+          client.send(JSON.stringify({method: 'refreshContent'}));
+        });
+        client.onclose = () => {
+          sub.dispose();
+        };
+        client.onmessage = (msg) => {
+          const data = JSON.parse(msg.data);
+          console.log('Got message from editor client', msg);
+          const ret = this._handleCacheEditorMessage(data.method, data.params)
+                          .then(ret => {
+                            client.send(JSON.stringify({
+                              id: data.id,
+                              result: ret,
+                            }));
+                          })
+                          .catch(e => {
+                            client.send(JSON.stringify({
+                              id: data.id,
+                              error: (e as Error).message,
+                            }));
+                          });
+        };
+      });
+
+      this._disposables.push(
+          vscode.workspace.registerTextDocumentContentProvider(
+              'cmake-cache', new CacheEditorContentProvider(
+                                 _context, editor_server.address().port)));
+    });
+
+
     // We want to rewrite our workspace cache and updare our statusbar whenever
     // the active build variant changes
     this.variants.onActiveVariantCombinationChanged(v => {
@@ -222,13 +295,16 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
 
     // Refresh any test results that may be left aroud from a previous run
     this._ctestController.reloadTests(
-        this.binaryDir, this.selectedBuildType || 'Debug');
+        this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
 
     return this;
   }
 
   dispose() {
     this._disposables.map(d => d.dispose());
+    this._ws_server.close();
+    this._http_server.close();
+    this._http_server.destroy();
   }
 
   /**
@@ -524,8 +600,14 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       }
     }
 
-    const cache = await vscode.workspace.openTextDocument(this.cachePath);
-    return await vscode.window.showTextDocument(cache);
+    vscode.commands.executeCommand(
+        'vscode.previewHtml', 'cmake-cache://' + this.cachePath,
+        vscode.ViewColumn.Three, 'CMake Cache');
+
+    return null;
+
+    // const cache = await vscode.workspace.openTextDocument(this.cachePath);
+    // return await vscode.window.showTextDocument(cache);
   }
 
   public async cleanRebuild(): Promise<Number> {
@@ -559,7 +641,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     if (changed) {
       // Changing the build type can affect the binary dir
       this._ctestController.reloadTests(
-          this.binaryDir, this.selectedBuildType || 'Debug');
+          this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
     }
     return changed;
   }
@@ -803,15 +885,15 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         typestr = 'BOOL';
         value = value ? 'TRUE' : 'FALSE';
       }
-      if (typeof(value) === 'string') {
+      else if (typeof(value) === 'string') {
         typestr = 'STRING';
         value = this.replaceVars(value)
         value = util.replaceAll(value, ';', '\\;');
       }
-      if (value instanceof Number || typeof value === 'number') {
+      else if (value instanceof Number || typeof value === 'number') {
         typestr = 'STRING';
       }
-      if (value instanceof Array) {
+      else if (value instanceof Array) {
         typestr = 'STRING';
         value = value.join(';');
       }
@@ -822,5 +904,20 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     }
     initial_cache_content.push('cmake_policy(POP)');
     return initial_cache_content.join('\n');
+  }
+  private _handleCacheEditorMessage(
+      method: string, params: {[key: string]: any}): Promise<any> {
+    switch (method) {
+      case 'getEntries': {
+        return Promise.resolve(this.allCacheEntries());
+      }
+      case 'configure': {
+        return this.configure(params['args']);
+      }
+      case 'build': {
+        return this.build();
+      }
+    }
+    throw new Error('Invalid method: ' + method);
   }
 }

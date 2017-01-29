@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.8.8",
+    "version": "0.9.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -46,6 +46,7 @@
         "onCommand:cmake.debugTarget",
         "onCommand:cmake.selectDebugTarget",
         "onCommand:cmake.selectEnvironments",
+        "onCommand:cmake.toggleCoverageDecorations",
         "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
@@ -124,6 +125,11 @@
             {
                 "command": "cmake.selectEnvironments",
                 "title": "Select active build environments",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.toggleCoverageDecorations",
+                "title": "Toggle visibility of test coverage in the editor",
                 "category": "CMake"
             }
         ],
@@ -478,6 +484,11 @@
                         "C:\\MinGW"
                     ],
                     "description": "Directors where MinGW may be installed"
+                },
+                "cmake.experimental.useCMakeServer": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable CMake server [experimental]"
                 }
             }
         },
@@ -517,14 +528,16 @@
         "@types/js-yaml": "^3.5.28",
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
-        "@types/rimraf": "^0.0.28"
+        "@types/rimraf": "^0.0.28",
+        "@types/ws": "^0.0.38"
     },
     "dependencies": {
         "open": "0.0.5",
         "js-yaml": "^3.6.1",
         "ajv": "^4.7.5",
         "xml2js": "^0.4.17",
-        "rimraf": "^2.5.4"
+        "rimraf": "^2.5.4",
+        "ws": "^1.1.1"
     },
     "extensionDependencies": [
         "twxs.cmake"

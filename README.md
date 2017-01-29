@@ -9,30 +9,18 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
 
 ## What's New?
 
-### **0.8.0**:
-  - **Automatic Environment Selection**. CMake Tools will now automatically
-    detect available build environments and let you select them using a
-    quick-pick. This means *no more starting Code from a Visual Studio
-    developer command prompt!* Currently supports Visual Studio 2013 and 2015
-    for x86 and amd64. The environment chosen will be saved and persisted to the
-    workspace.
-  - Configuration options for the default build variants.
-  - Configuration option for CTest command line arguments.
-  - **0.8.1**: Fix deadlock on startup.
-  - **0.8.2-4**: More fixes for environment loading.
-  - **0.8.5**:
-    - New `${workspaceRootFolderName}` available in config substitution.
-    - New API exported for other extensions. See [here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/src/api.ts).
-  - **0.8.6**: Tweaking output
-  - **0.8.7**:
-    - This version contains an enormous refactor of the codebase in preparation
-      for CMake Server support. If you find _any_ issues or regressions from
-      prior extension versions, **please** create an issue on the GitHub
-      project.
-  - **0.8.8**
-    - Many bugfixes
-    - Support for MinGW build environments. See documentation for
-      `cmake.mingwSearchDirs`.
+### **0.9.0**
+
+- Experimental CMake Server support has landed. [Read more here.](docs/cmake_server.md)
+- Experimental graphical CMake cache editor. The `Edit the CMake Cache` command
+  now opens up a dedicated UI within VS Code for viewing and modifying values
+  stored in the CMake cache. [Read more here.](docs/cache_editor.md])
+- CTest coverage! Now code coverage can be viewed inline after it has been
+  collected by CTest. This requires that CTest be executed with `-T Coverage`
+  from the command line (CMake Tools does not yet do this automatically).
+
+As always: Please report any issues, questions, or comments to the GitHub
+project issues list!
 
 ## Issues? Questions? Feature requests?
 

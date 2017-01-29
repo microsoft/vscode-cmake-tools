@@ -502,12 +502,12 @@ suite("Utility tests", () => {
     };
     suite('Extension smoke tests [without cmake-server]', function() {
         smokeTests(this, 'without cmake-server', async() => {
-            // await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
+            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
         });
     });
-    // suite('Extension smoke tests [with cmake-server]', function() {
-    //     smokeTests(this, 'with cmake-server', async() => {
-    //         await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
-    //     });
-    // });
+    suite('Extension smoke tests [with cmake-server]', function() {
+        smokeTests(this, 'with cmake-server', async() => {
+            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
+        });
+    });
 });

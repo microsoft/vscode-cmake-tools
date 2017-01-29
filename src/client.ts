@@ -20,6 +20,13 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   private _accumulatedMessages: string[] = [];
   private _codeModel: null|cms.CodeModelContent;
 
+  private _reconfiguredEmitter = new vscode.EventEmitter<void>();
+  private readonly _reconfigured = this._reconfiguredEmitter.event;
+  public get reconfigured() {
+    return this._reconfigured;
+  }
+
+
   private _executableTargets: api.ExecutableTarget[] = [];
   get executableTargets() {
     return this.targets.filter(t => t.targetType == 'EXECUTABLE')
@@ -59,6 +66,17 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return this._globalSettings ? this._globalSettings.generator : null;
   }
 
+  allCacheEntries(): api.CacheEntryProperties[] {
+    return Array.from(this._cacheEntries.values()).map(e => ({
+                                                         type: e.type,
+                                                         key: e.key,
+                                                         value: e.value,
+                                                         advanced: e.advanced,
+                                                         helpString:
+                                                             e.helpString,
+                                                       }));
+  }
+
   cacheEntry(key: string) {
     return this._cacheEntries.get(key) || null;
   }
@@ -84,7 +102,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       this._channel.append('[vscode] Removing ' + cmake_files);
       await util.rmdir(cmake_files);
     }
-    this._client = await this._restartClient();
+    await this._restartClient();
     return this.configure();
   }
 
@@ -154,7 +172,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     const variant_options = this.variants.activeConfigurationOptions;
     if (variant_options) {
       Object.assign(settings, variant_options.settings || {});
-      settings.BUID_SHARED_LIBS = variant_options.linkage === 'shared';
+      settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
     }
 
     const inst_prefix = config.installPrefix;
@@ -200,6 +218,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         await this._client.sendRequest('codemodel');
     await this._writeWorkspaceCacheContent();
     await this._refreshAfterConfigure();
+    this._reconfiguredEmitter.fire();
     return 0;
   }
 
@@ -259,27 +278,35 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     super(_ctx);
   }
 
-  private _restartClient(): Promise<cms.CMakeServerClient> {
-    return cms.CMakeServerClient.start({
-      binaryDir: this.binaryDir,
-      sourceDir: this.sourceDir,
-      cmakePath: config.cmakePath,
-      environment: Object.assign(
-          {}, config.environment, this.currentEnvironmentVariables),
-      onDirty: async() => {
-        this._dirty = true;
-      },
-      onMessage: async(msg) => {
-        const line = `-- ${msg.message}`;
-        this._accumulatedMessages.push(line);
-        this._channel.appendLine(line);
-      },
-      onProgress: async(prog) => {
-        this.buildProgress = (prog.progressCurrent - prog.progressMinimum) /
-            (prog.progressMaximum - prog.progressMinimum);
-        this.statusMessage = prog.progressMessage;
-      },
-    });
+  private _restartClient(): Promise<void> {
+    return cms.CMakeServerClient
+        .start({
+          binaryDir: this.binaryDir,
+          sourceDir: this.sourceDir,
+          cmakePath: config.cmakePath,
+          environment: Object.assign(
+              {}, config.environment, this.currentEnvironmentVariables),
+          onDirty: async() => {
+            this._dirty = true;
+          },
+          onMessage: async(msg) => {
+            const line = `-- ${msg.message}`;
+            this._accumulatedMessages.push(line);
+            this._channel.appendLine(line);
+          },
+          onProgress: async(prog) => {
+            this.buildProgress = (prog.progressCurrent - prog.progressMinimum) /
+                (prog.progressMaximum - prog.progressMinimum);
+            this.statusMessage = prog.progressMessage;
+          },
+        })
+        .then(cl => {
+          this._client = cl;
+          return this._refreshAfterConfigure();
+        })
+        .catch(e => {
+          console.error('Error setting up client:', e);
+        });
   }
 
   protected async _refreshAfterConfigure() {
@@ -306,15 +333,17 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       }[el.type];
       console.assert(type !== undefined, `Unknown cache type ${el.type}`);
       acc.set(
-          el.key,
-          new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING));
+          el.key, new cache.Entry(
+                      el.key, el.value, type, el.properties.HELPSTRING,
+                      el.properties.ADVANCED == '1'));
       return acc;
     }, new Map<string, cache.Entry>());
   }
 
   protected async _init(): Promise<ServerClientCMakeTools> {
     await super._init();
-    const cl = this._client = await this._restartClient();
+    await this._restartClient();
+    const cl = this._client;
     this._globalSettings = await cl.getGlobalSettings();
     this._codeModel = this._workspaceCacheContent.codeModel || null;
     this._statusBar.statusMessage = 'Ready';

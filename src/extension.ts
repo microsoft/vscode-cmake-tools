@@ -35,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
             'debugTarget',
             'selectDebugTarget',
             'selectEnvironments',
+            'toggleCoverageDecorations',
         ]) {
             context.subscriptions.push(register('cmake.' + key, cmake[key as string]));
         }

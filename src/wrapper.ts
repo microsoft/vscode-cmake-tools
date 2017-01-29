@@ -8,16 +8,14 @@ import * as client from './client';
 import * as util from './util';
 import {config} from './config';
 
-const open = require('open') as (
-    (url: string, appName?: string, callback?: Function) => void);
-
 export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   private _impl: Promise<api.CMakeToolsAPI>;
 
   constructor(private _ctx: vscode.ExtensionContext) {}
 
   async dispose() {
-    return (await this._impl).dispose();
+    await this.shutdown();
+    this._reconfiguredEmitter.dispose();
   }
 
   private async _sourceDir() {
@@ -149,77 +147,41 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     return (await this._impl).setActiveVariantCombination(settings);
   }
 
+  async toggleCoverageDecorations() {
+    return (await this._impl).toggleCoverageDecorations();
+  }
+
+  private _reconfiguredEmitter = new vscode.EventEmitter<void>();
+  readonly reconfigured = this._reconfiguredEmitter.event;
+
+  private async _setupEvents() {
+    const cmt = await this._impl;
+    cmt.reconfigured(this._reconfiguredEmitter.fire);
+  }
+
   public async reload(): Promise<CMakeToolsWrapper> {
     await this.shutdown();
-    const impl = await this._impl;
-    if (impl) {
-      impl.dispose();
+    if (config.experimental_useCMakeServer) {
+      const cmpath = config.cmakePath;
+      const version_ex = await util.execute(config.cmakePath, ['--version']).onComplete;
+      console.assert(version_ex.stdout);
+      const version_re = /cmake version (.*?)\r?\n/;
+      const version = util.parseVersion(version_re.exec(version_ex.stdout!)![1]);
+      // We purposefully exclude versions <3.7.1, which have some major CMake
+      // server bugs
+      if (util.versionGreater(version, '3.7.1')) {
+        this._impl = client.ServerClientCMakeTools.startup(this._ctx);
+        await this._impl;
+        await this._setupEvents();
+        return this;
+      }
+      vscode.window.showWarningMessage('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
     }
-    // NOTE: This block is disabled UNTIL a few upstream CMake Server Bugs are
-    // fixed.
-    // const cmpath = config.cmakePath;
-    // const version_ex =
-    //     await util.execute(config.cmakePath, ['--version']).onComplete;
-    // console.assert(version_ex.stdout);
-    // const version_re = /cmake version (.*?)\r?\n/;
-    // const version = util.parseVersion(version_re.exec(version_ex.stdout!)![1]);
-    // We purposefully exclude versions <3.7.1, which have some major CMake server
-    // bugs
-    // const new_enough = util.versionGreater(version, '3.7.1');
-    // if (config.experimental_useCMakeServer) {
-    //   if (new_enough) {
-    //     this._impl = client.ServerClientCMakeTools.startup(this._ctx);
-    //     return this;
-    //   } else {
-    //     vscode.window.showWarningMessage(
-    //         'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
-    //   }
-    // } else {
-    //   const dont_nag =
-    //       this._ctx.globalState.get('cmakeServerNag.dontNag1', false);
-    //   const v36_or_newer = util.versionGreater(version, '3.5.999');
-    //   const options = [
-    //     {
-    //       title: 'Tell me more',
-    //       what: 'yes',
-    //       isCloseAffordance: false,
-    //     },
-    //     {
-    //       title: 'Not now',
-    //       what: 'no',
-    //       isCloseAffordance: true,
-    //     },
-    //     {
-    //       title: 'No, and don\'t bother me again',
-    //       what: 'never',
-    //       isCloseAffordance: false,
-    //     }
-    //   ];
-    //   const continuation = chosen => {
-    //     if (chosen.what == 'yes') {
-    //       open('https://github.com/vector-of-bool/vscode-cmake-tools/');
-    //     } else if (chosen.what == 'never') {
-    //       this._ctx.globalState.update('cmakeServerNag.dontNag1', true);
-    //     }
-    //   };
-    //   if (v36_or_newer && !new_enough && !dont_nag) {
-    //     vscode.window
-    //         .showInformationMessage(
-    //             'Would you consider upgrading CMake and trying CMake Tools\' new cmake-server support?',
-    //             ...options)
-    //         .then(continuation);
-    //   } else if (new_enough && !dont_nag) {
-    //     vscode.window
-    //         .showInformationMessage(
-    //             'Would you like to try CMake Tools\' new cmake-server support?',
-    //             ...options)
-    //         .then(continuation);
-    //   }
-    // }
     // Fall back to use the legacy plugin
     const cmt = new legacy.CMakeTools(this._ctx);
     this._impl = cmt.initFinished;
     await this._impl;
+    await this._setupEvents();
     return this;
   }
 
@@ -227,6 +189,9 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     const impl = await this._impl;
     if (impl instanceof client.ServerClientCMakeTools) {
       await impl.dangerousShutdownClient();
+    }
+    if (impl) {
+      impl.dispose();
     }
   }
 
