@@ -83,16 +83,16 @@ export class CacheEditorContentProvider implements
                   font-style: italic;
                   font-size: 10pt;
                   transition:
-                    300ms max-height ease,
+                    300ms line-height ease,
                     300ms padding ease,
                     300ms opacity ease;
-                  max-height: 0;
+                  line-height: 0;
                   opacity: 0;
                   text-align: center;
                   pointer-events: none;
                 }
                 div.help[show] {
-                  max-height: initial;
+                  line-height: normal;
                   padding: 10px;
                   opacity: 1;
                   overflow-y: auto;
