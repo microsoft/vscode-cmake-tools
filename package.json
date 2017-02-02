@@ -537,7 +537,8 @@
         "ajv": "^4.7.5",
         "xml2js": "^0.4.17",
         "rimraf": "^2.5.4",
-        "ws": "^1.1.1"
+        "ws": "^1.1.1",
+        "Polymer": "1.6.1--"
     },
     "extensionDependencies": [
         "twxs.cmake"
