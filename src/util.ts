@@ -256,8 +256,9 @@ export function execute(
             .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
             .join(' '));
   }
+  const real_env = Object.assign({}, process.env, env);
   const pipe = proc.spawn(program, args, {
-    env,
+    env: real_env,
     cwd: workingDirectory,
   });
   for (const [acckey, stream] of [

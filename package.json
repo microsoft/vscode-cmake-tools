@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -520,11 +520,11 @@
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "typescript": "^2.0.3",
-        "@types/node": "^6.0.45",
+        "typescript": "~2.0.3",
+        "@types/node": "~6.0.45",
         "vscode": "^1.0.3",
-        "mocha": "^3.1.2",
-        "@types/mocha": "^2.2.32",
+        "mocha": "~3.1.2",
+        "@types/mocha": "2.2.32",
         "@types/js-yaml": "^3.5.28",
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
@@ -537,7 +537,8 @@
         "ajv": "^4.7.5",
         "xml2js": "^0.4.17",
         "rimraf": "^2.5.4",
-        "ws": "^1.1.1"
+        "ws": "^1.1.1",
+        "Polymer": "1.6.1--"
     },
     "extensionDependencies": [
         "twxs.cmake"

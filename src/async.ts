@@ -19,11 +19,11 @@ export function doAsync<Result, Param, ErrorType>(
     });
 }
 
-export function doVoidAsync<Result, Param, ErrorType>(
+export function doVoidAsync<Param, ErrorType>(
         fn: (param: Param, callback: (error: NodeJS.ErrnoException) => void) => void,
         p: Param
-): Promise<Result> {
-    return new Promise<Result>((resolve, reject) => {
+): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
         fn(p, (er) => {
             if (er) {
                 reject(er);

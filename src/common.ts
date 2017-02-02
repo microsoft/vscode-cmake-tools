@@ -304,7 +304,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     this._disposables.map(d => d.dispose());
     this._ws_server.close();
     this._http_server.close();
-    this._http_server.destroy();
   }
 
   /**

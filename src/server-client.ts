@@ -551,7 +551,7 @@ export class CMakeServerClient {
     if (process.platform == 'win32') {
       pipe_file = '\\\\?\\pipe\\' + pipe_file;
     } else {
-      pipe_file = path.join('/tmp/cmt', pipe_file);
+      pipe_file = path.join(params.binaryDir, `.cmserver.${process.pid}`);
     }
     const child = this._proc = proc.spawn(
         params.cmakePath,

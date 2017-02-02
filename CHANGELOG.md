@@ -1,6 +1,17 @@
 
 ## Change History
 
+### **0.9.0**
+
+- Experimental CMake Server support has landed. [Read more here.](docs/cmake_server.md)
+- Experimental graphical CMake cache editor. The `Edit the CMake Cache` command
+  now opens up a dedicated UI within VS Code for viewing and modifying values
+  stored in the CMake cache. [Read more here.](docs/cache_editor.md)
+- CTest coverage! Now code coverage can be viewed inline after it has been
+  collected by CTest. This requires that CTest be executed with `-T Coverage`
+  from the command line (CMake Tools does not yet do this automatically).
+- **0.9.1**: Fix issues with CMake Server and cache editor.
+
 ### **0.8.0**:
 - **Automatic Environment Selection**. CMake Tools will now automatically
   detect available build environments and let you select them using a
