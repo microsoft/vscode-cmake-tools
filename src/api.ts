@@ -8,7 +8,7 @@ export interface ExecutionResult {
 
 export interface ExecuteOptions {
   silent: boolean;
-  environment: Object;
+  environment: {[key: string]: string};
   collectOutput?: boolean;
   workingDirectory?: string;
 }
