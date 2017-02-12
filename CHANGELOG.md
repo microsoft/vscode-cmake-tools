@@ -11,6 +11,7 @@
   collected by CTest. This requires that CTest be executed with `-T Coverage`
   from the command line (CMake Tools does not yet do this automatically).
 - **0.9.1**: Fix issues with CMake Server and cache editor.
+- **0.9.2**: Fix issues with environment variables on Windows.
 
 ### **0.8.0**:
 - **Automatic Environment Selection**. CMake Tools will now automatically
