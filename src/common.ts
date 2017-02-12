@@ -19,6 +19,89 @@ import * as util from './util';
 import {Maybe} from './util';
 import {VariantManager} from './variants';
 
+const CMAKETOOLS_HELPER_SCRIPT = `
+get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
+if(NOT is_set_up)
+    set_property(GLOBAL PROPERTY _CMAKETOOLS_SET_UP TRUE)
+    macro(_cmt_invoke fn)
+        file(WRITE "\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" "
+            set(_args \\"\${ARGN}\\")
+            \${fn}(\\\${_args})
+        ")
+        include("\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" NO_POLICY_SCOPE)
+    endmacro()
+
+    set(_cmt_add_executable add_executable)
+    set(_previous_cmt_add_executable _add_executable)
+    while(COMMAND "\${_previous_cmt_add_executable}")
+        set(_cmt_add_executable "_\${_cmt_add_executable}")
+        set(_previous_cmt_add_executable _\${_previous_cmt_add_executable})
+    endwhile()
+    macro(\${_cmt_add_executable} target)
+        _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
+        get_target_property(is_imported \${target} IMPORTED)
+        if(NOT is_imported)
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "executable;\${target};$<TARGET_FILE:\${target}>\n"
+                )
+            _cmt_generate_system_info()
+        endif()
+    endmacro()
+
+    set(_cmt_add_library add_library)
+    set(_previous_cmt_add_library _add_library)
+    while(COMMAND "\${_previous_cmt_add_library}")
+        set(_cmt_add_library "_\${_cmt_add_library}")
+        set(_previous_cmt_add_library "_\${_previous_cmt_add_library}")
+    endwhile()
+    macro(\${_cmt_add_library} target)
+        _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
+        get_target_property(type \${target} TYPE)
+        if(NOT type MATCHES "^(INTERFACE_LIBRARY|OBJECT_LIBRARY)$")
+            get_target_property(imported \${target} IMPORTED)
+            get_target_property(alias \${target} ALIAS)
+            if(NOT imported AND NOT alias)
+                file(APPEND
+                    "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                    "library;\${target};$<TARGET_FILE:\${target}>\n"
+                    )
+            endif()
+        else()
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "interface-library;\${target}\n"
+                )
+        endif()
+        _cmt_generate_system_info()
+    endmacro()
+
+    if({{{IS_MULTICONF}}})
+        set(condition CONDITION "$<CONFIG:Debug>")
+    endif()
+
+    file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
+    file(GENERATE
+        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta-$<CONFIG>.txt"
+        INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+        \${condition}
+        )
+
+    function(_cmt_generate_system_info)
+        get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
+        if(NOT done)
+            set(_compiler_id "\${CMAKE_CXX_COMPILER_ID}")
+            if(MSVC AND CMAKE_CXX_COMPILER MATCHES ".*clang-cl.*")
+                set(_compiler_id "MSVC")
+            endif()
+            file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+    "system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${_compiler_id}\n")
+        endif()
+        set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
+    endfunction()
+endif()
+`;
+
 interface WsMessage {
   data: string;
   target: ws;
@@ -525,7 +608,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
 
 
   public get executionEnvironmentVariables(): {[key: string]: string} {
-    return Object.assign(config.environment, this.currentEnvironmentVariables)
+    return util.mergeEnvironment(config.environment, this.currentEnvironmentVariables);
   }
 
   /**
@@ -538,7 +621,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       parser: util.OutputParser = new util.NullParser()):
       Promise<api.ExecutionResult> {
     const silent: boolean = options && options.silent || false;
-    const final_env = Object.assign(
+    const env = util.mergeEnvironment(
         {
           // We set NINJA_STATUS to force Ninja to use the format
           // that we would like to parse
@@ -546,7 +629,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         },
         options.environment, this.executionEnvironmentVariables);
     const info = util.execute(
-        program, args, final_env, options.workingDirectory,
+        program, args, env, options.workingDirectory,
         silent ? null : this._channel);
     const pipe = info.process;
     if (!silent) {
@@ -757,6 +840,55 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     Object.assign(real_config, user_config);
     real_config['program'] = target.path;
     return vscode.commands.executeCommand('vscode.startDebug', real_config);
+  }
+
+  public async prepareConfigure(): Promise<string[]> {
+    const cmake_cache_path = this.cachePath;
+
+    const args = [] as string[];
+    const toolset = config.toolset;
+    if (toolset) {
+      args.push('-T' + toolset);
+    }
+
+    const settings = Object.assign({}, config.configureSettings);
+    if (!this.isMultiConf) {
+      settings.CMAKE_BUILD_TYPE = this.selectedBuildType;
+    }
+
+    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
+
+    const variant_options = this.variants.activeConfigurationOptions;
+    if (variant_options) {
+      Object.assign(settings, variant_options.settings || {});
+      settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
+    }
+
+    const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
+    await util.ensureDirectory(cmt_dir);
+
+    const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
+    const helper_content = util.replaceAll(
+        CMAKETOOLS_HELPER_SCRIPT, '{{{IS_MULTICONF}}}',
+        this.isMultiConf ? '1' : '0');
+    await util.writeFile(helpers, helper_content);
+    const old_path = settings['CMAKE_MODULE_PATH'] as Array<string>|| [];
+    settings['CMAKE_MODULE_PATH'] =
+        Array.from(old_path).concat([cmt_dir.replace(/\\/g, path.posix.sep)]);
+
+    const init_cache_path =
+        path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
+    const init_cache_content = this._buildCacheInitializer(settings);
+    await util.writeFile(init_cache_path, init_cache_content);
+    let prefix = config.installPrefix;
+    if (prefix && prefix !== '') {
+      prefix = this.replaceVars(prefix);
+      args.push('-DCMAKE_INSTALL_PREFIX=' + prefix);
+    }
+
+    args.push('-C' + init_cache_path);
+    args.push(...config.configureArgs);
+    return args;
   }
 
   public async build(target_: Maybe<string> = null): Promise<Number> {

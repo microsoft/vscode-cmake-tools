@@ -163,29 +163,8 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         return -1;
       }
     }
-    const settings = Object.assign({}, config.configureSettings);
-    if (!this.isMultiConf) {
-      settings.CMAKE_BUILD_TYPE = this.selectedBuildType;
-    }
 
-    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
-    const variant_options = this.variants.activeConfigurationOptions;
-    if (variant_options) {
-      Object.assign(settings, variant_options.settings || {});
-      settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
-    }
-
-    const inst_prefix = config.installPrefix;
-    if (inst_prefix && inst_prefix != '') {
-      settings.CMAKE_INSTALL_PREFIX = this.replaceVars(inst_prefix);
-    }
-
-    const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
-    await util.ensureDirectory(cmt_dir);
-    const init_cache_path =
-        path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
-    const init_cache_content = this._buildCacheInitializer(settings);
-    await util.writeFile(init_cache_path, init_cache_content);
+    const args = await this.prepareConfigure();
 
     this.statusMessage = 'Configuring...';
     const parser = new diagnostics.BuildParser(
@@ -202,7 +181,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     try {
       this._accumulatedMessages = [];
       await this._client.configure(
-          {cacheArguments: ['-C', init_cache_path].concat(extraArgs)});
+          {cacheArguments: args.concat(extraArgs)});
       await this._client.compute();
       parseMessages();
     } catch (e) {
@@ -284,8 +263,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
           binaryDir: this.binaryDir,
           sourceDir: this.sourceDir,
           cmakePath: config.cmakePath,
-          environment: Object.assign(
-              {}, config.environment, this.currentEnvironmentVariables),
+          environment: util.mergeEnvironment(config.environment, this.currentEnvironmentVariables),
           onDirty: async() => {
             this._dirty = true;
           },

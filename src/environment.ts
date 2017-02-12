@@ -296,7 +296,7 @@ export class EnvironmentManager {
    *    as specified by the active build environments.
    */
   public get currentEnvironmentVariables(): {[key: string]: string} {
-    const active_env = this.activeEnvironments.reduce<Object>((acc, name) => {
+    const active_env = this.activeEnvironments.reduce((acc, name) => {
       const env_ = this.availableEnvironments.get(name);
       console.assert(env_);
       const env = env_!;
@@ -306,23 +306,6 @@ export class EnvironmentManager {
       return acc;
     }, {});
     const proc_env = process.env;
-    if (process.platform == 'win32') {
-      // Env vars on windows are case insensitive, so we take the ones from
-      // active env and overwrite the ones in our current process env
-      const norm_active_env = Object.getOwnPropertyNames(active_env)
-                                  .reduce<Object>((acc, key: string) => {
-                                    acc[key.toUpperCase()] = active_env[key];
-                                    return acc;
-                                  }, {});
-      const norm_proc_env = Object.getOwnPropertyNames(proc_env).reduce<Object>(
-          (acc, key: string) => {
-            acc[key.toUpperCase()] = proc_env[key];
-            return acc;
-          },
-          {});
-      return Object.assign({}, norm_proc_env, norm_active_env);
-    } else {
-      return Object.assign({}, proc_env, active_env);
-    }
+    return util.mergeEnvironment(process.env, active_env);
   }
 }

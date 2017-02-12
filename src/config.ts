@@ -94,20 +94,20 @@ export class ConfigurationReader {
     return this._readPrefixed<any>('debugConfig');
   }
 
-  get environment(): Object {
-    return this._readPrefixed<Object>('environment') || {};
+  get environment() {
+    return this._readPrefixed<{[key: string]: string}>('environment') || {};
   }
 
-  get configureEnvironment(): Object {
-    return this._readPrefixed<Object>('configureEnvironment') || {};
+  get configureEnvironment() {
+    return this._readPrefixed<{[key: string]: string}>('configureEnvironment') || {};
   }
 
-  get buildEnvironment(): Object {
-    return this._readPrefixed<Object>('buildEnvironment') || {};
+  get buildEnvironment() {
+    return this._readPrefixed<{[key: string]: string}>('buildEnvironment') || {};
   }
 
-  get testEnvironment(): Object {
-    return this._readPrefixed<Object>('testEnvironment') || {};
+  get testEnvironment() {
+    return this._readPrefixed<{[key: string]: string}>('testEnvironment') || {};
   }
 
   get defaultVariants(): Object {

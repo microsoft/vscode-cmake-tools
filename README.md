@@ -19,6 +19,7 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   collected by CTest. This requires that CTest be executed with `-T Coverage`
   from the command line (CMake Tools does not yet do this automatically).
 - **0.9.1**: Fix issues with CMake Server and cache editor.
+- **0.9.2**: Fix issues with environment variables on Windows.
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
