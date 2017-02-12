@@ -238,10 +238,28 @@ export interface ExecutionInformation {
   process: proc.ChildProcess;
 }
 
+export function mergeEnvironment(...env: {[key: string]: string}[]) {
+  return env.reduce((acc, vars) => {
+    if (process.platform === 'win32') {
+      // Env vars on windows are case insensitive, so we take the ones from
+      // active env and overwrite the ones in our current process env
+      const norm_vars = Object.getOwnPropertyNames(vars).reduce<Object>(
+          (acc2, key: string) => {
+            acc2[key.toUpperCase()] = vars[key];
+            return acc2;
+          },
+          {});
+      return Object.assign({}, acc, norm_vars);
+    } else {
+      return Object.assign({}, acc, vars);
+    }
+  }, {})
+}
+
 export function execute(
     program: string, args: string[], env: {[key: string]: string} = {},
     workingDirectory?: string,
-    outputChannel: vscode.OutputChannel | null = null): ExecutionInformation {
+    outputChannel: vscode.OutputChannel|null = null): ExecutionInformation {
   const acc = {stdout: '', stderr: ''};
   if (outputChannel) {
     outputChannel.appendLine(
@@ -256,9 +274,9 @@ export function execute(
             .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
             .join(' '));
   }
-  const real_env = Object.assign({}, process.env, env);
+  const final_env = mergeEnvironment(process.env, env);
   const pipe = proc.spawn(program, args, {
-    env: real_env,
+    env: final_env,
     cwd: workingDirectory,
   });
   for (const [acckey, stream] of [

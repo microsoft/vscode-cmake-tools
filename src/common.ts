@@ -608,7 +608,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
 
 
   public get executionEnvironmentVariables(): {[key: string]: string} {
-    return Object.assign(config.environment, this.currentEnvironmentVariables)
+    return util.mergeEnvironment(config.environment, this.currentEnvironmentVariables);
   }
 
   /**
@@ -621,7 +621,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       parser: util.OutputParser = new util.NullParser()):
       Promise<api.ExecutionResult> {
     const silent: boolean = options && options.silent || false;
-    const final_env = Object.assign(
+    const env = util.mergeEnvironment(
         {
           // We set NINJA_STATUS to force Ninja to use the format
           // that we would like to parse
@@ -629,7 +629,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         },
         options.environment, this.executionEnvironmentVariables);
     const info = util.execute(
-        program, args, final_env, options.workingDirectory,
+        program, args, env, options.workingDirectory,
         silent ? null : this._channel);
     const pipe = info.process;
     if (!silent) {

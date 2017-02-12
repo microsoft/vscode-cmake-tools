@@ -418,7 +418,7 @@ export class CTestController {
           '-j' + config.numCTestJobs, '-C', configuration, '-T', 'test',
           '--output-on-failure'
         ].concat(config.ctestArgs),
-        Object.assign({}, config.testEnvironment as any, env), binarydir,
+        util.mergeEnvironment(config.testEnvironment as any, env), binarydir,
         this._channel);
     const rp = pr.onComplete.then(res => res.retc);
     rp.then(async() => {
