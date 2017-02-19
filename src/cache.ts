@@ -38,8 +38,12 @@ export class Entry implements api.CacheEntry {
       key: string, value: string, type: api.EntryType, docs: string,
       advanced: boolean) {
     this._key = key;
-    this._value = value;
     this._type = type;
+    if (type == api.EntryType.Bool) {
+      this._value = util.isTruthy(value);
+    } else {
+      this._value = value;
+    }
     this._docs = docs;
     this._advanced = advanced;
   }
@@ -114,12 +118,9 @@ export class CMakeCache {
           }[typename];
           const docs = docs_acc.trim();
           docs_acc = '';
-          let value: any = valuestr;
-          if (type === api.EntryType.Bool) value = util.isTruthy(value);
-
           console.assert(
               type !== undefined, `Unknown cache entry type: ${type}`);
-          entries.set(name, new Entry(key, value, type, docs, false));
+          entries.set(name, new Entry(key, valuestr, type, docs, false));
         }
       }
     }
