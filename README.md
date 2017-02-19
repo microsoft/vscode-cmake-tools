@@ -20,6 +20,7 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   from the command line (CMake Tools does not yet do this automatically).
 - **0.9.1**: Fix issues with CMake Server and cache editor.
 - **0.9.2**: Fix issues with environment variables on Windows.
+- **0.9.3**: Various bugfixes
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
