@@ -34,3 +34,5 @@ else()
     target_compile_options(MyExecutable PRIVATE -fprofile-arcs -ftest-coverage)
     target_link_libraries(MyExecutable PRIVATE --coverage)
 endif()
+
+add_library(some-interface-lib INTERFACE)
