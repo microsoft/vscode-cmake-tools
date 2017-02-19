@@ -594,12 +594,14 @@ export class CMakeServerClient {
           });
         }
       });
-    }, 500);
+    }, 1000);
   }
 
   public static async start(params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
     const tmpdir = path.join(vscode.workspace.rootPath, '.vscode');
+    // Ensure the binary directory exists
+    await util.ensureDirectory(params.binaryDir);
     return new Promise<CMakeServerClient>((resolve, reject) => {
       const client = new CMakeServerClient({
         tmpdir,
