@@ -17,10 +17,6 @@ import * as rimraf from 'rimraf';
 
 const here = __dirname;
 
-function pause(time: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, time));
-}
-
 function testFilePath(filename: string): string {
     return path.normalize(path.join(here, '../..', 'test', filename));
 }
@@ -358,7 +354,7 @@ suite("Utility tests", () => {
             // removing files doesn't actually remove them, which can cause
             // spurious test failures when we are rapidly adding/removing files
             // in the build directory
-            await pause(1000);
+            await util.pause(1000);
             await new Promise(resolve => exists ? rimraf(bd, resolve) : resolve());
         });
         test(`Can configure [${tag}]`, async function() {
@@ -366,6 +362,22 @@ suite("Utility tests", () => {
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
             assert((await cmt.targets).findIndex(t => t.name == 'MyExecutable') >= 0);
+        });
+        test(`Configure respects environment overrides [${tag}]`, async function() {
+            const cmt: api.CMakeToolsAPI = this.cmt;
+            const homedir_varname = process.platform == 'win32' ? 'PROFILE' : 'HOME';
+            const suffix = '-TEST-APPENDED';
+            const homedir_var = process.env[homedir_varname] + suffix;
+            await vscode.workspace.getConfiguration('cmake').update('configureEnvironment', {
+                [homedir_varname]: homedir_var
+            });
+            const retc = await cmt.configure();
+            // Check that the cache got our modified env variable
+            const cache_content = await async.readFile(await cmt.cachePath);
+            const re = new RegExp("\nENV_HOME:STRING=(.*?)\n");
+            const seen = re.exec(cache_content.toString())![1];
+            assert.strictEqual(seen, homedir_var);
+            await vscode.workspace.getConfiguration('cmake').update('configureEnvironment', undefined);
         });
         test(`Can build named target [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
@@ -506,9 +518,9 @@ suite("Utility tests", () => {
             await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
         });
     });
-    suite('Extension smoke tests [with cmake-server]', function() {
-        smokeTests(this, 'with cmake-server', async() => {
-            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
-        });
-    });
+    // suite('Extension smoke tests [with cmake-server]', function() {
+    //     smokeTests(this, 'with cmake-server', async() => {
+    //         await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
+    //     });
+    // });
 });

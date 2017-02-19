@@ -489,8 +489,6 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
       };
     }
 
-
-
 export function parseCompileDefinition(str: string): [string, string | null] {
   if (/^\w+$/.test(str)) {
     return [str, null];
@@ -498,4 +496,8 @@ export function parseCompileDefinition(str: string): [string, string | null] {
     const key = str.split('=', 1)[0];
     return [key, str.substr(key.length + 1)];
   }
+}
+
+export function pause(time: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, time));
 }
