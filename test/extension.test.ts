@@ -443,19 +443,20 @@ suite("Utility tests", () => {
             const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
-            const pathvar = process.env['PATH'];
+            const homedir_varname = process.platform == 'win32' ? 'PROFILE' : 'HOME';
+            const homedir_var = process.env[homedir_varname];
             const outfile = testFilePath('output-file.txt');
             await vscode.workspace.getConfiguration('cmake').update('debugConfig', {
                 args: [
                     '--write-file', outfile,
-                    '--env', 'PATH',
+                    '--env', homedir_varname,
                 ]
             });
             await pause(1000);
             await cmt.debugTarget();
             await pause(1000);
             const content = (await async.readFile(outfile)).toString();
-            assert.strictEqual(content, pathvar);
+            assert.strictEqual(content, homedir_var);
         });
         test(`Debugger gets custom environment variables [${tag}]`, async function() {
             const cmt: api.CMakeToolsAPI = this.cmt;
