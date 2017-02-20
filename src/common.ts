@@ -627,7 +627,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           // that we would like to parse
           NINJA_STATUS: '[%f/%t %p] '
         },
-        options.environment, this.executionEnvironmentVariables);
+        this.executionEnvironmentVariables, options.environment);
     const info = util.execute(
         program, args, env, options.workingDirectory,
         silent ? null : this._channel);

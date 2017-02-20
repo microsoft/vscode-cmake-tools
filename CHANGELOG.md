@@ -12,6 +12,7 @@
   from the command line (CMake Tools does not yet do this automatically).
 - **0.9.1**: Fix issues with CMake Server and cache editor.
 - **0.9.2**: Fix issues with environment variables on Windows.
+- **0.9.3**: Various bugfixes. Shiny new icon.
 
 ### **0.8.0**:
 - **Automatic Environment Selection**. CMake Tools will now automatically

@@ -13,6 +13,15 @@ if(DEFINED WARNING_COOKIE)
     message(WARNING "${WARNING_COOKIE}")
 endif()
 
+if(WIN32)
+    set(home "$ENV{PROFILE}")
+else()
+    set(home "$ENV{HOME}")
+endif()
+
+message(STATUS "HOME is ${home}")
+set(ENV_HOME "${home}" CACHE STRING "For testing" FORCE)
+
 add_test(AnExampleTest MyExecutable)
 
 if(CAUSE_BUILD_ERROR)
@@ -25,3 +34,5 @@ else()
     target_compile_options(MyExecutable PRIVATE -fprofile-arcs -ftest-coverage)
     target_link_libraries(MyExecutable PRIVATE --coverage)
 endif()
+
+add_library(some-interface-lib INTERFACE)
