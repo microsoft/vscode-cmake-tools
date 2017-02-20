@@ -443,11 +443,11 @@ suite("Utility tests", () => {
                     '--content', test_string,
                 ]
             });
-            await pause(1000);
+            await util.pause(1000);
             await cmt.debugTarget();
             // Debugging doesn't wait for it to finish. We must pause for a
             // while
-            await pause(1000);
+            await util.pause(1000);
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, test_string);
         });
@@ -464,9 +464,9 @@ suite("Utility tests", () => {
                     '--env', homedir_varname,
                 ]
             });
-            await pause(1000);
+            await util.pause(1000);
             await cmt.debugTarget();
-            await pause(1000);
+            await util.pause(1000);
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, homedir_var);
         });
@@ -487,9 +487,9 @@ suite("Utility tests", () => {
                     value: test_string,
                 }]
             });
-            await pause(1000);
+            await util.pause(1000);
             await cmt.debugTarget();
-            await pause(1000);
+            await util.pause(1000);
             const content = (await async.readFile(outfile)).toString();
             assert.strictEqual(content, test_string);
         });

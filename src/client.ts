@@ -243,7 +243,10 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       return [];
     }
     return config.projects.reduce<Ret>(
-        (acc, project) => acc.concat(project.targets.map(
+        (acc, project) => acc.concat(project.targets
+          // Filter out targets with no build dir/filename, such as INTERFACE targets
+          .filter(t => !!t.buildDirectory && !!t.fullName)
+          .map(
             t => ({
               type: 'rich' as 'rich',
               name: t.name,

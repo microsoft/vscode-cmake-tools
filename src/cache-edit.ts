@@ -217,7 +217,7 @@ export class CacheEditorContentProvider implements
                   this.initing = true;
                   this.showHelp = false;
                   if (this.type === EntryType.Bool) {
-                    this.checked = this.value != 'FALSE';
+                    this.checked = this.value !== false;
                   } else if (this._isString(this.type)) {
                     this.arrayItems = [];
                     setTimeout(() => {
