@@ -174,6 +174,18 @@ suite("Utility tests", () => {
             assert(path.posix.isAbsolute(diag.file));
         }
     });
+    test('Parsing warning diagnostics 2', () => {
+        const line = `/test/main.cpp:21:14: warning: unused parameter ‘v’ [-Wunused-parameter]`;
+        const diag = diagnostics.parseGCCDiagnostic(line);
+        assert(diag);
+        if (diag) {
+            assert.strictEqual(diag.line, 20);
+            assert.strictEqual(diag.column, 13);
+            assert.strictEqual(diag.file, '/test/main.cpp');
+            assert.strictEqual(diag.message, `unused parameter ‘v’ [-Wunused-parameter]`);
+            assert.strictEqual(diag.severity, 'warning');
+        }
+    })
     test('Parsing warning diagnostics in french', () => {
         const line = '/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’';
         const diag = diagnostics.parseGCCDiagnostic(line);
@@ -513,11 +525,11 @@ suite("Utility tests", () => {
             await cmt.reload();
         });
     };
-    suite('Extension smoke tests [without cmake-server]', function() {
-        smokeTests(this, 'without cmake-server', async() => {
-            await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
-        });
-    });
+    // suite('Extension smoke tests [without cmake-server]', function() {
+    //     smokeTests(this, 'without cmake-server', async() => {
+    //         await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
+    //     });
+    // });
     // suite('Extension smoke tests [with cmake-server]', function() {
     //     smokeTests(this, 'with cmake-server', async() => {
     //         await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
