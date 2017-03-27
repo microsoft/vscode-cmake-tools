@@ -80,18 +80,17 @@ the above ``cmake-variants.json`` file:
     /* ... */
   },
   "linkage": {
-      "default$": "static",
-      "description$": "The link usage of build libraries",
-      "static": {
-        "oneWordSummary$": "Static",
-        "description$": "Emit Static Libraries",
-        "linkage": "static"
-      },
-      "shared": {
-        "oneWordSummary$": "Shared",
-        "description$": "Emit shared libraries/DLLs",
-        "linkage": "shared"
-      }
+    "default$": "static",
+    "description$": "The link usage of build libraries",
+    "static": {
+      "oneWordSummary$": "Static",
+      "description$": "Emit Static Libraries",
+      "linkage": "static"
+    },
+    "shared": {
+      "oneWordSummary$": "Shared",
+      "description$": "Emit shared libraries/DLLs",
+      "linkage": "shared"
     }
   }
 }
