@@ -869,7 +869,10 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const variant_options = this.variants.activeConfigurationOptions;
     if (variant_options) {
       Object.assign(settings, variant_options.settings || {});
-      settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
+      if (variant_options.linkage) {
+        // Don't set BUILD_SHARED_LIBS if we don't have a specific setting
+        settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
+      }
     }
 
     const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
