@@ -859,6 +859,11 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       args.push('-T' + toolset);
     }
 
+    const platform = config.platform;
+    if (platform) {
+      args.push('-A' + platform);
+    }
+
     const settings = Object.assign({}, config.configureSettings);
     if (!this.isMultiConf) {
       settings.CMAKE_BUILD_TYPE = this.selectedBuildType;

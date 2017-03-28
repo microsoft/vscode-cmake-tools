@@ -192,6 +192,11 @@
                     "default": null,
                     "description": "The CMake toolset to use when configuring"
                 },
+                "cmake.platform": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake platform to use when configuring"
+                },
                 "cmake.configureArgs": {
                     "type": "array",
                     "description": "Additional arguments to pass to CMake when configuring",

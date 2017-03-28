@@ -36,15 +36,16 @@ quick summary of options that can be tweaked, should you wish to do so:
   The first supported generator in this list is used when configuring a project
   for the first time. If a project is already configured, the generator will not
   be overriden by CMake Tools unless a _Clean rebuild/reconfigure_ is invoked.
-- ``cmake.generator.{all,windows,linux,osx}`` tells CMake to skip the
+- ``cmake.generator`` tells CMake to skip the
   ``preferredGenerator`` logic and forcibly use the named generator.
 - ``cmake.{configure,build,buildTool}Args`` allows passing of arbitrary strings
   as command line arguments to the respective configure/build step. *Please* do
   not use this option if another one of CMake Tools' options is sufficient.
   CMake Tools is better able to integrate with your build system when it can
   easily understand your project and its settings.
-- ``cmake.toolset.{all,windows,linux,osx}`` tells CMake to set the toolset
+- ``cmake.toolset`` tells CMake to set the toolset
   argument when configuring the first time. (Not to be confused with *toolchain* files!)
+- ``cmake.platform`` tells CMake to set the platform argument when configuring.
 - ``cmake.clearOutputBeforeBuild`` clears the _CMake/Build_ output channel before
   running the CMake build command. Default is _enabled_
 - ``cmake.cmakePath`` allows you to specify a different CMake executable to use,

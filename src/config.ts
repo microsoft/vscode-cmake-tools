@@ -58,6 +58,10 @@ export class ConfigurationReader {
     return this._readPrefixed<string>('toolset');
   }
 
+  get platform(): Maybe<string> {
+    return this._readPrefixed<string>('platform');
+  }
+
   get configureArgs(): string[] {
     return this._readPrefixed<string[]>('configureArgs')!;
   }
