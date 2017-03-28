@@ -59,9 +59,15 @@ export class StatusBar implements vscode.Disposable {
     const show = (i: vscode.StatusBarItem) => i.show();
     for (const item
              of [this._cmakeToolsStatusItem, this._buildButton,
-                 this._targetButton, this._testStatusButton, this._debugButton,
+                 this._targetButton, this._testStatusButton,
                  this._debugTargetButton, this._environmentSelectionButton]) {
       this.visible ? show(item) : hide(item);
+    }
+    // Debug button is only visible if cpptools is also installed
+    if (this.visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined) {
+      this._debugButton.show();
+    } else {
+      this._debugButton.hide();
     }
   }
 
