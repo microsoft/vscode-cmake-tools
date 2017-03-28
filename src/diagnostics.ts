@@ -40,11 +40,14 @@ export function parseGNULDDiagnostic(line: string): Maybe<RawDiagnostic> {
     // This is a Make error. It may *look* like an LD error, so we abort early
     return null;
   }
-  const ld_re = /^(.*):(\d+)\s?:\s+(.*)$/;
+  const ld_re = /^(.*):(\d+)\s?:\s+(.*[^\]])$/;
   const res = ld_re.exec(line);
   if (!res) {
     return null;
   }
+  // Tricksy compiler error looks like a linker error:
+  if (line.endsWith('required from here'))
+    return null;
   const [full, file, lineno, message] = res;
   if (file && lineno && message) {
     return {

@@ -32,6 +32,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
             'ctest',
             'stop',
             'quickStart',
+            'debugTargetProgramPath',
             'debugTarget',
             'selectDebugTarget',
             'selectEnvironments',

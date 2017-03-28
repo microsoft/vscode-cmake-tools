@@ -189,7 +189,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return this.variants.setActiveVariantCombination(settings);
   }
   /**
-   * ctestController manages running ctest and reportrs ctest results via an
+   * ctestController manages running ctest and reports ctest results via an
    * event emitter.
    */
   protected _ctestController = new ctest.CTestController();
@@ -811,14 +811,22 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return this.configure();
   }
 
+  public getDebugTarget() {
+    return this.executableTargets.find(e => e.name == this.currentDebugTarget);
+  }
+
+  public async debugTargetProgramPath() {
+    const t = this.getDebugTarget();
+    return t ? t.path : t;
+  }
+
   public async debugTarget() {
     if (!this.executableTargets.length) {
       vscode.window.showWarningMessage(
           'No targets are available for debugging. Be sure you have included CMakeToolsHelpers in your CMake project.');
       return;
     }
-    const target =
-        this.executableTargets.find(e => e.name === this.currentDebugTarget);
+    const target = this.getDebugTarget();
     if (!target) {
       vscode.window.showErrorMessage(
           `The current debug target "${this.currentDebugTarget
@@ -851,6 +859,11 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       args.push('-T' + toolset);
     }
 
+    const platform = config.platform;
+    if (platform) {
+      args.push('-A' + platform);
+    }
+
     const settings = Object.assign({}, config.configureSettings);
     if (!this.isMultiConf) {
       settings.CMAKE_BUILD_TYPE = this.selectedBuildType;
@@ -861,7 +874,10 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const variant_options = this.variants.activeConfigurationOptions;
     if (variant_options) {
       Object.assign(settings, variant_options.settings || {});
-      settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
+      if (variant_options.linkage) {
+        // Don't set BUILD_SHARED_LIBS if we don't have a specific setting
+        settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
+      }
     }
 
     const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
