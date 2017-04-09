@@ -325,6 +325,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
     public replaceVars(str: string): string {
         const replacements = [
             ['${buildType}', this.selectedBuildType || 'Unknown'],
+            ['${buildLabel}', this.selectedBuildLabel || 'Unknown'],
             ['${workspaceRoot}', vscode.workspace.rootPath],
             ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
         ] as [string, string][];

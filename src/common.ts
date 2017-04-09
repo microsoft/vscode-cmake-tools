@@ -487,9 +487,20 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return cached ? cached : null;
   }
 
+  public get selectedBuildLabel(): Maybe<string> {
+    let cached:Maybe<string> = null;
+    try {
+      cached = this.variants.activeVariantCombination.label;
+    } catch (error) {
+      cached = null;
+    }
+    return cached;
+  }
+
   public replaceVars(str: string): string {
     const replacements = [
       ['${buildType}', this.selectedBuildType || 'Unknown'],
+      ['${buildLabel}', this.selectedBuildLabel || 'Unknown'],
       ['${workspaceRoot}', vscode.workspace.rootPath],
       [
         '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)
