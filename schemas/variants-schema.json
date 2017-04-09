@@ -71,6 +71,10 @@
                                 ]
                             }
                         },
+                        "activeEnvironment": {
+                            "type": "string",
+                            "description": "The compiler toolchain used by this variant"
+                        },
                         "generator": {
                             "type": "string",
                             "description": "The CMake generator to use for this variant",

@@ -19,6 +19,7 @@ export interface VariantConfigurationOptions {
   description$?: string;
   buildType?: Maybe<string>;
   linkage?: Maybe<string>;
+  activeEnvironment?: Maybe<string>;
   settings?: ConfigureArguments[];
   generator?: Maybe<string>;
   toolset?: Maybe<string>;
@@ -153,6 +154,7 @@ export class VariantManager implements vscode.Disposable {
           generator: el.generator || acc.generator,
           linkage: el.linkage || acc.linkage,
           toolset: el.toolset || acc.toolset,
+          activeEnvironment: el.activeEnvironment || acc.activeEnvironment,
           settings: Object.assign(acc.settings || {}, el.settings || {})
         }),
         {});

@@ -211,8 +211,14 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   public selectEnvironments() {
     return this._environments.selectEnvironments();
   }
+
+  public get activeEnvironment(): Maybe<string> {
+    const cached = this.variants.activeConfigurationOptions.activeEnvironment;
+    return cached ? cached : null;
+  }
+
   public get currentEnvironmentVariables() {
-    return this._environments.currentEnvironmentVariables;
+    return this._environments.getCurrentEnvironmentVariables(this.activeEnvironment);
   }
 
   /**
