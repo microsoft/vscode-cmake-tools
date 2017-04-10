@@ -171,6 +171,18 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
     const dists: VSDistribution[] =
                      [
                        {
+                         name: 'Visual C++ 9.0',
+                         variable: 'VS90COMNTOOLS',
+                       },
+                       {
+                         name: 'Visual C++ 10.0',
+                         variable: 'VS100COMNTOOLS',
+                       },
+                       {
+                         name: 'Visual C++ 11.0',
+                         variable: 'VS110COMNTOOLS',
+                       },
+                       {
                          name: 'Visual C++ 12.0',
                          variable: 'VS120COMNTOOLS',
                        },

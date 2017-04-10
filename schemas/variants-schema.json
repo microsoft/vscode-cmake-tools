@@ -71,6 +71,10 @@
                                 ]
                             }
                         },
+                        "environments": {
+                            "type": "object",
+                            "description": "The environment variables to pass to CMake for variant"
+                        },
                         "activeEnvironment": {
                             "type": "string",
                             "description": "The compiler toolchain used by this variant"

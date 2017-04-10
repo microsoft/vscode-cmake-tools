@@ -1,3 +1,4 @@
+import { Environment } from './environment';
 import * as ajv from 'ajv';
 import * as yaml from 'js-yaml';
 import * as path from 'path';
@@ -7,7 +8,7 @@ import * as api from './api';
 import * as async from './async';
 import {config} from './config';
 import * as util from './util';
-import {Maybe} from './util';
+import {Maybe, mergeEnvironment} from './util';
 
 export interface ConfigureArguments {
   key: string;
@@ -22,6 +23,7 @@ export interface VariantConfigurationOptions {
   activeEnvironment?: Maybe<string>;
   settings?: ConfigureArguments[];
   generator?: Maybe<string>;
+  environments?: {[key: string]: string},
   toolset?: Maybe<string>;
 }
 
@@ -155,6 +157,7 @@ export class VariantManager implements vscode.Disposable {
           linkage: el.linkage || acc.linkage,
           toolset: el.toolset || acc.toolset,
           activeEnvironment: el.activeEnvironment || acc.activeEnvironment,
+          environments: mergeEnvironment(acc.environments || {}, el.environments || {}),
           settings: Object.assign(acc.settings || {}, el.settings || {})
         }),
         {});

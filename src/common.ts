@@ -16,7 +16,7 @@ import {BuildParser} from './diagnostics';
 import * as environment from './environment';
 import * as status from './status';
 import * as util from './util';
-import {Maybe} from './util';
+import {Maybe, mergeEnvironment} from './util';
 import {VariantManager} from './variants';
 
 const CMAKETOOLS_HELPER_SCRIPT = `
@@ -217,8 +217,14 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return cached ? cached : null;
   }
 
+  public get selectedEnvironments(): {[key: string]: string} {
+    const cached = this.variants.activeConfigurationOptions.environments;
+    return cached ? cached : {};
+  }
+
   public get currentEnvironmentVariables() {
-    return this._environments.getCurrentEnvironmentVariables(this.activeEnvironment);
+    let currentEnvironments = this._environments.getCurrentEnvironmentVariables(this.activeEnvironment);
+    return mergeEnvironment(currentEnvironments, this.selectedEnvironments)
   }
 
   /**
