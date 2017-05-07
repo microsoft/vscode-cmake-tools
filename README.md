@@ -4,7 +4,7 @@
 powerful configure+build workflow for CMake-based projects within the
 Visual Studio Code editor.
 
-Make you have [this dependency](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) installed before using CMake Tools.
+Make sure you have [this dependency](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) installed before using CMake Tools.
 
 ## What's New?
 
