@@ -4,8 +4,7 @@
 powerful configure+build workflow for CMake-based projects within the
 Visual Studio Code editor.
 
-This extension itself *does not* provide language support for the CMake
-scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+Make you have [this dependency](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) installed before using CMake Tools.
 
 ## What's New?
 
