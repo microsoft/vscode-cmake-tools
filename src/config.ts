@@ -94,6 +94,10 @@ export class ConfigurationReader {
     return this._readPrefixed<string>('cmakePath')!;
   }
 
+  get ctestPath(): string {
+    return this._readPrefixed<string>('ctestPath')!;
+  }
+
   get debugConfig(): any {
     return this._readPrefixed<any>('debugConfig');
   }
