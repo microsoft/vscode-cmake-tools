@@ -496,7 +496,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       ['${workspaceRoot}', vscode.workspace.rootPath],
       [
         '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)
-      ]
+      ],
+      ['${toolset}', config.toolset]
     ] as [string, string][];
     return replacements.reduce(
         (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str);

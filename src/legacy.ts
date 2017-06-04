@@ -325,18 +325,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         return this.targets;
     }
 
-    public replaceVars(str: string): string {
-        const replacements = [
-            ['${buildType}', this.selectedBuildType || 'Unknown'],
-            ['${workspaceRoot}', vscode.workspace.rootPath],
-            ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
-        ] as [string, string][];
-        return replacements.reduce(
-            (accdir, [needle, what]) => util.replaceAll(accdir, needle, what),
-            str,
-        );
-    }
-
     /**
      * @brief Get the path to the metadata file
      */
