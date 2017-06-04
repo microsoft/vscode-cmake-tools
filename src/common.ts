@@ -16,7 +16,7 @@ import {BuildParser} from './diagnostics';
 import * as environment from './environment';
 import * as status from './status';
 import * as util from './util';
-import {Maybe} from './util';
+import {Maybe, mergeEnvironment} from './util';
 import {VariantManager} from './variants';
 
 const CMAKETOOLS_HELPER_SCRIPT = `
@@ -214,8 +214,20 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   public selectEnvironments() {
     return this._environments.selectEnvironments();
   }
+
+  public get activeEnvironment(): Maybe<string> {
+    const cached = this.variants.activeConfigurationOptions.activeEnvironment;
+    return cached ? cached : null;
+  }
+
+  public get selectedEnvironments(): {[key: string]: string} {
+    const cached = this.variants.activeConfigurationOptions.environments;
+    return cached ? cached : {};
+  }
+
   public get currentEnvironmentVariables() {
-    return this._environments.currentEnvironmentVariables;
+    let currentEnvironments = this._environments.getCurrentEnvironmentVariables(this.activeEnvironment);
+    return mergeEnvironment(currentEnvironments, this.selectedEnvironments)
   }
 
   /**
@@ -490,9 +502,20 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return cached ? cached : null;
   }
 
+  public get selectedBuildLabel(): Maybe<string> {
+    let cached:Maybe<string> = null;
+    try {
+      cached = this.variants.activeVariantCombination.label;
+    } catch (error) {
+      cached = null;
+    }
+    return cached;
+  }
+
   public replaceVars(str: string): string {
     const replacements = [
       ['${buildType}', this.selectedBuildType || 'Unknown'],
+      ['${buildLabel}', this.selectedBuildLabel || 'Unknown'],
       ['${workspaceRoot}', vscode.workspace.rootPath],
       [
         '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)

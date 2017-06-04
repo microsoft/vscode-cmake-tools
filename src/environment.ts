@@ -171,6 +171,18 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
     const dists: VSDistribution[] =
                      [
                        {
+                         name: 'Visual C++ 9.0',
+                         variable: 'VS90COMNTOOLS',
+                       },
+                       {
+                         name: 'Visual C++ 10.0',
+                         variable: 'VS100COMNTOOLS',
+                       },
+                       {
+                         name: 'Visual C++ 11.0',
+                         variable: 'VS110COMNTOOLS',
+                       },
+                       {
                          name: 'Visual C++ 12.0',
                          variable: 'VS120COMNTOOLS',
                        },
@@ -295,8 +307,13 @@ export class EnvironmentManager {
    * @brief The current environment variables to use when executing commands,
    *    as specified by the active build environments.
    */
-  public get currentEnvironmentVariables(): {[key: string]: string} {
-    const active_env = this.activeEnvironments.reduce((acc, name) => {
+  public getCurrentEnvironmentVariables(key:Maybe<string>): {[key: string]: string} {
+    let currentEnvironments:string[] = []
+    Array.prototype.push.apply(currentEnvironments, this.activeEnvironments)
+    if (key && currentEnvironments.indexOf(key) < 0) {
+      currentEnvironments.push(key)
+    }
+    const active_env = currentEnvironments.reduce((acc, name) => {
       const env_ = this.availableEnvironments.get(name);
       console.assert(env_);
       const env = env_!;

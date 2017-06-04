@@ -240,19 +240,27 @@ export interface ExecutionInformation {
 
 export function mergeEnvironment(...env: {[key: string]: string}[]) {
   return env.reduce((acc, vars) => {
+    let pathExist = acc['PATH'] || ''
+    let norm_vars = vars
     if (process.platform === 'win32') {
       // Env vars on windows are case insensitive, so we take the ones from
       // active env and overwrite the ones in our current process env
-      const norm_vars = Object.getOwnPropertyNames(vars).reduce<Object>(
+      norm_vars = Object.getOwnPropertyNames(vars).reduce(
           (acc2, key: string) => {
             acc2[key.toUpperCase()] = vars[key];
             return acc2;
           },
-          {});
-      return Object.assign({}, acc, norm_vars);
-    } else {
-      return Object.assign({}, acc, vars);
+          {}
+      );
     }
+    if (Object.prototype.hasOwnProperty.call(norm_vars, 'PATH')) {
+      pathExist = pathExist + path.delimiter + norm_vars['PATH']
+      delete norm_vars['PATH']
+    }
+    let pathExistList = pathExist.split(path.delimiter)
+    pathExistList = pathExistList.filter((item) => item.length > 0)
+    acc['PATH'] = pathExistList.join(path.delimiter)
+    return Object.assign({}, acc, norm_vars);
   }, {})
 }
 

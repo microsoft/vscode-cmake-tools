@@ -9,11 +9,15 @@ quick summary of options that can be tweaked, should you wish to do so:
   will automatically be joined as semicolon-serperated strings.
 - ``cmake.buildDirectory`` allows you to specify where CMake should generate its
   metadata and build files. The default, ``${workspaceRoot}/build`` tells CMake
-  Tools to configure into the ``build`` subdirectory of your projet. Use
-  ``${buildType}`` to set the build directory based on the CMake build type. For
-  example, ``${workspaceroot}/build/${buildType}`` will create subdirectories
+  Tools to configure into the ``build`` subdirectory of your projet.
+  Use ``${buildType}`` to set the build directory based on the CMake build type.
+  For example, ``${workspaceroot}/build/${buildType}`` will create subdirectories
   ``build/Debug``, ``build/Release``, etc. when you configure using those build
   types.
+  Use ``${buildLabel}`` to set the build directory based on the CMake build type.
+  for different label. For example ``${workspaceroot}/build/${buildType}`` will
+  create subdirectories ``build/Debug+toolset=vc140_amd64``,
+  ``build/Release+toolset=vc141_amd64``, etc. 
 - ``cmake.installPrefix`` tells CMake Tools what to set for your
   ``CMAKE_INSTALL_PREFIX`` when you configure. This also supports variable
   substitutions. By default, CMake Tools will not specify a
