@@ -168,6 +168,9 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   abstract selectDebugTarget();
   abstract get reconfigured(): vscode.Event<void>;
 
+  private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
+  readonly targetChangedEvent = this._targetChangedEventEmitter.event;
+
   protected _refreshAfterConfigure() {}
 
   /**
@@ -716,6 +719,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const new_default = await this.showTargetSelector();
     if (!new_default) return;
     this.defaultBuildTarget = new_default;
+    this._targetChangedEventEmitter.fire();
   }
 
   public async setBuildTypeWithoutConfigure(): Promise<boolean> {

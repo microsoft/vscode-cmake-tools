@@ -158,9 +158,15 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   private _reconfiguredEmitter = new vscode.EventEmitter<void>();
   readonly reconfigured = this._reconfiguredEmitter.event;
 
+  private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
+  readonly targetChangedEvent = this._targetChangedEventEmitter.event;
+
   private async _setupEvents() {
     const cmt = await this._impl;
     cmt.reconfigured(this._reconfiguredEmitter.fire);
+    cmt.targetChangedEvent(() => {
+      this._targetChangedEventEmitter.fire();
+    });
   }
 
   public async reload(): Promise<CMakeToolsWrapper> {
