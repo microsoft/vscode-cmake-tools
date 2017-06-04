@@ -32,9 +32,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<api.CM
             'ctest',
             'stop',
             'quickStart',
-            'debugTargetProgramPath',
+            'launchTargetProgramPath',
             'debugTarget',
-            'selectDebugTarget',
+            'launchTarget',
+            'selectLaunchTarget',
             'selectEnvironments',
             'toggleCoverageDecorations',
         ]) {

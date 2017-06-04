@@ -165,7 +165,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       Promise<api.CompilationInfo>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
-  abstract selectDebugTarget();
+  abstract selectLaunchTarget();
   abstract get reconfigured(): vscode.Event<void>;
 
   private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
@@ -563,13 +563,13 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * The selected target for debugging
    */
-  private _currentDebugTarget: Maybe<string> = null;
-  public get currentDebugTarget(): Maybe<string> {
-    return this._currentDebugTarget;
+  private _currentLaunchTarget: Maybe<string> = null;
+  public get currentLaunchTarget(): Maybe<string> {
+    return this._currentLaunchTarget;
   }
-  public set currentDebugTarget(v: Maybe<string>) {
-    this._currentDebugTarget = v;
-    this._statusBar.debugTargetName = v || '';
+  public set currentLaunchTarget(v: Maybe<string>) {
+    this._currentLaunchTarget = v;
+    this._statusBar.launchTargetName = v || '';
   }
 
   /**
@@ -816,30 +816,43 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return this.configure();
   }
 
-  public getDebugTarget() {
-    return this.executableTargets.find(e => e.name == this.currentDebugTarget);
+  public getLaunchTargetInfo() {
+    return this.executableTargets.find(e => e.name == this.currentLaunchTarget);
   }
 
-  public async debugTargetProgramPath() {
-    const t = this.getDebugTarget();
+  public async launchTargetProgramPath() {
+    const t = this.getLaunchTargetInfo();
     return t ? t.path : t;
   }
 
-  public async debugTarget() {
+  private async _prelaunchTarget(): Promise<api.ExecutableTarget|null> {
     if (!this.executableTargets.length) {
       vscode.window.showWarningMessage(
-          'No targets are available for debugging. Be sure you have included CMakeToolsHelpers in your CMake project.');
-      return;
+          'No executable targets are available. Be sure you have included CMakeToolsHelpers in your CMake project.');
+      return null;
     }
-    const target = this.getDebugTarget();
+    const target = this.getLaunchTargetInfo();
     if (!target) {
       vscode.window.showErrorMessage(
-          `The current debug target "${this.currentDebugTarget
-          }" no longer exists. Select a new target to debug.`);
-          return;
+          `The current debug target "${this.currentLaunchTarget}" no longer exists. Select a new target to debug.`);
+          return null;
     }
     const build_retc = await this.build(target.name);
-    if (build_retc !== 0) return;
+    if (build_retc !== 0) return null;
+    return target;
+  }
+
+  public async launchTarget() {
+    const target = await this._prelaunchTarget();
+    if (!target) return;
+    const term = vscode.window.createTerminal(target.name, target.path);
+    this._disposables.push(term);
+    term.show();
+  }
+
+  public async debugTarget() {
+    const target = await this._prelaunchTarget();
+    if (!target) return;
     const real_config = {
       name: `Debugging Target ${target.name}`,
       type: (this.compilerId && this.compilerId.includes('MSVC')) ? 'cppvsdbg' :

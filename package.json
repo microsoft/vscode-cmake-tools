@@ -43,8 +43,10 @@
         "onCommand:cmake.ctest",
         "onCommand:cmake.jumpToCacheFile",
         "onCommand:cmake.quickStart",
+        "onCommand:cmake.launchTargetProgramPath",
+        "onCommand:cmake.launchTarget",
         "onCommand:cmake.debugTarget",
-        "onCommand:cmake.selectDebugTarget",
+        "onCommand:cmake.selectLaunchTarget",
         "onCommand:cmake.selectEnvironments",
         "onCommand:cmake.toggleCoverageDecorations",
         "workspaceContains:CMakeLists.txt"
@@ -118,7 +120,12 @@
                 "category": "CMake"
             },
             {
-                "command": "cmake.selectDebugTarget",
+                "command": "cmake.launchTarget",
+                "title": "Execute the current target without a debugger",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.selectLaunchTarget",
                 "title": "Select a Target to Debug",
                 "category": "CMake"
             },
@@ -515,6 +522,10 @@
                 "key": "ctrl+f5",
                 "command": "cmake.debugTarget",
                 "when": "!inDebugMode"
+            },
+            {
+                "key": "shift+f5",
+                "command": "cmake.launchTarget"
             }
         ],
         "jsonValidation": [

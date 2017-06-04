@@ -47,7 +47,7 @@ export class StatusBar implements vscode.Disposable {
     this._debugButton.command = 'cmake.debugTarget';
     this._debugButton.tooltip =
         'Click to launch the debugger for the selected target';
-    this._debugTargetButton.command = 'cmake.selectDebugTarget';
+    this._debugTargetButton.command = 'cmake.selectLaunchTarget';
     this._debugTargetButton.tooltip = 'Click to select a target for debugging';
     this._environmentSelectionButton.command = 'cmake.selectEnvironments';
     this._environmentSelectionButton.tooltip =
@@ -181,12 +181,12 @@ export class StatusBar implements vscode.Disposable {
   }
 
   private _reloadDebugButton() {
-    if (!this.debugTargetName) {
+    if (!this.launchTargetName) {
       this._debugButton.text = '$(bug)';
       this._debugTargetButton.hide();
     } else {
       this._debugButton.text = '$(bug) Debug';
-      this._debugTargetButton.text = this.debugTargetName;
+      this._debugTargetButton.text = this.launchTargetName;
       if (this.visible) {
         this._debugTargetButton.show();
       }
@@ -196,12 +196,12 @@ export class StatusBar implements vscode.Disposable {
   /**
    * The name of the target that will be debugged
    */
-  private _debugTargetName: string = '';
-  public get debugTargetName(): string {
-    return this._debugTargetName;
+  private _launchTargetName: string = '';
+  public get launchTargetName(): string {
+    return this._launchTargetName;
   }
-  public set debugTargetName(v: string) {
-    this._debugTargetName = v;
+  public set launchTargetName(v: string) {
+    this._launchTargetName = v;
     this._reloadDebugButton();
   }
 

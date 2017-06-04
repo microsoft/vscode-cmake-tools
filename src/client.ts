@@ -201,7 +201,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return 0;
   }
 
-  async selectDebugTarget() {
+  async selectLaunchTarget() {
     const choices = this.executableTargets.map(e => ({
                                                  label: e.name,
                                                  description: '',
@@ -211,7 +211,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     if (!chosen) {
       return;
     }
-    this.currentDebugTarget = chosen.label;
+    this.currentLaunchTarget = chosen.label;
   }
 
   async build(target?: string|null) {
@@ -330,7 +330,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     this._statusBar.statusMessage = 'Ready';
     this._statusBar.isBusy = false;
     if (this.executableTargets.length > 0) {
-      this.currentDebugTarget = this.executableTargets[0].name;
+      this.currentLaunchTarget = this.executableTargets[0].name;
     }
     try {
       await this._refreshAfterConfigure();

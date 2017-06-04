@@ -25,9 +25,9 @@ Make sure you have [this dependency](https://marketplace.visualstudio.com/items?
   - Do not forcibly set `BUILD_SHARED_LIBS`
   - Fix issues with incorrect debug paths with cmake-server
   - `cmake.platform` setting for controlling the `-A` CMake option.
-  - New command `cmake.debugTargetProgramPath` for usage in `launch.json`:
+  - New command `cmake.launchTargetProgramPath` for usage in `launch.json`:
     - This means that other debuggers can be used with CMake Tools just
-      by setting them up with `launch.json`, using `${command.cmake.debugTargetProgramPath}` as the path to the program. VSCode
+      by setting them up with `launch.json`, using `${command.cmake.launchTargetProgramPath}` as the path to the program. VSCode
       will replace that with the path from CMake Tools. This makes setting up
       permanent debugging configurations easier than before. Also, the `Debug`
       button in the status bar is *only* visible if the Microsoft C/C++ extension

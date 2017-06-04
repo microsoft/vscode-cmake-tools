@@ -135,12 +135,17 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     return (await this._impl).debugTarget();
   }
 
-  async debugTargetProgramPath() {
-    return (await this._impl).debugTargetProgramPath();
+  async launchTarget() {
+    return (await this._impl).launchTarget();
   }
 
-  async selectDebugTarget() {
-    return (await this._impl).selectDebugTarget();
+
+  async launchTargetProgramPath() {
+    return (await this._impl).launchTargetProgramPath();
+  }
+
+  async selectLaunchTarget() {
+    return (await this._impl).selectLaunchTarget();
   }
 
   async selectEnvironments() {
