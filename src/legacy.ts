@@ -164,8 +164,11 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                     name: tup[1],
                     path: tup[2],
                 }));
-            const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
-            this._compilerId = cid || null;
+            this._compilerId = null;
+            if (tuples.length > 0) {
+                const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
+                this._compilerId = cid;
+            }
         } else {
             this.executableTargets = [];
             this._compilerId = null;
