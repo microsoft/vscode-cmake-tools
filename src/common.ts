@@ -544,6 +544,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   public set defaultBuildTarget(v: string|null) {
     this._defaultBuildTarget = v;
     this._statusBar.targetName = v || this.allTargetName;
+    this._targetChangedEventEmitter.fire();
   }
 
   /**
@@ -719,7 +720,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const new_default = await this.showTargetSelector();
     if (!new_default) return;
     this.defaultBuildTarget = new_default;
-    this._targetChangedEventEmitter.fire();
   }
 
   public async setBuildTypeWithoutConfigure(): Promise<boolean> {
