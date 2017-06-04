@@ -160,7 +160,9 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
 
   private async _setupEvents() {
     const cmt = await this._impl;
-    cmt.reconfigured(this._reconfiguredEmitter.fire);
+    cmt.reconfigured(() => {
+      this._reconfiguredEmitter.fire();
+    });
   }
 
   public async reload(): Promise<CMakeToolsWrapper> {
