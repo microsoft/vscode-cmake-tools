@@ -32,6 +32,14 @@ Make sure you have [this dependency](https://marketplace.visualstudio.com/items?
       permanent debugging configurations easier than before. Also, the `Debug`
       button in the status bar is *only* visible if the Microsoft C/C++ extension
       is installed, since that button is currently hard-coded to use it.
+- **0.9.5**:
+  - Launching targets without a debugger (default bound to `shift+f5`).
+  - The path to CTest is more intelligent. Can also be manually overridden with
+    `cmake.ctestPath`.
+  - CMake Server is now enabled by default for new-enough CMake versions. It
+    can still be disabled in the user settings.
+  - Fixes for using Xcode
+  - Many smaller fixes and tweaks after the long hiatus in development.
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
