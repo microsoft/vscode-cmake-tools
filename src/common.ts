@@ -470,7 +470,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    */
   public get allTargetName() {
     const gen = this.activeGenerator;
-    return (gen && /Visual Studio/.test(gen)) ? 'ALL_BUILD' : 'all';
+    return (gen && (/Visual Studio/.test(gen) || gen.toLowerCase().includes('xcode'))) ? 'ALL_BUILD' : 'all';
   }
 
   /**
