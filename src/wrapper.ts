@@ -163,9 +163,11 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
 
   private async _setupEvents() {
     const cmt = await this._impl;
-    cmt.reconfigured(this._reconfiguredEmitter.fire);
     cmt.targetChangedEvent(() => {
       this._targetChangedEventEmitter.fire();
+    });
+    cmt.reconfigured(() => {
+      this._reconfiguredEmitter.fire();
     });
   }
 
