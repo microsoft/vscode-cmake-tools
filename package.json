@@ -227,6 +227,11 @@
                     "default": 0,
                     "description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs."
                 },
+                "cmake.ctestPath": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Path to CTest executable. If null, will be inference from cmake.cmakePath (recommended to leave null)"
+                },
                 "cmake.ctest.parallelJobs": {
                     "type": "number",
                     "default": 0,

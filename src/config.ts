@@ -1,4 +1,5 @@
 import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {Maybe} from './util';
@@ -95,7 +96,17 @@ export class ConfigurationReader {
   }
 
   get ctestPath(): string {
-    return this._readPrefixed<string>('ctestPath')!;
+    const ctest_path = this._readPrefixed<string>('ctestPath');
+    if (!ctest_path) {
+      const cmake = this.cmakePath;
+      if (cmake === 'cmake' || cmake == 'cmake.exe') {
+        return 'ctest';
+      }
+      return path.join(path.dirname(cmake), 'ctest')
+    }
+    else {
+      return ctest_path;
+    }
   }
 
   get debugConfig(): any {
