@@ -137,8 +137,8 @@ export class ConfigurationReader {
     return this._readPrefixed<string[]>('ctestArgs') || [];
   }
 
-  get experimental_useCMakeServer(): boolean {
-    return this._readPrefixed<boolean>('experimental.useCMakeServer') || false;
+  get useCMakeServer(): boolean {
+    return this._readPrefixed<boolean>('useCMakeServer') || false;
   }
 
   public get numJobs(): number {

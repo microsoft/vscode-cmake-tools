@@ -195,8 +195,8 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                 );
             }
         });
-        if (config.experimental_useCMakeServer) {
-            vscode.window.showInformationMessage('Enabling experimental cmake-server support requires that VSCode be restarted');
+        if (config.useCMakeServer) {
+            vscode.window.showInformationMessage('Enabling cmake-server support requires that VSCode be restarted');
         }
     }
 

@@ -178,7 +178,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
 
   public async reload(): Promise<CMakeToolsWrapper> {
     await this.shutdown();
-    if (config.experimental_useCMakeServer) {
+    if (config.useCMakeServer) {
       const cmpath = config.cmakePath;
       const version_ex = await util.execute(config.cmakePath, ['--version']).onComplete;
       console.assert(version_ex.stdout);
@@ -192,7 +192,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
         await this._setupEvents();
         return this;
       }
-      vscode.window.showWarningMessage('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
+      console.warn('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
     }
     // Fall back to use the legacy plugin
     const cmt = new legacy.CMakeTools(this._ctx);
