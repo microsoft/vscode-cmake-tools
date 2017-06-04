@@ -91,6 +91,8 @@ export interface CMakeToolsAPI extends Disposable {
   readonly targets: Promise<Target[]>|Target[];
   // Event fired when configure completes
   readonly reconfigured: Event<void>;
+  // Event fired when the default build target changes
+  readonly targetChangedEvent: Event<void>;
 
   // Execute a command using the CMake executable
   executeCMakeCommand(args: string[], options?: ExecuteOptions):
