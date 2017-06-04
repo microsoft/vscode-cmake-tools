@@ -6,6 +6,15 @@ Visual Studio Code editor.
 
 Make sure you have [this dependency](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) installed before using CMake Tools.
 
+## Calling All Users:
+
+One of the number-one most important things I need help with is _documentation_.
+The changelog may mention all important changes and features, but it's hard for
+a new user to get acclimated and find all the features and options.
+
+If you'd like to help, please head on over to the GitHub project's wiki, or
+add a PR for relevant information in the `docs/` subdirectory.
+
 ## What's New?
 
 ### **0.9.0**
