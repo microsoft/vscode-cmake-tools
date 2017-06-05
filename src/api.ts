@@ -91,6 +91,8 @@ export interface CMakeToolsAPI extends Disposable {
   readonly targets: Promise<Target[]>|Target[];
   // Event fired when configure completes
   readonly reconfigured: Event<void>;
+  // Event fired when the default build target changes
+  readonly targetChangedEvent: Event<void>;
 
   // Execute a command using the CMake executable
   executeCMakeCommand(args: string[], options?: ExecuteOptions):
@@ -128,12 +130,14 @@ export interface CMakeToolsAPI extends Disposable {
   stop(): Promise<boolean>;
   // Show a quickstart
   quickStart(): Promise<number|null>;
+  // Start the executable target without a debugger
+  launchTarget(): Promise<void>;
   // Start the debugger with the selected build target
   debugTarget(): Promise<void>;
   // Get the path to the active debugging target
-  debugTargetProgramPath(): Promise<null|string>;
+  launchTargetProgramPath(): Promise<null|string>;
   // Allow the user to select target to debug
-  selectDebugTarget(): Promise<string|null>;
+  selectLaunchTarget(): Promise<string|null>;
   // Show the environment selection quickpick
   selectEnvironments(): Promise<string[]|null>;
   // Sets the variant based on keyword settings

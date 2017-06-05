@@ -18,13 +18,21 @@
   - Do not forcibly set `BUILD_SHARED_LIBS`
   - Fix issues with incorrect debug paths with cmake-server
   - `cmake.platform` setting for controlling the `-A` CMake option.
-  - New command `cmake.debugTargetProgramPath` for usage in `launch.json`:
+  - New command `cmake.launchTargetProgramPath` for usage in `launch.json`:
     - This means that other debuggers can be used with CMake Tools just
-      by setting them up with `launch.json`, using `${command.cmake.debugTargetProgramPath}` as the path to the program. VSCode
+      by setting them up with `launch.json`, using `${command.cmake.launchTargetProgramPath}` as the path to the program. VSCode
       will replace that with the path from CMake Tools. This makes setting up
       permanent debugging configurations easier than before. Also, the `Debug`
       button in the status bar is *only* visible if the Microsoft C/C++ extension
       is installed, since that button is currently hard-coded to use it.
+- **0.9.5**:
+  - Launching targets without a debugger (default bound to `shift+f5`).
+  - The path to CTest is more intelligent. Can also be manually overridden with
+    `cmake.ctestPath`.
+  - CMake Server is now enabled by default for new-enough CMake versions. It
+    can still be disabled in the user settings.
+  - Fixes for using Xcode
+  - Many smaller fixes and tweaks after the long hiatus in development.
 
 ### **0.8.0**:
 - **Automatic Environment Selection**. CMake Tools will now automatically

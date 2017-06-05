@@ -18,7 +18,21 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   private _dirty = true;
   private _cacheEntries = new Map<string, cache.Entry>();
   private _accumulatedMessages: string[] = [];
+
   private _codeModel: null|cms.CodeModelContent;
+  public get codeModel() {
+    return this._codeModel;
+  }
+  public set codeModel(cm: null|cms.CodeModelContent) {
+    this._codeModel = cm;
+    this._workspaceCacheContent.codeModel = cm;
+    if (cm && cm.configurations.length && cm.configurations[0].projects.length) {
+      this._statusBar.projectName = cm.configurations[0].projects[0].name;
+    } else {
+      this._statusBar.projectName = 'No Project';
+    }
+    this._writeWorkspaceCacheContent();
+  }
 
   private _reconfiguredEmitter = new vscode.EventEmitter<void>();
   private readonly _reconfigured = this._reconfiguredEmitter.event;
@@ -108,12 +122,12 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
 
   async compilationInfoForFile(filepath: string):
       Promise<api.CompilationInfo|null> {
-    if (!this._codeModel) {
+    if (!this.codeModel) {
       return null;
     }
-    const config = this._codeModel.configurations.length == 1 ?
-        this._codeModel.configurations[0] :
-        this._codeModel.configurations.find(
+    const config = this.codeModel.configurations.length == 1 ?
+        this.codeModel.configurations[0] :
+        this.codeModel.configurations.find(
             c => c.name == this.selectedBuildType);
     if (!config) {
       return null;
@@ -201,7 +215,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return 0;
   }
 
-  async selectDebugTarget() {
+  async selectLaunchTarget() {
     const choices = this.executableTargets.map(e => ({
                                                  label: e.name,
                                                  description: '',
@@ -211,7 +225,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     if (!chosen) {
       return;
     }
-    this.currentDebugTarget = chosen.label;
+    this.currentLaunchTarget = chosen.label;
   }
 
   async build(target?: string|null) {
@@ -295,9 +309,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   }
 
   private async _refreshCodeModel() {
-    this._codeModel = await this._client.codemodel();
-    this._workspaceCacheContent.codeModel = this._codeModel;
-    await this._writeWorkspaceCacheContent();
+    this.codeModel = await this._client.codemodel();
   }
 
   private async _refreshCacheEntries() {
@@ -326,11 +338,11 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     await this._restartClient();
     const cl = this._client;
     this._globalSettings = await cl.getGlobalSettings();
-    this._codeModel = this._workspaceCacheContent.codeModel || null;
+    this.codeModel = this._workspaceCacheContent.codeModel || null;
     this._statusBar.statusMessage = 'Ready';
     this._statusBar.isBusy = false;
     if (this.executableTargets.length > 0) {
-      this.currentDebugTarget = this.executableTargets[0].name;
+      this.currentLaunchTarget = this.executableTargets[0].name;
     }
     try {
       await this._refreshAfterConfigure();

@@ -413,7 +413,7 @@ export class CTestController {
     this._channel.show();
     this._decorationManager.failingTestDecorations = [];
     const pr = util.execute(
-        'ctest',
+        config.ctestPath,
         [
           '-j' + config.numCTestJobs, '-C', configuration, '-T', 'test',
           '--output-on-failure'

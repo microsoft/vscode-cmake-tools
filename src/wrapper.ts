@@ -135,12 +135,17 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
     return (await this._impl).debugTarget();
   }
 
-  async debugTargetProgramPath() {
-    return (await this._impl).debugTargetProgramPath();
+  async launchTarget() {
+    return (await this._impl).launchTarget();
   }
 
-  async selectDebugTarget() {
-    return (await this._impl).selectDebugTarget();
+
+  async launchTargetProgramPath() {
+    return (await this._impl).launchTargetProgramPath();
+  }
+
+  async selectLaunchTarget() {
+    return (await this._impl).selectLaunchTarget();
   }
 
   async selectEnvironments() {
@@ -158,14 +163,22 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   private _reconfiguredEmitter = new vscode.EventEmitter<void>();
   readonly reconfigured = this._reconfiguredEmitter.event;
 
+  private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
+  readonly targetChangedEvent = this._targetChangedEventEmitter.event;
+
   private async _setupEvents() {
     const cmt = await this._impl;
-    cmt.reconfigured(this._reconfiguredEmitter.fire);
+    cmt.targetChangedEvent(() => {
+      this._targetChangedEventEmitter.fire();
+    });
+    cmt.reconfigured(() => {
+      this._reconfiguredEmitter.fire();
+    });
   }
 
   public async reload(): Promise<CMakeToolsWrapper> {
     await this.shutdown();
-    if (config.experimental_useCMakeServer) {
+    if (config.useCMakeServer) {
       const cmpath = config.cmakePath;
       const version_ex = await util.execute(config.cmakePath, ['--version']).onComplete;
       console.assert(version_ex.stdout);
@@ -179,7 +192,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
         await this._setupEvents();
         return this;
       }
-      vscode.window.showWarningMessage('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
+      console.warn('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
     }
     // Fall back to use the legacy plugin
     const cmt = new legacy.CMakeTools(this._ctx);

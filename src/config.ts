@@ -1,4 +1,5 @@
 import * as os from 'os';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {Maybe} from './util';
@@ -94,6 +95,20 @@ export class ConfigurationReader {
     return this._readPrefixed<string>('cmakePath')!;
   }
 
+  get ctestPath(): string {
+    const ctest_path = this._readPrefixed<string>('ctestPath');
+    if (!ctest_path) {
+      const cmake = this.cmakePath;
+      if (cmake === 'cmake' || cmake == 'cmake.exe') {
+        return 'ctest';
+      }
+      return path.join(path.dirname(cmake), 'ctest')
+    }
+    else {
+      return ctest_path;
+    }
+  }
+
   get debugConfig(): any {
     return this._readPrefixed<any>('debugConfig');
   }
@@ -122,8 +137,8 @@ export class ConfigurationReader {
     return this._readPrefixed<string[]>('ctestArgs') || [];
   }
 
-  get experimental_useCMakeServer(): boolean {
-    return this._readPrefixed<boolean>('experimental.useCMakeServer') || false;
+  get useCMakeServer(): boolean {
+    return this._readPrefixed<boolean>('useCMakeServer') || false;
   }
 
   public get numJobs(): number {

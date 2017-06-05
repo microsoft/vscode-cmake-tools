@@ -4,8 +4,16 @@
 powerful configure+build workflow for CMake-based projects within the
 Visual Studio Code editor.
 
-This extension itself *does not* provide language support for the CMake
-scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+Make sure you have [this dependency](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) installed before using CMake Tools.
+
+## Calling All Users:
+
+One of the number-one most important things I need help with is _documentation_.
+The changelog may mention all important changes and features, but it's hard for
+a new user to get acclimated and find all the features and options.
+
+If you'd like to help, please head on over to the GitHub project's wiki, or
+add a PR for relevant information in the `docs/` subdirectory.
 
 ## What's New?
 
@@ -26,13 +34,21 @@ scripting language. For that I recommend [this extension](https://marketplace.vi
   - Do not forcibly set `BUILD_SHARED_LIBS`
   - Fix issues with incorrect debug paths with cmake-server
   - `cmake.platform` setting for controlling the `-A` CMake option.
-  - New command `cmake.debugTargetProgramPath` for usage in `launch.json`:
+  - New command `cmake.launchTargetProgramPath` for usage in `launch.json`:
     - This means that other debuggers can be used with CMake Tools just
-      by setting them up with `launch.json`, using `${command.cmake.debugTargetProgramPath}` as the path to the program. VSCode
+      by setting them up with `launch.json`, using `${command.cmake.launchTargetProgramPath}` as the path to the program. VSCode
       will replace that with the path from CMake Tools. This makes setting up
       permanent debugging configurations easier than before. Also, the `Debug`
       button in the status bar is *only* visible if the Microsoft C/C++ extension
       is installed, since that button is currently hard-coded to use it.
+- **0.9.5**:
+  - Launching targets without a debugger (default bound to `shift+f5`).
+  - The path to CTest is more intelligent. Can also be manually overridden with
+    `cmake.ctestPath`.
+  - CMake Server is now enabled by default for new-enough CMake versions. It
+    can still be disabled in the user settings.
+  - Fixes for using Xcode
+  - Many smaller fixes and tweaks after the long hiatus in development.
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!

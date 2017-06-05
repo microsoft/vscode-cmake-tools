@@ -366,6 +366,7 @@ export async function pickGenerator(candidates: string[]):
     if (delegate === undefined) {
       const vsMatcher = /^Visual Studio (\d{2}) (\d{4})($|\sWin64$|\sARM$)/;
       if (vsMatcher.test(gen) && process.platform === 'win32') return gen;
+      if (gen.toLowerCase().startsWith('xcode') && process.platform == 'darwin') return gen;
       vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
       continue;
     }

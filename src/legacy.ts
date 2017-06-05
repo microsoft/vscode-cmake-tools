@@ -132,20 +132,20 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
     public set executableTargets(value: api.ExecutableTarget[]) {
         this._executableTargets = value;
         if (!value) {
-            this.currentDebugTarget = null;
+            this.currentLaunchTarget = null;
             return;
         }
         // Check if the currently selected debug target is no longer a target
-        if (value.findIndex(e => e.name === this.currentDebugTarget) < 0) {
+        if (value.findIndex(e => e.name === this.currentLaunchTarget) < 0) {
             if (value.length) {
-                this.currentDebugTarget = value[0].name;
+                this.currentLaunchTarget = value[0].name;
             } else {
-                this.currentDebugTarget = null;
+                this.currentLaunchTarget = null;
             }
         }
         // If we didn't have a debug target, set the debug target to the first target
-        if (this.currentDebugTarget === null && value.length) {
-            this.currentDebugTarget = value[0].name;
+        if (this.currentLaunchTarget === null && value.length) {
+            this.currentLaunchTarget = value[0].name;
         }
     }
 
@@ -164,8 +164,11 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                     name: tup[1],
                     path: tup[2],
                 }));
-            const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
-            this._compilerId = cid || null;
+            this._compilerId = null;
+            if (tuples.length > 0) {
+                const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
+                this._compilerId = cid;
+            }
         } else {
             this.executableTargets = [];
             this._compilerId = null;
@@ -192,8 +195,8 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                 );
             }
         });
-        if (config.experimental_useCMakeServer) {
-            vscode.window.showInformationMessage('Enabling experimental cmake-server support requires that VSCode be restarted');
+        if (config.useCMakeServer) {
+            vscode.window.showInformationMessage('Enabling cmake-server support requires that VSCode be restarted');
         }
     }
 
@@ -322,18 +325,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         return this.targets;
     }
 
-    public replaceVars(str: string): string {
-        const replacements = [
-            ['${buildType}', this.selectedBuildType || 'Unknown'],
-            ['${workspaceRoot}', vscode.workspace.rootPath],
-            ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
-        ] as [string, string][];
-        return replacements.reduce(
-            (accdir, [needle, what]) => util.replaceAll(accdir, needle, what),
-            str,
-        );
-    }
-
     /**
      * @brief Get the path to the metadata file
      */
@@ -442,7 +433,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         return ret;
     }
 
-    public async selectDebugTarget() {
+    public async selectLaunchTarget() {
         if (!this.executableTargets) {
             vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
             return;
@@ -455,7 +446,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         if (!target) {
             return;
         }
-        this.currentDebugTarget = target.label;
+        this.currentLaunchTarget = target.label;
     }
 
     public stop(): Promise<boolean> {

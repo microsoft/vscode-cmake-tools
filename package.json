@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.9.4",
+    "version": "0.9.5",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -43,8 +43,10 @@
         "onCommand:cmake.ctest",
         "onCommand:cmake.jumpToCacheFile",
         "onCommand:cmake.quickStart",
+        "onCommand:cmake.launchTargetProgramPath",
+        "onCommand:cmake.launchTarget",
         "onCommand:cmake.debugTarget",
-        "onCommand:cmake.selectDebugTarget",
+        "onCommand:cmake.selectLaunchTarget",
         "onCommand:cmake.selectEnvironments",
         "onCommand:cmake.toggleCoverageDecorations",
         "workspaceContains:CMakeLists.txt"
@@ -118,7 +120,12 @@
                 "category": "CMake"
             },
             {
-                "command": "cmake.selectDebugTarget",
+                "command": "cmake.launchTarget",
+                "title": "Execute the current target without a debugger",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.selectLaunchTarget",
                 "title": "Select a Target to Debug",
                 "category": "CMake"
             },
@@ -226,6 +233,11 @@
                     "type": "number",
                     "default": 0,
                     "description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs."
+                },
+                "cmake.ctestPath": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Path to CTest executable. If null, will be inference from cmake.cmakePath (recommended to leave null)"
                 },
                 "cmake.ctest.parallelJobs": {
                     "type": "number",
@@ -490,10 +502,10 @@
                     ],
                     "description": "Directors where MinGW may be installed"
                 },
-                "cmake.experimental.useCMakeServer": {
+                "cmake.useCMakeServer": {
                     "type": "boolean",
-                    "default": false,
-                    "description": "Enable CMake server [experimental]"
+                    "default": true,
+                    "description": "Enable CMake server"
                 }
             }
         },
@@ -510,6 +522,10 @@
                 "key": "ctrl+f5",
                 "command": "cmake.debugTarget",
                 "when": "!inDebugMode"
+            },
+            {
+                "key": "shift+f5",
+                "command": "cmake.launchTarget"
             }
         ],
         "jsonValidation": [
