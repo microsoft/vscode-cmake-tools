@@ -11,9 +11,10 @@ import * as util from './util';
 import * as common from './common';
 import {config} from './config';
 import * as cms from './server-client';
+import { log } from "./logging";
 
 export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
-  private _client: cms.CMakeServerClient;
+  private _client?: cms.CMakeServerClient;
   private _globalSettings: cms.GlobalSettingsContent;
   private _dirty = true;
   private _cacheEntries = new Map<string, cache.Entry>();
@@ -96,7 +97,10 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   }
 
   async dangerousShutdownClient() {
-    await this._client.shutdown();
+    if (this._client) {
+      await this._client.shutdown();
+      this._client = undefined;
+    }
   }
 
   async dangerousRestartClient() {
@@ -107,7 +111,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     const build_dir = this.binaryDir;
     const cache = this.cachePath;
     const cmake_files = path.join(build_dir, 'CMakeFiles');
-    await this._client.shutdown();
+    await this.dangerousShutdownClient();
     if (await async.exists(cache)) {
       this._channel.appendLine('[vscode] Removing ' + cache);
       await async.unlink(cache);
@@ -167,8 +171,10 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return null;
   }
 
-  async configure(extraArgs: string[] = [], runPreBuild = true):
-      Promise<number> {
+  async configure(extraArgs: string[] = [], runPreBuild = true): Promise<number> {
+    if (!this._client)
+      return -1;
+
     if (!await this._preconfigure()) {
       return -1;
     }
@@ -179,6 +185,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     }
 
     const args = await this.prepareConfigure();
+
     this.statusMessage = 'Configuring...';
     const parser = new diagnostics.BuildParser(
         this.binaryDir, ['cmake'], this.activeGenerator);
@@ -250,7 +257,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     const config = this._workspaceCacheContent.codeModel.configurations.find(
         conf => conf.name == this.selectedBuildType);
     if (!config) {
-      console.error(
+      log.error(
           `Found no matching codemodel config for active build type ${this
               .selectedBuildType}`);
       return [];
@@ -273,36 +280,30 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     super(_ctx);
   }
 
-  private _restartClient(): Promise<void> {
-    return cms.CMakeServerClient
-        .start({
-          binaryDir: this.binaryDir,
-          sourceDir: this.sourceDir,
-          cmakePath: config.cmakePath,
-          environment: util.mergeEnvironment(config.environment, this.currentEnvironmentVariables),
-          onDirty: async() => {
-            this._dirty = true;
-          },
-          onMessage: async(msg) => {
-            const line = `-- ${msg.message}`;
-            this._accumulatedMessages.push(line);
-            this._channel.appendLine(line);
-          },
-          onProgress: async(prog) => {
-            this.buildProgress = (prog.progressCurrent - prog.progressMinimum) /
-                (prog.progressMaximum - prog.progressMinimum);
-            this.statusMessage = prog.progressMessage;
-          },
-        })
-        .then(async (cl): Promise<void> => {
-          this._client = cl;
-          if (await async.exists(this.cachePath)) {
-            await this._refreshAfterConfigure();
-          }
-        })
-        .catch(e => {
-          console.error('Error setting up client:', e);
-        });
+  private async _restartClient(): Promise<void> {
+    this._client = await cms.CMakeServerClient
+      .start({
+        binaryDir: this.binaryDir,
+        sourceDir: this.sourceDir,
+        cmakePath: config.cmakePath,
+        environment: util.mergeEnvironment(config.environment, this.currentEnvironmentVariables),
+        onDirty: async () => {
+          this._dirty = true;
+        },
+        onMessage: async (msg) => {
+          const line = `-- ${msg.message}`;
+          this._accumulatedMessages.push(line);
+          this._channel.appendLine(line);
+        },
+        onProgress: async (prog) => {
+          this.buildProgress = (prog.progressCurrent - prog.progressMinimum) /
+            (prog.progressMaximum - prog.progressMinimum);
+          this.statusMessage = prog.progressMessage;
+        },
+      });
+      if (await async.exists(this.cachePath)) {
+        await this._refreshAfterConfigure();
+      }
   }
 
   protected async _refreshAfterConfigure() {
@@ -310,11 +311,11 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   }
 
   private async _refreshCodeModel() {
-    this.codeModel = await this._client.codemodel();
+    this.codeModel = await this._client!.codemodel();
   }
 
   private async _refreshCacheEntries() {
-    const clcache = await this._client.getCMakeCacheContent();
+    const clcache = await this._client!.getCMakeCacheContent();
     return this._cacheEntries = clcache.cache.reduce((acc, el) => {
       const type: api.EntryType = {
         BOOL: api.EntryType.Bool,
@@ -337,8 +338,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   protected async _init(): Promise<ServerClientCMakeTools> {
     await super._init();
     await this._restartClient();
-    const cl = this._client;
-    this._globalSettings = await cl.getGlobalSettings();
+    this._globalSettings = await this._client!.getGlobalSettings();
     this.codeModel = this._workspaceCacheContent.codeModel || null;
     this._statusBar.statusMessage = 'Ready';
     this._statusBar.isBusy = false;

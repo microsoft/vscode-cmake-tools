@@ -140,6 +140,78 @@
                 "category": "CMake"
             }
         ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "cmake.configure",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.build",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.install",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.buildWithTarget",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.setBuildType",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.setDefaultTarget",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.setDefaultTarget",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.cleanConfigure",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.clean",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.cleanRebuild",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.ctest",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.jumpToCacheFile",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.debugTarget",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.launchTarget",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.selectLaunchTarget",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.selectEnvironments",
+                    "when": "cmaketools:enabled"
+                },
+                {
+                    "command": "cmake.toggleCoverageDecorations",
+                    "when": "cmaketools:enabled"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "CMake Tools configuration",
@@ -506,26 +578,38 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Enable CMake server"
+                },
+                "cmake.loggingLevel": {
+                    "type": "string",
+                    "default": "normal",
+                    "enum": [
+                        "verbose",
+                        "normal",
+                        "minimal"
+                    ]
                 }
             }
         },
         "keybindings": [
             {
                 "key": "f7",
-                "command": "cmake.build"
+                "command": "cmake.build",
+                "when": "cmaketools:enabled"
             },
             {
                 "key": "shift+f7",
-                "command": "cmake.buildWithTarget"
+                "command": "cmake.buildWithTarget",
+                "when": "cmaketools:enabled"
             },
             {
                 "key": "ctrl+f5",
                 "command": "cmake.debugTarget",
-                "when": "!inDebugMode"
+                "when": "!inDebugMode && cmaketools:enabled"
             },
             {
                 "key": "shift+f5",
-                "command": "cmake.launchTarget"
+                "command": "cmake.launchTarget",
+                "when": "cmaketools:enabled"
             }
         ],
         "jsonValidation": [

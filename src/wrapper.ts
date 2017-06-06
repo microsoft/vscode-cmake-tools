@@ -6,158 +6,131 @@ import * as api from './api';
 import * as legacy from './legacy';
 import * as client from './client';
 import * as util from './util';
-import {config} from './config';
+import { config } from './config';
+import { log } from './logging';
 
-export class CMakeToolsWrapper implements api.CMakeToolsAPI {
-  private _impl: Promise<api.CMakeToolsAPI>;
+export class CMakeToolsWrapper {
+  private _impl?: api.CMakeToolsAPI = undefined;
 
-  constructor(private _ctx: vscode.ExtensionContext) {}
+  constructor(private _ctx: vscode.ExtensionContext) { }
 
-  async dispose() {
+  public async dispose() {
     await this.shutdown();
     this._reconfiguredEmitter.dispose();
   }
 
-  private async _sourceDir() {
-    return (await this._impl).sourceDir;
-  }
-  get sourceDir() {
-    return this._sourceDir();
-  }
-
-  private async _mainListFile() {
-    return (await this._impl).mainListFile;
-  }
-  get mainListFile() {
-    return this._mainListFile();
+  public get toolsApi(): api.CMakeToolsAPI {
+    if (this._impl)
+      return this._impl;
+    else
+      throw new Error("CMakeTools is not initialized");
   }
 
-  private async _binaryDir() {
-    return (await this._impl).binaryDir;
-  }
-  get binaryDir() {
-    return this._binaryDir();
+  public async configure(extraArgs?: string[], runPrebuild?: boolean) {
+    if (this._impl)
+      await this._impl.configure(extraArgs, runPrebuild);
   }
 
-  private async _cachePath() {
-    return (await this._impl).cachePath;
-  }
-  get cachePath() {
-    return this._cachePath();
+  public async build(target?: string) {
+    if (this._impl)
+      await this._impl.build(target);
   }
 
-  private async _executableTargets() {
-    return (await this._impl).executableTargets;
-  }
-  get executableTargets() {
-    return this._executableTargets();
+  public async install() {
+    if (this._impl)
+      await this._impl.install();
   }
 
-  private async _diagnostics() {
-    return (await this._impl).diagnostics;
-  }
-  get diagnostics() {
-    return this._diagnostics();
+  public async jumpToCacheFile() {
+    if (this._impl)
+      await this._impl.jumpToCacheFile();
   }
 
-  private async _targets() {
-    return (await this._impl).targets;
-  }
-  get targets() {
-    return this._targets();
+  public async clean() {
+    if (this._impl)
+      await this._impl.clean();
   }
 
-  async executeCMakeCommand(args: string[], options?: api.ExecuteOptions) {
-    return (await this._impl).executeCMakeCommand(args, options);
+  public async cleanConfigure() {
+    if (this._impl) {
+      try {
+        await this._impl.cleanConfigure();
+      } catch (error) {
+        log.error(`Failed to reconfigure project: ${error}`);
+        // TODO: show error message?
+      }
+    }
   }
 
-  async execute(program: string, args: string[], options?: api.ExecuteOptions) {
-    return (await this._impl).execute(program, args, options);
+  public async cleanRebuild() {
+    if (this._impl)
+      await this._impl.cleanRebuild();
   }
 
-  async compilationInfoForFile(filepath: string) {
-    return (await this._impl).compilationInfoForFile(filepath);
+  public async buildWithTarget() {
+    if (this._impl)
+      await this._impl.buildWithTarget();
   }
 
-  async configure(extraArgs?: string[], runPrebuild?: boolean) {
-    return (await this._impl).configure(extraArgs, runPrebuild);
+  public async setDefaultTarget() {
+    if (this._impl)
+      await this._impl.setDefaultTarget();
   }
 
-  async build(target?: string) {
-    return (await this._impl).build(target);
+  public async setBuildType() {
+    if (this._impl)
+      await this._impl.setBuildType();
   }
 
-  async install() {
-    return (await this._impl).install();
+  public async ctest() {
+    if (this._impl)
+      await this._impl.ctest();
   }
 
-  async jumpToCacheFile() {
-    return (await this._impl).jumpToCacheFile();
+  public async stop() {
+    if (this._impl)
+      await this._impl.stop();
   }
 
-  async clean() {
-    return (await this._impl).clean();
+  public async quickStart() {
+    if (this._impl)
+      await this._impl.quickStart();
   }
 
-  async cleanConfigure() {
-    return (await this._impl).cleanConfigure();
+  public async debugTarget() {
+    if (this._impl)
+      await this._impl.debugTarget();
   }
 
-  async cleanRebuild() {
-    return (await this._impl).cleanRebuild();
-  }
-
-  async buildWithTarget() {
-    return (await this._impl).buildWithTarget();
-  }
-
-  async setDefaultTarget() {
-    return (await this._impl).setDefaultTarget();
-  }
-
-  async setBuildType() {
-    return (await this._impl).setBuildType();
-  }
-
-  async ctest() {
-    return (await this._impl).ctest();
-  }
-
-  async stop() {
-    return (await this._impl).stop();
-  }
-
-  async quickStart() {
-    return (await this._impl).quickStart();
-  }
-
-  async debugTarget() {
-    return (await this._impl).debugTarget();
-  }
-
-  async launchTarget() {
-    return (await this._impl).launchTarget();
+  public async launchTarget() {
+    if (this._impl)
+      await this._impl.launchTarget();
   }
 
 
-  async launchTargetProgramPath() {
-    return (await this._impl).launchTargetProgramPath();
+  public async launchTargetProgramPath() {
+    if (this._impl)
+      await this._impl.launchTargetProgramPath();
   }
 
-  async selectLaunchTarget() {
-    return (await this._impl).selectLaunchTarget();
+  public async selectLaunchTarget() {
+    if (this._impl)
+      await this._impl.selectLaunchTarget();
   }
 
-  async selectEnvironments() {
-    return (await this._impl).selectEnvironments();
+  public async selectEnvironments() {
+    if (this._impl)
+      await this._impl.selectEnvironments();
   }
 
-  async setActiveVariantCombination(settings: api.VariantKeywordSettings) {
-    return (await this._impl).setActiveVariantCombination(settings);
+  public async setActiveVariantCombination(settings: api.VariantKeywordSettings) {
+    if (this._impl)
+      await this._impl.setActiveVariantCombination(settings);
   }
 
-  async toggleCoverageDecorations() {
-    return (await this._impl).toggleCoverageDecorations();
+  public async toggleCoverageDecorations() {
+    if (this._impl)
+      await this._impl.toggleCoverageDecorations();
   }
 
   private _reconfiguredEmitter = new vscode.EventEmitter<void>();
@@ -166,54 +139,59 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
   readonly targetChangedEvent = this._targetChangedEventEmitter.event;
 
-  private async _setupEvents() {
-    const cmt = await this._impl;
-    cmt.targetChangedEvent(() => {
-      this._targetChangedEventEmitter.fire();
-    });
-    cmt.reconfigured(() => {
-      this._reconfiguredEmitter.fire();
-    });
+  private setToolsApi(cmt?: api.CMakeToolsAPI): void {
+    this._impl = cmt;
+    util.setCommandContext(util.CommandContext.Enabled, !!cmt);
+    if (this._impl) {
+      this._impl.targetChangedEvent(() => { this._targetChangedEventEmitter.fire(); });
+      this._impl.reconfigured(() => { this._reconfiguredEmitter.fire(); });
+    }
   }
 
-  public async reload(): Promise<CMakeToolsWrapper> {
-    await this.shutdown();
-    if (config.useCMakeServer) {
-      const cmpath = config.cmakePath;
-      const version_ex = await util.execute(config.cmakePath, ['--version']).onComplete;
-      console.assert(version_ex.stdout);
-      const version_re = /cmake version (.*?)\r?\n/;
-      const version = util.parseVersion(version_re.exec(version_ex.stdout!)![1]);
-      // We purposefully exclude versions <3.7.1, which have some major CMake
-      // server bugs
-      if (util.versionGreater(version, '3.7.1')) {
-        this._impl = client.ServerClientCMakeTools.startup(this._ctx);
-        await this._impl;
-        await this._setupEvents();
-        return this;
+  public async start(): Promise<void> {
+    console.assert(!this._impl);
+    try {
+      if (config.useCMakeServer) {
+        const cmpath = config.cmakePath;
+        const version_ex = await util.execute(config.cmakePath, ['--version']).onComplete;
+        console.assert(version_ex.stdout);
+        const version_re = /cmake version (.*?)\r?\n/;
+        const version = util.parseVersion(version_re.exec(version_ex.stdout!)![1]);
+        // We purposefully exclude versions <3.7.1, which have some major CMake
+        // server bugs
+        if (util.versionGreater(version, '3.7.1')) {
+          const impl = await client.ServerClientCMakeTools.startup(this._ctx);
+          await impl;
+          this.setToolsApi(impl);
+          return;
+        }
+        log.error('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
       }
-      console.warn('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
+      // Fall back to use the legacy plugin
+      const cmt = new legacy.CMakeTools(this._ctx);
+      const impl = await cmt.initFinished;
+      this.setToolsApi(impl);
+    } catch (error) {
+      this.setToolsApi();
+      log.error(`Failed to start CMakeTools: ${error}`);
+      vscode.window.showErrorMessage('CMakeTools extension was unable to initialize. Please check output window for details.');
     }
-    // Fall back to use the legacy plugin
-    const cmt = new legacy.CMakeTools(this._ctx);
-    this._impl = cmt.initFinished;
-    await this._impl;
-    await this._setupEvents();
-    return this;
   }
 
   public async shutdown() {
-    const impl = await this._impl;
-    if (impl instanceof client.ServerClientCMakeTools) {
-      await impl.dangerousShutdownClient();
+    if (!this._impl)
+      return;
+
+    if (this._impl instanceof client.ServerClientCMakeTools) {
+      await this._impl.dangerousShutdownClient();
     }
-    if (impl) {
-      impl.dispose();
-    }
+    this._impl.dispose();
+    this.setToolsApi();
   }
 
-  static startup(ct: vscode.ExtensionContext): Promise<CMakeToolsWrapper> {
-    const cmt = new CMakeToolsWrapper(ct);
-    return cmt.reload();
+  public async restart(): Promise<void> {
+    await this.shutdown();
+    await this.start();
   }
+
 };
