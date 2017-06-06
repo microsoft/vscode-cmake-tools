@@ -295,9 +295,11 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
             this.statusMessage = prog.progressMessage;
           },
         })
-        .then(cl => {
+        .then(async (cl): Promise<void> => {
           this._client = cl;
-          return this._refreshAfterConfigure();
+          if (await async.exists(this.cachePath)) {
+            await this._refreshAfterConfigure();
+          }
         })
         .catch(e => {
           console.error('Error setting up client:', e);

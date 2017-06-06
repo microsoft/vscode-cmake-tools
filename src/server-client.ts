@@ -620,8 +620,12 @@ export class CMakeServerClient {
         onHello: async(msg: HelloMessage) => {
           // We've gotten the hello message. We need to commense handshake
           try {
-            const generator =
-                await util.pickGenerator(config.preferredGenerators);
+            const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
+            const have_cache = await async.exists(cache_path);
+            const tmpcache = have_cache ? await cache.CMakeCache.fromPath(cache_path) : null;
+            const generator = tmpcache
+                ? tmpcache.get('CMAKE_GENERATOR')!.as<string>()
+                : await util.pickGenerator(config.preferredGenerators);
             if (!generator) {
               vscode.window.showErrorMessage(
                   'Unable to determine CMake Generator to use');
@@ -634,9 +638,7 @@ export class CMakeServerClient {
             // path differently than we would, we should make sure that
             // we pass the value that is specified in the cache exactly
             // to avoid causing CMake server to spuriously fail.
-            const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
-            if (await async.exists(cache_path)) {
-              const tmpcache = await cache.CMakeCache.fromPath(cache_path);
+            if (tmpcache) {
               const home = tmpcache.get('CMAKE_HOME_DIRECTORY');
               if (home &&
                   util.normalizePath(home.as<string>()) ==

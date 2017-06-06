@@ -345,7 +345,8 @@ suite("Utility tests", () => {
         assert.strictEqual(info.compileFlags[0], '/Z+:some-compile-flag');
         assert.strictEqual(info.compiler, 'cl.exe');
     });
-    test('Can access the extension API', async function() {
+    test('Can access the extension API', async function () {
+        this.timeout(40000);
         const api = await getExtension();
         assert(await api.binaryDir);
     });
@@ -527,12 +528,12 @@ suite("Utility tests", () => {
     };
     // suite('Extension smoke tests [without cmake-server]', function() {
     //     smokeTests(this, 'without cmake-server', async() => {
-    //         await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', false);
+    //         await vscode.workspace.getConfiguration('cmake').update('useCMakeServer', false);
     //     });
     // });
-    // suite('Extension smoke tests [with cmake-server]', function() {
-    //     smokeTests(this, 'with cmake-server', async() => {
-    //         await vscode.workspace.getConfiguration('cmake').update('experimental.useCMakeServer', true);
-    //     });
-    // });
+    suite('Extension smoke tests [with cmake-server]', function() {
+        smokeTests(this, 'with cmake-server', async() => {
+            await vscode.workspace.getConfiguration('cmake').update('useCMakeServer', true);
+        });
+    });
 });

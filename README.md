@@ -49,6 +49,7 @@ add a PR for relevant information in the `docs/` subdirectory.
     can still be disabled in the user settings.
   - Fixes for using Xcode
   - Many smaller fixes and tweaks after the long hiatus in development.
+- **0.9.6**: Fix startup issue on Windows
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!

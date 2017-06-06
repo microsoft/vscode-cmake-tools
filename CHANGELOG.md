@@ -33,6 +33,7 @@
     can still be disabled in the user settings.
   - Fixes for using Xcode
   - Many smaller fixes and tweaks after the long hiatus in development.
+- **0.9.6**: Fix startup issue on Windows
 
 ### **0.8.0**:
 - **Automatic Environment Selection**. CMake Tools will now automatically
