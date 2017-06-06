@@ -179,47 +179,39 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     }
 
     const args = await this.prepareConfigure();
-
-    return vscode.window.withProgress({
-      title: "CMake: Configuring",
-      location: vscode.ProgressLocation.Window
-    }, async (pr) => {
-      pr.report({message: 'Meow meow 10%'});
-      this.statusMessage = 'Configuring...';
-      const parser = new diagnostics.BuildParser(
-          this.binaryDir, ['cmake'], this.activeGenerator);
-      const parseMessages = () => {
-        for (const msg of this._accumulatedMessages) {
-          const lines = msg.split('\n');
-          for (const line of lines) {
-            parser.parseLine(line);
-          }
-        }
-        parser.fillDiagnosticCollection(this._diagnostics);
-      };
-      try {
-        this._accumulatedMessages = [];
-        await this._client.configure(
-            {cacheArguments: args.concat(extraArgs)});
-        await this._client.compute();
-        parseMessages();
-      } catch (e) {
-        if (e instanceof cms.ServerError) {
-          parseMessages();
-          this._channel.appendLine(`[vscode] Configure failed: ${e}`);
-          return 1;
-        } else {
-          throw e;
+    this.statusMessage = 'Configuring...';
+    const parser = new diagnostics.BuildParser(
+        this.binaryDir, ['cmake'], this.activeGenerator);
+    const parseMessages = () => {
+      for (const msg of this._accumulatedMessages) {
+        const lines = msg.split('\n');
+        for (const line of lines) {
+          parser.parseLine(line);
         }
       }
-      this._workspaceCacheContent.codeModel =
-          await this._client.sendRequest('codemodel');
-      await this._writeWorkspaceCacheContent();
-      await this._refreshAfterConfigure();
-      this._reconfiguredEmitter.fire();
-      return 0;
-    });
-
+      parser.fillDiagnosticCollection(this._diagnostics);
+    };
+    try {
+      this._accumulatedMessages = [];
+      await this._client.configure(
+          {cacheArguments: args.concat(extraArgs)});
+      await this._client.compute();
+      parseMessages();
+    } catch (e) {
+      if (e instanceof cms.ServerError) {
+        parseMessages();
+        this._channel.appendLine(`[vscode] Configure failed: ${e}`);
+        return 1;
+      } else {
+        throw e;
+      }
+    }
+    this._workspaceCacheContent.codeModel =
+        await this._client.sendRequest('codemodel');
+    await this._writeWorkspaceCacheContent();
+    await this._refreshAfterConfigure();
+    this._reconfiguredEmitter.fire();
+    return 0;
   }
 
   async selectLaunchTarget() {
