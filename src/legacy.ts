@@ -272,7 +272,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                     title: 'Not now',
                     isCloseAffordance: true,
                 }).then(chosen => {
-                    if (chosen.action) {
+                    if (chosen && chosen.action) {
                         chosen.action();
                     }
                 });

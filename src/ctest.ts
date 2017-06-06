@@ -319,7 +319,7 @@ export class DecorationManager {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
       // Seems that sometimes the activeTextEditor is undefined. A VSCode bug?
-      this._refreshEditorDecorations(vscode.window.activeTextEditor);
+      this._refreshEditorDecorations(editor);
     }
   }
 

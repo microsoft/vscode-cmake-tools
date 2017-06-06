@@ -22,7 +22,7 @@ function testFilePath(filename: string): string {
 }
 
 async function getExtension(): Promise<api.CMakeToolsAPI> {
-    const cmt = vscode.extensions.getExtension<api.CMakeToolsAPI>('vector-of-bool.cmake-tools');
+    const cmt = vscode.extensions.getExtension<api.CMakeToolsAPI>('vector-of-bool.cmake-tools')!;
     return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
 }
 

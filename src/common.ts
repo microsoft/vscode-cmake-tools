@@ -437,9 +437,9 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * Shows a QuickPick containing the available build targets.
    */
-  public showTargetSelector(): Thenable<Maybe<string>> {
+  public async showTargetSelector(): Promise<string|null> {
     if (!this.targets.length) {
-      return vscode.window.showInputBox({prompt: 'Enter a target name'});
+      return (await vscode.window.showInputBox({prompt: 'Enter a target name'})) || null;
     } else {
       const choices = this.targets.map((t): vscode.QuickPickItem => {
         switch (t.type) {
@@ -495,7 +495,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       ['${buildType}', this.selectedBuildType || 'Unknown'],
       ['${workspaceRoot}', vscode.workspace.rootPath],
       [
-        '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)
+        '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath || '.')
       ],
       ['${toolset}', config.toolset]
     ] as [string, string][];
@@ -596,7 +596,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
               title: 'No',
               isCloseAffordance: true,
             });
-        return chosen.title === 'Yes';
+        return chosen !== undefined && (chosen.title === 'Yes');
       }
     }
     return true;
