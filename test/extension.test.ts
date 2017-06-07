@@ -345,6 +345,12 @@ suite("Utility tests", () => {
         assert.strictEqual(info.compileFlags[0], '/Z+:some-compile-flag');
         assert.strictEqual(info.compiler, 'cl.exe');
     });
+    test('Version compare', async function () {
+        assert(!util.versionGreater(util.parseVersion('3.0.2'), '3.7.1'));
+        assert(util.versionGreater(util.parseVersion('1.0.1'), '1.0.0'));
+        assert(util.versionGreater(util.parseVersion('1.1.2'), '1.0.3'));
+        assert(util.versionGreater(util.parseVersion('1.2.3'), '0.4.5'));
+    });
     test('Can access the extension API', async function () {
         this.timeout(40000);
         const api = await getExtension();
