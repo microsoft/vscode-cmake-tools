@@ -521,15 +521,16 @@ suite("Utility tests", () => {
         });
         teardown(async function() {
             const cmt: wrapper.CMakeToolsWrapper = this.cmt;
+            const bindir = await cmt.binaryDir;
             await cmt.shutdown();
-            if (fs.existsSync(await cmt.binaryDir)) {
-                rimraf.sync(await cmt.binaryDir);
+            if (fs.existsSync(bindir)) {
+                rimraf.sync(bindir);
             }
             const output_file = testFilePath('output-file.txt');
             if (fs.existsSync(output_file)) {
                 fs.unlinkSync(output_file);
             }
-            await cmt.restart();
+            await cmt.start();
         });
     };
     // suite('Extension smoke tests [without cmake-server]', function() {
