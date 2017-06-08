@@ -41,8 +41,6 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return this._reconfigured;
   }
 
-
-  private _executableTargets: api.ExecutableTarget[] = [];
   get executableTargets() {
     return this.targets.filter(t => t.targetType == 'EXECUTABLE')
         .map(t => ({

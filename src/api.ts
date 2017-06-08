@@ -72,37 +72,35 @@ export interface RichTarget {
   targetType: string;
 }
 
-export type Target = NamedTarget | RichTarget
+export type Target = NamedTarget | RichTarget;
 
 export interface CMakeToolsAPI extends Disposable {
   // Get the root source directory
-  readonly sourceDir: Promise<string>|string;
+  readonly sourceDir: Promise<string>;
   // Get the main CMake File
-  readonly mainListFile: Promise<string>|string;
+  readonly mainListFile: Promise<string>;
   // Get the binary directory for the project
-  readonly binaryDir: Promise<string>|string;
+  readonly binaryDir: Promise<string>;
   // Get the path to the CMake cache
-  readonly cachePath: Promise<string>|string;
+  readonly cachePath: Promise<string>;
   // Targets which are executable
-  readonly executableTargets: Promise<ExecutableTarget[]>|ExecutableTarget[];
+  readonly executableTargets: Promise<ExecutableTarget[]>;
   // Diagnostics obtained from configure/build
-  readonly diagnostics: Promise<DiagnosticCollection>|DiagnosticCollection;
+  readonly diagnostics: Promise<DiagnosticCollection>;
   // Targets available for building
-  readonly targets: Promise<Target[]>|Target[];
+  readonly targets: Promise<Target[]>;
   // Event fired when configure completes
   readonly reconfigured: Event<void>;
   // Event fired when the default build target changes
   readonly targetChangedEvent: Event<void>;
 
   // Execute a command using the CMake executable
-  executeCMakeCommand(args: string[], options?: ExecuteOptions):
-      Promise<ExecutionResult>;
+  executeCMakeCommand(args: string[], options?: ExecuteOptions): Promise<ExecutionResult>;
   // Execute an arbitrary program in the active environments
-  execute(program: string, args: string[], options?: ExecuteOptions):
-      Promise<ExecutionResult>;
+  execute(program: string, args: string[], options?: ExecuteOptions): Promise<ExecutionResult>;
 
   // Get the compilation information for a file
-  compilationInfoForFile(filepath: string): Promise<CompilationInfo|null>;
+  compilationInfoForFile(filepath: string): Promise<CompilationInfo | null>;
 
   // Configure the project. Returns the return code from CMake.
   configure(extraArgs?: string[], runPreBuild?: boolean): Promise<number>;
@@ -111,7 +109,7 @@ export interface CMakeToolsAPI extends Disposable {
   // Install the project. Returns the return code from CMake
   install(): Promise<number>;
   // Open the CMake Cache file in a text editor
-  jumpToCacheFile(): Promise<TextEditor|null>;
+  jumpToCacheFile(): Promise<TextEditor | null>;
   // Clean the build output
   clean(): Promise<number>;
   // Remove cached build settings and rerun the configuration
@@ -135,7 +133,7 @@ export interface CMakeToolsAPI extends Disposable {
   // Start the debugger with the selected build target
   debugTarget(): Promise<void>;
   // Get the path to the active debugging target
-  launchTargetProgramPath(): Promise<string|null>;
+  launchTargetProgramPath(): Promise<string | null>;
   // Allow the user to select target to debug
   selectLaunchTarget(): Promise<void>;
   // Show the environment selection quickpick

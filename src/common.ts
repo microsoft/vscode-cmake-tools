@@ -19,6 +19,7 @@ import * as util from './util';
 import {Maybe} from './util';
 import {VariantManager} from './variants';
 import { log } from './logging';
+import {CMakeToolsBackend} from './backend';
 
 const CMAKETOOLS_HELPER_SCRIPT = `
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
@@ -151,7 +152,7 @@ writeWorkspaceCache(path: string, content: util.WorkspaceCache) {
 
 
 
-export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
+export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   abstract allCacheEntries(): api.CacheEntryProperties[];
   abstract cacheEntry(name: string): api.CacheEntry|null;
   abstract get needsReconfigure(): boolean;
@@ -169,8 +170,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   abstract selectLaunchTarget(): Promise<void>;
   abstract get reconfigured(): vscode.Event<void>;
 
-  private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
-  readonly targetChangedEvent = this._targetChangedEventEmitter.event;
+  private _targetChangedEmitter = new vscode.EventEmitter<void>();
+  readonly targetChanged = this._targetChangedEmitter.event;
 
   protected _refreshAfterConfigure() {}
 
@@ -507,7 +508,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * @brief Read the source directory from the config
    */
-  public get sourceDir(): string {
+  get sourceDir(): string {
     const dir = this.replaceVars(config.sourceDirectory);
     return util.normalizePath(dir);
   }
@@ -546,7 +547,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   public set defaultBuildTarget(v: string|null) {
     this._defaultBuildTarget = v;
     this._statusBar.targetName = v || this.allTargetName;
-    this._targetChangedEventEmitter.fire();
+    this._targetChangedEmitter.fire();
   }
 
   /**
@@ -693,9 +694,6 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         vscode.ViewColumn.Three, 'CMake Cache');
 
     return null;
-
-    // const cache = await vscode.workspace.openTextDocument(this.cachePath);
-    // return await vscode.window.showTextDocument(cache);
   }
 
   public async cleanRebuild(): Promise<Number> {

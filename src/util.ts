@@ -517,12 +517,3 @@ export function parseCompileDefinition(str: string): [string, string | null] {
 export function pause(time: number): Promise<void> {
     return new Promise<void>(resolve => setTimeout(resolve, time));
 }
-
-export type CommandContext = 'cmaketools:enabled';
-export const CommandContext = {
-    Enabled: 'cmaketools:enabled' as CommandContext
-};
-
-export function setCommandContext(key: CommandContext | string, value: any) {
-  return vscode.commands.executeCommand('setContext', key, value);
-}

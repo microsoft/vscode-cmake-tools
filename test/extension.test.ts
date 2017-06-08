@@ -354,7 +354,7 @@ suite("Utility tests", () => {
     test('Can access the extension API', async function () {
         this.timeout(40000);
         const api = await getExtension();
-        assert(await api.toolsApi.binaryDir);
+        assert(await api.binaryDir);
     });
     function smokeTests(context, tag, setupHelper) {
         context.timeout(60 * 1000); // These tests are slower than just unit tests
@@ -365,7 +365,7 @@ suite("Utility tests", () => {
             await cmt.setActiveVariantCombination({
                 buildType: 'debug'
             });
-            const bd = await cmt.toolsApi.binaryDir;
+            const bd = await cmt.binaryDir;
             const exists = await new Promise<boolean>(resolve => {
                 fs.exists(bd, resolve);
             });
@@ -522,8 +522,8 @@ suite("Utility tests", () => {
         teardown(async function() {
             const cmt: wrapper.CMakeToolsWrapper = this.cmt;
             await cmt.shutdown();
-            if (fs.existsSync(await cmt.toolsApi.binaryDir)) {
-                rimraf.sync(await cmt.toolsApi.binaryDir);
+            if (fs.existsSync(await cmt.binaryDir)) {
+                rimraf.sync(await cmt.binaryDir);
             }
             const output_file = testFilePath('output-file.txt');
             if (fs.existsSync(output_file)) {
