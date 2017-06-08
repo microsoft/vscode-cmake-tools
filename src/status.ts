@@ -269,7 +269,6 @@ export class StatusBar implements vscode.Disposable {
     } else {
       this._environmentSelectionButton.hide();
     }
-    this._environmentSelectionButton.text
   }
 
   private _environmentsAvailable: boolean = false;

@@ -6,9 +6,10 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as async from './async';
-import {config} from './config';
-import {CodeModelContent} from './server-client';
-import {VariantCombination} from './variants';
+import { config } from './config';
+import { CodeModelContent } from './server-client';
+import { VariantCombination } from './variants';
+import { log } from './logging';
 
 export class ThrottledOutputChannel implements vscode.OutputChannel {
   private _channel: vscode.OutputChannel;
@@ -18,7 +19,7 @@ export class ThrottledOutputChannel implements vscode.OutputChannel {
   constructor(name: string) {
     this._channel = vscode.window.createOutputChannel(name);
     this._accumulatedData = '';
-    this._throttler = new async.Throttler();
+    this._throttler = new async.Throttler<void>();
   }
 
   get name(): string {
@@ -71,7 +72,7 @@ export function isTruthy(value: (boolean|string|null|undefined|number)) {
   return !!value;
 }
 export function rmdir(dirpath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     rimraf(dirpath, err => {
       if (err) {
         reject(err);
@@ -311,7 +312,7 @@ export function execute(
       }
     });
     stream.on('line', (line: string) => {
-      console.log(`[${program} output]: ${line}`);
+      log.verbose(`[${program} output]: ${line}`);
       if (outputChannel) {
         outputChannel.appendLine(line);
       }
@@ -321,9 +322,11 @@ export function execute(
     pipe.on('error', reject);
     pipe.on('close', (retc: number) => {
       const msg = `${program} exited with return code ${retc}`;
-      console.log(msg);
       if (outputChannel) {
         outputChannel.appendLine(`[vscode] ${msg}`)
+      }
+      else {
+        log.verbose(msg);
       }
       resolve({retc, stdout: acc.stdout, stderr: acc.stderr});
     })
@@ -352,8 +355,10 @@ export async function pickGenerator(candidates: string[]):
   const generator = config.generator;
   if (generator) {
     // User has explicitly requested a certain generator. Use that one.
+    log.verbose(`Using generator from configuration: ${generator}`);
     return generator;
   }
+  log.verbose("Trying to detect generator supported by system");
   for (const gen of candidates) {
     const delegate = {
       Ninja: async() => {
@@ -378,10 +383,12 @@ export async function pickGenerator(candidates: string[]):
       vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
       continue;
     }
-    if (await delegate.bind(this)())
+    if (await delegate.bind(this)()) {
       return gen;
-    else
-      console.log('Generator "' + gen + '" is not supported');
+    }
+    else {
+      log.info(`Build program for generator ${gen} is not found. Skipping...`);
+    }
   }
   return null;
 }
@@ -508,5 +515,14 @@ export function parseCompileDefinition(str: string): [string, string | null] {
 }
 
 export function pause(time: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, time));
+    return new Promise<void>(resolve => setTimeout(resolve, time));
+}
+
+export type CommandContext = 'cmaketools:enabled';
+export const CommandContext = {
+    Enabled: 'cmaketools:enabled' as CommandContext
+};
+
+export function setCommandContext(key: CommandContext | string, value: any) {
+  return vscode.commands.executeCommand('setContext', key, value);
 }

@@ -119,9 +119,9 @@ export interface CMakeToolsAPI extends Disposable {
   // Clean the build output and rebuild
   cleanRebuild(): Promise<number>;
   // Build a target selected by the user
-  buildWithTarget(): Promise<number|null>;
+  buildWithTarget(): Promise<number>;
   // Show a selector for the user to set the default build target
-  setDefaultTarget(): Promise<string|null>;
+  setDefaultTarget(): Promise<void>;
   // Set the active build variant
   setBuildType(): Promise<number>;
   // Execute CTest
@@ -129,17 +129,17 @@ export interface CMakeToolsAPI extends Disposable {
   // Stop the currently running build/configure/test/install process
   stop(): Promise<boolean>;
   // Show a quickstart
-  quickStart(): Promise<number|null>;
+  quickStart(): Promise<number>;
   // Start the executable target without a debugger
   launchTarget(): Promise<void>;
   // Start the debugger with the selected build target
   debugTarget(): Promise<void>;
   // Get the path to the active debugging target
-  launchTargetProgramPath(): Promise<null|string>;
+  launchTargetProgramPath(): Promise<string|null>;
   // Allow the user to select target to debug
-  selectLaunchTarget(): Promise<string|null>;
+  selectLaunchTarget(): Promise<void>;
   // Show the environment selection quickpick
-  selectEnvironments(): Promise<string[]|null>;
+  selectEnvironments(): Promise<void>;
   // Sets the variant based on keyword settings
   setActiveVariantCombination(settings: VariantKeywordSettings): Promise<void>;
   // Toggle code coverage view on/off

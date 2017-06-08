@@ -18,6 +18,7 @@ import * as status from './status';
 import * as util from './util';
 import {Maybe} from './util';
 import {VariantManager} from './variants';
+import { log } from './logging';
 
 const CMAKETOOLS_HELPER_SCRIPT = `
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
@@ -110,7 +111,7 @@ interface WsMessage {
 
 async function readWorkspaceCache(
     path: string, defaultContent: util.WorkspaceCache) {
-  console.log(`Loading CMake Tools from ${path}`);
+  log.info(`Loading CMake Tools from ${path}`);
   try {
     if (await async.exists(path)) {
       const buf = await async.readFile(path);
@@ -129,7 +130,7 @@ async function readWorkspaceCache(
       return defaultContent;
     }
   } catch (err) {
-    console.error('Error reading CMake Tools workspace cache', err);
+    log.error(`Error reading CMake Tools workspace cache: ${err}`);
     return defaultContent;
   }
 }
@@ -165,7 +166,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       Promise<api.CompilationInfo>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
-  abstract selectLaunchTarget();
+  abstract selectLaunchTarget(): Promise<void>;
   abstract get reconfigured(): vscode.Event<void>;
 
   private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
@@ -607,7 +608,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       options: api.ExecuteOptions = {silent: false, environment: {}},
       parser: util.OutputParser = new util.NullParser):
       Promise<api.ExecutionResult> {
-    console.info('Execute cmake with arguments:', args);
+    log.info(`Execute cmake with arguments: ${args}`);
     return this.execute(config.cmakePath, args, options, parser);
   }
 
@@ -817,7 +818,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   }
 
   public getLaunchTargetInfo() {
-    return this.executableTargets.find(e => e.name == this.currentLaunchTarget);
+    return this.executableTargets.find(e => e.name === this.currentLaunchTarget) || null;
   }
 
   public async launchTargetProgramPath() {
@@ -850,7 +851,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     term.show();
   }
 
-  public async debugTarget() {
+  public async debugTarget(): Promise<void> {
     const target = await this._prelaunchTarget();
     if (!target) return;
     const real_config = {
@@ -865,7 +866,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const user_config = config.debugConfig;
     Object.assign(real_config, user_config);
     real_config['program'] = target.path;
-    return vscode.commands.executeCommand('vscode.startDebug', real_config);
+    vscode.commands.executeCommand('vscode.startDebug', real_config);
   }
 
   public async prepareConfigure(): Promise<string[]> {

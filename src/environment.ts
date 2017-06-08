@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import * as async from './async'
 import {config} from './config';
 import * as util from './util';
+import { log } from './logging';
 
 type Maybe<T> = util.Maybe<T>;
 
@@ -108,7 +109,7 @@ async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
       }
       const variables = output.split('\n')
                             .map(l => l.trim())
-                            .filter(l => l.length != 0)
+                            .filter(l => l.length !== 0)
                             .reduce<Map<string, string>>((acc, line) => {
                               const mat = /(\w+) := ?(.*)/.exec(line);
                               console.assert(!!mat, line);
@@ -214,11 +215,11 @@ export class EnvironmentManager {
   }
 
   public readonly environmentsLoaded: Promise<void> =
-      Promise.all(availableEnvironments().map(async(pr) => {
+      <Promise<void>>Promise.all(availableEnvironments().map(async(pr) => {
         try {
           const env = await pr;
           if (env.variables) {
-            console.log(`Detected available environment "${env.name}`);
+            log.info(`Detected available environment "${env.name}`);
             this._availableEnvironments.set(env.name, {
               name: env.name,
               variables: env.variables,
