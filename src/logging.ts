@@ -23,7 +23,8 @@ export class Logger {
 
     private onConfigurationChanged(): void {
         const newLevel = vscode.workspace.getConfiguration('cmake').get<LogLevel>('loggingLevel');
-        this.currentLevel = newLevel;
+        if (newLevel)
+            this.currentLevel = newLevel;
     }
 
     public initialize(context: vscode.ExtensionContext) {

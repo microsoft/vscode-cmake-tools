@@ -600,14 +600,14 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "./node_modules/typescript/bin/tsc -p ./",
-        "compile": "./node_modules/typescript/bin/tsc -watch -p ./",
+        "vscode:prepublish": "./node_modules/.bin/tsc -p ./",
+        "compile": "./node_modules/.bin/tsc -watch -p ./",
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
         "typescript": "~2.0.3",
         "@types/node": "~6.0.45",
-        "vscode": "~1.12.0",
+        "vscode": "~1.1.0",
         "mocha": "~3.4.2",
         "@types/mocha": "~2.2.41",
         "@types/js-yaml": "^3.5.28",

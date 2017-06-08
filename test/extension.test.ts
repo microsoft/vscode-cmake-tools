@@ -23,6 +23,9 @@ function testFilePath(filename: string): string {
 
 async function getExtension(): Promise<wrapper.CMakeToolsWrapper> {
     const cmt = vscode.extensions.getExtension<wrapper.CMakeToolsWrapper>('vector-of-bool.cmake-tools');
+    if (!cmt) {
+        return Promise.reject("Extension doesn't exist");
+    }
     return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
 }
 
@@ -305,12 +308,12 @@ suite("Utility tests", () => {
         assert.strictEqual(raw.command, info.compile!.command);
         assert.strictEqual(raw.directory, info.compile!.directory);
         assert.strictEqual(raw.file, info.file);
-        let idx = info.includeDirectories.findIndex(i => i.path == '/system/path');
+        let idx = info.includeDirectories.findIndex(i => i.path === '/system/path');
         assert(idx >= 0);
         let inc = info.includeDirectories[idx];
         assert(inc.isSystem);
         assert.strictEqual(inc.path, '/system/path');
-        idx = info.includeDirectories.findIndex(i => i.path == '/some/relative/path');
+        idx = info.includeDirectories.findIndex(i => i.path === '/some/relative/path');
         assert(idx >= 0);
         inc = info.includeDirectories[idx];
         assert(!inc.isSystem);
@@ -330,12 +333,12 @@ suite("Utility tests", () => {
         assert.strictEqual(raw.command, info.compile!.command);
         assert.strictEqual(raw.directory, info.compile!.directory);
         assert.strictEqual(raw.file, info.file);
-        let idx = info.includeDirectories.findIndex(i => i.path == '/system/path');
+        let idx = info.includeDirectories.findIndex(i => i.path === '/system/path');
         assert(idx >= 0);
         let inc = info.includeDirectories[idx];
         assert(!inc.isSystem);
         assert.strictEqual(inc.path, '/system/path');
-        idx = info.includeDirectories.findIndex(i => i.path == '/some/relative/path');
+        idx = info.includeDirectories.findIndex(i => i.path === '/some/relative/path');
         assert(idx >= 0);
         inc = info.includeDirectories[idx];
         assert(!inc.isSystem);
@@ -358,10 +361,10 @@ suite("Utility tests", () => {
     });
     function smokeTests(context, tag, setupHelper) {
         context.timeout(60 * 1000); // These tests are slower than just unit tests
+        let cmt: wrapper.CMakeToolsWrapper;
         setup(async function () {
             await setupHelper();
-            const cmt = await getExtension();
-            this.cmt = cmt;
+            cmt = await getExtension();
             await cmt.setActiveVariantCombination({
                 buildType: 'debug'
             });
@@ -377,14 +380,12 @@ suite("Utility tests", () => {
             await new Promise(resolve => exists ? rimraf(bd, resolve) : resolve());
         });
         test(`Can configure [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
-            assert((await cmt.targets).findIndex(t => t.name == 'MyExecutable') >= 0);
+            assert((await cmt.targets).findIndex(t => t.name === 'MyExecutable') >= 0);
         });
         test(`Configure respects environment overrides [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
-            const homedir_varname = process.platform == 'win32' ? 'PROFILE' : 'HOME';
+            const homedir_varname = process.platform === 'win32' ? 'PROFILE' : 'HOME';
             const suffix = '-TEST-APPENDED';
             const homedir_var = process.env[homedir_varname] + suffix;
             await vscode.workspace.getConfiguration('cmake').update('configureEnvironment', {
@@ -399,22 +400,18 @@ suite("Utility tests", () => {
             await vscode.workspace.getConfiguration('cmake').update('configureEnvironment', undefined);
         });
         test(`Can build named target [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build('MyExecutable');
             assert.strictEqual(retc, 0);
         });
         test(`Non-existent target fails [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build('ThisIsNotAnExistingTarget');
             assert.notStrictEqual(retc, 0);
         });
         test(`Can execute CTest tests [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.ctest();
             assert.strictEqual(retc, 0);
         });
         test(`Finds executable targets [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0, 'Configure failed');
             const targets = await cmt.executableTargets;
@@ -422,7 +419,6 @@ suite("Utility tests", () => {
             assert.strictEqual(targets[0].name, 'MyExecutable');
         });
         test(`CMake Diagnostic Parsing [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure(['-DWARNING_COOKIE=this-is-a-warning-cookie']);
             assert.strictEqual(retc, 0);
             const diags: vscode.Diagnostic[] = [];
@@ -434,7 +430,6 @@ suite("Utility tests", () => {
             assert(diag.message.includes('this-is-a-warning-cookie'));
         });
         test(`Compile Error Parsing [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const config_retc = await cmt.configure(['-DCAUSE_BUILD_ERROR=TRUE']);
             assert.strictEqual(config_retc, 0);
             const build_retc = await cmt.build();
@@ -451,7 +446,6 @@ suite("Utility tests", () => {
             assert(diag.message.includes('special-error-cookie asdfqwerty'));
         });
         test(`Pass arguments to debugger [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
             const outfile = testFilePath('output-file.txt');
@@ -471,10 +465,9 @@ suite("Utility tests", () => {
             assert.strictEqual(content, test_string);
         });
         test(`Debugger gets environment variables [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
-            const homedir_varname = process.platform == 'win32' ? 'PROFILE' : 'HOME';
+            const homedir_varname = process.platform === 'win32' ? 'PROFILE' : 'HOME';
             const homedir_var = process.env[homedir_varname];
             const outfile = testFilePath('output-file.txt');
             await vscode.workspace.getConfiguration('cmake').update('debugConfig', {
@@ -490,7 +483,6 @@ suite("Utility tests", () => {
             assert.strictEqual(content, homedir_var);
         });
         test(`Debugger gets custom environment variables [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
             const outfile = testFilePath('output-file.txt');
@@ -513,14 +505,12 @@ suite("Utility tests", () => {
             assert.strictEqual(content, test_string);
         });
         test(`Get compilation info for a file [${tag}]`, async function() {
-            const cmt: api.CMakeToolsAPI = this.cmt;
             const retc = await cmt.configure();
             assert.strictEqual(retc, 0);
             const info = await cmt.compilationInfoForFile(testFilePath('test_project/main.cpp'));
             assert(info);
         });
         teardown(async function() {
-            const cmt: wrapper.CMakeToolsWrapper = this.cmt;
             const bindir = await cmt.binaryDir;
             await cmt.shutdown();
             if (fs.existsSync(bindir)) {
