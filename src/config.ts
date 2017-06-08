@@ -92,7 +92,7 @@ export class ConfigurationReader {
   }
 
   get cmakePath(): string {
-    return this._readPrefixed<string>('cmakePath')!;
+    return this._readPrefixed<string>('cmakePath') || 'cmake';
   }
 
   get ctestPath(): string {
