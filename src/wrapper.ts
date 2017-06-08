@@ -173,9 +173,10 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
         if (util.versionGreater(version, '3.7.1')) {
           this._backend = client.ServerClientCMakeTools.startup(this._ctx);
           did_start = true;
+        } else {
+          log.info(
+              'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
         }
-        log.info(
-            'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
       }
       if (!did_start) {
         const leg = new legacy.CMakeTools(this._ctx);
