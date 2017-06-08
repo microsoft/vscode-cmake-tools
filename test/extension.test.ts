@@ -21,8 +21,8 @@ function testFilePath(filename: string): string {
     return path.normalize(path.join(here, '../..', 'test', filename));
 }
 
-async function getExtension(): Promise<api.CMakeToolsAPI> {
-    const cmt = vscode.extensions.getExtension<api.CMakeToolsAPI>('vector-of-bool.cmake-tools');
+async function getExtension(): Promise<wrapper.CMakeToolsWrapper> {
+    const cmt = vscode.extensions.getExtension<wrapper.CMakeToolsWrapper>('vector-of-bool.cmake-tools');
     return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
 }
 
@@ -345,6 +345,12 @@ suite("Utility tests", () => {
         assert.strictEqual(info.compileFlags[0], '/Z+:some-compile-flag');
         assert.strictEqual(info.compiler, 'cl.exe');
     });
+    test('Version compare', async function () {
+        assert(!util.versionGreater(util.parseVersion('3.0.2'), '3.7.1'));
+        assert(util.versionGreater(util.parseVersion('1.0.1'), '1.0.0'));
+        assert(util.versionGreater(util.parseVersion('1.1.2'), '1.0.3'));
+        assert(util.versionGreater(util.parseVersion('1.2.3'), '0.4.5'));
+    });
     test('Can access the extension API', async function () {
         this.timeout(40000);
         const api = await getExtension();
@@ -515,15 +521,16 @@ suite("Utility tests", () => {
         });
         teardown(async function() {
             const cmt: wrapper.CMakeToolsWrapper = this.cmt;
+            const bindir = await cmt.binaryDir;
             await cmt.shutdown();
-            if (fs.existsSync(await cmt.binaryDir)) {
-                rimraf.sync(await cmt.binaryDir);
+            if (fs.existsSync(bindir)) {
+                rimraf.sync(bindir);
             }
             const output_file = testFilePath('output-file.txt');
             if (fs.existsSync(output_file)) {
                 fs.unlinkSync(output_file);
             }
-            await cmt.reload();
+            await cmt.start();
         });
     };
     // suite('Extension smoke tests [without cmake-server]', function() {

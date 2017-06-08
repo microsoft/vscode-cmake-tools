@@ -280,7 +280,7 @@ export class VariantManager implements vscode.Disposable {
           description:
               optionset.map(o => o.settings['description$']).join(' + '),
         }));
-    const chosen: VariantCombination = await vscode.window.showQuickPick(items);
+    const chosen: VariantCombination|undefined = await vscode.window.showQuickPick(items);
     if (!chosen) return false;  // User cancelled
     this.activeVariantCombination = chosen;
     return true;

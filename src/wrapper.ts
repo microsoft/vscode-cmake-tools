@@ -7,157 +7,150 @@ import * as legacy from './legacy';
 import * as client from './client';
 import * as util from './util';
 import {config} from './config';
+import {log} from './logging';
+import {CMakeToolsBackend} from './backend';
 
-export class CMakeToolsWrapper implements api.CMakeToolsAPI {
-  private _impl: Promise<api.CMakeToolsAPI>;
+function wrappedAPI(target: any, propertyKey: string, method: PropertyDescriptor) {
+  const orig = method.value;
+  method.value = async function(...args: any[]) {
+    try {
+      await this._backend;
+      return orig.apply(this, args);
+    } catch (e) {
+      this.showError();
+    }
+  };
+  return method;
+}
+
+/**
+ * The purpose of CMaketoolsWrapper is to hide which backend is being used at
+ * any particular time behind a single API, such that we can invoke commands
+ * on the wrapper, and the underlying implementation will be chosen based on
+ * user configuration and platform
+ */
+export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
+  private _backend:
+      Promise<CMakeToolsBackend> = Promise.reject(new Error('Invalid backend promise'));
 
   constructor(private _ctx: vscode.ExtensionContext) {}
 
-  async dispose() {
+  /**
+   * Disposable for this object.
+   *
+   * Shutdown the backend and dispose of the emitters
+   */
+  public async dispose() {
     await this.shutdown();
     this._reconfiguredEmitter.dispose();
+    this._targetChangedEventEmitter.dispose();
   }
 
-  private async _sourceDir() {
-    return (await this._impl).sourceDir;
-  }
-  get sourceDir() {
-    return this._sourceDir();
+  /**
+   * sourceDir: Promise<string>
+   */
+  private async _sourceDir() { return (await this._backend).sourceDir; }
+  get sourceDir() { return this._sourceDir(); }
+
+  /**
+   * mainListFile: Promise<string>
+   */
+  private async _mainListFile() { return (await this._backend).mainListFile; }
+  get mainListFile() { return this._mainListFile(); }
+
+  /**
+   * binaryDir: Promise<string>
+   */
+  private async _binaryDir() { return (await this._backend).binaryDir; }
+  get binaryDir() { return this._binaryDir(); }
+
+  /**
+   * cachePath: Promise<string>
+   */
+  private async _cachePath() { return (await this._backend).cachePath; }
+  get cachePath() { return this._cachePath(); }
+
+  /**
+   * executableTargets: Promise<ExecutableTarget[]>
+   */
+  private async _executableTargets() { return (await this._backend).executableTargets; }
+  get executableTargets() { return this._executableTargets(); }
+
+  /**
+   * diagnostics: Promise<DiagnosticCollection[]>
+   */
+  private async _diagnostics() { return (await this._backend).diagnostics; }
+  get diagnostics() { return this._diagnostics(); }
+
+  /**
+   * targets: Promise<Target[]>
+   */
+  private async _targets() { return (await this._backend).targets; }
+  get targets() { return this._targets(); }
+
+  @wrappedAPI
+  async executeCMakeCommand(args: string[],
+                            options?: api.ExecuteOptions): Promise<api.ExecutionResult> {
+    return (await this._backend).executeCMakeCommand(args, options);
   }
 
-  private async _mainListFile() {
-    return (await this._impl).mainListFile;
-  }
-  get mainListFile() {
-    return this._mainListFile();
-  }
-
-  private async _binaryDir() {
-    return (await this._impl).binaryDir;
-  }
-  get binaryDir() {
-    return this._binaryDir();
+  @wrappedAPI
+  async execute(program: string, args: string[], options?: api.ExecuteOptions):
+      Promise<api.ExecutionResult> {
+    return (await this._backend).execute(program, args, options);
   }
 
-  private async _cachePath() {
-    return (await this._impl).cachePath;
-  }
-  get cachePath() {
-    return this._cachePath();
+  @wrappedAPI
+  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null> {
+    return (await this._backend).compilationInfoForFile(filepath);
   }
 
-  private async _executableTargets() {
-    return (await this._impl).executableTargets;
-  }
-  get executableTargets() {
-    return this._executableTargets();
+  @wrappedAPI
+  async configure(extraArgs?: string[], runPrebuild?: boolean): Promise<number> {
+    return (await this._backend).configure(extraArgs, runPrebuild);
   }
 
-  private async _diagnostics() {
-    return (await this._impl).diagnostics;
-  }
-  get diagnostics() {
-    return this._diagnostics();
-  }
-
-  private async _targets() {
-    return (await this._impl).targets;
-  }
-  get targets() {
-    return this._targets();
-  }
-
-  async executeCMakeCommand(args: string[], options?: api.ExecuteOptions) {
-    return (await this._impl).executeCMakeCommand(args, options);
-  }
-
-  async execute(program: string, args: string[], options?: api.ExecuteOptions) {
-    return (await this._impl).execute(program, args, options);
-  }
-
-  async compilationInfoForFile(filepath: string) {
-    return (await this._impl).compilationInfoForFile(filepath);
-  }
-
-  async configure(extraArgs?: string[], runPrebuild?: boolean) {
-    return (await this._impl).configure(extraArgs, runPrebuild);
-  }
-
-  async build(target?: string) {
-    return (await this._impl).build(target);
-  }
-
-  async install() {
-    return (await this._impl).install();
-  }
-
-  async jumpToCacheFile() {
-    return (await this._impl).jumpToCacheFile();
-  }
-
-  async clean() {
-    return (await this._impl).clean();
-  }
-
-  async cleanConfigure() {
-    return (await this._impl).cleanConfigure();
-  }
-
-  async cleanRebuild() {
-    return (await this._impl).cleanRebuild();
-  }
-
-  async buildWithTarget() {
-    return (await this._impl).buildWithTarget();
-  }
-
-  async setDefaultTarget() {
-    return (await this._impl).setDefaultTarget();
-  }
-
-  async setBuildType() {
-    return (await this._impl).setBuildType();
-  }
-
-  async ctest() {
-    return (await this._impl).ctest();
-  }
-
-  async stop() {
-    return (await this._impl).stop();
-  }
-
-  async quickStart() {
-    return (await this._impl).quickStart();
-  }
-
-  async debugTarget() {
-    return (await this._impl).debugTarget();
-  }
-
-  async launchTarget() {
-    return (await this._impl).launchTarget();
-  }
-
-
-  async launchTargetProgramPath() {
-    return (await this._impl).launchTargetProgramPath();
-  }
-
-  async selectLaunchTarget() {
-    return (await this._impl).selectLaunchTarget();
-  }
-
-  async selectEnvironments() {
-    return (await this._impl).selectEnvironments();
-  }
-
+  @wrappedAPI
+  async build(target?: string) { return (await this._backend).build(target); }
+  @wrappedAPI
+  async install() { return (await this._backend).install(); }
+  @wrappedAPI
+  async jumpToCacheFile() { return (await this._backend).jumpToCacheFile(); }
+  @wrappedAPI
+  async clean() { return (await this._backend).clean(); }
+  @wrappedAPI
+  async cleanConfigure() { return (await this._backend).cleanConfigure(); }
+  @wrappedAPI
+  async cleanRebuild() { return (await this._backend).cleanRebuild(); }
+  @wrappedAPI
+  async buildWithTarget() { return (await this._backend).buildWithTarget(); }
+  @wrappedAPI
+  async setDefaultTarget() { return (await this._backend).setDefaultTarget(); }
+  @wrappedAPI
+  async setBuildType() { return (await this._backend).setBuildType(); }
+  @wrappedAPI
+  async ctest() { return (await this._backend).ctest(); }
+  @wrappedAPI
+  async stop() { return (await this._backend).stop(); }
+  @wrappedAPI
+  async quickStart() { return (await this._backend).quickStart(); }
+  @wrappedAPI
+  async debugTarget() { return (await this._backend).debugTarget(); }
+  @wrappedAPI
+  async launchTarget() { return (await this._backend).launchTarget(); }
+  @wrappedAPI
+  async launchTargetProgramPath() { return (await this._backend).launchTargetProgramPath(); }
+  @wrappedAPI
+  async selectLaunchTarget() { return (await this._backend).selectLaunchTarget(); }
+  @wrappedAPI
+  async selectEnvironments() { return (await this._backend).selectEnvironments(); }
+  @wrappedAPI
   async setActiveVariantCombination(settings: api.VariantKeywordSettings) {
-    return (await this._impl).setActiveVariantCombination(settings);
+    return (await this._backend).setActiveVariantCombination(settings);
   }
-
+  @wrappedAPI
   async toggleCoverageDecorations() {
-    return (await this._impl).toggleCoverageDecorations();
+    return (await this._backend).toggleCoverageDecorations();
   }
 
   private _reconfiguredEmitter = new vscode.EventEmitter<void>();
@@ -166,54 +159,62 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI {
   private _targetChangedEventEmitter = new vscode.EventEmitter<void>();
   readonly targetChangedEvent = this._targetChangedEventEmitter.event;
 
-  private async _setupEvents() {
-    const cmt = await this._impl;
-    cmt.targetChangedEvent(() => {
-      this._targetChangedEventEmitter.fire();
-    });
-    cmt.reconfigured(() => {
-      this._reconfiguredEmitter.fire();
-    });
-  }
-
-  public async reload(): Promise<CMakeToolsWrapper> {
-    await this.shutdown();
-    if (config.useCMakeServer) {
-      const cmpath = config.cmakePath;
-      const version_ex = await util.execute(config.cmakePath, ['--version']).onComplete;
-      console.assert(version_ex.stdout);
-      const version_re = /cmake version (.*?)\r?\n/;
-      const version = util.parseVersion(version_re.exec(version_ex.stdout!)![1]);
-      // We purposefully exclude versions <3.7.1, which have some major CMake
-      // server bugs
-      if (util.versionGreater(version, '3.7.1')) {
-        this._impl = client.ServerClientCMakeTools.startup(this._ctx);
-        await this._impl;
-        await this._setupEvents();
-        return this;
+  async start(): Promise<void> {
+    try {
+      let did_start = false;
+      if (config.useCMakeServer) {
+        const cmpath = config.cmakePath;
+        const version_ex = await util.execute(config.cmakePath, [ '--version' ]).onComplete;
+        console.assert(version_ex.stdout);
+        const version_re = /cmake version (.*?)\r?\n/;
+        const version = util.parseVersion(version_re.exec(version_ex.stdout !) ![1]);
+        // We purposefully exclude versions <3.7.1, which have some major CMake
+        // server bugs
+        if (util.versionGreater(version, '3.7.1')) {
+          this._backend = client.ServerClientCMakeTools.startup(this._ctx);
+          did_start = true;
+        }
+        log.info(
+            'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
       }
-      console.warn('CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
+      if (!did_start) {
+        const leg = new legacy.CMakeTools(this._ctx);
+        this._backend = leg.initFinished;
+        did_start = true;
+      }
+      this._backend.then((be) => {
+        be.targetChanged(() => this._targetChangedEventEmitter.fire());
+        be.reconfigured(() => this._reconfiguredEmitter.fire());
+      });
+      // Fall back to use the legacy plugin
+      // const cmt = new legacy.CMakeTools(this._ctx);
+      // const impl = await cmt.initFinished;
+    } catch (error) {
+      log.error(error);
+      this._backend = Promise.reject(error);
+      this.showError();
     }
-    // Fall back to use the legacy plugin
-    const cmt = new legacy.CMakeTools(this._ctx);
-    this._impl = cmt.initFinished;
-    await this._impl;
-    await this._setupEvents();
-    return this;
   }
 
-  public async shutdown() {
-    const impl = await this._impl;
-    if (impl instanceof client.ServerClientCMakeTools) {
-      await impl.dangerousShutdownClient();
+  async shutdown() {
+    const be = await this._backend;
+    if (be instanceof client.ServerClientCMakeTools) {
+      await be.dangerousShutdownClient();
     }
-    if (impl) {
-      impl.dispose();
-    }
+    be.dispose();
+    this._backend = Promise.reject(new Error('Invalid backend promise'));
   }
 
-  static startup(ct: vscode.ExtensionContext): Promise<CMakeToolsWrapper> {
-    const cmt = new CMakeToolsWrapper(ct);
-    return cmt.reload();
+  async restart(): Promise<void> {
+    await this.shutdown();
+    await this.start();
+  }
+
+  async showError() {
+    try {
+      await this._backend;
+    } catch (e) {
+      vscode.window.showErrorMessage(`CMakeTools extension was unable to initialize: ${e} [See output window for more details]`);
+    }
   }
 };

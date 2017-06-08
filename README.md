@@ -4,7 +4,8 @@
 powerful configure+build workflow for CMake-based projects within the
 Visual Studio Code editor.
 
-Make sure you have [this dependency](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) installed before using CMake Tools.
+This extension itself *does not* provide language support for the CMake
+scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
 
 ## Calling All Users:
 
@@ -50,6 +51,10 @@ add a PR for relevant information in the `docs/` subdirectory.
   - Fixes for using Xcode
   - Many smaller fixes and tweaks after the long hiatus in development.
 - **0.9.6**: Fix startup issue on Windows
+- **0.9.7**:
+  - Fix startup and reliability issues, especially with older CMake versions.
+    Special thanks to [ytimenkov](https://github.com/ytimenkov)
+
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!

@@ -2,6 +2,19 @@ import * as vscode from 'vscode';
 
 import {Maybe} from './util';
 
+interface Hideable {
+  show(): void;
+  hide(): void;
+}
+
+function setVisible<T extends Hideable>(i: T, v: boolean) {
+  if (v) {
+    i.show();
+  } else {
+    i.hide();
+  }
+}
+
 export class StatusBar implements vscode.Disposable {
   private readonly _cmakeToolsStatusItem =
       vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
@@ -52,6 +65,7 @@ export class StatusBar implements vscode.Disposable {
     this._environmentSelectionButton.command = 'cmake.selectEnvironments';
     this._environmentSelectionButton.tooltip =
         'Click to change the active build environments';
+      this._reloadVisibility();
   }
 
   private _reloadVisibility() {
@@ -61,7 +75,7 @@ export class StatusBar implements vscode.Disposable {
              of [this._cmakeToolsStatusItem, this._buildButton,
                  this._targetButton, this._testStatusButton,
                  this._debugTargetButton, this._environmentSelectionButton]) {
-      this.visible ? show(item) : hide(item);
+      setVisible(item, this.visible && !!item.text);
     }
     // Debug button is only visible if cpptools is also installed
     if (this.visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined) {
@@ -269,7 +283,6 @@ export class StatusBar implements vscode.Disposable {
     } else {
       this._environmentSelectionButton.hide();
     }
-    this._environmentSelectionButton.text
   }
 
   private _environmentsAvailable: boolean = false;

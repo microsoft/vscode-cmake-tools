@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.9.6",
+    "version": "0.9.7",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -20,7 +20,7 @@
     ],
     "publisher": "vector-of-bool",
     "engines": {
-        "vscode": "^1.7.0"
+        "vscode": "^1.12.0"
     },
     "categories": [
         "Other"
@@ -140,6 +140,61 @@
                 "category": "CMake"
             }
         ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "cmake.configure"
+                },
+                {
+                    "command": "cmake.build"
+                },
+                {
+                    "command": "cmake.install"
+                },
+                {
+                    "command": "cmake.buildWithTarget"
+                },
+                {
+                    "command": "cmake.setBuildType"
+                },
+                {
+                    "command": "cmake.setDefaultTarget"
+                },
+                {
+                    "command": "cmake.setDefaultTarget"
+                },
+                {
+                    "command": "cmake.cleanConfigure"
+                },
+                {
+                    "command": "cmake.clean"
+                },
+                {
+                    "command": "cmake.cleanRebuild"
+                },
+                {
+                    "command": "cmake.ctest"
+                },
+                {
+                    "command": "cmake.jumpToCacheFile"
+                },
+                {
+                    "command": "cmake.debugTarget"
+                },
+                {
+                    "command": "cmake.launchTarget"
+                },
+                {
+                    "command": "cmake.selectLaunchTarget"
+                },
+                {
+                    "command": "cmake.selectEnvironments"
+                },
+                {
+                    "command": "cmake.toggleCoverageDecorations"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "CMake Tools configuration",
@@ -506,6 +561,15 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Enable CMake server"
+                },
+                "cmake.loggingLevel": {
+                    "type": "string",
+                    "default": "normal",
+                    "enum": [
+                        "verbose",
+                        "normal",
+                        "minimal"
+                    ]
                 }
             }
         },
@@ -543,9 +607,9 @@
     "devDependencies": {
         "typescript": "~2.0.3",
         "@types/node": "~6.0.45",
-        "vscode": "^1.0.3",
-        "mocha": "~3.1.2",
-        "@types/mocha": "2.2.32",
+        "vscode": "~1.12.0",
+        "mocha": "~3.4.2",
+        "@types/mocha": "~2.2.41",
         "@types/js-yaml": "^3.5.28",
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
@@ -560,8 +624,5 @@
         "rimraf": "^2.5.4",
         "ws": "^1.1.1",
         "Polymer": "1.6.1--"
-    },
-    "extensionDependencies": [
-        "twxs.cmake"
-    ]
+    }
 }
