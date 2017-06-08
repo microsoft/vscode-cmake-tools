@@ -140,6 +140,61 @@
                 "category": "CMake"
             }
         ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "cmake.configure"
+                },
+                {
+                    "command": "cmake.build"
+                },
+                {
+                    "command": "cmake.install"
+                },
+                {
+                    "command": "cmake.buildWithTarget"
+                },
+                {
+                    "command": "cmake.setBuildType"
+                },
+                {
+                    "command": "cmake.setDefaultTarget"
+                },
+                {
+                    "command": "cmake.setDefaultTarget"
+                },
+                {
+                    "command": "cmake.cleanConfigure"
+                },
+                {
+                    "command": "cmake.clean"
+                },
+                {
+                    "command": "cmake.cleanRebuild"
+                },
+                {
+                    "command": "cmake.ctest"
+                },
+                {
+                    "command": "cmake.jumpToCacheFile"
+                },
+                {
+                    "command": "cmake.debugTarget"
+                },
+                {
+                    "command": "cmake.launchTarget"
+                },
+                {
+                    "command": "cmake.selectLaunchTarget"
+                },
+                {
+                    "command": "cmake.selectEnvironments"
+                },
+                {
+                    "command": "cmake.toggleCoverageDecorations"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "CMake Tools configuration",
@@ -506,6 +561,15 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Enable CMake server"
+                },
+                "cmake.loggingLevel": {
+                    "type": "string",
+                    "default": "normal",
+                    "enum": [
+                        "verbose",
+                        "normal",
+                        "minimal"
+                    ]
                 }
             }
         },

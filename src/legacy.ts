@@ -21,8 +21,10 @@ import {CompilationDatabase} from './compdb';
 import * as api from './api';
 import {config} from './config';
 import {Entry, CMakeCache} from './cache';
+import {CMakeToolsBackend} from './backend';
 
 import {CommonCMakeToolsBase} from './common';
+import { log } from './logging';
 
 type Maybe<T> = util.Maybe<T>;
 
@@ -56,7 +58,7 @@ class CMakeTargetListParser extends util.OutputParser {
     }
 }
 
-export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAPI {
+export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBackend {
     private _lastConfigureSettings = {};
     private _compilationDatabase: Promise<Maybe<CompilationDatabase>> = Promise.resolve(null);
 
@@ -245,7 +247,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         this._lastConfigureSettings = config.configureSettings;
         this._needsReconfigure = true;
         vscode.workspace.onDidChangeConfiguration(() => {
-            console.log('Reloading CMakeTools after configuration change');
+            log.info('Reloading CMakeTools after configuration change');
             this._reloadConfiguration();
         });
 
@@ -369,7 +371,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                 args.push('-G' + generator);
                 is_multi_conf = util.isMultiConfGenerator(generator);
             } else {
-                console.error('None of the preferred generators were selected');
+                log.error('None of the preferred generators were selected');
             }
         }
 

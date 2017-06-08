@@ -5,7 +5,8 @@ import * as vscode from 'vscode';
 
 import * as async from './async';
 import * as cache from './cache';
-import {config} from './config';
+import { config } from './config';
+import { log } from './logging';
 import * as util from './util';
 
 const MESSAGE_WRAPPER_RE =
@@ -386,6 +387,9 @@ export class ServerError extends global.Error implements ErrorMessage {
       public cookie = e.cookie, public inReplyTo = e.inReplyTo) {
     super(e.errorMessage);
   }
+  toString(): string {
+    return `[cmake-server] ${this.errorMessage}`;
+  }
 }
 
 interface MessageResolutionCallbacks {
@@ -418,6 +422,7 @@ export class CMakeServerClient {
             'Protocol error talking to CMake! Got this input: ' + input);
       }
       this._accInput = tail;
+      console.log(`Received message from cmake-server: ${content}`);
       const message: SomeMessage = JSON.parse(content);
       this._onMessage(message);
     }
@@ -505,14 +510,15 @@ export class CMakeServerClient {
     const pr = new Promise((resolve, reject) => {
       this._promisesResolvers.set(cookie, {resolve: resolve, reject: reject});
     });
-    console.log(`Sending message to cmake-server: ${JSON.stringify(cp)}`);
+    const msg = JSON.stringify(cp);
+    console.log(`Sending message to cmake-server: ${msg}`);
     this._pipe.write('\n[== "CMake Server" ==[\n');
-    this._pipe.write(JSON.stringify(cp));
+    this._pipe.write(msg);
     this._pipe.write('\n]== "CMake Server" ==]\n');
     return pr;
   }
 
-  setGlobalSettings(params: SetGlobalSettingsParams): Promise<void> {
+  setGlobalSettings(params: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent> {
     return this.sendRequest('setGlobalSettings', params);
   }
 
@@ -537,7 +543,7 @@ export class CMakeServerClient {
   }
 
   private _onErrorData(data: Uint8Array) {
-    console.error(data.toString());
+    log.error(`[cmake-server] ${data.toString()}`);
   }
 
   public async shutdown() {
@@ -548,7 +554,7 @@ export class CMakeServerClient {
   private constructor(params: ClientInitPrivate) {
     this._params = params;
     let pipe_file = path.join(params.tmpdir, '.cmserver-pipe');
-    if (process.platform == 'win32') {
+    if (process.platform === 'win32') {
       pipe_file = '\\\\?\\pipe\\' + pipe_file;
     } else {
       pipe_file = path.join(params.binaryDir, `.cmserver.${process.pid}`);
@@ -558,10 +564,9 @@ export class CMakeServerClient {
         ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
           env: params.environment,
         });
-    child.stderr.on('data', (dat) => {
-      console.error('Error from cmake-server process:', dat.toString());
-    });
-    console.log('Started new CMake Server instance with PID', child.pid);
+    log.info(`Started new CMake Server instance with PID ${child.pid}`);
+    child.stdout.on('data', this._onErrorData.bind(this));
+    child.stderr.on('data', this._onErrorData.bind(this));
     setTimeout(() => {
       const end_promise = new Promise(resolve => {
         const pipe = this._pipe = net.createConnection(pipe_file);
@@ -580,17 +585,14 @@ export class CMakeServerClient {
           resolve();
         });
       });
-      this._endPromise = Promise.all([end_promise, exit_promise]);
+      this._endPromise = <Promise<void>>Promise.all([end_promise, exit_promise]);
       this._proc = child;
-      child.stdout.on('data', this._onErrorData.bind(this));
-      child.stderr.on('data', this._onErrorData.bind(this));
       child.on('close', (retc: number, signal: string) => {
         if (retc !== 0) {
-          console.error(
-              'The connection to cmake-server was terminated unexpectedly');
-          console.error(`cmake-server exited with status ${retc} (${signal})`);
+          log.error("The connection to cmake-server was terminated unexpectedly");
+          log.error(`cmake-server exited with status ${retc} (${signal})`);
           params.onCrash(retc, signal).catch(e => {
-            console.error('Unhandled error in onCrash', e);
+            log.error(`Unhandled error in onCrash ${e}`);
           });
         }
       });
@@ -623,13 +625,17 @@ export class CMakeServerClient {
             const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
             const have_cache = await async.exists(cache_path);
             const tmpcache = have_cache ? await cache.CMakeCache.fromPath(cache_path) : null;
-            const generator = tmpcache
-                ? tmpcache.get('CMAKE_GENERATOR')!.as<string>()
-                : await util.pickGenerator(config.preferredGenerators);
+            let generator: string | null = null;
+            if (tmpcache) {
+              generator = tmpcache.get('CMAKE_GENERATOR')!.as<string>();
+              log.info(`Determining CMake startup parameters from existing cache ${cache_path}`);
+            }
+            else {
+              generator = await util.pickGenerator(config.preferredGenerators);
+            }
             if (!generator) {
-              vscode.window.showErrorMessage(
-                  'Unable to determine CMake Generator to use');
-              throw new global.Error('No generator!');
+              log.error('None of preferred generators available on the system.');
+              throw new global.Error('Unable to determine CMake Generator to use');
             }
             let src_dir = params.sourceDir;
             // Work-around: CMake Server checks that CMAKE_HOME_DIRECTORY
@@ -641,7 +647,7 @@ export class CMakeServerClient {
             if (tmpcache) {
               const home = tmpcache.get('CMAKE_HOME_DIRECTORY');
               if (home &&
-                  util.normalizePath(home.as<string>()) ==
+                  util.normalizePath(home.as<string>()) ===
                       util.normalizePath(src_dir)) {
                 src_dir = home.as<string>();
               }
