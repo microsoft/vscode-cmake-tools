@@ -79,7 +79,7 @@ async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
         bat.push(`echo ${envvar} := %${envvar}%`);
       }
       const fname = Math.random().toString() + '.bat';
-      const batpath = path.join(vscode.workspace.rootPath, '.vscode', fname);
+      const batpath = path.join(vscode.workspace.rootPath!, '.vscode', fname);
       await util.ensureDirectory(path.dirname(batpath));
       await util.writeFile(batpath, bat.join('\r\n'));
       const prom = new Promise<Maybe<string>>((resolve, reject) => {
