@@ -120,9 +120,9 @@ export interface HelloMessage extends MessageBase {
  * information for the project.
  */
 export interface HandshakeParams {
-  sourceDirectory: string;
+  sourceDirectory?: string;
   buildDirectory: string;
-  generator: string;
+  generator?: string;
   extraGenerator?: string;
   platform?: string;
   toolset?: string;
@@ -622,43 +622,49 @@ export class CMakeServerClient {
         onHello: async(msg: HelloMessage) => {
           // We've gotten the hello message. We need to commense handshake
           try {
-            const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
-            const have_cache = await async.exists(cache_path);
-            const tmpcache = have_cache ? await cache.CMakeCache.fromPath(cache_path) : null;
-            let generator: string | null = null;
-            if (tmpcache) {
-              generator = tmpcache.get('CMAKE_GENERATOR')!.as<string>();
-              log.info(`Determining CMake startup parameters from existing cache ${cache_path}`);
-            }
-            else {
-              generator = await util.pickGenerator(config.preferredGenerators);
-            }
-            if (!generator) {
-              log.error('None of preferred generators available on the system.');
-              throw new global.Error('Unable to determine CMake Generator to use');
-            }
-            let src_dir = params.sourceDir;
-            // Work-around: CMake Server checks that CMAKE_HOME_DIRECTORY
-            // in the cmake cache is the same as what we provide when we
-            // set up the connection. Because CMake may normalize the
-            // path differently than we would, we should make sure that
-            // we pass the value that is specified in the cache exactly
-            // to avoid causing CMake server to spuriously fail.
-            if (tmpcache) {
-              const home = tmpcache.get('CMAKE_HOME_DIRECTORY');
-              if (home &&
-                  util.normalizePath(home.as<string>()) ===
-                      util.normalizePath(src_dir)) {
-                src_dir = home.as<string>();
-              }
-            }
-            const hsparams: HandshakeParams = {
-              sourceDirectory: src_dir,
+            let hsparams: HandshakeParams = {
               buildDirectory: params.binaryDir,
-              generator: generator,
-              toolset: config.toolset || undefined,
               protocolVersion: msg.supportedProtocolVersions[0]
             };
+
+            const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
+            const have_cache = await async.exists(cache_path);
+
+            if (have_cache) {
+              // Work-around: CMake Server checks that CMAKE_HOME_DIRECTORY
+              // in the cmake cache is the same as what we provide when we
+              // set up the connection. Because CMake may normalize the
+              // path differently than we would, we should make sure that
+              // we pass the value that is specified in the cache exactly
+              // to avoid causing CMake server to spuriously fail.
+
+              // While trying to fix issue above CMake broke ability to run
+              // with an empty sourceDir, so workaround because necessary for
+              // different CMake versions.
+              // See
+              // https://gitlab.kitware.com/cmake/cmake/issues/16948
+              // https://gitlab.kitware.com/cmake/cmake/issues/16736
+              const tmpcache = await cache.CMakeCache.fromPath(cache_path);
+              const src_dir = tmpcache.get('CMAKE_HOME_DIRECTORY');
+
+              // TODO: if src_dir is not available or is different
+              // clean configure is required as CMake won't accept it anyways.
+              if (src_dir) {
+                hsparams.sourceDirectory = src_dir.as<string>();
+              }
+            }
+            else {
+              // Do clean configure, all parameters are required.
+              const generator = await util.pickGenerator(config.preferredGenerators);
+              if (!generator) {
+                log.error('None of preferred generators available on the system.');
+                throw new global.Error('Unable to determine CMake Generator to use');
+              }
+              hsparams.sourceDirectory = params.sourceDir;
+              hsparams.generator = generator;
+              hsparams.toolset = config.toolset || undefined;
+            }
+
             const res = await client.sendRequest('handshake', hsparams);
             resolved = true;
             resolve(client);
