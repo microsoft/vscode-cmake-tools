@@ -301,9 +301,6 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
           this.statusMessage = prog.progressMessage;
         },
       });
-      if (await async.exists(this.cachePath)) {
-        await this._refreshAfterConfigure();
-      }
   }
 
   protected async _refreshAfterConfigure() {
