@@ -34,6 +34,9 @@
   - Fixes for using Xcode
   - Many smaller fixes and tweaks after the long hiatus in development.
 - **0.9.6**: Fix startup issue on Windows
+- **0.9.7**:
+  - Fix startup and reliability issues, especially with older CMake versions.
+    Special thanks to [ytimenkov](https://github.com/ytimenkov)
 
 ### **0.8.0**:
 - **Automatic Environment Selection**. CMake Tools will now automatically
