@@ -189,12 +189,12 @@ export interface Version {
   patch: number;
 }
 export function parseVersion(str: string): Version {
-  const version_re = /(\d+)\.(\d+).(\d+)/;
+  const version_re = /(\d+)\.(\d+)\.(\d+)/;
   const mat = version_re.exec(str);
   if (!mat) {
     throw new Error(`Invalid version string ${str}`);
   }
-  const [major, minor, patch] = mat!;
+  const [, major, minor, patch] = mat;
   return {
     major: parseInt(major),
     minor: parseInt(minor),
@@ -206,10 +206,18 @@ export function versionGreater(lhs: Version, rhs: Version|string): boolean {
   if (typeof(rhs) === 'string') {
     return versionGreater(lhs, parseVersion(rhs));
   }
-  return lhs.major > rhs.major ||
-      (lhs.major == rhs.major && lhs.minor > rhs.minor) ||
-      (lhs.major == rhs.major && lhs.minor == rhs.major &&
-       lhs.patch == lhs.patch);
+  if (lhs.major > rhs.major) {
+    return true;
+  }
+  else if (lhs.major === rhs.major) {
+    if (lhs.minor > rhs.minor) {
+      return true;
+    }
+    else if (lhs.minor === rhs.minor) {
+      return lhs.patch > rhs.patch;
+    }
+  }
+  return false;
 }
 
 export function versionEquals(lhs: Version, rhs: Version|string): boolean {
