@@ -51,6 +51,10 @@ add a PR for relevant information in the `docs/` subdirectory.
   - Fixes for using Xcode
   - Many smaller fixes and tweaks after the long hiatus in development.
 - **0.9.6**: Fix startup issue on Windows
+- **0.9.7**:
+  - Fix startup and reliability issues, especially with older CMake versions.
+    Special thanks to [ytimenkov](https://github.com/ytimenkov)
+
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
