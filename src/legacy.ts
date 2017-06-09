@@ -182,9 +182,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
                 );
             }
         });
-        if (config.useCMakeServer) {
-            vscode.window.showInformationMessage('Enabling cmake-server support requires that VSCode be restarted');
-        }
     }
 
     private _cmCacheWatcher: vscode.FileSystemWatcher;

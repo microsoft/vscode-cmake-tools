@@ -32,8 +32,16 @@ function wrappedAPI(target: any, propertyKey: string, method: PropertyDescriptor
 export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
   private _backend:
       Promise<CMakeToolsBackend> = Promise.reject(new Error('Invalid backend promise'));
+  private _cmakeServerWasEnabled = config.useCMakeServer;
 
-  constructor(private _ctx: vscode.ExtensionContext) {}
+  constructor(private _ctx: vscode.ExtensionContext) {
+    vscode.workspace.onDidChangeConfiguration(() => {
+      if (config.useCMakeServer != this._cmakeServerWasEnabled) {
+        this.restart();
+        this._cmakeServerWasEnabled = config.useCMakeServer;
+      }
+    });
+  }
 
   /**
    * Disposable for this object.
@@ -161,6 +169,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
 
   async start(): Promise<void> {
     try {
+      log.verbose('Starting CMake Tools backend');
       let did_start = false;
       if (config.useCMakeServer) {
         const cmpath = config.cmakePath;
@@ -198,17 +207,21 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
   }
 
   async shutdown() {
+    log.verbose('Shutting down CMake Tools backend');
     const be = await this._backend;
     if (be instanceof client.ServerClientCMakeTools) {
       await be.dangerousShutdownClient();
     }
     be.dispose();
     this._backend = Promise.reject(new Error('Invalid backend promise'));
+    log.verbose('CMake Tools has been stopped');
   }
 
   async restart(): Promise<void> {
+    log.verbose('Restarting CMake Tools backend');
     await this.shutdown();
     await this.start();
+    log.verbose('Restart is complete');
   }
 
   async showError() {
