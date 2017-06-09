@@ -215,6 +215,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         await this._client.sendRequest('codemodel');
     await this._writeWorkspaceCacheContent();
     await this._refreshAfterConfigure();
+    this._setDefaultLaunchTarget();
     this._reconfiguredEmitter.fire();
     return 0;
   }

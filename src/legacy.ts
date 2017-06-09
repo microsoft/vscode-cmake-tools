@@ -133,22 +133,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
 
     public set executableTargets(value: api.ExecutableTarget[]) {
         this._executableTargets = value;
-        if (!value) {
-            this.currentLaunchTarget = null;
-            return;
-        }
-        // Check if the currently selected debug target is no longer a target
-        if (value.findIndex(e => e.name === this.currentLaunchTarget) < 0) {
-            if (value.length) {
-                this.currentLaunchTarget = value[0].name;
-            } else {
-                this.currentLaunchTarget = null;
-            }
-        }
-        // If we didn't have a debug target, set the debug target to the first target
-        if (this.currentLaunchTarget === null && value.length) {
-            this.currentLaunchTarget = value[0].name;
-        }
+        this._setDefaultLaunchTarget();
     }
 
     private async _reloadMetaData() {

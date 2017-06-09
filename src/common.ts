@@ -573,6 +573,21 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     this._currentLaunchTarget = v;
     this._statusBar.launchTargetName = v || '';
   }
+  protected _setDefaultLaunchTarget() {
+    // Check if the currently selected debug target is no longer a target
+    const targets = this.executableTargets;
+    if (targets.findIndex(e => e.name === this.currentLaunchTarget) < 0) {
+      if (targets.length) {
+        this.currentLaunchTarget = targets[0].name;
+      } else {
+        this.currentLaunchTarget = null;
+      }
+    }
+    // If we didn't have a debug target, set the debug target to the first target
+    if (this.currentLaunchTarget === null && targets.length) {
+      this.currentLaunchTarget = targets[0].name;
+    }
+  }
 
   /**
    * @brief Execute tasks required before doing the build. Returns true if we
@@ -997,6 +1012,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
                  this.activeGenerator) :
              new util.NullParser()));
     this.statusMessage = 'Ready';
+    this._statusBar.reloadVisibility();
     return result.retc;
   }
 
