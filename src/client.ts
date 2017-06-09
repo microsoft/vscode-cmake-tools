@@ -272,7 +272,12 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
               filepath: path.normalize(t.artifacts[0]),
               targetType: t.type,
             }))),
-        []);
+        [{
+          type: 'rich' as 'rich',
+          name: this.allTargetName,
+          filepath: 'A special target to build all available targets',
+          targetType: 'META'
+        }]);
   }
 
   protected constructor(private _ctx: vscode.ExtensionContext) {
