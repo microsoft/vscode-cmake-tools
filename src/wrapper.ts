@@ -33,13 +33,21 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
   private _backend:
       Promise<CMakeToolsBackend> = Promise.reject(new Error('Invalid backend promise'));
   private _cmakeServerWasEnabled = config.useCMakeServer;
+  private _oldPreferredGenerators = config.preferredGenerators;
+  private _oldGenerator = config.generator;
 
   constructor(private _ctx: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(() => {
-      if (config.useCMakeServer != this._cmakeServerWasEnabled) {
+      const do_reload =
+        (config.useCMakeServer != this._cmakeServerWasEnabled) ||
+        (config.preferredGenerators !== this._oldPreferredGenerators) ||
+        (config.generator !== this._oldGenerator);
+      if (do_reload) {
         this.restart();
-        this._cmakeServerWasEnabled = config.useCMakeServer;
       }
+      this._cmakeServerWasEnabled = config.useCMakeServer;
+      this._oldPreferredGenerators = config.preferredGenerators;
+      this._oldGenerator = config.generator;
     });
   }
 
