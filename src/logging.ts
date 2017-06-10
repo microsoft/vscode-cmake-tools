@@ -40,16 +40,19 @@ export class Logger {
     }
 
     public error(message: string): void {
+        console.error(message);
         this.logChannel.appendLine(message);
     }
 
     public info(message: string): void {
+        console.info(message);
         if (this.currentLevel !== LogLevel.Minimal) {
             this.logChannel.appendLine(message);
         }
     }
 
     public verbose(message: string): void {
+        console.log(message);
         if (this.currentLevel === LogLevel.Verbose) {
             this.logChannel.appendLine(message);
         }
