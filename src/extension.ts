@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import { CMakeToolsWrapper } from './wrapper';
 import { log } from './logging';
+import { outputChannels } from "./util";
 
 export async function activate(context: vscode.ExtensionContext): Promise<CMakeToolsWrapper> {
     log.initialize(context);
@@ -47,5 +48,5 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
 
 // this method is called when your extension is deactivated
 export function deactivate() {
-    log.dispose();
+    outputChannels.dispose();
 }

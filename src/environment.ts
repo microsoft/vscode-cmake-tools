@@ -218,6 +218,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
     const progfiles: string |undefined = process.env['programfiles(x86)'] || process.env['programfiles'];
     if (!progfiles) {
       log.error('Unable to find Program Files directory');
+      return [];
     }
     const vswhere = path.join(progfiles, 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
     if (!await async.exists(vswhere)) {
