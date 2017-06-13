@@ -12,6 +12,11 @@ manage their debugging setup within VS Code. There is no need to write a
 the path/architecture/debugger for an executable. All this is determined
 automatically by CMake Tools when a target-based debug is invoked.
 
+**NOTE:** CMake Tools extension assumes ``ms-vscode.cpptools`` is used
+for debugging C/C++ programs.
+If you work with other languages or have another debugger extension,
+you may use integration with launch.json as described below.
+
 ## Selecting a Debug Target
 Once project is configured and generated CMake Tools uses metadata from CMake
 to automatically discover your executables and the paths that they are written to.
