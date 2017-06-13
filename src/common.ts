@@ -167,13 +167,14 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       Promise<api.CompilationInfo>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
-  abstract selectLaunchTarget(): Promise<void>;
   abstract get reconfigured(): vscode.Event<void>;
 
   private _targetChangedEmitter = new vscode.EventEmitter<void>();
   readonly targetChanged = this._targetChangedEmitter.event;
 
   protected _refreshAfterConfigure() {}
+
+  protected noExecutablesMessage: string = 'No targets are available for debugging.';
 
   /**
    * A list of all the disposables we keep track of
@@ -261,6 +262,26 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   protected _writeWorkspaceCacheContent() {
     return writeWorkspaceCache(
         this._workspaceCachePath, this._workspaceCacheContent);
+  }
+
+  public async selectLaunchTarget(): Promise<string | null> {
+    const executableTargets = this.executableTargets;
+    if (!executableTargets) {
+      vscode.window.showWarningMessage(this.noExecutablesMessage);
+      return null;
+    }
+
+    const choices = executableTargets.map(e => ({
+      label: e.name,
+      description: '',
+      detail: e.path,
+    }));
+    const chosen = await vscode.window.showQuickPick(choices);
+    if (!chosen) {
+      return null;
+    }
+    this.currentLaunchTarget = chosen.label;
+    return chosen.detail;
   }
 
   private _ws_server: ws.Server;
