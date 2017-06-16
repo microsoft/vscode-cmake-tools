@@ -65,7 +65,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   const bat = [
     `@echo off`,
     `call "${devbat}" ${args.join(" ")}`,
-    `if NOT ERRORLEVEL 0 exit 1`,
+    `if NOT %ERRORLEVEL% 0 exit 1`,
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}%`);
@@ -81,6 +81,10 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
     }
   });
   const output = res.stdout;
+  if (res.retc !== 0) {
+    console.log(`Error runnig ${devbat}`, output);
+    return;
+  }
   if (output.includes("Invalid host architecture")) {
     return;
   }
