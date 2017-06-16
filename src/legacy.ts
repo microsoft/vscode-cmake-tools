@@ -268,6 +268,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
     constructor(ctx: vscode.ExtensionContext) {
         super(ctx);
         this._initFinished = this._init();
+        this.noExecutablesMessage = 'No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.';
     }
 
     public async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
@@ -387,7 +388,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
 
     public async build(target: Maybe<string> = null): Promise<Number> {
         const res = await super.build(target);
-        if (res == 0) {
+        if (res === 0) {
             await this._refreshAll();
         }
         return res;
@@ -411,26 +412,10 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
     public async setBuildTypeWithoutConfigure() {
         const old_build_path = this.binaryDir;
         const ret = await super.setBuildTypeWithoutConfigure();
-        if (old_build_path != this.binaryDir) {
+        if (old_build_path !== this.binaryDir) {
             await this._setupCMakeCacheWatcher();
         }
         return ret;
-    }
-
-    public async selectLaunchTarget() {
-        if (!this.executableTargets) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
-            return;
-        }
-        const target = await vscode.window.showQuickPick(
-            this.executableTargets.map(e => ({
-                label: e.name,
-                description: e.path,
-            })));
-        if (!target) {
-            return;
-        }
-        this.currentLaunchTarget = target.label;
     }
 
     public stop(): Promise<boolean> {

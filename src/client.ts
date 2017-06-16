@@ -220,19 +220,6 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return 0;
   }
 
-  async selectLaunchTarget() {
-    const choices = this.executableTargets.map(e => ({
-                                                 label: e.name,
-                                                 description: '',
-                                                 detail: e.path,
-                                               }));
-    const chosen = await vscode.window.showQuickPick(choices);
-    if (!chosen) {
-      return;
-    }
-    this.currentLaunchTarget = chosen.label;
-  }
-
   async build(target?: string|null) {
     const retc = await super.build(target);
     if (retc >= 0) {
