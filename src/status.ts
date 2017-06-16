@@ -151,6 +151,9 @@ export class StatusBar implements vscode.Disposable {
     this._buildButton.text =
         this.isBusy ? `$(x) Stop${progress_bar}` : `$(gear) Build:`;
     this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
+    if (this.isBusy) {
+      this._buildButton.show();
+    }
   }
 
   /**
