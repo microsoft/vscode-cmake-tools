@@ -2,6 +2,7 @@ import * as api from './api';
 import * as async from './async';
 import * as util from './util';
 import {Maybe} from './util';
+import { log } from "./logging";
 
 export class Entry implements api.CacheEntry {
   private _type: api.EntryType = api.EntryType.Uninitialized;
@@ -99,9 +100,11 @@ export class CMakeCache {
         docs_acc += /^\/\/(.*)/.exec(line)![1] + ' ';
       } else {
         const match = /^(.*?):(.*?)=(.*)/.exec(line);
-        console.assert(
-            !!match, 'Couldn\'t handle reading cache entry: ' + line);
-        const [_, name, typename, valuestr] = match!;
+        if (!match) {
+          log.error(`Couldn't handle reading cache entry: ${line}`);
+          continue;
+        }
+        const [, name, typename, valuestr] = match;
         if (!name || !typename) continue;
         if (name.endsWith('-ADVANCED') && valuestr === '1') {
           // We skip the ADVANCED property variables. They're a little odd.
@@ -118,9 +121,12 @@ export class CMakeCache {
           }[typename];
           const docs = docs_acc.trim();
           docs_acc = '';
-          console.assert(
-              type !== undefined, `Unknown cache entry type: ${type}`);
-          entries.set(name, new Entry(key, valuestr, type, docs, false));
+          if (type === undefined) {
+            log.error(`Cache entry '${name}' has unknown type: '${typename}'`);
+          }
+          else {
+            entries.set(name, new Entry(key, valuestr, type, docs, false));
+          }
         }
       }
     }

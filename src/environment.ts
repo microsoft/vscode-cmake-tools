@@ -93,8 +93,12 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
               .filter(l => l.length !== 0)
               .reduce<Map<string, string>>((acc, line) => {
                 const mat = /(\w+) := ?(.*)/.exec(line);
-                console.assert(!!mat, line);
-                acc.set(mat![1], mat![2]);
+                if (mat) {
+                  acc.set(mat[1], mat[2]);
+                }
+                else {
+                  console.error(`Error parsing environment variable: ${line}`);
+                }
                 return acc;
               }, new Map());
   return vars;
