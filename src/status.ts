@@ -65,10 +65,10 @@ export class StatusBar implements vscode.Disposable {
     this._environmentSelectionButton.command = 'cmake.selectEnvironments';
     this._environmentSelectionButton.tooltip =
         'Click to change the active build environments';
-      this._reloadVisibility();
+      this.reloadVisibility();
   }
 
-  private _reloadVisibility() {
+  reloadVisibility() {
     const hide = (i: vscode.StatusBarItem) => i.hide();
     const show = (i: vscode.StatusBarItem) => i.show();
     for (const item
@@ -78,11 +78,9 @@ export class StatusBar implements vscode.Disposable {
       setVisible(item, this.visible && !!item.text);
     }
     // Debug button is only visible if cpptools is also installed
-    if (this.visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined) {
-      this._debugButton.show();
-    } else {
-      this._debugButton.hide();
-    }
+    setVisible(this._debugButton,
+               this.visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined
+                   && !!this._debugButton.text);
   }
 
   /**
@@ -94,7 +92,7 @@ export class StatusBar implements vscode.Disposable {
   }
   public set visible(v: boolean) {
     this._visible = v;
-    this._reloadVisibility();
+    this.reloadVisibility();
   }
 
   private _reloadStatusButton() {
@@ -153,6 +151,9 @@ export class StatusBar implements vscode.Disposable {
     this._buildButton.text =
         this.isBusy ? `$(x) Stop${progress_bar}` : `$(gear) Build:`;
     this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
+    if (this.isBusy) {
+      this._buildButton.show();
+    }
   }
 
   /**
@@ -205,6 +206,7 @@ export class StatusBar implements vscode.Disposable {
         this._debugTargetButton.show();
       }
     }
+    this.reloadVisibility();
   }
 
   /**
@@ -280,6 +282,7 @@ export class StatusBar implements vscode.Disposable {
       } else {
         this._environmentSelectionButton.text = 'Select a build environment...';
       }
+      this.reloadVisibility();
     } else {
       this._environmentSelectionButton.hide();
     }

@@ -215,21 +215,9 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         await this._client.sendRequest('codemodel');
     await this._writeWorkspaceCacheContent();
     await this._refreshAfterConfigure();
+    this._setDefaultLaunchTarget();
     this._reconfiguredEmitter.fire();
     return 0;
-  }
-
-  async selectLaunchTarget() {
-    const choices = this.executableTargets.map(e => ({
-                                                 label: e.name,
-                                                 description: '',
-                                                 detail: e.path,
-                                               }));
-    const chosen = await vscode.window.showQuickPick(choices);
-    if (!chosen) {
-      return;
-    }
-    this.currentLaunchTarget = chosen.label;
   }
 
   async build(target?: string|null) {
@@ -271,7 +259,12 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
               filepath: path.normalize(t.artifacts[0]),
               targetType: t.type,
             }))),
-        []);
+        [{
+          type: 'rich' as 'rich',
+          name: this.allTargetName,
+          filepath: 'A special target to build all available targets',
+          targetType: 'META'
+        }]);
   }
 
   protected constructor(private _ctx: vscode.ExtensionContext) {

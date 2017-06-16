@@ -135,7 +135,7 @@ export interface CMakeToolsAPI extends Disposable {
   // Get the path to the active debugging target
   launchTargetProgramPath(): Promise<string | null>;
   // Allow the user to select target to debug
-  selectLaunchTarget(): Promise<void>;
+  selectLaunchTarget(): Promise<string | null>;
   // Show the environment selection quickpick
   selectEnvironments(): Promise<void>;
   // Sets the variant based on keyword settings

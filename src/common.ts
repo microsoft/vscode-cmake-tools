@@ -167,13 +167,14 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       Promise<api.CompilationInfo>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
-  abstract selectLaunchTarget(): Promise<void>;
   abstract get reconfigured(): vscode.Event<void>;
 
   private _targetChangedEmitter = new vscode.EventEmitter<void>();
   readonly targetChanged = this._targetChangedEmitter.event;
 
   protected _refreshAfterConfigure() {}
+
+  protected noExecutablesMessage: string = 'No targets are available for debugging.';
 
   /**
    * A list of all the disposables we keep track of
@@ -261,6 +262,26 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   protected _writeWorkspaceCacheContent() {
     return writeWorkspaceCache(
         this._workspaceCachePath, this._workspaceCacheContent);
+  }
+
+  public async selectLaunchTarget(): Promise<string | null> {
+    const executableTargets = this.executableTargets;
+    if (!executableTargets) {
+      vscode.window.showWarningMessage(this.noExecutablesMessage);
+      return null;
+    }
+
+    const choices = executableTargets.map(e => ({
+      label: e.name,
+      description: '',
+      detail: e.path,
+    }));
+    const chosen = await vscode.window.showQuickPick(choices);
+    if (!chosen) {
+      return null;
+    }
+    this.currentLaunchTarget = chosen.label;
+    return chosen.detail;
   }
 
   private _ws_server: ws.Server;
@@ -572,6 +593,21 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   public set currentLaunchTarget(v: Maybe<string>) {
     this._currentLaunchTarget = v;
     this._statusBar.launchTargetName = v || '';
+  }
+  protected _setDefaultLaunchTarget() {
+    // Check if the currently selected debug target is no longer a target
+    const targets = this.executableTargets;
+    if (targets.findIndex(e => e.name === this.currentLaunchTarget) < 0) {
+      if (targets.length) {
+        this.currentLaunchTarget = targets[0].name;
+      } else {
+        this.currentLaunchTarget = null;
+      }
+    }
+    // If we didn't have a debug target, set the debug target to the first target
+    if (this.currentLaunchTarget === null && targets.length) {
+      this.currentLaunchTarget = targets[0].name;
+    }
   }
 
   /**
@@ -997,6 +1033,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
                  this.activeGenerator) :
              new util.NullParser()));
     this.statusMessage = 'Ready';
+    this._statusBar.reloadVisibility();
     return result.retc;
   }
 

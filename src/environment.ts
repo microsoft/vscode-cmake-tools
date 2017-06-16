@@ -21,8 +21,13 @@ export interface Environment extends PotentialEnvironment {
   variables: Map<string, string>;
 }
 
+interface VSWhereItem {
+  displayName: string;
+  installationPath: string;
+}
+
 interface EnvironmentProvider {
-  getEnvironments(): Promise<PotentialEnvironment>[];
+  getEnvironments(): Promise<Promise<PotentialEnvironment>[]>;
   [_: string]: any;
 }
 
@@ -56,6 +61,58 @@ interface VSDistribution {
   variable: string;
 }
 
+async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<string, string>|undefined> {
+  const bat = [
+    `@echo off`,
+    `call "${devbat}" ${args.join(" ")}`,
+    `if NOT ERRORLEVEL 0 exit 1`,
+  ];
+  for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
+    bat.push(`echo ${envvar} := %${envvar}%`);
+  }
+  const fname = Math.random().toString() + '.bat';
+  const batpath = path.join(vscode.workspace.rootPath!, '.vscode', fname);
+  await util.ensureDirectory(path.dirname(batpath));
+  await util.writeFile(batpath, bat.join('\r\n'));
+  const res = await async.execute(batpath, [], {shell: true});
+  fs.unlink(batpath, err => {
+    if (err) {
+      console.error(`Error removing temporary batch file!`, err);
+    }
+  });
+  const output = res.stdout;
+  if (output.includes("Invalid host architecture")) {
+    return;
+  }
+  if (!output) {
+    console.log(`Environment detection for using ${devbat} failed`);
+    return;
+  }
+  const vars = output.split('\n')
+              .map(l => l.trim())
+              .filter(l => l.length !== 0)
+              .reduce<Map<string, string>>((acc, line) => {
+                const mat = /(\w+) := ?(.*)/.exec(line);
+                console.assert(!!mat, line);
+                acc.set(mat![1], mat![2]);
+                return acc;
+              }, new Map());
+  return vars;
+}
+
+async function tryCreateNewVCEnvironment(where: VSWhereItem, arch: string): Promise<PotentialEnvironment> {
+  const name = where.displayName + ' - ' + arch;
+  const mutex = 'msvc';
+  const common_dir = path.join(where.installationPath, 'Common7', 'Tools');
+  const devbat = path.join(common_dir, 'VsDevCmd.bat');
+  log.verbose('Detecting environment: ' + name);
+  return {
+    name: name,
+    mutex: mutex,
+    variables: await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`])
+  };
+}
+
 // Detect Visual C++ environments
 async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
     Promise<PotentialEnvironment> {
@@ -70,53 +127,11 @@ async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
       if (!await async.exists(vcvarsall)) {
         return {name, mutex};
       }
-      const bat = [
-        `@echo off`,
-        `call "${vcvarsall}" ${arch}`,
-        `if NOT ERRORLEVEL 0 exit 1`,
-      ];
-      for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
-        bat.push(`echo ${envvar} := %${envvar}%`);
+      return {
+        name,
+        mutex,
+        variables: await collectDevBatVars(vcvarsall, [arch]),
       }
-      const fname = Math.random().toString() + '.bat';
-      const batpath = path.join(vscode.workspace.rootPath, '.vscode', fname);
-      await util.ensureDirectory(path.dirname(batpath));
-      await util.writeFile(batpath, bat.join('\r\n'));
-      const prom = new Promise<Maybe<string>>((resolve, reject) => {
-        const pipe = proc.spawn(batpath, [], {shell: true});
-        let stdout_acc = '';
-        pipe.stdout.on('data', (data) => {
-          stdout_acc += data.toString();
-        });
-        pipe.stdout.on('close', () => {
-          resolve(stdout_acc);
-        });
-        pipe.on('exit', (code) => {
-          fs.unlink(batpath, err => {
-            if (err) {
-              console.error(`Error removing temporary batch file!`, err);
-            }
-          });
-          if (code) {
-            resolve(null);
-          }
-        });
-      });
-      const output = await prom;
-      if (!output) {
-        console.log(`Environment detection for ${name} failed`);
-        return {name, mutex};
-      }
-      const variables = output.split('\n')
-                            .map(l => l.trim())
-                            .filter(l => l.length !== 0)
-                            .reduce<Map<string, string>>((acc, line) => {
-                              const mat = /(\w+) := ?(.*)/.exec(line);
-                              console.assert(!!mat, line);
-                              acc.set(mat![1], mat![2]);
-                              return acc;
-                            }, new Map());
-      return {name, mutex, variables};
     }
 
 
@@ -164,8 +179,7 @@ async function tryCreateMinGWEnvironment(dir: string):
     }
 
 const ENVIRONMENTS: EnvironmentProvider[] = [{
-
-  getEnvironments(): Promise<Environment>[]{
+  async getEnvironments(): Promise<Promise<Environment>[]> {
     if (process.platform !== 'win32') {
       return [];
     };
@@ -193,16 +207,43 @@ const ENVIRONMENTS: EnvironmentProvider[] = [{
         []);
     const prom_mingw_environments =
         config.mingwSearchDirs.map(tryCreateMinGWEnvironment);
+    // const new_vs_environments =
     return prom_vs_environments.concat(prom_mingw_environments);
+  }
+}, {
+  async getEnvironments(): Promise<Promise<PotentialEnvironment>[]> {
+    if (process.platform !== 'win32') {
+      return [];
+    }
+    const progfiles: string |undefined = process.env['programfiles(x86)'] || process.env['programfiles'];
+    if (!progfiles) {
+      log.error('Unable to find Program Files directory');
+      return [];
+    }
+    const vswhere = path.join(progfiles, 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
+    if (!await async.exists(vswhere)) {
+      log.verbose('VSWhere is not installed. Not searching for VS 2017');
+      return [];
+    }
+    const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*']);
+    const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
+    type PEnv = Promise<PotentialEnvironment>;
+    return installs.reduce<PEnv[]>((acc, where) =>
+      ['x86', 'amd64', 'arm'].reduce<PEnv[]>((acc, arch) =>
+        acc.concat([tryCreateNewVCEnvironment(where, arch)]), acc),
+      []);
   }
 }];
 
-export function availableEnvironments(): Promise<PotentialEnvironment>[] {
-  return ENVIRONMENTS.reduce<Promise<PotentialEnvironment>[]>(
-      (acc: Promise<PotentialEnvironment>[], provider: EnvironmentProvider) => {
-        return acc.concat(provider.getEnvironments());
-      },
-      []);
+export async function availableEnvironments(): Promise<PotentialEnvironment[]> {
+  const all_envs = [] as PotentialEnvironment[];
+  const prs = ENVIRONMENTS.map(e => e.getEnvironments());
+  const arrs = await Promise.all(prs);
+  for (const arr of arrs) {
+    const envs = await Promise.all(arr);
+    all_envs.push(...envs);
+  }
+  return all_envs;
 }
 
 export class EnvironmentManager {
@@ -214,23 +255,22 @@ export class EnvironmentManager {
     return this._availableEnvironments;
   }
 
-  public readonly environmentsLoaded: Promise<void> =
-      <Promise<void>>Promise.all(availableEnvironments().map(async(pr) => {
-        try {
-          const env = await pr;
-          if (env.variables) {
-            log.info(`Detected available environment "${env.name}`);
-            this._availableEnvironments.set(env.name, {
-              name: env.name,
-              variables: env.variables,
-              mutex: env.mutex,
-              description: env.description,
-            });
-          }
-        } catch (e) {
-          console.error('Error detecting an environment', e);
-        }
-      }));
+  public readonly environmentsLoaded: Promise<void> = (async() => {
+    console.log('Loading environments');
+    const envs = await availableEnvironments();
+    console.log('Environments loaded');
+    for (const env of envs) {
+      if (env.variables) {
+        log.info(`Detected available environment "${env.name}`);
+        this._availableEnvironments.set(env.name, {
+          name: env.name,
+          variables: env.variables,
+          mutex: env.mutex,
+          description: env.description,
+        });
+      }
+    }
+  })();
 
   /**
    * The environments (by name) which are currently active in the workspace

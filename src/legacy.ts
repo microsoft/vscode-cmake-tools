@@ -133,22 +133,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
 
     public set executableTargets(value: api.ExecutableTarget[]) {
         this._executableTargets = value;
-        if (!value) {
-            this.currentLaunchTarget = null;
-            return;
-        }
-        // Check if the currently selected debug target is no longer a target
-        if (value.findIndex(e => e.name === this.currentLaunchTarget) < 0) {
-            if (value.length) {
-                this.currentLaunchTarget = value[0].name;
-            } else {
-                this.currentLaunchTarget = null;
-            }
-        }
-        // If we didn't have a debug target, set the debug target to the first target
-        if (this.currentLaunchTarget === null && value.length) {
-            this.currentLaunchTarget = value[0].name;
-        }
+        this._setDefaultLaunchTarget();
     }
 
     private async _reloadMetaData() {
@@ -197,9 +182,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
                 );
             }
         });
-        if (config.useCMakeServer) {
-            vscode.window.showInformationMessage('Enabling cmake-server support requires that VSCode be restarted');
-        }
     }
 
     private _cmCacheWatcher: vscode.FileSystemWatcher;
@@ -286,6 +268,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
     constructor(ctx: vscode.ExtensionContext) {
         super(ctx);
         this._initFinished = this._init();
+        this.noExecutablesMessage = 'No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.';
     }
 
     public async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
@@ -405,7 +388,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
 
     public async build(target: Maybe<string> = null): Promise<Number> {
         const res = await super.build(target);
-        if (res == 0) {
+        if (res === 0) {
             await this._refreshAll();
         }
         return res;
@@ -429,26 +412,10 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
     public async setBuildTypeWithoutConfigure() {
         const old_build_path = this.binaryDir;
         const ret = await super.setBuildTypeWithoutConfigure();
-        if (old_build_path != this.binaryDir) {
+        if (old_build_path !== this.binaryDir) {
             await this._setupCMakeCacheWatcher();
         }
         return ret;
-    }
-
-    public async selectLaunchTarget() {
-        if (!this.executableTargets) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
-            return;
-        }
-        const target = await vscode.window.showQuickPick(
-            this.executableTargets.map(e => ({
-                label: e.name,
-                description: e.path,
-            })));
-        if (!target) {
-            return;
-        }
-        this.currentLaunchTarget = target.label;
     }
 
     public stop(): Promise<boolean> {

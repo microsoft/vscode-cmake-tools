@@ -35,7 +35,7 @@ export interface CMakeToolsBackend extends vscode.Disposable {
   launchTarget(): Promise<void>;
   debugTarget(): Promise<void>;
   launchTargetProgramPath(): Promise<string | null>;
-  selectLaunchTarget(): Promise<void>;
+  selectLaunchTarget(): Promise<string | null>;
   selectEnvironments(): Promise<void>;
   setActiveVariantCombination(settings: api.VariantKeywordSettings): Promise<void>;
   toggleCoverageDecorations(): void;

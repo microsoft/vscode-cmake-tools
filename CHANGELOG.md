@@ -1,6 +1,13 @@
 
 ## Change History
 
+### **0.10.0**
+- VS 2017 environment detection! Finally! **Note:** We use `vswhere` to find the
+  local Visual Studio installation, and this program is only bundled with
+  Visual Studio 2017 Update 2 (or newer). Please install (at least) update 2
+  for automatic detection to work
+- Lots of small bugfixes and tweaks, and debugging documentation updates. Many thanks to [Yuri Timenkov](https://github.com/ytimenkov).
+
 ### **0.9.0**
 
 - Experimental CMake Server support has landed. [Read more here.](docs/cmake_server.md)

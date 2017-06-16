@@ -11,13 +11,37 @@ import { CodeModelContent } from './server-client';
 import { VariantCombination } from './variants';
 import { log } from './logging';
 
+/**
+ * An interface providing registry of reusable VS Code output windows
+ * so they could be reused from different parts of the extension.
+ */
+export class OutputChannelManager implements vscode.Disposable {
+    private _channels: vscode.OutputChannel[] = [];
+
+    get(name: string): vscode.OutputChannel {
+        let channel = this._channels.find((c) => c.name === name);
+        if (!channel) {
+            channel = vscode.window.createOutputChannel(name);
+            this._channels.push(channel);
+        }
+        return channel;
+    }
+
+    dispose() {
+        for (const channel of this._channels) {
+            channel.dispose();
+        }
+    }
+}
+export const outputChannels = new OutputChannelManager();
+
 export class ThrottledOutputChannel implements vscode.OutputChannel {
   private _channel: vscode.OutputChannel;
   private _accumulatedData: string;
   private _throttler: async.Throttler<void>;
 
   constructor(name: string) {
-    this._channel = vscode.window.createOutputChannel(name);
+    this._channel = outputChannels.get(name);
     this._accumulatedData = '';
     this._throttler = new async.Throttler<void>();
   }

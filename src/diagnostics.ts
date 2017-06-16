@@ -146,7 +146,7 @@ export class CMakeDiagnosticParser extends DiagnosticParser {
     this._cmakeDiag = <FileDiagnostic>{};
     this._cmakeDiag.filepath = path.isAbsolute(filename) ?
         filename :
-        path.join(vscode.workspace.rootPath, filename);
+        path.join(vscode.workspace.rootPath!, filename);
     this._cmakeDiag.key = full;
     const lineNr = Number.parseInt(linestr) - 1;
 
@@ -406,7 +406,7 @@ export class BuildParser extends util.OutputParser {
 
   private parseDiagnosticLine(line: string): Maybe<FileDiagnostic> {
     if (this._activeParser) {
-      var {lineMatch, diagnostic} = this._activeParser.parseLine(line);
+      const {lineMatch, diagnostic} = this._activeParser.parseLine(line);
       if (lineMatch) {
         return diagnostic;
       }
@@ -414,7 +414,7 @@ export class BuildParser extends util.OutputParser {
 
     for (let parser of this._parserCollection.values()) {
       if (parser !== this._activeParser) {
-        var {lineMatch, diagnostic} = parser.parseLine(line);
+        const {lineMatch, diagnostic} = parser.parseLine(line);
         if (lineMatch) {
           this._activeParser = parser;
           return diagnostic;

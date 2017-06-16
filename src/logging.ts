@@ -1,6 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import { outputChannels } from "./util";
 
 export type LogLevel = 'verbose' | 'normal' | 'minimal';
 export const LogLevel = {
@@ -14,7 +15,7 @@ export class Logger {
 
     private get logChannel(): vscode.OutputChannel {
         if (!this._logChannel) {
-            this._logChannel = vscode.window.createOutputChannel('CMake/Build');
+            this._logChannel = outputChannels.get('CMake/Build');
         }
         return this._logChannel!;
     }
@@ -23,7 +24,8 @@ export class Logger {
 
     private onConfigurationChanged(): void {
         const newLevel = vscode.workspace.getConfiguration('cmake').get<LogLevel>('loggingLevel');
-        this.currentLevel = newLevel;
+        if (newLevel)
+            this.currentLevel = newLevel;
     }
 
     public initialize(context: vscode.ExtensionContext) {
@@ -31,24 +33,20 @@ export class Logger {
         this.onConfigurationChanged();
     }
 
-    public dispose() {
-        if (this._logChannel) {
-            this._logChannel.dispose();
-            this._logChannel = undefined;
-        }
-    }
-
     public error(message: string): void {
+        console.error(message);
         this.logChannel.appendLine(message);
     }
 
     public info(message: string): void {
+        console.info(message);
         if (this.currentLevel !== LogLevel.Minimal) {
             this.logChannel.appendLine(message);
         }
     }
 
     public verbose(message: string): void {
+        console.log(message);
         if (this.currentLevel === LogLevel.Verbose) {
             this.logChannel.appendLine(message);
         }
