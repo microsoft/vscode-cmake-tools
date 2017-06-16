@@ -1,6 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import { outputChannels } from "./util";
 
 export type LogLevel = 'verbose' | 'normal' | 'minimal';
 export const LogLevel = {
@@ -14,7 +15,7 @@ export class Logger {
 
     private get logChannel(): vscode.OutputChannel {
         if (!this._logChannel) {
-            this._logChannel = vscode.window.createOutputChannel('CMake/Build');
+            this._logChannel = outputChannels.get('CMake/Build');
         }
         return this._logChannel!;
     }
@@ -30,13 +31,6 @@ export class Logger {
     public initialize(context: vscode.ExtensionContext) {
         vscode.workspace.onDidChangeConfiguration(this.onConfigurationChanged, this, context.subscriptions);
         this.onConfigurationChanged();
-    }
-
-    public dispose() {
-        if (this._logChannel) {
-            this._logChannel.dispose();
-            this._logChannel = undefined;
-        }
     }
 
     public error(message: string): void {
