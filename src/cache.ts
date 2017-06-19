@@ -40,7 +40,7 @@ export class Entry implements api.CacheEntry {
       advanced: boolean) {
     this._key = key;
     this._type = type;
-    if (type == api.EntryType.Bool) {
+    if (type === api.EntryType.Bool) {
       this._value = util.isTruthy(value);
     } else {
       this._value = value;
@@ -101,7 +101,7 @@ export class CMakeCache {
       } else {
         const match = /^(.*?):(.*?)=(.*)/.exec(line);
         if (!match) {
-          log.error(`Couldn't handle reading cache entry: ${line}`);
+          log.verbose(`Couldn't handle reading cache entry: ${line}`);
           continue;
         }
         const [, name, typename, valuestr] = match;
@@ -122,7 +122,7 @@ export class CMakeCache {
           const docs = docs_acc.trim();
           docs_acc = '';
           if (type === undefined) {
-            log.error(`Cache entry '${name}' has unknown type: '${typename}'`);
+            log.verbose(`Cache entry '${name}' has unknown type: '${typename}'`);
           }
           else {
             entries.set(name, new Entry(key, valuestr, type, docs, false));
