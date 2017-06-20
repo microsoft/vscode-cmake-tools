@@ -238,9 +238,7 @@
                     "type": "array",
                     "default": [
                         "Ninja",
-                        "Unix Makefiles",
-                        "MinGW Makefiles",
-                        "NMake Makefiles"
+                        "Unix Makefiles"
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },

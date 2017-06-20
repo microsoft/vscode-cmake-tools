@@ -8,6 +8,7 @@ import * as cache from './cache';
 import { config } from './config';
 import { log } from './logging';
 import * as util from './util';
+import { Generator } from './environment';
 
 const MESSAGE_WRAPPER_RE =
     /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" ==\]\s*([^]*)/;
@@ -363,6 +364,7 @@ export interface ClientInit {
   environment: {[key: string]: string};
   sourceDir: string;
   binaryDir: string;
+  pickGenerator: () => Promise<util.Maybe<Generator>>;
 }
 
 interface ClientInitPrivate extends ClientInit {
@@ -614,6 +616,7 @@ export class CMakeServerClient {
         environment: params.environment,
         onProgress: params.onProgress,
         onDirty: params.onDirty,
+        pickGenerator: params.pickGenerator,
         onCrash: async(retc) => {
           if (!resolved) {
             reject(new StartupError(retc));
@@ -655,14 +658,16 @@ export class CMakeServerClient {
             }
             else {
               // Do clean configure, all parameters are required.
-              const generator = await util.pickGenerator(config.preferredGenerators);
+              const generator = await params.pickGenerator();
               if (!generator) {
                 log.error('None of preferred generators available on the system.');
                 throw new global.Error('Unable to determine CMake Generator to use');
               }
               hsparams.sourceDirectory = params.sourceDir;
-              hsparams.generator = generator;
-              hsparams.toolset = config.toolset || undefined;
+              hsparams.generator = generator.name;
+              hsparams.platform = generator.platform;
+              hsparams.toolset = generator.toolset || config.toolset || undefined;
+              log.info(`[vscode] Configuring using the "${generator.name}" CMake generator`);
             }
 
             const res = await client.sendRequest('handshake', hsparams);

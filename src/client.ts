@@ -291,6 +291,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
             (prog.progressMaximum - prog.progressMinimum);
           this.statusMessage = prog.progressMessage;
         },
+        pickGenerator: () => this.pickGenerator(),
       });
   }
 

@@ -122,7 +122,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
         } else {
             this.cmakeCache = await CMakeCache.fromPath(this.cachePath);
         }
-        this._statusBar.projectName = this.projectName;
         return this.cmakeCache;
     }
 
@@ -175,13 +174,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
         if (!this._metaWatcher) {
             this._setupMetaWatcher();
         }
-        util.testHaveCommand(config.cmakePath).then(exists => {
-            if (!exists) {
-                vscode.window.showErrorMessage(
-                    `Bad CMake executable "${config.cmakePath}". Is it installed and a valid executable?`
-                );
-            }
-        });
     }
 
     private _cmCacheWatcher: vscode.FileSystemWatcher;
@@ -346,13 +338,23 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
             let is_multi_conf = this.isMultiConf;
             if (!this.cmakeCache.exists) {
             this._channel.appendLine('[vscode] Setting up new CMake configuration');
-            const generator = await util.pickGenerator(config.preferredGenerators);
+            const generator = await this.pickGenerator();
             if (generator) {
                 this._channel.appendLine(
-                    '[vscode] Configuring using the "' + generator +
+                    '[vscode] Configuring using the "' + generator.name +
                     '" CMake generator');
-                args.push('-G' + generator);
-                is_multi_conf = util.isMultiConfGenerator(generator);
+                args.push('-G' + generator.name);
+                const platform = generator.platform || config.platform || undefined;
+                if (platform) {
+                    this._channel.appendLine(`[vscode] Platform: ${platform}`);
+                    args.push('-A' + platform);
+                }
+                const toolset = generator.toolset || config.toolset || undefined;
+                if (toolset) {
+                    this._channel.appendLine(`[vscode] Toolset: ${toolset}`);
+                    args.push('-T' + toolset);
+                }
+                is_multi_conf = util.isMultiConfGenerator(generator.name);
             } else {
                 log.error('None of the preferred generators were selected');
             }
