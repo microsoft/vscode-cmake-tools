@@ -42,7 +42,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   }
 
   get executableTargets() {
-    return this.targets.filter(t => t.targetType == 'EXECUTABLE')
+    return this.targets.filter(t => t.targetType === 'EXECUTABLE')
         .map(t => ({
                name: t.name,
                path: t.filepath,
@@ -127,10 +127,10 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     if (!this.codeModel) {
       return null;
     }
-    const config = this.codeModel.configurations.length == 1 ?
+    const config = this.codeModel.configurations.length === 1 ?
         this.codeModel.configurations[0] :
         this.codeModel.configurations.find(
-            c => c.name == this.selectedBuildType);
+            c => c.name === this.selectedBuildType);
     if (!config) {
       return null;
     }
@@ -144,7 +144,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
             const abs_filepath = path.isAbsolute(filepath) ?
                 filepath :
                 path.join(this.sourceDir, filepath);
-            return util.normalizePath(abs_source) ==
+            return util.normalizePath(abs_source) ===
                 util.normalizePath(abs_filepath);
           });
           if (found) {
@@ -241,7 +241,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       return [];
     }
     const config = this._workspaceCacheContent.codeModel.configurations.find(
-        conf => conf.name == this.selectedBuildType);
+        conf => conf.name === this.selectedBuildType);
     if (!config) {
       log.error(
           `Found no matching codemodel config for active build type ${this
@@ -318,7 +318,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       acc.set(
           el.key, new cache.Entry(
                       el.key, el.value, type, el.properties.HELPSTRING,
-                      el.properties.ADVANCED == '1'));
+                      el.properties.ADVANCED === '1'));
       return acc;
     }, new Map<string, cache.Entry>());
   }

@@ -180,7 +180,7 @@ export async function ensureDirectory(dirpath: string): Promise<void> {
     try {
       await async.doVoidAsync(fs.mkdir, dirpath);
     } catch (e) {
-      if (e.code == 'EEXIST') {
+      if (e.code === 'EEXIST') {
         // It already exists, but that's ok
         return;
       }
@@ -249,8 +249,8 @@ export function versionEquals(lhs: Version, rhs: Version|string): boolean {
   if (typeof(rhs) === 'string') {
     return versionEquals(lhs, parseVersion(rhs));
   }
-  return lhs.major == rhs.major && lhs.minor == rhs.minor &&
-      lhs.patch == rhs.patch;
+  return lhs.major === rhs.major && lhs.minor === rhs.minor &&
+      lhs.patch === rhs.patch;
 }
 
 export function versionLess(lhs: Version, rhs: Version|string): boolean {
@@ -490,7 +490,7 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
           const flagstr = iflag.flag;
           if (arg(i).startsWith(flagstr)) {
             const ipath =
-                arg(i) == flagstr ? arg(++i) : arg(i).substr(flagstr.length);
+                arg(i) === flagstr ? arg(++i) : arg(i).substr(flagstr.length);
             const abs_ipath = path.isAbsolute(ipath) ?
                 ipath :
                 path.join(raw.directory, ipath);
@@ -510,7 +510,7 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
         for (const dflag of def_flags) {
           if (arg(i).startsWith(dflag)) {
             const defstr =
-                arg(i) == dflag ? arg(++i) : arg(i).substr(dflag.length);
+                arg(i) === dflag ? arg(++i) : arg(i).substr(dflag.length);
             const def = parseCompileDefinition(defstr);
             definitions[def[0]] = def[1];
             continue next_arg2;

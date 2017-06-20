@@ -99,7 +99,7 @@ export class ConfigurationReader {
     const ctest_path = this._readPrefixed<string>('ctestPath');
     if (!ctest_path) {
       const cmake = this.cmakePath;
-      if (cmake === 'cmake' || cmake == 'cmake.exe') {
+      if (cmake === 'cmake' || cmake === 'cmake.exe') {
         return 'ctest';
       }
       return path.join(path.dirname(cmake), 'ctest')
