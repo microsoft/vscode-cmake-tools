@@ -31,6 +31,10 @@ export class ConfigurationReader {
     return this._readPrefixed<string>('sourceDirectory') as string;
   }
 
+  get configureBeforeBuild(): boolean {
+    return !!this._readPrefixed<boolean>('configureBeforeBuild');
+  }
+
   get saveBeforeBuild(): boolean {
     return !!this._readPrefixed<boolean>('saveBeforeBuild');
   }

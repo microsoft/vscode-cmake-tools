@@ -995,7 +995,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     if (!ok) {
       return -1;
     }
-    if (this.needsReconfigure) {
+    if (this.needsReconfigure && config.configureBeforeBuild) {
       const retc = await this.configure([], false);
       if (!!retc) return retc;
     }
