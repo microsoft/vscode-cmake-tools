@@ -513,24 +513,11 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return cached ? cached : null;
   }
 
-  public replaceVars(str: string): string {
-    const replacements = [
-      ['${buildType}', this.selectedBuildType || 'Unknown'],
-      ['${workspaceRoot}', vscode.workspace.rootPath],
-      [
-        '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath || '.')
-      ],
-      ['${toolset}', config.toolset]
-    ] as [string, string][];
-    return replacements.reduce(
-        (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str);
-  }
-
   /**
    * @brief Read the source directory from the config
    */
   get sourceDir(): string {
-    const dir = this.replaceVars(config.sourceDirectory);
+    const dir = util.replaceVars(config.sourceDirectory);
     return util.normalizePath(dir);
   }
 
@@ -546,7 +533,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * @brief Get the path to the binary dir
    */
   public get binaryDir(): string {
-    const dir = this.replaceVars(config.buildDirectory);
+    const dir = util.replaceVars(config.buildDirectory);
     return util.normalizePath(dir, false);
   }
 
@@ -951,7 +938,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     await util.writeFile(init_cache_path, init_cache_content);
     let prefix = config.installPrefix;
     if (prefix && prefix !== '') {
-      prefix = this.replaceVars(prefix);
+      prefix = util.replaceVars(prefix);
       args.push('-DCMAKE_INSTALL_PREFIX=' + prefix);
     }
 
@@ -1088,7 +1075,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       }
       else if (typeof(value) === 'string') {
         typestr = 'STRING';
-        value = this.replaceVars(value)
+        value = util.replaceVars(value)
         value = util.replaceAll(value, ';', '\\;');
       }
       else if (value instanceof Number || typeof value === 'number') {

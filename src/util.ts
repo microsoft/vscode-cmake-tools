@@ -541,3 +541,16 @@ export function parseCompileDefinition(str: string): [string, string | null] {
 export function pause(time: number): Promise<void> {
     return new Promise<void>(resolve => setTimeout(resolve, time));
 }
+
+export function replaceVars(str: string): string {
+  const replacements = [
+    ['${buildType}', this.selectedBuildType || 'Unknown'],
+    ['${workspaceRoot}', vscode.workspace.rootPath],
+    [
+      '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath || '.')
+    ],
+    ['${toolset}', config.toolset]
+  ] as [string, string][];
+  return replacements.reduce(
+      (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str);
+}
