@@ -219,6 +219,11 @@
                     "default": true,
                     "description": "Save open files before building"
                 },
+                "cmake.buildBeforeRun": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Build the target before running it."
+                },
                 "cmake.clearOutputBeforeBuild": {
                     "type": "boolean",
                     "default": true,
