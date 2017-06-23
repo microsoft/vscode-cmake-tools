@@ -36,6 +36,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
   private _oldPreferredGenerators = config.preferredGenerators;
   private _oldGenerator = config.generator;
   private _cmakePath = config.cmakePath;
+  private _configureEnvironment = config.configureEnvironment;
 
   constructor(private _ctx: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(() => {
@@ -43,11 +44,13 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
         (config.useCMakeServer !== this._cmakeServerWasEnabled) ||
         (config.preferredGenerators !== this._oldPreferredGenerators) ||
         (config.generator !== this._oldGenerator) ||
-        (config.cmakePath !== this._cmakePath);
+        (config.cmakePath !== this._cmakePath) ||
+        (config.configureEnvironment !== this._configureEnvironment);
       this._cmakeServerWasEnabled = config.useCMakeServer;
       this._oldPreferredGenerators = config.preferredGenerators;
       this._oldGenerator = config.generator;
       this._cmakePath = config.cmakePath;
+      this._configureEnvironment = config.configureEnvironment;
       if (do_reload) {
         this.restart();
       }
