@@ -467,7 +467,7 @@ suite("Utility tests", () => {
         test(`Debugger gets environment variables [${tag}]`, async function() {
             const retc = await cmt.build();
             assert.strictEqual(retc, 0);
-            const homedir_varname = process.platform === 'win32' ? 'PROFILE' : 'HOME';
+            const homedir_varname = process.platform === 'win32' ? 'USERPROFILE' : 'HOME';
             const homedir_var = process.env[homedir_varname];
             const outfile = testFilePath('output-file.txt');
             await vscode.workspace.getConfiguration('cmake').update('debugConfig', {

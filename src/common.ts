@@ -976,7 +976,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     const user_config = config.debugConfig;
     Object.assign(real_config, user_config);
     real_config['program'] = target.path;
-    vscode.commands.executeCommand('vscode.startDebug', real_config);
+    await vscode.commands.executeCommand('vscode.startDebug', real_config);
   }
 
   public async prepareConfigure(): Promise<string[]> {
