@@ -552,5 +552,5 @@ export function replaceVars(str: string): string {
     ['${toolset}', config.toolset]
   ] as [string, string][];
   return replacements.reduce(
-      (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str);
+      (accdir, [needle, what]) => replaceAll(accdir, needle, what), str);
 }
