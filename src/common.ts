@@ -533,7 +533,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * @brief Read the source directory from the config
    */
   get sourceDir(): string {
-    const dir = util.replaceVars(config.sourceDirectory);
+    const dir = this.replaceVars(config.sourceDirectory);
     return util.normalizePath(dir);
   }
 
@@ -549,7 +549,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * @brief Get the path to the binary dir
    */
   public get binaryDir(): string {
-    const dir = util.replaceVars(config.buildDirectory);
+    const dir = this.replaceVars(config.buildDirectory);
     return util.normalizePath(dir, false);
   }
 
@@ -954,7 +954,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     await util.writeFile(init_cache_path, init_cache_content);
     let prefix = config.installPrefix;
     if (prefix && prefix !== '') {
-      prefix = util.replaceVars(prefix);
+      prefix = this.replaceVars(prefix);
       args.push('-DCMAKE_INSTALL_PREFIX=' + prefix);
     }
 
@@ -1091,7 +1091,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       }
       else if (typeof(value) === 'string') {
         typestr = 'STRING';
-        value = util.replaceVars(value)
+        value = this.replaceVars(value)
         value = util.replaceAll(value, ';', '\\;');
       }
       else if (value instanceof Number || typeof value === 'number') {
