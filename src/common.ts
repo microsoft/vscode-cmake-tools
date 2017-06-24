@@ -514,6 +514,22 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   }
 
   /**
+   * @brief Replace all predefined variable by their actual values in the
+   * input string.
+   *
+   * This method takes care of variables that depend on CMake configuration,
+   * such as the built type, etc. All variables that do not need to know
+   * of CMake should go to util.replaceVars instead.
+   */
+  public replaceVars(str: string): string {
+    const replacements = [
+      ['${buildType}', this.selectedBuildType || 'Unknown']
+    ] as [string, string][];
+    return util.replaceVars(replacements.reduce(
+        (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str));
+  }
+
+  /**
    * @brief Read the source directory from the config
    */
   get sourceDir(): string {
