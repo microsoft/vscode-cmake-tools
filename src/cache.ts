@@ -39,7 +39,7 @@ export class Entry implements api.CacheEntry {
       advanced: boolean) {
     this._key = key;
     this._type = type;
-    if (type == api.EntryType.Bool) {
+    if (type === api.EntryType.Bool) {
       this._value = util.isTruthy(value);
     } else {
       this._value = value;

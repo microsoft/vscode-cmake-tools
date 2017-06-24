@@ -10,24 +10,28 @@ import { log } from './logging';
 
 type Maybe<T> = util.Maybe<T>;
 
-export interface PotentialEnvironment {
+export interface Generator {
   name: string;
-  description?: string;
-  variables?: Map<string, string>;
-  mutex?: string;
+  platform?: string;
+  toolset?: string;
 }
 
-export interface Environment extends PotentialEnvironment {
+export interface Environment {
+  name: string;
+  description?: string;
+  mutex?: string;
   variables: Map<string, string>;
+  preferredGenerator?: Generator;
 }
 
 interface VSWhereItem {
   displayName: string;
   installationPath: string;
+  installationVersion: string;
 }
 
 interface EnvironmentProvider {
-  getEnvironments(): Promise<Promise<PotentialEnvironment>[]>;
+  getEnvironments(): Promise<Environment[]>;
   [_: string]: any;
 }
 
@@ -100,150 +104,195 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   return vars;
 }
 
-async function tryCreateNewVCEnvironment(where: VSWhereItem, arch: string): Promise<PotentialEnvironment> {
+const VsArchitectures = {
+  'amd64': 'x64',
+  'arm': 'ARM',
+  'amd64_arm': 'ARM',
+};
+
+const VsGenerators = {
+  '15': 'Visual Studio 15 2017',
+  'VS120COMNTOOLS': 'Visual Studio 12 2013',
+  'VS140COMNTOOLS': 'Visual Studio 14 2015',
+}
+
+async function tryCreateNewVCEnvironment(where: VSWhereItem, arch: string): Promise<Environment | undefined> {
   const name = where.displayName + ' - ' + arch;
   const mutex = 'msvc';
   const common_dir = path.join(where.installationPath, 'Common7', 'Tools');
   const devbat = path.join(common_dir, 'VsDevCmd.bat');
   log.verbose('Detecting environment: ' + name);
-  return {
+  const variables = await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`]);
+  if (!variables)
+    return;
+
+  let env: Environment = {
     name: name,
     mutex: mutex,
-    variables: await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`])
+    variables: variables
   };
+
+  const version = /^(\d+)+./.exec(where.installationVersion);
+  if (version) {
+    const generatorName: string | undefined = VsGenerators[version[1]];
+    if (generatorName) {
+      env.preferredGenerator = {
+        name: generatorName,
+        platform: VsArchitectures[arch] as string || undefined,
+      };
+    }
+  }
+
+  return env;
 }
 
 // Detect Visual C++ environments
-async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
-    Promise<PotentialEnvironment> {
-      const name = `${dist.name} - ${arch}`;
-      const mutex = 'msvc';
-      const common_dir: Maybe<string> = process.env[dist.variable];
-      if (!common_dir) {
-        return {name, mutex};
-      }
-      const vcdir = path.normalize(path.join(common_dir, '../../VC'));
-      const vcvarsall = path.join(vcdir, 'vcvarsall.bat');
-      if (!await async.exists(vcvarsall)) {
-        return {name, mutex};
-      }
-      return {
-        name,
-        mutex,
-        variables: await collectDevBatVars(vcvarsall, [arch]),
-      }
-    }
+async function tryCreateVCEnvironment(dist: VSDistribution, arch: string): Promise<Environment | undefined> {
+  const name = `${dist.name} - ${arch}`;
+  const mutex = 'msvc';
+  const common_dir: Maybe<string> = process.env[dist.variable];
+  if (!common_dir) {
+    return;
+  }
+  const vcdir = path.normalize(path.join(common_dir, '../../VC'));
+  const vcvarsall = path.join(vcdir, 'vcvarsall.bat');
+  if (!await async.exists(vcvarsall)) {
+    return;
+  }
+
+  const variables = await collectDevBatVars(vcvarsall, [arch]);
+  if (!variables)
+    return;
+
+  let env: Environment = {
+    name: name,
+    mutex: mutex,
+    variables: variables,
+  };
+
+  const generatorName: string | undefined = VsGenerators[dist.variable];
+  if (generatorName) {
+    env.preferredGenerator = {
+      name: generatorName,
+      platform: VsArchitectures[arch] as string || undefined,
+    };
+  }
+
+  return env;
+}
 
 
 // Detect MinGW environments
-async function tryCreateMinGWEnvironment(dir: string):
-    Promise<PotentialEnvironment> {
-      const ret: PotentialEnvironment = {
-        name: `MinGW - ${dir}`,
-        mutex: 'mingw',
-        description: `Root at ${dir}`,
-      };
-      function prependEnv(key: string, ...values: string[]) {
-        let env_init: string = process.env[key] || '';
-        return values.reduce<string>((acc, val) => {
-          if (acc.length !== 0) {
-            return val + ';' + acc;
-          } else {
-            return val;
-          }
-        }, env_init);
-      };
-      const gcc_path = path.join(dir, 'bin', 'gcc.exe');
-      if (await async.exists(gcc_path)) {
-        ret.variables = new Map<string, string>([
-          [
-            'PATH',
-            prependEnv(
-                'PATH', path.join(dir, 'bin'), path.join(dir, 'git', 'cmd'))
-          ],
-          [
-            'C_INCLUDE_PATH', prependEnv(
-                                  'C_INCLUDE_PATH', path.join(dir, 'include'),
-                                  path.join(dir, 'include', 'freetype'))
-          ],
-          [
-            'CXX_INCLUDE_PATH',
-            prependEnv(
-                'CXX_INCLUDE_PATH', path.join(dir, 'include'),
-                path.join(dir, 'include', 'freetype'))
-          ]
-        ]);
+async function tryCreateMinGWEnvironment(dir: string): Promise<Environment | undefined> {
+  function prependEnv(key: string, ...values: string[]) {
+    let env_init: string = process.env[key] || '';
+    return values.reduce<string>((acc, val) => {
+      if (acc.length !== 0) {
+        return val + ';' + acc;
+      } else {
+        return val;
       }
-
-      return ret;
-    }
-
-const ENVIRONMENTS: EnvironmentProvider[] = [{
-  async getEnvironments(): Promise<Promise<Environment>[]> {
-    if (process.platform !== 'win32') {
-      return [];
+    }, env_init);
+  };
+  const gcc_path = path.join(dir, 'bin', 'gcc.exe');
+  if (await async.exists(gcc_path)) {
+    const ret: Environment = {
+      name: `MinGW - ${dir}`,
+      mutex: 'mingw',
+      description: `Root at ${dir}`,
+      variables: new Map<string, string>([
+        [
+          'PATH',
+          prependEnv(
+            'PATH', path.join(dir, 'bin'), path.join(dir, 'git', 'cmd'))
+        ],
+        [
+          'C_INCLUDE_PATH', prependEnv(
+            'C_INCLUDE_PATH', path.join(dir, 'include'),
+            path.join(dir, 'include', 'freetype'))
+        ],
+        [
+          'CXX_INCLUDE_PATH',
+          prependEnv(
+            'CXX_INCLUDE_PATH', path.join(dir, 'include'),
+            path.join(dir, 'include', 'freetype'))
+        ]
+      ]),
+      preferredGenerator: {
+        name: 'MinGW Makefiles',
+      },
     };
-    const dists: VSDistribution[] =
-                     [
-                       {
-                         name: 'Visual C++ 12.0',
-                         variable: 'VS120COMNTOOLS',
-                       },
-                       {
-                         name: 'Visual C++ 14.0',
-                         variable: 'VS140COMNTOOLS',
-                       }
-                     ];
-    const archs = ['x86', 'amd64', 'amd64_arm'];
-    type PEnv = Promise<PotentialEnvironment>;
-    const prom_vs_environments = dists.reduce<PEnv[]>(
-        (acc, dist) => {
-          return acc.concat(archs.reduce<PEnv[]>((acc, arch) => {
-            const maybe_env = tryCreateVCEnvironment(dist, arch);
-            acc.push(maybe_env);
-            return acc;
-          }, []));
-        },
-        []);
-    const prom_mingw_environments =
-        config.mingwSearchDirs.map(tryCreateMinGWEnvironment);
-    // const new_vs_environments =
-    return prom_vs_environments.concat(prom_mingw_environments);
+    return ret;
   }
-}, {
-  async getEnvironments(): Promise<Promise<PotentialEnvironment>[]> {
-    if (process.platform !== 'win32') {
-      return [];
-    }
-    const progfiles: string |undefined = process.env['programfiles(x86)'] || process.env['programfiles'];
-    if (!progfiles) {
-      log.error('Unable to find Program Files directory');
-      return [];
-    }
-    const vswhere = path.join(progfiles, 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
-    if (!await async.exists(vswhere)) {
-      log.verbose('VSWhere is not installed. Not searching for VS 2017');
-      return [];
-    }
-    const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*']);
-    const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
-    type PEnv = Promise<PotentialEnvironment>;
-    return installs.reduce<PEnv[]>((acc, where) =>
-      ['x86', 'amd64', 'arm'].reduce<PEnv[]>((acc, arch) =>
-        acc.concat([tryCreateNewVCEnvironment(where, arch)]), acc),
-      []);
-  }
-}];
 
-export async function availableEnvironments(): Promise<PotentialEnvironment[]> {
-  const all_envs = [] as PotentialEnvironment[];
-  const prs = ENVIRONMENTS.map(e => e.getEnvironments());
-  const arrs = await Promise.all(prs);
-  for (const arr of arrs) {
-    const envs = await Promise.all(arr);
-    all_envs.push(...envs);
+  return;
+}
+
+const ENVIRONMENTS: EnvironmentProvider[] = [
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      if (process.platform !== 'win32') {
+        return [];
+      };
+      const dists: VSDistribution[] =
+        [
+          {
+            name: 'Visual C++ 12.0',
+            variable: 'VS120COMNTOOLS',
+          },
+          {
+            name: 'Visual C++ 14.0',
+            variable: 'VS140COMNTOOLS',
+          }
+        ];
+      const archs = ['x86', 'amd64', 'amd64_arm'];
+      const all_promices = dists
+        .map((dist) => archs.map((arch) => tryCreateVCEnvironment(dist, arch)))
+        .reduce((acc, proms) => acc.concat(proms));
+      const envs = await Promise.all(all_promices);
+      return <Environment[]>envs.filter((e) => !!e);
+    }
+  },
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      if (process.platform !== 'win32') {
+        return [];
+      }
+      const progfiles: string | undefined = process.env['programfiles(x86)'] || process.env['programfiles'];
+      if (!progfiles) {
+        log.error('Unable to find Program Files directory');
+        return [];
+      }
+      const vswhere = path.join(progfiles, 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
+      if (!await async.exists(vswhere)) {
+        log.verbose('VSWhere is not installed. Not searching for VS 2017');
+        return [];
+      }
+      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*']);
+      const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
+      const archs = ['x86', 'amd64', 'arm'];
+      const all_promices = installs
+        .map((where) => archs.map((arch) => tryCreateNewVCEnvironment(where, arch)))
+        .reduce((acc, proms) => acc.concat(proms));
+      const envs = await Promise.all(all_promices);
+      return <Environment[]>envs.filter((e) => !!e);
+    }
+  },
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      if (process.platform !== 'win32') {
+        return [];
+      };
+      const envs = await Promise.all(config.mingwSearchDirs.map(tryCreateMinGWEnvironment));
+      return <Environment[]>envs.filter((e) => !!e);
+    }
   }
-  return all_envs;
+];
+
+export async function availableEnvironments(): Promise<Environment[]> {
+  const prs = ENVIRONMENTS.map(e => e.getEnvironments());
+  const all_envs = await Promise.all(prs);
+  return all_envs.reduce((acc, envs) => (acc.concat(envs)));
 }
 
 export class EnvironmentManager {
@@ -255,20 +304,13 @@ export class EnvironmentManager {
     return this._availableEnvironments;
   }
 
-  public readonly environmentsLoaded: Promise<void> = (async() => {
+  public readonly environmentsLoaded: Promise<void> = (async () => {
     console.log('Loading environments');
     const envs = await availableEnvironments();
     console.log('Environments loaded');
     for (const env of envs) {
-      if (env.variables) {
-        log.info(`Detected available environment "${env.name}`);
-        this._availableEnvironments.set(env.name, {
-          name: env.name,
-          variables: env.variables,
-          mutex: env.mutex,
-          description: env.description,
-        });
-      }
+      log.info(`Detected available environment "${env.name}`);
+      this._availableEnvironments.set(env.name, env);
     }
   })();
 
@@ -348,5 +390,15 @@ export class EnvironmentManager {
     }, {});
     const proc_env = process.env;
     return util.mergeEnvironment(process.env, active_env);
+  }
+
+  public get preferredEnvironmentGenerators(): Generator[] {
+    const allEnvs = this.availableEnvironments;
+    return this.activeEnvironments.reduce<Generator[]>((gens, envName) => {
+      const env = allEnvs.get(envName);
+      if (env && env.preferredGenerator)
+        gens.push(env.preferredGenerator);
+      return gens;
+    }, []);
   }
 }

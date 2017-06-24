@@ -180,7 +180,7 @@ export async function ensureDirectory(dirpath: string): Promise<void> {
     try {
       await async.doVoidAsync(fs.mkdir, dirpath);
     } catch (e) {
-      if (e.code == 'EEXIST') {
+      if (e.code === 'EEXIST') {
         // It already exists, but that's ok
         return;
       }
@@ -249,8 +249,8 @@ export function versionEquals(lhs: Version, rhs: Version|string): boolean {
   if (typeof(rhs) === 'string') {
     return versionEquals(lhs, parseVersion(rhs));
   }
-  return lhs.major == rhs.major && lhs.minor == rhs.minor &&
-      lhs.patch == rhs.patch;
+  return lhs.major === rhs.major && lhs.minor === rhs.minor &&
+      lhs.patch === rhs.patch;
 }
 
 export function versionLess(lhs: Version, rhs: Version|string): boolean {
@@ -362,61 +362,6 @@ export function execute(
   };
 }
 
-export async function testHaveCommand(
-    program: string, args: string[] = ['--version']): Promise<Boolean> {
-  return await new Promise<Boolean>((resolve, _) => {
-    const pipe = proc.spawn(program, args);
-    pipe.on('error', () => resolve(false));
-    pipe.on('exit', () => resolve(true));
-  });
-}
-
-// Given a list of CMake generators, returns the first one available on this
-// system
-export async function pickGenerator(candidates: string[]):
-    Promise<Maybe<string>> {
-  // The user can override our automatic selection logic in their config
-  const generator = config.generator;
-  if (generator) {
-    // User has explicitly requested a certain generator. Use that one.
-    log.verbose(`Using generator from configuration: ${generator}`);
-    return generator;
-  }
-  log.verbose("Trying to detect generator supported by system");
-  for (const gen of candidates) {
-    const delegate = {
-      Ninja: async() => {
-        return await testHaveCommand('ninja-build') ||
-            await testHaveCommand('ninja');
-      },
-      'MinGW Makefiles': async() => {
-        return process.platform === 'win32' && await testHaveCommand('make');
-      },
-      'NMake Makefiles': async() => {
-        return process.platform === 'win32' &&
-            await testHaveCommand('nmake', ['/?']);
-      },
-      'Unix Makefiles': async() => {
-        return process.platform !== 'win32' && await testHaveCommand('make');
-      }
-    }[gen];
-    if (delegate === undefined) {
-      const vsMatcher = /^Visual Studio (\d{2}) (\d{4})($|\sWin64$|\sARM$)/;
-      if (vsMatcher.test(gen) && process.platform === 'win32') return gen;
-      if (gen.toLowerCase().startsWith('xcode') && process.platform == 'darwin') return gen;
-      vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
-      continue;
-    }
-    if (await delegate.bind(this)()) {
-      return gen;
-    }
-    else {
-      log.info(`Build program for generator ${gen} is not found. Skipping...`);
-    }
-  }
-  return null;
-}
-
 export async function termProc(child: proc.ChildProcess) {
   // Stopping the process isn't as easy as it may seem. cmake --build will
   // spawn child processes, and CMake won't forward signals to its
@@ -490,7 +435,7 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
           const flagstr = iflag.flag;
           if (arg(i).startsWith(flagstr)) {
             const ipath =
-                arg(i) == flagstr ? arg(++i) : arg(i).substr(flagstr.length);
+                arg(i) === flagstr ? arg(++i) : arg(i).substr(flagstr.length);
             const abs_ipath = path.isAbsolute(ipath) ?
                 ipath :
                 path.join(raw.directory, ipath);
@@ -510,7 +455,7 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
         for (const dflag of def_flags) {
           if (arg(i).startsWith(dflag)) {
             const defstr =
-                arg(i) == dflag ? arg(++i) : arg(i).substr(dflag.length);
+                arg(i) === dflag ? arg(++i) : arg(i).substr(dflag.length);
             const def = parseCompileDefinition(defstr);
             definitions[def[0]] = def[1];
             continue next_arg2;
