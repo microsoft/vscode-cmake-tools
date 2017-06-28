@@ -101,7 +101,7 @@ export class CMakeCache {
       } else {
         const match = /^(.*?):(.*?)=(.*)/.exec(line);
         if (!match) {
-          log.verbose(`Couldn't handle reading cache entry: ${line}`);
+          log.error(`Couldn't handle reading cache entry: ${line}`);
           continue;
         }
         const [, name, typename, valuestr] = match;
@@ -122,7 +122,7 @@ export class CMakeCache {
           const docs = docs_acc.trim();
           docs_acc = '';
           if (type === undefined) {
-            log.verbose(`Cache entry '${name}' has unknown type: '${typename}'`);
+            log.error(`Cache entry '${name}' has unknown type: '${typename}'`);
           }
           else {
             entries.set(name, new Entry(key, valuestr, type, docs, false));
