@@ -7,6 +7,16 @@
   Visual Studio 2017 Update 2 (or newer). Please install (at least) update 2
   for automatic detection to work
 - Lots of small bugfixes and tweaks, and debugging documentation updates. Many thanks to [Yuri Timenkov](https://github.com/ytimenkov).
+- **0.10.1**:
+  - Option `cmake.buildBeforeRun` to enable/disable building of a target before
+    running/debugging it. (Default is *enabled*)
+  - Changes in the way Visual Studio generators are loaded and detected. Now,
+    generators for detected build environments are added to the `preferred`
+    list. (Thanks to [Yuri Timenkov](https://github.com/ytimenkov)!)
+  - Fix issue where cmake-server could be restarted too quickly and break
+    itself.
+  - `${variable}` substitution is now supported in the `cmake.*Environment`
+    settings. (Thanks to [Damien Courtois](https://github.com/dcourtois)!)
 
 ### **0.9.0**
 
