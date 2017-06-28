@@ -486,3 +486,21 @@ export function parseCompileDefinition(str: string): [string, string | null] {
 export function pause(time: number): Promise<void> {
     return new Promise<void>(resolve => setTimeout(resolve, time));
 }
+
+/**
+ * @brief Replace all predefined variable by their actual values in the
+ * input string.
+ *
+ * This method handles all variables that do not need to know of CMake.
+ */
+export function replaceVars(str: string): string {
+  const replacements = [
+    ['${workspaceRoot}', vscode.workspace.rootPath],
+    [
+      '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath || '.')
+    ],
+    ['${toolset}', config.toolset]
+  ] as [string, string][];
+  return replacements.reduce(
+      (accdir, [needle, what]) => replaceAll(accdir, needle, what), str);
+}
