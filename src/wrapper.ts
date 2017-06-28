@@ -37,9 +37,15 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
   private _oldGenerator = config.generator;
   private _cmakePath = config.cmakePath;
   private _configureEnvironment = config.configureEnvironment;
+  private _disposables = []  as vscode.Disposable[];
 
   constructor(private _ctx: vscode.ExtensionContext) {
-    vscode.workspace.onDidChangeConfiguration(() => {
+    this._disposables.push(vscode.workspace.onDidChangeConfiguration(async () => {
+      try {
+        await this._backend;
+      } catch (e) {
+        console.error('Error from previous CMake Server instance was ignored:', e);
+      }
       const do_reload =
         (config.useCMakeServer !== this._cmakeServerWasEnabled) ||
         (config.preferredGenerators !== this._oldPreferredGenerators) ||
@@ -52,9 +58,9 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
       this._cmakePath = config.cmakePath;
       this._configureEnvironment = config.configureEnvironment;
       if (do_reload) {
-        this.restart();
+        await this.restart();
       }
-    });
+    }));
   }
 
   /**
@@ -66,6 +72,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
     await this.shutdown();
     this._reconfiguredEmitter.dispose();
     this._targetChangedEventEmitter.dispose();
+    this._disposables.map(t => t.dispose());
   }
 
   /**
