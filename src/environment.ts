@@ -68,8 +68,7 @@ interface VSDistribution {
 async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<string, string>|undefined> {
   const bat = [
     `@echo off`,
-    `call "${devbat}" ${args.join(" ")}`,
-    `if NOT ERRORLEVEL 0 exit 1`,
+    `call "${devbat}" ${args.join(" ")} || exit`,
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}%`);
@@ -85,7 +84,11 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
     }
   });
   const output = res.stdout;
-  if (output.includes("Invalid host architecture")) {
+  if (res.retc !== 0) {
+    console.log(`Error runnig ${devbat}`, output);
+    return;
+  }
+  if (output.includes("Invalid host architecture") || output.includes("Error in script usage")) {
     return;
   }
   if (!output) {
@@ -97,8 +100,12 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
               .filter(l => l.length !== 0)
               .reduce<Map<string, string>>((acc, line) => {
                 const mat = /(\w+) := ?(.*)/.exec(line);
-                console.assert(!!mat, line);
-                acc.set(mat![1], mat![2]);
+                if (mat) {
+                  acc.set(mat[1], mat[2]);
+                }
+                else {
+                  console.error(`Error parsing environment variable: ${line}`);
+                }
                 return acc;
               }, new Map());
   return vars;
