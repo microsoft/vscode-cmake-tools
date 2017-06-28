@@ -20,6 +20,7 @@ import {Maybe} from './util';
 import {VariantManager} from './variants';
 import { log } from './logging';
 import {CMakeToolsBackend} from './backend';
+import { Generator } from './environment';
 
 const CMAKETOOLS_HELPER_SCRIPT = `
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
@@ -219,6 +220,81 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   }
   public get currentEnvironmentVariables() {
     return this._environments.currentEnvironmentVariables;
+  }
+
+  public getPreferredGenerators(): Generator[] {
+    const configGenerators = config.preferredGenerators.map(g => <Generator>{ name: g });
+    return configGenerators.concat(this._environments.preferredEnvironmentGenerators);
+  }
+
+  protected async testHaveCommand(program: string, args: string[] = ['--version']): Promise<Boolean> {
+    const env = util.mergeEnvironment(process.env, this.currentEnvironmentVariables);
+    return await new Promise<Boolean>((resolve, _) => {
+      const pipe = proc.spawn(program, args, {
+        env: env
+      });
+      pipe.on('error', () => resolve(false));
+      pipe.on('exit', () => resolve(true));
+    });
+  }
+
+  // Returns the first one available on this system
+  public async pickGenerator(): Promise<Maybe<Generator>> {
+    // The user can override our automatic selection logic in their config
+    const generator = config.generator;
+    if (generator) {
+      // User has explicitly requested a certain generator. Use that one.
+      log.verbose(`Using generator from configuration: ${generator}`);
+      return {
+        name: generator,
+        platform: config.platform || undefined,
+        toolset: config.toolset || undefined,
+      };
+    }
+    log.verbose("Trying to detect generator supported by system");
+    const platform = process.platform;
+    const candidates = this.getPreferredGenerators();
+    for (const gen of candidates) {
+      const delegate = {
+        Ninja: async () => {
+          return await this.testHaveCommand('ninja-build') ||
+            await this.testHaveCommand('ninja');
+        },
+        'MinGW Makefiles': async () => {
+          return platform === 'win32' && await this.testHaveCommand('make')
+            || await this.testHaveCommand('mingw32-make');
+        },
+        'NMake Makefiles': async () => {
+          return platform === 'win32' &&
+            await this.testHaveCommand('nmake', ['/?']);
+        },
+        'Unix Makefiles': async () => {
+          return platform !== 'win32' && await this.testHaveCommand('make');
+        }
+      }[gen.name];
+      if (!delegate) {
+        const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
+        if (platform === 'win32' && vsMatch) {
+          return {
+            name: vsMatch[1],
+            platform: gen.platform || vsMatch[2],
+            toolset: gen.toolset,
+          };
+        }
+        if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
+          return gen;
+        }
+        vscode.window.showErrorMessage('Unknown CMake generator "' + gen.name + '"');
+        continue;
+      }
+      if (await delegate.bind(this)()) {
+        return gen;
+      }
+      else {
+        log.info(`Build program for generator ${gen.name} is not found. Skipping...`);
+      }
+    }
+    return null;
   }
 
   /**
@@ -513,17 +589,20 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return cached ? cached : null;
   }
 
+  /**
+   * @brief Replace all predefined variable by their actual values in the
+   * input string.
+   *
+   * This method takes care of variables that depend on CMake configuration,
+   * such as the built type, etc. All variables that do not need to know
+   * of CMake should go to util.replaceVars instead.
+   */
   public replaceVars(str: string): string {
     const replacements = [
-      ['${buildType}', this.selectedBuildType || 'Unknown'],
-      ['${workspaceRoot}', vscode.workspace.rootPath],
-      [
-        '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath || '.')
-      ],
-      ['${toolset}', config.toolset]
+      ['${buildType}', this.selectedBuildType || 'Unknown']
     ] as [string, string][];
-    return replacements.reduce(
-        (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str);
+    return util.replaceVars(replacements.reduce(
+        (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str));
   }
 
   /**
@@ -872,6 +951,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
           `The current debug target "${this.currentLaunchTarget}" no longer exists. Select a new target to debug.`);
           return null;
     }
+    const build_before = config.buildBeforeRun;
+    if (!build_before) return target;
+
     const build_retc = await this.build(target.name);
     if (build_retc !== 0) return null;
     return target;
@@ -900,22 +982,13 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     const user_config = config.debugConfig;
     Object.assign(real_config, user_config);
     real_config['program'] = target.path;
-    vscode.commands.executeCommand('vscode.startDebug', real_config);
+    await vscode.commands.executeCommand('vscode.startDebug', real_config);
   }
 
   public async prepareConfigure(): Promise<string[]> {
     const cmake_cache_path = this.cachePath;
 
     const args = [] as string[];
-    const toolset = config.toolset;
-    if (toolset) {
-      args.push('-T' + toolset);
-    }
-
-    const platform = config.platform;
-    if (platform) {
-      args.push('-A' + platform);
-    }
 
     const settings = Object.assign({}, config.configureSettings);
     if (!this.isMultiConf) {

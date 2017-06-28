@@ -35,20 +35,32 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
   private _cmakeServerWasEnabled = config.useCMakeServer;
   private _oldPreferredGenerators = config.preferredGenerators;
   private _oldGenerator = config.generator;
+  private _cmakePath = config.cmakePath;
+  private _configureEnvironment = config.configureEnvironment;
+  private _disposables = []  as vscode.Disposable[];
 
   constructor(private _ctx: vscode.ExtensionContext) {
-    vscode.workspace.onDidChangeConfiguration(() => {
-      const do_reload =
-        (config.useCMakeServer != this._cmakeServerWasEnabled) ||
-        (config.preferredGenerators !== this._oldPreferredGenerators) ||
-        (config.generator !== this._oldGenerator);
-      if (do_reload) {
-        this.restart();
+    this._disposables.push(vscode.workspace.onDidChangeConfiguration(async () => {
+      try {
+        await this._backend;
+      } catch (e) {
+        console.error('Error from previous CMake Server instance was ignored:', e);
       }
+      const do_reload =
+        (config.useCMakeServer !== this._cmakeServerWasEnabled) ||
+        (config.preferredGenerators !== this._oldPreferredGenerators) ||
+        (config.generator !== this._oldGenerator) ||
+        (config.cmakePath !== this._cmakePath) ||
+        (config.configureEnvironment !== this._configureEnvironment);
       this._cmakeServerWasEnabled = config.useCMakeServer;
       this._oldPreferredGenerators = config.preferredGenerators;
       this._oldGenerator = config.generator;
-    });
+      this._cmakePath = config.cmakePath;
+      this._configureEnvironment = config.configureEnvironment;
+      if (do_reload) {
+        await this.restart();
+      }
+    }));
   }
 
   /**
@@ -60,6 +72,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
     await this.shutdown();
     this._reconfiguredEmitter.dispose();
     this._targetChangedEventEmitter.dispose();
+    this._disposables.map(t => t.dispose());
   }
 
   /**
@@ -178,13 +191,16 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
   async start(): Promise<void> {
     try {
       log.verbose('Starting CMake Tools backend');
+      const version_ex = await util.execute(this._cmakePath, ['--version']).onComplete;
+      if (version_ex.retc !== 0 || !version_ex.stdout) {
+        throw new Error(`Bad CMake executable "${this._cmakePath}". Is it installed and a valid executable?`);
+      }
+
       let did_start = false;
       if (config.useCMakeServer) {
-        const cmpath = config.cmakePath;
-        const version_ex = await util.execute(config.cmakePath, [ '--version' ]).onComplete;
         console.assert(version_ex.stdout);
         const version_re = /cmake version (.*?)\r?\n/;
-        const version = util.parseVersion(version_re.exec(version_ex.stdout !) ![1]);
+        const version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
         // We purposefully exclude versions <3.7.1, which have some major CMake
         // server bugs
         if (util.versionGreater(version, '3.7.1')) {
@@ -192,7 +208,7 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
           did_start = true;
         } else {
           log.info(
-              'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
+            'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer first.');
         }
       }
       if (!did_start) {
@@ -204,19 +220,19 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
         be.targetChanged(() => this._targetChangedEventEmitter.fire());
         be.reconfigured(() => this._reconfiguredEmitter.fire());
       });
-      // Fall back to use the legacy plugin
-      // const cmt = new legacy.CMakeTools(this._ctx);
-      // const impl = await cmt.initFinished;
     } catch (error) {
       log.error(error);
       this._backend = Promise.reject(error);
       this.showError();
     }
+    await this._backend;
   }
 
   async shutdown() {
     log.verbose('Shutting down CMake Tools backend');
-    const be = await this._backend;
+    const old_be = this._backend;
+    this._backend = Promise.reject(new Error('Invalid backend promise'));
+    const be = await old_be;
     if (be instanceof client.ServerClientCMakeTools) {
       await be.dangerousShutdownClient();
     }

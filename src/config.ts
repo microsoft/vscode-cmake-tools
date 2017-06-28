@@ -1,6 +1,7 @@
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as util from './util';
 
 import {Maybe} from './util';
 
@@ -9,6 +10,15 @@ export class ConfigurationReader {
     const config = vscode.workspace.getConfiguration('cmake');
     const value = config.get(key);
     return (value !== undefined) ? value as T : default_;
+  }
+
+  private _escapePaths(obj: Object) {
+    return Object.getOwnPropertyNames(obj).reduce(
+      (acc, key: string) => {
+        acc[key] = util.replaceVars(obj[key]);
+        return acc;
+      },
+      {});
   }
 
   private _readPrefixed<T>(key): T|null {
@@ -29,6 +39,10 @@ export class ConfigurationReader {
 
   get sourceDirectory(): string {
     return this._readPrefixed<string>('sourceDirectory') as string;
+  }
+
+  get buildBeforeRun(): boolean {
+    return !!this._readPrefixed<boolean>('buildBeforeRun');
   }
 
   get saveBeforeBuild(): boolean {
@@ -99,7 +113,7 @@ export class ConfigurationReader {
     const ctest_path = this._readPrefixed<string>('ctestPath');
     if (!ctest_path) {
       const cmake = this.cmakePath;
-      if (cmake === 'cmake' || cmake == 'cmake.exe') {
+      if (cmake === 'cmake' || cmake === 'cmake.exe') {
         return 'ctest';
       }
       return path.join(path.dirname(cmake), 'ctest')
@@ -114,19 +128,19 @@ export class ConfigurationReader {
   }
 
   get environment() {
-    return this._readPrefixed<{[key: string]: string}>('environment') || {};
+    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('environment') || {});
   }
 
   get configureEnvironment() {
-    return this._readPrefixed<{[key: string]: string}>('configureEnvironment') || {};
+    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('configureEnvironment') || {});
   }
 
   get buildEnvironment() {
-    return this._readPrefixed<{[key: string]: string}>('buildEnvironment') || {};
+    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('buildEnvironment') || {});
   }
 
   get testEnvironment() {
-    return this._readPrefixed<{[key: string]: string}>('testEnvironment') || {};
+    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('testEnvironment') || {});
   }
 
   get defaultVariants(): Object {

@@ -32,6 +32,7 @@ quick summary of options that can be tweaked, should you wish to do so:
 - ``cmake.saveBeforeBuild`` tells CMake Tools to save all open text documents
   after the build command is invoked, but before performing the build. This
   defaults to being _enabled_.
+- ``cmake.buildBeforeRun`` Always build the target before running.
 - ``cmake.preferredGenerator`` tells CMake Tools what CMake genertors to prefer.
   The first supported generator in this list is used when configuring a project
   for the first time. If a project is already configured, the generator will not

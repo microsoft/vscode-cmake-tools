@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.10.0",
+    "version": "0.10.1",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -219,6 +219,11 @@
                     "default": true,
                     "description": "Save open files before building"
                 },
+                "cmake.buildBeforeRun": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Build the target before running it."
+                },
                 "cmake.clearOutputBeforeBuild": {
                     "type": "boolean",
                     "default": true,
@@ -238,9 +243,7 @@
                     "type": "array",
                     "default": [
                         "Ninja",
-                        "Unix Makefiles",
-                        "MinGW Makefiles",
-                        "NMake Makefiles"
+                        "Unix Makefiles"
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },
