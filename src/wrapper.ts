@@ -225,11 +225,14 @@ export class CMakeToolsWrapper implements api.CMakeToolsAPI, vscode.Disposable {
       this._backend = Promise.reject(error);
       this.showError();
     }
+    await this._backend;
   }
 
   async shutdown() {
     log.verbose('Shutting down CMake Tools backend');
-    const be = await this._backend;
+    const old_be = this._backend;
+    this._backend = Promise.reject(new Error('Invalid backend promise'));
+    const be = await old_be;
     if (be instanceof client.ServerClientCMakeTools) {
       await be.dangerousShutdownClient();
     }
