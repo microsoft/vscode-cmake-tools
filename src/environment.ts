@@ -85,7 +85,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   });
   const output = res.stdout;
   if (res.retc !== 0) {
-    console.log(`Error runnig ${devbat}`, output);
+    console.log(`Error running ${devbat}`, output);
     return;
   }
   if (output.includes("Invalid host architecture") || output.includes("Error in script usage")) {
