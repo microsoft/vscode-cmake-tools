@@ -1084,7 +1084,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
           `The current debug target "${this.currentLaunchTarget}" no longer exists. Select a new target to debug.`);
           return null;
     }
-    const build_before = true;//config.buildBeforeRun;
+    const build_before = config.buildBeforeRun;
     if (!build_before) return target;
 
     const build_retc = await this.build(target.name);
