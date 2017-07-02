@@ -429,7 +429,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     // a lot of headaches understanding why things don't work as expected.
     // So the best way to avoid this is to just report the error and clear the file.
     // This way the user instantly notice that something's wrong, and knows why.
-    if (this.selectedBuildType) {
+    if (this._workspaceCacheContent.variant) {
       if (target === undefined) {
         vscode.window.showWarningMessage(
           "CMake Tools: Couldn't update cpptools configuration. " +
