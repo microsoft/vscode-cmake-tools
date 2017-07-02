@@ -67,3 +67,18 @@ quick summary of options that can be tweaked, should you wish to do so:
   headers, and libraries. There is currently one default search directory,
   `C:\MinGW`. If more than one directory in this list matches, each matching
   directory will be an available MinGW environment.
+
+### The following are options related to the CppTools integration
+
+- ``cmake.cpptools.enabled`` if true, CMake Tools will create/update the `c_cpp_properties.json` file
+needed by cpptools to make Intellisense work correctly. If true, this file will always be kept in
+sync with the current build type and target.
+- ``cmake.cpptools.defaultTarget`` is the name of the default target to use to update the `c_cpp_properties.json`
+file (e.g. when the current target is `all` or any other invalid target which doesn't produce
+any defines / include paths)
+- ``cmake.cpptools.intelliSenseMode`` for the `intelliSenseMode` field in `c_cpp_properties.json`
+- ``cmake.cpptools.limitSymbolsToIncludedHeaders`` for the `limitSymbolsToIncludedHeaders` field in `c_cpp_properties.json`
+- ``cmake.cpptools.databaseFilename`` for the `databaseFilename` field in `c_cpp_properties.json`
+- ``cmake.cpptools.additionalIncludePaths`` is a list of additional include paths that will be written in the
+`c_cpp_properties.json` file. This is needed for standard include path (CMake doesn't offer any way of getting
+those currently, so this option is needed in the meantime)

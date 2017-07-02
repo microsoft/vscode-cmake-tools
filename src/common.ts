@@ -340,6 +340,131 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         this._workspaceCachePath, this._workspaceCacheContent);
   }
 
+  /**
+   * Find a target in our code model
+   */
+  protected _findTarget(codeModel, targetName) {
+    if (codeModel) {
+      const targets = codeModel.configurations[0].projects[0].targets;
+      for (var t in targets) {
+        const target = targets[t];
+        if (target.name === targetName) {
+          return target;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Extract the include paths from the given target
+   */
+  protected _getIncludePaths(target) {
+    var includePaths: string[] = [];
+
+    // add the config paths
+    includePaths = includePaths.concat(config.cppToolsAdditionalIncludePaths);
+
+    // add the target paths
+    if (target) {
+      for (var f in target.fileGroups) {
+        const fileGroup = target.fileGroups[f];
+        if (fileGroup.language === "CXX") {
+          if (fileGroup.includePath) {
+            for (var p in fileGroup.includePath) {
+              if (fileGroup.includePath[p].path) {
+                includePaths.push(fileGroup.includePath[p].path);
+              }
+            }
+          }
+        }
+      }
+    }
+    return includePaths;
+  }
+
+  /**
+   * Extract the defines from the given target
+   */
+  protected _getDefines(target) {
+    var defines: string[] = [];
+    if (target) {
+      for (var f in target.fileGroups) {
+        const fileGroup = target.fileGroups[f];
+        if (fileGroup.language === "CXX") {
+          const compileFlags: string = fileGroup.compileFlags;
+          const defineMatches = compileFlags.match(/-D([^ ]+)/g);
+          if (defineMatches) {
+            for (var d in defineMatches) {
+              defines.push(defineMatches[d]);
+            }
+          }
+        }
+      }
+    }
+    return defines;
+  }
+
+  /**
+   * Generate a c_cpp_properties.json file with the include path, defines, etc.
+   * of the current build type
+   */
+  protected _generateCppToolsSettings() {
+    // if the integration is disabled, leave c_cpp_properties.json alone !
+    if (config.cppToolsEnabled === false) {
+      return;
+    }
+
+    // get the target
+    const targetName = this._defaultBuildTarget && this._defaultBuildTarget !== "all" ?
+      this._defaultBuildTarget :
+      config.cppToolsDefaultTarget;
+    const target = this._findTarget(this._workspaceCacheContent.codeModel, targetName);
+
+    // check for errors and notify the user accordingly without returning
+    // note: in case of errors, we still want to update the c_cpp_settings.json properties
+    // if we didn't update it, it would continue using the previous file, resulting in a
+    // really bad thing: Intellisense might still work, so the user might think that everything
+    // went well, while a few defines might be wrong, some include paths too, leading  to
+    // a lot of headaches understanding why things don't work as expected.
+    // So the best way to avoid this is to just report the error and clear the file.
+    // This way the user instantly notice that something's wrong, and knows why.
+    if (this.selectedBuildType) {
+      if (target === undefined) {
+        vscode.window.showWarningMessage(
+          "CMake Tools: Couldn't update cpptools configuration. " +
+          "Make sure the build type is selected and `cmake.cpptools.defaultTarget` " +
+          "is set to a valid target name."
+        );
+      }
+    }
+
+    // create the c_cpp_properties.json content
+    const includePaths = this._getIncludePaths(target);
+    const defines = this._getDefines(target);
+    const settings = {
+      "configurations": [
+        {
+          "name": os.platform(),
+          "includePath": includePaths,
+          "defines": defines,
+          "intelliSenseMode": config.cppToolsIntelliSenseMode,
+          "browse": {
+              "path": includePaths,
+              "limitSymbolsToIncludedHeaders": config.cppToolsLimitSymbolsToIncludedHeaders,
+              "databaseFilename": config.cppToolsDatabaseFilename
+          }
+        }
+      ]
+    };
+
+    // and update it
+    util.writeFile(
+      path.join(vscode.workspace.rootPath, ".vscode", "c_cpp_properties.json"),
+      JSON.stringify(settings, null, 2)
+    );
+  }
+
   public async selectLaunchTarget(): Promise<string | null> {
     const executableTargets = this.executableTargets;
     if (!executableTargets) {
@@ -481,6 +606,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     // Refresh any test results that may be left aroud from a previous run
     this._ctestController.reloadTests(
         this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
+
+    // we're initialized, time to handle the cpptools integration !
+    this._generateCppToolsSettings();
 
     return this;
   }
@@ -648,6 +776,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     this._defaultBuildTarget = v;
     this._statusBar.targetName = v || this.allTargetName;
     this._targetChangedEmitter.fire();
+    this._generateCppToolsSettings();
   }
 
   /**
@@ -850,7 +979,11 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   public async setBuildType(): Promise<Number> {
     const do_configure = await this.setBuildTypeWithoutConfigure();
     if (do_configure) {
-      return await this.configure();
+     const result = await this.configure();
+      if (result === 0) {
+        this._generateCppToolsSettings();
+      }
+      return result;
     } else {
       return -1;
     }
@@ -951,7 +1084,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
           `The current debug target "${this.currentLaunchTarget}" no longer exists. Select a new target to debug.`);
           return null;
     }
-    const build_before = config.buildBeforeRun;
+    const build_before = true;//config.buildBeforeRun;
     if (!build_before) return target;
 
     const build_retc = await this.build(target.name);

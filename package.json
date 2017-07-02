@@ -573,6 +573,36 @@
                         "normal",
                         "minimal"
                     ]
+                },
+                "cmake.cpptools.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enabled automatic generation of `c_cpp_properties.json` (needed by cpptools)."
+                },
+                "cmake.cpptools.databaseFilename": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Intellisense database filename."
+                },
+                "cmake.cpptools.intelliSenseMode": {
+                    "type": "string",
+                    "default": "clang-x64",
+                    "description": "Intellisense mode."
+                },
+                "cmake.cpptools.limitSymbolsToIncludedHeaders": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Limit symbols search to included headers."
+                },
+                "cmake.cpptools.defaultTarget": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Default target used to generate `c_cpp_properties.json`."
+                },
+                "cmake.cpptools.additionalIncludePaths": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Additional list of include paths to add to `c_cpp_properties.json`."
                 }
             }
         },
