@@ -358,6 +358,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
 
   /**
    * Extract the include paths from the given target
+   *
+   * @todo Check for duplicated paths ?
    */
   protected _getIncludePaths(target) {
     var includePaths: string[] = [];
@@ -385,6 +387,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
 
   /**
    * Extract the defines from the given target
+   *
+   * @todo Check for duplicated defines ?
    */
   protected _getDefines(target) {
     var defines: string[] = [];
@@ -392,6 +396,14 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       for (var f in target.fileGroups) {
         const fileGroup = target.fileGroups[f];
         if (fileGroup.language === "CXX") {
+          // handle explicit defines list
+          if (fileGroup.defines) {
+            for (var d in fileGroup.defines) {
+              defines.push(fileGroup.defines[d]);
+            }
+          }
+
+          // scan the compil flags
           const compileFlags: string = fileGroup.compileFlags;
           const defineMatches = compileFlags.match(/-D([^ ]+)/g);
           if (defineMatches) {
