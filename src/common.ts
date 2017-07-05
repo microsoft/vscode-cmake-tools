@@ -358,8 +358,6 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
 
   /**
    * Extract the include paths from the given target
-   *
-   * @todo Check for duplicated paths ?
    */
   protected _getIncludePaths(target) {
     var includePaths: string[] = [];
@@ -374,8 +372,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         if (fileGroup.language === "CXX") {
           if (fileGroup.includePath) {
             for (var p in fileGroup.includePath) {
-              if (fileGroup.includePath[p].path) {
-                includePaths.push(fileGroup.includePath[p].path);
+              const includePath = fileGroup.includePath[p].path;
+              if (includePath && includePaths.indexOf(includePath) === -1) {
+                includePaths.push(includePath);
               }
             }
           }
@@ -394,8 +393,6 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
 
   /**
    * Extract the defines from the given target
-
-   * @todo Check for duplicated defines ?
    */
   protected _getDefines(target) {
     var defines: string[] = [];
@@ -415,7 +412,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
           CommonCMakeToolsBase._defineRegexp.lastIndex = 0;
           var result;
           while ((result = CommonCMakeToolsBase._defineRegexp.exec(compileFlags)) !== null) {
-            defines.push(result[1]);
+            if (defines.indexOf(result[1]) === -1) {
+              defines.push(result[1]);
+            }
           }
         }
       }
