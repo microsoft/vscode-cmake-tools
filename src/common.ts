@@ -386,8 +386,15 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   }
 
   /**
-   * Extract the defines from the given target
+   * RegExp used to identify defines
    *
+   * @see _getDefines
+   */
+  private static _defineRegexp = /-D([^ ]+)/g
+
+  /**
+   * Extract the defines from the given target
+
    * @todo Check for duplicated defines ?
    */
   protected _getDefines(target) {
@@ -405,11 +412,10 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
 
           // scan the compil flags
           const compileFlags: string = fileGroup.compileFlags;
-          const defineMatches = compileFlags.match(/-D([^ ]+)/g);
-          if (defineMatches) {
-            for (var d in defineMatches) {
-              defines.push(defineMatches[d]);
-            }
+          CommonCMakeToolsBase._defineRegexp.lastIndex = 0;
+          var result;
+          while ((result = CommonCMakeToolsBase._defineRegexp.exec(compileFlags)) !== null) {
+            defines.push(result[1]);
           }
         }
       }
