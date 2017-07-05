@@ -178,7 +178,10 @@ export class VariantManager implements vscode.Disposable {
 
     const workdir = vscode.workspace.rootPath!;
     const yaml_file = path.join(workdir, 'cmake-variants.yaml');
-    const json_file = path.join(workdir, 'cmake-variants.json');
+    const json_files = [
+      path.join(workdir, 'cmake-variants.json'),
+      path.join(workdir, '.vscode', 'cmake-variants.json')
+    ];
     let variants: any;
     if (await async.exists(yaml_file)) {
       const content = (await async.readFile(yaml_file)).toString();
@@ -189,17 +192,26 @@ export class VariantManager implements vscode.Disposable {
             `${yaml_file} is syntactically invalid.`);
         variants = config.defaultVariants;
       }
-    } else if (await async.exists(json_file)) {
-      const content = (await async.readFile(json_file)).toString();
-      try {
-        variants = JSON.parse(content);
-      } catch (e) {
-        vscode.window.showErrorMessage(
-            `${json_file} is syntactically invalid.`);
+    } else {
+      // iterate on the json files
+      for (let json_file of json_files) {
+        if (await async.exists(json_file)) {
+          const content = (await async.readFile(json_file)).toString();
+          try {
+            variants = JSON.parse(content);
+            break;
+          } catch (e) {
+            vscode.window.showErrorMessage(
+                `${json_file} is syntactically invalid.`);
+            variants = config.defaultVariants;
+          }
+        }
+      }
+
+      // check if it was loaded
+      if (variants === undefined) {
         variants = config.defaultVariants;
       }
-    } else {
-      variants = config.defaultVariants;
     }
     const validated = validate(variants);
     if (!validated) {
