@@ -512,6 +512,11 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     });
 
     ready.then(() => {
+      // on reconfiguration, we need to resync c/cpp properties
+      this.reconfigured(() => {
+        this._generateCppToolsSettings();
+      });
+
       const websock_server = this._ws_server =
           ws.createServer({server: editor_server});
       websock_server.on('connection', (client) => {
