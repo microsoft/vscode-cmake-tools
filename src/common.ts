@@ -341,41 +341,46 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   }
 
   /**
-   * Find a target in our code model
+   * Find all specified targets
+   *
+   * @param codeModel
+   *  CMake code model object
+   *
+   * @param targetName
+   *  Name of the target(s) to find. You can specify multiple targets
+   *  by separating them with a semi-colon.
    */
-  protected _findTarget(codeModel, targetName) {
+  protected _findTargets(codeModel, targetName) {
+    var selectedTargets: any[] = [];
     if (codeModel) {
+      const targetNames = targetName.split(";");
       const targets = codeModel.configurations[0].projects[0].targets;
-      for (var t in targets) {
-        const target = targets[t];
-        if (target.name === targetName) {
-          return target;
+      for (const target of targets) {
+        if (targetNames.indexOf(target.name) !== -1) {
+          selectedTargets.push(target);
         }
       }
     }
-    return undefined;
+    return selectedTargets;
   }
 
   /**
-   * Extract the include paths from the given target
+   * Extract the include paths from the given targets
    */
-  protected _getIncludePaths(target) {
+  protected _getIncludePaths(targets) {
     var includePaths: string[] = [];
 
     // add the config paths
     includePaths = includePaths.concat(config.cppToolsAdditionalIncludePaths);
 
     // add the target paths
-    if (target) {
-      for (var f in target.fileGroups) {
-        const fileGroup = target.fileGroups[f];
-        if (fileGroup.language === "CXX") {
-          if (fileGroup.includePath) {
-            for (var p in fileGroup.includePath) {
-              const includePath = fileGroup.includePath[p].path;
-              if (includePath && includePaths.indexOf(includePath) === -1) {
-                includePaths.push(includePath);
-              }
+    for (const target of targets) {
+      for (const fileGroup of target.fileGroups) {
+        if (fileGroup.language === "CXX" && fileGroup.includePath) {
+          for (const includePath of fileGroup.includePath) {
+            const normalizedPath = path.normalize(includePath.path);
+            if (includePath.path && includePaths.indexOf(normalizedPath) === -1) {
+              includePaths.push(normalizedPath);
             }
           }
         }
@@ -392,18 +397,17 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   private static _defineRegexp = /-D([^ ]+)/g
 
   /**
-   * Extract the defines from the given target
+   * Extract the defines from the given targets
    */
-  protected _getDefines(target) {
+  protected _getDefines(targets) {
     var defines: string[] = [];
-    if (target) {
-      for (var f in target.fileGroups) {
-        const fileGroup = target.fileGroups[f];
+    for (const target of targets) {
+      for (const fileGroup of target.fileGroups) {
         if (fileGroup.language === "CXX") {
           // handle explicit defines list
           if (fileGroup.defines) {
-            for (var d in fileGroup.defines) {
-              defines.push(fileGroup.defines[d]);
+            for (const define of fileGroup.defines) {
+              defines.push(define);
             }
           }
 
@@ -436,7 +440,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     const targetName = this._defaultBuildTarget && this._defaultBuildTarget !== "all" ?
       this._defaultBuildTarget :
       config.cppToolsDefaultTarget;
-    const target = this._findTarget(this._workspaceCacheContent.codeModel, targetName);
+    const targets = this._findTargets(this._workspaceCacheContent.codeModel, targetName);
 
     // check for errors and notify the user accordingly without returning
     // note: in case of errors, we still want to update the c_cpp_settings.json properties
@@ -447,7 +451,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     // So the best way to avoid this is to just report the error and clear the file.
     // This way the user instantly notice that something's wrong, and knows why.
     if (this._workspaceCacheContent.variant) {
-      if (target === undefined) {
+      if (targets.length === 0) {
         vscode.window.showWarningMessage(
           "CMake Tools: Couldn't update cpptools configuration. " +
           "Make sure the build type is selected and `cmake.cpptools.defaultTarget` " +
@@ -457,8 +461,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     }
 
     // create the c_cpp_properties.json content
-    const includePaths = this._getIncludePaths(target);
-    const defines = this._getDefines(target);
+    const includePaths = this._getIncludePaths(targets);
+    const defines = this._getDefines(targets);
     const settings = {
       "configurations": [
         {
