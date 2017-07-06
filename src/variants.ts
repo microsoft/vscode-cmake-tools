@@ -83,12 +83,17 @@ export const DEFAULT_VARIANTS = {
 
 export class VariantManager implements vscode.Disposable {
   constructor(private readonly _context: vscode.ExtensionContext) {
-    const variants_watcher = vscode.workspace.createFileSystemWatcher(
-        path.join(vscode.workspace.rootPath!, 'cmake-variants.*'));
-    this._disposables.push(variants_watcher);
-    variants_watcher.onDidChange(this._reloadVariants.bind(this));
-    variants_watcher.onDidCreate(this._reloadVariants.bind(this));
-    variants_watcher.onDidDelete(this._reloadVariants.bind(this));
+    const workdir = vscode.workspace.rootPath!;
+    const variants_watchers = [
+      vscode.workspace.createFileSystemWatcher(path.join(workdir, 'cmake-variants.*')),
+      vscode.workspace.createFileSystemWatcher(path.join(workdir, '.vscode', 'cmake-variants.*'))
+    ];
+    for (const variants_watcher of variants_watchers) {
+      this._disposables.push(variants_watcher);
+      variants_watcher.onDidChange(this._reloadVariants.bind(this));
+      variants_watcher.onDidCreate(this._reloadVariants.bind(this));
+      variants_watcher.onDidDelete(this._reloadVariants.bind(this));
+    }
     this._reloadVariants();
   }
 
