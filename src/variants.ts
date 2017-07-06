@@ -194,7 +194,7 @@ export class VariantManager implements vscode.Disposable {
       }
     } else {
       // iterate on the json files
-      for (let json_file of json_files) {
+      for (const json_file of json_files) {
         if (await async.exists(json_file)) {
           const content = (await async.readFile(json_file)).toString();
           try {
