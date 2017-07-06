@@ -379,7 +379,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         if (fileGroup.language === "CXX" && fileGroup.includePath) {
           for (const includePath of fileGroup.includePath) {
             const normalizedPath = path.normalize(includePath.path);
-            if (includePath.path && includePaths.indexOf(normalizedPath) === -1) {
+            if (includePaths.indexOf(normalizedPath) === -1) {
               includePaths.push(normalizedPath);
             }
           }
