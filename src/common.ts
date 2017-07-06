@@ -407,7 +407,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
           // handle explicit defines list
           if (fileGroup.defines) {
             for (const define of fileGroup.defines) {
-              defines.push(define);
+              if (defines.indexOf(define) === -1) {
+                defines.push(define);
+              }
             }
           }
 
