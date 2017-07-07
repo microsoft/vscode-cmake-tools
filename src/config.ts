@@ -198,6 +198,10 @@ export class ConfigurationReader {
   get cppToolsAdditionalIncludePaths(): string[] {
     return this._readPrefixed<string[]>('cpptools.additionalIncludePaths') || [];
   }
+
+  public get emscriptenSearchDirs(): string[] {
+    return this._readPrefixed<string[]>('emscriptenSearchDirs') || [];
+  }
 }
 
 export const config = new ConfigurationReader();
