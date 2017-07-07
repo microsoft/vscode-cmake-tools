@@ -174,6 +174,10 @@ export class ConfigurationReader {
   public get mingwSearchDirs(): string[] {
     return this._readPrefixed<string[]>('mingwSearchDirs') || [];
   }
+
+  public get emscriptenSearchDirs(): string[] {
+    return this._readPrefixed<string[]>('emscriptenSearchDirs') || [];
+  }
 }
 
 export const config = new ConfigurationReader();

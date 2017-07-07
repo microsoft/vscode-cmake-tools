@@ -558,7 +558,16 @@
                     "default": [
                         "C:\\MinGW"
                     ],
-                    "description": "Directors where MinGW may be installed"
+                    "description": "Directories where MinGW may be installed"
+                },
+                "cmake.emscriptenSearchDirs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Path to a directory"
+                    },
+                    "default": [],
+                    "description": "Directories where Emscripten may be installed"
                 },
                 "cmake.useCMakeServer": {
                     "type": "boolean",

@@ -221,6 +221,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   public get currentEnvironmentVariables() {
     return this._environments.currentEnvironmentVariables;
   }
+  public get currentEnvironmentSettings() {
+    return this._environments.currentEnvironmentSettings;
+  }
 
   public getPreferredGenerators(): Generator[] {
     const configGenerators = config.preferredGenerators.map(g => <Generator>{ name: g });
@@ -991,6 +994,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     const args = [] as string[];
 
     const settings = Object.assign({}, config.configureSettings);
+    Object.assign(settings, this.currentEnvironmentSettings || {});
+
     if (!this.isMultiConf) {
       settings.CMAKE_BUILD_TYPE = this.selectedBuildType;
     }
