@@ -255,9 +255,6 @@ async function tryCreateEmscriptenEnvironment(emscripten: string): Promise<Envir
         'CMAKE_TOOLCHAIN_FILE': cmake_toolchain
       },
       variables: new Map<string, string>([]),
-      preferredGenerator: {
-        name: 'Ninja'
-      }
     };
     return ret;
   }
@@ -327,9 +324,9 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
   {
     async getEnvironments(): Promise<Environment[]> {
       var dirs = config.emscriptenSearchDirs;
-      var env_dir = process.env['EMSCRIPTEN'];
+      var env_dir = process.env['EMSCRIPTEN'] as string|undefined;
       if (env_dir && dirs.indexOf(env_dir) == -1)
-        dirs = dirs.concat(env_dir);
+        dirs = dirs.push(env_dir);
       const envs = await Promise.all(dirs.map(tryCreateEmscriptenEnvironment));
       return <Environment[]>envs.filter((e) => !!e);
     }
