@@ -82,7 +82,7 @@ CMake Tools provides a few buttons on the statusbar:
 3.  The default/active target. This is the target that will be invoked if run
     the build command. Clicking on this button will let you select a different
     target to be built by default.
-4.  The Target Debugging launcher (must be explicitly enabled, se below).
+4.  The Target Debugging launcher (must be explicitly enabled, see below).
 5.  The active debug target (must be explicitly enabled).
 6.  The CTest results button. Click this button to rebuild and run CTest tests.
 
