@@ -305,7 +305,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
         log.verbose('VSWhere is not installed. Not searching for VS 2017');
         return [];
       }
-      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*']);
+      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*', '-legacy']);
       const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
       const archs = ['x86', 'amd64', 'arm'];
       const all_promices = installs
