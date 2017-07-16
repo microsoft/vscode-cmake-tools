@@ -326,7 +326,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
       var dirs = config.emscriptenSearchDirs;
       var env_dir = process.env['EMSCRIPTEN'] as string|undefined;
       if (env_dir && dirs.indexOf(env_dir) == -1)
-        dirs = dirs.push(env_dir);
+        dirs.push(env_dir);
       const envs = await Promise.all(dirs.map(tryCreateEmscriptenEnvironment));
       return <Environment[]>envs.filter((e) => !!e);
     }
