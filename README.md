@@ -34,7 +34,12 @@ add a PR for relevant information in the `docs/` subdirectory.
     itself.
   - `${variable}` substitution is now supported in the `cmake.*Environment`
     settings. (Thanks to [Damien Courtois](https://github.com/dcourtois)!)
-
+- **0.10.2**:
+  - Support for Emscripten environment detection. Set the
+    `cmake.emscriptenSearchDirs` setting or the `EMSCRIPTEN` environment
+    variable to the root path of the Emscripten SDK
+    (Contains `cmake/Modules/Platform/Emscripten.cmake`)
+  - Fix environment variables not passing from `settings.json` to configuration.
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
