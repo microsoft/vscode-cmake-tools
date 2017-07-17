@@ -199,6 +199,11 @@
             "type": "object",
             "title": "CMake Tools configuration",
             "properties": {
+                "cmake.cmakePath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "The Path to CMake binary"
+                },
                 "cmake.buildDirectory": {
                     "type": "string",
                     "default": "${workspaceRoot}/build",
