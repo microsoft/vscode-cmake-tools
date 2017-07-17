@@ -34,7 +34,12 @@ add a PR for relevant information in the `docs/` subdirectory.
     itself.
   - `${variable}` substitution is now supported in the `cmake.*Environment`
     settings. (Thanks to [Damien Courtois](https://github.com/dcourtois)!)
-
+- **0.10.2**:
+  - Support for Emscripten environment detection. Set the
+    `cmake.emscriptenSearchDirs` setting or the `EMSCRIPTEN` environment
+    variable to the root path of the Emscripten SDK
+    (Contains `cmake/Modules/Platform/Emscripten.cmake`)
+  - Fix environment variables not passing from `settings.json` to configuration.
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
@@ -82,7 +87,7 @@ CMake Tools provides a few buttons on the statusbar:
 3.  The default/active target. This is the target that will be invoked if run
     the build command. Clicking on this button will let you select a different
     target to be built by default.
-4.  The Target Debugging launcher (must be explicitly enabled, se below).
+4.  The Target Debugging launcher (must be explicitly enabled, see below).
 5.  The active debug target (must be explicitly enabled).
 6.  The CTest results button. Click this button to rebuild and run CTest tests.
 

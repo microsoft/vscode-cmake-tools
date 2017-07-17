@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.10.1",
+    "version": "0.10.2",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -29,7 +29,7 @@
         "color": "#13578c",
         "theme": "dark"
     },
-    "icon": "res/icon.svg",
+    "icon": "res/icon_128.png",
     "activationEvents": [
         "onCommand:cmake.configure",
         "onCommand:cmake.build",
@@ -558,7 +558,16 @@
                     "default": [
                         "C:\\MinGW"
                     ],
-                    "description": "Directors where MinGW may be installed"
+                    "description": "Directories where MinGW may be installed"
+                },
+                "cmake.emscriptenSearchDirs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Path to a directory"
+                    },
+                    "default": [],
+                    "description": "Directories where Emscripten may be installed"
                 },
                 "cmake.useCMakeServer": {
                     "type": "boolean",

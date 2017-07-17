@@ -41,26 +41,26 @@ export interface VariantCombination extends vscode.QuickPickItem {
 
 export const DEFAULT_VARIANTS = {
   buildType: {
-    'default$': 'debug',
-    'description$': 'The build type to use',
+    default$: 'debug',
+    description$: 'The build type to use',
     debug: {
-      'oneWordSummary$': 'Debug',
-      'description$': 'Emit debug information without performing optimizations',
+      oneWordSummary$: 'Debug',
+      description$: 'Emit debug information without performing optimizations',
       buildType: 'Debug',
     },
     release: {
-      'oneWordSummary$': 'Release',
-      'description$': 'Enable optimizations, omit debug info',
+      oneWordSummary$: 'Release',
+      description$: 'Enable optimizations, omit debug info',
       buildType: 'Release',
     },
     minsize: {
-      'oneWordSummary$': 'MinSizeRel',
-      'description$': 'Optimize for smallest binary size',
+      oneWordSummary$: 'MinSizeRel',
+      description$: 'Optimize for smallest binary size',
       buildType: 'MinSizeRel',
     },
     reldeb: {
-      'oneWordSummary$': 'RelWithDebInfo',
-      'description$': 'Perform optimizations AND include debugging information',
+      oneWordSummary$: 'RelWithDebInfo',
+      description$: 'Perform optimizations AND include debugging information',
       buildType: 'RelWithDebInfo',
     }
   },
@@ -83,12 +83,17 @@ export const DEFAULT_VARIANTS = {
 
 export class VariantManager implements vscode.Disposable {
   constructor(private readonly _context: vscode.ExtensionContext) {
-    const variants_watcher = vscode.workspace.createFileSystemWatcher(
-        path.join(vscode.workspace.rootPath!, 'cmake-variants.*'));
-    this._disposables.push(variants_watcher);
-    variants_watcher.onDidChange(this._reloadVariants.bind(this));
-    variants_watcher.onDidCreate(this._reloadVariants.bind(this));
-    variants_watcher.onDidDelete(this._reloadVariants.bind(this));
+    const workdir = vscode.workspace.rootPath!;
+    const variants_watchers = [
+      vscode.workspace.createFileSystemWatcher(path.join(workdir, 'cmake-variants.*')),
+      vscode.workspace.createFileSystemWatcher(path.join(workdir, '.vscode', 'cmake-variants.*'))
+    ];
+    for (const variants_watcher of variants_watchers) {
+      this._disposables.push(variants_watcher);
+      variants_watcher.onDidChange(this._reloadVariants.bind(this));
+      variants_watcher.onDidCreate(this._reloadVariants.bind(this));
+      variants_watcher.onDidDelete(this._reloadVariants.bind(this));
+    }
     this._reloadVariants();
   }
 
@@ -178,7 +183,10 @@ export class VariantManager implements vscode.Disposable {
 
     const workdir = vscode.workspace.rootPath!;
     const yaml_file = path.join(workdir, 'cmake-variants.yaml');
-    const json_file = path.join(workdir, 'cmake-variants.json');
+    const json_files = [
+      path.join(workdir, 'cmake-variants.json'),
+      path.join(workdir, '.vscode', 'cmake-variants.json')
+    ];
     let variants: any;
     if (await async.exists(yaml_file)) {
       const content = (await async.readFile(yaml_file)).toString();
@@ -189,17 +197,26 @@ export class VariantManager implements vscode.Disposable {
             `${yaml_file} is syntactically invalid.`);
         variants = config.defaultVariants;
       }
-    } else if (await async.exists(json_file)) {
-      const content = (await async.readFile(json_file)).toString();
-      try {
-        variants = JSON.parse(content);
-      } catch (e) {
-        vscode.window.showErrorMessage(
-            `${json_file} is syntactically invalid.`);
+    } else {
+      // iterate on the json files
+      for (const json_file of json_files) {
+        if (await async.exists(json_file)) {
+          const content = (await async.readFile(json_file)).toString();
+          try {
+            variants = JSON.parse(content);
+            break;
+          } catch (e) {
+            vscode.window.showErrorMessage(
+                `${json_file} is syntactically invalid.`);
+            variants = config.defaultVariants;
+          }
+        }
+      }
+
+      // check if it was loaded
+      if (variants === undefined) {
         variants = config.defaultVariants;
       }
-    } else {
-      variants = config.defaultVariants;
     }
     const validated = validate(variants);
     if (!validated) {

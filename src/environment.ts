@@ -21,6 +21,7 @@ export interface Environment {
   description?: string;
   mutex?: string;
   variables: Map<string, string>;
+  settings?: Object;
   preferredGenerator?: Generator;
 }
 
@@ -235,6 +236,32 @@ async function tryCreateMinGWEnvironment(dir: string): Promise<Environment | und
   return;
 }
 
+// Detect Emscripten environment
+async function tryCreateEmscriptenEnvironment(emscripten: string): Promise<Environment | undefined> {
+  let cmake_toolchain = path.join(emscripten, 'cmake', 'Modules', 'Platform', 'Emscripten.cmake');
+  if (await async.exists(cmake_toolchain)) {
+    // read version and strip "" and newlines
+    let version = fs.readFileSync(path.join(emscripten, 'emscripten-version.txt'), 'utf8');
+    version = version.replace(/["\r\n]/g, '');
+    log.verbose('Found Emscripten ' + version + ': ' + cmake_toolchain);
+    if (process.platform === 'win32') {
+      cmake_toolchain = cmake_toolchain.replace(/\\/g, path.posix.sep);
+    }
+    const ret: Environment = {
+      name: `Emscripten - ${version}`,
+      mutex: 'emscripten',
+      description: `Root at ${emscripten}`,
+      settings: {
+        'CMAKE_TOOLCHAIN_FILE': cmake_toolchain
+      },
+      variables: new Map<string, string>([]),
+    };
+    return ret;
+  }
+
+  return;
+}
+
 const ENVIRONMENTS: EnvironmentProvider[] = [
   {
     async getEnvironments(): Promise<Environment[]> {
@@ -275,7 +302,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
         log.verbose('VSWhere is not installed. Not searching for VS 2017');
         return [];
       }
-      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*']);
+      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*', '-legacy']);
       const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
       const archs = ['x86', 'amd64', 'arm'];
       const all_promices = installs
@@ -293,7 +320,17 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
       const envs = await Promise.all(config.mingwSearchDirs.map(tryCreateMinGWEnvironment));
       return <Environment[]>envs.filter((e) => !!e);
     }
-  }
+  },
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      var dirs = config.emscriptenSearchDirs;
+      var env_dir = process.env['EMSCRIPTEN'] as string|undefined;
+      if (env_dir && dirs.indexOf(env_dir) == -1)
+        dirs.push(env_dir);
+      const envs = await Promise.all(dirs.map(tryCreateEmscriptenEnvironment));
+      return <Environment[]>envs.filter((e) => !!e);
+    }
+  },
 ];
 
 export async function availableEnvironments(): Promise<Environment[]> {
@@ -397,6 +434,19 @@ export class EnvironmentManager {
     }, {});
     const proc_env = process.env;
     return util.mergeEnvironment(process.env, active_env);
+  }
+  /**
+   * @brief The current cmake settings to use when configuring,
+   *    as specified by the active build environments.
+   */
+  public get currentEnvironmentSettings(): Object {
+    const active_settings = this.activeEnvironments.reduce((acc, name) => {
+      const env_ = this.availableEnvironments.get(name);
+      console.assert(env_);
+      const env = env_!;
+      return env.settings || {};
+    }, {});
+    return active_settings;
   }
 
   public get preferredEnvironmentGenerators(): Generator[] {
