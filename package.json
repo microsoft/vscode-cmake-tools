@@ -29,7 +29,7 @@
         "color": "#13578c",
         "theme": "dark"
     },
-    "icon": "res/icon.svg",
+    "icon": "res/icon_128.png",
     "activationEvents": [
         "onCommand:cmake.configure",
         "onCommand:cmake.build",
