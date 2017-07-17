@@ -278,9 +278,9 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         sourceDir: this.sourceDir,
         cmakePath: config.cmakePath,
         environment: util.mergeEnvironment(
+          this.currentEnvironmentVariables,
           config.environment,
-          config.configureEnvironment,
-          this.currentEnvironmentVariables),
+          config.configureEnvironment),
         onDirty: async () => {
           this._dirty = true;
         },
