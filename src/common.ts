@@ -355,7 +355,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    */
   protected _findTargets(codeModel, targetName) {
     var selectedTargets: any[] = [];
-    if (codeModel) {
+    if (targetName && codeModel) {
       const targetNames = targetName.split(";");
       const targets = codeModel.configurations[0].projects[0].targets;
       for (const target of targets) {
@@ -465,24 +465,32 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       }
     }
 
-    // create the c_cpp_properties.json content
+    // create the mandatory c_cpp_properties.json content
     const includePaths = this._getIncludePaths(targets);
     const defines = this._getDefines(targets);
-    const settings = {
+    var settings = {
       "configurations": [
         {
           "name": os.platform(),
           "includePath": includePaths,
           "defines": defines,
-          "intelliSenseMode": config.cppToolsIntelliSenseMode,
           "browse": {
-              "path": includePaths,
-              "limitSymbolsToIncludedHeaders": config.cppToolsLimitSymbolsToIncludedHeaders,
-              "databaseFilename": config.cppToolsDatabaseFilename
+              "path": includePaths
           }
         }
       ]
     };
+
+    // add optional configurations (when not specified, cpp tools will use the default)
+    if (config.cppToolsIntelliSenseMode !== null) {
+      settings.configurations[0]["intelliSenseMode"] = config.cppToolsIntelliSenseMode;
+    }
+    if (config.cppToolsLimitSymbolsToIncludedHeaders !== null) {
+      settings.configurations[0].browse["limitSymbolsToIncludedHeaders"] = config.cppToolsLimitSymbolsToIncludedHeaders;
+    }
+    if (config.cppToolsDatabaseFilename !== null) {
+      settings.configurations[0].browse["databaseFilename"] = config.cppToolsDatabaseFilename;
+    }
 
     // and update it
     util.writeFile(
