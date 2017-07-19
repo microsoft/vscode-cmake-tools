@@ -255,9 +255,6 @@ async function tryCreateEmscriptenEnvironment(emscripten: string): Promise<Envir
         'CMAKE_TOOLCHAIN_FILE': cmake_toolchain
       },
       variables: new Map<string, string>([]),
-      preferredGenerator: {
-        name: 'Ninja'
-      }
     };
     return ret;
   }
@@ -305,7 +302,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
         log.verbose('VSWhere is not installed. Not searching for VS 2017');
         return [];
       }
-      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*']);
+      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*', '-legacy']);
       const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
       const archs = ['x86', 'amd64', 'arm'];
       const all_promices = installs
@@ -327,9 +324,9 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
   {
     async getEnvironments(): Promise<Environment[]> {
       var dirs = config.emscriptenSearchDirs;
-      var env_dir = process.env['EMSCRIPTEN'];
+      var env_dir = process.env['EMSCRIPTEN'] as string|undefined;
       if (env_dir && dirs.indexOf(env_dir) == -1)
-        dirs = dirs.concat(env_dir);
+        dirs.push(env_dir);
       const envs = await Promise.all(dirs.map(tryCreateEmscriptenEnvironment));
       return <Environment[]>envs.filter((e) => !!e);
     }
