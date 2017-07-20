@@ -351,16 +351,29 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    *
    * @param targetName
    *  Name of the target(s) to find. You can specify multiple targets
-   *  by separating them with a semi-colon.
+   *  by separating them with a semi-colon. You can also use those 2
+   *  special target names:
+   *    - __merge__: will get all the targets
+   *    - __first__: will get the first target
    */
   protected _findTargets(codeModel, targetName) {
     var selectedTargets: any[] = [];
     if (targetName && codeModel) {
-      const targetNames = targetName.split(";");
       const targets = codeModel.configurations[0].projects[0].targets;
-      for (const target of targets) {
-        if (targetNames.indexOf(target.name) !== -1) {
+      if (targetName === "__mergeEverything") {
+        for (const target of targets) {
           selectedTargets.push(target);
+        }
+      } else if (targetName === "__firstValid") {
+        if (targets.length > 0) {
+          selectedTargets.push(targets[0]);
+        }
+      } else {
+        const targetNames = targetName.split(";");
+        for (const target of targets) {
+          if (targetNames.indexOf(target.name) !== -1) {
+            selectedTargets.push(target);
+          }
         }
       }
     }

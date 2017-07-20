@@ -77,7 +77,10 @@ sync with the current build type and target.
 file (e.g. when the current target is `all`) If you want to specify multiple targets, you can by separating them
 with a semi-colon. For instance: `"libA;libB;someExe"`. This can be useful when working in projects with one or
 more lib and the using executable, but be carefull: include paths and defines of all the targets will be merged,
-so intellisense might have some troubles if you have conflicting defines / include paths.
+so intellisense might have some troubles if you have conflicting defines / include paths. The following target
+names can also be used:
+  - \_\_merge__: this will tell CMake tools to merge all include paths and defines of all targets
+  - \_\_first__: this will tell CMake tools to use the first valid target
 - ``cmake.cpptools.intelliSenseMode`` for the `intelliSenseMode` field in `c_cpp_properties.json`
 - ``cmake.cpptools.limitSymbolsToIncludedHeaders`` for the `limitSymbolsToIncludedHeaders` field in `c_cpp_properties.json`
 - ``cmake.cpptools.databaseFilename`` for the `databaseFilename` field in `c_cpp_properties.json`
