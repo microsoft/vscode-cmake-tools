@@ -318,7 +318,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
             : null;
     }
 
-    public async configure(extra_args: string[] = [], run_prebuild = true): Promise<Number> {
+    public async configure(extra_args: string[] = [], run_prebuild = true): Promise<number> {
         if (!await this._preconfigure()) {
             return -1;
         }
@@ -388,7 +388,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
         return this._refreshAll();
     }
 
-    public async build(target: Maybe<string> = null): Promise<Number> {
+    public async build(target: Maybe<string> = null): Promise<number> {
         const res = await super.build(target);
         if (res === 0) {
             await this._refreshAll();
@@ -396,7 +396,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
         return res;
     }
 
-    public async cleanConfigure(): Promise<Number> {
+    public async cleanConfigure(): Promise<number> {
         const build_dir = this.binaryDir;
         const cache = this.cachePath;
         const cmake_files = path.join(build_dir, 'CMakeFiles');

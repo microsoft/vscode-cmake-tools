@@ -165,7 +165,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   abstract configure(extraArgs?: string[], runPrebuild?: boolean):
       Promise<number>;
   abstract compilationInfoForFile(filepath: string):
-      Promise<api.CompilationInfo>;
+      Promise<api.CompilationInfo|null>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
   abstract get reconfigured(): vscode.Event<void>;
@@ -200,7 +200,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * event emitter.
    */
   protected _ctestController = new ctest.CTestController();
-  public async ctest(): Promise<Number> {
+  public async ctest(): Promise<number> {
     this._channel.show();
     const build_retc = await this.build();
     if (build_retc !== 0) {
@@ -992,7 +992,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return null;
   }
 
-  public async cleanRebuild(): Promise<Number> {
+  public async cleanRebuild(): Promise<number> {
     const clean_result = await this.clean();
     if (clean_result) return clean_result;
     return await this.build();
@@ -1006,7 +1006,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return this.build('clean');
   }
 
-  public async buildWithTarget(): Promise<Number> {
+  public async buildWithTarget(): Promise<number> {
     const target = await this.showTargetSelector();
     if (target === null || target === undefined) return -1;
     return await this.build(target);
@@ -1028,7 +1028,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return changed;
   }
 
-  public async setBuildType(): Promise<Number> {
+  public async setBuildType(): Promise<number> {
     const do_configure = await this.setBuildTypeWithoutConfigure();
     if (do_configure) {
      const result = await this.configure();
@@ -1040,7 +1040,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       return -1;
     }
   }
-  public async quickStart(): Promise<Number> {
+  public async quickStart(): Promise<number> {
     if (await async.exists(this.mainListFile)) {
       vscode.window.showErrorMessage(
           'This workspace already contains a CMakeLists.txt!');
@@ -1220,7 +1220,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return args;
   }
 
-  public async build(target_: Maybe<string> = null): Promise<Number> {
+  public async build(target_: Maybe<string> = null): Promise<number> {
     let target = target_;
     if (!target_) {
       target = this.defaultBuildTarget || this.allTargetName;
