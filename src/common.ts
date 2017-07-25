@@ -360,11 +360,11 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     var selectedTargets: any[] = [];
     if (targetName && codeModel) {
       const targets = codeModel.configurations[0].projects[0].targets;
-      if (targetName === "__mergeEverything") {
+      if (targetName === "__merge__") {
         for (const target of targets) {
           selectedTargets.push(target);
         }
-      } else if (targetName === "__firstValid") {
+      } else if (targetName === "__first__") {
         if (targets.length > 0) {
           selectedTargets.push(targets[0]);
         }
