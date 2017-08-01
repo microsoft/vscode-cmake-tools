@@ -71,6 +71,19 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return null;
   }
 
+  get linkerId() {
+    const entry = this.cacheEntry(`CMAKE_LINKER`);
+    if (entry) {
+      const linker = entry.as<string>();
+      if (linker.endsWith('link.exe')) {
+        return 'MSVC';
+      } else if (linker.endsWith('ld')) {
+        return 'GNU';
+      }
+    }
+    return null;
+  }
+
   get needsReconfigure() {
     return this._dirty;
   }
