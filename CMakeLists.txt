@@ -52,7 +52,6 @@ if(SPHINX_EXECUTABLE)
             # -D "html_static_path=_static,"
             -D html_logo=../res/icon_190.svg
             -b html
-            -a
             -j 10
             "${CMAKE_CURRENT_SOURCE_DIR}/docs"
             "${CMAKE_CURRENT_BINARY_DIR}/docs"

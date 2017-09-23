@@ -3,14 +3,20 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to CMake Tools's documentation!
-=======================================
+CMake Tools for Visual Studio Code
+==================================
+
+CMake Tools is an extension designed to make working with CMake-based projects
+a breeze.
 
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
+    getting_started
+
+    kits
 
 
 Indices and tables
