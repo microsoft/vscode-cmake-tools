@@ -9,8 +9,11 @@
         "sourceMap": true,
         "rootDir": ".",
         "noImplicitReturns": true,
+        "noImplicitAny": true,
         "strictNullChecks": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
     },
     "exclude": [
         "node_modules",

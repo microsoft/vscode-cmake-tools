@@ -1,52 +1,52 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as api from './api';
-import { CMakeToolsWrapper } from './wrapper';
-import { log } from './logging';
-import { outputChannels } from "./util";
+// import * as api from './api';
+// import { CMakeToolsWrapper } from './wrapper';
+// import { log } from './logging';
+// import { outputChannels } from "./util";
 
-export async function activate(context: vscode.ExtensionContext): Promise<CMakeToolsWrapper> {
-    log.initialize(context);
+import {CMakeProject} from './project';
 
-    const cmake = new CMakeToolsWrapper(context);
-    context.subscriptions.push(cmake);
+export async function activate(context: vscode.ExtensionContext): Promise<CMakeProject> {
+  // log.initialize(context);
 
-    function register(name, fn) {
-        fn = fn.bind(cmake);
-        return vscode.commands.registerCommand(name, _ => fn());
-    }
+  const pr = await CMakeProject.create(context);
 
-    for (const key of [
-        'configure',
-        'build',
-        'install',
-        'jumpToCacheFile',
-        'clean',
-        'cleanConfigure',
-        'cleanRebuild',
-        'buildWithTarget',
-        'setDefaultTarget',
-        'setBuildType',
-        'ctest',
-        'stop',
-        'quickStart',
-        'launchTargetProgramPath',
-        'debugTarget',
-        'launchTarget',
-        'selectLaunchTarget',
-        'selectEnvironments',
-        'toggleCoverageDecorations',
-    ]) {
-        context.subscriptions.push(register('cmake.' + key, cmake[key]));
-    }
+  context.subscriptions.push(pr);
 
-    await cmake.start();
+  function register(name: keyof CMakeProject) {
+    const fn = (pr[name] as Function).bind(pr);
+    return vscode.commands.registerCommand('cmake.' + name, _ => fn());
+  }
 
-    return cmake;
+  for (const key of['editKits', 'scanForKits',
+                    //   'configure',
+                    // 'build',
+                    // 'install',
+                    // 'jumpToCacheFile',
+                    // 'clean',
+                    // 'cleanConfigure',
+                    // 'cleanRebuild',
+                    // 'buildWithTarget',
+                    // 'setDefaultTarget',
+                    // 'setBuildType',
+                    // 'ctest',
+                    // 'stop',
+                    // 'quickStart',
+                    // 'launchTargetProgramPath',
+                    // 'debugTarget',
+                    // 'launchTarget',
+                    // 'selectLaunchTarget',
+                    // 'selectEnvironments',
+                    // 'toggleCoverageDecorations',
+] as(keyof CMakeProject)[]) { context.subscriptions.push(register(key));}
+
+  return pr;
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {
-    outputChannels.dispose();
+export function
+deactivate() {
+  //   outputChannels.dispose();
 }

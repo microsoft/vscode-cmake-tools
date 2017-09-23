@@ -49,11 +49,23 @@
         "onCommand:cmake.selectLaunchTarget",
         "onCommand:cmake.selectEnvironments",
         "onCommand:cmake.toggleCoverageDecorations",
+        "onCommand:cmake.editKits",
+        "onCommand:cmake.scanForKits",
         "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
     "contributes": {
         "commands": [
+            {
+                "command": "cmake.editKits",
+                "title": "Edit CMake Kits",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.scanForKits",
+                "title": "Scan for Kits",
+                "category": "CMake"
+            },
             {
                 "command": "cmake.configure",
                 "title": "Configure",
@@ -608,17 +620,22 @@
             {
                 "fileMatch": "cmake-variants.json",
                 "url": "./schemas/variants-schema.json"
+            },
+            {
+                "fileMatch": "cmake-kits.json",
+                "url": "./schemas/kits-schema.json"
             }
         ]
     },
     "scripts": {
         "vscode:prepublish": "./node_modules/.bin/tsc -p ./",
         "compile": "./node_modules/.bin/tsc -watch -p ./",
+        "compile-once": "./node_modules/.bin/tsc -p ./",
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "typescript": "~2.0.3",
-        "@types/node": "~6.0.45",
+        "typescript": "~2.3.0",
+        "@types/node": "~8.0.0",
         "vscode": "~1.1.0",
         "mocha": "~3.4.2",
         "@types/mocha": "~2.2.41",
@@ -626,7 +643,8 @@
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
         "@types/rimraf": "^0.0.28",
-        "@types/ws": "^0.0.38"
+        "@types/ws": "^0.0.38",
+        "@types/es6-promisify": "~5.0.0"
     },
     "dependencies": {
         "open": "0.0.5",
@@ -635,6 +653,8 @@
         "xml2js": "^0.4.17",
         "rimraf": "^2.5.4",
         "ws": "^1.1.1",
-        "Polymer": "1.6.1--"
+        "Polymer": "1.6.1--",
+        "rollbar": "~2.2.8",
+        "es6-promisify": "~5.0.0"
     }
 }

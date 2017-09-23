@@ -1,3 +1,5 @@
 out
 node_modules
 .browse.VC.db*
+*.old
+build/
