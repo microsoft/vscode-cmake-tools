@@ -67,6 +67,11 @@
                 "category": "CMake"
             },
             {
+                "command": "cmake.selectKit",
+                "title": "Select a Kit",
+                "category": "CMake"
+            },
+            {
                 "command": "cmake.configure",
                 "title": "Configure",
                 "category": "CMake"

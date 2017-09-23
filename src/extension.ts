@@ -20,7 +20,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeP
     return vscode.commands.registerCommand('cmake.' + name, _ => fn());
   }
 
-  for (const key of['editKits', 'scanForKits',
+  for (const key of['editKits', 'scanForKits', 'selectKit',
                     //   'configure',
                     // 'build',
                     // 'install',
