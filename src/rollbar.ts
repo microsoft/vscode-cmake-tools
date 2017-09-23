@@ -4,8 +4,11 @@ import Rollbar = require('rollbar');
 
 export class RollbarController {
   private _rollbar = new Rollbar({
-    accessToken : '57a16f8ec14746b898b0cb5a7d9b550c',
-    reportLevel : 'error',
+    accessToken : '14d411d713be4a5a9f9d57660534cac7',
+    reportLevel: 'error',
+    payload: {
+      platform: 'client',
+    },
   });
 
   private _enabled = false;
