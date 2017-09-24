@@ -8,6 +8,8 @@ import * as fs_ from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
+import * as rimraf from 'rimraf';
+
 export namespace fs {
 
   export function exists(fspath: string): Promise<boolean> {
@@ -78,6 +80,18 @@ export namespace fs {
           hash.end();
           resolve((hash.read() as Buffer).toString('hex'));
         });
+      });
+    });
+  }
+
+  export function rmdir(dirpath: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      rimraf(dirpath, err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
       });
     });
   }

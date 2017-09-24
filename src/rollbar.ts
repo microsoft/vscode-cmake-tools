@@ -5,9 +5,9 @@ import Rollbar = require('rollbar');
 export class RollbarController {
   private _rollbar = new Rollbar({
     accessToken : '14d411d713be4a5a9f9d57660534cac7',
-    reportLevel: 'error',
-    payload: {
-      platform: 'client',
+    reportLevel : 'error',
+    payload : {
+      platform : 'client',
     },
   });
 
@@ -48,5 +48,29 @@ export class RollbarController {
       return this._rollbar.error(what, additional);
     }
     return null;
+  }
+
+  invokeAsync<T>(what: string, func: () => Promise<T>): void;
+  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): void;
+  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): void {
+    if (!func) {
+      additional = {};
+      func = additional as() => Promise<T>;
+    }
+    func().catch(e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); })
+  }
+
+  invoke<T>(what: string, func: () => T): void;
+  invoke<T>(what: string, additional: object, func: () => T): void;
+  invoke<T>(what: string, additional: object, func?: () => T) {
+    if (!func) {
+      additional = {};
+      func = additional as() => T;
+    }
+    try {
+      func();
+    } catch (e) {
+      this.exception('Unhandled exception: ' + what, e, additional);
+    }
   }
 }

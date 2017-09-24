@@ -3,6 +3,8 @@ import * as vscode from 'vscode';
 import {RollbarController} from './rollbar';
 import {KitManager, Kit} from './kit';
 import {StateManager} from './state';
+import {CMakeDriver} from './driver';
+import {LegacyCMakeDriver} from './legacy-driver';
 
 export class CMakeProject implements vscode.Disposable {
   // Let's us submit rollbar messages
@@ -18,20 +20,50 @@ export class CMakeProject implements vscode.Disposable {
   // We store the active kit here
   private _activeKit: Kit | null = null;
 
-  //
+  /**
+   * The object in charge of talking to CMake
+   */
+  private _cmakeDriver: CMakeDriver;
+
   private constructor(readonly extensionContext: vscode.ExtensionContext) {
-    // Handle the active kit changing. We want to do some updates and teardowns
+    // Handle the active kit changing. We want to do some updates and teardown
     this._kitManager.onActiveKitChanged(kit => {
       this._activeKit = kit;
+      if (kit) {
+        this._cmakeDriver.setKit(kit);
+      }
     });
   }
 
   // Teardown
-  dispose() { this._kitManager.dispose(); }
+  dispose() {
+    this._kitManager.dispose();
+    if (this._cmakeDriver) {
+      this._cmakeDriver.dispose();
+    }
+  }
+
+  /**
+   * Reload/restarts the CMake Driver
+   */
+  private async _reloadCMakeDriver() {
+    if (this._cmakeDriver) {
+      await this._cmakeDriver.asyncDispose();
+    }
+    this._cmakeDriver = await LegacyCMakeDriver.create(this._rollbar);
+    if (this._activeKit) {
+      await this._cmakeDriver.setKit(this._activeKit);
+    }
+  }
 
   // Two-phase initialize
   private async _init() {
+    // First, start up Rollbar
     await this._rollbar.requestPermissions();
+    // Now start the CMake driver
+    await this._reloadCMakeDriver();
+    // Start up the kit manager. This will also inject the current kit into
+    // the CMake driver
     await this._kitManager.initialize();
   }
 
@@ -47,4 +79,10 @@ export class CMakeProject implements vscode.Disposable {
   editKits() { return this._kitManager.openKitsEditor(); }
   scanForKits() { return this._kitManager.rescanForKits(); }
   selectKit() { return this._kitManager.selectKit(); }
+  async configure() {
+    while (!this._activeKit) {
+      await this.selectKit();
+    }
+    return this._cmakeDriver.configure();
+  }
 }

@@ -1,0 +1,147 @@
+import * as os from 'os';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import * as util from './util';
+
+export class ConfigurationReader {
+  public readConfig<T>(key: string, default_: T | null = null): T | null {
+    const config = vscode.workspace.getConfiguration('cmake');
+    const value = config.get(key);
+    return (value !== undefined) ? value as T : default_;
+  }
+
+  private _escapePaths(obj: {[k: string] : any}) {
+    return Object.getOwnPropertyNames(obj).reduce(
+        (acc, key: string) => {
+          acc[key] = util.replaceVars(obj[key]);
+          return acc;
+        },
+        {} as typeof obj);
+  }
+
+  private _readPrefixed<T>(key: string): T | null {
+    const platmap = {
+      win32 : 'windows',
+      darwin : 'osx',
+      linux : 'linux',
+    } as{[k: string] : string};
+    const platform = platmap[process.platform];
+    return this.readConfig<T>(`${platform}.${key}`, this.readConfig<T>(`${key}`));
+  }
+
+  get buildDirectory(): string { return this._readPrefixed<string>('buildDirectory') !; }
+
+  get installPrefix(): string | null { return this._readPrefixed<string>('installPrefix') !; }
+
+  get sourceDirectory(): string { return this._readPrefixed<string>('sourceDirectory') as string; }
+
+  get buildBeforeRun(): boolean { return !!this._readPrefixed<boolean>('buildBeforeRun'); }
+
+  get saveBeforeBuild(): boolean { return !!this._readPrefixed<boolean>('saveBeforeBuild'); }
+
+  get clearOutputBeforeBuild(): boolean {
+    return !!this._readPrefixed<boolean>('clearOutputBeforeBuild');
+  }
+
+  get configureSettings(): any { return this._readPrefixed<Object>('configureSettings'); }
+
+  get initialBuildType(): string | null { return this._readPrefixed<string>('initialBuildType'); }
+
+  get preferredGenerators(): string[] {
+    return this._readPrefixed<string[]>('preferredGenerators') || [];
+  }
+
+  get generator(): string | null { return this._readPrefixed<string>('generator'); }
+
+  get toolset(): string | null { return this._readPrefixed<string>('toolset'); }
+
+  get platform(): string | null { return this._readPrefixed<string>('platform'); }
+
+  get configureArgs(): string[] { return this._readPrefixed<string[]>('configureArgs') !; }
+
+  get buildArgs(): string[] { return this._readPrefixed<string[]>('buildArgs') !; }
+
+  get buildToolArgs(): string[] { return this._readPrefixed<string[]>('buildToolArgs') !; }
+
+  get parallelJobs(): number | null { return this._readPrefixed<number>('parallelJobs'); }
+
+  get ctest_parallelJobs(): number | null {
+    return this._readPrefixed<number>('ctest.parallelJobs');
+  }
+
+  get parseBuildDiagnostics(): boolean {
+    return !!this._readPrefixed<boolean>('parseBuildDiagnostics');
+  }
+
+  get enableOutputParsers(): string[] | null {
+    return this._readPrefixed<string[]>('enableOutputParsers');
+  }
+
+  get cmakePath(): string { return this._readPrefixed<string>('cmakePath') || 'cmake'; }
+
+  get ctestPath(): string {
+    const ctest_path = this._readPrefixed<string>('ctestPath');
+    if (!ctest_path) {
+      const cmake = this.cmakePath;
+      if (cmake === 'cmake' || cmake === 'cmake.exe') {
+        return 'ctest';
+      }
+      return path.join(path.dirname(cmake), 'ctest')
+    } else {
+      return ctest_path;
+    }
+  }
+
+  get debugConfig(): any { return this._readPrefixed<any>('debugConfig'); }
+
+  get environment() {
+    return this._escapePaths(this._readPrefixed<{[key: string] : string}>('environment') || {});
+  }
+
+  get configureEnvironment() {
+    return this._escapePaths(this._readPrefixed<{[key: string] : string}>('configureEnvironment')
+                             || {});
+  }
+
+  get buildEnvironment() {
+    return this._escapePaths(this._readPrefixed<{[key: string] : string}>('buildEnvironment')
+                             || {});
+  }
+
+  get testEnvironment() {
+    return this._escapePaths(this._readPrefixed<{[key: string] : string}>('testEnvironment') || {});
+  }
+
+  get defaultVariants(): Object { return this._readPrefixed<Object>('defaultVariants') || {}; }
+
+  get ctestArgs(): string[] { return this._readPrefixed<string[]>('ctestArgs') || []; }
+
+  get useCMakeServer(): boolean { return this._readPrefixed<boolean>('useCMakeServer') || false; }
+
+  public get numJobs(): number {
+    const jobs = this.parallelJobs;
+    if (!!jobs) {
+      return jobs;
+    }
+    return os.cpus().length + 2;
+  }
+
+  public get numCTestJobs(): number {
+    const ctest_jobs = this.ctest_parallelJobs;
+    if (!ctest_jobs) {
+      return this.numJobs;
+    }
+    return ctest_jobs;
+  }
+
+  public get mingwSearchDirs(): string[] {
+    return this._readPrefixed<string[]>('mingwSearchDirs') || [];
+  }
+
+  public get emscriptenSearchDirs(): string[] {
+    return this._readPrefixed<string[]>('emscriptenSearchDirs') || [];
+  }
+}
+
+export const config = new ConfigurationReader();
+export default config;

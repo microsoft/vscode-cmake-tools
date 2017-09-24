@@ -76,7 +76,7 @@ async function kitIfCompiler(bin: string):
             name : name,
             compilers : {
               'CXX' : gxx_bin,
-              'CC' : bin,
+              'C' : bin,
             }
           };
         } else {
@@ -84,7 +84,7 @@ async function kitIfCompiler(bin: string):
             type : 'compilerKit',
             name : name,
             compilers : {
-              'CC' : bin,
+              'C' : bin,
             }
           };
         }
@@ -108,7 +108,7 @@ async function kitIfCompiler(bin: string):
             type : 'compilerKit',
             name : name,
             compilers : {
-              'CC' : bin,
+              'C' : bin,
               'CXX' : clangxx_bin,
             },
           };
@@ -117,7 +117,7 @@ async function kitIfCompiler(bin: string):
             type : 'compilerKit',
             name : name,
             compilers : {
-              'CC' : bin,
+              'C' : bin,
             },
           };
         }

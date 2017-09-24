@@ -20,27 +20,32 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeP
     return vscode.commands.registerCommand('cmake.' + name, _ => fn());
   }
 
-  for (const key of['editKits', 'scanForKits', 'selectKit',
-                    //   'configure',
-                    // 'build',
-                    // 'install',
-                    // 'jumpToCacheFile',
-                    // 'clean',
-                    // 'cleanConfigure',
-                    // 'cleanRebuild',
-                    // 'buildWithTarget',
-                    // 'setDefaultTarget',
-                    // 'setBuildType',
-                    // 'ctest',
-                    // 'stop',
-                    // 'quickStart',
-                    // 'launchTargetProgramPath',
-                    // 'debugTarget',
-                    // 'launchTarget',
-                    // 'selectLaunchTarget',
-                    // 'selectEnvironments',
-                    // 'toggleCoverageDecorations',
-] as(keyof CMakeProject)[]) { context.subscriptions.push(register(key));}
+  const funs : (keyof CMakeProject)[] =
+                   [
+                     'editKits',
+                     'scanForKits',
+                     'selectKit',
+                     'configure',
+                    //  'build',
+                     // 'install',
+                     // 'jumpToCacheFile',
+                     // 'clean',
+                     // 'cleanConfigure',
+                     // 'cleanRebuild',
+                     // 'buildWithTarget',
+                     // 'setDefaultTarget',
+                     // 'setBuildType',
+                     // 'ctest',
+                     // 'stop',
+                     // 'quickStart',
+                     // 'launchTargetProgramPath',
+                     // 'debugTarget',
+                     // 'launchTarget',
+                     // 'selectLaunchTarget',
+                     // 'selectEnvironments',
+                     // 'toggleCoverageDecorations',
+                   ];
+  for (const key of funs) { context.subscriptions.push(register(key));}
 
   return pr;
 }

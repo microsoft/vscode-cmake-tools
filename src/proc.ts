@@ -1,7 +1,7 @@
 import * as proc from 'child_process';
 
 export interface ExecutionResult {
-    retc: Number;
+    retc: number;
     stdout: string;
     stderr: string;
 }
