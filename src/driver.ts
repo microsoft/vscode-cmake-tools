@@ -18,7 +18,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   // We just call the async disposal method
   dispose() {
-    this.asyncDispose();
+    this._rollbar.invokeAsync('Async disposing CMake driver', async () => this.asyncDispose());
     this._cacheWatcher.dispose();
   }
 

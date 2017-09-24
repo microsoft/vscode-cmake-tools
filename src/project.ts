@@ -28,19 +28,23 @@ export class CMakeProject implements vscode.Disposable {
   private constructor(readonly extensionContext: vscode.ExtensionContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     this._kitManager.onActiveKitChanged(kit => {
-      this._activeKit = kit;
-      if (kit) {
-        this._cmakeDriver.setKit(kit);
-      }
+      this._rollbar.invokeAsync('Changing CMake kit', async() => {
+        this._activeKit = kit;
+        if (kit) {
+          await this._cmakeDriver.setKit(kit);
+        }
+      });
     });
   }
 
   // Teardown
   dispose() {
-    this._kitManager.dispose();
-    if (this._cmakeDriver) {
-      this._cmakeDriver.dispose();
-    }
+    this._rollbar.invoke('Root dispose', () => {
+      this._kitManager.dispose();
+      if (this._cmakeDriver) {
+        this._cmakeDriver.dispose();
+      }
+    });
   }
 
   /**
@@ -58,13 +62,15 @@ export class CMakeProject implements vscode.Disposable {
 
   // Two-phase initialize
   private async _init() {
-    // First, start up Rollbar
-    await this._rollbar.requestPermissions();
-    // Now start the CMake driver
-    await this._reloadCMakeDriver();
-    // Start up the kit manager. This will also inject the current kit into
-    // the CMake driver
-    await this._kitManager.initialize();
+    await this._rollbar.invokeAsync('Root init', async() => {
+      // First, start up Rollbar
+      await this._rollbar.requestPermissions();
+      // Now start the CMake driver
+      await this._reloadCMakeDriver();
+      // Start up the kit manager. This will also inject the current kit into
+      // the CMake driver
+      await this._kitManager.initialize();
+    });
   }
 
   // Static creation, because we never want to hand-out an uninitialized
@@ -76,13 +82,17 @@ export class CMakeProject implements vscode.Disposable {
   }
 
   // Extension command implementations
-  editKits() { return this._kitManager.openKitsEditor(); }
-  scanForKits() { return this._kitManager.rescanForKits(); }
-  selectKit() { return this._kitManager.selectKit(); }
+  editKits() {
+    return this._rollbar.invokeAsync('editKits', () => this._kitManager.openKitsEditor());
+  }
+  scanForKits() {
+    return this._rollbar.invokeAsync('scanForKits', () => this._kitManager.rescanForKits());
+  }
+  selectKit() { return this._rollbar.invokeAsync('selectKit', () => this._kitManager.selectKit()); }
   async configure() {
     while (!this._activeKit) {
       await this.selectKit();
     }
-    return this._cmakeDriver.configure();
+    return this._rollbar.invokeAsync('configure', () => this._cmakeDriver.configure());
   }
 }

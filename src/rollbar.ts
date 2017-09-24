@@ -16,7 +16,7 @@ export class RollbarController {
   constructor(readonly extensionContext: vscode.ExtensionContext) {}
 
   async requestPermissions() {
-    const key = 'rollbar-optin1';
+    const key = 'rollbar-optin3';
     const optin = this.extensionContext.globalState.get(key);
     if (optin === true) {
       this._enabled = true;
@@ -25,8 +25,8 @@ export class RollbarController {
     } else if (optin === undefined) {
       const item = await vscode.window.showInformationMessage(
           "Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?",
-          { title: 'Yes!', isCloseAffordance: true, } as vscode.MessageItem,
-          { title: 'No Thanks', isCloseAffordance: false, } as vscode.MessageItem);
+          { title: 'Yes!', isCloseAffordance: false, } as vscode.MessageItem,
+          { title: 'No Thanks', isCloseAffordance: true, } as vscode.MessageItem);
 
       if (item === undefined) {
         return;
@@ -50,27 +50,28 @@ export class RollbarController {
     return null;
   }
 
-  invokeAsync<T>(what: string, func: () => Promise<T>): void;
-  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): void;
-  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): void {
+  invokeAsync<T>(what: string, func: () => Promise<T>): Promise<T>;
+  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): Promise<T>;
+  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): Promise<T> {
     if (!func) {
-      additional = {};
       func = additional as() => Promise<T>;
+      additional = {};
     }
-    func().catch(e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); })
+    return func().catch(e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); });
   }
 
-  invoke<T>(what: string, func: () => T): void;
-  invoke<T>(what: string, additional: object, func: () => T): void;
-  invoke<T>(what: string, additional: object, func?: () => T) {
+  invoke<T>(what: string, func: () => T): T;
+  invoke<T>(what: string, additional: object, func: () => T): T;
+  invoke<T>(what: string, additional: object, func?: () => T): T {
     if (!func) {
-      additional = {};
       func = additional as() => T;
+      additional = {};
     }
     try {
-      func();
+      return func();
     } catch (e) {
       this.exception('Unhandled exception: ' + what, e, additional);
+      throw e;
     }
   }
 }
