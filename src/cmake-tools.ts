@@ -1,15 +1,21 @@
+/**
+ * Root of the extension
+ */
 import * as vscode from 'vscode';
 
-import {RollbarController} from './rollbar';
+import rollbar from './rollbar';
 import {KitManager, Kit} from './kit';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
 import {LegacyCMakeDriver} from './legacy-driver';
 
-export class CMakeProject implements vscode.Disposable {
-  // Let's us submit rollbar messages
-  private _rollbar = new RollbarController(this.extensionContext);
-
+/**
+ * Class implementing the extension. It's all here!
+ */
+export class CMakeTools implements vscode.Disposable {
+  /**
+   * The state manager for the class
+   */
   private _stateManager = new StateManager(this.extensionContext);
 
   /**
@@ -17,7 +23,11 @@ export class CMakeProject implements vscode.Disposable {
    * to it for kit changes.
    */
   private _kitManager = new KitManager(this._stateManager);
-  // We store the active kit here
+
+  /**
+   * Store the active kit. We keep it around in case we need to restart the
+   * CMake driver.
+   */
   private _activeKit: Kit | null = null;
 
   /**
@@ -25,10 +35,16 @@ export class CMakeProject implements vscode.Disposable {
    */
   private _cmakeDriver: CMakeDriver;
 
+  /**
+   * Construct a new instance. The instance isn't ready, and must be initalized.
+   * @param extensionContext The extension context
+   *
+   * This is private. You must call `create` to get an instance.
+   */
   private constructor(readonly extensionContext: vscode.ExtensionContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     this._kitManager.onActiveKitChanged(kit => {
-      this._rollbar.invokeAsync('Changing CMake kit', async() => {
+      rollbar.invokeAsync('Changing CMake kit', async() => {
         this._activeKit = kit;
         if (kit) {
           await this._cmakeDriver.setKit(kit);
@@ -37,9 +53,11 @@ export class CMakeProject implements vscode.Disposable {
     });
   }
 
-  // Teardown
+  /**
+   * Dispose the extension
+   */
   dispose() {
-    this._rollbar.invoke('Root dispose', () => {
+    rollbar.invoke('Root dispose', () => {
       this._kitManager.dispose();
       if (this._cmakeDriver) {
         this._cmakeDriver.dispose();
@@ -54,17 +72,19 @@ export class CMakeProject implements vscode.Disposable {
     if (this._cmakeDriver) {
       await this._cmakeDriver.asyncDispose();
     }
-    this._cmakeDriver = await LegacyCMakeDriver.create(this._rollbar);
+    this._cmakeDriver = await LegacyCMakeDriver.create();
     if (this._activeKit) {
       await this._cmakeDriver.setKit(this._activeKit);
     }
   }
 
-  // Two-phase initialize
+  /**
+   * Two-phase init. Called by `create`.
+   */
   private async _init() {
-    await this._rollbar.invokeAsync('Root init', async() => {
+    await rollbar.invokeAsync('Root init', async() => {
       // First, start up Rollbar
-      await this._rollbar.requestPermissions();
+      await rollbar.requestPermissions(this.extensionContext);
       // Now start the CMake driver
       await this._reloadCMakeDriver();
       // Start up the kit manager. This will also inject the current kit into
@@ -73,26 +93,47 @@ export class CMakeProject implements vscode.Disposable {
     });
   }
 
-  // Static creation, because we never want to hand-out an uninitialized
-  // instance
-  static async create(ctx: vscode.ExtensionContext): Promise<CMakeProject> {
-    const inst = new CMakeProject(ctx);
+  /**
+   * Create an instance asynchronously
+   * @param ctx The extension context
+   *
+   * The purpose of making this the only way to create an instance is to prevent
+   * us from creating uninitialized instances of the CMake Tools extension.
+   */
+  static async create(ctx: vscode.ExtensionContext): Promise<CMakeTools> {
+    const inst = new CMakeTools(ctx);
     await inst._init();
     return inst;
   }
 
-  // Extension command implementations
+  /**
+   * Implementation of `cmake.editKits`
+   */
   editKits() {
-    return this._rollbar.invokeAsync('editKits', () => this._kitManager.openKitsEditor());
+    return this._kitManager.openKitsEditor();
   }
+
+  /**
+   * Implementation of `cmake.scanForKits`
+   */
   scanForKits() {
-    return this._rollbar.invokeAsync('scanForKits', () => this._kitManager.rescanForKits());
+    return this._kitManager.rescanForKits();
   }
-  selectKit() { return this._rollbar.invokeAsync('selectKit', () => this._kitManager.selectKit()); }
+
+  /**
+   * Implementation of `cmake.selectKit`
+   */
+  selectKit() { return this._kitManager.selectKit(); }
+
+  /**
+   * Implementation of `cmake.configure`
+   */
   async configure() {
     while (!this._activeKit) {
       await this.selectKit();
     }
-    return this._rollbar.invokeAsync('configure', () => this._cmakeDriver.configure());
+    return this._cmakeDriver.configure();
   }
 }
+
+export default CMakeTools;

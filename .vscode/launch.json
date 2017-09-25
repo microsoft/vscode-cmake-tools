@@ -16,7 +16,7 @@
                 "${workspaceRoot}/out/test/*"
             ],
             "preLaunchTask": "npm",
-            "smartStep": true
+            "smartStep": false
         },
         {
             "name": "Launch Tests",

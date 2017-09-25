@@ -1,3 +1,7 @@
+/**
+ * Extension startup/teardown
+ */ /** */
+
 'use strict';
 
 import * as vscode from 'vscode';
@@ -6,27 +10,39 @@ import * as vscode from 'vscode';
 // import { log } from './logging';
 // import { outputChannels } from "./util";
 
-import {CMakeProject} from './project';
+import CMakeTools from './cmake-tools';
+import rollbar from './rollbar';
 
-export async function activate(context: vscode.ExtensionContext): Promise<CMakeProject> {
+/**
+ * Starts up the extension.
+ * @param context The extension context
+ * @returns A promise that will resolve when the extension is ready for use
+ */
+export async function activate(context: vscode.ExtensionContext): Promise<CMakeTools> {
   // log.initialize(context);
 
-  const pr = await CMakeProject.create(context);
+  // Create a new instance and initailize.
+  const cmt = await CMakeTools.create(context);
 
-  context.subscriptions.push(pr);
+  // Push it so we get clean teardown.
+  context.subscriptions.push(cmt);
 
-  function register(name: keyof CMakeProject) {
-    const fn = (pr[name] as Function).bind(pr);
-    return vscode.commands.registerCommand('cmake.' + name, _ => fn());
+  // A register function helps us bind the commands to the extension
+  function register<K extends keyof CMakeTools>(name: K) {
+    const fn = (cmt[name] as Function).bind(cmt);
+    return vscode.commands.registerCommand('cmake.' + name, () => {
+      return rollbar.invokeAsync(name, fn);
+    });
   }
 
-  const funs : (keyof CMakeProject)[] =
+  // List of functions that will be bound commands
+  const funs : (keyof CMakeTools)[] =
                    [
                      'editKits',
                      'scanForKits',
                      'selectKit',
                      'configure',
-                    //  'build',
+                     // 'build',
                      // 'install',
                      // 'jumpToCacheFile',
                      // 'clean',
@@ -45,9 +61,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeP
                      // 'selectEnvironments',
                      // 'toggleCoverageDecorations',
                    ];
+
+  // Bind them all!
   for (const key of funs) { context.subscriptions.push(register(key));}
 
-  return pr;
+  // Return that promise
+  return cmt;
 }
 
 // this method is called when your extension is deactivated

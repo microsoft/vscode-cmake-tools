@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es6",
+        "target": "es2017",
         "outDir": "out",
         "lib": [
             "es6"
@@ -13,7 +13,8 @@
         "strictNullChecks": true,
         "experimentalDecorators": true,
         "noUnusedLocals": true,
-        "noUnusedParameters": true
+        "noUnusedParameters": true,
+        "noImplicitThis": true
     },
     "exclude": [
         "node_modules",

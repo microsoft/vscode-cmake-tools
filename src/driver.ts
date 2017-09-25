@@ -1,47 +1,117 @@
+/**
+ * Defines base class for CMake drivers
+ */ /** */
+
 import * as path from 'path';
 
 import * as vscode from 'vscode';
 
 import * as api from './api';
-import {RollbarController} from './rollbar';
+import rollbar from './rollbar';
 import {Kit, CompilerKit, ToolchainKit, VSKit} from './kit';
 import {CMakeCache} from './cache';
 import * as util from './util';
-import {config} from './config';
+import config from './config';
 import {fs} from './pr';
 
+/**
+ * Base class for CMake drivers.
+ *
+ * CMake drivers are separated because different CMake version warrant different
+ * communication methods. Older CMake versions need to be driven by the command
+ * line, but newer versions may be controlled via CMake server, which provides
+ * a much richer interface.
+ *
+ * This class defines the basis for what a driver must implement to work.
+ */
 export abstract class CMakeDriver implements vscode.Disposable {
+  /**
+   * Do the configuration process for the current project.
+   *
+   * @returns The exit code from CMake
+   */
   abstract configure(): Promise<number>;
+
+  /**
+   * Do any necessary disposal for the driver. For the CMake Server driver,
+   * this entails shutting down the server process and closing the open pipes.
+   *
+   * The reason this is separate from the regular `dispose()` is so that the
+   * driver shutdown may be `await`ed on to ensure full shutdown.
+   */
   abstract asyncDispose(): Promise<void>;
 
-  constructor(protected readonly _rollbar: RollbarController) {}
+  /**
+   * Construct the driver. Concrete instances should provide their own creation
+   * routines.
+   */
+  protected constructor() {}
 
-  // We just call the async disposal method
+  /**
+   * Dispose the driver. This disposes some things synchronously, but also
+   * calls the `asyncDispose()` method to start any asynchronous shutdown.
+   */
   dispose() {
-    this._rollbar.invokeAsync('Async disposing CMake driver', async () => this.asyncDispose());
+    rollbar.invokeAsync('Async disposing CMake driver', async() => this.asyncDispose());
     this._cacheWatcher.dispose();
   }
 
-  /// The current kit
-  protected _kit: Kit | null = null;
-  /// Get the current kit as a compiler kit
+  /**
+   * The current Kit. Starts out `null`, but once set, is never `null` again.
+   * We do some separation here to protect ourselves: The `_baseKit` property
+   * is `private`, so derived classes cannot change it, except via
+   * `_setBaseKit`, which only allows non-null kits. This prevents the derived
+   * classes from resetting the kit back to `null`.
+   */
+  private _baseKit: Kit | null = null;
+
+  /**
+   * Sets the kit on the base class.
+   * @param k The new kit
+   */
+  protected _setBaseKit(k: Kit) { this._baseKit = k; }
+
+  /**
+   * Get the current kit. Once non-`null`, the kit is never `null` again.
+   */
+  protected get _kit() { return this._baseKit; }
+
+  /**
+   * Get the current kit as a `CompilerKit`.
+   *
+   * @precondition `this._kit` is non-`null` and `this._kit.type` is `compilerKit`.
+   * Guarded with an `assert`
+   */
   protected get _compilerKit() {
     console.assert(this._kit && this._kit.type == 'compilerKit', JSON.stringify(this._kit));
     return this._kit as CompilerKit;
   }
-  /// Get the current kit as a toolchain kit
+
+  /**
+   * Get the current kit as a `ToolchainKit`.
+   *
+   * @precondition `this._kit` is non-`null` and `this._kit.type` is `toolchainKit`.
+   * Guarded with an `assert`
+   */
   protected get _toolchainFileKit() {
     console.assert(this._kit && this._kit.type == 'toolchainKit', JSON.stringify(this._kit));
     return this._kit as ToolchainKit;
   }
-  /// Get the current kit as a VS kit
+  /**
+   * Get the current kit as a `VSKit`.
+   *
+   * @precondition `this._kit` is non-`null` and `this._kit.type` is `vsKit`.
+   * Guarded with an `assert`
+   */
   protected get _vsKit() {
     console.assert(this._kit && this._kit.type == 'vsKit', JSON.stringify(this._kit));
     return this._kit as VSKit;
   }
+
   /**
-   * Determine if we need to wipe the build directory if we change to `kit`
+   * Determine if we need to wipe the build directory if we change adopt `kit`
    * @param kit The new kit
+   * @returns `true` if the new kit requires a clean reconfigure.
    */
   protected _kitChangeNeedsClean(kit: Kit): boolean {
     if (!this._kit) {
@@ -71,17 +141,24 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
     }
   }
+
   /**
    * Change the current kit. This lets the driver reload, if necessary.
    * @param kit The new kit
    */
   abstract setKit(kit: Kit): Promise<void>;
 
-  /// Are we busy?
+  /**
+   * Is the driver busy? ie. running a configure/build/test
+   */
+  get isBusy() { return this._isBusy; }
   protected _isBusy: boolean = false;
 
   /**
-   * The source directory, where the root CMakeLists.txt lives
+   * The source directory, where the root CMakeLists.txt lives.
+   *
+   * @note This is distinct from the config values, since we do variable
+   * substitution.
    */
   get sourceDir(): string {
     const dir = util.replaceVars(config.sourceDirectory);
@@ -166,31 +243,58 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return true;
   }
 
-  private _cmakeCache: CMakeCache | null;
+  /**
+   * The CMake cache for the driver.
+   *
+   * Will be automatically reloaded when the file on disk changes.
+   */
   get cmakeCache() { return this._cmakeCache; }
+  private _cmakeCache: Promise<CMakeCache | null> = Promise.resolve(null);
+
+  /**
+   * Watcher for the CMake cache file on disk.
+   */
   private _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
 
-  allCacheEntries(): api.CacheEntryProperties[] {
-    return !this.cmakeCache ? [] : this.cmakeCache.allEntries().map(e => ({
-                                                                      type : e.type,
-                                                                      key : e.key,
-                                                                      value : e.value,
-                                                                      advanced : e.advanced,
-                                                                      helpString : e.helpString,
-                                                                    }));
+  /**
+   * Get all cache entries
+   */
+  get allCacheEntries() { return this._allCacheEntries(); }
+  private async _allCacheEntries(): Promise<api.CacheEntryProperties[]> {
+    const cache = await this.cmakeCache;
+    if (!cache) {
+      return [];
+    } else {
+      return cache.allEntries.map(e => ({
+                                    type : e.type,
+                                    key : e.key,
+                                    value : e.value,
+                                    advanced : e.advanced,
+                                    helpString : e.helpString,
+                                  }));
+    }
   }
 
+  /**
+   * Asynchronous initialization. Should be called by base classes during
+   * their initialization.
+   */
   protected async _init() {
     if (await fs.exists(this.cachePath)) {
-      this._cmakeCache = await CMakeCache.fromPath(this.cachePath);
+      this._cmakeCache = CMakeCache.fromPath(this.cachePath);
     }
     this._cacheWatcher.onDidChange(() => {
-      this._rollbar.invokeAsync('Reloading CMake Cache', async() => {
-        this._cmakeCache = await CMakeCache.fromPath(this.cachePath);
+      rollbar.invokeAsync('Reloading CMake Cache', async() => {
+        this._cmakeCache = CMakeCache.fromPath(this.cachePath);
+        // Force await here so that any errors are thrown into rollbar
+        await this._cmakeCache;
       });
     });
   }
 
+  /**
+   * Get the list of command line flags that should be passed to CMake
+   */
   protected _cmakeFlags(): string[] {
     const settings = Object.assign({}, config.configureSettings);
 
@@ -217,7 +321,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
     const settings_flags
         = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, value));
-    // = Object.getOwnPropertyNames(settings).map(key => _makeFlag(key, settings[key]));
     const flags = [ '--no-warn-unused-cli' ];
     return flags.concat(settings_flags);
   }

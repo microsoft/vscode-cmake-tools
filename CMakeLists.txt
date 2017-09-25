@@ -55,6 +55,8 @@ if(SPHINX_EXECUTABLE)
             -j 10
             "${CMAKE_CURRENT_SOURCE_DIR}/docs"
             "${CMAKE_CURRENT_BINARY_DIR}/docs"
+        COMMAND "${YARN_EXECUTABLE}" --silent docs
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMENT "Generating documentation"
         )
 endif()

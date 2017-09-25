@@ -1,3 +1,8 @@
+/**
+ * This module promise-ifies some NodeJS APIs that are frequently used in this
+ * ext.
+ */ /** */
+
 import promisify_ = require('es6-promisify');
 import * as util from 'util';
 // VSCode doesn't ship with util.promisify yet, but we do have type definitions for it, so we'll
@@ -6,10 +11,14 @@ const promisify = promisify_ as typeof util.promisify;
 
 import * as fs_ from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 
 import * as rimraf from 'rimraf';
 
+/**
+ * Wrappers for the `fs` module.
+ *
+ * Also has a few utility functions
+ */
 export namespace fs {
 
   export function exists(fspath: string): Promise<boolean> {
@@ -36,6 +45,11 @@ export namespace fs {
 
   export const unlink = promisify(fs_.unlink);
 
+  /**
+   * Creates a directory and all parent directories recursively. If the file
+   * already exists, and is not a directory, just return.
+   * @param fspath The directory to create
+   */
   export async function mkdir_p(fspath: string): Promise<void> {
     const parent = path.dirname(fspath);
     if (!await exists(parent)) {
@@ -54,6 +68,11 @@ export namespace fs {
     }
   }
 
+  /**
+   * Copy a file from one location to another.
+   * @param inpath The input file
+   * @param outpath The output file
+   */
   export function copyFile(inpath: string, outpath: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const reader = fs_.createReadStream(inpath);
@@ -69,21 +88,10 @@ export namespace fs {
     });
   }
 
-  export function hexHash(filepath: string): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-      const hash = crypto.createHash('md5');
-      const reader = fs_.createReadStream(filepath);
-      reader.on('error', e => reject(e));
-      reader.on('open', _fd => {
-        reader.pipe(hash);
-        reader.on('close', () => {
-          hash.end();
-          resolve((hash.read() as Buffer).toString('hex'));
-        });
-      });
-    });
-  }
-
+  /**
+   * Remove a directory recursively. **DANGER DANGER!**
+   * @param dirpath Directory to remove
+   */
   export function rmdir(dirpath: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       rimraf(dirpath, err => {

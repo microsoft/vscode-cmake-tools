@@ -1,21 +1,29 @@
-import {CMakeDriver} from './driver';
-import {RollbarController} from './rollbar';
+/**
+ * Module for the legacy driver. Talks to pre-CMake Server versions of CMake.
+ * Can also talk to newer versions of CMake via the command line.
+ */ /** */
+
+import { CMakeDriver } from './driver';
+// import rollbar from './rollbar';
 import {Kit} from './kit';
 import {fs} from './pr';
-import {config} from './config';
+import config from './config';
 import * as util from './util';
 import * as proc from './proc';
 // import * as proc from './proc';
 
+/**
+ * The legacy driver.
+ */
 export class LegacyCMakeDriver extends CMakeDriver {
-  private constructor(rb: RollbarController) { super(rb); }
+  private constructor() { super(); }
 
   async setKit(kit: Kit): Promise<void> {
     const need_clean = this._kitChangeNeedsClean(kit);
     if (need_clean) {
       await fs.rmdir(this.binaryDir);
     }
-    this._kit = kit;
+    this._setBaseKit(kit);
   }
 
   // Legacy disposal does nothing
@@ -57,8 +65,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return res.retc;
   }
 
-  static async create(rb: RollbarController): Promise<LegacyCMakeDriver> {
-    const inst = new LegacyCMakeDriver(rb);
+  static async create(): Promise<LegacyCMakeDriver> {
+    const inst = new LegacyCMakeDriver();
     await inst._init();
     return inst;
   }

@@ -2,7 +2,7 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import {config} from './config';
+import config from './config';
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -86,6 +86,11 @@ export function isTruthy(value: (boolean | string | null | undefined | number)) 
   return !!value;
 }
 
+/**
+ * Generate an array of key-value pairs from an object using
+ * `getOwnPropertyNames`
+ * @param obj The object to iterate
+ */
 export function objectPairs<V>(obj: {[key: string] : V}): [ string, V ][] {
   return Object.getOwnPropertyNames(obj).map(key => ([ key, obj[key] ] as[string, V]));
 }

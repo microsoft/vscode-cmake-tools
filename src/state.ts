@@ -13,7 +13,9 @@ import * as vscode from 'vscode';
 export class StateManager {
   constructor(readonly extensionContext: vscode.ExtensionContext) {}
 
-  // The kit
+  /**
+   * The name of the workspace-local active kit.
+   */
   public get activeKitName(): string | null {
     const kit = this.extensionContext.workspaceState.get<string>('activeKitName');
     return kit || null;
