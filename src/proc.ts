@@ -4,7 +4,13 @@
 
 import * as proc from 'child_process';
 
-import {ExecutionResult} from './api';
+// import {ExecutionResult} from './api';
+
+export interface ExecutionResult {
+  retc: number;
+  stdout: string;
+  stderr: string;
+}
 
 /**
  * Execute a command and return the result
@@ -22,8 +28,8 @@ export function execute(command: string, args: string[], options?: proc.SpawnOpt
     child.on('error', (err) => { reject(err); });
     let stdout_acc = '';
     let stderr_acc = '';
-    child.stdout.on('data', (data: Uint8Array) => { stdout_acc += data.toString(); });
-    child.stderr.on('data', (data: Uint8Array) => { stderr_acc += data.toString(); });
+    child.stdout.on('data', (data: Uint8Array) => { stdout_acc += data.toLocaleString(); });
+    child.stderr.on('data', (data: Uint8Array) => { stderr_acc += data.toLocaleString(); });
     // Don't stop until the child stream is closed, otherwise we might not read
     // the whole output of the command.
     child.on('close',
