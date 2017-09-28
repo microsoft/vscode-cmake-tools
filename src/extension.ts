@@ -8,7 +8,6 @@ import * as vscode from 'vscode';
 import * as logging from './logging';
 import * as util from './util';
 
-debugger;
 const log = logging.createLogger('extension');
 
 // import * as api from './api';
@@ -80,6 +79,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
     log.trace(`Register CMakeTools extension command cmake.${key}`);
     context.subscriptions.push(register(key));
   }
+
+  context.subscriptions.push(
+      vscode.commands.registerCommand('cmake._extensionInstance', () => { return cmt;}));
 
   // Return that promise
   return cmt;

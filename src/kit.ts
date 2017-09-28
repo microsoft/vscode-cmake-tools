@@ -9,7 +9,7 @@ import * as proc from './proc';
 import dirs from './dirs';
 import * as logging from './logging';
 import {StateManager} from './state';
-import { fs } from './pr';
+import {fs} from './pr';
 
 const log = logging.createLogger('kit');
 
@@ -84,11 +84,12 @@ export type Kit = CompilerKit | VSKit | ToolchainKit;
  * @param bin Path to a binary
  * @returns A CompilerKit, or null if `bin` is not a known compiler
  */
-async function kitIfCompiler(bin: string):
+export async function kitIfCompiler(bin: string):
     Promise<CompilerKit | null> {
       const fname = path.basename(bin);
       // Check by filename what the compiler might be. This is just heuristic.
-      const gcc_regex = /^gcc(-\d+(\.\d+(\.\d+)?)?)?(\\.exe)?$/;
+      const gcc_regex
+      = /^gcc(-\d+(\.\d+(\.\d+)?)?)?(\\.exe)?$/;
       const clang_regex = /^clang(-\d+(\.\d+(\.\d+)?)?)?(\\.exe)?$/;
       const gcc_res = gcc_regex.exec(fname);
       const clang_res = clang_regex.exec(fname);
@@ -162,9 +163,7 @@ async function kitIfCompiler(bin: string):
             },
           };
         }
-      } else {
-        return null;
-      }
+      } else {return null;}
     }
 
 /**
@@ -172,11 +171,9 @@ async function kitIfCompiler(bin: string):
  * @param dir Directory containing candidate binaries
  * @returns A list of CompilerKits found
  */
-async function scanDirForCompilerKits(dir: string) {
-  log.debug('Scanning directory', dir, 'for compilers');
-  try {
-    const stat = await fs.stat(dir);
-    if (!stat.isDirectory()) {
+export async function scanDirForCompilerKits(dir: string) {
+  log.debug('Scanning directory', dir, 'for compilers'); try {
+    const stat = await fs.stat(dir); if (!stat.isDirectory()) {
       console.log('Skipping scan of non-directory', dir);
       return [];
     }
@@ -187,21 +184,24 @@ async function scanDirForCompilerKits(dir: string) {
     }
     throw e;
   }
-  const bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
+  // Get files in the directory
+  const bins
+  = (await fs.readdir(dir)).map(f => path.join(dir, f));
   // Scan each binary in parallel
-  const prs = bins.map(async(bin) => {
-    log.trace('Checking file for compiler-ness:', bin);
-    try {
-      return await kitIfCompiler(bin)
-    } catch (e) {
-      log.warning('Failed to check binary', bin, 'by exception:', e);
-      // The binary may not be executable by this user...
-      if (e.code == 'EACCES') {
-        return null;
+  const prs
+  = bins.map(async(bin) => {
+      log.trace('Checking file for compiler-ness:', bin);
+      try {
+        return await kitIfCompiler(bin)
+      } catch (e) {
+        log.warning('Failed to check binary', bin, 'by exception:', e);
+        // The binary may not be executable by this user...
+        if (e.code == 'EACCES') {
+          return null;
+        }
+        throw e;
       }
-      throw e;
-    }
-  });
+    });
   const maybe_kits = await Promise.all(prs);
   const kits = maybe_kits.filter(k => k !== null) as Kit[];
   log.debug('Found', kits.length, 'kits in directory', dir);
@@ -212,15 +212,17 @@ async function scanDirForCompilerKits(dir: string) {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-async function
+export async function
 scanForKits() {
   log.debug('Scanning for Kits on system');
   // Search directories on `PATH` for compiler binaries
-  const pathvar = process.env['PATH'] !;
+  const pathvar
+  = process.env['PATH'] !;
   const sep = process.platform === 'win32' ? ';' : ':';
   const paths = pathvar.split(sep);
   // Search them all in parallel
-  const prs = paths.map(path => scanDirForCompilerKits(path));
+  const prs
+  = paths.map(path => scanDirForCompilerKits(path));
   const arrays = await Promise.all(prs);
   const kits = ([] as Kit[]).concat(...arrays);
   kits.map(k => log.info(`Found Kit: ${k.name}`));
@@ -233,16 +235,16 @@ scanForKits() {
  */
 function descriptionForKit(kit: Kit) {
   switch (kit.type) {
-  case 'toolchainKit': {
-    return `Kit for toolchain file ${kit.toolchainFile}`;
-  }
-  case 'vsKit': {
-    return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
-  }
-  case 'compilerKit': {
-    return 'Using compilers: '
-        + Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
-  }
+case 'toolchainKit': {
+  return `Kit for toolchain file ${kit.toolchainFile}`;
+}
+case 'vsKit': {
+  return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
+}
+case 'compilerKit': {
+  return 'Using compilers: '
+      + Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
+}
   }
 }
 
@@ -253,25 +255,29 @@ export class KitManager implements vscode.Disposable {
   /**
    * The known kits
    */
+  get kits() { return this._kits; }
   private _kits = [] as Kit[];
 
   /**
    * The path to the `cmake-kits.json` file
    */
-  private get _kitsPath(): string { return path.join(dirs.dataDir, 'cmake-kits.json'); }
+  private get _kitsPath() : string{return path.join(dirs.dataDir, 'cmake-kits.json');}
 
   /**
    * Watches the file at `_kitsPath`.
    */
-  private _kitsWatcher = vscode.workspace.createFileSystemWatcher(this._kitsPath);
+  private _kitsWatcher
+  = vscode.workspace.createFileSystemWatcher(this._kitsPath);
 
   /**
    * Event emitted when the Kit changes. This can be via user action, by the
    * available kits changing, or on initial load when the prior workspace kit
    * is reloaded.
    */
-  get onActiveKitChanged() { return this._activeKitChangedEmitter.event; }
-  private _activeKitChangedEmitter = new vscode.EventEmitter<Kit | null>();
+  get onActiveKitChanged() {
+    return this._activeKitChangedEmitter.event;
+  } private _activeKitChangedEmitter
+  = new vscode.EventEmitter<Kit | null>();
 
   /**
    * Change the current kit. Commits the current kit name to workspace-local
@@ -292,7 +298,8 @@ export class KitManager implements vscode.Disposable {
   /**
    * Shows teh currently selected kit and allows the user to select a new one.
    */
-  private _statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+  private _statusItem
+  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
 
   /**
    * Create a new kit manager.
@@ -332,18 +339,17 @@ export class KitManager implements vscode.Disposable {
    * selection, the current kit is kept. The only way it can reset to `null` is
    * if the active kit becomes somehow unavailable.
    */
-  async selectKit(): Promise<Kit | null> {
-    interface KitItem extends vscode.QuickPickItem {
-      kit: Kit
-    }
-    log.debug('Opening kit selection QuickPick');
-    const items = this._kits.map((kit): KitItem => {
-      return {
-        label : kit.name,
-        description : descriptionForKit(kit),
-        kit : kit,
-      };
-    });
+  async selectKit() : Promise<Kit | null>{
+    interface KitItem extends vscode.
+    QuickPickItem{kit : Kit} log.debug('Opening kit selection QuickPick');
+    const items = this._kits.map((kit):
+                                     KitItem => {
+                                       return {
+                                         label : kit.name,
+                                         description : descriptionForKit(kit),
+                                         kit : kit,
+                                       };
+                                     });
     const chosen = await vscode.window.showQuickPick(items, {
       ignoreFocusOut : true,
       placeHolder : 'Select a Kit',
@@ -352,9 +358,18 @@ export class KitManager implements vscode.Disposable {
       log.debug('User cancelled Kit selection');
       // No selection was made
       return null;
+    } else {this._setActiveKit(chosen.kit); return chosen.kit;}
+  }
+
+  async selectKitByName(kitName: string): Promise<Kit | null> {
+    log.debug('Setting active Kit by name', kitName);
+    const chosen = this._kits.find(k => k.name == kitName);
+    if (chosen === undefined) {
+      log.warning('Kit set by name to non-existent kit:', kitName);
+      return null;
     } else {
-      this._setActiveKit(chosen.kit);
-      return chosen.kit;
+      this._setActiveKit(chosen);
+      return chosen;
     }
   }
 

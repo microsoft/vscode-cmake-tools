@@ -7,12 +7,6 @@ import * as path from 'path';
 
 import * as vscode from 'vscode';
 
-import * as util from './util';
-import {fs} from './pr';
-import config from './config';
-import {LogLevelKey} from './config';
-import dirs from './dirs';
-
 /** Logging levels */
 export enum LogLevel {
   Trace,
@@ -23,6 +17,8 @@ export enum LogLevel {
   Error,
   Fatal,
 }
+
+export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
 
 /**
  * Get the name of a logging level
@@ -138,7 +134,9 @@ class SingletonLogger {
     case LogLevel.Debug:
     case LogLevel.Info:
     case LogLevel.Note:
-      console.info("[CMakeTools]", raw_message);
+      if (process.env['CMT_QUIET_CONSOLE'] !== '1') {
+        console.info("[CMakeTools]", raw_message);
+      }
       break;
     case LogLevel.Warning:
       console.warn("[CMakeTools]", raw_message);
@@ -170,8 +168,13 @@ class SingletonLogger {
   error(...args: Stringable[]) { this._log(LogLevel.Error, ...args); }
   fatal(...args: Stringable[]) { this._log(LogLevel.Fatal, ...args); }
 
-  createLogger(tag: string) {
-    return new Logger(tag);
+  private static _inst: SingletonLogger | null = null;
+
+  static instance(): SingletonLogger {
+    if (SingletonLogger._inst === null) {
+      SingletonLogger._inst = new SingletonLogger();
+    }
+    return SingletonLogger._inst;
   }
 }
 
@@ -191,22 +194,24 @@ class SingletonLogger {
 //   return method;
 // }
 
-export const log = new SingletonLogger();
-
 class Logger {
   constructor(readonly _tag: string) {}
   get tag() { return `[${this._tag}]`; }
-  trace(...args: Stringable[]) { log.trace(this.tag, ...args); }
-  debug(...args: Stringable[]) { log.debug(this.tag, ...args); }
-  info(...args: Stringable[]) { log.info(this.tag, ...args); }
-  note(...args: Stringable[]) { log.note(this.tag, ...args); }
-  warning(...args: Stringable[]) { log.warning(this.tag, ...args); }
-  error(...args: Stringable[]) { log.error(this.tag, ...args); }
-  fatal(...args: Stringable[]) { log.fatal(this.tag, ...args); }
+  trace(...args: Stringable[]) { SingletonLogger.instance().trace(this.tag, ...args); }
+  debug(...args: Stringable[]) { SingletonLogger.instance().debug(this.tag, ...args); }
+  info(...args: Stringable[]) { SingletonLogger.instance().info(this.tag, ...args); }
+  note(...args: Stringable[]) { SingletonLogger.instance().note(this.tag, ...args); }
+  warning(...args: Stringable[]) { SingletonLogger.instance().warning(this.tag, ...args); }
+  error(...args: Stringable[]) { SingletonLogger.instance().error(this.tag, ...args); }
+  fatal(...args: Stringable[]) { SingletonLogger.instance().fatal(this.tag, ...args); }
 }
 
-export function createLogger(tag: string) {
-  return new Logger(tag);
-}
+export function createLogger(tag: string) { return new Logger(tag); }
 
-export default log;
+// The imports aren't needed immediately, so we can drop them all the way down
+// here since we may have circular imports
+import * as util from './util';
+import {fs} from './pr';
+import config from './config';
+import {LogLevelKey} from './config';
+import dirs from './dirs';

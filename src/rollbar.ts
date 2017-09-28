@@ -7,7 +7,6 @@ import Rollbar = require('rollbar');
 
 import * as logging from './logging';
 
-debugger;
 const log = logging.createLogger('rollbar');
 
 /**
@@ -42,6 +41,14 @@ class RollbarController {
   async requestPermissions(extensionContext: vscode.ExtensionContext): Promise<void> {
     // The memento key where we store permission. Update this to ask again.
     log.debug('Checking Rollbar permissions');
+    if (process.env['CMT_TESTING'] === '1') {
+      log.warning('Running CMakeTools in test mode. Rollbar is disabled.');
+      return;
+    }
+    if (process.env['CMT_DEVRUN'] === '1') {
+      log.warning('Running CMakeTools in developer mode. Rollbar reporting is disabled.');
+      return;
+    }
     const key = 'rollbar-optin3';
     const optin = extensionContext.globalState.get(key);
     if (optin === true) {

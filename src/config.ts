@@ -181,7 +181,12 @@ class ConfigurationReader {
     return readPrefixedConfig<string[]>('emscriptenSearchDirs', []);
   }
 
-  get loggingLevel(): LogLevelKey { return readPrefixedConfig<LogLevelKey>('loggingLevel', 'info'); }
+  get loggingLevel(): LogLevelKey {
+    if (process.env['CMT_LOGGING_LEVEL']) {
+      return process.env['CMT_LOGGING_LEVEL']! as LogLevelKey;
+    }
+    return readPrefixedConfig<LogLevelKey>('loggingLevel', 'info');
+  }
   get enableTraceLogging(): boolean { return readPrefixedConfig<boolean>('enableTraceLogging', false); }
 
   /**
@@ -192,7 +197,7 @@ class ConfigurationReader {
   onChange<K extends keyof ConfigurationReader>(setting: K,
                                                 cb: (value: ConfigurationReader[K]) => void) {
     const state = { value: this[setting] };
-    return vscode.workspace.onDidChangeConfiguration(_ => {
+    return vscode.workspace.onDidChangeConfiguration(() => {
       rollbar.invoke(`Callback changing setting: cmake.${setting}`, () => {
         const new_value = this[setting];
         if (new_value !== state.value) {

@@ -15,6 +15,9 @@
                 "${workspaceRoot}/out/src/*",
                 "${workspaceRoot}/out/test/*"
             ],
+            "env": {
+                "CMT_DEVRUN": "1"
+            },
             "preLaunchTask": "npm",
             "smartStep": false
         },
@@ -23,7 +26,7 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["${workspaceRoot}/test/test_project", "--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test"],
+            "args": ["${workspaceRoot}/test/test-project", "--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test"],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
@@ -31,6 +34,10 @@
                 "${workspaceRoot}/out/src/*",
                 "${workspaceRoot}/out/test/*"
             ],
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1"
+            },
             "preLaunchTask": "npm"
             // "smartStep": true
         }
