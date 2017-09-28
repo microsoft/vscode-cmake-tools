@@ -5,6 +5,11 @@
 import * as vscode from 'vscode';
 import Rollbar = require('rollbar');
 
+import * as logging from './logging';
+
+debugger;
+const log = logging.createLogger('rollbar');
+
 /**
  * The wrapper around Rollbar. Presents a nice functional API.
  */
@@ -36,6 +41,7 @@ class RollbarController {
    */
   async requestPermissions(extensionContext: vscode.ExtensionContext): Promise<void> {
     // The memento key where we store permission. Update this to ask again.
+    log.debug('Checking Rollbar permissions');
     const key = 'rollbar-optin3';
     const optin = extensionContext.globalState.get(key);
     if (optin === true) {
@@ -43,6 +49,7 @@ class RollbarController {
     } else if (optin == false) {
       this._enabled = false;
     } else if (optin === undefined) {
+      log.debug('Asking user for permission to user Rollbar...');
       // We haven't asked yet. Ask them now:
       const item = await vscode.window.showInformationMessage(
           "Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?",
@@ -51,11 +58,13 @@ class RollbarController {
 
       if (item === undefined) {
         // We didn't get an answer
+        log.trace('User did not answer. Rollbar is not enabled.');
         return;
       }
       extensionContext.globalState.update(key, !item.isCloseAffordance);
-      this._enabled = !item.isCloseAffordance
+      this._enabled = !item.isCloseAffordance;
     }
+    log.debug('Rollbar enabled? ', this._enabled);
   }
 
   /**
@@ -66,6 +75,7 @@ class RollbarController {
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
   exception(what: string, exception: Error, additional: object = {}): Rollbar.LogResult | null {
+    log.fatal('Unhandled exception:', what, exception, JSON.stringify(additional));
     if (this._enabled) {
       return this._rollbar.error(what, exception, additional);
     }
@@ -79,9 +89,10 @@ class RollbarController {
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
   error(what: string, additional: object = {}): Rollbar.LogResult | null {
+    log.error(what, JSON.stringify(additional));
     if (this._enabled) {
       const stack = new Error().stack;
-      return this._rollbar.error(what, additional, {stack: stack});
+      return this._rollbar.error(what, additional, {stack : stack});
     }
     return null;
   }
@@ -94,6 +105,7 @@ class RollbarController {
   updatePayload(data: object) {
     Object.assign(this._payload, data);
     this._rollbar.configure({payload : this._payload});
+    log.debug('Updated Rollbar payload', JSON.stringify(data));
   }
 
   /**
@@ -109,6 +121,7 @@ class RollbarController {
       func = additional as() => Promise<T>;
       additional = {};
     }
+    log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
     return func().catch(e => {
       this.exception('Unhandled Promise rejection: ' + what, e, additional);
       throw e;
@@ -129,6 +142,7 @@ class RollbarController {
       additional = {};
     }
     try {
+      log.trace(`Invoking function [${func.name}] with Rollbar wrapping`, `[${what}]`);
       return func();
     } catch (e) {
       this.exception('Unhandled exception: ' + what, e, additional);

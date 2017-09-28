@@ -7,7 +7,11 @@ import rollbar from './rollbar';
 import {KitManager, Kit} from './kit';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
-import {LegacyCMakeDriver} from './legacy-driver';
+import { LegacyCMakeDriver } from './legacy-driver';
+
+import * as logging from './logging';
+
+const log = logging.createLogger('main');
 
 /**
  * Class implementing the extension. It's all here!
@@ -43,10 +47,13 @@ export class CMakeTools implements vscode.Disposable {
    */
   private constructor(readonly extensionContext: vscode.ExtensionContext) {
     // Handle the active kit changing. We want to do some updates and teardown
+    log.debug('Constructing new CMakeTools instance');
     this._kitManager.onActiveKitChanged(kit => {
+      log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
       rollbar.invokeAsync('Changing CMake kit', async() => {
         this._activeKit = kit;
         if (kit) {
+          log.debug('Injecting new Kit into CMake driver');
           await this._cmakeDriver.setKit(kit);
         }
       });
@@ -57,6 +64,7 @@ export class CMakeTools implements vscode.Disposable {
    * Dispose the extension
    */
   dispose() {
+    log.debug('Disposing CMakeTools extension');
     rollbar.invoke('Root dispose', () => {
       this._kitManager.dispose();
       if (this._cmakeDriver) {
@@ -69,11 +77,15 @@ export class CMakeTools implements vscode.Disposable {
    * Reload/restarts the CMake Driver
    */
   private async _reloadCMakeDriver() {
+    log.debug('Reloading CMake driver');
     if (this._cmakeDriver) {
+      log.debug('Diposing old driver first');
       await this._cmakeDriver.asyncDispose();
     }
+    log.debug('Loading legacy (non-cmake-server) driver');
     this._cmakeDriver = await LegacyCMakeDriver.create();
     if (this._activeKit) {
+      log.debug('Pushing active Kit into driver');
       await this._cmakeDriver.setKit(this._activeKit);
     }
   }
@@ -82,6 +94,7 @@ export class CMakeTools implements vscode.Disposable {
    * Two-phase init. Called by `create`.
    */
   private async _init() {
+    log.debug('Starting CMakeTools second-phase init');
     await rollbar.invokeAsync('Root init', async() => {
       // First, start up Rollbar
       await rollbar.requestPermissions(this.extensionContext);
@@ -101,8 +114,10 @@ export class CMakeTools implements vscode.Disposable {
    * us from creating uninitialized instances of the CMake Tools extension.
    */
   static async create(ctx: vscode.ExtensionContext): Promise<CMakeTools> {
+    log.debug('Safe constructing new CMakeTools instance');
     const inst = new CMakeTools(ctx);
     await inst._init();
+    log.debug('CMakeTools instance initialization complete.');
     return inst;
   }
 
@@ -129,8 +144,14 @@ export class CMakeTools implements vscode.Disposable {
    * Implementation of `cmake.configure`
    */
   async configure() {
-    while (!this._activeKit) {
+    if (!this._activeKit) {
+      log.debug('No kit selected yet. Asking for a Kit first.');
       await this.selectKit();
+    }
+    if (!this._activeKit) {
+      log.debug('No kit selected. Abort configure.');
+      vscode.window.showErrorMessage('Cannot configure without a Kit');
+      return -1;
     }
     return this._cmakeDriver.configure();
   }

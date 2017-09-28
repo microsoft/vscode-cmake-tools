@@ -591,13 +591,22 @@
                     "default": true,
                     "description": "Enable CMake server"
                 },
+                "cmake.enableTraceLogging": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable trace logging to file and console (very noisy)"
+                },
                 "cmake.loggingLevel": {
                     "type": "string",
-                    "default": "normal",
+                    "default": "info",
                     "enum": [
-                        "verbose",
-                        "normal",
-                        "minimal"
+                        "trace",
+                        "debug",
+                        "info",
+                        "note",
+                        "warning",
+                        "error",
+                        "fatal"
                     ]
                 }
             }

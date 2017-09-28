@@ -5,6 +5,12 @@
 'use strict';
 
 import * as vscode from 'vscode';
+import * as logging from './logging';
+import * as util from './util';
+
+debugger;
+const log = logging.createLogger('extension');
+
 // import * as api from './api';
 // import { CMakeToolsWrapper } from './wrapper';
 // import { log } from './logging';
@@ -19,19 +25,26 @@ import rollbar from './rollbar';
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext): Promise<CMakeTools> {
-  // log.initialize(context);
-
   // Create a new instance and initailize.
   const cmt = await CMakeTools.create(context);
 
   // Push it so we get clean teardown.
   context.subscriptions.push(cmt);
 
+  // We are now safe to do logging
+  log.debug('Registering extension commands');
+
   // A register function helps us bind the commands to the extension
   function register<K extends keyof CMakeTools>(name: K) {
     const fn = (cmt[name] as Function).bind(cmt);
     return vscode.commands.registerCommand('cmake.' + name, () => {
-      return rollbar.invokeAsync(name, fn);
+      const id = util.randint(1000, 10000);
+      log.debug(`[${id}]`, 'cmake.' + name, 'started');
+      const pr = rollbar.invokeAsync(name, fn);
+      pr.then(() => { log.debug(`[${id}]`, 'cmake.' + name, 'finished'); }).catch(e => {
+        log.debug(`[${id}]`, 'cmake.' + name, 'finished with an exception', e);
+      });
+      return pr;
     });
   }
 
@@ -63,7 +76,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                    ];
 
   // Bind them all!
-  for (const key of funs) { context.subscriptions.push(register(key));}
+  for (const key of funs) {
+    log.trace(`Register CMakeTools extension command cmake.${key}`);
+    context.subscriptions.push(register(key));
+  }
 
   // Return that promise
   return cmt;
@@ -72,5 +88,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
 // this method is called when your extension is deactivated
 export function
 deactivate() {
+  log.debug('Deactivate CMakeTools');
   //   outputChannels.dispose();
 }

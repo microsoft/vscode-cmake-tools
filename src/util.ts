@@ -94,3 +94,23 @@ export function isTruthy(value: (boolean | string | null | undefined | number)) 
 export function objectPairs<V>(obj: {[key: string] : V}): [ string, V ][] {
   return Object.getOwnPropertyNames(obj).map(key => ([ key, obj[key] ] as[string, V]));
 }
+
+/**
+ * Map an iterable by some projection function
+ * @param iter An iterable to map
+ * @param proj The projection function
+ */
+export function* map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iterator<Out> {
+  for (const item of iter) {
+    yield proj(item);
+  }
+}
+
+/**
+ * Generate a random integral value.
+ * @param min Minimum value
+ * @param max Maximum value
+ */
+export function randint(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min) + min);
+}

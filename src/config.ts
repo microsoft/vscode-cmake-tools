@@ -10,6 +10,8 @@ import * as vscode from 'vscode';
 import * as util from './util';
 import rollbar from './rollbar';
 
+export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
+
 /**
  * Read a config value from `settings.json`
  * @param key The configuration setting name
@@ -179,6 +181,9 @@ class ConfigurationReader {
     return readPrefixedConfig<string[]>('emscriptenSearchDirs', []);
   }
 
+  get loggingLevel(): LogLevelKey { return readPrefixedConfig<LogLevelKey>('loggingLevel', 'info'); }
+  get enableTraceLogging(): boolean { return readPrefixedConfig<boolean>('enableTraceLogging', false); }
+
   /**
    * Watch for changes on a particular setting
    * @param setting The name of the setting to watch
@@ -186,7 +191,7 @@ class ConfigurationReader {
    */
   onChange<K extends keyof ConfigurationReader>(setting: K,
                                                 cb: (value: ConfigurationReader[K]) => void) {
-    const state = {value : this[setting]};
+    const state = { value: this[setting] };
     return vscode.workspace.onDidChangeConfiguration(_ => {
       rollbar.invoke(`Callback changing setting: cmake.${setting}`, () => {
         const new_value = this[setting];

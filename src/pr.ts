@@ -45,6 +45,8 @@ export namespace fs {
 
   export const unlink = promisify(fs_.unlink);
 
+  export const appendFile = promisify(fs_.appendFile);
+
   /**
    * Creates a directory and all parent directories recursively. If the file
    * already exists, and is not a directory, just return.

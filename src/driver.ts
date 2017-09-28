@@ -12,7 +12,10 @@ import {Kit, CompilerKit, ToolchainKit, VSKit} from './kit';
 import {CMakeCache} from './cache';
 import * as util from './util';
 import config from './config';
+import * as logging from './logging';
 import {fs} from './pr';
+
+const log = logging.createLogger('driver')
 
 /**
  * Base class for CMake drivers.
@@ -52,6 +55,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * calls the `asyncDispose()` method to start any asynchronous shutdown.
    */
   dispose() {
+    log.debug('Disposing base CMakeDriver');
     rollbar.invokeAsync('Async disposing CMake driver', async() => this.asyncDispose());
     this._cacheWatcher.dispose();
   }
@@ -69,7 +73,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Sets the kit on the base class.
    * @param k The new kit
    */
-  protected _setBaseKit(k: Kit) { this._baseKit = k; }
+  protected _setBaseKit(k: Kit) {
+    this._baseKit = k;
+    log.debug('CMakeDriver Kit set to', k.name);
+  }
 
   /**
    * Get the current kit. Once non-`null`, the kit is never `null` again.
@@ -114,30 +121,53 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns `true` if the new kit requires a clean reconfigure.
    */
   protected _kitChangeNeedsClean(kit: Kit): boolean {
+    log.debug('Checking if Kit change necessitates cleaning');
     if (!this._kit) {
       // First kit? We never clean
+      log.debug('Clean not needed: No prior Kit selected');
       return false;
     }
     if (kit.type !== this._kit.type) {
       // If the kit type changed, we must clean up
+      log.debug('Need clean: Kit type changed', this._kit.type, '->', kit.type);
       return true;
     }
     switch (kit.type) {
     case 'compilerKit': {
       // We need to wipe out the build directory if the compiler for any language was changed.
-      return Object.keys(this._compilerKit.compilers).some(lang => {
+      const comp_changed = Object.keys(this._compilerKit.compilers).some(lang => {
         return !!this._compilerKit.compilers[lang]
             && this._compilerKit.compilers[lang] !== kit.compilers[lang];
       });
+      if (comp_changed) {
+        log.debug('Need clean: Compilers for one or more languages changed');
+      } else {
+        log.debug('Clean not needed: No compilers changed');
+      }
+      return comp_changed;
     }
     case 'toolchainKit': {
       // We'll assume that a new toolchain is very destructive
-      return kit.toolchainFile !== this._toolchainFileKit.toolchainFile;
+      const tc_chained = kit.toolchainFile !== this._toolchainFileKit.toolchainFile;
+      if (tc_chained) {
+        log.debug('Need clean: Toolchain file changed', this._toolchainFileKit.toolchainFile, '->', kit.toolchainFile);
+      } else {
+        log.debug('Clean not needed: toolchain file unchanged');
+      }
+      return tc_chained;
     }
     case 'vsKit': {
       // Switching VS changes everything
-      return kit.visualStudio !== this._vsKit.visualStudio
+      const vs_changed = kit.visualStudio !== this._vsKit.visualStudio
           && kit.visualStudioArchitecture !== this._vsKit.visualStudioArchitecture;
+      if (vs_changed) {
+        const old_vs = `${this._vsKit.visualStudio} ${this._vsKit.visualStudioArchitecture}`;
+        const new_vs = `${kit.visualStudio} ${kit.visualStudioArchitecture}`;
+        log.debug('Need clean: Visual Studio changed:', old_vs, '->', new_vs);
+      } else {
+        log.debug('Clean not needed: Same Visual Studio');
+      }
+      return vs_changed;
     }
     }
   }
@@ -194,19 +224,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * before any configuration tasks are run
    */
   protected async _beforeConfigure(): Promise<boolean> {
+    log.debug('Runnnig pre-configure checks and steps');
     if (this._isBusy) {
+      log.debug('No configuring: We\'re busy.');
       vscode.window.showErrorMessage(
           'A CMake task is already running. Stop it before trying to configure.');
       return false;
     }
 
     if (!this.sourceDir) {
+      log.debug('No configuring: There is no source directory.');
       vscode.window.showErrorMessage('You do not have a source directory open');
       return false;
     }
 
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
+      log.debug('No configuring: There is no', cmake_list);
       await vscode.window.showErrorMessage('You do not have a CMakeLists.txt');
       // if (do_quickstart) // TODO
       //   await this.quickStart();
@@ -215,8 +249,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Save open files before we configure/build
     if (config.saveBeforeBuild) {
+      log.debug('Saving open files before configure/build');
       const save_good = await vscode.workspace.saveAll();
       if (!save_good) {
+        log.debug('Saving open files failed');
         const chosen = await vscode.window.showErrorMessage<vscode.MessageItem>(
             'Not all open documents were saved. Would you like to continue anyway?',
             {
@@ -280,11 +316,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * their initialization.
    */
   protected async _init() {
+    log.debug('Base _init() of CMakeDriver');
     if (await fs.exists(this.cachePath)) {
       this._cmakeCache = CMakeCache.fromPath(this.cachePath);
     }
     this._cacheWatcher.onDidChange(() => {
-      rollbar.invokeAsync('Reloading CMake Cache', async() => {
+      log.debug(`Reload CMake cache: ${this.cachePath} changed`);
+      rollbar.invokeAsync('Reloading CMake Cache', async () => {
         this._cmakeCache = CMakeCache.fromPath(this.cachePath);
         // Force await here so that any errors are thrown into rollbar
         await this._cmakeCache;
@@ -321,7 +359,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
     const settings_flags
         = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, value));
-    const flags = [ '--no-warn-unused-cli' ];
-    return flags.concat(settings_flags);
+    const flags = ['--no-warn-unused-cli'];
+    const final_flags = flags.concat(settings_flags);
+    log.trace('CMake flags are', JSON.stringify(final_flags));
+    return final_flags;
   }
 }

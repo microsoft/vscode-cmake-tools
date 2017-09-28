@@ -7,8 +7,11 @@ import * as path from 'path';
 
 import * as proc from './proc';
 import dirs from './dirs';
+import * as logging from './logging';
 import {StateManager} from './state';
-import {fs} from './pr';
+import { fs } from './pr';
+
+const log = logging.createLogger('kit');
 
 /**
  * Base of all kits. Just has a name.
@@ -90,6 +93,7 @@ async function kitIfCompiler(bin: string):
       const gcc_res = gcc_regex.exec(fname);
       const clang_res = clang_regex.exec(fname);
       if (gcc_res) {
+        log.debug('Testing GCC-ish binary:', bin);
         const exec = await proc.execute(bin, [ '-v' ]);
         if (exec.retc != 0) {
           return null;
@@ -104,6 +108,7 @@ async function kitIfCompiler(bin: string):
         const gxx_fname = fname.replace(/^gcc/, 'g++');
         const gxx_bin = path.join(path.dirname(bin), gxx_fname);
         const name = `GCC ${version}`;
+        log.debug('Detected GCC compiler kit:', bin);
         if (await fs.exists(gxx_bin)) {
           return {
             type : 'compilerKit',
@@ -123,6 +128,7 @@ async function kitIfCompiler(bin: string):
           };
         }
       } else if (clang_res) {
+        log.debug('Testing Clang-ish binary:', bin);
         const exec = await proc.execute(bin, [ '-v' ]);
         if (exec.retc != 0) {
           return null;
@@ -137,6 +143,7 @@ async function kitIfCompiler(bin: string):
         const clangxx_fname = fname.replace(/^clang/, 'clang++');
         const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
         const name = `Clang ${version}`;
+        log.debug('Detected Clang compiler kit:', bin);
         if (await fs.exists(clangxx_bin)) {
           return {
             type : 'compilerKit',
@@ -166,6 +173,7 @@ async function kitIfCompiler(bin: string):
  * @returns A list of CompilerKits found
  */
 async function scanDirForCompilerKits(dir: string) {
+  log.debug('Scanning directory', dir, 'for compilers');
   try {
     const stat = await fs.stat(dir);
     if (!stat.isDirectory()) {
@@ -173,6 +181,7 @@ async function scanDirForCompilerKits(dir: string) {
       return [];
     }
   } catch (e) {
+    log.warning('Failed to scan', dir, 'by exception:', e);
     if (e.code == 'ENOENT') {
       return [];
     }
@@ -181,9 +190,11 @@ async function scanDirForCompilerKits(dir: string) {
   const bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
   // Scan each binary in parallel
   const prs = bins.map(async(bin) => {
+    log.trace('Checking file for compiler-ness:', bin);
     try {
       return await kitIfCompiler(bin)
     } catch (e) {
+      log.warning('Failed to check binary', bin, 'by exception:', e);
       // The binary may not be executable by this user...
       if (e.code == 'EACCES') {
         return null;
@@ -192,7 +203,9 @@ async function scanDirForCompilerKits(dir: string) {
     }
   });
   const maybe_kits = await Promise.all(prs);
-  return maybe_kits.filter(k => k !== null) as Kit[];
+  const kits = maybe_kits.filter(k => k !== null) as Kit[];
+  log.debug('Found', kits.length, 'kits in directory', dir);
+  return kits;
 }
 
 /**
@@ -201,6 +214,7 @@ async function scanDirForCompilerKits(dir: string) {
  */
 async function
 scanForKits() {
+  log.debug('Scanning for Kits on system');
   // Search directories on `PATH` for compiler binaries
   const pathvar = process.env['PATH'] !;
   const sep = process.platform === 'win32' ? ';' : ':';
@@ -209,7 +223,7 @@ scanForKits() {
   const prs = paths.map(path => scanDirForCompilerKits(path));
   const arrays = await Promise.all(prs);
   const kits = ([] as Kit[]).concat(...arrays);
-  kits.map(k => console.log(`Found kit ${k.name}`));
+  kits.map(k => log.info(`Found Kit: ${k.name}`));
   return kits;
 }
 
@@ -266,6 +280,7 @@ export class KitManager implements vscode.Disposable {
    * @param kit The new Kit
    */
   private _setActiveKit(kit: Kit | null) {
+    log.debug('Active kit set to', kit ? kit.name : 'null');
     if (kit) {
       this.stateManager.activeKitName = kit.name;
     } else {
@@ -284,6 +299,7 @@ export class KitManager implements vscode.Disposable {
    * @param stateManager The workspace state manager
    */
   constructor(readonly stateManager: StateManager) {
+    log.debug('Constructing KitManager');
     // Re-read the kits file when it is changed
     this._kitsWatcher.onDidChange(_e => this._rereadKits());
     // Update the statusbar item whenever the active kit changes
@@ -303,6 +319,7 @@ export class KitManager implements vscode.Disposable {
    * Dispose the kit manager
    */
   dispose() {
+    log.debug('Disposing KitManager');
     this._kitsWatcher.dispose();
     this._activeKitChangedEmitter.dispose();
     this._statusItem.dispose();
@@ -319,6 +336,7 @@ export class KitManager implements vscode.Disposable {
     interface KitItem extends vscode.QuickPickItem {
       kit: Kit
     }
+    log.debug('Opening kit selection QuickPick');
     const items = this._kits.map((kit): KitItem => {
       return {
         label : kit.name,
@@ -331,6 +349,7 @@ export class KitManager implements vscode.Disposable {
       placeHolder : 'Select a Kit',
     });
     if (chosen === undefined) {
+      log.debug('User cancelled Kit selection');
       // No selection was made
       return null;
     } else {
@@ -346,6 +365,7 @@ export class KitManager implements vscode.Disposable {
    * and rewrite any previously discovered kits with the new data.
    */
   async rescanForKits() {
+    log.debug('Rescanning for Kits');
     // clang-format off
     const old_kits_by_name = this._kits.reduce(
       (acc, kit) => Object.assign({}, acc, {[kit.name]: kit}),
@@ -363,6 +383,7 @@ export class KitManager implements vscode.Disposable {
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
 
+    log.debug('Saving news kits to', this._kitsPath);
     await fs.mkdir_p(path.dirname(this._kitsPath));
     const stripped_kits = new_kits.map((k: any) => {
       k.type = undefined;
@@ -378,6 +399,7 @@ export class KitManager implements vscode.Disposable {
       }
     });
     await fs.writeFile(this._kitsPath, JSON.stringify(sorted_kits, null, 2));
+    log.debug(this._kitsPath, 'saved');
   }
 
   /**
@@ -385,6 +407,7 @@ export class KitManager implements vscode.Disposable {
    * file in `rescanForKits`, or if the user otherwise edits the file manually.
    */
   private async _rereadKits() {
+    log.debug('Re-reading kits file', this._kitsPath);
     const content_str = await fs.readFile(this._kitsPath);
     const content = JSON.parse(content_str.toLocaleString()) as object[];
     this._kits = content.map((item_): Kit => {
@@ -436,7 +459,9 @@ export class KitManager implements vscode.Disposable {
    * Initialize the kits manager. Must be called before using an instance.
    */
   async initialize() {
+    log.debug('Second phase init for KitManager');
     if (await fs.exists(this._kitsPath)) {
+      log.debug('Re-read kits file from prior session');
       // Load up the list of kits that we've saved
       await this._rereadKits();
     } else {
@@ -462,7 +487,8 @@ export class KitManager implements vscode.Disposable {
    * Opens a text editor with the user-local `cmake-kits.json` file.
    */
   async openKitsEditor() {
+    log.debug('Opening TextEditor for', this._kitsPath);
     const text = await vscode.workspace.openTextDocument(this._kitsPath);
-    return vscode.window.showTextDocument(text);
+    return await vscode.window.showTextDocument(text);
   }
 }
