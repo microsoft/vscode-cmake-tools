@@ -15,7 +15,10 @@ import {expect} from 'chai';
 
 import * as state from '../src/state';
 import * as kit from '../src/kit';
+import * as api from '../src/api';
+import * as util from '../src/util';
 import {CMakeTools} from '../src/cmake-tools';
+import {CMakeCache} from '../src/cache';
 
 // You can import and use all API from the 'vscode' module
 // as well as import your extension to test it
@@ -30,6 +33,13 @@ async function getExtension():
       }
       return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
     }
+
+const here
+    = __dirname;
+
+function testFilePath(filename: string): string {
+  return path.normalize(path.join(here, '../..', 'test', filename));
+}
 
 // Defines a Mocha test suite to group tests of similar kind together
 suite("Extension Tests", () => {
@@ -81,7 +91,7 @@ suite('Kits test', async() => {
     expect(kits.length).to.eq(2);
   });
 
-  test('Create a kits manager', async() => {
+  test('KitManager tests', async() => {
     const cmt = await getExtension();
     const sm = new state.StateManager(cmt.extensionContext);
     const km = new kit.KitManager(sm);
@@ -92,20 +102,73 @@ suite('Kits test', async() => {
     // Now close it. We don't care about it any more
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 
-    if (km.kits.length > 0) {
-      let fired_kit: string | null = null;
-      km.onActiveKitChanged(k => fired_kit = k!.name);
-      for (const kit of km.kits) {
-        const name = kit.name;
-        await km.selectKitByName(name);
-        expect(fired_kit).to.eq(name);
-        // Check that we've saved our change
-        expect(sm.activeKitName).to.eq(name);
-      }
-    } else {
-      console.warn('Skipping some tests as no available kits were detected');
+    // Check that each time we change the kit, it fires a signal
+    let fired_kit: string | null = null;
+    km.onActiveKitChanged(k => fired_kit = k !.name);
+    for (const kit of km.kits) {
+      const name = kit.name;
+      // Set the kit
+      await km.selectKitByName(name);
+      // Check that we got the signal
+      expect(fired_kit).to.eq(name);
+      // Check that we've saved our change
+      expect(sm.activeKitName).to.eq(name);
     }
+    km.dispose();
   });
 
   // TODO: Do some tests with Visual Studio kits and vswhere
+});
+
+suite('Cache test', async() => {
+  test("Read CMake Cache", async function() {
+    const cache = await CMakeCache.fromPath(testFilePath('TestCMakeCache.txt'));
+    const generator = cache.get("CMAKE_GENERATOR") as api.CacheEntry;
+    expect(generator.type).to.eq(api.CacheEntryType.Internal);
+    expect(generator.key).to.eq('CMAKE_GENERATOR');
+    expect(generator.as<string>()).to.eq('Ninja');
+    expect(typeof generator.value).to.eq('string');
+
+    const build_testing = await cache.get('BUILD_TESTING') as api.CacheEntry;
+    expect(build_testing.type).to.eq(api.CacheEntryType.Bool);
+    expect(build_testing.as<boolean>()).to.be.true;
+  });
+  test("Read cache with various newlines", async function() {
+    for (const newline of['\n', '\r\n', '\r']) {
+      const str =
+          [ '# This line is ignored', '// This line is docs', 'SOMETHING:STRING=foo', '' ].join(
+              newline);
+      const entries = CMakeCache.parseCache(str);
+      expect(entries.size).to.eq(1);
+      expect(entries.has('SOMETHING')).to.be.true;
+      const entry = entries.get('SOMETHING') !;
+      expect(entry.value).to.eq('foo');
+      expect(entry.type).to.eq(api.CacheEntryType.String);
+      expect(entry.helpString).to.eq('This line is docs');
+    }
+  });
+  test('Falsey values', () => {
+    const false_things = [
+      '0',
+      '',
+      'NO',
+      'FALSE',
+      'OFF',
+      'NOTFOUND',
+      'IGNORE',
+      'N',
+      'SOMETHING-NOTFOUND',
+      null,
+      false,
+    ];
+    for (const thing of false_things) {
+      expect(util.isTruthy(thing), 'Check false-iness of ' + thing).to.be.false;
+    }
+  });
+  test('Truthy values', () => {
+    const true_things = [ '1', 'ON', 'YES', 'Y', '112', 12, 'SOMETHING' ];
+    for (const thing of true_things) {
+      expect(util.isTruthy(thing), 'Check truthiness of ' + thing).to.be.true;
+    }
+  });
 });
