@@ -110,10 +110,17 @@ export interface Stringable {
   toLocaleString(): string;
 }
 
+let _LOGGER: Promise<NodeJS.WritableStream>;
+
 async function _openLogFile() {
-  const logfilepath = path.join(dirs.dataDir, 'log.txt');
-  await fs.mkdir_p(path.dirname(logfilepath));
-  return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
+  if (!_LOGGER) {
+    _LOGGER = (async () => {
+      const logfilepath = path.join(dirs.dataDir, 'log.txt');
+      await fs.mkdir_p(path.dirname(logfilepath));
+      return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
+    })();
+  }
+  return _LOGGER;
 }
 
 /**
