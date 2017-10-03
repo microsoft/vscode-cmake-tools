@@ -95,7 +95,7 @@ export async function kitIfCompiler(bin: string):
       const clang_res = clang_regex.exec(fname);
       if (gcc_res) {
         log.debug('Testing GCC-ish binary:', bin);
-        const exec = await proc.execute(bin, [ '-v' ]);
+        const exec = await proc.execute(bin, [ '-v' ]).result;
         if (exec.retc != 0) {
           return null;
         }
@@ -130,7 +130,7 @@ export async function kitIfCompiler(bin: string):
         }
       } else if (clang_res) {
         log.debug('Testing Clang-ish binary:', bin);
-        const exec = await proc.execute(bin, [ '-v' ]);
+        const exec = await proc.execute(bin, [ '-v' ]).result;
         if (exec.retc != 0) {
           return null;
         }

@@ -34,7 +34,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   // Legacy disposal does nothing
   async asyncDispose() { log.debug('Dispose: Do nothing'); }
 
-  async configure(): Promise<number> {
+  async configure(outputConsumer?: proc.OutputConsumer): Promise<number> {
     if (!await this._beforeConfigure()) {
       log.debug('Pre-configure steps aborted configure');
       // Pre-configure steps failed. Bad...
@@ -70,7 +70,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const bindir = util.normalizePath(this.binaryDir);
     args.push('-B' + bindir);
     log.debug('Invoking CMake', config.cmakePath, 'with arguments', JSON.stringify(args));
-    const res = await proc.execute(config.cmakePath, args);
+    const res = await proc.execute(config.cmakePath, args, outputConsumer).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
     return res.retc;

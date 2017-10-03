@@ -7,7 +7,7 @@ import rollbar from './rollbar';
 import {KitManager, Kit} from './kit';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
-import { LegacyCMakeDriver } from './legacy-driver';
+import {LegacyCMakeDriver} from './legacy-driver';
 
 import * as logging from './logging';
 
@@ -124,16 +124,12 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementation of `cmake.editKits`
    */
-  editKits() {
-    return this._kitManager.openKitsEditor();
-  }
+  editKits() { return this._kitManager.openKitsEditor(); }
 
   /**
    * Implementation of `cmake.scanForKits`
    */
-  scanForKits() {
-    return this._kitManager.rescanForKits();
-  }
+  scanForKits() { return this._kitManager.rescanForKits(); }
 
   /**
    * Implementation of `cmake.selectKit`
@@ -153,7 +149,11 @@ export class CMakeTools implements vscode.Disposable {
       vscode.window.showErrorMessage('Cannot configure without a Kit');
       return -1;
     }
-    return this._cmakeDriver.configure();
+    const outputter = {
+      output(line: string) { log.info('[configure]', line); },
+      error(line: string) { log.error('[configure]', line); },
+    };
+    return this._cmakeDriver.configure(outputter);
   }
 }
 

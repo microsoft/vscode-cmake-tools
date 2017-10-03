@@ -14,8 +14,9 @@ import * as util from './util';
 import config from './config';
 import * as logging from './logging';
 import {fs} from './pr';
+import * as proc from './proc';
 
-const log = logging.createLogger('driver')
+const log = logging.createLogger('driver');
 
 /**
  * Base class for CMake drivers.
@@ -33,7 +34,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  abstract configure(): Promise<number>;
+  abstract configure(consumer?: proc.OutputConsumer): Promise<number>;
 
   /**
    * Do any necessary disposal for the driver. For the CMake Server driver,
@@ -150,7 +151,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // We'll assume that a new toolchain is very destructive
       const tc_chained = kit.toolchainFile !== this._toolchainFileKit.toolchainFile;
       if (tc_chained) {
-        log.debug('Need clean: Toolchain file changed', this._toolchainFileKit.toolchainFile, '->', kit.toolchainFile);
+        log.debug('Need clean: Toolchain file changed',
+                  this._toolchainFileKit.toolchainFile,
+                  '->',
+                  kit.toolchainFile);
       } else {
         log.debug('Clean not needed: toolchain file unchanged');
       }
@@ -322,7 +326,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
     this._cacheWatcher.onDidChange(() => {
       log.debug(`Reload CMake cache: ${this.cachePath} changed`);
-      rollbar.invokeAsync('Reloading CMake Cache', async () => {
+      rollbar.invokeAsync('Reloading CMake Cache', async() => {
         this._cmakeCache = CMakeCache.fromPath(this.cachePath);
         // Force await here so that any errors are thrown into rollbar
         await this._cmakeCache;
@@ -359,7 +363,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
     const settings_flags
         = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, value));
-    const flags = ['--no-warn-unused-cli'];
+    const flags = [ '--no-warn-unused-cli' ];
     const final_flags = flags.concat(settings_flags);
     log.trace('CMake flags are', JSON.stringify(final_flags));
     return final_flags;
