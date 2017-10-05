@@ -104,6 +104,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
         if (this._errorState.blankLines == 0) {
           // First blank. Okay
           this._errorState.blankLines++;
+          this._errorState.diag !.diag.message += '\n';
         } else {
           // Second blank line. Now we commit the diagnostic.
           this._commitDiag();
@@ -140,8 +141,8 @@ export class CMakeOutputConsumer implements OutputConsumer {
 
   private _commitDiag() {
     const diag = this._errorState.diag !;
-    // Remove the final newline from the message
-    diag.diag.message = diag.diag.message.replace(/\n$/, '');
+    // Remove the final newline(s) from the message
+    diag.diag.message = diag.diag.message.replace(/\n+$/, '');
     this._diagnostics.push(this._errorState.diag !);
     this._errorState.diag = null;
     this._errorState.blankLines = 0;
