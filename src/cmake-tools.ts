@@ -68,6 +68,7 @@ export class CMakeTools implements vscode.Disposable {
     log.debug('Disposing CMakeTools extension');
     rollbar.invoke('Root dispose', () => {
       this._kitManager.dispose();
+      this._diagnostics.dispose();
       if (this._cmakeDriver) {
         this._cmakeDriver.dispose();
       }
@@ -138,10 +139,8 @@ export class CMakeTools implements vscode.Disposable {
   selectKit() { return this._kitManager.selectKit(); }
 
   /**
-   * The DiagnosticCollection for the entire extension. Contains diags from
-   * both configure and build.
+   * The DiagnosticCollection for the CMake configure diagnostics.
    */
-  get diagnostics(): vscode.DiagnosticCollection { return this._diagnostics; }
   private readonly _diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
   /**
@@ -159,7 +158,7 @@ export class CMakeTools implements vscode.Disposable {
     }
     const consumer = new diags.CMakeOutputConsumer();
     const retc = await this._cmakeDriver.configure(consumer);
-    diags.populateCollection(this.diagnostics, consumer.diagnostics);
+    diags.populateCollection(this._diagnostics, consumer.diagnostics);
     return retc;
   }
 }
