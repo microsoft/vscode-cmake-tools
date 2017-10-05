@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 
 import rollbar from './rollbar';
+import * as diags from './diagnostics';
 import {KitManager, Kit} from './kit';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
@@ -137,6 +138,13 @@ export class CMakeTools implements vscode.Disposable {
   selectKit() { return this._kitManager.selectKit(); }
 
   /**
+   * The DiagnosticCollection for the entire extension. Contains diags from
+   * both configure and build.
+   */
+  get diagnostics(): vscode.DiagnosticCollection { return this._diagnostics; }
+  private readonly _diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+
+  /**
    * Implementation of `cmake.configure`
    */
   async configure() {
@@ -149,11 +157,10 @@ export class CMakeTools implements vscode.Disposable {
       vscode.window.showErrorMessage('Cannot configure without a Kit');
       return -1;
     }
-    const outputter = {
-      output(line: string) { log.info('[configure]', line); },
-      error(line: string) { log.error('[configure]', line); },
-    };
-    return this._cmakeDriver.configure(outputter);
+    const consumer = new diags.CMakeOutputConsumer();
+    const retc = await this._cmakeDriver.configure(consumer);
+    diags.populateCollection(this.diagnostics, consumer.diagnostics);
+    return retc;
   }
 }
 
