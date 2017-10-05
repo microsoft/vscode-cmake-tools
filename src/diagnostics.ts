@@ -78,7 +78,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
           'Error' : vscode.DiagnosticSeverity.Error,
         };
         const vsdiag
-            = new vscode.Diagnostic(new vscode.Range(line, 0, line, 0), '', diagmap[level]);
+            = new vscode.Diagnostic(new vscode.Range(line, 0, line, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
         this._errorState.diag = {
           filepath,
