@@ -16,11 +16,22 @@ export class StateManager {
   /**
    * The name of the workspace-local active kit.
    */
-  public get activeKitName(): string | null {
+  get activeKitName(): string | null {
     const kit = this.extensionContext.workspaceState.get<string>('activeKitName');
     return kit || null;
   }
-  public set activeKitName(v: string | null) {
+  set activeKitName(v: string | null) {
     this.extensionContext.workspaceState.update('activeKitName', v);
+  }
+
+  /**
+   * The currently select build target
+   */
+  get activeBuildTarget(): string | null {
+    const target = this.extensionContext.workspaceState.get<string>('activeBuildTarget');
+    return target || null;
+  }
+  set activeBuildTarget(s: string | null) {
+    this.extensionContext.workspaceState.update('activeBuildTarget', s);
   }
 }

@@ -37,6 +37,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
   abstract configure(consumer?: proc.OutputConsumer): Promise<number>;
 
   /**
+   * Execute a CMake build. Should not configure.
+   * @param target The target to build
+   */
+  abstract build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess>;
+
+  /**
+   * Check if we need to reconfigure, such as if an important file has changed
+   */
+  abstract get needsReconfigure(): boolean;
+
+  /**
    * Do any necessary disposal for the driver. For the CMake Server driver,
    * this entails shutting down the server process and closing the open pipes.
    *
@@ -105,6 +116,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     console.assert(this._kit && this._kit.type == 'toolchainKit', JSON.stringify(this._kit));
     return this._kit as ToolchainKit;
   }
+
   /**
    * Get the current kit as a `VSKit`.
    *
@@ -221,6 +233,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
   public get cachePath(): string {
     const file = path.join(this.binaryDir, 'CMakeCache.txt');
     return util.normalizePath(file);
+  }
+
+  /**
+   * Get the name of the current CMake generator, or `null` if we have not yet
+   * configured the project.
+   */
+  get generatorName(): Promise<string | null> {
+    return this._generatorName();
+  }
+  private async _generatorName(): Promise<string | null> {
+    const cache = await this.cmakeCache;
+    if (!cache) {
+      return null;
+    }
+    const gen = cache.get('CMAKE_GENERATOR');
+    if (!gen) {
+      return null;
+    }
+    return gen.as<string>();
   }
 
   /**

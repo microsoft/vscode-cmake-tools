@@ -13,6 +13,7 @@ import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 
 const log = logging.createLogger('main');
+const build_log = logging.createLogger('build');
 
 /**
  * Class implementing the extension. It's all here!
@@ -160,6 +161,45 @@ export class CMakeTools implements vscode.Disposable {
     const retc = await this._cmakeDriver.configure(consumer);
     diags.populateCollection(this._diagnostics, consumer.diagnostics);
     return retc;
+  }
+
+  get allTargetName() { return this._allTargetName(); }
+  private async _allTargetName(): Promise<string> {
+    // TODO: Get the correct name!
+    const gen = await this._cmakeDriver.generatorName;
+    if (gen && (gen.includes('Visual Studio') || gen.toLowerCase().includes('xcode'))) {
+      return 'ALL_BUILD';
+    } else {
+      return 'all';
+    }
+  }
+
+  /**
+   * Implementation of `cmake.build`
+   */
+  async build(target_?: string): Promise<number> {
+    // First, reconfigure if necessary
+    if (await this._cmakeDriver.needsReconfigure) {
+      const retc = await this.configure();
+      if (retc) {
+        return retc;
+      }
+    }
+    const target
+        = target_ ? target_ : this._stateManager.activeBuildTarget || await this.allTargetName;
+    const consumer = {
+      output(line: string) {
+        build_log.info(line);
+      },
+      error(line: string) {
+        build_log.error(line);
+      }
+    };
+    build_log.info('Starting build');
+    const subproc = await this._cmakeDriver.build(target, consumer);
+    const rc = (await subproc.result).retc;
+    build_log.info('Build finished with exit code', rc);
+    return rc;
   }
 }
 

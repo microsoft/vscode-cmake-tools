@@ -72,11 +72,10 @@ export interface OutputConsumer {
 /**
  * Represents an executing subprocess
  */
-interface Subprocess {
+export interface Subprocess {
   result: Promise<ExecutionResult>;
   child: proc.ChildProcess;
 }
-;
 
 /**
  * Execute a command and return the result

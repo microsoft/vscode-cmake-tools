@@ -21,8 +21,12 @@ const log = logging.createLogger('legacy-driver');
 export class LegacyCMakeDriver extends CMakeDriver {
   private constructor() { super(); }
 
+  private _needsReconfigure = true;
+  get needsReconfigure() { return this._needsReconfigure; }
+
   async setKit(kit: Kit): Promise<void> {
     log.debug('Setting new kit', kit.name);
+    this._needsReconfigure = true;
     const need_clean = this._kitChangeNeedsClean(kit);
     if (need_clean) {
       log.debug('Wiping build directory', this.binaryDir);
@@ -44,7 +48,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
 
     // Build up the CMake arguments
     const args: string[] = [];
-    if (!this.cmakeCache) {
+    if (!await this.cmakeCache) {
       // No cache! This is our first time configuring
       const generator = 'Ninja';  // TODO: Find generators!
       log.debug('Using', generator, 'CMake generator');
@@ -73,7 +77,27 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const res = await proc.execute(config.cmakePath, args, outputConsumer).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
+    this._needsReconfigure = false;
     return res.retc;
+  }
+
+  async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess> {
+    const gen = await this.generatorName;
+    const generator_args = (() => {
+      if (!gen)
+        return [];
+      else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
+        return [ '-j', config.numJobs.toString() ];
+      else if (gen.includes('Visual Studio'))
+        return [
+          '/m',
+          '/property:GenerateFullPaths=true',
+        ];  // TODO: Older VS doesn't support these flags
+      else
+        return [];
+    })();
+    const args = [ '--build', this.binaryDir, '--' ].concat(generator_args);
+    return proc.execute(config.cmakePath, args, consumer);
   }
 
   static async create(): Promise<LegacyCMakeDriver> {
