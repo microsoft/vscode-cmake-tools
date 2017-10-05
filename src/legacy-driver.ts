@@ -81,7 +81,11 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return res.retc;
   }
 
-  async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess> {
+  async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
+    const ok = await this._beforeConfigure();
+    if (!ok) {
+      return null;
+    }
     const gen = await this.generatorName;
     const generator_args = (() => {
       if (!gen)

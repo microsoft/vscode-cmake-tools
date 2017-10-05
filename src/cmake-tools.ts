@@ -140,9 +140,10 @@ export class CMakeTools implements vscode.Disposable {
   selectKit() { return this._kitManager.selectKit(); }
 
   /**
-   * The DiagnosticCollection for the CMake configure diagnostics.
+   * The `DiagnosticCollection` for the CMake configure diagnostics.
    */
-  private readonly _diagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+  private readonly _diagnostics
+      = vscode.languages.createDiagnosticCollection('cmake-configure-diags');
 
   /**
    * Implementation of `cmake.configure`
@@ -163,6 +164,15 @@ export class CMakeTools implements vscode.Disposable {
     return retc;
   }
 
+  /**
+   * Get the name of the "all" target; that is, the target name for which CMake
+   * will build all default targets.
+   *
+   * This is required because simply using `all` as the target name is incorrect
+   * for some generators, such as Visual Studio and Xcode.
+   *
+   * This is async because it depends on checking the active generator name
+   */
   get allTargetName() { return this._allTargetName(); }
   private async _allTargetName(): Promise<string> {
     // TODO: Get the correct name!
@@ -188,15 +198,15 @@ export class CMakeTools implements vscode.Disposable {
     const target
         = target_ ? target_ : this._stateManager.activeBuildTarget || await this.allTargetName;
     const consumer = {
-      output(line: string) {
-        build_log.info(line);
-      },
-      error(line: string) {
-        build_log.error(line);
-      }
+      output(line: string) { build_log.info(line); },
+      error(line: string) { build_log.error(line); }
     };
     build_log.info('Starting build');
     const subproc = await this._cmakeDriver.build(target, consumer);
+    if (!subproc) {
+      build_log.error('Build failed to start');
+      return -1;
+    }
     const rc = (await subproc.result).retc;
     build_log.info('Build finished with exit code', rc);
     return rc;

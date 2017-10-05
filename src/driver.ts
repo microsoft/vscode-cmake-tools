@@ -40,7 +40,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Execute a CMake build. Should not configure.
    * @param target The target to build
    */
-  abstract build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess>;
+  abstract build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null>;
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
@@ -239,9 +239,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the name of the current CMake generator, or `null` if we have not yet
    * configured the project.
    */
-  get generatorName(): Promise<string | null> {
-    return this._generatorName();
-  }
+  get generatorName(): Promise<string | null> { return this._generatorName(); }
   private async _generatorName(): Promise<string | null> {
     const cache = await this.cmakeCache;
     if (!cache) {
