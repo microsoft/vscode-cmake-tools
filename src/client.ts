@@ -201,6 +201,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       await this._client.configure(
           {cacheArguments: args.concat(extraArgs)});
       await this._client.compute();
+      this._dirty = false;
       parseMessages();
     } catch (e) {
       if (e instanceof cms.ServerError) {
