@@ -99,6 +99,23 @@
                             "visualStudioArchitecture": {
                                 "type": "string",
                                 "description": "Architecture to target"
+                            },
+                            "preferredGenerator": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "platform": {
+                                        "type": "string"
+                                    },
+                                    "toolset": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "name"
+                                ]
                             }
                         },
                         "required": [

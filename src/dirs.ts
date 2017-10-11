@@ -35,6 +35,17 @@ class Dirs {
    * data.
    */
   get dataDir(): string { return path.join(this.userLocalDir, 'CMakeTools'); }
+
+  /**
+   * Get the platform-specific temporary directory
+   */
+  get tmpDir(): string {
+    if (process.platform == 'win32') {
+      return process.env['TEMP']!;
+    } else {
+      return '/tmp';
+    }
+  }
 }
 
 const dirs = new Dirs();

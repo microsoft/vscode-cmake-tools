@@ -40,6 +40,15 @@ export interface CompilerKit extends BaseKit {
 }
 
 /**
+ * Description of a CMake Visual Studio generator
+ */
+export interface VSGenerator {
+  name: string;
+  platform?: string;
+  toolset?: string;
+}
+
+/**
  * VSKits are associated with an installed Visual Studio on the system, and a
  * target architecture.
  */
@@ -58,6 +67,11 @@ export interface VSKit extends BaseKit {
    * from the dev environment batch file.
    */
   visualStudioArchitecture: string;
+
+  /**
+   * The preferred CMake generator for this Visual Studio
+   */
+  preferredGenerator?: VSGenerator;
 }
 
 /**
@@ -89,8 +103,8 @@ export async function kitIfCompiler(bin: string):
       const fname = path.basename(bin);
       // Check by filename what the compiler might be. This is just heuristic.
       const gcc_regex
-      = /^gcc(-\d+(\.\d+(\.\d+)?)?)?(\\.exe)?$/;
-      const clang_regex = /^clang(-\d+(\.\d+(\.\d+)?)?)?(\\.exe)?$/;
+      = /^gcc(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
+      const clang_regex = /^clang(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
       const gcc_res = gcc_regex.exec(fname);
       const clang_res = clang_regex.exec(fname);
       if (gcc_res) {
@@ -135,7 +149,7 @@ export async function kitIfCompiler(bin: string):
           return null;
         }
         const first_line = exec.stderr.split('\n')[0];
-        const version_re = /^clang version (.*?)-/;
+        const version_re = /^clang version (.*?)[ -]/;
         const version_match = version_re.exec(first_line);
         if (version_match === null) {
           return null;
@@ -209,6 +223,194 @@ export async function scanDirForCompilerKits(dir: string) {
 }
 
 /**
+ * Description of a Visual Studio installation returned by vswhere.exe
+ *
+ * This isn't _all_ the properties, just the ones we need so far.
+ */
+export interface VSInstallation {
+  instanceId: string;
+  displayName: string;
+  installationPath: string;
+  installationVersion: string;
+  description: string;
+}
+
+/**
+ * Get a list of all Visual Studio installations available from vswhere.exe
+ *
+ * Will not include older versions. vswhere doesn't seem to list them?
+ */
+export async function vsInstallations(): Promise<VSInstallation[]> {
+  const pf_native = process.env['programfiles']!;
+  const pf_x86 = process.env['programfiles(x86)']!;
+  const installs = [] as VSInstallation[];
+  const inst_ids = [] as string[];
+  for (const progdir of [pf_native, pf_x86]) {
+    const vswhere_exe = path.join(progdir, 'Microsoft Visual Studio/Installer/vswhere.exe');
+    if (await fs.exists(vswhere_exe)) {
+      const vswhere_res = await proc.execute(vswhere_exe, ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease']).result;
+      if (vswhere_res.retc !== 0) {
+        log.error('Failed to execute vswhere.exe:', vswhere_res.stdout);
+        continue;
+      }
+      const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
+      for (const inst of vs_installs) {
+        if (inst_ids.indexOf(inst.instanceId) < 0) {
+          installs.push(inst);
+          inst_ids.push(inst.instanceId)
+        }
+      }
+    }
+  }
+  return installs;
+}
+
+/**
+ * List of environment variables required for Visual C++ to run as expected for
+ * a VS installation.
+ */
+const MSVC_ENVIRONMENT_VARIABLES = [
+  'CL',
+  '_CL_',
+  'INCLUDE',
+  'LIBPATH',
+  'LINK',
+  '_LINK_',
+  'LIB',
+  'PATH',
+  'TMP',
+  'FRAMEWORKDIR',
+  'FRAMEWORKDIR64',
+  'FRAMEWORKVERSION',
+  'FRAMEWORKVERSION64',
+  'UCRTCONTEXTROOT',
+  'UCRTVERSION',
+  'UNIVERSALCRTSDKDIR',
+  'VCINSTALLDIR',
+  'VCTARGETSPATH',
+  'WINDOWSLIBPATH',
+  'WINDOWSSDKDIR',
+  'WINDOWSSDKLIBVERSION',
+  'WINDOWSSDKVERSION',
+];
+
+/**
+ * Get the environment variables corresponding to a VS dev batch file.
+ * @param devbat Path to a VS environment batch file
+ * @param args List of arguments to pass to the batch file
+ */
+async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<string, string>|undefined> {
+  const bat = [
+    `@echo off`,
+    `call "${devbat}" ${args.join(" ")} || exit`,
+  ];
+  for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
+    bat.push(`echo ${envvar} := %${envvar}%`);
+  }
+  const fname = Math.random().toString() + '.bat';
+  const batpath = path.join(dirs.tmpDir, `vs-cmt-${fname}`);
+  await fs.writeFile(batpath, bat.join('\r\n'));
+  const res = await proc.execute(batpath, [], null, {shell: true}).result;
+  fs.unlink(batpath);
+  const output = res.stdout;
+  if (res.retc !== 0) {
+    console.log(`Error running ${devbat}`, output);
+    return;
+  }
+  if (output.includes("Invalid host architecture") || output.includes("Error in script usage")) {
+    return;
+  }
+  if (!output) {
+    console.log(`Environment detection for using ${devbat} failed`);
+    return;
+  }
+  const vars = output.split('\n')
+              .map(l => l.trim())
+              .filter(l => l.length !== 0)
+              .reduce<Map<string, string>>((acc, line) => {
+                const mat = /(\w+) := ?(.*)/.exec(line);
+                if (mat) {
+                  acc.set(mat[1], mat[2]);
+                }
+                else {
+                  console.error(`Error parsing environment variable: ${line}`);
+                }
+                return acc;
+              }, new Map());
+  return vars;
+}
+
+/**
+ * Platform arguments for VS Generators
+ */
+const VsArchitectures: { [key: string]: string } = {
+  'amd64': 'x64',
+  'arm': 'ARM',
+  'amd64_arm': 'ARM',
+};
+
+/**
+ * Preferred CMake VS generators by VS version
+ */
+const VsGenerators: { [key: string]: string } = {
+  '15': 'Visual Studio 15 2017',
+  'VS120COMNTOOLS': 'Visual Studio 12 2013',
+  'VS140COMNTOOLS': 'Visual Studio 14 2015',
+}
+
+/**
+ * Try to get a VSKit from a VS installation and architecture
+ * @param inst A VS installation from vswhere
+ * @param arch The architecture to try
+ */
+async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string): Promise<VSKit | null> {
+  const name = inst.displayName + ' - ' + arch;
+  const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
+  const devbat = path.join(common_dir, 'VsDevCmd.bat');
+  log.debug('Checking for kit: ' + name);
+  const variables = await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`]);
+  if (!variables)
+    return null;
+
+  const kit: VSKit = {
+    type: 'vsKit',
+    name: name,
+    visualStudio: inst.displayName,
+    visualStudioArchitecture: arch,
+  };
+
+  const version = /^(\d+)+./.exec(inst.installationVersion);
+  if (version) {
+    const generatorName: string | undefined = VsGenerators[version[1]];
+    if (generatorName) {
+      kit.preferredGenerator = {
+        name: generatorName,
+        platform: VsArchitectures[arch] as string || undefined,
+      };
+    }
+  }
+
+  return kit;
+}
+
+/**
+ * Scans the system for Visual C++ installations using vswhere
+ */
+export async function scanForVSKits(): Promise<VSKit[]> {
+  const installs = await vsInstallations();
+  const prs = installs.map(async (inst): Promise<VSKit[]> => {
+    const ret = [] as VSKit[];
+    const arches = ['x86', 'amd64', 'x86_amd64', 'x86_arm', 'amd64_arm', 'amd64_x86'];
+    const sub_prs = arches.map(arch => tryCreateNewVCEnvironment(inst, arch));
+    const maybe_kits = await Promise.all(sub_prs);
+    maybe_kits.map(k => k ? ret.push(k) : null);
+    return ret;
+  });
+  const vs_kits = await Promise.all(prs);
+  return ([] as VSKit[]).concat(...vs_kits);
+}
+
+/**
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
@@ -221,8 +423,11 @@ scanForKits() {
   const sep = process.platform === 'win32' ? ';' : ':';
   const paths = pathvar.split(sep);
   // Search them all in parallel
-  const prs
-  = paths.map(path => scanDirForCompilerKits(path));
+  const prs = [] as Promise<Kit[]>[];
+  const compiler_kits = paths.map(path => scanDirForCompilerKits(path));
+  prs.concat(compiler_kits);
+  const vs_kits = scanForVSKits();
+  prs.push(vs_kits);
   const arrays = await Promise.all(prs);
   const kits = ([] as Kit[]).concat(...arrays);
   kits.map(k => log.info(`Found Kit: ${k.name}`));
@@ -235,16 +440,16 @@ scanForKits() {
  */
 function descriptionForKit(kit: Kit) {
   switch (kit.type) {
-case 'toolchainKit': {
-  return `Kit for toolchain file ${kit.toolchainFile}`;
-}
-case 'vsKit': {
-  return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
-}
-case 'compilerKit': {
-  return 'Using compilers: '
-      + Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
-}
+  case 'toolchainKit': {
+    return `Kit for toolchain file ${kit.toolchainFile}`;
+  }
+  case 'vsKit': {
+    return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
+  }
+  case 'compilerKit': {
+    return 'Using compilers: '
+        + Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
+  }
   }
 }
 
