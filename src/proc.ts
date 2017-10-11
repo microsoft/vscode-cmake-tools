@@ -94,9 +94,13 @@ export function execute(command: string,
                         options?: proc.SpawnOptions): Subprocess {
   let child: proc.ChildProcess | null = null;
   const result = new Promise<ExecutionResult>((resolve, reject) => {
-    // We wrap things in `stdbuf` to disable output buffering.
-    const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);
-    child = proc.spawn('stdbuf', subargs, options);
+    if (process.platform != 'win32') {
+      // We wrap things in `stdbuf` to disable output buffering.
+      const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);
+      child = proc.spawn('stdbuf', subargs, options);
+    } else {
+      child = proc.spawn(command, args, options);
+    }
     child.on('error', (err) => { reject(err); });
     let stdout_acc = '';
     let line_acc = '';
