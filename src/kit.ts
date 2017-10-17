@@ -501,12 +501,6 @@ export class KitManager implements vscode.Disposable {
   }
 
   /**
-   * Shows teh currently selected kit and allows the user to select a new one.
-   */
-  private _statusItem
-  = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
-
-  /**
    * Create a new kit manager.
    * @param stateManager The workspace state manager
    */
@@ -514,17 +508,6 @@ export class KitManager implements vscode.Disposable {
     log.debug('Constructing KitManager');
     // Re-read the kits file when it is changed
     this._kitsWatcher.onDidChange(_e => this._rereadKits());
-    // Update the statusbar item whenever the active kit changes
-    this.onActiveKitChanged(kit => {
-      if (!kit) {
-        this._statusItem.text = 'No Kit Selected';
-      } else {
-        this._statusItem.text = kit.name;
-      }
-    });
-    // Clicking on it let's the user select a kit
-    this._statusItem.command = 'cmake.selectKit';
-    this._statusItem.show();
   }
 
   /**
@@ -534,7 +517,6 @@ export class KitManager implements vscode.Disposable {
     log.debug('Disposing KitManager');
     this._kitsWatcher.dispose();
     this._activeKitChangedEmitter.dispose();
-    this._statusItem.dispose();
   }
 
   /**
@@ -556,7 +538,6 @@ export class KitManager implements vscode.Disposable {
                                        };
                                      });
     const chosen = await vscode.window.showQuickPick(items, {
-      ignoreFocusOut : true,
       placeHolder : 'Select a Kit',
     });
     if (chosen === undefined) {

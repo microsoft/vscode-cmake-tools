@@ -4,8 +4,6 @@
 
 import * as proc from 'child_process';
 
-import * as vscode from 'vscode';
-
 // import {ExecutionResult} from './api';
 
 export interface ExecutionResult {
@@ -33,21 +31,6 @@ export interface ProgressData {
    * The current progress value. Should be in [minimum, maximum)
    */
   value: number;
-}
-
-/**
- * Result of parsing a line of output
- */
-export interface OutputData {
-  /**
-   * The progress parsed from the output
-   */
-  progress?: ProgressData;
-
-  /**
-   * Diagnostics parsed from the output
-   */
-  diagnostics?: vscode.Diagnostic[];
 }
 
 /**

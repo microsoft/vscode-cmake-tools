@@ -175,6 +175,11 @@ class SingletonLogger {
   error(...args: Stringable[]) { this._log(LogLevel.Error, ...args); }
   fatal(...args: Stringable[]) { this._log(LogLevel.Fatal, ...args); }
 
+  clearOutputChannel(): void {
+    const channel = channelManager.get('CMake/Build');
+    channel.clear();
+  }
+
   private static _inst: SingletonLogger | null = null;
 
   static instance(): SingletonLogger {
@@ -211,6 +216,10 @@ class Logger {
   warning(...args: Stringable[]) { SingletonLogger.instance().warning(this.tag, ...args); }
   error(...args: Stringable[]) { SingletonLogger.instance().error(this.tag, ...args); }
   fatal(...args: Stringable[]) { SingletonLogger.instance().fatal(this.tag, ...args); }
+
+  clearOutputChannel() {
+    SingletonLogger.instance().clearOutputChannel();
+  }
 }
 
 export function createLogger(tag: string) { return new Logger(tag); }

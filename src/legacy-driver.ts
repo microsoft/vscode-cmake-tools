@@ -48,8 +48,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
 
     // Build up the CMake arguments
     const args: string[] = [];
-    if (!await this.cmakeCache) {
-      // No cache! This is our first time configuring
+    if (!await fs.exists(this.cachePath)) {
+      // No cache! We are free to change the generator!
       const generator = 'Ninja';  // TODO: Find generators!
       log.debug('Using', generator, 'CMake generator');
       args.push('-G' + generator);

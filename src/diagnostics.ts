@@ -9,9 +9,10 @@ import * as vscode from 'vscode';
 import {OutputConsumer} from './proc';
 
 import * as logging from './logging';
+import * as proc from './proc';
 
 const cmake_logger = logging.createLogger('cmake');
-
+const build_logger = logging.createLogger('build');
 
 // export interface RawDiagnostic {
 //   full: string;
@@ -47,7 +48,6 @@ export interface FileDiagnostic {
  * @note The `coll` collection will be cleared of all previous contents
  */
 export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: FileDiagnostic[]) {
-  vscode.Diagnostic
   // Clear the collection
   coll.clear();
   // Collect the diagnostics and associate them with their respective files
@@ -92,12 +92,12 @@ export class CMakeOutputConsumer implements OutputConsumer {
      * of active parsing. `stack` is parsing the CMake call stack from an error
      * or warning.
      */
-    state: ('init' | 'diag' | 'stack'),
+    state : ('init' | 'diag' | 'stack'),
 
     /**
      * The diagnostic that is currently being accumulated into
      */
-    diag: FileDiagnostic | null,
+    diag : FileDiagnostic | null,
 
     /**
      * The number of blank lines encountered thus far. CMake signals the end of
@@ -109,7 +109,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
       state : 'init',
       diag : null,
       blankLines : 0,
-  };
+    };
   /**
    * Consume a line of stderr.
    * @param line The line from stderr
@@ -127,7 +127,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
       if (result) {
         // We have encountered and error
         const[_full, level, filename, linestr, command] = result;
-        _full; // unused
+        _full;  // unused
         const line = Number.parseInt(linestr) - 1;
         const filepath = path.isAbsolute(filename)
             ? filename
@@ -210,3 +210,40 @@ export class CMakeOutputConsumer implements OutputConsumer {
     this._errorState.state = 'init';
   }
 }
+
+/**
+ * Class which consumes the output of a running build.
+ *
+ * This parses compiler errors, but also emits progress events when the build
+ * tool writes a status message which can be parsed as containing a progress
+ * indicator.
+ */
+export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
+  /**
+   * Event fired when the progress changes
+   */
+  get onProgress() { return this._onProgressEmitter.event; }
+  private _onProgressEmitter = new vscode.EventEmitter<proc.ProgressData>();
+
+  private _percent_re = /\[.*?(\d+)\%.*?\]/;
+
+  /**
+   * Throw it away!
+   */
+  dispose() { this._onProgressEmitter.dispose(); }
+
+  error(line: string) { build_logger.error(line); }
+
+  output(line: string) {
+    build_logger.info(line);
+    const progress = this._percent_re.exec(line);
+    if (progress) {
+      const percent = progress[1];
+      this._onProgressEmitter.fire({
+        minimum : 0,
+        maximum : 100,
+        value : Number.parseInt(percent),
+      });
+    }
+  }
+};

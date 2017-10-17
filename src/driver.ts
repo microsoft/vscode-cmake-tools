@@ -70,6 +70,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug('Disposing base CMakeDriver');
     rollbar.invokeAsync('Async disposing CMake driver', async() => this.asyncDispose());
     this._cacheWatcher.dispose();
+    this._projectNameChangedEmitter.dispose();
   }
 
   /**
@@ -88,6 +89,27 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected _setBaseKit(k: Kit) {
     this._baseKit = k;
     log.debug('CMakeDriver Kit set to', k.name);
+  }
+
+  /**
+   * Event fired when the name of the CMake project is discovered or changes
+   */
+  get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
+  protected _projectNameChangedEmitter = new vscode.EventEmitter<string>();
+
+  /**
+   * The name of the project
+   */
+  get projectName(): Promise<string | null> {
+    return this.cmakeCache.then(cache => {
+      if (cache) {
+        const project = cache.get('CMAKE_PROJECT_NAME');
+        if (project) {
+          return project.as<string>();
+        }
+      }
+      return null;
+    });
   }
 
   /**
@@ -351,16 +373,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected async _init() {
     log.debug('Base _init() of CMakeDriver');
     if (await fs.exists(this.cachePath)) {
-      this._cmakeCache = CMakeCache.fromPath(this.cachePath);
+      await this._reloadCMakeCache();
     }
     this._cacheWatcher.onDidChange(() => {
       log.debug(`Reload CMake cache: ${this.cachePath} changed`);
-      rollbar.invokeAsync('Reloading CMake Cache', async() => {
-        this._cmakeCache = CMakeCache.fromPath(this.cachePath);
-        // Force await here so that any errors are thrown into rollbar
-        await this._cmakeCache;
-      });
+      rollbar.invokeAsync('Reloading CMake Cache', async() => { this._reloadCMakeCache(); });
     });
+  }
+
+  private async _reloadCMakeCache() {
+    this._cmakeCache = CMakeCache.fromPath(this.cachePath);
+    // Force await here so that any errors are thrown into rollbar
+    await this._cmakeCache;
+    const name = await this.projectName;
+    if (name) {
+      this._projectNameChangedEmitter.fire(name);
+    }
   }
 
   /**

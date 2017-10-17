@@ -9,6 +9,8 @@ import {KitManager, Kit} from './kit';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
 import {LegacyCMakeDriver} from './legacy-driver';
+import {StatusBar} from './status';
+import config from "./config";
 
 import * as logging from './logging';
 
@@ -42,6 +44,11 @@ export class CMakeTools implements vscode.Disposable {
   private _cmakeDriver: CMakeDriver;
 
   /**
+   * The status bar manager
+   */
+  private _statusBar: StatusBar = new StatusBar();
+
+  /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
    * @param extensionContext The extension context
    *
@@ -58,6 +65,7 @@ export class CMakeTools implements vscode.Disposable {
           log.debug('Injecting new Kit into CMake driver');
           await this._cmakeDriver.setKit(kit);
         }
+        this._statusBar.setActiveKitName(kit ? kit.name : '');
       });
     });
   }
@@ -73,6 +81,7 @@ export class CMakeTools implements vscode.Disposable {
       if (this._cmakeDriver) {
         this._cmakeDriver.dispose();
       }
+      this._statusBar.dispose();
     });
   }
 
@@ -91,6 +100,11 @@ export class CMakeTools implements vscode.Disposable {
       log.debug('Pushing active Kit into driver');
       await this._cmakeDriver.setKit(this._activeKit);
     }
+    const project = await this._cmakeDriver.projectName;
+    if (project) {
+      this._statusBar.setProjectName(project);
+    }
+    this._cmakeDriver.onProjectNameChanged(name => { this._statusBar.setProjectName(name); });
   }
 
   /**
@@ -106,6 +120,7 @@ export class CMakeTools implements vscode.Disposable {
       // Start up the kit manager. This will also inject the current kit into
       // the CMake driver
       await this._kitManager.initialize();
+      this._statusBar.setStatusMessage('Ready');
     });
   }
 
@@ -158,6 +173,9 @@ export class CMakeTools implements vscode.Disposable {
       vscode.window.showErrorMessage('Cannot configure without a Kit');
       return -1;
     }
+    if (config.clearOutputBeforeBuild) {
+      log.clearOutputChannel();
+    }
     const consumer = new diags.CMakeOutputConsumer();
     const retc = await this._cmakeDriver.configure(consumer);
     diags.populateCollection(this._diagnostics, consumer.diagnostics);
@@ -194,22 +212,30 @@ export class CMakeTools implements vscode.Disposable {
       if (retc) {
         return retc;
       }
+    } else if (config.clearOutputBeforeBuild) {
+      log.clearOutputChannel();
     }
     const target
         = target_ ? target_ : this._stateManager.activeBuildTarget || await this.allTargetName;
-    const consumer = {
-      output(line: string) { build_log.info(line); },
-      error(line: string) { build_log.error(line); }
-    };
-    build_log.info('Starting build');
-    const subproc = await this._cmakeDriver.build(target, consumer);
-    if (!subproc) {
-      build_log.error('Build failed to start');
-      return -1;
+    const consumer = new diags.CMakeBuildConsumer();
+    try {
+      this._statusBar.setStatusMessage('Building');
+      this._statusBar.setVisible(true);
+      this._statusBar.setIsBusy(true);
+      consumer.onProgress(pr => { this._statusBar.setProgress(pr.value); });
+      build_log.info('Starting build');
+      const subproc = await this._cmakeDriver.build(target, consumer);
+      if (!subproc) {
+        build_log.error('Build failed to start');
+        return -1;
+      }
+      const rc = (await subproc.result).retc;
+      build_log.info('Build finished with exit code', rc);
+      return rc;
+    } finally {
+      this._statusBar.setIsBusy(false);
+      consumer.dispose();
     }
-    const rc = (await subproc.result).retc;
-    build_log.info('Build finished with exit code', rc);
-    return rc;
   }
 }
 
