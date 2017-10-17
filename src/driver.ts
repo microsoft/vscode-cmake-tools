@@ -68,7 +68,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   dispose() {
     log.debug('Disposing base CMakeDriver');
-    rollbar.invokeAsync('Async disposing CMake driver', async() => this.asyncDispose());
+    rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
     this._cacheWatcher.dispose();
     this._projectNameChangedEmitter.dispose();
   }
@@ -377,7 +377,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
     this._cacheWatcher.onDidChange(() => {
       log.debug(`Reload CMake cache: ${this.cachePath} changed`);
-      rollbar.invokeAsync('Reloading CMake Cache', async() => { this._reloadCMakeCache(); });
+      rollbar.invokeAsync('Reloading CMake Cache', () => this._reloadCMakeCache());
     });
   }
 
