@@ -3,11 +3,9 @@
  */ /** */
 
 import * as api from './api';
-// import * as async from './async';
 import * as logging from './logging';
 import rollbar from './rollbar';
 import * as util from './util';
-// import {log} from "./logging";
 import {fs} from './pr';
 
 const log = logging.createLogger('cache');

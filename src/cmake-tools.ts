@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 import rollbar from './rollbar';
 import * as diags from './diagnostics';
 import {KitManager, Kit} from './kit';
+import {VariantManager} from './variant';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
 import {LegacyCMakeDriver} from './legacy-driver';
@@ -31,6 +32,11 @@ export class CMakeTools implements vscode.Disposable {
    * to it for kit changes.
    */
   private _kitManager = new KitManager(this._stateManager);
+
+  /**
+   * The variant manager keeps track of build variants
+   */
+  private _variantManager = new VariantManager(this.extensionContext, this._stateManager);
 
   /**
    * Store the active kit. We keep it around in case we need to restart the
@@ -82,6 +88,7 @@ export class CMakeTools implements vscode.Disposable {
         this._cmakeDriver.dispose();
       }
       this._statusBar.dispose();
+      this._variantManager.dispose();
     });
   }
 
@@ -176,6 +183,7 @@ export class CMakeTools implements vscode.Disposable {
     if (config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
     }
+    log.showChannel();
     const consumer = new diags.CMakeOutputConsumer();
     const retc = await this._cmakeDriver.configure(consumer);
     diags.populateCollection(this._diagnostics, consumer.diagnostics);
@@ -223,6 +231,7 @@ export class CMakeTools implements vscode.Disposable {
       this._statusBar.setVisible(true);
       this._statusBar.setIsBusy(true);
       consumer.onProgress(pr => { this._statusBar.setProgress(pr.value); });
+      log.showChannel();
       build_log.info('Starting build');
       const subproc = await this._cmakeDriver.build(target, consumer);
       if (!subproc) {

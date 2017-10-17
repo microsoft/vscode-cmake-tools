@@ -631,9 +631,19 @@
                 "command": "cmake.launchTarget"
             }
         ],
+        "yamlValidation": [
+            {
+                "fileMatch": "cmake-variants.yaml",
+                "url": "./schemas/variants-schema.json"
+            }
+        ],
         "jsonValidation": [
             {
                 "fileMatch": "cmake-variants.json",
+                "url": "./schemas/variants-schema.json"
+            },
+            {
+                "fileMatch": "cmake-variants.yaml",
                 "url": "./schemas/variants-schema.json"
             },
             {
