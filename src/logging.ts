@@ -129,6 +129,10 @@ async function _openLogFile() {
 class SingletonLogger {
   private _logStream = _openLogFile();
 
+  private get _channel() {
+    return channelManager.get('CMake/Build');
+  }
+
   private _log(level: LogLevel, ...args: Stringable[]) {
     if (level == LogLevel.Trace && !config.enableTraceLogging && !levelEnabled(LogLevel.Trace)) {
       return;
@@ -159,11 +163,7 @@ class SingletonLogger {
     });
     // Write to our output channel
     if (levelEnabled(level)) {
-      const channel = channelManager.get('CMake/Build');
-      if (level >= LogLevel.Info) {
-        channel.show();
-      }
-      channel.appendLine(user_message);
+      this._channel.appendLine(user_message);
     }
   }
 
@@ -176,8 +176,11 @@ class SingletonLogger {
   fatal(...args: Stringable[]) { this._log(LogLevel.Fatal, ...args); }
 
   clearOutputChannel(): void {
-    const channel = channelManager.get('CMake/Build');
-    channel.clear();
+    this._channel.clear();
+  }
+
+  showChannel(): void {
+    this._channel.show();
   }
 
   private static _inst: SingletonLogger | null = null;
@@ -220,6 +223,10 @@ class Logger {
   clearOutputChannel() {
     SingletonLogger.instance().clearOutputChannel();
   }
+
+  showChannel() {
+    SingletonLogger.instance().showChannel();
+  }
 }
 
 export function createLogger(tag: string) { return new Logger(tag); }
@@ -230,4 +237,4 @@ import * as util from './util';
 import {fs} from './pr';
 import config from './config';
 import {LogLevelKey} from './config';
-import dirs from './dirs';
+import dirs from './dirs';import { channelManager } from './logging';
