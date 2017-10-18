@@ -74,6 +74,11 @@ export class CMakeTools implements vscode.Disposable {
         this._statusBar.setActiveKitName(kit ? kit.name : '');
       });
     });
+    this._variantManager.onActiveVariantChanged(
+        () => {rollbar.invokeAsync('Changing build variant', async() => {
+          await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
+          await this.configure();
+        })});
   }
 
   /**
@@ -107,6 +112,7 @@ export class CMakeTools implements vscode.Disposable {
       log.debug('Pushing active Kit into driver');
       await this._cmakeDriver.setKit(this._activeKit);
     }
+    await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = await this._cmakeDriver.projectName;
     if (project) {
       this._statusBar.setProjectName(project);
@@ -124,6 +130,8 @@ export class CMakeTools implements vscode.Disposable {
       await rollbar.requestPermissions(this.extensionContext);
       // Now start the CMake driver
       await this._reloadCMakeDriver();
+      // Start up the variant manager
+      await this._variantManager.initialize();
       // Start up the kit manager. This will also inject the current kit into
       // the CMake driver
       await this._kitManager.initialize();
@@ -246,6 +254,11 @@ export class CMakeTools implements vscode.Disposable {
       consumer.dispose();
     }
   }
+
+  /**
+   * Implementation of `cmake.setVariant`
+   */
+  async setVariant() { return await this._variantManager.selectVariant(); }
 }
 
 export default CMakeTools;

@@ -100,7 +100,7 @@ export function objectPairs<V>(obj: {[key: string] : V}): [ string, V ][] {
  * @param iter An iterable to map
  * @param proj The projection function
  */
-export function* map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iterator<Out> {
+export function * map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iterator<Out> {
   for (const item of iter) {
     yield proj(item);
   }
@@ -113,4 +113,53 @@ export function* map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Itera
  */
 export function randint(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min) + min);
+}
+
+
+export function product<T>(arrays: T[][]): T[][] {
+  // clang-format off
+  return arrays.reduce((acc, curr) =>
+    acc
+      // Append each element of the current array to each list already accumulated
+      .map(
+        prev => curr.map(
+          item => prev.concat(item)
+        )
+      )
+      .reduce(
+        // Join all the lists
+        (a, b) => a.concat(b),
+        []
+      ),
+      [[]] as T[][]
+    );
+  // clang-format on
+}
+
+interface CMakeValue {
+  type: string;
+  value: string;
+}
+
+export function cmakeify(value: (string | boolean | number | string[])): CMakeValue {
+  let type = 'UNKNOWN';
+  let value_str = '';
+  if (value === true || value === false) {
+    type = 'BOOL';
+    value_str = value ? 'TRUE' : 'FALSE';
+  } else if (typeof(value) === 'string') {
+    type = 'STRING';
+    value_str = replaceAll(value, ';', '\\;');
+  } else if (value instanceof Number || typeof value === 'number') {
+    type = 'STRING';
+  } else if (value instanceof Array) {
+    type = 'STRING';
+    value_str = value.join(';');
+  } else {
+    throw new Error(`Invalid value to convert to cmake value: ${value}`)
+  }
+  return {
+    type: type,
+    value: value_str,
+  };
 }

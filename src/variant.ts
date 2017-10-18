@@ -8,6 +8,7 @@ import {StateManager} from './state';
 import * as logging from './logging';
 import rollbar from './rollbar';
 import {fs} from "./pr";
+import * as util from './util';
 
 const log = logging.createLogger('variant');
 
@@ -21,7 +22,7 @@ export interface VariantConfigurationOptions {
   oneWordSummary: string;
   description: string;
   buildType?: string;
-  linkage?: string;
+  linkage?: 'static' | 'shared';
   settings?: ConfigureArguments[];
   generator?: string;
   toolset?: string;
@@ -79,8 +80,16 @@ export class VariantManager implements vscode.Disposable {
   /**
    * The variants available for this project
    */
-  get variants() { return this._variants; }
-  private _variants = [];
+  private _variants: VariantSet = new Map();
+
+  private _activeVariantCombination: VariantCombination;
+  private _setActiveVariantCombination(v: VariantCombination) {
+    this._activeVariantCombination = v;
+    this._activeVariantChanged.fire();
+  }
+
+  get onActiveVariantChanged() { return this._activeVariantChanged.event; }
+  private _activeVariantChanged = new vscode.EventEmitter<void>();
 
   /**
    * Watches for changes to the variants file on the filesystem
@@ -88,7 +97,10 @@ export class VariantManager implements vscode.Disposable {
   private _variantFileWatcher = vscode.workspace.createFileSystemWatcher(
       path.join(vscode.workspace.rootPath || '/', 'cmake-variants.*'));
 
-  dispose() { this._variantFileWatcher.dispose(); }
+  dispose() {
+    this._variantFileWatcher.dispose();
+    this._activeVariantChanged.dispose();
+  }
 
   /**
    * Create a new VariantManager
@@ -165,5 +177,80 @@ export class VariantManager implements vscode.Disposable {
         choices : choices,
       });
     }
+    this._variants = sets;
   }
+
+  get activeVariantOptions(): VariantConfigurationOptions {
+    const invalid_variant = {
+      oneWordSummary : 'Unknown',
+      description : 'Unknwon',
+    };
+    const vari = this._activeVariantCombination;
+    if (!vari) {
+      return invalid_variant;
+    }
+    const kws = vari.keywordSettings;
+    if (!kws) {
+      return invalid_variant;
+    }
+    const vars = this._variants;
+    if (!vars) {
+      return invalid_variant;
+    }
+    const data = Array.from(kws.entries()).map(([ param, setting ]) => {
+      if (!vars.has(param)) {
+        debugger;
+        throw 12;
+      }
+      const choices = vars.get(param) !.choices;
+      if (!choices.has(setting)) {
+        debugger;
+        throw 12;
+      }
+      return choices.get(setting) !;
+    });
+    const init: VariantConfigurationOptions = {
+      oneWordSummary : '[not-user-visible]',
+      description : '[not-user-visible]',
+      settings : []
+    };
+    const result: VariantConfigurationOptions
+        = data.reduce((acc, el) => ({
+                        buildType : el.buildType || acc.buildType,
+                        generator : el.generator || acc.generator,
+                        linkage : el.linkage || acc.linkage,
+                        toolset : el.toolset || acc.toolset,
+                        settings : acc.settings !.concat(el.settings || []),
+                        oneWordSummary : '[not-user-visible]',
+                        description : '[not-user-visible]',
+                      }),
+                      init);
+    return result;
+  }
+
+  async selectVariant() {
+    const variants = Array.from(this._variants.entries())
+                         .map(([ key, variant ]) => Array.from(variant.choices.entries())
+                                                        .map(([ value_name, value ]) => ({
+                                                               settingKey : key,
+                                                               settingValue : value_name,
+                                                               settings : value
+                                                             })));
+    const product = util.product(variants);
+    const items: VariantCombination[]
+        = product.map(optionset => ({
+                        label : optionset.map(o => o.settings.oneWordSummary).join('+'),
+                        keywordSettings : new Map<string, string>(optionset.map(
+                            param => [param.settingKey, param.settingValue] as[string, string])),
+                        description : optionset.map(o => o.settings.description).join(' + '),
+                      }));
+    const chosen = await vscode.window.showQuickPick(items);
+    if (!chosen) {
+      return false;
+    }
+    this._setActiveVariantCombination(chosen);
+    return true;
+  }
+
+  async initialize() { await this._reloadVariantsFile(); }
 }

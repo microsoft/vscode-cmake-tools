@@ -15,6 +15,7 @@ import config from './config';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
+import { VariantConfigurationOptions } from "./variant";
 
 const log = logging.createLogger('driver');
 
@@ -215,6 +216,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param kit The new kit
    */
   abstract setKit(kit: Kit): Promise<void>;
+
+  /**
+   * Change the current options from the variant.
+   * @param opts The new options
+   */
+  abstract setVariantOptions(opts: VariantConfigurationOptions): Promise<void>;
 
   /**
    * Is the driver busy? ie. running a configure/build/test

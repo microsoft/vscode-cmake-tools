@@ -4,7 +4,9 @@
 
 import * as proc from 'child_process';
 
-// import {ExecutionResult} from './api';
+import { createLogger } from './logging';
+
+const log = createLogger('proc');
 
 export interface ExecutionResult {
   retc: number;
@@ -76,6 +78,17 @@ export function execute(command: string,
                         options?: proc.SpawnOptions): Subprocess {
   let child: proc.ChildProcess | null = null;
   const result = new Promise<ExecutionResult>((resolve, reject) => {
+    log.info(
+      'Executing command: '
+      // We do simple quoting of arguments with spaces.
+      // This is only shown to the user,
+      // and doesn't have to be 100% correct.
+      +
+      [command]
+          .concat(args)
+          .map(a => a.replace('"', '\"'))
+          .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
+          .join(' '));
     if (process.platform != 'win32') {
       // We wrap things in `stdbuf` to disable output buffering.
       const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);

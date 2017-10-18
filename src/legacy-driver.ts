@@ -12,6 +12,8 @@ import * as util from './util';
 import * as proc from './proc';
 // import * as proc from './proc';
 import * as logging from './logging';
+import {VariantConfigurationOptions} from "./variant";
+import {ConfigureArguments} from './variant';
 
 const log = logging.createLogger('legacy-driver');
 
@@ -35,6 +37,28 @@ export class LegacyCMakeDriver extends CMakeDriver {
     this._setBaseKit(kit);
   }
 
+  /**
+   * The CMAKE_BUILD_TYPE to use
+   */
+  private _buildType: string = 'Debug';
+
+  /**
+   * The arguments to pass to CMake during a configuration
+   */
+  private _configArgs: ConfigureArguments[] = [];
+
+  /**
+   * Determine if we set BUILD_SHARED_LIBS to TRUE or FALSE
+   */
+  private _linkage: ('static' | 'shared') = 'static';
+
+  async setVariantOptions(opts: VariantConfigurationOptions) {
+    log.debug('Setting new variant', opts.description);
+    this._buildType = opts.buildType || this._buildType;
+    this._configArgs = opts.settings || this._configArgs;
+    this._linkage = opts.linkage || this._linkage;
+  }
+
   // Legacy disposal does nothing
   async asyncDispose() { log.debug('Dispose: Do nothing'); }
 
@@ -55,6 +79,17 @@ export class LegacyCMakeDriver extends CMakeDriver {
       args.push('-G' + generator);
       // TODO: Platform and toolset selection
     }
+
+    for (const setting of this._configArgs) {
+      const cmake_value = util.cmakeify(setting.value);
+      args.push(`${setting.key}:${cmake_value.type}=${cmake_value.value}`);
+    }
+
+    args.push(`-DCMAKE_BUILD_TYPE:STRING=${this._buildType}`);
+
+    // TODO: Make sure we are respecting all variant options
+
+    // TODO: Read options from settings.json
 
     console.assert(!!this._kit);
     if (!this._kit) {
@@ -81,7 +116,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return res.retc;
   }
 
-  async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
+  async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
     const ok = await this._beforeConfigure();
     if (!ok) {
       return null;
@@ -100,7 +135,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
       else
         return [];
     })();
-    const args = [ '--build', this.binaryDir, '--' ].concat(generator_args);
+    const args =
+        [ '--build', this.binaryDir, '--config', this._buildType, '--' ].concat(generator_args);
     return proc.execute(config.cmakePath, args, consumer);
   }
 

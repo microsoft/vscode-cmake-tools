@@ -193,22 +193,6 @@ class SingletonLogger {
   }
 }
 
-// export function traced(_target: any, _key: string, method: PropertyDescriptor) {
-//   const orig = method.value as Function;
-//   method.value = function(...args: any[]) {
-//     log.trace(`Call [${orig.name}]`);
-//     try {
-//       const ret = orig(...args);
-//       log.trace(`Return from [${orig.name}]`);
-//       return ret;
-//     } catch (e) {
-//       log.trace(`Exception thrown by [${orig.name}]`, e);
-//       throw e;
-//     }
-//   };
-//   return method;
-// }
-
 class Logger {
   constructor(readonly _tag: string) {}
   get tag() { return `[${this._tag}]`; }
@@ -237,4 +221,4 @@ import * as util from './util';
 import {fs} from './pr';
 import config from './config';
 import {LogLevelKey} from './config';
-import dirs from './dirs';import { channelManager } from './logging';
+import dirs from './dirs';

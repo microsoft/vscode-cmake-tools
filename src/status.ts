@@ -36,8 +36,8 @@ export class StatusBar implements vscode.Disposable {
   }
 
   constructor() {
-    this._cmakeToolsStatusItem.command = 'cmake.setBuildType';
-    this._cmakeToolsStatusItem.tooltip = 'Click to select the current build type';
+    this._cmakeToolsStatusItem.command = 'cmake.setVariant';
+    this._cmakeToolsStatusItem.tooltip = 'Click to select the current build variant';
     this._buildButton.command = 'cmake.build';
     this._kitSelectionButton.command = 'cmake.selectKit';
     this._kitSelectionButton.tooltip = 'Click to change the active kit';
