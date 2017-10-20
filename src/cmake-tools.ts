@@ -178,7 +178,22 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementation of `cmake.configure`
    */
-  async configure() {
+  configure() {
+    return this._doConfigure(consumer => this._cmakeDriver.configure(consumer));
+  }
+
+  /**
+   * Implementation of `cmake.cleanConfigure()
+   */
+  cleanConfigure() {
+    return this._doConfigure(consumer => this._cmakeDriver.cleanConfigure(consumer));
+  }
+
+  /**
+   * Wraps pre/post configure logic around an actual configure function
+   * @param cb The actual configure callback. Called to do the configure
+   */
+  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
     if (!this._activeKit) {
       log.debug('No kit selected yet. Asking for a Kit first.');
       await this.selectKit();
@@ -193,7 +208,7 @@ export class CMakeTools implements vscode.Disposable {
     }
     log.showChannel();
     const consumer = new diags.CMakeOutputConsumer();
-    const retc = await this._cmakeDriver.configure(consumer);
+    const retc = await cb(consumer);
     diags.populateCollection(this._diagnostics, consumer.diagnostics);
     return retc;
   }
