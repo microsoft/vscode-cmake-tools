@@ -106,6 +106,13 @@ export function * map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iter
   }
 }
 
+export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out, el: In) => Out): Out {
+  for (const item of iter) {
+    init = mapper(init, item);
+  }
+  return init;
+}
+
 /**
  * Generate a random integral value.
  * @param min Minimum value
