@@ -3,6 +3,8 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
+import * as path from 'path';
+
 import {CMakeDriver} from './driver';
 // import rollbar from './rollbar';
 import {Kit} from './kit';
@@ -34,7 +36,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
       log.debug('Wiping build directory', this.binaryDir);
       await fs.rmdir(this.binaryDir);
     }
-    this._setBaseKit(kit);
+    await this._setBaseKit(kit);
   }
 
   /**
@@ -109,11 +111,26 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const bindir = util.normalizePath(this.binaryDir);
     args.push('-B' + bindir);
     log.debug('Invoking CMake', config.cmakePath, 'with arguments', JSON.stringify(args));
-    const res = await proc.execute(config.cmakePath, args, outputConsumer).result;
+    const res = await this.executeCommand(config.cmakePath, args, outputConsumer).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
     this._needsReconfigure = false;
     return res.retc;
+  }
+
+  async cleanConfigure(consumer?: proc.OutputConsumer) {
+    const build_dir = this.binaryDir;
+    const cache = this.cachePath;
+    const cmake_files = path.join(build_dir, 'CMakeFiles');
+    if (await fs.exists(cache)) {
+        log.info('Removing ', cache);
+        await fs.unlink(cache);
+    }
+    if (await fs.exists(cmake_files)) {
+        log.info('[vscode] Removing ', cmake_files);
+        await fs.rmdir(cmake_files);
+    }
+    return this.configure(consumer);
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
@@ -137,7 +154,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     })();
     const args =
         [ '--build', this.binaryDir, '--config', this._buildType, '--' ].concat(generator_args);
-    return proc.execute(config.cmakePath, args, consumer);
+    return this.executeCommand(config.cmakePath, args, consumer);
   }
 
   static async create(): Promise<LegacyCMakeDriver> {

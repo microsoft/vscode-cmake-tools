@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import rollbar from './rollbar';
-import {Kit, CompilerKit, ToolchainKit, VSKit} from './kit';
+import {Kit, CompilerKit, ToolchainKit, VSKit, getVSKitEnvironment} from './kit';
 import {CMakeCache} from './cache';
 import * as util from './util';
 import config from './config';
@@ -36,6 +36,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns The exit code from CMake
    */
   abstract configure(consumer?: proc.OutputConsumer): Promise<number>;
+
+  /**
+   * Perform a clean configure. Deletes cached files before running the config
+   * @param consumer The output consumer
+   */
+  abstract cleanConfigure(consumer?: proc.OutputConsumer): Promise<number>;
 
   /**
    * Execute a CMake build. Should not configure.
@@ -84,12 +90,45 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private _baseKit: Kit | null = null;
 
   /**
+   * The environment variables required by the current kit
+   */
+  private _kitEnvironmentVariables = new Map<string, string>();
+
+  /**
    * Sets the kit on the base class.
    * @param k The new kit
    */
-  protected _setBaseKit(k: Kit) {
+  protected async _setBaseKit(k: Kit) {
     this._baseKit = k;
     log.debug('CMakeDriver Kit set to', k.name);
+
+    this._kitEnvironmentVariables = new Map();
+    switch (this._baseKit.type) {
+      case 'vsKit': {
+        const vars = await getVSKitEnvironment(this._baseKit);
+        if (!vars) {
+          log.error('Invalid VS environment:', this._baseKit.name);
+          log.error('We couldn\'t find the required environment variables');
+        } else {
+          this._kitEnvironmentVariables = vars;
+        }
+      }
+      default: {
+        // Other kits don't have environment variables
+      }
+    }
+  }
+
+  /**
+   * Get the environment variables required by the current Kit
+   */
+  protected _getKitEnvironmentVariablesObject(): {[key: string]: string} {
+    return util.reduce(
+      this._kitEnvironmentVariables.entries(),
+      {},
+      (acc, [key, value]) =>
+        Object.assign(acc, { [key]: value })
+    );
   }
 
   /**
@@ -209,6 +248,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
       return vs_changed;
     }
     }
+  }
+
+  executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer): proc.Subprocess {
+    return proc.execute(command, args, consumer, {
+      env: this._getKitEnvironmentVariablesObject()
+    });
   }
 
   /**

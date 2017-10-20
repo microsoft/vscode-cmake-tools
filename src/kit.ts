@@ -358,6 +358,17 @@ const VsGenerators: { [key: string]: string } = {
   'VS140COMNTOOLS': 'Visual Studio 14 2015',
 }
 
+async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string> | null> {
+  const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
+  const devbat = path.join(common_dir, 'VsDevCmd.bat');
+  const variables = await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`]);
+  if (!variables) {
+    return null;
+  } else {
+    return variables;
+  }
+}
+
 /**
  * Try to get a VSKit from a VS installation and architecture
  * @param inst A VS installation from vswhere
@@ -365,10 +376,8 @@ const VsGenerators: { [key: string]: string } = {
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string): Promise<VSKit | null> {
   const name = inst.displayName + ' - ' + arch;
-  const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
-  const devbat = path.join(common_dir, 'VsDevCmd.bat');
   log.debug('Checking for kit: ' + name);
-  const variables = await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`]);
+  const variables = await varsForVSInstallation(inst, arch);
   if (!variables)
     return null;
 
@@ -408,6 +417,15 @@ export async function scanForVSKits(): Promise<VSKit[]> {
   });
   const vs_kits = await Promise.all(prs);
   return ([] as VSKit[]).concat(...vs_kits);
+}
+
+export async function getVSKitEnvironment(kit: VSKit): Promise<Map<string, string>|null> {
+  const installs = await vsInstallations();
+  const requested = installs.find(inst => inst.displayName == kit.visualStudio);
+  if (!requested) {
+    return null;
+  }
+  return varsForVSInstallation(requested, kit.visualStudioArchitecture);
 }
 
 /**
