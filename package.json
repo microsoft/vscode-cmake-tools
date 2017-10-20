@@ -35,7 +35,7 @@
         "onCommand:cmake.build",
         "onCommand:cmake.install",
         "onCommand:cmake.buildWithTarget",
-        "onCommand:cmake.setBuildType",
+        "onCommand:cmake.setVariant",
         "onCommand:cmake.setDefaultTarget",
         "onCommand:cmake.cleanConfigure",
         "onCommand:cmake.clean",
