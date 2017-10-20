@@ -82,12 +82,6 @@ export class VariantManager implements vscode.Disposable {
    */
   private _variants: VariantSet = new Map();
 
-  private _activeVariantCombination: VariantCombination;
-  private _setActiveVariantCombination(v: VariantCombination) {
-    this._activeVariantCombination = v;
-    this._activeVariantChanged.fire();
-  }
-
   get onActiveVariantChanged() { return this._activeVariantChanged.event; }
   private _activeVariantChanged = new vscode.EventEmitter<void>();
 
@@ -180,16 +174,16 @@ export class VariantManager implements vscode.Disposable {
     this._variants = sets;
   }
 
+  get haveVariant(): boolean {
+    return !!this.stateManager.activeVariantSettings;
+  }
+
   get activeVariantOptions(): VariantConfigurationOptions {
     const invalid_variant = {
       oneWordSummary : 'Unknown',
       description : 'Unknwon',
     };
-    const vari = this._activeVariantCombination;
-    if (!vari) {
-      return invalid_variant;
-    }
-    const kws = vari.keywordSettings;
+    const kws = this.stateManager.activeVariantSettings;
     if (!kws) {
       return invalid_variant;
     }
@@ -210,8 +204,8 @@ export class VariantManager implements vscode.Disposable {
       return choices.get(setting) !;
     });
     const init: VariantConfigurationOptions = {
-      oneWordSummary : '[not-user-visible]',
-      description : '[not-user-visible]',
+      oneWordSummary : '',
+      description : '',
       settings : []
     };
     const result: VariantConfigurationOptions
@@ -221,8 +215,8 @@ export class VariantManager implements vscode.Disposable {
                         linkage : el.linkage || acc.linkage,
                         toolset : el.toolset || acc.toolset,
                         settings : acc.settings !.concat(el.settings || []),
-                        oneWordSummary : '[not-user-visible]',
-                        description : '[not-user-visible]',
+                        oneWordSummary : [acc.oneWordSummary, el.oneWordSummary].join(' ').trim(),
+                        description : [acc.description, el.description].join(', '),
                       }),
                       init);
     return result;
@@ -248,7 +242,8 @@ export class VariantManager implements vscode.Disposable {
     if (!chosen) {
       return false;
     }
-    this._setActiveVariantCombination(chosen);
+    this.stateManager.activeVariantSettings = chosen.keywordSettings;
+    this._activeVariantChanged.fire();
     return true;
   }
 

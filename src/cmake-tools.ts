@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 
 import rollbar from './rollbar';
 import * as diags from './diagnostics';
-import {KitManager, Kit} from './kit';
+import {KitManager} from './kit';
 import {VariantManager} from './variant';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
@@ -39,12 +39,6 @@ export class CMakeTools implements vscode.Disposable {
   private _variantManager = new VariantManager(this.extensionContext, this._stateManager);
 
   /**
-   * Store the active kit. We keep it around in case we need to restart the
-   * CMake driver.
-   */
-  private _activeKit: Kit | null = null;
-
-  /**
    * The object in charge of talking to CMake
    */
   private _cmakeDriver: CMakeDriver;
@@ -63,22 +57,6 @@ export class CMakeTools implements vscode.Disposable {
   private constructor(readonly extensionContext: vscode.ExtensionContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     log.debug('Constructing new CMakeTools instance');
-    this._kitManager.onActiveKitChanged(kit => {
-      log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
-      rollbar.invokeAsync('Changing CMake kit', async() => {
-        this._activeKit = kit;
-        if (kit) {
-          log.debug('Injecting new Kit into CMake driver');
-          await this._cmakeDriver.setKit(kit);
-        }
-        this._statusBar.setActiveKitName(kit ? kit.name : '');
-      });
-    });
-    this._variantManager.onActiveVariantChanged(
-        () => {rollbar.invokeAsync('Changing build variant', async() => {
-          await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
-          await this.configure();
-        })});
   }
 
   /**
@@ -108,9 +86,9 @@ export class CMakeTools implements vscode.Disposable {
     }
     log.debug('Loading legacy (non-cmake-server) driver');
     this._cmakeDriver = await LegacyCMakeDriver.create();
-    if (this._activeKit) {
+    if (this._kitManager.activeKit) {
       log.debug('Pushing active Kit into driver');
-      await this._cmakeDriver.setKit(this._activeKit);
+      await this._cmakeDriver.setKit(this._kitManager.activeKit);
     }
     await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = await this._cmakeDriver.projectName;
@@ -128,13 +106,29 @@ export class CMakeTools implements vscode.Disposable {
     await rollbar.invokeAsync('Root init', async() => {
       // First, start up Rollbar
       await rollbar.requestPermissions(this.extensionContext);
-      // Now start the CMake driver
-      await this._reloadCMakeDriver();
       // Start up the variant manager
       await this._variantManager.initialize();
-      // Start up the kit manager. This will also inject the current kit into
-      // the CMake driver
+      this._variantManager.onActiveVariantChanged(
+        () => {rollbar.invokeAsync('Changing build variant', async() => {
+          await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
+          this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
+          // We don't configure yet, since someone else might be in the middle of a configure
+        })});
+      // Start up the kit manager
       await this._kitManager.initialize();
+      this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name : '');
+      this._kitManager.onActiveKitChanged(kit => {
+        log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
+        rollbar.invokeAsync('Changing CMake kit', async() => {
+          if (kit) {
+            log.debug('Injecting new Kit into CMake driver');
+            await this._cmakeDriver.setKit(kit);
+          }
+          this._statusBar.setActiveKitName(kit ? kit.name : '');
+        });
+      });
+      // Now start the CMake driver
+      await this._reloadCMakeDriver();
       this._statusBar.setStatusMessage('Ready');
     });
   }
@@ -194,14 +188,21 @@ export class CMakeTools implements vscode.Disposable {
    * @param cb The actual configure callback. Called to do the configure
    */
   private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
-    if (!this._activeKit) {
+    if (!this._kitManager.activeKit) {
       log.debug('No kit selected yet. Asking for a Kit first.');
       await this.selectKit();
     }
-    if (!this._activeKit) {
+    if (!this._kitManager.activeKit) {
       log.debug('No kit selected. Abort configure.');
       vscode.window.showErrorMessage('Cannot configure without a Kit');
       return -1;
+    }
+    if (!this._variantManager.haveVariant) {
+      await this._variantManager.selectVariant();
+      if (!this._variantManager.haveVariant) {
+        log.debug('No variant selected. Abort configure');
+        return -1;
+      }
     }
     if (config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
@@ -224,7 +225,6 @@ export class CMakeTools implements vscode.Disposable {
    */
   get allTargetName() { return this._allTargetName(); }
   private async _allTargetName(): Promise<string> {
-    // TODO: Get the correct name!
     const gen = await this._cmakeDriver.generatorName;
     if (gen && (gen.includes('Visual Studio') || gen.toLowerCase().includes('xcode'))) {
       return 'ALL_BUILD';
@@ -273,7 +273,13 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementation of `cmake.setVariant`
    */
-  async setVariant() { return await this._variantManager.selectVariant(); }
+  async setVariant() {
+    const ret = await this._variantManager.selectVariant();
+    if (ret) {
+      await this.configure();
+    }
+    return ret;
+  }
 }
 
 export default CMakeTools;

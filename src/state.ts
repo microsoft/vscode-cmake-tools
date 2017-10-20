@@ -34,4 +34,24 @@ export class StateManager {
   set activeBuildTarget(s: string | null) {
     this.extensionContext.workspaceState.update('activeBuildTarget', s);
   }
+
+  /**
+   * The keyword settings for the build variant
+   */
+  get activeVariantSettings(): Map<string, string> | null {
+    const pairs = this.extensionContext.workspaceState.get<[string, string][]>('activeVariantSettings');
+    if (pairs) {
+      return new Map<string, string>(pairs);
+    } else {
+      return null;
+    }
+  }
+  set activeVariantSettings(settings: Map<string, string> | null) {
+    if (settings) {
+      const pairs: [string, string][] = Array.from(settings.entries());
+      this.extensionContext.workspaceState.update('activeVariantSettings', pairs);
+    } else {
+      this.extensionContext.workspaceState.update('activeVariantSettings', null);
+    }
+  }
 }

@@ -493,6 +493,14 @@ export class KitManager implements vscode.Disposable {
   = vscode.workspace.createFileSystemWatcher(this._kitsPath);
 
   /**
+   * The active build kit
+   */
+  get activeKit() {
+    return this._activeKit;
+  }
+  private _activeKit: Kit | null;
+
+  /**
    * Event emitted when the Kit changes. This can be via user action, by the
    * available kits changing, or on initial load when the prior workspace kit
    * is reloaded.
@@ -515,6 +523,7 @@ export class KitManager implements vscode.Disposable {
     } else {
       this.stateManager.activeKitName = null;
     }
+    this._activeKit = kit;
     this._activeKitChangedEmitter.fire(kit);
   }
 

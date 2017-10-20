@@ -237,10 +237,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     case 'vsKit': {
       // Switching VS changes everything
       const vs_changed = kit.visualStudio !== this._vsKit.visualStudio
-          && kit.visualStudioArchitecture !== this._vsKit.visualStudioArchitecture;
+          || kit.visualStudioArchitecture !== this._vsKit.visualStudioArchitecture;
       if (vs_changed) {
-        const old_vs = `${this._vsKit.visualStudio} ${this._vsKit.visualStudioArchitecture}`;
-        const new_vs = `${kit.visualStudio} ${kit.visualStudioArchitecture}`;
+        const old_vs = this._vsKit.name;
+        const new_vs = kit.name;
         log.debug('Need clean: Visual Studio changed:', old_vs, '->', new_vs);
       } else {
         log.debug('Clean not needed: Same Visual Studio');
