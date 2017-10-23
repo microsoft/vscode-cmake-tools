@@ -12,7 +12,7 @@ in this manner.
 The most important part of the system is ``cmake-variants.json``, which encodes
 available build settings in such a way that they can be parsed and analyzed by
 automated tooling, as well as human users. Here is the default variants
-created by CMake Tools when one is not present in a project directory:
+configuration used by CMake Tools when one is not present in a project directory:
 
 ~~~json
 {
@@ -80,18 +80,17 @@ the above ``cmake-variants.json`` file:
     /* ... */
   },
   "linkage": {
-      "default$": "static",
-      "description$": "The link usage of build libraries",
-      "static": {
-        "oneWordSummary$": "Static",
-        "description$": "Emit Static Libraries",
-        "linkage": "static"
-      },
-      "shared": {
-        "oneWordSummary$": "Shared",
-        "description$": "Emit shared libraries/DLLs",
-        "linkage": "shared"
-      }
+    "default$": "static",
+    "description$": "The link usage of build libraries",
+    "static": {
+      "oneWordSummary$": "Static",
+      "description$": "Emit Static Libraries",
+      "linkage": "static"
+    },
+    "shared": {
+      "oneWordSummary$": "Shared",
+      "description$": "Emit shared libraries/DLLs",
+      "linkage": "shared"
     }
   }
 }

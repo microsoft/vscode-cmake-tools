@@ -11,18 +11,38 @@ import * as util from './util';
 import * as common from './common';
 import {config} from './config';
 import * as cms from './server-client';
+import { log } from "./logging";
 
 export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
-  private _client: cms.CMakeServerClient;
+  private _client?: cms.CMakeServerClient;
   private _globalSettings: cms.GlobalSettingsContent;
   private _dirty = true;
   private _cacheEntries = new Map<string, cache.Entry>();
   private _accumulatedMessages: string[] = [];
-  private _codeModel: null|cms.CodeModelContent;
 
-  private _executableTargets: api.ExecutableTarget[] = [];
+  private _codeModel: null|cms.CodeModelContent;
+  public get codeModel() {
+    return this._codeModel;
+  }
+  public set codeModel(cm: null|cms.CodeModelContent) {
+    this._codeModel = cm;
+    this._workspaceCacheContent.codeModel = cm;
+    if (cm && cm.configurations.length && cm.configurations[0].projects.length) {
+      this._statusBar.projectName = cm.configurations[0].projects[0].name;
+    } else {
+      this._statusBar.projectName = 'No Project';
+    }
+    this._writeWorkspaceCacheContent();
+  }
+
+  private _reconfiguredEmitter = new vscode.EventEmitter<void>();
+  private readonly _reconfigured = this._reconfiguredEmitter.event;
+  public get reconfigured() {
+    return this._reconfigured;
+  }
+
   get executableTargets() {
-    return this.targets.filter(t => t.targetType == 'EXECUTABLE')
+    return this.targets.filter(t => t.targetType === 'EXECUTABLE')
         .map(t => ({
                name: t.name,
                path: t.filepath,
@@ -42,9 +62,9 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       const compiler = entry.as<string>();
       if (compiler.endsWith('cl.exe')) {
         return 'MSVC';
-      } else if (/g(cc|++)[^/]*/.test(compiler)) {
+      } else if (/g(cc|\+\+)[^/]*/.test(compiler)) {
         return 'GNU';
-      } else if (/clang(++)?[^/]*/.test(compiler)) {
+      } else if (/clang(\+\+)?[^/]*/.test(compiler)) {
         return 'Clang';
       }
     }
@@ -59,12 +79,26 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return this._globalSettings ? this._globalSettings.generator : null;
   }
 
+  allCacheEntries(): api.CacheEntryProperties[] {
+    return Array.from(this._cacheEntries.values()).map(e => ({
+                                                         type: e.type,
+                                                         key: e.key,
+                                                         value: e.value,
+                                                         advanced: e.advanced,
+                                                         helpString:
+                                                             e.helpString,
+                                                       }));
+  }
+
   cacheEntry(key: string) {
     return this._cacheEntries.get(key) || null;
   }
 
   async dangerousShutdownClient() {
-    await this._client.shutdown();
+    if (this._client) {
+      await this._client.shutdown();
+      this._client = undefined;
+    }
   }
 
   async dangerousRestartClient() {
@@ -75,7 +109,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     const build_dir = this.binaryDir;
     const cache = this.cachePath;
     const cmake_files = path.join(build_dir, 'CMakeFiles');
-    await this._client.shutdown();
+    await this.dangerousShutdownClient();
     if (await async.exists(cache)) {
       this._channel.appendLine('[vscode] Removing ' + cache);
       await async.unlink(cache);
@@ -84,19 +118,19 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       this._channel.append('[vscode] Removing ' + cmake_files);
       await util.rmdir(cmake_files);
     }
-    this._client = await this._restartClient();
+    await this._restartClient();
     return this.configure();
   }
 
   async compilationInfoForFile(filepath: string):
       Promise<api.CompilationInfo|null> {
-    if (!this._codeModel) {
+    if (!this.codeModel) {
       return null;
     }
-    const config = this._codeModel.configurations.length == 1 ?
-        this._codeModel.configurations[0] :
-        this._codeModel.configurations.find(
-            c => c.name == this.selectedBuildType);
+    const config = this.codeModel.configurations.length === 1 ?
+        this.codeModel.configurations[0] :
+        this.codeModel.configurations.find(
+            c => c.name === this.selectedBuildType);
     if (!config) {
       return null;
     }
@@ -110,7 +144,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
             const abs_filepath = path.isAbsolute(filepath) ?
                 filepath :
                 path.join(this.sourceDir, filepath);
-            return util.normalizePath(abs_source) ==
+            return util.normalizePath(abs_source) ===
                 util.normalizePath(abs_filepath);
           });
           if (found) {
@@ -135,8 +169,10 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     return null;
   }
 
-  async configure(extraArgs: string[] = [], runPreBuild = true):
-      Promise<number> {
+  async configure(extraArgs: string[] = [], runPreBuild = true): Promise<number> {
+    if (!this._client)
+      return -1;
+
     if (!await this._preconfigure()) {
       return -1;
     }
@@ -145,29 +181,8 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         return -1;
       }
     }
-    const settings = Object.assign({}, config.configureSettings);
-    if (!this.isMultiConf) {
-      settings.CMAKE_BUILD_TYPE = this.selectedBuildType;
-    }
 
-    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
-    const variant_options = this.variants.activeConfigurationOptions;
-    if (variant_options) {
-      Object.assign(settings, variant_options.settings || {});
-      settings.BUID_SHARED_LIBS = variant_options.linkage === 'shared';
-    }
-
-    const inst_prefix = config.installPrefix;
-    if (inst_prefix && inst_prefix != '') {
-      settings.CMAKE_INSTALL_PREFIX = this.replaceVars(inst_prefix);
-    }
-
-    const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
-    await util.ensureDirectory(cmt_dir);
-    const init_cache_path =
-        path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
-    const init_cache_content = this._buildCacheInitializer(settings);
-    await util.writeFile(init_cache_path, init_cache_content);
+    const args = await this.prepareConfigure();
 
     this.statusMessage = 'Configuring...';
     const parser = new diagnostics.BuildParser(
@@ -184,8 +199,9 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     try {
       this._accumulatedMessages = [];
       await this._client.configure(
-          {cacheArguments: ['-C', init_cache_path].concat(extraArgs)});
+          {cacheArguments: args.concat(extraArgs)});
       await this._client.compute();
+      this._dirty = false;
       parseMessages();
     } catch (e) {
       if (e instanceof cms.ServerError) {
@@ -200,20 +216,9 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
         await this._client.sendRequest('codemodel');
     await this._writeWorkspaceCacheContent();
     await this._refreshAfterConfigure();
+    this._setDefaultLaunchTarget();
+    this._reconfiguredEmitter.fire();
     return 0;
-  }
-
-  async selectDebugTarget() {
-    const choices = this.executableTargets.map(e => ({
-                                                 label: e.name,
-                                                 description: '',
-                                                 detail: e.path,
-                                               }));
-    const chosen = await vscode.window.showQuickPick(choices);
-    if (!chosen) {
-      return;
-    }
-    this.currentDebugTarget = chosen.label;
   }
 
   async build(target?: string|null) {
@@ -237,49 +242,61 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       return [];
     }
     const config = this._workspaceCacheContent.codeModel.configurations.find(
-        conf => conf.name == this.selectedBuildType);
+        conf => conf.name === this.selectedBuildType);
     if (!config) {
-      console.error(
+      log.error(
           `Found no matching codemodel config for active build type ${this
               .selectedBuildType}`);
       return [];
     }
     return config.projects.reduce<Ret>(
-        (acc, project) => acc.concat(project.targets.map(
+        (acc, project) => acc.concat(project.targets
+          // Filter out targets with no build dir/filename, such as INTERFACE targets
+          .filter(t => !!t.buildDirectory && !!t.artifacts)
+          .map(
             t => ({
               type: 'rich' as 'rich',
               name: t.name,
-              filepath: path.join(t.buildDirectory, t.fullName),
+              filepath: path.normalize(t.artifacts[0]),
               targetType: t.type,
             }))),
-        []);
+        [{
+          type: 'rich' as 'rich',
+          name: this.allTargetName,
+          filepath: 'A special target to build all available targets',
+          targetType: 'META'
+        }]);
   }
 
   protected constructor(private _ctx: vscode.ExtensionContext) {
     super(_ctx);
   }
 
-  private _restartClient(): Promise<cms.CMakeServerClient> {
-    return cms.CMakeServerClient.start({
-      binaryDir: this.binaryDir,
-      sourceDir: this.sourceDir,
-      cmakePath: config.cmakePath,
-      environment: Object.assign(
-          {}, config.environment, this.currentEnvironmentVariables),
-      onDirty: async() => {
-        this._dirty = true;
-      },
-      onMessage: async(msg) => {
-        const line = `-- ${msg.message}`;
-        this._accumulatedMessages.push(line);
-        this._channel.appendLine(line);
-      },
-      onProgress: async(prog) => {
-        this.buildProgress = (prog.progressCurrent - prog.progressMinimum) /
+  private async _restartClient(): Promise<void> {
+    this._client = await cms.CMakeServerClient
+      .start({
+        binaryDir: this.binaryDir,
+        sourceDir: this.sourceDir,
+        cmakePath: config.cmakePath,
+        environment: util.mergeEnvironment(
+          this.currentEnvironmentVariables,
+          config.environment,
+          config.configureEnvironment),
+        onDirty: async () => {
+          this._dirty = true;
+        },
+        onMessage: async (msg) => {
+          const line = `-- ${msg.message}`;
+          this._accumulatedMessages.push(line);
+          this._channel.appendLine(line);
+        },
+        onProgress: async (prog) => {
+          this.buildProgress = (prog.progressCurrent - prog.progressMinimum) /
             (prog.progressMaximum - prog.progressMinimum);
-        this.statusMessage = prog.progressMessage;
-      },
-    });
+          this.statusMessage = prog.progressMessage;
+        },
+        pickGenerator: () => this.pickGenerator(),
+      });
   }
 
   protected async _refreshAfterConfigure() {
@@ -287,13 +304,11 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
   }
 
   private async _refreshCodeModel() {
-    this._codeModel = await this._client.codemodel();
-    this._workspaceCacheContent.codeModel = this._codeModel;
-    await this._writeWorkspaceCacheContent();
+    this.codeModel = await this._client!.codemodel();
   }
 
   private async _refreshCacheEntries() {
-    const clcache = await this._client.getCMakeCacheContent();
+    const clcache = await this._client!.getCMakeCacheContent();
     return this._cacheEntries = clcache.cache.reduce((acc, el) => {
       const type: api.EntryType = {
         BOOL: api.EntryType.Bool,
@@ -306,21 +321,22 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       }[el.type];
       console.assert(type !== undefined, `Unknown cache type ${el.type}`);
       acc.set(
-          el.key,
-          new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING));
+          el.key, new cache.Entry(
+                      el.key, el.value, type, el.properties.HELPSTRING,
+                      el.properties.ADVANCED === '1'));
       return acc;
     }, new Map<string, cache.Entry>());
   }
 
   protected async _init(): Promise<ServerClientCMakeTools> {
     await super._init();
-    const cl = this._client = await this._restartClient();
-    this._globalSettings = await cl.getGlobalSettings();
-    this._codeModel = this._workspaceCacheContent.codeModel || null;
+    await this._restartClient();
+    this._globalSettings = await this._client!.getGlobalSettings();
+    this.codeModel = this._workspaceCacheContent.codeModel || null;
     this._statusBar.statusMessage = 'Ready';
     this._statusBar.isBusy = false;
     if (this.executableTargets.length > 0) {
-      this.currentDebugTarget = this.executableTargets[0].name;
+      this.currentLaunchTarget = this.executableTargets[0].name;
     }
     try {
       await this._refreshAfterConfigure();

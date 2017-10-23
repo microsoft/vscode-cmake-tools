@@ -7,28 +7,42 @@ Visual Studio Code editor.
 This extension itself *does not* provide language support for the CMake
 scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
 
+## Calling All Users:
+
+One of the number-one most important things I need help with is _documentation_.
+The changelog may mention all important changes and features, but it's hard for
+a new user to get acclimated and find all the features and options.
+
+If you'd like to help, please head on over to the GitHub project's wiki, or
+add a PR for relevant information in the `docs/` subdirectory.
+
 ## What's New?
 
-### **0.8.0**:
-  - **Automatic Environment Selection**. CMake Tools will now automatically
-    detect available build environments and let you select them using a
-    quick-pick. This means *no more starting Code from a Visual Studio
-    developer command prompt!* Currently supports Visual Studio 2013 and 2015
-    for x86 and amd64. The environment chosen will be saved and persisted to the
-    workspace.
-  - Configuration options for the default build variants.
-  - Configuration option for CTest command line arguments.
-  - **0.8.1**: Fix deadlock on startup.
-  - **0.8.2-4**: More fixes for environment loading.
-  - **0.8.5**:
-    - New `${workspaceRootFolderName}` available in config substitution.
-    - New API exported for other extensions. See [here](https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/src/api.ts).
-  - **0.8.6**: Tweaking output
-  - **0.8.7**:
-    - This version contains an enormous refactor of the codebase in preparation
-      for CMake Server support. If you find _any_ issues or regressions from
-      prior extension versions, **please** create an issue on the GitHub
-      project.
+### **0.10.0**
+- VS 2017 environment detection! Finally! **Note:** We use `vswhere` to find the
+  local Visual Studio installation, and this program is only bundled with
+  Visual Studio 2017 Update 2 (or newer). Please install (at least) update 2
+  for automatic detection to work
+- Lots of small bugfixes and tweaks, and debugging documentation updates. Many thanks to [Yuri Timenkov](https://github.com/ytimenkov)!
+- **0.10.1**:
+  - Option `cmake.buildBeforeRun` to enable/disable building of a target before
+    running/debugging it. (Default is *enabled*)
+  - Changes in the way Visual Studio generators are loaded and detected. Now,
+    generators for detected build environments are added to the `preferred`
+    list. (Thanks to [Yuri Timenkov](https://github.com/ytimenkov)!)
+  - Fix issue where cmake-server could be restarted too quickly and break
+    itself.
+  - `${variable}` substitution is now supported in the `cmake.*Environment`
+    settings. (Thanks to [Damien Courtois](https://github.com/dcourtois)!)
+- **0.10.2**:
+  - Support for Emscripten environment detection. Set the
+    `cmake.emscriptenSearchDirs` setting or the `EMSCRIPTEN` environment
+    variable to the root path of the Emscripten SDK
+    (Contains `cmake/Modules/Platform/Emscripten.cmake`)
+  - Fix environment variables not passing from `settings.json` to configuration.
+
+As always: Please report any issues, questions, or comments to the GitHub
+project issues list!
 
 ## Issues? Questions? Feature requests?
 
@@ -73,7 +87,7 @@ CMake Tools provides a few buttons on the statusbar:
 3.  The default/active target. This is the target that will be invoked if run
     the build command. Clicking on this button will let you select a different
     target to be built by default.
-4.  The Target Debugging launcher (must be explicitly enabled, se below).
+4.  The Target Debugging launcher (must be explicitly enabled, see below).
 5.  The active debug target (must be explicitly enabled).
 6.  The CTest results button. Click this button to rebuild and run CTest tests.
 

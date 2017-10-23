@@ -3,6 +3,11 @@
     "description": "Variant options",
     "additionalProperties": false,
     "patternProperties": {
+        "base\\$": {
+            "type": "object",
+            "description": "Base mix-in for all variants (Not implemented for CMake Tools)",
+            "additionalProperties": true
+        },
         "^\\w+$": {
             "type": "object",
             "properties": {

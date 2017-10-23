@@ -1,4 +1,4 @@
-import {DiagnosticCollection, Disposable, TextEditor} from 'vscode';
+import {DiagnosticCollection, Disposable, Event, TextEditor} from 'vscode';
 
 export interface ExecutionResult {
   retc: number;
@@ -8,7 +8,7 @@ export interface ExecutionResult {
 
 export interface ExecuteOptions {
   silent: boolean;
-  environment: Object;
+  environment: {[key: string]: string};
   collectOutput?: boolean;
   workingDirectory?: string;
 }
@@ -22,23 +22,20 @@ export interface RawCompilationInfo {
 export interface CompilationInfo {
   file: string;
   compile?: RawCompilationInfo;
-  includeDirectories: {
-    path: string;
-    isSystem: boolean;
-  }[];
-  compileDefinitions: {[define: string]: string|null};
+  includeDirectories: {path: string; isSystem: boolean;}[];
+  compileDefinitions: {[define: string]: string | null};
   compileFlags: string[];
   compiler?: string;
 }
 
 export enum EntryType {
-  Bool,
-  String,
-  Path,
-  FilePath,
-  Internal,
-  Uninitialized,
-  Static,
+  Bool = 0,
+  String = 1,
+  Path = 2,
+  FilePath = 3,
+  Internal = 4,
+  Uninitialized = 5,
+  Static = 6,
 }
 
 export interface Test {
@@ -46,14 +43,15 @@ export interface Test {
   name: string;
 }
 
-export interface CacheEntry {
+export interface CacheEntryProperties {
   type: EntryType;
   helpString: string;
   key: string;
   value: any;
-  as<T>(): T;
   advanced: boolean;
 }
+
+export interface CacheEntry extends CacheEntryProperties { as<T>(): T; }
 
 export interface ExecutableTarget {
   name: string;
@@ -74,33 +72,35 @@ export interface RichTarget {
   targetType: string;
 }
 
-export type Target = NamedTarget | RichTarget
+export type Target = NamedTarget | RichTarget;
 
 export interface CMakeToolsAPI extends Disposable {
   // Get the root source directory
-  readonly sourceDir: Promise<string>|string;
+  readonly sourceDir: Promise<string>;
   // Get the main CMake File
-  readonly mainListFile: Promise<string>|string;
+  readonly mainListFile: Promise<string>;
   // Get the binary directory for the project
-  readonly binaryDir: Promise<string>|string;
+  readonly binaryDir: Promise<string>;
   // Get the path to the CMake cache
-  readonly cachePath: Promise<string>|string;
+  readonly cachePath: Promise<string>;
   // Targets which are executable
-  readonly executableTargets: Promise<ExecutableTarget[]>|ExecutableTarget[];
+  readonly executableTargets: Promise<ExecutableTarget[]>;
   // Diagnostics obtained from configure/build
-  readonly diagnostics: Promise<DiagnosticCollection>|DiagnosticCollection;
+  readonly diagnostics: Promise<DiagnosticCollection>;
   // Targets available for building
-  readonly targets: Promise<Target[]>|Target[];
+  readonly targets: Promise<Target[]>;
+  // Event fired when configure completes
+  readonly reconfigured: Event<void>;
+  // Event fired when the default build target changes
+  readonly targetChangedEvent: Event<void>;
 
   // Execute a command using the CMake executable
-  executeCMakeCommand(args: string[], options?: ExecuteOptions):
-      Promise<ExecutionResult>;
+  executeCMakeCommand(args: string[], options?: ExecuteOptions): Promise<ExecutionResult>;
   // Execute an arbitrary program in the active environments
-  execute(program: string, args: string[], options?: ExecuteOptions):
-      Promise<ExecutionResult>;
+  execute(program: string, args: string[], options?: ExecuteOptions): Promise<ExecutionResult>;
 
   // Get the compilation information for a file
-  compilationInfoForFile(filepath: string): Promise<CompilationInfo|null>;
+  compilationInfoForFile(filepath: string): Promise<CompilationInfo | null>;
 
   // Configure the project. Returns the return code from CMake.
   configure(extraArgs?: string[], runPreBuild?: boolean): Promise<number>;
@@ -109,7 +109,7 @@ export interface CMakeToolsAPI extends Disposable {
   // Install the project. Returns the return code from CMake
   install(): Promise<number>;
   // Open the CMake Cache file in a text editor
-  jumpToCacheFile(): Promise<TextEditor|null>;
+  jumpToCacheFile(): Promise<TextEditor | null>;
   // Clean the build output
   clean(): Promise<number>;
   // Remove cached build settings and rerun the configuration
@@ -117,9 +117,9 @@ export interface CMakeToolsAPI extends Disposable {
   // Clean the build output and rebuild
   cleanRebuild(): Promise<number>;
   // Build a target selected by the user
-  buildWithTarget(): Promise<number|null>;
+  buildWithTarget(): Promise<number>;
   // Show a selector for the user to set the default build target
-  setDefaultTarget(): Promise<string|null>;
+  setDefaultTarget(): Promise<void>;
   // Set the active build variant
   setBuildType(): Promise<number>;
   // Execute CTest
@@ -127,13 +127,19 @@ export interface CMakeToolsAPI extends Disposable {
   // Stop the currently running build/configure/test/install process
   stop(): Promise<boolean>;
   // Show a quickstart
-  quickStart(): Promise<number|null>;
+  quickStart(): Promise<number>;
+  // Start the executable target without a debugger
+  launchTarget(): Promise<void>;
   // Start the debugger with the selected build target
   debugTarget(): Promise<void>;
+  // Get the path to the active debugging target
+  launchTargetProgramPath(): Promise<string | null>;
   // Allow the user to select target to debug
-  selectDebugTarget(): Promise<string|null>;
+  selectLaunchTarget(): Promise<string | null>;
   // Show the environment selection quickpick
-  selectEnvironments(): Promise<string[]|null>;
+  selectEnvironments(): Promise<void>;
   // Sets the variant based on keyword settings
   setActiveVariantCombination(settings: VariantKeywordSettings): Promise<void>;
+  // Toggle code coverage view on/off
+  toggleCoverageDecorations(): void;
 }

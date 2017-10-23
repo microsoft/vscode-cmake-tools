@@ -1,6 +1,66 @@
 
 ## Change History
 
+### **0.10.0**
+- VS 2017 environment detection! Finally! **Note:** We use `vswhere` to find the
+  local Visual Studio installation, and this program is only bundled with
+  Visual Studio 2017 Update 2 (or newer). Please install (at least) update 2
+  for automatic detection to work
+- Lots of small bugfixes and tweaks, and debugging documentation updates. Many thanks to [Yuri Timenkov](https://github.com/ytimenkov).
+- **0.10.1**:
+  - Option `cmake.buildBeforeRun` to enable/disable building of a target before
+    running/debugging it. (Default is *enabled*)
+  - Changes in the way Visual Studio generators are loaded and detected. Now,
+    generators for detected build environments are added to the `preferred`
+    list. (Thanks to [Yuri Timenkov](https://github.com/ytimenkov)!)
+  - Fix issue where cmake-server could be restarted too quickly and break
+    itself.
+  - `${variable}` substitution is now supported in the `cmake.*Environment`
+    settings. (Thanks to [Damien Courtois](https://github.com/dcourtois)!)
+- **0.10.2**:
+  - Support for Emscripten environment detection. Set the
+    `cmake.emscriptenSearchDirs` setting or the `EMSCRIPTEN` environment
+    variable to the root path of the Emscripten SDK
+    (Contains `cmake/Modules/Platform/Emscripten.cmake`)
+  - Fix environment variables not passing from `settings.json` to configuration.
+
+### **0.9.0**
+
+- Experimental CMake Server support has landed. [Read more here.](docs/cmake_server.md)
+- Experimental graphical CMake cache editor. The `Edit the CMake Cache` command
+  now opens up a dedicated UI within VS Code for viewing and modifying values
+  stored in the CMake cache. [Read more here.](docs/cache_editor.md)
+- CTest coverage! Now code coverage can be viewed inline after it has been
+  collected by CTest. This requires that CTest be executed with `-T Coverage`
+  from the command line (CMake Tools does not yet do this automatically).
+- **0.9.1**: Fix issues with CMake Server and cache editor.
+- **0.9.2**: Fix issues with environment variables on Windows.
+- **0.9.3**: Various bugfixes. Shiny new icon.
+- **0.9.4**:
+  - Fix issues with GCC template error parsing
+  - Do not forcibly set `BUILD_SHARED_LIBS`
+  - Fix issues with incorrect debug paths with cmake-server
+  - `cmake.platform` setting for controlling the `-A` CMake option.
+  - New command `cmake.launchTargetProgramPath` for usage in `launch.json`:
+    - This means that other debuggers can be used with CMake Tools just
+      by setting them up with `launch.json`, using `${command.cmake.launchTargetProgramPath}` as the path to the program. VSCode
+      will replace that with the path from CMake Tools. This makes setting up
+      permanent debugging configurations easier than before. Also, the `Debug`
+      button in the status bar is *only* visible if the Microsoft C/C++ extension
+      is installed, since that button is currently hard-coded to use it.
+- **0.9.5**:
+  - Launching targets without a debugger (default bound to `shift+f5`).
+  - The path to CTest is more intelligent. Can also be manually overridden with
+    `cmake.ctestPath`.
+  - CMake Server is now enabled by default for new-enough CMake versions. It
+    can still be disabled in the user settings.
+  - Fixes for using Xcode
+  - Many smaller fixes and tweaks after the long hiatus in development.
+- **0.9.6**: Fix startup issue on Windows
+- **0.9.7**:
+  - Fix startup and reliability issues, especially with older CMake versions.
+    Special thanks to [ytimenkov](https://github.com/ytimenkov)
+
 ### **0.8.0**:
 - **Automatic Environment Selection**. CMake Tools will now automatically
   detect available build environments and let you select them using a
@@ -19,6 +79,10 @@
 - **0.8.7**:
   - This version contains an enormous refactor of the codebase in preparation
     for CMake Server support.
+- **0.8.8**
+  - Many bugfixes
+  - Support for MinGW build environments. See documentation for
+    `cmake.mingwSearchDirs`.
 
 ### Version 0.7.0
 

@@ -2,6 +2,19 @@ import * as vscode from 'vscode';
 
 import {Maybe} from './util';
 
+interface Hideable {
+  show(): void;
+  hide(): void;
+}
+
+function setVisible<T extends Hideable>(i: T, v: boolean) {
+  if (v) {
+    i.show();
+  } else {
+    i.hide();
+  }
+}
+
 export class StatusBar implements vscode.Disposable {
   private readonly _cmakeToolsStatusItem =
       vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
@@ -47,22 +60,27 @@ export class StatusBar implements vscode.Disposable {
     this._debugButton.command = 'cmake.debugTarget';
     this._debugButton.tooltip =
         'Click to launch the debugger for the selected target';
-    this._debugTargetButton.command = 'cmake.selectDebugTarget';
+    this._debugTargetButton.command = 'cmake.selectLaunchTarget';
     this._debugTargetButton.tooltip = 'Click to select a target for debugging';
     this._environmentSelectionButton.command = 'cmake.selectEnvironments';
     this._environmentSelectionButton.tooltip =
         'Click to change the active build environments';
+      this.reloadVisibility();
   }
 
-  private _reloadVisibility() {
+  reloadVisibility() {
     const hide = (i: vscode.StatusBarItem) => i.hide();
     const show = (i: vscode.StatusBarItem) => i.show();
     for (const item
              of [this._cmakeToolsStatusItem, this._buildButton,
-                 this._targetButton, this._testStatusButton, this._debugButton,
+                 this._targetButton, this._testStatusButton,
                  this._debugTargetButton, this._environmentSelectionButton]) {
-      this.visible ? show(item) : hide(item);
+      setVisible(item, this.visible && !!item.text);
     }
+    // Debug button is only visible if cpptools is also installed
+    setVisible(this._debugButton,
+               this.visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined
+                   && !!this._debugButton.text);
   }
 
   /**
@@ -74,7 +92,7 @@ export class StatusBar implements vscode.Disposable {
   }
   public set visible(v: boolean) {
     this._visible = v;
-    this._reloadVisibility();
+    this.reloadVisibility();
   }
 
   private _reloadStatusButton() {
@@ -133,6 +151,9 @@ export class StatusBar implements vscode.Disposable {
     this._buildButton.text =
         this.isBusy ? `$(x) Stop${progress_bar}` : `$(gear) Build:`;
     this._buildButton.command = this.isBusy ? 'cmake.stop' : 'cmake.build';
+    if (this.isBusy) {
+      this._buildButton.show();
+    }
   }
 
   /**
@@ -175,27 +196,28 @@ export class StatusBar implements vscode.Disposable {
   }
 
   private _reloadDebugButton() {
-    if (!this.debugTargetName) {
+    if (!this.launchTargetName) {
       this._debugButton.text = '$(bug)';
       this._debugTargetButton.hide();
     } else {
       this._debugButton.text = '$(bug) Debug';
-      this._debugTargetButton.text = this.debugTargetName;
+      this._debugTargetButton.text = this.launchTargetName;
       if (this.visible) {
         this._debugTargetButton.show();
       }
     }
+    this.reloadVisibility();
   }
 
   /**
    * The name of the target that will be debugged
    */
-  private _debugTargetName: string = '';
-  public get debugTargetName(): string {
-    return this._debugTargetName;
+  private _launchTargetName: string = '';
+  public get launchTargetName(): string {
+    return this._launchTargetName;
   }
-  public set debugTargetName(v: string) {
-    this._debugTargetName = v;
+  public set launchTargetName(v: string) {
+    this._launchTargetName = v;
     this._reloadDebugButton();
   }
 
@@ -260,10 +282,10 @@ export class StatusBar implements vscode.Disposable {
       } else {
         this._environmentSelectionButton.text = 'Select a build environment...';
       }
+      this.reloadVisibility();
     } else {
       this._environmentSelectionButton.hide();
     }
-    this._environmentSelectionButton.text
   }
 
   private _environmentsAvailable: boolean = false;

@@ -21,90 +21,12 @@ import {CompilationDatabase} from './compdb';
 import * as api from './api';
 import {config} from './config';
 import {Entry, CMakeCache} from './cache';
+import {CMakeToolsBackend} from './backend';
 
 import {CommonCMakeToolsBase} from './common';
+import { log } from './logging';
 
 type Maybe<T> = util.Maybe<T>;
-
-const CMAKETOOLS_HELPER_SCRIPT =
-`
-get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
-if(NOT is_set_up)
-    set_property(GLOBAL PROPERTY _CMAKETOOLS_SET_UP TRUE)
-    macro(_cmt_invoke fn)
-        file(WRITE "\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" "
-            set(_args \\"\${ARGN}\\")
-            \${fn}(\\\${_args})
-        ")
-        include("\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" NO_POLICY_SCOPE)
-    endmacro()
-
-    set(_cmt_add_executable add_executable)
-    set(_previous_cmt_add_executable _add_executable)
-    while(COMMAND "\${_previous_cmt_add_executable}")
-        set(_cmt_add_executable "_\${_cmt_add_executable}")
-        set(_previous_cmt_add_executable _\${_previous_cmt_add_executable})
-    endwhile()
-    macro(\${_cmt_add_executable} target)
-        _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
-        get_target_property(is_imported \${target} IMPORTED)
-        if(NOT is_imported)
-            file(APPEND
-                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-                "executable;\${target};$<TARGET_FILE:\${target}>\n"
-                )
-            _cmt_generate_system_info()
-        endif()
-    endmacro()
-
-    set(_cmt_add_library add_library)
-    set(_previous_cmt_add_library _add_library)
-    while(COMMAND "\${_previous_cmt_add_library}")
-        set(_cmt_add_library "_\${_cmt_add_library}")
-        set(_previous_cmt_add_library "_\${_previous_cmt_add_library}")
-    endwhile()
-    macro(\${_cmt_add_library} target)
-        _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
-        get_target_property(type \${target} TYPE)
-        if(NOT type MATCHES "^(INTERFACE_LIBRARY|OBJECT_LIBRARY)$")
-            get_target_property(imported \${target} IMPORTED)
-            get_target_property(alias \${target} ALIAS)
-            if(NOT imported AND NOT alias)
-                file(APPEND
-                    "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-                    "library;\${target};$<TARGET_FILE:\${target}>\n"
-                    )
-            endif()
-        else()
-            file(APPEND
-                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-                "interface-library;\${target}\n"
-                )
-        endif()
-        _cmt_generate_system_info()
-    endmacro()
-
-    if({{{IS_MULTICONF}}})
-        set(condition CONDITION "$<CONFIG:Debug>")
-    endif()
-
-    file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
-    file(GENERATE
-        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.txt"
-        INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-        \${condition}
-        )
-
-    function(_cmt_generate_system_info)
-        get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
-        if(NOT done)
-            file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
-    "system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${CMAKE_CXX_COMPILER_ID}\n")
-        endif()
-        set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
-    endfunction()
-endif()
-`;
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
@@ -136,9 +58,15 @@ class CMakeTargetListParser extends util.OutputParser {
     }
 }
 
-export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAPI {
+export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBackend {
     private _lastConfigureSettings = {};
     private _compilationDatabase: Promise<Maybe<CompilationDatabase>> = Promise.resolve(null);
+
+    private _reconfiguredEmitter = new vscode.EventEmitter<void>();
+    private readonly _reconfigured = this._reconfiguredEmitter.event;
+    get reconfigured() {
+        return this._reconfigured;
+    }
 
     private _compilerId: Maybe<string> = null;
     get compilerId() {
@@ -159,6 +87,16 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
     public set cmakeCache(cache: CMakeCache) {
         this._cmakeCache = cache;
         this._statusBar.projectName = this.projectName;
+    }
+
+    allCacheEntries(): api.CacheEntryProperties[] {
+        return this.cmakeCache.allEntries().map(e => ({
+            type: e.type,
+            key: e.key,
+            value: e.value,
+            advanced: e.advanced,
+            helpString: e.helpString,
+        }));
     }
 
     public cacheEntry(name: string) {
@@ -184,7 +122,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         } else {
             this.cmakeCache = await CMakeCache.fromPath(this.cachePath);
         }
-        this._statusBar.projectName = this.projectName;
         return this.cmakeCache;
     }
 
@@ -195,22 +132,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
 
     public set executableTargets(value: api.ExecutableTarget[]) {
         this._executableTargets = value;
-        if (!value) {
-            this.currentDebugTarget = null;
-            return;
-        }
-        // Check if the currently selected debug target is no longer a target
-        if (value.findIndex(e => e.name === this.currentDebugTarget) < 0) {
-            if (value.length) {
-                this.currentDebugTarget = value[0].name;
-            } else {
-                this.currentDebugTarget = null;
-            }
-        }
-        // If we didn't have a debug target, set the debug target to the first target
-        if (this.currentDebugTarget === null && value.length) {
-            this.currentDebugTarget = value[0].name;
-        }
+        this._setDefaultLaunchTarget();
     }
 
     private async _reloadMetaData() {
@@ -228,8 +150,11 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                     name: tup[1],
                     path: tup[2],
                 }));
-            const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
-            this._compilerId = cid || null;
+            this._compilerId = null;
+            if (tuples.length > 0) {
+                const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
+                this._compilerId = cid;
+            }
         } else {
             this.executableTargets = [];
             this._compilerId = null;
@@ -248,16 +173,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         }
         if (!this._metaWatcher) {
             this._setupMetaWatcher();
-        }
-        util.testHaveCommand(config.cmakePath).then(exists => {
-            if (!exists) {
-                vscode.window.showErrorMessage(
-                    `Bad CMake executable "${config.cmakePath}". Is it installed and a valid executable?`
-                );
-            }
-        });
-        if (config.experimental_useCMakeServer) {
-            vscode.window.showInformationMessage('Enabling experimental cmake-server support requires that VSCode be restarted');
         }
     }
 
@@ -306,7 +221,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         this._lastConfigureSettings = config.configureSettings;
         this._needsReconfigure = true;
         vscode.workspace.onDidChangeConfiguration(() => {
-            console.log('Reloading CMakeTools after configuration change');
+            log.info('Reloading CMakeTools after configuration change');
             this._reloadConfiguration();
         });
 
@@ -333,7 +248,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
                     title: 'Not now',
                     isCloseAffordance: true,
                 }).then(chosen => {
-                    if (chosen.action) {
+                    if (chosen && chosen.action) {
                         chosen.action();
                     }
                 });
@@ -345,6 +260,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
     constructor(ctx: vscode.ExtensionContext) {
         super(ctx);
         this._initFinished = this._init();
+        this.noExecutablesMessage = 'No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.';
     }
 
     public async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
@@ -359,7 +275,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         await this.reloadCMakeCache();
         await this._refreshTargetList();
         await this._reloadMetaData();
-        await this._ctestController.reloadTests(this.binaryDir, this.selectedBuildType || 'Debug');
+        await this._ctestController.reloadTests(this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
         this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
     }
 
@@ -386,23 +302,12 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
         return this.targets;
     }
 
-    public replaceVars(str: string): string {
-        const replacements = [
-            ['${buildType}', this.selectedBuildType || 'Unknown'],
-            ['${workspaceRoot}', vscode.workspace.rootPath],
-            ['${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)]
-        ] as [string, string][];
-        return replacements.reduce(
-            (accdir, [needle, what]) => util.replaceAll(accdir, needle, what),
-            str,
-        );
-    }
-
     /**
      * @brief Get the path to the metadata file
      */
     public get metaPath(): string {
-        const meta = path.join(this.binaryDir, 'CMakeToolsMeta.txt');
+        const bt = this.selectedBuildType;
+        const meta = path.join(this.binaryDir, `CMakeToolsMeta-${bt}.txt`);
         return util.normalizePath(meta);
     }
 
@@ -424,85 +329,50 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             }
         }
 
-        const cmake_cache_path = this.cachePath;
+        if (!(await async.exists(this.cachePath)) ||
+            (this.cmakeCache.exists && this.cachePath !== this.cmakeCache.path)) {
+                    await this.reloadCMakeCache();
+            }
 
-        if (!(await async.exists(cmake_cache_path))
-         || (this.cmakeCache.exists && this.cachePath !== this.cmakeCache.path)) {
-            await this.reloadCMakeCache();
-        }
-
-        const settings_args: string[] = [];
-        let is_multi_conf = this.isMultiConf;
-        if (!this.cmakeCache.exists) {
-            this._channel.appendLine("[vscode] Setting up new CMake configuration");
-            const generator = await util.pickGenerator(config.preferredGenerators);
+            const args: string[] = [];
+            let is_multi_conf = this.isMultiConf;
+            if (!this.cmakeCache.exists) {
+            this._channel.appendLine('[vscode] Setting up new CMake configuration');
+            const generator = await this.pickGenerator();
             if (generator) {
-                this._channel.appendLine('[vscode] Configuring using the "' + generator + '" CMake generator');
-                settings_args.push("-G" + generator);
-                is_multi_conf = util.isMultiConfGenerator(generator);
+                this._channel.appendLine(
+                    '[vscode] Configuring using the "' + generator.name +
+                    '" CMake generator');
+                args.push('-G' + generator.name);
+                const platform = generator.platform || config.platform || undefined;
+                if (platform) {
+                    this._channel.appendLine(`[vscode] Platform: ${platform}`);
+                    args.push('-A' + platform);
+                }
+                const toolset = generator.toolset || config.toolset || undefined;
+                if (toolset) {
+                    this._channel.appendLine(`[vscode] Toolset: ${toolset}`);
+                    args.push('-T' + toolset);
+                }
+                is_multi_conf = util.isMultiConfGenerator(generator.name);
             } else {
-                console.error("None of the preferred generators was selected");
+                log.error('None of the preferred generators were selected');
             }
         }
 
-        const toolset = config.toolset;
-        if (toolset) {
-            settings_args.push('-T' + toolset);
-        }
-
-        const settings = Object.assign({}, config.configureSettings);
-        if (!is_multi_conf) {
-            settings.CMAKE_BUILD_TYPE = this.selectedBuildType;
-        }
-
-        settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
-
-        const variant_options = this.variants.activeConfigurationOptions;
-        if (variant_options) {
-            Object.assign(settings, variant_options.settings || {});
-            settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
-        }
-
-        const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
-        await util.ensureDirectory(cmt_dir);
-
-        const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
-        const helper_content = util.replaceAll(CMAKETOOLS_HELPER_SCRIPT,
-                                        '{{{IS_MULTICONF}}}',
-                                        is_multi_conf
-                                            ? '1'
-                                            : '0'
-                                        );
-        await util.writeFile(helpers, helper_content);
-        const old_path = settings['CMAKE_MODULE_PATH'] as Array<string> || [];
-        settings['CMAKE_MODULE_PATH'] = Array.from(old_path).concat([
-            cmt_dir.replace(/\\/g, path.posix.sep)
-        ]);
-
-        const init_cache_path = path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
-        const init_cache_content = this._buildCacheInitializer(settings);
-        await util.writeFile(init_cache_path, init_cache_content);
-        let prefix = config.installPrefix;
-        if (prefix && prefix !== "") {
-            prefix = this.replaceVars(prefix);
-            settings_args.push("-DCMAKE_INSTALL_PREFIX=" + prefix);
-        }
+        args.push(... await this.prepareConfigure());
+        args.push(
+            '-H' + util.normalizePath(this.sourceDir),
+            '-B' + util.normalizePath(this.binaryDir));
 
         const binary_dir = this.binaryDir;
         this.statusMessage = 'Configuring...';
         const result = await this.executeCMakeCommand(
-            ['-H' + this.sourceDir.replace(/\\/g, path.posix.sep),
-             '-B' + binary_dir.replace(/\\/g, path.posix.sep),
-             '-C' + init_cache_path]
-                .concat(settings_args)
-                .concat(extra_args)
-                .concat(config.configureArgs),
-            {
-                silent: false,
-                environment: config.configureEnvironment,
+            args.concat(extra_args), {
+              silent: false,
+              environment: config.configureEnvironment,
             },
-            new BuildParser(this.binaryDir, null, this.activeGenerator)
-        );
+            new BuildParser(this.binaryDir, null, this.activeGenerator));
         this.statusMessage = 'Ready';
         if (!result.retc) {
             await this._refreshAll();
@@ -510,6 +380,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
             await this.reloadCMakeCache();
             this._needsReconfigure = false;
         }
+        this._reconfiguredEmitter.fire();
         return result.retc;
     }
 
@@ -519,7 +390,7 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
 
     public async build(target: Maybe<string> = null): Promise<Number> {
         const res = await super.build(target);
-        if (res == 0) {
+        if (res === 0) {
             await this._refreshAll();
         }
         return res;
@@ -543,26 +414,10 @@ export class CMakeTools extends CommonCMakeToolsBase implements api.CMakeToolsAP
     public async setBuildTypeWithoutConfigure() {
         const old_build_path = this.binaryDir;
         const ret = await super.setBuildTypeWithoutConfigure();
-        if (old_build_path != this.binaryDir) {
+        if (old_build_path !== this.binaryDir) {
             await this._setupCMakeCacheWatcher();
         }
         return ret;
-    }
-
-    public async selectDebugTarget() {
-        if (!this.executableTargets) {
-            vscode.window.showWarningMessage('No targets are available for debugging. Be sure you have included the CMakeToolsProject in your CMake project.');
-            return;
-        }
-        const target = await vscode.window.showQuickPick(
-            this.executableTargets.map(e => ({
-                label: e.name,
-                description: e.path,
-            })));
-        if (!target) {
-            return;
-        }
-        this.currentDebugTarget = target.label;
     }
 
     public stop(): Promise<boolean> {

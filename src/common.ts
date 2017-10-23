@@ -1,12 +1,15 @@
 import * as ajv from 'ajv';
 import * as proc from 'child_process';
+import * as http from 'http';
 import * as yaml from 'js-yaml';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as ws from 'ws';
 
 import * as api from './api';
 import * as async from './async';
+import {CacheEditorContentProvider} from './cache-edit';
 import {config} from './config';
 import * as ctest from './ctest';
 import {BuildParser} from './diagnostics';
@@ -15,10 +18,102 @@ import * as status from './status';
 import * as util from './util';
 import {Maybe} from './util';
 import {VariantManager} from './variants';
+import { log } from './logging';
+import {CMakeToolsBackend} from './backend';
+import { Generator } from './environment';
+
+const CMAKETOOLS_HELPER_SCRIPT = `
+get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
+if(NOT is_set_up)
+    set_property(GLOBAL PROPERTY _CMAKETOOLS_SET_UP TRUE)
+    macro(_cmt_invoke fn)
+        file(WRITE "\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" "
+            set(_args \\"\${ARGN}\\")
+            \${fn}(\\\${_args})
+        ")
+        include("\${CMAKE_BINARY_DIR}/_cmt_tmp.cmake" NO_POLICY_SCOPE)
+    endmacro()
+
+    set(_cmt_add_executable add_executable)
+    set(_previous_cmt_add_executable _add_executable)
+    while(COMMAND "\${_previous_cmt_add_executable}")
+        set(_cmt_add_executable "_\${_cmt_add_executable}")
+        set(_previous_cmt_add_executable _\${_previous_cmt_add_executable})
+    endwhile()
+    macro(\${_cmt_add_executable} target)
+        _cmt_invoke(\${_previous_cmt_add_executable} \${ARGV})
+        get_target_property(is_imported \${target} IMPORTED)
+        if(NOT is_imported)
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "executable;\${target};$<TARGET_FILE:\${target}>\n"
+                )
+            _cmt_generate_system_info()
+        endif()
+    endmacro()
+
+    set(_cmt_add_library add_library)
+    set(_previous_cmt_add_library _add_library)
+    while(COMMAND "\${_previous_cmt_add_library}")
+        set(_cmt_add_library "_\${_cmt_add_library}")
+        set(_previous_cmt_add_library "_\${_previous_cmt_add_library}")
+    endwhile()
+    macro(\${_cmt_add_library} target)
+        _cmt_invoke(\${_previous_cmt_add_library} \${ARGV})
+        get_target_property(type \${target} TYPE)
+        if(NOT type MATCHES "^(INTERFACE_LIBRARY|OBJECT_LIBRARY)$")
+            get_target_property(imported \${target} IMPORTED)
+            get_target_property(alias \${target} ALIAS)
+            if(NOT imported AND NOT alias)
+                file(APPEND
+                    "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                    "library;\${target};$<TARGET_FILE:\${target}>\n"
+                    )
+            endif()
+        else()
+            file(APPEND
+                "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+                "interface-library;\${target}\n"
+                )
+        endif()
+        _cmt_generate_system_info()
+    endmacro()
+
+    if({{{IS_MULTICONF}}})
+        set(condition CONDITION "$<CONFIG:Debug>")
+    endif()
+
+    file(WRITE "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt" "")
+    file(GENERATE
+        OUTPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta-$<CONFIG>.txt"
+        INPUT "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+        \${condition}
+        )
+
+    function(_cmt_generate_system_info)
+        get_property(done GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO)
+        if(NOT done)
+            set(_compiler_id "\${CMAKE_CXX_COMPILER_ID}")
+            if(MSVC AND CMAKE_CXX_COMPILER MATCHES ".*clang-cl.*")
+                set(_compiler_id "MSVC")
+            endif()
+            file(APPEND "\${CMAKE_BINARY_DIR}/CMakeToolsMeta.in.txt"
+    "system;\${CMAKE_HOST_SYSTEM_NAME};\${CMAKE_SYSTEM_PROCESSOR};\${_compiler_id}\n")
+        endif()
+        set_property(GLOBAL PROPERTY CMT_GENERATED_SYSTEM_INFO TRUE)
+    endfunction()
+endif()
+`;
+
+interface WsMessage {
+  data: string;
+  target: ws;
+  type: string;
+}
 
 async function readWorkspaceCache(
     path: string, defaultContent: util.WorkspaceCache) {
-  console.log(`Loading CMake Tools from ${path}`);
+  log.info(`Loading CMake Tools from ${path}`);
   try {
     if (await async.exists(path)) {
       const buf = await async.readFile(path);
@@ -37,7 +132,7 @@ async function readWorkspaceCache(
       return defaultContent;
     }
   } catch (err) {
-    console.error('Error reading CMake Tools workspace cache', err);
+    log.error(`Error reading CMake Tools workspace cache: ${err}`);
     return defaultContent;
   }
 }
@@ -58,7 +153,8 @@ writeWorkspaceCache(path: string, content: util.WorkspaceCache) {
 
 
 
-export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
+export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
+  abstract allCacheEntries(): api.CacheEntryProperties[];
   abstract cacheEntry(name: string): api.CacheEntry|null;
   abstract get needsReconfigure(): boolean;
   abstract get activeGenerator(): Maybe<string>;
@@ -72,9 +168,14 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       Promise<api.CompilationInfo>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
-  abstract selectDebugTarget();
+  abstract get reconfigured(): vscode.Event<void>;
+
+  private _targetChangedEmitter = new vscode.EventEmitter<void>();
+  readonly targetChanged = this._targetChangedEmitter.event;
 
   protected _refreshAfterConfigure() {}
+
+  protected noExecutablesMessage: string = 'No targets are available for debugging.';
 
   /**
    * A list of all the disposables we keep track of
@@ -95,7 +196,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return this.variants.setActiveVariantCombination(settings);
   }
   /**
-   * ctestController manages running ctest and reportrs ctest results via an
+   * ctestController manages running ctest and reports ctest results via an
    * event emitter.
    */
   protected _ctestController = new ctest.CTestController();
@@ -106,7 +207,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       return build_retc;
     }
     return this._ctestController.executeCTest(
-        this.binaryDir, this.selectedBuildType || 'Debug');
+        this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug',
+        this.executionEnvironmentVariables);
   }
 
   /**
@@ -119,6 +221,84 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   public get currentEnvironmentVariables() {
     return this._environments.currentEnvironmentVariables;
   }
+  public get currentEnvironmentSettings() {
+    return this._environments.currentEnvironmentSettings;
+  }
+
+  public getPreferredGenerators(): Generator[] {
+    const configGenerators = config.preferredGenerators.map(g => <Generator>{ name: g });
+    return configGenerators.concat(this._environments.preferredEnvironmentGenerators);
+  }
+
+  protected async testHaveCommand(program: string, args: string[] = ['--version']): Promise<Boolean> {
+    const env = util.mergeEnvironment(process.env, this.currentEnvironmentVariables);
+    return await new Promise<Boolean>((resolve, _) => {
+      const pipe = proc.spawn(program, args, {
+        env: env
+      });
+      pipe.on('error', () => resolve(false));
+      pipe.on('exit', () => resolve(true));
+    });
+  }
+
+  // Returns the first one available on this system
+  public async pickGenerator(): Promise<Maybe<Generator>> {
+    // The user can override our automatic selection logic in their config
+    const generator = config.generator;
+    if (generator) {
+      // User has explicitly requested a certain generator. Use that one.
+      log.verbose(`Using generator from configuration: ${generator}`);
+      return {
+        name: generator,
+        platform: config.platform || undefined,
+        toolset: config.toolset || undefined,
+      };
+    }
+    log.verbose("Trying to detect generator supported by system");
+    const platform = process.platform;
+    const candidates = this.getPreferredGenerators();
+    for (const gen of candidates) {
+      const delegate = {
+        Ninja: async () => {
+          return await this.testHaveCommand('ninja-build') ||
+            await this.testHaveCommand('ninja');
+        },
+        'MinGW Makefiles': async () => {
+          return platform === 'win32' && await this.testHaveCommand('make')
+            || await this.testHaveCommand('mingw32-make');
+        },
+        'NMake Makefiles': async () => {
+          return platform === 'win32' &&
+            await this.testHaveCommand('nmake', ['/?']);
+        },
+        'Unix Makefiles': async () => {
+          return platform !== 'win32' && await this.testHaveCommand('make');
+        }
+      }[gen.name];
+      if (!delegate) {
+        const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
+        if (platform === 'win32' && vsMatch) {
+          return {
+            name: vsMatch[1],
+            platform: gen.platform || vsMatch[2],
+            toolset: gen.toolset,
+          };
+        }
+        if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
+          return gen;
+        }
+        vscode.window.showErrorMessage('Unknown CMake generator "' + gen.name + '"');
+        continue;
+      }
+      if (await delegate.bind(this)()) {
+        return gen;
+      }
+      else {
+        log.info(`Build program for generator ${gen.name} is not found. Skipping...`);
+      }
+    }
+    return null;
+  }
 
   /**
    * The main diagnostic collection for this extension. Contains both build
@@ -128,6 +308,19 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       vscode.languages.createDiagnosticCollection('cmake-build-diags');
   public get diagnostics(): vscode.DiagnosticCollection {
     return this._diagnostics;
+  }
+
+  /**
+   * Toggle on/off highlighting of coverage data in the editor
+   */
+  public toggleCoverageDecorations() {
+    this.showCoverageData = !this.showCoverageData;
+  }
+  public get showCoverageData(): boolean {
+    return this._ctestController.showCoverageData;
+  }
+  public set showCoverageData(v: boolean) {
+    this._ctestController.showCoverageData = v;
   }
 
   /**
@@ -150,7 +343,76 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         this._workspaceCachePath, this._workspaceCacheContent);
   }
 
+  public async selectLaunchTarget(): Promise<string | null> {
+    const executableTargets = this.executableTargets;
+    if (!executableTargets) {
+      vscode.window.showWarningMessage(this.noExecutablesMessage);
+      return null;
+    }
+
+    const choices = executableTargets.map(e => ({
+      label: e.name,
+      description: '',
+      detail: e.path,
+    }));
+    const chosen = await vscode.window.showQuickPick(choices);
+    if (!chosen) {
+      return null;
+    }
+    this.currentLaunchTarget = chosen.label;
+    return chosen.detail;
+  }
+
+  private _ws_server: ws.Server;
+  private _http_server: http.Server;
+
   constructor(protected readonly _context: vscode.ExtensionContext) {
+    const editor_server = this._http_server = http.createServer();
+    const ready = new Promise((resolve, reject) => {
+      editor_server.listen(0, 'localhost', undefined, (err) => {
+        if (err)
+          reject(err);
+        else
+          resolve();
+      });
+    });
+
+    ready.then(() => {
+      const websock_server = this._ws_server =
+          ws.createServer({server: editor_server});
+      websock_server.on('connection', (client) => {
+        const sub = this.reconfigured(() => {
+          client.send(JSON.stringify({method: 'refreshContent'}));
+        });
+        client.onclose = () => {
+          sub.dispose();
+        };
+        client.onmessage = (msg) => {
+          const data = JSON.parse(msg.data);
+          console.log('Got message from editor client', msg);
+          const ret = this._handleCacheEditorMessage(data.method, data.params)
+                          .then(ret => {
+                            client.send(JSON.stringify({
+                              id: data.id,
+                              result: ret,
+                            }));
+                          })
+                          .catch(e => {
+                            client.send(JSON.stringify({
+                              id: data.id,
+                              error: (e as Error).message,
+                            }));
+                          });
+        };
+      });
+
+      this._disposables.push(
+          vscode.workspace.registerTextDocumentContentProvider(
+              'cmake-cache', new CacheEditorContentProvider(
+                                 _context, editor_server.address().port)));
+    });
+
+
     // We want to rewrite our workspace cache and updare our statusbar whenever
     // the active build variant changes
     this.variants.onActiveVariantCombinationChanged(v => {
@@ -190,7 +452,9 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    * @brief Performs asynchronous extension initialization
    */
   protected async _init(): Promise<CommonCMakeToolsBase> {
-    this._statusBar.targetName = this.defaultBuildTarget;
+    // Setting this will set the string in the statusbar, so we set it here even
+    // though it has the correct default value.
+    this.defaultBuildTarget = null;
 
     async.exists(this.mainListFile).then(e => this._statusBar.visible = e);
 
@@ -219,13 +483,15 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
 
     // Refresh any test results that may be left aroud from a previous run
     this._ctestController.reloadTests(
-        this.binaryDir, this.selectedBuildType || 'Debug');
+        this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
 
     return this;
   }
 
   dispose() {
     this._disposables.map(d => d.dispose());
+    this._ws_server.close();
+    this._http_server.close();
   }
 
   /**
@@ -273,12 +539,12 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * Shows a QuickPick containing the available build targets.
    */
-  public showTargetSelector(): Thenable<Maybe<string>> {
+  public async showTargetSelector(): Promise<string|null> {
     if (!this.targets.length) {
-      return  vscode.window.showInputBox({prompt: 'Enter a target name'});
+      return (await vscode.window.showInputBox({prompt: 'Enter a target name'})) || null;
     } else {
       const choices = this.targets.map((t): vscode.QuickPickItem => {
-        switch(t.type) {
+        switch (t.type) {
           case 'rich': {
             return {
               label: t.name,
@@ -294,7 +560,8 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           }
         }
       });
-      return vscode.window.showQuickPick(choices).then(sel => sel ? sel.label : null);
+      return vscode.window.showQuickPick(choices).then(
+          sel => sel ? sel.label : null);
     }
   }
 
@@ -305,7 +572,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
    */
   public get allTargetName() {
     const gen = this.activeGenerator;
-    return (gen && /Visual Studio/.test(gen)) ? 'ALL_BUILD' : 'all';
+    return (gen && (/Visual Studio/.test(gen) || gen.toLowerCase().includes('xcode'))) ? 'ALL_BUILD' : 'all';
   }
 
   /**
@@ -325,22 +592,26 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return cached ? cached : null;
   }
 
+  /**
+   * @brief Replace all predefined variable by their actual values in the
+   * input string.
+   *
+   * This method takes care of variables that depend on CMake configuration,
+   * such as the built type, etc. All variables that do not need to know
+   * of CMake should go to util.replaceVars instead.
+   */
   public replaceVars(str: string): string {
     const replacements = [
-      ['${buildType}', this.selectedBuildType || 'Unknown'],
-      ['${workspaceRoot}', vscode.workspace.rootPath],
-      [
-        '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath)
-      ]
+      ['${buildType}', this.selectedBuildType || 'Unknown']
     ] as [string, string][];
-    return replacements.reduce(
-        (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str);
+    return util.replaceVars(replacements.reduce(
+        (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str));
   }
 
   /**
    * @brief Read the source directory from the config
    */
-  public get sourceDir(): string {
+  get sourceDir(): string {
     const dir = this.replaceVars(config.sourceDirectory);
     return util.normalizePath(dir);
   }
@@ -372,13 +643,14 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * @brief The default target to build when no target is specified
    */
-  private _defaultBuildTarget: string = 'all';
-  public get defaultBuildTarget(): string {
+  private _defaultBuildTarget: string|null = null;
+  public get defaultBuildTarget(): string|null {
     return this._defaultBuildTarget;
   }
-  public set defaultBuildTarget(v: string) {
+  public set defaultBuildTarget(v: string|null) {
     this._defaultBuildTarget = v;
-    this._statusBar.targetName = v;
+    this._statusBar.targetName = v || this.allTargetName;
+    this._targetChangedEmitter.fire();
   }
 
   /**
@@ -396,13 +668,28 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
   /**
    * The selected target for debugging
    */
-  private _currentDebugTarget: Maybe<string> = null;
-  public get currentDebugTarget(): Maybe<string> {
-    return this._currentDebugTarget;
+  private _currentLaunchTarget: Maybe<string> = null;
+  public get currentLaunchTarget(): Maybe<string> {
+    return this._currentLaunchTarget;
   }
-  public set currentDebugTarget(v: Maybe<string>) {
-    this._currentDebugTarget = v;
-    this._statusBar.debugTargetName = v || '';
+  public set currentLaunchTarget(v: Maybe<string>) {
+    this._currentLaunchTarget = v;
+    this._statusBar.launchTargetName = v || '';
+  }
+  protected _setDefaultLaunchTarget() {
+    // Check if the currently selected debug target is no longer a target
+    const targets = this.executableTargets;
+    if (targets.findIndex(e => e.name === this.currentLaunchTarget) < 0) {
+      if (targets.length) {
+        this.currentLaunchTarget = targets[0].name;
+      } else {
+        this.currentLaunchTarget = null;
+      }
+    }
+    // If we didn't have a debug target, set the debug target to the first target
+    if (this.currentLaunchTarget === null && targets.length) {
+      this.currentLaunchTarget = targets[0].name;
+    }
   }
 
   /**
@@ -429,7 +716,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
               title: 'No',
               isCloseAffordance: true,
             });
-        return chosen.title === 'Yes';
+        return chosen !== undefined && (chosen.title === 'Yes');
       }
     }
     return true;
@@ -440,8 +727,13 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       options: api.ExecuteOptions = {silent: false, environment: {}},
       parser: util.OutputParser = new util.NullParser):
       Promise<api.ExecutionResult> {
-    console.info('Execute cmake with arguments:', args);
+    log.info(`Execute cmake with arguments: ${args}`);
     return this.execute(config.cmakePath, args, options, parser);
+  }
+
+
+  public get executionEnvironmentVariables(): {[key: string]: string} {
+    return util.mergeEnvironment(config.environment, this.currentEnvironmentVariables);
   }
 
   /**
@@ -454,16 +746,15 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       parser: util.OutputParser = new util.NullParser()):
       Promise<api.ExecutionResult> {
     const silent: boolean = options && options.silent || false;
-    const final_env = Object.assign(
+    const env = util.mergeEnvironment(
         {
           // We set NINJA_STATUS to force Ninja to use the format
           // that we would like to parse
           NINJA_STATUS: '[%f/%t %p] '
         },
-        options.environment, config.environment,
-        this.currentEnvironmentVariables, );
+        this.executionEnvironmentVariables, options.environment);
     const info = util.execute(
-        program, args, final_env, options.workingDirectory,
+        program, args, env, options.workingDirectory,
         silent ? null : this._channel);
     const pipe = info.process;
     if (!silent) {
@@ -516,8 +807,11 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
       }
     }
 
-    const cache = await vscode.workspace.openTextDocument(this.cachePath);
-    return await vscode.window.showTextDocument(cache);
+    vscode.commands.executeCommand(
+        'vscode.previewHtml', 'cmake-cache://' + this.cachePath,
+        vscode.ViewColumn.Three, 'CMake Cache');
+
+    return null;
   }
 
   public async cleanRebuild(): Promise<Number> {
@@ -551,7 +845,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     if (changed) {
       // Changing the build type can affect the binary dir
       this._ctestController.reloadTests(
-          this.binaryDir, this.selectedBuildType || 'Debug');
+          this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
     }
     return changed;
   }
@@ -639,22 +933,46 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     return this.configure();
   }
 
-  public async debugTarget() {
+  public getLaunchTargetInfo() {
+    return this.executableTargets.find(e => e.name === this.currentLaunchTarget) || null;
+  }
+
+  public async launchTargetProgramPath() {
+    const t = this.getLaunchTargetInfo();
+    return t ? t.path : t;
+  }
+
+  private async _prelaunchTarget(): Promise<api.ExecutableTarget|null> {
     if (!this.executableTargets.length) {
       vscode.window.showWarningMessage(
-          'No targets are available for debugging. Be sure you have included CMakeToolsHelpers in your CMake project.');
-      return;
+          'No executable targets are available. Be sure you have included CMakeToolsHelpers in your CMake project.');
+      return null;
     }
-    const target =
-        this.executableTargets.find(e => e.name === this.currentDebugTarget);
+    const target = this.getLaunchTargetInfo();
     if (!target) {
       vscode.window.showErrorMessage(
-          `The current debug target "${this.currentDebugTarget
-          }" no longer exists. Select a new target to debug.`);
-          return;
+          `The current debug target "${this.currentLaunchTarget}" no longer exists. Select a new target to debug.`);
+          return null;
     }
+    const build_before = config.buildBeforeRun;
+    if (!build_before) return target;
+
     const build_retc = await this.build(target.name);
-    if (build_retc !== 0) return;
+    if (build_retc !== 0) return null;
+    return target;
+  }
+
+  public async launchTarget() {
+    const target = await this._prelaunchTarget();
+    if (!target) return;
+    const term = vscode.window.createTerminal(target.name, target.path);
+    this._disposables.push(term);
+    term.show();
+  }
+
+  public async debugTarget(): Promise<void> {
+    const target = await this._prelaunchTarget();
+    if (!target) return;
     const real_config = {
       name: `Debugging Target ${target.name}`,
       type: (this.compilerId && this.compilerId.includes('MSVC')) ? 'cppvsdbg' :
@@ -667,7 +985,57 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
     const user_config = config.debugConfig;
     Object.assign(real_config, user_config);
     real_config['program'] = target.path;
-    return vscode.commands.executeCommand('vscode.startDebug', real_config);
+    await vscode.commands.executeCommand('vscode.startDebug', real_config);
+  }
+
+  public async prepareConfigure(): Promise<string[]> {
+    const cmake_cache_path = this.cachePath;
+
+    const args = [] as string[];
+
+    const settings = Object.assign({}, config.configureSettings);
+    Object.assign(settings, this.currentEnvironmentSettings || {});
+
+    if (!this.isMultiConf) {
+      settings.CMAKE_BUILD_TYPE = this.selectedBuildType;
+    }
+
+    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
+
+    const variant_options = this.variants.activeConfigurationOptions;
+    if (variant_options) {
+      Object.assign(settings, variant_options.settings || {});
+      if (variant_options.linkage) {
+        // Don't set BUILD_SHARED_LIBS if we don't have a specific setting
+        settings.BUILD_SHARED_LIBS = variant_options.linkage === 'shared';
+      }
+    }
+
+    const cmt_dir = path.join(this.binaryDir, 'CMakeTools');
+    await util.ensureDirectory(cmt_dir);
+
+    const helpers = path.join(cmt_dir, 'CMakeToolsHelpers.cmake');
+    const helper_content = util.replaceAll(
+        CMAKETOOLS_HELPER_SCRIPT, '{{{IS_MULTICONF}}}',
+        this.isMultiConf ? '1' : '0');
+    await util.writeFile(helpers, helper_content);
+    const old_path = settings['CMAKE_MODULE_PATH'] as Array<string>|| [];
+    settings['CMAKE_MODULE_PATH'] =
+        Array.from(old_path).concat([cmt_dir.replace(/\\/g, path.posix.sep)]);
+
+    const init_cache_path =
+        path.join(this.binaryDir, 'CMakeTools', 'InitializeCache.cmake');
+    const init_cache_content = this._buildCacheInitializer(settings);
+    await util.writeFile(init_cache_path, init_cache_content);
+    let prefix = config.installPrefix;
+    if (prefix && prefix !== '') {
+      prefix = this.replaceVars(prefix);
+      args.push('-DCMAKE_INSTALL_PREFIX=' + prefix);
+    }
+
+    args.push('-C' + init_cache_path);
+    args.push(...config.configureArgs);
+    return args;
   }
 
   public async build(target_: Maybe<string> = null): Promise<Number> {
@@ -743,6 +1111,7 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
                  this.activeGenerator) :
              new util.NullParser()));
     this.statusMessage = 'Ready';
+    this._statusBar.reloadVisibility();
     return result.retc;
   }
 
@@ -795,15 +1164,15 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
         typestr = 'BOOL';
         value = value ? 'TRUE' : 'FALSE';
       }
-      if (typeof(value) === 'string') {
+      else if (typeof(value) === 'string') {
         typestr = 'STRING';
         value = this.replaceVars(value)
         value = util.replaceAll(value, ';', '\\;');
       }
-      if (value instanceof Number || typeof value === 'number') {
+      else if (value instanceof Number || typeof value === 'number') {
         typestr = 'STRING';
       }
-      if (value instanceof Array) {
+      else if (value instanceof Array) {
         typestr = 'STRING';
         value = value.join(';');
       }
@@ -812,7 +1181,22 @@ export abstract class CommonCMakeToolsBase implements api.CMakeToolsAPI {
           '\\"')}" CACHE ${typestr
                 } "Variable supplied by CMakeTools. Value is forced." FORCE)`);
     }
-    initial_cache_content.push('cmake_policy(POP)')
+    initial_cache_content.push('cmake_policy(POP)');
     return initial_cache_content.join('\n');
+  }
+  private _handleCacheEditorMessage(
+      method: string, params: {[key: string]: any}): Promise<any> {
+    switch (method) {
+      case 'getEntries': {
+        return Promise.resolve(this.allCacheEntries());
+      }
+      case 'configure': {
+        return this.configure(params['args']);
+      }
+      case 'build': {
+        return this.build();
+      }
+    }
+    throw new Error('Invalid method: ' + method);
   }
 }

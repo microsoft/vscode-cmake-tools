@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.8.7",
+    "version": "0.10.2",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -18,9 +18,10 @@
         "c++",
         "native"
     ],
+    "license": "MIT",
     "publisher": "vector-of-bool",
     "engines": {
-        "vscode": "^1.7.0"
+        "vscode": "^1.12.0"
     },
     "categories": [
         "Other"
@@ -29,7 +30,7 @@
         "color": "#13578c",
         "theme": "dark"
     },
-    "icon": "res/icon.svg",
+    "icon": "res/icon_128.png",
     "activationEvents": [
         "onCommand:cmake.configure",
         "onCommand:cmake.build",
@@ -43,9 +44,12 @@
         "onCommand:cmake.ctest",
         "onCommand:cmake.jumpToCacheFile",
         "onCommand:cmake.quickStart",
+        "onCommand:cmake.launchTargetProgramPath",
+        "onCommand:cmake.launchTarget",
         "onCommand:cmake.debugTarget",
-        "onCommand:cmake.selectDebugTarget",
+        "onCommand:cmake.selectLaunchTarget",
         "onCommand:cmake.selectEnvironments",
+        "onCommand:cmake.toggleCoverageDecorations",
         "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
@@ -117,7 +121,12 @@
                 "category": "CMake"
             },
             {
-                "command": "cmake.selectDebugTarget",
+                "command": "cmake.launchTarget",
+                "title": "Execute the current target without a debugger",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.selectLaunchTarget",
                 "title": "Select a Target to Debug",
                 "category": "CMake"
             },
@@ -125,8 +134,68 @@
                 "command": "cmake.selectEnvironments",
                 "title": "Select active build environments",
                 "category": "CMake"
+            },
+            {
+                "command": "cmake.toggleCoverageDecorations",
+                "title": "Toggle visibility of test coverage in the editor",
+                "category": "CMake"
             }
         ],
+        "menus": {
+            "commandPalette": [
+                {
+                    "command": "cmake.configure"
+                },
+                {
+                    "command": "cmake.build"
+                },
+                {
+                    "command": "cmake.install"
+                },
+                {
+                    "command": "cmake.buildWithTarget"
+                },
+                {
+                    "command": "cmake.setBuildType"
+                },
+                {
+                    "command": "cmake.setDefaultTarget"
+                },
+                {
+                    "command": "cmake.setDefaultTarget"
+                },
+                {
+                    "command": "cmake.cleanConfigure"
+                },
+                {
+                    "command": "cmake.clean"
+                },
+                {
+                    "command": "cmake.cleanRebuild"
+                },
+                {
+                    "command": "cmake.ctest"
+                },
+                {
+                    "command": "cmake.jumpToCacheFile"
+                },
+                {
+                    "command": "cmake.debugTarget"
+                },
+                {
+                    "command": "cmake.launchTarget"
+                },
+                {
+                    "command": "cmake.selectLaunchTarget"
+                },
+                {
+                    "command": "cmake.selectEnvironments"
+                },
+                {
+                    "command": "cmake.toggleCoverageDecorations"
+                }
+            ]
+        },
         "configuration": {
             "type": "object",
             "title": "CMake Tools configuration",
@@ -151,6 +220,11 @@
                     "default": true,
                     "description": "Save open files before building"
                 },
+                "cmake.buildBeforeRun": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Build the target before running it."
+                },
                 "cmake.clearOutputBeforeBuild": {
                     "type": "boolean",
                     "default": true,
@@ -170,9 +244,7 @@
                     "type": "array",
                     "default": [
                         "Ninja",
-                        "Unix Makefiles",
-                        "MinGW Makefiles",
-                        "NMake Makefiles"
+                        "Unix Makefiles"
                     ],
                     "description": "The preferred CMake generator(s) to use when configuring (tried in order of listing)"
                 },
@@ -185,6 +257,11 @@
                     "type": "string",
                     "default": null,
                     "description": "The CMake toolset to use when configuring"
+                },
+                "cmake.platform": {
+                    "type": "string",
+                    "default": null,
+                    "description": "The CMake platform to use when configuring"
                 },
                 "cmake.configureArgs": {
                     "type": "array",
@@ -215,6 +292,11 @@
                     "type": "number",
                     "default": 0,
                     "description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs."
+                },
+                "cmake.ctestPath": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Path to CTest executable. If null, will be inference from cmake.cmakePath (recommended to leave null)"
                 },
                 "cmake.ctest.parallelJobs": {
                     "type": "number",
@@ -467,6 +549,40 @@
                         "type": "string",
                         "description": "Value for the environment variable"
                     }
+                },
+                "cmake.mingwSearchDirs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Path to a directory"
+                    },
+                    "default": [
+                        "C:\\MinGW"
+                    ],
+                    "description": "Directories where MinGW may be installed"
+                },
+                "cmake.emscriptenSearchDirs": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "description": "Path to a directory"
+                    },
+                    "default": [],
+                    "description": "Directories where Emscripten may be installed"
+                },
+                "cmake.useCMakeServer": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable CMake server"
+                },
+                "cmake.loggingLevel": {
+                    "type": "string",
+                    "default": "normal",
+                    "enum": [
+                        "verbose",
+                        "normal",
+                        "minimal"
+                    ]
                 }
             }
         },
@@ -483,6 +599,10 @@
                 "key": "ctrl+f5",
                 "command": "cmake.debugTarget",
                 "when": "!inDebugMode"
+            },
+            {
+                "key": "shift+f5",
+                "command": "cmake.launchTarget"
             }
         ],
         "jsonValidation": [
@@ -493,29 +613,29 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "tsc -p ./",
-        "compile": "tsc -watch -p ./",
+        "vscode:prepublish": "./node_modules/.bin/tsc -p ./",
+        "compile": "./node_modules/.bin/tsc -watch -p ./",
         "postinstall": "node ./node_modules/vscode/bin/install"
     },
     "devDependencies": {
-        "typescript": "^2.0.3",
-        "@types/node": "^6.0.45",
-        "vscode": "^1.0.3",
-        "mocha": "^3.1.2",
-        "@types/mocha": "^2.2.32",
+        "typescript": "~2.0.3",
+        "@types/node": "~6.0.45",
+        "vscode": "~1.1.0",
+        "mocha": "~3.4.2",
+        "@types/mocha": "~2.2.41",
         "@types/js-yaml": "^3.5.28",
         "@types/ajv": "^0.0.3",
         "@types/xml2js": "^0.0.28",
-        "@types/rimraf": "^0.0.28"
+        "@types/rimraf": "^0.0.28",
+        "@types/ws": "^0.0.38"
     },
     "dependencies": {
         "open": "0.0.5",
         "js-yaml": "^3.6.1",
         "ajv": "^4.7.5",
         "xml2js": "^0.4.17",
-        "rimraf": "^2.5.4"
-    },
-    "extensionDependencies": [
-        "twxs.cmake"
-    ]
+        "rimraf": "^2.5.4",
+        "ws": "^1.1.1",
+        "Polymer": "1.6.1--"
+    }
 }

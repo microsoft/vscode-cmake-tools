@@ -4,22 +4,35 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as async from './async'
+import {config} from './config';
 import * as util from './util';
+import { log } from './logging';
 
 type Maybe<T> = util.Maybe<T>;
 
-export interface PotentialEnvironment {
+export interface Generator {
   name: string;
-  variables?: Map<string, string>;
-  mutex?: string;
+  platform?: string;
+  toolset?: string;
 }
 
-export interface Environment extends PotentialEnvironment {
+export interface Environment {
+  name: string;
+  description?: string;
+  mutex?: string;
   variables: Map<string, string>;
+  settings?: Object;
+  preferredGenerator?: Generator;
+}
+
+interface VSWhereItem {
+  displayName: string;
+  installationPath: string;
+  installationVersion: string;
 }
 
 interface EnvironmentProvider {
-  getEnvironments(): Promise<PotentialEnvironment>[];
+  getEnvironments(): Promise<Environment[]>;
   [_: string]: any;
 }
 
@@ -53,106 +66,277 @@ interface VSDistribution {
   variable: string;
 }
 
-// Detect Visual C++ environments
-async function tryCreateVCEnvironment(dist: VSDistribution, arch: string):
-    Promise<PotentialEnvironment> {
-      const name = `${dist.name} - ${arch}`;
-      const mutex = 'msvc';
-      const common_dir: Maybe<string> = process.env[dist.variable];
-      if (!common_dir) {
-        return {name, mutex};
-      }
-      const vcdir = path.normalize(path.join(common_dir, '../../VC'));
-      const vcvarsall = path.join(vcdir, 'vcvarsall.bat');
-      if (!await async.exists(vcvarsall)) {
-        return {name, mutex};
-      }
-      const bat = [
-        `@echo off`,
-        `call "${vcvarsall}" ${arch}`,
-        `if NOT ERRORLEVEL 0 exit 1`,
-      ];
-      for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
-        bat.push(`echo ${envvar} := %${envvar}%`);
-      }
-      const fname = Math.random().toString() + '.bat';
-      const batpath = path.join(vscode.workspace.rootPath, '.vscode', fname);
-      await util.ensureDirectory(path.dirname(batpath));
-      await util.writeFile(batpath, bat.join('\r\n'));
-      const prom = new Promise<Maybe<string>>((resolve, reject) => {
-        const pipe = proc.spawn(batpath, [], {shell: true});
-        let stdout_acc = '';
-        pipe.stdout.on('data', (data) => {
-          stdout_acc += data.toString();
-        });
-        pipe.stdout.on('close', () => {
-          resolve(stdout_acc);
-        });
-        pipe.on('exit', (code) => {
-          fs.unlink(batpath, err => {
-            if (err) {
-              console.error(`Error removing temporary batch file!`, err);
-            }
-          });
-          if (code) {
-            resolve(null);
-          }
-        });
-      });
-      const output = await prom;
-      if (!output) {
-        console.log(`Environment detection for ${name} failed`);
-        return {name, mutex};
-      }
-      const variables = output.split('\n')
-                            .map(l => l.trim())
-                            .filter(l => l.length != 0)
-                            .reduce<Map<string, string>>((acc, line) => {
-                              const mat = /(\w+) := ?(.*)/.exec(line);
-                              console.assert(!!mat, line);
-                              acc.set(mat![1], mat![2]);
-                              return acc;
-                            }, new Map());
-      return {name, mutex, variables};
-    }
-
-const ENVIRONMENTS: EnvironmentProvider[] = [{
-
-  getEnvironments(): Promise<Environment>[]{
-    if (process.platform !== 'win32') {
-      return [];
-    } const dists: VSDistribution[] =
-                       [
-                         {
-                           name: 'Visual C++ 12.0',
-                           variable: 'VS120COMNTOOLS',
-                         },
-                         {
-                           name: 'Visual C++ 14.0',
-                           variable: 'VS140COMNTOOLS',
-                         }
-                       ];
-    const archs = ['x86', 'amd64', 'amd64_arm'];
-    type PEnv = Promise<Maybe<Environment>>;
-    const prom_environments = dists.reduce<PEnv[]>(
-        (acc, dist) => {
-          return acc.concat(archs.reduce<PEnv[]>((acc, arch) => {
-            const maybe_env = tryCreateVCEnvironment(dist, arch);
-            acc.push(maybe_env);
-            return acc;
-          }, []));
-        },
-        []);
-    return prom_environments;
+async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<string, string>|undefined> {
+  const bat = [
+    `@echo off`,
+    `call "${devbat}" ${args.join(" ")} || exit`,
+  ];
+  for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
+    bat.push(`echo ${envvar} := %${envvar}%`);
   }
-}];
+  const fname = Math.random().toString() + '.bat';
+  const batpath = path.join(vscode.workspace.rootPath!, '.vscode', fname);
+  await util.ensureDirectory(path.dirname(batpath));
+  await util.writeFile(batpath, bat.join('\r\n'));
+  const res = await async.execute(batpath, [], {shell: true});
+  fs.unlink(batpath, err => {
+    if (err) {
+      console.error(`Error removing temporary batch file!`, err);
+    }
+  });
+  const output = res.stdout;
+  if (res.retc !== 0) {
+    console.log(`Error running ${devbat}`, output);
+    return;
+  }
+  if (output.includes("Invalid host architecture") || output.includes("Error in script usage")) {
+    return;
+  }
+  if (!output) {
+    console.log(`Environment detection for using ${devbat} failed`);
+    return;
+  }
+  const vars = output.split('\n')
+              .map(l => l.trim())
+              .filter(l => l.length !== 0)
+              .reduce<Map<string, string>>((acc, line) => {
+                const mat = /(\w+) := ?(.*)/.exec(line);
+                if (mat) {
+                  acc.set(mat[1], mat[2]);
+                }
+                else {
+                  console.error(`Error parsing environment variable: ${line}`);
+                }
+                return acc;
+              }, new Map());
+  return vars;
+}
 
-export function availableEnvironments(): Promise<PotentialEnvironment>[] {
-  return ENVIRONMENTS.reduce<Promise<PotentialEnvironment>[]>(
-      (acc: Promise<PotentialEnvironment>[], provider: EnvironmentProvider) => {
-        return acc.concat(provider.getEnvironments());
+const VsArchitectures = {
+  'amd64': 'x64',
+  'arm': 'ARM',
+  'amd64_arm': 'ARM',
+};
+
+const VsGenerators = {
+  '15': 'Visual Studio 15 2017',
+  'VS120COMNTOOLS': 'Visual Studio 12 2013',
+  'VS140COMNTOOLS': 'Visual Studio 14 2015',
+}
+
+async function tryCreateNewVCEnvironment(where: VSWhereItem, arch: string): Promise<Environment | undefined> {
+  const name = where.displayName + ' - ' + arch;
+  const mutex = 'msvc';
+  const common_dir = path.join(where.installationPath, 'Common7', 'Tools');
+  const devbat = path.join(common_dir, 'VsDevCmd.bat');
+  log.verbose('Detecting environment: ' + name);
+  const variables = await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`]);
+  if (!variables)
+    return;
+
+  let env: Environment = {
+    name: name,
+    mutex: mutex,
+    variables: variables
+  };
+
+  const version = /^(\d+)+./.exec(where.installationVersion);
+  if (version) {
+    const generatorName: string | undefined = VsGenerators[version[1]];
+    if (generatorName) {
+      env.preferredGenerator = {
+        name: generatorName,
+        platform: VsArchitectures[arch] as string || undefined,
+      };
+    }
+  }
+
+  return env;
+}
+
+// Detect Visual C++ environments
+async function tryCreateVCEnvironment(dist: VSDistribution, arch: string): Promise<Environment | undefined> {
+  const name = `${dist.name} - ${arch}`;
+  const mutex = 'msvc';
+  const common_dir: Maybe<string> = process.env[dist.variable];
+  if (!common_dir) {
+    return;
+  }
+  const vcdir = path.normalize(path.join(common_dir, '../../VC'));
+  const vcvarsall = path.join(vcdir, 'vcvarsall.bat');
+  if (!await async.exists(vcvarsall)) {
+    return;
+  }
+
+  const variables = await collectDevBatVars(vcvarsall, [arch]);
+  if (!variables)
+    return;
+
+  let env: Environment = {
+    name: name,
+    mutex: mutex,
+    variables: variables,
+  };
+
+  const generatorName: string | undefined = VsGenerators[dist.variable];
+  if (generatorName) {
+    env.preferredGenerator = {
+      name: generatorName,
+      platform: VsArchitectures[arch] as string || undefined,
+    };
+  }
+
+  return env;
+}
+
+
+// Detect MinGW environments
+async function tryCreateMinGWEnvironment(dir: string): Promise<Environment | undefined> {
+  function prependEnv(key: string, ...values: string[]) {
+    let env_init: string = process.env[key] || '';
+    return values.reduce<string>((acc, val) => {
+      if (acc.length !== 0) {
+        return val + ';' + acc;
+      } else {
+        return val;
+      }
+    }, env_init);
+  };
+  const gcc_path = path.join(dir, 'bin', 'gcc.exe');
+  if (await async.exists(gcc_path)) {
+    const ret: Environment = {
+      name: `MinGW - ${dir}`,
+      mutex: 'mingw',
+      description: `Root at ${dir}`,
+      variables: new Map<string, string>([
+        [
+          'PATH',
+          prependEnv(
+            'PATH', path.join(dir, 'bin'), path.join(dir, 'git', 'cmd'))
+        ],
+        [
+          'C_INCLUDE_PATH', prependEnv(
+            'C_INCLUDE_PATH', path.join(dir, 'include'),
+            path.join(dir, 'include', 'freetype'))
+        ],
+        [
+          'CXX_INCLUDE_PATH',
+          prependEnv(
+            'CXX_INCLUDE_PATH', path.join(dir, 'include'),
+            path.join(dir, 'include', 'freetype'))
+        ]
+      ]),
+      preferredGenerator: {
+        name: 'MinGW Makefiles',
       },
-      []);
+    };
+    return ret;
+  }
+
+  return;
+}
+
+// Detect Emscripten environment
+async function tryCreateEmscriptenEnvironment(emscripten: string): Promise<Environment | undefined> {
+  let cmake_toolchain = path.join(emscripten, 'cmake', 'Modules', 'Platform', 'Emscripten.cmake');
+  if (await async.exists(cmake_toolchain)) {
+    // read version and strip "" and newlines
+    let version = fs.readFileSync(path.join(emscripten, 'emscripten-version.txt'), 'utf8');
+    version = version.replace(/["\r\n]/g, '');
+    log.verbose('Found Emscripten ' + version + ': ' + cmake_toolchain);
+    if (process.platform === 'win32') {
+      cmake_toolchain = cmake_toolchain.replace(/\\/g, path.posix.sep);
+    }
+    const ret: Environment = {
+      name: `Emscripten - ${version}`,
+      mutex: 'emscripten',
+      description: `Root at ${emscripten}`,
+      settings: {
+        'CMAKE_TOOLCHAIN_FILE': cmake_toolchain
+      },
+      variables: new Map<string, string>([]),
+    };
+    return ret;
+  }
+
+  return;
+}
+
+const ENVIRONMENTS: EnvironmentProvider[] = [
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      if (process.platform !== 'win32') {
+        return [];
+      };
+      const dists: VSDistribution[] =
+        [
+          {
+            name: 'Visual C++ 12.0',
+            variable: 'VS120COMNTOOLS',
+          },
+          {
+            name: 'Visual C++ 14.0',
+            variable: 'VS140COMNTOOLS',
+          }
+        ];
+      const archs = ['x86', 'amd64', 'amd64_arm'];
+      const all_promices = dists
+        .map((dist) => archs.map((arch) => tryCreateVCEnvironment(dist, arch)))
+        .reduce((acc, proms) => acc.concat(proms));
+      const envs = await Promise.all(all_promices);
+      return <Environment[]>envs.filter((e) => !!e);
+    }
+  },
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      if (process.platform !== 'win32') {
+        return [];
+      }
+      const progfiles: string | undefined = process.env['programfiles(x86)'] || process.env['programfiles'];
+      if (!progfiles) {
+        log.error('Unable to find Program Files directory');
+        return [];
+      }
+      const vswhere = path.join(progfiles, 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
+      if (!await async.exists(vswhere)) {
+        log.verbose('VSWhere is not installed. Not searching for VS 2017');
+        return [];
+      }
+      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*', '-legacy']);
+      const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
+      const archs = ['x86', 'amd64', 'arm'];
+      const all_promices = installs
+        .map((where) => archs.map((arch) => tryCreateNewVCEnvironment(where, arch)))
+        .reduce((acc, proms) => acc.concat(proms));
+      const envs = await Promise.all(all_promices);
+      return <Environment[]>envs.filter((e) => !!e);
+    }
+  },
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      if (process.platform !== 'win32') {
+        return [];
+      };
+      const envs = await Promise.all(config.mingwSearchDirs.map(tryCreateMinGWEnvironment));
+      return <Environment[]>envs.filter((e) => !!e);
+    }
+  },
+  {
+    async getEnvironments(): Promise<Environment[]> {
+      var dirs = config.emscriptenSearchDirs;
+      var env_dir = process.env['EMSCRIPTEN'] as string|undefined;
+      if (env_dir && dirs.indexOf(env_dir) == -1)
+        dirs.push(env_dir);
+      const envs = await Promise.all(dirs.map(tryCreateEmscriptenEnvironment));
+      return <Environment[]>envs.filter((e) => !!e);
+    }
+  },
+];
+
+export async function availableEnvironments(): Promise<Environment[]> {
+  const prs = ENVIRONMENTS.map(e => e.getEnvironments());
+  const all_envs = await Promise.all(prs);
+  return all_envs.reduce((acc, envs) => (acc.concat(envs)));
 }
 
 export class EnvironmentManager {
@@ -164,22 +348,15 @@ export class EnvironmentManager {
     return this._availableEnvironments;
   }
 
-  public readonly environmentsLoaded: Promise<void> =
-      Promise.all(availableEnvironments().map(async(pr) => {
-        try {
-          const env = await pr;
-          if (env.variables) {
-            console.log(`Detected available environment "${env.name}`);
-            this._availableEnvironments.set(env.name, {
-              name: env.name,
-              variables: env.variables,
-              mutex: env.mutex,
-            });
-          }
-        } catch (e) {
-          console.error('Error detecting an environment', e);
-        }
-      }));
+  public readonly environmentsLoaded: Promise<void> = (async () => {
+    console.log('Loading environments');
+    const envs = await availableEnvironments();
+    console.log('Environments loaded');
+    for (const env of envs) {
+      log.info(`Detected available environment "${env.name}`);
+      this._availableEnvironments.set(env.name, env);
+    }
+  })();
 
   /**
    * The environments (by name) which are currently active in the workspace
@@ -224,13 +401,13 @@ export class EnvironmentManager {
 
   public async selectEnvironments(): Promise<void> {
     const entries =
-        Array.from(this.availableEnvironments.keys())
-            .map(name => ({
+        Array.from(this.availableEnvironments.entries())
+            .map(([name, env]) => ({
                    name: name,
                    label: this.activeEnvironments.indexOf(name) >= 0 ?
                        `$(check) ${name}` :
                        name,
-                   description: '',
+                   description: env.description || '',
                  }));
     const chosen = await vscode.window.showQuickPick(entries);
     if (!chosen) {
@@ -246,7 +423,7 @@ export class EnvironmentManager {
    *    as specified by the active build environments.
    */
   public get currentEnvironmentVariables(): {[key: string]: string} {
-    const active_env = this.activeEnvironments.reduce<Object>((acc, name) => {
+    const active_env = this.activeEnvironments.reduce((acc, name) => {
       const env_ = this.availableEnvironments.get(name);
       console.assert(env_);
       const env = env_!;
@@ -256,23 +433,29 @@ export class EnvironmentManager {
       return acc;
     }, {});
     const proc_env = process.env;
-    if (process.platform == 'win32') {
-      // Env vars on windows are case insensitive, so we take the ones from
-      // active env and overwrite the ones in our current process env
-      const norm_active_env = Object.getOwnPropertyNames(active_env)
-                                  .reduce<Object>((acc, key: string) => {
-                                    acc[key.toUpperCase()] = active_env[key];
-                                    return acc;
-                                  }, {});
-      const norm_proc_env = Object.getOwnPropertyNames(proc_env).reduce<Object>(
-          (acc, key: string) => {
-            acc[key.toUpperCase()] = proc_env[key];
-            return acc;
-          },
-          {});
-      return Object.assign({}, norm_proc_env, norm_active_env);
-    } else {
-      return Object.assign({}, proc_env, active_env);
-    }
+    return util.mergeEnvironment(process.env, active_env);
+  }
+  /**
+   * @brief The current cmake settings to use when configuring,
+   *    as specified by the active build environments.
+   */
+  public get currentEnvironmentSettings(): Object {
+    const active_settings = this.activeEnvironments.reduce((acc, name) => {
+      const env_ = this.availableEnvironments.get(name);
+      console.assert(env_);
+      const env = env_!;
+      return env.settings || {};
+    }, {});
+    return active_settings;
+  }
+
+  public get preferredEnvironmentGenerators(): Generator[] {
+    const allEnvs = this.availableEnvironments;
+    return this.activeEnvironments.reduce<Generator[]>((gens, envName) => {
+      const env = allEnvs.get(envName);
+      if (env && env.preferredGenerator)
+        gens.push(env.preferredGenerator);
+      return gens;
+    }, []);
   }
 }

@@ -6,9 +6,34 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as async from './async';
-import {config} from './config';
-import {CodeModelContent} from './server-client';
-import {VariantCombination} from './variants';
+import { config } from './config';
+import { CodeModelContent } from './server-client';
+import { VariantCombination } from './variants';
+import { log } from './logging';
+
+/**
+ * An interface providing registry of reusable VS Code output windows
+ * so they could be reused from different parts of the extension.
+ */
+export class OutputChannelManager implements vscode.Disposable {
+    private _channels: vscode.OutputChannel[] = [];
+
+    get(name: string): vscode.OutputChannel {
+        let channel = this._channels.find((c) => c.name === name);
+        if (!channel) {
+            channel = vscode.window.createOutputChannel(name);
+            this._channels.push(channel);
+        }
+        return channel;
+    }
+
+    dispose() {
+        for (const channel of this._channels) {
+            channel.dispose();
+        }
+    }
+}
+export const outputChannels = new OutputChannelManager();
 
 export class ThrottledOutputChannel implements vscode.OutputChannel {
   private _channel: vscode.OutputChannel;
@@ -16,9 +41,9 @@ export class ThrottledOutputChannel implements vscode.OutputChannel {
   private _throttler: async.Throttler<void>;
 
   constructor(name: string) {
-    this._channel = vscode.window.createOutputChannel(name);
+    this._channel = outputChannels.get(name);
     this._accumulatedData = '';
-    this._throttler = new async.Throttler();
+    this._throttler = new async.Throttler<void>();
   }
 
   get name(): string {
@@ -71,7 +96,7 @@ export function isTruthy(value: (boolean|string|null|undefined|number)) {
   return !!value;
 }
 export function rmdir(dirpath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     rimraf(dirpath, err => {
       if (err) {
         reject(err);
@@ -155,7 +180,7 @@ export async function ensureDirectory(dirpath: string): Promise<void> {
     try {
       await async.doVoidAsync(fs.mkdir, dirpath);
     } catch (e) {
-      if (e.code == 'EEXIST') {
+      if (e.code === 'EEXIST') {
         // It already exists, but that's ok
         return;
       }
@@ -189,12 +214,12 @@ export interface Version {
   patch: number;
 }
 export function parseVersion(str: string): Version {
-  const version_re = /(\d+)\.(\d+).(\d+)/;
+  const version_re = /(\d+)\.(\d+)\.(\d+)/;
   const mat = version_re.exec(str);
   if (!mat) {
     throw new Error(`Invalid version string ${str}`);
   }
-  const [major, minor, patch] = mat!;
+  const [, major, minor, patch] = mat;
   return {
     major: parseInt(major),
     minor: parseInt(minor),
@@ -206,22 +231,30 @@ export function versionGreater(lhs: Version, rhs: Version|string): boolean {
   if (typeof(rhs) === 'string') {
     return versionGreater(lhs, parseVersion(rhs));
   }
-  return lhs.major > rhs.major ||
-      (lhs.major == rhs.major && lhs.minor > rhs.minor) ||
-      (lhs.major == rhs.major && lhs.minor == rhs.major &&
-       lhs.patch == lhs.patch);
+  if (lhs.major > rhs.major) {
+    return true;
+  }
+  else if (lhs.major === rhs.major) {
+    if (lhs.minor > rhs.minor) {
+      return true;
+    }
+    else if (lhs.minor === rhs.minor) {
+      return lhs.patch > rhs.patch;
+    }
+  }
+  return false;
 }
 
 export function versionEquals(lhs: Version, rhs: Version|string): boolean {
   if (typeof(rhs) === 'string') {
     return versionEquals(lhs, parseVersion(rhs));
   }
-  return lhs.major == rhs.major && lhs.minor == rhs.minor &&
-      lhs.patch == rhs.patch;
+  return lhs.major === rhs.major && lhs.minor === rhs.minor &&
+      lhs.patch === rhs.patch;
 }
 
 export function versionLess(lhs: Version, rhs: Version|string): boolean {
-  return !versionGreater(lhs, rhs) && versionEquals(lhs, rhs);
+  return !versionGreater(lhs, rhs) && !versionEquals(lhs, rhs);
 }
 
 /**
@@ -238,10 +271,28 @@ export interface ExecutionInformation {
   process: proc.ChildProcess;
 }
 
+export function mergeEnvironment(...env: {[key: string]: string}[]) {
+  return env.reduce((acc, vars) => {
+    if (process.platform === 'win32') {
+      // Env vars on windows are case insensitive, so we take the ones from
+      // active env and overwrite the ones in our current process env
+      const norm_vars = Object.getOwnPropertyNames(vars).reduce<Object>(
+          (acc2, key: string) => {
+            acc2[key.toUpperCase()] = vars[key];
+            return acc2;
+          },
+          {});
+      return Object.assign({}, acc, norm_vars);
+    } else {
+      return Object.assign({}, acc, vars);
+    }
+  }, {})
+}
+
 export function execute(
     program: string, args: string[], env: {[key: string]: string} = {},
     workingDirectory?: string,
-    outputChannel: vscode.OutputChannel | null = null): ExecutionInformation {
+    outputChannel: vscode.OutputChannel|null = null): ExecutionInformation {
   const acc = {stdout: '', stderr: ''};
   if (outputChannel) {
     outputChannel.appendLine(
@@ -256,8 +307,9 @@ export function execute(
             .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
             .join(' '));
   }
+  const final_env = mergeEnvironment(process.env, env);
   const pipe = proc.spawn(program, args, {
-    env,
+    env: final_env,
     cwd: workingDirectory,
   });
   for (const [acckey, stream] of [
@@ -284,7 +336,7 @@ export function execute(
       }
     });
     stream.on('line', (line: string) => {
-      console.log(`[${program} output]: ${line}`);
+      log.verbose(`[${program} output]: ${line}`);
       if (outputChannel) {
         outputChannel.appendLine(line);
       }
@@ -294,9 +346,11 @@ export function execute(
     pipe.on('error', reject);
     pipe.on('close', (retc: number) => {
       const msg = `${program} exited with return code ${retc}`;
-      console.log(msg);
       if (outputChannel) {
         outputChannel.appendLine(`[vscode] ${msg}`)
+      }
+      else {
+        log.verbose(msg);
       }
       resolve({retc, stdout: acc.stdout, stderr: acc.stderr});
     })
@@ -308,62 +362,12 @@ export function execute(
   };
 }
 
-export async function testHaveCommand(
-    program: string, args: string[] = ['--version']): Promise<Boolean> {
-  return await new Promise<Boolean>((resolve, _) => {
-    const pipe = proc.spawn(program, args);
-    pipe.on('error', () => resolve(false));
-    pipe.on('exit', () => resolve(true));
-  });
-}
-
-// Given a list of CMake generators, returns the first one available on this
-// system
-export async function pickGenerator(candidates: string[]):
-    Promise<Maybe<string>> {
-  // The user can override our automatic selection logic in their config
-  const generator = config.generator;
-  if (generator) {
-    // User has explicitly requested a certain generator. Use that one.
-    return generator;
-  }
-  for (const gen of candidates) {
-    const delegate = {
-      Ninja: async() => {
-        return await testHaveCommand('ninja-build') ||
-            await testHaveCommand('ninja');
-      },
-      'MinGW Makefiles': async() => {
-        return process.platform === 'win32' && await testHaveCommand('make');
-      },
-      'NMake Makefiles': async() => {
-        return process.platform === 'win32' &&
-            await testHaveCommand('nmake', ['/?']);
-      },
-      'Unix Makefiles': async() => {
-        return process.platform !== 'win32' && await testHaveCommand('make');
-      }
-    }[gen];
-    if (delegate === undefined) {
-      const vsMatcher = /^Visual Studio (\d{2}) (\d{4})($|\sWin64$|\sARM$)/;
-      if (vsMatcher.test(gen) && process.platform === 'win32') return gen;
-      vscode.window.showErrorMessage('Unknown CMake generator "' + gen + '"');
-      continue;
-    }
-    if (await delegate.bind(this)())
-      return gen;
-    else
-      console.log('Generator "' + gen + '" is not supported');
-  }
-  return null;
-}
-
 export async function termProc(child: proc.ChildProcess) {
   // Stopping the process isn't as easy as it may seem. cmake --build will
   // spawn child processes, and CMake won't forward signals to its
   // children. As a workaround, we list the children of the cmake process
   // and also send signals to them.
-  await this._killTree(child.pid);
+  await _killTree(child.pid);
   return true;
 }
 
@@ -376,7 +380,7 @@ async function _killTree(pid: number) {
       children = stdout.split('\n').map(line => Number.parseInt(line));
     }
     for (const other of children) {
-      if (other) await this._killTree(other);
+      if (other) await _killTree(other);
     }
     process.kill(pid, 'SIGINT');
   } else {
@@ -431,7 +435,7 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
           const flagstr = iflag.flag;
           if (arg(i).startsWith(flagstr)) {
             const ipath =
-                arg(i) == flagstr ? arg(++i) : arg(i).substr(flagstr.length);
+                arg(i) === flagstr ? arg(++i) : arg(i).substr(flagstr.length);
             const abs_ipath = path.isAbsolute(ipath) ?
                 ipath :
                 path.join(raw.directory, ipath);
@@ -451,7 +455,7 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
         for (const dflag of def_flags) {
           if (arg(i).startsWith(dflag)) {
             const defstr =
-                arg(i) == dflag ? arg(++i) : arg(i).substr(dflag.length);
+                arg(i) === dflag ? arg(++i) : arg(i).substr(dflag.length);
             const def = parseCompileDefinition(defstr);
             definitions[def[0]] = def[1];
             continue next_arg2;
@@ -470,8 +474,6 @@ export function parseRawCompilationInfo(raw: api.RawCompilationInfo):
       };
     }
 
-
-
 export function parseCompileDefinition(str: string): [string, string | null] {
   if (/^\w+$/.test(str)) {
     return [str, null];
@@ -479,4 +481,26 @@ export function parseCompileDefinition(str: string): [string, string | null] {
     const key = str.split('=', 1)[0];
     return [key, str.substr(key.length + 1)];
   }
+}
+
+export function pause(time: number): Promise<void> {
+    return new Promise<void>(resolve => setTimeout(resolve, time));
+}
+
+/**
+ * @brief Replace all predefined variable by their actual values in the
+ * input string.
+ *
+ * This method handles all variables that do not need to know of CMake.
+ */
+export function replaceVars(str: string): string {
+  const replacements = [
+    ['${workspaceRoot}', vscode.workspace.rootPath],
+    [
+      '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath || '.')
+    ],
+    ['${toolset}', config.toolset]
+  ] as [string, string][];
+  return replacements.reduce(
+      (accdir, [needle, what]) => replaceAll(accdir, needle, what), str);
 }
