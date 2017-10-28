@@ -20,6 +20,8 @@ export class StatusBar implements vscode.Disposable {
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.45);
   private readonly _buildButton
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
+  private readonly _targetButton
+      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
   private readonly _warningMessage
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
 
@@ -29,6 +31,7 @@ export class StatusBar implements vscode.Disposable {
       this._cmakeToolsStatusItem,
       this._buildButton,
       this._warningMessage,
+      this._targetButton,
     ];
     for (const item of items) {
       item.dispose();
@@ -41,6 +44,9 @@ export class StatusBar implements vscode.Disposable {
     this._buildButton.command = 'cmake.build';
     this._kitSelectionButton.command = 'cmake.selectKit';
     this._kitSelectionButton.tooltip = 'Click to change the active kit';
+    this._targetButton.command = 'cmake.setDefaultTarget';
+    this._targetButton.tooltip = 'Set the active target to build';
+    this._reloadBuildButton();
     this.reloadVisibility();
   }
 
@@ -49,6 +55,7 @@ export class StatusBar implements vscode.Disposable {
       this._cmakeToolsStatusItem,
       this._buildButton,
       this._kitSelectionButton,
+      this._targetButton,
     ];
     for (const item of autovis_items) {
       setVisible(item, this._visible && !!item.text);
@@ -96,6 +103,19 @@ export class StatusBar implements vscode.Disposable {
   setStatusMessage(v: string) {
     this._statusMessage = v;
     this._reloadStatusButton();
+  }
+
+  /**
+   * The name of the currently active target to build
+   */
+  private _targetName : string;
+  public get targetName() : string {
+    return this._targetName;
+  }
+  public set targetName(v : string) {
+    this._targetName = v;
+    this._targetButton.text = `[${v}]`;
+    this.reloadVisibility();
   }
 
   /** Reloads the content of the build button */

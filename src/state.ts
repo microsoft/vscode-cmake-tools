@@ -27,11 +27,11 @@ export class StateManager {
   /**
    * The currently select build target
    */
-  get activeBuildTarget(): string | null {
+  get defaultBuildTarget(): string | null {
     const target = this.extensionContext.workspaceState.get<string>('activeBuildTarget');
     return target || null;
   }
-  set activeBuildTarget(s: string | null) {
+  set defaultBuildTarget(s: string | null) {
     this.extensionContext.workspaceState.update('activeBuildTarget', s);
   }
 

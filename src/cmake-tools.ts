@@ -133,6 +133,7 @@ export class CMakeTools implements vscode.Disposable {
       // Now start the CMake driver
       await this._reloadCMakeDriver();
       this._statusBar.setStatusMessage('Ready');
+      this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
     });
   }
 
@@ -249,7 +250,7 @@ export class CMakeTools implements vscode.Disposable {
       log.clearOutputChannel();
     }
     const target
-        = target_ ? target_ : this._stateManager.activeBuildTarget || await this.allTargetName;
+        = target_ ? target_ : this._stateManager.defaultBuildTarget || await this.allTargetName;
     const consumer = new diags.CMakeBuildConsumer();
     try {
       this._statusBar.setStatusMessage('Building');
@@ -285,19 +286,15 @@ export class CMakeTools implements vscode.Disposable {
     } else {
       const choices = this._cmakeDriver.targets.map((t): vscode.QuickPickItem => {
         switch (t.type) {
-          case 'named': {
-            return {
-              label: t.name,
-              description: 'Target to build',
-            };
-          }
-          case 'rich': {
-            return {
-              label: t.name,
-              description: t.targetType,
-              detail: t.filepath
-            }
-          }
+        case 'named': {
+          return {
+            label : t.name,
+            description : 'Target to build',
+          };
+        }
+        case 'rich': {
+          return { label: t.name, description: t.targetType, detail: t.filepath }
+        }
         }
       });
       const sel = await vscode.window.showQuickPick(choices);
@@ -334,6 +331,29 @@ export class CMakeTools implements vscode.Disposable {
       await this.configure();
     }
     return ret;
+  }
+
+  /**
+   * The target that will be built with a regular build invocation
+   */
+  public get defaultBuildTarget(): string | null { return this._stateManager.defaultBuildTarget; }
+  private async _setDefaultBuildTarget(v: string) {
+    this._stateManager.defaultBuildTarget = v;
+    this._statusBar.targetName = v || await this.allTargetName;
+  }
+
+  /**
+   * Set the default target to build. Implementation of `cmake.setDefaultTarget`
+   * @param target If specified, set this target instead of asking the user
+   */
+  async setDefaultTarget(target?: string | null) {
+    if (!target) {
+      target = await this.showTargetSelector();
+    }
+    if (!target) {
+      return;
+    }
+    await this._setDefaultBuildTarget(target);
   }
 }
 

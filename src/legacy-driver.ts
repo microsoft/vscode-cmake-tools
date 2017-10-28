@@ -147,6 +147,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     if (res.retc == 0) {
       this._needsReconfigure = false;
     }
+    await this._reloadCMakeCache();
     await this._refreshTargets();
     return res.retc;
   }
@@ -190,6 +191,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
             generator_args);
     const res = await this.executeCommand(config.cmakePath, args, consumer);
     await res.result;
+    await this._reloadCMakeCache();
     await this._refreshTargets();
     return res;
   }
@@ -204,6 +206,14 @@ export class LegacyCMakeDriver extends CMakeDriver {
         .result;
     this._targets = parser.targetNames.map(t => ({type: 'named' as 'named', name: t}));
     log.debug('Target names are', this._targets);
+  }
+
+  protected async _init() {
+    await super._init();
+    if (await fs.exists(this.cachePath)) {
+      // Try to load the target name
+      await this._refreshTargets();
+    }
   }
 
   static async create(): Promise<LegacyCMakeDriver> {

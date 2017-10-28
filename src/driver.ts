@@ -440,7 +440,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     });
   }
 
-  private async _reloadCMakeCache() {
+  protected async _reloadCMakeCache() {
     this._cmakeCache = CMakeCache.fromPath(this.cachePath);
     // Force await here so that any errors are thrown into rollbar
     await this._cmakeCache;
