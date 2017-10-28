@@ -61,7 +61,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      // 'jumpToCacheFile',
                      'clean',
                      'cleanRebuild',
-                     // 'buildWithTarget',
+                     'buildWithTarget',
                      // 'setDefaultTarget',
                      // 'setBuildType',
                      // 'ctest',

@@ -52,7 +52,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Check if we need to reconfigure, such as if an important file has changed
    */
+
   abstract get needsReconfigure(): boolean;
+
+  /**
+   * List of targets known to CMake
+   */
+  abstract get targets(): api.Target[];
 
   /**
    * Do any necessary disposal for the driver. For the CMake Server driver,
@@ -305,6 +311,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @brief Get the path to the CMakeCache file in the build directory
    */
   public get cachePath(): string {
+    // TODO: Cache path can change if build dir changes at runtime
     const file = path.join(this.binaryDir, 'CMakeCache.txt');
     return util.normalizePath(file);
   }

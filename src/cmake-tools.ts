@@ -272,6 +272,39 @@ export class CMakeTools implements vscode.Disposable {
     }
   }
 
+  async buildWithTarget(): Promise<number> {
+    const target = await this.showTargetSelector();
+    if (target === null)
+      return -1;
+    return this.build(target);
+  }
+
+  async showTargetSelector(): Promise<string | null> {
+    if (!this._cmakeDriver.targets.length) {
+      return (await vscode.window.showInputBox({prompt : 'Enter a target name'})) || null;
+    } else {
+      const choices = this._cmakeDriver.targets.map((t): vscode.QuickPickItem => {
+        switch (t.type) {
+          case 'named': {
+            return {
+              label: t.name,
+              description: 'Target to build',
+            };
+          }
+          case 'rich': {
+            return {
+              label: t.name,
+              description: t.targetType,
+              detail: t.filepath
+            }
+          }
+        }
+      });
+      const sel = await vscode.window.showQuickPick(choices);
+      return sel ? sel.label : null;
+    }
+  }
+
   /**
    * Implementaiton of `cmake.clean`
    */
