@@ -278,6 +278,22 @@ export class CMakeTools implements vscode.Disposable {
   }
 
   /**
+   * Implementation of `cmake.cleanRebuild`
+   */
+  async cleanRebuild(): Promise<number> {
+    const clean_res = await this.clean();
+    if (clean_res !== 0) return clean_res;
+    return this.build();
+  }
+
+  /**
+   * Implementation of `cmake.install`
+   */
+  async install(): Promise<number> {
+    return this.build('install');
+  }
+
+  /**
    * Implementation of `cmake.setVariant`
    */
   async setVariant() {
