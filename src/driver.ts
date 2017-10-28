@@ -252,7 +252,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer): proc.Subprocess {
     return proc.execute(command, args, consumer, {
-      env: this._getKitEnvironmentVariablesObject()
+      environment: this._getKitEnvironmentVariablesObject()
     });
   }
 
