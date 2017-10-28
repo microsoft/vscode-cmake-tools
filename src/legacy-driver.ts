@@ -125,12 +125,12 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const cache = this.cachePath;
     const cmake_files = path.join(build_dir, 'CMakeFiles');
     if (await fs.exists(cache)) {
-        log.info('Removing ', cache);
-        await fs.unlink(cache);
+      log.info('Removing ', cache);
+      await fs.unlink(cache);
     }
     if (await fs.exists(cmake_files)) {
-        log.info('[vscode] Removing ', cmake_files);
-        await fs.rmdir(cmake_files);
+      log.info('[vscode] Removing ', cmake_files);
+      await fs.rmdir(cmake_files);
     }
     return this.configure(consumer);
   }
@@ -155,7 +155,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
         return [];
     })();
     const args =
-        [ '--build', this.binaryDir, '--config', this._buildType, '--' ].concat(generator_args);
+        [ '--build', this.binaryDir, '--config', this._buildType, '--target', target, '--' ].concat(
+            generator_args);
     return this.executeCommand(config.cmakePath, args, consumer);
   }
 

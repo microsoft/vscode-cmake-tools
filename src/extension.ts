@@ -59,7 +59,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      'setVariant',
                      // 'install',
                      // 'jumpToCacheFile',
-                     // 'clean',
+                     'clean',
                      // 'cleanRebuild',
                      // 'buildWithTarget',
                      // 'setDefaultTarget',
