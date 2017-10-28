@@ -114,7 +114,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const res = await this.executeCommand(config.cmakePath, args, outputConsumer).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
-    this._needsReconfigure = false;
+    if (res.retc == 0) {
+      this._needsReconfigure = false;
+    }
     return res.retc;
   }
 
