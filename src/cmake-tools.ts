@@ -109,14 +109,17 @@ export class CMakeTools implements vscode.Disposable {
       // Start up the variant manager
       await this._variantManager.initialize();
       this._variantManager.onActiveVariantChanged(
-        () => {rollbar.invokeAsync('Changing build variant', async() => {
-          await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
-          this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
-          // We don't configure yet, since someone else might be in the middle of a configure
-        })});
+          () => {rollbar.invokeAsync('Changing build variant', async() => {
+            await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
+            this._statusBar.setBuildTypeLabel(
+                this._variantManager.activeVariantOptions.oneWordSummary);
+            // We don't configure yet, since someone else might be in the middle of a configure
+          })});
+      this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
       // Start up the kit manager
       await this._kitManager.initialize();
-      this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name : '');
+      this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name
+                                                                  : '');
       this._kitManager.onActiveKitChanged(kit => {
         log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
         rollbar.invokeAsync('Changing CMake kit', async() => {
@@ -172,9 +175,7 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementation of `cmake.configure`
    */
-  configure() {
-    return this._doConfigure(consumer => this._cmakeDriver.configure(consumer));
-  }
+  configure() { return this._doConfigure(consumer => this._cmakeDriver.configure(consumer)); }
 
   /**
    * Implementation of `cmake.cleanConfigure()
@@ -187,7 +188,8 @@ export class CMakeTools implements vscode.Disposable {
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
-  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
+  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>):
+      Promise<number> {
     if (!this._kitManager.activeKit) {
       log.debug('No kit selected yet. Asking for a Kit first.');
       await this.selectKit();
@@ -273,25 +275,22 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementaiton of `cmake.clean`
    */
-  async clean(): Promise<number> {
-    return this.build('clean');
-  }
+  async clean(): Promise<number> { return this.build('clean'); }
 
   /**
    * Implementation of `cmake.cleanRebuild`
    */
   async cleanRebuild(): Promise<number> {
     const clean_res = await this.clean();
-    if (clean_res !== 0) return clean_res;
+    if (clean_res !== 0)
+      return clean_res;
     return this.build();
   }
 
   /**
    * Implementation of `cmake.install`
    */
-  async install(): Promise<number> {
-    return this.build('install');
-  }
+  async install(): Promise<number> { return this.build('install'); }
 
   /**
    * Implementation of `cmake.setVariant`
