@@ -1,4 +1,5 @@
 # Configuration
+test
 
 CMake tools has a good set of defaults for its configuration options. Here is a
 quick summary of options that can be tweaked, should you wish to do so:
