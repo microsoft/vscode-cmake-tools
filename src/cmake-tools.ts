@@ -20,34 +20,20 @@ const build_log = logging.createLogger('build');
 
 /**
  * Class implementing the extension. It's all here!
+ *
+ * The class internally uses a two-phase initialization, since proper startup
+ * requires asynchrony. To ensure proper initialization. The class must be
+ * created via the `create` static method. This will run the two phases
+ * internally and return a promise to the new instance. This ensures that the
+ * class invariants are maintained at all times.
+ *
+ * Some fields also require two-phase init. Their first phase is in the first
+ * phase of the CMakeTools init, ie. the constructor.
+ *
+ * The second phases of fields will be called by the second phase of the parent
+ * class. See the `_init` private method for this initialization.
  */
 export class CMakeTools implements vscode.Disposable {
-  /**
-   * The state manager for the class
-   */
-  private _stateManager = new StateManager(this.extensionContext);
-
-  /**
-   * It's up to the kit manager to do all things related to kits. We only listen
-   * to it for kit changes.
-   */
-  private _kitManager = new KitManager(this._stateManager);
-
-  /**
-   * The variant manager keeps track of build variants
-   */
-  private _variantManager = new VariantManager(this.extensionContext, this._stateManager);
-
-  /**
-   * The object in charge of talking to CMake
-   */
-  private _cmakeDriver: CMakeDriver;
-
-  /**
-   * The status bar manager
-   */
-  private _statusBar: StatusBar = new StatusBar();
-
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
    * @param extensionContext The extension context
@@ -60,81 +46,135 @@ export class CMakeTools implements vscode.Disposable {
   }
 
   /**
+   * The state manager for the class. Workspace-persistent state is kept in here
+   * on a vscode Memento so that we don't have to bother worrying about keeping
+   * it persisted.
+   */
+  private readonly _stateManager = new StateManager(this.extensionContext);
+
+  /**
+   * It's up to the kit manager to do all things related to kits. Has two-phase
+   * init.
+   */
+  private readonly _kitManager = new KitManager(this._stateManager);
+
+  /**
+   * The variant manager keeps track of build variants. Has two-phase inti.
+   */
+  private readonly _variantManager = new VariantManager(this.extensionContext, this._stateManager);
+
+  /**
+   * The object in charge of talking to CMake. It starts out as invalid because
+   * we don't know what driver to use at the current time. The driver also has
+   * two-phase init and a private constructor. The driver may be replaced at
+   * any time by the user making changes to the workspace configuration.
+   */
+  private _cmakeDriver:
+      Promise<CMakeDriver> = Promise.reject(new Error('Accessing CMake driver too early!'));
+
+  /**
+   * The status bar manager. Has two-phase init.
+   */
+  private _statusBar: StatusBar = new StatusBar();
+
+  /**
    * Dispose the extension
    */
   dispose() {
     log.debug('Disposing CMakeTools extension');
-    rollbar.invoke('Root dispose', () => {
-      this._kitManager.dispose();
-      this._diagnostics.dispose();
-      if (this._cmakeDriver) {
-        this._cmakeDriver.dispose();
-      }
-      this._statusBar.dispose();
-      this._variantManager.dispose();
-    });
+    rollbar.invoke('Root dispose', () => this.asyncDispose());
+  }
+
+  /**
+   * Dispose of the extension asynchronously.
+   */
+  async asyncDispose() {
+    this._kitManager.dispose();
+    this._diagnostics.dispose();
+    const drv = await this._cmakeDriver;
+    if (drv) {
+      await drv.asyncDispose();
+    }
+    this._statusBar.dispose();
+    this._variantManager.dispose();
+  }
+
+  /**
+   * Start up a new CMake driver and return it. This is so that the initialization
+   * of the driver is atomic to those using it
+   */
+  private async _startNewCMakeDriver(): Promise<CMakeDriver> {
+    log.debug('Loading legacy (non-cmake-server) driver');
+    const drv = await LegacyCMakeDriver.create();
+    if (this._kitManager.activeKit) {
+      log.debug('Pushing active Kit into driver');
+      await drv.setKit(this._kitManager.activeKit);
+    }
+    await drv.setVariantOptions(this._variantManager.activeVariantOptions);
+    const project = await drv.projectName;
+    if (project) {
+      this._statusBar.setProjectName(project);
+    }
+    drv.onProjectNameChanged(name => { this._statusBar.setProjectName(name); });
+    // All set up. Fulfill the driver promise.
+    return drv;
   }
 
   /**
    * Reload/restarts the CMake Driver
    */
-  private async _reloadCMakeDriver() {
-    log.debug('Reloading CMake driver');
-    if (this._cmakeDriver) {
-      log.debug('Diposing old driver first');
-      await this._cmakeDriver.asyncDispose();
-    }
-    log.debug('Loading legacy (non-cmake-server) driver');
-    this._cmakeDriver = await LegacyCMakeDriver.create();
-    if (this._kitManager.activeKit) {
-      log.debug('Pushing active Kit into driver');
-      await this._cmakeDriver.setKit(this._kitManager.activeKit);
-    }
-    await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
-    const project = await this._cmakeDriver.projectName;
-    if (project) {
-      this._statusBar.setProjectName(project);
-    }
-    this._cmakeDriver.onProjectNameChanged(name => { this._statusBar.setProjectName(name); });
-  }
+  // private async _reloadCMakeDriver() {
+  //   log.debug('Reloading CMake driver');
+  //   const drv = await this._cmakeDriver;
+  //   log.debug('Diposing old CMake driver');
+  //   await drv.asyncDispose();
+  //   return this._cmakeDriver = this._startNewCMakeDriver();
+  // }
 
   /**
-   * Two-phase init. Called by `create`.
+   * Second phase of two-phase init. Called by `create`.
    */
   private async _init() {
     log.debug('Starting CMakeTools second-phase init');
-    await rollbar.invokeAsync('Root init', async() => {
-      // First, start up Rollbar
-      await rollbar.requestPermissions(this.extensionContext);
-      // Start up the variant manager
-      await this._variantManager.initialize();
-      this._variantManager.onActiveVariantChanged(
-          () => {rollbar.invokeAsync('Changing build variant', async() => {
-            await this._cmakeDriver.setVariantOptions(this._variantManager.activeVariantOptions);
-            this._statusBar.setBuildTypeLabel(
-                this._variantManager.activeVariantOptions.oneWordSummary);
-            // We don't configure yet, since someone else might be in the middle of a configure
-          })});
-      this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
-      // Start up the kit manager
-      await this._kitManager.initialize();
-      this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name
-                                                                  : '');
-      this._kitManager.onActiveKitChanged(kit => {
-        log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
-        rollbar.invokeAsync('Changing CMake kit', async() => {
-          if (kit) {
-            log.debug('Injecting new Kit into CMake driver');
-            await this._cmakeDriver.setKit(kit);
-          }
-          this._statusBar.setActiveKitName(kit ? kit.name : '');
-        });
-      });
-      // Now start the CMake driver
-      await this._reloadCMakeDriver();
-      this._statusBar.setStatusMessage('Ready');
-      this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
+    // First, start up Rollbar
+    await rollbar.requestPermissions(this.extensionContext);
+    // Start up the variant manager
+    await this._variantManager.initialize();
+    // Set the status bar message
+    this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
+    // Start up the kit manager
+    await this._kitManager.initialize();
+    this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name
+                                                                : '');
+
+    // Hook up event handlers
+    // Listen for the variant to change
+    this._variantManager.onActiveVariantChanged(() => {
+      log.debug('Active build variant changed');
+      rollbar.invokeAsync('Changing build variant', async() => {
+        const drv = await this._cmakeDriver;
+        await drv.setVariantOptions(this._variantManager.activeVariantOptions);
+        this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
+        // We don't configure yet, since someone else might be in the middle of a configure
+      })
     });
+    // Listen for the kit to change
+    this._kitManager.onActiveKitChanged(kit => {
+      log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
+      rollbar.invokeAsync('Changing CMake kit', async() => {
+        if (kit) {
+          log.debug('Injecting new Kit into CMake driver');
+          const drv = await this._cmakeDriver;
+          await drv.setKit(kit);
+        }
+        this._statusBar.setActiveKitName(kit ? kit.name : '');
+      });
+    });
+
+    // Finally, start the CMake driver
+    await (this._cmakeDriver = this._startNewCMakeDriver());
+    this._statusBar.setStatusMessage('Ready');
+    this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
   }
 
   /**
@@ -176,13 +216,21 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementation of `cmake.configure`
    */
-  configure() { return this._doConfigure(consumer => this._cmakeDriver.configure(consumer)); }
+  configure() {
+    return this._doConfigure(async(consumer) => {
+      const drv = await this._cmakeDriver;
+      return drv.configure(consumer)
+    });
+  }
 
   /**
    * Implementation of `cmake.cleanConfigure()
    */
   cleanConfigure() {
-    return this._doConfigure(consumer => this._cmakeDriver.cleanConfigure(consumer));
+    return this._doConfigure(async(consumer) => {
+      const drv = await this._cmakeDriver;
+      return drv.cleanConfigure(consumer);
+    });
   }
 
   /**
@@ -228,7 +276,8 @@ export class CMakeTools implements vscode.Disposable {
    */
   get allTargetName() { return this._allTargetName(); }
   private async _allTargetName(): Promise<string> {
-    const gen = await this._cmakeDriver.generatorName;
+    const drv = await this._cmakeDriver;
+    const gen = await drv.generatorName;
     if (gen && (gen.includes('Visual Studio') || gen.toLowerCase().includes('xcode'))) {
       return 'ALL_BUILD';
     } else {
@@ -241,7 +290,8 @@ export class CMakeTools implements vscode.Disposable {
    */
   async build(target_?: string): Promise<number> {
     // First, reconfigure if necessary
-    if (await this._cmakeDriver.needsReconfigure) {
+    const drv = await this._cmakeDriver;
+    if (await drv.needsReconfigure) {
       const retc = await this.configure();
       if (retc) {
         return retc;
@@ -259,7 +309,7 @@ export class CMakeTools implements vscode.Disposable {
       consumer.onProgress(pr => { this._statusBar.setProgress(pr.value); });
       log.showChannel();
       build_log.info('Starting build');
-      const subproc = await this._cmakeDriver.build(target, consumer);
+      const subproc = await drv.build(target, consumer);
       if (!subproc) {
         build_log.error('Build failed to start');
         return -1;
@@ -281,10 +331,11 @@ export class CMakeTools implements vscode.Disposable {
   }
 
   async showTargetSelector(): Promise<string | null> {
-    if (!this._cmakeDriver.targets.length) {
+    const drv = await this._cmakeDriver;
+    if (!drv.targets.length) {
       return (await vscode.window.showInputBox({prompt : 'Enter a target name'})) || null;
     } else {
-      const choices = this._cmakeDriver.targets.map((t): vscode.QuickPickItem => {
+      const choices = drv.targets.map((t): vscode.QuickPickItem => {
         switch (t.type) {
         case 'named': {
           return {

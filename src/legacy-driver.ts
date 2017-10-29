@@ -205,7 +205,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
             parser)
         .result;
     this._targets = parser.targetNames.map(t => ({type: 'named' as 'named', name: t}));
-    log.debug('Target names are', this._targets);
   }
 
   protected async _init() {

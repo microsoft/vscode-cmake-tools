@@ -18,6 +18,8 @@ const log = logging.createLogger('extension');
 import CMakeTools from './cmake-tools';
 import rollbar from './rollbar';
 
+let INSTANCE: CMakeTools | null = null;
+
 /**
  * Starts up the extension.
  * @param context The extension context
@@ -63,8 +65,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      'cleanRebuild',
                      'buildWithTarget',
                      'setDefaultTarget',
-                     // 'setBuildType',
-                     // 'ctest',
+                     //  'ctest',
                      // 'stop',
                      // 'quickStart',
                      // 'launchTargetProgramPath',
@@ -84,13 +85,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
   context.subscriptions.push(
       vscode.commands.registerCommand('cmake._extensionInstance', () => { return cmt;}));
 
-  // Return that promise
-  return cmt;
+  // Return the extension
+  INSTANCE = cmt;
+  return INSTANCE;
 }
 
 // this method is called when your extension is deactivated
-export function
+export async function
 deactivate() {
   log.debug('Deactivate CMakeTools');
   //   outputChannels.dispose();
+  if (INSTANCE) {
+    await INSTANCE.asyncDispose();
+  }
 }
