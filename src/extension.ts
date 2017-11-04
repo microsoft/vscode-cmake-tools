@@ -67,7 +67,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      'setDefaultTarget',
                      'ctest',
                      'stop',
-                     // 'quickStart',
+                     'quickStart',
                      // 'launchTargetProgramPath',
                      // 'debugTarget',
                      // 'launchTarget',

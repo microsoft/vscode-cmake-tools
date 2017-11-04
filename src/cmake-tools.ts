@@ -2,6 +2,7 @@
  * Root of the extension
  */
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 import rollbar from './rollbar';
 import * as diags from './diagnostics';
@@ -12,9 +13,10 @@ import {CMakeDriver} from './driver';
 import {LegacyCMakeDriver} from './legacy-driver';
 import {StatusBar} from './status';
 import config from "./config";
+import {fs} from './pr';
 
 import * as logging from './logging';
-import { CTestDriver } from './ctest';
+import {CTestDriver} from './ctest';
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -171,15 +173,12 @@ export class CMakeTools implements vscode.Disposable {
         this._statusBar.setActiveKitName(kit ? kit.name : '');
       });
     });
-    this._ctestController.onTestingEnabledChanged(enabled => {
-      this._statusBar.ctestEnabled = enabled;
-    });
-    this._ctestController.onResultsChanged(res => {
-      this._statusBar.testResults = res;
-    });
+    this._ctestController.onTestingEnabledChanged(
+        enabled => { this._statusBar.ctestEnabled = enabled; });
+    this._ctestController.onResultsChanged(res => { this._statusBar.testResults = res; });
 
     // Finally, start the CMake driver
-    const drv = await (this._cmakeDriver = this._startNewCMakeDriver());
+    const drv = await(this._cmakeDriver = this._startNewCMakeDriver());
     // Reload any test results. This will also update visibility on the status
     // bar
     await this._ctestController.reloadTests(drv);
@@ -438,6 +437,85 @@ export class CMakeTools implements vscode.Disposable {
       return;
     }
     await this._setDefaultBuildTarget(target);
+  }
+
+  /**
+   * Implementation of `cmake.quickStart`
+   */
+  public async quickStart(): Promise<Number> {
+    const drv = await this._cmakeDriver;
+    if (await fs.exists(drv.mainListFile)) {
+      vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
+      return -1;
+    }
+
+    const project_name = await vscode.window.showInputBox({
+      prompt : 'Enter a name for the new project',
+      validateInput : (value: string) : string => {
+        if (!value.length)
+          return 'A project name is required';
+        return '';
+      },
+    });
+    if (!project_name)
+      return -1;
+
+    const target_type = (await vscode.window.showQuickPick([
+      {
+        label : 'Library',
+        description : 'Create a library',
+      },
+      {label : 'Executable', description : 'Create an executable'}
+    ]));
+
+    if (!target_type)
+      return -1;
+
+    const type = target_type.label;
+
+    const init = [
+      'cmake_minimum_required(VERSION 3.0.0)',
+      `project(${project_name} VERSION 0.1.0)`,
+      '',
+      'include(CTest)',
+      'enable_testing()',
+      '',
+      type == 'Library' ? `add_library(${project_name} ${project_name}.cpp)`
+                        : `add_executable(${project_name} main.cpp)`,
+      '',
+      'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
+      'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
+      'include(CPack)',
+      '',
+    ].join('\n');
+
+    if (type === 'Library') {
+      if (!(await fs.exists(path.join(drv.sourceDir, project_name + '.cpp')))) {
+        await fs.writeFile(path.join(drv.sourceDir, project_name + '.cpp'), [
+          '#include <iostream>',
+          '',
+          'void say_hello(){',
+          `    std::cout << "Hello, from ${project_name}!\\n";`,
+          '}',
+          '',
+        ].join('\n'));
+      }
+    } else {
+      if (!(await fs.exists(path.join(drv.sourceDir, 'main.cpp')))) {
+        await fs.writeFile(path.join(drv.sourceDir, 'main.cpp'), [
+          '#include <iostream>',
+          '',
+          'int main(int, char**) {',
+          '   std::cout << "Hello, world!\\n";',
+          '}',
+          '',
+        ].join('\n'));
+      }
+    }
+    await fs.writeFile(drv.mainListFile, init);
+    const doc = await vscode.workspace.openTextDocument(drv.mainListFile);
+    await vscode.window.showTextDocument(doc);
+    return this.configure();
   }
 }
 
