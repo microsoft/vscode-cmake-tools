@@ -83,6 +83,7 @@ class RollbarController {
    */
   exception(what: string, exception: Error, additional: object = {}): Rollbar.LogResult | null {
     log.fatal('Unhandled exception:', what, exception, JSON.stringify(additional));
+    debugger;
     if (this._enabled) {
       return this._rollbar.error(what, exception, additional);
     }
@@ -97,6 +98,7 @@ class RollbarController {
    */
   error(what: string, additional: object = {}): Rollbar.LogResult | null {
     log.error(what, JSON.stringify(additional));
+    debugger;
     if (this._enabled) {
       const stack = new Error().stack;
       return this._rollbar.error(what, additional, {stack : stack});
