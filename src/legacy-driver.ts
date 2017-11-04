@@ -16,38 +16,8 @@ import * as proc from './proc';
 import * as logging from './logging';
 import {VariantConfigurationOptions} from "./variant";
 import {ConfigureArguments} from './variant';
-import * as api from './api';
 
 const log = logging.createLogger('legacy-driver');
-
-export class TargetListParser implements proc.OutputConsumer {
-  private _targetNames: string[] = [];
-  get targetNames() { return this._targetNames; }
-
-  constructor(readonly generator: string) {}
-
-  output(line: string) {
-    if (this.generator.endsWith('Makefiles')) {
-      if (!line.startsWith('...')) {
-        return;
-      }
-      let target_name = line.substr(4);
-      if (target_name.includes(' ')) {
-        target_name = target_name.substr(0, target_name.indexOf(' '));
-      }
-      this._targetNames.push(target_name);
-    } else {
-      // Try parsing it as a ninja line
-      const colpos = line.indexOf(': ');
-      if (colpos === -1 || line.includes('All primary targets')) {
-        return;
-      }
-      const target_name = line.substr(0, colpos);
-      this._targetNames.push(target_name);
-    }
-  }
-  error(line: string) { this.output(line); }
-}
 
 /**
  * The legacy driver.
@@ -154,7 +124,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
       this._needsReconfigure = false;
     }
     await this._reloadCMakeCache();
-    await this._refreshTargets();
     return res.retc === null ? -1 : res.retc;
   }
 
@@ -200,7 +169,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
     await child.result;
     this._currentProcess = null;
     await this._reloadCMakeCache();
-    await this._refreshTargets();
     return child;
   }
 
@@ -213,24 +181,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return true;
   }
 
-  private async _refreshTargets() {
-    const parser = new TargetListParser((await this.generatorName) !);
-    await this
-        .executeCommand(
-            config.cmakePath,
-            [ '--build', this.binaryDir, '--config', this._buildType, '--target', 'help' ],
-            parser,
-            {silent : true})
-        .result;
-    this._targets = parser.targetNames.map(t => ({type : 'named' as 'named', name : t}));
-  }
-
   protected async _init() {
     await super._init();
-    if (await fs.exists(this.cachePath)) {
-      // Try to load the target name
-      await this._refreshTargets();
-    }
   }
 
   static async create(): Promise<LegacyCMakeDriver> {
@@ -240,6 +192,5 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return inst;
   }
 
-  private _targets: api.NamedTarget[] = [];
-  get targets() { return this._targets; }
+  get targets() { return []; }
 }
