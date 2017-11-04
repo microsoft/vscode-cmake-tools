@@ -70,6 +70,7 @@ export interface ExecutionOptions {
   environment?: EnvironmentVariables;
   shell?: boolean;
   silent?: boolean;
+  cwd?: string;
 }
 
 
@@ -109,6 +110,9 @@ export function execute(command: string,
       env : final_env,
       shell : !!options.shell,
     };
+    if (options && options.cwd) {
+      spawn_opts.cwd = options.cwd;
+    }
     if (process.platform != 'win32') {
       // We wrap things in `stdbuf` to disable output buffering.
       const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);

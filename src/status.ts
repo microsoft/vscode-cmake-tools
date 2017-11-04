@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { BasicTestResults } from "./ctest";
 
 interface Hideable {
   show(): void;
@@ -22,6 +23,8 @@ export class StatusBar implements vscode.Disposable {
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
   private readonly _targetButton
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
+  private readonly _testButton
+      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
   private readonly _warningMessage
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
 
@@ -46,6 +49,8 @@ export class StatusBar implements vscode.Disposable {
     this._kitSelectionButton.tooltip = 'Click to change the active kit';
     this._targetButton.command = 'cmake.setDefaultTarget';
     this._targetButton.tooltip = 'Set the active target to build';
+    this._testButton.command = 'cmake.ctest';
+    this._testButton.tooltip = 'Run CTest tests';
     this._reloadBuildButton();
     this.reloadVisibility();
   }
@@ -108,14 +113,40 @@ export class StatusBar implements vscode.Disposable {
   /**
    * The name of the currently active target to build
    */
-  private _targetName : string;
-  public get targetName() : string {
-    return this._targetName;
-  }
-  public set targetName(v : string) {
+  private _targetName: string;
+  public get targetName(): string { return this._targetName; }
+  public set targetName(v: string) {
     this._targetName = v;
     this._targetButton.text = `[${v}]`;
     this.reloadVisibility();
+  }
+
+  private _ctestEnabled: boolean = false;
+  public get ctestEnabled(): boolean { return this._ctestEnabled; }
+  public set ctestEnabled(v: boolean) {
+    this._ctestEnabled = v;
+    setVisible(this._testButton, v);
+  }
+
+
+  private _testResults: BasicTestResults | null = null;
+  public get testResults(): BasicTestResults | null { return this._testResults; }
+  public set testResults(v: BasicTestResults | null) {
+    this._testResults = v;
+
+    if (!v) {
+      this._testButton.text = 'Run CTest';
+      this._testButton.color = '';
+      return;
+    }
+
+    const passing = v.passing;
+    const total = v.total;
+    const good = passing == total;
+    const icon = good ? 'check' : 'x';
+    this._testButton.text
+        = `$(${icon}) ${passing}/${total} ` + (total == 1 ? 'test' : 'tests') + ' passing';
+    this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 
   /** Reloads the content of the build button */

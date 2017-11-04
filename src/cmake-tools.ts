@@ -14,6 +14,7 @@ import {StatusBar} from './status';
 import config from "./config";
 
 import * as logging from './logging';
+import { CTestDriver } from './ctest';
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -170,9 +171,18 @@ export class CMakeTools implements vscode.Disposable {
         this._statusBar.setActiveKitName(kit ? kit.name : '');
       });
     });
+    this._ctestController.onTestingEnabledChanged(enabled => {
+      this._statusBar.ctestEnabled = enabled;
+    });
+    this._ctestController.onResultsChanged(res => {
+      this._statusBar.testResults = res;
+    });
 
     // Finally, start the CMake driver
-    await (this._cmakeDriver = this._startNewCMakeDriver());
+    const drv = await (this._cmakeDriver = this._startNewCMakeDriver());
+    // Reload any test results. This will also update visibility on the status
+    // bar
+    await this._ctestController.reloadTests(drv);
     this._statusBar.setStatusMessage('Ready');
     this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
   }
@@ -370,6 +380,17 @@ export class CMakeTools implements vscode.Disposable {
     if (clean_res !== 0)
       return clean_res;
     return this.build();
+  }
+
+  private _ctestController = new CTestDriver();
+  async ctest(): Promise<number> {
+    const build_retc = await this.build();
+    if (build_retc !== 0) {
+      return build_retc;
+    }
+    const drv = await this._cmakeDriver;
+    // TODO: Pass build configuration type to CTest
+    return this._ctestController.runCTest(drv);
   }
 
   /**
