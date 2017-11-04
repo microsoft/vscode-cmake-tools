@@ -1,8 +1,10 @@
 import * as path from 'path';
+import * as child_process from 'child_process';
 
 import * as vscode from 'vscode';
 
 import config from './config';
+import {execute} from './proc';
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -106,7 +108,8 @@ export function * map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iter
   }
 }
 
-export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out, el: In) => Out): Out {
+export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out, el: In) => Out):
+    Out {
   for (const item of iter) {
     init = mapper(init, item);
   }
@@ -166,7 +169,43 @@ export function cmakeify(value: (string | boolean | number | string[])): CMakeVa
     throw new Error(`Invalid value to convert to cmake value: ${value}`)
   }
   return {
-    type: type,
-    value: value_str,
+    type : type,
+    value : value_str,
   };
+}
+
+
+export async function termProc(child: child_process.ChildProcess) {
+  // Stopping the process isn't as easy as it may seem. cmake --build will
+  // spawn child processes, and CMake won't forward signals to its
+  // children. As a workaround, we list the children of the cmake process
+  // and also send signals to them.
+  await _killTree(child.pid); return true;
+}
+
+async function _killTree(pid: number) {
+  if (process.platform !== 'win32') {
+    let children: number[] = [];
+    const stdout = (await execute('pgrep', [ '-P', pid.toString() ], null, {silent : true}).result)
+                       .stdout.trim();
+    if (!!stdout.length) {
+      children = stdout.split('\n').map(line => Number.parseInt(line));
+    }
+    for (const other of children) {
+      if (other)
+        await _killTree(other);
+    }
+    try {
+      process.kill(pid, 'SIGINT');
+    } catch (e) {
+      if (e.code === 'ESRCH') {
+        // Do nothing. We're okay.
+      } else {
+        throw e;
+      }
+    }
+  } else {// Because reasons, Node's proc.kill doesn't work on killing child
+          // processes transitively. We have to do a sad and manually kill the
+          // task using taskkill.
+          child_process.exec('taskkill /pid ' + pid.toString() + ' /T /F');}
 }

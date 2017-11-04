@@ -50,6 +50,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
   abstract build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null>;
 
   /**
+   * Stops the currently running process at user request
+   */
+  abstract stopCurrentProcess(): Promise<boolean>;
+
+  /**
    * Check if we need to reconfigure, such as if an important file has changed
    */
 
@@ -256,10 +261,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer): proc.Subprocess {
-    return proc.execute(command, args, consumer, {
-      environment: this._getKitEnvironmentVariablesObject()
-    });
+  executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
+    let env = this._getKitEnvironmentVariablesObject();
+    if (options && options.environment) {
+      env = Object.assign({}, env, options.environment);
+    }
+    const final_options = Object.assign({}, options, { environment: env });
+    return proc.execute(command, args, consumer, final_options);
   }
 
   /**

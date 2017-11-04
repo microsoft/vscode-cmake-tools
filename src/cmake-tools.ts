@@ -315,8 +315,12 @@ export class CMakeTools implements vscode.Disposable {
         return -1;
       }
       const rc = (await subproc.result).retc;
-      build_log.info('Build finished with exit code', rc);
-      return rc;
+      if (rc === null) {
+        build_log.info('Build was terminated');
+      } else {
+        build_log.info('Build finished with exit code', rc);
+      }
+      return rc === null ? -1 : rc;
     } finally {
       this._statusBar.setIsBusy(false);
       consumer.dispose();
@@ -372,6 +376,14 @@ export class CMakeTools implements vscode.Disposable {
    * Implementation of `cmake.install`
    */
   async install(): Promise<number> { return this.build('install'); }
+
+  /**
+   * Implementation of `cmake.stop`
+   */
+  async stop(): Promise<void> {
+    const drv = await this._cmakeDriver;
+    await drv.stopCurrentProcess();
+  }
 
   /**
    * Implementation of `cmake.setVariant`

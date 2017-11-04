@@ -9,7 +9,7 @@ import {createLogger} from './logging';
 const log = createLogger('proc');
 
 export interface ExecutionResult {
-  retc: number;
+  retc: number | null;
   stdout: string;
   stderr: string;
 }
@@ -69,6 +69,7 @@ export type EnvironmentVariables = {
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
   shell?: boolean;
+  silent?: boolean;
 }
 
 
@@ -88,16 +89,18 @@ export function execute(command: string,
                         options?: ExecutionOptions): Subprocess {
   let child: proc.ChildProcess | null = null;
   const result = new Promise<ExecutionResult>((resolve, reject) => {
-    log.info('Executing command: '
-             // We do simple quoting of arguments with spaces.
-             // This is only shown to the user,
-             // and doesn't have to be 100% correct.
-             +
-             [ command ]
-                 .concat(args)
-                 .map(a => a.replace('"', '\"'))
-                 .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
-                 .join(' '));
+    if (options && options.silent !== true) {
+      log.info('Executing command: '
+               // We do simple quoting of arguments with spaces.
+               // This is only shown to the user,
+               // and doesn't have to be 100% correct.
+               +
+               [ command ]
+                   .concat(args)
+                   .map(a => a.replace('"', '\"'))
+                   .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
+                   .join(' '));
+    }
     if (!options) {
       options = {};
     }

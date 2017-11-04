@@ -55,6 +55,12 @@ export class TargetListParser implements proc.OutputConsumer {
 export class LegacyCMakeDriver extends CMakeDriver {
   private constructor() { super(); }
 
+  /**
+   * The currently running process. We keep a handle on it so we can stop it
+   * upon user request
+   */
+  private _currentProcess: proc.Subprocess | null = null;
+
   private _needsReconfigure = true;
   get needsReconfigure() { return this._needsReconfigure; }
 
@@ -149,7 +155,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     }
     await this._reloadCMakeCache();
     await this._refreshTargets();
-    return res.retc;
+    return res.retc === null ? -1 : res.retc;
   }
 
   async cleanConfigure(consumer?: proc.OutputConsumer) {
@@ -189,11 +195,22 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const args =
         [ '--build', this.binaryDir, '--config', this._buildType, '--target', target, '--' ].concat(
             generator_args);
-    const res = await this.executeCommand(config.cmakePath, args, consumer);
-    await res.result;
+    const child = this.executeCommand(config.cmakePath, args, consumer);
+    this._currentProcess = child;
+    await child.result;
+    this._currentProcess = null;
     await this._reloadCMakeCache();
     await this._refreshTargets();
-    return res;
+    return child;
+  }
+
+  async stopCurrentProcess(): Promise<boolean> {
+    const cur = this._currentProcess;
+    if (!cur) {
+      return false;
+    }
+    await util.termProc(cur.child);
+    return true;
   }
 
   private async _refreshTargets() {
@@ -202,9 +219,10 @@ export class LegacyCMakeDriver extends CMakeDriver {
         .executeCommand(
             config.cmakePath,
             [ '--build', this.binaryDir, '--config', this._buildType, '--target', 'help' ],
-            parser)
+            parser,
+            {silent : true})
         .result;
-    this._targets = parser.targetNames.map(t => ({type: 'named' as 'named', name: t}));
+    this._targets = parser.targetNames.map(t => ({type : 'named' as 'named', name : t}));
   }
 
   protected async _init() {
