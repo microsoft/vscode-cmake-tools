@@ -21,7 +21,7 @@
     "license": "MIT",
     "publisher": "vector-of-bool",
     "engines": {
-        "vscode": "^1.12.0"
+        "vscode": "^1.16.0"
     },
     "categories": [
         "Other"
@@ -620,7 +620,7 @@
     "devDependencies": {
         "typescript": "~2.0.3",
         "@types/node": "~6.0.45",
-        "vscode": "~1.1.0",
+        "vscode": "~1.1.5",
         "mocha": "~3.4.2",
         "@types/mocha": "~2.2.41",
         "@types/js-yaml": "^3.5.28",

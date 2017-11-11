@@ -973,7 +973,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   public async debugTarget(): Promise<void> {
     const target = await this._prelaunchTarget();
     if (!target) return;
-    const real_config = {
+    const debug_config: vscode.DebugConfiguration = {
       name: `Debugging Target ${target.name}`,
       type: (this.compilerId && this.compilerId.includes('MSVC')) ? 'cppvsdbg' :
                                                                     'cppdbg',
@@ -983,9 +983,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       MIMode: process.platform === 'darwin' ? 'lldb' : 'gdb',
     };
     const user_config = config.debugConfig;
-    Object.assign(real_config, user_config);
-    real_config['program'] = target.path;
-    await vscode.commands.executeCommand('vscode.startDebug', real_config);
+    Object.assign(debug_config, user_config);
+    debug_config['program'] = target.path;
+    await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
   }
 
   public async prepareConfigure(): Promise<string[]> {
