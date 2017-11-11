@@ -100,6 +100,7 @@ export class CMakeTools implements vscode.Disposable {
     }
     this._statusBar.dispose();
     this._variantManager.dispose();
+    this._ctestController.dispose();
   }
 
   /**
@@ -145,6 +146,8 @@ export class CMakeTools implements vscode.Disposable {
     await this._variantManager.initialize();
     // Set the status bar message
     this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
+    // Restore the debug target
+    this._statusBar.setLaunchTargetName(this._stateManager.launchTargetName || '');
     // Start up the kit manager
     await this._kitManager.initialize();
     this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name
@@ -437,6 +440,44 @@ export class CMakeTools implements vscode.Disposable {
       return;
     }
     await this._setDefaultBuildTarget(target);
+  }
+
+  /**
+   * Implementation of `cmake.selectLaunchTarget`
+   */
+  async selectLaunchTarget(): Promise<string | null> {
+    const drv = await this._cmakeDriver;
+    const executableTargets = drv.executableTargets;
+    if (executableTargets.length === 0) {
+      vscode.window.showWarningMessage('There are no known executable targets to choose from');
+      return null;
+    }
+
+    const choices = executableTargets.map(e => ({
+                                            label : e.name,
+                                            description : '',
+                                            detail : e.path,
+                                          }));
+    const chosen = await vscode.window.showQuickPick(choices);
+    if (!chosen) {
+      return null;
+    }
+    this._stateManager.launchTargetName = chosen.label;
+    this._statusBar.setLaunchTargetName(chosen.label);
+    return chosen.detail;
+  }
+
+  /**
+   * Implementation of `cmake.launchTargetPath`
+   */
+  async launchTargetPath(): Promise<string | null> {
+    const drv = await this._cmakeDriver;
+    const target_name = this._stateManager.launchTargetName;
+    const chosen = drv.executableTargets.find(e => e.name == target_name);
+    if (!chosen) {
+      return null;
+    }
+    return chosen.path;
   }
 
   /**

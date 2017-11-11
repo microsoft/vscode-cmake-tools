@@ -35,6 +35,14 @@ export class StateManager {
     this.extensionContext.workspaceState.update('activeBuildTarget', s);
   }
 
+  get launchTargetName(): string | null {
+    const name = this.extensionContext.workspaceState.get<string>('launchTargetName');
+    return name || null;
+  }
+  set launchTargetName(t: string | null) {
+    this.extensionContext.workspaceState.update('launchTargetName', t);
+  }
+
   /**
    * The keyword settings for the build variant
    */

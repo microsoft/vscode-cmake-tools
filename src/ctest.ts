@@ -148,7 +148,7 @@ class CTestOutputLogger implements OutputConsumer {
   output(line: string) { log.info(line);} error(line: string) { this.output(line);}
 };
 
-export class CTestDriver {
+export class CTestDriver implements vscode.Disposable {
   private _testingEnabled: boolean = false;
   public get testingEnabled(): boolean { return this._testingEnabled; }
   public set testingEnabled(v: boolean) {
@@ -158,6 +158,12 @@ export class CTestDriver {
 
   private readonly _testingEnabledEmitter = new vscode.EventEmitter<boolean>();
   public readonly onTestingEnabledChanged = this._testingEnabledEmitter.event;
+
+  dispose() {
+    this._testingEnabledEmitter.dispose();
+    this._resultsChangedEmitter.dispose();
+    this._testsChangedEmitter.dispose();
+  }
 
   /**
    * Holds the most recent test informations

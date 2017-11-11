@@ -20,7 +20,7 @@
     ],
     "publisher": "vector-of-bool",
     "engines": {
-        "vscode": "^1.12.0"
+        "vscode": "^1.16.0"
     },
     "categories": [
         "Other"
@@ -675,7 +675,7 @@
         "mocha": "~3.4.2",
         "typedoc": "^0.8.0",
         "typescript": "~2.3.0",
-        "vscode": "~1.1.0"
+        "vscode": "~1.1.5"
     },
     "dependencies": {
         "Polymer": "1.6.1--",

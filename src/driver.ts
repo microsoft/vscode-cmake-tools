@@ -57,13 +57,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Check if we need to reconfigure, such as if an important file has changed
    */
-
   abstract get needsReconfigure(): boolean;
 
   /**
    * List of targets known to CMake
    */
   abstract get targets(): api.Target[];
+
+  /**
+   * List of executable targets known to CMake
+   */
+  abstract get executableTargets(): api.ExecutableTarget[];
 
   /**
    * Do any necessary disposal for the driver. For the CMake Server driver,

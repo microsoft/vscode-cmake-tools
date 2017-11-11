@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { BasicTestResults } from "./ctest";
+import {BasicTestResults} from "./ctest";
 
 interface Hideable {
   show(): void;
@@ -23,6 +23,8 @@ export class StatusBar implements vscode.Disposable {
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
   private readonly _targetButton
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
+  private readonly _launchTargetNameButton
+      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.2);
   private readonly _testButton
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
   private readonly _warningMessage
@@ -30,11 +32,13 @@ export class StatusBar implements vscode.Disposable {
 
   dispose() {
     const items = [
-      this._kitSelectionButton,
       this._cmakeToolsStatusItem,
+      this._kitSelectionButton,
       this._buildButton,
-      this._warningMessage,
       this._targetButton,
+      this._launchTargetNameButton,
+      this._testButton,
+      this._warningMessage,
     ];
     for (const item of items) {
       item.dispose();
@@ -51,6 +55,8 @@ export class StatusBar implements vscode.Disposable {
     this._targetButton.tooltip = 'Set the active target to build';
     this._testButton.command = 'cmake.ctest';
     this._testButton.tooltip = 'Run CTest tests';
+    this._launchTargetNameButton.command = 'cmake.selectLaunchTarget';
+    this._launchTargetNameButton.tooltip = 'Select the target to launch';
     this._reloadBuildButton();
     this.reloadVisibility();
   }
@@ -61,6 +67,7 @@ export class StatusBar implements vscode.Disposable {
       this._buildButton,
       this._kitSelectionButton,
       this._targetButton,
+      this._launchTargetNameButton,
     ];
     for (const item of autovis_items) {
       setVisible(item, this._visible && !!item.text);
@@ -118,6 +125,11 @@ export class StatusBar implements vscode.Disposable {
   public set targetName(v: string) {
     this._targetName = v;
     this._targetButton.text = `[${v}]`;
+    this.reloadVisibility();
+  }
+
+  setLaunchTargetName(v : string) {
+    this._launchTargetNameButton.text = v;
     this.reloadVisibility();
   }
 

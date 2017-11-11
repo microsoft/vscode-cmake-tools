@@ -193,4 +193,5 @@ export class LegacyCMakeDriver extends CMakeDriver {
   }
 
   get targets() { return []; }
+  get executableTargets() { return []; }
 }
