@@ -104,7 +104,7 @@ export const PARSER_NEEDS_MORE: LineParseResult = {
 };
 
 export abstract class DiagnosticParser {
-  constructor(protected readonly binaryDir: string) {}
+  constructor(protected readonly binaryDir: string, protected readonly sourceDir: string) {}
   public abstract parseLine(line: string): LineParseResult;
 }
 
@@ -112,8 +112,8 @@ export abstract class DiagnosticParser {
 export class CMakeDiagnosticParser extends DiagnosticParser {
   private _cmakeDiag: Maybe<FileDiagnostic>;
 
-  constructor(binaryDir: string) {
-    super(binaryDir);
+  constructor(binaryDir: string, sourceDir: string) {
+    super(binaryDir, sourceDir);
     this._cmakeDiag = null;
   }
 
@@ -146,7 +146,7 @@ export class CMakeDiagnosticParser extends DiagnosticParser {
     this._cmakeDiag = <FileDiagnostic>{};
     this._cmakeDiag.filepath = path.isAbsolute(filename) ?
         filename :
-        path.join(vscode.workspace.rootPath!, filename);
+        path.normalize(path.join(this.sourceDir, filename));
     this._cmakeDiag.key = full;
     const lineNr = Number.parseInt(linestr) - 1;
 
@@ -372,7 +372,7 @@ export class BuildParser extends util.OutputParser {
   private _parserCollection: Set<DiagnosticParser>;
 
   constructor(
-      binaryDir: string, parsers: Maybe<string[]>, generator: Maybe<string>) {
+      binaryDir: string, sourceDir: string, parsers: Maybe<string[]>, generator: Maybe<string>) {
     super();
     this._accumulatedDiags = new Map();
     this._lastFile = null;
@@ -381,13 +381,13 @@ export class BuildParser extends util.OutputParser {
     if (parsers) {
       for (let parser of parsers) {
         if (parser in diagnosticParsers) {
-          this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
+          this._parserCollection.add(new diagnosticParsers[parser](binaryDir, sourceDir));
         }
       }
     } else {
       /* No parser specified. Use all implemented. */
       for (let parser in diagnosticParsers) {
-        this._parserCollection.add(new diagnosticParsers[parser](binaryDir));
+        this._parserCollection.add(new diagnosticParsers[parser](binaryDir, sourceDir));
       }
     }
   }

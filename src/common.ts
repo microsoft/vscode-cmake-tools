@@ -1107,7 +1107,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         },
         (config.parseBuildDiagnostics ?
              new BuildParser(
-                 this.binaryDir, config.enableOutputParsers,
+                 this.binaryDir, this.sourceDir,
+                 config.enableOutputParsers,
                  this.activeGenerator) :
              new util.NullParser()));
     this.statusMessage = 'Ready';

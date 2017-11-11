@@ -365,14 +365,13 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
             '-H' + util.normalizePath(this.sourceDir),
             '-B' + util.normalizePath(this.binaryDir));
 
-        const binary_dir = this.binaryDir;
         this.statusMessage = 'Configuring...';
         const result = await this.executeCMakeCommand(
             args.concat(extra_args), {
               silent: false,
               environment: config.configureEnvironment,
             },
-            new BuildParser(this.binaryDir, null, this.activeGenerator));
+            new BuildParser(this.binaryDir, this.sourceDir, null, this.activeGenerator));
         this.statusMessage = 'Ready';
         if (!result.retc) {
             await this._refreshAll();
