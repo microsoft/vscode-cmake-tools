@@ -160,8 +160,6 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   abstract get activeGenerator(): Maybe<string>;
   abstract get executableTargets(): api.ExecutableTarget[];
   abstract get targets(): api.Target[];
-  abstract get compilerId(): string|null;
-  abstract get linkerId(): string|null;
   abstract markDirty(): void;
   abstract configure(extraArgs?: string[], runPrebuild?: boolean):
       Promise<number>;
@@ -188,6 +186,38 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * the statusbar.
    */
   protected readonly _statusBar = new status.StatusBar();
+
+  get compilerId() {
+    for (const lang of ['CXX', 'C']) {
+      const entry = this.cacheEntry(`CMAKE_${lang}_COMPILER`);
+      if (!entry) {
+        continue;
+      }
+      const compiler = entry.as<string>();
+      if (compiler.endsWith('cl.exe')) {
+        return 'MSVC';
+      } else if (/g(cc|\+\+)[^/]*/.test(compiler)) {
+        return 'GNU';
+      } else if (/clang(\+\+)?[^/]*/.test(compiler)) {
+        return 'Clang';
+      }
+    }
+    return null;
+  }
+
+
+  get linkerId() {
+    const entry = this.cacheEntry(`CMAKE_LINKER`);
+    if (entry) {
+      const linker = entry.as<string>();
+      if (linker.endsWith('link.exe')) {
+        return 'MSVC';
+      } else if (linker.endsWith('ld')) {
+        return 'GNU';
+      }
+    }
+    return null;
+  }
 
   /**
    * The variant manager, controls and updates build variants

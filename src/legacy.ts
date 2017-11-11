@@ -68,16 +68,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
         return this._reconfigured;
     }
 
-    private _compilerId: Maybe<string> = null;
-    get compilerId() {
-        return this._compilerId;
-    }
-
-    private _linkerId: Maybe<string> = null;
-    get linkerId() {
-        return this._linkerId;
-    }
-
     private _targets: api.NamedTarget[] = [];
     get targets() { return this._targets; }
 
@@ -155,14 +145,11 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
                     name: tup[1],
                     path: tup[2],
                 }));
-            this._compilerId = null;
             if (tuples.length > 0) {
                 const [_, os, proc, cid] = tuples.find(tup => tup[0] === 'system')!;
-                this._compilerId = cid;
             }
         } else {
             this.executableTargets = [];
-            this._compilerId = null;
         }
     }
 
