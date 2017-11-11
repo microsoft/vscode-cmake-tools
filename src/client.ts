@@ -53,24 +53,6 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     this._dirty = true;
   }
 
-  get compilerId() {
-    for (const lang of ['CXX', 'C']) {
-      const entry = this.cacheEntry(`CMAKE_${lang}_COMPILER`);
-      if (!entry) {
-        continue;
-      }
-      const compiler = entry.as<string>();
-      if (compiler.endsWith('cl.exe')) {
-        return 'MSVC';
-      } else if (/g(cc|\+\+)[^/]*/.test(compiler)) {
-        return 'GNU';
-      } else if (/clang(\+\+)?[^/]*/.test(compiler)) {
-        return 'Clang';
-      }
-    }
-    return null;
-  }
-
   get needsReconfigure() {
     return this._dirty;
   }
@@ -186,7 +168,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
 
     this.statusMessage = 'Configuring...';
     const parser = new diagnostics.BuildParser(
-        this.binaryDir, ['cmake'], this.activeGenerator);
+        this.binaryDir, this.sourceDir, ['cmake'], this.activeGenerator);
     const parseMessages = () => {
       for (const msg of this._accumulatedMessages) {
         const lines = msg.split('\n');
@@ -201,6 +183,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       await this._client.configure(
           {cacheArguments: args.concat(extraArgs)});
       await this._client.compute();
+      this._dirty = false;
       parseMessages();
     } catch (e) {
       if (e instanceof cms.ServerError) {

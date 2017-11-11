@@ -40,6 +40,10 @@ add a PR for relevant information in the `docs/` subdirectory.
     variable to the root path of the Emscripten SDK
     (Contains `cmake/Modules/Platform/Emscripten.cmake`)
   - Fix environment variables not passing from `settings.json` to configuration.
+- **0.10.3**:
+  - Bugfixes:
+    - Debugging works again in the VSCode October update
+    - Various
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
