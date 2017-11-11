@@ -976,7 +976,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     if (!target) return;
     const msvc = this.compilerId ? this.compilerId.includes('MSVC') :
       (this.linkerId ? this.linkerId.includes('MSVC') : false);
-    const real_config = {
+    const debug_config: vscode.DebugConfiguration = {
       name: `Debugging Target ${target.name}`,
       type: msvc ? 'cppvsdbg' : 'cppdbg',
       request: 'launch',
@@ -985,9 +985,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       MIMode: process.platform === 'darwin' ? 'lldb' : 'gdb',
     };
     const user_config = config.debugConfig;
-    Object.assign(real_config, user_config);
-    real_config['program'] = target.path;
-    await vscode.commands.executeCommand('vscode.startDebug', real_config);
+    Object.assign(debug_config, user_config);
+    debug_config['program'] = target.path;
+    await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
   }
 
   public async prepareConfigure(): Promise<string[]> {
@@ -1109,7 +1109,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         },
         (config.parseBuildDiagnostics ?
              new BuildParser(
-                 this.binaryDir, config.enableOutputParsers,
+                 this.binaryDir, this.sourceDir,
+                 config.enableOutputParsers,
                  this.activeGenerator) :
              new util.NullParser()));
     this.statusMessage = 'Ready';

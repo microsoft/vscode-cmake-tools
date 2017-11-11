@@ -495,7 +495,7 @@ export function pause(time: number): Promise<void> {
  */
 export function replaceVars(str: string): string {
   const replacements = [
-    ['${workspaceRoot}', vscode.workspace.rootPath],
+    ['${workspaceRoot}', normalizePath(vscode.workspace.rootPath || '')],
     [
       '${workspaceRootFolderName}', path.basename(vscode.workspace.rootPath || '.')
     ],

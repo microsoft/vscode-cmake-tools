@@ -199,7 +199,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
 
     this.statusMessage = 'Configuring...';
     const parser = new diagnostics.BuildParser(
-        this.binaryDir, ['cmake'], this.activeGenerator);
+        this.binaryDir, this.sourceDir, ['cmake'], this.activeGenerator);
     const parseMessages = () => {
       for (const msg of this._accumulatedMessages) {
         const lines = msg.split('\n');
@@ -214,6 +214,7 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
       await this._client.configure(
           {cacheArguments: args.concat(extraArgs)});
       await this._client.compute();
+      this._dirty = false;
       parseMessages();
     } catch (e) {
       if (e instanceof cms.ServerError) {
