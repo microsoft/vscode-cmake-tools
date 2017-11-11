@@ -161,6 +161,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   abstract get executableTargets(): api.ExecutableTarget[];
   abstract get targets(): api.Target[];
   abstract get compilerId(): string|null;
+  abstract get linkerId(): string|null;
   abstract markDirty(): void;
   abstract configure(extraArgs?: string[], runPrebuild?: boolean):
       Promise<number>;
@@ -973,10 +974,11 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   public async debugTarget(): Promise<void> {
     const target = await this._prelaunchTarget();
     if (!target) return;
+    const msvc = this.compilerId ? this.compilerId.includes('MSVC') :
+      (this.linkerId ? this.linkerId.includes('MSVC') : false);
     const debug_config: vscode.DebugConfiguration = {
       name: `Debugging Target ${target.name}`,
-      type: (this.compilerId && this.compilerId.includes('MSVC')) ? 'cppvsdbg' :
-                                                                    'cppdbg',
+      type: msvc ? 'cppvsdbg' : 'cppdbg',
       request: 'launch',
       cwd: '${workspaceRoot}',
       args: [],

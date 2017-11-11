@@ -73,6 +73,11 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
         return this._compilerId;
     }
 
+    private _linkerId: Maybe<string> = null;
+    get linkerId() {
+        return this._linkerId;
+    }
+
     private _targets: api.NamedTarget[] = [];
     get targets() { return this._targets; }
 
