@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 
 import * as path from 'path';
+import * as zlib from 'zlib';
 
 import * as xml2js from 'xml2js';
 
 import * as api from './api';
+import * as util from './util';
 import {CMakeDriver} from './driver';
 import {fs} from './pr';
 
@@ -22,6 +24,12 @@ export interface BasicTestResults {
 interface SiteAttributes {}
 
 type TestStatus = ('failed' | 'notrun' | 'passed');
+
+export interface FailingTestDecoration {
+  fileName: string;
+  lineNumber: number;
+  hoverMessage: string;
+}
 
 export interface TestMeasurement {
   type: string;
@@ -52,6 +60,10 @@ export interface SiteData {
 
 export interface CTestResults { Site: SiteData; }
 
+interface EncodedMeasurementValue {
+  $: {encoding?: string; compression?: string;};
+  _: string;
+}
 
 // clang-format off
 interface MessyResults {
@@ -70,7 +82,7 @@ interface MessyResults {
         Results: {
           NamedMeasurement:
               {$: {type: string; name: string;}, Value: string[];}[]
-          Measurement: {Value: string[];}[];
+          Measurement: { Value: EncodedMeasurementValue[] }[];
         }[];
       }[];
     }[];
@@ -116,48 +128,191 @@ function parseXMLString<T>(xml: string): Promise<T> {
   });
 }
 
+function decodeOutputMeasurement(node: EncodedMeasurementValue): string {
+  let buffer = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
+  if (!!node.$.compression) {
+    buffer = zlib.unzipSync(buffer);
+  }
+  return buffer.toString('utf-8');
+}
+
 function cleanupResultsXML(messy: MessyResults): CTestResults {
   return {
     Site : {
       $ : messy.Site.$,
       Testing : {
         TestList : messy.Site.Testing[0].TestList.map(l => l.Test[0]),
-        Test : messy.Site.Testing[0].Test.map((test): Test => ({
-                                                FullName : test.FullName[0],
-                                                FullCommandLine : test.FullCommandLine[0],
-                                                Name : test.Name[0],
-                                                Path : test.Path[0],
-                                                Status : test.$.Status,
-                                                Measurements : new Map<string, TestMeasurement>(),
-                                                Output : test.Results[0].Measurement[0].Value[0]
-                                              }))
+        Test : messy.Site.Testing[0].Test.map(
+            (test): Test => ({
+              FullName : test.FullName[0],
+              FullCommandLine : test.FullCommandLine[0],
+              Name : test.Name[0],
+              Path : test.Path[0],
+              Status : test.$.Status,
+              Measurements : new Map<string, TestMeasurement>(),
+              Output : decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
+            }))
       }
     }
   };
 }
 
-export async function readTestResultsFile(test_xml: string):
-    Promise<CTestResults> {
-      const content = (await fs.readFile(test_xml)).toString();
-      const data = await parseXMLString(content) as MessyResults;
-      const clean = cleanupResultsXML(data);
-      return clean;
+export async function readTestResultsFile(test_xml: string) {
+  const content = (await fs.readFile(test_xml)).toString();
+  const data = await parseXMLString(content) as MessyResults;
+  const clean = cleanupResultsXML(data);
+  return clean;
+};
+
+
+export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
+  const lines_with_ws = output.split('\n');
+  const lines = lines_with_ws.map(l => l.trim());
+  const decorations: FailingTestDecoration[] = [];
+  for (let cursor = 0; cursor < lines.length; ++cursor) {
+    const line = lines[cursor];
+    const regex = process.platform === 'win32' ? /^(.*)\((\d+)\): FAILED:/ : /^(.*):(\d+): FAILED:/;
+    const res = regex.exec(line);
+    if (res) {
+      const[_all, file, lineno_] = res;
+      _all;  // unused
+      const lineno = parseInt(lineno_) - 1;
+      let message = '~~~c++\n';
+      for (let i = 0;; ++i) {
+        const expr_line = lines_with_ws[cursor + i];
+        if (expr_line.startsWith('======') || expr_line.startsWith('------')) {
+          break;
+        }
+        message += expr_line + '\n';
+      }
+
+      decorations.push({
+        fileName : file,
+        lineNumber : lineno,
+        hoverMessage : `${message}\n~~~`,
+      });
     }
+  }
+  return decorations;
+}
+
+export async function parseTestOutput(output: string): Promise<FailingTestDecoration[]> {
+  if (/is a Catch .* host application\./.test(output)) {
+    return parseCatchTestOutput(output);
+  } else {return [];}
+};
+
+export class DecorationManager {
+  constructor() {
+    vscode.window.onDidChangeActiveTextEditor(_ => { this._refreshActiveEditorDecorations(); });
+  }
+
+  private readonly _failingTestDecorationType = vscode.window.createTextEditorDecorationType({
+    borderColor : 'rgba(255, 0, 0, 0.2)',
+    borderWidth : '1px',
+    borderRadius : '3px',
+    borderStyle : 'solid',
+    cursor : 'pointer',
+    backgroundColor : 'rgba(255, 0, 0, 0.1)',
+    overviewRulerColor : 'red',
+    overviewRulerLane : vscode.OverviewRulerLane.Center,
+    after : {
+      contentText : 'Failed',
+      backgroundColor : 'darkred',
+      margin : '10px',
+    },
+  });
+
+  private _binaryDir: string = '';
+  get binaryDir(): string { return this._binaryDir; }
+  set binaryDir(v: string) {
+    this._binaryDir = v;
+    this._refreshActiveEditorDecorations();
+  }
+
+  private _showCoverageData: boolean = false;
+  get showCoverageData(): boolean { return this._showCoverageData; }
+  set showCoverageData(v: boolean) {
+    this._showCoverageData = v;
+    this._refreshAllEditorDecorations();
+  }
+
+  private _refreshAllEditorDecorations() {
+    for (const editor of vscode.window.visibleTextEditors) {
+      this._refreshEditorDecorations(editor);
+    }
+  }
+
+  private _refreshActiveEditorDecorations() {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+      // Seems that sometimes the activeTextEditor is undefined. A VSCode bug?
+      this._refreshEditorDecorations(editor);
+    }
+  }
+
+  private _refreshEditorDecorations(editor: vscode.TextEditor) {
+    const fails_acc: vscode.DecorationOptions[] = [];
+    const editor_file = util.normalizePath(editor.document.fileName);
+    for (const decor of this.failingTestDecorations) {
+      const decor_file = util.normalizePath(path.isAbsolute(decor.fileName)
+                                                ? decor.fileName
+                                                : path.join(this.binaryDir, decor.fileName));
+      if (editor_file !== decor_file) {
+        continue;
+      }
+      const file_line = editor.document.lineAt(decor.lineNumber);
+      const range = new vscode.Range(decor.lineNumber,
+                                     file_line.firstNonWhitespaceCharacterIndex,
+                                     decor.lineNumber,
+                                     file_line.range.end.character);
+      fails_acc.push({
+        hoverMessage : decor.hoverMessage,
+        range : range,
+      });
+    }
+    editor.setDecorations(this._failingTestDecorationType, fails_acc);
+  }
+
+  private _failingTestDecorations: FailingTestDecoration[] = [];
+  clearFailingTestDecorations() { this.failingTestDecorations = []; }
+  addFailingTestDecoration(dec: FailingTestDecoration) {
+    this._failingTestDecorations.push(dec);
+    this._refreshActiveEditorDecorations();
+  }
+  get failingTestDecorations(): FailingTestDecoration[] { return this._failingTestDecorations; }
+  set failingTestDecorations(v: FailingTestDecoration[]) {
+    this._failingTestDecorations = v;
+    this._refreshAllEditorDecorations();
+  }
+
+  // XXX: Revive coverage decorations?
+  // private _coverageDecorations : CoverageDecoration[] = [];
+  // get coverageDecorations() : CoverageDecoration[] {
+  //   return this._coverageDecorations;
+  // }
+  // set coverageDecorations(v : CoverageDecoration[]) {
+  //   this._coverageDecorations = v;
+  //   this._refreshAllEditorDecorations();
+  // }
+};
 
 class CTestOutputLogger implements OutputConsumer {
-  output(line: string) { log.info(line);} error(line: string) { this.output(line);}
+  output(line: string) { log.info(line); }
+  error(line: string) { this.output(line); }
 };
 
 export class CTestDriver implements vscode.Disposable {
+  private _decorationManager = new DecorationManager();
   private _testingEnabled: boolean = false;
-  public get testingEnabled(): boolean { return this._testingEnabled; }
-  public set testingEnabled(v: boolean) {
+  get testingEnabled(): boolean { return this._testingEnabled; }
+  set testingEnabled(v: boolean) {
     this._testingEnabled = v;
     this._testingEnabledEmitter.fire(v);
   }
 
   private readonly _testingEnabledEmitter = new vscode.EventEmitter<boolean>();
-  public readonly onTestingEnabledChanged = this._testingEnabledEmitter.event;
+  readonly onTestingEnabledChanged = this._testingEnabledEmitter.event;
 
   dispose() {
     this._testingEnabledEmitter.dispose();
@@ -169,18 +324,18 @@ export class CTestDriver implements vscode.Disposable {
    * Holds the most recent test informations
    */
   private _tests: api.Test[] = [];
-  public get tests(): api.Test[] { return this._tests; }
-  public set tests(v: api.Test[]) {
+  get tests(): api.Test[] { return this._tests; }
+  set tests(v: api.Test[]) {
     this._tests = v;
     this._testsChangedEmitter.fire(v);
   }
 
   private readonly _testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();
-  public readonly onTestsChanged = this._testsChangedEmitter.event;
+  readonly onTestsChanged = this._testsChangedEmitter.event;
 
   private _testResults: CTestResults | null;
-  public get testResults(): CTestResults | null { return this._testResults; }
-  public set testResults(v: CTestResults | null) {
+  get testResults(): CTestResults | null { return this._testResults; }
+  set testResults(v: CTestResults | null) {
     this._testResults = v;
     if (v) {
       const total = this.tests.length;
@@ -193,10 +348,11 @@ export class CTestDriver implements vscode.Disposable {
   }
 
   private readonly _resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
-  public readonly onResultsChanged = this._resultsChangedEmitter.event;
+  readonly onResultsChanged = this._resultsChangedEmitter.event;
 
   async runCTest(driver: CMakeDriver): Promise<number> {
     log.showChannel();
+    this._decorationManager.clearFailingTestDecorations();
 
     // TODO: Pass in configuration for -C
     const configuration = 'Debug';
@@ -221,14 +377,13 @@ export class CTestDriver implements vscode.Disposable {
   /**
    * @brief Reload the list of CTest tests
    */
-  public async reloadTests(driver: CMakeDriver): Promise<api.Test[]> {
+  async reloadTests(driver: CMakeDriver): Promise<api.Test[]> {
     const ctest_file = path.join(driver.binaryDir, 'CTestTestfile.cmake');
     if (!(await fs.exists(ctest_file))) {
       this.testingEnabled = false;
       return this.tests = [];
     }
-    // TODO: Bring back decoration manager
-    // this._decorationManager.binaryDir = driver.binaryDir;
+    this._decorationManager.binaryDir = driver.binaryDir;
     this.testingEnabled = true;
 
     // TOOD: Load the real config
@@ -271,17 +426,12 @@ export class CTestDriver implements vscode.Disposable {
   private async _reloadTestResults(_sourceDir: string, _tagdir: string, test_xml: string):
       Promise<void> {
     this.testResults = await readTestResultsFile(test_xml);
-    // const failing =
-    //     this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
-    // this._decorationManager.clearFailingTestDecorations();
-    // let new_decors = [] as FailingTestDecoration[];
-    // for (const t of failing) {
-    //   new_decors.push(...await parseTestOutput(t.Output));
-    // }
-    // this._decorationManager.failingTestDecorations = new_decors;
-
-    // const coverage = await readTestCoverageFiles(tagdir);
-    // const decors = generateCoverageDecorations(sourcedir, coverage)
-    // this._decorationManager.coverageDecorations = decors;
+    const failing = this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
+    this._decorationManager.clearFailingTestDecorations();
+    let new_decors = [] as FailingTestDecoration[];
+    for (const t of failing) {
+      new_decors.push(...await parseTestOutput(t.Output));
+    }
+    this._decorationManager.failingTestDecorations = new_decors;
   }
 }
