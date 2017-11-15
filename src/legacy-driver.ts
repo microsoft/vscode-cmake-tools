@@ -70,7 +70,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   // Legacy disposal does nothing
   async asyncDispose() { log.debug('Dispose: Do nothing'); }
 
-  async configure(outputConsumer?: proc.OutputConsumer): Promise<number> {
+  async configure(extra_args: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     if (!await this._beforeConfigure()) {
       log.debug('Pre-configure steps aborted configure');
       // Pre-configure steps failed. Bad...
@@ -94,6 +94,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     }
 
     args.push(`-DCMAKE_BUILD_TYPE:STRING=${this._buildType}`);
+    args.push(...extra_args);
 
     // TODO: Make sure we are respecting all variant options
 
@@ -139,7 +140,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
       log.info('[vscode] Removing ', cmake_files);
       await fs.rmdir(cmake_files);
     }
-    return this.configure(consumer);
+    return this.configure([], consumer);
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {

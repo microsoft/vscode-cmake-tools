@@ -60,7 +60,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      'build',
                      'setVariant',
                      'install',
-                     // 'jumpToCacheFile',
+                     'editCache',
                      'clean',
                      'cleanRebuild',
                      'buildWithTarget',
@@ -72,7 +72,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      'debugTarget',
                      'launchTarget',
                      'selectLaunchTarget',
-                     // 'toggleCoverageDecorations',
+                     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
                    ];
 
   // Bind them all!
@@ -85,7 +85,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
       vscode.commands.registerCommand('cmake._extensionInstance', () => { return cmt;}));
 
   // Return the extension
-  INSTANCE = cmt;
+  INSTANCE
+  = cmt;
   return INSTANCE;
 }
 
@@ -94,7 +95,5 @@ export async function
 deactivate() {
   log.debug('Deactivate CMakeTools');
   //   outputChannels.dispose();
-  if (INSTANCE) {
-    await INSTANCE.asyncDispose();
-  }
+  if (INSTANCE) { await INSTANCE.asyncDispose();}
 }

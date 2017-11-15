@@ -2,7 +2,10 @@
  * Root of the extension
  */
 import * as vscode from 'vscode';
+
+import * as http from 'http';
 import * as path from 'path';
+import * as ws from 'ws';
 
 import rollbar from './rollbar';
 import * as diags from './diagnostics';
@@ -14,9 +17,10 @@ import {LegacyCMakeDriver} from './legacy-driver';
 import {StatusBar} from './status';
 import config from "./config";
 import {fs} from './pr';
+import {CTestDriver} from './ctest';
+import {CacheEditorContentProvider} from "./cache-editor";
 
 import * as logging from './logging';
-import {CTestDriver} from './ctest';
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -37,6 +41,10 @@ const build_log = logging.createLogger('build');
  * class. See the `_init` private method for this initialization.
  */
 export class CMakeTools implements vscode.Disposable {
+  private _http_server: http.Server;
+  private _ws_server: ws.Server;
+  private _editor_provider: vscode.Disposable;
+
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
    * @param extensionContext The extension context
@@ -46,6 +54,49 @@ export class CMakeTools implements vscode.Disposable {
   private constructor(readonly extensionContext: vscode.ExtensionContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     log.debug('Constructing new CMakeTools instance');
+
+    const editor_server = this._http_server = http.createServer();
+    const ready = new Promise((resolve, reject) => {
+      editor_server.listen(0, 'localhost', undefined, (err: any) => {
+        if (err)
+          reject(err);
+        else
+          resolve();
+      });
+    });
+
+    ready.then(() => {
+      const websock_server = this._ws_server = ws.createServer({server : editor_server});
+      websock_server.on('connection', (client) => {
+        // TODO:
+        // const sub = this.reconfigured(
+        //     () => { client.send(JSON.stringify({method : 'refreshContent'})); });
+        // client.onclose = () => { sub.dispose(); };
+        client.onmessage = (msg) => {
+          const data = JSON.parse(msg.data);
+          console.log('Got message from editor client', msg);
+          rollbar.invokeAsync('Handle message from cache editor', () => {
+            return this._handleCacheEditorMessage(data.method, data.params)
+                .then(ret => {
+                  client.send(JSON.stringify({
+                    id : data.id,
+                    result : ret,
+                  }));
+                })
+                .catch(e => {
+                  client.send(JSON.stringify({
+                    id : data.id,
+                    error : (e as Error).message,
+                  }));
+                });
+          });
+        };
+      });
+
+      this._editor_provider = vscode.workspace.registerTextDocumentContentProvider(
+          'cmake-cache',
+          new CacheEditorContentProvider(this.extensionContext, editor_server.address().port));
+    });
   }
 
   /**
@@ -228,10 +279,10 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementation of `cmake.configure`
    */
-  configure() {
+  configure(extra_args: string[] = []) {
     return this._doConfigure(async(consumer) => {
       const drv = await this._cmakeDriver;
-      return drv.configure(consumer)
+      return drv.configure(extra_args, consumer);
     });
   }
 
@@ -337,6 +388,26 @@ export class CMakeTools implements vscode.Disposable {
       this._statusBar.setIsBusy(false);
       consumer.dispose();
     }
+  }
+
+  async editCache(): Promise<void> {
+    const drv = await this._cmakeDriver;
+    if (!await fs.exists(drv.cachePath)) {
+      const do_conf
+          = !!(await vscode.window.showErrorMessage('This project has not yet been configured',
+                                                    'Configure Now'));
+      if (do_conf) {
+        if (await this.configure() !== 0)
+          return;
+      } else {
+        return;
+      }
+    }
+
+    await vscode.commands.executeCommand('vscode.previewHtml',
+                                         'cmake-cache://' + drv.cachePath,
+                                         vscode.ViewColumn.Three,
+                                         'CMake Cache');
   }
 
   async buildWithTarget(): Promise<number> {
@@ -601,6 +672,24 @@ export class CMakeTools implements vscode.Disposable {
     const doc = await vscode.workspace.openTextDocument(drv.mainListFile);
     await vscode.window.showTextDocument(doc);
     return this.configure();
+  }
+
+  private async _handleCacheEditorMessage(method: string,
+                                          params: {[key: string] : any}): Promise<any> {
+    switch (method) {
+    case 'getEntries': {
+      const drv = await this._cmakeDriver;
+      return drv.allCacheEntries;
+    }
+    case 'configure': {
+      // TODO: Send args from the cache editor
+      return this.configure(params['args']);
+    }
+    case 'build': {
+      return this.build();
+    }
+    }
+    throw new Error('Invalid method: ' + method);
   }
 }
 

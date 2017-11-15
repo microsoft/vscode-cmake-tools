@@ -35,7 +35,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  abstract configure(consumer?: proc.OutputConsumer): Promise<number>;
+  abstract configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
 
   /**
    * Perform a clean configure. Deletes cached files before running the config
