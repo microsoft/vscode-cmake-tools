@@ -481,6 +481,34 @@ export class CMakeTools implements vscode.Disposable {
   }
 
   /**
+   * Implementation of `cmake.debugTarget`
+   * TODO: Check once we have CMakeToolsMeta back in place.
+   */
+  async debugTarget(): Promise<vscode.DebugSession | null> {
+    const target_name = this._stateManager.launchTargetName;
+    const target_path = await this.launchTargetPath();
+    if (!target_path) {
+      vscode.window.showWarningMessage('No target selected for debugging');
+      return null;
+    }
+    // TODO: Check if we are MSVC
+    const is_msvc = false;
+    const debug_config: vscode.DebugConfiguration = {
+      type : is_msvc ? 'cppvsdbg' : 'cppdbg',
+      name : `Debug target: ${target_name}`,
+      request : 'launch',
+      cwd : '${workspaceRoot}',
+      args : [],
+      MIMode : process.platform == 'darwin' ? 'lldb' : 'gdb',
+    };
+    const user_config = config.debugConfig;
+    Object.assign(debug_config, user_config);
+    debug_config.program = target_path;
+    await vscode.debug.startDebugging(vscode.workspace.workspaceFolders ![0], debug_config);
+    return vscode.debug.activeDebugSession !;
+  }
+
+  /**
    * Implementation of `cmake.quickStart`
    */
   public async quickStart(): Promise<Number> {
