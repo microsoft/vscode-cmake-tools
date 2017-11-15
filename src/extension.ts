@@ -70,7 +70,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      'quickStart',
                      'launchTargetPath',
                      'debugTarget',
-                     // 'launchTarget',
+                     'launchTarget',
                      'selectLaunchTarget',
                      // 'toggleCoverageDecorations',
                    ];

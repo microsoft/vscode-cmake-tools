@@ -509,6 +509,22 @@ export class CMakeTools implements vscode.Disposable {
   }
 
   /**
+   * Implementation of `cmake.launchTarget`
+   */
+  async launchTarget() {
+    const target_name = this._stateManager.launchTargetName;
+    const target_path = await this.launchTargetPath();
+    if (!target_path || !target_name) {
+      vscode.window.showWarningMessage('No target selected for launching');
+      return null;
+    }
+    const term = vscode.window.createTerminal(target_name, target_path);
+    // TODO: Setup disposing of the terminal
+    term.show();
+    return term;
+  }
+
+  /**
    * Implementation of `cmake.quickStart`
    */
   public async quickStart(): Promise<Number> {
