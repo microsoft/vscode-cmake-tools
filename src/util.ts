@@ -209,3 +209,13 @@ async function _killTree(pid: number) {
           // task using taskkill.
           child_process.exec('taskkill /pid ' + pid.toString() + ' /T /F');}
 }
+
+export function splitCommandLine(cmd: string): string[] {
+  const cmd_re = /('(\\'|[^'])*'|"(\\"|[^"])*"|(\\ |[^ ])+|[\w-]+)/g;
+  const quoted_args = cmd.match(cmd_re);
+  console.assert(quoted_args);
+  // Our regex will parse escaped quotes, but they remain. We must
+  // remove them ourselves
+  return quoted_args !.map(arg => arg.replace(/\\(")/g, '$1').replace(/^"(.*)"$/g, '$1'));
+
+}
