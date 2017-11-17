@@ -129,7 +129,8 @@ function parseXMLString<T>(xml: string): Promise<T> {
 }
 
 function decodeOutputMeasurement(node: EncodedMeasurementValue): string {
-  let buffer = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
+  let buffer
+      = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
   if (!!node.$.compression) {
     buffer = zlib.unzipSync(buffer);
   }
@@ -354,8 +355,7 @@ export class CTestDriver implements vscode.Disposable {
     log.showChannel();
     this._decorationManager.clearFailingTestDecorations();
 
-    // TODO: Pass in configuration for -C
-    const configuration = 'Debug';
+    const configuration = driver.currentBuildType;
     const child = driver.executeCommand(
         config.ctestPath,
         [ `-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure' ]
@@ -386,8 +386,7 @@ export class CTestDriver implements vscode.Disposable {
     this._decorationManager.binaryDir = driver.binaryDir;
     this.testingEnabled = true;
 
-    // TOOD: Load the real config
-    const config = 'Debug';
+    const config = driver.currentBuildType;
     const result = await driver
                        .executeCommand('ctest',
                                        [ '-N', '-C', config ],

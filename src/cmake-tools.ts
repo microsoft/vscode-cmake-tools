@@ -68,10 +68,9 @@ export class CMakeTools implements vscode.Disposable {
     ready.then(() => {
       const websock_server = this._ws_server = ws.createServer({server : editor_server});
       websock_server.on('connection', (client) => {
-        // TODO:
-        // const sub = this.reconfigured(
-        //     () => { client.send(JSON.stringify({method : 'refreshContent'})); });
-        // client.onclose = () => { sub.dispose(); };
+        const sub = this.onReconfigured(
+            () => { client.send(JSON.stringify({method : 'refreshContent'})); });
+        client.onclose = () => { sub.dispose(); };
         client.onmessage = (msg) => {
           const data = JSON.parse(msg.data);
           console.log('Got message from editor client', msg);
@@ -171,9 +170,18 @@ export class CMakeTools implements vscode.Disposable {
       this._statusBar.setProjectName(project);
     }
     drv.onProjectNameChanged(name => { this._statusBar.setProjectName(name); });
+    drv.onReconfigured(() => this._onReconfiguredEmitter.fire());
     // All set up. Fulfill the driver promise.
     return drv;
   }
+
+  /**
+   * Event fired after CMake configure runs
+   */
+  get onReconfigured() {
+    return this._onReconfiguredEmitter.event;
+  }
+  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
   /**
    * Reload/restarts the CMake Driver
@@ -462,7 +470,6 @@ export class CMakeTools implements vscode.Disposable {
       return build_retc;
     }
     const drv = await this._cmakeDriver;
-    // TODO: Pass build configuration type to CTest
     return this._ctestController.runCTest(drv);
   }
 

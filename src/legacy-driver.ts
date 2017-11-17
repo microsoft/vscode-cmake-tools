@@ -3,6 +3,7 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
+import * as vscode from 'vscode';
 import * as path from 'path';
 
 import {CMakeDriver} from './driver';
@@ -45,6 +46,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     await this._setBaseKit(kit);
   }
 
+  get onReconfigured() { return this._onReconfiguredEmitter.event; }
+  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
+
   /**
    * The CMAKE_BUILD_TYPE to use
    */
@@ -67,8 +71,10 @@ export class LegacyCMakeDriver extends CMakeDriver {
     this._linkage = opts.linkage || this._linkage;
   }
 
+  get currentBuildType(): string { return this._buildType; }
+
   // Legacy disposal does nothing
-  async asyncDispose() { log.debug('Dispose: Do nothing'); }
+  async asyncDispose() { this._onReconfiguredEmitter.dispose(); }
 
   async configure(extra_args: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     if (!await this._beforeConfigure()) {
@@ -125,6 +131,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
       this._needsReconfigure = false;
     }
     await this._reloadCMakeCache();
+    this._onReconfiguredEmitter.fire();
     return res.retc === null ? -1 : res.retc;
   }
 
@@ -170,6 +177,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     await child.result;
     this._currentProcess = null;
     await this._reloadCMakeCache();
+    this._onReconfiguredEmitter.fire();
     return child;
   }
 
@@ -182,9 +190,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return true;
   }
 
-  protected async _init() {
-    await super._init();
-  }
+  protected async _init() { await super._init(); }
 
   static async create(): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');

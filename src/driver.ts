@@ -15,7 +15,7 @@ import config from './config';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
-import { VariantConfigurationOptions } from "./variant";
+import {VariantConfigurationOptions} from "./variant";
 
 const log = logging.createLogger('driver');
 
@@ -58,6 +58,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Check if we need to reconfigure, such as if an important file has changed
    */
   abstract get needsReconfigure(): boolean;
+
+  /**
+   * Event emitted when configuration finishes
+   */
+  abstract get onReconfigured(): vscode.Event<void>;
 
   /**
    * List of targets known to CMake
@@ -119,31 +124,28 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     this._kitEnvironmentVariables = new Map();
     switch (this._baseKit.type) {
-      case 'vsKit': {
-        const vars = await getVSKitEnvironment(this._baseKit);
-        if (!vars) {
-          log.error('Invalid VS environment:', this._baseKit.name);
-          log.error('We couldn\'t find the required environment variables');
-        } else {
-          this._kitEnvironmentVariables = vars;
-        }
+    case 'vsKit': {
+      const vars = await getVSKitEnvironment(this._baseKit);
+      if (!vars) {
+        log.error('Invalid VS environment:', this._baseKit.name);
+        log.error('We couldn\'t find the required environment variables');
+      } else {
+        this._kitEnvironmentVariables = vars;
       }
-      default: {
-        // Other kits don't have environment variables
-      }
+    }
+    default: {
+      // Other kits don't have environment variables
+    }
     }
   }
 
   /**
    * Get the environment variables required by the current Kit
    */
-  protected _getKitEnvironmentVariablesObject(): {[key: string]: string} {
-    return util.reduce(
-      this._kitEnvironmentVariables.entries(),
-      {},
-      (acc, [key, value]) =>
-        Object.assign(acc, { [key]: value })
-    );
+  protected _getKitEnvironmentVariablesObject(): {[key: string] : string} {
+    return util.reduce(this._kitEnvironmentVariables.entries(),
+                       {},
+                       (acc, [ key, value ]) => Object.assign(acc, {[key] : value}));
   }
 
   /**
@@ -265,12 +267,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
+  executeCommand(command: string,
+                 args: string[],
+                 consumer?: proc.OutputConsumer,
+                 options?: proc.ExecutionOptions): proc.Subprocess {
     let env = this._getKitEnvironmentVariablesObject();
     if (options && options.environment) {
       env = Object.assign({}, env, options.environment);
     }
-    const final_options = Object.assign({}, options, { environment: env });
+    const final_options = Object.assign({}, options, {environment : env});
     return proc.execute(command, args, consumer, final_options);
   }
 
@@ -322,11 +327,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * @brief Get the path to the CMakeCache file in the build directory
    */
-  public get cachePath(): string {
+  get cachePath(): string {
     // TODO: Cache path can change if build dir changes at runtime
     const file = path.join(this.binaryDir, 'CMakeCache.txt');
     return util.normalizePath(file);
   }
+
+  /**
+   * Get the current build type, according to the current selected variant.
+   *
+   * This is the value passed to CMAKE_BUILD_TYPE or --config for multiconf
+   */
+  abstract get currentBuildType(): string;
 
   /**
    * Get the name of the current CMake generator, or `null` if we have not yet
@@ -469,7 +481,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const settings = Object.assign({}, config.configureSettings);
 
     // TODO: Detect multi-conf
-    settings.CMAKE_BUILD_TYPE = 'Debug';
+    settings.CMAKE_BUILD_TYPE = this.currentBuildType;
     settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
 
     const _makeFlag = (key: string, value: any) => {
