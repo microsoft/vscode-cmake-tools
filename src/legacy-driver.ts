@@ -99,7 +99,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
       args.push(`${setting.key}:${cmake_value.type}=${cmake_value.value}`);
     }
 
-    args.push(`-DCMAKE_BUILD_TYPE:STRING=${this._buildType}`);
     args.push(...extra_args);
 
     // TODO: Make sure we are respecting all variant options
