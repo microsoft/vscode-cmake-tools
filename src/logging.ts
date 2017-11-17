@@ -117,7 +117,11 @@ async function _openLogFile() {
     _LOGGER = (async () => {
       const logfilepath = path.join(dirs.dataDir, 'log.txt');
       await fs.mkdir_p(path.dirname(logfilepath));
-      return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
+      if (await fs.exists(logfilepath)) {
+        return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
+      } else {
+        return node_fs.createWriteStream(logfilepath, { flags: 'w' });
+      }
     })();
   }
   return _LOGGER;
