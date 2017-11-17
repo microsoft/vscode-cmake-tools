@@ -10,18 +10,22 @@ import {OutputConsumer} from './proc';
 
 import * as logging from './logging';
 import * as proc from './proc';
+import {RawDiagnostic} from './diagnostics';
 
 const cmake_logger = logging.createLogger('cmake');
 const build_logger = logging.createLogger('build');
 
-// export interface RawDiagnostic {
-//   full: string;
-//   file: string;
-//   line: number;
-//   column: number;
-//   severity: string;
-//   message: string;
-// }
+// TODO: Show diagnostics in the problems window
+
+export interface RawDiagnostic {
+  full: string;
+  file: string;
+  line: number;
+  location: number | vscode.Range;
+  severity: string;
+  message: string;
+  code?: string;
+}
 
 /**
  * An association between a diagnostic and the path to a file. This is required
@@ -247,3 +251,143 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
     }
   }
 };
+
+export class CompileOutputConsumer implements OutputConsumer {
+  // Regular expressions for the diagnostic messages corresponding to each tool
+  private readonly _ghs_re
+      = /^\"(.*)\",\s+(?:(?:line\s+(\d+)\s+\(col\.\s+(\d+)\))|(?:At end of source)):\s+(?:fatal )?(remark|warning|error)\s+(.*)/;
+  private readonly _gcc_re = /^(.*):(\d+):(\d+):\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/;
+  private readonly _gnu_ld_re = /^(.*):(\d+)\s?:\s+(.*[^\]])$/;
+  private readonly _msvc_re
+      = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/
+
+      private _ghsDiagnostics: RawDiagnostic[]
+      = [];
+  get ghsDiagnostics() { return this._ghsDiagnostics; }
+
+  private _gccDiagnostics: RawDiagnostic[] = [];
+  get gccDiagnostics() { return this._gccDiagnostics; }
+
+  private _gnuLDDiagnostics: RawDiagnostic[] = [];
+  get gnuLDDiagnostics() { return this._gnuLDDiagnostics; }
+
+  private _msvcDiagnostics: RawDiagnostic[] = [];
+  get msvcDiagnostics() { return this._msvcDiagnostics; }
+
+  private _tryParseLD(line: string): RawDiagnostic | null {
+    // Try to parse for GNU ld
+    if (line.startsWith('make')) {
+      // This is a Make error. It may *look* like an LD error, so we abort early
+      return null;
+    }
+    const res = this._gnu_ld_re.exec(line);
+    if (!res) {
+      return null;
+    }
+    // Tricksy compiler error looks like a linker error:
+    if (line.endsWith('required from here'))
+      return null;
+    const[full, file, lineno, message] = res;
+    if (file && lineno && message) {
+      return {
+        full : full,
+        file : file,
+        line : parseInt(lineno) - 1,
+        location : 0,
+        severity : 'error',
+        message : message,
+      };
+    } else {
+      return null;
+    }
+  }
+
+  public _tryParseMSVC(line: string): RawDiagnostic | null {
+    const res = this._msvc_re.exec(line);
+    if (!res)
+      return null;
+    const[full, file, location, severity, code, message] = res;
+    const range = (() => {
+      const parts = location.split(',');
+      const n0 = parseInt(parts[0]);
+      if (parts.length === 1)
+        return new vscode.Range(n0, 0, n0, 0);
+      if (parts.length === 2)
+        return new vscode.Range(Number.parseInt(parts[0]) - 1,
+                                Number.parseInt(parts[1]) - 1,
+                                Number.parseInt(parts[0]) - 1,
+                                Number.parseInt(parts[1]) - 1);
+      if (parts.length === 4)
+        return new vscode.Range(Number.parseInt(parts[0]) - 1,
+                                Number.parseInt(parts[1]) - 1,
+                                Number.parseInt(parts[2]) - 1,
+                                Number.parseInt(parts[3]) - 1);
+      throw new Error('Unable to determine location of MSVC diagnostic');
+    })();
+    return {
+      full : full,
+      file : file,
+      line : range.start.line,
+      location : range,
+      severity : severity,
+      message : message,
+      code : code,
+    };
+  }
+
+  error(line: string) {
+    {
+      // Try to parse for GCC
+      const gcc_mat = this._gcc_re.exec(line);
+      if (gcc_mat) {
+        const[full, file, lineno, column, severity, message] = gcc_mat;
+        if (file && lineno && column && severity && message) {
+          this._gccDiagnostics.push({
+            full : full,
+            file : file,
+            line : parseInt(lineno) - 1,
+            location : parseInt(column) - 1,
+            severity : severity,
+            message : message,
+          });
+          return;
+        }
+      }
+    }
+
+    {
+      // Try to parse for GHS
+      const ghs_mat = this._ghs_re.exec(line);
+      if (ghs_mat) {
+        const[full, file, lineno = '1', column = '1', severity, message] = ghs_mat;
+        if (file && severity && message) {
+          this._ghsDiagnostics.push({
+            full : full,
+            file : file,
+            line : parseInt(lineno) - 1,
+            location : parseInt(column) - 1,
+            severity : severity,
+            message : message
+          });
+          return;
+        }
+      }
+    }
+
+    {
+      const ld_diag = this._tryParseLD(line);
+      if (ld_diag) {
+        this._gnuLDDiagnostics.push(ld_diag);
+      }
+    }
+
+    {
+      const msvc_diag = this._tryParseMSVC(line);
+      if (msvc_diag) {
+        this._msvcDiagnostics.push(msvc_diag);
+      }
+    }
+  }
+
+  output(line: string) { this.error(line); }
+}
