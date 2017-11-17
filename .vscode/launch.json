@@ -26,7 +26,7 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["${workspaceRoot}/test/test-project", "--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test"],
+            "args": ["${workspaceRoot}/test/test_project", "--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test"],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
