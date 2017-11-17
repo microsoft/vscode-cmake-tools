@@ -25,14 +25,13 @@ import {CMakeCache} from '../src/cache';
 // import * as vscode from 'vscode';
 // import * as myExtension from '../src/extension';
 
-async function getExtension():
-    Promise<CMakeTools> {
-      const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
-      if (!cmt) {
-        return Promise.reject("Extension doesn't exist");
-      }
-      return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
-    }
+async function getExtension() {
+  const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
+  if (!cmt) {
+    return Promise.reject("Extension doesn't exist");
+  }
+  return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
+}
 
 const here
     = __dirname;
@@ -40,16 +39,6 @@ const here
 function testFilePath(filename: string): string {
   return path.normalize(path.join(here, '../..', 'test', filename));
 }
-
-// Defines a Mocha test suite to group tests of similar kind together
-suite("Extension Tests", () => {
-  // Defines a Mocha unit test
-  test("Something 1",
-       () => {
-           // assert.equal(-1, [ 1, 2, 3 ].indexOf(5));
-           // assert.equal(-1, [ 1, 2, 3 ].indexOf(0));
-       });
-});
 
 suite('Kits test', async() => {
   const fakebin = path.join(vscode.workspace.rootPath !, '../fakebin');
@@ -186,10 +175,15 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
   }
 }
 
-suite('CMake Diagnostics', async() => {
+suite('Diagnostics', async() => {
   let consumer = new diags.CMakeOutputConsumer();
-  setup(() => { consumer = new diags.CMakeOutputConsumer(); });
-  test('Waring-free output', async() => {
+  let build_consumer = new diags.CompileOutputConsumer();
+  setup(() => {
+    // FIXME: SETUP IS NOT BEING CALLED
+    consumer = new diags.CMakeOutputConsumer();
+    build_consumer = new diags.CompileOutputConsumer();
+  });
+  test('Waring-free CMake output', async() => {
     const cmake_output = [
       '-- Configuring done',
       '-- Generating done',
@@ -208,11 +202,11 @@ suite('CMake Diagnostics', async() => {
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
     const diag = consumer.diagnostics[0];
-    expect(diag.filepath).to.eq(path.join(vscode.workspace.rootPath!, 'CMakeLists.txt'));
+    expect(diag.filepath).to.eq(path.join(vscode.workspace.rootPath !, 'CMakeLists.txt'));
     expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
     expect(diag.diag.source).to.eq('CMake (message)');
     expect(diag.diag.message).to.eq('I am a warning!');
-    expect(diag.diag.range.start.line).to.eq(13); // Line numbers are one-based
+    expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
   });
   test('Parse two diags', () => {
     const error_output = [
@@ -297,8 +291,268 @@ suite('CMake Diagnostics', async() => {
     expect(consumer.diagnostics.length).to.eq(2);
     const coll = vscode.languages.createDiagnosticCollection('cmake-tools-test');
     diags.populateCollection(coll, consumer.diagnostics);
-    const fullpath = path.join(vscode.workspace.rootPath!, 'CMakeLists.txt');
+    const fullpath = path.join(vscode.workspace.rootPath !, 'CMakeLists.txt');
     expect(coll.has(vscode.Uri.file(fullpath))).to.be.true;
-    expect(coll.get(vscode.Uri.file(fullpath))!.length).to.eq(2);
+    expect(coll.get(vscode.Uri.file(fullpath)) !.length).to.eq(2);
+  });
+
+  test('Parsing Apple Clang Diagnostics', () => {
+    const lines = [
+      '/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h:85:15: warning: comparison of unsigned expression >= 0 is always true [-Wtautological-compare]'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    const diag = build_consumer.gccDiagnostics[0];
+    expect(diag.line).to.eq(84);
+    expect(diag.message)
+        .to.eq('comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
+    expect(diag.location as number).to.eq(14);
+    expect(diag.file).to.eq('/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h');
+    expect(diag.severity).to.eq('warning');
+    expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+    expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+
+  test('Parse more GCC diagnostics', () => {
+    const lines = [
+      `/Users/Tobias/Code/QUIT/Source/qidespot1.cpp:303:49: error: expected ';' after expression`
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    const diag = build_consumer.gccDiagnostics[0];
+    expect(diag.file).to.eq('/Users/Tobias/Code/QUIT/Source/qidespot1.cpp');
+    expect(diag.line).to.eq(302);
+    expect(diag.location).to.eq(48);
+    expect(diag.message).to.eq(`expected ';' after expression`);
+    expect(diag.severity).to.eq('error');
+  });
+
+  test('Parsing fatal error diagnostics', () => {
+    const lines = [ '/some/path/here:4:26: fatal error: some_header.h: No such file or directory' ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    const diag = build_consumer.gccDiagnostics[0];
+    expect(diag.line).to.eq(3);
+    expect(diag.message).to.eq('some_header.h: No such file or directory');
+    expect(diag.location).to.eq(25);
+    expect(diag.file).to.eq('/some/path/here');
+    expect(diag.severity).to.eq('error');
+    expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+    expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+
+  test('Parsing fatal error diagnostics in french', () => {
+    const lines = [
+      '/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    const diag = build_consumer.gccDiagnostics[0];
+
+    expect(diag.line).to.eq(1);
+    expect(diag.message).to.eq('bonjour.h : Aucun fichier ou dossier de ce type');
+    expect(diag.location as number).to.eq(20);
+    expect(diag.file).to.eq('/home/romain/TL/test/base.c');
+    expect(diag.severity).to.eq('erreur');
+    expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+    expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing warning diagnostics', () => {
+    const lines = [ "/some/path/here:4:26: warning: unused parameter 'data'" ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    const diag = build_consumer.gccDiagnostics[0];
+
+    expect(diag.line).to.eq(3);
+    expect(diag.message).to.eq("unused parameter 'data'");
+    expect(diag.location as number).to.eq(25);
+    expect(diag.file).to.eq('/some/path/here');
+    expect(diag.severity).to.eq('warning');
+    expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+    expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing warning diagnostics 2', () => {
+    const lines = [ `/test/main.cpp:21:14: warning: unused parameter ‘v’ [-Wunused-parameter]` ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    const diag = build_consumer.gccDiagnostics[0];
+
+    expect(diag.line).to.eq(20);
+    expect(diag.location as number).to.eq(13);
+    expect(diag.file).to.eq('/test/main.cpp');
+    expect(diag.message).to.eq(`unused parameter ‘v’ [-Wunused-parameter]`);
+    expect(diag.severity).to.eq('warning');
+  });
+  test('Parsing warning diagnostics in french', () => {
+    const lines = [
+      '/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    const diag = build_consumer.gccDiagnostics[0];
+
+    expect(diag.line).to.eq(154);
+    expect(diag.message).to.eq('déclaration implicite de la fonction ‘create’');
+    expect(diag.location as number).to.eq(1);
+    expect(diag.file).to.eq('/home/romain/TL/test/base.c');
+    expect(diag.severity).to.eq('attention');
+    expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+    expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing linker error', () => {
+    const lines = [ "/some/path/here:101: undefined reference to `some_function'" ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
+    const diag = build_consumer.gnuLDDiagnostics[0];
+
+    expect(diag.line).to.eq(100);
+    expect(diag.message).to.eq("undefined reference to `some_function'");
+    expect(diag.file).to.eq('/some/path/here');
+    expect(diag.severity).to.eq('error');
+    expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+    expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing linker error in french', () => {
+    const lines = [
+      "/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »"
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
+    const diag = build_consumer.gnuLDDiagnostics[0];
+
+    expect(diag.line).to.eq(8);
+    expect(diag.message).to.eq("référence indéfinie vers « create_automaton_product56 »");
+    expect(diag.file).to.eq('/home/romain/TL/test/test_fa_tp4.c');
+    expect(diag.severity).to.eq('error');
+    expect(path.posix.normalize(diag.file)).to.eq(diag.file);
+    expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing GHS Diagnostics', () => {
+    const lines = [
+      '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): warning #68-D: integer conversion resulted in a change of sign'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.ghsDiagnostics).to.have.length(1);
+    const diag = build_consumer.ghsDiagnostics[0];
+
+    expect(diag.line).to.eq(630);
+    expect(diag.message).to.eq('#68-D: integer conversion resulted in a change of sign');
+    expect(diag.location as number).to.eq(2);
+    expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
+    expect(diag.severity).to.eq('warning');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing GHS Diagnostics At end of source', () => {
+    const lines = [
+      '"C:\\path\\source\\debug\\debug.c", At end of source: remark #96-D: a translation unit must contain at least one declaration'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.ghsDiagnostics).to.have.length(1);
+    const diag = build_consumer.ghsDiagnostics[0];
+
+    expect(diag.line).to.eq(0);
+    expect(diag.message).to.eq('#96-D: a translation unit must contain at least one declaration');
+    expect(diag.location as number).to.eq(0);
+    expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
+    expect(diag.severity).to.eq('remark');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing GHS Diagnostics fatal error', () => {
+    const lines = [
+      '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): fatal error #68: some fatal error'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.ghsDiagnostics).to.have.length(1);
+    const diag = build_consumer.ghsDiagnostics[0];
+    expect(diag.line).to.eq(630);
+    expect(diag.message).to.eq('#68: some fatal error');
+    expect(diag.location).to.eq(2);
+    expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
+    expect(diag.severity).to.eq('error');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.true;
+  });
+
+  test('No parsing Make errors', () => {
+    const lines = [
+      `make[2]: *** [CMakeFiles/myApp.dir/build.make:87: CMakeFiles/myApp.dir/app.cpp.o] Error 1`,
+      `make[1]: *** [CMakeFiles/Makefile2:68: CMakeFiles/myApp.dir/all] Error 2`,
+      `make: *** [Makefile:84 all] Error 2`
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gnuLDDiagnostics).to.have.length(0);
+  });
+});
+
+import * as compdb from '../src/compdb';
+
+suite('Compilation info', () => {
+  test('Parsing compilation databases', async() => {
+    const dbpath = testFilePath('test_compdb.json');
+    const db = (await compdb.CompilationDatabase.fromFilePath(dbpath)) !;
+    expect(db).to.not.be.null;
+    const source_path = "/home/clang-languageservice/main.cpp";
+    const info = db.getCompilationInfoForUri(vscode.Uri.file(source_path)) !;
+    expect(info).to.not.be.null;
+    expect(info.file).to.eq(source_path);
+    expect(info.compile !.directory).to.eq('/home/clang-languageservice/build');
+    expect(info.compile !.command)
+        .to.eq(
+            "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp");
+  });
+  test('Parsing gnu-style compile info', () => {
+    const raw: api.RawCompilationInfo = {
+      command :
+          'clang++ -I/foo/bar -isystem /system/path -fsome-compile-flag -DMACRO=DEFINITION -I ../relative/path "-I/path\\"with\\" embedded quotes/foo"',
+      directory : '/some/dir',
+      file : 'meow.cpp'
+    };
+    const info = compdb.parseRawCompilationInfo(raw);
+    expect(raw.command).to.eq(info.compile !.command);
+    expect(raw.directory).to.eq(info.compile !.directory);
+    expect(raw.file).to.eq(info.file);
+    let idx = info.includeDirectories.findIndex(i => i.path === '/system/path');
+    expect(idx).to.be.gte(0);
+    let inc = info.includeDirectories[idx];
+    expect(inc.isSystem).to.be.true;
+    expect(inc.path).to.eq('/system/path');
+    idx = info.includeDirectories.findIndex(i => i.path === '/some/relative/path');
+    expect(idx).to.be.gte(0);
+    inc = info.includeDirectories[idx];
+    expect(inc.isSystem).to.be.false;
+    inc = info.includeDirectories[3];
+    expect(inc.path).to.eq('/path"with" embedded quotes/foo');
+    expect(info.compileDefinitions['MACRO']).to.eq('DEFINITION');
+    expect(info.compileFlags[0]).to.eq('-fsome-compile-flag');
+    expect(info.compiler).to.eq('clang++');
+  });
+
+  test('Parsing MSVC-style compile info', () => {
+    const raw: api.RawCompilationInfo = {
+      command :
+          'cl.exe -I/foo/bar /I/system/path /Z+:some-compile-flag /DMACRO=DEFINITION -I ../relative/path "/I/path\\"with\\" embedded quotes/foo"',
+      directory : '/some/dir',
+      file : 'meow.cpp'
+    };
+    const info = compdb.parseRawCompilationInfo(raw);
+    expect(raw.command).to.eq(info.compile !.command);
+    expect(raw.directory).to.eq(info.compile !.directory);
+    expect(raw.file).to.eq(info.file);
+    let idx = info.includeDirectories.findIndex(i => i.path === '/system/path');
+    expect(idx).to.be.gte(0);
+    let inc = info.includeDirectories[idx];
+    expect(inc.isSystem).to.be.false;
+    expect(inc.path).to.eq('/system/path');
+    idx = info.includeDirectories.findIndex(i => i.path === '/some/relative/path');
+    expect(idx).to.be.gte(0);
+    inc = info.includeDirectories[idx];
+    expect(inc.isSystem).to.be.false;
+    inc = info.includeDirectories[3];
+    expect(inc.path).to.eq('/path"with" embedded quotes/foo');
+    expect(info.compileDefinitions['MACRO']).to.eq('DEFINITION');
+    expect(info.compileFlags[0]).to.eq('/Z+:some-compile-flag');
+    expect(info.compiler).to.eq('cl.exe');
   });
 });
