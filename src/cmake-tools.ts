@@ -135,6 +135,7 @@ export class CMakeTools implements vscode.Disposable {
    */
   dispose() {
     log.debug('Disposing CMakeTools extension');
+    this._launchTerminals.forEach(t => t.dispose());
     rollbar.invoke('Root dispose', () => this.asyncDispose());
   }
 
@@ -586,6 +587,8 @@ export class CMakeTools implements vscode.Disposable {
     return vscode.debug.activeDebugSession !;
   }
 
+  private _launchTerminals: vscode.Terminal[] = [];
+
   /**
    * Implementation of `cmake.launchTarget`
    */
@@ -597,7 +600,7 @@ export class CMakeTools implements vscode.Disposable {
       return null;
     }
     const term = vscode.window.createTerminal(target_name, target_path);
-    // TODO: Setup disposing of the terminal
+    this._launchTerminals.push(term);
     term.show();
     return term;
   }
