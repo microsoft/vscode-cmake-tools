@@ -298,7 +298,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Determine if we set BUILD_SHARED_LIBS to TRUE or FALSE
    */
-  private _variantLinkage: ('static' | 'shared') = 'static';
+  private _variantLinkage: ('static' | 'shared' | null) = null;
 
   /**
    * Change the current options from the variant.
@@ -308,7 +308,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug('Setting new variant', opts.description);
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
-    this._variantLinkage = opts.linkage || this._variantLinkage;
+    this._variantLinkage = opts.linkage || null;
   }
 
   /**
@@ -504,9 +504,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected async _prepareConfigure(): Promise<string[]> {
     const settings = Object.assign({}, config.configureSettings);
 
+    this._variantConfigureSettings.forEach(s => settings[s.key] = s.value);
+    if (this._variantLinkage !== null) {
+      settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
+    }
+
+    // Always export so that we have compile_commands.json
+    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
+
     // TODO: Detect multi-conf
     settings.CMAKE_BUILD_TYPE = this.currentBuildType;
-    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
 
     const _makeFlag = (key: string, cmval: util.CMakeValue) => {
       switch (cmval.type) {
@@ -518,10 +525,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
     const settings_flags = util.objectPairs(settings).map(
         ([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
-    const variant_flags
-        = this._variantConfigureSettings.map(s => _makeFlag(s.key, util.cmakeify(s.value)));
     const flags = [ '--no-warn-unused-cli' ];
-    const final_flags = flags.concat(settings_flags).concat(variant_flags);
+    const final_flags = flags.concat(settings_flags);
     log.trace('CMake flags are', JSON.stringify(final_flags));
     return final_flags;
   }
