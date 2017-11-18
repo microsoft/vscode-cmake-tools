@@ -692,7 +692,6 @@ export class CMakeTools implements vscode.Disposable {
       return drv.allCacheEntries;
     }
     case 'configure': {
-      // TODO: Send args from the cache editor
       return this.configure(params['args']);
     }
     case 'build': {
