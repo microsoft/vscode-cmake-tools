@@ -15,7 +15,7 @@ import config from './config';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
-import {VariantConfigurationOptions} from "./variant";
+import {VariantConfigurationOptions, ConfigureArguments} from "./variant";
 
 const log = logging.createLogger('driver');
 
@@ -286,10 +286,30 @@ export abstract class CMakeDriver implements vscode.Disposable {
   abstract setKit(kit: Kit): Promise<void>;
 
   /**
+   * The CMAKE_BUILD_TYPE to use
+   */
+  private _variantBuildType: string = 'Debug';
+
+  /**
+   * The arguments to pass to CMake during a configuration according to the current variant
+   */
+  private _variantConfigureSettings: ConfigureArguments[] = [];
+
+  /**
+   * Determine if we set BUILD_SHARED_LIBS to TRUE or FALSE
+   */
+  private _variantLinkage: ('static' | 'shared') = 'static';
+
+  /**
    * Change the current options from the variant.
    * @param opts The new options
    */
-  abstract setVariantOptions(opts: VariantConfigurationOptions): Promise<void>;
+  async setVariantOptions(opts: VariantConfigurationOptions) {
+    log.debug('Setting new variant', opts.description);
+    this._variantBuildType = opts.buildType || this._variantBuildType;
+    this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
+    this._variantLinkage = opts.linkage || this._variantLinkage;
+  }
 
   /**
    * Is the driver busy? ie. running a configure/build/test
@@ -338,7 +358,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * This is the value passed to CMAKE_BUILD_TYPE or --config for multiconf
    */
-  abstract get currentBuildType(): string;
+  get currentBuildType(): string {
+    // TODO: Handle multiconf
+    return this._variantBuildType;
+  }
 
   /**
    * Get the name of the current CMake generator, or `null` if we have not yet
@@ -475,36 +498,30 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
-   * Get the list of command line flags that should be passed to CMake
+   * Do pre-configure tasks and return the arguments that should be passed
+   * to CMake to configure.
    */
-  protected _cmakeFlags(): string[] {
+  protected async _prepareConfigure(): Promise<string[]> {
     const settings = Object.assign({}, config.configureSettings);
 
     // TODO: Detect multi-conf
     settings.CMAKE_BUILD_TYPE = this.currentBuildType;
     settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
 
-    const _makeFlag = (key: string, value: any) => {
-      if (value === true || value === false) {
-        return `-D${key}:BOOL=${value ? 'TRUE' : 'FALSE'}`;
-      } else if (typeof(value) === 'string') {
-        return `-D${key}:STRING=${value}`;
-      } else if (value instanceof Number || typeof value === 'number') {
-        return `-D${key}:STRING=${value}`;
-      } else if (value instanceof Array) {
-        return `-D${key}:STRING=${value.join(';')}`;
-      } else if (typeof value === 'object') {
-        // TODO: Log invalid value
-        throw new Error();
-      } else {
-        console.assert(false, 'Unknown value passed to CMake settings', key, value);
-        throw new Error();
+    const _makeFlag = (key: string, cmval: util.CMakeValue) => {
+      switch (cmval.type) {
+      case 'UNKNOWN':
+        return `-D${key}=${cmval.value}`;
+      default:
+        return `-D${key}:${cmval.type}=${cmval.value}`;
       }
     };
-    const settings_flags
-        = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, value));
+    const settings_flags = util.objectPairs(settings).map(
+        ([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
+    const variant_flags
+        = this._variantConfigureSettings.map(s => _makeFlag(s.key, util.cmakeify(s.value)));
     const flags = [ '--no-warn-unused-cli' ];
-    const final_flags = flags.concat(settings_flags);
+    const final_flags = flags.concat(settings_flags).concat(variant_flags);
     log.trace('CMake flags are', JSON.stringify(final_flags));
     return final_flags;
   }

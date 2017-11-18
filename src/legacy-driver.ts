@@ -15,8 +15,6 @@ import * as util from './util';
 import * as proc from './proc';
 // import * as proc from './proc';
 import * as logging from './logging';
-import {VariantConfigurationOptions} from "./variant";
-import {ConfigureArguments} from './variant';
 
 const log = logging.createLogger('legacy-driver');
 
@@ -49,30 +47,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
   get onReconfigured() { return this._onReconfiguredEmitter.event; }
   private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
-  /**
-   * The CMAKE_BUILD_TYPE to use
-   */
-  private _buildType: string = 'Debug';
-
-  /**
-   * The arguments to pass to CMake during a configuration
-   */
-  private _configArgs: ConfigureArguments[] = [];
-
-  /**
-   * Determine if we set BUILD_SHARED_LIBS to TRUE or FALSE
-   */
-  private _linkage: ('static' | 'shared') = 'static';
-
-  async setVariantOptions(opts: VariantConfigurationOptions) {
-    log.debug('Setting new variant', opts.description);
-    this._buildType = opts.buildType || this._buildType;
-    this._configArgs = opts.settings || this._configArgs;
-    this._linkage = opts.linkage || this._linkage;
-  }
-
-  get currentBuildType(): string { return this._buildType; }
-
   // Legacy disposal does nothing
   async asyncDispose() { this._onReconfiguredEmitter.dispose(); }
 
@@ -94,11 +68,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
       // TODO: Platform and toolset selection
     }
 
-    for (const setting of this._configArgs) {
-      const cmake_value = util.cmakeify(setting.value);
-      args.push(`${setting.key}:${cmake_value.type}=${cmake_value.value}`);
-    }
-
+    args.push(...await this._prepareConfigure());
     args.push(...extra_args);
 
     // TODO: Make sure we are respecting all variant options
@@ -114,11 +84,15 @@ export class LegacyCMakeDriver extends CMakeDriver {
       log.debug('Using compilerKit', this._kit.name, 'for usage');
       args.push(...util.objectPairs(this._kit.compilers)
                     .map(([ lang, comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
-    }
+    } break;
+    case 'toolchainKit': {
+      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+      args.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
+    } break;
+    default:
+      log.debug('Kit requires no extra CMake arguments');
     }
 
-    const cmake_settings = this._cmakeFlags();
-    args.push(...cmake_settings);
     args.push('-H' + util.normalizePath(this.sourceDir));
     const bindir = util.normalizePath(this.binaryDir);
     args.push('-B' + bindir);
@@ -169,7 +143,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
         return [];
     })();
     const args =
-        [ '--build', this.binaryDir, '--config', this._buildType, '--target', target, '--' ].concat(
+        [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ].concat(
             generator_args);
     const child = this.executeCommand(config.cmakePath, args, consumer);
     this._currentProcess = child;

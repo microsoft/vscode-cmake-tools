@@ -146,32 +146,32 @@ export function product<T>(arrays: T[][]): T[][] {
   // clang-format on
 }
 
-interface CMakeValue {
-  type: string;
+export interface CMakeValue {
+  type: ('UNKNOWN' | 'BOOL' | 'STRING'); // There are more types, but we don't care ATM
   value: string;
 }
 
 export function cmakeify(value: (string | boolean | number | string[])): CMakeValue {
-  let type = 'UNKNOWN';
-  let value_str = '';
+  const ret: CMakeValue = {
+    type: 'UNKNOWN',
+    value: '',
+  };
   if (value === true || value === false) {
-    type = 'BOOL';
-    value_str = value ? 'TRUE' : 'FALSE';
+    ret.type = 'BOOL';
+    ret.value = value ? 'TRUE' : 'FALSE';
   } else if (typeof(value) === 'string') {
-    type = 'STRING';
-    value_str = replaceAll(value, ';', '\\;');
+    ret.type = 'STRING';
+    ret.value = replaceAll(value, ';', '\\;');
   } else if (value instanceof Number || typeof value === 'number') {
-    type = 'STRING';
+    ret.type = 'STRING';
+    ret.value = value.toString();
   } else if (value instanceof Array) {
-    type = 'STRING';
-    value_str = value.join(';');
+    ret.type = 'STRING';
+    ret.value = value.join(';');
   } else {
     throw new Error(`Invalid value to convert to cmake value: ${value}`)
   }
-  return {
-    type : type,
-    value : value_str,
-  };
+  return ret;
 }
 
 
