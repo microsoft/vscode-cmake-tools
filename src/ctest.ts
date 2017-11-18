@@ -88,32 +88,6 @@ interface MessyResults {
     }[];
   };
 }
-// TODO: Bring back test coverage
-// interface MessyCoverage {
-//   Site: {
-//     $: {};
-//     CoverageLog: {
-//       File: {
-//         $: {
-//           Name: string;
-//           FullPath: string;
-//         };
-//         Report: {
-//           Line: {
-//             $: {
-//               Number: string;
-//               Count: string;
-//             };
-//           }[];
-//         }[];
-//       }[];
-//     }[];
-//   };
-// }
-
-// interface Coverage {
-//   [filename: string]: number[];
-// }
 // clang-format on
 
 function parseXMLString<T>(xml: string): Promise<T> {
