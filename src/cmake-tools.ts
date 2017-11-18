@@ -21,6 +21,7 @@ import {CTestDriver} from './ctest';
 import {CacheEditorContentProvider} from "./cache-editor";
 
 import * as logging from './logging';
+import {populateCollection} from './diagnostics';
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -144,7 +145,7 @@ export class CMakeTools implements vscode.Disposable {
    */
   async asyncDispose() {
     this._kitManager.dispose();
-    this._diagnostics.dispose();
+    this._configureDiagnostics.dispose();
     const drv = await this._cmakeDriver;
     if (drv) {
       await drv.asyncDispose();
@@ -179,9 +180,7 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Event fired after CMake configure runs
    */
-  get onReconfigured() {
-    return this._onReconfiguredEmitter.event;
-  }
+  get onReconfigured() { return this._onReconfiguredEmitter.event; }
   private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
   /**
@@ -282,8 +281,14 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * The `DiagnosticCollection` for the CMake configure diagnostics.
    */
-  private readonly _diagnostics
+  private readonly _configureDiagnostics
       = vscode.languages.createDiagnosticCollection('cmake-configure-diags');
+
+  /**
+   * The `DiagnosticCollection` for build diagnostics
+   */
+  private readonly _buildDiagnostics
+      = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
   /**
    * Implementation of `cmake.configure`
@@ -333,7 +338,7 @@ export class CMakeTools implements vscode.Disposable {
     log.showChannel();
     const consumer = new diags.CMakeOutputConsumer();
     const retc = await cb(consumer);
-    diags.populateCollection(this._diagnostics, consumer.diagnostics);
+    diags.populateCollection(this._configureDiagnostics, consumer.diagnostics);
     return retc;
   }
 
@@ -392,6 +397,8 @@ export class CMakeTools implements vscode.Disposable {
       } else {
         build_log.info('Build finished with exit code', rc);
       }
+      const diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
+      populateCollection(this._buildDiagnostics, diags);
       return rc === null ? -1 : rc;
     } finally {
       this._statusBar.setIsBusy(false);
@@ -561,9 +568,13 @@ export class CMakeTools implements vscode.Disposable {
 
   /**
    * Implementation of `cmake.debugTarget`
-   * TODO: Check once we have CMakeToolsMeta back in place.
    */
   async debugTarget(): Promise<vscode.DebugSession | null> {
+    const drv = await this._cmakeDriver;
+    if (drv instanceof LegacyCMakeDriver) {
+      vscode.window.showWarningMessage('Target debugging is not supported with the legacy driver');
+      return null;
+    }
     const target_name = this._stateManager.launchTargetName;
     const target_path = await this.launchTargetPath();
     if (!target_path) {

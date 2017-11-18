@@ -11,6 +11,7 @@ import {OutputConsumer} from './proc';
 import * as logging from './logging';
 import * as proc from './proc';
 import {RawDiagnostic} from './diagnostics';
+import * as util from "./util";
 
 const cmake_logger = logging.createLogger('cmake');
 const build_logger = logging.createLogger('build');
@@ -214,43 +215,6 @@ export class CMakeOutputConsumer implements OutputConsumer {
   }
 }
 
-/**
- * Class which consumes the output of a running build.
- *
- * This parses compiler errors, but also emits progress events when the build
- * tool writes a status message which can be parsed as containing a progress
- * indicator.
- */
-export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
-  /**
-   * Event fired when the progress changes
-   */
-  get onProgress() { return this._onProgressEmitter.event; }
-  private _onProgressEmitter = new vscode.EventEmitter<proc.ProgressData>();
-
-  private _percent_re = /\[.*?(\d+)\%.*?\]/;
-
-  /**
-   * Throw it away!
-   */
-  dispose() { this._onProgressEmitter.dispose(); }
-
-  error(line: string) { build_logger.error(line); }
-
-  output(line: string) {
-    build_logger.info(line);
-    const progress = this._percent_re.exec(line);
-    if (progress) {
-      const percent = progress[1];
-      this._onProgressEmitter.fire({
-        minimum : 0,
-        maximum : 100,
-        value : Number.parseInt(percent),
-      });
-    }
-  }
-};
-
 export class CompileOutputConsumer implements OutputConsumer {
   // Regular expressions for the diagnostic messages corresponding to each tool
   private readonly _ghs_re
@@ -388,4 +352,88 @@ export class CompileOutputConsumer implements OutputConsumer {
   }
 
   output(line: string) { this.error(line); }
+
+  createDiagnostics(build_dir: string): FileDiagnostic[] {
+    const diags_by_file = new Map<string, vscode.Diagnostic[]>();
+
+    const make_abs
+        = (p: string) => util.normalizePath(path.isAbsolute(p) ? p : path.join(build_dir, p));
+    const severity_of = (p: string) => {
+      switch (p) {
+      case 'warning':
+        return vscode.DiagnosticSeverity.Warning;
+      case 'error':
+        return vscode.DiagnosticSeverity.Error;
+      case 'note':
+      case 'info':
+      case 'remark':
+        return vscode.DiagnosticSeverity.Information;
+      }
+      throw new Error('Unknwon diagnostic severity level: ' + p);
+    };
+
+    const by_source = {
+      GCC : this.gccDiagnostics,
+      MSVC : this.msvcDiagnostics,
+      GHS : this.ghsDiagnostics,
+      link : this.gnuLDDiagnostics,
+    };
+    const arrs = util.objectPairs(by_source).map(
+        ([ source, diags ]) => {return diags.map((raw_diag) => {
+          const filepath = make_abs(raw_diag.file);
+          const diag = new vscode.Diagnostic(raw_diag.location,
+                                             raw_diag.message,
+                                             severity_of(raw_diag.severity));
+          diag.source = source;
+          if (raw_diag.code) {
+            diag.code = raw_diag.code;
+          }
+          if (!diags_by_file.has(filepath)) {
+            diags_by_file.set(filepath, []);
+          }
+          diags_by_file.get(filepath) !.push(diag);
+          return { filepath: filepath, diag: diag, }
+        })});
+    return ([] as FileDiagnostic[]).concat(...arrs);
+  }
 }
+
+
+/**
+ * Class which consumes the output of a running build.
+ *
+ * This parses compiler errors, but also emits progress events when the build
+ * tool writes a status message which can be parsed as containing a progress
+ * indicator.
+ */
+export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
+  /**
+   * Event fired when the progress changes
+   */
+  get onProgress() { return this._onProgressEmitter.event; }
+  private _onProgressEmitter = new vscode.EventEmitter<proc.ProgressData>();
+  private _percent_re = /\[.*?(\d+)\%.*?\]/;
+
+  readonly compileConsumer = new CompileOutputConsumer();
+
+  dispose() { this._onProgressEmitter.dispose(); }
+
+  error(line: string) {
+    this.compileConsumer.error(line);
+    build_logger.error(line);
+  }
+
+  output(line: string) {
+    this.compileConsumer.output(line);
+    build_logger.info(line);
+    const progress = this._percent_re.exec(line);
+    if (progress) {
+      const percent = progress[1];
+      this._onProgressEmitter.fire({
+        minimum : 0,
+        maximum : 100,
+        value : Number.parseInt(percent),
+      });
+    }
+  }
+};
