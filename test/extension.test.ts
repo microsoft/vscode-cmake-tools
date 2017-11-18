@@ -303,10 +303,10 @@ suite('Diagnostics', async() => {
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
-    expect(diag.line).to.eq(84);
+    expect(diag.location.start.line).to.eq(84);
     expect(diag.message)
         .to.eq('comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
-    expect(diag.location as number).to.eq(14);
+    expect(diag.location.start.character).to.eq(14);
     expect(diag.file).to.eq('/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h');
     expect(diag.severity).to.eq('warning');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
@@ -321,8 +321,8 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
     expect(diag.file).to.eq('/Users/Tobias/Code/QUIT/Source/qidespot1.cpp');
-    expect(diag.line).to.eq(302);
-    expect(diag.location).to.eq(48);
+    expect(diag.location.start.line).to.eq(302);
+    expect(diag.location.start.character).to.eq(48);
     expect(diag.message).to.eq(`expected ';' after expression`);
     expect(diag.severity).to.eq('error');
   });
@@ -332,9 +332,10 @@ suite('Diagnostics', async() => {
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
-    expect(diag.line).to.eq(3);
+    expect(diag.location.start.line).to.eq(3);
     expect(diag.message).to.eq('some_header.h: No such file or directory');
-    expect(diag.location).to.eq(25);
+    expect(diag.location.start.line).to.eq(3);
+    expect(diag.location.start.character).to.eq(25);
     expect(diag.file).to.eq('/some/path/here');
     expect(diag.severity).to.eq('error');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
@@ -349,9 +350,9 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
 
-    expect(diag.line).to.eq(1);
+    expect(diag.location.start.line).to.eq(1);
     expect(diag.message).to.eq('bonjour.h : Aucun fichier ou dossier de ce type');
-    expect(diag.location as number).to.eq(20);
+    expect(diag.location.start.character).to.eq(20);
     expect(diag.file).to.eq('/home/romain/TL/test/base.c');
     expect(diag.severity).to.eq('erreur');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
@@ -363,9 +364,9 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
 
-    expect(diag.line).to.eq(3);
+    expect(diag.location.start.line).to.eq(3);
     expect(diag.message).to.eq("unused parameter 'data'");
-    expect(diag.location as number).to.eq(25);
+    expect(diag.location.start.character).to.eq(25);
     expect(diag.file).to.eq('/some/path/here');
     expect(diag.severity).to.eq('warning');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
@@ -377,8 +378,8 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
 
-    expect(diag.line).to.eq(20);
-    expect(diag.location as number).to.eq(13);
+    expect(diag.location.start.line).to.eq(20);
+    expect(diag.location.start.character).to.eq(13);
     expect(diag.file).to.eq('/test/main.cpp');
     expect(diag.message).to.eq(`unused parameter ‘v’ [-Wunused-parameter]`);
     expect(diag.severity).to.eq('warning');
@@ -391,9 +392,9 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
 
-    expect(diag.line).to.eq(154);
+    expect(diag.location.start.line).to.eq(154);
     expect(diag.message).to.eq('déclaration implicite de la fonction ‘create’');
-    expect(diag.location as number).to.eq(1);
+    expect(diag.location.start.character).to.eq(1);
     expect(diag.file).to.eq('/home/romain/TL/test/base.c');
     expect(diag.severity).to.eq('attention');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
@@ -405,7 +406,7 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
     const diag = build_consumer.gnuLDDiagnostics[0];
 
-    expect(diag.line).to.eq(100);
+    expect(diag.location.start.line).to.eq(100);
     expect(diag.message).to.eq("undefined reference to `some_function'");
     expect(diag.file).to.eq('/some/path/here');
     expect(diag.severity).to.eq('error');
@@ -420,7 +421,7 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
     const diag = build_consumer.gnuLDDiagnostics[0];
 
-    expect(diag.line).to.eq(8);
+    expect(diag.location.start.line).to.eq(8);
     expect(diag.message).to.eq("référence indéfinie vers « create_automaton_product56 »");
     expect(diag.file).to.eq('/home/romain/TL/test/test_fa_tp4.c');
     expect(diag.severity).to.eq('error');
@@ -435,9 +436,9 @@ suite('Diagnostics', async() => {
     expect(build_consumer.ghsDiagnostics).to.have.length(1);
     const diag = build_consumer.ghsDiagnostics[0];
 
-    expect(diag.line).to.eq(630);
+    expect(diag.location.start.line).to.eq(630);
     expect(diag.message).to.eq('#68-D: integer conversion resulted in a change of sign');
-    expect(diag.location as number).to.eq(2);
+    expect(diag.location.start.character).to.eq(2);
     expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
     expect(diag.severity).to.eq('warning');
     expect(path.win32.normalize(diag.file)).to.eq(diag.file);
@@ -451,9 +452,9 @@ suite('Diagnostics', async() => {
     expect(build_consumer.ghsDiagnostics).to.have.length(1);
     const diag = build_consumer.ghsDiagnostics[0];
 
-    expect(diag.line).to.eq(0);
+    expect(diag.location.start.line).to.eq(0);
     expect(diag.message).to.eq('#96-D: a translation unit must contain at least one declaration');
-    expect(diag.location as number).to.eq(0);
+    expect(diag.location.start.character).to.eq(0);
     expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
     expect(diag.severity).to.eq('remark');
     expect(path.win32.normalize(diag.file)).to.eq(diag.file);
@@ -466,9 +467,9 @@ suite('Diagnostics', async() => {
     feedLines(build_consumer, [], lines);
     expect(build_consumer.ghsDiagnostics).to.have.length(1);
     const diag = build_consumer.ghsDiagnostics[0];
-    expect(diag.line).to.eq(630);
+    expect(diag.location.start.line).to.eq(630);
     expect(diag.message).to.eq('#68: some fatal error');
-    expect(diag.location).to.eq(2);
+    expect(diag.location.start.character).to.eq(2);
     expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
     expect(diag.severity).to.eq('error');
     expect(path.win32.normalize(diag.file)).to.eq(diag.file);

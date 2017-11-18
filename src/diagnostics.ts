@@ -20,8 +20,7 @@ const build_logger = logging.createLogger('build');
 export interface RawDiagnostic {
   full: string;
   file: string;
-  line: number;
-  location: number | vscode.Range;
+  location: vscode.Range;
   severity: string;
   message: string;
   code?: string;
@@ -292,8 +291,7 @@ export class CompileOutputConsumer implements OutputConsumer {
       return {
         full : full,
         file : file,
-        line : parseInt(lineno) - 1,
-        location : 0,
+        location : new vscode.Range(parseInt(lineno) - 1, 0, parseInt(lineno) - 1, 999),
         severity : 'error',
         message : message,
       };
@@ -311,7 +309,7 @@ export class CompileOutputConsumer implements OutputConsumer {
       const parts = location.split(',');
       const n0 = parseInt(parts[0]);
       if (parts.length === 1)
-        return new vscode.Range(n0, 0, n0, 0);
+        return new vscode.Range(n0, 0, n0, 999);
       if (parts.length === 2)
         return new vscode.Range(Number.parseInt(parts[0]) - 1,
                                 Number.parseInt(parts[1]) - 1,
@@ -327,7 +325,6 @@ export class CompileOutputConsumer implements OutputConsumer {
     return {
       full : full,
       file : file,
-      line : range.start.line,
       location : range,
       severity : severity,
       message : message,
@@ -345,8 +342,10 @@ export class CompileOutputConsumer implements OutputConsumer {
           this._gccDiagnostics.push({
             full : full,
             file : file,
-            line : parseInt(lineno) - 1,
-            location : parseInt(column) - 1,
+            location : new vscode.Range(parseInt(lineno) - 1,
+                                        parseInt(column) - 1,
+                                        parseInt(lineno) - 1,
+                                        999),
             severity : severity,
             message : message,
           });
@@ -363,9 +362,8 @@ export class CompileOutputConsumer implements OutputConsumer {
         if (file && severity && message) {
           this._ghsDiagnostics.push({
             full : full,
-            file : file,
-            line : parseInt(lineno) - 1,
-            location : parseInt(column) - 1,
+            file: file,
+            location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
             severity : severity,
             message : message
           });
