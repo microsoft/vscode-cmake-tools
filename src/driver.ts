@@ -410,8 +410,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
-   * Execute pre-configure tasks. This should be called by a derived driver
-   * before any configuration tasks are run
+   * Execute pre-configure tasks to check if we are ready to run a full
+   * configure. This should be called by a derived driver before any
+   * configuration tasks are run
    */
   protected async _beforeConfigure(): Promise<boolean> {
     log.debug('Runnnig pre-configure checks and steps');
@@ -458,15 +459,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
     }
 
-    // TODO
-    // // If no build variant has been chosen, ask the user now
-    // if (!this.variants.activeVariantCombination) {
-    //   const ok = await this.setBuildTypeWithoutConfigure();
-    //   if (!ok) {
-    //     return false;
-    //   }
-    // }
-    // this._channel.show();
     return true;
   }
 
