@@ -16,8 +16,6 @@ import * as util from "./util";
 const cmake_logger = logging.createLogger('cmake');
 const build_logger = logging.createLogger('build');
 
-// TODO: Show diagnostics in the problems window
-
 export interface RawDiagnostic {
   full: string;
   file: string;
