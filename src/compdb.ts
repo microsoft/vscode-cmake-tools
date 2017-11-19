@@ -18,7 +18,6 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
   // arguments.
   const command = util.splitCommandLine(raw.command);
   const compiler = command[0];
-  // const flags: string[] = [];  // TODO
   const inc_dirs = [] as({
     path: string;
     isSystem: boolean
