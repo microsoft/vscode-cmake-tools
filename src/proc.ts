@@ -73,7 +73,6 @@ export interface ExecutionOptions {
   cwd?: string;
 }
 
-
 /**
  * Execute a command and return the result
  * @param command The binary to execute

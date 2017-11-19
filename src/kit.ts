@@ -14,6 +14,15 @@ import {fs} from './pr';
 const log = logging.createLogger('kit');
 
 /**
+ * Representation of a CMake generator, along with a toolset and platform
+ */
+export interface CMakeGenerator {
+  name: string;
+  toolset?: string;
+  platform?: string;
+}
+
+/**
  * Base of all kits. Just has a name.
  */
 export interface BaseKit {
@@ -21,6 +30,11 @@ export interface BaseKit {
    * The name of the kit
    */
   name: string;
+
+  /**
+   * The preferred CMake generator for this kit
+   */
+  preferredGenerator?: CMakeGenerator;
 }
 
 /**
@@ -37,15 +51,6 @@ export interface CompilerKit extends BaseKit {
    * The corresponding value is a path to a compiler for that language.
    */
   compilers: {[lang: string] : string}
-}
-
-/**
- * Description of a CMake Visual Studio generator
- */
-export interface VSGenerator {
-  name: string;
-  platform?: string;
-  toolset?: string;
 }
 
 /**
@@ -67,11 +72,6 @@ export interface VSKit extends BaseKit {
    * from the dev environment batch file.
    */
   visualStudioArchitecture: string;
-
-  /**
-   * The preferred CMake generator for this Visual Studio
-   */
-  preferredGenerator?: VSGenerator;
 }
 
 /**

@@ -62,10 +62,23 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const args: string[] = [];
     if (!await fs.exists(this.cachePath)) {
       // No cache! We are free to change the generator!
-      const generator = 'Ninja';  // TODO: Find generators!
-      log.debug('Using', generator, 'CMake generator');
-      args.push('-G' + generator);
-      // TODO: Platform and toolset selection
+      const generator = await this.pickGenerator();
+      if (generator) {
+        log.info(`Using the ${generator.name} CMake generator`);
+        args.push('-G' + generator.name);
+        const platform = generator.platform || config.platform || null;
+        if (platform) {
+          log.info(`Using the ${platform} generator platform`);
+          args.push('-A', platform);
+        }
+        const toolset = generator.toolset || config.toolset || null;
+        if (toolset) {
+          log.info(`Using the ${toolset} generator toolset`);
+          args.push('-T', toolset);
+        }
+      } else {
+        log.warning('Unable to automatically pick a CMake generator. Using default.');
+      }
     }
 
     args.push(...await this._prepareConfigure());

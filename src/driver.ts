@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import rollbar from './rollbar';
-import {Kit, CompilerKit, ToolchainKit, VSKit, getVSKitEnvironment} from './kit';
+import {Kit, CompilerKit, ToolchainKit, VSKit, getVSKitEnvironment, CMakeGenerator} from './kit';
 import {CMakeCache} from './cache';
 import * as util from './util';
 import config from './config';
@@ -405,6 +405,84 @@ export abstract class CMakeDriver implements vscode.Disposable {
       return 'MSVC';
     } else if (linker.endsWith('ld')) {
       return 'GNU';
+    }
+    return null;
+  }
+
+  private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
+    const child = this.executeCommand(program, args, undefined, {silent: true});
+    try {
+      await child.result;
+      return true;
+    } catch (e) {
+      const e2: NodeJS.ErrnoException = e;
+      if (e2.code == 'ENOENT') {
+        return false;
+      }
+      throw e;
+    }
+  }
+
+  getPreferredGenerators(): CMakeGenerator[] {
+    const user_preferred = config.preferredGenerators.map(g => ({ name: g }));
+    if (this._kit && this._kit.type == 'vsKit' && this._kit.preferredGenerator) {
+      // The kit has a preferred generator attached as well
+      user_preferred.push(this._kit.preferredGenerator);
+    }
+    return user_preferred;
+  }
+
+  /**
+   * Picks the best generator to use on the current system
+   */
+  async pickGenerator(): Promise<CMakeGenerator | null> {
+    // User can override generator with a setting
+    const user_generator = config.generator;
+    if (user_generator) {
+      log.debug(`Using generator from user configuration: ${user_generator}`);
+      return {
+        name : user_generator,
+        platform : config.platform || undefined,
+        toolset : config.toolset || undefined,
+      };
+    }
+    log.debug("Trying to detect generator supported by system");
+    const platform = process.platform;
+    const candidates = this.getPreferredGenerators();
+    for (const gen of candidates) {
+      const gen_name = gen.name;
+      const generator_present = await (async (): Promise<boolean> => {
+        if (gen_name == 'Ninja') {
+          return await this.testHaveCommand('ninja-build') || await this.testHaveCommand('ninja');
+        }
+        if (gen_name == 'MinGW Makefiles') {
+          return platform === 'win32' && await this.testHaveCommand('make') || await this.testHaveCommand('mingw32-make');
+        }
+        if (gen_name == 'NMake Makefiles') {
+          return platform === 'win32' && await this.testHaveCommand('nmake', ['/?']);
+        }
+        if (gen_name == 'Unix Makefiles') {
+          return platform !== 'win32' && await this.testHaveCommand('make');
+        }
+        return false;
+      })();
+      if (!generator_present) {
+        const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
+        if (platform === 'win32' && vsMatch) {
+          return {
+            name : vsMatch[1],
+            platform : gen.platform || vsMatch[2],
+            toolset : gen.toolset,
+          };
+        }
+        if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
+          return gen;
+        }
+        vscode.window.showErrorMessage('Unknown CMake generator "' + gen.name + '"');
+        continue;
+      } else {
+        return gen;
+      }
     }
     return null;
   }
