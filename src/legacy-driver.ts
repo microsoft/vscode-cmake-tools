@@ -84,10 +84,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push(...await this._prepareConfigure());
     args.push(...extra_args);
 
-    // TODO: Make sure we are respecting all variant options
-
-    // TODO: Read options from settings.json
-
     console.assert(!!this._kit);
     if (!this._kit) {
       throw new Error('No kit is set!');

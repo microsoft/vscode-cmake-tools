@@ -167,7 +167,6 @@ class SingletonLogger {
     });
     // Write to our output channel
     if (levelEnabled(level)) {
-      // TODO: Bring back output throttling
       this._channel.appendLine(user_message);
     }
   }
