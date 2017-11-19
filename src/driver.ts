@@ -431,9 +431,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
       log.debug('No configuring: There is no', cmake_list);
-      await vscode.window.showErrorMessage('You do not have a CMakeLists.txt');
-      // if (do_quickstart) // TODO
-      //   await this.quickStart();
+      const do_quickstart = await vscode.window.showErrorMessage('You do not have a CMakeLists.txt',
+                                                                 'Quickstart a new CMake project');
+      if (do_quickstart)
+        vscode.commands.executeCommand('cmake.quickStart');
       return false;
     }
 
