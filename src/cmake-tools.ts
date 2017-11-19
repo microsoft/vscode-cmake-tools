@@ -354,7 +354,7 @@ export class CMakeTools implements vscode.Disposable {
   get allTargetName() { return this._allTargetName(); }
   private async _allTargetName(): Promise<string> {
     const drv = await this._cmakeDriver;
-    const gen = await drv.generatorName;
+    const gen = drv.generatorName;
     if (gen && (gen.includes('Visual Studio') || gen.toLowerCase().includes('xcode'))) {
       return 'ALL_BUILD';
     } else {
@@ -581,8 +581,8 @@ export class CMakeTools implements vscode.Disposable {
       vscode.window.showWarningMessage('No target selected for debugging');
       return null;
     }
-    // TODO: Check if we are MSVC
-    const is_msvc = false;
+    const is_msvc = drv.compilerID ? drv.compilerID.includes('MSVC')
+                                   : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
     const debug_config: vscode.DebugConfiguration = {
       type : is_msvc ? 'cppvsdbg' : 'cppdbg',
       name : `Debug target: ${target_name}`,

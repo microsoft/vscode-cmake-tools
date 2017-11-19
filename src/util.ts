@@ -219,3 +219,7 @@ export function splitCommandLine(cmd: string): string[] {
   return quoted_args !.map(arg => arg.replace(/\\(")/g, '$1').replace(/^"(.*)"$/g, '$1'));
 
 }
+
+export function isMultiConfGenerator(gen: string): boolean{
+  return gen.includes('Visual Studio') || gen.includes('Xcode');
+}

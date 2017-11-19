@@ -128,7 +128,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     if (!ok) {
       return null;
     }
-    const gen = await this.generatorName;
+    const gen = this.generatorName;
     const generator_args = (() => {
       if (!gen)
         return [];

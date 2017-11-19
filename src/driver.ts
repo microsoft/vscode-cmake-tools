@@ -157,16 +157,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * The name of the project
    */
-  get projectName(): Promise<string | null> {
-    return this.cmakeCache.then(cache => {
-      if (cache) {
-        const project = cache.get('CMAKE_PROJECT_NAME');
-        if (project) {
-          return project.as<string>();
-        }
-      }
+  get projectName(): string | null {
+    if (!this.cmakeCache) {
       return null;
-    });
+    }
+    const project = this.cmakeCache.get('CMAKE_PROJECT_NAME');
+    return project ? project.as<string>() : null;
   }
 
   /**
@@ -358,26 +354,59 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * This is the value passed to CMAKE_BUILD_TYPE or --config for multiconf
    */
-  get currentBuildType(): string {
-    // TODO: Handle multiconf
-    return this._variantBuildType;
+  get currentBuildType(): string { return this._variantBuildType; }
+
+  get isMultiConf(): boolean {
+    return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false;
   }
 
   /**
    * Get the name of the current CMake generator, or `null` if we have not yet
    * configured the project.
    */
-  get generatorName(): Promise<string | null> { return this._generatorName(); }
-  private async _generatorName(): Promise<string | null> {
-    const cache = await this.cmakeCache;
-    if (!cache) {
+  get generatorName(): string | null { return this._generatorName; }
+  private _generatorName: string | null = null;
+
+  /**
+   * The ID of the current compiler, as best we can tell
+   */
+  get compilerID(): string | null {
+    if (!this.cmakeCache) {
       return null;
     }
-    const gen = cache.get('CMAKE_GENERATOR');
-    if (!gen) {
+    const languages = [ 'CXX', 'C', 'CUDA' ];
+    for (const lang of languages) {
+      const entry = this.cmakeCache.get(`CMAKE_${lang}_COMPILER`);
+      if (!entry) {
+        continue;
+      }
+      const compiler = entry.as<string>();
+      if (compiler.endsWith('cl.exe')) {
+        return 'MSVC';
+      } else if (/g(cc|)\+\+)/.test(compiler)) {
+        return 'GNU';
+      } else if (/clang(\+\+)?[^/]*/.test(compiler)) {
+        return 'Clang';
+      }
+    }
+    return null;
+  }
+
+  get linkerID(): string | null {
+    if (!this.cmakeCache) {
       return null;
     }
-    return gen.as<string>();
+    const entry = this.cmakeCache.get('CMAKE_LINKER');
+    if (!entry) {
+      return null;
+    }
+    const linker = entry.as<string>();
+    if (linker.endsWith('link.exe')) {
+      return 'MSVC';
+    } else if (linker.endsWith('ld')) {
+      return 'GNU';
+    }
+    return null;
   }
 
   /**
@@ -446,7 +475,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Will be automatically reloaded when the file on disk changes.
    */
   get cmakeCache() { return this._cmakeCache; }
-  private _cmakeCache: Promise<CMakeCache | null> = Promise.resolve(null);
+  private _cmakeCache: CMakeCache | null = null;
 
   /**
    * Watcher for the CMake cache file on disk.
@@ -456,19 +485,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Get all cache entries
    */
-  get allCacheEntries() { return this._allCacheEntries(); }
-  private async _allCacheEntries(): Promise<api.CacheEntryProperties[]> {
-    const cache = await this.cmakeCache;
-    if (!cache) {
+  get allCacheEntries(): api.CacheEntryProperties[] {
+    if (!this.cmakeCache) {
       return [];
     } else {
-      return cache.allEntries.map(e => ({
-                                    type : e.type,
-                                    key : e.key,
-                                    value : e.value,
-                                    advanced : e.advanced,
-                                    helpString : e.helpString,
-                                  }));
+      return this.cmakeCache.allEntries.map(e => ({
+                                              type : e.type,
+                                              key : e.key,
+                                              value : e.value,
+                                              advanced : e.advanced,
+                                              helpString : e.helpString,
+                                            }));
     }
   }
 
@@ -488,9 +515,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   protected async _reloadCMakeCache() {
-    this._cmakeCache = CMakeCache.fromPath(this.cachePath);
     // Force await here so that any errors are thrown into rollbar
-    await this._cmakeCache;
+    const new_cache = await CMakeCache.fromPath(this.cachePath);
+    this._cmakeCache = new_cache;
     const name = await this.projectName;
     if (name) {
       this._projectNameChangedEmitter.fire(name);
@@ -512,8 +539,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Always export so that we have compile_commands.json
     settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
 
-    // TODO: Detect multi-conf
-    settings.CMAKE_BUILD_TYPE = this.currentBuildType;
+    if (!this.isMultiConf) {
+      // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
+      settings.CMAKE_BUILD_TYPE = this.currentBuildType;
+    }
 
     const _makeFlag = (key: string, cmval: util.CMakeValue) => {
       switch (cmval.type) {
