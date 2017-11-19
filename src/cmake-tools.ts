@@ -695,6 +695,14 @@ export class CMakeTools implements vscode.Disposable {
     return this.configure();
   }
 
+  /**
+   * Implementation of `cmake.resetState`
+   */
+  async resetState() {
+    this._stateManager.reset();
+    vscode.commands.executeCommand('workbench.action.reloadWindow');
+  }
+
   private async _handleCacheEditorMessage(method: string,
                                           params: {[key: string] : any}): Promise<any> {
     switch (method) {

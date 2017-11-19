@@ -62,4 +62,14 @@ export class StateManager {
       this.extensionContext.workspaceState.update('activeVariantSettings', null);
     }
   }
+
+  /**
+   * Rest all current workspace state. Mostly for troubleshooting
+   */
+  reset() {
+    this.activeVariantSettings = null;
+    this.launchTargetName = null;
+    this.defaultBuildTarget = null;
+    this.activeKitName = null;
+  }
 }

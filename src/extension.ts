@@ -52,26 +52,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
   // List of functions that will be bound commands
   const funs : (keyof CMakeTools)[] =
                    [
-                     'editKits',
-                     'scanForKits',
-                     'selectKit',
-                     'cleanConfigure',
-                     'configure',
-                     'build',
-                     'setVariant',
-                     'install',
-                     'editCache',
-                     'clean',
-                     'cleanRebuild',
-                     'buildWithTarget',
-                     'setDefaultTarget',
-                     'ctest',
-                     'stop',
-                     'quickStart',
-                     'launchTargetPath',
-                     'debugTarget',
-                     'launchTarget',
-                     'selectLaunchTarget',
+                     'editKits',         'scanForKits', 'selectKit',    'cleanConfigure',
+                     'configure',        'build',       'setVariant',   'install',
+                     'editCache',        'clean',       'cleanRebuild', 'buildWithTarget',
+                     'setDefaultTarget', 'ctest',       'stop',         'quickStart',
+                     'launchTargetPath', 'debugTarget', 'launchTarget', 'selectLaunchTarget',
+                     'resetState',
                      // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
                    ];
 

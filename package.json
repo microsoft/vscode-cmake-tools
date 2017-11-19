@@ -51,6 +51,7 @@
         "onCommand:cmake.toggleCoverageDecorations",
         "onCommand:cmake.editKits",
         "onCommand:cmake.scanForKits",
+        "onCommand:cmake.resetState",
         "onCommand:cmake._extensionInstance",
         "workspaceContains:CMakeLists.txt"
     ],
@@ -155,6 +156,11 @@
             {
                 "command": "cmake.toggleCoverageDecorations",
                 "title": "Toggle visibility of test coverage in the editor",
+                "category": "CMake"
+            },
+            {
+                "command": "cmake.resetState",
+                "title": "Reset CMake Tools extension state (For troubleshooting)",
                 "category": "CMake"
             }
         ],
