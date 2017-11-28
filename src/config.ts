@@ -29,6 +29,16 @@ export class ConfigurationReader {
         `${platform}.${key}`, this.readConfig<T>(`${key}`));
   }
 
+  private _escapeArray(obj:Array<string>){
+    const acc: Array<string> = [];
+    return obj.reduce(
+      (acc,key:string) =>{
+        acc.push(util.replaceVars(key));
+        return acc;
+    },acc)
+
+  }
+
   get buildDirectory(): string {
     return this._readPrefixed<string>('buildDirectory')!;
   }
@@ -78,15 +88,15 @@ export class ConfigurationReader {
   }
 
   get configureArgs(): string[] {
-    return this._readPrefixed<string[]>('configureArgs')!;
+    return this._escapeArray(this._readPrefixed<string[]>('configureArgs') || []);
   }
 
   get buildArgs(): string[] {
-    return this._readPrefixed<string[]>('buildArgs')!;
+    return this._escapeArray(this._readPrefixed<string[]>('buildArgs') || [] );
   }
 
   get buildToolArgs(): string[] {
-    return this._readPrefixed<string[]>('buildToolArgs')!;
+    return this._escapeArray(this._readPrefixed<string[]>('buildToolArgs') || [] );
   }
 
   get parallelJobs(): Maybe<number> {
