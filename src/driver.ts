@@ -9,7 +9,6 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import rollbar from './rollbar';
 import {Kit, CompilerKit, ToolchainKit, VSKit, getVSKitEnvironment, CMakeGenerator} from './kit';
-import {CMakeCache} from './cache';
 import * as util from './util';
 import config from './config';
 import * as logging from './logging';
@@ -48,11 +47,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param target The target to build
    */
   abstract build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null>;
-
-  /**
-   * Stops the currently running process at user request
-   */
-  abstract stopCurrentProcess(): Promise<boolean>;
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
@@ -96,7 +90,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
   dispose() {
     log.debug('Disposing base CMakeDriver');
     rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
-    this._cacheWatcher.dispose();
     this._projectNameChangedEmitter.dispose();
   }
 
@@ -142,7 +135,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Get the environment variables required by the current Kit
    */
-  protected _getKitEnvironmentVariablesObject(): {[key: string] : string} {
+  protected _getKitEnvironmentVariablesObject(): proc.EnvironmentVariables {
     return util.reduce(this._kitEnvironmentVariables.entries(),
                        {},
                        (acc, [ key, value ]) => Object.assign(acc, {[key] : value}));
@@ -152,18 +145,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Event fired when the name of the CMake project is discovered or changes
    */
   get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
-  protected _projectNameChangedEmitter = new vscode.EventEmitter<string>();
+  private _projectNameChangedEmitter = new vscode.EventEmitter<string>();
 
-  /**
-   * The name of the project
-   */
-  get projectName(): string | null {
-    if (!this.cmakeCache) {
-      return null;
-    }
-    const project = this.cmakeCache.get('CMAKE_PROJECT_NAME');
-    return project ? project.as<string>() : null;
+  private _projectName: string;
+  public get projectName(): string { return this._projectName; }
+  protected doSetProjectName(v: string) {
+    this._projectName = v;
+    this._projectNameChangedEmitter.fire(v);
   }
+
 
   /**
    * Get the current kit. Once non-`null`, the kit is never `null` again.
@@ -267,12 +257,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
                  args: string[],
                  consumer?: proc.OutputConsumer,
                  options?: proc.ExecutionOptions): proc.Subprocess {
-    let env = this._getKitEnvironmentVariablesObject();
-    if (options && options.environment) {
-      env = Object.assign({}, env, options.environment);
-    }
-    const final_options = Object.assign({}, options, {environment : env});
-    return proc.execute(command, args, consumer, final_options);
+    const cur_env = process.env as proc.EnvironmentVariables;
+    const env = util.mergeEnvironment(cur_env,
+                                      this._getKitEnvironmentVariablesObject(),
+                                      (options && options.environment) ? options.environment : {});
+    const exec_options = Object.assign({}, options, {environment : env});
+    return proc.execute(command, args, consumer, exec_options);
   }
 
   /**
@@ -364,23 +354,29 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the name of the current CMake generator, or `null` if we have not yet
    * configured the project.
    */
-  get generatorName(): string | null { return this._generatorName; }
-  private _generatorName: string | null = null;
+  abstract get generatorName(): string | null;
+
+  get allTargetName(): string {
+    const gen = this.generatorName;
+    if (gen && (gen.includes('Visual Studio') || gen.toLowerCase().includes('xcode'))) {
+      return 'ALL_BUILD';
+    } else {
+      return 'all';
+    }
+  }
 
   /**
    * The ID of the current compiler, as best we can tell
    */
   get compilerID(): string | null {
-    if (!this.cmakeCache) {
-      return null;
-    }
+    const entries = this.cmakeCacheEntries;
     const languages = [ 'CXX', 'C', 'CUDA' ];
     for (const lang of languages) {
-      const entry = this.cmakeCache.get(`CMAKE_${lang}_COMPILER`);
+      const entry = entries.get(`CMAKE_${lang}_COMPILER`);
       if (!entry) {
         continue;
       }
-      const compiler = entry.as<string>();
+      const compiler = entry.value as string;
       if (compiler.endsWith('cl.exe')) {
         return 'MSVC';
       } else if (/g(cc|)\+\+)/.test(compiler)) {
@@ -393,14 +389,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   get linkerID(): string | null {
-    if (!this.cmakeCache) {
-      return null;
-    }
-    const entry = this.cmakeCache.get('CMAKE_LINKER');
+    const entries = this.cmakeCacheEntries;
+    const entry = entries.get('CMAKE_LINKER');
     if (!entry) {
       return null;
     }
-    const linker = entry.as<string>();
+    const linker = entry.value as string;
     if (linker.endsWith('link.exe')) {
       return 'MSVC';
     } else if (linker.endsWith('ld')) {
@@ -409,8 +403,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
-  private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
-    const child = this.executeCommand(program, args, undefined, {silent: true});
+  private async testHaveCommand(program: string,
+                                args: string[] = [ '--version' ]): Promise<boolean> {
+    const child = this.executeCommand(program, args, undefined, {silent : true});
     try {
       await child.result;
       return true;
@@ -424,7 +419,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   getPreferredGenerators(): CMakeGenerator[] {
-    const user_preferred = config.preferredGenerators.map(g => ({ name: g }));
+    const user_preferred = config.preferredGenerators.map(g => ({name : g}));
     if (this._kit && this._kit.type == 'vsKit' && this._kit.preferredGenerator) {
       // The kit has a preferred generator attached as well
       user_preferred.push(this._kit.preferredGenerator);
@@ -451,15 +446,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await (async (): Promise<boolean> => {
+      const generator_present = await(async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || await this.testHaveCommand('ninja');
         }
         if (gen_name == 'MinGW Makefiles') {
-          return platform === 'win32' && await this.testHaveCommand('make') || await this.testHaveCommand('mingw32-make');
+          return platform === 'win32' && await this.testHaveCommand('make')
+              || await this.testHaveCommand('mingw32-make');
         }
         if (gen_name == 'NMake Makefiles') {
-          return platform === 'win32' && await this.testHaveCommand('nmake', ['/?']);
+          return platform === 'win32' && await this.testHaveCommand('nmake', [ '/?' ]);
         }
         if (gen_name == 'Unix Makefiles') {
           return platform !== 'win32' && await this.testHaveCommand('make');
@@ -541,59 +537,65 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * The currently running process. We keep a handle on it so we can stop it
+   * upon user request
+   */
+  private _currentProcess: proc.Subprocess | null = null;
+
+  protected async doCMakeBuild(target: string,
+                               consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
+    const ok = await this._beforeConfigure();
+    if (!ok) {
+      return null;
+    }
+    const gen = this.generatorName;
+    const generator_args = (() => {
+      if (!gen)
+        return [];
+      else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
+        return [ '-j', config.numJobs.toString() ];
+      else if (gen.includes('Visual Studio'))
+        return [
+          '/m',
+          '/property:GenerateFullPaths=true',
+        ];  // TODO: Older VS doesn't support these flags
+      else
+        return [];
+    })();
+    const args =
+        [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ]
+            .concat(generator_args);
+    const child = this.executeCommand(config.cmakePath, args, consumer);
+    this._currentProcess = child;
+    await child.result;
+    this._currentProcess = null;
+    return child;
+  }
+
+  /**
+   * Stops the currently running process at user request
+   */
+  async stopCurrentProcess(): Promise<boolean> {
+    const cur = this._currentProcess;
+    if (!cur) {
+      return false;
+    }
+    await util.termProc(cur.child);
+    return true;
+  }
+
+  /**
    * The CMake cache for the driver.
    *
    * Will be automatically reloaded when the file on disk changes.
    */
-  get cmakeCache() { return this._cmakeCache; }
-  private _cmakeCache: CMakeCache | null = null;
-
-  /**
-   * Watcher for the CMake cache file on disk.
-   */
-  private _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
-
-  /**
-   * Get all cache entries
-   */
-  get allCacheEntries(): api.CacheEntryProperties[] {
-    if (!this.cmakeCache) {
-      return [];
-    } else {
-      return this.cmakeCache.allEntries.map(e => ({
-                                              type : e.type,
-                                              key : e.key,
-                                              value : e.value,
-                                              advanced : e.advanced,
-                                              helpString : e.helpString,
-                                            }));
-    }
-  }
+  abstract get cmakeCacheEntries(): Map<string, api.CacheEntryProperties>;
 
   /**
    * Asynchronous initialization. Should be called by base classes during
    * their initialization.
    */
-  protected async _init() {
-    log.debug('Base _init() of CMakeDriver');
-    if (await fs.exists(this.cachePath)) {
-      await this._reloadCMakeCache();
-    }
-    this._cacheWatcher.onDidChange(() => {
-      log.debug(`Reload CMake cache: ${this.cachePath} changed`);
-      rollbar.invokeAsync('Reloading CMake Cache', () => this._reloadCMakeCache());
-    });
-  }
-
-  protected async _reloadCMakeCache() {
-    // Force await here so that any errors are thrown into rollbar
-    const new_cache = await CMakeCache.fromPath(this.cachePath);
-    this._cmakeCache = new_cache;
-    const name = await this.projectName;
-    if (name) {
-      this._projectNameChangedEmitter.fire(name);
-    }
-  }
+  protected async _init() { log.debug('Base _init() of CMakeDriver'); }
 
   /**
    * Do pre-configure tasks and return the arguments that should be passed

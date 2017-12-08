@@ -4,7 +4,7 @@ import * as child_process from 'child_process';
 import * as vscode from 'vscode';
 
 import config from './config';
-import {execute} from './proc';
+import { execute, EnvironmentVariables } from './proc';
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -222,4 +222,72 @@ export function splitCommandLine(cmd: string): string[] {
 
 export function isMultiConfGenerator(gen: string): boolean{
   return gen.includes('Visual Studio') || gen.includes('Xcode');
+}
+
+
+export interface Version {
+  major: number;
+  minor: number;
+  patch: number;
+}
+export function parseVersion(str: string): Version {
+  const version_re = /(\d+)\.(\d+)\.(\d+)/;
+  const mat = version_re.exec(str);
+  if (!mat) {
+    throw new Error(`Invalid version string ${str}`);
+  }
+  const [, major, minor, patch] = mat;
+  return {
+    major: parseInt(major),
+    minor: parseInt(minor),
+    patch: parseInt(patch),
+  };
+}
+
+export function versionGreater(lhs: Version, rhs: Version|string): boolean {
+  if (typeof(rhs) === 'string') {
+    return versionGreater(lhs, parseVersion(rhs));
+  }
+  if (lhs.major > rhs.major) {
+    return true;
+  }
+  else if (lhs.major === rhs.major) {
+    if (lhs.minor > rhs.minor) {
+      return true;
+    }
+    else if (lhs.minor === rhs.minor) {
+      return lhs.patch > rhs.patch;
+    }
+  }
+  return false;
+}
+
+export function versionEquals(lhs: Version, rhs: Version|string): boolean {
+  if (typeof(rhs) === 'string') {
+    return versionEquals(lhs, parseVersion(rhs));
+  }
+  return lhs.major === rhs.major && lhs.minor === rhs.minor &&
+      lhs.patch === rhs.patch;
+}
+
+export function versionLess(lhs: Version, rhs: Version|string): boolean {
+  return !versionGreater(lhs, rhs) && !versionEquals(lhs, rhs);
+}
+
+export function mergeEnvironment(...env: EnvironmentVariables[]) {
+  return env.reduce((acc, vars) => {
+    if (process.platform === 'win32') {
+      // Env vars on windows are case insensitive, so we take the ones from
+      // active env and overwrite the ones in our current process env
+      const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>(
+          (acc2, key: string) => {
+            acc2[key.toUpperCase()] = vars[key];
+            return acc2;
+          },
+          {});
+      return Object.assign({}, acc, norm_vars);
+    } else {
+      return Object.assign({}, acc, vars);
+    }
+  }, {})
 }

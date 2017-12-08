@@ -9,11 +9,14 @@ import * as ws from 'ws';
 
 import rollbar from './rollbar';
 import * as diags from './diagnostics';
+import * as proc from './proc';
+import * as util from './util';
 import {KitManager} from './kit';
 import {VariantManager} from './variant';
 import {StateManager} from './state';
 import {CMakeDriver} from './driver';
 import {LegacyCMakeDriver} from './legacy-driver';
+import {CMakeServerClientDriver} from './cms-driver';
 import {StatusBar} from './status';
 import config from "./config";
 import {fs} from './pr';
@@ -160,8 +163,31 @@ export class CMakeTools implements vscode.Disposable {
    * of the driver is atomic to those using it
    */
   private async _startNewCMakeDriver(): Promise<CMakeDriver> {
-    log.debug('Loading legacy (non-cmake-server) driver');
-    const drv = await LegacyCMakeDriver.create();
+    const drv = await (async() => {
+      log.debug('Starting CMake driver');
+      const version_ex = await proc.execute(config.cmakePath, [ '--version' ]).result;
+      if (version_ex.retc !== 0 || !version_ex.stdout) {
+        throw new Error(
+            `Bad CMake executable "${config.cmakePath}". Is it installed and a valid executable?`);
+      }
+
+      if (config.useCMakeServer) {
+        console.assert(version_ex.stdout);
+        const version_re = /cmake version (.*?)\r?\n/;
+        const version = util.parseVersion(version_re.exec(version_ex.stdout) ![1]);
+        // We purposefully exclude versions <3.7.1, which have some major CMake
+        // server bugs
+        if (util.versionGreater(version, '3.7.1')) {
+          return await CMakeServerClientDriver.create(this.extensionContext);
+        } else {
+          log.info(
+              'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
+        }
+      }
+      // We didn't start the server backend, so we'll use the legacy one
+      return await LegacyCMakeDriver.create();
+    })();
+    // Push state into the new driver
     if (this._kitManager.activeKit) {
       log.debug('Pushing active Kit into driver');
       await drv.setKit(this._kitManager.activeKit);
@@ -354,12 +380,7 @@ export class CMakeTools implements vscode.Disposable {
   get allTargetName() { return this._allTargetName(); }
   private async _allTargetName(): Promise<string> {
     const drv = await this._cmakeDriver;
-    const gen = drv.generatorName;
-    if (gen && (gen.includes('Visual Studio') || gen.toLowerCase().includes('xcode'))) {
-      return 'ALL_BUILD';
-    } else {
-      return 'all';
-    }
+    return drv.allTargetName;
   }
 
   /**
@@ -708,7 +729,7 @@ export class CMakeTools implements vscode.Disposable {
     switch (method) {
     case 'getEntries': {
       const drv = await this._cmakeDriver;
-      return drv.allCacheEntries;
+      return drv.cmakeCacheEntries;
     }
     case 'configure': {
       return this.configure(params['args']);

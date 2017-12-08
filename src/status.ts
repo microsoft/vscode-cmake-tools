@@ -23,6 +23,8 @@ export class StatusBar implements vscode.Disposable {
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
   private readonly _targetButton
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
+  private readonly _debugButton
+      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.25);
   private readonly _launchTargetNameButton
       = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.2);
   private readonly _testButton
@@ -55,6 +57,8 @@ export class StatusBar implements vscode.Disposable {
     this._targetButton.tooltip = 'Set the active target to build';
     this._testButton.command = 'cmake.ctest';
     this._testButton.tooltip = 'Run CTest tests';
+    this._debugButton.tooltip = 'Launch the debugger for the selected target';
+    this._debugButton.command = 'cmake.debugTarget';
     this._launchTargetNameButton.command = 'cmake.selectLaunchTarget';
     this._launchTargetNameButton.tooltip = 'Select the target to launch';
     this._reloadBuildButton();
@@ -67,11 +71,15 @@ export class StatusBar implements vscode.Disposable {
       this._buildButton,
       this._kitSelectionButton,
       this._targetButton,
+      this._debugButton,
       this._launchTargetNameButton,
     ];
     for (const item of autovis_items) {
       setVisible(item, this._visible && !!item.text);
     }
+    setVisible(this._debugButton,
+               this._visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined
+                   && !!this._debugButton.text);
   }
 
   /**
@@ -86,6 +94,19 @@ export class StatusBar implements vscode.Disposable {
   private _reloadStatusButton() {
     this._cmakeToolsStatusItem.text = `CMake: ${this._projectName}: ${this._buildTypeLabel
       }: ${this._statusMessage}`;
+    this.reloadVisibility();
+  }
+
+  private _reloadDebugButton() {
+    if (!this._launchTargetNameButton.text) {
+      this._debugButton.text = '$(bug)';
+      this._launchTargetNameButton.hide();
+    } else {
+      this._debugButton.text = '$(bug) Debug';
+      if (this._visible) {
+        this._launchTargetNameButton.show();
+      }
+    }
     this.reloadVisibility();
   }
 
@@ -128,9 +149,9 @@ export class StatusBar implements vscode.Disposable {
     this.reloadVisibility();
   }
 
-  setLaunchTargetName(v : string) {
+  setLaunchTargetName(v: string) {
     this._launchTargetNameButton.text = v;
-    this.reloadVisibility();
+    this._reloadDebugButton();
   }
 
   private _ctestEnabled: boolean = false;

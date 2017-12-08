@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import {CMakeDriver} from './driver';
-// import rollbar from './rollbar';
+import rollbar from './rollbar';
 import {Kit} from './kit';
 import {fs} from './pr';
 import config from './config';
@@ -15,6 +15,8 @@ import * as util from './util';
 import * as proc from './proc';
 // import * as proc from './proc';
 import * as logging from './logging';
+import {CMakeCache} from "./cache";
+import * as api from './api';
 
 const log = logging.createLogger('legacy-driver');
 
@@ -23,12 +25,6 @@ const log = logging.createLogger('legacy-driver');
  */
 export class LegacyCMakeDriver extends CMakeDriver {
   private constructor() { super(); }
-
-  /**
-   * The currently running process. We keep a handle on it so we can stop it
-   * upon user request
-   */
-  private _currentProcess: proc.Subprocess | null = null;
 
   private _needsReconfigure = true;
   get needsReconfigure() { return this._needsReconfigure; }
@@ -48,7 +44,10 @@ export class LegacyCMakeDriver extends CMakeDriver {
   private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
   // Legacy disposal does nothing
-  async asyncDispose() { this._onReconfiguredEmitter.dispose(); }
+  async asyncDispose() {
+    this._onReconfiguredEmitter.dispose();
+    this._cacheWatcher.dispose();
+  }
 
   async configure(extra_args: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     if (!await this._beforeConfigure()) {
@@ -133,46 +132,25 @@ export class LegacyCMakeDriver extends CMakeDriver {
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
-    const ok = await this._beforeConfigure();
-    if (!ok) {
-      return null;
+    const child = await this.doCMakeBuild(target, consumer);
+    if (!child) {
+      return child;
     }
-    const gen = this.generatorName;
-    const generator_args = (() => {
-      if (!gen)
-        return [];
-      else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return [ '-j', config.numJobs.toString() ];
-      else if (gen.includes('Visual Studio'))
-        return [
-          '/m',
-          '/property:GenerateFullPaths=true',
-        ];  // TODO: Older VS doesn't support these flags
-      else
-        return [];
-    })();
-    const args =
-        [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ].concat(
-            generator_args);
-    const child = this.executeCommand(config.cmakePath, args, consumer);
-    this._currentProcess = child;
-    await child.result;
-    this._currentProcess = null;
     await this._reloadCMakeCache();
     this._onReconfiguredEmitter.fire();
     return child;
   }
 
-  async stopCurrentProcess(): Promise<boolean> {
-    const cur = this._currentProcess;
-    if (!cur) {
-      return false;
+  protected async _init() {
+    await super._init();
+    if (await fs.exists(this.cachePath)) {
+      await this._reloadCMakeCache();
     }
-    await util.termProc(cur.child);
-    return true;
+    this._cacheWatcher.onDidChange(() => {
+      log.debug(`Reload CMake cache: ${this.cachePath} changed`);
+      rollbar.invokeAsync('Reloading CMake Cache', () => this._reloadCMakeCache());
+    });
   }
-
-  protected async _init() { await super._init(); }
 
   static async create(): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
@@ -183,4 +161,46 @@ export class LegacyCMakeDriver extends CMakeDriver {
 
   get targets() { return []; }
   get executableTargets() { return []; }
+
+  /**
+   * Watcher for the CMake cache file on disk.
+   */
+  private _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
+
+  get cmakeCache() { return this._cmakeCache; }
+  private _cmakeCache: CMakeCache | null = null;
+
+  protected async _reloadCMakeCache() {
+    // Force await here so that any errors are thrown into rollbar
+    const new_cache = await CMakeCache.fromPath(this.cachePath);
+    this._cmakeCache = new_cache;
+    const project = new_cache.get('CMAKE_PROJECT_NAME');
+    if (project) {
+      this.doSetProjectName(project.as<string>());
+    }
+  }
+
+  get cmakeCacheEntries() {
+    let ret = new Map<string, api.CacheEntryProperties>();
+    if (this.cmakeCache) {
+      ret = util.reduce(this.cmakeCache.allEntries, ret, (acc, entry) => acc.set(entry.key, entry));
+    }
+    return ret;
+  }
+
+  get generatorName(): string | null {
+    if (!this.cmakeCache) {
+      return null;
+    }
+    const gen = this.cmakeCache.get('CMAKE_GENERATOR');
+    return gen ? gen.as<string>() : null;
+  }
+
+  // get projectName(): string | null {
+  //   if (!this.cmakeCache) {
+  //     return null;
+  //   }
+  //   const project = this.cmakeCache.get('CMAKE_PROJECT_NAME');
+  //   return project ? project.as<string>() : null;
+  // }
 }

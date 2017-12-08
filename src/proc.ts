@@ -62,7 +62,7 @@ export interface Subprocess {
   child: proc.ChildProcess;
 }
 
-export type EnvironmentVariables = {
+export interface EnvironmentVariables {
   [key: string] : string
 };
 
