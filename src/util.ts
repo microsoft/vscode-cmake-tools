@@ -67,7 +67,7 @@ export function normalizePath(p: string, normalize_case = true): string {
  */
 export function replaceVars(str: string): string {
   const replacements: {[key: string] : string} = {
-    ['${workspaceRoot}'] : vscode.workspace.rootPath || '.',
+    ['${workspaceRoot}'] : normalizePath(vscode.workspace.rootPath || '.'),
     ['${workspaceRootFolderName}'] : path.basename(vscode.workspace.rootPath || '.'),
     ['${toolset}'] : config.toolset || 'unknown',
   };
