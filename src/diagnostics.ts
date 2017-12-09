@@ -72,6 +72,7 @@ export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: Fi
  * in conjunction with `proc.execute`.
  */
 export class CMakeOutputConsumer implements OutputConsumer {
+  constructor(readonly sourceDir: string) {}
   /**
    * The diagnostics that this consumer has accumulated. It will be populated
    * during calls to `output()` and `error()`
@@ -83,7 +84,10 @@ export class CMakeOutputConsumer implements OutputConsumer {
    * Simply writes the line of output to the log
    * @param line Line of output
    */
-  output(line: string) { cmake_logger.info(line); }
+  output(line: string) {
+    cmake_logger.info(line);
+    this._parseDiags(line);
+  }
 
   /**
    * The state for the diagnostic parser. Implemented as a crude FSM
@@ -119,6 +123,10 @@ export class CMakeOutputConsumer implements OutputConsumer {
   error(line: string) {
     // First, just log the line
     cmake_logger.error(line);
+    this._parseDiags(line);
+  }
+
+  private _parseDiags(line: string) {
     // This line of output terminates an `AUTHOR_WARNING`
     const dev_warning_re = /^This warning is for project developers\./;
     // Switch on the state to implement our crude FSM
@@ -131,9 +139,6 @@ export class CMakeOutputConsumer implements OutputConsumer {
         const[_full, level, filename, linestr, command] = result;
         _full;  // unused
         const line = Number.parseInt(linestr) - 1;
-        const filepath = path.isAbsolute(filename)
-            ? filename
-            : path.join(vscode.workspace.rootPath !, filename);
         const diagmap: {[k: string] : vscode.DiagnosticSeverity} = {
           'Warning' : vscode.DiagnosticSeverity.Warning,
           'Error' : vscode.DiagnosticSeverity.Error,
@@ -141,6 +146,9 @@ export class CMakeOutputConsumer implements OutputConsumer {
         const vsdiag
             = new vscode.Diagnostic(new vscode.Range(line, 0, line, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
+        const filepath = path.isAbsolute(filename)
+            ? filename
+            : util.normalizePath(path.join(this.sourceDir, filename));
         this._errorState.diag = {
           filepath,
           diag : vsdiag,
@@ -324,8 +332,11 @@ export class CompileOutputConsumer implements OutputConsumer {
         if (file && severity && message) {
           this._ghsDiagnostics.push({
             full : full,
-            file: file,
-            location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
+            file : file,
+            location : new vscode.Range(parseInt(lineno) - 1,
+                                        parseInt(column) - 1,
+                                        parseInt(lineno) - 1,
+                                        999),
             severity : severity,
             message : message
           });

@@ -68,6 +68,13 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
     const config_args = await this._prepareConfigure();
     const cl = await this._cmsClient;
+    const sub = this.onMessage(msg => {
+      if (_consumer) {
+        for (const line of msg.split('\n')) {
+          _consumer.output(line);
+        }
+      }
+    });
     try {
       await cl.configure({cacheArguments : config_args.concat(extra_args)});
       await cl.compute();
@@ -81,6 +88,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
       } else {
         throw e;
       }
+    } finally {
+      sub.dispose();
     }
     this._codeModel = await cl.sendRequest('codemodel');
     this._onReconfiguredEmitter.fire();
@@ -177,11 +186,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
       cmakePath : config.cmakePath,
       environment : this._getKitEnvironmentVariablesObject(),
       onDirty : async() => { this._dirty = true },
-      onMessage : async(msg) => { log.info('--', msg.message); },
+      onMessage : async(msg) => { this._onMessageEmitter.fire(msg.message); },
       onProgress : async(_prog) => {},
       pickGenerator : () => this.pickGenerator(),
     });
   }
+
+  private _onMessageEmitter = new vscode.EventEmitter<string>();
+  get onMessage() { return this._onMessageEmitter.event; }
 
   protected async _init(): Promise<void> {
     await super._init();

@@ -362,7 +362,8 @@ export class CMakeTools implements vscode.Disposable {
       log.clearOutputChannel();
     }
     log.showChannel();
-    const consumer = new diags.CMakeOutputConsumer();
+    const drv = await this._cmakeDriver;
+    const consumer = new diags.CMakeOutputConsumer(drv.sourceDir);
     const retc = await cb(consumer);
     diags.populateCollection(this._configureDiagnostics, consumer.diagnostics);
     return retc;
