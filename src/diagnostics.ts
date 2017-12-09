@@ -228,7 +228,7 @@ export class CompileOutputConsumer implements OutputConsumer {
   private readonly _gcc_re = /^(.*):(\d+):(\d+):\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/;
   private readonly _gnu_ld_re = /^(.*):(\d+)\s?:\s+(.*[^\]])$/;
   private readonly _msvc_re
-      = /^\s*(?!\d+>)\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/
+      = /^\s*(?!\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/
 
       private _ghsDiagnostics: RawDiagnostic[]
       = [];
