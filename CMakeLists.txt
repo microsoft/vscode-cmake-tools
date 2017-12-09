@@ -2,34 +2,33 @@ cmake_minimum_required(VERSION 3.7)
 
 project(CMakeTools VERSION 0.99.0 LANGUAGES NONE)
 
-find_program(YARN_EXECUTABLE yarn)
 find_program(NPM_EXECUTABLE npm)
 find_program(VSCE_EXECUTABLE vsce)
 find_program(SPHINX_EXECUTABLE sphinx-build)
 
 get_filename_component(package_json package.json ABSOLUTE)
 get_filename_component(package_lock package-lock.json ABSOLUTE)
-get_filename_component(yarn_stamp "${CMAKE_CURRENT_BINARY_DIR}/yarn.stamp" ABSOLUTE)
-add_custom_command(OUTPUT ${yarn_stamp}
+get_filename_component(npm_stamp "${CMAKE_CURRENT_BINARY_DIR}/npm.stamp" ABSOLUTE)
+add_custom_command(OUTPUT ${npm_stamp}
     DEPENDS ${package_json}
-    COMMAND ${YARN_EXECUTABLE}
-    COMMAND ${CMAKE_COMMAND} -E touch ${yarn_stamp}
+    COMMAND ${NPM_EXECUTABLE} install
+    COMMAND ${CMAKE_COMMAND} -E touch ${npm_stamp}
     COMMENT "Installing dependencies..."
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL
     )
-add_custom_target(yarn-install DEPENDS ${package_lock} ${yarn_stamp})
+add_custom_target(npm-install DEPENDS ${package_lock} ${npm_stamp})
 
 add_custom_target(compile ALL
-    DEPENDS yarn-install
-    COMMAND ${YARN_EXECUTABLE} --silent compile-once
+    DEPENDS npm-install
+    COMMAND ${NPM_EXECUTABLE} run compile-once
     COMMENT "Compiling TypeScript code..."
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     # USES_TERMINAL
     )
 
 add_custom_target(vsce-package
-    DEPENDS yarn-install
+    DEPENDS npm-install
     COMMAND ${VSCE_EXECUTABLE} package
     COMMENT "Generating VSCode package"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
@@ -55,7 +54,7 @@ if(SPHINX_EXECUTABLE)
             -j 10
             "${CMAKE_CURRENT_SOURCE_DIR}/docs"
             "${CMAKE_CURRENT_BINARY_DIR}/docs"
-        COMMAND "${YARN_EXECUTABLE}" --silent docs
+        COMMAND "${NPM_EXECUTABLE}" --silent docs
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMENT "Generating documentation"
         )
