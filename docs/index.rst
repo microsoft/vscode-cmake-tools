@@ -17,6 +17,7 @@ Contents:
     getting_started
 
     kits
+    variants
 
 Developer Reference
 ===================

@@ -54,3 +54,71 @@ CMake Tools will use the compilers/toolchain from the kit when building your
 project.
 
 Find out more on the :ref:`kits` page.
+
+Selecting a Variant
+-------------------
+
+Similar to selecting a kit, we must select a *Variant*.
+
+What are variants?
+    Variants represent a set of common compilation options that change the type
+    of binaries that will be emitted. This includes Debug, Release, MinSizeRel,
+    etc.
+
+.. image:: res/no_variant.png
+    :align: center
+
+To select a variant, click this statusbar button, or run the *Set build type*
+command from the command palette. A quick-pick will appear:
+
+.. image:: res/variant_selector.png
+    :align: center
+
+The active build variant will be displayed on the same statusbar button, along
+with the project name and extension status.
+
+Find out more on the :ref:`variants` page.
+
+Running Configuration
+=====================
+
+Configuration can be run by clicking the project button in the statusbar and
+changing the build type, by running the *CMake: Configure* command from the
+command palette, or by running a build when configuration has not yet taken
+place.
+
+When configuration runs, the *CMake/Build* output panel will reveal and show
+the live output from CMake as configuration runs:
+
+.. image:: res/configure_output.png
+    :align: center
+
+At this point, CMake Tools has loaded information about your project and you are
+free to roam about the cabin.
+
+
+Building Your Project
+*********************
+
+More important than just configuring, you probably want to *build* your project
+as well.
+
+Building is simple: Run the *CMake: Build* command from the command palette:
+
+.. image:: res/build_command.png
+    :align: center
+
+.. note:: The default keybinding for this command is ``F7``.
+
+You can also press the *Build* button in the statusbar:
+
+.. image:: res/build_button.png
+    :align: center
+
+While the the build is running, the *Build* button will be replaced with a
+build progress bar:
+
+.. image:: res/build_progress.png
+    :align: center
+
+The build can be stopped by clicking the *Stop* button.
