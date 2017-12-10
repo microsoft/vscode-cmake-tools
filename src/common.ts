@@ -231,7 +231,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * event emitter.
    */
   protected _ctestController = new ctest.CTestController();
-  public async ctest(): Promise<Number> {
+  public async ctest(): Promise<number> {
     this._channel.show();
     const build_retc = await this.build();
     if (build_retc !== 0) {
@@ -513,9 +513,14 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     }
 
     // Refresh any test results that may be left aroud from a previous run
-    this._ctestController.reloadTests(
-        this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
-
+      const bt = this.selectedBuildType;
+      /// Call reloadTests only if buildType has been configured to avoid creating `Unknown` build
+      /// directory in case ${buildType} was used in the path.
+      if(bt)
+         this._ctestController.reloadTests(this.sourceDir, this.binaryDir, bt);
+      else
+         vscode.window.showWarningMessage(
+            'BinaryDirectory depends on ${buildType} or other build-variant variable - skipping CTest reloading until buildType will be configured');
     return this;
   }
 
@@ -632,10 +637,18 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * of CMake should go to util.replaceVars instead.
    */
   public replaceVars(str: string): string {
-    const replacements = [
-      ['${buildType}', this.selectedBuildType || 'Unknown']
-    ] as [string, string][];
-    return util.replaceVars(replacements.reduce(
+   const cachedSource = this.variants.activeConfigurationOptions.replacableVariables;
+   let replacements: Array<[string, string]> = new Array();
+   if(cachedSource) {
+      Array.from(cachedSource.entries()).map(([key, value]) => {
+         replacements.push(["${" + key + "}", value]);
+      });
+   }
+   else {
+      replacements.push(['${buildType}', this.selectedBuildType || 'Unknown']);
+   }
+
+   return util.replaceVars(replacements.reduce(
         (accdir, [needle, what]) => util.replaceAll(accdir, needle, what), str));
   }
 
@@ -845,7 +858,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return null;
   }
 
-  public async cleanRebuild(): Promise<Number> {
+  public async cleanRebuild(): Promise<number> {
     const clean_result = await this.clean();
     if (clean_result) return clean_result;
     return await this.build();
@@ -859,7 +872,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return this.build('clean');
   }
 
-  public async buildWithTarget(): Promise<Number> {
+  public async buildWithTarget(): Promise<number> {
     const target = await this.showTargetSelector();
     if (target === null || target === undefined) return -1;
     return await this.build(target);
@@ -881,7 +894,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return changed;
   }
 
-  public async setBuildType(): Promise<Number> {
+  public async setBuildType(): Promise<number> {
     const do_configure = await this.setBuildTypeWithoutConfigure();
     if (do_configure) {
       return await this.configure();
@@ -889,7 +902,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
       return -1;
     }
   }
-  public async quickStart(): Promise<Number> {
+  public async quickStart(): Promise<number> {
     if (await async.exists(this.mainListFile)) {
       vscode.window.showErrorMessage(
           'This workspace already contains a CMakeLists.txt!');
@@ -1070,7 +1083,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return args;
   }
 
-  public async build(target_: Maybe<string> = null): Promise<Number> {
+  public async build(target_: Maybe<string> = null): Promise<number> {
     let target = target_;
     if (!target_) {
       target = this.defaultBuildTarget || this.allTargetName;
