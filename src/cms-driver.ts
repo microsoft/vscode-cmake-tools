@@ -9,6 +9,7 @@ import * as proc from './proc';
 import {ExecutableTarget, RichTarget, CacheEntryProperties} from "./api";
 import {Kit} from "./kit";
 import * as cms from './cms-client';
+import * as util from './util';
 import {fs} from "./pr";
 import {createLogger} from './logging';
 
@@ -67,6 +68,23 @@ export class CMakeServerClientDriver extends CMakeDriver {
     // methods, to wrap proper common functionality.
 
     const config_args = await this._prepareConfigure();
+    console.assert(!!this._kit);
+    if (!this._kit) {
+      throw new Error('No kit is set!');
+    }
+    switch (this._kit.type) {
+    case 'compilerKit': {
+      log.debug('Using compilerKit', this._kit.name, 'for usage');
+      config_args.push(...util.objectPairs(this._kit.compilers)
+                    .map(([ lang, comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
+    } break;
+    case 'toolchainKit': {
+      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+      config_args.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
+    } break;
+    default:
+      log.debug('Kit requires no extra CMake arguments');
+    }
     const cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
       if (_consumer) {
