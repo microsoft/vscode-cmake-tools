@@ -35,6 +35,11 @@ export interface BaseKit {
    * The preferred CMake generator for this kit
    */
   preferredGenerator?: CMakeGenerator;
+
+  /**
+   * Additional settings to pass to CMake
+   */
+  cmakeSettings?: { [key: string]: string };
 }
 
 /**
@@ -241,11 +246,14 @@ export interface VSInstallation {
  * Will not include older versions. vswhere doesn't seem to list them?
  */
 export async function vsInstallations(): Promise<VSInstallation[]> {
-  const pf_native = process.env['programfiles']!;
-  const pf_x86 = process.env['programfiles(x86)']!;
+  const pf_native = process.env['programfiles'];
+  const pf_x86 = process.env['programfiles(x86)'];
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   for (const progdir of [pf_native, pf_x86]) {
+    if (!progdir) {
+      continue;
+    }
     const vswhere_exe = path.join(progdir, 'Microsoft Visual Studio/Installer/vswhere.exe');
     if (await fs.exists(vswhere_exe)) {
       const vswhere_res = await proc.execute(vswhere_exe, ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease']).result;
@@ -356,7 +364,7 @@ const VsGenerators: { [key: string]: string } = {
   '15': 'Visual Studio 15 2017',
   'VS120COMNTOOLS': 'Visual Studio 12 2013',
   'VS140COMNTOOLS': 'Visual Studio 14 2015',
-}
+};
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string> | null> {
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
