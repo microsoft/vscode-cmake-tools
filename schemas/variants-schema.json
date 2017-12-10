@@ -27,15 +27,14 @@
           "patternProperties": {
             "^\\w+$": {
               "required": [
-                "oneWordSummary",
-                "description"
+                "short"
               ],
               "properties": {
-                "oneWordSummary": {
+                "short": {
                   "type": "string",
                   "description": "A simple one-word description of this value"
                 },
-                "description": {
+                "long": {
                   "type": "string",
                   "description": "A lengthier description of what this value does"
                 },
@@ -92,7 +91,6 @@
         }
       },
       "required": [
-        "description",
         "default",
         "choices"
       ]

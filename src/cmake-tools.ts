@@ -230,7 +230,7 @@ export class CMakeTools implements vscode.Disposable {
     // Start up the variant manager
     await this._variantManager.initialize();
     // Set the status bar message
-    this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
+    this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.short);
     // Restore the debug target
     this._statusBar.setLaunchTargetName(this._stateManager.launchTargetName || '');
     // Start up the kit manager
@@ -245,7 +245,7 @@ export class CMakeTools implements vscode.Disposable {
       rollbar.invokeAsync('Changing build variant', async() => {
         const drv = await this._cmakeDriver;
         await drv.setVariantOptions(this._variantManager.activeVariantOptions);
-        this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.oneWordSummary);
+        this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.short);
         // We don't configure yet, since someone else might be in the middle of a configure
       })
     });

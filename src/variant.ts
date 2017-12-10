@@ -13,23 +13,20 @@ import * as util from './util';
 const log = logging.createLogger('variant');
 
 
-export interface ConfigureArguments {
-  key: string;
-  value: (string | string[] | number | boolean);
-}
+export type ConfigureArguments = { [key: string]: (string | string[] | number | boolean) };
 
 export interface VariantConfigurationOptions {
-  oneWordSummary: string;
-  description: string;
+  short: string;
+  long?: string;
   buildType?: string;
   linkage?: 'static' | 'shared';
-  settings?: ConfigureArguments[];
+  settings?: ConfigureArguments;
   generator?: string;
   toolset?: string;
 }
 
 export interface VariantSetting {
-  description: string;
+  description?: string;
   default_: string;
   choices: Map<string, VariantConfigurationOptions>;
 }
@@ -53,23 +50,23 @@ export const DEFAULT_VARIANTS: VariantFileContent = {
     description : 'The build type',
     choices : {
       debug : {
-        oneWordSummary : 'Debug',
-        description : 'Emit debug information without performing optimizations',
+        short : 'Debug',
+        long : 'Emit debug information without performing optimizations',
         buildType : 'Debug',
       },
       release : {
-        oneWordSummary : 'Release',
-        description : 'Enable optimizations, omit debug info',
+        short : 'Release',
+        long : 'Enable optimizations, omit debug info',
         buildType : 'Release',
       },
       minsize : {
-        oneWordSummary : 'MinSizeRel',
-        description : 'Optimize for smallest binary size',
+        short : 'MinSizeRel',
+        long : 'Optimize for smallest binary size',
         buildType : 'MinSizeRel',
       },
       reldeb : {
-        oneWordSummary : 'RelWithDebInfo',
-        description : 'Perform optimizations AND include debugging information',
+        short : 'RelWithDebInfo',
+        long : 'Perform optimizations AND include debugging information',
         buildType : 'RelWithDebInfo',
       }
     }
@@ -180,8 +177,8 @@ export class VariantManager implements vscode.Disposable {
 
   get activeVariantOptions(): VariantConfigurationOptions {
     const invalid_variant = {
-      oneWordSummary : 'Unknown',
-      description : 'Unknwon',
+      short : 'Unknown',
+      long : 'Unknwon',
     };
     const kws = this.stateManager.activeVariantSettings;
     if (!kws) {
@@ -194,19 +191,19 @@ export class VariantManager implements vscode.Disposable {
     const data = Array.from(kws.entries()).map(([ param, setting ]) => {
       if (!vars.has(param)) {
         debugger;
-        throw 12;
+        throw new Error("Unexpected missing variant setting");
       }
       const choices = vars.get(param) !.choices;
       if (!choices.has(setting)) {
         debugger;
-        throw 12;
+        throw new Error("Unexpected missing variant option");
       }
       return choices.get(setting) !;
     });
     const init: VariantConfigurationOptions = {
-      oneWordSummary : '',
-      description : '',
-      settings : []
+      short : '',
+      long : '',
+      settings: {}
     };
     const result: VariantConfigurationOptions
         = data.reduce((acc, el) => ({
@@ -214,9 +211,9 @@ export class VariantManager implements vscode.Disposable {
                         generator : el.generator || acc.generator,
                         linkage : el.linkage || acc.linkage,
                         toolset : el.toolset || acc.toolset,
-                        settings : acc.settings !.concat(el.settings || []),
-                        oneWordSummary : [acc.oneWordSummary, el.oneWordSummary].join(' ').trim(),
-                        description : [acc.description, el.description].join(', '),
+                        settings: Object.assign({}, acc.settings, el.settings),
+                        short : [acc.short, el.short].join(' ').trim(),
+                        long : [acc.long, el.long].join(', '),
                       }),
                       init);
     return result;
@@ -233,10 +230,10 @@ export class VariantManager implements vscode.Disposable {
     const product = util.product(variants);
     const items: VariantCombination[]
         = product.map(optionset => ({
-                        label : optionset.map(o => o.settings.oneWordSummary).join('+'),
+                        label : optionset.map(o => o.settings.short).join(' + '),
                         keywordSettings : new Map<string, string>(optionset.map(
                             param => [param.settingKey, param.settingValue] as[string, string])),
-                        description : optionset.map(o => o.settings.description).join(' + '),
+                        description : optionset.map(o => o.settings.long).join(' + '),
                       }));
     const chosen = await vscode.window.showQuickPick(items);
     if (!chosen) {

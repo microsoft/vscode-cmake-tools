@@ -279,7 +279,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * The arguments to pass to CMake during a configuration according to the current variant
    */
-  private _variantConfigureSettings: ConfigureArguments[] = [];
+  private _variantConfigureSettings: ConfigureArguments = {};
 
   /**
    * Determine if we set BUILD_SHARED_LIBS to TRUE or FALSE
@@ -291,7 +291,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param opts The new options
    */
   async setVariantOptions(opts: VariantConfigurationOptions) {
-    log.debug('Setting new variant', opts.description);
+    log.debug('Setting new variant', opts.long || '(Unnamed)');
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
     this._variantLinkage = opts.linkage || null;
@@ -604,7 +604,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected async _prepareConfigure(): Promise<string[]> {
     const settings = Object.assign({}, config.configureSettings);
 
-    this._variantConfigureSettings.forEach(s => settings[s.key] = s.value);
+
+    const _makeFlag = (key: string, cmval: util.CMakeValue) => {
+      switch (cmval.type) {
+      case 'UNKNOWN':
+        return `-D${key}=${cmval.value}`;
+      default:
+        return `-D${key}:${cmval.type}=${cmval.value}`;
+      }
+    };
+
+    util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settings[key] = value);
     if (this._variantLinkage !== null) {
       settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
     }
@@ -617,14 +627,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       settings.CMAKE_BUILD_TYPE = this.currentBuildType;
     }
 
-    const _makeFlag = (key: string, cmval: util.CMakeValue) => {
-      switch (cmval.type) {
-      case 'UNKNOWN':
-        return `-D${key}=${cmval.value}`;
-      default:
-        return `-D${key}:${cmval.type}=${cmval.value}`;
-      }
-    };
     const settings_flags = util.objectPairs(settings).map(
         ([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
     const flags = ['--no-warn-unused-cli'];
