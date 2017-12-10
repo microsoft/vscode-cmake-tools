@@ -627,7 +627,31 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
     const settings_flags = util.objectPairs(settings).map(
         ([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = [ '--no-warn-unused-cli' ];
+    const flags = ['--no-warn-unused-cli'];
+
+    console.assert(!!this._kit);
+    if (!this._kit) {
+      throw new Error('No kit is set!');
+    }
+    switch (this._kit.type) {
+    case 'compilerKit': {
+      log.debug('Using compilerKit', this._kit.name, 'for usage');
+      flags.push(...util.objectPairs(this._kit.compilers)
+                    .map(([ lang, comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
+    } break;
+    case 'toolchainKit': {
+      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
+    } break;
+    default:
+      log.debug('Kit requires no extra CMake arguments');
+    }
+
+    if (this._kit.cmakeSettings) {
+      flags.push(...util.objectPairs(this._kit.cmakeSettings)
+                     .map(([ key, val ]) => _makeFlag(key, util.cmakeify(val))));
+    }
+
     const final_flags = flags.concat(settings_flags);
     log.trace('CMake flags are', JSON.stringify(final_flags));
     return final_flags;

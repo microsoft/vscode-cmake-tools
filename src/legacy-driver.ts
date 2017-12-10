@@ -83,24 +83,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push(...await this._prepareConfigure());
     args.push(...extra_args);
 
-    console.assert(!!this._kit);
-    if (!this._kit) {
-      throw new Error('No kit is set!');
-    }
-    switch (this._kit.type) {
-    case 'compilerKit': {
-      log.debug('Using compilerKit', this._kit.name, 'for usage');
-      args.push(...util.objectPairs(this._kit.compilers)
-                    .map(([ lang, comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
-    } break;
-    case 'toolchainKit': {
-      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
-      args.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
-    } break;
-    default:
-      log.debug('Kit requires no extra CMake arguments');
-    }
-
     args.push('-H' + util.normalizePath(this.sourceDir));
     const bindir = util.normalizePath(this.binaryDir);
     args.push('-B' + bindir);
