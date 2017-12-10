@@ -640,36 +640,32 @@ export class KitManager implements vscode.Disposable {
     const content = JSON.parse(content_str.toLocaleString()) as object[];
     this._kits = content.map((item_): Kit => {
       if ('compilers' in item_) {
-        const item = item_ as {
-          name: string;
-          compilers: {[lang: string] : string};
-        };
+        const item = item_ as CompilerKit;
         return {
           type : 'compilerKit',
           name : item.name,
-          compilers : item['compilers'],
+          compilers : item.compilers,
+          preferredGenerator : item.preferredGenerator,
+          cmakeSettings : item.cmakeSettings,
         };
       } else if ('toolchainFile' in item_) {
-        const item = item_ as {
-          name: string;
-          toolchainFile: string;
-        };
+        const item = item_ as ToolchainKit;
         return {
           type : 'toolchainKit',
           name : item.name,
           toolchainFile : item.toolchainFile,
+          preferredGenerator : item.preferredGenerator,
+          cmakeSettings : item.cmakeSettings,
         };
       } else if ('visualStudio' in item_) {
-        const item = item_ as {
-          name: string;
-          visualStudio: string;
-          visualStudioArchitecture: string;
-        };
+        const item = item_ as VSKit;
         return {
           type : 'vsKit',
           name : item.name,
           visualStudio : item.visualStudio,
           visualStudioArchitecture : item.visualStudioArchitecture,
+          preferredGenerator : item.preferredGenerator,
+          cmakeSettings : item.cmakeSettings,
         };
       } else {
         vscode.window.showErrorMessage(

@@ -420,7 +420,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   getPreferredGenerators(): CMakeGenerator[] {
     const user_preferred = config.preferredGenerators.map(g => ({name : g}));
-    if (this._kit && this._kit.type == 'vsKit' && this._kit.preferredGenerator) {
+    if (this._kit && this._kit.preferredGenerator) {
       // The kit has a preferred generator attached as well
       user_preferred.push(this._kit.preferredGenerator);
     }
