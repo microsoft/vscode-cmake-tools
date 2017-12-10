@@ -137,7 +137,7 @@ file when entering the VS dev environment.
 Common Options
 **************
 
-Each kit also supports some additional options:
+All kit types also support some additional options:
 
 ``preferredGenerator``
     The CMake generator that should be used with this kit if not the default.
