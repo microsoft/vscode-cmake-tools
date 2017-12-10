@@ -534,18 +534,19 @@ export class CMakeServerClient {
     } else {
       pipe_file = path.join(params.binaryDir, `.cmserver.${process.pid}`);
     }
-    const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
+    const final_env
+        = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
     const child = this._proc
         = child_proc.spawn(params.cmakePath,
-                     [ '-E', 'server', '--experimental', `--pipe=${pipe_file}` ],
-                     {
-                       env : final_env,
-                     });
+                           [ '-E', 'server', '--experimental', `--pipe=${pipe_file}` ],
+                           {
+                             env : final_env,
+                           });
     log.info(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', this._onErrorData.bind(this));
     child.stderr.on('data', this._onErrorData.bind(this));
     setTimeout(() => {
-      const end_promise = new Promise(resolve => {
+      const end_promise = new Promise<void>(resolve => {
         const pipe = this._pipe = net.createConnection(pipe_file);
         pipe.on('data', this._onMoreData.bind(this));
         pipe.on('error', () => {
@@ -557,8 +558,9 @@ export class CMakeServerClient {
           resolve();
         });
       });
-      const exit_promise = new Promise(resolve => { child.on('exit', () => { resolve(); }); });
-      this._endPromise = <Promise<void>>Promise.all([ end_promise, exit_promise ]);
+      const exit_promise
+          = new Promise<void>(resolve => { child.on('exit', () => { resolve(); }); });
+      this._endPromise = Promise.all([ end_promise, exit_promise ]).then(() => {});
       this._proc = child;
       child.on('close', (retc: number, signal: string) => {
         if (retc !== 0) {
