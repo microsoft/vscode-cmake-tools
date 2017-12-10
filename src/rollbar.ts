@@ -39,7 +39,6 @@ class RollbarController {
    * remember our permission
    */
   async requestPermissions(extensionContext: vscode.ExtensionContext): Promise<void> {
-    // The memento key where we store permission. Update this to ask again.
     log.debug('Checking Rollbar permissions');
     if (process.env['CMT_TESTING'] === '1') {
       log.warning('Running CMakeTools in test mode. Rollbar is disabled.');
@@ -49,6 +48,7 @@ class RollbarController {
       log.warning('Running CMakeTools in developer mode. Rollbar reporting is disabled.');
       return;
     }
+    // The memento key where we store permission. Update this to ask again.
     const key = 'rollbar-optin3';
     const optin = extensionContext.globalState.get(key);
     if (optin === true) {
