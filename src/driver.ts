@@ -112,7 +112,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param k The new kit
    */
   protected async _setBaseKit(k: Kit) {
-    this._baseKit = k;
+    this._baseKit = Object.seal(Object.assign({}, k));
     log.debug('CMakeDriver Kit set to', k.name);
 
     this._kitEnvironmentVariables = new Map();
