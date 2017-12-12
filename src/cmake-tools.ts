@@ -594,7 +594,7 @@ export class CMakeTools implements vscode.Disposable {
   async debugTarget(): Promise<vscode.DebugSession | null> {
     const drv = await this._cmakeDriver;
     if (drv instanceof LegacyCMakeDriver) {
-      vscode.window.showWarningMessage('Target debugging is not supported with the legacy driver');
+      vscode.window.showWarningMessage('Target debugging is no longer supported with the legacy driver');
       return null;
     }
     const target_name = this._stateManager.launchTargetName;
