@@ -77,8 +77,6 @@ class ConfigurationReader {
 
   get sourceDirectory(): string { return readPrefixedConfig<string>('sourceDirectory') as string; }
 
-  get buildBeforeRun(): boolean { return !!readPrefixedConfig<boolean>('buildBeforeRun'); }
-
   get saveBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('saveBeforeBuild'); }
 
   get clearOutputBeforeBuild(): boolean {
