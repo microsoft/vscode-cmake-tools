@@ -1,7 +1,5 @@
 .. CMake Tools documentation master file, created by
    sphinx-quickstart on Sat Sep 23 14:46:28 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
 CMake Tools for Visual Studio Code
 ==================================
@@ -18,6 +16,8 @@ Contents:
 
     kits
     variants
+
+    configuring
 
 Developer Reference
 ===================
