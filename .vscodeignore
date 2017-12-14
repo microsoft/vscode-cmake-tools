@@ -7,3 +7,9 @@ src/**
 .gitignore
 tsconfig.json
 vsc-extension-quickstart.md
+build/**
+docs/**
+cSpell.json
+CMakeLists.txt
+tslint.json
+.gitattributes
