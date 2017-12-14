@@ -428,7 +428,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
 /**
  * Scans the system for Visual C++ installations using vswhere
  */
-export async function scanForVSKits(pr?: vscode.Progress<vscode.ProgressOptions>):
+export async function scanForVSKits(pr?: ProgressReporter):
     Promise<VSKit[]> {
       const installs = await vsInstallations();
       const prs = installs.map(async(inst): Promise<VSKit[]> => {
