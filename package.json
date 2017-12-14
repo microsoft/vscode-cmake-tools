@@ -2,7 +2,7 @@
     "name": "cmake-tools",
     "displayName": "CMake Tools",
     "description": "Extended CMake support in Visual Studio Code",
-    "version": "0.10.2",
+    "version": "0.11.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -31,28 +31,25 @@
     },
     "icon": "res/icon_128.png",
     "activationEvents": [
-        "onCommand:cmake.configure",
         "onCommand:cmake.build",
-        "onCommand:cmake.install",
         "onCommand:cmake.buildWithTarget",
-        "onCommand:cmake.setVariant",
-        "onCommand:cmake.setDefaultTarget",
-        "onCommand:cmake.cleanConfigure",
         "onCommand:cmake.clean",
+        "onCommand:cmake.cleanConfigure",
         "onCommand:cmake.cleanRebuild",
+        "onCommand:cmake.configure",
         "onCommand:cmake.ctest",
-        "onCommand:cmake.editCache",
-        "onCommand:cmake.quickStart",
-        "onCommand:cmake.launchTargetProgramPath",
-        "onCommand:cmake.launchTarget",
         "onCommand:cmake.debugTarget",
-        "onCommand:cmake.selectLaunchTarget",
-        "onCommand:cmake.selectEnvironments",
-        "onCommand:cmake.toggleCoverageDecorations",
+        "onCommand:cmake.editCache",
         "onCommand:cmake.editKits",
-        "onCommand:cmake.scanForKits",
+        "onCommand:cmake.install",
+        "onCommand:cmake.launchTarget",
+        "onCommand:cmake.launchTargetPath",
+        "onCommand:cmake.quickStart",
         "onCommand:cmake.resetState",
-        "onCommand:cmake._extensionInstance",
+        "onCommand:cmake.scanForKits",
+        "onCommand:cmake.selectLaunchTarget",
+        "onCommand:cmake.setVariant",
+        "onCommand:cmake.stop",
         "workspaceContains:CMakeLists.txt"
     ],
     "main": "./out/src/extension",
@@ -91,11 +88,6 @@
             {
                 "command": "cmake.buildWithTarget",
                 "title": "Build a target",
-                "category": "CMake"
-            },
-            {
-                "command": "cmake.setBuildType",
-                "title": "Set build type",
                 "category": "CMake"
             },
             {
@@ -149,13 +141,8 @@
                 "category": "CMake"
             },
             {
-                "command": "cmake.selectEnvironments",
-                "title": "Select active build environments",
-                "category": "CMake"
-            },
-            {
-                "command": "cmake.toggleCoverageDecorations",
-                "title": "Toggle visibility of test coverage in the editor",
+                "command": "cmake.stop",
+                "title": "Stop the currently running CMake/Build process",
                 "category": "CMake"
             },
             {
@@ -216,6 +203,9 @@
                 },
                 {
                     "command": "cmake.toggleCoverageDecorations"
+                },
+                {
+                    "command": "cmake.stop"
                 }
             ]
         },
@@ -663,7 +653,7 @@
         "compile": "./node_modules/.bin/tsc -watch -p ./",
         "compile-once": "./node_modules/.bin/tsc -p ./",
         "postinstall": "node ./node_modules/vscode/bin/install",
-        "docs": "node ./node_modules/.bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none --tsconfig tsconfig-docs.json src/"
+        "docs": "node ./node_modules/.bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
     },
     "devDependencies": {
         "@types/ajv": "^0.0.3",
