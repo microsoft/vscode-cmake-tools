@@ -271,6 +271,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract setKit(kit: Kit): Promise<void>;
 
+  abstract compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null>;
+
   /**
    * The CMAKE_BUILD_TYPE to use
    */

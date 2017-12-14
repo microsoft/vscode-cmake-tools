@@ -7,6 +7,7 @@ import * as http from 'http';
 import * as path from 'path';
 import * as ws from 'ws';
 
+import * as api from './api';
 import rollbar from './rollbar';
 import * as diags from './diagnostics';
 import * as proc from './proc';
@@ -25,6 +26,7 @@ import {CacheEditorContentProvider} from "./cache-editor";
 
 import * as logging from './logging';
 import {populateCollection} from './diagnostics';
+import {ExecutionOptions, ExecutionResult} from "./api";
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -44,7 +46,7 @@ const build_log = logging.createLogger('build');
  * The second phases of fields will be called by the second phase of the parent
  * class. See the `_init` private method for this initialization.
  */
-export class CMakeTools implements vscode.Disposable {
+export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _http_server: http.Server;
   private _ws_server: ws.Server;
   private _editor_provider: vscode.Disposable;
@@ -163,7 +165,7 @@ export class CMakeTools implements vscode.Disposable {
    * of the driver is atomic to those using it
    */
   private async _startNewCMakeDriver(): Promise<CMakeDriver> {
-    const drv = await (async() => {
+    const drv = await(async() => {
       log.debug('Starting CMake driver');
       const version_ex = await proc.execute(config.cmakePath, [ '--version' ]).result;
       if (version_ex.retc !== 0 || !version_ex.stdout) {
@@ -208,6 +210,26 @@ export class CMakeTools implements vscode.Disposable {
    */
   get onReconfigured() { return this._onReconfiguredEmitter.event; }
   private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
+
+  get reconfigured() { return this.onReconfigured; }
+
+  private _onTargetChangedEmitter = new vscode.EventEmitter<void>();
+  get targetChangedEvent() { return this._onTargetChangedEmitter.event; }
+
+  async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
+    const drv = await this._cmakeDriver;
+    return drv.executeCommand(config.cmakePath, args, undefined, options).result;
+  }
+
+  async execute(program: string, args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
+    const drv = await this._cmakeDriver;
+    return drv.executeCommand(program, args, undefined, options).result;
+  }
+
+  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null> {
+    const drv = await this._cmakeDriver;
+    return drv.compilationInfoForFile(filepath);
+  }
 
   /**
    * Reload/restarts the CMake Driver
@@ -362,8 +384,7 @@ export class CMakeTools implements vscode.Disposable {
       log.clearOutputChannel();
     }
     log.showChannel();
-    const drv = await this._cmakeDriver;
-    const consumer = new diags.CMakeOutputConsumer(drv.sourceDir);
+    const consumer = new diags.CMakeOutputConsumer(await this.sourceDir);
     const retc = await cb(consumer);
     diags.populateCollection(this._configureDiagnostics, consumer.diagnostics);
     return retc;
@@ -511,9 +532,9 @@ export class CMakeTools implements vscode.Disposable {
   /**
    * Implementation of `cmake.stop`
    */
-  async stop(): Promise<void> {
+  async stop(): Promise<boolean> {
     const drv = await this._cmakeDriver;
-    await drv.stopCurrentProcess();
+    return drv.stopCurrentProcess();
   }
 
   /**
@@ -554,8 +575,7 @@ export class CMakeTools implements vscode.Disposable {
    * Implementation of `cmake.selectLaunchTarget`
    */
   async selectLaunchTarget(): Promise<string | null> {
-    const drv = await this._cmakeDriver;
-    const executableTargets = drv.executableTargets;
+    const executableTargets = await this.executableTargets;
     if (executableTargets.length === 0) {
       vscode.window.showWarningMessage('There are no known executable targets to choose from');
       return null;
@@ -579,13 +599,16 @@ export class CMakeTools implements vscode.Disposable {
    * Implementation of `cmake.launchTargetPath`
    */
   async launchTargetPath(): Promise<string | null> {
-    const drv = await this._cmakeDriver;
     const target_name = this._stateManager.launchTargetName;
-    const chosen = drv.executableTargets.find(e => e.name == target_name);
+    const chosen = (await this.executableTargets).find(e => e.name == target_name);
     if (!chosen) {
       return null;
     }
     return chosen.path;
+  }
+
+  launchTargetProgramPath(): Promise<string | null> {
+    return this.launchTargetPath();
   }
 
   /**
@@ -594,7 +617,8 @@ export class CMakeTools implements vscode.Disposable {
   async debugTarget(): Promise<vscode.DebugSession | null> {
     const drv = await this._cmakeDriver;
     if (drv instanceof LegacyCMakeDriver) {
-      vscode.window.showWarningMessage('Target debugging is no longer supported with the legacy driver');
+      vscode.window.showWarningMessage(
+          'Target debugging is no longer supported with the legacy driver');
       return null;
     }
     const target_name = this._stateManager.launchTargetName;
@@ -688,9 +712,11 @@ export class CMakeTools implements vscode.Disposable {
       '',
     ].join('\n');
 
+    const source_dir = await this.sourceDir;
+
     if (type === 'Library') {
-      if (!(await fs.exists(path.join(drv.sourceDir, project_name + '.cpp')))) {
-        await fs.writeFile(path.join(drv.sourceDir, project_name + '.cpp'), [
+      if (!(await fs.exists(path.join(source_dir, project_name + '.cpp')))) {
+        await fs.writeFile(path.join(source_dir, project_name + '.cpp'), [
           '#include <iostream>',
           '',
           'void say_hello(){',
@@ -700,8 +726,8 @@ export class CMakeTools implements vscode.Disposable {
         ].join('\n'));
       }
     } else {
-      if (!(await fs.exists(path.join(drv.sourceDir, 'main.cpp')))) {
-        await fs.writeFile(path.join(drv.sourceDir, 'main.cpp'), [
+      if (!(await fs.exists(path.join(source_dir, 'main.cpp')))) {
+        await fs.writeFile(path.join(source_dir, 'main.cpp'), [
           '#include <iostream>',
           '',
           'int main(int, char**) {',
@@ -711,8 +737,9 @@ export class CMakeTools implements vscode.Disposable {
         ].join('\n'));
       }
     }
-    await fs.writeFile(drv.mainListFile, init);
-    const doc = await vscode.workspace.openTextDocument(drv.mainListFile);
+    const main_list_file = await this.mainListFile;
+    await fs.writeFile(main_list_file, init);
+    const doc = await vscode.workspace.openTextDocument(main_list_file);
     await vscode.window.showTextDocument(doc);
     return this.configure();
   }
@@ -740,6 +767,34 @@ export class CMakeTools implements vscode.Disposable {
     }
     }
     throw new Error('Invalid method: ' + method);
+  }
+
+  get sourceDir() { return this._cmakeDriver.then(d => d.sourceDir); }
+
+  get mainListFile() { return this._cmakeDriver.then(d => d.mainListFile); }
+
+  get binaryDir() { return this._cmakeDriver.then(d => d.binaryDir); }
+
+  get cachePath() { return this._cmakeDriver.then(d => d.cachePath); }
+
+  get targets() { return this._cmakeDriver.then(d => d.targets); }
+
+  get executableTargets() { return this._cmakeDriver.then(d => d.executableTargets); }
+
+  get diagnostics() { return Promise.resolve(this._configureDiagnostics); }
+
+  async jumpToCacheFile() {
+    // Do nothing.
+    return null;
+  }
+
+  async setBuildType() {
+    // Do nothing
+    return -1;
+  }
+
+  async selectEnvironments() {
+    return null;
   }
 }
 

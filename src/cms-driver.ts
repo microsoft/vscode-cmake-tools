@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import * as path from 'path';
 
+import * as api from './api';
 import {CMakeDriver} from "./driver";
 import config from './config';
 import * as cache from './cache';
@@ -9,6 +10,7 @@ import * as proc from './proc';
 import {ExecutableTarget, RichTarget, CacheEntryProperties} from "./api";
 import {Kit} from "./kit";
 import * as cms from './cms-client';
+import * as util from './util';
 import {fs} from "./pr";
 import {createLogger} from './logging';
 
@@ -155,6 +157,48 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
     await this._setBaseKit(kit);
     await this._restartClient();
+  }
+
+  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null> {
+    if (!this.codeModel) {
+      return null;
+    }
+    const config = this.codeModel.configurations.length === 1
+        ? this.codeModel.configurations[0]
+        : this.codeModel.configurations.find(c => c.name == this.currentBuildType);
+    if (!config) {
+      return null;
+    }
+    for (const project of config.projects) {
+      for (const target of project.targets) {
+        for (const group of target.fileGroups) {
+          const found = group.sources.find(source => {
+            const abs_source
+                = path.isAbsolute(filepath) ? source : path.join(target.sourceDirectory, source);
+            const abs_filepath
+                = path.isAbsolute(filepath) ? filepath : path.join(this.sourceDir, filepath);
+            return util.normalizePath(abs_source) === util.normalizePath(abs_filepath);
+          });
+          if (found) {
+            const defs = (group.defines || []).map(util.parseCompileDefinition);
+            const defs_o
+                = defs.reduce((acc,
+                               [ key, value ]) => { return Object.assign(acc, {[key] : value}); },
+                              {});
+            const includes = (group.includePath ||
+                              []).map(p => ({path : p.path, isSystem : p.isSystem || false}));
+            const flags = util.splitCommandLine(group.compileFlags);
+            return {
+              file : found,
+              compileDefinitions : defs_o,
+              compileFlags : flags,
+              includeDirectories : includes,
+            };
+          }
+        }
+      }
+    }
+    return null;
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {

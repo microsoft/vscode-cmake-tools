@@ -17,6 +17,7 @@ import * as proc from './proc';
 import * as logging from './logging';
 import {CMakeCache} from "./cache";
 import * as api from './api';
+import { CompilationDatabase } from './compdb';
 
 const log = logging.createLogger('legacy-driver');
 
@@ -38,6 +39,15 @@ export class LegacyCMakeDriver extends CMakeDriver {
       await fs.rmdir(this.binaryDir);
     }
     await this._setBaseKit(kit);
+  }
+
+  private _compilationDatabase: Promise<CompilationDatabase | null> = Promise.resolve(null);
+  async compilationInfoForFile(filepath: string) {
+    const db = await this._compilationDatabase;
+    if (!db) {
+      return null;
+    }
+    return db.getCompilationInfoForUri(vscode.Uri.file(filepath));
   }
 
   get onReconfigured() { return this._onReconfiguredEmitter.event; }
@@ -93,7 +103,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     if (res.retc == 0) {
       this._needsReconfigure = false;
     }
-    await this._reloadCMakeCache();
+    await this._reloadPostConfigure();
     this._onReconfiguredEmitter.fire();
     return res.retc === null ? -1 : res.retc;
   }
@@ -118,7 +128,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     if (!child) {
       return child;
     }
-    await this._reloadCMakeCache();
+    await this._reloadPostConfigure();
     this._onReconfiguredEmitter.fire();
     return child;
   }
@@ -126,11 +136,11 @@ export class LegacyCMakeDriver extends CMakeDriver {
   protected async _init() {
     await super._init();
     if (await fs.exists(this.cachePath)) {
-      await this._reloadCMakeCache();
+      await this._reloadPostConfigure();
     }
     this._cacheWatcher.onDidChange(() => {
       log.debug(`Reload CMake cache: ${this.cachePath} changed`);
-      rollbar.invokeAsync('Reloading CMake Cache', () => this._reloadCMakeCache());
+      rollbar.invokeAsync('Reloading CMake Cache', () => this._reloadPostConfigure());
     });
   }
 
@@ -152,7 +162,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   get cmakeCache() { return this._cmakeCache; }
   private _cmakeCache: CMakeCache | null = null;
 
-  protected async _reloadCMakeCache() {
+  protected async _reloadPostConfigure() {
     // Force await here so that any errors are thrown into rollbar
     const new_cache = await CMakeCache.fromPath(this.cachePath);
     this._cmakeCache = new_cache;
@@ -160,6 +170,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     if (project) {
       this.doSetProjectName(project.as<string>());
     }
+    this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
   }
 
   get cmakeCacheEntries() {

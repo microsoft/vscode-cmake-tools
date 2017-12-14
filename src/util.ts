@@ -291,3 +291,12 @@ export function mergeEnvironment(...env: EnvironmentVariables[]) {
     }
   }, {})
 }
+
+export function parseCompileDefinition(str: string): [string, string | null] {
+  if (/^\w+$/.test(str)) {
+    return [str, null];
+  } else {
+    const key = str.split('=', 1)[0];
+    return [key, str.substr(key.length + 1)];
+  }
+}

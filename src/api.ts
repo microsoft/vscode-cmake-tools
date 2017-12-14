@@ -7,7 +7,7 @@
  * Copy the `api.ts` source file into your project to use it.
  */ /** */
 
-import {DiagnosticCollection, Disposable, Event, TextEditor} from 'vscode';
+import {DiagnosticCollection, Disposable, Event, Terminal, DebugSession} from 'vscode';
 
 
 /**
@@ -17,7 +17,7 @@ export interface ExecutionResult {
   /**
    * The return code of the program.
    */
-  retc: number;
+  retc: number | null;
   /**
    * The full standard output of the program. May be `null` if standard out
    * was not captured.
@@ -167,7 +167,7 @@ export type Target = NamedTarget | RichTarget;
  * The CMake Tools extension API obtained via `getExtension().exports`
  */
 export interface CMakeToolsAPI extends Disposable {
-  constructor(): never;
+
   /**
    * The source directory, containing the root of the project
    */
@@ -266,14 +266,6 @@ export interface CMakeToolsAPI extends Disposable {
   install(): Promise<number>;
 
   /**
-   * Open a text editor to the CMake cache file.
-   *
-   * @returns A new text editor, or `null` if the file could not be opened.
-   */
-
-  jumpToCacheFile(): Promise<TextEditor | null>;
-
-  /**
    * Clean the build output. Runs the `clean` target.
    *
    * @returns The exit code from the build command
@@ -289,7 +281,6 @@ export interface CMakeToolsAPI extends Disposable {
    * Cleaning up configure includes removing the CMake cache file and any
    * intermediate configuration files.
    */
-  // Remove cached build settings and rerun the configuration
   cleanConfigure(): Promise<number>;
 
   /**
@@ -298,25 +289,6 @@ export interface CMakeToolsAPI extends Disposable {
    * @returns The exit code from the build command.
    */
   cleanRebuild(): Promise<number>;
-
-  /**
-   * Asks the user to select a target, then builds that target.
-   *
-   * @returns The exit code from the build command.
-   */
-  buildWithTarget(): Promise<number>;
-
-  /**
-   * Open up a QuickPick where the user can select a target to build.
-   */
-  setDefaultTarget(): Promise<void>;
-
-  /**
-   * Set the new build type.
-   *
-   * @returns The exit code from running CMake configure
-   */
-  setBuildType(): Promise<number>;
 
   /**
    * Execute CTest
@@ -333,44 +305,17 @@ export interface CMakeToolsAPI extends Disposable {
   stop(): Promise<boolean>;
 
   /**
-   * Run the CMake project quickstart.
-   *
-   * @returns The exit code from running CMake configure
-   */
-  quickStart(): Promise<number>;
-
-  /**
    * Start the active target without a debugger.
    */
-  launchTarget(): Promise<void>;
+  launchTarget(): Promise<Terminal | null>;
 
   /**
    * Start the active target with a debugger.
    */
-  debugTarget(): Promise<void>;
+  debugTarget(): Promise<DebugSession | null>;
 
   /**
    * Get the path to the active launch target
    */
-  launchTargetProgramPath(): Promise<string | null>;
-
-  /**
-   * Show a QuickPick to select a new target to launch.
-   */
-  selectLaunchTarget(): Promise<string | null>;
-
-  /**
-   * Show a QuickPick to select a build environment
-   */
-  selectEnvironments(): Promise<void>;
-
-  /**
-   * Select the active variant combination
-   */
-  setActiveVariantCombination(settings: VariantKeywordSettings): Promise<void>;
-
-  /**
-   * Toggle test coverage decorations
-   */
-  toggleCoverageDecorations(): void;
+  launchTargetPath(): Promise<string | null>;
 }
