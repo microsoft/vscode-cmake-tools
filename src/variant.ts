@@ -3,17 +3,21 @@ import * as path from 'path';
 
 import * as yaml from 'js-yaml';
 import * as ajv from 'ajv';
+import * as json5 from 'json5';
 
 import {StateManager} from './state';
 import * as logging from './logging';
 import rollbar from './rollbar';
 import {fs} from "./pr";
 import * as util from './util';
+import {MultiWatcher} from './watcher';
 
 const log = logging.createLogger('variant');
 
 
-export type ConfigureArguments = { [key: string]: (string | string[] | number | boolean) };
+export type ConfigureArguments = {
+  [key: string] : (string | string[] | number | boolean)
+};
 
 export interface VariantConfigurationOptions {
   short: string;
@@ -85,8 +89,7 @@ export class VariantManager implements vscode.Disposable {
   /**
    * Watches for changes to the variants file on the filesystem
    */
-  private _variantFileWatcher = vscode.workspace.createFileSystemWatcher(
-      path.join(vscode.workspace.rootPath || '/', 'cmake-variants.*'));
+  private _variantFileWatcher = new MultiWatcher();
 
   dispose() {
     this._variantFileWatcher.dispose();
@@ -100,19 +103,28 @@ export class VariantManager implements vscode.Disposable {
   constructor(private readonly _context: vscode.ExtensionContext,
               readonly stateManager: StateManager) {
     log.debug('Constructing VariantManager');
-    this._variantFileWatcher.onDidChange(() => {
-      rollbar.invokeAsync('Reloading variants file', () => this._reloadVariantsFile());
-    });
-    this._variantFileWatcher.onDidCreate(() => {
-      rollbar.invokeAsync('Reloading variants file', () => this._reloadVariantsFile());
-    });
-    this._variantFileWatcher.onDidDelete(() => {
-      rollbar.invokeAsync('Reloading variants file', () => this._reloadVariantsFile());
+    if (!vscode.workspace.workspaceFolders) {
+      return;  // Nothing we can do. We have no directory open
+    }
+    const folder = vscode.workspace.workspaceFolders[0];  // TODO: Multi-root!
+    if (!folder) {
+      return;  // No root folder open
+    }
+    const base_path = folder.uri.path;
+    for (const filename of['cmake-variants.yaml',
+                           'cmake-variants.json',
+                           '.vscode/cmake-variants.yaml',
+                           '.vscode/cmake-variants.json']) {
+      this._variantFileWatcher.createWatcher(path.join(base_path, filename));
+    }
+    this._variantFileWatcher.onAnyEvent(e => {
+      rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`,
+                          () => this._reloadVariantsFile(e.fsPath));
     });
     rollbar.invokeAsync('Initial load of variants file', () => this._reloadVariantsFile());
   }
 
-  private async _reloadVariantsFile() {
+  private async _reloadVariantsFile(filepath?: string) {
     const schema_path = this._context.asAbsolutePath('schemas/variants-schema.json');
     const schema = JSON.parse((await fs.readFile(schema_path)).toString());
     const validate = new ajv({allErrors : true, format : 'full'}).compile(schema);
@@ -122,21 +134,35 @@ export class VariantManager implements vscode.Disposable {
       // Can't read, we don't have a dir open
       return;
     }
-    const files = [
-      path.join(workdir, 'cmake-variants.json'),
-      path.join(workdir, 'cmake-variants.yaml'),
-    ];
 
-    let new_variants = DEFAULT_VARIANTS;
-    for (const cand of files) {
-      if (await fs.exists(cand)) {
-        const content = (await fs.readFile(cand)).toString();
-        try {
-          new_variants = yaml.load(content);
+    if (!filepath || !await fs.exists(filepath)) {
+      const candidates = [
+        path.join(workdir, 'cmake-variants.json'),
+        path.join(workdir, 'cmake-variants.json'),
+        path.join(workdir, '.vscode/cmake-variants.json'),
+        path.join(workdir, '.vscode/cmake-variants.yaml'),
+      ];
+      for (const testpath of candidates) {
+        if (await fs.exists(testpath)) {
+          filepath = testpath;
           break;
-        } catch (e) {
-          log.error(`Error parsing ${cand}: ${e}`);
         }
+      }
+    }
+
+    // Todo: Check that we are loading default vars from config?
+    let new_variants = DEFAULT_VARIANTS;
+    // Check once more that we have a file to read
+    if (filepath && await fs.exists(filepath)) {
+      const content = (await fs.readFile(filepath)).toString();
+      try {
+        if (filepath.endsWith('.json')) {
+          new_variants = json5.parse(content);
+        } else {
+          new_variants = yaml.load(content);
+        }
+      } catch (e) {
+        log.error(`Error parsing ${filepath}: ${e}`);
       }
     }
 
@@ -171,9 +197,7 @@ export class VariantManager implements vscode.Disposable {
     this._variants = sets;
   }
 
-  get haveVariant(): boolean {
-    return !!this.stateManager.activeVariantSettings;
-  }
+  get haveVariant(): boolean { return !!this.stateManager.activeVariantSettings; }
 
   get activeVariantOptions(): VariantConfigurationOptions {
     const invalid_variant = {
@@ -200,20 +224,16 @@ export class VariantManager implements vscode.Disposable {
       }
       return choices.get(setting) !;
     });
-    const init: VariantConfigurationOptions = {
-      short : '',
-      long : '',
-      settings: {}
-    };
+    const init: VariantConfigurationOptions = {short : '', long : '', settings : {}};
     const result: VariantConfigurationOptions
         = data.reduce((acc, el) => ({
                         buildType : el.buildType || acc.buildType,
                         generator : el.generator || acc.generator,
                         linkage : el.linkage || acc.linkage,
                         toolset : el.toolset || acc.toolset,
-                        settings: Object.assign({}, acc.settings, el.settings),
-                        short : [acc.short, el.short].join(' ').trim(),
-                        long : [acc.long, el.long].join(', '),
+                        settings : Object.assign({}, acc.settings, el.settings),
+                        short : [ acc.short, el.short ].join(' ').trim(),
+                        long : [ acc.long, el.long ].join(', '),
                       }),
                       init);
     return result;
