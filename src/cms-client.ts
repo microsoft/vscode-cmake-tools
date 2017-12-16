@@ -381,6 +381,7 @@ export class CMakeServerClient {
   private _params: ClientInitPrivate;
   private _endPromise: Promise<void>;
   private _pipe: net.Socket;
+  private _pipeFilePath: string;
 
   private _onMoreData(data: Uint8Array) {
     const str = data.toString();
@@ -449,6 +450,11 @@ export class CMakeServerClient {
 
     switch (some.type) {
     case 'hello': {
+      fs.exists(this._pipeFilePath).then(exists => {
+        if (exists && process.platform !== 'win32') {
+          fs.unlink(this._pipeFilePath);
+        }
+      });
       this._params.onHello(some as HelloMessage).catch(e => {
         console.error('Unhandled error in onHello', e);
       });
@@ -534,6 +540,7 @@ export class CMakeServerClient {
     } else {
       pipe_file = path.join(params.binaryDir, `.cmserver.${process.pid}`);
     }
+    this._pipeFilePath = pipe_file;
     const final_env
         = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
     const child = this._proc
