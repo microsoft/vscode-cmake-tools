@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(CMakeTools VERSION 0.99.0 LANGUAGES NONE)
+project(CMakeTools VERSION 0.11.0 LANGUAGES NONE)
 
 find_program(NPM_EXECUTABLE npm)
 find_program(VSCE_EXECUTABLE vsce)
