@@ -11,6 +11,9 @@ interface for creating and building variants is ``cmake-variants.json``, or
 For smaller or simple projects, providing a custom ``cmake-variants.yaml`` is
 unnecessary, and the default CMake build types will work just fine.
 
+The variants file can be placed in the root of the project directory, or in the
+``.vscode`` subdirectory for the project.
+
 .. note::
 
     CMake Tools provides a YAML validation schema, which is only checked in the
