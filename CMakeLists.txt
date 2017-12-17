@@ -36,6 +36,18 @@ add_custom_target(vsce-package
 
 if(SPHINX_EXECUTABLE)
     message(STATUS "Build documentation with the `docs` target")
+    # This docs-copy logic is just for uploading it to my personal site at
+    # vector-of-bool.github.io via Jekyll. Don't worry about it too much.
+    get_filename_component(vb_site_dir "${CMAKE_CURRENT_SOURCE_DIR}/../vb-site/" ABSOLUTE)
+    if(IS_DIRECTORY "${vb_site_dir}")
+        message(STATUS "Copying documentation to vb-site")
+        get_filename_component(docs_dest "${vb_site_dir}/docs/vscode-cmake-tools" ABSOLUTE)
+        set(docs_copy
+            COMMAND "${CMAKE_COMMAND}" -E copy_directory
+                "${CMAKE_CURRENT_BINARY_DIR}/docs"
+                "${docs_dest}"
+            )
+    endif()
     add_custom_target(docs
         COMMAND ${SPHINX_EXECUTABLE}
             -W # Warning as error
@@ -48,14 +60,15 @@ if(SPHINX_EXECUTABLE)
             -D release=${PROJECT_VERSION}
             -D pygments_style=sphinx
             -D html_theme=nature
-            # -D "html_static_path=_static,"
             -D html_logo=../res/icon_190.svg
             -b html
             -j 10
             "${CMAKE_CURRENT_SOURCE_DIR}/docs"
             "${CMAKE_CURRENT_BINARY_DIR}/docs"
-        COMMAND "${NPM_EXECUTABLE}" --silent docs
+        COMMAND "${NPM_EXECUTABLE}" run docs
+        ${docs_copy}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMENT "Generating documentation"
+        USES_TERMINAL
         )
 endif()
