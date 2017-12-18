@@ -292,12 +292,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
       if (process.platform !== 'win32') {
         return [];
       }
-      const progfiles: string | undefined = process.env['programfiles(x86)'] || process.env['programfiles'];
-      if (!progfiles) {
-        log.error('Unable to find Program Files directory');
-        return [];
-      }
-      const vswhere = path.join(progfiles, 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
+      const vswhere =  path.join(util.thisExtensionPath(), 'res/vswhere.exe');
       if (!await async.exists(vswhere)) {
         log.verbose('VSWhere is not installed. Not searching for VS 2017');
         return [];
