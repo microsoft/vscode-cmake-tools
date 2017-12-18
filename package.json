@@ -583,6 +583,36 @@
                         "normal",
                         "minimal"
                     ]
+                },
+                "cmake.cpptools.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enabled automatic generation of `c_cpp_properties.json` (needed by cpptools)."
+                },
+                "cmake.cpptools.databaseFilename": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Intellisense database filename. If not used or null, vscode-cpptools will use the default value."
+                },
+                "cmake.cpptools.intelliSenseMode": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Intellisense mode. If not used or null, vscode-cpptools will use the default value."
+                },
+                "cmake.cpptools.limitSymbolsToIncludedHeaders": {
+                    "type": "boolean",
+                    "default": null,
+                    "description": "Limit symbols search to included headers. If not used or null, vscode-cpptools will use the default value."
+                },
+                "cmake.cpptools.defaultTarget": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Default target used to generate `c_cpp_properties.json` when the active build target doesn't generate build info (typically the `all` target)"
+                },
+                "cmake.cpptools.additionalIncludePaths": {
+                    "type": "array",
+                    "default": [],
+                    "description": "Additional list of include paths to add to `c_cpp_properties.json`."
                 }
             }
         },

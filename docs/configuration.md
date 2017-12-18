@@ -67,3 +67,23 @@ quick summary of options that can be tweaked, should you wish to do so:
   headers, and libraries. There is currently one default search directory,
   `C:\MinGW`. If more than one directory in this list matches, each matching
   directory will be an available MinGW environment.
+
+### The following are options related to the CppTools integration
+
+- ``cmake.cpptools.enabled`` if true, CMake Tools will create/update the `c_cpp_properties.json` file
+needed by cpptools to make Intellisense work correctly. If true, this file will always be kept in
+sync with the current build type and target.
+- ``cmake.cpptools.defaultTarget`` is the name of the default target to use to update the `c_cpp_properties.json`
+file (e.g. when the current target is `all`) If you want to specify multiple targets, you can by separating them
+with a semi-colon. For instance: `"libA;libB;someExe"`. This can be useful when working in projects with one or
+more lib and the using executable, but be carefull: include paths and defines of all the targets will be merged,
+so intellisense might have some troubles if you have conflicting defines / include paths. The following target
+names can also be used:
+  - \_\_merge__: this will tell CMake tools to merge all include paths and defines of all targets
+  - \_\_first__: this will tell CMake tools to use the first valid target
+- ``cmake.cpptools.intelliSenseMode`` for the `intelliSenseMode` field in `c_cpp_properties.json`
+- ``cmake.cpptools.limitSymbolsToIncludedHeaders`` for the `limitSymbolsToIncludedHeaders` field in `c_cpp_properties.json`
+- ``cmake.cpptools.databaseFilename`` for the `databaseFilename` field in `c_cpp_properties.json`
+- ``cmake.cpptools.additionalIncludePaths`` is a list of additional include paths that will be written in the
+`c_cpp_properties.json` file. This is needed for standard include path (CMake doesn't offer any way of getting
+those currently, so this option is needed in the meantime)

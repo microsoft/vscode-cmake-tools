@@ -175,6 +175,30 @@ export class ConfigurationReader {
     return this._readPrefixed<string[]>('mingwSearchDirs') || [];
   }
 
+  get cppToolsEnabled(): boolean {
+    return this._readPrefixed<boolean>('cpptools.enabled') as boolean;
+  }
+
+  get cppToolsDatabaseFilename(): string {
+    return this._readPrefixed<string>('cpptools.databaseFilename') as string;
+  }
+
+  get cppToolsIntelliSenseMode(): string {
+    return this._readPrefixed<string>('cpptools.intelliSenseMode') as string;
+  }
+
+  get cppToolsLimitSymbolsToIncludedHeaders(): boolean {
+    return this._readPrefixed<boolean>('cpptools.limitSymbolsToIncludedHeaders') as boolean;
+  }
+
+  get cppToolsDefaultTarget(): string {
+    return this._readPrefixed<string>('cpptools.defaultTarget') as string;
+  }
+
+  get cppToolsAdditionalIncludePaths(): string[] {
+    return this._readPrefixed<string[]>('cpptools.additionalIncludePaths') || [];
+  }
+
   public get emscriptenSearchDirs(): string[] {
     return this._readPrefixed<string[]>('emscriptenSearchDirs') || [];
   }

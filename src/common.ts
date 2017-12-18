@@ -164,7 +164,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   abstract configure(extraArgs?: string[], runPrebuild?: boolean):
       Promise<number>;
   abstract compilationInfoForFile(filepath: string):
-      Promise<api.CompilationInfo>;
+      Promise<api.CompilationInfo|null>;
   abstract cleanConfigure(): Promise<number>;
   abstract stop(): Promise<boolean>;
   abstract get reconfigured(): vscode.Event<void>;
@@ -231,7 +231,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * event emitter.
    */
   protected _ctestController = new ctest.CTestController();
-  public async ctest(): Promise<Number> {
+  public async ctest(): Promise<number> {
     this._channel.show();
     const build_retc = await this.build();
     if (build_retc !== 0) {
@@ -374,6 +374,175 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         this._workspaceCachePath, this._workspaceCacheContent);
   }
 
+  /**
+   * Find all specified targets
+   *
+   * @param codeModel
+   *  CMake code model object
+   *
+   * @param targetName
+   *  Name of the target(s) to find. You can specify multiple targets
+   *  by separating them with a semi-colon. You can also use those 2
+   *  special target names:
+   *    - __merge__: will get all the targets
+   *    - __first__: will get the first target
+   */
+  protected _findTargets(codeModel, targetName) {
+    var selectedTargets: any[] = [];
+    if (targetName && codeModel) {
+      const targets = codeModel.configurations[0].projects[0].targets;
+      if (targetName === "__merge__") {
+        for (const target of targets) {
+          selectedTargets.push(target);
+        }
+      } else if (targetName === "__first__") {
+        if (targets.length > 0) {
+          selectedTargets.push(targets[0]);
+        }
+      } else {
+        const targetNames = targetName.split(";");
+        for (const target of targets) {
+          if (targetNames.indexOf(target.name) !== -1) {
+            selectedTargets.push(target);
+          }
+        }
+      }
+    }
+    return selectedTargets;
+  }
+
+  /**
+   * Extract the include paths from the given targets
+   */
+  protected _getIncludePaths(targets) {
+    var includePaths: string[] = [];
+
+    // add the config paths
+    includePaths = includePaths.concat(config.cppToolsAdditionalIncludePaths);
+
+    // add the target paths
+    for (const target of targets) {
+      for (const fileGroup of target.fileGroups) {
+        if (fileGroup.language === "CXX" && fileGroup.includePath) {
+          for (const includePath of fileGroup.includePath) {
+            const normalizedPath = path.normalize(includePath.path);
+            if (includePaths.indexOf(normalizedPath) === -1) {
+              includePaths.push(normalizedPath);
+            }
+          }
+        }
+      }
+    }
+    return includePaths;
+  }
+
+  /**
+   * RegExp used to identify defines
+   *
+   * @see _getDefines
+   */
+  private static _defineRegexp = /-D([^ ]+)/g
+
+  /**
+   * Extract the defines from the given targets
+   */
+  protected _getDefines(targets) {
+    var defines: string[] = [];
+    for (const target of targets) {
+      for (const fileGroup of target.fileGroups) {
+        if (fileGroup.language === "CXX") {
+          // handle explicit defines list
+          if (fileGroup.defines) {
+            for (const define of fileGroup.defines) {
+              if (defines.indexOf(define) === -1) {
+                defines.push(define);
+              }
+            }
+          }
+
+          // scan the compil flags
+          const compileFlags: string = fileGroup.compileFlags;
+          CommonCMakeToolsBase._defineRegexp.lastIndex = 0;
+          var result;
+          while ((result = CommonCMakeToolsBase._defineRegexp.exec(compileFlags)) !== null) {
+            if (defines.indexOf(result[1]) === -1) {
+              defines.push(result[1]);
+            }
+          }
+        }
+      }
+    }
+    return defines;
+  }
+
+  /**
+   * Generate a c_cpp_properties.json file with the include path, defines, etc.
+   * of the current build type
+   */
+  protected _generateCppToolsSettings() {
+    // if the integration is disabled, leave c_cpp_properties.json alone !
+    if (config.cppToolsEnabled === false) {
+      return;
+    }
+
+    // get the target
+    const targetName = this._defaultBuildTarget && this._defaultBuildTarget !== "all" ?
+      this._defaultBuildTarget :
+      config.cppToolsDefaultTarget;
+    const targets = this._findTargets(this._workspaceCacheContent.codeModel, targetName);
+
+    // check for errors and notify the user accordingly without returning
+    // note: in case of errors, we still want to update the c_cpp_settings.json properties
+    // if we didn't update it, it would continue using the previous file, resulting in a
+    // really bad thing: Intellisense might still work, so the user might think that everything
+    // went well, while a few defines might be wrong, some include paths too, leading  to
+    // a lot of headaches understanding why things don't work as expected.
+    // So the best way to avoid this is to just report the error and clear the file.
+    // This way the user instantly notice that something's wrong, and knows why.
+    if (this._workspaceCacheContent.variant) {
+      if (targets.length === 0) {
+        vscode.window.showWarningMessage(
+          "CMake Tools: Couldn't update cpptools configuration. " +
+          "Make sure the build type is selected and `cmake.cpptools.defaultTarget` " +
+          "is set to a valid target name."
+        );
+      }
+    }
+
+    // create the mandatory c_cpp_properties.json content
+    const includePaths = this._getIncludePaths(targets);
+    const defines = this._getDefines(targets);
+    var settings = {
+      "configurations": [
+        {
+          "name": os.platform(),
+          "includePath": includePaths,
+          "defines": defines,
+          "browse": {
+              "path": includePaths
+          }
+        }
+      ]
+    };
+
+    // add optional configurations (when not specified, cpp tools will use the default)
+    if (config.cppToolsIntelliSenseMode !== null) {
+      settings.configurations[0]["intelliSenseMode"] = config.cppToolsIntelliSenseMode;
+    }
+    if (config.cppToolsLimitSymbolsToIncludedHeaders !== null) {
+      settings.configurations[0].browse["limitSymbolsToIncludedHeaders"] = config.cppToolsLimitSymbolsToIncludedHeaders;
+    }
+    if (config.cppToolsDatabaseFilename !== null) {
+      settings.configurations[0].browse["databaseFilename"] = config.cppToolsDatabaseFilename;
+    }
+
+    // and update it
+    util.writeFile(
+      path.join(vscode.workspace.rootPath, ".vscode", "c_cpp_properties.json"),
+      JSON.stringify(settings, null, 2)
+    );
+  }
+
   public async selectLaunchTarget(): Promise<string | null> {
     const executableTargets = this.executableTargets;
     if (!executableTargets) {
@@ -409,6 +578,11 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     });
 
     ready.then(() => {
+      // on reconfiguration, we need to resync c/cpp properties
+      this.reconfigured(() => {
+        this._generateCppToolsSettings();
+      });
+
       const websock_server = this._ws_server =
           ws.createServer({server: editor_server});
       websock_server.on('connection', (client) => {
@@ -515,6 +689,9 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     // Refresh any test results that may be left aroud from a previous run
     this._ctestController.reloadTests(
         this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
+
+    // we're initialized, time to handle the cpptools integration !
+    this._generateCppToolsSettings();
 
     return this;
   }
@@ -682,6 +859,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     this._defaultBuildTarget = v;
     this._statusBar.targetName = v || this.allTargetName;
     this._targetChangedEmitter.fire();
+    this._generateCppToolsSettings();
   }
 
   /**
@@ -845,7 +1023,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return null;
   }
 
-  public async cleanRebuild(): Promise<Number> {
+  public async cleanRebuild(): Promise<number> {
     const clean_result = await this.clean();
     if (clean_result) return clean_result;
     return await this.build();
@@ -859,7 +1037,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return this.build('clean');
   }
 
-  public async buildWithTarget(): Promise<Number> {
+  public async buildWithTarget(): Promise<number> {
     const target = await this.showTargetSelector();
     if (target === null || target === undefined) return -1;
     return await this.build(target);
@@ -881,15 +1059,19 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return changed;
   }
 
-  public async setBuildType(): Promise<Number> {
+  public async setBuildType(): Promise<number> {
     const do_configure = await this.setBuildTypeWithoutConfigure();
     if (do_configure) {
-      return await this.configure();
+     const result = await this.configure();
+      if (result === 0) {
+        this._generateCppToolsSettings();
+      }
+      return result;
     } else {
       return -1;
     }
   }
-  public async quickStart(): Promise<Number> {
+  public async quickStart(): Promise<number> {
     if (await async.exists(this.mainListFile)) {
       vscode.window.showErrorMessage(
           'This workspace already contains a CMakeLists.txt!');
@@ -1070,7 +1252,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     return args;
   }
 
-  public async build(target_: Maybe<string> = null): Promise<Number> {
+  public async build(target_: Maybe<string> = null): Promise<number> {
     let target = target_;
     if (!target_) {
       target = this.defaultBuildTarget || this.allTargetName;
