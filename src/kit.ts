@@ -10,6 +10,7 @@ import dirs from './dirs';
 import * as logging from './logging';
 import {StateManager} from './state';
 import {fs} from './pr';
+import {thisExtensionPath} from "./util";
 
 const log = logging.createLogger('kit');
 
@@ -254,28 +255,18 @@ vsInstallations(): Promise<VSInstallation[]> {
   const pf_native = process.env['programfiles']; const pf_x86 = process.env['programfiles(x86)'];
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
-  for (const progdir of[pf_native, pf_x86]) {
-    if (!progdir) {
-      continue;
-    }
-    const vswhere_exe = path.join(progdir, 'Microsoft Visual Studio/Installer/vswhere.exe');
-    if (await fs.exists(vswhere_exe)) {
-      const vswhere_res
-          = await proc
-                .execute(vswhere_exe,
-                         [ '-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease' ])
-                .result;
-      if (vswhere_res.retc !== 0) {
-        log.error('Failed to execute vswhere.exe:', vswhere_res.stdout);
-        continue;
-      }
-      const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
-      for (const inst of vs_installs) {
-        if (inst_ids.indexOf(inst.instanceId) < 0) {
-          installs.push(inst);
-          inst_ids.push(inst.instanceId)
-        }
-      }
+  const vswhere_exe = path.join(thisExtensionPath(), 'res/vswhere.exe');
+  const vswhere_args = [ '-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease' ];
+  const vswhere_res = await proc.execute(vswhere_exe, vswhere_args).result;
+  if (vswhere_res.retc !== 0) {
+    log.error('Failed to execute vswhere.exe:', vswhere_res.stdout);
+    return [];
+  } const vs_installs
+  = JSON.parse(vswhere_res.stdout) as VSInstallation[];
+  for (const inst of vs_installs) {
+    if (inst_ids.indexOf(inst.instanceId) < 0) {
+      installs.push(inst);
+      inst_ids.push(inst.instanceId)
     }
   } return installs;
 }

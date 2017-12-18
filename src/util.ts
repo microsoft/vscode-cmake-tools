@@ -300,3 +300,11 @@ export function parseCompileDefinition(str: string): [string, string | null] {
     return [key, str.substr(key.length + 1)];
   }
 }
+
+export function thisExtensionPath(): string {
+  const ext = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+  if (!ext) {
+    throw new Error('Out own extension is null! What gives?');
+  }
+  return ext.extensionPath;
+}
