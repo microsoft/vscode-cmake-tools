@@ -252,7 +252,6 @@ export interface VSInstallation {
  */
 export async function
 vsInstallations(): Promise<VSInstallation[]> {
-  const pf_native = process.env['programfiles']; const pf_x86 = process.env['programfiles(x86)'];
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res/vswhere.exe');
