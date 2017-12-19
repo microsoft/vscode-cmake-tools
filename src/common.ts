@@ -763,7 +763,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   }
 
 
-  public get executionEnvironmentVariables(): {[key: string]: string} {
+  public get executionEnvironmentVariables() {
     return util.mergeEnvironment(config.environment, this.currentEnvironmentVariables);
   }
 

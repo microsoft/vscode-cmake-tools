@@ -294,7 +294,7 @@ export function mergeEnvironment(...env: NodeJS.ProcessEnv[]) {
 }
 
 export function execute(
-    program: string, args: string[], env: {[key: string]: string} = {},
+    program: string, args: string[], env: NodeJS.ProcessEnv = {},
     workingDirectory?: string,
     outputChannel: vscode.OutputChannel|null = null): ExecutionInformation {
   const acc = {stdout: '', stderr: ''};
