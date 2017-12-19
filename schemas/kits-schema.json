@@ -23,8 +23,25 @@
                     }
                 },
                 "preferredGenerator": {
-                    "type": "string",
-                    "description": "Set a preferred CMake generator for this Kit"
+                    "type": "object",
+                    "description": "Set a preferred CMake generator for this Kit",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the generator to use"
+                        },
+                        "platform": {
+                            "type": "string",
+                            "description": "CMake platform for -A argument"
+                        },
+                        "toolset": {
+                            "type": "string",
+                            "description": "CMake toolset for -T argument"
+                        }
+                    },
+                    "required": [
+                        "name"
+                    ]
                 }
             }
         },
