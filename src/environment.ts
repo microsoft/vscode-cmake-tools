@@ -293,10 +293,6 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
         return [];
       }
       const vswhere =  path.join(util.thisExtensionPath(), 'res/vswhere.exe');
-      if (!await async.exists(vswhere)) {
-        log.verbose('VSWhere is not installed. Not searching for VS 2017');
-        return [];
-      }
       const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease']);
       const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
       const archs = ['x86', 'amd64', 'arm'];
