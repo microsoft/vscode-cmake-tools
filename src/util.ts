@@ -102,7 +102,7 @@ export function objectPairs<V>(obj: {[key: string] : V}): [ string, V ][] {
  * @param iter An iterable to map
  * @param proj The projection function
  */
-export function * map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iterator<Out> {
+export function * map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iterable<Out> {
   for (const item of iter) {
     yield proj(item);
   }
