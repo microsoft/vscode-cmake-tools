@@ -77,6 +77,9 @@ command from the command palette. A quick-pick will appear:
 The active build variant will be displayed on the same statusbar button, along
 with the project name and extension status.
 
+CMake Tools will load up the default variant when it doesn't detect a prior
+selection. For the default variant, this will be ``Debug``.
+
 Find out more on the :ref:`variants` page.
 
 Running Configuration
