@@ -11,7 +11,6 @@ import rollbar from './rollbar';
 import {fs} from "./pr";
 import * as util from './util';
 import {MultiWatcher} from './watcher';
-import { isNullOrUndefined } from 'util';
 
 const log = logging.createLogger('variant');
 
@@ -192,7 +191,7 @@ export class VariantManager implements vscode.Disposable {
       if (!choices.has(def)) {
         const newDefault = Array.from(choices.keys())[0];
         log.warning('Invalid variants specified:');
-        log.warning(` >> ['` + setting_name + `']: invalid default choice "` + def + `", falling back to "` + newDefault + `"` );
+        log.warning(` >> [${setting_name}]: invalid default choice "${def}", falling back to "${newDefault}"`);
         def = newDefault;
       }
 
@@ -201,7 +200,6 @@ export class VariantManager implements vscode.Disposable {
         description : desc,
         choices : choices,
       });
-
     }
 
     if (loaded_default) {
@@ -265,51 +263,46 @@ export class VariantManager implements vscode.Disposable {
                                                                settings : value
                                                              })));
     const product = util.product(variants);
-    const items: VariantCombination[]
-        = product.map(optionset => ({
-                        label : optionset.map(o => o.settings.short).join(' + '),
-                        keywordSettings : this.transformChoiceCombinationToKeywordSettings(optionset),
-                        description : optionset.map(o => o.settings.long).join(' + '),
-                      }));
+    const items: VariantCombination[] = product.map(
+        optionset => ({
+          label : optionset.map(o => o.settings.short).join(' + '),
+          keywordSettings : this.transformChoiceCombinationToKeywordSettings(optionset),
+          description : optionset.map(o => o.settings.long).join(' + '),
+        }));
     const chosen = await vscode.window.showQuickPick(items);
     if (!chosen) {
       return false;
     }
-    this.publishActiveKeyworkSettings( chosen.keywordSettings);
+    this.publishActiveKeywordSettings(chosen.keywordSettings);
     return true;
   }
 
-  publishActiveKeyworkSettings( keywordSettings : Map<string, string>) {
+  publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
     this.stateManager.activeVariantSettings = keywordSettings;
     this._activeVariantChanged.fire();
   }
 
-  transformChoiceCombinationToKeywordSettings( choiceCombination : Array<any>) : Map<string, string> {
-    const keywordSettings = new Map<string, string>();
-
-    Array.from(choiceCombination).map((variantItem : any) => {
-      keywordSettings.set(variantItem['settingKey'], variantItem['settingValue']);
-    });
-
-    return keywordSettings;
+  transformChoiceCombinationToKeywordSettings(
+      choiceCombination: {settingKey : string, settingValue : string}[]): Map<string, string> {
+    const keywords = new Map<string, string>();
+    choiceCombination.forEach(kv => keywords.set(kv.settingKey, kv.settingValue));
+    return keywords;
   }
 
-  findDefaultChoiceCombination() : Array<any> {
-    const defaultValue = Array.from(this._variants.entries()).map(([ variantIdentifier, variantObject ]) => ({
-      settingKey: variantIdentifier,
-      settingValue: variantObject.default_
-    }));
-
-    return defaultValue;
+  findDefaultChoiceCombination(): Map<string, string> {
+    const defaults = util.map(this._variants.entries(), ([ option, definition ]) => ({
+                                                          settingKey : option,
+                                                          settingValue : definition.default_,
+                                                        }));
+    return this.transformChoiceCombinationToKeywordSettings(Array.from(defaults));
   }
 
   async initialize() {
     await this._reloadVariantsFile();
 
-    const defaultChoices = this.findDefaultChoiceCombination();
-    if (!isNullOrUndefined(defaultChoices)) {
-      const defaultSetting = this.transformChoiceCombinationToKeywordSettings(defaultChoices)
-      this.publishActiveKeyworkSettings(defaultSetting);
+    if (this.stateManager.activeVariantSettings === null) {
+      const defaultChoices = this.findDefaultChoiceCombination();
+      this.publishActiveKeywordSettings(defaultChoices);
     }
   }
 }
