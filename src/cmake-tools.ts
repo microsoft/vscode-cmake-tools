@@ -27,6 +27,7 @@ import {CacheEditorContentProvider} from "./cache-editor";
 import * as logging from './logging';
 import {populateCollection} from './diagnostics';
 import {ExecutionOptions, ExecutionResult} from "./api";
+import {NagManager} from "./nag";
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -50,6 +51,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _http_server: http.Server;
   private _ws_server: ws.Server;
   private _editor_provider: vscode.Disposable;
+
+  private _nagManager = new NagManager(this.extensionContext);
 
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
@@ -294,6 +297,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await this._ctestController.reloadTests(drv);
     this._statusBar.setStatusMessage('Ready');
     this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
+
+    // Additional, non-extension: Start up nagging.
+    this._nagManager.start();
   }
 
   /**
