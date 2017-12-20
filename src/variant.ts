@@ -251,8 +251,7 @@ export class VariantManager implements vscode.Disposable {
     const items: VariantCombination[]
         = product.map(optionset => ({
                         label : optionset.map(o => o.settings.short).join(' + '),
-                        keywordSettings : new Map<string, string>(optionset.map(
-                            param => [param.settingKey, param.settingValue] as[string, string])),
+                        keywordSettings : this.getVariantSettingsForVariantCombination(optionset),
                         description : optionset.map(o => o.settings.long).join(' + '),
                       }));
     const chosen = await vscode.window.showQuickPick(items);
@@ -262,6 +261,16 @@ export class VariantManager implements vscode.Disposable {
     this.stateManager.activeVariantSettings = chosen.keywordSettings;
     this._activeVariantChanged.fire();
     return true;
+  }
+
+  getVariantSettingsForVariantCombination( variantCombination : Array<any>) : Map<string, string> {
+    const variantSetting = new Map<string, string>();
+
+    Array.from(variantCombination).map((variantItem : any) => {
+      variantSetting.set(variantItem['settingKey'], variantItem['settingValue']);
+    });
+
+    return variantSetting;
   }
 
   async initialize() { await this._reloadVariantsFile(); }
