@@ -51,6 +51,11 @@ For more information, see [this issue](https://github.com/vector-of-bool/vscode-
   - Bugfixes:
     - Debugging works again in the VSCode October update
     - Various
+- **0.10.4**:
+  - Tweaks:
+    - VSWhere is now bundled with the extension, so it isn't required to be
+      installed at a specific version. Fixes #254 and #235.
+  - Request for feedback and beta testing.
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!
