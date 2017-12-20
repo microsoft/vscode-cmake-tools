@@ -21,6 +21,7 @@ import {VariantManager} from './variants';
 import { log } from './logging';
 import {CMakeToolsBackend} from './backend';
 import { Generator } from './environment';
+import { NagManager } from "./nag";
 
 const CMAKETOOLS_HELPER_SCRIPT = `
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
@@ -186,6 +187,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * the statusbar.
    */
   protected readonly _statusBar = new status.StatusBar();
+
+  private _nagManager = new NagManager(this._context);
 
   get compilerId() {
     for (const lang of ['CXX', 'C']) {
@@ -516,6 +519,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     this._ctestController.reloadTests(
         this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
 
+    this._nagManager.start();
+
     return this;
   }
 
@@ -763,7 +768,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   }
 
 
-  public get executionEnvironmentVariables(): {[key: string]: string} {
+  public get executionEnvironmentVariables() {
     return util.mergeEnvironment(config.environment, this.currentEnvironmentVariables);
   }
 

@@ -271,7 +271,11 @@ export interface ExecutionInformation {
   process: proc.ChildProcess;
 }
 
-export function mergeEnvironment(...env: {[key: string]: string}[]) {
+export interface ProcessEnvironment {
+  [key: string]: string;
+}
+
+export function mergeEnvironment(...env: NodeJS.ProcessEnv[]) {
   return env.reduce((acc, vars) => {
     if (process.platform === 'win32') {
       // Env vars on windows are case insensitive, so we take the ones from
@@ -290,7 +294,7 @@ export function mergeEnvironment(...env: {[key: string]: string}[]) {
 }
 
 export function execute(
-    program: string, args: string[], env: {[key: string]: string} = {},
+    program: string, args: string[], env: NodeJS.ProcessEnv = {},
     workingDirectory?: string,
     outputChannel: vscode.OutputChannel|null = null): ExecutionInformation {
   const acc = {stdout: '', stderr: ''};
@@ -503,4 +507,12 @@ export function replaceVars(str: string): string {
   ] as [string, string][];
   return replacements.reduce(
       (accdir, [needle, what]) => replaceAll(accdir, needle, what), str);
+}
+
+export function thisExtensionPath(): string {
+  const ext = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+  if (!ext) {
+    throw new Error('Our own extension is null! What gives?');
+  }
+  return ext.extensionPath;
 }

@@ -407,7 +407,7 @@ export class CTestController {
 
   public async executeCTest(sourceDir: string,
       binarydir: string, configuration: string,
-      env: {[key: string]: string}): Promise<number> {
+      env: NodeJS.ProcessEnv): Promise<number> {
     // Reset test decorations
     this._channel.clear();
     this._channel.show();

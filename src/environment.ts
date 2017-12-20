@@ -158,7 +158,7 @@ async function tryCreateNewVCEnvironment(where: VSWhereItem, arch: string): Prom
 async function tryCreateVCEnvironment(dist: VSDistribution, arch: string): Promise<Environment | undefined> {
   const name = `${dist.name} - ${arch}`;
   const mutex = 'msvc';
-  const common_dir: Maybe<string> = process.env[dist.variable];
+  const common_dir: Maybe<string> = process.env[dist.variable] || null;
   if (!common_dir) {
     return;
   }
@@ -292,16 +292,7 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
       if (process.platform !== 'win32') {
         return [];
       }
-      const progfiles: string | undefined = process.env['programfiles(x86)'] || process.env['programfiles'];
-      if (!progfiles) {
-        log.error('Unable to find Program Files directory');
-        return [];
-      }
-      const vswhere = path.join(progfiles, 'Microsoft Visual Studio', 'Installer', 'vswhere.exe');
-      if (!await async.exists(vswhere)) {
-        log.verbose('VSWhere is not installed. Not searching for VS 2017');
-        return [];
-      }
+      const vswhere =  path.join(util.thisExtensionPath(), 'res/vswhere.exe');
       const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease']);
       const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
       const archs = ['x86', 'amd64', 'arm'];
@@ -422,7 +413,7 @@ export class EnvironmentManager {
    * @brief The current environment variables to use when executing commands,
    *    as specified by the active build environments.
    */
-  public get currentEnvironmentVariables(): {[key: string]: string} {
+  public get currentEnvironmentVariables(): NodeJS.ProcessEnv {
     const active_env = this.activeEnvironments.reduce((acc, name) => {
       const env_ = this.availableEnvironments.get(name);
       console.assert(env_);

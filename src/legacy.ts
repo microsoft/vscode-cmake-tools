@@ -221,31 +221,6 @@ export class CMakeTools extends CommonCMakeToolsBase implements CMakeToolsBacken
             vscode.window.showWarningMessage('The "cmake.initialBuildType" setting is now deprecated and will no longer be used.');
         }
 
-        const last_nag_time = this._context.globalState.get('feedbackWanted.lastNagTime', 0);
-        const now = new Date().getTime();
-        const time_since_nag = now - last_nag_time;
-        // Ask for feedback once every thirty days
-        const do_nag = time_since_nag > 1000 * 60 * 60 * 24 * 30;
-        if (do_nag && Math.random() < 0.1) {
-            this._context.globalState.update('feedbackWanted.lastNagTime', now);
-            vscode.window.showInformationMessage<{title: string, action?: () => void, isCloseAffordance?: boolean}>(
-                'Like CMake Tools? I need your feedback to help make this extension better! Submitting feedback should only take a few seconds.',
-                {
-                    title: 'I\'ve got a few seconds',
-                    action: () => {
-                        open('https://github.com/vector-of-bool/vscode-cmake-tools/issues?q=is%3Aopen+is%3Aissue+label%3A%22feedback+wanted%21%22');
-                    },
-                },
-                {
-                    title: 'Not now',
-                    isCloseAffordance: true,
-                }).then(chosen => {
-                    if (chosen && chosen.action) {
-                        chosen.action();
-                    }
-                });
-        }
-
         return this;
     }
 
