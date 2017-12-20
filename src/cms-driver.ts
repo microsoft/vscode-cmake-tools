@@ -137,7 +137,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return this._globalSettings ? this._globalSettings.generator : null;
   }
 
-  private _dirty = false;
+  private _dirty = true;
   markDirty() { this._dirty = true; }
   get needsReconfigure(): boolean { return this._dirty; }
 
