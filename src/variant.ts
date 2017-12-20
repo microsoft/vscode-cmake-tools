@@ -122,7 +122,6 @@ export class VariantManager implements vscode.Disposable {
       rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`,
                           () => this._reloadVariantsFile(e.fsPath));
     });
-    rollbar.invokeAsync('Initial load of variants file', () => this.initialize());
   }
 
   private async _reloadVariantsFile(filepath?: string) {
@@ -304,7 +303,6 @@ export class VariantManager implements vscode.Disposable {
     return defaultValue;
   }
 
-
   async initialize() {
     await this._reloadVariantsFile();
 
@@ -314,5 +312,4 @@ export class VariantManager implements vscode.Disposable {
       this.publishActiveKeyworkSettings(defaultSetting);
     }
   }
-
 }
