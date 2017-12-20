@@ -198,7 +198,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       await drv.setKit(this._kitManager.activeKit);
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
-    const project = await drv.projectName;
+    const project = drv.projectName;
     if (project) {
       this._statusBar.setProjectName(project);
     }

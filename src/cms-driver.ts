@@ -93,7 +93,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     } finally {
       sub.dispose();
     }
-    this._codeModel = await cl.sendRequest('codemodel');
+    this.codeModel = await cl.sendRequest('codemodel');
     this._onReconfiguredEmitter.fire();
     return 0;
   }
