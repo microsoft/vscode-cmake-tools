@@ -370,7 +370,7 @@ export class CTestDriver implements vscode.Disposable {
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
       console.error(
-          '[vscode] There was an error running ctest to determine available test executables');
+          'There was an error running ctest to determine available test executables');
       return this.tests = [];
     }
     const tests = result.stdout.split('\n')

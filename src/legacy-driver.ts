@@ -117,7 +117,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
       await fs.unlink(cache);
     }
     if (await fs.exists(cmake_files)) {
-      log.info('[vscode] Removing ', cmake_files);
+      log.info('Removing ', cmake_files);
       await fs.rmdir(cmake_files);
     }
     return this.configure([], consumer);

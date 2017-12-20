@@ -645,7 +645,7 @@ export class CMakeServerClient {
               hsparams.generator = generator.name;
               hsparams.platform = generator.platform;
               hsparams.toolset = generator.toolset || config.toolset || undefined;
-              log.info(`[vscode] Configuring using the "${generator.name}" CMake generator`);
+              log.info(`Configuring using the "${generator.name}" CMake generator`);
             }
 
             await client.sendRequest('handshake', hsparams);
