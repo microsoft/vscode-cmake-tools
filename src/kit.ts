@@ -5,12 +5,15 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
+import * as json5 from 'json5';
+
 import * as proc from './proc';
 import dirs from './dirs';
 import * as logging from './logging';
 import {StateManager} from './state';
 import {fs} from './pr';
-import {thisExtensionPath} from "./util";
+import {thisExtensionPath, dropNulls} from "./util";
+import { loadSchema } from "./schema";
 
 const log = logging.createLogger('kit');
 
@@ -655,8 +658,25 @@ export class KitManager implements vscode.Disposable {
   private async _rereadKits() {
     log.debug('Re-reading kits file', this._kitsPath);
     const content_str = await fs.readFile(this._kitsPath);
-    const content = JSON.parse(content_str.toLocaleString()) as object[];
-    this._kits = content.map((item_): Kit => {
+    let kits_raw: object[] = [];
+    try {
+      kits_raw = json5.parse(content_str.toLocaleString());
+    } catch (e) {
+      log.error('Failed to parse cmake-kits.json:', e);
+    }
+    const validator = await loadSchema('schemas/kits-schema.json');
+    const is_valid = validator(kits_raw);
+    if (!is_valid) {
+      const errors = validator.errors!;
+      log.error('Invalid cmake-kits.json:');
+      for (const err of errors) {
+        log.error(` >> ${err.dataPath}: ${err.message}`);
+      }
+      kits_raw = [];
+    } else {
+      log.info('Loading new set of kits');
+    }
+    const new_kits = kits_raw.map((item_): Kit | null => {
       if ('compilers' in item_) {
         const item = item_ as CompilerKit;
         return {
@@ -688,9 +708,11 @@ export class KitManager implements vscode.Disposable {
       } else {
         vscode.window.showErrorMessage(
             'Your cmake-kits.json file contains one or more invalid entries.');
-        throw new Error('Invalid kits');
+        return null;
       }
     });
+    this._kits = dropNulls(new_kits);
+    log.info(`Successfully loaded ${this._kits.length} kits`);
     // Set the current kit to the one we have named
     const already_active_kit
         = this._kits.find((kit) => kit.name === this.stateManager.activeKitName);

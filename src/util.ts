@@ -309,6 +309,8 @@ export function thisExtension() {
   return ext;
 }
 
-export function thisExtensionPath(): string {
-  return thisExtension().extensionPath;
+export function thisExtensionPath(): string { return thisExtension().extensionPath; }
+
+export function dropNulls<T>(items: (T | null)[]): T[] {
+  return items.filter(item => item !== null) as T[];
 }
