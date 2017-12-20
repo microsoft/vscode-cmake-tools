@@ -301,10 +301,14 @@ export function parseCompileDefinition(str: string): [string, string | null] {
   }
 }
 
-export function thisExtensionPath(): string {
+export function thisExtension() {
   const ext = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
   if (!ext) {
     throw new Error('Out own extension is null! What gives?');
   }
-  return ext.extensionPath;
+  return ext;
+}
+
+export function thisExtensionPath(): string {
+  return thisExtension().extensionPath;
 }
