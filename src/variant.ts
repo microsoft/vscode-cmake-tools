@@ -11,6 +11,7 @@ import rollbar from './rollbar';
 import {fs} from "./pr";
 import * as util from './util';
 import {MultiWatcher} from './watcher';
+import { isNullOrUndefined } from 'util';
 
 const log = logging.createLogger('variant');
 
@@ -121,7 +122,7 @@ export class VariantManager implements vscode.Disposable {
       rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`,
                           () => this._reloadVariantsFile(e.fsPath));
     });
-    rollbar.invokeAsync('Initial load of variants file', () => this._reloadVariantsFile());
+    rollbar.invokeAsync('Initial load of variants file', () => this.initialize());
   }
 
   private async _reloadVariantsFile(filepath?: string) {
@@ -150,7 +151,6 @@ export class VariantManager implements vscode.Disposable {
       }
     }
 
-    // Todo: Check that we are loading default vars from config?
     let new_variants = DEFAULT_VARIANTS;
     // Check once more that we have a file to read
     if (filepath && await fs.exists(filepath)) {
@@ -166,6 +166,7 @@ export class VariantManager implements vscode.Disposable {
       }
     }
 
+    let loaded_default = false;
     const is_valid = validate(new_variants);
     if (!is_valid) {
       const errors = validate.errors as ajv.ErrorObject[];
@@ -174,26 +175,43 @@ export class VariantManager implements vscode.Disposable {
         log.error(` >> ${err.dataPath}: ${err.message}`);
       }
       new_variants = DEFAULT_VARIANTS;
-    } else {
-      log.info("Loaded new set of variants");
+      loaded_default = true;
     }
 
     const sets = new Map() as VariantSet;
     for (const setting_name in new_variants) {
       const setting = new_variants[setting_name];
-      const def = setting.default;
+      let def = setting.default;
       const desc = setting.description;
       const choices = new Map<string, VariantConfigurationOptions>();
       for (const choice_name in setting.choices) {
         const choice = setting.choices[choice_name];
         choices.set(choice_name, choice);
       }
+
+      // Check existence of default choice
+      if (!choices.has(def)) {
+        const newDefault = Array.from(choices.keys())[0];
+        log.warning('Invalid variants specified:');
+        log.warning(` >> ['` + setting_name + `']: invalid default choice "` + def + `", falling back to "` + newDefault + `"` );
+        def = newDefault;
+      }
+
       sets.set(setting_name, {
         default_ : def,
         description : desc,
         choices : choices,
       });
+
     }
+
+    if (loaded_default) {
+      log.info("Loaded default variants");
+    } else {
+      log.info("Loaded new set of variants");
+    }
+
+
     this._variants = sets;
   }
 
@@ -251,27 +269,50 @@ export class VariantManager implements vscode.Disposable {
     const items: VariantCombination[]
         = product.map(optionset => ({
                         label : optionset.map(o => o.settings.short).join(' + '),
-                        keywordSettings : this.getVariantSettingsForVariantCombination(optionset),
+                        keywordSettings : this.transformChoiceCombinationToKeywordSettings(optionset),
                         description : optionset.map(o => o.settings.long).join(' + '),
                       }));
     const chosen = await vscode.window.showQuickPick(items);
     if (!chosen) {
       return false;
     }
-    this.stateManager.activeVariantSettings = chosen.keywordSettings;
-    this._activeVariantChanged.fire();
+    this.publishActiveKeyworkSettings( chosen.keywordSettings);
     return true;
   }
 
-  getVariantSettingsForVariantCombination( variantCombination : Array<any>) : Map<string, string> {
-    const variantSetting = new Map<string, string>();
-
-    Array.from(variantCombination).map((variantItem : any) => {
-      variantSetting.set(variantItem['settingKey'], variantItem['settingValue']);
-    });
-
-    return variantSetting;
+  publishActiveKeyworkSettings( keywordSettings : Map<string, string>) {
+    this.stateManager.activeVariantSettings = keywordSettings;
+    this._activeVariantChanged.fire();
   }
 
-  async initialize() { await this._reloadVariantsFile(); }
+  transformChoiceCombinationToKeywordSettings( choiceCombination : Array<any>) : Map<string, string> {
+    const keywordSettings = new Map<string, string>();
+
+    Array.from(choiceCombination).map((variantItem : any) => {
+      keywordSettings.set(variantItem['settingKey'], variantItem['settingValue']);
+    });
+
+    return keywordSettings;
+  }
+
+  findDefaultChoiceCombination() : Array<any> {
+    const defaultValue = Array.from(this._variants.entries()).map(([ variantIdentifier, variantObject ]) => ({
+      settingKey: variantIdentifier,
+      settingValue: variantObject.default_
+    }));
+
+    return defaultValue;
+  }
+
+
+  async initialize() {
+    await this._reloadVariantsFile();
+
+    const defaultChoices = this.findDefaultChoiceCombination();
+    if (!isNullOrUndefined(defaultChoices)) {
+      const defaultSetting = this.transformChoiceCombinationToKeywordSettings(defaultChoices)
+      this.publishActiveKeyworkSettings(defaultSetting);
+    }
+  }
+
 }
