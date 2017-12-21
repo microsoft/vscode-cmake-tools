@@ -214,6 +214,56 @@ export class VariantManager implements vscode.Disposable {
 
   get haveVariant(): boolean { return !!this.stateManager.activeVariantSettings; }
 
+  findVariantConfigurationOptions(keywordSetting : Map<string, string>) : VariantConfigurationOptions[] | null {
+    const vars = this._variants;
+    if (!vars) {
+      return null;
+    }
+
+    let detectedError : Error | undefined = undefined;
+    const data = Array.from(keywordSetting.entries()).map(([ param, setting ]): VariantConfigurationOptions => {
+      let choice : VariantConfigurationOptions = {
+        short : 'Unknown'
+      };
+
+      if (vars.has(param)) {
+        const choices = vars.get(param) !.choices;
+        if (choices.has(setting)) {
+          choice = choices.get(setting) !;
+        } else {
+          debugger;
+          detectedError =  new Error(`Missing variant choice "${param}": "${setting}" in variant definition.`);
+        }
+      } else {
+        debugger;
+        detectedError = new Error(`Missing variant "${param}" in variant definition.`);
+      }
+
+      return choice;
+    });
+
+    if (detectedError)
+    {
+      throw detectedError;
+    } else {
+      return data;
+    }
+  }
+
+  mergeVariantConfigurations( options : VariantConfigurationOptions[]) : VariantConfigurationOptions {
+    const init: VariantConfigurationOptions = {short : '', long : '', settings : {}};
+    return options.reduce((acc, el) => ({
+                        buildType : el.buildType || acc.buildType,
+                        generator : el.generator || acc.generator,
+                        linkage : el.linkage || acc.linkage,
+                        toolset : el.toolset || acc.toolset,
+                        settings : Object.assign({}, acc.settings, el.settings),
+                        short : [ acc.short, el.short ].join(' ').trim(),
+                        long : [ acc.long, el.long ].join(', '),
+                      }),
+                      init);
+  }
+
   get activeVariantOptions(): VariantConfigurationOptions {
     const invalid_variant = {
       short : 'Unknown',
@@ -227,31 +277,24 @@ export class VariantManager implements vscode.Disposable {
     if (!vars) {
       return invalid_variant;
     }
-    const data = Array.from(kws.entries()).map(([ param, setting ]) => {
-      if (!vars.has(param)) {
-        debugger;
-        throw new Error("Unexpected missing variant setting");
-      }
-      const choices = vars.get(param) !.choices;
-      if (!choices.has(setting)) {
-        debugger;
-        throw new Error("Unexpected missing variant option");
-      }
-      return choices.get(setting) !;
-    });
-    const init: VariantConfigurationOptions = {short : '', long : '', settings : {}};
-    const result: VariantConfigurationOptions
-        = data.reduce((acc, el) => ({
-                        buildType : el.buildType || acc.buildType,
-                        generator : el.generator || acc.generator,
-                        linkage : el.linkage || acc.linkage,
-                        toolset : el.toolset || acc.toolset,
-                        settings : Object.assign({}, acc.settings, el.settings),
-                        short : [ acc.short, el.short ].join(' ').trim(),
-                        long : [ acc.long, el.long ].join(', '),
-                      }),
-                      init);
-    return result;
+
+    let data : VariantConfigurationOptions[] | null = null;
+    try {
+      data = this.findVariantConfigurationOptions(kws);
+    } catch (e) {
+      log.warning("Last variant selection is incompatible with present variant definition.");
+      log.warning(">> " + e.message);
+
+      log.warning("Using default variant choices from variant definition.");
+      const defaultKws = this.findDefaultChoiceCombination();
+      data = this.findVariantConfigurationOptions(defaultKws);
+    }
+
+    if (!data) {
+      return invalid_variant;
+    }
+
+    return this.mergeVariantConfigurations(data);
   }
 
   async selectVariant() {
