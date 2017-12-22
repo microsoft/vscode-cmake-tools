@@ -136,7 +136,7 @@ export class VariantManager implements vscode.Disposable {
     if (!filepath || !await fs.exists(filepath)) {
       const candidates = [
         path.join(workdir, 'cmake-variants.json'),
-        path.join(workdir, 'cmake-variants.json'),
+        path.join(workdir, 'cmake-variants.yaml'),
         path.join(workdir, '.vscode/cmake-variants.json'),
         path.join(workdir, '.vscode/cmake-variants.yaml'),
       ];
