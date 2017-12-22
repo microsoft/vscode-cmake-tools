@@ -549,7 +549,7 @@ export class CMakeServerClient {
                            {
                              env : final_env,
                            });
-    log.info(`Started new CMake Server instance with PID ${child.pid}`);
+    log.debug(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', this._onErrorData.bind(this));
     child.stderr.on('data', this._onErrorData.bind(this));
     setTimeout(() => {
