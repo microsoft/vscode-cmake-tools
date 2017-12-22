@@ -11,6 +11,7 @@ import rollbar from './rollbar';
 import {fs} from "./pr";
 import * as util from './util';
 import {MultiWatcher} from './watcher';
+import {loadSchema} from "./schema";
 
 const log = logging.createLogger('variant');
 
@@ -124,9 +125,7 @@ export class VariantManager implements vscode.Disposable {
   }
 
   private async _reloadVariantsFile(filepath?: string) {
-    const schema_path = this._context.asAbsolutePath('schemas/variants-schema.json');
-    const schema = JSON.parse((await fs.readFile(schema_path)).toString());
-    const validate = new ajv({allErrors : true, format : 'full'}).compile(schema);
+    const validate = await loadSchema('schemas/variants-schema.json');
 
     const workdir = vscode.workspace.rootPath;
     if (!workdir) {
