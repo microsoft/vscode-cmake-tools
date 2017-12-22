@@ -224,8 +224,11 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
         return await kitIfCompiler(bin, pr);
       } catch (e) {
         log.warning('Failed to check binary', bin, 'by exception:', e);
-        // The binary may not be executable by this user...
         if (e.code == 'EACCES') {
+          // The binary may not be executable by this user...
+          return null;
+        } else if (e.code == 'ENOENT') {
+          // This will happen on Windows if we try to "execute" a directory
           return null;
         }
         throw e;
