@@ -391,10 +391,11 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string):
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter):
     Promise<VSKit | null> {
-      const name = inst.displayName + ' - ' + arch;
+      const installName = inst.displayName || inst.instanceId;
+      const name = installName + ' - ' + arch;
       log.debug('Checking for kit: ' + name);
       if (pr) {
-        pr.report({message : `Checking ${inst.displayName} with ${arch}`});
+        pr.report({message : `Checking ${installName} with ${arch}`});
       }
       const variables = await varsForVSInstallation(inst, arch);
       if (!variables)
@@ -403,7 +404,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
       const kit: VSKit = {
         type : 'vsKit',
         name : name,
-        visualStudio : inst.displayName,
+        visualStudio : installName,
         visualStudioArchitecture : arch,
       };
 
