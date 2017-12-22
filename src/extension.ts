@@ -27,25 +27,19 @@ let INSTANCE: CMakeTools | null = null;
  */
 export async function activate(context: vscode.ExtensionContext): Promise<CMakeTools> {
   // Create a new instance and initailize.
-  const cmt = await CMakeTools.create(context);
-
-  // Push it so we get clean teardown.
-  context.subscriptions.push(cmt);
-
-  // We are now safe to do logging
-  log.debug('Registering extension commands');
+  const cmt_pr = CMakeTools.create(context);
 
   // A register function helps us bind the commands to the extension
   function register<K extends keyof CMakeTools>(name: K) {
-    const fn = (cmt[name] as Function).bind(cmt);
     return vscode.commands.registerCommand('cmake.' + name, () => {
       const id = util.randint(1000, 10000);
-      log.debug(`[${id}]`, 'cmake.' + name, 'started');
-      const pr = rollbar.invokeAsync(name, fn);
-      pr.then(() => { log.debug(`[${id}]`, 'cmake.' + name, 'finished'); }).catch(e => {
-        log.debug(`[${id}]`, 'cmake.' + name, 'finished with an exception', e);
+      return rollbar.invokeAsync(name, async() => {
+        const cmt = await cmt_pr;
+        log.debug(`[${id}]`, 'cmake.' + name, 'started');
+        const fn = (cmt[name] as Function).bind(cmt);
+        await fn();
+        log.debug(`[${id}]`, 'cmake.' + name, 'finished');
       });
-      return pr;
     });
   }
 
@@ -61,11 +55,19 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
                      // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
                    ];
 
-  // Bind them all!
+  // Register the functions before the extension is done loading so that fast
+  // fingers won't cause "unregistered command" errors while CMake Tools starts
+  // up. The command wrapper will await on the extension promise.
   for (const key of funs) {
     log.trace(`Register CMakeTools extension command cmake.${key}`);
     context.subscriptions.push(register(key));
   }
+
+  const cmt
+  = await cmt_pr;
+
+  // Push it so we get clean teardown.
+  context.subscriptions.push(cmt);
 
   context.subscriptions.push(
       vscode.commands.registerCommand('cmake._extensionInstance', () => { return cmt;}));
