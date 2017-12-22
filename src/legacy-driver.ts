@@ -18,6 +18,7 @@ import * as logging from './logging';
 import {CMakeCache} from "./cache";
 import * as api from './api';
 import { CompilationDatabase } from './compdb';
+import { kitChangeNeedsClean } from './kit';
 
 const log = logging.createLogger('legacy-driver');
 
@@ -30,15 +31,14 @@ export class LegacyCMakeDriver extends CMakeDriver {
   private _needsReconfigure = true;
   get needsReconfigure() { return this._needsReconfigure; }
 
-  async setKit(kit: Kit): Promise<void> {
+  async doPreSetKit(kit: Kit): Promise<void> {
     log.debug('Setting new kit', kit.name);
     this._needsReconfigure = true;
-    const need_clean = this._kitChangeNeedsClean(kit);
+    const need_clean = kitChangeNeedsClean(kit, this.currentKit);
     if (need_clean) {
       log.debug('Wiping build directory', this.binaryDir);
       await fs.rmdir(this.binaryDir);
     }
-    await this._setBaseKit(kit);
   }
 
   private _compilationDatabase: Promise<CompilationDatabase | null> = Promise.resolve(null);
@@ -92,8 +92,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return true;
   }
 
-  protected async _init() {
-    await super._init();
+  async doInit() {
     if (await fs.exists(this.cachePath)) {
       await this._reloadPostConfigure();
     }
@@ -105,9 +104,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
 
   static async create(): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    const inst = new LegacyCMakeDriver();
-    await inst._init();
-    return inst;
+    return this.createDerived(new LegacyCMakeDriver);
   }
 
   get targets() { return []; }
@@ -121,7 +118,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   get cmakeCache() { return this._cmakeCache; }
   private _cmakeCache: CMakeCache | null = null;
 
-  protected async _reloadPostConfigure() {
+  private async _reloadPostConfigure() {
     // Force await here so that any errors are thrown into rollbar
     const new_cache = await CMakeCache.fromPath(this.cachePath);
     this._cmakeCache = new_cache;

@@ -756,3 +756,60 @@ export class KitManager implements vscode.Disposable {
     return await vscode.window.showTextDocument(text);
   }
 }
+
+
+export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit | null): boolean {
+  if (!oldKit) {
+    // First kit? We never clean
+    log.debug('Clean not needed: No prior Kit selected');
+    return false;
+  }
+  if (newKit.type !== oldKit.type) {
+    // If the kit type changed, we must clean up
+    log.debug('Need clean: Kit type changed', oldKit.type, '->', newKit.type);
+    return true;
+  }
+  switch (newKit.type) {
+  case 'compilerKit': {
+    const oldCompKit = oldKit as CompilerKit;
+    // We need to wipe out the build directory if the compiler for any language was changed.
+    const comp_changed = Object.keys(oldCompKit.compilers).some(lang => {
+      return !!oldCompKit.compilers[lang] && oldCompKit.compilers[lang] !== newKit.compilers[lang];
+    });
+    if (comp_changed) {
+      log.debug('Need clean: Compilers for one or more languages changed');
+    } else {
+      log.debug('Clean not needed: No compilers changed');
+    }
+    return comp_changed;
+  }
+  case 'toolchainKit': {
+    // We'll assume that a new toolchain is very destructive
+    const oldTCKit = oldKit as ToolchainKit;
+    const tc_chained = newKit.toolchainFile !== oldTCKit.toolchainFile;
+    if (tc_chained) {
+      log.debug('Need clean: Toolchain file changed',
+                oldTCKit.toolchainFile,
+                '->',
+                newKit.toolchainFile);
+    } else {
+      log.debug('Clean not needed: toolchain file unchanged');
+    }
+    return tc_chained;
+  }
+  case 'vsKit': {
+      const oldVSKit = oldKit as VSKit;
+    // Switching VS changes everything
+    const vs_changed = newKit.visualStudio !== oldVSKit.visualStudio
+        || newKit.visualStudioArchitecture !== oldVSKit.visualStudioArchitecture;
+    if (vs_changed) {
+      const old_vs = oldVSKit.name;
+      const new_vs = newKit.name;
+      log.debug('Need clean: Visual Studio changed:', old_vs, '->', new_vs);
+    } else {
+      log.debug('Clean not needed: Same Visual Studio');
+    }
+    return vs_changed;
+  }
+  }
+}

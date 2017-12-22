@@ -8,7 +8,7 @@ import config from './config';
 import * as cache from './cache';
 import * as proc from './proc';
 import {ExecutableTarget, RichTarget, CacheEntryProperties} from "./api";
-import {Kit} from "./kit";
+import {Kit, kitChangeNeedsClean} from "./kit";
 import * as cms from './cms-client';
 import * as util from './util';
 import {fs} from "./pr";
@@ -149,16 +149,18 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
-  async setKit(kit: Kit): Promise<void> {
+  async doPreSetKit(kit: Kit): Promise<void> {
     log.debug('Setting new kit', kit.name);
     this._dirty = true;
-    const need_clean = this._kitChangeNeedsClean(kit);
-    await(await this._cmsClient).shutdown();
+    const need_clean = kitChangeNeedsClean(kit, this.currentKit);
+    await (await this._cmsClient).shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
       await fs.rmdir(this.binaryDir);
     }
-    await this._setBaseKit(kit);
+  }
+
+  async doPostSetKit(_kit: Kit): Promise<void> {
     await this._restartClient();
   }
 
@@ -223,7 +225,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       binaryDir : this.binaryDir,
       sourceDir : this.sourceDir,
       cmakePath : config.cmakePath,
-      environment : this._getKitEnvironmentVariablesObject(),
+      environment : this.getKitEnvironmentVariablesObject(),
       onDirty : async() => { this._dirty = true },
       onMessage : async(msg) => { this._onMessageEmitter.fire(msg.message); },
       onProgress : async(_prog) => {},
@@ -234,14 +236,11 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _onMessageEmitter = new vscode.EventEmitter<string>();
   get onMessage() { return this._onMessageEmitter.event; }
 
-  protected async _init(): Promise<void> {
-    await super._init();
+  async doInit(): Promise<void> {
     await this._restartClient();
   }
 
   static async create(ctx: vscode.ExtensionContext): Promise<CMakeServerClientDriver> {
-    const driver = new CMakeServerClientDriver(ctx);
-    await driver._init();
-    return driver;
+    return this.createDerived(new CMakeServerClientDriver(ctx));
   }
 }
