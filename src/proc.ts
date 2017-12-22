@@ -62,9 +62,7 @@ export interface Subprocess {
   child: proc.ChildProcess;
 }
 
-export interface EnvironmentVariables {
-  [key: string] : string
-};
+export interface EnvironmentVariables { [key: string]: string; }
 
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
@@ -87,38 +85,38 @@ export function execute(command: string,
                         args: string[],
                         outputConsumer?: OutputConsumer | null,
                         options?: ExecutionOptions): Subprocess {
-  let child: proc.ChildProcess | null = null;
+  let child: proc.ChildProcess;
+  if (options && options.silent !== true) {
+    log.info('Executing command: '
+             // We do simple quoting of arguments with spaces.
+             // This is only shown to the user,
+             // and doesn't have to be 100% correct.
+             +
+             [ command ]
+                 .concat(args)
+                 .map(a => a.replace('"', '\"'))
+                 .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
+                 .join(' '));
+  }
+  if (!options) {
+    options = {};
+  }
+  const final_env = Object.assign({}, process.env, options.environment || {});
+  const spawn_opts: proc.SpawnOptions = {
+    env : final_env,
+    shell : !!options.shell,
+  };
+  if (options && options.cwd) {
+    spawn_opts.cwd = options.cwd;
+  }
+  if (process.platform == 'linux') {
+    // We wrap things in `stdbuf` to disable output buffering.
+    const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);
+    child = proc.spawn('stdbuf', subargs, spawn_opts);
+  } else {
+    child = proc.spawn(command, args, spawn_opts);
+  }
   const result = new Promise<ExecutionResult>((resolve, reject) => {
-    if (options && options.silent !== true) {
-      log.info('Executing command: '
-               // We do simple quoting of arguments with spaces.
-               // This is only shown to the user,
-               // and doesn't have to be 100% correct.
-               +
-               [ command ]
-                   .concat(args)
-                   .map(a => a.replace('"', '\"'))
-                   .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
-                   .join(' '));
-    }
-    if (!options) {
-      options = {};
-    }
-    const final_env = Object.assign({}, process.env, options.environment || {});
-    const spawn_opts: proc.SpawnOptions = {
-      env : final_env,
-      shell : !!options.shell,
-    };
-    if (options && options.cwd) {
-      spawn_opts.cwd = options.cwd;
-    }
-    if (process.platform != 'win32') {
-      // We wrap things in `stdbuf` to disable output buffering.
-      const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);
-      child = proc.spawn('stdbuf', subargs, spawn_opts);
-    } else {
-      child = proc.spawn(command, args, spawn_opts);
-    }
     child.on('error', (err) => { reject(err); });
     let stdout_acc = '';
     let line_acc = '';
@@ -168,6 +166,5 @@ export function execute(command: string,
       resolve({retc : retc, stdout : stdout_acc, stderr : stderr_acc});
     });
   });
-  console.assert(!!child, "Didn't start child?");
-  return {child : child !, result};
+  return {child, result};
 }
