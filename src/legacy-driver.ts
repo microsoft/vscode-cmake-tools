@@ -8,7 +8,6 @@ import * as path from 'path';
 
 import {CMakeDriver} from './driver';
 import rollbar from './rollbar';
-import {Kit} from './kit';
 import {fs} from './pr';
 import config from './config';
 import * as util from './util';
@@ -18,7 +17,8 @@ import * as logging from './logging';
 import {CMakeCache} from "./cache";
 import * as api from './api';
 import { CompilationDatabase } from './compdb';
-import { kitChangeNeedsClean } from './kit';
+import { StateManager } from './state';
+import { Kit } from "./kit";
 
 const log = logging.createLogger('legacy-driver');
 
@@ -26,19 +26,18 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
-  private constructor() { super(); }
+  private constructor(state: StateManager) { super(state); }
 
   private _needsReconfigure = true;
   get needsReconfigure() { return this._needsReconfigure; }
 
-  async doPreSetKit(kit: Kit): Promise<void> {
-    log.debug('Setting new kit', kit.name);
+  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._needsReconfigure = true;
-    const need_clean = kitChangeNeedsClean(kit, this.currentKit);
     if (need_clean) {
       log.debug('Wiping build directory', this.binaryDir);
       await fs.rmdir(this.binaryDir);
     }
+    await cb();
   }
 
   private _compilationDatabase: Promise<CompilationDatabase | null> = Promise.resolve(null);
@@ -102,9 +101,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(): Promise<LegacyCMakeDriver> {
+  static async create(state: StateManager, kit: Kit|null): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver);
+    return this.createDerived(new LegacyCMakeDriver(state), kit);
   }
 
   get targets() { return []; }

@@ -168,6 +168,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * of the driver is atomic to those using it
    */
   private async _startNewCMakeDriver(): Promise<CMakeDriver> {
+    const kit = this._kitManager.activeKit;
     const drv = await(async() => {
       log.debug('Starting CMake driver');
       const version_ex = await proc.execute(config.cmakePath, [ '--version' ]).result;
@@ -183,20 +184,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // We purposefully exclude versions <3.7.1, which have some major CMake
         // server bugs
         if (util.versionGreater(version, '3.7.1')) {
-          return await CMakeServerClientDriver.create(this.extensionContext);
+          return await CMakeServerClientDriver.create(this._stateManager, kit);
         } else {
           log.info(
               'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
         }
       }
       // We didn't start the server backend, so we'll use the legacy one
-      return await LegacyCMakeDriver.create();
+      return await LegacyCMakeDriver.create(this._stateManager, kit);
     })();
-    // Push state into the new driver
-    if (this._kitManager.activeKit) {
-      log.debug('Pushing active Kit into driver');
-      await drv.setKit(this._kitManager.activeKit);
-    }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = drv.projectName;
     if (project) {

@@ -8,13 +8,22 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import rollbar from './rollbar';
-import {Kit, CompilerKit, ToolchainKit, VSKit, getVSKitEnvironment, CMakeGenerator} from './kit';
+import {
+  Kit,
+  CompilerKit,
+  ToolchainKit,
+  VSKit,
+  getVSKitEnvironment,
+  CMakeGenerator,
+  kitChangeNeedsClean
+} from './kit';
 import * as util from './util';
 import config from './config';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import {VariantConfigurationOptions, ConfigureArguments} from "./variant";
+import {StateManager} from "./state";
 
 const log = logging.createLogger('driver');
 
@@ -75,7 +84,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor() {}
+  protected constructor(readonly stateManager: StateManager) {}
 
   /**
    * Dispose the driver. This disposes some things synchronously, but also
@@ -107,10 +116,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
   private _projectNameChangedEmitter = new vscode.EventEmitter<string>();
 
-  private _projectName: string;
-  public get projectName(): string { return this._projectName; }
+  public get projectName(): string { return this.stateManager.projectName || 'Unknown Project'; }
   protected doSetProjectName(v: string) {
-    this._projectName = v;
+    this.stateManager.projectName = v;
     this._projectNameChangedEmitter.fire(v);
   }
 
@@ -124,20 +132,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private _kit: Kit | null = null;
 
   /**
-   * Get the current kit. Once non-`null`, the kit is never `null` again.
-   */
-  get currentKit() { return this._kit; }
-
-  /**
    * Get the current kit as a `CompilerKit`.
    *
    * @precondition `this._kit` is non-`null` and `this._kit.type` is `compilerKit`.
    * Guarded with an `assert`
    */
   private get _compilerKit() {
-    console.assert(this.currentKit && this.currentKit.type == 'compilerKit',
-                   JSON.stringify(this.currentKit));
-    return this.currentKit as CompilerKit;
+    console.assert(this._kit && this._kit.type == 'compilerKit', JSON.stringify(this._kit));
+    return this._kit as CompilerKit;
   }
 
   /**
@@ -147,9 +149,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Guarded with an `assert`
    */
   private get _toolchainFileKit() {
-    console.assert(this.currentKit && this.currentKit.type == 'toolchainKit',
-                   JSON.stringify(this.currentKit));
-    return this.currentKit as ToolchainKit;
+    console.assert(this._kit && this._kit.type == 'toolchainKit', JSON.stringify(this._kit));
+    return this._kit as ToolchainKit;
   }
 
   /**
@@ -159,9 +160,73 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Guarded with an `assert`
    */
   private get _vsKit() {
-    console.assert(this.currentKit && this.currentKit.type == 'vsKit',
-                   JSON.stringify(this.currentKit));
-    return this.currentKit as VSKit;
+    console.assert(this._kit && this._kit.type == 'vsKit', JSON.stringify(this._kit));
+    return this._kit as VSKit;
+  }
+
+  /**
+   * Replace ${variable} references in the given string with their corresponding
+   * values.
+   * @param instr The input string
+   * @returns A string with the variable references replaced
+   */
+  async expandString(instr: string): Promise<string> {
+    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
+    type StringObject = {[key: string] : string | undefined};
+    const user_dir
+        = process.platform === 'win32' ? process.env['PROFILE'] ! : process.env['HOME'] !;
+    const replacements: StringObject = {
+      workspaceRoot : vscode.workspace.rootPath,
+      buildType : this.currentBuildType,
+      workspaceRootFolderName : path.basename(ws_root),
+      generator : this.generatorName || 'null',
+      projectName : this.projectName,
+      userHome : user_dir,
+    };
+
+    // We accumulate a list of substitutions that we need to make, preventing
+    // recursively expanding or looping forever on bad replacements
+    const subs = new Map<string, string>();
+
+    const var_re = /\$\{(\w+)\}/g;
+    let mat: RegExpMatchArray | null = null;
+    while ((mat = var_re.exec(instr))) {
+      const full = mat[0];
+      const key = mat[1];
+      let repl = replacements[key];
+      if (!repl) {
+        log.warning(`Invalid variable reference ${full} in string: ${instr}`);
+      } else {
+        subs.set(full, repl);
+      }
+    }
+
+    const env_re = /\$\{env:(.+?)\}/g;
+    while ((mat = env_re.exec(instr))) {
+      const full = mat[0];
+      const varname = mat[1];
+      const repl = process.env[varname.toLocaleLowerCase()] || '';
+      subs.set(full, repl);
+    }
+
+    const command_re = /\$\{command:(.+?)\}/g;
+    while ((mat = command_re.exec(instr))) {
+      const full = mat[0];
+      const command = mat[1];
+      if (subs.has(full)) {
+        continue;  // Don't execute commands more than once per string
+      }
+      try {
+        const command_ret = await vscode.commands.executeCommand(command);
+        subs.set(full, `${command_ret}`);
+      } catch (e) {
+        log.warning(`Exception while executing command ${command} for string: ${instr} (${e})`);
+      }
+    }
+
+    let final_str = instr;
+    subs.forEach((value, key) => { final_str = util.replaceAll(final_str, key, value); });
+    return final_str;
   }
 
   executeCommand(command: string,
@@ -181,7 +246,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param kit The new kit
    */
   async setKit(kit: Kit): Promise<void> {
-    await this.doPreSetKit(kit);
+    log.info(`Switching to kit: ${kit.name}`);
+    const needs_clean = kitChangeNeedsClean(kit, this._kit);
+    await this.doSetKit(needs_clean, async () => {
+      await this._setKit(kit);
+    });
+  }
+
+  private async _setKit(kit: Kit): Promise<void> {
     this._kit = Object.seal(Object.assign({}, kit));
     log.debug('CMakeDriver Kit set to', kit.name);
 
@@ -200,11 +272,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // Other kits don't have environment variables
     }
     }
-    await this.doPostSetKit(kit);
   }
 
-  protected async doPreSetKit(_newKit: Kit): Promise<void>{};
-  protected async doPostSetKit(_newKit: Kit): Promise<void>{};
+  protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
   abstract compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null>;
 
@@ -232,6 +302,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
     this._variantLinkage = opts.linkage || null;
+    await this._refreshExpansions();
   }
 
   /**
@@ -246,9 +317,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @note This is distinct from the config values, since we do variable
    * substitution.
    */
-  get sourceDir(): string {
-    const dir = util.replaceVars(config.sourceDirectory);
-    return util.normalizePath(dir);
+  get sourceDir(): string { return this._sourceDirectory; }
+  private _sourceDirectory = '';
+
+  protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> { return cb(); }
+
+  private async _refreshExpansions() {
+    await this.doRefreshExpansions(async() => {
+      this._sourceDirectory = util.normalizePath(await this.expandString(config.sourceDirectory));
+      this._binaryDir = util.normalizePath(await this.expandString(config.buildDirectory));
+    });
   }
 
   /**
@@ -262,10 +340,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Directory where build output is stored.
    */
-  get binaryDir(): string {
-    const dir = util.replaceVars(config.buildDirectory);
-    return util.normalizePath(dir);
-  }
+  get binaryDir(): string { return this._binaryDir }
+  private _binaryDir = '';
 
   /**
    * @brief Get the path to the CMakeCache file in the build directory
@@ -357,9 +433,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   getPreferredGenerators(): CMakeGenerator[] {
     const user_preferred = config.preferredGenerators.map(g => ({name : g}));
-    if (this.currentKit && this.currentKit.preferredGenerator) {
+    if (this._kit && this._kit.preferredGenerator) {
       // The kit has a preferred generator attached as well
-      user_preferred.push(this.currentKit.preferredGenerator);
+      user_preferred.push(this._kit.preferredGenerator);
     }
     return user_preferred;
   }
@@ -458,26 +534,26 @@ export abstract class CMakeDriver implements vscode.Disposable {
         ([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
     const flags = [ '--no-warn-unused-cli' ].concat(extra_args);
 
-    console.assert(!!this.currentKit);
-    if (!this.currentKit) {
+    console.assert(!!this._kit);
+    if (!this._kit) {
       throw new Error('No kit is set!');
     }
-    switch (this.currentKit.type) {
+    switch (this._kit.type) {
     case 'compilerKit': {
-      log.debug('Using compilerKit', this.currentKit.name, 'for usage');
-      flags.push(...util.objectPairs(this.currentKit.compilers)
+      log.debug('Using compilerKit', this._kit.name, 'for usage');
+      flags.push(...util.objectPairs(this._kit.compilers)
                      .map(([ lang, comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
     } break;
     case 'toolchainKit': {
-      log.debug('Using CMake toolchain', this.currentKit.name, 'for configuring');
-      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this.currentKit.toolchainFile}`);
+      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
     } break;
     default:
       log.debug('Kit requires no extra CMake arguments');
     }
 
-    if (this.currentKit.cmakeSettings) {
-      flags.push(...util.objectPairs(this.currentKit.cmakeSettings)
+    if (this._kit.cmakeSettings) {
+      flags.push(...util.objectPairs(this._kit.cmakeSettings)
                      .map(([ key, val ]) => _makeFlag(key, util.cmakeify(val))));
     }
 
@@ -486,6 +562,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const retc = await this.doConfigure(final_flags, consumer);
     this._onReconfiguredEmitter.fire();
+    await this._refreshExpansions();
     return retc;
   }
 
@@ -502,6 +579,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!post_build_ok) {
       return -1;
     }
+    await this._refreshExpansions();
     return (await child.result).retc;
   }
 
@@ -613,15 +691,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract get cmakeCacheEntries(): Map<string, api.CacheEntryProperties>;
 
-  private async _baseInit() { await this.doInit(); }
+  private async _baseInit(kit: Kit | null) {
+    if (kit) {
+      // Load up kit environment before starting any drivers.
+      await this._setKit(kit);
+    }
+    await this._refreshExpansions();
+    await this.doInit();
+  }
   protected abstract doInit(): Promise<void>;
 
   /**
    * Asynchronous initialization. Should be called by base classes during
    * their initialization.
    */
-  static async createDerived<T extends CMakeDriver>(inst: T): Promise<T> {
-    await inst._baseInit();
+  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit | null): Promise<T> {
+    await inst._baseInit(kit);
     return inst;
   }
 }

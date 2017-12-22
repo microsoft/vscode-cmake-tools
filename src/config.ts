@@ -7,7 +7,6 @@
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as util from './util';
 import rollbar from './rollbar';
 
 export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
@@ -62,15 +61,6 @@ function readPrefixedConfig<T>(key: string, default_?: T): T | null {
  * in the setting name.
  */
 class ConfigurationReader {
-  private _escapePaths(obj: {[k: string] : any}) {
-    return Object.getOwnPropertyNames(obj).reduce(
-        (acc, key: string) => {
-          acc[key] = util.replaceVars(obj[key]);
-          return acc;
-        },
-        {} as typeof obj);
-  }
-
   get buildDirectory(): string { return readPrefixedConfig<string>('buildDirectory') !; }
 
   get installPrefix(): string | null { return readPrefixedConfig<string>('installPrefix') !; }
@@ -135,20 +125,19 @@ class ConfigurationReader {
   get debugConfig(): any { return readPrefixedConfig<any>('debugConfig'); }
 
   get environment() {
-    return this._escapePaths(readPrefixedConfig<{[key: string] : string}>('environment', {}));
+    return readPrefixedConfig<{[key: string] : string}>('environment', {});
   }
 
   get configureEnvironment() {
-    return this._escapePaths(
-        readPrefixedConfig<{[key: string] : string}>('configureEnvironment', {}));
+    return readPrefixedConfig<{[key: string] : string}>('configureEnvironment', {});
   }
 
   get buildEnvironment() {
-    return this._escapePaths(readPrefixedConfig<{[key: string] : string}>('buildEnvironment', {}));
+    return readPrefixedConfig<{[key: string] : string}>('buildEnvironment', {});
   }
 
   get testEnvironment() {
-    return this._escapePaths(readPrefixedConfig<{[key: string] : string}>('testEnvironment', {}));
+    return readPrefixedConfig<{[key: string] : string}>('testEnvironment', {});
   }
 
   get defaultVariants(): Object { return readPrefixedConfig<Object>('defaultVariants', {}); }

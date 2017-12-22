@@ -8,16 +8,17 @@ import config from './config';
 import * as cache from './cache';
 import * as proc from './proc';
 import {ExecutableTarget, RichTarget, CacheEntryProperties} from "./api";
-import {Kit, kitChangeNeedsClean} from "./kit";
 import * as cms from './cms-client';
 import * as util from './util';
 import {fs} from "./pr";
 import {createLogger} from './logging';
+import {StateManager} from "./state";
+import {Kit} from "./kit";
 
 const log = createLogger('cms-driver');
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(readonly extensionContext: vscode.ExtensionContext) { super(); }
+  private constructor(stateman: StateManager) { super(stateman); }
   private _cmsClient: Promise<cms.CMakeServerClient>;
   private _globalSettings: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
@@ -71,7 +72,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     });
 
     try {
-      await cl.configure({ cacheArguments: args });
+      await cl.configure({cacheArguments : args});
       await cl.compute();
       this._dirty = false;
     } catch (e) {
@@ -102,6 +103,19 @@ export class CMakeServerClientDriver extends CMakeDriver {
     const cl = await this._cmsClient;
     this.codeModel = await cl.sendRequest('codemodel');
     return true;
+  }
+
+  async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
+    const bindir_before = this.binaryDir;
+    const srcdir_before = this.sourceDir;
+    await cb();
+    if (!bindir_before.length || !srcdir_before.length) {
+      return;
+    }
+    if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir) {
+      // Directories changed. We need to restart the driver
+      await this._restartClient();
+    }
   }
 
   get targets(): RichTarget[] {
@@ -149,19 +163,15 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
-  async doPreSetKit(kit: Kit): Promise<void> {
-    log.debug('Setting new kit', kit.name);
+  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._dirty = true;
-    const need_clean = kitChangeNeedsClean(kit, this.currentKit);
-    await (await this._cmsClient).shutdown();
+    await(await this._cmsClient).shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
       await fs.rmdir(this.binaryDir);
     }
-  }
-
-  async doPostSetKit(_kit: Kit): Promise<void> {
-    await this._restartClient();
+    await cb();
+    this._restartClient();
   }
 
   async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null> {
@@ -236,11 +246,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _onMessageEmitter = new vscode.EventEmitter<string>();
   get onMessage() { return this._onMessageEmitter.event; }
 
-  async doInit(): Promise<void> {
-    await this._restartClient();
-  }
+  async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(ctx: vscode.ExtensionContext): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(ctx));
+  static async create(state: StateManager, kit: Kit | null): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(state), kit);
   }
 }

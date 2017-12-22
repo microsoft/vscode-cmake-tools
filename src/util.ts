@@ -3,7 +3,6 @@ import * as child_process from 'child_process';
 
 import * as vscode from 'vscode';
 
-import config from './config';
 import { execute, EnvironmentVariables } from './proc';
 
 /**
@@ -59,20 +58,6 @@ export function normalizePath(p: string, normalize_case = true): string {
     norm = replaceAll(norm, '//', '/');
   }
   return norm;
-}
-
-/**
- * Replace variable references with the corresponding variables
- * @param str The input string
- */
-export function replaceVars(str: string): string {
-  const replacements: {[key: string] : string} = {
-    ['${workspaceRoot}'] : normalizePath(vscode.workspace.rootPath || '.'),
-    ['${workspaceRootFolderName}'] : path.basename(vscode.workspace.rootPath || '.'),
-    ['${toolset}'] : config.toolset || 'unknown',
-  };
-  return Object.keys(replacements)
-      .reduce((acc, key) => replaceAll(acc, key, replacements[key]), str);
 }
 
 /**
