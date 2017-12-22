@@ -435,12 +435,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       consumer.onProgress(pr => { this._statusBar.setProgress(pr.value); });
       log.showChannel();
       build_log.info('Starting build');
-      const subproc = await drv.build(target, consumer);
-      if (!subproc) {
-        build_log.error('Build failed to start');
-        return -1;
-      }
-      const rc = (await subproc.result).retc;
+      const rc = await drv.build(target, consumer);
       if (rc === null) {
         build_log.info('Build was terminated');
       } else {

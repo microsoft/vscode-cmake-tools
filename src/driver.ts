@@ -34,7 +34,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  abstract configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
 
   /**
    * Perform a clean configure. Deletes cached files before running the config
@@ -42,21 +42,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract cleanConfigure(consumer?: proc.OutputConsumer): Promise<number>;
 
-  /**
-   * Execute a CMake build. Should not configure.
-   * @param target The target to build
-   */
-  abstract build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null>;
+  protected doPreBuild(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
+
+  protected doPostBuild(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
    */
   abstract get needsReconfigure(): boolean;
-
-  /**
-   * Event emitted when configuration finishes
-   */
-  abstract get onReconfigured(): vscode.Event<void>;
 
   /**
    * List of targets known to CMake
@@ -432,7 +429,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Picks the best generator to use on the current system
    */
-  async pickGenerator(): Promise<CMakeGenerator | null> {
+  async getBestGenerator(): Promise<CMakeGenerator | null> {
     // User can override generator with a setting
     const user_generator = config.generator;
     if (user_generator) {
@@ -485,12 +482,96 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
+  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
+  get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
+
+  async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
+    const pre_check_ok = await this._beforeConfigure();
+    if (!pre_check_ok) {
+      return -1;
+    }
+
+    const settings = Object.assign({}, config.configureSettings);
+
+    const _makeFlag = (key: string, cmval: util.CMakeValue) => {
+      switch (cmval.type) {
+      case 'UNKNOWN':
+        return `-D${key}=${cmval.value}`;
+      default:
+        return `-D${key}:${cmval.type}=${cmval.value}`;
+      }
+    };
+
+    util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settings[key] = value);
+    if (this._variantLinkage !== null) {
+      settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
+    }
+
+    // Always export so that we have compile_commands.json
+    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
+
+    if (!this.isMultiConf) {
+      // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
+      settings.CMAKE_BUILD_TYPE = this.currentBuildType;
+    }
+
+    const settings_flags = util.objectPairs(settings).map(
+        ([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
+    const flags = ['--no-warn-unused-cli'].concat(extra_args);
+
+    console.assert(!!this._kit);
+    if (!this._kit) {
+      throw new Error('No kit is set!');
+    }
+    switch (this._kit.type) {
+    case 'compilerKit': {
+      log.debug('Using compilerKit', this._kit.name, 'for usage');
+      flags.push(...util.objectPairs(this._kit.compilers)
+                    .map(([ lang, comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
+    } break;
+    case 'toolchainKit': {
+      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
+    } break;
+    default:
+      log.debug('Kit requires no extra CMake arguments');
+    }
+
+    if (this._kit.cmakeSettings) {
+      flags.push(...util.objectPairs(this._kit.cmakeSettings)
+                     .map(([ key, val ]) => _makeFlag(key, util.cmakeify(val))));
+    }
+
+    const final_flags = flags.concat(settings_flags);
+    log.trace('CMake flags are', JSON.stringify(final_flags));
+
+    const retc = await this.doConfigure(final_flags, consumer);
+    this._onReconfiguredEmitter.fire();
+    return retc;
+  }
+
+  async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
+    const pre_build_ok = await this.doPreBuild();
+    if (!pre_build_ok) {
+      return -1;
+    }
+    const child = await this.doCMakeBuild(target, consumer);
+    if (!child) {
+      return -1;
+    }
+    const post_build_ok = await this.doPostBuild();
+    if (!post_build_ok) {
+      return -1;
+    }
+    return (await child.result).retc;
+  }
+
   /**
    * Execute pre-configure tasks to check if we are ready to run a full
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  protected async _beforeConfigure(): Promise<boolean> {
+  private async _beforeConfigure(): Promise<boolean> {
     log.debug('Runnnig pre-configure checks and steps');
     if (this._isBusy) {
       log.debug('No configuring: We\'re busy.');
@@ -598,66 +679,4 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * their initialization.
    */
   protected async _init() { log.debug('Base _init() of CMakeDriver'); }
-
-  /**
-   * Do pre-configure tasks and return the arguments that should be passed
-   * to CMake to configure.
-   */
-  protected async _prepareConfigure(): Promise<string[]> {
-    const settings = Object.assign({}, config.configureSettings);
-
-
-    const _makeFlag = (key: string, cmval: util.CMakeValue) => {
-      switch (cmval.type) {
-      case 'UNKNOWN':
-        return `-D${key}=${cmval.value}`;
-      default:
-        return `-D${key}:${cmval.type}=${cmval.value}`;
-      }
-    };
-
-    util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settings[key] = value);
-    if (this._variantLinkage !== null) {
-      settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
-    }
-
-    // Always export so that we have compile_commands.json
-    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
-
-    if (!this.isMultiConf) {
-      // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
-      settings.CMAKE_BUILD_TYPE = this.currentBuildType;
-    }
-
-    const settings_flags = util.objectPairs(settings).map(
-        ([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = ['--no-warn-unused-cli'];
-
-    console.assert(!!this._kit);
-    if (!this._kit) {
-      throw new Error('No kit is set!');
-    }
-    switch (this._kit.type) {
-    case 'compilerKit': {
-      log.debug('Using compilerKit', this._kit.name, 'for usage');
-      flags.push(...util.objectPairs(this._kit.compilers)
-                    .map(([ lang, comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
-    } break;
-    case 'toolchainKit': {
-      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
-      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
-    } break;
-    default:
-      log.debug('Kit requires no extra CMake arguments');
-    }
-
-    if (this._kit.cmakeSettings) {
-      flags.push(...util.objectPairs(this._kit.cmakeSettings)
-                     .map(([ key, val ]) => _makeFlag(key, util.cmakeify(val))));
-    }
-
-    const final_flags = flags.concat(settings_flags);
-    log.trace('CMake flags are', JSON.stringify(final_flags));
-    return final_flags;
-  }
 }

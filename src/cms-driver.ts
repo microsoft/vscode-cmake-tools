@@ -60,31 +60,22 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return this.configure([], consumer);
   }
 
-  async configure(extra_args: string[], _consumer?: proc.OutputConsumer) {
-    if (!await this._beforeConfigure()) {
-      return -1;
-    }
-
-    // XXX: Switch up inheritence model to have public impls call private derived
-    // methods, to wrap proper common functionality.
-
-    const config_args = await this._prepareConfigure();
+  async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
     const cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
-      if (_consumer) {
+      if (consumer) {
         for (const line of msg.split('\n')) {
-          _consumer.output(line);
+          consumer.output(line);
         }
       }
     });
+
     try {
-      await cl.configure({cacheArguments : config_args.concat(extra_args)});
+      await cl.configure({ cacheArguments: args });
       await cl.compute();
       this._dirty = false;
-      // TODO: Parse diags
     } catch (e) {
       if (e instanceof cms.ServerError) {
-        // TODO: Parse diags
         log.error(`Error during CMake configure: ${e}`);
         return 1;
       } else {
@@ -94,8 +85,23 @@ export class CMakeServerClientDriver extends CMakeDriver {
       sub.dispose();
     }
     this.codeModel = await cl.sendRequest('codemodel');
-    this._onReconfiguredEmitter.fire();
     return 0;
+  }
+
+  async doPreBuild(): Promise<boolean> {
+    if (this._dirty) {
+      const retc = await this.configure([]);
+      if (retc !== 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  async doPostBuild(): Promise<boolean> {
+    const cl = await this._cmsClient;
+    this.codeModel = await cl.sendRequest('codemodel');
+    return true;
   }
 
   get targets(): RichTarget[] {
@@ -140,9 +146,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _dirty = true;
   markDirty() { this._dirty = true; }
   get needsReconfigure(): boolean { return this._dirty; }
-
-  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
-  get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
@@ -201,14 +204,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return null;
   }
 
-  async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
-    const child = await this.doCMakeBuild(target, consumer);
-    if (!child) {
-      return child;
-    }
-    return child;
-  }
-
   private async _restartClient(): Promise<void> {
     this._cmsClient = this._doRestartClient();
     await this._cmsClient;
@@ -232,7 +227,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       onDirty : async() => { this._dirty = true },
       onMessage : async(msg) => { this._onMessageEmitter.fire(msg.message); },
       onProgress : async(_prog) => {},
-      pickGenerator : () => this.pickGenerator(),
+      pickGenerator : () => this.getBestGenerator(),
     });
   }
 

@@ -50,49 +50,14 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return db.getCompilationInfoForUri(vscode.Uri.file(filepath));
   }
 
-  get onReconfigured() { return this._onReconfiguredEmitter.event; }
-  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
-
   // Legacy disposal does nothing
   async asyncDispose() {
-    this._onReconfiguredEmitter.dispose();
     this._cacheWatcher.dispose();
   }
 
-  async configure(extra_args: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
-    if (!await this._beforeConfigure()) {
-      log.debug('Pre-configure steps aborted configure');
-      // Pre-configure steps failed. Bad...
-      return -1;
-    }
-    log.debug('Proceeding with configuration');
-
-    // Build up the CMake arguments
-    const args: string[] = [];
-    if (!await fs.exists(this.cachePath)) {
-      // No cache! We are free to change the generator!
-      const generator = await this.pickGenerator();
-      if (generator) {
-        log.info(`Using the ${generator.name} CMake generator`);
-        args.push('-G' + generator.name);
-        const platform = generator.platform || config.platform || null;
-        if (platform) {
-          log.info(`Using the ${platform} generator platform`);
-          args.push('-A', platform);
-        }
-        const toolset = generator.toolset || config.toolset || null;
-        if (toolset) {
-          log.info(`Using the ${toolset} generator toolset`);
-          args.push('-T', toolset);
-        }
-      } else {
-        log.warning('Unable to automatically pick a CMake generator. Using default.');
-      }
-    }
-
-    args.push(...await this._prepareConfigure());
-    args.push(...extra_args);
-
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
+    // Dup args so we can modify them
+    const args = Array.from(args_);
     args.push('-H' + util.normalizePath(this.sourceDir));
     const bindir = util.normalizePath(this.binaryDir);
     args.push('-B' + bindir);
@@ -104,7 +69,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
       this._needsReconfigure = false;
     }
     await this._reloadPostConfigure();
-    this._onReconfiguredEmitter.fire();
     return res.retc === null ? -1 : res.retc;
   }
 
@@ -123,14 +87,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return this.configure([], consumer);
   }
 
-  async build(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess | null> {
-    const child = await this.doCMakeBuild(target, consumer);
-    if (!child) {
-      return child;
-    }
+  async doPostBuild(): Promise<boolean> {
     await this._reloadPostConfigure();
-    this._onReconfiguredEmitter.fire();
-    return child;
+    return true;
   }
 
   protected async _init() {
