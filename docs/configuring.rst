@@ -51,5 +51,41 @@ invoked before running CMake.
 Variable Substitution
 =====================
 
-Some options support the replacement of variable values in their string value
-using ``${variable}`` syntax.
+Some options support the replacement of special values in their string value
+using ``${variable}`` syntax. The following built-in variables are expanded:
+
+``${workspaceRoot}``
+    The full path to the workspace root directory
+
+``${workspaceRootFolderName}``
+    The name of the leaf directory in the workspace directory path
+
+``${buildType}``
+    The current CMake build type, eg. ``Debug``, ``Release``, ``MinSizeRel``
+
+``${generator}``
+    The name of the CMake generator, eg. ``Ninja``
+
+``${projectName}``
+    The name of the CMake project. Isn't expanded fully until project has been
+    configured once. Before configuring, expands to "Unknown Project".
+
+``${userHome}``
+    The full path to the current user's home directory
+
+Environment Variables
+*********************
+
+Additionally, environment variables may be substituted with ``${env:VARNAME}``
+syntax, where the string for the ``VARNAME`` environment variable will be
+replaced. If the named environment variable is undefined, an empty string
+will be expanded instead.
+
+Command Substitution
+********************
+
+CMake Tools also supports expanding of VSCode commands, similar to
+``launch.json``. Running a command ``${command:foo.bar}`` will execute the
+``foo.bar`` VSCode command and replace the string value. Beware of long-running
+commands! It is unspecified when and how many times CMake Tools will execute a
+command for a given expansion.
