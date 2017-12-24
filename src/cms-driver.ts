@@ -218,7 +218,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   private async _restartClient(): Promise<void> {
     this._cmsClient = this._doRestartClient();
-    await this._cmsClient;
+    const client = await this._cmsClient;
+    this._globalSettings = await client.getGlobalSettings();
   }
 
   private async _doRestartClient(): Promise<cms.CMakeServerClient> {
