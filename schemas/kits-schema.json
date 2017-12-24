@@ -109,7 +109,7 @@
                     },
                     {
                         "properties": {
-                            "visualStudioVersion": {
+                            "visualStudio": {
                                 "type": "string",
                                 "description": "Name of the Visual Studio product"
                             },
@@ -137,7 +137,7 @@
                         },
                         "required": [
                             "name",
-                            "visualStudioVersion",
+                            "visualStudio",
                             "visualStudioArchitecture"
                         ]
                     }
