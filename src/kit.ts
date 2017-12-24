@@ -405,7 +405,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
       const kit: VSKit = {
         type : 'vsKit',
         name : name,
-        visualStudio : installName,
+        visualStudio : inst.instanceId,
         visualStudioArchitecture : arch,
       };
 
@@ -444,7 +444,7 @@ export async function scanForVSKits(pr?: ProgressReporter):
 export async function getVSKitEnvironment(kit: VSKit):
     Promise<Map<string, string>| null> {
       const installs = await vsInstallations();
-      const requested = installs.find(inst => inst.displayName == kit.visualStudio);
+      const requested = installs.find(inst => inst.instanceId == kit.visualStudio);
       if (!requested) {
         return null;
       }
