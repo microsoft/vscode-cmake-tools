@@ -50,7 +50,6 @@ const build_log = logging.createLogger('build');
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _http_server: http.Server;
   private _ws_server: ws.Server;
-  private _editor_provider: vscode.Disposable;
 
   private _nagManager = new NagManager(this.extensionContext);
 
@@ -101,7 +100,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         };
       });
 
-      this._editor_provider = vscode.workspace.registerTextDocumentContentProvider(
+      vscode.workspace.registerTextDocumentContentProvider(
           'cmake-cache',
           new CacheEditorContentProvider(this.extensionContext, editor_server.address().port));
     });
