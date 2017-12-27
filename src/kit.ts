@@ -367,6 +367,7 @@ const VsArchitectures: {[key: string] : string}
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: {[key: string] : string} = {
+  '14' : 'Visual Studio 14 2015',
   '15' : 'Visual Studio 15 2017',
   'VS120COMNTOOLS' : 'Visual Studio 12 2013',
   'VS140COMNTOOLS' : 'Visual Studio 14 2015',
@@ -391,10 +392,11 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string):
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter):
     Promise<VSKit | null> {
-      const name = inst.displayName + ' - ' + arch;
+      const installName = inst.displayName || inst.instanceId;
+      const name = installName + ' - ' + arch;
       log.debug('Checking for kit: ' + name);
       if (pr) {
-        pr.report({message : `Checking ${inst.displayName} with ${arch}`});
+        pr.report({message : `Checking ${installName} with ${arch}`});
       }
       const variables = await varsForVSInstallation(inst, arch);
       if (!variables)
@@ -403,7 +405,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
       const kit: VSKit = {
         type : 'vsKit',
         name : name,
-        visualStudio : inst.displayName,
+        visualStudio : inst.instanceId,
         visualStudioArchitecture : arch,
       };
 
@@ -442,7 +444,7 @@ export async function scanForVSKits(pr?: ProgressReporter):
 export async function getVSKitEnvironment(kit: VSKit):
     Promise<Map<string, string>| null> {
       const installs = await vsInstallations();
-      const requested = installs.find(inst => inst.displayName == kit.visualStudio);
+      const requested = installs.find(inst => inst.instanceId == kit.visualStudio);
       if (!requested) {
         return null;
       }
