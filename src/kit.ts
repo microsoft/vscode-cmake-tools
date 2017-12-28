@@ -559,6 +559,8 @@ export class KitManager implements vscode.Disposable {
     log.debug('Constructing KitManager');
     // Re-read the kits file when it is changed
     this._kitsWatcher.onDidChange(_e => this._rereadKits());
+    this._kitsWatcher.onDidCreate(_e => this._rereadKits());
+    this._kitsWatcher.onDidDelete(_e => this._rereadKits());
   }
 
   /**
@@ -655,6 +657,9 @@ export class KitManager implements vscode.Disposable {
       }
     });
     await fs.writeFile(this._kitsPath, JSON.stringify(sorted_kits, null, 2));
+    // Sometimes the kit watcher does fire?? May be an upstream bug, so we'll
+    // re-read now
+    await this._rereadKits();
     log.debug(this._kitsPath, 'saved');
   }
 
