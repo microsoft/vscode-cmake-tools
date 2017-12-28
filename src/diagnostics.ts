@@ -279,7 +279,7 @@ export class CompileOutputConsumer implements OutputConsumer {
       const parts = location.split(',');
       const n0 = parseInt(parts[0]);
       if (parts.length === 1)
-        return new vscode.Range(n0, 0, n0, 999);
+        return new vscode.Range(n0 - 1, 0, n0 - 1, 999);
       if (parts.length === 2)
         return new vscode.Range(Number.parseInt(parts[0]) - 1,
                                 Number.parseInt(parts[1]) - 1,
