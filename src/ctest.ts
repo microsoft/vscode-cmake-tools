@@ -82,7 +82,7 @@ interface MessyResults {
         Results: {
           NamedMeasurement:
               {$: {type: string; name: string;}, Value: string[];}[]
-          Measurement: { Value: EncodedMeasurementValue[] }[];
+          Measurement: { Value: [EncodedMeasurementValue|string] }[];
         }[];
       }[];
     }[];
@@ -102,7 +102,10 @@ function parseXMLString<T>(xml: string): Promise<T> {
   });
 }
 
-function decodeOutputMeasurement(node: EncodedMeasurementValue): string {
+function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
+  if (typeof node === 'string') {
+    return node;
+  }
   let buffer
       = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
   if (!!node.$.compression) {
