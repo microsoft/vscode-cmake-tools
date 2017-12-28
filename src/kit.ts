@@ -246,7 +246,9 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
  * This isn't _all_ the properties, just the ones we need so far.
  */
 export interface VSInstallation {
-  instanceId : string; displayName : string; installationPath : string;
+  instanceId: string;
+  displayName?: string;
+  installationPath: string;
   installationVersion : string;
   description : string;
 }
