@@ -14,6 +14,7 @@ import {fs} from "./pr";
 import {createLogger} from './logging';
 import {StateManager} from "./state";
 import {Kit} from "./kit";
+import rollbar from './rollbar';
 
 const log = createLogger('cms-driver');
 
@@ -85,7 +86,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     } finally {
       sub.dispose();
     }
-    this.codeModel = await cl.sendRequest('codemodel');
+    await this._refreshPostConfigure();
     return 0;
   }
 
@@ -100,9 +101,35 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doPostBuild(): Promise<boolean> {
-    const cl = await this._cmsClient;
-    this.codeModel = await cl.sendRequest('codemodel');
+    await this._refreshPostConfigure();
     return true;
+  }
+
+  async _refreshPostConfigure(): Promise<void> {
+    const cl = await this._cmsClient;
+    const clcache = await cl.getCMakeCacheContent();
+    this._cacheEntries = clcache.cache.reduce((acc, el) => {
+      const entry_map: { [key: string]: api.CacheEntryType | undefined } = {
+        BOOL: api.CacheEntryType.Bool,
+        STRING: api.CacheEntryType.String,
+        PATH: api.CacheEntryType.Path,
+        FILEPATH: api.CacheEntryType.FilePath,
+        INTERNAL: api.CacheEntryType.Internal,
+        UNINITIALIZED: api.CacheEntryType.Uninitialized,
+        STATIC: api.CacheEntryType.Static,
+      };
+      const type = entry_map[el.type];
+      if (type == undefined) {
+        rollbar.error(`Unknown cache entry type ${el.type}`);
+        return acc;
+      }
+      acc.set(
+        el.key, new cache.Entry(
+          el.key, el.value, type, el.properties.HELPSTRING,
+          el.properties.ADVANCED === '1'));
+      return acc;
+    }, new Map<string, cache.Entry>());
+    this.codeModel = await cl.sendRequest('codemodel');
   }
 
   async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
