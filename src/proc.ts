@@ -3,6 +3,7 @@
  */ /** */
 
 import * as proc from 'child_process';
+import * as util from './util';
 
 import {createLogger} from './logging';
 
@@ -85,7 +86,6 @@ export function execute(command: string,
                         args: string[],
                         outputConsumer?: OutputConsumer | null,
                         options?: ExecutionOptions): Subprocess {
-  let child: proc.ChildProcess;
   if (options && options.silent !== true) {
     log.info('Executing command: '
              // We do simple quoting of arguments with spaces.
@@ -101,7 +101,7 @@ export function execute(command: string,
   if (!options) {
     options = {};
   }
-  const final_env = Object.assign({}, process.env, options.environment || {});
+  const final_env = util.mergeEnvironment(process.env as EnvironmentVariables, options.environment || {});
   const spawn_opts: proc.SpawnOptions = {
     env : final_env,
     shell : !!options.shell,
@@ -109,6 +109,7 @@ export function execute(command: string,
   if (options && options.cwd) {
     spawn_opts.cwd = options.cwd;
   }
+  let child: proc.ChildProcess;
   if (process.platform == 'linux') {
     // We wrap things in `stdbuf` to disable output buffering.
     const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);
