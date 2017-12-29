@@ -392,7 +392,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const compiler = entry.value as string;
       if (compiler.endsWith('cl.exe')) {
         return 'MSVC';
-      } else if (/g(cc|)\+\+)/.test(compiler)) {
+      } else if (/g(cc|\+\+)/.test(compiler)) {
         return 'GNU';
       } else if (/clang(\+\+)?[^/]*/.test(compiler)) {
         return 'Clang';
