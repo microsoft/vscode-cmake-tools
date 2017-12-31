@@ -694,6 +694,9 @@ suite('Diagnostics', async () => {
   });
 });
 
+import * as compdb from '../src/compdb';
+
+
 suite('Compilation info', () => {
   test('Parsing compilation databases', async () => {
     const dbpath = testFilePath('test_compdb.json');
@@ -761,4 +764,14 @@ suite('Compilation info', () => {
     expect(info.compileFlags[0]).to.eq('/Z+:some-compile-flag');
     expect(info.compiler).to.eq('cl.exe');
   });
+
+  suite('CMake System tests', () => {
+    test('Test no present kit', async() => {
+      const cmt = await getExtension();
+      process.env.PATH = "";
+      await cmt.scanForKits();
+      expect(cmt.selectKit()).to.null;
+    });
+  });
+
 });
