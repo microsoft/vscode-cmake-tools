@@ -305,6 +305,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   async getCMakeDriverInstance() : Promise<CMakeDriver | null> {
+    if (!this._kitManager.hasActiveKit) {
+      return null;
+    }
 
     if (!this._cmakeDriver) {
       let d = this._startNewCMakeDriver();
@@ -389,12 +392,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
-  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
-    if (!this._kitManager.activeKit) {
+  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>):
+      Promise<number> {
+    if (!this._kitManager.hasActiveKit) {
       log.debug('No kit selected yet. Asking for a Kit first.');
       await this.selectKit();
     }
-    if (!this._kitManager.activeKit) {
+    if (!this._kitManager.hasActiveKit) {
       log.debug('No kit selected. Abort configure.');
       vscode.window.showErrorMessage('Cannot configure without a Kit');
       return -1;
@@ -442,6 +446,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // First, reconfigure if necessary
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
+      log.debug('Build of project is not possible, because driver is not ready.');
+      vscode.window.showErrorMessage('Unable to build, try to run configure before build.');
+
       return -1;
     }
 

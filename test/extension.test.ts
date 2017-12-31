@@ -27,7 +27,17 @@ import * as state from '../src/state';
 import * as util from '../src/util';
 
 
-const here = __dirname;
+function clearExistingKitConfigurationFile() {
+  fs.writeFile( path.join(dirs.dataDir, 'cmake-kits.json'), "[]");
+}
+
+async function getExtension() {
+  const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
+  if (!cmt) {
+    return Promise.reject("Extension doesn't exist");
+  }
+  return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
+}
 
 function testFilePath(filename: string): string { return path.normalize(path.join(here, '../..', 'test', filename)); }
 
@@ -81,6 +91,21 @@ suite('Kits test', async () => {
     expect(nil).to.be.null;
   });
 
+  test('Scan non exisiting dir for kits', async() => {
+    const kits = await kit.scanDirForCompilerKits("");
+    expect(kits.length).to.eq(0);
+  });
+
+  test('KitManager tests', async() => {
+    const cmt = await getExtension();
+    const sm = new state.StateManager(cmt.extensionContext);
+    const km = new kit.KitManager(sm);
+    await km.initialize();
+    const editor = await km.openKitsEditor();
+    // Ensure it is the active editor
+    await vscode.window.showTextDocument(editor.document);
+    // Now close it. We don't care about it any more
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 
   suite('Scan directory', async () => {
     let path_with_compilername = "";
@@ -695,7 +720,8 @@ suite('Diagnostics', async () => {
 });
 
 import * as compdb from '../src/compdb';
-
+import dirs from '../src/dirs';
+import { fs } from '../src/pr';
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async () => {
@@ -764,14 +790,33 @@ suite('Compilation info', () => {
     expect(info.compileFlags[0]).to.eq('/Z+:some-compile-flag');
     expect(info.compiler).to.eq('cl.exe');
   });
+});
 
-  suite('CMake System tests', () => {
-    test('Test no present kit', async() => {
-      const cmt = await getExtension();
+suite('CMake System tests', () => {
+  suite('No present kit',() => {
+    suiteSetup(()=>{
+      clearExistingKitConfigurationFile();
       process.env.PATH = "";
+    });
+
+    test('Scan for no existing kit should return no selected kit', async() => {
+      const cmt = await getExtension();
       await cmt.scanForKits();
-      expect(cmt.selectKit()).to.null;
+      expect(await cmt.selectKit()).to.be.eq(null);
+    });
+
+    test('Configure ', async() => {
+      const cmt = await getExtension();
+      await cmt.scanForKits();
+
+      expect(await cmt.configure()).to.be.eq(-1);
+    });
+
+    test('Build', async() => {
+      const cmt = await getExtension();
+      await cmt.scanForKits();
+
+      expect(await cmt.build()).to.be.eq(-1);
     });
   });
-
 });
