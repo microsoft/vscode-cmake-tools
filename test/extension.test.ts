@@ -793,30 +793,30 @@ suite('Compilation info', () => {
 });
 
 suite('CMake System tests', () => {
-  suite('No present kit',() => {
-    suiteSetup(()=>{
-      clearExistingKitConfigurationFile();
-      process.env.PATH = "";
+  (process.env.HasVs == 'true' ? suite.skip : suite)('No present kit',() => {
+        suiteSetup(()=>{
+          clearExistingKitConfigurationFile();
+          process.env.PATH = "";
+        });
+
+        test('Scan for no existing kit should return no selected kit', async() => {
+          const cmt = await getExtension();
+          await cmt.scanForKits();
+          expect(await cmt.selectKit()).to.be.eq(null);
+        });
+
+        test('Configure ', async() => {
+          const cmt = await getExtension();
+          await cmt.scanForKits();
+
+          expect(await cmt.configure()).to.be.eq(-1);
+        });
+
+        test('Build', async() => {
+          const cmt = await getExtension();
+          await cmt.scanForKits();
+
+          expect(await cmt.build()).to.be.eq(-1);
+        });
     });
-
-    test('Scan for no existing kit should return no selected kit', async() => {
-      const cmt = await getExtension();
-      await cmt.scanForKits();
-      expect(await cmt.selectKit()).to.be.eq(null);
-    });
-
-    test('Configure ', async() => {
-      const cmt = await getExtension();
-      await cmt.scanForKits();
-
-      expect(await cmt.configure()).to.be.eq(-1);
-    });
-
-    test('Build', async() => {
-      const cmt = await getExtension();
-      await cmt.scanForKits();
-
-      expect(await cmt.build()).to.be.eq(-1);
-    });
-  });
 });
