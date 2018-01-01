@@ -128,7 +128,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * two-phase init and a private constructor. The driver may be replaced at
    * any time by the user making changes to the workspace configuration.
    */
-  private _cmakeDriver: CMakeDriver | null = null;
+  private _cmakeDriver: Promise<CMakeDriver> | null = null;
 
   /**
    * The status bar manager. Has two-phase init.
@@ -310,11 +310,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     if (!this._cmakeDriver) {
-      let d = this._startNewCMakeDriver();
-      this._cmakeDriver = await(d);
+      this._cmakeDriver = this._startNewCMakeDriver();
       // Reload any test results. This will also update visibility on the status
       // bar
-      await this._ctestController.reloadTests(this._cmakeDriver);
+      await this._ctestController.reloadTests(await this._cmakeDriver);
       this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
     }
     return this._cmakeDriver;
