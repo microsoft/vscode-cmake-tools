@@ -17,7 +17,6 @@ import * as state from '../src/state';
 import * as kit from '../src/kit';
 import * as api from '../src/api';
 import * as util from '../src/util';
-import config from '../src/config';
 import {CMakeTools} from '../src/cmake-tools';
 import {CMakeCache} from '../src/cache';
 
@@ -177,11 +176,11 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
 }
 
 suite('Diagnostics', async() => {
-  let consumer = new diags.CMakeOutputConsumer(config.sourceDirectory);
+  let consumer = new diags.CMakeOutputConsumer("dummyPath");
   let build_consumer = new diags.CompileOutputConsumer();
   setup(() => {
     // FIXME: SETUP IS NOT BEING CALLED
-    consumer = new diags.CMakeOutputConsumer(config.sourceDirectory);
+    consumer = new diags.CMakeOutputConsumer("dummyPath");
     build_consumer = new diags.CompileOutputConsumer();
   });
   test('Waring-free CMake output', async() => {
@@ -203,7 +202,7 @@ suite('Diagnostics', async() => {
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
     const diag = consumer.diagnostics[0];
-    expect(diag.filepath).to.eq(path.join(vscode.workspace.rootPath !, 'CMakeLists.txt'));
+    expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
     expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
     expect(diag.diag.source).to.eq('CMake (message)');
     expect(diag.diag.message).to.eq('I am a warning!');
@@ -292,7 +291,7 @@ suite('Diagnostics', async() => {
     expect(consumer.diagnostics.length).to.eq(2);
     const coll = vscode.languages.createDiagnosticCollection('cmake-tools-test');
     diags.populateCollection(coll, consumer.diagnostics);
-    const fullpath = path.join(vscode.workspace.rootPath !, 'CMakeLists.txt');
+    const fullpath = 'dummyPath/CMakeLists.txt';
     expect(coll.has(vscode.Uri.file(fullpath))).to.be.true;
     expect(coll.get(vscode.Uri.file(fullpath)) !.length).to.eq(2);
   });
