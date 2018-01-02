@@ -53,24 +53,6 @@ export class ServerClientCMakeTools extends common.CommonCMakeToolsBase {
     this._dirty = true;
   }
 
-  get compilerId() {
-    for (const lang of ['CXX', 'C']) {
-      const entry = this.cacheEntry(`CMAKE_${lang}_COMPILER`);
-      if (!entry) {
-        continue;
-      }
-      const compiler = entry.as<string>();
-      if (compiler.endsWith('cl.exe')) {
-        return 'MSVC';
-      } else if (/g(cc|\+\+)[^/]*/.test(compiler)) {
-        return 'GNU';
-      } else if (/clang(\+\+)?[^/]*/.test(compiler)) {
-        return 'Clang';
-      }
-    }
-    return null;
-  }
-
   get needsReconfigure() {
     return this._dirty;
   }
