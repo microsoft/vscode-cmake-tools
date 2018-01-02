@@ -40,8 +40,8 @@ function testFilePath(filename: string): string {
   return path.normalize(path.join(here, '../..', 'test', filename));
 }
 
-suite('Kits test', async() => {
-  const fakebin = path.join(vscode.workspace.rootPath !, '../fakebin');
+suite('Kits test', () => {
+  const fakebin = testFilePath('fakebin');
   test('Detect system kits never throws',
        async() => {
          // Don't care about the result, just check that we don't throw during the test
