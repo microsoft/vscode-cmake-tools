@@ -4,6 +4,10 @@ os:
   - osx
   - linux
 
+env:
+  - HasVs=true
+
+
 before_install:
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
       export DISPLAY=:99.0;
