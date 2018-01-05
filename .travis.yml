@@ -5,8 +5,7 @@ os:
   - linux
 
 env:
-  - HasVs=true
-  - CMT_TESTING=1
+  - HasVs=true CMT_TESTING=1
 
 
 before_install:
