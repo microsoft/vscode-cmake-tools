@@ -6,6 +6,7 @@ os:
 
 env:
   - HasVs=true
+  - CMT_TESTING=1
 
 
 before_install:

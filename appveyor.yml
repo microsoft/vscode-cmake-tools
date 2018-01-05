@@ -6,6 +6,8 @@ image:
 - Visual Studio 2013
 environment:
   HasVs: true
+  CMT_TESTING: 1
+
 install:
 - ps: Install-Product node 8.9.1 x64
 - cmd: npm install --loglevel=error
