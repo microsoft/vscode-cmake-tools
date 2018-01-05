@@ -11,6 +11,7 @@ install:
 - cmd: npm install --loglevel=error
 build_script:
 - cmd: npm run vscode:prepublish
+- cmd: scripts/prepare_test.bat
 test_script:
 - cmd: >-
     node --version

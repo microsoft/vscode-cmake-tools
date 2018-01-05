@@ -18,6 +18,7 @@ before_install:
 install:
   - npm install
   - npm run vscode:prepublish
+  - scripts/prepare_test.sh
 
 script:
   - node --version
