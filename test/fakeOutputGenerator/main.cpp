@@ -20,7 +20,7 @@ std::string generateConfigFilename(std::string inputFileName) {
 }
 
 int main(int argc, char** argv) {
-   
+
    std::string filePath = argv[0];
    std::string configFilePath = generateConfigFilename(filePath);
 
@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
    if(inputData.good()) {
         for( std::string line; std::getline(inputData, line ); )
         {
-            std::cout << line << std::endl;
+            std::cerr << line << std::endl;
         }
    } else {
         std::cerr << "ERROR: config file is missing '" << configFilePath << "'" << std::endl;

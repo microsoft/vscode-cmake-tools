@@ -48,7 +48,7 @@ suite('Kits test', () => {
          await expect(kit.scanForKits()).to.eventually.not.be.rejected;
        })
       // Compiler detection can run a little slow
-      .timeout(10000);
+      .timeout(12000);
 
   test('Detect a GCC compiler file', async() => {
     const compiler = path.join(fakebin, 'gcc-42.1');
