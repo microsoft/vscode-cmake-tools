@@ -3,8 +3,8 @@
 #include <string>
 
 std::string generateConfigFilename(std::string inputFileName) {
-    constexpr int EXT_LENGTH = 4;
-    constexpr const char* CONFIG_EXTENSION = ".cfg";
+    static const int EXT_LENGTH = 4;
+    static const char* CONFIG_EXTENSION = ".cfg";
     std::string configFilePath = inputFileName;
     if (configFilePath.length() > EXT_LENGTH) {
         int extPosition = configFilePath.length() - EXT_LENGTH;
