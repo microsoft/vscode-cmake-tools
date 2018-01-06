@@ -104,7 +104,7 @@ export function execute(command: string,
   const final_env = util.mergeEnvironment(process.env as EnvironmentVariables, options.environment || {});
   const spawn_opts: proc.SpawnOptions = {
     env : final_env,
-    shell : true,
+    shell : !!options.shell,
   };
   if (options && options.cwd) {
     spawn_opts.cwd = options.cwd;
