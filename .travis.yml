@@ -1,8 +1,12 @@
-sudo: false
+language: cpp
 
 os:
   - osx
   - linux
+
+compiler:
+  - clang
+  - gcc
 
 env:
   - HasVs=false CMT_TESTING=1
