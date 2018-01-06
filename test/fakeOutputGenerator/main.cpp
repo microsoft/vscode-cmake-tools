@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
    std::string filePath = argv[0];
    std::string configFilePath = generateConfigFilename(filePath);
 
-   std::ifstream inputData(configFilePath);
+   std::ifstream inputData(configFilePath.c_str());
 
    if(inputData.good()) {
         for( std::string line; std::getline(inputData, line ); )
