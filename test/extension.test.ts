@@ -104,7 +104,7 @@ suite('Kits test', () => {
       expect(sm.activeKitName).to.eq(name);
     }
     km.dispose();
-  });
+  }).timeout(10000);
 
   // TODO: Do some tests with Visual Studio kits and vswhere
 });

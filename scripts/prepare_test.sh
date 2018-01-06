@@ -11,8 +11,8 @@ cmake --build .
 mkdir ../../fakebin
 cp ../configfiles/* ../../fakebin
 
-cp Debug/FakeOutputGenerator.exe ../../fakebin/clang-0.25.exe
-cp Debug/FakeOutputGenerator.exe ../../fakebin/gcc-666.exe
-cp Debug/FakeOutputGenerator.exe ../../fakebin/gcc-42.1.exe
+cp FakeOutputGenerator ../../fakebin/clang-0.25
+cp FakeOutputGenerator ../../fakebin/gcc-666
+cp FakeOutputGenerator ../../fakebin/gcc-42.1
 
 cd $current_dir

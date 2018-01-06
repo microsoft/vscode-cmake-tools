@@ -8,7 +8,7 @@ std::string generateConfigFilename(std::string inputFileName) {
     std::string configFilePath = inputFileName;
     if (configFilePath.length() > EXT_LENGTH) {
         int extPosition = configFilePath.length() - EXT_LENGTH;
-        auto fileEnd = configFilePath.substr(extPosition, EXT_LENGTH);
+        std::string fileEnd = configFilePath.substr(extPosition, EXT_LENGTH);
 
         if (fileEnd[0] == '.') {
             configFilePath = configFilePath.replace(extPosition, 4, CONFIG_EXTENSION);
