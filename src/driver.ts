@@ -420,8 +420,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                                 args: string[] = [ '--version' ]): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent : true});
     try {
-      await child.result;
-      return true;
+      return (await child.result).retc == 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
       if (e2.code == 'ENOENT') {
