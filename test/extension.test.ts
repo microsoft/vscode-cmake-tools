@@ -12,26 +12,18 @@ import * as chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 
 import {expect} from 'chai';
+import * as sinon from 'sinon';
 
-import * as state from '../src/state';
-import * as kit from '../src/kit';
 import * as api from '../src/api';
-import * as util from '../src/util';
-import {CMakeTools} from '../src/cmake-tools';
+import * as compdb from '../src/compdb';
 import {CMakeCache} from '../src/cache';
+import * as diags from '../src/diagnostics';
+import * as kit from '../src/kit';
+import { fs } from '../src/pr';
+import {OutputConsumer} from '../src/proc';
+import * as state from '../src/state';
+import * as util from '../src/util';
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
-// import * as vscode from 'vscode';
-// import * as myExtension from '../src/extension';
-
-async function getExtension() {
-  const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
-  if (!cmt) {
-    return Promise.reject("Extension doesn't exist");
-  }
-  return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
-}
 
 const here
     = __dirname;
@@ -80,17 +72,30 @@ suite('Kits test', () => {
     expect(kits.length).to.eq(2);
   });
 
-  test('KitManager tests', async() => {
-    const cmt = await getExtension();
-    const sm = new state.StateManager(cmt.extensionContext);
-    const km = new kit.KitManager(sm);
+  test('KitManager tests opening of kit file', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return null;
+    }).set(function() {});
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
     await km.initialize();
-    const editor = await km.openKitsEditor();
-    // Ensure it is the active editor
-    await vscode.window.showTextDocument(editor.document);
-    // Now close it. We don't care about it any more
-    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 
+    const editor = await km.openKitsEditor();
+
+    const rawKitsFromFile = (await fs.readFile(testFilePath('test_kit.json'), 'utf8'));
+    expect( editor.document.getText()).to.be.eq(rawKitsFromFile);
+  });
+
+  test('KitManager tests event on change of active kit', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    let storedActivatedKitName : string = "";
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return null;
+    }).set(function(kit) {
+      storedActivatedKitName = kit;
+    });
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    await km.initialize();
     // Check that each time we change the kit, it fires a signal
     let fired_kit: string | null = null;
     km.onActiveKitChanged(k => fired_kit = k !.name);
@@ -101,7 +106,7 @@ suite('Kits test', () => {
       // Check that we got the signal
       expect(fired_kit).to.eq(name);
       // Check that we've saved our change
-      expect(sm.activeKitName).to.eq(name);
+      expect(storedActivatedKitName).to.eq(name);
     }
     km.dispose();
   }).timeout(10000);
@@ -145,12 +150,9 @@ suite('Kits test', () => {
 
   test('KitManager test selection of a default kit', async() => {
     let stateMock =  sinon.createStubInstance(state.StateManager);
-    let storedActivatedKitName : string = "";
     sinon.stub(stateMock, 'activeKitName').get(function () {
       return null;
-    }).set(function(kit) {
-      storedActivatedKitName = kit;
-    });
+    }).set(function() {});
 
     const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
     await km.initialize();
@@ -231,8 +233,6 @@ suite('Cache test', async() => {
 });
 
 
-import * as diags from '../src/diagnostics';
-import {OutputConsumer} from '../src/proc';
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
@@ -554,10 +554,6 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gnuLDDiagnostics).to.have.length(0);
   });
 });
-
-import * as compdb from '../src/compdb';
-import dirs from '../src/dirs';
-import * as sinon from 'sinon';
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async() => {
