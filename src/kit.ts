@@ -513,12 +513,12 @@ export class KitManager implements vscode.Disposable {
   /**
    * The path to the `cmake-kits.json` file
    */
-  private get _kitsPath(): string { return path.join(dirs.dataDir, 'cmake-kits.json'); }
+  private _kitsPath: string;
 
   /**
    * Watches the file at `_kitsPath`.
    */
-  private _kitsWatcher = vscode.workspace.createFileSystemWatcher(this._kitsPath);
+  private _kitsWatcher : vscode.FileSystemWatcher;
 
   /**
    * The active build kit
@@ -555,9 +555,16 @@ export class KitManager implements vscode.Disposable {
    * Create a new kit manager.
    * @param stateManager The workspace state manager
    */
-  constructor(readonly stateManager: StateManager) {
+  constructor(readonly stateManager: StateManager, kitPath : string | null = null) {
     log.debug('Constructing KitManager');
+    if (kitPath != null) {
+      this._kitsPath = kitPath;
+    } else {
+      this._kitsPath = path.join(dirs.dataDir, 'cmake-kits.json');
+    }
+
     // Re-read the kits file when it is changed
+    this._kitsWatcher = vscode.workspace.createFileSystemWatcher(this._kitsPath);
     this._kitsWatcher.onDidChange(_e => this._rereadKits());
     this._kitsWatcher.onDidCreate(_e => this._rereadKits());
     this._kitsWatcher.onDidDelete(_e => this._rereadKits());

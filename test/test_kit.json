@@ -1,0 +1,37 @@
+[
+    {
+        "name": "CompilerKit 1",
+        "compilers": {
+            "CC": "fakeCC",
+            "CXX": "fakeCXX"
+        }
+    },
+    {
+        "name": "CompilerKit 2",
+        "compilers": {
+            "CC": "fakeCC",
+            "CXX": "fakeCXX"
+        }
+    },
+    {
+        "name": "CompilerKit 3 with PreferedGenerator",
+        "compilers": {
+            "CC": "fakeCC",
+            "CXX": "fakeCXX"
+        }
+    },
+    {
+        "name": "ToolchainKit 1",
+        "toolchainFile": "toolchain.cmake"
+    },
+    {
+        "name": "VSCode Kit 1",
+        "visualStudio": "Visual Studio 2015",
+        "visualStudioArchitecture": "x86"
+    },
+    {
+        "name": "VSCode Kit 2",
+        "visualStudio": "Visual Studio Build Tools 2017",
+        "visualStudioArchitecture": "amd64"
+    }
+]

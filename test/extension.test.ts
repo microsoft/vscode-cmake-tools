@@ -106,7 +106,75 @@ suite('Kits test', () => {
     km.dispose();
   }).timeout(10000);
 
-  // TODO: Do some tests with Visual Studio kits and vswhere
+  test('KitManager test load of kit from test file', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return null;
+    }).set(function() {});
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+
+    await km.initialize();
+
+    expect( km.kits.length).to.eq(6);
+    expect( km.kits[0].name).to.eq( "CompilerKit 1");
+    expect( km.kits[1].name).to.eq( "CompilerKit 2");
+    expect( km.kits[2].name).to.eq( "CompilerKit 3 with PreferedGenerator");
+    expect( km.kits[3].name).to.eq( "ToolchainKit 1");
+    expect( km.kits[4].name).to.eq( "VSCode Kit 1");
+    expect( km.kits[5].name).to.eq( "VSCode Kit 2");
+
+    km.dispose();
+  });
+
+  test('KitManager test selection of last activated kit', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return "ToolchainKit 1";
+    }).set(function() {});
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+
+    await km.initialize();
+
+    expect( km.activeKit).to.be.not.null;
+    if( km.activeKit)
+      expect( km.activeKit.name).to.eq( "ToolchainKit 1");
+
+    km.dispose();
+  });
+
+  test('KitManager test selection of a default kit', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    let storedActivatedKitName : string = "";
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return null;
+    }).set(function(kit) {
+      storedActivatedKitName = kit;
+    });
+
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    await km.initialize();
+
+    expect( km.activeKit).to.be.null;
+    km.dispose();
+  });
+
+  test('KitManager test selection of default kit if last activated kit is invalid', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    let storedActivatedKitName = "not replaced";
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return "Unknown";
+    }).set(function(kit) {
+      storedActivatedKitName = kit;
+    });
+
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    await km.initialize();
+
+    expect( km.activeKit).to.be.null;
+    expect( storedActivatedKitName).to.be.null;
+    km.dispose();
+  });
 });
 
 suite('Cache test', async() => {
@@ -488,6 +556,8 @@ suite('Diagnostics', async() => {
 });
 
 import * as compdb from '../src/compdb';
+import dirs from '../src/dirs';
+import * as sinon from 'sinon';
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async() => {
