@@ -66,10 +66,36 @@ suite('Kits test', () => {
     expect(nil).to.be.null;
   });
 
-  test('Scan dir for kits', async() => {
-    // Scan the directory with fake compilers in it
-    const kits = await kit.scanDirForCompilerKits(fakebin);
-    expect(kits.length).to.eq(2);
+  test('Detect non existing program', async() => {
+    const program = path.join(fakebin, 'unknown');
+    const nil = await kit.kitIfCompiler(program);
+    expect(nil).to.be.null;
+  });
+
+
+  suite('Scan directory', () => {
+    let path_with_compilername ="";
+    setup( async() =>  {
+      path_with_compilername = path.join(fakebin, "gcc-4.3.2");
+    });
+    teardown(async() => {
+      if( await fs.exists(path_with_compilername)) {
+        await fs.rmdir(path_with_compilername)
+      }
+    });
+    test('Scan folder with compiler name', async() => {
+      fs.mkdir(path_with_compilername)
+      // Scan the directory with fake compilers in it
+      const kits = await kit.scanDirForCompilerKits(fakebin);
+      expect(kits.length).to.eq(2);
+    });
+
+    test('Scan file with compiler name', async() => {
+      await fs.writeFile(path_with_compilername, "")
+      // Scan the directory with fake compilers in it
+      const kits = await kit.scanDirForCompilerKits(fakebin);
+      expect(kits.length).to.eq(2);
+    });
   });
 
   test('KitManager tests opening of kit file', async() => {

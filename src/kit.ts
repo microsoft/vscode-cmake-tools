@@ -221,14 +221,25 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
   = bins.map(async(bin) => {
       log.trace('Checking file for compiler-ness:', bin);
       try {
+
         return await kitIfCompiler(bin, pr);
       } catch (e) {
+
         log.warning('Failed to check binary', bin, 'by exception:', e);
+        const stat = await fs.stat(bin);
+        log.debug( "File infos: ",
+        "Mode", stat.mode,
+        "isFile", stat.isFile(),
+        "isDirectory", stat.isDirectory(),
+        "isSymbolicLink", stat.isSymbolicLink())
         if (e.code == 'EACCES') {
           // The binary may not be executable by this user...
           return null;
         } else if (e.code == 'ENOENT') {
           // This will happen on Windows if we try to "execute" a directory
+          return null;
+        } else if ( e.code == "UNKNOWN" && process.platform == "win32") {
+          // This is when file is not executable (in windows)
           return null;
         }
         throw e;
