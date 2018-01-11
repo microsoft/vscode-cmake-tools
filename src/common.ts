@@ -1121,7 +1121,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
         return ['-j', config.numJobs.toString()];
-      else if (/Visual Studio/.test(gen))
+      else if (/Visual Studio(?! 9 2008)/.test(gen)) // negative lookahead to exclude MSVC 2008 which does not support these flags
         return ['/m', '/property:GenerateFullPaths=true'];
       else
         return [];
