@@ -161,7 +161,7 @@ suite('Kits test', async () => {
 
       const newKitFileExists = await fs.exists(path_rescan_kit);
       expect(newKitFileExists).to.be.true;
-     });
+     }).timeout(5000);
 
      test('check valid kit file for test system compilers', async() => {
       await km.initialize();
@@ -177,7 +177,7 @@ suite('Kits test', async () => {
       let kitFile = await readValidKitFile(path_rescan_kit);
       let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
       expect(nonVSKits.length).to.be.eq(0);
-     });
+     }).timeout(5000);
 
      // Fails because PATH is tried to split but a empty path is not splitable
      test.skip('check empty kit file', async() => {
@@ -197,7 +197,7 @@ suite('Kits test', async () => {
       let kitFile = await readValidKitFile(path_rescan_kit);
       let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
       expect(nonVSKits.length).to.be.eq(2);
-     });
+     }).timeout(5000);
   });
 
   suite('GUI test', async () => {
