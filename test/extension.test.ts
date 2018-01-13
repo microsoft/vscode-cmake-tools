@@ -110,7 +110,7 @@ suite('Kits test', () => {
     let path_rescan_kit = testFilePath('rescan_kit.json');
     let sandbox : sinon.SinonSandbox;
     let path_backup : string | undefined;
-    setup( async() =>  {;
+    setup( async() =>  {
       sandbox = sinon.sandbox.create();
       let stateMock =  sandbox.createStubInstance(state.StateManager);
       sandbox.stub(stateMock, 'activeKitName').get(function () {
@@ -182,19 +182,39 @@ suite('Kits test', () => {
      });
   });
 
-  test('KitManager tests opening of kit file', async() => {
-    let stateMock =  sinon.createStubInstance(state.StateManager);
-    sinon.stub(stateMock, 'activeKitName').get(function () {
-      return null;
-    }).set(function() {});
-    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
-    await km.initialize();
+  suite('GUI test', () => {
+    let km : kit.KitManager;
+    let gui_sandbox : sinon.SinonSandbox;
+    setup( async() =>  {
+      gui_sandbox = sinon.sandbox.create();
+      let stateMock =  gui_sandbox.createStubInstance(state.StateManager);
+      sinon.stub(stateMock, 'activeKitName').get(function () {
+        return null;
+      }).set(function() {});
 
-    const editor = await km.openKitsEditor();
+      km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    });
+    teardown(async() => {
+      gui_sandbox.restore();
+    });
 
-    const rawKitsFromFile = (await fs.readFile(testFilePath('test_kit.json'), 'utf8'));
-    expect( editor.document.getText()).to.be.eq(rawKitsFromFile);
-  }).timeout(5000);
+    test('KitManager tests opening of kit file', async() => {
+      let text : vscode.TextDocument | undefined;
+      gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(function(textDoc) {
+        text = textDoc;
+        return {document: text};
+      });
+      await km.initialize();
+
+      const editor = await km.openKitsEditor();
+
+      expect(text).to.be.not.undefined;
+      if(text != undefined) {
+        const rawKitsFromFile = (await fs.readFile(testFilePath('test_kit.json'), 'utf8'));
+        expect(editor.document.getText()).to.be.eq(rawKitsFromFile);
+      } else {}
+    }).timeout(5000);
+  });
 
   test('KitManager tests event on change of active kit', async() => {
     let stateMock =  sinon.createStubInstance(state.StateManager);
