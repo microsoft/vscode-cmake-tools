@@ -39,7 +39,7 @@ function getRessourcePath(filename: string) : string {
   return path.normalize(path.join(here, '../..', filename));
 }
 
-suite('Kits test', () => {
+suite('Kits test', async () => {
   const fakebin = testFilePath('fakebin');
   test('Detect system kits never throws',
        async() => {
@@ -80,7 +80,7 @@ suite('Kits test', () => {
   });
 
 
-  suite('Scan directory', () => {
+  suite('Scan directory', async () => {
     let path_with_compilername ="";
     setup( async() =>  {
       path_with_compilername = path.join(fakebin, "gcc-4.3.2");
@@ -105,7 +105,7 @@ suite('Kits test', () => {
     });
   });
 
-  suite('Rescan kits', () => {
+  suite('Rescan kits', async () => {
     let km : kit.KitManager;
     let path_rescan_kit = testFilePath('rescan_kit.json');
     let sandbox : sinon.SinonSandbox;
@@ -182,7 +182,7 @@ suite('Kits test', () => {
      });
   });
 
-  suite('GUI test', () => {
+  suite('GUI test', async () => {
     let km : kit.KitManager;
     let gui_sandbox : sinon.SinonSandbox;
     setup( async() =>  {
