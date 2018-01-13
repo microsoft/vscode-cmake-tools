@@ -198,6 +198,26 @@ suite('Kits test', async () => {
       let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
       expect(nonVSKits.length).to.be.eq(2);
      }).timeout(5000);
+
+     test('check check combination of scan and old kits', async() => {
+      process.env['PATH'] = testFilePath("fakebin");
+      await fs.copyFile(testFilePath('test_kit.json'), path_rescan_kit)
+
+      await km.initialize();
+      await km.rescanForKits()
+
+      let names = km.kits.map( (item) => { return item.name} );
+
+      expect( names).to.contains("CompilerKit 1");
+      expect( names).to.contains("CompilerKit 2");
+      expect( names).to.contains("CompilerKit 3 with PreferedGenerator");
+      expect( names).to.contains("ToolchainKit 1");
+      expect( names).to.contains("VSCode Kit 1");
+      expect( names).to.contains("VSCode Kit 2");
+      expect( names).to.contains("Clang 0.25");
+      expect( names).to.contains("GCC 42.1");
+
+     }).timeout(5000);
   });
 
   suite('GUI test', async () => {
