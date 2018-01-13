@@ -14,6 +14,9 @@ chai.use(chaiAsPromised);
 import {expect} from 'chai';
 import * as sinon from 'sinon';
 
+import * as json5 from 'json5';
+import * as ajv from 'ajv';
+
 import * as api from '../src/api';
 import * as compdb from '../src/compdb';
 import {CMakeCache} from '../src/cache';
@@ -30,6 +33,10 @@ const here
 
 function testFilePath(filename: string): string {
   return path.normalize(path.join(here, '../..', 'test', filename));
+}
+
+function getRessourcePath(filename: string) : string {
+  return path.normalize(path.join(here, '../..', filename));
 }
 
 suite('Kits test', () => {
@@ -98,6 +105,83 @@ suite('Kits test', () => {
     });
   });
 
+  suite('Rescan kits', () => {
+    let km : kit.KitManager;
+    let path_rescan_kit = testFilePath('rescan_kit.json');
+    let sandbox : sinon.SinonSandbox;
+    let path_backup : string | undefined;
+    setup( async() =>  {;
+      sandbox = sinon.sandbox.create();
+      let stateMock =  sandbox.createStubInstance(state.StateManager);
+      sandbox.stub(stateMock, 'activeKitName').get(function () {
+        return null;
+      }).set(function() {});
+      km = new kit.KitManager(stateMock, path_rescan_kit);
+
+      // Mock showInformationMessage to suppress needed user choice
+      sandbox.stub(vscode.window, "showInformationMessage").callsFake(function() {
+          return {title : "No", isCloseAffordance : true, doOpen : false};
+        });
+
+      path_backup = process.env.PATH;
+    });
+    teardown(async() => {
+      sandbox.restore();
+      if( await fs.exists(path_rescan_kit)) {
+        await fs.rmdir(path_rescan_kit)
+      }
+      process.env.PATH = path_backup;
+    });
+
+    async function readValidKitFile( file_path : string) : Promise<any[]> {
+      const rawKitsFromFile = (await fs.readFile(file_path, 'utf8'));
+      expect(rawKitsFromFile.length).to.be.not.eq(0);
+
+      let kitFile = json5.parse(rawKitsFromFile);
+
+      const schema = json5.parse(await fs.readFile(getRessourcePath('schemas/kits-schema.json'), 'utf8'));
+      const validator = new ajv({allErrors : true, format : 'full'}).compile(schema);
+      expect(validator(kitFile)).to.be.true;
+
+      return kitFile;
+    }
+
+    test('init kit file creation', async() => {
+      process.env.PATH = "";
+
+      await km.initialize();
+
+      const newKitFileExists = await fs.exists(path_rescan_kit);
+      expect(newKitFileExists).to.be.true;
+     });
+
+     test('check valid kit file for test system compilers', async() => {
+      await km.initialize();
+
+      await readValidKitFile(path_rescan_kit);
+     }).timeout(30000);
+
+     test('check empty kit file', async() => {
+      process.env.PATH = "";
+
+      await km.initialize();
+
+      let kitFile = await readValidKitFile(path_rescan_kit);
+      let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
+      expect(nonVSKits.length).to.be.eq(0);
+     });
+
+     test('check fake compilers in kit file', async() => {
+      process.env.PATH = testFilePath("fakebin");
+
+      await km.initialize();
+
+      let kitFile = await readValidKitFile(path_rescan_kit);
+      let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
+      expect(nonVSKits.length).to.be.eq(2);
+     });
+  });
+
   test('KitManager tests opening of kit file', async() => {
     let stateMock =  sinon.createStubInstance(state.StateManager);
     sinon.stub(stateMock, 'activeKitName').get(function () {
@@ -110,7 +194,7 @@ suite('Kits test', () => {
 
     const rawKitsFromFile = (await fs.readFile(testFilePath('test_kit.json'), 'utf8'));
     expect( editor.document.getText()).to.be.eq(rawKitsFromFile);
-  });
+  }).timeout(5000);
 
   test('KitManager tests event on change of active kit', async() => {
     let stateMock =  sinon.createStubInstance(state.StateManager);
