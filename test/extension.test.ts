@@ -411,6 +411,14 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
   }
 }
 
+function toLowerCaseForWindows(str : string) :string {
+  if(process.platform == "win32") {
+    return str.toLowerCase();
+  } else {
+    return str;
+  }
+}
+
 suite('Diagnostics', async() => {
   let consumer = new diags.CMakeOutputConsumer("dummyPath");
   let build_consumer = new diags.CompileOutputConsumer();
@@ -438,7 +446,7 @@ suite('Diagnostics', async() => {
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
     const diag = consumer.diagnostics[0];
-    expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
+    expect(diag.filepath).to.eq(toLowerCaseForWindows('dummyPath/CMakeLists.txt'));
     expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
     expect(diag.diag.source).to.eq('CMake (message)');
     expect(diag.diag.message).to.eq('I am a warning!');
@@ -527,7 +535,7 @@ suite('Diagnostics', async() => {
     expect(consumer.diagnostics.length).to.eq(2);
     const coll = vscode.languages.createDiagnosticCollection('cmake-tools-test');
     diags.populateCollection(coll, consumer.diagnostics);
-    const fullpath = 'dummyPath/CMakeLists.txt';
+    const fullpath = toLowerCaseForWindows('dummyPath/CMakeLists.txt');
     expect(coll.has(vscode.Uri.file(fullpath))).to.be.true;
     expect(coll.get(vscode.Uri.file(fullpath)) !.length).to.eq(2);
   });
