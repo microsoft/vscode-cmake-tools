@@ -794,10 +794,19 @@ suite('Compilation info', () => {
 
 suite('CMake System tests', () => {
   (process.env.HasVs == 'true' ? suite.skip : suite)('No present kit',() => {
+        let path_backup = "";
         suiteSetup(()=>{
           clearExistingKitConfigurationFile();
+
+          // Test will use path to scan for compilers
+          // with no path content there is no compiler found
+          path_backup = process.env.PATH!;
           process.env.PATH = "";
         });
+        suiteTeardown(() => {
+          // restores old path
+          process.env.PATH = path_backup;
+        })
 
         test('Scan for no existing kit should return no selected kit', async() => {
           const cmt = await getExtension();
