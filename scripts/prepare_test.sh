@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 pushd .
 
 # Location of the fake bin directory where the compiler fakes should be placed
