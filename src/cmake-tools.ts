@@ -128,7 +128,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * two-phase init and a private constructor. The driver may be replaced at
    * any time by the user making changes to the workspace configuration.
    */
-  private _cmakeDriver: Promise<CMakeDriver> | null = null;
+  private _cmakeDriver: Promise<CMakeDriver | null> = Promise.resolve(null);
 
   /**
    * The status bar manager. Has two-phase init.
@@ -218,7 +218,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       return drv.executeCommand(config.cmakePath, args, undefined, options).result;
     } else {
-      return Promise.reject(null);
+      throw new Error("Unable to execute cmake command, there is no valid cmake driver instance.");
     }
   }
 
@@ -227,7 +227,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       return drv.executeCommand(program, args, undefined, options).result;
     } else {
-      return Promise.reject(null);
+      throw new Error("Unable to execute program, there is no valid cmake driver instance.");
     }
   }
 
@@ -236,7 +236,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       return drv.compilationInfoForFile(filepath);
     } else {
-      return Promise.reject(null);
+      throw new Error("Unable to get compilation information, there is no valid cmake driver instance.");
     }
   }
 
@@ -309,12 +309,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    if (!this._cmakeDriver) {
-      this._cmakeDriver = this._startNewCMakeDriver();
-      // Reload any test results. This will also update visibility on the status
-      // bar
-      await this._ctestController.reloadTests(await this._cmakeDriver);
-      this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
+    if ((await this._cmakeDriver) == null) {
+      try {
+        this._cmakeDriver = this._startNewCMakeDriver();
+        let cmakeInstance = await this._cmakeDriver;
+        // Reload any test results. This will also update visibility on the status
+        // bar
+        await this._ctestController.reloadTests(cmakeInstance!);
+        this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
+      } catch(ex) {
+        log.debug("Exception on start of cmake driver.", ex.stack);
+        this._cmakeDriver = Promise.resolve(null);
+      }
     }
     return this._cmakeDriver;
   }
