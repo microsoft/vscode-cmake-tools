@@ -505,8 +505,18 @@ export function replaceVars(str: string): string {
     ],
     ['${toolset}', config.toolset]
   ] as [string, string][];
-  return replacements.reduce(
+  var retval =  replacements.reduce(
       (accdir, [needle, what]) => replaceAll(accdir, needle, what), str);
+
+  // process ${env:ENVIRONMENT_VAR}
+  let regexp = /\$\{(env:|env.)?(.*?)\}/g;
+  retval = retval.replace(regexp, (match, ignored, name) => {
+    let newValue = process.env[name];
+    return (newValue != null) ? newValue : match;
+  });
+
+
+  return retval;
 }
 
 export function thisExtensionPath(): string {
