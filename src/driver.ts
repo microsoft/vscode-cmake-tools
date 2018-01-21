@@ -420,8 +420,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                                 args: string[] = [ '--version' ]): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent : true});
     try {
-      await child.result;
-      return true;
+      return (await child.result).retc == 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
       if (e2.code == 'ENOENT') {
@@ -432,12 +431,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   getPreferredGenerators(): CMakeGenerator[] {
-    const user_preferred = config.preferredGenerators.map(g => ({name : g}));
+    let generators = [] as CMakeGenerator[];
+
+    // The kit provides the best choice for the compiler
     if (this._kit && this._kit.preferredGenerator) {
-      // The kit has a preferred generator attached as well
-      user_preferred.push(this._kit.preferredGenerator);
+      generators.push(this._kit.preferredGenerator);
     }
-    return user_preferred;
+
+    // This are alternatives from settings are needed, if there is no prefered generator by the kit
+    config.preferredGenerators.forEach( (generatorName) => {
+      generators.push({name: generatorName});
+    });
+    return generators;
   }
 
   /**
@@ -487,12 +492,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
           return gen;
         }
-        vscode.window.showErrorMessage('Unknown CMake generator "' + gen.name + '"');
         continue;
       } else {
         return gen;
       }
     }
+    vscode.window.showWarningMessage('Not of the prefered cmake generator found.\n' +
+                                     'Please install or configure your prefered generator needs.\n');
     return null;
   }
 
