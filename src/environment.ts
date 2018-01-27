@@ -262,6 +262,46 @@ async function tryCreateEmscriptenEnvironment(emscripten: string): Promise<Envir
   return;
 }
 
+function parseVsWhereItemFromTextFormat(output: string): VSWhereItem[] {
+  var lines = output.split(/\r?\n/);
+  var installationPath: string = "";
+  var installationVersion: string = "";
+  var displayName = "";
+  var ret: VSWhereItem[] = [];
+  var currentItem: VSWhereItem;
+  for(var i = 0;i < lines.length;i++) {
+    var line = lines[i];
+    // when first 'instanceId: ' comes, installattionPath is ""
+    if(line.startsWith("instanceId: ") && installationPath != "")
+    {
+      ret.push({
+        displayName: displayName,
+        installationPath: installationPath,
+        installationVersion: installationVersion
+      });
+    }
+    if(line.startsWith("displayName: "))
+    {
+      displayName = line.substring("displayName: ".length);
+    }
+    else if(line.startsWith("installationPath: ")) {
+      installationPath = line.substring("installationPath: ".length);
+    }
+    else if(line.startsWith("installationVersion: ")) {
+      installationVersion = line.substring("installationVersion: ".length);
+    }
+  }
+  // push last item
+  if(displayName != "") {
+    ret.push({
+      displayName: displayName,
+      installationPath: installationPath,
+      installationVersion: installationVersion
+    });
+  }
+  return ret;
+}
+
 const ENVIRONMENTS: EnvironmentProvider[] = [
   {
     async getEnvironments(): Promise<Environment[]> {
@@ -293,8 +333,8 @@ const ENVIRONMENTS: EnvironmentProvider[] = [
         return [];
       }
       const vswhere =  path.join(util.thisExtensionPath(), 'res/vswhere.exe');
-      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease']);
-      const installs: VSWhereItem[] = JSON.parse(vswhere_res.stdout);
+      const vswhere_res = await async.execute(vswhere, ['-all', '-format', 'text', '-products', '*', '-legacy', '-prerelease']);
+      const installs: VSWhereItem[] = parseVsWhereItemFromTextFormat(vswhere_res.stdout);
       const archs = ['x86', 'amd64', 'arm'];
       const all_promices = installs
         .map((where) => archs.map((arch) => tryCreateNewVCEnvironment(where, arch)))
