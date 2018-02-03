@@ -190,6 +190,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
 
   private _nagManager = new NagManager(this._context);
 
+  protected _terminal: Maybe<vscode.Terminal>;
+
   get compilerId() {
     for (const lang of ['CXX', 'C']) {
       const entry = this.cacheEntry(`CMAKE_${lang}_COMPILER`);
@@ -520,6 +522,13 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         this.sourceDir, this.binaryDir, this.selectedBuildType || 'Debug');
 
     this._nagManager.start();
+
+    // if the launch terminal closes we should create a new one on next launch
+    vscode.window.onDidCloseTerminal((term) => {
+      if (term == this._terminal) {
+        this._terminal = null;
+      }
+    });
 
     return this;
   }
@@ -1001,9 +1010,12 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   public async launchTarget() {
     const target = await this._prelaunchTarget();
     if (!target) return;
-    const term = vscode.window.createTerminal(target.name, target.path);
-    this._disposables.push(term);
-    term.show();
+    if (!this._terminal) {
+      this._terminal = vscode.window.createTerminal("CMake/Launch");
+      this._disposables.push(this._terminal);
+    }
+    this._terminal.sendText(target.path);
+    this._terminal.show();
   }
 
   public async debugTarget(): Promise<void> {
