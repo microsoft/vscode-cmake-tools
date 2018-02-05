@@ -123,7 +123,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _variantManager = new VariantManager(this._stateManager);
 
   /**
-   * The object in charge of talking to CMake. It starts out as invalid because
+   * The object in charge of talking to CMake. It starts empty (null) because
    * we don't know what driver to use at the current time. The driver also has
    * two-phase init and a private constructor. The driver may be replaced at
    * any time by the user making changes to the workspace configuration.
@@ -304,6 +304,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._nagManager.start();
   }
 
+  /**
+   * Returns, if possible a cmake driver instance. To creation the driver instance,
+   * there are preconditions that should be fulfilled, such as an active kit is selected.
+   * These preconditions are checked before it driver instance creation. When creating a
+   * driver instance, this function waits until the driver is ready before returning.
+   * This ensures that user commands can always be executed, because error criterials like
+   * exceptions would assign a null driver and it is possible to create a new driver instance later again.
+   */
   async getCMakeDriverInstance() : Promise<CMakeDriver | null> {
     if (!this._kitManager.hasActiveKit) {
       return null;
