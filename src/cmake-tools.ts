@@ -143,7 +143,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   dispose() {
     log.debug('Disposing CMakeTools extension');
-    this._launchTerminals.forEach(t => t.dispose());
+    if (this._launchTerminal)
+      this._launchTerminal.dispose();
     rollbar.invoke('Root dispose', () => this.asyncDispose());
   }
 
@@ -284,6 +285,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._ctestController.onTestingEnabledChanged(
         enabled => { this._statusBar.ctestEnabled = enabled; });
     this._ctestController.onResultsChanged(res => { this._statusBar.testResults = res; });
+
+    // Listen for terminal closing, we should create a new one on next launch
+    vscode.window.onDidCloseTerminal((term) => {
+      if (term == this._launchTerminal) {
+        this._launchTerminal = null;
+      }
+    });
 
     // Finally, start the CMake driver
     const drv = await(this._cmakeDriver = this._startNewCMakeDriver());
@@ -640,7 +648,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return vscode.debug.activeDebugSession !;
   }
 
-  private _launchTerminals: vscode.Terminal[] = [];
+  private _launchTerminal: vscode.Terminal | null;
 
   /**
    * Implementation of `cmake.launchTarget`
@@ -652,10 +660,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       vscode.window.showWarningMessage('No target selected for launching');
       return null;
     }
-    const term = vscode.window.createTerminal(target_name, target_path);
-    this._launchTerminals.push(term);
-    term.show();
-    return term;
+    if (!this._launchTerminal)
+      this._launchTerminal = vscode.window.createTerminal("CMake/Launch");
+    this._launchTerminal.sendText(target_path);
+    this._launchTerminal.show();
+    return this._launchTerminal;
   }
 
   /**
