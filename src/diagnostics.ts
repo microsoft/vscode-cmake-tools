@@ -370,7 +370,8 @@ export class CompileOutputConsumer implements OutputConsumer {
     const severity_of = (p: string) => {
       switch (p) {
       case 'warning':
-        return vscode.DiagnosticSeverity.Warning;
+          return vscode.DiagnosticSeverity.Warning;
+      case 'fatal error':
       case 'error':
         return vscode.DiagnosticSeverity.Error;
       case 'note':
