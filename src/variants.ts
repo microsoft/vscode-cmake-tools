@@ -18,6 +18,7 @@ export interface VariantConfigurationOptions {
   oneWordSummary$?: string;
   description$?: string;
   buildType?: Maybe<string>;
+  replacableVariables?: Map<string, string>;
   linkage?: Maybe<string>;
   settings?: ConfigureArguments[];
   generator?: Maybe<string>;
@@ -140,21 +141,37 @@ export class VariantManager implements vscode.Disposable {
     if (!vars) {
       return {};
     }
+
+    let defVars: Map<string, string> = new Map();
+
     const data = Array.from(kws.entries()).map(([param, setting]) => {
       if (!vars.has(param)) {
         debugger;
         throw 12;
       }
-      const choices = vars.get(param)!.choices;
+      const variantSetting = vars.get(param)!;
+      const choices = variantSetting.choices;
       if (!choices.has(setting)) {
         debugger;
         throw 12;
       }
-      return choices.get(setting)!;
+      const propertyValue = choices.get(setting)!;
+
+      if(param === "buildType") {
+         const bt = propertyValue.buildType || "Undefined-buildType";
+         defVars.set(param, bt);
+      }
+      else {
+         defVars.set(param, setting);
+      }
+
+
+      return propertyValue;
     });
     const result: VariantConfigurationOptions = data.reduce(
         (acc, el) => ({
           buildType: el.buildType || acc.buildType,
+          replacableVariables: defVars,
           generator: el.generator || acc.generator,
           linkage: el.linkage || acc.linkage,
           toolset: el.toolset || acc.toolset,
