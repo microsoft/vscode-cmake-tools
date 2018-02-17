@@ -21,6 +21,7 @@ import {VariantManager} from './variants';
 import { log } from './logging';
 import {CMakeToolsBackend} from './backend';
 import { Generator } from './environment';
+import { NagManager } from "./nag";
 
 const CMAKETOOLS_HELPER_SCRIPT = `
 get_cmake_property(is_set_up _CMAKETOOLS_SET_UP)
@@ -186,6 +187,8 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
    * the statusbar.
    */
   protected readonly _statusBar = new status.StatusBar();
+
+  private _nagManager = new NagManager(this._context);
 
   get compilerId() {
     for (const lang of ['CXX', 'C']) {
@@ -513,14 +516,17 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
     }
 
     // Refresh any test results that may be left aroud from a previous run
-      const bt = this.selectedBuildType;
-      /// Call reloadTests only if buildType has been configured to avoid creating `Unknown` build
-      /// directory in case ${buildType} was used in the path.
-      if(bt)
-         this._ctestController.reloadTests(this.sourceDir, this.binaryDir, bt);
-      else
-         vscode.window.showWarningMessage(
-            'BinaryDirectory depends on ${buildType} or other build-variant variable - skipping CTest reloading until buildType will be configured');
+    const bt = this.selectedBuildType;
+    /// Call reloadTests only if buildType has been configured to avoid creating `Unknown` build
+    /// directory in case ${buildType} was used in the path.
+    if(bt) {
+       this._ctestController.reloadTests(this.sourceDir, this.binaryDir, bt);
+       this._nagManager.start();
+    }
+    else {
+       vscode.window.showWarningMessage(
+          'BinaryDirectory depends on ${buildType} or other build-variant variable - skipping CTest reloading until buildType will be configured');
+    }
     return this;
   }
 
@@ -776,7 +782,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
   }
 
 
-  public get executionEnvironmentVariables(): {[key: string]: string} {
+  public get executionEnvironmentVariables() {
     return util.mergeEnvironment(config.environment, this.currentEnvironmentVariables);
   }
 
@@ -1129,7 +1135,7 @@ export abstract class CommonCMakeToolsBase implements CMakeToolsBackend {
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
         return ['-j', config.numJobs.toString()];
-      else if (/Visual Studio/.test(gen))
+      else if (/Visual Studio(?! 9 2008)/.test(gen)) // negative lookahead to exclude MSVC 2008 which does not support these flags
         return ['/m', '/property:GenerateFullPaths=true'];
       else
         return [];

@@ -361,7 +361,7 @@ export interface ClientInit {
   onMessage: (m: MessageMessage) => Promise<void>;
   onProgress: (m: ProgressMessage) => Promise<void>;
   onDirty: () => Promise<void>;
-  environment: {[key: string]: string};
+  environment: NodeJS.ProcessEnv;
   sourceDir: string;
   binaryDir: string;
   pickGenerator: () => Promise<util.Maybe<Generator>>;

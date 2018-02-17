@@ -27,6 +27,11 @@
   - Bugfixes:
     - Debugging works again in the VSCode October update
     - Various
+- **0.10.4**:
+  - Tweaks:
+    - VSWhere is now bundled with the extension, so it isn't required to be
+      installed at a specific version. Fixes #254 and #235.
+  - Request for feedback and beta testing.
 
 ### **0.9.0**
 
