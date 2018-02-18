@@ -24,7 +24,7 @@ before_install:
       export DISPLAY=:99.0
       sh -e /etc/init.d/xvfb start
       curl https://cmake.org/files/v${CMAKE_MINOR}/cmake-${CMAKE_VER}-Linux-x86_64.sh -o /tmp/cmake.sh
-      sh /tmp/cmake.sh --exclude-subdir --prefix=/usr/local
+      sudo sh /tmp/cmake.sh --exclude-subdir --prefix=/usr/local
       sleep 3
     fi
 
