@@ -339,6 +339,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     await this.doRefreshExpansions(async () => {
       this._sourceDirectory = util.normalizePath(await this.expandString(config.sourceDirectory));
       this._binaryDir = util.normalizePath(await this.expandString(config.buildDirectory));
+
+      const installPrefix = config.installPrefix;
+      if (installPrefix) {
+        this._installDir = util.normalizePath(await this.expandString(installPrefix));
+      }
     });
   }
 
@@ -353,8 +358,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Directory where build output is stored.
    */
-  get binaryDir(): string { return this._binaryDir }
+  get binaryDir(): string { return this._binaryDir; }
   private _binaryDir = '';
+
+  /**
+   * Directory where the targets will be installed.
+   */
+  get installDir(): string|null { return this._installDir; }
+  private _installDir: string|null = '';
 
   /**
    * @brief Get the path to the CMakeCache file in the build directory
@@ -537,6 +548,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!this.isMultiConf) {
       // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
       settings.CMAKE_BUILD_TYPE = this.currentBuildType;
+    }
+
+    // Only use the installPrefix config if the user didn't
+    // provide one via configureSettings
+    if (!settings.CMAKE_INSTALL_PREFIX) {
+      await this._refreshExpansions();
+      settings.CMAKE_INSTALL_PREFIX = this.installDir;
     }
 
     const settings_flags
