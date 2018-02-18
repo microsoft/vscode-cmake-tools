@@ -67,6 +67,26 @@ export class StateManager {
   set projectName(s: string|null) { this.extensionContext.workspaceState.update('projectName', s); }
 
   /**
+   * The replacements for the current workspace
+   */
+  get replacements(): {[key: string] : string | undefined} {
+    const replacements = this.extensionContext.workspaceState.get<string>('replacements');
+    if (replacements) {
+      return JSON.parse(replacements);
+    } else {
+      return {};
+    }
+  }
+  set replacements(repl: {[key: string] : string | undefined}) {
+    if (repl) {
+      const replacements = JSON.stringify(repl);
+      this.extensionContext.workspaceState.update('replacements', replacements);
+    } else {
+      this.extensionContext.workspaceState.update('replacements', {});
+    }
+  }
+
+  /**
    * Rest all current workspace state. Mostly for troubleshooting
    */
   reset() {
@@ -74,5 +94,6 @@ export class StateManager {
     this.launchTargetName = null;
     this.defaultBuildTarget = null;
     this.activeKitName = null;
+    this.replacements = {};
   }
 }

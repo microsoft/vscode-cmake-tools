@@ -155,6 +155,36 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this._kit as VSKit;
   }
 
+  private get _replacements(): {[key: string] : string | undefined} {
+    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
+    const user_dir = process.platform === 'win32' ? process.env['PROFILE']! : process.env['HOME']!;
+    let replacements = this.stateManager.replacements;
+
+    // Update default replacements
+    replacements['workspaceRoot'] = vscode.workspace.rootPath;
+    replacements['buildType'] = this.currentBuildType;
+    replacements['workspaceRootFolderName'] = path.basename(ws_root);
+    replacements['generator'] = this.generatorName || 'null';
+    replacements['projectName'] = this.projectName;
+    replacements['userHome'] = user_dir;
+
+    // Update Variant replacements
+    const variantSettings = this.stateManager.activeVariantSettings;
+    if (variantSettings) {
+      variantSettings.forEach((value: string, key: string) => {
+        if (key != 'buildType') {
+          replacements[key] = value;
+        } else {
+          replacements['buildLabel'] = value;
+        }
+      });
+    }
+
+    this.stateManager.replacements = replacements;
+
+    return replacements;
+  }
+
   /**
    * Replace ${variable} references in the given string with their corresponding
    * values.
@@ -162,17 +192,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns A string with the variable references replaced
    */
   async expandString(instr: string): Promise<string> {
-    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
-    type StringObject = {[key: string] : string | undefined};
-    const user_dir = process.platform === 'win32' ? process.env['PROFILE']! : process.env['HOME']!;
-    const replacements: StringObject = {
-      workspaceRoot : vscode.workspace.rootPath,
-      buildType : this.currentBuildType,
-      workspaceRootFolderName : path.basename(ws_root),
-      generator : this.generatorName || 'null',
-      projectName : this.projectName,
-      userHome : user_dir,
-    };
+    // Update the replacements and get the updated values
+    const replacements = this._replacements;
 
     // We accumulate a list of substitutions that we need to make, preventing
     // recursively expanding or looping forever on bad replacements
@@ -193,6 +214,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const env_re = /\$\{env:(.+?)\}/g;
     while ((mat = env_re.exec(instr))) {
+      const full = mat[0];
+      const varname = mat[1];
+      const repl = process.env[varname.toLocaleLowerCase()] || '';
+      subs.set(full, repl);
+    }
+
+    const env2_re = /\$\{env.(.+?)\}/g;
+    while ((mat = env2_re.exec(instr))) {
       const full = mat[0];
       const varname = mat[1];
       const repl = process.env[varname.toLocaleLowerCase()] || '';
@@ -440,7 +469,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await (async(): Promise<boolean> => {
+      const generator_present = await(async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || await this.testHaveCommand('ninja');
         }
@@ -538,10 +567,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
           ...util.objectPairs(this._kit.cmakeSettings).map(([ key, val ]) => _makeFlag(key, util.cmakeify(val))));
     }
 
+    // Expand all flags
     const final_flags = flags.concat(settings_flags);
-    log.trace('CMake flags are', JSON.stringify(final_flags));
+    const expanded_flags_promises = final_flags.map(async (value: string) => await this.expandString(value));
+    const expanded_flags = await Promise.all(expanded_flags_promises);
+    log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
-    const retc = await this.doConfigure(final_flags, consumer);
+    const retc = await this.doConfigure(expanded_flags, consumer);
     this._onReconfiguredEmitter.fire();
     await this._refreshExpansions();
     return retc;
