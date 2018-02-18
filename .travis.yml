@@ -9,14 +9,22 @@ compiler:
   - gcc
 
 env:
-  - HasVs=false CMT_TESTING=1
+  global:
+    - HasVs=false CMT_TESTING=1
+  matrix:
+    - CMAKE_MINOR=3.5 CMAKE_VER=3.5.0
+    - CMAKE_MINOR=3.7 CMAKE_VER=3.7.0
+    - CMAKE_MINOR=3.7 CMAKE_VER=3.7.2
 
 
 before_install:
   - |
+    set -eu
     if [ $TRAVIS_OS_NAME == "linux" ]; then
       export DISPLAY=:99.0
       sh -e /etc/init.d/xvfb start
+      curl https://cmake.org/files/v${CMAKE_MINOR}/cmake-${CMAKE_VER}-Linux-x86_64.sh -o /tmp/cmake.sh
+      sh /tmp/cmake.sh --exclude-subdir --prefix=/usr/local
       sleep 3
     fi
 
