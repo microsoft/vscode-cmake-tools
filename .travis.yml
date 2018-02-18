@@ -35,6 +35,7 @@ before_install:
       fi
       sudo cp -r cmake-${CMAKE_VER}-Darwin-x86_64/CMake.app /Applications/
       sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
+      popd
     fi
     set +eu
 
