@@ -4,3 +4,4 @@ node_modules
 *.old
 build/
 test/fakebin/*
+.vscode-test
