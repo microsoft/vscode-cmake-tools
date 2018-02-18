@@ -483,8 +483,10 @@ scanForKits() {
                       let prs = [] as Promise<Kit[]>[];
                       const compiler_kits = paths.map(path => scanDirForCompilerKits(path, pr));
                       prs = prs.concat(compiler_kits);
-                      const vs_kits = scanForVSKits(pr);
-                      prs.push(vs_kits);
+                      if (process.platform == 'win32') {
+                        const vs_kits = scanForVSKits(pr);
+                        prs.push(vs_kits);
+                      }
                       const arrays = await Promise.all(prs);
                       const kits = ([] as Kit[]).concat(...arrays);
                       kits.map(k => log.info(`Found Kit: ${k.name}`));
