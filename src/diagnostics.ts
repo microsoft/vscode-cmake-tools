@@ -367,7 +367,7 @@ export class CompileOutputConsumer implements OutputConsumer {
       case 'remark':
         return vscode.DiagnosticSeverity.Information;
       }
-      throw new Error('Unknwon diagnostic severity level: ' + p);
+      throw new Error('Unknown diagnostic severity level: ' + p);
     };
 
     const by_source = {
