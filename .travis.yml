@@ -28,17 +28,10 @@ before_install:
       sudo sh /tmp/cmake.sh --exclude-subdir --prefix=/usr/local
       sleep 3
     else
-      curl https://cmake.org/files/v${CMAKE_MINOR}/cmake-${CMAKE_VER}-Darwin-x86_64.tar.gz -o /tmp/cmake.tgz
-      pushd /tmp
-      tar xf /tmp/cmake.tgz
-      if test -e /Applications/CMake.app; then
-        sudo rm -rf /Applications/CMake.app
-      fi
-      command curl -sSL https://rvm.io/mpapis.asc | gpg --import -
-      rvm get stable
+      curl https://cmake.org/files/v${CMAKE_MINOR}/cmake-${CMAKE_VER}-Darwin-x86_64.tar.gz -o cmake.tgz
+      tar xf cmake.tgz
       sudo cp -r cmake-${CMAKE_VER}-Darwin-x86_64/CMake.app /Applications/
       sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
-      popd
     fi
     set +eu
 
