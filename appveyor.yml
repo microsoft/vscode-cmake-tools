@@ -1,12 +1,12 @@
-version: 1.0.{build}
+version: 1.0.{build}-{branch}
 image:
 - Visual Studio 2017
 - Visual Studio 2017 Preview
 - Visual Studio 2015
 - Visual Studio 2013
 environment:
-  HasVs: true
-  CMT_TESTING: 1
+  HasVs: "true"
+  CMT_TESTING: "1"
 
 install:
 - ps: Install-Product node 8.9.1 x64
@@ -15,7 +15,6 @@ build_script:
 - cmd: npm run vscode:prepublish
 - cmd: scripts/prepare_test.bat
 test_script:
-- cmd: >-
+- cmd: |
     node --version
-
     node ./node_modules/vscode/bin/test
