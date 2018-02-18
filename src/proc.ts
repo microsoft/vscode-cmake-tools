@@ -109,14 +109,7 @@ export function execute(command: string,
   if (options && options.cwd) {
     spawn_opts.cwd = options.cwd;
   }
-  let child: proc.ChildProcess;
-  if (process.platform == 'linux') {
-    // We wrap things in `stdbuf` to disable output buffering.
-    const subargs = [ '-o', '0', '-e', '0' ].concat([ command ], args);
-    child = proc.spawn('stdbuf', subargs, spawn_opts);
-  } else {
-    child = proc.spawn(command, args, spawn_opts);
-  }
+  let child: proc.ChildProcess = proc.spawn(command, args, spawn_opts);
   const result = new Promise<ExecutionResult>((resolve, reject) => {
     child.on('error', (err) => { reject(err); });
     let stdout_acc = '';
