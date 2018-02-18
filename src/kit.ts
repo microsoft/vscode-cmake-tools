@@ -221,14 +221,25 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
   = bins.map(async(bin) => {
       log.trace('Checking file for compiler-ness:', bin);
       try {
+
         return await kitIfCompiler(bin, pr);
       } catch (e) {
+
         log.warning('Failed to check binary', bin, 'by exception:', e);
+        const stat = await fs.stat(bin);
+        log.debug( "File infos: ",
+        "Mode", stat.mode,
+        "isFile", stat.isFile(),
+        "isDirectory", stat.isDirectory(),
+        "isSymbolicLink", stat.isSymbolicLink())
         if (e.code == 'EACCES') {
           // The binary may not be executable by this user...
           return null;
         } else if (e.code == 'ENOENT') {
           // This will happen on Windows if we try to "execute" a directory
+          return null;
+        } else if ( e.code == "UNKNOWN" && process.platform == "win32") {
+          // This is when file is not executable (in windows)
           return null;
         }
         throw e;
@@ -513,12 +524,12 @@ export class KitManager implements vscode.Disposable {
   /**
    * The path to the `cmake-kits.json` file
    */
-  private get _kitsPath(): string { return path.join(dirs.dataDir, 'cmake-kits.json'); }
+  private _kitsPath: string;
 
   /**
    * Watches the file at `_kitsPath`.
    */
-  private _kitsWatcher = vscode.workspace.createFileSystemWatcher(this._kitsPath);
+  private _kitsWatcher : vscode.FileSystemWatcher;
 
   /**
    * The active build kit
@@ -555,9 +566,16 @@ export class KitManager implements vscode.Disposable {
    * Create a new kit manager.
    * @param stateManager The workspace state manager
    */
-  constructor(readonly stateManager: StateManager) {
+  constructor(readonly stateManager: StateManager, kitPath : string | null = null) {
     log.debug('Constructing KitManager');
+    if (kitPath != null) {
+      this._kitsPath = kitPath;
+    } else {
+      this._kitsPath = path.join(dirs.dataDir, 'cmake-kits.json');
+    }
+
     // Re-read the kits file when it is changed
+    this._kitsWatcher = vscode.workspace.createFileSystemWatcher(this._kitsPath);
     this._kitsWatcher.onDidChange(_e => this._rereadKits());
     this._kitsWatcher.onDidCreate(_e => this._rereadKits());
     this._kitsWatcher.onDidDelete(_e => this._rereadKits());

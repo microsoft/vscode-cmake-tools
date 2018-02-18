@@ -12,27 +12,21 @@ import * as chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 
 import {expect} from 'chai';
+import * as sinon from 'sinon';
 
-import * as state from '../src/state';
-import * as kit from '../src/kit';
+import * as json5 from 'json5';
+import * as ajv from 'ajv';
+
 import * as api from '../src/api';
-import * as util from '../src/util';
-import config from '../src/config';
-import {CMakeTools} from '../src/cmake-tools';
+import * as compdb from '../src/compdb';
 import {CMakeCache} from '../src/cache';
+import * as diags from '../src/diagnostics';
+import * as kit from '../src/kit';
+import { fs } from '../src/pr';
+import {OutputConsumer} from '../src/proc';
+import * as state from '../src/state';
+import * as util from '../src/util';
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
-// import * as vscode from 'vscode';
-// import * as myExtension from '../src/extension';
-
-async function getExtension() {
-  const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
-  if (!cmt) {
-    return Promise.reject("Extension doesn't exist");
-  }
-  return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
-}
 
 const here
     = __dirname;
@@ -41,15 +35,27 @@ function testFilePath(filename: string): string {
   return path.normalize(path.join(here, '../..', 'test', filename));
 }
 
-suite('Kits test', async() => {
-  const fakebin = path.join(vscode.workspace.rootPath !, '../fakebin');
+function getRessourcePath(filename: string) : string {
+  return path.normalize(path.join(here, '../..', filename));
+}
+
+function getPathWithoutCompilers() {
+  if( process.arch == "win32") {
+    return "C:\\TMP"
+  } else {
+    return "/tmp"
+  }
+}
+
+suite('Kits test', async () => {
+  const fakebin = testFilePath('fakebin');
   test('Detect system kits never throws',
        async() => {
          // Don't care about the result, just check that we don't throw during the test
          await expect(kit.scanForKits()).to.eventually.not.be.rejected;
        })
       // Compiler detection can run a little slow
-      .timeout(10000);
+      .timeout(12000);
 
   test('Detect a GCC compiler file', async() => {
     const compiler = path.join(fakebin, 'gcc-42.1');
@@ -75,23 +81,189 @@ suite('Kits test', async() => {
     expect(nil).to.be.null;
   });
 
-  test('Scan dir for kits', async() => {
-    // Scan the directory with fake compilers in it
-    const kits = await kit.scanDirForCompilerKits(fakebin);
-    expect(kits.length).to.eq(2);
+  test('Detect non existing program', async() => {
+    const program = path.join(fakebin, 'unknown');
+    const nil = await kit.kitIfCompiler(program);
+    expect(nil).to.be.null;
   });
 
-  test('KitManager tests', async() => {
-    const cmt = await getExtension();
-    const sm = new state.StateManager(cmt.extensionContext);
-    const km = new kit.KitManager(sm);
-    await km.initialize();
-    const editor = await km.openKitsEditor();
-    // Ensure it is the active editor
-    await vscode.window.showTextDocument(editor.document);
-    // Now close it. We don't care about it any more
-    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
 
+  suite('Scan directory', async () => {
+    let path_with_compilername ="";
+    setup( async() =>  {
+      path_with_compilername = path.join(fakebin, "gcc-4.3.2");
+    });
+    teardown(async() => {
+      if( await fs.exists(path_with_compilername)) {
+        await fs.rmdir(path_with_compilername)
+      }
+    });
+    test('Scan folder with compiler name', async() => {
+      fs.mkdir(path_with_compilername)
+      // Scan the directory with fake compilers in it
+      const kits = await kit.scanDirForCompilerKits(fakebin);
+      expect(kits.length).to.eq(2);
+    });
+
+    test('Scan file with compiler name', async() => {
+      await fs.writeFile(path_with_compilername, "")
+      // Scan the directory with fake compilers in it
+      const kits = await kit.scanDirForCompilerKits(fakebin);
+      expect(kits.length).to.eq(2);
+    });
+  });
+
+  suite('Rescan kits', async () => {
+    let km : kit.KitManager;
+    let path_rescan_kit = testFilePath('rescan_kit.json');
+    let sandbox : sinon.SinonSandbox;
+    let path_backup : string | undefined;
+    setup( async() =>  {
+      sandbox = sinon.sandbox.create();
+      let stateMock =  sandbox.createStubInstance(state.StateManager);
+      sandbox.stub(stateMock, 'activeKitName').get(function () {
+        return null;
+      }).set(function() {});
+      km = new kit.KitManager(stateMock, path_rescan_kit);
+
+      // Mock showInformationMessage to suppress needed user choice
+      sandbox.stub(vscode.window, "showInformationMessage").callsFake(function() {
+          return {title : "No", isCloseAffordance : true, doOpen : false};
+        });
+
+      path_backup = process.env.PATH;
+    });
+    teardown(async() => {
+      sandbox.restore();
+      if( await fs.exists(path_rescan_kit)) {
+        await fs.rmdir(path_rescan_kit)
+      }
+      process.env.PATH = path_backup;
+    });
+
+    async function readValidKitFile( file_path : string) : Promise<any[]> {
+      const rawKitsFromFile = (await fs.readFile(file_path, 'utf8'));
+      expect(rawKitsFromFile.length).to.be.not.eq(0);
+
+      let kitFile = json5.parse(rawKitsFromFile);
+
+      const schema = json5.parse(await fs.readFile(getRessourcePath('schemas/kits-schema.json'), 'utf8'));
+      const validator = new ajv({allErrors : true, format : 'full'}).compile(schema);
+      expect(validator(kitFile)).to.be.true;
+
+      return kitFile;
+    }
+
+    test('init kit file creation no compilers in path', async() => {
+      process.env['PATH'] = getPathWithoutCompilers();
+
+      await km.initialize();
+
+      const newKitFileExists = await fs.exists(path_rescan_kit);
+      expect(newKitFileExists).to.be.true;
+     }).timeout(5000);
+
+     test('check valid kit file for test system compilers', async() => {
+      await km.initialize();
+
+      await readValidKitFile(path_rescan_kit);
+     }).timeout(30000);
+
+     test('check empty kit file no compilers in path', async() => {
+      process.env['PATH'] = getPathWithoutCompilers();
+
+      await km.initialize();
+
+      let kitFile = await readValidKitFile(path_rescan_kit);
+      let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
+      expect(nonVSKits.length).to.be.eq(0);
+     }).timeout(5000);
+
+     // Fails because PATH is tried to split but a empty path is not splitable
+     test.skip('check empty kit file', async() => {
+      process.env['PATH'] = "";
+
+      await km.initialize();
+
+      const newKitFileExists = await fs.exists(path_rescan_kit);
+      expect(newKitFileExists).to.be.true;
+     });
+
+     test('check fake compilers in kit file', async() => {
+      process.env['PATH'] = testFilePath("fakebin");
+
+      await km.initialize();
+
+      let kitFile = await readValidKitFile(path_rescan_kit);
+      let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
+      expect(nonVSKits.length).to.be.eq(2);
+     }).timeout(5000);
+
+     test('check check combination of scan and old kits', async() => {
+      process.env['PATH'] = testFilePath("fakebin");
+      await fs.copyFile(testFilePath('test_kit.json'), path_rescan_kit)
+
+      await km.initialize();
+      await km.rescanForKits()
+
+      let names = km.kits.map( (item) => { return item.name} );
+
+      expect( names).to.contains("CompilerKit 1");
+      expect( names).to.contains("CompilerKit 2");
+      expect( names).to.contains("CompilerKit 3 with PreferedGenerator");
+      expect( names).to.contains("ToolchainKit 1");
+      expect( names).to.contains("VSCode Kit 1");
+      expect( names).to.contains("VSCode Kit 2");
+      expect( names).to.contains("Clang 0.25");
+      expect( names).to.contains("GCC 42.1");
+
+     }).timeout(5000);
+  });
+
+  suite('GUI test', async () => {
+    let km : kit.KitManager;
+    let gui_sandbox : sinon.SinonSandbox;
+    setup( async() =>  {
+      gui_sandbox = sinon.sandbox.create();
+      let stateMock =  gui_sandbox.createStubInstance(state.StateManager);
+      sinon.stub(stateMock, 'activeKitName').get(function () {
+        return null;
+      }).set(function() {});
+
+      km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    });
+    teardown(async() => {
+      gui_sandbox.restore();
+    });
+
+    test('KitManager tests opening of kit file', async() => {
+      let text : vscode.TextDocument | undefined;
+      gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(function(textDoc) {
+        text = textDoc;
+        return {document: text};
+      });
+      await km.initialize();
+
+      const editor = await km.openKitsEditor();
+
+      expect(text).to.be.not.undefined;
+      if(text != undefined) {
+        const rawKitsFromFile = (await fs.readFile(testFilePath('test_kit.json'), 'utf8'));
+        expect(editor.document.getText()).to.be.eq(rawKitsFromFile);
+      } else {}
+    }).timeout(5000);
+  });
+
+  test('KitManager tests event on change of active kit', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    let storedActivatedKitName : string = "";
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return null;
+    }).set(function(kit) {
+      storedActivatedKitName = kit;
+    });
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    await km.initialize();
     // Check that each time we change the kit, it fires a signal
     let fired_kit: string | null = null;
     km.onActiveKitChanged(k => fired_kit = k !.name);
@@ -102,12 +274,77 @@ suite('Kits test', async() => {
       // Check that we got the signal
       expect(fired_kit).to.eq(name);
       // Check that we've saved our change
-      expect(sm.activeKitName).to.eq(name);
+      expect(storedActivatedKitName).to.eq(name);
     }
+    km.dispose();
+  }).timeout(10000);
+
+  test('KitManager test load of kit from test file', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return null;
+    }).set(function() {});
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+
+    await km.initialize();
+
+    expect( km.kits.length).to.eq(6);
+    expect( km.kits[0].name).to.eq( "CompilerKit 1");
+    expect( km.kits[1].name).to.eq( "CompilerKit 2");
+    expect( km.kits[2].name).to.eq( "CompilerKit 3 with PreferedGenerator");
+    expect( km.kits[3].name).to.eq( "ToolchainKit 1");
+    expect( km.kits[4].name).to.eq( "VSCode Kit 1");
+    expect( km.kits[5].name).to.eq( "VSCode Kit 2");
+
     km.dispose();
   });
 
-  // TODO: Do some tests with Visual Studio kits and vswhere
+  test('KitManager test selection of last activated kit', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return "ToolchainKit 1";
+    }).set(function() {});
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+
+    await km.initialize();
+
+    expect( km.activeKit).to.be.not.null;
+    if( km.activeKit)
+      expect( km.activeKit.name).to.eq( "ToolchainKit 1");
+
+    km.dispose();
+  });
+
+  test('KitManager test selection of a default kit', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return null;
+    }).set(function() {});
+
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    await km.initialize();
+
+    expect( km.activeKit).to.be.null;
+    km.dispose();
+  });
+
+  test('KitManager test selection of default kit if last activated kit is invalid', async() => {
+    let stateMock =  sinon.createStubInstance(state.StateManager);
+    let storedActivatedKitName = "not replaced";
+    sinon.stub(stateMock, 'activeKitName').get(function () {
+      return "Unknown";
+    }).set(function(kit) {
+      storedActivatedKitName = kit;
+    });
+
+    const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
+    await km.initialize();
+
+    expect( km.activeKit).to.be.null;
+    expect( storedActivatedKitName).to.be.null;
+    km.dispose();
+  });
 });
 
 suite('Cache test', async() => {
@@ -164,8 +401,6 @@ suite('Cache test', async() => {
 });
 
 
-import * as diags from '../src/diagnostics';
-import {OutputConsumer} from '../src/proc';
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
@@ -176,12 +411,20 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
   }
 }
 
+function toLowerCaseForWindows(str : string) :string {
+  if(process.platform == "win32") {
+    return str.toLowerCase();
+  } else {
+    return str;
+  }
+}
+
 suite('Diagnostics', async() => {
-  let consumer = new diags.CMakeOutputConsumer(config.sourceDirectory);
+  let consumer = new diags.CMakeOutputConsumer("dummyPath");
   let build_consumer = new diags.CompileOutputConsumer();
   setup(() => {
     // FIXME: SETUP IS NOT BEING CALLED
-    consumer = new diags.CMakeOutputConsumer(config.sourceDirectory);
+    consumer = new diags.CMakeOutputConsumer("dummyPath");
     build_consumer = new diags.CompileOutputConsumer();
   });
   test('Waring-free CMake output', async() => {
@@ -203,7 +446,7 @@ suite('Diagnostics', async() => {
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
     const diag = consumer.diagnostics[0];
-    expect(diag.filepath).to.eq(path.join(vscode.workspace.rootPath !, 'CMakeLists.txt'));
+    expect(diag.filepath).to.eq(toLowerCaseForWindows('dummyPath/CMakeLists.txt'));
     expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
     expect(diag.diag.source).to.eq('CMake (message)');
     expect(diag.diag.message).to.eq('I am a warning!');
@@ -292,7 +535,7 @@ suite('Diagnostics', async() => {
     expect(consumer.diagnostics.length).to.eq(2);
     const coll = vscode.languages.createDiagnosticCollection('cmake-tools-test');
     diags.populateCollection(coll, consumer.diagnostics);
-    const fullpath = path.join(vscode.workspace.rootPath !, 'CMakeLists.txt');
+    const fullpath = toLowerCaseForWindows('dummyPath/CMakeLists.txt');
     expect(coll.has(vscode.Uri.file(fullpath))).to.be.true;
     expect(coll.get(vscode.Uri.file(fullpath)) !.length).to.eq(2);
   });
@@ -487,8 +730,6 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gnuLDDiagnostics).to.have.length(0);
   });
 });
-
-import * as compdb from '../src/compdb';
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async() => {
