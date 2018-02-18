@@ -27,6 +27,7 @@ before_install:
       sudo sh /tmp/cmake.sh --exclude-subdir --prefix=/usr/local
       sleep 3
     fi
+    set +eu
 
 install:
   - npm install
