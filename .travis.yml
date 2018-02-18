@@ -44,4 +44,5 @@ install:
 
 script:
   - node --version
+  - cmake --version
   - node ./node_modules/vscode/bin/test
