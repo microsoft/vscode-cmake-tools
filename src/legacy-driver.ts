@@ -3,22 +3,22 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
-import * as vscode from 'vscode';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
-import {CMakeDriver} from './driver';
-import rollbar from './rollbar';
-import {fs} from './pr';
+import * as api from './api';
+import {CMakeCache} from "./cache";
+import {CompilationDatabase} from './compdb';
 import config from './config';
-import * as util from './util';
-import * as proc from './proc';
+import {CMakeDriver} from './driver';
+import {Kit} from "./kit";
 // import * as proc from './proc';
 import * as logging from './logging';
-import {CMakeCache} from "./cache";
-import * as api from './api';
-import { CompilationDatabase } from './compdb';
-import { StateManager } from './state';
-import { Kit } from "./kit";
+import {fs} from './pr';
+import * as proc from './proc';
+import rollbar from './rollbar';
+import {StateManager} from './state';
+import * as util from './util';
 
 const log = logging.createLogger('legacy-driver');
 
@@ -40,7 +40,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     await cb();
   }
 
-  private _compilationDatabase: Promise<CompilationDatabase | null> = Promise.resolve(null);
+  private _compilationDatabase: Promise<CompilationDatabase|null> = Promise.resolve(null);
   async compilationInfoForFile(filepath: string) {
     const db = await this._compilationDatabase;
     if (!db) {
@@ -50,9 +50,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   }
 
   // Legacy disposal does nothing
-  async asyncDispose() {
-    this._cacheWatcher.dispose();
-  }
+  async asyncDispose() { this._cacheWatcher.dispose(); }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     // Dup args so we can modify them
@@ -115,7 +113,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   private _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
 
   get cmakeCache() { return this._cmakeCache; }
-  private _cmakeCache: CMakeCache | null = null;
+  private _cmakeCache: CMakeCache|null = null;
 
   private async _reloadPostConfigure() {
     // Force await here so that any errors are thrown into rollbar
@@ -136,7 +134,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return ret;
   }
 
-  get generatorName(): string | null {
+  get generatorName(): string|null {
     if (!this.cmakeCache) {
       return null;
     }

@@ -18,7 +18,7 @@ export enum LogLevel {
   Fatal,
 }
 
-export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
+export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
 /**
  * Get the name of a logging level
@@ -120,7 +120,7 @@ async function _openLogFile() {
       if (await fs.exists(logfilepath)) {
         return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
       } else {
-        return node_fs.createWriteStream(logfilepath, { flags: 'w' });
+        return node_fs.createWriteStream(logfilepath, {flags : 'w'});
       }
     })();
   }
@@ -133,9 +133,7 @@ async function _openLogFile() {
 class SingletonLogger {
   private _logStream = _openLogFile();
 
-  private get _channel() {
-    return channelManager.get('CMake/Build');
-  }
+  private get _channel() { return channelManager.get('CMake/Build'); }
 
   private _log(level: LogLevel, ...args: Stringable[]) {
     if (level == LogLevel.Trace && !config.enableTraceLogging && !levelEnabled(LogLevel.Trace)) {
@@ -162,9 +160,8 @@ class SingletonLogger {
       break;
     }
     // Write to the logfile asynchronously.
-    this._logStream.then(strm => strm.write(raw_message + '\n')).catch(e => {
-      console.error('Unhandled error while writing CMakeTools log file', e);
-    });
+    this._logStream.then(strm => strm.write(raw_message + '\n'))
+        .catch(e => { console.error('Unhandled error while writing CMakeTools log file', e); });
     // Write to our output channel
     if (levelEnabled(level)) {
       this._channel.appendLine(user_message);
@@ -179,15 +176,11 @@ class SingletonLogger {
   error(...args: Stringable[]) { this._log(LogLevel.Error, ...args); }
   fatal(...args: Stringable[]) { this._log(LogLevel.Fatal, ...args); }
 
-  clearOutputChannel(): void {
-    this._channel.clear();
-  }
+  clearOutputChannel(): void { this._channel.clear(); }
 
-  showChannel(): void {
-    this._channel.show();
-  }
+  showChannel(): void { this._channel.show(); }
 
-  private static _inst: SingletonLogger | null = null;
+  private static _inst: SingletonLogger|null = null;
 
   static instance(): SingletonLogger {
     if (SingletonLogger._inst === null) {
@@ -208,13 +201,9 @@ class Logger {
   error(...args: Stringable[]) { SingletonLogger.instance().error(this.tag, ...args); }
   fatal(...args: Stringable[]) { SingletonLogger.instance().fatal(this.tag, ...args); }
 
-  clearOutputChannel() {
-    SingletonLogger.instance().clearOutputChannel();
-  }
+  clearOutputChannel() { SingletonLogger.instance().clearOutputChannel(); }
 
-  showChannel() {
-    SingletonLogger.instance().showChannel();
-  }
+  showChannel() { SingletonLogger.instance().showChannel(); }
 }
 
 export function createLogger(tag: string) { return new Logger(tag); }

@@ -3,14 +3,12 @@
  */ /** */
 
 import * as path from 'path';
-
 import * as vscode from 'vscode';
 
-import {OutputConsumer} from './proc';
-
+import {RawDiagnostic} from './diagnostics';
 import * as logging from './logging';
 import * as proc from './proc';
-import {RawDiagnostic} from './diagnostics';
+import {OutputConsumer} from './proc';
 import * as util from "./util";
 
 const cmake_logger = logging.createLogger('cmake');
@@ -57,7 +55,7 @@ export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: Fi
     if (!by_file.has(fdiag.filepath)) {
       by_file.set(fdiag.filepath, []);
     }
-    by_file.get(fdiag.filepath) !.push(fdiag.diag);
+    by_file.get(fdiag.filepath)!.push(fdiag.diag);
     return by_file;
   }, new Map<string, vscode.Diagnostic[]>());
   // Insert the diags into the collection
@@ -98,23 +96,23 @@ export class CMakeOutputConsumer implements OutputConsumer {
      * of active parsing. `stack` is parsing the CMake call stack from an error
      * or warning.
      */
-    state : ('init' | 'diag' | 'stack'),
+    state: ('init'|'diag'|'stack'),
 
     /**
      * The diagnostic that is currently being accumulated into
      */
-    diag : FileDiagnostic | null,
+    diag: FileDiagnostic|null,
 
     /**
      * The number of blank lines encountered thus far. CMake signals the end of
      * a warning or error with blank lines
      */
-    blankLines : number,
+    blankLines: number,
   }
   = {
       state : 'init',
-      diag : null,
-      blankLines : 0,
+      diag: null,
+      blankLines: 0,
     };
   /**
    * Consume a line of stderr.
@@ -136,19 +134,16 @@ export class CMakeOutputConsumer implements OutputConsumer {
       const result = re.exec(line);
       if (result) {
         // We have encountered and error
-        const[_full, level, filename, linestr, command] = result;
+        const [_full, level, filename, linestr, command] = result;
         _full;  // unused
         const line = Number.parseInt(linestr) - 1;
-        const diagmap: {[k: string] : vscode.DiagnosticSeverity} = {
+        const diagmap: {[k: string]: vscode.DiagnosticSeverity} = {
           'Warning' : vscode.DiagnosticSeverity.Warning,
           'Error' : vscode.DiagnosticSeverity.Error,
         };
-        const vsdiag
-            = new vscode.Diagnostic(new vscode.Range(line, 0, line, 9999), '', diagmap[level]);
+        const vsdiag = new vscode.Diagnostic(new vscode.Range(line, 0, line, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
-        const filepath = path.isAbsolute(filename)
-            ? filename
-            : util.normalizePath(path.join(this.sourceDir, filename));
+        const filepath = path.isAbsolute(filename) ? filename : util.normalizePath(path.join(this.sourceDir, filename));
         this._errorState.diag = {
           filepath,
           diag : vsdiag,
@@ -172,7 +167,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
         if (this._errorState.blankLines == 0) {
           // First blank. Okay
           this._errorState.blankLines++;
-          this._errorState.diag !.diag.message += '\n';
+          this._errorState.diag!.diag.message += '\n';
         } else {
           // Second blank line. Now we commit the diagnostic.
           this._commitDiag();
@@ -184,7 +179,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
         this._errorState.blankLines = 0;
         // Add this line to the current diag accumulator
         const trimmed = line.replace(/^  /, '');
-        this._errorState.diag !.diag.message += trimmed + '\n';
+        this._errorState.diag!.diag.message += trimmed + '\n';
       }
       break;
     }
@@ -211,10 +206,10 @@ export class CMakeOutputConsumer implements OutputConsumer {
    * Commit the accumulated diagnostic and go back to `init` state.
    */
   private _commitDiag() {
-    const diag = this._errorState.diag !;
+    const diag = this._errorState.diag!;
     // Remove the final newline(s) from the message, for prettiness
     diag.diag.message = diag.diag.message.replace(/\n+$/, '');
-    this._diagnostics.push(this._errorState.diag !);
+    this._diagnostics.push(this._errorState.diag!);
     this._errorState.diag = null;
     this._errorState.blankLines = 0;
     this._errorState.state = 'init';
@@ -243,7 +238,7 @@ export class CompileOutputConsumer implements OutputConsumer {
   private _msvcDiagnostics: RawDiagnostic[] = [];
   get msvcDiagnostics() { return this._msvcDiagnostics; }
 
-  private _tryParseLD(line: string): RawDiagnostic | null {
+  private _tryParseLD(line: string): RawDiagnostic|null {
     // Try to parse for GNU ld
     if (line.startsWith('make')) {
       // This is a Make error. It may *look* like an LD error, so we abort early
@@ -256,7 +251,7 @@ export class CompileOutputConsumer implements OutputConsumer {
     // Tricksy compiler error looks like a linker error:
     if (line.endsWith('required from here'))
       return null;
-    const[full, file, lineno, message] = res;
+    const [full, file, lineno, message] = res;
     if (file && lineno && message) {
       return {
         full : full,
@@ -270,11 +265,11 @@ export class CompileOutputConsumer implements OutputConsumer {
     }
   }
 
-  public _tryParseMSVC(line: string): RawDiagnostic | null {
+  public _tryParseMSVC(line: string): RawDiagnostic|null {
     const res = this._msvc_re.exec(line);
     if (!res)
       return null;
-    const[full, file, location, severity, code, message] = res;
+    const [full, file, location, severity, code, message] = res;
     const range = (() => {
       const parts = location.split(',');
       const n0 = parseInt(parts[0]);
@@ -307,15 +302,12 @@ export class CompileOutputConsumer implements OutputConsumer {
       // Try to parse for GCC
       const gcc_mat = this._gcc_re.exec(line);
       if (gcc_mat) {
-        const[full, file, lineno, column, severity, message] = gcc_mat;
+        const [full, file, lineno, column, severity, message] = gcc_mat;
         if (file && lineno && column && severity && message) {
           this._gccDiagnostics.push({
             full : full,
             file : file,
-            location : new vscode.Range(parseInt(lineno) - 1,
-                                        parseInt(column) - 1,
-                                        parseInt(lineno) - 1,
-                                        999),
+            location : new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
             severity : severity,
             message : message,
           });
@@ -328,15 +320,12 @@ export class CompileOutputConsumer implements OutputConsumer {
       // Try to parse for GHS
       const ghs_mat = this._ghs_re.exec(line);
       if (ghs_mat) {
-        const[full, file, lineno = '1', column = '1', severity, message] = ghs_mat;
+        const [full, file, lineno = '1', column = '1', severity, message] = ghs_mat;
         if (file && severity && message) {
           this._ghsDiagnostics.push({
             full : full,
             file : file,
-            location : new vscode.Range(parseInt(lineno) - 1,
-                                        parseInt(column) - 1,
-                                        parseInt(lineno) - 1,
-                                        999),
+            location : new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
             severity : severity,
             message : message
           });
@@ -365,12 +354,11 @@ export class CompileOutputConsumer implements OutputConsumer {
   createDiagnostics(build_dir: string): FileDiagnostic[] {
     const diags_by_file = new Map<string, vscode.Diagnostic[]>();
 
-    const make_abs
-        = (p: string) => util.normalizePath(path.isAbsolute(p) ? p : path.join(build_dir, p));
+    const make_abs = (p: string) => util.normalizePath(path.isAbsolute(p) ? p : path.join(build_dir, p));
     const severity_of = (p: string) => {
       switch (p) {
       case 'warning':
-          return vscode.DiagnosticSeverity.Warning;
+        return vscode.DiagnosticSeverity.Warning;
       case 'fatal error':
       case 'error':
         return vscode.DiagnosticSeverity.Error;
@@ -391,9 +379,7 @@ export class CompileOutputConsumer implements OutputConsumer {
     const arrs = util.objectPairs(by_source).map(
         ([ source, diags ]) => {return diags.map((raw_diag) => {
           const filepath = make_abs(raw_diag.file);
-          const diag = new vscode.Diagnostic(raw_diag.location,
-                                             raw_diag.message,
-                                             severity_of(raw_diag.severity));
+          const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity_of(raw_diag.severity));
           diag.source = source;
           if (raw_diag.code) {
             diag.code = raw_diag.code;
@@ -401,7 +387,7 @@ export class CompileOutputConsumer implements OutputConsumer {
           if (!diags_by_file.has(filepath)) {
             diags_by_file.set(filepath, []);
           }
-          diags_by_file.get(filepath) !.push(diag);
+          diags_by_file.get(filepath)!.push(diag);
           return { filepath: filepath, diag: diag, }
         })});
     return ([] as FileDiagnostic[]).concat(...arrs);

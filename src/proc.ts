@@ -3,14 +3,14 @@
  */ /** */
 
 import * as proc from 'child_process';
-import * as util from './util';
 
 import {createLogger} from './logging';
+import * as util from './util';
 
 const log = createLogger('proc');
 
 export interface ExecutionResult {
-  retc: number | null;
+  retc: number|null;
   stdout: string;
   stderr: string;
 }
@@ -63,7 +63,9 @@ export interface Subprocess {
   child: proc.ChildProcess;
 }
 
-export interface EnvironmentVariables { [key: string]: string; }
+export interface EnvironmentVariables {
+  [key: string]: string;
+}
 
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
@@ -84,19 +86,18 @@ export interface ExecutionOptions {
  */
 export function execute(command: string,
                         args: string[],
-                        outputConsumer?: OutputConsumer | null,
+                        outputConsumer?: OutputConsumer|null,
                         options?: ExecutionOptions): Subprocess {
   if (options && options.silent !== true) {
     log.info('Executing command: '
              // We do simple quoting of arguments with spaces.
              // This is only shown to the user,
              // and doesn't have to be 100% correct.
-             +
-             [ command ]
-                 .concat(args)
-                 .map(a => a.replace('"', '\"'))
-                 .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
-                 .join(' '));
+             + [ command ]
+                   .concat(args)
+                   .map(a => a.replace('"', '\"'))
+                   .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
+                   .join(' '));
   }
   if (!options) {
     options = {};

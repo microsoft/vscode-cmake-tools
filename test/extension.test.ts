@@ -3,12 +3,11 @@
 // Please refer to their documentation on https://mochajs.org/ for help.
 //
 
-import * as path from 'path';
-
-import * as vscode from 'vscode';
-
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
+import * as path from 'path';
+import * as vscode from 'vscode';
+
 chai.use(chaiAsPromised);
 
 import {expect} from 'chai';
@@ -22,25 +21,20 @@ import * as compdb from '../src/compdb';
 import {CMakeCache} from '../src/cache';
 import * as diags from '../src/diagnostics';
 import * as kit from '../src/kit';
-import { fs } from '../src/pr';
+import {fs} from '../src/pr';
 import {OutputConsumer} from '../src/proc';
 import * as state from '../src/state';
 import * as util from '../src/util';
 
 
-const here
-    = __dirname;
+const here = __dirname;
 
-function testFilePath(filename: string): string {
-  return path.normalize(path.join(here, '../..', 'test', filename));
-}
+function testFilePath(filename: string): string { return path.normalize(path.join(here, '../..', 'test', filename)); }
 
-function getRessourcePath(filename: string) : string {
-  return path.normalize(path.join(here, '../..', filename));
-}
+function getRessourcePath(filename: string): string { return path.normalize(path.join(here, '../..', filename)); }
 
 function getPathWithoutCompilers() {
-  if( process.arch == "win32") {
+  if (process.arch == "win32") {
     return "C:\\TMP"
   } else {
     return "/tmp"
@@ -50,38 +44,38 @@ function getPathWithoutCompilers() {
 suite('Kits test', async () => {
   const fakebin = testFilePath('fakebin');
   test('Detect system kits never throws',
-       async() => {
+       async () => {
          // Don't care about the result, just check that we don't throw during the test
          await expect(kit.scanForKits()).to.eventually.not.be.rejected;
        })
       // Compiler detection can run a little slow
       .timeout(12000);
 
-  test('Detect a GCC compiler file', async() => {
+  test('Detect a GCC compiler file', async () => {
     const compiler = path.join(fakebin, 'gcc-42.1');
     const compkit = await kit.kitIfCompiler(compiler);
     expect(compkit).to.not.be.null;
-    expect(compkit !.compilers).has.property('C').equal(compiler);
-    expect(compkit !.compilers).to.not.have.property('CXX');
-    expect(compkit !.name).to.eq('GCC 42.1');
+    expect(compkit!.compilers).has.property('C').equal(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+    expect(compkit!.name).to.eq('GCC 42.1');
   });
 
-  test('Detect a Clang compiler file', async() => {
+  test('Detect a Clang compiler file', async () => {
     const compiler = path.join(fakebin, 'clang-0.25');
     const compkit = await kit.kitIfCompiler(compiler);
     expect(compkit).to.not.be.null;
-    expect(compkit !.compilers).has.property('C').eq(compiler);
-    expect(compkit !.compilers).to.not.have.property('CXX');
-    expect(compkit !.name).to.eq('Clang 0.25');
+    expect(compkit!.compilers).has.property('C').eq(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+    expect(compkit!.name).to.eq('Clang 0.25');
   });
 
-  test('Detect non-compiler program', async() => {
+  test('Detect non-compiler program', async () => {
     const program = path.join(fakebin, 'gcc-666');
     const nil = await kit.kitIfCompiler(program);
     expect(nil).to.be.null;
   });
 
-  test('Detect non existing program', async() => {
+  test('Detect non existing program', async () => {
     const program = path.join(fakebin, 'unknown');
     const nil = await kit.kitIfCompiler(program);
     expect(nil).to.be.null;
@@ -89,23 +83,21 @@ suite('Kits test', async () => {
 
 
   suite('Scan directory', async () => {
-    let path_with_compilername ="";
-    setup( async() =>  {
-      path_with_compilername = path.join(fakebin, "gcc-4.3.2");
-    });
-    teardown(async() => {
-      if( await fs.exists(path_with_compilername)) {
+    let path_with_compilername = "";
+    setup(async () => { path_with_compilername = path.join(fakebin, "gcc-4.3.2"); });
+    teardown(async () => {
+      if (await fs.exists(path_with_compilername)) {
         await fs.rmdir(path_with_compilername)
       }
     });
-    test('Scan folder with compiler name', async() => {
+    test('Scan folder with compiler name', async () => {
       fs.mkdir(path_with_compilername)
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
       expect(kits.length).to.eq(2);
     });
 
-    test('Scan file with compiler name', async() => {
+    test('Scan file with compiler name', async () => {
       await fs.writeFile(path_with_compilername, "")
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
@@ -114,34 +106,31 @@ suite('Kits test', async () => {
   });
 
   suite('Rescan kits', async () => {
-    let km : kit.KitManager;
+    let km: kit.KitManager;
     let path_rescan_kit = testFilePath('rescan_kit.json');
-    let sandbox : sinon.SinonSandbox;
-    let path_backup : string | undefined;
-    setup( async() =>  {
+    let sandbox: sinon.SinonSandbox;
+    let path_backup: string|undefined;
+    setup(async () => {
       sandbox = sinon.sandbox.create();
-      let stateMock =  sandbox.createStubInstance(state.StateManager);
-      sandbox.stub(stateMock, 'activeKitName').get(function () {
-        return null;
-      }).set(function() {});
+      let stateMock = sandbox.createStubInstance(state.StateManager);
+      sandbox.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
       km = new kit.KitManager(stateMock, path_rescan_kit);
 
       // Mock showInformationMessage to suppress needed user choice
-      sandbox.stub(vscode.window, "showInformationMessage").callsFake(function() {
-          return {title : "No", isCloseAffordance : true, doOpen : false};
-        });
+      sandbox.stub(vscode.window, "showInformationMessage")
+          .callsFake(function() { return {title : "No", isCloseAffordance : true, doOpen : false}; });
 
       path_backup = process.env.PATH;
     });
-    teardown(async() => {
+    teardown(async () => {
       sandbox.restore();
-      if( await fs.exists(path_rescan_kit)) {
+      if (await fs.exists(path_rescan_kit)) {
         await fs.rmdir(path_rescan_kit)
       }
       process.env.PATH = path_backup;
     });
 
-    async function readValidKitFile( file_path : string) : Promise<any[]> {
+    async function readValidKitFile(file_path: string): Promise<any[]> {
       const rawKitsFromFile = (await fs.readFile(file_path, 'utf8'));
       expect(rawKitsFromFile.length).to.be.not.eq(0);
 
@@ -154,119 +143,114 @@ suite('Kits test', async () => {
       return kitFile;
     }
 
-    test('init kit file creation no compilers in path', async() => {
+    test('init kit file creation no compilers in path', async () => {
       process.env['PATH'] = getPathWithoutCompilers();
 
       await km.initialize();
 
       const newKitFileExists = await fs.exists(path_rescan_kit);
       expect(newKitFileExists).to.be.true;
-     }).timeout(5000);
+    }).timeout(5000);
 
-     test('check valid kit file for test system compilers', async() => {
+    test('check valid kit file for test system compilers', async () => {
       await km.initialize();
 
       await readValidKitFile(path_rescan_kit);
-     }).timeout(30000);
+    }).timeout(30000);
 
-     test('check empty kit file no compilers in path', async() => {
+    test('check empty kit file no compilers in path', async () => {
       process.env['PATH'] = getPathWithoutCompilers();
 
       await km.initialize();
 
       let kitFile = await readValidKitFile(path_rescan_kit);
-      let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
+      let nonVSKits = kitFile.filter((item) => {return item.visualStudio == null});
       expect(nonVSKits.length).to.be.eq(0);
-     }).timeout(5000);
+    }).timeout(5000);
 
-     // Fails because PATH is tried to split but a empty path is not splitable
-     test.skip('check empty kit file', async() => {
+    // Fails because PATH is tried to split but a empty path is not splitable
+    test.skip('check empty kit file', async () => {
       process.env['PATH'] = "";
 
       await km.initialize();
 
       const newKitFileExists = await fs.exists(path_rescan_kit);
       expect(newKitFileExists).to.be.true;
-     });
+    });
 
-     test('check fake compilers in kit file', async() => {
+    test('check fake compilers in kit file', async () => {
       process.env['PATH'] = testFilePath("fakebin");
 
       await km.initialize();
 
       let kitFile = await readValidKitFile(path_rescan_kit);
-      let nonVSKits = kitFile.filter( (item) => { return item.visualStudio == null});
+      let nonVSKits = kitFile.filter((item) => {return item.visualStudio == null});
       expect(nonVSKits.length).to.be.eq(2);
-     }).timeout(5000);
+    }).timeout(5000);
 
-     test('check check combination of scan and old kits', async() => {
+    test('check check combination of scan and old kits', async () => {
       process.env['PATH'] = testFilePath("fakebin");
-      await fs.copyFile(testFilePath('test_kit.json'), path_rescan_kit)
+      await fs
+          .copyFile(testFilePath('test_kit.json'), path_rescan_kit)
 
-      await km.initialize();
+              await km.initialize();
       await km.rescanForKits()
 
-      let names = km.kits.map( (item) => { return item.name} );
+      let names = km.kits.map((item) => {return item.name});
 
-      expect( names).to.contains("CompilerKit 1");
-      expect( names).to.contains("CompilerKit 2");
-      expect( names).to.contains("CompilerKit 3 with PreferedGenerator");
-      expect( names).to.contains("ToolchainKit 1");
-      expect( names).to.contains("VSCode Kit 1");
-      expect( names).to.contains("VSCode Kit 2");
-      expect( names).to.contains("Clang 0.25");
-      expect( names).to.contains("GCC 42.1");
-
-     }).timeout(5000);
+      expect(names).to.contains("CompilerKit 1");
+      expect(names).to.contains("CompilerKit 2");
+      expect(names).to.contains("CompilerKit 3 with PreferedGenerator");
+      expect(names).to.contains("ToolchainKit 1");
+      expect(names).to.contains("VSCode Kit 1");
+      expect(names).to.contains("VSCode Kit 2");
+      expect(names).to.contains("Clang 0.25");
+      expect(names).to.contains("GCC 42.1");
+    }).timeout(5000);
   });
 
   suite('GUI test', async () => {
-    let km : kit.KitManager;
-    let gui_sandbox : sinon.SinonSandbox;
-    setup( async() =>  {
+    let km: kit.KitManager;
+    let gui_sandbox: sinon.SinonSandbox;
+    setup(async () => {
       gui_sandbox = sinon.sandbox.create();
-      let stateMock =  gui_sandbox.createStubInstance(state.StateManager);
-      sinon.stub(stateMock, 'activeKitName').get(function () {
-        return null;
-      }).set(function() {});
+      let stateMock = gui_sandbox.createStubInstance(state.StateManager);
+      sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
 
       km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
     });
-    teardown(async() => {
-      gui_sandbox.restore();
-    });
+    teardown(async () => { gui_sandbox.restore(); });
 
-    test('KitManager tests opening of kit file', async() => {
-      let text : vscode.TextDocument | undefined;
+    test('KitManager tests opening of kit file', async () => {
+      let text: vscode.TextDocument|undefined;
       gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(function(textDoc) {
         text = textDoc;
-        return {document: text};
+        return {document : text};
       });
       await km.initialize();
 
       const editor = await km.openKitsEditor();
 
       expect(text).to.be.not.undefined;
-      if(text != undefined) {
+      if (text != undefined) {
         const rawKitsFromFile = (await fs.readFile(testFilePath('test_kit.json'), 'utf8'));
         expect(editor.document.getText()).to.be.eq(rawKitsFromFile);
-      } else {}
+      } else {
+      }
     }).timeout(5000);
   });
 
-  test('KitManager tests event on change of active kit', async() => {
-    let stateMock =  sinon.createStubInstance(state.StateManager);
-    let storedActivatedKitName : string = "";
-    sinon.stub(stateMock, 'activeKitName').get(function () {
-      return null;
-    }).set(function(kit) {
-      storedActivatedKitName = kit;
-    });
+  test('KitManager tests event on change of active kit', async () => {
+    let stateMock = sinon.createStubInstance(state.StateManager);
+    let storedActivatedKitName: string = "";
+    sinon.stub(stateMock, 'activeKitName')
+        .get(function() { return null; })
+        .set(function(kit) { storedActivatedKitName = kit; });
     const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
     await km.initialize();
     // Check that each time we change the kit, it fires a signal
-    let fired_kit: string | null = null;
-    km.onActiveKitChanged(k => fired_kit = k !.name);
+    let fired_kit: string|null = null;
+    km.onActiveKitChanged(k => fired_kit = k!.name);
     for (const kit of km.kits) {
       const name = kit.name;
       // Set the kit
@@ -279,75 +263,67 @@ suite('Kits test', async () => {
     km.dispose();
   }).timeout(10000);
 
-  test('KitManager test load of kit from test file', async() => {
-    let stateMock =  sinon.createStubInstance(state.StateManager);
-    sinon.stub(stateMock, 'activeKitName').get(function () {
-      return null;
-    }).set(function() {});
+  test('KitManager test load of kit from test file', async () => {
+    let stateMock = sinon.createStubInstance(state.StateManager);
+    sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
     const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
 
     await km.initialize();
 
-    expect( km.kits.length).to.eq(6);
-    expect( km.kits[0].name).to.eq( "CompilerKit 1");
-    expect( km.kits[1].name).to.eq( "CompilerKit 2");
-    expect( km.kits[2].name).to.eq( "CompilerKit 3 with PreferedGenerator");
-    expect( km.kits[3].name).to.eq( "ToolchainKit 1");
-    expect( km.kits[4].name).to.eq( "VSCode Kit 1");
-    expect( km.kits[5].name).to.eq( "VSCode Kit 2");
+    expect(km.kits.length).to.eq(6);
+    expect(km.kits[0].name).to.eq("CompilerKit 1");
+    expect(km.kits[1].name).to.eq("CompilerKit 2");
+    expect(km.kits[2].name).to.eq("CompilerKit 3 with PreferedGenerator");
+    expect(km.kits[3].name).to.eq("ToolchainKit 1");
+    expect(km.kits[4].name).to.eq("VSCode Kit 1");
+    expect(km.kits[5].name).to.eq("VSCode Kit 2");
 
     km.dispose();
   });
 
-  test('KitManager test selection of last activated kit', async() => {
-    let stateMock =  sinon.createStubInstance(state.StateManager);
+  test('KitManager test selection of last activated kit', async () => {
+    let stateMock = sinon.createStubInstance(state.StateManager);
 
-    sinon.stub(stateMock, 'activeKitName').get(function () {
-      return "ToolchainKit 1";
-    }).set(function() {});
+    sinon.stub(stateMock, 'activeKitName').get(function() { return "ToolchainKit 1"; }).set(function() {});
     const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
 
     await km.initialize();
 
-    expect( km.activeKit).to.be.not.null;
-    if( km.activeKit)
-      expect( km.activeKit.name).to.eq( "ToolchainKit 1");
+    expect(km.activeKit).to.be.not.null;
+    if (km.activeKit)
+      expect(km.activeKit.name).to.eq("ToolchainKit 1");
 
     km.dispose();
   });
 
-  test('KitManager test selection of a default kit', async() => {
-    let stateMock =  sinon.createStubInstance(state.StateManager);
-    sinon.stub(stateMock, 'activeKitName').get(function () {
-      return null;
-    }).set(function() {});
+  test('KitManager test selection of a default kit', async () => {
+    let stateMock = sinon.createStubInstance(state.StateManager);
+    sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
 
     const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
     await km.initialize();
 
-    expect( km.activeKit).to.be.null;
+    expect(km.activeKit).to.be.null;
     km.dispose();
   });
 
-  test('KitManager test selection of default kit if last activated kit is invalid', async() => {
-    let stateMock =  sinon.createStubInstance(state.StateManager);
+  test('KitManager test selection of default kit if last activated kit is invalid', async () => {
+    let stateMock = sinon.createStubInstance(state.StateManager);
     let storedActivatedKitName = "not replaced";
-    sinon.stub(stateMock, 'activeKitName').get(function () {
-      return "Unknown";
-    }).set(function(kit) {
-      storedActivatedKitName = kit;
-    });
+    sinon.stub(stateMock, 'activeKitName')
+        .get(function() { return "Unknown"; })
+        .set(function(kit) { storedActivatedKitName = kit; });
 
     const km = new kit.KitManager(stateMock, testFilePath('test_kit.json'));
     await km.initialize();
 
-    expect( km.activeKit).to.be.null;
-    expect( storedActivatedKitName).to.be.null;
+    expect(km.activeKit).to.be.null;
+    expect(storedActivatedKitName).to.be.null;
     km.dispose();
   });
 });
 
-suite('Cache test', async() => {
+suite('Cache test', async () => {
   test("Read CMake Cache", async function() {
     const cache = await CMakeCache.fromPath(testFilePath('TestCMakeCache.txt'));
     const generator = cache.get("CMAKE_GENERATOR") as api.CacheEntry;
@@ -361,14 +337,12 @@ suite('Cache test', async() => {
     expect(build_testing.as<boolean>()).to.be.true;
   });
   test("Read cache with various newlines", async function() {
-    for (const newline of['\n', '\r\n', '\r']) {
-      const str =
-          [ '# This line is ignored', '// This line is docs', 'SOMETHING:STRING=foo', '' ].join(
-              newline);
+    for (const newline of ['\n', '\r\n', '\r']) {
+      const str = [ '# This line is ignored', '// This line is docs', 'SOMETHING:STRING=foo', '' ].join(newline);
       const entries = CMakeCache.parseCache(str);
       expect(entries.size).to.eq(1);
       expect(entries.has('SOMETHING')).to.be.true;
-      const entry = entries.get('SOMETHING') !;
+      const entry = entries.get('SOMETHING')!;
       expect(entry.value).to.eq('foo');
       expect(entry.type).to.eq(api.CacheEntryType.String);
       expect(entry.helpString).to.eq('This line is docs');
@@ -401,7 +375,6 @@ suite('Cache test', async() => {
 });
 
 
-
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
     consumer.output(line);
@@ -411,15 +384,15 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
   }
 }
 
-function toLowerCaseForWindows(str : string) :string {
-  if(process.platform == "win32") {
+function toLowerCaseForWindows(str: string): string {
+  if (process.platform == "win32") {
     return str.toLowerCase();
   } else {
     return str;
   }
 }
 
-suite('Diagnostics', async() => {
+suite('Diagnostics', async () => {
   let consumer = new diags.CMakeOutputConsumer("dummyPath");
   let build_consumer = new diags.CompileOutputConsumer();
   setup(() => {
@@ -427,7 +400,7 @@ suite('Diagnostics', async() => {
     consumer = new diags.CMakeOutputConsumer("dummyPath");
     build_consumer = new diags.CompileOutputConsumer();
   });
-  test('Waring-free CMake output', async() => {
+  test('Waring-free CMake output', async () => {
     const cmake_output = [
       '-- Configuring done',
       '-- Generating done',
@@ -537,7 +510,7 @@ suite('Diagnostics', async() => {
     diags.populateCollection(coll, consumer.diagnostics);
     const fullpath = toLowerCaseForWindows('dummyPath/CMakeLists.txt');
     expect(coll.has(vscode.Uri.file(fullpath))).to.be.true;
-    expect(coll.get(vscode.Uri.file(fullpath)) !.length).to.eq(2);
+    expect(coll.get(vscode.Uri.file(fullpath))!.length).to.eq(2);
   });
 
   test('Parsing Apple Clang Diagnostics', () => {
@@ -548,8 +521,7 @@ suite('Diagnostics', async() => {
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
     expect(diag.location.start.line).to.eq(84);
-    expect(diag.message)
-        .to.eq('comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
+    expect(diag.message).to.eq('comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
     expect(diag.location.start.character).to.eq(14);
     expect(diag.file).to.eq('/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h');
     expect(diag.severity).to.eq('warning');
@@ -558,9 +530,7 @@ suite('Diagnostics', async() => {
   });
 
   test('Parse more GCC diagnostics', () => {
-    const lines = [
-      `/Users/Tobias/Code/QUIT/Source/qidespot1.cpp:303:49: error: expected ';' after expression`
-    ];
+    const lines = [ `/Users/Tobias/Code/QUIT/Source/qidespot1.cpp:303:49: error: expected ';' after expression` ];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -587,9 +557,8 @@ suite('Diagnostics', async() => {
   });
 
   test('Parsing fatal error diagnostics in french', () => {
-    const lines = [
-      '/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type'
-    ];
+    const lines =
+        [ '/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type' ];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -629,9 +598,7 @@ suite('Diagnostics', async() => {
     expect(diag.severity).to.eq('warning');
   });
   test('Parsing warning diagnostics in french', () => {
-    const lines = [
-      '/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’'
-    ];
+    const lines = [ '/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’' ];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -658,9 +625,7 @@ suite('Diagnostics', async() => {
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
   });
   test('Parsing linker error in french', () => {
-    const lines = [
-      "/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »"
-    ];
+    const lines = [ "/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »" ];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
     const diag = build_consumer.gnuLDDiagnostics[0];
@@ -705,9 +670,7 @@ suite('Diagnostics', async() => {
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
   });
   test('Parsing GHS Diagnostics fatal error', () => {
-    const lines = [
-      '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): fatal error #68: some fatal error'
-    ];
+    const lines = [ '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): fatal error #68: some fatal error' ];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.ghsDiagnostics).to.have.length(1);
     const diag = build_consumer.ghsDiagnostics[0];
@@ -732,16 +695,16 @@ suite('Diagnostics', async() => {
 });
 
 suite('Compilation info', () => {
-  test('Parsing compilation databases', async() => {
+  test('Parsing compilation databases', async () => {
     const dbpath = testFilePath('test_compdb.json');
-    const db = (await compdb.CompilationDatabase.fromFilePath(dbpath)) !;
+    const db = (await compdb.CompilationDatabase.fromFilePath(dbpath))!;
     expect(db).to.not.be.null;
     const source_path = "/home/clang-languageservice/main.cpp";
-    const info = db.getCompilationInfoForUri(vscode.Uri.file(source_path)) !;
+    const info = db.getCompilationInfoForUri(vscode.Uri.file(source_path))!;
     expect(info).to.not.be.null;
     expect(info.file).to.eq(source_path);
-    expect(info.compile !.directory).to.eq('/home/clang-languageservice/build');
-    expect(info.compile !.command)
+    expect(info.compile!.directory).to.eq('/home/clang-languageservice/build');
+    expect(info.compile!.command)
         .to.eq(
             "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp");
   });
@@ -753,8 +716,8 @@ suite('Compilation info', () => {
       file : 'meow.cpp'
     };
     const info = compdb.parseRawCompilationInfo(raw);
-    expect(raw.command).to.eq(info.compile !.command);
-    expect(raw.directory).to.eq(info.compile !.directory);
+    expect(raw.command).to.eq(info.compile!.command);
+    expect(raw.directory).to.eq(info.compile!.directory);
     expect(raw.file).to.eq(info.file);
     let idx = info.includeDirectories.findIndex(i => i.path === '/system/path');
     expect(idx).to.be.gte(0);
@@ -780,8 +743,8 @@ suite('Compilation info', () => {
       file : 'meow.cpp'
     };
     const info = compdb.parseRawCompilationInfo(raw);
-    expect(raw.command).to.eq(info.compile !.command);
-    expect(raw.directory).to.eq(info.compile !.directory);
+    expect(raw.command).to.eq(info.compile!.command);
+    expect(raw.directory).to.eq(info.compile!.directory);
     expect(raw.file).to.eq(info.file);
     let idx = info.includeDirectories.findIndex(i => i.path === '/system/path');
     expect(idx).to.be.gte(0);

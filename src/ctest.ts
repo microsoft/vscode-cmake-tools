@@ -1,18 +1,15 @@
-import * as vscode from 'vscode';
-
 import * as path from 'path';
+import * as vscode from 'vscode';
+import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
-import * as xml2js from 'xml2js';
-
 import * as api from './api';
-import * as util from './util';
-import {CMakeDriver} from './driver';
-import {fs} from './pr';
-
-import * as logging from './logging';
 import config from './config';
+import {CMakeDriver} from './driver';
+import * as logging from './logging';
+import {fs} from './pr';
 import {OutputConsumer} from './proc';
+import * as util from './util';
 
 const log = logging.createLogger('ctest');
 
@@ -23,7 +20,7 @@ export interface BasicTestResults {
 
 interface SiteAttributes {}
 
-type TestStatus = ('failed' | 'notrun' | 'passed');
+type TestStatus = ('failed'|'notrun'|'passed');
 
 export interface FailingTestDecoration {
   fileName: string;
@@ -58,7 +55,9 @@ export interface SiteData {
   Testing: TestingData;
 }
 
-export interface CTestResults { Site: SiteData; }
+export interface CTestResults {
+  Site: SiteData;
+}
 
 interface EncodedMeasurementValue {
   $: {encoding?: string; compression?: string;};
@@ -106,8 +105,7 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
   if (typeof node === 'string') {
     return node;
   }
-  let buffer
-      = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
+  let buffer = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
   if (!!node.$.compression) {
     buffer = zlib.unzipSync(buffer);
   }
@@ -120,16 +118,16 @@ function cleanupResultsXML(messy: MessyResults): CTestResults {
       $ : messy.Site.$,
       Testing : {
         TestList : messy.Site.Testing[0].TestList.map(l => l.Test[0]),
-        Test : messy.Site.Testing[0].Test.map(
-            (test): Test => ({
-              FullName : test.FullName[0],
-              FullCommandLine : test.FullCommandLine[0],
-              Name : test.Name[0],
-              Path : test.Path[0],
-              Status : test.$.Status,
-              Measurements : new Map<string, TestMeasurement>(),
-              Output : decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
-            }))
+        Test :
+            messy.Site.Testing[0].Test.map((test): Test => ({
+                                             FullName : test.FullName[0],
+                                             FullCommandLine : test.FullCommandLine[0],
+                                             Name : test.Name[0],
+                                             Path : test.Path[0],
+                                             Status : test.$.Status,
+                                             Measurements : new Map<string, TestMeasurement>(),
+                                             Output : decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
+                                           }))
       }
     }
   };
@@ -152,7 +150,7 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
     const regex = process.platform === 'win32' ? /^(.*)\((\d+)\): FAILED:/ : /^(.*):(\d+): FAILED:/;
     const res = regex.exec(line);
     if (res) {
-      const[_all, file, lineno_] = res;
+      const [_all, file, lineno_] = res;
       _all;  // unused
       const lineno = parseInt(lineno_) - 1;
       let message = '~~~c++\n';
@@ -177,7 +175,9 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
 export async function parseTestOutput(output: string): Promise<FailingTestDecoration[]> {
   if (/is a Catch .* host application\./.test(output)) {
     return parseCatchTestOutput(output);
-  } else {return [];}
+  } else {
+    return [];
+  }
 };
 
 export class DecorationManager {
@@ -187,17 +187,17 @@ export class DecorationManager {
 
   private readonly _failingTestDecorationType = vscode.window.createTextEditorDecorationType({
     borderColor : 'rgba(255, 0, 0, 0.2)',
-    borderWidth : '1px',
-    borderRadius : '3px',
-    borderStyle : 'solid',
-    cursor : 'pointer',
-    backgroundColor : 'rgba(255, 0, 0, 0.1)',
-    overviewRulerColor : 'red',
-    overviewRulerLane : vscode.OverviewRulerLane.Center,
-    after : {
-      contentText : 'Failed',
-      backgroundColor : 'darkred',
-      margin : '10px',
+    borderWidth: '1px',
+    borderRadius: '3px',
+    borderStyle: 'solid',
+    cursor: 'pointer',
+    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+    overviewRulerColor: 'red',
+    overviewRulerLane: vscode.OverviewRulerLane.Center,
+    after: {
+      contentText: 'Failed',
+      backgroundColor: 'darkred',
+      margin: '10px',
     },
   });
 
@@ -233,9 +233,8 @@ export class DecorationManager {
     const fails_acc: vscode.DecorationOptions[] = [];
     const editor_file = util.normalizePath(editor.document.fileName);
     for (const decor of this.failingTestDecorations) {
-      const decor_file = util.normalizePath(path.isAbsolute(decor.fileName)
-                                                ? decor.fileName
-                                                : path.join(this.binaryDir, decor.fileName));
+      const decor_file = util.normalizePath(
+          path.isAbsolute(decor.fileName) ? decor.fileName : path.join(this.binaryDir, decor.fileName));
       if (editor_file !== decor_file) {
         continue;
       }
@@ -311,21 +310,20 @@ export class CTestDriver implements vscode.Disposable {
   private readonly _testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();
   readonly onTestsChanged = this._testsChangedEmitter.event;
 
-  private _testResults: CTestResults | null;
-  get testResults(): CTestResults | null { return this._testResults; }
-  set testResults(v: CTestResults | null) {
+  private _testResults: CTestResults|null;
+  get testResults(): CTestResults|null { return this._testResults; }
+  set testResults(v: CTestResults|null) {
     this._testResults = v;
     if (v) {
       const total = this.tests.length;
-      const passing
-          = v.Site.Testing.Test.reduce((acc, test) => acc + (test.Status === 'passed' ? 1 : 0), 0);
+      const passing = v.Site.Testing.Test.reduce((acc, test) => acc + (test.Status === 'passed' ? 1 : 0), 0);
       this._resultsChangedEmitter.fire({passing, total});
     } else {
       this._resultsChangedEmitter.fire(null);
     }
   }
 
-  private readonly _resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults | null>();
+  private readonly _resultsChangedEmitter = new vscode.EventEmitter<BasicTestResults|null>();
   readonly onResultsChanged = this._resultsChangedEmitter.event;
 
   async runCTest(driver: CMakeDriver): Promise<number> {
@@ -333,12 +331,12 @@ export class CTestDriver implements vscode.Disposable {
     this._decorationManager.clearFailingTestDecorations();
 
     const configuration = driver.currentBuildType;
-    const child = driver.executeCommand(
-        config.ctestPath,
-        [ `-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure' ]
-            .concat(config.ctestArgs),
-        new CTestOutputLogger(),
-        {environment : config.testEnvironment, cwd : driver.binaryDir});
+    const child
+        = driver.executeCommand(config.ctestPath,
+                                [ `-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure' ]
+                                    .concat(config.ctestArgs),
+                                new CTestOutputLogger(),
+                                {environment : config.testEnvironment, cwd : driver.binaryDir});
 
     const res = await child.result;
     await this.reloadTests(driver);
@@ -364,33 +362,28 @@ export class CTestDriver implements vscode.Disposable {
     this.testingEnabled = true;
 
     const config = driver.currentBuildType;
-    const result = await driver
-                       .executeCommand('ctest',
-                                       [ '-N', '-C', config ],
-                                       undefined,
-                                       {cwd : driver.binaryDir, silent : true})
-                       .result;
+    const result
+        = await driver
+              .executeCommand('ctest', [ '-N', '-C', config ], undefined, {cwd : driver.binaryDir, silent : true})
+              .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
-      console.error(
-          'There was an error running ctest to determine available test executables');
+      console.error('There was an error running ctest to determine available test executables');
       return this.tests = [];
     }
     const tests = result.stdout.split('\n')
                       .map(l => l.trim())
                       .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
-                      .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l) !)
-                      .map(([ _, id, tname ]) => ({id : parseInt(id !), name : tname !}));
+                      .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
+                      .map(([ _, id, tname ]) => ({id : parseInt(id!), name : tname!}));
     const tagfile = path.join(driver.binaryDir, 'Testing', 'TAG');
-    const tag = (await fs.exists(tagfile))
-        ? (await fs.readFile(tagfile)).toString().split('\n')[0].trim()
-        : null;
+    const tag = (await fs.exists(tagfile)) ? (await fs.readFile(tagfile)).toString().split('\n')[0].trim() : null;
     const tagdir = tag ? path.join(driver.binaryDir, 'Testing', tag) : null;
     const results_file = tagdir ? path.join(tagdir, 'Test.xml') : null;
     this.tests = tests;
     if (results_file && await fs.exists(results_file)) {
       console.assert(tagdir);
-      await this._reloadTestResults(driver.sourceDir, tagdir !, results_file);
+      await this._reloadTestResults(driver.sourceDir, tagdir!, results_file);
     } else {
       this.testResults = null;
     }
@@ -399,8 +392,7 @@ export class CTestDriver implements vscode.Disposable {
   }
 
 
-  private async _reloadTestResults(_sourceDir: string, _tagdir: string, test_xml: string):
-      Promise<void> {
+  private async _reloadTestResults(_sourceDir: string, _tagdir: string, test_xml: string): Promise<void> {
     this.testResults = await readTestResultsFile(test_xml);
     const failing = this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
     this._decorationManager.clearFailingTestDecorations();

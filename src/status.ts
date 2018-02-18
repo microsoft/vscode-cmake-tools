@@ -15,22 +15,14 @@ function setVisible<T extends Hideable>(i: T, v: boolean) {
 }
 
 export class StatusBar implements vscode.Disposable {
-  private readonly _cmakeToolsStatusItem
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
-  private readonly _kitSelectionButton
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.45);
-  private readonly _buildButton
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
-  private readonly _targetButton
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
-  private readonly _debugButton
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.25);
-  private readonly _launchTargetNameButton
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.2);
-  private readonly _testButton
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
-  private readonly _warningMessage
-      = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
+  private readonly _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
+  private readonly _kitSelectionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.45);
+  private readonly _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
+  private readonly _targetButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.3);
+  private readonly _debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.25);
+  private readonly _launchTargetNameButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.2);
+  private readonly _testButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
+  private readonly _warningMessage = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
 
   dispose() {
     const items = [
@@ -92,8 +84,7 @@ export class StatusBar implements vscode.Disposable {
   private _visible: boolean = true;
 
   private _reloadStatusButton() {
-    this._cmakeToolsStatusItem.text = `CMake: ${this._projectName}: ${this._buildTypeLabel
-      }: ${this._statusMessage}`;
+    this._cmakeToolsStatusItem.text = `CMake: ${this._projectName}: ${this._buildTypeLabel}: ${this._statusMessage}`;
     this.reloadVisibility();
   }
 
@@ -162,9 +153,9 @@ export class StatusBar implements vscode.Disposable {
   }
 
 
-  private _testResults: BasicTestResults | null = null;
-  public get testResults(): BasicTestResults | null { return this._testResults; }
-  public set testResults(v: BasicTestResults | null) {
+  private _testResults: BasicTestResults|null = null;
+  public get testResults(): BasicTestResults|null { return this._testResults; }
+  public set testResults(v: BasicTestResults|null) {
     this._testResults = v;
 
     if (!v) {
@@ -177,8 +168,7 @@ export class StatusBar implements vscode.Disposable {
     const total = v.total;
     const good = passing == total;
     const icon = good ? 'check' : 'x';
-    this._testButton.text
-        = `$(${icon}) ${passing}/${total} ` + (total == 1 ? 'test' : 'tests') + ' passing';
+    this._testButton.text = `$(${icon}) ${passing}/${total} ` + (total == 1 ? 'test' : 'tests') + ' passing';
     this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 
@@ -212,8 +202,8 @@ export class StatusBar implements vscode.Disposable {
    * The progress of the currently executing task. Updates a primitive progress
    * bar.
    */
-  private _progress: number | null = null;
-  setProgress(v: number | null) {
+  private _progress: number|null = null;
+  setProgress(v: number|null) {
     this._progress = v;
     this._reloadBuildButton();
   }

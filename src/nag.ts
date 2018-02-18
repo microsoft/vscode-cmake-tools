@@ -4,14 +4,12 @@
  * Module for getting "nags" from a remote.
  */ /** */
 
+import * as ajv from 'ajv';
+import * as https from 'https';
+import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 
-import * as https from 'https';
-
-import * as yaml from 'js-yaml';
-import * as ajv from 'ajv';
-
-const open = require('open') as((url: string, appName?: string, callback?: Function) => void);
+const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 const NAG_REMOTE_URL = 'https://vector-of-bool.github.io/vscode-cmt-nags.yaml';
 
@@ -28,7 +26,7 @@ export interface Nag {
   resetSeconds: number;
 }
 
-export function parseNagData(items: any): Nag[] | null {
+export function parseNagData(items: any): Nag[]|null {
   const validator = new ajv({allErrors : true, format : 'full'}).compile({
     type : 'object',
     properties : {
@@ -84,7 +82,7 @@ export function parseNagData(items: any): Nag[] | null {
 }
 
 
-export function parseNagYAML(str: string): Nag[] | null {
+export function parseNagYAML(str: string): Nag[]|null {
   try {
     const raw_data = yaml.load(str);
     return parseNagData(raw_data);
@@ -96,17 +94,15 @@ export function parseNagYAML(str: string): Nag[] | null {
 
 interface NagState {
   nagsByID: {
-    [id: string] : undefined | {
+    [id: string]: undefined|{
       nextShowTimeMS : number,
-      neverAgain : boolean,
+      neverAgain: boolean,
     };
   };
 }
 
 
-function writeNagState(ext: vscode.ExtensionContext, state: NagState) {
-  ext.globalState.update('nagState', state);
-}
+function writeNagState(ext: vscode.ExtensionContext, state: NagState) { ext.globalState.update('nagState', state); }
 
 function getOrInitNagState(ext: vscode.ExtensionContext): NagState {
   const state = ext.globalState.get<NagState>('nagState');
@@ -214,8 +210,6 @@ export class NagManager {
   start() {
     try {
       this._pollRemoteForNags();
-    } catch (e) {
-      console.error('Error starting up initial event polling.', e);
-    }
+    } catch (e) { console.error('Error starting up initial event polling.', e); }
   }
 };

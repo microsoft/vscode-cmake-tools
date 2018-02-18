@@ -21,88 +21,84 @@ import * as rimraf from 'rimraf';
  */
 export namespace fs {
 
-  export function exists(fspath: string): Promise<boolean> {
-    return new Promise<boolean>((resolve, _reject) => {
-      fs_.exists(fspath, res => resolve(res));
-    })
-  }
+export function exists(fspath: string): Promise<boolean> {
+  return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); })
+}
 
-  export const readFile = promisify(fs_.readFile);
+export const readFile = promisify(fs_.readFile);
 
-  export const writeFile = promisify(fs_.writeFile);
+export const writeFile = promisify(fs_.writeFile);
 
-  export const readdir = promisify(fs_.readdir);
+export const readdir = promisify(fs_.readdir);
 
-  export const mkdir = promisify(fs_.mkdir);
+export const mkdir = promisify(fs_.mkdir);
 
-  export const mkdtemp = promisify(fs_.mkdtemp);
+export const mkdtemp = promisify(fs_.mkdtemp);
 
-  export const rename = promisify(fs_.rename);
+export const rename = promisify(fs_.rename);
 
-  export const stat = promisify(fs_.stat);
+export const stat = promisify(fs_.stat);
 
-  export const readlink = promisify(fs_.readlink);
+export const readlink = promisify(fs_.readlink);
 
-  export const unlink = promisify(fs_.unlink);
+export const unlink = promisify(fs_.unlink);
 
-  export const appendFile = promisify(fs_.appendFile);
+export const appendFile = promisify(fs_.appendFile);
 
-  /**
-   * Creates a directory and all parent directories recursively. If the file
-   * already exists, and is not a directory, just return.
-   * @param fspath The directory to create
-   */
-  export async function mkdir_p(fspath: string): Promise<void> {
-    const parent = path.dirname(fspath);
-    if (!await exists(parent)) {
-      await mkdir_p(parent);
-    } else {
-      if (!(await stat(parent)).isDirectory()) {
-        throw new Error("Cannot create ${fspath}: ${parent} is a non-directory");
-      }
-    }
-    if (!await exists(fspath)) {
-      await mkdir(fspath);
-    } else {
-      if (!(await stat(fspath)).isDirectory()) {
-        throw new Error("Cannot mkdir_p on ${fspath}. It exists, and is not a directory!");
-      }
+/**
+ * Creates a directory and all parent directories recursively. If the file
+ * already exists, and is not a directory, just return.
+ * @param fspath The directory to create
+ */
+export async function mkdir_p(fspath: string): Promise<void> {
+  const parent = path.dirname(fspath);
+  if (!await exists(parent)) {
+    await mkdir_p(parent);
+  } else {
+    if (!(await stat(parent)).isDirectory()) {
+      throw new Error("Cannot create ${fspath}: ${parent} is a non-directory");
     }
   }
-
-  /**
-   * Copy a file from one location to another.
-   * @param inpath The input file
-   * @param outpath The output file
-   */
-  export function copyFile(inpath: string, outpath: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const reader = fs_.createReadStream(inpath);
-      reader.on('error', e => reject(e));
-      reader.on('open', _fd => {
-        const writer = fs_.createWriteStream(outpath);
-        writer.on('error', e => reject(e));
-        writer.on('open', _fd => {
-          reader.pipe(writer);
-        });
-        writer.on('close', () => resolve());
-      });
-    });
+  if (!await exists(fspath)) {
+    await mkdir(fspath);
+  } else {
+    if (!(await stat(fspath)).isDirectory()) {
+      throw new Error("Cannot mkdir_p on ${fspath}. It exists, and is not a directory!");
+    }
   }
+}
 
-  /**
-   * Remove a directory recursively. **DANGER DANGER!**
-   * @param dirpath Directory to remove
-   */
-  export function rmdir(dirpath: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      rimraf(dirpath, err => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
+/**
+ * Copy a file from one location to another.
+ * @param inpath The input file
+ * @param outpath The output file
+ */
+export function copyFile(inpath: string, outpath: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const reader = fs_.createReadStream(inpath);
+    reader.on('error', e => reject(e));
+    reader.on('open', _fd => {
+      const writer = fs_.createWriteStream(outpath);
+      writer.on('error', e => reject(e));
+      writer.on('open', _fd => { reader.pipe(writer); });
+      writer.on('close', () => resolve());
     });
-  }
+  });
+}
+
+/**
+ * Remove a directory recursively. **DANGER DANGER!**
+ * @param dirpath Directory to remove
+ */
+export function rmdir(dirpath: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    rimraf(dirpath, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 }

@@ -5,11 +5,11 @@ import * as vscode from 'vscode';
 
 import * as cache from './cache';
 import config from './config';
-import * as util from './util';
-import {createLogger} from './logging';
 import {CMakeGenerator} from './kit';
+import {createLogger} from './logging';
 import {fs} from "./pr";
 import * as proc from './proc';
+import * as util from './util';
 
 const log = createLogger('cms-client');
 
@@ -53,18 +53,24 @@ export interface ProtocolVersion {
 /**
  * The base of all messages. Each message has a `type` property.
  */
-export interface MessageBase { type: string; }
+export interface MessageBase {
+  type: string;
+}
 
 /**
  * Cookied messages represent some on-going conversation.
  */
-export interface CookiedMessage extends MessageBase { cookie: string; }
+export interface CookiedMessage extends MessageBase {
+  cookie: string;
+}
 
 /**
  * Reply messages are solicited by some previous request, which comes with a
  * cookie to identify the initiating request.
  */
-export interface ReplyMessage extends CookiedMessage { inReplyTo: string; }
+export interface ReplyMessage extends CookiedMessage {
+  inReplyTo: string;
+}
 
 /**
  * Progress messages are sent regarding some long-running request process before
@@ -83,7 +89,9 @@ export interface SignalMessage extends MessageBase {
   name: string;
 }
 
-export interface DirtyMessage extends SignalMessage { name: 'dirty'; }
+export interface DirtyMessage extends SignalMessage {
+  name: 'dirty';
+}
 
 export interface FileChangeMessage {
   name: 'fileChange';
@@ -91,7 +99,7 @@ export interface FileChangeMessage {
   properties: string[];
 }
 
-type SomeSignalMessage = (DirtyMessage | FileChangeMessage);
+type SomeSignalMessage = (DirtyMessage|FileChangeMessage);
 
 /**
  * The `MessageMessage` is an un-solicited message from cmake with a string to
@@ -124,14 +132,18 @@ export interface HandshakeParams {
   extraGenerator?: string;
   platform?: string;
   toolset?: string;
-  protocolVersion: {major : number; minor : number;};
+  protocolVersion: {major: number; minor : number;};
 }
 
-export interface HandshakeRequest extends CookiedMessage, HandshakeParams { type: 'handshake'; }
+export interface HandshakeRequest extends CookiedMessage, HandshakeParams {
+  type: 'handshake';
+}
 
 export interface HandshakeContent {}
 
-export interface HandshakeReply extends ReplyMessage, HandshakeContent { inReplyTo: 'handshake'; }
+export interface HandshakeReply extends ReplyMessage, HandshakeContent {
+  inReplyTo: 'handshake';
+}
 
 /**
  * GlobalSettings request gets some static information about the project setup.
@@ -145,15 +157,9 @@ export interface GlobalSettingsRequest extends CookiedMessage, GlobalSettingsPar
 export interface GlobalSettingsContent {
   buildDirectory: string;
   capabilities: {
-    generators : {
-      extraGenerators : string[]; name : string; platformSupport : boolean;
-      toolsetSupport : boolean;
-    }[];
+    generators: {extraGenerators: string[]; name : string; platformSupport : boolean; toolsetSupport : boolean;}[];
     serverMode : boolean;
-    version : {
-      isDirty : boolean; major : number; minor : number; patch : number; string : string;
-      suffix : string;
-    };
+    version : {isDirty : boolean; major : number; minor : number; patch : number; string : string; suffix : string;};
   };
   checkSystemVars: boolean;
   extraGenerator: string;
@@ -198,23 +204,33 @@ export interface SetGlobalSettingsReply extends ReplyMessage, SetGlobalSettingsC
  * configure will actually do the configuration for the project. Note that
  * this should be followed shortly with a 'compute' request.
  */
-export interface ConfigureParams { cacheArguments: string[]; }
+export interface ConfigureParams {
+  cacheArguments: string[];
+}
 
-export interface ConfigureRequest extends CookiedMessage, ConfigureParams { type: 'configure'; }
+export interface ConfigureRequest extends CookiedMessage, ConfigureParams {
+  type: 'configure';
+}
 
 export interface ConfigureContent {}
-export interface ConfigureReply extends ReplyMessage, ConfigureContent { inReplyTo: 'configure'; }
+export interface ConfigureReply extends ReplyMessage, ConfigureContent {
+  inReplyTo: 'configure';
+}
 
 /**
  * Compute actually generates the build files from the configure step.
  */
 export interface ComputeParams {}
 
-export interface ComputeRequest extends CookiedMessage, ComputeParams { type: 'compute'; }
+export interface ComputeRequest extends CookiedMessage, ComputeParams {
+  type: 'compute';
+}
 
 export interface ComputeContent {}
 
-export interface ComputeReply extends ReplyMessage, ComputeContent { inReplyTo: 'compute'; }
+export interface ComputeReply extends ReplyMessage, ComputeContent {
+  inReplyTo: 'compute';
+}
 
 /**
  * codemodel gets information about the project, such as targets, files,
@@ -223,21 +239,22 @@ export interface ComputeReply extends ReplyMessage, ComputeContent { inReplyTo: 
  */
 export interface CodeModelParams {}
 
-export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel'; }
+export interface CodeModelRequest extends CookiedMessage, CodeModelParams {
+  type: 'codemodel';
+}
 
 export interface CodeModelFileGroup {
   language: string;
   compileFlags: string;
-  includePath?: {path : string; isSystem?: boolean;}[];
+  includePath?: {path: string; isSystem?: boolean;}[];
   defines?: string[];
   sources: string[];
 }
 
 export interface CodeModelTarget {
   name: string;
-  type: ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE'
-         | 'UTILITY'
-         | 'INTERFACE_LIBRARY');
+  type:
+      ('STATIC_LIBRARY'|'MODULE_LIBRARY'|'SHARED_LIBRARY'|'OBJECT_LIBRARY'|'EXECUTABLE'|'UTILITY'|'INTERFACE_LIBRARY');
   fullName: string;
   sourceDirectory: string;
   buildDirectory: string;
@@ -264,9 +281,13 @@ export interface CodeModelConfiguration {
   projects: CodeModelProject[];
 }
 
-export interface CodeModelContent { configurations: CodeModelConfiguration[]; }
+export interface CodeModelContent {
+  configurations: CodeModelConfiguration[];
+}
 
-export interface CodeModelReply extends ReplyMessage, CodeModelContent { inReplyTo: 'codemodel'; }
+export interface CodeModelReply extends ReplyMessage, CodeModelContent {
+  inReplyTo: 'codemodel';
+}
 
 /**
  * cmakeInputs will respond with a list of file paths that can alter a
@@ -280,7 +301,7 @@ export interface CMakeInputsRequest extends CookiedMessage, CMakeInputsParams {
 }
 
 export interface CMakeInputsContent {
-  buildFiles: {isCMake : boolean; isTemporary : boolean; sources : string[];}[];
+  buildFiles: {isCMake: boolean; isTemporary : boolean; sources : string[];}[];
   cmakeRootDirectory: string;
   sourceDirectory: string;
 }
@@ -294,36 +315,35 @@ export interface CMakeInputsReply extends ReplyMessage, CMakeInputsContent {
  */
 export interface CacheParams {}
 
-export interface CacheRequest extends CookiedMessage, CacheParams { type: 'cache' }
+export interface CacheRequest extends CookiedMessage, CacheParams {
+  type: 'cache'
+}
 
-export interface CacheContent { cache: CMakeCacheEntry[]; }
+export interface CacheContent {
+  cache: CMakeCacheEntry[];
+}
 
 export interface CMakeCacheEntry {
   key: string;
-  properties: {ADVANCED : '0' | '1'; HELPSTRING : string};
+  properties: {ADVANCED: '0'|'1'; HELPSTRING : string};
   type: string;
   value: string;
 }
 
-export interface CacheReply extends ReplyMessage, CacheContent { inReplyTo: 'cache'; }
+export interface CacheReply extends ReplyMessage, CacheContent {
+  inReplyTo: 'cache';
+}
 
 // Union type that represents any of the request types.
 export type SomeRequestMessage
-    = (HandshakeRequest | GlobalSettingsRequest | SetGlobalSettingsRequest | ConfigureRequest
-       | ComputeRequest
-       | CodeModelRequest
-       | CacheRequest);
+    = (HandshakeRequest|GlobalSettingsRequest|SetGlobalSettingsRequest|ConfigureRequest|ComputeRequest|CodeModelRequest|CacheRequest);
 
 // Union type that represents a response type
 export type SomeReplyMessage
-    = (HandshakeReply | GlobalSettingsReply | SetGlobalSettingsReply | ConfigureReply | ComputeReply
-       | CodeModelReply
-       | CacheReply);
+    = (HandshakeReply|GlobalSettingsReply|SetGlobalSettingsReply|ConfigureReply|ComputeReply|CodeModelReply|CacheReply);
 
 export type SomeMessage
-    = (SomeReplyMessage | SomeRequestMessage | ProgressMessage | ErrorMessage | MessageMessage
-       | HelloMessage
-       | SignalMessage);
+    = (SomeReplyMessage|SomeRequestMessage|ProgressMessage|ErrorMessage|MessageMessage|HelloMessage|SignalMessage);
 
 /**
  * The initial parameters when setting up the CMake client. The client init
@@ -336,10 +356,10 @@ export interface ClientInit {
   onMessage: (m: MessageMessage) => Promise<void>;
   onProgress: (m: ProgressMessage) => Promise<void>;
   onDirty: () => Promise<void>;
-  environment: {[key: string] : string};
+  environment: {[key: string]: string};
   sourceDir: string;
   binaryDir: string;
-  pickGenerator: () => Promise<CMakeGenerator | null>;
+  pickGenerator: () => Promise<CMakeGenerator|null>;
 }
 
 interface ClientInitPrivate extends ClientInit {
@@ -392,7 +412,7 @@ export class CMakeServerClient {
       if (!mat) {
         break;
       }
-      const[_all, content, tail] = mat;
+      const [_all, content, tail] = mat;
       if (!_all || !content || tail === undefined) {
         debugger;
         throw new global.Error('Protocol error talking to CMake! Got this input: ' + input);
@@ -404,7 +424,7 @@ export class CMakeServerClient {
     }
   }
 
-  private _takePromiseForCookie(cookie: string): MessageResolutionCallbacks | undefined {
+  private _takePromiseForCookie(cookie: string): MessageResolutionCallbacks|undefined {
     const item = this._promisesResolvers.get(cookie);
     if (!item) {
       throw new global.Error('Invalid cookie: ' + cookie);
@@ -423,8 +443,7 @@ export class CMakeServerClient {
         if (pr) {
           pr.resolve(reply);
         } else {
-          log.error(
-              `CMake server cookie "${cookied.cookie}" does not correspond to a known message`);
+          log.error(`CMake server cookie "${cookied.cookie}" does not correspond to a known message`);
         }
         return;
       }
@@ -434,15 +453,13 @@ export class CMakeServerClient {
         if (pr) {
           pr.reject(err);
         } else {
-          log.error(
-              `CMake server cookie "${cookied.cookie}" does not correspond to a known message`);
+          log.error(`CMake server cookie "${cookied.cookie}" does not correspond to a known message`);
         }
         return;
       }
       case 'progress': {
         const prog = cookied as any as ProgressMessage;
-        this._params.onProgress(prog).catch(
-            e => { console.error('Unandled error in onProgress', e); });
+        this._params.onProgress(prog).catch(e => { console.error('Unandled error in onProgress', e); });
         return;
       }
       }
@@ -455,15 +472,11 @@ export class CMakeServerClient {
           fs.unlink(this._pipeFilePath);
         }
       });
-      this._params.onHello(some as HelloMessage).catch(e => {
-        console.error('Unhandled error in onHello', e);
-      });
+      this._params.onHello(some as HelloMessage).catch(e => { console.error('Unhandled error in onHello', e); });
       return;
     }
     case 'message': {
-      this._params.onMessage(some as MessageMessage).catch(e => {
-        console.error('Unhandled error in onMessage', e);
-      });
+      this._params.onMessage(some as MessageMessage).catch(e => { console.error('Unhandled error in onMessage', e); });
       return;
     }
     case 'signal': {
@@ -485,8 +498,7 @@ export class CMakeServerClient {
 
   sendRequest(t: 'handshake', p: HandshakeParams): Promise<HandshakeContent>;
   sendRequest(t: 'globalSettings', p?: GlobalSettingsParams): Promise<GlobalSettingsContent>;
-  sendRequest(t: 'setGlobalSettings',
-              p: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent>;
+  sendRequest(t: 'setGlobalSettings', p: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent>;
   sendRequest(t: 'configure', p: ConfigureParams): Promise<ConfigureContent>;
   sendRequest(t: 'compute', p?: ComputeParams): Promise<ComputeContent>;
   sendRequest(t: 'codemodel', p?: CodeModelParams): Promise<CodeModelContent>;
@@ -494,9 +506,8 @@ export class CMakeServerClient {
   sendRequest(type: string, params: any = {}): Promise<any> {
     const cp = Object.assign({type}, params);
     const cookie = cp.cookie = Math.random().toString();
-    const pr = new Promise((resolve, reject) => {
-      this._promisesResolvers.set(cookie, {resolve : resolve, reject : reject});
-    });
+    const pr = new Promise(
+        (resolve, reject) => { this._promisesResolvers.set(cookie, {resolve : resolve, reject : reject}); });
     const msg = JSON.stringify(cp);
     console.log(`Sending message to cmake-server: ${msg}`);
     this._pipe.write('\n[== "CMake Server" ==[\n');
@@ -513,17 +524,11 @@ export class CMakeServerClient {
 
   getGlobalSettings(): Promise<GlobalSettingsContent> { return this.sendRequest('globalSettings'); }
 
-  configure(params: ConfigureParams): Promise<ConfigureContent> {
-    return this.sendRequest('configure', params);
-  }
+  configure(params: ConfigureParams): Promise<ConfigureContent> { return this.sendRequest('configure', params); }
 
-  compute(params?: ComputeParams): Promise<ComputeParams> {
-    return this.sendRequest('compute', params);
-  }
+  compute(params?: ComputeParams): Promise<ComputeParams> { return this.sendRequest('compute', params); }
 
-  codemodel(params?: CodeModelParams): Promise<CodeModelContent> {
-    return this.sendRequest('codemodel', params);
-  }
+  codemodel(params?: CodeModelParams): Promise<CodeModelContent> { return this.sendRequest('codemodel', params); }
 
   private _onErrorData(data: Uint8Array) { log.error(`[cmake-server] ${data.toString()}`); }
 
@@ -541,14 +546,11 @@ export class CMakeServerClient {
       pipe_file = path.join(params.binaryDir, `.cmserver.${process.pid}`);
     }
     this._pipeFilePath = pipe_file;
-    const final_env
-        = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
+    const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
     const child = this._proc
-        = child_proc.spawn(params.cmakePath,
-                           [ '-E', 'server', '--experimental', `--pipe=${pipe_file}` ],
-                           {
-                             env : final_env,
-                           });
+        = child_proc.spawn(params.cmakePath, [ '-E', 'server', '--experimental', `--pipe=${pipe_file}` ], {
+            env : final_env,
+          });
     log.debug(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', this._onErrorData.bind(this));
     child.stderr.on('data', this._onErrorData.bind(this));
@@ -565,17 +567,14 @@ export class CMakeServerClient {
           resolve();
         });
       });
-      const exit_promise
-          = new Promise<void>(resolve => { child.on('exit', () => { resolve(); }); });
+      const exit_promise = new Promise<void>(resolve => { child.on('exit', () => { resolve(); }); });
       this._endPromise = Promise.all([ end_promise, exit_promise ]).then(() => {});
       this._proc = child;
       child.on('close', (retc: number, signal: string) => {
         if (retc !== 0) {
           log.error("The connection to cmake-server was terminated unexpectedly");
           log.error(`cmake-server exited with status ${retc} (${signal})`);
-          params.onCrash(retc, signal).catch(e => {
-            log.error(`Unhandled error in onCrash ${e}`);
-          });
+          params.onCrash(retc, signal).catch(e => { log.error(`Unhandled error in onCrash ${e}`); });
         }
       });
     }, 1000);
@@ -583,7 +582,7 @@ export class CMakeServerClient {
 
   public static async start(params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
-    const tmpdir = path.join(vscode.workspace.rootPath !, '.vscode');
+    const tmpdir = path.join(vscode.workspace.rootPath!, '.vscode');
     // Ensure the binary directory exists
     await fs.mkdir_p(params.binaryDir);
     return new Promise<CMakeServerClient>((resolve, reject) => {
@@ -597,18 +596,16 @@ export class CMakeServerClient {
         onProgress : params.onProgress,
         onDirty : params.onDirty,
         pickGenerator : params.pickGenerator,
-        onCrash : async(retc) => {
+        onCrash : async (retc) => {
           if (!resolved) {
             reject(new StartupError(retc));
           }
         },
-        onHello : async(msg: HelloMessage) => {
+        onHello : async (msg: HelloMessage) => {
           // We've gotten the hello message. We need to commense handshake
           try {
-            let hsparams: HandshakeParams = {
-              buildDirectory : params.binaryDir,
-              protocolVersion : msg.supportedProtocolVersions[0]
-            };
+            let hsparams: HandshakeParams
+                = {buildDirectory : params.binaryDir, protocolVersion : msg.supportedProtocolVersions[0]};
 
             const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
             const have_cache = await fs.exists(cache_path);

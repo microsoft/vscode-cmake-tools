@@ -7,7 +7,7 @@
  * Copy the `api.ts` source file into your project to use it.
  */ /** */
 
-import {DiagnosticCollection, Disposable, Event, Terminal, DebugSession} from 'vscode';
+import {DebugSession, DiagnosticCollection, Disposable, Event, Terminal} from 'vscode';
 
 
 /**
@@ -17,17 +17,17 @@ export interface ExecutionResult {
   /**
    * The return code of the program.
    */
-  retc: number | null;
+  retc: number|null;
   /**
    * The full standard output of the program. May be `null` if standard out
    * was not captured.
    */
-  stdout: string | null;
+  stdout: string|null;
   /**
    * Standard error output of the program. May be `null` if standard error was
    * not captured
    */
-  stderr: string | null;
+  stderr: string|null;
 }
 
 /**
@@ -42,7 +42,7 @@ export interface ExecutionOptions {
   /**
    * Additional environment variables to define when executing the command.
    */
-  environment: {[key: string] : string};
+  environment: {[key: string]: string};
   /**
    * Whether we should collect output from the command.
    *
@@ -75,8 +75,8 @@ export interface RawCompilationInfo {
 export interface CompilationInfo {
   file: string;
   compile?: RawCompilationInfo;
-  includeDirectories: {path : string; isSystem : boolean;}[];
-  compileDefinitions: {[define: string] : string | null};
+  includeDirectories: {path: string; isSystem : boolean;}[];
+  compileDefinitions: {[define: string]: string|null};
   compileFlags: string[];
   compiler?: string;
 }
@@ -141,7 +141,9 @@ export interface ExecutableTarget {
   path: string;
 }
 
-export interface VariantKeywordSettings { [key: string]: string; }
+export interface VariantKeywordSettings {
+  [key: string]: string;
+}
 
 /**
  * A target with a name, but no output. This may be created via `add_custom_command()`.
@@ -161,7 +163,7 @@ export interface RichTarget {
   targetType: string;
 }
 
-export type Target = NamedTarget | RichTarget;
+export type Target = NamedTarget|RichTarget;
 
 /**
  * The CMake Tools extension API obtained via `getExtension().exports`
@@ -239,7 +241,7 @@ export interface CMakeToolsAPI extends Disposable {
    * @returns New compilation info, or `null` if no compilation info was found
    * for the named file.
    */
-  compilationInfoForFile(filepath: string): Promise<CompilationInfo | null>;
+  compilationInfoForFile(filepath: string): Promise<CompilationInfo|null>;
 
   /**
    * Configure the project.
@@ -307,15 +309,15 @@ export interface CMakeToolsAPI extends Disposable {
   /**
    * Start the active target without a debugger.
    */
-  launchTarget(): Promise<Terminal | null>;
+  launchTarget(): Promise<Terminal|null>;
 
   /**
    * Start the active target with a debugger.
    */
-  debugTarget(): Promise<DebugSession | null>;
+  debugTarget(): Promise<DebugSession|null>;
 
   /**
    * Get the path to the active launch target
    */
-  launchTargetPath(): Promise<string | null>;
+  launchTargetPath(): Promise<string|null>;
 }

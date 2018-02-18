@@ -1,12 +1,10 @@
-import * as vscode from 'vscode';
-
 import * as path from 'path';
-
-import {fs} from './pr';
-import * as util from './util';
+import * as vscode from 'vscode';
 
 import {CompilationInfo, RawCompilationInfo} from './api';
 import {createLogger} from './logging';
+import {fs} from './pr';
+import * as util from './util';
 
 const log = createLogger('compdb');
 
@@ -18,11 +16,11 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
   // arguments.
   const command = util.splitCommandLine(raw.command);
   const compiler = command[0];
-  const inc_dirs = [] as({
-    path: string;
-    isSystem: boolean
-  }[]);
-  const definitions = {} as{[key: string] : string | null};
+  const inc_dirs = [] as ({
+                     path: string;
+                     isSystem: boolean
+                   }[]);
+  const definitions = {} as {[key: string] : string | null};
 
   const include_flags = [ {flag : '-I', isSystem : false}, {flag : '-isystem', isSystem : true} ];
   const def_flags = [ '-D' ];
@@ -75,7 +73,7 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
   };
 }
 
-export function parseCompileDefinition(str: string): [ string, string | null ] {
+export function parseCompileDefinition(str: string): [ string, string|null ] {
   if (/^\w+$/.test(str)) {
     return [ str, null ];
   } else {
@@ -115,19 +113,18 @@ export class CompilationDatabase {
     return util.normalizePath(no_detail);
   }
 
-  public getCompilationInfoForUri(uri: vscode.Uri): CompilationInfo | null {
+  public getCompilationInfoForUri(uri: vscode.Uri): CompilationInfo|null {
     const fspath = uri.fsPath;
     const plain = this._info_by_filepath.get(fspath);
     if (plain) {
       return plain;
     }
     const fsnorm = this._normalizeFilePath(fspath);
-    const matching_key = Array.from(this._info_by_filepath.keys())
-                             .find(key => this._normalizeFilePath(key) == fsnorm);
-    return !matching_key ? null : this._info_by_filepath.get(matching_key) !;
+    const matching_key = Array.from(this._info_by_filepath.keys()).find(key => this._normalizeFilePath(key) == fsnorm);
+    return !matching_key ? null : this._info_by_filepath.get(matching_key)!;
   }
 
-  public static async fromFilePath(dbpath: string): Promise<CompilationDatabase | null> {
+  public static async fromFilePath(dbpath: string): Promise<CompilationDatabase|null> {
     if (!await fs.exists(dbpath)) {
       return null;
     }

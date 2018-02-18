@@ -18,7 +18,7 @@ const log = logging.createLogger('extension');
 import CMakeTools from './cmake-tools';
 import rollbar from './rollbar';
 
-let INSTANCE: CMakeTools | null = null;
+let INSTANCE: CMakeTools|null = null;
 
 /**
  * Starts up the extension.
@@ -33,7 +33,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
   function register<K extends keyof CMakeTools>(name: K) {
     return vscode.commands.registerCommand('cmake.' + name, () => {
       const id = util.randint(1000, 10000);
-      return rollbar.invokeAsync(name, async() => {
+      return rollbar.invokeAsync(name, async () => {
         const cmt = await cmt_pr;
         log.debug(`[${id}]`, 'cmake.' + name, 'started');
         const fn = (cmt[name] as Function).bind(cmt);
@@ -44,16 +44,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
   }
 
   // List of functions that will be bound commands
-  const funs : (keyof CMakeTools)[] =
-                   [
-                     'editKits',         'scanForKits', 'selectKit',    'cleanConfigure',
-                     'configure',        'build',       'setVariant',   'install',
-                     'editCache',        'clean',       'cleanRebuild', 'buildWithTarget',
-                     'setDefaultTarget', 'ctest',       'stop',         'quickStart',
-                     'launchTargetPath', 'debugTarget', 'launchTarget', 'selectLaunchTarget',
-                     'resetState',
-                     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
-                   ];
+  const funs: (keyof CMakeTools)[] = [
+    'editKits',     'scanForKits',      'selectKit',        'cleanConfigure', 'configure',
+    'build',        'setVariant',       'install',          'editCache',      'clean',
+    'cleanRebuild', 'buildWithTarget',  'setDefaultTarget', 'ctest',          'stop',
+    'quickStart',   'launchTargetPath', 'debugTarget',      'launchTarget',   'selectLaunchTarget',
+    'resetState',
+    // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
+  ];
 
   // Register the functions before the extension is done loading so that fast
   // fingers won't cause "unregistered command" errors while CMake Tools starts
@@ -63,25 +61,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
     context.subscriptions.push(register(key));
   }
 
-  const cmt
-  = await cmt_pr;
+  const cmt = await cmt_pr;
 
   // Push it so we get clean teardown.
   context.subscriptions.push(cmt);
 
-  context.subscriptions.push(
-      vscode.commands.registerCommand('cmake._extensionInstance', () => { return cmt;}));
+  context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => { return cmt; }));
 
   // Return the extension
-  INSTANCE
-  = cmt;
+  INSTANCE = cmt;
   return INSTANCE;
 }
 
 // this method is called when your extension is deactivated
-export async function
-deactivate() {
+export async function deactivate() {
   log.debug('Deactivate CMakeTools');
   //   outputChannels.dispose();
-  if (INSTANCE) { await INSTANCE.asyncDispose();}
+  if (INSTANCE) {
+    await INSTANCE.asyncDispose();
+  }
 }

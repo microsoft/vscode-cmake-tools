@@ -1,16 +1,13 @@
-import * as path from 'path';
 import * as child_process from 'child_process';
-
+import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { execute, EnvironmentVariables } from './proc';
+import {EnvironmentVariables, execute} from './proc';
 
 /**
  * Escape a string so it can be used as a regular expression
  */
-export function escapeStringForRegex(str: string): string {
-  return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
-}
+export function escapeStringForRegex(str: string): string { return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1'); }
 
 /**
  * Replace all occurrences of `needle` in `str` with `what`
@@ -64,7 +61,7 @@ export function normalizePath(p: string, normalize_case = true): string {
  * Check if a value is "truthy" according to CMake's own language rules
  * @param value The value to check
  */
-export function isTruthy(value: (boolean | string | null | undefined | number)) {
+export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
     return !([ '', 'FALSE', 'OFF', '0', 'NOTFOUND', 'NO', 'N', 'IGNORE' ].indexOf(value) >= 0
              || value.endsWith('-NOTFOUND'));
@@ -78,8 +75,8 @@ export function isTruthy(value: (boolean | string | null | undefined | number)) 
  * `getOwnPropertyNames`
  * @param obj The object to iterate
  */
-export function objectPairs<V>(obj: {[key: string] : V}): [ string, V ][] {
-  return Object.getOwnPropertyNames(obj).map(key => ([ key, obj[key] ] as[string, V]));
+export function objectPairs<V>(obj: {[key: string]: V}): [ string, V ][] {
+  return Object.getOwnPropertyNames(obj).map(key => ([ key, obj[key] ] as [string, V]));
 }
 
 /**
@@ -87,14 +84,13 @@ export function objectPairs<V>(obj: {[key: string] : V}): [ string, V ][] {
  * @param iter An iterable to map
  * @param proj The projection function
  */
-export function * map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iterable<Out> {
+export function* map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Iterable<Out> {
   for (const item of iter) {
     yield proj(item);
   }
 }
 
-export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out, el: In) => Out):
-    Out {
+export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out, el: In) => Out): Out {
   for (const item of iter) {
     init = mapper(init, item);
   }
@@ -106,9 +102,7 @@ export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out
  * @param min Minimum value
  * @param max Maximum value
  */
-export function randint(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min) + min);
-}
+export function randint(min: number, max: number): number { return Math.floor(Math.random() * (max - min) + min); }
 
 
 export function product<T>(arrays: T[][]): T[][] {
@@ -132,19 +126,19 @@ export function product<T>(arrays: T[][]): T[][] {
 }
 
 export interface CMakeValue {
-  type: ('UNKNOWN' | 'BOOL' | 'STRING'); // There are more types, but we don't care ATM
+  type: ('UNKNOWN'|'BOOL'|'STRING');  // There are more types, but we don't care ATM
   value: string;
 }
 
-export function cmakeify(value: (string | boolean | number | string[])): CMakeValue {
+export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   const ret: CMakeValue = {
-    type: 'UNKNOWN',
-    value: '',
+    type : 'UNKNOWN',
+    value : '',
   };
   if (value === true || value === false) {
     ret.type = 'BOOL';
     ret.value = value ? 'TRUE' : 'FALSE';
-  } else if (typeof(value) === 'string') {
+  } else if (typeof (value) === 'string') {
     ret.type = 'STRING';
     ret.value = replaceAll(value, ';', '\\;');
   } else if (value instanceof Number || typeof value === 'number') {
@@ -165,14 +159,14 @@ export async function termProc(child: child_process.ChildProcess) {
   // spawn child processes, and CMake won't forward signals to its
   // children. As a workaround, we list the children of the cmake process
   // and also send signals to them.
-  await _killTree(child.pid); return true;
+  await _killTree(child.pid);
+  return true;
 }
 
 async function _killTree(pid: number) {
   if (process.platform !== 'win32') {
     let children: number[] = [];
-    const stdout = (await execute('pgrep', [ '-P', pid.toString() ], null, {silent : true}).result)
-                       .stdout.trim();
+    const stdout = (await execute('pgrep', [ '-P', pid.toString() ], null, {silent : true}).result).stdout.trim();
     if (!!stdout.length) {
       children = stdout.split('\n').map(line => Number.parseInt(line));
     }
@@ -189,10 +183,11 @@ async function _killTree(pid: number) {
         throw e;
       }
     }
-  } else {// Because reasons, Node's proc.kill doesn't work on killing child
-          // processes transitively. We have to do a sad and manually kill the
-          // task using taskkill.
-          child_process.exec('taskkill /pid ' + pid.toString() + ' /T /F');}
+  } else {  // Because reasons, Node's proc.kill doesn't work on killing child
+    // processes transitively. We have to do a sad and manually kill the
+    // task using taskkill.
+    child_process.exec('taskkill /pid ' + pid.toString() + ' /T /F');
+  }
 }
 
 export function splitCommandLine(cmd: string): string[] {
@@ -201,11 +196,10 @@ export function splitCommandLine(cmd: string): string[] {
   console.assert(quoted_args);
   // Our regex will parse escaped quotes, but they remain. We must
   // remove them ourselves
-  return quoted_args !.map(arg => arg.replace(/\\(")/g, '$1').replace(/^"(.*)"$/g, '$1'));
-
+  return quoted_args!.map(arg => arg.replace(/\\(")/g, '$1').replace(/^"(.*)"$/g, '$1'));
 }
 
-export function isMultiConfGenerator(gen: string): boolean{
+export function isMultiConfGenerator(gen: string): boolean {
   return gen.includes('Visual Studio') || gen.includes('Xcode');
 }
 
@@ -223,24 +217,22 @@ export function parseVersion(str: string): Version {
   }
   const [, major, minor, patch] = mat;
   return {
-    major: parseInt(major),
-    minor: parseInt(minor),
-    patch: parseInt(patch),
+    major : parseInt(major),
+    minor : parseInt(minor),
+    patch : parseInt(patch),
   };
 }
 
 export function versionGreater(lhs: Version, rhs: Version|string): boolean {
-  if (typeof(rhs) === 'string') {
+  if (typeof (rhs) === 'string') {
     return versionGreater(lhs, parseVersion(rhs));
   }
   if (lhs.major > rhs.major) {
     return true;
-  }
-  else if (lhs.major === rhs.major) {
+  } else if (lhs.major === rhs.major) {
     if (lhs.minor > rhs.minor) {
       return true;
-    }
-    else if (lhs.minor === rhs.minor) {
+    } else if (lhs.minor === rhs.minor) {
       return lhs.patch > rhs.patch;
     }
   }
@@ -248,11 +240,10 @@ export function versionGreater(lhs: Version, rhs: Version|string): boolean {
 }
 
 export function versionEquals(lhs: Version, rhs: Version|string): boolean {
-  if (typeof(rhs) === 'string') {
+  if (typeof (rhs) === 'string') {
     return versionEquals(lhs, parseVersion(rhs));
   }
-  return lhs.major === rhs.major && lhs.minor === rhs.minor &&
-      lhs.patch === rhs.patch;
+  return lhs.major === rhs.major && lhs.minor === rhs.minor && lhs.patch === rhs.patch;
 }
 
 export function versionLess(lhs: Version, rhs: Version|string): boolean {
@@ -264,12 +255,10 @@ export function mergeEnvironment(...env: EnvironmentVariables[]) {
     if (process.platform === 'win32') {
       // Env vars on windows are case insensitive, so we take the ones from
       // active env and overwrite the ones in our current process env
-      const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>(
-          (acc2, key: string) => {
-            acc2[key.toUpperCase()] = vars[key];
-            return acc2;
-          },
-          {});
+      const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>((acc2, key: string) => {
+        acc2[key.toUpperCase()] = vars[key];
+        return acc2;
+      }, {});
       return Object.assign({}, acc, norm_vars);
     } else {
       return Object.assign({}, acc, vars);
@@ -277,12 +266,12 @@ export function mergeEnvironment(...env: EnvironmentVariables[]) {
   }, {})
 }
 
-export function parseCompileDefinition(str: string): [string, string | null] {
+export function parseCompileDefinition(str: string): [ string, string|null ] {
   if (/^\w+$/.test(str)) {
-    return [str, null];
+    return [ str, null ];
   } else {
     const key = str.split('=', 1)[0];
-    return [key, str.substr(key.length + 1)];
+    return [ key, str.substr(key.length + 1) ];
   }
 }
 
@@ -296,6 +285,4 @@ export function thisExtension() {
 
 export function thisExtensionPath(): string { return thisExtension().extensionPath; }
 
-export function dropNulls<T>(items: (T | null)[]): T[] {
-  return items.filter(item => item !== null) as T[];
-}
+export function dropNulls<T>(items: (T|null)[]): T[] { return items.filter(item => item !== null) as T[]; }

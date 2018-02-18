@@ -23,8 +23,8 @@ class RollbarController {
    */
   private _rollbar = new Rollbar({
     accessToken : '14d411d713be4a5a9f9d57660534cac7',
-    reportLevel : 'error',
-    payload : this._payload,
+    reportLevel: 'error',
+    payload: this._payload,
   });
 
   /**
@@ -60,8 +60,14 @@ class RollbarController {
       // We haven't asked yet. Ask them now:
       const item = await vscode.window.showInformationMessage(
           "Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?",
-          { title: 'Yes!', isCloseAffordance: false, } as vscode.MessageItem,
-          { title: 'No Thanks', isCloseAffordance: true, } as vscode.MessageItem);
+          {
+            title : 'Yes!',
+            isCloseAffordance : false,
+          } as vscode.MessageItem,
+          {
+            title : 'No Thanks',
+            isCloseAffordance : true,
+          } as vscode.MessageItem);
 
       if (item === undefined) {
         // We didn't get an answer
@@ -81,7 +87,7 @@ class RollbarController {
    * @param additional Additional items in the payload
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
-  exception(what: string, exception: Error, additional: object = {}): Rollbar.LogResult | null {
+  exception(what: string, exception: Error, additional: object = {}): Rollbar.LogResult|null {
     log.fatal('Unhandled exception:', what, exception, JSON.stringify(additional));
     console.error(exception);
     debugger;
@@ -97,7 +103,7 @@ class RollbarController {
    * @param additional Additional items in the payload
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
-  error(what: string, additional: object = {}): Rollbar.LogResult | null {
+  error(what: string, additional: object = {}): Rollbar.LogResult|null {
     log.error(what, JSON.stringify(additional));
     debugger;
     if (this._enabled) {
@@ -128,7 +134,7 @@ class RollbarController {
   invokeAsync<T>(what: string, func: () => Promise<T>): Promise<T>;
   invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): Promise<T> {
     if (!func) {
-      func = additional as() => Promise<T>;
+      func = additional as () => Promise<T>;
       additional = {};
     }
     log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
@@ -148,7 +154,7 @@ class RollbarController {
   invoke<T>(what: string, func: () => T): T;
   invoke<T>(what: string, additional: object, func?: () => T): T {
     if (!func) {
-      func = additional as() => T;
+      func = additional as () => T;
       additional = {};
     }
     try {

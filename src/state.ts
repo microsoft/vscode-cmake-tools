@@ -16,47 +16,41 @@ export class StateManager {
   /**
    * The name of the workspace-local active kit.
    */
-  get activeKitName(): string | null {
+  get activeKitName(): string|null {
     const kit = this.extensionContext.workspaceState.get<string>('activeKitName');
     return kit || null;
   }
-  set activeKitName(v: string | null) {
-    this.extensionContext.workspaceState.update('activeKitName', v);
-  }
+  set activeKitName(v: string|null) { this.extensionContext.workspaceState.update('activeKitName', v); }
 
   /**
    * The currently select build target
    */
-  get defaultBuildTarget(): string | null {
+  get defaultBuildTarget(): string|null {
     const target = this.extensionContext.workspaceState.get<string>('activeBuildTarget');
     return target || null;
   }
-  set defaultBuildTarget(s: string | null) {
-    this.extensionContext.workspaceState.update('activeBuildTarget', s);
-  }
+  set defaultBuildTarget(s: string|null) { this.extensionContext.workspaceState.update('activeBuildTarget', s); }
 
-  get launchTargetName(): string | null {
+  get launchTargetName(): string|null {
     const name = this.extensionContext.workspaceState.get<string>('launchTargetName');
     return name || null;
   }
-  set launchTargetName(t: string | null) {
-    this.extensionContext.workspaceState.update('launchTargetName', t);
-  }
+  set launchTargetName(t: string|null) { this.extensionContext.workspaceState.update('launchTargetName', t); }
 
   /**
    * The keyword settings for the build variant
    */
-  get activeVariantSettings(): Map<string, string> | null {
-    const pairs = this.extensionContext.workspaceState.get<[string, string][]>('activeVariantSettings');
+  get activeVariantSettings(): Map<string, string>|null {
+    const pairs = this.extensionContext.workspaceState.get<[ string, string ][]>('activeVariantSettings');
     if (pairs) {
       return new Map<string, string>(pairs);
     } else {
       return null;
     }
   }
-  set activeVariantSettings(settings: Map<string, string> | null) {
+  set activeVariantSettings(settings: Map<string, string>|null) {
     if (settings) {
-      const pairs: [string, string][] = Array.from(settings.entries());
+      const pairs: [ string, string ][] = Array.from(settings.entries());
       this.extensionContext.workspaceState.update('activeVariantSettings', pairs);
     } else {
       this.extensionContext.workspaceState.update('activeVariantSettings', null);
@@ -66,13 +60,11 @@ export class StateManager {
   /**
    * The name of the CMake project for this workspace
    */
-  get projectName(): string | null {
+  get projectName(): string|null {
     const name = this.extensionContext.workspaceState.get<string>('projectName');
     return name || null;
   }
-  set projectName(s: string | null) {
-    this.extensionContext.workspaceState.update('projectName', s);
-  }
+  set projectName(s: string|null) { this.extensionContext.workspaceState.update('projectName', s); }
 
   /**
    * Rest all current workspace state. Mostly for troubleshooting

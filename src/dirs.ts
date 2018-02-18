@@ -11,7 +11,7 @@ class Dirs {
   /**
    * The current user's home directory
    */
-  get userHome(): string { return process.env['HOME'] || process.env['PROFILE'] !; }
+  get userHome(): string { return process.env['HOME'] || process.env['PROFILE']!; }
 
   /**
    * The user-local data directory. This is where user-specific persistent
@@ -19,7 +19,7 @@ class Dirs {
    */
   get userLocalDir(): string {
     if (process.platform == 'win32') {
-      return process.env['AppData'] !;
+      return process.env['AppData']!;
     } else {
       const xdg_dir = process.env["XDG_DATA_HOME"];
       if (xdg_dir) {

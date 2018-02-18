@@ -36,8 +36,8 @@ export class MultiWatcher implements vscode.Disposable {
   private _dispatcher = new EventDispatcher();
   private _anyEventEmitter = new vscode.EventEmitter<vscode.Uri>();
 
-  private _unregisterSub = this._dispatcher.disposeIndividualWatcherEvent.event(
-      indiv => { this._watchers.delete(indiv); });
+  private _unregisterSub
+      = this._dispatcher.disposeIndividualWatcherEvent.event(indiv => { this._watchers.delete(indiv); });
 
   private _createSub = this.onCreate(e => this._anyEventEmitter.fire(e));
   private _delSub = this.onDelete(e => this._anyEventEmitter.fire(e));

@@ -4,9 +4,9 @@
 
 import * as api from './api';
 import * as logging from './logging';
+import {fs} from './pr';
 import rollbar from './rollbar';
 import * as util from './util';
-import {fs} from './pr';
 
 const log = logging.createLogger('cache');
 
@@ -43,11 +43,7 @@ export class Entry implements api.CacheEntry {
    * @param docs The `DOC` string in the cache
    * @param advanced Whether the entry is `ADVANCED`
    */
-  constructor(key: string,
-              value: string,
-              type: api.CacheEntryType,
-              docs: string,
-              advanced: boolean) {
+  constructor(key: string, value: string, type: api.CacheEntryType, docs: string, advanced: boolean) {
     this._key = key;
     this._type = type;
     if (type === api.CacheEntryType.Bool) {
@@ -131,26 +127,23 @@ export class CMakeCache {
    */
   static parseCache(content: string): Map<string, Entry> {
     log.debug('Parsing CMake cache string');
-    const lines = content.split(/\r\n|\n|\r/)
-                      .filter(line => !!line.length)
-                      .filter(line => !/^\s*#/.test(line));
+    const lines = content.split(/\r\n|\n|\r/).filter(line => !!line.length).filter(line => !/^\s*#/.test(line));
 
     const entries = new Map<string, Entry>();
     let docs_acc = '';
     for (const line of lines) {
       if (line.startsWith('//')) {
-        docs_acc += /^\/\/(.*)/.exec(line) ![1] + ' ';
+        docs_acc += /^\/\/(.*)/.exec(line)![1] + ' ';
       } else {
         const match = /^(.*?):(.*?)=(.*)/.exec(line);
         if (!match) {
           rollbar.error('Failed to read a line from a CMake cache file', {line});
           continue;
         }
-        const[, name, typename, valuestr] = match;
+        const [, name, typename, valuestr] = match;
         if (!name || !typename)
           continue;
-        log.trace(
-            `Read line in cache with name=${name}, typename=${typename}, valuestr=${valuestr}`);
+        log.trace(`Read line in cache with name=${name}, typename=${typename}, valuestr=${valuestr}`);
         if (name.endsWith('-ADVANCED') && valuestr === '1') {
           log.trace('Skipping *-ADVANCED variable');
           // We skip the ADVANCED property variables. They're a little odd.
@@ -164,7 +157,7 @@ export class CMakeCache {
             INTERNAL : api.CacheEntryType.Internal,
             UNINITIALIZED : api.CacheEntryType.Uninitialized,
             STATIC : api.CacheEntryType.Static,
-          } as{[type: string] : api.CacheEntryType};
+          } as {[type: string] : api.CacheEntryType};
           const type: api.CacheEntryType = typemap[typename];
           const docs = docs_acc.trim();
           docs_acc = '';
@@ -187,7 +180,7 @@ export class CMakeCache {
    * @param key The name of a cache entry
    * @returns The cache entry, or `null` if the cache entry is not present.
    */
-  get(key: string): Entry | null {
+  get(key: string): Entry|null {
     const ret = this._entries.get(key) || null;
     log.trace(`Get cache key ${key}=${ret ? ret.value : "[[Misisng]]"}`);
     return ret;

@@ -1,30 +1,29 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-
-import * as yaml from 'js-yaml';
 import * as ajv from 'ajv';
+import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
+import * as path from 'path';
+import * as vscode from 'vscode';
 
-import {StateManager} from './state';
 import * as logging from './logging';
-import rollbar from './rollbar';
 import {fs} from "./pr";
+import rollbar from './rollbar';
+import {loadSchema} from "./schema";
+import {StateManager} from './state';
 import * as util from './util';
 import {MultiWatcher} from './watcher';
-import {loadSchema} from "./schema";
 
 const log = logging.createLogger('variant');
 
 
 export type ConfigureArguments = {
-  [key: string] : (string | string[] | number | boolean)
+  [key: string]: (string|string[]|number|boolean)
 };
 
 export interface VariantConfigurationOptions {
   short: string;
   long?: string;
   buildType?: string;
-  linkage?: 'static' | 'shared';
+  linkage?: 'static'|'shared';
   settings?: ConfigureArguments;
   generator?: string;
   toolset?: string;
@@ -43,10 +42,7 @@ export interface VariantCombination extends vscode.QuickPickItem {
 }
 
 export interface VariantFileContent {
-  [key: string]: {
-    default : string; description : string;
-    choices : {[name: string] : VariantConfigurationOptions;};
-  };
+  [key: string]: {default: string; description : string; choices : {[name: string] : VariantConfigurationOptions;};};
 }
 
 export const DEFAULT_VARIANTS: VariantFileContent = {
@@ -111,16 +107,14 @@ export class VariantManager implements vscode.Disposable {
       return;  // No root folder open
     }
     const base_path = folder.uri.path;
-    for (const filename of['cmake-variants.yaml',
-                           'cmake-variants.json',
-                           '.vscode/cmake-variants.yaml',
-                           '.vscode/cmake-variants.json']) {
+    for (const filename of ['cmake-variants.yaml',
+                            'cmake-variants.json',
+                            '.vscode/cmake-variants.yaml',
+                            '.vscode/cmake-variants.json']) {
       this._variantFileWatcher.createWatcher(path.join(base_path, filename));
     }
-    this._variantFileWatcher.onAnyEvent(e => {
-      rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`,
-                          () => this._reloadVariantsFile(e.fsPath));
-    });
+    this._variantFileWatcher.onAnyEvent(
+        e => { rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`, () => this._reloadVariantsFile(e.fsPath)); });
   }
 
   private async _reloadVariantsFile(filepath?: string) {
@@ -157,9 +151,7 @@ export class VariantManager implements vscode.Disposable {
         } else {
           new_variants = yaml.load(content);
         }
-      } catch (e) {
-        log.error(`Error parsing ${filepath}: ${e}`);
-      }
+      } catch (e) { log.error(`Error parsing ${filepath}: ${e}`); }
     }
 
     let loaded_default = false;
@@ -189,8 +181,7 @@ export class VariantManager implements vscode.Disposable {
       if (!choices.has(def)) {
         const newDefault = Array.from(choices.keys())[0];
         log.warning('Invalid variants specified:');
-        log.warning(
-            ` >> [${setting_name}]: invalid default choice "${def}", falling back to "${newDefault}"`);
+        log.warning(` >> [${setting_name}]: invalid default choice "${def}", falling back to "${newDefault}"`);
         def = newDefault;
       }
 
@@ -213,28 +204,24 @@ export class VariantManager implements vscode.Disposable {
 
   get haveVariant(): boolean { return !!this.stateManager.activeVariantSettings; }
 
-  variantConfigurationOptionsForKWs(keywordSetting: Map<string, string>):
-          VariantConfigurationOptions[]
-      | string {
+  variantConfigurationOptionsForKWs(keywordSetting: Map<string, string>): VariantConfigurationOptions[]|string {
     const vars = this._variants;
-    let error: string | undefined = undefined;
-    const data
-        = Array.from(keywordSetting.entries()).map(([ param,
-                                                      setting ]): VariantConfigurationOptions => {
-            let choice: VariantConfigurationOptions = {short : 'Unknown'};
+    let error: string|undefined = undefined;
+    const data = Array.from(keywordSetting.entries()).map(([ param, setting ]): VariantConfigurationOptions => {
+      let choice: VariantConfigurationOptions = {short : 'Unknown'};
 
-            if (vars.has(param)) {
-              const choices = vars.get(param) !.choices;
-              if (choices.has(setting)) {
-                choice = choices.get(setting) !;
-              } else {
-                error = `Missing variant choice "${param}": "${setting}" in variant definition.`;
-              }
-            } else {
-              error = `Missing variant "${param}" in variant definition.`;
-            }
-            return choice;
-          });
+      if (vars.has(param)) {
+        const choices = vars.get(param)!.choices;
+        if (choices.has(setting)) {
+          choice = choices.get(setting)!;
+        } else {
+          error = `Missing variant choice "${param}": "${setting}" in variant definition.`;
+        }
+      } else {
+        error = `Missing variant "${param}" in variant definition.`;
+      }
+      return choice;
+    });
 
     if (error) {
       return error;
@@ -290,20 +277,19 @@ export class VariantManager implements vscode.Disposable {
   }
 
   async selectVariant() {
-    const variants = Array.from(this._variants.entries())
-                         .map(([ key, variant ]) => Array.from(variant.choices.entries())
-                                                        .map(([ value_name, value ]) => ({
-                                                               settingKey : key,
-                                                               settingValue : value_name,
-                                                               settings : value
-                                                             })));
+    const variants
+        = Array.from(this._variants.entries())
+              .map(
+                  ([ key, variant ]) => Array.from(variant.choices.entries())
+                                            .map(([ value_name, value ]) => (
+                                                     {settingKey : key, settingValue : value_name, settings : value})));
     const product = util.product(variants);
-    const items: VariantCombination[] = product.map(
-        optionset => ({
-          label : optionset.map(o => o.settings.short).join(' + '),
-          keywordSettings : this.transformChoiceCombinationToKeywordSettings(optionset),
-          description : optionset.map(o => o.settings.long).join(' + '),
-        }));
+    const items: VariantCombination[]
+        = product.map(optionset => ({
+                        label : optionset.map(o => o.settings.short).join(' + '),
+                        keywordSettings : this.transformChoiceCombinationToKeywordSettings(optionset),
+                        description : optionset.map(o => o.settings.long).join(' + '),
+                      }));
     const chosen = await vscode.window.showQuickPick(items);
     if (!chosen) {
       return false;
@@ -317,8 +303,8 @@ export class VariantManager implements vscode.Disposable {
     this._activeVariantChanged.fire();
   }
 
-  transformChoiceCombinationToKeywordSettings(
-      choiceCombination: {settingKey : string, settingValue : string}[]): Map<string, string> {
+  transformChoiceCombinationToKeywordSettings(choiceCombination: {settingKey: string, settingValue: string}[]):
+      Map<string, string> {
     const keywords = new Map<string, string>();
     choiceCombination.forEach(kv => keywords.set(kv.settingKey, kv.settingValue));
     return keywords;

@@ -1,20 +1,19 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 
-import * as path from 'path';
-
 import * as api from './api';
-import {CMakeDriver} from "./driver";
-import config from './config';
+import {CacheEntryProperties, ExecutableTarget, RichTarget} from "./api";
 import * as cache from './cache';
-import * as proc from './proc';
-import {ExecutableTarget, RichTarget, CacheEntryProperties} from "./api";
 import * as cms from './cms-client';
-import * as util from './util';
-import {fs} from "./pr";
-import {createLogger} from './logging';
-import {StateManager} from "./state";
+import config from './config';
+import {CMakeDriver} from "./driver";
 import {Kit} from "./kit";
+import {createLogger} from './logging';
+import {fs} from "./pr";
+import * as proc from './proc';
 import rollbar from './rollbar';
+import {StateManager} from "./state";
+import * as util from './util';
 
 const log = createLogger('cms-driver');
 
@@ -24,9 +23,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _globalSettings: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
 
-  private _codeModel: null | cms.CodeModelContent;
-  get codeModel(): null | cms.CodeModelContent { return this._codeModel; }
-  set codeModel(v: null | cms.CodeModelContent) {
+  private _codeModel: null|cms.CodeModelContent;
+  get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
+  set codeModel(v: null|cms.CodeModelContent) {
     this._codeModel = v;
     if (v && v.configurations.length && v.configurations[0].projects.length) {
       this.doSetProjectName(v.configurations[0].projects[0].name);
@@ -37,13 +36,13 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async asyncDispose() {
     if (this._cmsClient) {
-      await(await this._cmsClient).shutdown();
+      await (await this._cmsClient).shutdown();
     }
   }
 
   async cleanConfigure(consumer?: proc.OutputConsumer) {
     const old_cl = await this._cmsClient;
-    this._cmsClient = (async() => {
+    this._cmsClient = (async () => {
       // Stop the server before we try to rip out any old files
       await old_cl.shutdown();
       const build_dir = this.binaryDir;
@@ -83,9 +82,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       } else {
         throw e;
       }
-    } finally {
-      sub.dispose();
-    }
+    } finally { sub.dispose(); }
     await this._refreshPostConfigure();
     return 0;
   }
@@ -109,24 +106,22 @@ export class CMakeServerClientDriver extends CMakeDriver {
     const cl = await this._cmsClient;
     const clcache = await cl.getCMakeCacheContent();
     this._cacheEntries = clcache.cache.reduce((acc, el) => {
-      const entry_map: { [key: string]: api.CacheEntryType | undefined } = {
-        BOOL: api.CacheEntryType.Bool,
-        STRING: api.CacheEntryType.String,
-        PATH: api.CacheEntryType.Path,
-        FILEPATH: api.CacheEntryType.FilePath,
-        INTERNAL: api.CacheEntryType.Internal,
-        UNINITIALIZED: api.CacheEntryType.Uninitialized,
-        STATIC: api.CacheEntryType.Static,
+      const entry_map: {[key: string]: api.CacheEntryType|undefined} = {
+        BOOL : api.CacheEntryType.Bool,
+        STRING : api.CacheEntryType.String,
+        PATH : api.CacheEntryType.Path,
+        FILEPATH : api.CacheEntryType.FilePath,
+        INTERNAL : api.CacheEntryType.Internal,
+        UNINITIALIZED : api.CacheEntryType.Uninitialized,
+        STATIC : api.CacheEntryType.Static,
       };
       const type = entry_map[el.type];
       if (type == undefined) {
         rollbar.error(`Unknown cache entry type ${el.type}`);
         return acc;
       }
-      acc.set(
-        el.key, new cache.Entry(
-          el.key, el.value, type, el.properties.HELPSTRING,
-          el.properties.ADVANCED === '1'));
+      acc.set(el.key,
+              new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
       return acc;
     }, new Map<string, cache.Entry>());
     this.codeModel = await cl.sendRequest('codemodel');
@@ -151,26 +146,24 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
     const config = this._codeModel.configurations.find(conf => conf.name == this.currentBuildType);
     if (!config) {
-      log.error(
-          'Found no matching code model for the current build type. This shouldn\'t be possible');
+      log.error('Found no matching code model for the current build type. This shouldn\'t be possible');
       return [];
     }
-    return config.projects
-        .reduce<RichTarget[]>((acc, project) => acc.concat(
-                                  project.targets.map(t => ({
-                                                        type : 'rich' as 'rich',
-                                                        name : t.name,
-                                                        filepath : t.artifacts && t.artifacts.length
-                                                            ? path.normalize(t.artifacts[0])
-                                                            : 'Utility target',
-                                                        targetType : t.type,
-                                                      }))),
-                              [ {
-                                type : 'rich' as 'rich',
-                                name : this.allTargetName,
-                                filepath : 'A special target to build all available targets',
-                                targetType : 'META',
-                              } ]);
+    return config.projects.reduce<RichTarget[]>((acc, project) => acc.concat(
+                                                    project.targets.map(t => ({
+                                                                          type : 'rich' as 'rich',
+                                                                          name : t.name,
+                                                                          filepath : t.artifacts && t.artifacts.length
+                                                                              ? path.normalize(t.artifacts[0])
+                                                                              : 'Utility target',
+                                                                          targetType : t.type,
+                                                                        }))),
+                                                [ {
+                                                  type : 'rich' as 'rich',
+                                                  name : this.allTargetName,
+                                                  filepath : 'A special target to build all available targets',
+                                                  targetType : 'META',
+                                                } ]);
   }
 
   get executableTargets(): ExecutableTarget[] {
@@ -180,9 +173,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
                                                                        }));
   }
 
-  get generatorName(): string | null {
-    return this._globalSettings ? this._globalSettings.generator : null;
-  }
+  get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
 
   private _dirty = true;
   markDirty() { this._dirty = true; }
@@ -192,7 +183,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._dirty = true;
-    await(await this._cmsClient).shutdown();
+    await (await this._cmsClient).shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
       await fs.rmdir(this.binaryDir);
@@ -201,7 +192,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     this._restartClient();
   }
 
-  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null> {
+  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
     if (!this.codeModel) {
       return null;
     }
@@ -215,20 +206,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
       for (const target of project.targets) {
         for (const group of target.fileGroups) {
           const found = group.sources.find(source => {
-            const abs_source
-                = path.isAbsolute(filepath) ? source : path.join(target.sourceDirectory, source);
-            const abs_filepath
-                = path.isAbsolute(filepath) ? filepath : path.join(this.sourceDir, filepath);
+            const abs_source = path.isAbsolute(filepath) ? source : path.join(target.sourceDirectory, source);
+            const abs_filepath = path.isAbsolute(filepath) ? filepath : path.join(this.sourceDir, filepath);
             return util.normalizePath(abs_source) === util.normalizePath(abs_filepath);
           });
           if (found) {
             const defs = (group.defines || []).map(util.parseCompileDefinition);
-            const defs_o
-                = defs.reduce((acc,
-                               [ key, value ]) => { return Object.assign(acc, {[key] : value}); },
-                              {});
-            const includes = (group.includePath ||
-                              []).map(p => ({path : p.path, isSystem : p.isSystem || false}));
+            const defs_o = defs.reduce((acc, [ key, value ]) => { return Object.assign(acc, {[key] : value}); }, {});
+            const includes = (group.includePath || []).map(p => ({path : p.path, isSystem : p.isSystem || false}));
             const flags = util.splitCommandLine(group.compileFlags);
             return {
               file : found,
@@ -264,9 +249,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
       sourceDir : this.sourceDir,
       cmakePath : config.cmakePath,
       environment : this.getKitEnvironmentVariablesObject(),
-      onDirty : async() => { this._dirty = true },
-      onMessage : async(msg) => { this._onMessageEmitter.fire(msg.message); },
-      onProgress : async(_prog) => {},
+      onDirty : async () => { this._dirty = true },
+      onMessage : async (msg) => { this._onMessageEmitter.fire(msg.message); },
+      onProgress : async (_prog) => {},
       pickGenerator : () => this.getBestGenerator(),
     });
   }
@@ -276,7 +261,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(state: StateManager, kit: Kit | null): Promise<CMakeServerClientDriver> {
+  static async create(state: StateManager, kit: Kit|null): Promise<CMakeServerClientDriver> {
     return this.createDerived(new CMakeServerClientDriver(state), kit);
   }
 }
