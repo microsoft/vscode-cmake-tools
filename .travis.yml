@@ -19,8 +19,6 @@ env:
 
 before_install:
   - |
-    set -eu
-    set +x
     if [ $TRAVIS_OS_NAME == "linux" ]; then
       export DISPLAY=:99.0
       sh -e /etc/init.d/xvfb start
@@ -28,8 +26,6 @@ before_install:
       sudo sh /tmp/cmake.sh --exclude-subdir --prefix=/usr/local
       sleep 3
     else
-      command curl -sSL https://rvm.io/mpapis.asc | gpg --import -
-      rvm get stable
       curl https://cmake.org/files/v${CMAKE_MINOR}/cmake-${CMAKE_VER}-Darwin-x86_64.tar.gz -o /tmp/cmake.tgz
       pushd /tmp
       tar xf /tmp/cmake.tgz
@@ -40,7 +36,6 @@ before_install:
       sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
       popd
     fi
-    set +eu
 
 install:
   - npm install
