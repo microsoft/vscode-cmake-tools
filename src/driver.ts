@@ -365,7 +365,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Directory where the targets will be installed.
    */
   get installDir(): string|null { return this._installDir; }
-  private _installDir: string|null = '';
+  private _installDir: string|null = null;
 
   /**
    * @brief Get the path to the CMakeCache file in the build directory

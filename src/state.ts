@@ -78,12 +78,8 @@ export class StateManager {
     }
   }
   set replacements(repl: {[key: string] : string | undefined}) {
-    if (repl) {
-      const replacements = JSON.stringify(repl);
-      this.extensionContext.workspaceState.update('replacements', replacements);
-    } else {
-      this.extensionContext.workspaceState.update('replacements', {});
-    }
+    const replacements = JSON.stringify(repl);
+    this.extensionContext.workspaceState.update('replacements', replacements);
   }
 
   /**
