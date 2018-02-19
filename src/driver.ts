@@ -220,7 +220,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       subs.set(full, repl);
     }
 
-    const env2_re = /\$\{env.(.+?)\}/g;
+    const env2_re = /\$\{env\.(.+?)\}/g;
     while ((mat = env2_re.exec(instr))) {
       const full = mat[0];
       const varname = mat[1];
