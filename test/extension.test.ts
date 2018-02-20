@@ -18,6 +18,7 @@ import * as ajv from 'ajv';
 
 import * as api from '../src/api';
 import * as compdb from '../src/compdb';
+import {CMakeTools} from '../src/cmake-tools';
 import {CMakeCache} from '../src/cache';
 import * as diags from '../src/diagnostics';
 import * as kit from '../src/kit';
@@ -26,6 +27,7 @@ import {OutputConsumer} from '../src/proc';
 import * as state from '../src/state';
 import * as util from '../src/util';
 
+const here = __dirname;
 
 function clearExistingKitConfigurationFile() {
   fs.writeFile( path.join(dirs.dataDir, 'cmake-kits.json'), "[]");
@@ -106,6 +108,7 @@ suite('Kits test', async () => {
     await vscode.window.showTextDocument(editor.document);
     // Now close it. We don't care about it any more
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+  });
 
   suite('Scan directory', async () => {
     let path_with_compilername = "";
@@ -719,9 +722,7 @@ suite('Diagnostics', async () => {
   });
 });
 
-import * as compdb from '../src/compdb';
 import dirs from '../src/dirs';
-import { fs } from '../src/pr';
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async () => {
