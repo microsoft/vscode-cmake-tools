@@ -212,6 +212,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
     }
 
+    // Setup custom configure environment
+    const old_env = process.env;
+    const configureEnv = util.mergeEnvironment(old_env as proc.EnvironmentVariables, config.configureEnvironment);
+    process.env = configureEnv;
+
     const env_re = /\$\{env:(.+?)\}/g;
     while ((mat = env_re.exec(instr))) {
       const full = mat[0];
@@ -227,6 +232,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const repl = process.env[varname.toLocaleLowerCase()] || '';
       subs.set(full, repl);
     }
+
+    // Reset environment
+    process.env = old_env;
 
     const command_re = /\$\{command:(.+?)\}/g;
     while ((mat = command_re.exec(instr))) {
