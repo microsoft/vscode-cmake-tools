@@ -513,7 +513,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const settings_flags
         = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = [ '--no-warn-unused-cli' ].concat(extra_args);
+    const flags = [ '--no-warn-unused-cli' ].concat(extra_args, config.configureArgs);
 
     console.assert(!!this._kit);
     if (!this._kit) {
