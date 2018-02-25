@@ -36,7 +36,7 @@ function clearExistingKitConfigurationFile() {
 async function getExtension() {
   const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
   if (!cmt) {
-    return Promise.reject("Extension doesn't exist");
+    throw new Error("Extension doesn't exist");
   }
   return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
 }
@@ -94,12 +94,12 @@ suite('Kits test', async () => {
   });
 
   test('Scan non exisiting dir for kits', async() => {
-    const kits = await kit.scanDirForCompilerKits("");
+    const kits = await kit.scanDirForCompilerKits('');
     expect(kits.length).to.eq(0);
   });
 
   suite('Scan directory', async () => {
-    let path_with_compilername = "";
+    let path_with_compilername = '';
     setup(async () => { path_with_compilername = path.join(fakebin, "gcc-4.3.2"); });
     teardown(async () => {
       if (await fs.exists(path_with_compilername)) {
@@ -114,7 +114,7 @@ suite('Kits test', async () => {
     });
 
     test('Scan file with compiler name', async () => {
-      await fs.writeFile(path_with_compilername, "")
+      await fs.writeFile(path_with_compilername, '')
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
       expect(kits.length).to.eq(2);
@@ -186,7 +186,7 @@ suite('Kits test', async () => {
 
     // Fails because PATH is tried to split but a empty path is not splitable
     test.skip('check empty kit file', async () => {
-      process.env['PATH'] = "";
+      process.env['PATH'] = '';
 
       await km.initialize();
 
@@ -258,7 +258,7 @@ suite('Kits test', async () => {
 
   test('KitManager tests event on change of active kit', async () => {
     let stateMock = sinon.createStubInstance(state.StateManager);
-    let storedActivatedKitName: string = "";
+    let storedActivatedKitName: string = '';
     sinon.stub(stateMock, 'activeKitName')
         .get(function() { return null; })
         .set(function(kit) { storedActivatedKitName = kit; });
@@ -783,14 +783,14 @@ suite('Compilation info', () => {
 
 suite('CMake System tests', () => {
   (process.env.HasVs == 'true' ? suite.skip : suite)('No present kit',() => {
-        let path_backup = "";
+        let path_backup = '';
         suiteSetup(()=>{
           clearExistingKitConfigurationFile();
 
           // Test will use path to scan for compilers
           // with no path content there is no compiler found
           path_backup = process.env.PATH!;
-          process.env.PATH = "";
+          process.env.PATH = '';
         });
         suiteTeardown(() => {
           // restores old path

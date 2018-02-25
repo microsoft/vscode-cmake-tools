@@ -448,7 +448,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       return drv.allTargetName;
     } else {
-      return "";
+      return '';
     }
   }
 
@@ -530,7 +530,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async showTargetSelector(): Promise<string | null> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
-      return "";
+      return '';
     }
 
     if (!drv.targets.length) {
@@ -844,7 +844,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     return drv.then(d => {
       if (!d) {
-        return "";
+        return '';
       }
       return d.sourceDir
     });
@@ -855,7 +855,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     return drv.then(d => {
       if (!d) {
-        return "";
+        return '';
       }
       return d.mainListFile
     });
@@ -866,7 +866,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     return drv.then(d => {
       if (!d) {
-        return "";
+        return '';
       }
       return d.binaryDir
     });
@@ -877,7 +877,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     return drv.then(d => {
       if (!d) {
-        return "";
+        return '';
       }
       return d.cachePath
     });
