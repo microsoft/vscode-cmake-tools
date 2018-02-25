@@ -98,18 +98,6 @@ suite('Kits test', async () => {
     expect(kits.length).to.eq(0);
   });
 
-  test('KitManager tests', async() => {
-    const cmt = await getExtension();
-    const sm = new state.StateManager(cmt.extensionContext);
-    const km = new kit.KitManager(sm);
-    await km.initialize();
-    const editor = await km.openKitsEditor();
-    // Ensure it is the active editor
-    await vscode.window.showTextDocument(editor.document);
-    // Now close it. We don't care about it any more
-    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-  });
-
   suite('Scan directory', async () => {
     let path_with_compilername = "";
     setup(async () => { path_with_compilername = path.join(fakebin, "gcc-4.3.2"); });
@@ -178,7 +166,7 @@ suite('Kits test', async () => {
 
       const newKitFileExists = await fs.exists(path_rescan_kit);
       expect(newKitFileExists).to.be.true;
-    }).timeout(5000);
+    }).timeout(10000);
 
     test('check valid kit file for test system compilers', async () => {
       await km.initialize();
