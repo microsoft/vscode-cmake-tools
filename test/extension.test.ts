@@ -782,6 +782,9 @@ suite('Compilation info', () => {
 });
 
 suite('CMake System tests', () => {
+  // This test will be skip when a Visual Studio installation marker (Env.HasVs=true) is present.
+  // At the moment it is not possible to hide an installation against the test. In that case
+  // it is not possible to test a no present kit, because VS will provid always kits.
   (process.env.HasVs == 'true' ? suite.skip : suite)('No present kit',() => {
         let path_backup = '';
         suiteSetup(()=>{
