@@ -18,6 +18,7 @@ import * as ajv from 'ajv';
 
 import * as api from '../src/api';
 import * as compdb from '../src/compdb';
+import {CMakeTools} from '../src/cmake-tools';
 import {CMakeCache} from '../src/cache';
 import * as diags from '../src/diagnostics';
 import * as kit from '../src/kit';
@@ -26,8 +27,19 @@ import {OutputConsumer} from '../src/proc';
 import * as state from '../src/state';
 import * as util from '../src/util';
 
-
 const here = __dirname;
+
+function clearExistingKitConfigurationFile() {
+  fs.writeFile( path.join(dirs.dataDir, 'cmake-kits.json'), "[]");
+}
+
+async function getExtension() {
+  const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
+  if (!cmt) {
+    throw new Error("Extension doesn't exist");
+  }
+  return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
+}
 
 function testFilePath(filename: string): string { return path.normalize(path.join(here, '../..', 'test', filename)); }
 
@@ -81,9 +93,13 @@ suite('Kits test', async () => {
     expect(nil).to.be.null;
   });
 
+  test('Scan non exisiting dir for kits', async() => {
+    const kits = await kit.scanDirForCompilerKits('');
+    expect(kits.length).to.eq(0);
+  });
 
   suite('Scan directory', async () => {
-    let path_with_compilername = "";
+    let path_with_compilername = '';
     setup(async () => { path_with_compilername = path.join(fakebin, "gcc-4.3.2"); });
     teardown(async () => {
       if (await fs.exists(path_with_compilername)) {
@@ -98,7 +114,7 @@ suite('Kits test', async () => {
     });
 
     test('Scan file with compiler name', async () => {
-      await fs.writeFile(path_with_compilername, "")
+      await fs.writeFile(path_with_compilername, '')
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
       expect(kits.length).to.eq(2);
@@ -150,7 +166,7 @@ suite('Kits test', async () => {
 
       const newKitFileExists = await fs.exists(path_rescan_kit);
       expect(newKitFileExists).to.be.true;
-    }).timeout(5000);
+    }).timeout(10000);
 
     test('check valid kit file for test system compilers', async () => {
       await km.initialize();
@@ -166,11 +182,11 @@ suite('Kits test', async () => {
       let kitFile = await readValidKitFile(path_rescan_kit);
       let nonVSKits = kitFile.filter((item) => {return item.visualStudio == null});
       expect(nonVSKits.length).to.be.eq(0);
-    }).timeout(5000);
+    }).timeout(10000);
 
     // Fails because PATH is tried to split but a empty path is not splitable
     test.skip('check empty kit file', async () => {
-      process.env['PATH'] = "";
+      process.env['PATH'] = '';
 
       await km.initialize();
 
@@ -186,7 +202,7 @@ suite('Kits test', async () => {
       let kitFile = await readValidKitFile(path_rescan_kit);
       let nonVSKits = kitFile.filter((item) => {return item.visualStudio == null});
       expect(nonVSKits.length).to.be.eq(2);
-    }).timeout(5000);
+    }).timeout(10000);
 
     test('check check combination of scan and old kits', async () => {
       process.env['PATH'] = testFilePath("fakebin");
@@ -206,7 +222,7 @@ suite('Kits test', async () => {
       expect(names).to.contains("VSCode Kit 2");
       expect(names).to.contains("Clang 0.25");
       expect(names).to.contains("GCC 42.1");
-    }).timeout(5000);
+    }).timeout(10000);
   });
 
   suite('GUI test', async () => {
@@ -237,12 +253,12 @@ suite('Kits test', async () => {
         expect(editor.document.getText()).to.be.eq(rawKitsFromFile);
       } else {
       }
-    }).timeout(5000);
+    }).timeout(10000);
   });
 
   test('KitManager tests event on change of active kit', async () => {
     let stateMock = sinon.createStubInstance(state.StateManager);
-    let storedActivatedKitName: string = "";
+    let storedActivatedKitName: string = '';
     sinon.stub(stateMock, 'activeKitName')
         .get(function() { return null; })
         .set(function(kit) { storedActivatedKitName = kit; });
@@ -694,6 +710,8 @@ suite('Diagnostics', async () => {
   });
 });
 
+import dirs from '../src/dirs';
+
 suite('Compilation info', () => {
   test('Parsing compilation databases', async () => {
     const dbpath = testFilePath('test_compdb.json');
@@ -761,4 +779,45 @@ suite('Compilation info', () => {
     expect(info.compileFlags[0]).to.eq('/Z+:some-compile-flag');
     expect(info.compiler).to.eq('cl.exe');
   });
+});
+
+suite('CMake System tests', () => {
+  // This test will be skip when a Visual Studio installation marker (Env.HasVs=true) is present.
+  // At the moment it is not possible to hide an installation against the test. In that case
+  // it is not possible to test a no present kit, because VS will provid always kits.
+  (process.env.HasVs == 'true' ? suite.skip : suite)('No present kit',() => {
+        let path_backup = '';
+        suiteSetup(()=>{
+          clearExistingKitConfigurationFile();
+
+          // Test will use path to scan for compilers
+          // with no path content there is no compiler found
+          path_backup = process.env.PATH!;
+          process.env.PATH = '';
+        });
+        suiteTeardown(() => {
+          // restores old path
+          process.env.PATH = path_backup;
+        })
+
+        test('Scan for no existing kit should return no selected kit', async() => {
+          const cmt = await getExtension();
+          await cmt.scanForKits();
+          expect(await cmt.selectKit()).to.be.eq(null);
+        });
+
+        test('Configure ', async() => {
+          const cmt = await getExtension();
+          await cmt.scanForKits();
+
+          expect(await cmt.configure()).to.be.eq(-1);
+        });
+
+        test('Build', async() => {
+          const cmt = await getExtension();
+          await cmt.scanForKits();
+
+          expect(await cmt.build()).to.be.eq(-1);
+        });
+    });
 });
