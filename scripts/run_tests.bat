@@ -2,7 +2,7 @@
 setlocal
 
 pushd
-set HasVs=false
+set HasVs=true
 set CMT_TESTING="1"
 
 REM Run all tests with a workspace folder where no CMakeLists.txt exists
