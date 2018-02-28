@@ -17,5 +17,11 @@ CMT_TESTING=1
 CODE_TESTS_PATH=$ROOT/../out/test
 CODE_TESTS_WORKSPACE=$ROOT/../test/test_project_without_cmakelists
 node ./node_modules/vscode/bin/test
+test_error_code=$?
 
 popd
+
+# Forward error level
+if [ $test_error_code -ne 0 ]; then
+	exit $test_error_code
+fi
