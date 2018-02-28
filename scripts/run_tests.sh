@@ -1,3 +1,5 @@
+#!/bin/bash
+
 pushd .
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -9,13 +11,13 @@ fi
 
 cd $ROOT
 
-HasVs=false
-CMT_TESTING=1
+export HasVs=false
+export CMT_TESTING=1
 
 # Run all tests with a workspace folder where no CMakeLists.txt exists
 # This prevents automatic loading of the extension.
-CODE_TESTS_PATH=$ROOT/../out/test
-CODE_TESTS_WORKSPACE=$ROOT/../test/test_project_without_cmakelists
+export CODE_TESTS_PATH=$ROOT/out/test
+export CODE_TESTS_WORKSPACE=$ROOT/test/test_project_without_cmakelists
 node ./node_modules/vscode/bin/test
 test_error_code=$?
 
