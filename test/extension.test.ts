@@ -18,7 +18,6 @@ import * as ajv from 'ajv';
 
 import * as api from '../src/api';
 import * as compdb from '../src/compdb';
-import {CMakeTools} from '../src/cmake-tools';
 import {CMakeCache} from '../src/cache';
 import * as diags from '../src/diagnostics';
 import * as kit from '../src/kit';
@@ -26,20 +25,9 @@ import {fs} from '../src/pr';
 import {OutputConsumer} from '../src/proc';
 import * as state from '../src/state';
 import * as util from '../src/util';
+import {clearExistingKitConfigurationFile, getExtension} from './test_helpers';
 
 const here = __dirname;
-
-function clearExistingKitConfigurationFile() {
-  fs.writeFile( path.join(paths.dataDir, 'cmake-kits.json'), "[]");
-}
-
-async function getExtension() {
-  const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
-  if (!cmt) {
-    throw new Error("Extension doesn't exist");
-  }
-  return cmt.isActive ? Promise.resolve(cmt.exports) : cmt.activate();
-}
 
 function testFilePath(filename: string): string { return path.normalize(path.join(here, '../..', 'test', filename)); }
 
@@ -710,7 +698,6 @@ suite('Diagnostics', async () => {
   });
 });
 
-import paths from '../src/paths';
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async () => {
