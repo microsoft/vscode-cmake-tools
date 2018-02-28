@@ -29,7 +29,7 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/test_project",
+                "${workspaceRoot}/test/test_project_without_cmakelists",
                 "--extensionDevelopmentPath=${workspaceRoot}",
                 "--extensionTestsPath=${workspaceRoot}/out/test"
             ],
@@ -46,6 +46,41 @@
                 "HasVs": "true"
             },
             "preLaunchTask": "npm"
+            // "smartStep": true
+        },
+        {
+            "name": "Launch Extension Tests (Empty project folder)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceRoot}/test/extension_tests/without_cmakelist_file/project_folder",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension_tests/without_cmakelist_file"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*",
+                "${workspaceRoot}/out/src/*",
+                "${workspaceRoot}/out/test/*"
+            ],
+
+            "preLaunchTask": "npm",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
             // "smartStep": true
         }
     ]

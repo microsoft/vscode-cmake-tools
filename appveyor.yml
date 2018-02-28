@@ -15,3 +15,4 @@ test_script:
 - cmd: |
     node --version
     scripts/run_tests.bat
+    scripts/run_extension_tests.bat

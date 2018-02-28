@@ -44,3 +44,4 @@ script:
   - node --version
   - cmake --version
   - bash scripts/run_tests.sh
+  - bash scripts/run_extension_tests.sh
