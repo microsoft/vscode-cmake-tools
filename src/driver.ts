@@ -440,7 +440,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await (async(): Promise<boolean> => {
+      const generator_present = await(async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || await this.testHaveCommand('ninja');
         }
@@ -572,9 +572,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _beforeConfigure(): Promise<boolean> {
     log.debug('Runnnig pre-configure checks and steps');
     if (this._isBusy) {
-      log.debug('No configuring: We\'re busy.');
-      vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to configure.');
-      return false;
+      if (config.autoRestartBuild) {
+        log.debug('Stopping current CMake task.');
+        this.stopCurrentProcess();
+      } else {
+        log.debug('No configuring: We\'re busy.');
+        vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to configure.');
+        return false;
+      }
     }
 
     if (!this.sourceDir) {
@@ -585,7 +590,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
-      log.debug('No configuring: There is no', cmake_list);
+      log.debug('No configuring: There is no ', cmake_list);
       const do_quickstart
           = await vscode.window.showErrorMessage('You do not have a CMakeLists.txt', 'Quickstart a new CMake project');
       if (do_quickstart)
