@@ -627,6 +627,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!ok) {
       return null;
     }
+
     const gen = this.generatorName;
     const generator_args = (() => {
       if (!gen)
@@ -641,10 +642,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
       else
         return [];
     })();
+
     const args = [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ]
-                     .concat(config.buildArgs, generator_args, config.buildToolArgs);
+                     .concat(generator_args, config.buildToolArgs, config.buildArgs);
+    const expanded_args_promises = args.map(async (value: string) => await this.expandString(value));
+    const expanded_args = await Promise.all(expanded_args_promises);
+    log.trace('CMake build args are', JSON.stringify(expanded_args));
+
     const cmake = await paths.cmakePath;
-    const child = this.executeCommand(cmake, args, consumer);
+    const child = this.executeCommand(cmake, expanded_args, consumer);
     this._currentProcess = child;
     await child.result;
     this._currentProcess = null;
