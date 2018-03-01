@@ -440,7 +440,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await (async(): Promise<boolean> => {
+      const generator_present = await(async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || await this.testHaveCommand('ninja');
         }
@@ -641,8 +641,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
       else
         return [];
     })();
-    const args = [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ].concat(
-        generator_args);
+    const args = [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ]
+                     .concat(config.buildArgs, generator_args, config.buildToolArgs);
     const cmake = await paths.cmakePath;
     const child = this.executeCommand(cmake, args, consumer);
     this._currentProcess = child;
