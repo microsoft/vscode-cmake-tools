@@ -574,6 +574,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (this._isBusy) {
       if (config.autoRestartBuild) {
         log.debug('Stopping current CMake task.');
+        vscode.window.showInformationMessage('Stopping current CMake task and starting new build.');
         this.stopCurrentProcess();
       } else {
         log.debug('No configuring: We\'re busy.');
@@ -651,7 +652,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const cmake = await paths.cmakePath;
     const child = this.executeCommand(cmake, args, consumer);
     this._currentProcess = child;
+    this._isBusy = true;
     await child.result;
+    this._isBusy = false;
     this._currentProcess = null;
     return child;
   }
