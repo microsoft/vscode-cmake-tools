@@ -6,8 +6,8 @@ import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import paths from './paths';
 import * as logging from './logging';
+import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from "./schema";
@@ -200,8 +200,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
  * @param dir Directory containing candidate binaries
  * @returns A list of CompilerKits found
  */
-export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter) : Promise<Kit[]> {
-  if (! await fs.exists(dir)) {
+export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter): Promise<Kit[]> {
+  if (!await fs.exists(dir)) {
     log.debug('Skipping scan of not existing path', dir);
     return [];
   }
@@ -226,7 +226,7 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
     pr.report({message : `Checking ${dir} for compilers...`});
   const bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
   // Scan each binary in parallel
-  const prs = bins.map(async (bin) => {
+  const prs = bins.map(async bin => {
     log.trace('Checking file for compiler-ness:', bin);
     try {
 
@@ -475,29 +475,29 @@ export async function getVSKitEnvironment(kit: VSKit): Promise<Map<string, strin
  */
 export async function scanForKits() {
   log.debug('Scanning for Kits on system');
-  return vscode.window
-      .withProgress({location : vscode.ProgressLocation.Window, title : 'Scanning for kits'},
-                    async(pr) => {
-                      const isWin32 = process.platform === 'win32';
-                      pr.report({message : 'Scanning for CMake kits...'});
-                      // Search directories on `PATH` for compiler binaries
-                      const pathvar = process.env['PATH'] !;
-                      const sep = isWin32 ? ';' : ':';
-                      const path_elems = pathvar.split(sep);
+  return vscode.window.withProgress({location : vscode.ProgressLocation.Window, title : 'Scanning for kits'},
+                                    async pr => {
+                                      const isWin32 = process.platform === 'win32';
+                                      pr.report({message : 'Scanning for CMake kits...'});
+                                      // Search directories on `PATH` for compiler binaries
+                                      const pathvar = process.env['PATH']!;
+                                      const sep = isWin32 ? ';' : ':';
+                                      const path_elems = pathvar.split(sep);
 
-                      // Search them all in parallel
-                      let prs = [] as Promise<Kit[]>[];
-                      const compiler_kits = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
-                      prs = prs.concat(compiler_kits);
-                      if(isWin32) {
-                        const vs_kits = scanForVSKits(pr);
-                        prs.push(vs_kits);
-                      }
-                      const arrays = await Promise.all(prs);
-                      const kits = ([] as Kit[]).concat(...arrays);
-                      kits.map(k => log.info(`Found Kit: ${k.name}`));
-                      return kits;
-                    });
+                                      // Search them all in parallel
+                                      let prs = [] as Promise<Kit[]>[];
+                                      const compiler_kits
+                                          = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
+                                      prs = prs.concat(compiler_kits);
+                                      if (isWin32) {
+                                        const vs_kits = scanForVSKits(pr);
+                                        prs.push(vs_kits);
+                                      }
+                                      const arrays = await Promise.all(prs);
+                                      const kits = ([] as Kit[]).concat(...arrays);
+                                      kits.map(k => log.info(`Found Kit: ${k.name}`));
+                                      return kits;
+                                    });
 }
 
 /**
@@ -513,7 +513,8 @@ function descriptionForKit(kit: Kit) {
     return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
   }
   case 'compilerKit': {
-    return 'Using compilers: ' + Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
+    const compilers = Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
+    return `Using compilers ${compilers.join(' ')}`;
   }
   }
 }
@@ -531,12 +532,12 @@ export class KitManager implements vscode.Disposable {
   /**
    * The path to the `cmake-kits.json` file
    */
-  private _kitsPath: string;
+  private readonly _kitsPath: string;
 
   /**
    * Watches the file at `_kitsPath`.
    */
-  private _kitsWatcher: vscode.FileSystemWatcher;
+  private readonly _kitsWatcher: vscode.FileSystemWatcher;
 
   /**
    * The active build kit
@@ -547,9 +548,7 @@ export class KitManager implements vscode.Disposable {
   /**
    * The kit manager has a selected kit.
    */
-  get hasActiveKit() {
-    return this._activeKit != null;
-  }
+  get hasActiveKit() { return this._activeKit !== null; }
 
   /**
    * Event emitted when the Kit changes. This can be via user action, by the
@@ -557,7 +556,7 @@ export class KitManager implements vscode.Disposable {
    * is reloaded.
    */
   get onActiveKitChanged() { return this._activeKitChangedEmitter.event; }
-  private _activeKitChangedEmitter = new vscode.EventEmitter<Kit|null>();
+  private readonly _activeKitChangedEmitter = new vscode.EventEmitter<Kit|null>();
 
   /**
    * Change the current kit. Commits the current kit name to workspace-local
@@ -582,7 +581,7 @@ export class KitManager implements vscode.Disposable {
    */
   constructor(readonly stateManager: StateManager, kitPath: string|null = null) {
     log.debug('Constructing KitManager');
-    if (kitPath != null) {
+    if (kitPath !== null) {
       this._kitsPath = kitPath;
     } else {
       this._kitsPath = path.join(paths.dataDir, 'cmake-kits.json');
@@ -611,7 +610,7 @@ export class KitManager implements vscode.Disposable {
    * selection, the current kit is kept. The only way it can reset to `null` is
    * if the active kit becomes somehow unavailable.
    */
-  async selectKit(): Promise<Kit | null> {
+  async selectKit(): Promise<Kit|null> {
     if (this._kits.length == 0) {
       return null;
     }
@@ -662,7 +661,7 @@ export class KitManager implements vscode.Disposable {
     log.debug('Rescanning for Kits');
     // clang-format off
     const old_kits_by_name = this._kits.reduce(
-      (acc, kit) => Object.assign({}, acc, {[kit.name]: kit}),
+      (acc, kit) => ({...acc, [kit.name]: kit}),
       {} as{[kit: string]: Kit}
     );
     const discovered_kits = await scanForKits();
@@ -759,7 +758,7 @@ export class KitManager implements vscode.Disposable {
     this._kits = dropNulls(new_kits);
     log.info(`Successfully loaded ${this._kits.length} kits`);
     // Set the current kit to the one we have named
-    const already_active_kit = this._kits.find((kit) => kit.name === this.stateManager.activeKitName);
+    const already_active_kit = this._kits.find(kit => kit.name === this.stateManager.activeKitName);
     this._setActiveKit(already_active_kit || null);
   }
 

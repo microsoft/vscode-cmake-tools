@@ -17,7 +17,7 @@ function getTestResourceFilePath(filename: string): string {
 }
 
 suite('Compilation info', () => {
-  test('Parsing compilation databases', async() => {
+  test('Parsing compilation databases', async () => {
     const dbpath = getTestResourceFilePath('test_compdb.json');
     const db = (await compdb.CompilationDatabase.fromFilePath(dbpath))!;
     expect(db).to.not.be.null;

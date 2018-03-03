@@ -153,7 +153,7 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
     if (res) {
       const [_all, file, lineno_] = res;
       // tslint:disable-next-line
-      void _all; // unused
+      void _all;  // unused
       const lineno = parseInt(lineno_) - 1;
       let message = '~~~c++\n';
       for (let i = 0;; ++i) {
@@ -282,7 +282,7 @@ class CTestOutputLogger implements OutputConsumer {
 };
 
 export class CTestDriver implements vscode.Disposable {
-  private _decorationManager = new DecorationManager();
+  private readonly _decorationManager = new DecorationManager();
   private _testingEnabled: boolean = false;
   get testingEnabled(): boolean { return this._testingEnabled; }
   set testingEnabled(v: boolean) {
@@ -398,7 +398,7 @@ export class CTestDriver implements vscode.Disposable {
     this.testResults = await readTestResultsFile(test_xml);
     const failing = this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
     this._decorationManager.clearFailingTestDecorations();
-    let new_decors = [] as FailingTestDecoration[];
+    const new_decors = [] as FailingTestDecoration[];
     for (const t of failing) {
       new_decors.push(...await parseTestOutput(t.Output));
     }

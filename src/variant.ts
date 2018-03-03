@@ -81,12 +81,12 @@ export class VariantManager implements vscode.Disposable {
   private _variants: VariantSet = new Map();
 
   get onActiveVariantChanged() { return this._activeVariantChanged.event; }
-  private _activeVariantChanged = new vscode.EventEmitter<void>();
+  private readonly _activeVariantChanged = new vscode.EventEmitter<void>();
 
   /**
    * Watches for changes to the variants file on the filesystem
    */
-  private _variantFileWatcher = new MultiWatcher();
+  private readonly _variantFileWatcher = new MultiWatcher();
 
   dispose() {
     this._variantFileWatcher.dispose();
@@ -237,7 +237,7 @@ export class VariantManager implements vscode.Disposable {
                             generator : el.generator || acc.generator,
                             linkage : el.linkage || acc.linkage,
                             toolset : el.toolset || acc.toolset,
-                            settings : Object.assign({}, acc.settings, el.settings),
+                            settings : {...acc.settings, ...el.settings},
                             short : [ acc.short, el.short ].join(' ').trim(),
                             long : [ acc.long, el.long ].join(', '),
                           }),

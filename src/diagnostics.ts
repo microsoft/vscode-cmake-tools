@@ -76,7 +76,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
    * during calls to `output()` and `error()`
    */
   get diagnostics() { return this._diagnostics; }
-  private _diagnostics = [] as FileDiagnostic[];
+  private readonly _diagnostics = [] as FileDiagnostic[];
 
   /**
    * Simply writes the line of output to the log
@@ -90,7 +90,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
   /**
    * The state for the diagnostic parser. Implemented as a crude FSM
    */
-  private _errorState: {
+  private readonly _errorState: {
     /**
      * The state of the parser. `init` is the rest state. `diag` is the state
      * of active parsing. `stack` is parsing the CMake call stack from an error
@@ -226,17 +226,17 @@ export class CompileOutputConsumer implements OutputConsumer {
   private readonly _msvc_re
       = /^\s*(?!\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/
 
-      private _ghsDiagnostics: RawDiagnostic[]
+      private readonly _ghsDiagnostics: RawDiagnostic[]
       = [];
   get ghsDiagnostics() { return this._ghsDiagnostics; }
 
-  private _gccDiagnostics: RawDiagnostic[] = [];
+  private readonly _gccDiagnostics: RawDiagnostic[] = [];
   get gccDiagnostics() { return this._gccDiagnostics; }
 
-  private _gnuLDDiagnostics: RawDiagnostic[] = [];
+  private readonly _gnuLDDiagnostics: RawDiagnostic[] = [];
   get gnuLDDiagnostics() { return this._gnuLDDiagnostics; }
 
-  private _msvcDiagnostics: RawDiagnostic[] = [];
+  private readonly _msvcDiagnostics: RawDiagnostic[] = [];
   get msvcDiagnostics() { return this._msvcDiagnostics; }
 
   private _tryParseLD(line: string): RawDiagnostic|null {
@@ -378,7 +378,7 @@ export class CompileOutputConsumer implements OutputConsumer {
       link : this.gnuLDDiagnostics,
     };
     const arrs = util.objectPairs(by_source).map(
-        ([ source, diags ]) => {return diags.map((raw_diag) => {
+        ([ source, diags ]) => {return diags.map(raw_diag => {
           const filepath = make_abs(raw_diag.file);
           const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity_of(raw_diag.severity));
           diag.source = source;
@@ -408,8 +408,8 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
    * Event fired when the progress changes
    */
   get onProgress() { return this._onProgressEmitter.event; }
-  private _onProgressEmitter = new vscode.EventEmitter<proc.ProgressData>();
-  private _percent_re = /\[.*?(\d+)\%.*?\]/;
+  private readonly _onProgressEmitter = new vscode.EventEmitter<proc.ProgressData>();
+  private readonly _percent_re = /\[.*?(\d+)\%.*?\]/;
 
   readonly compileConsumer = new CompileOutputConsumer();
 

@@ -96,16 +96,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the environment variables required by the current Kit
    */
   getKitEnvironmentVariablesObject(): proc.EnvironmentVariables {
-    return util.reduce(this._kitEnvironmentVariables.entries(),
-                       {},
-                       (acc, [ key, value ]) => Object.assign(acc, {[key] : value}));
+    return util.reduce(this._kitEnvironmentVariables.entries(), {}, (acc, [ key, value ]) => ({...acc, [key] : value}));
   }
 
   /**
    * Event fired when the name of the CMake project is discovered or changes
    */
   get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
-  private _projectNameChangedEmitter = new vscode.EventEmitter<string>();
+  private readonly _projectNameChangedEmitter = new vscode.EventEmitter<string>();
 
   public get projectName(): string { return this.stateManager.projectName || 'Unknown Project'; }
   protected doSetProjectName(v: string) {
@@ -183,7 +181,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     while ((mat = var_re.exec(instr))) {
       const full = mat[0];
       const key = mat[1];
-      let repl = replacements[key];
+      const repl = replacements[key];
       if (!repl) {
         log.warning(`Invalid variable reference ${full} in string: ${instr}`);
       } else {
@@ -223,7 +221,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const env = util.mergeEnvironment(cur_env,
                                       this.getKitEnvironmentVariablesObject(),
                                       (options && options.environment) ? options.environment : {});
-    const exec_options = Object.assign({}, options, {environment : env});
+    const exec_options = {...options, environment : env};
     return proc.execute(command, args, consumer, exec_options);
   }
 
@@ -238,7 +236,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   private async _setKit(kit: Kit): Promise<void> {
-    this._kit = Object.seal(Object.assign({}, kit));
+    this._kit = Object.seal({...kit});
     log.debug('CMakeDriver Kit set to', kit.name);
 
     this._kitEnvironmentVariables = new Map();
@@ -446,8 +444,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
           return await this.testHaveCommand('ninja-build') || this.testHaveCommand('ninja');
         }
         if (gen_name == 'MinGW Makefiles') {
-          return platform === 'win32' && await this.testHaveCommand('make')
-              || this.testHaveCommand('mingw32-make');
+          return platform === 'win32' && await this.testHaveCommand('make') || this.testHaveCommand('mingw32-make');
         }
         if (gen_name == 'NMake Makefiles') {
           return platform === 'win32' && this.testHaveCommand('nmake', [ '/?' ]);
@@ -478,7 +475,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
-  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
+  private readonly _onReconfiguredEmitter = new vscode.EventEmitter<void>();
   get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
 
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
@@ -487,7 +484,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       return -1;
     }
 
-    const settings = Object.assign({}, config.configureSettings);
+    const settings = {...config.configureSettings};
 
     const _makeFlag = (key: string, cmval: util.CMakeValue) => {
       switch (cmval.type) {

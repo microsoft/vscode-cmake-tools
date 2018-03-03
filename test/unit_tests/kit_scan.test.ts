@@ -107,12 +107,12 @@ suite('Kits scan test', async () => {
 
   suite('Rescan kits', async () => {
     let km: kit.KitManager;
-    let path_rescan_kit = getTestResourceFilePath('rescan_kit.json');
+    const path_rescan_kit = getTestResourceFilePath('rescan_kit.json');
     let sandbox: sinon.SinonSandbox;
     let path_backup: string|undefined;
     setup(async () => {
       sandbox = sinon.sandbox.create();
-      let stateMock = sandbox.createStubInstance(state.StateManager);
+      const stateMock = sandbox.createStubInstance(state.StateManager);
       sandbox.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
       km = new kit.KitManager(stateMock, path_rescan_kit);
 
@@ -134,7 +134,7 @@ suite('Kits scan test', async () => {
       const rawKitsFromFile = (await fs.readFile(file_path, 'utf8'));
       expect(rawKitsFromFile.length).to.be.not.eq(0);
 
-      let kitFile = json5.parse(rawKitsFromFile);
+      const kitFile = json5.parse(rawKitsFromFile);
 
       const schema = json5.parse(await fs.readFile(getResourcePath('schemas/kits-schema.json'), 'utf8'));
       const validator = new ajv({allErrors : true, format : 'full'}).compile(schema);
@@ -163,8 +163,8 @@ suite('Kits scan test', async () => {
 
       await km.initialize();
 
-      let kitFile = await readValidKitFile(path_rescan_kit);
-      let nonVSKits = kitFile.filter((item) => {return item.visualStudio == null});
+      const kitFile = await readValidKitFile(path_rescan_kit);
+      const nonVSKits = kitFile.filter(item => item.visualStudio == null);
       expect(nonVSKits.length).to.be.eq(0);
     }).timeout(10000);
 
@@ -183,8 +183,8 @@ suite('Kits scan test', async () => {
 
       await km.initialize();
 
-      let kitFile = await readValidKitFile(path_rescan_kit);
-      let nonVSKits = kitFile.filter((item) => {return item.visualStudio == null});
+      const kitFile = await readValidKitFile(path_rescan_kit);
+      const nonVSKits = kitFile.filter(item => item.visualStudio == null);
       expect(nonVSKits.length).to.be.eq(2);
     }).timeout(10000);
 
@@ -196,7 +196,7 @@ suite('Kits scan test', async () => {
               await km.initialize();
       await km.rescanForKits()
 
-      let names = km.kits.map((item) => {return item.name});
+      const names = km.kits.map(item => item.name);
 
       expect(names).to.contains("CompilerKit 1");
       expect(names).to.contains("CompilerKit 2");

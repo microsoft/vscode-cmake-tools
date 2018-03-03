@@ -47,10 +47,10 @@ const build_log = logging.createLogger('build');
  * class. See the `_init` private method for this initialization.
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
-  private _http_server: http.Server;
+  private readonly _http_server: http.Server;
   private _ws_server: ws.Server;
 
-  private _nagManager = new NagManager(this.extensionContext);
+  private readonly _nagManager = new NagManager(this.extensionContext);
 
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
@@ -74,10 +74,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     rollbar.takePromise('Setup cache editor server', {}, ready.then(() => {
       const websock_server = this._ws_server = ws.createServer({server : editor_server});
-      websock_server.on('connection', (client) => {
+      websock_server.on('connection', client => {
         const sub = this.onReconfigured(() => { client.send(JSON.stringify({method : 'refreshContent'})); });
         client.onclose = () => { sub.dispose(); };
-        client.onmessage = (msg) => {
+        client.onmessage = msg => {
           const data = JSON.parse(msg.data);
           console.log('Got message from editor client', msg);
           rollbar.invokeAsync('Handle message from cache editor', () => {
@@ -134,7 +134,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * The status bar manager. Has two-phase init.
    */
-  private _statusBar: StatusBar = new StatusBar();
+  private readonly _statusBar: StatusBar = new StatusBar();
 
   /**
    * Dispose the extension
@@ -208,11 +208,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Event fired after CMake configure runs
    */
   get onReconfigured() { return this._onReconfiguredEmitter.event; }
-  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
+  private readonly _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
   get reconfigured() { return this.onReconfigured; }
 
-  private _onTargetChangedEmitter = new vscode.EventEmitter<void>();
+  private readonly _onTargetChangedEmitter = new vscode.EventEmitter<void>();
   get targetChangedEvent() { return this._onTargetChangedEmitter.event; }
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
@@ -320,10 +320,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    if ((await this._cmakeDriver) == null) {
+    if ((await this._cmakeDriver) === null) {
       try {
         this._cmakeDriver = this._startNewCMakeDriver();
-        let cmakeInstance = await this._cmakeDriver;
+        const cmakeInstance = await this._cmakeDriver;
         // Reload any test results. This will also update visibility on the status
         // bar
         await this._ctestController.reloadTests(cmakeInstance!);
@@ -380,7 +380,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.configure`
    */
   configure(extra_args: string[] = []) {
-    return this._doConfigure(async (consumer) => {
+    return this._doConfigure(async consumer => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
         return drv.configure(extra_args, consumer);
@@ -394,7 +394,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.cleanConfigure()
    */
   cleanConfigure() {
-    return this._doConfigure(async (consumer) => {
+    return this._doConfigure(async consumer => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
         return drv.cleanConfigure(consumer);
@@ -458,7 +458,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Check if the current project needs to be (re)configured
    */
   private async _needsReconfigure(): Promise<boolean> {
-    let drv = await this.getCMakeDriverInstance();
+    const drv = await this.getCMakeDriverInstance();
     if (!drv || drv.needsReconfigure) {
       return true;
     } else {
@@ -581,7 +581,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.build();
   }
 
-  private _ctestController = new CTestDriver();
+  private readonly _ctestController = new CTestDriver();
   async ctest(): Promise<number> {
     const build_retc = await this.build();
     if (build_retc !== 0) {

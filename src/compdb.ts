@@ -50,7 +50,7 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
   }
 
   const unparsed_args: string[] = [];
-  arg = (n) => non_include_args[n];
+  arg = n => non_include_args[n];
   next_arg2: for (let i = 0; i < non_include_args.length; ++i) {
     for (const dflag of def_flags) {
       if (arg(i).startsWith(dflag)) {
@@ -83,7 +83,7 @@ export function parseCompileDefinition(str: string): [ string, string|null ] {
 }
 
 export class CompilationDatabase {
-  private _info_by_filepath: Map<string, CompilationInfo>;
+  private readonly _info_by_filepath: Map<string, CompilationInfo>;
   constructor(infos: CompilationInfo[]) {
     this._info_by_filepath = infos.reduce((acc, cur) => {
       acc.set(cur.file, cur);

@@ -21,7 +21,7 @@ class RollbarController {
   /**
    * The Rollbar client instance we use to communicate.
    */
-  private _rollbar = new Rollbar({
+  private readonly _rollbar = new Rollbar({
     accessToken : '14d411d713be4a5a9f9d57660534cac7',
     reportLevel: 'error',
     payload: this._payload,

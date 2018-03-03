@@ -110,9 +110,9 @@ export function execute(command: string,
   if (options && options.cwd) {
     spawn_opts.cwd = options.cwd;
   }
-  let child: proc.ChildProcess = proc.spawn(command, args, spawn_opts);
+  const child: proc.ChildProcess = proc.spawn(command, args, spawn_opts);
   const result = new Promise<ExecutionResult>((resolve, reject) => {
-    child.on('error', (err) => { reject(err); });
+    child.on('error', err => { reject(err); });
     let stdout_acc = '';
     let line_acc = '';
     let stderr_acc = '';
@@ -151,7 +151,7 @@ export function execute(command: string,
     });
     // Don't stop until the child stream is closed, otherwise we might not read
     // the whole output of the command.
-    child.on('close', (retc) => {
+    child.on('close', retc => {
       if (line_acc && outputConsumer) {
         outputConsumer.output(line_acc);
       }

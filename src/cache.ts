@@ -16,11 +16,11 @@ const log = logging.createLogger('cache');
  * information. This type is immutable.
  */
 export class Entry implements api.CacheEntry {
-  private _type: api.CacheEntryType = api.CacheEntryType.Uninitialized;
-  private _docs: string = '';
-  private _key: string = '';
-  private _value: any = null;
-  private _advanced: boolean = false;
+  private readonly _type: api.CacheEntryType = api.CacheEntryType.Uninitialized;
+  private readonly _docs: string = '';
+  private readonly _key: string = '';
+  private readonly _value: any = null;
+  private readonly _advanced: boolean = false;
 
   get type() { return this._type; }
 
@@ -157,8 +157,8 @@ export class CMakeCache {
             INTERNAL : api.CacheEntryType.Internal,
             UNINITIALIZED : api.CacheEntryType.Uninitialized,
             STATIC : api.CacheEntryType.Static,
-          } as {[type: string] : api.CacheEntryType};
-          const type: api.CacheEntryType = typemap[typename];
+          } as {[type: string] : api.CacheEntryType | undefined};
+          const type = typemap[typename];
           const docs = docs_acc.trim();
           docs_acc = '';
           if (type === undefined) {

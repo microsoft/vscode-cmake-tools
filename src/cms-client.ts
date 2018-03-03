@@ -398,23 +398,23 @@ interface MessageResolutionCallbacks {
 export class CMakeServerClient {
   private _proc: child_proc.ChildProcess;
   private _accInput: string = '';
-  private _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
-  private _params: ClientInitPrivate;
+  private readonly _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
+  private readonly _params: ClientInitPrivate;
   private _endPromise: Promise<void>;
   private _pipe: net.Socket;
-  private _pipeFilePath: string;
+  private readonly _pipeFilePath: string;
 
   private _onMoreData(data: Uint8Array) {
     const str = data.toString();
     this._accInput += str;
     while (1) {
       const input = this._accInput;
-      let mat = MESSAGE_WRAPPER_RE.exec(input);
+      const mat = MESSAGE_WRAPPER_RE.exec(input);
       if (!mat) {
         break;
       }
       const [_all, content, tail] = mat;
-      if (!_all || !content || tail === undefined) {
+      if (!_all || !content || !tail) {
         debugger;
         throw new global.Error('Protocol error talking to CMake! Got this input: ' + input);
       }
@@ -468,7 +468,7 @@ export class CMakeServerClient {
 
     switch (some.type) {
     case 'hello': {
-      const unlink_pr = fs.exists(this._pipeFilePath).then(async (exists) => {
+      const unlink_pr = fs.exists(this._pipeFilePath).then(async exists => {
         if (exists && process.platform !== 'win32') {
           await fs.unlink(this._pipeFilePath);
         }
@@ -506,7 +506,7 @@ export class CMakeServerClient {
   sendRequest(t: 'codemodel', p?: CodeModelParams): Promise<CodeModelContent>;
   sendRequest(T: 'cache', p?: CacheParams): Promise<CacheContent>;
   sendRequest(type: string, params: any = {}): Promise<any> {
-    const cp = Object.assign({type}, params);
+    const cp = {type, ...params};
     const cookie = cp.cookie = Math.random().toString();
     const pr = new Promise(
         (resolve, reject) => { this._promisesResolvers.set(cookie, {resolve : resolve, reject : reject}); });
@@ -598,7 +598,7 @@ export class CMakeServerClient {
         onProgress : params.onProgress,
         onDirty : params.onDirty,
         pickGenerator : params.pickGenerator,
-        onCrash : async (retc) => {
+        onCrash : async retc => {
           if (!resolved) {
             reject(new StartupError(retc));
           }
@@ -606,7 +606,7 @@ export class CMakeServerClient {
         onHello : async (msg: HelloMessage) => {
           // We've gotten the hello message. We need to commense handshake
           try {
-            let hsparams: HandshakeParams
+            const hsparams: HandshakeParams
                 = {buildDirectory : params.binaryDir, protocolVersion : msg.supportedProtocolVersions[0]};
 
             const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');

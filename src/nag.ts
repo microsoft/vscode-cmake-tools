@@ -122,14 +122,14 @@ function getOrInitNagState(ext: vscode.ExtensionContext): NagState {
 
 export class NagManager {
   get onNag() { return this._nagEmitter.event; }
-  private _nagEmitter = new vscode.EventEmitter<Nag>();
-  private _nagState = getOrInitNagState(this.extensionContext);
+  private readonly _nagEmitter = new vscode.EventEmitter<Nag>();
+  private readonly _nagState = getOrInitNagState(this.extensionContext);
   private _writeNagState() { writeNagState(this.extensionContext, this._nagState); }
 
   constructor(readonly extensionContext: vscode.ExtensionContext) {}
 
   private _pollRemoteForNags() {
-    const req = https.get(NAG_REMOTE_URL, (res) => {
+    const req = https.get(NAG_REMOTE_URL, res => {
       if (res.statusCode !== 200) {
         // Stop trying.
         console.error('Not polling for CMake-Tools updates.');
@@ -153,7 +153,7 @@ export class NagManager {
             });
       });
     });
-    req.on('error', (err) => {
+    req.on('error', err => {
       console.error('Error polling remote for nags', err);
       setTimeout(() => {
         // Poll again in ten minutes

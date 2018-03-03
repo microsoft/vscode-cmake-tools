@@ -4,11 +4,11 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from "./api";
 import * as cache from './cache';
-import paths from './paths';
 import * as cms from './cms-client';
 import {CMakeDriver} from "./driver";
 import {Kit} from "./kit";
 import {createLogger} from './logging';
+import paths from './paths';
 import {fs} from "./pr";
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -116,7 +116,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
         STATIC : api.CacheEntryType.Static,
       };
       const type = entry_map[el.type];
-      if (type == undefined) {
+      if (type === undefined) {
         rollbar.error(`Unknown cache entry type ${el.type}`);
         return acc;
       }
@@ -212,7 +212,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
           });
           if (found) {
             const defs = (group.defines || []).map(util.parseCompileDefinition);
-            const defs_o = defs.reduce((acc, [ key, value ]) => { return Object.assign(acc, {[key] : value}); }, {});
+            const defs_o = defs.reduce((acc, [ key, value ]) => ({...acc, [key] : value}), {});
             const includes = (group.includePath || []).map(p => ({path : p.path, isSystem : p.isSystem || false}));
             const flags = util.splitCommandLine(group.compileFlags);
             return {
@@ -250,13 +250,13 @@ export class CMakeServerClientDriver extends CMakeDriver {
       cmakePath : await paths.cmakePath,
       environment : this.getKitEnvironmentVariablesObject(),
       onDirty : async () => { this._dirty = true },
-      onMessage : async (msg) => { this._onMessageEmitter.fire(msg.message); },
-      onProgress : async (_prog) => {},
+      onMessage : async msg => { this._onMessageEmitter.fire(msg.message); },
+      onProgress : async _prog => {},
       pickGenerator : () => this.getBestGenerator(),
     });
   }
 
-  private _onMessageEmitter = new vscode.EventEmitter<string>();
+  private readonly _onMessageEmitter = new vscode.EventEmitter<string>();
   get onMessage() { return this._onMessageEmitter.event; }
 
   async doInit(): Promise<void> { await this._restartClient(); }

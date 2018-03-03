@@ -29,7 +29,7 @@ export function replaceAll(str: string, needle: string, what: string) {
  * @returns The modified string
  */
 export function removeAllPatterns(str: string, patterns: string[]): string {
-  return patterns.reduce((acc, needle) => { return replaceAll(acc, needle, ''); }, str);
+  return patterns.reduce((acc, needle) => replaceAll(acc, needle, ''), str);
 }
 
 /**
@@ -141,7 +141,7 @@ export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   } else if (typeof (value) === 'string') {
     ret.type = 'STRING';
     ret.value = replaceAll(value, ';', '\\;');
-  } else if (value instanceof Number || typeof value === 'number') {
+  } else if (typeof value === 'number') {
     ret.type = 'STRING';
     ret.value = value.toString();
   } else if (value instanceof Array) {
@@ -259,9 +259,9 @@ export function mergeEnvironment(...env: EnvironmentVariables[]) {
         acc2[key.toUpperCase()] = vars[key];
         return acc2;
       }, {});
-      return Object.assign({}, acc, norm_vars);
+      return {...acc, ...norm_vars};
     } else {
-      return Object.assign({}, acc, vars);
+      return {...acc, ...vars};
     }
   }, {})
 }

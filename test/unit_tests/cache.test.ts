@@ -56,13 +56,13 @@ suite('Cache test', async () => {
       false,
     ];
     for (const thing of false_things) {
-      expect(util.isTruthy(thing), 'Check false-iness of ' + thing).to.be.false;
+      expect(util.isTruthy(thing), `Check false-iness of ${thing}`).to.be.false;
     }
   });
   test('Truthy values', () => {
     const true_things = [ '1', 'ON', 'YES', 'Y', '112', 12, 'SOMETHING' ];
     for (const thing of true_things) {
-      expect(util.isTruthy(thing), 'Check truthiness of ' + thing).to.be.true;
+      expect(util.isTruthy(thing), `Check truthiness of ${thing}`).to.be.true;
     }
   });
 });

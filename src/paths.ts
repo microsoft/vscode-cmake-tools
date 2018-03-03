@@ -65,9 +65,7 @@ class Paths {
   }
 
   get cmakePath(): Promise<string> { return this._getCMakePath(); }
-  get ctestPath(): Promise<string> {
-    return this._getCTestPath();
-  }
+  get ctestPath(): Promise<string> { return this._getCTestPath(); }
 
   private async _getCTestPath(): Promise<string> {
     const ctest_path = config.raw_ctestPath;

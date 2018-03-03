@@ -81,7 +81,7 @@ class OutputChannelManager implements vscode.Disposable {
   /**
    * Channels that this manager knows about
    */
-  private _channels = new Map<string, vscode.OutputChannel>();
+  private readonly _channels = new Map<string, vscode.OutputChannel>();
 
   /**
    * Get the single instance of a channel with the given name. If the channel
@@ -132,7 +132,7 @@ async function _openLogFile() {
  * Manages and controls logging
  */
 class SingletonLogger {
-  private _logStream = _openLogFile();
+  private readonly _logStream = _openLogFile();
 
   private get _channel() { return channelManager.get('CMake/Build'); }
 

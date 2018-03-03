@@ -16,6 +16,18 @@
 		"no-shadowed-variable": true,
 		"no-return-await": true,
 		"no-string-throw": true,
-		"no-switch-case-fall-through": true
+		"no-switch-case-fall-through": true,
+		"no-unbound-method": true,
+		"no-this-assignment": true,
+		"no-unnecessary-class": true,
+		"no-unsafe-finally": true,
+		"no-var-keyword": true,
+		"prefer-object-spread": true,
+		"restrict-plus-operands": true,
+		"strict-type-predicates": true,
+		"prefer-const": true,
+		"prefer-readonly": true,
+		"arrow-parens": [true, "ban-single-arg-parens"],
+		"arrow-return-shorthand": true
 	}
 }
