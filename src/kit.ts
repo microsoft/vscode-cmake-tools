@@ -798,7 +798,7 @@ export class KitManager implements vscode.Disposable {
   async openKitsEditor() {
     log.debug('Opening TextEditor for', this._kitsPath);
     const text = await vscode.workspace.openTextDocument(this._kitsPath);
-    return await vscode.window.showTextDocument(text);
+    return vscode.window.showTextDocument(text);
   }
 }
 

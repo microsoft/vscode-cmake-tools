@@ -442,17 +442,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const gen_name = gen.name;
       const generator_present = await (async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
-          return await this.testHaveCommand('ninja-build') || await this.testHaveCommand('ninja');
+          return await this.testHaveCommand('ninja-build') || this.testHaveCommand('ninja');
         }
         if (gen_name == 'MinGW Makefiles') {
           return platform === 'win32' && await this.testHaveCommand('make')
-              || await this.testHaveCommand('mingw32-make');
+              || this.testHaveCommand('mingw32-make');
         }
         if (gen_name == 'NMake Makefiles') {
-          return platform === 'win32' && await this.testHaveCommand('nmake', [ '/?' ]);
+          return platform === 'win32' && this.testHaveCommand('nmake', [ '/?' ]);
         }
         if (gen_name == 'Unix Makefiles') {
-          return platform !== 'win32' && await this.testHaveCommand('make');
+          return platform !== 'win32' && this.testHaveCommand('make');
         }
         return false;
       })();

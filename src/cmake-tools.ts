@@ -184,14 +184,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // We purposefully exclude versions <3.7.1, which have some major CMake
         // server bugs
         if (util.versionGreater(version, '3.7.1')) {
-          return await CMakeServerClientDriver.create(this._stateManager, kit);
+          return CMakeServerClientDriver.create(this._stateManager, kit);
         } else {
           log.info(
               'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
         }
       }
       // We didn't start the server backend, so we'll use the legacy one
-      return await LegacyCMakeDriver.create(this._stateManager, kit);
+      return LegacyCMakeDriver.create(this._stateManager, kit);
     })();
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = drv.projectName;
