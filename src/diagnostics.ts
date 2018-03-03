@@ -254,11 +254,11 @@ export class CompileOutputConsumer implements OutputConsumer {
     const [full, file, lineno, message] = res;
     if (file && lineno && message) {
       return {
-        full: full,
-        file: file,
+        full,
+        file,
         location: new vscode.Range(parseInt(lineno) - 1, 0, parseInt(lineno) - 1, 999),
         severity: 'error',
-        message: message,
+        message,
       };
     } else {
       return null;
@@ -288,12 +288,12 @@ export class CompileOutputConsumer implements OutputConsumer {
       throw new Error('Unable to determine location of MSVC diagnostic');
     })();
     return {
-      full: full,
-      file: file,
+      full,
+      file,
       location: range,
-      severity: severity,
-      message: message,
-      code: code,
+      severity,
+      message,
+      code,
     };
   }
 
@@ -305,11 +305,11 @@ export class CompileOutputConsumer implements OutputConsumer {
         const [full, file, lineno, column, severity, message] = gcc_mat;
         if (file && lineno && column && severity && message) {
           this._gccDiagnostics.push({
-            full: full,
-            file: file,
+            full,
+            file,
             location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
-            severity: severity,
-            message: message,
+            severity,
+            message,
           });
           return;
         }
@@ -323,11 +323,11 @@ export class CompileOutputConsumer implements OutputConsumer {
         const [full, file, lineno = '1', column = '1', severity, message] = ghs_mat;
         if (file && severity && message) {
           this._ghsDiagnostics.push({
-            full: full,
-            file: file,
+            full,
+            file,
             location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
-            severity: severity,
-            message: message
+            severity,
+            message
           });
           return;
         }
@@ -389,8 +389,8 @@ export class CompileOutputConsumer implements OutputConsumer {
         }
         diags_by_file.get(filepath)!.push(diag);
         return {
-          filepath: filepath,
-          diag: diag,
+          filepath,
+          diag,
         };
       });
     });

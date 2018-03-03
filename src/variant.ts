@@ -188,7 +188,7 @@ export class VariantManager implements vscode.Disposable {
       sets.set(setting_name, {
         default_: def,
         description: desc,
-        choices: choices,
+        choices,
       });
     }
 

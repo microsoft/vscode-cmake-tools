@@ -138,7 +138,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
     if (await fs.exists(gxx_bin)) {
       return {
         type: 'compilerKit',
-        name: name,
+        name,
         compilers: {
           'CXX': gxx_bin,
           'C': bin,
@@ -147,7 +147,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
     } else {
       return {
         type: 'compilerKit',
-        name: name,
+        name,
         compilers: {
           'C': bin,
         }
@@ -175,7 +175,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
     if (await fs.exists(clangxx_bin)) {
       return {
         type: 'compilerKit',
-        name: name,
+        name,
         compilers: {
           'C': bin,
           'CXX': clangxx_bin,
@@ -184,7 +184,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
     } else {
       return {
         type: 'compilerKit',
-        name: name,
+        name,
         compilers: {
           'C': bin,
         },
@@ -422,7 +422,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
 
   const kit: VSKit = {
     type: 'vsKit',
-    name: name,
+    name,
     visualStudio: inst.instanceId,
     visualStudioArchitecture: arch,
   };
@@ -621,7 +621,7 @@ export class KitManager implements vscode.Disposable {
       return {
         label: kit.name,
         description: descriptionForKit(kit),
-        kit: kit,
+        kit,
       };
     });
     const chosen = await vscode.window.showQuickPick(items, {

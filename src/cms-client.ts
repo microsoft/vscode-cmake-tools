@@ -509,7 +509,7 @@ export class CMakeServerClient {
     const cp = {type, ...params};
     const cookie = cp.cookie = Math.random().toString();
     const pr = new Promise(
-        (resolve, reject) => { this._promisesResolvers.set(cookie, {resolve: resolve, reject: reject}); });
+        (resolve, reject) => { this._promisesResolvers.set(cookie, {resolve, reject}); });
     const msg = JSON.stringify(cp);
     console.log(`Sending message to cmake-server: ${msg}`);
     this._pipe.write('\n[== "CMake Server" ==[\n');

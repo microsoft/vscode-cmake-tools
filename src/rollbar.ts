@@ -109,7 +109,7 @@ class RollbarController {
     debugger;
     if (this._enabled) {
       const stack = new Error().stack;
-      return this._rollbar.error(what, additional, {stack: stack});
+      return this._rollbar.error(what, additional, {stack});
     }
     return null;
   }

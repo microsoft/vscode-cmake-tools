@@ -158,7 +158,7 @@ export function execute(command: string,
       if (stderr_line_acc && outputConsumer) {
         outputConsumer.error(stderr_line_acc);
       }
-      resolve({retc: retc, stdout: stdout_acc, stderr: stderr_acc});
+      resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
     });
   });
   return {child, result};

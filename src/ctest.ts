@@ -246,7 +246,7 @@ export class DecorationManager {
                                      file_line.range.end.character);
       fails_acc.push({
         hoverMessage: decor.hoverMessage,
-        range: range,
+        range,
       });
     }
     editor.setDecorations(this._failingTestDecorationType, fails_acc);
