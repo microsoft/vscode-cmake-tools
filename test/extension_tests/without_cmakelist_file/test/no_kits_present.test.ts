@@ -6,17 +6,17 @@ import {expect} from 'chai';
 
 import {clearExistingKitConfigurationFile, getExtension} from '../../../test_helpers';
 
-// This test will be skip when a Visual Studio installation marker (Env.HasVs=true) is present.
-// At the moment it is not possible to hide an installation against the test. In that case
-// it is not possible to test a no present kit, because VS will provid always kits.
+// This tests will be skipped when a Visual Studio installation marker (Env.HasVs=true) is present.
+// It is not possible to hide an installation against the test. In that case
+// it is not possible to test a no present kit, because VS will provide always kits.
 (process.env.HasVs == 'true' ? suite.skip : suite)('No present kit', () => {
   let path_backup = '';
   suiteSetup(() => {
     clearExistingKitConfigurationFile();
 
-    // Test will use path to scan for compilers
-    // with no path content there is no compiler found
     path_backup = process.env.PATH!;
+    // The tests will use the PATH environment variable to scan for compilers,
+    // with no PATH content no compiler will be found.
     process.env.PATH = '';
   });
   suiteTeardown(() => {
