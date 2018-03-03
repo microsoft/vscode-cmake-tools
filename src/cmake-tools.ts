@@ -455,12 +455,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Check if the current project needs to be (re)configured
+   */
+  private async _needsReconfigure(): Promise<boolean> {
+    let drv = await this.getCMakeDriverInstance();
+    if (!drv || await drv.needsReconfigure) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
     // First, reconfigure if necessary
-    let drv = await this.getCMakeDriverInstance();
-    if (!drv || await drv.needsReconfigure) {
+    if (await this._needsReconfigure()) {
       const retc = await this.configure();
       if (retc) {
         return retc;
@@ -468,7 +479,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     } else if (config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
     }
-    drv = await this.getCMakeDriverInstance();
+    const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       throw new Error('Impossible: CMake driver died immediately after successful configure');
     }
@@ -639,9 +650,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.selectLaunchTarget`
    */
   async selectLaunchTarget(): Promise<string|null> {
+    if (await this._needsReconfigure()) {
+      const rc = await this.configure();
+      if (rc !== 0) {
+        return null;
+      }
+    }
     const executableTargets = await this.executableTargets;
     if (executableTargets.length === 0) {
-      vscode.window.showWarningMessage('There are no known executable targets to choose from');
       return null;
     }
 
@@ -673,6 +689,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   launchTargetProgramPath(): Promise<string|null> { return this.launchTargetPath(); }
 
+  async getLaunchTargetPath(): Promise<string|null> {
+    const current = await this.launchTargetPath();
+    if (current) {
+      return current;
+    }
+    // Ask the user if we don't already have a target
+    const chosen = await this.selectLaunchTarget();
+    return chosen;
+  }
+
   /**
    * Implementation of `cmake.debugTarget`
    */
@@ -686,17 +712,24 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       vscode.window.showWarningMessage('Target debugging is no longer supported with the legacy driver');
       return null;
     }
-    const target_name = this._stateManager.launchTargetName;
-    const target_path = await this.launchTargetPath();
+    // Ensure that we've configured the project already. If we haven't, `getLaunchTargetPath` won't see any executable
+    // targets and may show an uneccessary prompt to the user
+    if (await this._needsReconfigure()) {
+      const rc = await this.configure();
+      if (rc !== 0) {
+        return null;
+      }
+    }
+    const target_path = await this.getLaunchTargetPath();
     if (!target_path) {
-      vscode.window.showWarningMessage('No target selected for debugging');
+      // The user has nothing selected and cancelled the prompt to select a target.
       return null;
     }
     const is_msvc
         = drv.compilerID ? drv.compilerID.includes('MSVC') : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
     const debug_config: vscode.DebugConfiguration = {
       type : is_msvc ? 'cppvsdbg' : 'cppdbg',
-      name : `Debug target: ${target_name}`,
+      name : `Debug ${target_path}`,
       request : 'launch',
       cwd : '${workspaceRoot}',
       args : [],
@@ -715,10 +748,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.launchTarget`
    */
   async launchTarget() {
-    const target_name = this._stateManager.launchTargetName;
-    const target_path = await this.launchTargetPath();
-    if (!target_path || !target_name) {
-      vscode.window.showWarningMessage('No target selected for launching');
+    const target_path = await this.getLaunchTargetPath();
+    if (!target_path) {
+      // The user has nothing selected and cancelled the prompt to select
+      // a target.
       return null;
     }
     if (!this._launchTerminal)
