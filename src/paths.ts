@@ -71,7 +71,7 @@ class Paths {
 
   private async _getCTestPath(): Promise<string> {
     const ctest_path = config.raw_ctestPath;
-    if (ctest_path == 'auto') {
+    if (!ctest_path || ctest_path == 'auto') {
       const cmake = await this.cmakePath;
       return path.join(path.dirname(cmake), 'ctest');
     } else {
