@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 pushd .
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -11,6 +13,9 @@ fi
 
 cd $ROOT
 
+# Run tslint
+node ./node_modules/tslint/bin/tslint -p $ROOT
+
 export HasVs=false
 export CMT_TESTING=1
 
@@ -19,11 +24,5 @@ export CMT_TESTING=1
 export CODE_TESTS_PATH=$ROOT/out/test/unit_tests
 export CODE_TESTS_WORKSPACE=$ROOT/test/unit_tests/test_project_without_cmakelists
 node ./node_modules/vscode/bin/test
-test_error_code=$?
 
 popd
-
-# Forward error level
-if [ $test_error_code -ne 0 ]; then
-	exit $test_error_code
-fi
