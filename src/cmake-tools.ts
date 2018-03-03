@@ -19,6 +19,7 @@ import {KitManager} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from "./nag";
+import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -170,9 +171,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const kit = this._kitManager.activeKit;
     const drv = await (async () => {
       log.debug('Starting CMake driver');
-      const version_ex = await proc.execute(config.cmakePath, [ '--version' ]).result;
+      const cmake = await paths.cmakePath;
+      const version_ex = await proc.execute(cmake, [ '--version' ]).result;
       if (version_ex.retc !== 0 || !version_ex.stdout) {
-        throw new Error(`Bad CMake executable "${config.cmakePath}". Is it installed and a valid executable?`);
+        throw new Error(`Bad CMake executable "${cmake}". Is it installed and a valid executable?`);
       }
 
       if (config.useCMakeServer) {
@@ -215,8 +217,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
+    const cmake = await paths.cmakePath;
     if (drv) {
-      return drv.executeCommand(config.cmakePath, args, undefined, options).result;
+      return drv.executeCommand(cmake, args, undefined, options).result;
     } else {
       throw new Error("Unable to execute cmake command, there is no valid cmake driver instance.");
     }

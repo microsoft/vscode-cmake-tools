@@ -5,8 +5,8 @@
  */ /** */
 
 import * as os from 'os';
-import * as path from 'path';
 import * as vscode from 'vscode';
+
 import rollbar from './rollbar';
 
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
@@ -53,6 +53,7 @@ function readPrefixedConfig<T>(key: string, default_?: T): T|null {
   }
 }
 
+
 /**
  * This class exposes a number of readonly properties which can be used to
  * access configuration options. Each property corresponds to a value in
@@ -97,20 +98,9 @@ class ConfigurationReader {
 
   get enableOutputParsers(): string[]|null { return readPrefixedConfig<string[]>('enableOutputParsers'); }
 
-  get cmakePath(): string { return readPrefixedConfig<string>('cmakePath', 'cmake'); }
+  get raw_cmakePath(): string { return readPrefixedConfig<string>('cmakePath', 'auto'); }
 
-  get ctestPath(): string {
-    const ctest_path = readPrefixedConfig<string>('ctestPath');
-    if (!ctest_path) {
-      const cmake = this.cmakePath;
-      if (cmake === 'cmake' || cmake === 'cmake.exe') {
-        return 'ctest';
-      }
-      return path.join(path.dirname(cmake), 'ctest')
-    } else {
-      return ctest_path;
-    }
-  }
+  get raw_ctestPath(): string { return readPrefixedConfig<string>('ctestPath', 'auto'); }
 
   get debugConfig(): any { return readPrefixedConfig<any>('debugConfig'); }
 

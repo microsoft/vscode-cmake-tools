@@ -9,6 +9,7 @@ import * as api from './api';
 import config from './config';
 import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
 import * as logging from './logging';
+import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -642,7 +643,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     })();
     const args = [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ].concat(
         generator_args);
-    const child = this.executeCommand(config.cmakePath, args, consumer);
+    const cmake = await paths.cmakePath;
+    const child = this.executeCommand(cmake, args, consumer);
     this._currentProcess = child;
     await child.result;
     this._currentProcess = null;

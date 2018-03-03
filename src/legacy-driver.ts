@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import {CMakeCache} from "./cache";
 import {CompilationDatabase} from './compdb';
-import config from './config';
+import paths from './paths';
 import {CMakeDriver} from './driver';
 import {Kit} from "./kit";
 // import * as proc from './proc';
@@ -58,8 +58,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push('-H' + util.normalizePath(this.sourceDir));
     const bindir = util.normalizePath(this.binaryDir);
     args.push('-B' + bindir);
-    log.debug('Invoking CMake', config.cmakePath, 'with arguments', JSON.stringify(args));
-    const res = await this.executeCommand(config.cmakePath, args, outputConsumer).result;
+    const cmake = await paths.cmakePath;
+    log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
+    const res = await this.executeCommand(cmake, args, outputConsumer).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
     if (res.retc == 0) {

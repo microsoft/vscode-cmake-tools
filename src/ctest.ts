@@ -7,6 +7,7 @@ import * as api from './api';
 import config from './config';
 import {CMakeDriver} from './driver';
 import * as logging from './logging';
+import paths from './paths';
 import {fs} from './pr';
 import {OutputConsumer} from './proc';
 import * as util from './util';
@@ -332,7 +333,7 @@ export class CTestDriver implements vscode.Disposable {
 
     const configuration = driver.currentBuildType;
     const child
-        = driver.executeCommand(config.ctestPath,
+        = driver.executeCommand(await paths.ctestPath,
                                 [ `-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure' ]
                                     .concat(config.ctestArgs),
                                 new CTestOutputLogger(),

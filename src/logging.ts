@@ -115,7 +115,7 @@ let _LOGGER: Promise<NodeJS.WritableStream>;
 async function _openLogFile() {
   if (!_LOGGER) {
     _LOGGER = (async () => {
-      const logfilepath = path.join(dirs.dataDir, 'log.txt');
+      const logfilepath = path.join(paths.dataDir, 'log.txt');
       await fs.mkdir_p(path.dirname(logfilepath));
       if (await fs.exists(logfilepath)) {
         return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
@@ -214,4 +214,4 @@ import * as util from './util';
 import {fs} from './pr';
 import config from './config';
 import {LogLevelKey} from './config';
-import dirs from './dirs';
+import paths from './paths';

@@ -4,8 +4,8 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from "./api";
 import * as cache from './cache';
+import paths from './paths';
 import * as cms from './cms-client';
-import config from './config';
 import {CMakeDriver} from "./driver";
 import {Kit} from "./kit";
 import {createLogger} from './logging';
@@ -243,11 +243,11 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return this._startNewClient();
   }
 
-  private _startNewClient() {
+  private async _startNewClient() {
     return cms.CMakeServerClient.start({
       binaryDir : this.binaryDir,
       sourceDir : this.sourceDir,
-      cmakePath : config.cmakePath,
+      cmakePath : await paths.cmakePath,
       environment : this.getKitEnvironmentVariablesObject(),
       onDirty : async () => { this._dirty = true },
       onMessage : async (msg) => { this._onMessageEmitter.fire(msg.message); },

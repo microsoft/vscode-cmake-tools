@@ -6,7 +6,7 @@ import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import dirs from './dirs';
+import paths from './paths';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
@@ -346,7 +346,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
     bat.push(`echo ${envvar} := %${envvar}%`);
   }
   const fname = Math.random().toString() + '.bat';
-  const batpath = path.join(dirs.tmpDir, `vs-cmt-${fname}`);
+  const batpath = path.join(paths.tmpDir, `vs-cmt-${fname}`);
   await fs.writeFile(batpath, bat.join('\r\n'));
   const res = await proc.execute(batpath, [], null, {shell : true}).result;
   fs.unlink(batpath);
@@ -586,7 +586,7 @@ export class KitManager implements vscode.Disposable {
     if (kitPath != null) {
       this._kitsPath = kitPath;
     } else {
-      this._kitsPath = path.join(dirs.dataDir, 'cmake-kits.json');
+      this._kitsPath = path.join(paths.dataDir, 'cmake-kits.json');
     }
 
     // Re-read the kits file when it is changed
