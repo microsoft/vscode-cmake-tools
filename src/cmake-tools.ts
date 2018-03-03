@@ -290,7 +290,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       rollbar.invokeAsync('Changing CMake kit', async () => {
         if (kit) {
           log.debug('Injecting new Kit into CMake driver');
-          const drv = await this.getCMakeDriverInstance();
+          const drv = await this._cmakeDriver;
           if (drv) {
             await drv.setKit(kit);
           }
