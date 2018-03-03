@@ -1,7 +1,0 @@
-{
-    "cmake.buildDirectory": "${workspaceRoot}/build",
-    "cmake.preferredGenerators": [],
-    "files.associations": {
-        "ostream": "cpp"
-    }
-}
