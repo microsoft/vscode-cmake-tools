@@ -28,6 +28,12 @@
 		"prefer-const": true,
 		"prefer-readonly": true,
 		"arrow-parens": [true, "ban-single-arg-parens"],
-		"arrow-return-shorthand": true
+		"arrow-return-shorthand": true,
+		"no-boolean-literal-compare": true,
+		"no-angle-bracket-type-assertion": true,
+		"no-trailing-whitespace": true,
+		"object-literal-shorthand": true,
+		"object-literal-key-quotes": [true, "as-needed"],
+		"prefer-template": [true, "allow-single-concat"]
 	}
 }
