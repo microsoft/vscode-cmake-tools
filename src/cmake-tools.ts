@@ -129,7 +129,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * two-phase init and a private constructor. The driver may be replaced at
    * any time by the user making changes to the workspace configuration.
    */
-  private _cmakeDriver: Promise<CMakeDriver | null> = Promise.resolve(null);
+  private _cmakeDriver: Promise<CMakeDriver|null> = Promise.resolve(null);
 
   /**
    * The status bar manager. Has two-phase init.
@@ -234,7 +234,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
-  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo | null> {
+  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
     const drv = await this.getCMakeDriverInstance();
     if (drv) {
       return drv.compilationInfoForFile(filepath);
@@ -275,9 +275,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Listen for the variant to change
     this._variantManager.onActiveVariantChanged(() => {
       log.debug('Active build variant changed');
-      rollbar.invokeAsync('Changing build variant', async() => {
+      rollbar.invokeAsync('Changing build variant', async () => {
         const drv = await this.getCMakeDriverInstance();
-        if (drv)  {
+        if (drv) {
           await drv.setVariantOptions(this._variantManager.activeVariantOptions);
           this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.short);
           // We don't configure yet, since someone else might be in the middle of a configure
@@ -291,7 +291,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         if (kit) {
           log.debug('Injecting new Kit into CMake driver');
           const drv = await this.getCMakeDriverInstance();
-          if(drv) {
+          if (drv) {
             await drv.setKit(kit);
           }
         }
@@ -315,7 +315,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * This ensures that user commands can always be executed, because error criterials like
    * exceptions would assign a null driver and it is possible to create a new driver instance later again.
    */
-  async getCMakeDriverInstance() : Promise<CMakeDriver | null> {
+  async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
     if (!this._kitManager.hasActiveKit) {
       return null;
     }
@@ -328,7 +328,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // bar
         await this._ctestController.reloadTests(cmakeInstance!);
         this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
-      } catch(ex) {
+      } catch (ex) {
         log.debug("Exception on start of cmake driver.", ex.stack);
         this._cmakeDriver = Promise.resolve(null);
       }
@@ -380,7 +380,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.configure`
    */
   configure(extra_args: string[] = []) {
-    return this._doConfigure(async(consumer) => {
+    return this._doConfigure(async (consumer) => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
         return drv.configure(extra_args, consumer);
@@ -394,7 +394,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.cleanConfigure()
    */
   cleanConfigure() {
-    return this._doConfigure(async(consumer) => {
+    return this._doConfigure(async (consumer) => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
         return drv.cleanConfigure(consumer);
@@ -408,8 +408,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
-  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>):
-      Promise<number> {
+  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
     if (!this._kitManager.hasActiveKit) {
       log.debug('No kit selected yet. Asking for a Kit first.');
       await this.selectKit();
@@ -464,7 +463,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!drv) {
       log.debug('Build of project is not possible, because driver is not ready.');
       vscode.window.showErrorMessage('Unable to build, try to run configure before build.');
-
       return -1;
     }
 
@@ -503,6 +501,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async editCache(): Promise<void> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
+      vscode.window.showErrorMessage('Set up your CMake project before trying to edit the cache.');
       return;
     }
 
@@ -530,9 +529,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.build(target);
   }
 
-  async showTargetSelector(): Promise<string | null> {
+  async showTargetSelector(): Promise<string|null> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
+      vscode.window.showErrorMessage('Set up your CMake project before selecting a target.');
       return '';
     }
 
@@ -581,7 +581,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
-      return -1;
+      throw new Error('Impossible: CMake driver died immediately after build succeeded.');
     }
     return this._ctestController.runCTest(drv);
   }
@@ -678,9 +678,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.debugTarget`
    */
-  async debugTarget(): Promise<vscode.DebugSession | null> {
+  async debugTarget(): Promise<vscode.DebugSession|null> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
+      vscode.window.showErrorMessage('Set up and build your CMake project before debugging.');
       return null;
     }
     if (drv instanceof LegacyCMakeDriver) {
@@ -735,6 +736,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   public async quickStart(): Promise<Number> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
+      vscode.window.showErrorMessage('CMake driver is not yet ready.');
       return -2;
     }
 
