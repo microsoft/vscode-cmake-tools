@@ -9,8 +9,6 @@ compiler:
   - gcc
 
 env:
-  global:
-    - HasVs=false CMT_TESTING=1
   matrix:
     - CMAKE_MINOR=3.5 CMAKE_VER=3.5.0
     - CMAKE_MINOR=3.7 CMAKE_VER=3.7.0
@@ -45,4 +43,5 @@ install:
 script:
   - node --version
   - cmake --version
-  - node ./node_modules/vscode/bin/test
+  - bash scripts/run_tests.sh
+  - bash scripts/run_extension_tests.sh
