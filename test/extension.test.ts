@@ -30,7 +30,7 @@ import * as util from '../src/util';
 const here = __dirname;
 
 function clearExistingKitConfigurationFile() {
-  fs.writeFile( path.join(dirs.dataDir, 'cmake-kits.json'), "[]");
+  fs.writeFile( path.join(paths.dataDir, 'cmake-kits.json'), "[]");
 }
 
 async function getExtension() {
@@ -710,7 +710,7 @@ suite('Diagnostics', async () => {
   });
 });
 
-import dirs from '../src/dirs';
+import paths from '../src/paths';
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async () => {
