@@ -140,8 +140,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
         type: 'compilerKit',
         name,
         compilers: {
-          'CXX': gxx_bin,
-          'C': bin,
+          CXX: gxx_bin,
+          C: bin,
         }
       };
     } else {
@@ -149,7 +149,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
         type: 'compilerKit',
         name,
         compilers: {
-          'C': bin,
+          C: bin,
         }
       };
     }
@@ -177,8 +177,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
         type: 'compilerKit',
         name,
         compilers: {
-          'C': bin,
-          'CXX': clangxx_bin,
+          C: bin,
+          CXX: clangxx_bin,
         },
       };
     } else {
@@ -186,7 +186,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
         type: 'compilerKit',
         name,
         compilers: {
-          'C': bin,
+          C: bin,
         },
       };
     }
@@ -377,19 +377,19 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
  * Platform arguments for VS Generators
  */
 const VsArchitectures: {[key: string]: string} = {
-  'amd64': 'x64',
-  'arm': 'ARM',
-  'amd64_arm': 'ARM',
+  amd64: 'x64',
+  arm: 'ARM',
+  amd64_arm: 'ARM',
 };
 
 /**
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: {[key: string]: string} = {
-  '14': 'Visual Studio 14 2015',
-  '15': 'Visual Studio 15 2017',
-  'VS120COMNTOOLS': 'Visual Studio 12 2013',
-  'VS140COMNTOOLS': 'Visual Studio 14 2015',
+  14: 'Visual Studio 14 2015',
+  15: 'Visual Studio 15 2017',
+  VS120COMNTOOLS: 'Visual Studio 12 2013',
+  VS140COMNTOOLS: 'Visual Studio 14 2015',
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
