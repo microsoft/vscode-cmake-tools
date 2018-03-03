@@ -46,11 +46,11 @@ export class CMakeServerClientDriver extends CMakeDriver {
       // Stop the server before we try to rip out any old files
       await old_cl.shutdown();
       const build_dir = this.binaryDir;
-      const cache = this.cachePath;
+      const cache_path = this.cachePath;
       const cmake_files = path.join(build_dir, 'CMakeFiles');
-      if (await fs.exists(cache)) {
-        log.info('Removing', cache);
-        await fs.unlink(cache);
+      if (await fs.exists(cache_path)) {
+        log.info('Removing', cache_path);
+        await fs.unlink(cache_path);
       }
       if (await fs.exists(cmake_files)) {
         log.info('Removing', cmake_files);

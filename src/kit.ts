@@ -483,11 +483,11 @@ export async function scanForKits() {
                       // Search directories on `PATH` for compiler binaries
                       const pathvar = process.env['PATH'] !;
                       const sep = isWin32 ? ';' : ':';
-                      const paths = pathvar.split(sep);
+                      const path_elems = pathvar.split(sep);
 
                       // Search them all in parallel
                       let prs = [] as Promise<Kit[]>[];
-                      const compiler_kits = paths.map(path => scanDirForCompilerKits(path, pr));
+                      const compiler_kits = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
                       prs = prs.concat(compiler_kits);
                       if(isWin32) {
                         const vs_kits = scanForVSKits(pr);
@@ -497,7 +497,6 @@ export async function scanForKits() {
                       const kits = ([] as Kit[]).concat(...arrays);
                       kits.map(k => log.info(`Found Kit: ${k.name}`));
                       return kits;
-
                     });
 }
 

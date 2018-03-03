@@ -19,8 +19,8 @@ export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal
 function readConfig<T>(key: string): T|null;
 function readConfig<T>(key: string, default_: T): T;
 function readConfig<T>(key: string, default_?: T): T|null {
-  const config = vscode.workspace.getConfiguration('cmake');
-  const value = config.get(key) as T | undefined;
+  const cmt_config = vscode.workspace.getConfiguration('cmake');
+  const value = cmt_config.get(key) as T | undefined;
   if (value === undefined) {
     if (default_ === undefined) {
       return null;

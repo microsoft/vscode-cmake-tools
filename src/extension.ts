@@ -34,9 +34,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
     return vscode.commands.registerCommand('cmake.' + name, () => {
       const id = util.randint(1000, 10000);
       return rollbar.invokeAsync(name, async () => {
-        const cmt = await cmt_pr;
+        const cmt_inst = await cmt_pr;
         log.debug(`[${id}]`, 'cmake.' + name, 'started');
-        const fn = (cmt[name] as Function).bind(cmt);
+        const fn = (cmt_inst[name] as Function).bind(cmt_inst);
         await fn();
         log.debug(`[${id}]`, 'cmake.' + name, 'finished');
       });

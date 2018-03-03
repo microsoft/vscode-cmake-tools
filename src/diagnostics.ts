@@ -137,12 +137,12 @@ export class CMakeOutputConsumer implements OutputConsumer {
         const [_full, level, filename, linestr, command] = result;
         // tslint:disable-next-line
         _full;  // unused
-        const line = Number.parseInt(linestr) - 1;
+        const lineno = Number.parseInt(linestr) - 1;
         const diagmap: {[k: string]: vscode.DiagnosticSeverity} = {
           'Warning' : vscode.DiagnosticSeverity.Warning,
           'Error' : vscode.DiagnosticSeverity.Error,
         };
-        const vsdiag = new vscode.Diagnostic(new vscode.Range(line, 0, line, 9999), '', diagmap[level]);
+        const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
         const filepath = path.isAbsolute(filename) ? filename : util.normalizePath(path.join(this.sourceDir, filename));
         this._errorState.diag = {
