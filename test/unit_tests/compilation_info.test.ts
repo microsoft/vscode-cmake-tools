@@ -15,10 +15,12 @@ import * as api from '../../src/api';
 import * as compdb from '../../src/compdb';
 
 const here = __dirname;
-function getTestResourceFilePath(filename: string): string { return path.normalize(path.join(here, '../../../test/unit_tests', filename)); }
+function getTestResourceFilePath(filename: string): string {
+  return path.normalize(path.join(here, '../../../test/unit_tests', filename));
+}
 
 suite('Compilation info', () => {
-  test('Parsing compilation databases', async () => {
+  test('Parsing compilation databases', async() => {
     const dbpath = getTestResourceFilePath('test_compdb.json');
     const db = (await compdb.CompilationDatabase.fromFilePath(dbpath))!;
     expect(db).to.not.be.null;

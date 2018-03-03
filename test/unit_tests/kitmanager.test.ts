@@ -19,23 +19,25 @@ import * as state from '../../src/state';
 
 
 const here = __dirname;
-function getTestResourceFilePath(filename: string): string { return path.normalize(path.join(here, '../../../test/unit_tests', filename)); }
+function getTestResourceFilePath(filename: string): string {
+  return path.normalize(path.join(here, '../../../test/unit_tests', filename));
+}
 
 
-suite('Kits test', async () => {
-  suite('GUI test', async () => {
+suite('Kits test', async() => {
+  suite('GUI test', async() => {
     let km: kit.KitManager;
     let gui_sandbox: sinon.SinonSandbox;
-    setup(async () => {
+    setup(async() => {
       gui_sandbox = sinon.sandbox.create();
       let stateMock = gui_sandbox.createStubInstance(state.StateManager);
       sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
       const kit_file = getTestResourceFilePath('test_kit.json');
       km = new kit.KitManager(stateMock, kit_file);
     });
-    teardown(async () => { gui_sandbox.restore(); });
+    teardown(async() => { gui_sandbox.restore(); });
 
-    test('KitManager tests opening of kit file', async () => {
+    test('KitManager tests opening of kit file', async() => {
       let text: vscode.TextDocument|undefined;
       gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(function(textDoc) {
         text = textDoc;
@@ -54,12 +56,12 @@ suite('Kits test', async () => {
     }).timeout(10000);
   });
 
-  test('KitManager tests event on change of active kit', async () => {
+  test('KitManager tests event on change of active kit', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     let storedActivatedKitName: string = '';
-    sinon.stub(stateMock, 'activeKitName')
-        .get(function() { return null; })
-        .set(function(kit) { storedActivatedKitName = kit; });
+    sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function(kit) {
+      storedActivatedKitName = kit;
+    });
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
     // Check that each time we change the kit, it fires a signal
@@ -77,7 +79,7 @@ suite('Kits test', async () => {
     km.dispose();
   }).timeout(10000);
 
-  test('KitManager test load of kit from test file', async () => {
+  test('KitManager test load of kit from test file', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
@@ -95,7 +97,7 @@ suite('Kits test', async () => {
     km.dispose();
   });
 
-  test('KitManager test selection of last activated kit', async () => {
+  test('KitManager test selection of last activated kit', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
 
     sinon.stub(stateMock, 'activeKitName').get(function() { return "ToolchainKit 1"; }).set(function() {});
@@ -110,7 +112,7 @@ suite('Kits test', async () => {
     km.dispose();
   });
 
-  test('KitManager test selection of a default kit', async () => {
+  test('KitManager test selection of a default kit', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
 
@@ -121,12 +123,12 @@ suite('Kits test', async () => {
     km.dispose();
   });
 
-  test('KitManager test selection of default kit if last activated kit is invalid', async () => {
+  test('KitManager test selection of default kit if last activated kit is invalid', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     let storedActivatedKitName = "not replaced";
-    sinon.stub(stateMock, 'activeKitName')
-        .get(function() { return "Unknown"; })
-        .set(function(kit) { storedActivatedKitName = kit; });
+    sinon.stub(stateMock, 'activeKitName').get(function() { return "Unknown"; }).set(function(kit) {
+      storedActivatedKitName = kit;
+    });
 
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
@@ -136,4 +138,3 @@ suite('Kits test', async () => {
     km.dispose();
   });
 });
-

@@ -16,9 +16,11 @@ import * as util from '../../src/util';
 
 
 const here = __dirname;
-function getTestResourceFilePath(filename: string): string { return path.normalize(path.join(here, '../../../test/unit_tests', filename)); }
+function getTestResourceFilePath(filename: string): string {
+  return path.normalize(path.join(here, '../../../test/unit_tests', filename));
+}
 
-suite('Cache test', async () => {
+suite('Cache test', async() => {
   test("Read CMake Cache", async function() {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
     const generator = cache.get("CMAKE_GENERATOR") as api.CacheEntry;

@@ -32,7 +32,7 @@ function toLowerCaseForWindows(str: string): string {
   }
 }
 
-suite('Diagnostics', async () => {
+suite('Diagnostics', async() => {
   let consumer = new diags.CMakeOutputConsumer("dummyPath");
   let build_consumer = new diags.CompileOutputConsumer();
   setup(() => {
@@ -40,7 +40,7 @@ suite('Diagnostics', async () => {
     consumer = new diags.CMakeOutputConsumer("dummyPath");
     build_consumer = new diags.CompileOutputConsumer();
   });
-  test('Waring-free CMake output', async () => {
+  test('Waring-free CMake output', async() => {
     const cmake_output = [
       '-- Configuring done',
       '-- Generating done',
