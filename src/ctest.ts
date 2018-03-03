@@ -363,10 +363,10 @@ export class CTestDriver implements vscode.Disposable {
     this._decorationManager.binaryDir = driver.binaryDir;
     this.testingEnabled = true;
 
-    const config = driver.currentBuildType;
+    const build_config = driver.currentBuildType;
     const result
         = await driver
-              .executeCommand('ctest', [ '-N', '-C', config ], undefined, {cwd : driver.binaryDir, silent : true})
+              .executeCommand('ctest', [ '-N', '-C', build_config ], undefined, {cwd : driver.binaryDir, silent : true})
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
