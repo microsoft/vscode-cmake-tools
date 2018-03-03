@@ -14,6 +14,8 @@
 		"no-floating-promises": [true, "PromisedAssertion"],
 		"no-implicit-dependencies": [true, "dev"],
 		"no-shadowed-variable": true,
-		"no-return-await": true
+		"no-return-await": true,
+		"no-string-throw": true,
+		"no-switch-case-fall-through": true
 	}
 }

@@ -251,6 +251,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       } else {
         this._kitEnvironmentVariables = vars;
       }
+      break;
     }
     default: {
       // Other kits don't have environment variables
