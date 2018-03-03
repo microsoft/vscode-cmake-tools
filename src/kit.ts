@@ -411,7 +411,7 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter):
     Promise<VSKit|null> {
   const installName = inst.displayName || inst.instanceId;
-  const name = installName + ' - ' + arch;
+  const name = `${installName} - ${arch}`;
   log.debug('Checking for kit: ' + name);
   if (pr) {
     pr.report({message: `Checking ${installName} with ${arch}`});

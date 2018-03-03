@@ -142,7 +142,7 @@ class SingletonLogger {
     }
     const user_message = args.map(a => a.toString()).join(' ');
     const prefix = new Date().toISOString() + ` [${levelName(level)}]`;
-    const raw_message = prefix + ' ' + user_message;
+    const raw_message = `${prefix} ${user_message}`;
     switch (level) {
     case LogLevel.Trace:
     case LogLevel.Debug:

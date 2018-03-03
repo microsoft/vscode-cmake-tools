@@ -183,10 +183,11 @@ async function _killTree(pid: number) {
         throw e;
       }
     }
-  } else {  // Because reasons, Node's proc.kill doesn't work on killing child
+  } else {
+    // Because reasons, Node's proc.kill doesn't work on killing child
     // processes transitively. We have to do a sad and manually kill the
     // task using taskkill.
-    child_process.exec('taskkill /pid ' + pid.toString() + ' /T /F');
+    child_process.exec(`taskkill /pid ${pid.toString()} /T /F`);
   }
 }
 
