@@ -150,14 +150,14 @@ export class CMakeCache {
         } else {
           const key = name;
           const typemap = {
-            BOOL : api.CacheEntryType.Bool,
-            STRING : api.CacheEntryType.String,
-            PATH : api.CacheEntryType.Path,
-            FILEPATH : api.CacheEntryType.FilePath,
-            INTERNAL : api.CacheEntryType.Internal,
-            UNINITIALIZED : api.CacheEntryType.Uninitialized,
-            STATIC : api.CacheEntryType.Static,
-          } as {[type: string] : api.CacheEntryType | undefined};
+            BOOL: api.CacheEntryType.Bool,
+            STRING: api.CacheEntryType.String,
+            PATH: api.CacheEntryType.Path,
+            FILEPATH: api.CacheEntryType.FilePath,
+            INTERNAL: api.CacheEntryType.Internal,
+            UNINITIALIZED: api.CacheEntryType.Uninitialized,
+            STATIC: api.CacheEntryType.Static,
+          } as {[type: string]: api.CacheEntryType | undefined};
           const type = typemap[typename];
           const docs = docs_acc.trim();
           docs_acc = '';
@@ -182,7 +182,7 @@ export class CMakeCache {
    */
   get(key: string): Entry|null {
     const ret = this._entries.get(key) || null;
-    log.trace(`Get cache key ${key}=${ret ? ret.value : "[[Misisng]]"}`);
+    log.trace(`Get cache key ${key}=${ret ? ret.value : '[[Misisng]]'}`);
     return ret;
   }
 }

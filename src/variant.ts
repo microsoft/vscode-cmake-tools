@@ -5,9 +5,9 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as logging from './logging';
-import {fs} from "./pr";
+import {fs} from './pr';
 import rollbar from './rollbar';
-import {loadSchema} from "./schema";
+import {loadSchema} from './schema';
 import {StateManager} from './state';
 import * as util from './util';
 import {MultiWatcher} from './watcher';
@@ -42,33 +42,33 @@ export interface VariantCombination extends vscode.QuickPickItem {
 }
 
 export interface VariantFileContent {
-  [key: string]: {default: string; description : string; choices : {[name: string] : VariantConfigurationOptions;};};
+  [key: string]: {default: string; description: string; choices: {[name: string]: VariantConfigurationOptions;};};
 }
 
 export const DEFAULT_VARIANTS: VariantFileContent = {
-  buildType : {
-    default : 'debug',
-    description : 'The build type',
-    choices : {
-      debug : {
-        short : 'Debug',
-        long : 'Emit debug information without performing optimizations',
-        buildType : 'Debug',
+  buildType: {
+    default: 'debug',
+    description: 'The build type',
+    choices: {
+      debug: {
+        short: 'Debug',
+        long: 'Emit debug information without performing optimizations',
+        buildType: 'Debug',
       },
-      release : {
-        short : 'Release',
-        long : 'Enable optimizations, omit debug info',
-        buildType : 'Release',
+      release: {
+        short: 'Release',
+        long: 'Enable optimizations, omit debug info',
+        buildType: 'Release',
       },
-      minsize : {
-        short : 'MinSizeRel',
-        long : 'Optimize for smallest binary size',
-        buildType : 'MinSizeRel',
+      minsize: {
+        short: 'MinSizeRel',
+        long: 'Optimize for smallest binary size',
+        buildType: 'MinSizeRel',
       },
-      reldeb : {
-        short : 'RelWithDebInfo',
-        long : 'Perform optimizations AND include debugging information',
-        buildType : 'RelWithDebInfo',
+      reldeb: {
+        short: 'RelWithDebInfo',
+        long: 'Perform optimizations AND include debugging information',
+        buildType: 'RelWithDebInfo',
       }
     }
   }
@@ -186,16 +186,16 @@ export class VariantManager implements vscode.Disposable {
       }
 
       sets.set(setting_name, {
-        default_ : def,
-        description : desc,
-        choices : choices,
+        default_: def,
+        description: desc,
+        choices: choices,
       });
     }
 
     if (loaded_default) {
-      log.info("Loaded default variants");
+      log.info('Loaded default variants');
     } else {
-      log.info("Loaded new set of variants");
+      log.info('Loaded new set of variants');
     }
 
 
@@ -207,8 +207,8 @@ export class VariantManager implements vscode.Disposable {
   variantConfigurationOptionsForKWs(keywordSetting: Map<string, string>): VariantConfigurationOptions[]|string {
     const vars = this._variants;
     let error: string|undefined = undefined;
-    const data = Array.from(keywordSetting.entries()).map(([ param, setting ]): VariantConfigurationOptions => {
-      let choice: VariantConfigurationOptions = {short : 'Unknown'};
+    const data = Array.from(keywordSetting.entries()).map(([param, setting]): VariantConfigurationOptions => {
+      let choice: VariantConfigurationOptions = {short: 'Unknown'};
 
       if (vars.has(param)) {
         const choices = vars.get(param)!.choices;
@@ -231,23 +231,23 @@ export class VariantManager implements vscode.Disposable {
   }
 
   mergeVariantConfigurations(options: VariantConfigurationOptions[]): VariantConfigurationOptions {
-    const init: VariantConfigurationOptions = {short : '', long : '', settings : {}};
+    const init: VariantConfigurationOptions = {short: '', long: '', settings: {}};
     return options.reduce((acc, el) => ({
-                            buildType : el.buildType || acc.buildType,
-                            generator : el.generator || acc.generator,
-                            linkage : el.linkage || acc.linkage,
-                            toolset : el.toolset || acc.toolset,
-                            settings : {...acc.settings, ...el.settings},
-                            short : [ acc.short, el.short ].join(' ').trim(),
-                            long : [ acc.long, el.long ].join(', '),
+                            buildType: el.buildType || acc.buildType,
+                            generator: el.generator || acc.generator,
+                            linkage: el.linkage || acc.linkage,
+                            toolset: el.toolset || acc.toolset,
+                            settings: {...acc.settings, ...el.settings},
+                            short: [acc.short, el.short].join(' ').trim(),
+                            long: [acc.long, el.long].join(', '),
                           }),
                           init);
   }
 
   get activeVariantOptions(): VariantConfigurationOptions {
     const invalid_variant = {
-      short : 'Unknown',
-      long : 'Unknwon',
+      short: 'Unknown',
+      long: 'Unknwon',
     };
     const kws = this.stateManager.activeVariantSettings;
     if (!kws) {
@@ -260,10 +260,10 @@ export class VariantManager implements vscode.Disposable {
 
     let options_or_error = this.variantConfigurationOptionsForKWs(kws);
     if (typeof options_or_error === 'string') {
-      log.warning("Last variant selection is incompatible with present variant definition.");
-      log.warning(">> " + options_or_error);
+      log.warning('Last variant selection is incompatible with present variant definition.');
+      log.warning('>> ' + options_or_error);
 
-      log.warning("Using default variant choices from variant definition.");
+      log.warning('Using default variant choices from variant definition.');
       const defaultKws = this.findDefaultChoiceCombination();
       options_or_error = this.variantConfigurationOptionsForKWs(defaultKws);
     }
@@ -279,16 +279,15 @@ export class VariantManager implements vscode.Disposable {
   async selectVariant() {
     const variants
         = Array.from(this._variants.entries())
-              .map(
-                  ([ key, variant ]) => Array.from(variant.choices.entries())
-                                            .map(([ value_name, value ]) => (
-                                                     {settingKey : key, settingValue : value_name, settings : value})));
+              .map(([key, variant]) => Array.from(variant.choices.entries())
+                                           .map(([value_name, value]) => (
+                                                    {settingKey: key, settingValue: value_name, settings: value})));
     const product = util.product(variants);
     const items: VariantCombination[]
         = product.map(optionset => ({
-                        label : optionset.map(o => o.settings.short).join(' + '),
-                        keywordSettings : this.transformChoiceCombinationToKeywordSettings(optionset),
-                        description : optionset.map(o => o.settings.long).join(' + '),
+                        label: optionset.map(o => o.settings.short).join(' + '),
+                        keywordSettings: this.transformChoiceCombinationToKeywordSettings(optionset),
+                        description: optionset.map(o => o.settings.long).join(' + '),
                       }));
     const chosen = await vscode.window.showQuickPick(items);
     if (!chosen) {
@@ -311,9 +310,9 @@ export class VariantManager implements vscode.Disposable {
   }
 
   findDefaultChoiceCombination(): Map<string, string> {
-    const defaults = util.map(this._variants.entries(), ([ option, definition ]) => ({
-                                                          settingKey : option,
-                                                          settingValue : definition.default_,
+    const defaults = util.map(this._variants.entries(), ([option, definition]) => ({
+                                                          settingKey: option,
+                                                          settingValue: definition.default_,
                                                         }));
     return this.transformChoiceCombinationToKeywordSettings(Array.from(defaults));
   }

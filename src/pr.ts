@@ -56,14 +56,14 @@ export async function mkdir_p(fspath: string): Promise<void> {
     await mkdir_p(parent);
   } else {
     if (!(await stat(parent)).isDirectory()) {
-      throw new Error("Cannot create ${fspath}: ${parent} is a non-directory");
+      throw new Error('Cannot create ${fspath}: ${parent} is a non-directory');
     }
   }
   if (!await exists(fspath)) {
     await mkdir(fspath);
   } else {
     if (!(await stat(fspath)).isDirectory()) {
-      throw new Error("Cannot mkdir_p on ${fspath}. It exists, and is not a directory!");
+      throw new Error('Cannot mkdir_p on ${fspath}. It exists, and is not a directory!');
     }
   }
 }

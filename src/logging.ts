@@ -119,9 +119,9 @@ async function _openLogFile() {
       const logfilepath = path.join(paths.dataDir, 'log.txt');
       await fs.mkdir_p(path.dirname(logfilepath));
       if (await fs.exists(logfilepath)) {
-        return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
+        return node_fs.createWriteStream(logfilepath, {flags: 'r+'});
       } else {
-        return node_fs.createWriteStream(logfilepath, {flags : 'w'});
+        return node_fs.createWriteStream(logfilepath, {flags: 'w'});
       }
     })();
   }
@@ -150,17 +150,17 @@ class SingletonLogger {
     case LogLevel.Note:
       if (process.env['CMT_QUIET_CONSOLE'] !== '1') {
         // tslint:disable-next-line
-        console.info("[CMakeTools]", raw_message);
+        console.info('[CMakeTools]', raw_message);
       }
       break;
     case LogLevel.Warning:
       // tslint:disable-next-line
-      console.warn("[CMakeTools]", raw_message);
+      console.warn('[CMakeTools]', raw_message);
       break;
     case LogLevel.Error:
     case LogLevel.Fatal:
       // tslint:disable-next-line
-      console.error("[CMakeTools]", raw_message);
+      console.error('[CMakeTools]', raw_message);
       break;
     }
     // Write to the logfile asynchronously.

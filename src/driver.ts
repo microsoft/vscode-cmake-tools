@@ -13,9 +13,9 @@ import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from "./state";
+import {StateManager} from './state';
 import * as util from './util';
-import {ConfigureArguments, VariantConfigurationOptions} from "./variant";
+import {ConfigureArguments, VariantConfigurationOptions} from './variant';
 
 const log = logging.createLogger('driver');
 
@@ -96,7 +96,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the environment variables required by the current Kit
    */
   getKitEnvironmentVariablesObject(): proc.EnvironmentVariables {
-    return util.reduce(this._kitEnvironmentVariables.entries(), {}, (acc, [ key, value ]) => ({...acc, [key] : value}));
+    return util.reduce(this._kitEnvironmentVariables.entries(), {}, (acc, [key, value]) => ({...acc, [key]: value}));
   }
 
   /**
@@ -161,15 +161,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async expandString(instr: string): Promise<string> {
     const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
-    type StringObject = {[key: string] : string | undefined};
+    type StringObject = {[key: string]: string | undefined};
     const user_dir = process.platform === 'win32' ? process.env['PROFILE']! : process.env['HOME']!;
     const replacements: StringObject = {
-      workspaceRoot : vscode.workspace.rootPath,
-      buildType : this.currentBuildType,
-      workspaceRootFolderName : path.basename(ws_root),
-      generator : this.generatorName || 'null',
-      projectName : this.projectName,
-      userHome : user_dir,
+      workspaceRoot: vscode.workspace.rootPath,
+      buildType: this.currentBuildType,
+      workspaceRootFolderName: path.basename(ws_root),
+      generator: this.generatorName || 'null',
+      projectName: this.projectName,
+      userHome: user_dir,
     };
 
     // We accumulate a list of substitutions that we need to make, preventing
@@ -221,7 +221,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const env = util.mergeEnvironment(cur_env,
                                       this.getKitEnvironmentVariablesObject(),
                                       (options && options.environment) ? options.environment : {});
-    const exec_options = {...options, environment : env};
+    const exec_options = {...options, environment: env};
     return proc.execute(command, args, consumer, exec_options);
   }
 
@@ -364,7 +364,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get compilerID(): string|null {
     const entries = this.cmakeCacheEntries;
-    const languages = [ 'CXX', 'C', 'CUDA' ];
+    const languages = ['CXX', 'C', 'CUDA'];
     for (const lang of languages) {
       const entry = entries.get(`CMAKE_${lang}_COMPILER`);
       if (!entry) {
@@ -397,8 +397,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
-  private async testHaveCommand(program: string, args: string[] = [ '--version' ]): Promise<boolean> {
-    const child = this.executeCommand(program, args, undefined, {silent : true});
+  private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
+    const child = this.executeCommand(program, args, undefined, {silent: true});
     try {
       await child.result;
       return true;
@@ -412,7 +412,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   getPreferredGenerators(): CMakeGenerator[] {
-    const user_preferred = config.preferredGenerators.map(g => ({name : g}));
+    const user_preferred = config.preferredGenerators.map(g => ({name: g}));
     if (this._kit && this._kit.preferredGenerator) {
       // The kit has a preferred generator attached as well
       user_preferred.push(this._kit.preferredGenerator);
@@ -429,12 +429,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (user_generator) {
       log.debug(`Using generator from user configuration: ${user_generator}`);
       return {
-        name : user_generator,
-        platform : config.platform || undefined,
-        toolset : config.toolset || undefined,
+        name: user_generator,
+        platform: config.platform || undefined,
+        toolset: config.toolset || undefined,
       };
     }
-    log.debug("Trying to detect generator supported by system");
+    log.debug('Trying to detect generator supported by system');
     const platform = process.platform;
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
@@ -447,7 +447,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
           return platform === 'win32' && await this.testHaveCommand('make') || this.testHaveCommand('mingw32-make');
         }
         if (gen_name == 'NMake Makefiles') {
-          return platform === 'win32' && this.testHaveCommand('nmake', [ '/?' ]);
+          return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
         }
         if (gen_name == 'Unix Makefiles') {
           return platform !== 'win32' && this.testHaveCommand('make');
@@ -458,9 +458,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const vsMatch = /^(Visual Studio \d{2} \d{4})($|\sWin64$|\sARM$)/.exec(gen.name);
         if (platform === 'win32' && vsMatch) {
           return {
-            name : vsMatch[1],
-            platform : gen.platform || vsMatch[2],
-            toolset : gen.toolset,
+            name: vsMatch[1],
+            platform: gen.platform || vsMatch[2],
+            toolset: gen.toolset,
           };
         }
         if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
@@ -495,7 +495,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
     };
 
-    util.objectPairs(this._variantConfigureSettings).forEach(([ key, value ]) => settings[key] = value);
+    util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settings[key] = value);
     if (this._variantLinkage !== null) {
       settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
     }
@@ -509,8 +509,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     const settings_flags
-        = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = [ '--no-warn-unused-cli' ].concat(extra_args);
+        = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
+    const flags = ['--no-warn-unused-cli'].concat(extra_args);
 
     console.assert(!!this._kit);
     if (!this._kit) {
@@ -520,8 +520,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     case 'compilerKit': {
       log.debug('Using compilerKit', this._kit.name, 'for usage');
       flags.push(
-          ...util.objectPairs(this._kit.compilers).map(([ lang,
-                                                          comp ]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
+          ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
     } break;
     case 'toolchainKit': {
       log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
@@ -532,8 +531,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     if (this._kit.cmakeSettings) {
-      flags.push(
-          ...util.objectPairs(this._kit.cmakeSettings).map(([ key, val ]) => _makeFlag(key, util.cmakeify(val))));
+      flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
     }
 
     const final_flags = flags.concat(settings_flags);
@@ -600,12 +598,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const chosen = await vscode.window.showErrorMessage<
             vscode.MessageItem>('Not all open documents were saved. Would you like to continue anyway?',
                                 {
-                                  title : 'Yes',
-                                  isCloseAffordance : false,
+                                  title: 'Yes',
+                                  isCloseAffordance: false,
                                 },
                                 {
-                                  title : 'No',
-                                  isCloseAffordance : true,
+                                  title: 'No',
+                                  isCloseAffordance: true,
                                 });
         return chosen !== undefined && (chosen.title === 'Yes');
       }
@@ -630,7 +628,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (!gen)
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return [ '-j', config.numJobs.toString() ];
+        return ['-j', config.numJobs.toString()];
       else if (gen.includes('Visual Studio'))
         return [
           '/m',
@@ -639,8 +637,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
       else
         return [];
     })();
-    const args = [ '--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--' ].concat(
-        generator_args);
+    const args =
+        ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--'].concat(generator_args);
     const cmake = await paths.cmakePath;
     const child = this.executeCommand(cmake, args, consumer);
     this._currentProcess = child;

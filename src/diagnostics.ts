@@ -9,7 +9,7 @@ import {RawDiagnostic} from './diagnostics';
 import * as logging from './logging';
 import * as proc from './proc';
 import {OutputConsumer} from './proc';
-import * as util from "./util";
+import * as util from './util';
 
 const cmake_logger = logging.createLogger('cmake');
 const build_logger = logging.createLogger('build');
@@ -110,7 +110,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
     blankLines: number,
   }
   = {
-      state : 'init',
+      state: 'init',
       diag: null,
       blankLines: 0,
     };
@@ -139,15 +139,15 @@ export class CMakeOutputConsumer implements OutputConsumer {
         _full;  // unused
         const lineno = Number.parseInt(linestr) - 1;
         const diagmap: {[k: string]: vscode.DiagnosticSeverity} = {
-          'Warning' : vscode.DiagnosticSeverity.Warning,
-          'Error' : vscode.DiagnosticSeverity.Error,
+          'Warning': vscode.DiagnosticSeverity.Warning,
+          'Error': vscode.DiagnosticSeverity.Error,
         };
         const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
         const filepath = path.isAbsolute(filename) ? filename : util.normalizePath(path.join(this.sourceDir, filename));
         this._errorState.diag = {
           filepath,
-          diag : vsdiag,
+          diag: vsdiag,
         };
         this._errorState.state = 'diag';
         this._errorState.blankLines = 0;
@@ -254,11 +254,11 @@ export class CompileOutputConsumer implements OutputConsumer {
     const [full, file, lineno, message] = res;
     if (file && lineno && message) {
       return {
-        full : full,
-        file : file,
-        location : new vscode.Range(parseInt(lineno) - 1, 0, parseInt(lineno) - 1, 999),
-        severity : 'error',
-        message : message,
+        full: full,
+        file: file,
+        location: new vscode.Range(parseInt(lineno) - 1, 0, parseInt(lineno) - 1, 999),
+        severity: 'error',
+        message: message,
       };
     } else {
       return null;
@@ -288,12 +288,12 @@ export class CompileOutputConsumer implements OutputConsumer {
       throw new Error('Unable to determine location of MSVC diagnostic');
     })();
     return {
-      full : full,
-      file : file,
-      location : range,
-      severity : severity,
-      message : message,
-      code : code,
+      full: full,
+      file: file,
+      location: range,
+      severity: severity,
+      message: message,
+      code: code,
     };
   }
 
@@ -305,11 +305,11 @@ export class CompileOutputConsumer implements OutputConsumer {
         const [full, file, lineno, column, severity, message] = gcc_mat;
         if (file && lineno && column && severity && message) {
           this._gccDiagnostics.push({
-            full : full,
-            file : file,
-            location : new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
-            severity : severity,
-            message : message,
+            full: full,
+            file: file,
+            location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
+            severity: severity,
+            message: message,
           });
           return;
         }
@@ -323,11 +323,11 @@ export class CompileOutputConsumer implements OutputConsumer {
         const [full, file, lineno = '1', column = '1', severity, message] = ghs_mat;
         if (file && severity && message) {
           this._ghsDiagnostics.push({
-            full : full,
-            file : file,
-            location : new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
-            severity : severity,
-            message : message
+            full: full,
+            file: file,
+            location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
+            severity: severity,
+            message: message
           });
           return;
         }
@@ -371,12 +371,12 @@ export class CompileOutputConsumer implements OutputConsumer {
     };
 
     const by_source = {
-      GCC : this.gccDiagnostics,
-      MSVC : this.msvcDiagnostics,
-      GHS : this.ghsDiagnostics,
-      link : this.gnuLDDiagnostics,
+      GCC: this.gccDiagnostics,
+      MSVC: this.msvcDiagnostics,
+      GHS: this.ghsDiagnostics,
+      link: this.gnuLDDiagnostics,
     };
-    const arrs = util.objectPairs(by_source).map(([ source, diags ]) => {
+    const arrs = util.objectPairs(by_source).map(([source, diags]) => {
       return diags.map(raw_diag => {
         const filepath = make_abs(raw_diag.file);
         const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity_of(raw_diag.severity));
@@ -389,8 +389,8 @@ export class CompileOutputConsumer implements OutputConsumer {
         }
         diags_by_file.get(filepath)!.push(diag);
         return {
-          filepath : filepath,
-          diag : diag,
+          filepath: filepath,
+          diag: diag,
         };
       });
     });
@@ -430,9 +430,9 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
     if (progress) {
       const percent = progress[1];
       this._onProgressEmitter.fire({
-        minimum : 0,
-        maximum : 100,
-        value : Number.parseInt(percent),
+        minimum: 0,
+        maximum: 100,
+        value: Number.parseInt(percent),
       });
     }
   }

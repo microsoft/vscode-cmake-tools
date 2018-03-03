@@ -29,36 +29,36 @@ export interface Nag {
 }
 
 export function parseNagData(items: any): Nag[]|null {
-  const validator = new ajv({allErrors : true, format : 'full'}).compile({
-    type : 'object',
-    properties : {
-      nags : {
-        type : 'array',
-        items : {
-          type : 'object',
-          properties : {
-            message : {type : 'string'},
-            id : {type : 'string'},
-            resetSeconds : {type : 'number'},
-            items : {
-              type : 'array',
-              items : {
-                type : 'object',
-                properties : {
-                  title : {type : 'string'},
-                  isCloseAffordance : {type : 'boolean'},
-                  openLink : {type : 'string'},
-                  askLater : {type : 'boolean'},
-                  neverAgain : {type : 'boolean'},
+  const validator = new ajv({allErrors: true, format: 'full'}).compile({
+    type: 'object',
+    properties: {
+      nags: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            message: {type: 'string'},
+            id: {type: 'string'},
+            resetSeconds: {type: 'number'},
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: {type: 'string'},
+                  isCloseAffordance: {type: 'boolean'},
+                  openLink: {type: 'string'},
+                  askLater: {type: 'boolean'},
+                  neverAgain: {type: 'boolean'},
                 },
-                required : [
+                required: [
                   'title',
                   'isCloseAffordance',
                 ],
               },
             },
           },
-          required : [
+          required: [
             'message',
             'items',
             'id',
@@ -67,7 +67,7 @@ export function parseNagData(items: any): Nag[]|null {
         },
       },
     },
-    required : [
+    required: [
       'nags',
     ],
   });
@@ -97,7 +97,7 @@ export function parseNagYAML(str: string): Nag[]|null {
 interface NagState {
   nagsByID: {
     [id: string]: undefined|{
-      nextShowTimeMS : number,
+      nextShowTimeMS: number,
       neverAgain: boolean,
     };
   };
@@ -112,7 +112,7 @@ function getOrInitNagState(ext: vscode.ExtensionContext): NagState {
     return state;
   }
   const init_state: NagState = {
-    nagsByID : {
+    nagsByID: {
 
     }
   };
@@ -190,14 +190,14 @@ export class NagManager {
       if (chosen.askLater) {
         // We'll ask again when the reset timer is met
         state.nagsByID[nag.id] = {
-          neverAgain : false,
-          nextShowTimeMS : next_time_ms,
+          neverAgain: false,
+          nextShowTimeMS: next_time_ms,
         };
       } else if (chosen.neverAgain) {
         // User doesn't want to be bothered again
         state.nagsByID[nag.id] = {
-          neverAgain : true,  // Prevents this nag from ever reappearing
-          nextShowTimeMS : next_time_ms,
+          neverAgain: true,  // Prevents this nag from ever reappearing
+          nextShowTimeMS: next_time_ms,
         };
       }
       if (chosen.openLink) {

@@ -93,7 +93,7 @@ export function execute(command: string,
              // We do simple quoting of arguments with spaces.
              // This is only shown to the user,
              // and doesn't have to be 100% correct.
-             + [ command ]
+             + [command]
                    .concat(args)
                    .map(a => a.replace('"', '\"'))
                    .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
@@ -104,8 +104,8 @@ export function execute(command: string,
   }
   const final_env = util.mergeEnvironment(process.env as EnvironmentVariables, options.environment || {});
   const spawn_opts: proc.SpawnOptions = {
-    env : final_env,
-    shell : !!options.shell,
+    env: final_env,
+    shell: !!options.shell,
   };
   if (options && options.cwd) {
     spawn_opts.cwd = options.cwd;
@@ -158,7 +158,7 @@ export function execute(command: string,
       if (stderr_line_acc && outputConsumer) {
         outputConsumer.error(stderr_line_acc);
       }
-      resolve({retc : retc, stdout : stdout_acc, stderr : stderr_acc});
+      resolve({retc: retc, stdout: stdout_acc, stderr: stderr_acc});
     });
   });
   return {child, result};

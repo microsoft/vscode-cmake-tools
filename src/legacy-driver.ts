@@ -7,10 +7,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
-import {CMakeCache} from "./cache";
+import {CMakeCache} from './cache';
 import {CompilationDatabase} from './compdb';
 import {CMakeDriver} from './driver';
-import {Kit} from "./kit";
+import {Kit} from './kit';
 // import * as proc from './proc';
 import * as logging from './logging';
 import paths from './paths';

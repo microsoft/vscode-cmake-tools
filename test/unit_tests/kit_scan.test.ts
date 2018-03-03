@@ -30,10 +30,10 @@ function getTestResourceFilePath(filename: string): string {
 function getResourcePath(filename: string): string { return path.normalize(path.join(here, '../../..', filename)); }
 
 function getPathWithoutCompilers() {
-  if (process.arch == "win32") {
-    return "C:\\TMP";
+  if (process.arch == 'win32') {
+    return 'C:\\TMP';
   } else {
-    return "/tmp";
+    return '/tmp';
   }
 }
 
@@ -84,7 +84,7 @@ suite('Kits scan test', async () => {
 
   suite('Scan directory', async () => {
     let path_with_compilername = '';
-    setup(async () => { path_with_compilername = path.join(fakebin, "gcc-4.3.2"); });
+    setup(async () => { path_with_compilername = path.join(fakebin, 'gcc-4.3.2'); });
     teardown(async () => {
       if (await fs.exists(path_with_compilername)) {
         await fs.rmdir(path_with_compilername);
@@ -117,8 +117,8 @@ suite('Kits scan test', async () => {
       km = new kit.KitManager(stateMock, path_rescan_kit);
 
       // Mock showInformationMessage to suppress needed user choice
-      sandbox.stub(vscode.window, "showInformationMessage")
-          .callsFake(() => ({title : "No", isCloseAffordance : true, doOpen : false}));
+      sandbox.stub(vscode.window, 'showInformationMessage')
+          .callsFake(() => ({title: 'No', isCloseAffordance: true, doOpen: false}));
 
       path_backup = process.env.PATH;
     });
@@ -137,7 +137,7 @@ suite('Kits scan test', async () => {
       const kitFile = json5.parse(rawKitsFromFile);
 
       const schema = json5.parse(await fs.readFile(getResourcePath('schemas/kits-schema.json'), 'utf8'));
-      const validator = new ajv({allErrors : true, format : 'full'}).compile(schema);
+      const validator = new ajv({allErrors: true, format: 'full'}).compile(schema);
       expect(validator(kitFile)).to.be.true;
 
       return kitFile;
@@ -179,7 +179,7 @@ suite('Kits scan test', async () => {
     });
 
     test('check fake compilers in kit file', async () => {
-      process.env['PATH'] = getTestRootFilePath("fakebin");
+      process.env['PATH'] = getTestRootFilePath('fakebin');
 
       await km.initialize();
 
@@ -189,7 +189,7 @@ suite('Kits scan test', async () => {
     }).timeout(10000);
 
     test('check check combination of scan and old kits', async () => {
-      process.env['PATH'] = getTestRootFilePath("fakebin");
+      process.env['PATH'] = getTestRootFilePath('fakebin');
       await fs.copyFile(getTestResourceFilePath('test_kit.json'), path_rescan_kit);
 
       await km.initialize();
@@ -197,14 +197,14 @@ suite('Kits scan test', async () => {
 
       const names = km.kits.map(item => item.name);
 
-      expect(names).to.contains("CompilerKit 1");
-      expect(names).to.contains("CompilerKit 2");
-      expect(names).to.contains("CompilerKit 3 with PreferedGenerator");
-      expect(names).to.contains("ToolchainKit 1");
-      expect(names).to.contains("VSCode Kit 1");
-      expect(names).to.contains("VSCode Kit 2");
-      expect(names).to.contains("Clang 0.25");
-      expect(names).to.contains("GCC 42.1");
+      expect(names).to.contains('CompilerKit 1');
+      expect(names).to.contains('CompilerKit 2');
+      expect(names).to.contains('CompilerKit 3 with PreferedGenerator');
+      expect(names).to.contains('ToolchainKit 1');
+      expect(names).to.contains('VSCode Kit 1');
+      expect(names).to.contains('VSCode Kit 2');
+      expect(names).to.contains('Clang 0.25');
+      expect(names).to.contains('GCC 42.1');
     }).timeout(10000);
   });
 });

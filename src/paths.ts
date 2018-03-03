@@ -25,7 +25,7 @@ class Paths {
     if (process.platform == 'win32') {
       return process.env['AppData']!;
     } else {
-      const xdg_dir = process.env["XDG_DATA_HOME"];
+      const xdg_dir = process.env['XDG_DATA_HOME'];
       if (xdg_dir) {
         return xdg_dir;
       }
@@ -57,7 +57,7 @@ class Paths {
         if (err) {
           resolve(null);
         } else {
-          console.assert(resolved, "`which` didn't do what it should have.");
+          console.assert(resolved, '`which` didn\'t do what it should have.');
           resolve(resolved!);
         }
       });

@@ -16,13 +16,13 @@ class RollbarController {
   /**
    * The payload to send with any messages. Can be updated via `updatePayload`.
    */
-  private readonly _payload: object = {platform : 'client'};
+  private readonly _payload: object = {platform: 'client'};
 
   /**
    * The Rollbar client instance we use to communicate.
    */
   private readonly _rollbar = new Rollbar({
-    accessToken : '14d411d713be4a5a9f9d57660534cac7',
+    accessToken: '14d411d713be4a5a9f9d57660534cac7',
     reportLevel: 'error',
     payload: this._payload,
   });
@@ -59,14 +59,14 @@ class RollbarController {
       log.debug('Asking user for permission to user Rollbar...');
       // We haven't asked yet. Ask them now:
       const item = await vscode.window.showInformationMessage(
-          "Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?",
+          'Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?',
           {
-            title : 'Yes!',
-            isCloseAffordance : false,
+            title: 'Yes!',
+            isCloseAffordance: false,
           } as vscode.MessageItem,
           {
-            title : 'No Thanks',
-            isCloseAffordance : true,
+            title: 'No Thanks',
+            isCloseAffordance: true,
           } as vscode.MessageItem);
 
       if (item === undefined) {
@@ -109,7 +109,7 @@ class RollbarController {
     debugger;
     if (this._enabled) {
       const stack = new Error().stack;
-      return this._rollbar.error(what, additional, {stack : stack});
+      return this._rollbar.error(what, additional, {stack: stack});
     }
     return null;
   }
@@ -121,7 +121,7 @@ class RollbarController {
    */
   updatePayload(data: object) {
     Object.assign(this._payload, data);
-    this._rollbar.configure({payload : this._payload});
+    this._rollbar.configure({payload: this._payload});
     log.debug('Updated Rollbar payload', JSON.stringify(data));
   }
 

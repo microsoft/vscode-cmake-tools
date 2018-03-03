@@ -41,7 +41,7 @@ export class StateManager {
    * The keyword settings for the build variant
    */
   get activeVariantSettings(): Map<string, string>|null {
-    const pairs = this.extensionContext.workspaceState.get<[ string, string ][]>('activeVariantSettings');
+    const pairs = this.extensionContext.workspaceState.get<[string, string][]>('activeVariantSettings');
     if (pairs) {
       return new Map<string, string>(pairs);
     } else {
@@ -50,7 +50,7 @@ export class StateManager {
   }
   set activeVariantSettings(settings: Map<string, string>|null) {
     if (settings) {
-      const pairs: [ string, string ][] = Array.from(settings.entries());
+      const pairs: [string, string][] = Array.from(settings.entries());
       this.extensionContext.workspaceState.update('activeVariantSettings', pairs);
     } else {
       this.extensionContext.workspaceState.update('activeVariantSettings', null);

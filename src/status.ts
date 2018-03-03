@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import {BasicTestResults} from "./ctest";
+import {BasicTestResults} from './ctest';
 
 interface Hideable {
   show(): void;

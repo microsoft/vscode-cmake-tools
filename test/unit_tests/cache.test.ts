@@ -17,9 +17,9 @@ function getTestResourceFilePath(filename: string): string {
 }
 
 suite('Cache test', async () => {
-  test("Read CMake Cache", async () => {
+  test('Read CMake Cache', async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
-    const generator = cache.get("CMAKE_GENERATOR") as api.CacheEntry;
+    const generator = cache.get('CMAKE_GENERATOR') as api.CacheEntry;
     expect(generator.type).to.eq(api.CacheEntryType.Internal);
     expect(generator.key).to.eq('CMAKE_GENERATOR');
     expect(generator.as<string>()).to.eq('Ninja');
@@ -29,9 +29,9 @@ suite('Cache test', async () => {
     expect(build_testing.type).to.eq(api.CacheEntryType.Bool);
     expect(build_testing.as<boolean>()).to.be.true;
   });
-  test("Read cache with various newlines", async () => {
+  test('Read cache with various newlines', async () => {
     for (const newline of ['\n', '\r\n', '\r']) {
-      const str = [ '# This line is ignored', '// This line is docs', 'SOMETHING:STRING=foo', '' ].join(newline);
+      const str = ['# This line is ignored', '// This line is docs', 'SOMETHING:STRING=foo', ''].join(newline);
       const entries = CMakeCache.parseCache(str);
       expect(entries.size).to.eq(1);
       expect(entries.has('SOMETHING')).to.be.true;
@@ -60,7 +60,7 @@ suite('Cache test', async () => {
     }
   });
   test('Truthy values', () => {
-    const true_things = [ '1', 'ON', 'YES', 'Y', '112', 12, 'SOMETHING' ];
+    const true_things = ['1', 'ON', 'YES', 'Y', '112', 12, 'SOMETHING'];
     for (const thing of true_things) {
       expect(util.isTruthy(thing), `Check truthiness of ${thing}`).to.be.true;
     }

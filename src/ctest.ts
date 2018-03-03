@@ -115,20 +115,19 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
 
 function cleanupResultsXML(messy: MessyResults): CTestResults {
   return {
-    Site : {
-      $ : messy.Site.$,
-      Testing : {
-        TestList : messy.Site.Testing[0].TestList.map(l => l.Test[0]),
-        Test :
-            messy.Site.Testing[0].Test.map((test): Test => ({
-                                             FullName : test.FullName[0],
-                                             FullCommandLine : test.FullCommandLine[0],
-                                             Name : test.Name[0],
-                                             Path : test.Path[0],
-                                             Status : test.$.Status,
-                                             Measurements : new Map<string, TestMeasurement>(),
-                                             Output : decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
-                                           }))
+    Site: {
+      $: messy.Site.$,
+      Testing: {
+        TestList: messy.Site.Testing[0].TestList.map(l => l.Test[0]),
+        Test: messy.Site.Testing[0].Test.map((test): Test => ({
+                                               FullName: test.FullName[0],
+                                               FullCommandLine: test.FullCommandLine[0],
+                                               Name: test.Name[0],
+                                               Path: test.Path[0],
+                                               Status: test.$.Status,
+                                               Measurements: new Map<string, TestMeasurement>(),
+                                               Output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
+                                             }))
       }
     }
   };
@@ -165,9 +164,9 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
       }
 
       decorations.push({
-        fileName : file,
-        lineNumber : lineno,
-        hoverMessage : `${message}\n~~~`,
+        fileName: file,
+        lineNumber: lineno,
+        hoverMessage: `${message}\n~~~`,
       });
     }
   }
@@ -188,7 +187,7 @@ export class DecorationManager {
   }
 
   private readonly _failingTestDecorationType = vscode.window.createTextEditorDecorationType({
-    borderColor : 'rgba(255, 0, 0, 0.2)',
+    borderColor: 'rgba(255, 0, 0, 0.2)',
     borderWidth: '1px',
     borderRadius: '3px',
     borderStyle: 'solid',
@@ -246,8 +245,8 @@ export class DecorationManager {
                                      decor.lineNumber,
                                      file_line.range.end.character);
       fails_acc.push({
-        hoverMessage : decor.hoverMessage,
-        range : range,
+        hoverMessage: decor.hoverMessage,
+        range: range,
       });
     }
     editor.setDecorations(this._failingTestDecorationType, fails_acc);
@@ -335,10 +334,10 @@ export class CTestDriver implements vscode.Disposable {
     const configuration = driver.currentBuildType;
     const child
         = driver.executeCommand(await paths.ctestPath,
-                                [ `-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure' ]
+                                [`-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure']
                                     .concat(config.ctestArgs),
                                 new CTestOutputLogger(),
-                                {environment : config.testEnvironment, cwd : driver.binaryDir});
+                                {environment: config.testEnvironment, cwd: driver.binaryDir});
 
     const res = await child.result;
     await this.reloadTests(driver);
@@ -366,7 +365,7 @@ export class CTestDriver implements vscode.Disposable {
     const build_config = driver.currentBuildType;
     const result
         = await driver
-              .executeCommand('ctest', [ '-N', '-C', build_config ], undefined, {cwd : driver.binaryDir, silent : true})
+              .executeCommand('ctest', ['-N', '-C', build_config], undefined, {cwd: driver.binaryDir, silent: true})
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
@@ -377,7 +376,7 @@ export class CTestDriver implements vscode.Disposable {
                       .map(l => l.trim())
                       .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
                       .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
-                      .map(([ _, id, tname ]) => ({id : parseInt(id!), name : tname!}));
+                      .map(([_, id, tname]) => ({id: parseInt(id!), name: tname!}));
     const tagfile = path.join(driver.binaryDir, 'Testing', 'TAG');
     const tag = (await fs.exists(tagfile)) ? (await fs.readFile(tagfile)).toString().split('\n')[0].trim() : null;
     const tagdir = tag ? path.join(driver.binaryDir, 'Testing', tag) : null;

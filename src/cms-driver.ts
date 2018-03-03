@@ -2,17 +2,17 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
-import {CacheEntryProperties, ExecutableTarget, RichTarget} from "./api";
+import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
 import * as cms from './cms-client';
-import {CMakeDriver} from "./driver";
-import {Kit} from "./kit";
+import {CMakeDriver} from './driver';
+import {Kit} from './kit';
 import {createLogger} from './logging';
 import paths from './paths';
-import {fs} from "./pr";
+import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from "./state";
+import {StateManager} from './state';
 import * as util from './util';
 
 const log = createLogger('cms-driver');
@@ -72,7 +72,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     });
 
     try {
-      await cl.configure({cacheArguments : args});
+      await cl.configure({cacheArguments: args});
       await cl.compute();
       this._dirty = false;
     } catch (e) {
@@ -107,13 +107,13 @@ export class CMakeServerClientDriver extends CMakeDriver {
     const clcache = await cl.getCMakeCacheContent();
     this._cacheEntries = clcache.cache.reduce((acc, el) => {
       const entry_map: {[key: string]: api.CacheEntryType|undefined} = {
-        BOOL : api.CacheEntryType.Bool,
-        STRING : api.CacheEntryType.String,
-        PATH : api.CacheEntryType.Path,
-        FILEPATH : api.CacheEntryType.FilePath,
-        INTERNAL : api.CacheEntryType.Internal,
-        UNINITIALIZED : api.CacheEntryType.Uninitialized,
-        STATIC : api.CacheEntryType.Static,
+        BOOL: api.CacheEntryType.Bool,
+        STRING: api.CacheEntryType.String,
+        PATH: api.CacheEntryType.Path,
+        FILEPATH: api.CacheEntryType.FilePath,
+        INTERNAL: api.CacheEntryType.Internal,
+        UNINITIALIZED: api.CacheEntryType.Uninitialized,
+        STATIC: api.CacheEntryType.Static,
       };
       const type = entry_map[el.type];
       if (type === undefined) {
@@ -151,25 +151,25 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
     return config.projects.reduce<RichTarget[]>((acc, project) => acc.concat(
                                                     project.targets.map(t => ({
-                                                                          type : 'rich' as 'rich',
-                                                                          name : t.name,
-                                                                          filepath : t.artifacts && t.artifacts.length
+                                                                          type: 'rich' as 'rich',
+                                                                          name: t.name,
+                                                                          filepath: t.artifacts && t.artifacts.length
                                                                               ? path.normalize(t.artifacts[0])
                                                                               : 'Utility target',
-                                                                          targetType : t.type,
+                                                                          targetType: t.type,
                                                                         }))),
-                                                [ {
-                                                  type : 'rich' as 'rich',
-                                                  name : this.allTargetName,
-                                                  filepath : 'A special target to build all available targets',
-                                                  targetType : 'META',
-                                                } ]);
+                                                [{
+                                                  type: 'rich' as 'rich',
+                                                  name: this.allTargetName,
+                                                  filepath: 'A special target to build all available targets',
+                                                  targetType: 'META',
+                                                }]);
   }
 
   get executableTargets(): ExecutableTarget[] {
     return this.targets.filter(t => t.targetType === 'EXECUTABLE').map(t => ({
-                                                                         name : t.name,
-                                                                         path : t.filepath,
+                                                                         name: t.name,
+                                                                         path: t.filepath,
                                                                        }));
   }
 
@@ -212,14 +212,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
           });
           if (found) {
             const defs = (group.defines || []).map(util.parseCompileDefinition);
-            const defs_o = defs.reduce((acc, [ key, value ]) => ({...acc, [key] : value}), {});
-            const includes = (group.includePath || []).map(p => ({path : p.path, isSystem : p.isSystem || false}));
+            const defs_o = defs.reduce((acc, [key, value]) => ({...acc, [key]: value}), {});
+            const includes = (group.includePath || []).map(p => ({path: p.path, isSystem: p.isSystem || false}));
             const flags = util.splitCommandLine(group.compileFlags);
             return {
-              file : found,
-              compileDefinitions : defs_o,
-              compileFlags : flags,
-              includeDirectories : includes,
+              file: found,
+              compileDefinitions: defs_o,
+              compileFlags: flags,
+              includeDirectories: includes,
             };
           }
         }
@@ -245,14 +245,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   private async _startNewClient() {
     return cms.CMakeServerClient.start({
-      binaryDir : this.binaryDir,
-      sourceDir : this.sourceDir,
-      cmakePath : await paths.cmakePath,
-      environment : this.getKitEnvironmentVariablesObject(),
-      onDirty : async () => { this._dirty = true; },
-      onMessage : async msg => { this._onMessageEmitter.fire(msg.message); },
-      onProgress : async _prog => {},
-      pickGenerator : () => this.getBestGenerator(),
+      binaryDir: this.binaryDir,
+      sourceDir: this.sourceDir,
+      cmakePath: await paths.cmakePath,
+      environment: this.getKitEnvironmentVariablesObject(),
+      onDirty: async () => { this._dirty = true; },
+      onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
+      onProgress: async _prog => {},
+      pickGenerator: () => this.getBestGenerator(),
     });
   }
 
