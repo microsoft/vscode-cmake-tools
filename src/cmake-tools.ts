@@ -727,14 +727,24 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     const is_msvc
         = drv.compilerID ? drv.compilerID.includes('MSVC') : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
+    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb'
     const debug_config: vscode.DebugConfiguration = {
       type : is_msvc ? 'cppvsdbg' : 'cppdbg',
       name : `Debug ${target_path}`,
       request : 'launch',
       cwd : '${workspaceRoot}',
       args : [],
-      MIMode : process.platform == 'darwin' ? 'lldb' : 'gdb',
+      MIMode : mi_mode,
     };
+    if (mi_mode == 'gdb') {
+      debug_config['setupCommands'] = [
+        {
+          description : 'Enable pretty-printing for gdb',
+          text : '-enable-pretty-printing',
+          ignoreFailures : true,
+        },
+      ];
+    }
     const user_config = config.debugConfig;
     Object.assign(debug_config, user_config);
     debug_config.program = target_path;
