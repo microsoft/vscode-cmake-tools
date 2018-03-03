@@ -76,7 +76,7 @@ export class CMakeCache {
       log.trace('File exists');
       const content = await fs.readFile(path);
       log.trace('File contents read successfully');
-      const entries = await CMakeCache.parseCache(content.toString());
+      const entries = CMakeCache.parseCache(content.toString());
       log.trace('Parsed', entries.size, 'entries from', path);
       return new CMakeCache(path, exists, entries);
     } else {

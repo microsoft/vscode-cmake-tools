@@ -9,14 +9,15 @@ import * as api from '../../src/api';
 import {CMakeCache} from '../../src/cache';
 import * as util from '../../src/util';
 
+// tslint:disable:no-unused-expression
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit_tests', filename));
 }
 
-suite('Cache test', async() => {
-  test("Read CMake Cache", async function() {
+suite('Cache test', async () => {
+  test("Read CMake Cache", async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
     const generator = cache.get("CMAKE_GENERATOR") as api.CacheEntry;
     expect(generator.type).to.eq(api.CacheEntryType.Internal);
@@ -24,11 +25,11 @@ suite('Cache test', async() => {
     expect(generator.as<string>()).to.eq('Ninja');
     expect(typeof generator.value).to.eq('string');
 
-    const build_testing = await cache.get('BUILD_TESTING') as api.CacheEntry;
+    const build_testing = cache.get('BUILD_TESTING') as api.CacheEntry;
     expect(build_testing.type).to.eq(api.CacheEntryType.Bool);
     expect(build_testing.as<boolean>()).to.be.true;
   });
-  test("Read cache with various newlines", async function() {
+  test("Read cache with various newlines", async () => {
     for (const newline of ['\n', '\r\n', '\r']) {
       const str = [ '# This line is ignored', '// This line is docs', 'SOMETHING:STRING=foo', '' ].join(newline);
       const entries = CMakeCache.parseCache(str);

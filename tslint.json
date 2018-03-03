@@ -6,6 +6,11 @@
 		"curly": false,
 		"class-name": true,
 		"semicolon": ["always"],
-		"triple-equals": true
+		"prefer-for-of": true,
+		"only-arrow-functions": [true, "allow-declarations"],
+		"await-promise": [true, "Thenable", "PromisedAssertion"],
+		"ban-comma-operator": true,
+		"no-console": [true, "info", "error", "warn"],
+		"no-floating-promises": [true, "PromisedAssertion"]
 	}
 }

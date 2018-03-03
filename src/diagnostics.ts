@@ -135,6 +135,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
       if (result) {
         // We have encountered and error
         const [_full, level, filename, linestr, command] = result;
+        // tslint:disable-next-line
         _full;  // unused
         const line = Number.parseInt(linestr) - 1;
         const diagmap: {[k: string]: vscode.DiagnosticSeverity} = {

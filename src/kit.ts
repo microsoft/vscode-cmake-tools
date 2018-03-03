@@ -349,7 +349,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   const batpath = path.join(paths.tmpDir, `vs-cmt-${fname}`);
   await fs.writeFile(batpath, bat.join('\r\n'));
   const res = await proc.execute(batpath, [], null, {shell : true}).result;
-  fs.unlink(batpath);
+  await fs.unlink(batpath);
   const output = res.stdout;
   if (res.retc !== 0) {
     console.log(`Error running ${devbat}`, output);
@@ -368,7 +368,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
           if (mat) {
             acc.set(mat[1], mat[2]);
           } else {
-            console.error(`Error parsing environment variable: ${line}`);
+            log.error(`Error parsing environment variable: ${line}`);
           }
           return acc;
         }, new Map());
@@ -787,7 +787,7 @@ export class KitManager implements vscode.Disposable {
         return;
       }
       if (item.doOpen) {
-        this.openKitsEditor();
+        await this.openKitsEditor();
       }
     }
   }

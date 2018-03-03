@@ -6,7 +6,9 @@ import {CMakeTools} from '../src/cmake-tools';
 import paths from '../src/paths';
 import {fs} from '../src/pr';
 
-export function clearExistingKitConfigurationFile() { fs.writeFile(path.join(paths.dataDir, 'cmake-kits.json'), "[]"); }
+export async function clearExistingKitConfigurationFile() {
+  await fs.writeFile(path.join(paths.dataDir, 'cmake-kits.json'), "[]");
+}
 
 export async function getExtension() {
   const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');

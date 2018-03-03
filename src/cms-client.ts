@@ -9,6 +9,7 @@ import {CMakeGenerator} from './kit';
 import {createLogger} from './logging';
 import {fs} from "./pr";
 import * as proc from './proc';
+import rollbar from './rollbar';
 import * as util from './util';
 
 const log = createLogger('cms-client');
@@ -459,7 +460,7 @@ export class CMakeServerClient {
       }
       case 'progress': {
         const prog = cookied as any as ProgressMessage;
-        this._params.onProgress(prog).catch(e => { console.error('Unandled error in onProgress', e); });
+        this._params.onProgress(prog).catch(e => { log.error('Unandled error in onProgress', e); });
         return;
       }
       }
@@ -467,23 +468,24 @@ export class CMakeServerClient {
 
     switch (some.type) {
     case 'hello': {
-      fs.exists(this._pipeFilePath).then(exists => {
+      const unlink_pr = fs.exists(this._pipeFilePath).then(async (exists) => {
         if (exists && process.platform !== 'win32') {
-          fs.unlink(this._pipeFilePath);
+          await fs.unlink(this._pipeFilePath);
         }
       });
-      this._params.onHello(some as HelloMessage).catch(e => { console.error('Unhandled error in onHello', e); });
+      rollbar.takePromise('Unlink pipe', {pipe : this._pipeFilePath}, unlink_pr);
+      this._params.onHello(some as HelloMessage).catch(e => { log.error('Unhandled error in onHello', e); });
       return;
     }
     case 'message': {
-      this._params.onMessage(some as MessageMessage).catch(e => { console.error('Unhandled error in onMessage', e); });
+      this._params.onMessage(some as MessageMessage).catch(e => { log.error('Unhandled error in onMessage', e); });
       return;
     }
     case 'signal': {
       const sig = some as SomeSignalMessage;
       switch (sig.name) {
       case 'dirty': {
-        this._params.onDirty().catch(e => { console.error('Unhandled error in onDirty', e); });
+        this._params.onDirty().catch(e => { log.error('Unhandled error in onDirty', e); });
         return;
       }
       case 'fileChange': {

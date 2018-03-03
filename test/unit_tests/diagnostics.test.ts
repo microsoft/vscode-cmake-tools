@@ -9,6 +9,7 @@ import {expect} from 'chai';
 import * as diags from '../../src/diagnostics';
 import {OutputConsumer} from '../../src/proc';
 
+// tslint:disable:no-unused-expression
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {

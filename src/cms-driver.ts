@@ -189,7 +189,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       await fs.rmdir(this.binaryDir);
     }
     await cb();
-    this._restartClient();
+    await this._restartClient();
   }
 
   async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {

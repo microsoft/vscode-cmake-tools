@@ -9,6 +9,8 @@ import * as https from 'https';
 import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 
+// tslint:disable:no-console
+
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 const NAG_REMOTE_URL = 'https://vector-of-bool.github.io/vscode-cmt-nags.yaml';

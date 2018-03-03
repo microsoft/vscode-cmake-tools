@@ -89,6 +89,7 @@ class RollbarController {
    */
   exception(what: string, exception: Error, additional: object = {}): Rollbar.LogResult|null {
     log.fatal('Unhandled exception:', what, exception, JSON.stringify(additional));
+    // tslint:disable-next-line
     console.error(exception);
     debugger;
     if (this._enabled) {
@@ -130,18 +131,16 @@ class RollbarController {
    * @param additional Additional data to log
    * @param func The block to call
    */
-  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): Promise<T>;
-  invokeAsync<T>(what: string, func: () => Promise<T>): Promise<T>;
-  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): Promise<T> {
+  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): void;
+  invokeAsync<T>(what: string, func: () => Promise<T>): void;
+  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): void {
     if (!func) {
       func = additional as () => Promise<T>;
       additional = {};
     }
     log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
-    return func().catch(e => {
-      this.exception('Unhandled Promise rejection: ' + what, e, additional);
-      throw e;
-    });
+    const pr = func();
+    this.takePromise(what, additional, pr);
   }
 
   /**
@@ -164,6 +163,13 @@ class RollbarController {
       this.exception('Unhandled exception: ' + what, e, additional);
       throw e;
     }
+  }
+
+  takePromise<T>(what: string, additional: object, pr: Promise<T>): void {
+    pr.catch(e => {
+      this.exception('Unhandled Promise rejection: ' + what, e, additional);
+      throw e;
+    });
   }
 }
 

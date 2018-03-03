@@ -9,6 +9,8 @@ import {expect} from 'chai';
 import * as api from '../../src/api';
 import * as compdb from '../../src/compdb';
 
+// tslint:disable:no-unused-expression
+
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit_tests', filename));

@@ -72,7 +72,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       });
     });
 
-    ready.then(() => {
+    rollbar.takePromise('Setup cache editor server', {}, ready.then(() => {
       const websock_server = this._ws_server = ws.createServer({server : editor_server});
       websock_server.on('connection', (client) => {
         const sub = this.onReconfigured(() => { client.send(JSON.stringify({method : 'refreshContent'})); });
@@ -102,7 +102,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           .registerTextDocumentContentProvider('cmake-cache',
                                                new CacheEditorContentProvider(this.extensionContext,
                                                                               editor_server.address().port));
-    });
+    }));
   }
 
   /**
@@ -143,7 +143,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug('Disposing CMakeTools extension');
     if (this._launchTerminal)
       this._launchTerminal.dispose();
-    rollbar.invoke('Root dispose', () => this.asyncDispose());
+    rollbar.invokeAsync('Root dispose', () => this.asyncDispose());
   }
 
   /**
@@ -459,7 +459,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async _needsReconfigure(): Promise<boolean> {
     let drv = await this.getCMakeDriverInstance();
-    if (!drv || await drv.needsReconfigure) {
+    if (!drv || drv.needsReconfigure) {
       return true;
     } else {
       return false;

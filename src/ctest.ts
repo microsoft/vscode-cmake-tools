@@ -152,7 +152,8 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
     const res = regex.exec(line);
     if (res) {
       const [_all, file, lineno_] = res;
-      _all;  // unused
+      // tslint:disable-next-line
+      void _all; // unused
       const lineno = parseInt(lineno_) - 1;
       let message = '~~~c++\n';
       for (let i = 0;; ++i) {
@@ -369,7 +370,7 @@ export class CTestDriver implements vscode.Disposable {
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
-      console.error('There was an error running ctest to determine available test executables');
+      log.error('There was an error running ctest to determine available test executables');
       return this.tests = [];
     }
     const tests = result.stdout.split('\n')

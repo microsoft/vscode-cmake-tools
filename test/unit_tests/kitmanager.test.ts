@@ -12,6 +12,7 @@ import * as kit from '../../src/kit';
 import {fs} from '../../src/pr';
 import * as state from '../../src/state';
 
+// tslint:disable:no-unused-expression
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
@@ -26,7 +27,7 @@ suite('Kits test', async() => {
     setup(async() => {
       gui_sandbox = sinon.sandbox.create();
       let stateMock = gui_sandbox.createStubInstance(state.StateManager);
-      sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
+      sinon.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
       const kit_file = getTestResourceFilePath('test_kit.json');
       km = new kit.KitManager(stateMock, kit_file);
     });
@@ -34,10 +35,7 @@ suite('Kits test', async() => {
 
     test('KitManager tests opening of kit file', async() => {
       let text: vscode.TextDocument|undefined;
-      gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(function(textDoc) {
-        text = textDoc;
-        return {document : text};
-      });
+      gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(textDoc => ({document : textDoc}));
       await km.initialize();
 
       const editor = await km.openKitsEditor();
@@ -54,9 +52,7 @@ suite('Kits test', async() => {
   test('KitManager tests event on change of active kit', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     let storedActivatedKitName: string = '';
-    sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function(kit) {
-      storedActivatedKitName = kit;
-    });
+    sinon.stub(stateMock, 'activeKitName').get(() => null).set(kit => storedActivatedKitName = kit);
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
     // Check that each time we change the kit, it fires a signal
@@ -76,7 +72,7 @@ suite('Kits test', async() => {
 
   test('KitManager test load of kit from test file', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
-    sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
+    sinon.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
 
     await km.initialize();
@@ -95,7 +91,7 @@ suite('Kits test', async() => {
   test('KitManager test selection of last activated kit', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
 
-    sinon.stub(stateMock, 'activeKitName').get(function() { return "ToolchainKit 1"; }).set(function() {});
+    sinon.stub(stateMock, 'activeKitName').get(() => "ToolchainKit 1").set(() => { });
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
 
     await km.initialize();
@@ -109,7 +105,7 @@ suite('Kits test', async() => {
 
   test('KitManager test selection of a default kit', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
-    sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
+    sinon.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
 
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
@@ -121,9 +117,7 @@ suite('Kits test', async() => {
   test('KitManager test selection of default kit if last activated kit is invalid', async() => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     let storedActivatedKitName = "not replaced";
-    sinon.stub(stateMock, 'activeKitName').get(function() { return "Unknown"; }).set(function(kit) {
-      storedActivatedKitName = kit;
-    });
+    sinon.stub(stateMock, 'activeKitName').get(() => "Unknown").set(kit => storedActivatedKitName = kit);
 
     const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
