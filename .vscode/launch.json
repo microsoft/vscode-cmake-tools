@@ -85,6 +85,43 @@
                 }
             }
             // "smartStep": true
+        },
+        {
+            "name": "Launch Extension Tests (successful_build)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceRoot}/test/extension_tests/successful_build/project_folder",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension_tests/successful_build"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*",
+                "${workspaceRoot}/out/src/*",
+                "${workspaceRoot}/out/test/*",
+                "${workspaceRoot}/out/test/extension_tests/successful_build/*",
+                "${workspaceRoot}/out/test/extension_tests/successful_build/test/*"
+            ],
+
+            "preLaunchTask": "npm",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
+            // "smartStep": true
         }
     ]
 }
