@@ -31,9 +31,9 @@ const here = __dirname;
 function getTestRootFilePath(filename: string): string { return path.normalize(path.join(here, '../../..', 'test', filename)); }
 
 
-function getTestRessourceFilePath(filename: string): string { return path.normalize(path.join(here, '../../../test/unit_tests', filename)); }
+function getTestResourceFilePath(filename: string): string { return path.normalize(path.join(here, '../../../test/unit_tests', filename)); }
 
-function getRessourcePath(filename: string): string { return path.normalize(path.join(here, '../../..', filename)); }
+function getResourcePath(filename: string): string { return path.normalize(path.join(here, '../../..', filename)); }
 
 function getPathWithoutCompilers() {
   if (process.arch == "win32") {
@@ -113,7 +113,7 @@ suite('Kits test', async () => {
 
   suite('Rescan kits', async () => {
     let km: kit.KitManager;
-    let path_rescan_kit = getTestRessourceFilePath('rescan_kit.json');
+    let path_rescan_kit = getTestResourceFilePath('rescan_kit.json');
     let sandbox: sinon.SinonSandbox;
     let path_backup: string|undefined;
     setup(async () => {
@@ -142,7 +142,7 @@ suite('Kits test', async () => {
 
       let kitFile = json5.parse(rawKitsFromFile);
 
-      const schema = json5.parse(await fs.readFile(getRessourcePath('schemas/kits-schema.json'), 'utf8'));
+      const schema = json5.parse(await fs.readFile(getResourcePath('schemas/kits-schema.json'), 'utf8'));
       const validator = new ajv({allErrors : true, format : 'full'}).compile(schema);
       expect(validator(kitFile)).to.be.true;
 
@@ -197,7 +197,7 @@ suite('Kits test', async () => {
     test('check check combination of scan and old kits', async () => {
       process.env['PATH'] = getTestRootFilePath("fakebin");
       await fs
-          .copyFile(getTestRessourceFilePath('test_kit.json'), path_rescan_kit)
+          .copyFile(getTestResourceFilePath('test_kit.json'), path_rescan_kit)
 
               await km.initialize();
       await km.rescanForKits()
@@ -222,7 +222,7 @@ suite('Kits test', async () => {
       gui_sandbox = sinon.sandbox.create();
       let stateMock = gui_sandbox.createStubInstance(state.StateManager);
       sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
-      const kit_file = getTestRessourceFilePath('test_kit.json');
+      const kit_file = getTestResourceFilePath('test_kit.json');
       km = new kit.KitManager(stateMock, kit_file);
     });
     teardown(async () => { gui_sandbox.restore(); });
@@ -239,7 +239,7 @@ suite('Kits test', async () => {
 
       expect(text).to.be.not.undefined;
       if (text != undefined) {
-        const rawKitsFromFile = (await fs.readFile(getTestRessourceFilePath('test_kit.json'), 'utf8'));
+        const rawKitsFromFile = (await fs.readFile(getTestResourceFilePath('test_kit.json'), 'utf8'));
         expect(editor.document.getText()).to.be.eq(rawKitsFromFile);
       } else {
       }
@@ -252,7 +252,7 @@ suite('Kits test', async () => {
     sinon.stub(stateMock, 'activeKitName')
         .get(function() { return null; })
         .set(function(kit) { storedActivatedKitName = kit; });
-    const km = new kit.KitManager(stateMock, getTestRessourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
     // Check that each time we change the kit, it fires a signal
     let fired_kit: string|null = null;
@@ -272,7 +272,7 @@ suite('Kits test', async () => {
   test('KitManager test load of kit from test file', async () => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
-    const km = new kit.KitManager(stateMock, getTestRessourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
 
     await km.initialize();
 
@@ -291,7 +291,7 @@ suite('Kits test', async () => {
     let stateMock = sinon.createStubInstance(state.StateManager);
 
     sinon.stub(stateMock, 'activeKitName').get(function() { return "ToolchainKit 1"; }).set(function() {});
-    const km = new kit.KitManager(stateMock, getTestRessourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
 
     await km.initialize();
 
@@ -306,7 +306,7 @@ suite('Kits test', async () => {
     let stateMock = sinon.createStubInstance(state.StateManager);
     sinon.stub(stateMock, 'activeKitName').get(function() { return null; }).set(function() {});
 
-    const km = new kit.KitManager(stateMock, getTestRessourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
 
     expect(km.activeKit).to.be.null;
@@ -320,7 +320,7 @@ suite('Kits test', async () => {
         .get(function() { return "Unknown"; })
         .set(function(kit) { storedActivatedKitName = kit; });
 
-    const km = new kit.KitManager(stateMock, getTestRessourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
     await km.initialize();
 
     expect(km.activeKit).to.be.null;
@@ -331,7 +331,7 @@ suite('Kits test', async () => {
 
 suite('Cache test', async () => {
   test("Read CMake Cache", async function() {
-    const cache = await CMakeCache.fromPath(getTestRessourceFilePath('TestCMakeCache.txt'));
+    const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
     const generator = cache.get("CMAKE_GENERATOR") as api.CacheEntry;
     expect(generator.type).to.eq(api.CacheEntryType.Internal);
     expect(generator.key).to.eq('CMAKE_GENERATOR');
@@ -703,7 +703,7 @@ suite('Diagnostics', async () => {
 
 suite('Compilation info', () => {
   test('Parsing compilation databases', async () => {
-    const dbpath = getTestRessourceFilePath('test_compdb.json');
+    const dbpath = getTestResourceFilePath('test_compdb.json');
     const db = (await compdb.CompilationDatabase.fromFilePath(dbpath))!;
     expect(db).to.not.be.null;
     const source_path = "/home/clang-languageservice/main.cpp";
