@@ -459,20 +459,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async build(target_?: string): Promise<number> {
     // First, reconfigure if necessary
-    const drv = await this.getCMakeDriverInstance();
-    if (!drv) {
-      log.debug('Build of project is not possible, because driver is not ready.');
-      vscode.window.showErrorMessage('Unable to build, try to run configure before build.');
-      return -1;
-    }
-
-    if (await drv.needsReconfigure) {
+    let drv = await this.getCMakeDriverInstance();
+    if (!drv || await drv.needsReconfigure) {
       const retc = await this.configure();
       if (retc) {
         return retc;
       }
     } else if (config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
+    }
+    drv = await this.getCMakeDriverInstance();
+    if (!drv) {
+      throw new Error('Impossible: CMake driver died immediately after successful configure');
     }
     const target = target_ ? target_ : this._stateManager.defaultBuildTarget || await this.allTargetName;
     const consumer = new diags.CMakeBuildConsumer();
