@@ -35,7 +35,10 @@ suite('Kits test', async() => {
 
     test('KitManager tests opening of kit file', async() => {
       let text: vscode.TextDocument|undefined;
-      gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(textDoc => ({document : textDoc}));
+      gui_sandbox.stub(vscode.window, "showTextDocument").callsFake(textDoc => {
+        text = textDoc;
+        return {document : textDoc};
+      });
       await km.initialize();
 
       const editor = await km.openKitsEditor();
