@@ -5,7 +5,7 @@
 		"no-unused-variable": true,
 		"curly": false,
 		"class-name": true,
-		"semicolon": ["always"],
+		"semicolon": [true, "always"],
 		"prefer-for-of": true,
 		"only-arrow-functions": [true, "allow-declarations"],
 		"await-promise": [true, "Thenable", "PromisedAssertion"],

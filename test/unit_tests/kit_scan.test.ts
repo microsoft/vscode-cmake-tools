@@ -31,9 +31,9 @@ function getResourcePath(filename: string): string { return path.normalize(path.
 
 function getPathWithoutCompilers() {
   if (process.arch == "win32") {
-    return "C:\\TMP"
+    return "C:\\TMP";
   } else {
-    return "/tmp"
+    return "/tmp";
   }
 }
 
@@ -98,7 +98,7 @@ suite('Kits scan test', async () => {
     });
 
     test('Scan file with compiler name', async () => {
-      await fs.writeFile(path_with_compilername, '')
+      await fs.writeFile(path_with_compilername, '');
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
       expect(kits.length).to.eq(2);
@@ -125,7 +125,7 @@ suite('Kits scan test', async () => {
     teardown(async () => {
       sandbox.restore();
       if (await fs.exists(path_rescan_kit)) {
-        await fs.rmdir(path_rescan_kit)
+        await fs.rmdir(path_rescan_kit);
       }
       process.env.PATH = path_backup;
     });
@@ -190,11 +190,10 @@ suite('Kits scan test', async () => {
 
     test('check check combination of scan and old kits', async () => {
       process.env['PATH'] = getTestRootFilePath("fakebin");
-      await fs
-          .copyFile(getTestResourceFilePath('test_kit.json'), path_rescan_kit)
+      await fs.copyFile(getTestResourceFilePath('test_kit.json'), path_rescan_kit);
 
-              await km.initialize();
-      await km.rescanForKits()
+      await km.initialize();
+      await km.rescanForKits();
 
       const names = km.kits.map(item => item.name);
 

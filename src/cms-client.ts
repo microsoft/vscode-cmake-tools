@@ -317,7 +317,7 @@ export interface CMakeInputsReply extends ReplyMessage, CMakeInputsContent {
 export interface CacheParams {}
 
 export interface CacheRequest extends CookiedMessage, CacheParams {
-  type: 'cache'
+  type: 'cache';
 }
 
 export interface CacheContent {

@@ -22,7 +22,7 @@ import * as rimraf from 'rimraf';
 export namespace fs {
 
 export function exists(fspath: string): Promise<boolean> {
-  return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); })
+  return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); });
 }
 
 export const readFile = promisify(fs_.readFile);

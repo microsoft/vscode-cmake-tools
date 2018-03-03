@@ -54,7 +54,7 @@ export class Entry implements api.CacheEntry {
     this._docs = docs;
     this._advanced = advanced;
   }
-};
+}
 
 /**
  * Reads a CMake cache file. This class is immutable.

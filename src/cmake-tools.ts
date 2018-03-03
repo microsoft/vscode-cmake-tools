@@ -282,7 +282,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.short);
           // We don't configure yet, since someone else might be in the middle of a configure
         }
-      })
+      });
     });
     // Listen for the kit to change
     this._kitManager.onActiveKitChanged(kit => {
@@ -557,7 +557,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           };
         }
         case 'rich': {
-          return { label: t.name, description: t.targetType, detail: t.filepath }
+          return {label : t.name, description : t.targetType, detail : t.filepath};
         }
         }
       });
@@ -727,7 +727,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     const is_msvc
         = drv.compilerID ? drv.compilerID.includes('MSVC') : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
-    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb'
+    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb';
     const debug_config: vscode.DebugConfiguration = {
       type : is_msvc ? 'cppvsdbg' : 'cppdbg',
       name : `Debug ${target_path}`,
@@ -892,7 +892,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.sourceDir
+      return d.sourceDir;
     });
   }
 
@@ -903,7 +903,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.mainListFile
+      return d.mainListFile;
     });
   }
 
@@ -914,7 +914,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.binaryDir
+      return d.binaryDir;
     });
   }
 
@@ -925,7 +925,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.cachePath
+      return d.cachePath;
     });
   }
 
@@ -936,7 +936,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return [];
       }
-      return d.targets
+      return d.targets;
     });
   }
 
@@ -947,7 +947,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return [];
       }
-      return d.executableTargets
+      return d.executableTargets;
     });
   }
 

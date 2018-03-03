@@ -60,7 +60,7 @@ export interface CompilerKit extends BaseKit {
    * The key `lang` is the language, as in `CMAKE_<lang>_COMPILER`.
    * The corresponding value is a path to a compiler for that language.
    */
-  compilers: {[lang: string]: string}
+  compilers: {[lang: string]: string};
 }
 
 /**
@@ -243,16 +243,14 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
                 "isDirectory",
                 stat.isDirectory(),
                 "isSymbolicLink",
-                stat.isSymbolicLink())
+                stat.isSymbolicLink());
       if (e.code == 'EACCES') {
         // The binary may not be executable by this user...
         return null;
-      }
-      else if (e.code == 'ENOENT') {
+      } else if (e.code == 'ENOENT') {
         // This will happen on Windows if we try to "execute" a directory
         return null;
-      }
-      else if (e.code == "UNKNOWN" && process.platform == "win32") {
+      } else if (e.code == "UNKNOWN" && process.platform == "win32") {
         // This is when file is not executable (in windows)
         return null;
       }
@@ -297,7 +295,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   for (const inst of vs_installs) {
     if (inst_ids.indexOf(inst.instanceId) < 0) {
       installs.push(inst);
-      inst_ids.push(inst.instanceId)
+      inst_ids.push(inst.instanceId);
     }
   }
   return installs;
@@ -616,7 +614,7 @@ export class KitManager implements vscode.Disposable {
     }
 
     interface KitItem extends vscode.QuickPickItem {
-      kit: Kit
+      kit: Kit;
     }
     log.debug('Opening kit selection QuickPick');
     const items = this._kits.map((kit): KitItem => {

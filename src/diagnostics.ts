@@ -224,10 +224,9 @@ export class CompileOutputConsumer implements OutputConsumer {
   private readonly _gcc_re = /^(.*):(\d+):(\d+):\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/;
   private readonly _gnu_ld_re = /^(.*):(\d+)\s?:\s+(.*[^\]])$/;
   private readonly _msvc_re
-      = /^\s*(?!\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/
+      = /^\s*(?!\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
 
-      private readonly _ghsDiagnostics: RawDiagnostic[]
-      = [];
+  private readonly _ghsDiagnostics: RawDiagnostic[] = [];
   get ghsDiagnostics() { return this._ghsDiagnostics; }
 
   private readonly _gccDiagnostics: RawDiagnostic[] = [];
@@ -377,20 +376,24 @@ export class CompileOutputConsumer implements OutputConsumer {
       GHS : this.ghsDiagnostics,
       link : this.gnuLDDiagnostics,
     };
-    const arrs = util.objectPairs(by_source).map(
-        ([ source, diags ]) => {return diags.map(raw_diag => {
-          const filepath = make_abs(raw_diag.file);
-          const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity_of(raw_diag.severity));
-          diag.source = source;
-          if (raw_diag.code) {
-            diag.code = raw_diag.code;
-          }
-          if (!diags_by_file.has(filepath)) {
-            diags_by_file.set(filepath, []);
-          }
-          diags_by_file.get(filepath)!.push(diag);
-          return { filepath: filepath, diag: diag, }
-        })});
+    const arrs = util.objectPairs(by_source).map(([ source, diags ]) => {
+      return diags.map(raw_diag => {
+        const filepath = make_abs(raw_diag.file);
+        const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity_of(raw_diag.severity));
+        diag.source = source;
+        if (raw_diag.code) {
+          diag.code = raw_diag.code;
+        }
+        if (!diags_by_file.has(filepath)) {
+          diags_by_file.set(filepath, []);
+        }
+        diags_by_file.get(filepath)!.push(diag);
+        return {
+          filepath : filepath,
+          diag : diag,
+        };
+      });
+    });
     return ([] as FileDiagnostic[]).concat(...arrs);
   }
 }
@@ -433,4 +436,4 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
       });
     }
   }
-};
+}

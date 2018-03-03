@@ -148,7 +148,7 @@ export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
     ret.type = 'STRING';
     ret.value = value.join(';');
   } else {
-    throw new Error(`Invalid value to convert to cmake value: ${value}`)
+    throw new Error(`Invalid value to convert to cmake value: ${value}`);
   }
   return ret;
 }
@@ -263,7 +263,7 @@ export function mergeEnvironment(...env: EnvironmentVariables[]) {
     } else {
       return {...acc, ...vars};
     }
-  }, {})
+  }, {});
 }
 
 export function parseCompileDefinition(str: string): [ string, string|null ] {

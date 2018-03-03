@@ -323,7 +323,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Directory where build output is stored.
    */
-  get binaryDir(): string { return this._binaryDir }
+  get binaryDir(): string { return this._binaryDir; }
   private _binaryDir = '';
 
   /**

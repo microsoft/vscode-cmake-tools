@@ -214,4 +214,4 @@ export class NagManager {
       this._pollRemoteForNags();
     } catch (e) { console.error('Error starting up initial event polling.', e); }
   }
-};
+}

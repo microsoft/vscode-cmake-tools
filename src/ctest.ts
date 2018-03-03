@@ -139,7 +139,7 @@ export async function readTestResultsFile(test_xml: string) {
   const data = await parseXMLString(content) as MessyResults;
   const clean = cleanupResultsXML(data);
   return clean;
-};
+}
 
 
 export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
@@ -180,7 +180,7 @@ export async function parseTestOutput(output: string): Promise<FailingTestDecora
   } else {
     return [];
   }
-};
+}
 
 export class DecorationManager {
   constructor() {
@@ -274,12 +274,12 @@ export class DecorationManager {
   //   this._coverageDecorations = v;
   //   this._refreshAllEditorDecorations();
   // }
-};
+}
 
 class CTestOutputLogger implements OutputConsumer {
   output(line: string) { log.info(line); }
   error(line: string) { this.output(line); }
-};
+}
 
 export class CTestDriver implements vscode.Disposable {
   private readonly _decorationManager = new DecorationManager();

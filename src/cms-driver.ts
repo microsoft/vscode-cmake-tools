@@ -249,7 +249,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       sourceDir : this.sourceDir,
       cmakePath : await paths.cmakePath,
       environment : this.getKitEnvironmentVariablesObject(),
-      onDirty : async () => { this._dirty = true },
+      onDirty : async () => { this._dirty = true; },
       onMessage : async msg => { this._onMessageEmitter.fire(msg.message); },
       onProgress : async _prog => {},
       pickGenerator : () => this.getBestGenerator(),
