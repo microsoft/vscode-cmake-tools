@@ -72,6 +72,8 @@ class ConfigurationReader {
 
   get clearOutputBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('clearOutputBeforeBuild'); }
 
+  get autoRestartBuild(): boolean { return !!readPrefixedConfig<boolean>('autoRestartBuild'); }
+
   get configureSettings(): any { return readPrefixedConfig<Object>('configureSettings'); }
 
   get initialBuildType(): string|null { return readPrefixedConfig<string>('initialBuildType'); }
