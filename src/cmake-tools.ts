@@ -333,7 +333,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const drv = await this._startNewCMakeDriver();
     // Reload any test results. This will also update visibility on the status bar
     await this._ctestController.reloadTests(drv);
-    this._statusBar.targetName = this.defaultBuildTarget || 'all';
+    this._statusBar.targetName = this.defaultBuildTarget || drv.allTargetName;
     return drv;
   }
 
