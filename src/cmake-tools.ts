@@ -199,6 +199,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (project) {
       this._statusBar.setProjectName(project);
     }
+    this._statusBar.targetName = this.defaultBuildTarget || drv.allTargetName;
+    await this._ctestController.reloadTests(drv);
     drv.onProjectNameChanged(name => { this._statusBar.setProjectName(name); });
     drv.onReconfigured(() => this._onReconfiguredEmitter.fire());
     // All set up. Fulfill the driver promise.
@@ -324,17 +326,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     if ((await this._cmakeDriver) === null) {
       log.debug('Starting new CMake driver');
-      this._cmakeDriver = this._setupNewCMakeDriver();
+      this._cmakeDriver = this._startNewCMakeDriver();
     }
     return this._cmakeDriver;
-  }
-
-  private async _setupNewCMakeDriver(): Promise<CMakeDriver> {
-    const drv = await this._startNewCMakeDriver();
-    // Reload any test results. This will also update visibility on the status bar
-    await this._ctestController.reloadTests(drv);
-    this._statusBar.targetName = this.defaultBuildTarget || drv.allTargetName;
-    return drv;
   }
 
   /**
