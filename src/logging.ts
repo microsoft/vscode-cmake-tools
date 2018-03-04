@@ -65,6 +65,7 @@ function levelEnabled(level: LogLevel): boolean {
   case 'fatal':
     return level >= LogLevel.Fatal;
   default:
+    // tslint:disable-next-line
     console.error('Invalid logging level in settings.json');
     return true;
   }
@@ -80,7 +81,7 @@ class OutputChannelManager implements vscode.Disposable {
   /**
    * Channels that this manager knows about
    */
-  private _channels = new Map<string, vscode.OutputChannel>();
+  private readonly _channels = new Map<string, vscode.OutputChannel>();
 
   /**
    * Get the single instance of a channel with the given name. If the channel
@@ -118,9 +119,9 @@ async function _openLogFile() {
       const logfilepath = path.join(paths.dataDir, 'log.txt');
       await fs.mkdir_p(path.dirname(logfilepath));
       if (await fs.exists(logfilepath)) {
-        return node_fs.createWriteStream(logfilepath, {flags : 'r+'});
+        return node_fs.createWriteStream(logfilepath, {flags: 'r+'});
       } else {
-        return node_fs.createWriteStream(logfilepath, {flags : 'w'});
+        return node_fs.createWriteStream(logfilepath, {flags: 'w'});
       }
     })();
   }
@@ -131,7 +132,7 @@ async function _openLogFile() {
  * Manages and controls logging
  */
 class SingletonLogger {
-  private _logStream = _openLogFile();
+  private readonly _logStream = _openLogFile();
 
   private get _channel() { return channelManager.get('CMake/Build'); }
 
@@ -141,27 +142,32 @@ class SingletonLogger {
     }
     const user_message = args.map(a => a.toString()).join(' ');
     const prefix = new Date().toISOString() + ` [${levelName(level)}]`;
-    const raw_message = prefix + ' ' + user_message;
+    const raw_message = `${prefix} ${user_message}`;
     switch (level) {
     case LogLevel.Trace:
     case LogLevel.Debug:
     case LogLevel.Info:
     case LogLevel.Note:
       if (process.env['CMT_QUIET_CONSOLE'] !== '1') {
-        console.info("[CMakeTools]", raw_message);
+        // tslint:disable-next-line
+        console.info('[CMakeTools]', raw_message);
       }
       break;
     case LogLevel.Warning:
-      console.warn("[CMakeTools]", raw_message);
+      // tslint:disable-next-line
+      console.warn('[CMakeTools]', raw_message);
       break;
     case LogLevel.Error:
     case LogLevel.Fatal:
-      console.error("[CMakeTools]", raw_message);
+      // tslint:disable-next-line
+      console.error('[CMakeTools]', raw_message);
       break;
     }
     // Write to the logfile asynchronously.
-    this._logStream.then(strm => strm.write(raw_message + '\n'))
-        .catch(e => { console.error('Unhandled error while writing CMakeTools log file', e); });
+    this._logStream.then(strm => strm.write(raw_message + '\n')).catch(e => {
+      // tslint:disable-next-line
+      console.error('Unhandled error while writing CMakeTools log file', e);
+    });
     // Write to our output channel
     if (levelEnabled(level)) {
       this._channel.appendLine(user_message);

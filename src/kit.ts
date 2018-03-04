@@ -6,13 +6,13 @@ import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import paths from './paths';
 import * as logging from './logging';
+import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
-import {loadSchema} from "./schema";
+import {loadSchema} from './schema';
 import {StateManager} from './state';
-import {dropNulls, thisExtensionPath} from "./util";
+import {dropNulls, thisExtensionPath} from './util';
 
 const log = logging.createLogger('kit');
 
@@ -60,7 +60,7 @@ export interface CompilerKit extends BaseKit {
    * The key `lang` is the language, as in `CMAKE_<lang>_COMPILER`.
    * The corresponding value is a path to a compiler for that language.
    */
-  compilers: {[lang: string]: string}
+  compilers: {[lang: string]: string};
 }
 
 /**
@@ -119,8 +119,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
   if (gcc_res) {
     log.debug('Testing GCC-ish binary:', bin);
     if (pr)
-      pr.report({message : `Getting GCC version for ${bin}`});
-    const exec = await proc.execute(bin, [ '-v' ]).result;
+      pr.report({message: `Getting GCC version for ${bin}`});
+    const exec = await proc.execute(bin, ['-v']).result;
     if (exec.retc != 0) {
       return null;
     }
@@ -137,27 +137,27 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
     log.debug('Detected GCC compiler kit:', bin);
     if (await fs.exists(gxx_bin)) {
       return {
-        type : 'compilerKit',
-        name : name,
-        compilers : {
-          'CXX' : gxx_bin,
-          'C' : bin,
+        type: 'compilerKit',
+        name,
+        compilers: {
+          CXX: gxx_bin,
+          C: bin,
         }
       };
     } else {
       return {
-        type : 'compilerKit',
-        name : name,
-        compilers : {
-          'C' : bin,
+        type: 'compilerKit',
+        name,
+        compilers: {
+          C: bin,
         }
       };
     }
   } else if (clang_res) {
     log.debug('Testing Clang-ish binary:', bin);
     if (pr)
-      pr.report({message : `Getting Clang version for ${bin}`});
-    const exec = await proc.execute(bin, [ '-v' ]).result;
+      pr.report({message: `Getting Clang version for ${bin}`});
+    const exec = await proc.execute(bin, ['-v']).result;
     if (exec.retc != 0) {
       return null;
     }
@@ -174,19 +174,19 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
     log.debug('Detected Clang compiler kit:', bin);
     if (await fs.exists(clangxx_bin)) {
       return {
-        type : 'compilerKit',
-        name : name,
-        compilers : {
-          'C' : bin,
-          'CXX' : clangxx_bin,
+        type: 'compilerKit',
+        name,
+        compilers: {
+          C: bin,
+          CXX: clangxx_bin,
         },
       };
     } else {
       return {
-        type : 'compilerKit',
-        name : name,
-        compilers : {
-          'C' : bin,
+        type: 'compilerKit',
+        name,
+        compilers: {
+          C: bin,
         },
       };
     }
@@ -200,8 +200,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
  * @param dir Directory containing candidate binaries
  * @returns A list of CompilerKits found
  */
-export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter) : Promise<Kit[]> {
-  if (! await fs.exists(dir)) {
+export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter): Promise<Kit[]> {
+  if (!await fs.exists(dir)) {
     log.debug('Skipping scan of not existing path', dir);
     return [];
   }
@@ -223,10 +223,10 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
   }
   // Get files in the directory
   if (pr)
-    pr.report({message : `Checking ${dir} for compilers...`});
+    pr.report({message: `Checking ${dir} for compilers...`});
   const bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
   // Scan each binary in parallel
-  const prs = bins.map(async (bin) => {
+  const prs = bins.map(async bin => {
     log.trace('Checking file for compiler-ness:', bin);
     try {
 
@@ -235,24 +235,22 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
 
       log.warning('Failed to check binary', bin, 'by exception:', e);
       const stat = await fs.stat(bin);
-      log.debug("File infos: ",
-                "Mode",
+      log.debug('File infos: ',
+                'Mode',
                 stat.mode,
-                "isFile",
+                'isFile',
                 stat.isFile(),
-                "isDirectory",
+                'isDirectory',
                 stat.isDirectory(),
-                "isSymbolicLink",
-                stat.isSymbolicLink())
+                'isSymbolicLink',
+                stat.isSymbolicLink());
       if (e.code == 'EACCES') {
         // The binary may not be executable by this user...
         return null;
-      }
-      else if (e.code == 'ENOENT') {
+      } else if (e.code == 'ENOENT') {
         // This will happen on Windows if we try to "execute" a directory
         return null;
-      }
-      else if (e.code == "UNKNOWN" && process.platform == "win32") {
+      } else if (e.code == 'UNKNOWN' && process.platform == 'win32') {
         // This is when file is not executable (in windows)
         return null;
       }
@@ -287,7 +285,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res/vswhere.exe');
-  const vswhere_args = [ '-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease' ];
+  const vswhere_args = ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease'];
   const vswhere_res = await proc.execute(vswhere_exe, vswhere_args).result;
   if (vswhere_res.retc !== 0) {
     log.error('Failed to execute vswhere.exe:', vswhere_res.stdout);
@@ -297,7 +295,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   for (const inst of vs_installs) {
     if (inst_ids.indexOf(inst.instanceId) < 0) {
       installs.push(inst);
-      inst_ids.push(inst.instanceId)
+      inst_ids.push(inst.instanceId);
     }
   }
   return installs;
@@ -340,7 +338,7 @@ const MSVC_ENVIRONMENT_VARIABLES = [
 async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<string, string>|undefined> {
   const bat = [
     `@echo off`,
-    `call "${devbat}" ${args.join(" ")} || exit`,
+    `call "${devbat}" ${args.join(' ')} || exit`,
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}%`);
@@ -348,14 +346,14 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   const fname = Math.random().toString() + '.bat';
   const batpath = path.join(paths.tmpDir, `vs-cmt-${fname}`);
   await fs.writeFile(batpath, bat.join('\r\n'));
-  const res = await proc.execute(batpath, [], null, {shell : true}).result;
-  fs.unlink(batpath);
+  const res = await proc.execute(batpath, [], null, {shell: true}).result;
+  await fs.unlink(batpath);
   const output = res.stdout;
   if (res.retc !== 0) {
     console.log(`Error running ${devbat}`, output);
     return;
   }
-  if (output.includes("Invalid host architecture") || output.includes("Error in script usage")) {
+  if (output.includes('Invalid host architecture') || output.includes('Error in script usage')) {
     return;
   }
   if (!output) {
@@ -368,7 +366,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
           if (mat) {
             acc.set(mat[1], mat[2]);
           } else {
-            console.error(`Error parsing environment variable: ${line}`);
+            log.error(`Error parsing environment variable: ${line}`);
           }
           return acc;
         }, new Map());
@@ -379,25 +377,25 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
  * Platform arguments for VS Generators
  */
 const VsArchitectures: {[key: string]: string} = {
-  'amd64' : 'x64',
-  'arm' : 'ARM',
-  'amd64_arm' : 'ARM',
+  amd64: 'x64',
+  arm: 'ARM',
+  amd64_arm: 'ARM',
 };
 
 /**
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: {[key: string]: string} = {
-  '14' : 'Visual Studio 14 2015',
-  '15' : 'Visual Studio 15 2017',
-  'VS120COMNTOOLS' : 'Visual Studio 12 2013',
-  'VS140COMNTOOLS' : 'Visual Studio 14 2015',
+  14: 'Visual Studio 14 2015',
+  15: 'Visual Studio 15 2017',
+  VS120COMNTOOLS: 'Visual Studio 12 2013',
+  VS140COMNTOOLS: 'Visual Studio 14 2015',
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
   const devbat = path.join(common_dir, 'VsDevCmd.bat');
-  const variables = await collectDevBatVars(devbat, [ '-no_logo', `-arch=${arch}` ]);
+  const variables = await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`]);
   if (!variables) {
     return null;
   } else {
@@ -413,20 +411,20 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter):
     Promise<VSKit|null> {
   const installName = inst.displayName || inst.instanceId;
-  const name = installName + ' - ' + arch;
+  const name = `${installName} - ${arch}`;
   log.debug('Checking for kit: ' + name);
   if (pr) {
-    pr.report({message : `Checking ${installName} with ${arch}`});
+    pr.report({message: `Checking ${installName} with ${arch}`});
   }
   const variables = await varsForVSInstallation(inst, arch);
   if (!variables)
     return null;
 
   const kit: VSKit = {
-    type : 'vsKit',
-    name : name,
-    visualStudio : inst.instanceId,
-    visualStudioArchitecture : arch,
+    type: 'vsKit',
+    name,
+    visualStudio: inst.instanceId,
+    visualStudioArchitecture: arch,
   };
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
@@ -434,8 +432,8 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
     const generatorName: string|undefined = VsGenerators[version[1]];
     if (generatorName) {
       kit.preferredGenerator = {
-        name : generatorName,
-        platform : VsArchitectures[arch] as string || undefined,
+        name: generatorName,
+        platform: VsArchitectures[arch] as string || undefined,
       };
     }
   }
@@ -450,7 +448,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<VSKit[]> {
   const installs = await vsInstallations();
   const prs = installs.map(async(inst): Promise<VSKit[]> => {
     const ret = [] as VSKit[];
-    const arches = [ 'x86', 'amd64', 'x86_amd64', 'x86_arm', 'amd64_arm', 'amd64_x86' ];
+    const arches = ['x86', 'amd64', 'x86_amd64', 'x86_arm', 'amd64_arm', 'amd64_x86'];
     const sub_prs = arches.map(arch => tryCreateNewVCEnvironment(inst, arch, pr));
     const maybe_kits = await Promise.all(sub_prs);
     maybe_kits.map(k => k ? ret.push(k) : null);
@@ -475,30 +473,29 @@ export async function getVSKitEnvironment(kit: VSKit): Promise<Map<string, strin
  */
 export async function scanForKits() {
   log.debug('Scanning for Kits on system');
-  return vscode.window
-      .withProgress({location : vscode.ProgressLocation.Window, title : 'Scanning for kits'},
-                    async(pr) => {
-                      const isWin32 = process.platform === 'win32';
-                      pr.report({message : 'Scanning for CMake kits...'});
-                      // Search directories on `PATH` for compiler binaries
-                      const pathvar = process.env['PATH'] !;
-                      const sep = isWin32 ? ';' : ':';
-                      const paths = pathvar.split(sep);
+  return vscode.window.withProgress({location: vscode.ProgressLocation.Window, title: 'Scanning for kits'},
+                                    async pr => {
+                                      const isWin32 = process.platform === 'win32';
+                                      pr.report({message: 'Scanning for CMake kits...'});
+                                      // Search directories on `PATH` for compiler binaries
+                                      const pathvar = process.env['PATH']!;
+                                      const sep = isWin32 ? ';' : ':';
+                                      const path_elems = pathvar.split(sep);
 
-                      // Search them all in parallel
-                      let prs = [] as Promise<Kit[]>[];
-                      const compiler_kits = paths.map(path => scanDirForCompilerKits(path, pr));
-                      prs = prs.concat(compiler_kits);
-                      if(isWin32) {
-                        const vs_kits = scanForVSKits(pr);
-                        prs.push(vs_kits);
-                      }
-                      const arrays = await Promise.all(prs);
-                      const kits = ([] as Kit[]).concat(...arrays);
-                      kits.map(k => log.info(`Found Kit: ${k.name}`));
-                      return kits;
-
-                    });
+                                      // Search them all in parallel
+                                      let prs = [] as Promise<Kit[]>[];
+                                      const compiler_kits
+                                          = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
+                                      prs = prs.concat(compiler_kits);
+                                      if (isWin32) {
+                                        const vs_kits = scanForVSKits(pr);
+                                        prs.push(vs_kits);
+                                      }
+                                      const arrays = await Promise.all(prs);
+                                      const kits = ([] as Kit[]).concat(...arrays);
+                                      kits.map(k => log.info(`Found Kit: ${k.name}`));
+                                      return kits;
+                                    });
 }
 
 /**
@@ -514,7 +511,8 @@ function descriptionForKit(kit: Kit) {
     return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
   }
   case 'compilerKit': {
-    return 'Using compilers: ' + Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
+    const compilers = Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
+    return `Using compilers ${compilers.join(' ')}`;
   }
   }
 }
@@ -532,12 +530,12 @@ export class KitManager implements vscode.Disposable {
   /**
    * The path to the `cmake-kits.json` file
    */
-  private _kitsPath: string;
+  private readonly _kitsPath: string;
 
   /**
    * Watches the file at `_kitsPath`.
    */
-  private _kitsWatcher: vscode.FileSystemWatcher;
+  private readonly _kitsWatcher: vscode.FileSystemWatcher;
 
   /**
    * The active build kit
@@ -548,9 +546,7 @@ export class KitManager implements vscode.Disposable {
   /**
    * The kit manager has a selected kit.
    */
-  get hasActiveKit() {
-    return this._activeKit != null;
-  }
+  get hasActiveKit() { return this._activeKit !== null; }
 
   /**
    * Event emitted when the Kit changes. This can be via user action, by the
@@ -558,7 +554,7 @@ export class KitManager implements vscode.Disposable {
    * is reloaded.
    */
   get onActiveKitChanged() { return this._activeKitChangedEmitter.event; }
-  private _activeKitChangedEmitter = new vscode.EventEmitter<Kit|null>();
+  private readonly _activeKitChangedEmitter = new vscode.EventEmitter<Kit|null>();
 
   /**
    * Change the current kit. Commits the current kit name to workspace-local
@@ -583,7 +579,7 @@ export class KitManager implements vscode.Disposable {
    */
   constructor(readonly stateManager: StateManager, kitPath: string|null = null) {
     log.debug('Constructing KitManager');
-    if (kitPath != null) {
+    if (kitPath !== null) {
       this._kitsPath = kitPath;
     } else {
       this._kitsPath = path.join(paths.dataDir, 'cmake-kits.json');
@@ -612,24 +608,24 @@ export class KitManager implements vscode.Disposable {
    * selection, the current kit is kept. The only way it can reset to `null` is
    * if the active kit becomes somehow unavailable.
    */
-  async selectKit(): Promise<Kit | null> {
+  async selectKit(): Promise<Kit|null> {
     if (this._kits.length == 0) {
       return null;
     }
 
     interface KitItem extends vscode.QuickPickItem {
-      kit: Kit
+      kit: Kit;
     }
     log.debug('Opening kit selection QuickPick');
     const items = this._kits.map((kit): KitItem => {
       return {
-        label : kit.name,
-        description : descriptionForKit(kit),
-        kit : kit,
+        label: kit.name,
+        description: descriptionForKit(kit),
+        kit,
       };
     });
     const chosen = await vscode.window.showQuickPick(items, {
-      placeHolder : 'Select a Kit',
+      placeHolder: 'Select a Kit',
     });
     if (chosen === undefined) {
       log.debug('User cancelled Kit selection');
@@ -663,7 +659,7 @@ export class KitManager implements vscode.Disposable {
     log.debug('Rescanning for Kits');
     // clang-format off
     const old_kits_by_name = this._kits.reduce(
-      (acc, kit) => Object.assign({}, acc, {[kit.name]: kit}),
+      (acc, kit) => ({...acc, [kit.name]: kit}),
       {} as{[kit: string]: Kit}
     );
     const discovered_kits = await scanForKits();
@@ -727,30 +723,30 @@ export class KitManager implements vscode.Disposable {
       if ('compilers' in item_) {
         const item = item_ as CompilerKit;
         return {
-          type : 'compilerKit',
-          name : item.name,
-          compilers : item.compilers,
-          preferredGenerator : item.preferredGenerator,
-          cmakeSettings : item.cmakeSettings,
+          type: 'compilerKit',
+          name: item.name,
+          compilers: item.compilers,
+          preferredGenerator: item.preferredGenerator,
+          cmakeSettings: item.cmakeSettings,
         };
       } else if ('toolchainFile' in item_) {
         const item = item_ as ToolchainKit;
         return {
-          type : 'toolchainKit',
-          name : item.name,
-          toolchainFile : item.toolchainFile,
-          preferredGenerator : item.preferredGenerator,
-          cmakeSettings : item.cmakeSettings,
+          type: 'toolchainKit',
+          name: item.name,
+          toolchainFile: item.toolchainFile,
+          preferredGenerator: item.preferredGenerator,
+          cmakeSettings: item.cmakeSettings,
         };
       } else if ('visualStudio' in item_) {
         const item = item_ as VSKit;
         return {
-          type : 'vsKit',
-          name : item.name,
-          visualStudio : item.visualStudio,
-          visualStudioArchitecture : item.visualStudioArchitecture,
-          preferredGenerator : item.preferredGenerator,
-          cmakeSettings : item.cmakeSettings,
+          type: 'vsKit',
+          name: item.name,
+          visualStudio: item.visualStudio,
+          visualStudioArchitecture: item.visualStudioArchitecture,
+          preferredGenerator: item.preferredGenerator,
+          cmakeSettings: item.cmakeSettings,
         };
       } else {
         vscode.window.showErrorMessage('Your cmake-kits.json file contains one or more invalid entries.');
@@ -760,7 +756,7 @@ export class KitManager implements vscode.Disposable {
     this._kits = dropNulls(new_kits);
     log.info(`Successfully loaded ${this._kits.length} kits`);
     // Set the current kit to the one we have named
-    const already_active_kit = this._kits.find((kit) => kit.name === this.stateManager.activeKitName);
+    const already_active_kit = this._kits.find(kit => kit.name === this.stateManager.activeKitName);
     this._setActiveKit(already_active_kit || null);
   }
 
@@ -781,13 +777,13 @@ export class KitManager implements vscode.Disposable {
       const item = await vscode.window.showInformationMessage<DoOpen>(
           'CMake Tools has scanned for available kits and saved them to a file. Would you like to edit the Kits file?',
           {},
-          {title : "Yes", doOpen : true},
-          {title : "No", isCloseAffordance : true, doOpen : false});
+          {title: 'Yes', doOpen: true},
+          {title: 'No', isCloseAffordance: true, doOpen: false});
       if (item === undefined) {
         return;
       }
       if (item.doOpen) {
-        this.openKitsEditor();
+        await this.openKitsEditor();
       }
     }
   }
@@ -798,7 +794,7 @@ export class KitManager implements vscode.Disposable {
   async openKitsEditor() {
     log.debug('Opening TextEditor for', this._kitsPath);
     const text = await vscode.workspace.openTextDocument(this._kitsPath);
-    return await vscode.window.showTextDocument(text);
+    return vscode.window.showTextDocument(text);
   }
 }
 

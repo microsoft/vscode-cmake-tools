@@ -7,8 +7,9 @@ import * as cache from './cache';
 import config from './config';
 import {CMakeGenerator} from './kit';
 import {createLogger} from './logging';
-import {fs} from "./pr";
+import {fs} from './pr';
 import * as proc from './proc';
+import rollbar from './rollbar';
 import * as util from './util';
 
 const log = createLogger('cms-client');
@@ -132,7 +133,7 @@ export interface HandshakeParams {
   extraGenerator?: string;
   platform?: string;
   toolset?: string;
-  protocolVersion: {major: number; minor : number;};
+  protocolVersion: {major: number; minor: number;};
 }
 
 export interface HandshakeRequest extends CookiedMessage, HandshakeParams {
@@ -157,9 +158,9 @@ export interface GlobalSettingsRequest extends CookiedMessage, GlobalSettingsPar
 export interface GlobalSettingsContent {
   buildDirectory: string;
   capabilities: {
-    generators: {extraGenerators: string[]; name : string; platformSupport : boolean; toolsetSupport : boolean;}[];
-    serverMode : boolean;
-    version : {isDirty : boolean; major : number; minor : number; patch : number; string : string; suffix : string;};
+    generators: {extraGenerators: string[]; name: string; platformSupport: boolean; toolsetSupport: boolean;}[];
+    serverMode: boolean;
+    version: {isDirty: boolean; major: number; minor: number; patch: number; string: string; suffix: string;};
   };
   checkSystemVars: boolean;
   extraGenerator: string;
@@ -301,7 +302,7 @@ export interface CMakeInputsRequest extends CookiedMessage, CMakeInputsParams {
 }
 
 export interface CMakeInputsContent {
-  buildFiles: {isCMake: boolean; isTemporary : boolean; sources : string[];}[];
+  buildFiles: {isCMake: boolean; isTemporary: boolean; sources: string[];}[];
   cmakeRootDirectory: string;
   sourceDirectory: string;
 }
@@ -316,7 +317,7 @@ export interface CMakeInputsReply extends ReplyMessage, CMakeInputsContent {
 export interface CacheParams {}
 
 export interface CacheRequest extends CookiedMessage, CacheParams {
-  type: 'cache'
+  type: 'cache';
 }
 
 export interface CacheContent {
@@ -325,7 +326,7 @@ export interface CacheContent {
 
 export interface CMakeCacheEntry {
   key: string;
-  properties: {ADVANCED: '0'|'1'; HELPSTRING : string};
+  properties: {ADVANCED: '0'|'1'; HELPSTRING: string};
   type: string;
   value: string;
 }
@@ -397,29 +398,28 @@ interface MessageResolutionCallbacks {
 export class CMakeServerClient {
   private _proc: child_proc.ChildProcess;
   private _accInput: string = '';
-  private _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
-  private _params: ClientInitPrivate;
+  private readonly _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
+  private readonly _params: ClientInitPrivate;
   private _endPromise: Promise<void>;
   private _pipe: net.Socket;
-  private _pipeFilePath: string;
+  private readonly _pipeFilePath: string;
 
   private _onMoreData(data: Uint8Array) {
     const str = data.toString();
     this._accInput += str;
     while (1) {
       const input = this._accInput;
-      let mat = MESSAGE_WRAPPER_RE.exec(input);
+      const mat = MESSAGE_WRAPPER_RE.exec(input);
       if (!mat) {
         break;
       }
-      const [_all, content, tail] = mat;
-      if (!_all || !content || tail === undefined) {
+      if (mat.length !== 3) {
         debugger;
         throw new global.Error('Protocol error talking to CMake! Got this input: ' + input);
       }
-      this._accInput = tail;
-      console.log(`Received message from cmake-server: ${content}`);
-      const message: SomeMessage = JSON.parse(content);
+      this._accInput = mat[2];
+      console.log(`Received message from cmake-server: ${mat[1]}`);
+      const message: SomeMessage = JSON.parse(mat[1]);
       this._onMessage(message);
     }
   }
@@ -459,7 +459,7 @@ export class CMakeServerClient {
       }
       case 'progress': {
         const prog = cookied as any as ProgressMessage;
-        this._params.onProgress(prog).catch(e => { console.error('Unandled error in onProgress', e); });
+        this._params.onProgress(prog).catch(e => { log.error('Unandled error in onProgress', e); });
         return;
       }
       }
@@ -467,23 +467,24 @@ export class CMakeServerClient {
 
     switch (some.type) {
     case 'hello': {
-      fs.exists(this._pipeFilePath).then(exists => {
+      const unlink_pr = fs.exists(this._pipeFilePath).then(async exists => {
         if (exists && process.platform !== 'win32') {
-          fs.unlink(this._pipeFilePath);
+          await fs.unlink(this._pipeFilePath);
         }
       });
-      this._params.onHello(some as HelloMessage).catch(e => { console.error('Unhandled error in onHello', e); });
+      rollbar.takePromise('Unlink pipe', {pipe: this._pipeFilePath}, unlink_pr);
+      this._params.onHello(some as HelloMessage).catch(e => { log.error('Unhandled error in onHello', e); });
       return;
     }
     case 'message': {
-      this._params.onMessage(some as MessageMessage).catch(e => { console.error('Unhandled error in onMessage', e); });
+      this._params.onMessage(some as MessageMessage).catch(e => { log.error('Unhandled error in onMessage', e); });
       return;
     }
     case 'signal': {
       const sig = some as SomeSignalMessage;
       switch (sig.name) {
       case 'dirty': {
-        this._params.onDirty().catch(e => { console.error('Unhandled error in onDirty', e); });
+        this._params.onDirty().catch(e => { log.error('Unhandled error in onDirty', e); });
         return;
       }
       case 'fileChange': {
@@ -504,10 +505,9 @@ export class CMakeServerClient {
   sendRequest(t: 'codemodel', p?: CodeModelParams): Promise<CodeModelContent>;
   sendRequest(T: 'cache', p?: CacheParams): Promise<CacheContent>;
   sendRequest(type: string, params: any = {}): Promise<any> {
-    const cp = Object.assign({type}, params);
+    const cp = {type, ...params};
     const cookie = cp.cookie = Math.random().toString();
-    const pr = new Promise(
-        (resolve, reject) => { this._promisesResolvers.set(cookie, {resolve : resolve, reject : reject}); });
+    const pr = new Promise((resolve, reject) => { this._promisesResolvers.set(cookie, {resolve, reject}); });
     const msg = JSON.stringify(cp);
     console.log(`Sending message to cmake-server: ${msg}`);
     this._pipe.write('\n[== "CMake Server" ==[\n');
@@ -548,8 +548,8 @@ export class CMakeServerClient {
     this._pipeFilePath = pipe_file;
     const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
     const child = this._proc
-        = child_proc.spawn(params.cmakePath, [ '-E', 'server', '--experimental', `--pipe=${pipe_file}` ], {
-            env : final_env,
+        = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
+            env: final_env,
           });
     log.debug(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', this._onErrorData.bind(this));
@@ -568,11 +568,11 @@ export class CMakeServerClient {
         });
       });
       const exit_promise = new Promise<void>(resolve => { child.on('exit', () => { resolve(); }); });
-      this._endPromise = Promise.all([ end_promise, exit_promise ]).then(() => {});
+      this._endPromise = Promise.all([end_promise, exit_promise]).then(() => {});
       this._proc = child;
       child.on('close', (retc: number, signal: string) => {
         if (retc !== 0) {
-          log.error("The connection to cmake-server was terminated unexpectedly");
+          log.error('The connection to cmake-server was terminated unexpectedly');
           log.error(`cmake-server exited with status ${retc} (${signal})`);
           params.onCrash(retc, signal).catch(e => { log.error(`Unhandled error in onCrash ${e}`); });
         }
@@ -588,24 +588,24 @@ export class CMakeServerClient {
     return new Promise<CMakeServerClient>((resolve, reject) => {
       const client = new CMakeServerClient({
         tmpdir,
-        sourceDir : params.sourceDir,
-        binaryDir : params.binaryDir,
-        onMessage : params.onMessage,
-        cmakePath : params.cmakePath,
-        environment : params.environment,
-        onProgress : params.onProgress,
-        onDirty : params.onDirty,
-        pickGenerator : params.pickGenerator,
-        onCrash : async (retc) => {
+        sourceDir: params.sourceDir,
+        binaryDir: params.binaryDir,
+        onMessage: params.onMessage,
+        cmakePath: params.cmakePath,
+        environment: params.environment,
+        onProgress: params.onProgress,
+        onDirty: params.onDirty,
+        pickGenerator: params.pickGenerator,
+        onCrash: async retc => {
           if (!resolved) {
             reject(new StartupError(retc));
           }
         },
-        onHello : async (msg: HelloMessage) => {
+        onHello: async (msg: HelloMessage) => {
           // We've gotten the hello message. We need to commense handshake
           try {
-            let hsparams: HandshakeParams
-                = {buildDirectory : params.binaryDir, protocolVersion : msg.supportedProtocolVersions[0]};
+            const hsparams: HandshakeParams
+                = {buildDirectory: params.binaryDir, protocolVersion: msg.supportedProtocolVersions[0]};
 
             const cache_path = path.join(params.binaryDir, 'CMakeCache.txt');
             const have_cache = await fs.exists(cache_path);

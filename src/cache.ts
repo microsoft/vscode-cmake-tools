@@ -16,11 +16,11 @@ const log = logging.createLogger('cache');
  * information. This type is immutable.
  */
 export class Entry implements api.CacheEntry {
-  private _type: api.CacheEntryType = api.CacheEntryType.Uninitialized;
-  private _docs: string = '';
-  private _key: string = '';
-  private _value: any = null;
-  private _advanced: boolean = false;
+  private readonly _type: api.CacheEntryType = api.CacheEntryType.Uninitialized;
+  private readonly _docs: string = '';
+  private readonly _key: string = '';
+  private readonly _value: any = null;
+  private readonly _advanced: boolean = false;
 
   get type() { return this._type; }
 
@@ -54,7 +54,7 @@ export class Entry implements api.CacheEntry {
     this._docs = docs;
     this._advanced = advanced;
   }
-};
+}
 
 /**
  * Reads a CMake cache file. This class is immutable.
@@ -76,7 +76,7 @@ export class CMakeCache {
       log.trace('File exists');
       const content = await fs.readFile(path);
       log.trace('File contents read successfully');
-      const entries = await CMakeCache.parseCache(content.toString());
+      const entries = CMakeCache.parseCache(content.toString());
       log.trace('Parsed', entries.size, 'entries from', path);
       return new CMakeCache(path, exists, entries);
     } else {
@@ -150,15 +150,15 @@ export class CMakeCache {
         } else {
           const key = name;
           const typemap = {
-            BOOL : api.CacheEntryType.Bool,
-            STRING : api.CacheEntryType.String,
-            PATH : api.CacheEntryType.Path,
-            FILEPATH : api.CacheEntryType.FilePath,
-            INTERNAL : api.CacheEntryType.Internal,
-            UNINITIALIZED : api.CacheEntryType.Uninitialized,
-            STATIC : api.CacheEntryType.Static,
-          } as {[type: string] : api.CacheEntryType};
-          const type: api.CacheEntryType = typemap[typename];
+            BOOL: api.CacheEntryType.Bool,
+            STRING: api.CacheEntryType.String,
+            PATH: api.CacheEntryType.Path,
+            FILEPATH: api.CacheEntryType.FilePath,
+            INTERNAL: api.CacheEntryType.Internal,
+            UNINITIALIZED: api.CacheEntryType.Uninitialized,
+            STATIC: api.CacheEntryType.Static,
+          } as {[type: string]: api.CacheEntryType | undefined};
+          const type = typemap[typename];
           const docs = docs_acc.trim();
           docs_acc = '';
           if (type === undefined) {
@@ -182,7 +182,7 @@ export class CMakeCache {
    */
   get(key: string): Entry|null {
     const ret = this._entries.get(key) || null;
-    log.trace(`Get cache key ${key}=${ret ? ret.value : "[[Misisng]]"}`);
+    log.trace(`Get cache key ${key}=${ret ? ret.value : '[[Misisng]]'}`);
     return ret;
   }
 }

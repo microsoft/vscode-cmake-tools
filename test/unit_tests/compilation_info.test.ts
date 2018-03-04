@@ -9,31 +9,33 @@ import {expect} from 'chai';
 import * as api from '../../src/api';
 import * as compdb from '../../src/compdb';
 
+// tslint:disable:no-unused-expression
+
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit_tests', filename));
 }
 
 suite('Compilation info', () => {
-  test('Parsing compilation databases', async() => {
+  test('Parsing compilation databases', async () => {
     const dbpath = getTestResourceFilePath('test_compdb.json');
     const db = (await compdb.CompilationDatabase.fromFilePath(dbpath))!;
     expect(db).to.not.be.null;
-    const source_path = "/home/clang-languageservice/main.cpp";
+    const source_path = '/home/clang-languageservice/main.cpp';
     const info = db.getCompilationInfoForUri(vscode.Uri.file(source_path))!;
     expect(info).to.not.be.null;
     expect(info.file).to.eq(source_path);
     expect(info.compile!.directory).to.eq('/home/clang-languageservice/build');
     expect(info.compile!.command)
         .to.eq(
-            "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp");
+            '/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp');
   });
   test('Parsing gnu-style compile info', () => {
     const raw: api.RawCompilationInfo = {
-      command :
+      command:
           'clang++ -I/foo/bar -isystem /system/path -fsome-compile-flag -DMACRO=DEFINITION -I ../relative/path "-I/path\\"with\\" embedded quotes/foo"',
-      directory : '/some/dir',
-      file : 'meow.cpp'
+      directory: '/some/dir',
+      file: 'meow.cpp'
     };
     const info = compdb.parseRawCompilationInfo(raw);
     expect(raw.command).to.eq(info.compile!.command);
@@ -57,10 +59,10 @@ suite('Compilation info', () => {
 
   test('Parsing MSVC-style compile info', () => {
     const raw: api.RawCompilationInfo = {
-      command :
+      command:
           'cl.exe -I/foo/bar /I/system/path /Z+:some-compile-flag /DMACRO=DEFINITION -I ../relative/path "/I/path\\"with\\" embedded quotes/foo"',
-      directory : '/some/dir',
-      file : 'meow.cpp'
+      directory: '/some/dir',
+      file: 'meow.cpp'
     };
     const info = compdb.parseRawCompilationInfo(raw);
     expect(raw.command).to.eq(info.compile!.command);

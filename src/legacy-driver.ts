@@ -7,13 +7,13 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
-import {CMakeCache} from "./cache";
+import {CMakeCache} from './cache';
 import {CompilationDatabase} from './compdb';
-import paths from './paths';
 import {CMakeDriver} from './driver';
-import {Kit} from "./kit";
+import {Kit} from './kit';
 // import * as proc from './proc';
 import * as logging from './logging';
+import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -111,7 +111,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   /**
    * Watcher for the CMake cache file on disk.
    */
-  private _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
+  private readonly _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
 
   get cmakeCache() { return this._cmakeCache; }
   private _cmakeCache: CMakeCache|null = null;

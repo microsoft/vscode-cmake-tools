@@ -7,10 +7,10 @@ import * as vscode from 'vscode';
 import * as ws from 'ws';
 
 import * as api from './api';
-import {ExecutionOptions, ExecutionResult} from "./api";
-import {CacheEditorContentProvider} from "./cache-editor";
+import {ExecutionOptions, ExecutionResult} from './api';
+import {CacheEditorContentProvider} from './cache-editor';
 import {CMakeServerClientDriver} from './cms-driver';
-import config from "./config";
+import config from './config';
 import {CTestDriver} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
@@ -18,7 +18,7 @@ import {CMakeDriver} from './driver';
 import {KitManager} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
-import {NagManager} from "./nag";
+import {NagManager} from './nag';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
@@ -47,10 +47,10 @@ const build_log = logging.createLogger('build');
  * class. See the `_init` private method for this initialization.
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
-  private _http_server: http.Server;
+  private readonly _http_server: http.Server;
   private _ws_server: ws.Server;
 
-  private _nagManager = new NagManager(this.extensionContext);
+  private readonly _nagManager = new NagManager(this.extensionContext);
 
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
@@ -72,26 +72,26 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       });
     });
 
-    ready.then(() => {
-      const websock_server = this._ws_server = ws.createServer({server : editor_server});
-      websock_server.on('connection', (client) => {
-        const sub = this.onReconfigured(() => { client.send(JSON.stringify({method : 'refreshContent'})); });
+    rollbar.takePromise('Setup cache editor server', {}, ready.then(() => {
+      const websock_server = this._ws_server = ws.createServer({server: editor_server});
+      websock_server.on('connection', client => {
+        const sub = this.onReconfigured(() => { client.send(JSON.stringify({method: 'refreshContent'})); });
         client.onclose = () => { sub.dispose(); };
-        client.onmessage = (msg) => {
+        client.onmessage = msg => {
           const data = JSON.parse(msg.data);
           console.log('Got message from editor client', msg);
           rollbar.invokeAsync('Handle message from cache editor', () => {
             return this._handleCacheEditorMessage(data.method, data.params)
                 .then(ret => {
                   client.send(JSON.stringify({
-                    id : data.id,
-                    result : ret,
+                    id: data.id,
+                    result: ret,
                   }));
                 })
                 .catch(e => {
                   client.send(JSON.stringify({
-                    id : data.id,
-                    error : (e as Error).message,
+                    id: data.id,
+                    error: (e as Error).message,
                   }));
                 });
           });
@@ -102,7 +102,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           .registerTextDocumentContentProvider('cmake-cache',
                                                new CacheEditorContentProvider(this.extensionContext,
                                                                               editor_server.address().port));
-    });
+    }));
   }
 
   /**
@@ -134,7 +134,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * The status bar manager. Has two-phase init.
    */
-  private _statusBar: StatusBar = new StatusBar();
+  private readonly _statusBar: StatusBar = new StatusBar();
 
   /**
    * Dispose the extension
@@ -143,7 +143,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug('Disposing CMakeTools extension');
     if (this._launchTerminal)
       this._launchTerminal.dispose();
-    rollbar.invoke('Root dispose', () => this.asyncDispose());
+    rollbar.invokeAsync('Root dispose', () => this.asyncDispose());
   }
 
   /**
@@ -169,30 +169,31 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async _startNewCMakeDriver(): Promise<CMakeDriver> {
     const kit = this._kitManager.activeKit;
-    const drv = await (async () => {
-      log.debug('Starting CMake driver');
-      const cmake = await paths.cmakePath;
-      const version_ex = await proc.execute(cmake, [ '--version' ]).result;
-      if (version_ex.retc !== 0 || !version_ex.stdout) {
-        throw new Error(`Bad CMake executable "${cmake}". Is it installed and a valid executable?`);
-      }
+    log.debug('Starting CMake driver');
+    const cmake = await paths.cmakePath;
+    const version_ex = await proc.execute(cmake, ['--version']).result;
+    if (version_ex.retc !== 0 || !version_ex.stdout) {
+      throw new Error(`Bad CMake executable "${cmake}". Is it installed and a valid executable?`);
+    }
 
-      if (config.useCMakeServer) {
-        console.assert(version_ex.stdout);
-        const version_re = /cmake version (.*?)\r?\n/;
-        const version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
-        // We purposefully exclude versions <3.7.1, which have some major CMake
-        // server bugs
-        if (util.versionGreater(version, '3.7.1')) {
-          return await CMakeServerClientDriver.create(this._stateManager, kit);
-        } else {
-          log.info(
-              'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
-        }
+    let drv: CMakeDriver;
+    if (config.useCMakeServer) {
+      console.assert(version_ex.stdout);
+      const version_re = /cmake version (.*?)\r?\n/;
+      const version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
+      // We purposefully exclude versions <3.7.1, which have some major CMake
+      // server bugs
+      if (util.versionGreater(version, '3.7.1')) {
+        drv = await CMakeServerClientDriver.create(this._stateManager, kit);
+      } else {
+        log.info(
+            'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
+        drv = await LegacyCMakeDriver.create(this._stateManager, kit);
       }
+    } else {
       // We didn't start the server backend, so we'll use the legacy one
-      return await LegacyCMakeDriver.create(this._stateManager, kit);
-    })();
+      drv = await LegacyCMakeDriver.create(this._stateManager, kit);
+    }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = drv.projectName;
     if (project) {
@@ -208,11 +209,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Event fired after CMake configure runs
    */
   get onReconfigured() { return this._onReconfiguredEmitter.event; }
-  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
+  private readonly _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
   get reconfigured() { return this.onReconfigured; }
 
-  private _onTargetChangedEmitter = new vscode.EventEmitter<void>();
+  private readonly _onTargetChangedEmitter = new vscode.EventEmitter<void>();
   get targetChangedEvent() { return this._onTargetChangedEmitter.event; }
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
@@ -221,7 +222,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       return drv.executeCommand(cmake, args, undefined, options).result;
     } else {
-      throw new Error("Unable to execute cmake command, there is no valid cmake driver instance.");
+      throw new Error('Unable to execute cmake command, there is no valid cmake driver instance.');
     }
   }
 
@@ -230,7 +231,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       return drv.executeCommand(program, args, undefined, options).result;
     } else {
-      throw new Error("Unable to execute program, there is no valid cmake driver instance.");
+      throw new Error('Unable to execute program, there is no valid cmake driver instance.');
     }
   }
 
@@ -239,7 +240,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       return drv.compilationInfoForFile(filepath);
     } else {
-      throw new Error("Unable to get compilation information, there is no valid cmake driver instance.");
+      throw new Error('Unable to get compilation information, there is no valid cmake driver instance.');
     }
   }
 
@@ -282,7 +283,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.short);
           // We don't configure yet, since someone else might be in the middle of a configure
         }
-      })
+      });
     });
     // Listen for the kit to change
     this._kitManager.onActiveKitChanged(kit => {
@@ -317,23 +318,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
     if (!this._kitManager.hasActiveKit) {
+      log.debug('Not starting CMake driver: no kits defined');
       return null;
     }
 
-    if ((await this._cmakeDriver) == null) {
-      try {
-        this._cmakeDriver = this._startNewCMakeDriver();
-        let cmakeInstance = await this._cmakeDriver;
-        // Reload any test results. This will also update visibility on the status
-        // bar
-        await this._ctestController.reloadTests(cmakeInstance!);
-        this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
-      } catch (ex) {
-        log.debug("Exception on start of cmake driver.", ex.stack);
-        this._cmakeDriver = Promise.resolve(null);
-      }
+    if ((await this._cmakeDriver) === null) {
+      log.debug('Starting new CMake driver');
+      this._cmakeDriver = this._setupNewCMakeDriver();
     }
     return this._cmakeDriver;
+  }
+
+  private async _setupNewCMakeDriver(): Promise<CMakeDriver> {
+    const drv = await this._startNewCMakeDriver();
+    // Reload any test results. This will also update visibility on the status bar
+    await this._ctestController.reloadTests(drv);
+    this._statusBar.targetName = this.defaultBuildTarget || drv.allTargetName;
+    return drv;
   }
 
   /**
@@ -380,7 +381,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.configure`
    */
   configure(extra_args: string[] = []) {
-    return this._doConfigure(async (consumer) => {
+    return this._doConfigure(async consumer => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
         return drv.configure(extra_args, consumer);
@@ -394,7 +395,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.cleanConfigure()
    */
   cleanConfigure() {
-    return this._doConfigure(async (consumer) => {
+    return this._doConfigure(async consumer => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
         return drv.cleanConfigure(consumer);
@@ -458,8 +459,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Check if the current project needs to be (re)configured
    */
   private async _needsReconfigure(): Promise<boolean> {
-    let drv = await this.getCMakeDriverInstance();
-    if (!drv || await drv.needsReconfigure) {
+    const drv = await this.getCMakeDriverInstance();
+    if (!drv || drv.needsReconfigure) {
       return true;
     } else {
       return false;
@@ -498,8 +499,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       } else {
         build_log.info('Build finished with exit code', rc);
       }
-      const diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
-      populateCollection(this._buildDiagnostics, diags);
+      const file_diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
+      populateCollection(this._buildDiagnostics, file_diags);
       return rc === null ? -1 : rc;
     } finally {
       this._statusBar.setIsBusy(false);
@@ -546,18 +547,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     if (!drv.targets.length) {
-      return (await vscode.window.showInputBox({prompt : 'Enter a target name'})) || null;
+      return (await vscode.window.showInputBox({prompt: 'Enter a target name'})) || null;
     } else {
       const choices = drv.targets.map((t): vscode.QuickPickItem => {
         switch (t.type) {
         case 'named': {
           return {
-            label : t.name,
-            description : 'Target to build',
+            label: t.name,
+            description: 'Target to build',
           };
         }
         case 'rich': {
-          return { label: t.name, description: t.targetType, detail: t.filepath }
+          return {label: t.name, description: t.targetType, detail: t.filepath};
         }
         }
       });
@@ -581,7 +582,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.build();
   }
 
-  private _ctestController = new CTestDriver();
+  private readonly _ctestController = new CTestDriver();
   async ctest(): Promise<number> {
     const build_retc = await this.build();
     if (build_retc !== 0) {
@@ -662,9 +663,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     const choices = executableTargets.map(e => ({
-                                            label : e.name,
-                                            description : '',
-                                            detail : e.path,
+                                            label: e.name,
+                                            description: '',
+                                            detail: e.path,
                                           }));
     const chosen = await vscode.window.showQuickPick(choices);
     if (!chosen) {
@@ -727,21 +728,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     const is_msvc
         = drv.compilerID ? drv.compilerID.includes('MSVC') : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
-    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb'
+    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb';
     const debug_config: vscode.DebugConfiguration = {
-      type : is_msvc ? 'cppvsdbg' : 'cppdbg',
-      name : `Debug ${target_path}`,
-      request : 'launch',
-      cwd : '${workspaceRoot}',
-      args : [],
-      MIMode : mi_mode,
+      type: is_msvc ? 'cppvsdbg' : 'cppdbg',
+      name: `Debug ${target_path}`,
+      request: 'launch',
+      cwd: '${workspaceRoot}',
+      args: [],
+      MIMode: mi_mode,
     };
     if (mi_mode == 'gdb') {
       debug_config['setupCommands'] = [
         {
-          description : 'Enable pretty-printing for gdb',
-          text : '-enable-pretty-printing',
-          ignoreFailures : true,
+          description: 'Enable pretty-printing for gdb',
+          text: '-enable-pretty-printing',
+          ignoreFailures: true,
         },
       ];
     }
@@ -765,7 +766,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
     if (!this._launchTerminal)
-      this._launchTerminal = vscode.window.createTerminal("CMake/Launch");
+      this._launchTerminal = vscode.window.createTerminal('CMake/Launch');
     this._launchTerminal.sendText(target_path);
     this._launchTerminal.show();
     return this._launchTerminal;
@@ -787,8 +788,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     const project_name = await vscode.window.showInputBox({
-      prompt : 'Enter a name for the new project',
-      validateInput : (value: string) : string => {
+      prompt: 'Enter a name for the new project',
+      validateInput: (value: string): string => {
         if (!value.length)
           return 'A project name is required';
         return '';
@@ -799,10 +800,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const target_type = (await vscode.window.showQuickPick([
       {
-        label : 'Library',
-        description : 'Create a library',
+        label: 'Library',
+        description: 'Create a library',
       },
-      {label : 'Executable', description : 'Create an executable'}
+      {label: 'Executable', description: 'Create an executable'}
     ]));
 
     if (!target_type)
@@ -892,7 +893,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.sourceDir
+      return d.sourceDir;
     });
   }
 
@@ -903,7 +904,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.mainListFile
+      return d.mainListFile;
     });
   }
 
@@ -914,7 +915,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.binaryDir
+      return d.binaryDir;
     });
   }
 
@@ -925,7 +926,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return '';
       }
-      return d.cachePath
+      return d.cachePath;
     });
   }
 
@@ -936,7 +937,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return [];
       }
-      return d.targets
+      return d.targets;
     });
   }
 
@@ -947,7 +948,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!d) {
         return [];
       }
-      return d.executableTargets
+      return d.executableTargets;
     });
   }
 

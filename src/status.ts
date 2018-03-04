@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import {BasicTestResults} from "./ctest";
+import {BasicTestResults} from './ctest';
 
 interface Hideable {
   show(): void;
@@ -168,7 +168,7 @@ export class StatusBar implements vscode.Disposable {
     const total = v.total;
     const good = passing == total;
     const icon = good ? 'check' : 'x';
-    this._testButton.text = `$(${icon}) ${passing}/${total} ` + (total == 1 ? 'test' : 'tests') + ' passing';
+    this._testButton.text = `$(${icon}) ${passing}/${total} ${total == 1 ? 'test' : 'tests'} passing`;
     this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 

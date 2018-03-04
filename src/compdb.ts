@@ -20,14 +20,14 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
                      path: string;
                      isSystem: boolean
                    }[]);
-  const definitions = {} as {[key: string] : string | null};
+  const definitions = {} as {[key: string]: string | null};
 
-  const include_flags = [ {flag : '-I', isSystem : false}, {flag : '-isystem', isSystem : true} ];
-  const def_flags = [ '-D' ];
+  const include_flags = [{flag: '-I', isSystem: false}, {flag: '-isystem', isSystem: true}];
+  const def_flags = ['-D'];
   if (compiler.endsWith('cl.exe')) {
     // We are parsing an MSVC-style command line.
     // It has options which may appear with a different argument prefix.
-    include_flags.push({flag : '/I', isSystem : false});
+    include_flags.push({flag: '/I', isSystem: false});
     def_flags.push('/D');
   }
 
@@ -40,8 +40,8 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
         const ipath = arg(i) === flagstr ? arg(++i) : arg(i).substr(flagstr.length);
         const abs_ipath = path.isAbsolute(ipath) ? ipath : path.join(raw.directory, ipath);
         inc_dirs.push({
-          path : util.normalizePath(abs_ipath),
-          isSystem : iflag.isSystem,
+          path: util.normalizePath(abs_ipath),
+          isSystem: iflag.isSystem,
         });
         continue next_arg;
       }
@@ -50,7 +50,7 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
   }
 
   const unparsed_args: string[] = [];
-  arg = (n) => non_include_args[n];
+  arg = n => non_include_args[n];
   next_arg2: for (let i = 0; i < non_include_args.length; ++i) {
     for (const dflag of def_flags) {
       if (arg(i).startsWith(dflag)) {
@@ -65,25 +65,25 @@ export function parseRawCompilationInfo(raw: RawCompilationInfo): CompilationInf
 
   return {
     compiler,
-    compile : raw,
-    compileDefinitions : definitions,
-    file : raw.file,
-    includeDirectories : inc_dirs,
-    compileFlags : unparsed_args,
+    compile: raw,
+    compileDefinitions: definitions,
+    file: raw.file,
+    includeDirectories: inc_dirs,
+    compileFlags: unparsed_args,
   };
 }
 
-export function parseCompileDefinition(str: string): [ string, string|null ] {
+export function parseCompileDefinition(str: string): [string, string|null] {
   if (/^\w+$/.test(str)) {
-    return [ str, null ];
+    return [str, null];
   } else {
     const key = str.split('=', 1)[0];
-    return [ key, str.substr(key.length + 1) ];
+    return [key, str.substr(key.length + 1)];
   }
 }
 
 export class CompilationDatabase {
-  private _info_by_filepath: Map<string, CompilationInfo>;
+  private readonly _info_by_filepath: Map<string, CompilationInfo>;
   constructor(infos: CompilationInfo[]) {
     this._info_by_filepath = infos.reduce((acc, cur) => {
       acc.set(cur.file, cur);

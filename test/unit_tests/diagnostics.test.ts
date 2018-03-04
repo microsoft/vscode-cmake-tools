@@ -9,6 +9,7 @@ import {expect} from 'chai';
 import * as diags from '../../src/diagnostics';
 import {OutputConsumer} from '../../src/proc';
 
+// tslint:disable:no-unused-expression
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
@@ -20,22 +21,22 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
 }
 
 function toLowerCaseForWindows(str: string): string {
-  if (process.platform == "win32") {
+  if (process.platform == 'win32') {
     return str.toLowerCase();
   } else {
     return str;
   }
 }
 
-suite('Diagnostics', async() => {
-  let consumer = new diags.CMakeOutputConsumer("dummyPath");
+suite('Diagnostics', async () => {
+  let consumer = new diags.CMakeOutputConsumer('dummyPath');
   let build_consumer = new diags.CompileOutputConsumer();
   setup(() => {
     // FIXME: SETUP IS NOT BEING CALLED
-    consumer = new diags.CMakeOutputConsumer("dummyPath");
+    consumer = new diags.CMakeOutputConsumer('dummyPath');
     build_consumer = new diags.CompileOutputConsumer();
   });
-  test('Waring-free CMake output', async() => {
+  test('Waring-free CMake output', async () => {
     const cmake_output = [
       '-- Configuring done',
       '-- Generating done',
@@ -102,7 +103,7 @@ suite('Diagnostics', async() => {
     expect(consumer.diagnostics.length).to.eq(1);
     const warning = consumer.diagnostics[0];
     expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-    expect(warning.diag.message).to.eq("I'm an inner warning");
+    expect(warning.diag.message).to.eq('I\'m an inner warning');
     expect(warning.diag.range.start.line).to.eq(14);
     expect(warning.diag.source).to.eq('CMake (message)');
   });
@@ -121,7 +122,7 @@ suite('Diagnostics', async() => {
     expect(consumer.diagnostics.length).to.eq(1);
     const warning = consumer.diagnostics[0];
     expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-    expect(warning.diag.message).to.eq("I'm an inner warning");
+    expect(warning.diag.message).to.eq('I\'m an inner warning');
     expect(warning.diag.range.start.line).to.eq(14);
     expect(warning.diag.source).to.eq('CMake (message)');
   });
@@ -165,7 +166,7 @@ suite('Diagnostics', async() => {
   });
 
   test('Parse more GCC diagnostics', () => {
-    const lines = [ `/Users/Tobias/Code/QUIT/Source/qidespot1.cpp:303:49: error: expected ';' after expression` ];
+    const lines = [`/Users/Tobias/Code/QUIT/Source/qidespot1.cpp:303:49: error: expected ';' after expression`];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -177,7 +178,7 @@ suite('Diagnostics', async() => {
   });
 
   test('Parsing fatal error diagnostics', () => {
-    const lines = [ '/some/path/here:4:26: fatal error: some_header.h: No such file or directory' ];
+    const lines = ['/some/path/here:4:26: fatal error: some_header.h: No such file or directory'];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -192,8 +193,7 @@ suite('Diagnostics', async() => {
   });
 
   test('Parsing fatal error diagnostics in french', () => {
-    const lines =
-        [ '/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type' ];
+    const lines = ['/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type'];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -207,13 +207,13 @@ suite('Diagnostics', async() => {
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
   });
   test('Parsing warning diagnostics', () => {
-    const lines = [ "/some/path/here:4:26: warning: unused parameter 'data'" ];
+    const lines = ['/some/path/here:4:26: warning: unused parameter \'data\''];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
 
     expect(diag.location.start.line).to.eq(3);
-    expect(diag.message).to.eq("unused parameter 'data'");
+    expect(diag.message).to.eq('unused parameter \'data\'');
     expect(diag.location.start.character).to.eq(25);
     expect(diag.file).to.eq('/some/path/here');
     expect(diag.severity).to.eq('warning');
@@ -221,7 +221,7 @@ suite('Diagnostics', async() => {
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
   });
   test('Parsing warning diagnostics 2', () => {
-    const lines = [ `/test/main.cpp:21:14: warning: unused parameter ‘v’ [-Wunused-parameter]` ];
+    const lines = [`/test/main.cpp:21:14: warning: unused parameter ‘v’ [-Wunused-parameter]`];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -233,7 +233,7 @@ suite('Diagnostics', async() => {
     expect(diag.severity).to.eq('warning');
   });
   test('Parsing warning diagnostics in french', () => {
-    const lines = [ '/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’' ];
+    const lines = ['/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’'];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
@@ -247,26 +247,26 @@ suite('Diagnostics', async() => {
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
   });
   test('Parsing linker error', () => {
-    const lines = [ "/some/path/here:101: undefined reference to `some_function'" ];
+    const lines = ['/some/path/here:101: undefined reference to `some_function\''];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
     const diag = build_consumer.gnuLDDiagnostics[0];
 
     expect(diag.location.start.line).to.eq(100);
-    expect(diag.message).to.eq("undefined reference to `some_function'");
+    expect(diag.message).to.eq('undefined reference to `some_function\'');
     expect(diag.file).to.eq('/some/path/here');
     expect(diag.severity).to.eq('error');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
   });
   test('Parsing linker error in french', () => {
-    const lines = [ "/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »" ];
+    const lines = ['/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »'];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
     const diag = build_consumer.gnuLDDiagnostics[0];
 
     expect(diag.location.start.line).to.eq(8);
-    expect(diag.message).to.eq("référence indéfinie vers « create_automaton_product56 »");
+    expect(diag.message).to.eq('référence indéfinie vers « create_automaton_product56 »');
     expect(diag.file).to.eq('/home/romain/TL/test/test_fa_tp4.c');
     expect(diag.severity).to.eq('error');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
@@ -305,7 +305,7 @@ suite('Diagnostics', async() => {
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
   });
   test('Parsing GHS Diagnostics fatal error', () => {
-    const lines = [ '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): fatal error #68: some fatal error' ];
+    const lines = ['"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): fatal error #68: some fatal error'];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.ghsDiagnostics).to.have.length(1);
     const diag = build_consumer.ghsDiagnostics[0];

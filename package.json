@@ -652,6 +652,7 @@
     "compile": "./node_modules/.bin/tsc -watch -p ./",
     "compile-once": "./node_modules/.bin/tsc -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",
+    "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "docs": "node ./node_modules/.bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
   },
   "devDependencies": {
@@ -672,6 +673,7 @@
     "chai-as-promised": "^7.1.1",
     "mocha": "~3.4.2",
     "sinon": "^4.1.4",
+    "tslint": "^5.9.1",
     "typedoc": "^0.8.0",
     "typescript": "~2.3.0",
     "vscode": "~1.1.5"

@@ -15,12 +15,12 @@ class EventDispatcher implements vscode.Disposable {
 }
 
 export class IndividualWatcher implements vscode.Disposable {
-  private _watcher = vscode.workspace.createFileSystemWatcher(this._pattern);
-  private _changeSub = this._watcher.onDidChange(e => this._disp.changeEvent.fire(e));
-  private _delSub = this._watcher.onDidDelete(e => this._disp.deleteEvent.fire(e));
-  private _createSub = this._watcher.onDidCreate(e => this._disp.createEvent.fire(e));
+  private readonly _watcher = vscode.workspace.createFileSystemWatcher(this._pattern);
+  private readonly _changeSub = this._watcher.onDidChange(e => this._disp.changeEvent.fire(e));
+  private readonly _delSub = this._watcher.onDidDelete(e => this._disp.deleteEvent.fire(e));
+  private readonly _createSub = this._watcher.onDidCreate(e => this._disp.createEvent.fire(e));
 
-  constructor(private _disp: EventDispatcher, private _pattern: string) {}
+  constructor(private readonly _disp: EventDispatcher, private readonly _pattern: string) {}
 
   dispose() {
     this._changeSub.dispose();
@@ -32,16 +32,16 @@ export class IndividualWatcher implements vscode.Disposable {
 }
 
 export class MultiWatcher implements vscode.Disposable {
-  private _watchers = new Set<IndividualWatcher>();
-  private _dispatcher = new EventDispatcher();
-  private _anyEventEmitter = new vscode.EventEmitter<vscode.Uri>();
+  private readonly _watchers = new Set<IndividualWatcher>();
+  private readonly _dispatcher = new EventDispatcher();
+  private readonly _anyEventEmitter = new vscode.EventEmitter<vscode.Uri>();
 
-  private _unregisterSub
+  private readonly _unregisterSub
       = this._dispatcher.disposeIndividualWatcherEvent.event(indiv => { this._watchers.delete(indiv); });
 
-  private _createSub = this.onCreate(e => this._anyEventEmitter.fire(e));
-  private _delSub = this.onDelete(e => this._anyEventEmitter.fire(e));
-  private _changeSub = this.onChange(e => this._anyEventEmitter.fire(e));
+  private readonly _createSub = this.onCreate(e => this._anyEventEmitter.fire(e));
+  private readonly _delSub = this.onDelete(e => this._anyEventEmitter.fire(e));
+  private readonly _changeSub = this.onChange(e => this._anyEventEmitter.fire(e));
 
   constructor(...patterns: string[]) {
     for (const pattern of patterns) {
