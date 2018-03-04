@@ -613,6 +613,7 @@ export class KitManager implements vscode.Disposable {
    * if the active kit becomes somehow unavailable.
    */
   async selectKit(): Promise<Kit | null> {
+    log.debug('Start selection of kits. Found ' + this._kits.length + " kits.");
     if (this._kits.length == 0) {
       return null;
     }
@@ -636,6 +637,7 @@ export class KitManager implements vscode.Disposable {
       // No selection was made
       return null;
     } else {
+      log.debug('User selected kit ', chosen);
       this._setActiveKit(chosen.kit);
       return chosen.kit;
     }
