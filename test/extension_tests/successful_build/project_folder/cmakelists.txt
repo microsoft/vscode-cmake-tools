@@ -3,4 +3,12 @@ project(TestBuildProcess VERSION 0.1.0)
 
 add_executable(TestBuildProcess main.cpp)
 
+add_custom_command(
+    TARGET TestBuildProcess
+    POST_BUILD
+    COMMAND $<TARGET_FILE:TestBuildProcess> > output.txt
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Running in ${CMAKE_CURRENT_BINARY_DIR}"
+)
+
 add_definitions(-D_CMAKE_VERSION="${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
