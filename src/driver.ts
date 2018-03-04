@@ -571,7 +571,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (config.autoRestartBuild) {
         log.debug('Stopping current CMake task.');
         vscode.window.showInformationMessage('Stopping current CMake task and starting new build.');
-        this.stopCurrentProcess();
+        await this.stopCurrentProcess();
       } else {
         log.debug('No configuring: We\'re busy.');
         vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to configure.');
