@@ -231,13 +231,15 @@ export class VariantManager implements vscode.Disposable {
   }
 
   mergeVariantConfigurations(options: VariantConfigurationOptions[]): VariantConfigurationOptions {
-    const init: VariantConfigurationOptions = {short: '', long: '', settings: {}};
+    const init = {short: '', long: '', settings: {}} as any as VariantConfigurationOptions;
     return options.reduce((acc, el) => ({
                             buildType: el.buildType || acc.buildType,
                             generator: el.generator || acc.generator,
                             linkage: el.linkage || acc.linkage,
                             toolset: el.toolset || acc.toolset,
-                            settings: {...acc.settings, ...el.settings},
+                            // TS 2.4 doesn't like using object spread here, for some reason.
+                            // tslint:disable-next-line:prefer-object-spread
+                            settings: Object.assign({}, acc.settings, el.settings),
                             short: [acc.short, el.short].join(' ').trim(),
                             long: [acc.long, el.long].join(', '),
                           }),

@@ -413,14 +413,13 @@ export class CMakeServerClient {
       if (!mat) {
         break;
       }
-      const [_all, content, tail] = mat;
-      if (!_all || !content || !tail) {
+      if (mat.length !== 3) {
         debugger;
         throw new global.Error('Protocol error talking to CMake! Got this input: ' + input);
       }
-      this._accInput = tail;
-      console.log(`Received message from cmake-server: ${content}`);
-      const message: SomeMessage = JSON.parse(content);
+      this._accInput = mat[2];
+      console.log(`Received message from cmake-server: ${mat[1]}`);
+      const message: SomeMessage = JSON.parse(mat[1]);
       this._onMessage(message);
     }
   }
