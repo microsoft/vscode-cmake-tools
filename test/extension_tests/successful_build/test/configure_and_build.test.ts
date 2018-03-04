@@ -82,9 +82,11 @@ class DefaultEnvironment {
   let testEnv: DefaultEnvironment;
 
   suiteSetup(async function(this: Mocha.IHookCallbackContext) {
-    this.timeout(10000);
+    this.timeout(30000);
     testEnv = new DefaultEnvironment();
+
     cmt = await getExtension();
+    expect(cmt).to.be.not.undefined;
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
