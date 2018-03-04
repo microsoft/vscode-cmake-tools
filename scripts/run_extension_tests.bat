@@ -3,7 +3,7 @@ setlocal
 
 pushd
 set HasVs=true
-set CMT_TESTING="1"
+set CMT_TESTING=1
 
 REM Run all tests with a workspace folder where no CMakeLists.txt exists
 REM This prevents automatic loading of the extension.
