@@ -16,8 +16,8 @@ std::string getCompilerName() {
 }
 
 int main(int, char**) {
-    std::cout << "{" << std::endl;
-    std::cout << "  \"compiler:\" " << getCompilerName() << std::endl;
-    std::cout << "  \"cmake-version:\" " << _CMAKE_VERSION << std::endl;
-    std::cout << "}" << std::endl;
+    std::cout << "{\n";
+    std::cout << "  \"compiler\": \"" << getCompilerName() << "\",\n";
+    std::cout << "  \"cmake-version\": \"" << _CMAKE_VERSION << "\"\n";
+    std::cout << "}\n";
 }
