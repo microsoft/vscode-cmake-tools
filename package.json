@@ -315,6 +315,11 @@
           "default": 0,
           "description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs"
         },
+        "cmake.autoRestartBuild": {
+          "type": "boolean",
+          "default": false,
+          "description": "If 'true', requesting a build while a build is already running will stop and restart the build"
+        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,
