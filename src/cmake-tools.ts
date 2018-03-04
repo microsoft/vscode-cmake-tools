@@ -169,30 +169,31 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async _startNewCMakeDriver(): Promise<CMakeDriver> {
     const kit = this._kitManager.activeKit;
-    const drv = await (async () => {
-      log.debug('Starting CMake driver');
-      const cmake = await paths.cmakePath;
-      const version_ex = await proc.execute(cmake, ['--version']).result;
-      if (version_ex.retc !== 0 || !version_ex.stdout) {
-        throw new Error(`Bad CMake executable "${cmake}". Is it installed and a valid executable?`);
-      }
+    log.debug('Starting CMake driver');
+    const cmake = await paths.cmakePath;
+    const version_ex = await proc.execute(cmake, ['--version']).result;
+    if (version_ex.retc !== 0 || !version_ex.stdout) {
+      throw new Error(`Bad CMake executable "${cmake}". Is it installed and a valid executable?`);
+    }
 
-      if (config.useCMakeServer) {
-        console.assert(version_ex.stdout);
-        const version_re = /cmake version (.*?)\r?\n/;
-        const version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
-        // We purposefully exclude versions <3.7.1, which have some major CMake
-        // server bugs
-        if (util.versionGreater(version, '3.7.1')) {
-          return CMakeServerClientDriver.create(this._stateManager, kit);
-        } else {
-          log.info(
-              'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
-        }
+    let drv: CMakeDriver;
+    if (config.useCMakeServer) {
+      console.assert(version_ex.stdout);
+      const version_re = /cmake version (.*?)\r?\n/;
+      const version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
+      // We purposefully exclude versions <3.7.1, which have some major CMake
+      // server bugs
+      if (util.versionGreater(version, '3.7.1')) {
+        drv = await CMakeServerClientDriver.create(this._stateManager, kit);
+      } else {
+        log.info(
+            'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
+        drv = await LegacyCMakeDriver.create(this._stateManager, kit);
       }
+    } else {
       // We didn't start the server backend, so we'll use the legacy one
-      return LegacyCMakeDriver.create(this._stateManager, kit);
-    })();
+      drv = await LegacyCMakeDriver.create(this._stateManager, kit);
+    }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = drv.projectName;
     if (project) {
@@ -317,23 +318,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
     if (!this._kitManager.hasActiveKit) {
+      log.debug('Not starting CMake driver: no kits defined');
       return null;
     }
 
     if ((await this._cmakeDriver) === null) {
-      try {
-        this._cmakeDriver = this._startNewCMakeDriver();
-        const cmakeInstance = await this._cmakeDriver;
-        // Reload any test results. This will also update visibility on the status
-        // bar
-        await this._ctestController.reloadTests(cmakeInstance!);
-        this._statusBar.targetName = this.defaultBuildTarget || await this.allTargetName;
-      } catch (ex) {
-        log.debug('Exception on start of cmake driver.', ex.stack);
-        this._cmakeDriver = Promise.resolve(null);
-      }
+      log.debug('Starting new CMake driver');
+      this._cmakeDriver = this._setupNewCMakeDriver();
     }
     return this._cmakeDriver;
+  }
+
+  private async _setupNewCMakeDriver(): Promise<CMakeDriver> {
+    const drv = await this._startNewCMakeDriver();
+    // Reload any test results. This will also update visibility on the status bar
+    await this._ctestController.reloadTests(drv);
+    this._statusBar.targetName = this.defaultBuildTarget || 'all';
+    return drv;
   }
 
   /**
