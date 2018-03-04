@@ -114,20 +114,34 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
 }
 
 function cleanupResultsXML(messy: MessyResults): CTestResults {
+  const testing_head = messy.Site.Testing[0];
+  if (testing_head.TestList.length === 1 && (testing_head.TestList[0] as any as string) === "") {
+    // XML parsing is obnoxious. This condition means that there are no tests,
+    // but CTest is still enabled.
+    return {
+      Site: {
+        $: messy.Site.$,
+        Testing: {
+          TestList: [],
+          Test: [],
+        }
+      }
+    };
+  }
   return {
     Site: {
       $: messy.Site.$,
       Testing: {
-        TestList: messy.Site.Testing[0].TestList.map(l => l.Test[0]),
-        Test: messy.Site.Testing[0].Test.map((test): Test => ({
-                                               FullName: test.FullName[0],
-                                               FullCommandLine: test.FullCommandLine[0],
-                                               Name: test.Name[0],
-                                               Path: test.Path[0],
-                                               Status: test.$.Status,
-                                               Measurements: new Map<string, TestMeasurement>(),
-                                               Output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
-                                             }))
+        TestList: testing_head.TestList.map(l => l.Test[0]),
+        Test: testing_head.Test.map((test): Test => ({
+                                      FullName: test.FullName[0],
+                                      FullCommandLine: test.FullCommandLine[0],
+                                      Name: test.Name[0],
+                                      Path: test.Path[0],
+                                      Status: test.$.Status,
+                                      Measurements: new Map<string, TestMeasurement>(),
+                                      Output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
+                                    }))
       }
     }
   };
