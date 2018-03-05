@@ -57,21 +57,58 @@ class TestProgramResult {
   }
 }
 
+class SelectKitPickerHandle {
+
+  constructor(readonly defaultKitLabelRegEx: string) {}
+
+  public get Identifier(): string { return "Select a Kit"; }
+
+  public handleQuickPick(items: any): any {
+    let defaultKit: string[] = items.filter((item: any) => {
+      const name: string = item.label;
+      if (name) {
+        if (new RegExp(this.defaultKitLabelRegEx).test(name)) {
+          return item;
+        }
+      } else {
+        return;
+      }
+    });
+    if (defaultKit && defaultKit.length != 0) {
+      return Promise.resolve(defaultKit[0]);
+    } else {
+      expect.fail("Unable to find compatible kit");
+    }
+  }
+}
+
 class DefaultEnvironment {
 
   sandbox: sinon.SinonSandbox;
   buildDir: BuildDirectory;
+  kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
 
-  public constructor(build_location: string = 'build', executableResult: string = 'output.txt') {
+
+  public constructor(build_location: string = 'build',
+                     executableResult: string = 'output.txt',
+                     defaultkitRegExp = "^VisualStudio") {
     this.buildDir = new BuildDirectory(build_location);
     this.result = new TestProgramResult(this.buildDir.Location, executableResult);
+    this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
 
     // clean build folder
     this.sandbox = sinon.sandbox.create();
-    this.sandbox.stub(vscode.window, 'showQuickPick').callsFake(function(items: string[]): Thenable<string|undefined> {
-      return Promise.resolve(items[1]);  // How do we make it plattform independent?
+
+    var that = this;
+    this.sandbox.stub(vscode.window, 'showQuickPick').callsFake(function(items, options): Thenable<string|undefined> {
+      if (options.placeHolder == that.kitSelection.Identifier) {
+        return Promise.resolve(that.kitSelection.handleQuickPick(items))
+      }
+      return Promise.reject('Unknown quick pick "' + options.placeHolder + '"');
     });
+
+    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(function() { return {doOpen : false}; })
   }
 
   public teardown(): void { this.sandbox.restore(); }
@@ -79,11 +116,10 @@ class DefaultEnvironment {
 
 (process.env.HasVs == 'true' ? suite : suite.skip)('Build', async() => {
   let cmt: CMakeTools;
-  let testEnv: DefaultEnvironment;
+  let testEnv: DefaultEnvironment = new DefaultEnvironment();
 
   suiteSetup(async function(this: Mocha.IHookCallbackContext) {
     this.timeout(30000);
-    testEnv = new DefaultEnvironment();
 
     cmt = await getExtension();
     expect(cmt).to.be.not.undefined;
