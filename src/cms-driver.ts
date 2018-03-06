@@ -40,20 +40,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
   }
 
-  /**
-   * Stops the currently running process at user request
-   */
-  async stopCurrentProcess(): Promise<boolean> {
-    const retStopBuild = await super.stopCurrentProcess();
-
-    let retStopClient = false;
-    if (this._cmsClient) {
-      await (await this._cmsClient).shutdown();
-      retStopClient = true;
-    }
-    return retStopClient || retStopBuild;
-  }
-
   async cleanConfigure(consumer?: proc.OutputConsumer) {
     const old_cl = await this._cmsClient;
     this._cmsClient = (async () => {

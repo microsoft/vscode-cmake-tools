@@ -29,7 +29,7 @@ class BuildDirectory {
 
   public async Clear() {
     if (await fs.exists(this.location)) {
-      fs.rmdir(this.location);
+      return fs.rmdir(this.location);
     }
   }
 
@@ -116,11 +116,11 @@ class DefaultEnvironment {
 
 (process.env.HasVs == 'true' ? suite : suite.skip)('Build', async() => {
   let cmt: CMakeTools;
-  let testEnv: DefaultEnvironment = new DefaultEnvironment();
+  let testEnv: DefaultEnvironment
 
-  suiteSetup(async function(this: Mocha.IHookCallbackContext) {
-    this.timeout(30000);
-
+  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+    this.timeout(100000);
+    testEnv = new DefaultEnvironment();
     cmt = await getExtension();
     expect(cmt).to.be.not.undefined;
 
@@ -130,16 +130,15 @@ class DefaultEnvironment {
     clearExistingKitConfigurationFile();
     await cmt.scanForKits();
     await cmt.selectKit();
+
+    await testEnv.buildDir.Clear();
   });
-  suiteTeardown(async function(this: Mocha.IHookCallbackContext) {
-    this.timeout(10000);
+
+  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+    this.timeout(30000);
     testEnv.teardown();
-    await cmt.stop();
-  })
-
-  setup(async() => { testEnv.buildDir.Clear(); });
-
-  teardown(async() => { await cmt.stop(); });
+    await cmt.asyncDispose();
+  });
 
   test('Configure ', async() => {
     expect(await cmt.configure()).to.be.eq(0);
@@ -152,6 +151,16 @@ class DefaultEnvironment {
 
     const result = await testEnv.result.GetResultAsJson();
     expect(result['compiler']).to.eq('Microsoft Visual Studio');
-    expect(result['cmake-version']).to.eq('3.9');
+    expect(result['cmake-version']).to.eq('3.10');
+  }).timeout(60000);
+
+
+  test('Configure and Build', async() => {
+    expect(await cmt.configure()).to.be.eq(0);
+    expect(await cmt.build()).to.be.eq(0);
+
+    const result = await testEnv.result.GetResultAsJson();
+    expect(result['compiler']).to.eq('Microsoft Visual Studio');
+    expect(result['cmake-version']).to.eq('3.10');
   }).timeout(60000);
 });
