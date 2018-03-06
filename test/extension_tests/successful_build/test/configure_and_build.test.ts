@@ -14,9 +14,9 @@ import {normalizePath} from '../../../../src/util';
 
 class BuildDirectory {
 
-  private location: string;
+  private readonly location: string;
 
-  private locationOfThisClassFile: string = __dirname;
+  private readonly locationOfThisClassFile: string = __dirname;
 
   private getProjectRootDirectory(): string {
     return path.normalize(
@@ -35,12 +35,12 @@ class BuildDirectory {
 
   public get Location(): string { return this.location; }
 
-  public get IsCMakeCachePresent(): Promise<boolean> { return fs.exists(path.join(this.Location, "CMakeCache.txt")); }
+  public get IsCMakeCachePresent(): Promise<boolean> { return fs.exists(path.join(this.Location, 'CMakeCache.txt')); }
 }
 
 class TestProgramResult {
 
-  private result_file_location: string;
+  private readonly result_file_location: string;
 
   public constructor(location: string, filename: string = 'output.txt') {
     this.result_file_location = normalizePath(path.join(location, filename));
@@ -57,14 +57,20 @@ class TestProgramResult {
   }
 }
 
-class SelectKitPickerHandle {
+export interface KitPickerHandle {
+  Identifier: string;
+
+  handleQuickPick(items: any): any;
+}
+
+class SelectKitPickerHandle implements KitPickerHandle {
 
   constructor(readonly defaultKitLabelRegEx: string) {}
 
-  public get Identifier(): string { return "Select a Kit"; }
+  public get Identifier(): string { return 'Select a Kit'; }
 
   public handleQuickPick(items: any): any {
-    let defaultKit: string[] = items.filter((item: any) => {
+    const defaultKit: string[] = items.filter((item: any) => {
       const name: string = item.label;
       if (name) {
         if (new RegExp(this.defaultKitLabelRegEx).test(name)) {
@@ -77,44 +83,37 @@ class SelectKitPickerHandle {
     if (defaultKit && defaultKit.length != 0) {
       return Promise.resolve(defaultKit[0]);
     } else {
-      expect.fail("Unable to find compatible kit");
+      expect.fail('Unable to find compatible kit');
     }
   }
 }
 
 class TestMemento implements vscode.Memento {
 
-  public get<T>(key: string): T | undefined;
+  public get<T>(key: string): T|undefined;
   public get<T>(key: string, defaultValue: T): T;
   public get(key: any, defaultValue?: any) {
-    if( this.ContainsKey(key)) {
+    if (this.ContainsKey(key)) {
       return this.storage[key];
     } else {
       return defaultValue;
     }
   }
-  public update(key: string, value: any): Thenable<void> {
-    return this.storage[key] = value;
-  }
-  private storage : { [key: string] : any} = {};
+  public update(key: string, value: any): Thenable<void> { return this.storage[key] = value; }
+  private readonly storage: {[key: string]: any} = {};
 
-  public ContainsKey(key: string): boolean {
-    return this.storage.hasOwnProperty(key);
-  }
-
+  public ContainsKey(key: string): boolean { return this.storage.hasOwnProperty(key); }
 }
 
 class FakeContextDefinition implements vscode.ExtensionContext {
 
-  subscriptions: { dispose(): any; }[];
+  subscriptions: {dispose(): any;}[];
   workspaceState: vscode.Memento;
   globalState: vscode.Memento;
   extensionPath: string;
 
-  asAbsolutePath(relativePath: string): string {
-    return relativePath;
-  }
-  storagePath: string | undefined;
+  asAbsolutePath(relativePath: string): string { return relativePath; }
+  storagePath: string|undefined;
 
   constructor() {
     this.globalState = new TestMemento();
@@ -132,7 +131,7 @@ class DefaultEnvironment {
 
   public constructor(build_location: string = 'build',
                      executableResult: string = 'output.txt',
-                     defaultkitRegExp = "^VisualStudio") {
+                     defaultkitRegExp = '^VisualStudio') {
     this.buildDir = new BuildDirectory(build_location);
     this.result = new TestProgramResult(this.buildDir.Location, executableResult);
     this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
@@ -140,34 +139,39 @@ class DefaultEnvironment {
     // clean build folder
     this.sandbox = sinon.sandbox.create();
 
-    var that = this;
-    this.sandbox.stub(vscode.window, 'showQuickPick').callsFake(function(items, options): Thenable<string|undefined> {
-      if (options.placeHolder == that.kitSelection.Identifier) {
-        return Promise.resolve(that.kitSelection.handleQuickPick(items))
-      }
-      return Promise.reject('Unknown quick pick "' + options.placeHolder + '"');
-    });
+    this.SetupShowQuickPickerStub([this.kitSelection]);
+    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+  }
 
-    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(function() { return {doOpen : false}; })
+  private SetupShowQuickPickerStub(selections: KitPickerHandle[]) {
+    this.sandbox.stub(vscode.window, 'showQuickPick').callsFake((items, options): Thenable<string|undefined> => {
+      if (options.placeHolder == selections[0].Identifier) {
+        return Promise.resolve(selections[0].handleQuickPick(items));
+      }
+      return Promise.reject(`Unknown quick pick "${options.placeHolder}"`);
+    });
   }
 
   public teardown(): void { this.sandbox.restore(); }
 }
 
-(process.env.HasVs == 'true' ? suite : suite.skip)('Build', async() => {
+suite('Build', async() => {
   let cmt: CMakeTools;
-  let testEnv: DefaultEnvironment
+  let testEnv: DefaultEnvironment;
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
+    if (process.env.HasVs != 'true') {
+      this.skip();
+    }
     this.timeout(100000);
+
     testEnv = new DefaultEnvironment();
     cmt = await CMakeTools.create(testEnv.vsContext);
-    expect(cmt).to.be.not.undefined;
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
     // No new kit selection is needed
-    clearExistingKitConfigurationFile();
+    await clearExistingKitConfigurationFile();
     await cmt.scanForKits();
     await cmt.selectKit();
 
@@ -176,14 +180,14 @@ class DefaultEnvironment {
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(30000);
-    testEnv.teardown();
     await cmt.asyncDispose();
+    testEnv.teardown();
   });
 
   test('Configure ', async() => {
     expect(await cmt.configure()).to.be.eq(0);
 
-    expect(await testEnv.buildDir.IsCMakeCachePresent).to.be.true;
+    expect(await testEnv.buildDir.IsCMakeCachePresent).to.eql(true,'no expected cache presetruent');
   }).timeout(60000);
 
   test('Build', async() => {
@@ -191,7 +195,6 @@ class DefaultEnvironment {
 
     const result = await testEnv.result.GetResultAsJson();
     expect(result['compiler']).to.eq('Microsoft Visual Studio');
-    expect(result['cmake-version']).to.eq('3.10');
   }).timeout(60000);
 
 
@@ -201,6 +204,5 @@ class DefaultEnvironment {
 
     const result = await testEnv.result.GetResultAsJson();
     expect(result['compiler']).to.eq('Microsoft Visual Studio');
-    expect(result['cmake-version']).to.eq('3.10');
   }).timeout(60000);
 });
