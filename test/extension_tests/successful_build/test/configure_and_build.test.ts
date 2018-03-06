@@ -7,7 +7,7 @@ import sinon = require('sinon');
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import {clearExistingKitConfigurationFile, getExtension} from '../../../test_helpers';
+import {clearExistingKitConfigurationFile} from '../../../test_helpers';
 import {CMakeTools} from '../../../../src/cmake-tools';
 import {fs} from '../../../../src/pr';
 import {normalizePath} from '../../../../src/util';
@@ -82,13 +82,53 @@ class SelectKitPickerHandle {
   }
 }
 
+class TestMemento implements vscode.Memento {
+
+  public get<T>(key: string): T | undefined;
+  public get<T>(key: string, defaultValue: T): T;
+  public get(key: any, defaultValue?: any) {
+    if( this.ContainsKey(key)) {
+      return this.storage[key];
+    } else {
+      return defaultValue;
+    }
+  }
+  public update(key: string, value: any): Thenable<void> {
+    return this.storage[key] = value;
+  }
+  private storage : { [key: string] : any} = {};
+
+  public ContainsKey(key: string): boolean {
+    return this.storage.hasOwnProperty(key);
+  }
+
+}
+
+class FakeContextDefinition implements vscode.ExtensionContext {
+
+  subscriptions: { dispose(): any; }[];
+  workspaceState: vscode.Memento;
+  globalState: vscode.Memento;
+  extensionPath: string;
+
+  asAbsolutePath(relativePath: string): string {
+    return relativePath;
+  }
+  storagePath: string | undefined;
+
+  constructor() {
+    this.globalState = new TestMemento();
+    this.workspaceState = new TestMemento();
+  }
+}
+
 class DefaultEnvironment {
 
   sandbox: sinon.SinonSandbox;
   buildDir: BuildDirectory;
   kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
-
+  public vsContext: FakeContextDefinition = new FakeContextDefinition();
 
   public constructor(build_location: string = 'build',
                      executableResult: string = 'output.txt',
@@ -121,7 +161,7 @@ class DefaultEnvironment {
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
     testEnv = new DefaultEnvironment();
-    cmt = await getExtension();
+    cmt = await CMakeTools.create(testEnv.vsContext);
     expect(cmt).to.be.not.undefined;
 
     // This test will use all on the same kit.
