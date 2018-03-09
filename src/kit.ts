@@ -386,10 +386,12 @@ const VsArchitectures: {[key: string]: string} = {
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: {[key: string]: string} = {
-  14: 'Visual Studio 14 2015',
-  15: 'Visual Studio 15 2017',
+  11: "Visual Studio 11 2012",
   VS120COMNTOOLS: 'Visual Studio 12 2013',
+  12: "Visual Studio 12 2013",
   VS140COMNTOOLS: 'Visual Studio 14 2015',
+  14: 'Visual Studio 14 2015',
+  15: 'Visual Studio 15 2017'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
