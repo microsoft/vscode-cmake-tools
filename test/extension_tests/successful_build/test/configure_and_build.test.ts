@@ -63,7 +63,7 @@ class TestProgramResult {
   public get IsPresent(): boolean { return fs.existsSync(this.result_file_location); }
 
   public async GetResultAsJson(): Promise<any> {
-    expect(await this.IsPresent).to.eq(true, 'Test programm result file was not found');
+    expect(this.IsPresent).to.eq(true, 'Test programm result file was not found');
     const content = fs.readFileSync(this.result_file_location);
     expect(content.toLocaleString()).to.not.eq('');
 
@@ -181,8 +181,8 @@ class CMakeToolsSettingFile {
 
   readonly originalValues: vscode.WorkspaceConfiguration;
   readonly filepath : string;
-  private fakeValues : CMakeToolsWorkspaceConfiguration;
-  private originalFunction : any;
+  readonly fakeValues : CMakeToolsWorkspaceConfiguration;
+  readonly originalFunction : any;
 
   constructor(sandbox : sinon.SinonSandbox) {
     this.originalValues = vscode.workspace.getConfiguration('cmake');
@@ -274,7 +274,7 @@ suite('Build', async() => {
     await cmt.scanForKits();
     await cmt.selectKit();
 
-    await testEnv.projectFolder.BuildDirectory.Clear();
+    testEnv.projectFolder.BuildDirectory.Clear();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -286,7 +286,7 @@ suite('Build', async() => {
   test('Configure ', async() => {
     expect(await cmt.configure()).to.be.eq(0);
 
-    expect(await testEnv.projectFolder.BuildDirectory.IsCMakeCachePresent).to.eql(true,'no expected cache presetruent');
+    expect(testEnv.projectFolder.BuildDirectory.IsCMakeCachePresent).to.eql(true,'no expected cache presetruent');
   }).timeout(60000);
 
   test('Build', async() => {
