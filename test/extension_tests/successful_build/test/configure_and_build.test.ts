@@ -6,36 +6,50 @@ import {expect} from 'chai';
 import sinon = require('sinon');
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as rimraf from 'rimraf';
 
 import {clearExistingKitConfigurationFile} from '../../../test_helpers';
 import {CMakeTools} from '../../../../src/cmake-tools';
-import {fs} from '../../../../src/pr';
 import {normalizePath} from '../../../../src/util';
 
-class BuildDirectory {
+import config from '../../../../src/config';
+import { WorkspaceConfiguration } from 'vscode';
 
-  private readonly location: string;
-
+class ProjectRootHelper {
   private readonly locationOfThisClassFile: string = __dirname;
+  private readonly buildFolder : BuildDirectoryHelper;
+  constructor(buildDir : string = 'build') {
+    this.buildFolder = new BuildDirectoryHelper(path.join(this.getProjectRootDirectory(), buildDir));
+  }
 
   private getProjectRootDirectory(): string {
     return path.normalize(
         path.join(this.locationOfThisClassFile, '../../../../../test/extension_tests/successful_build/project_folder'));
   }
 
-  public constructor(relative_location_to_root: string = 'build') {
-    this.location = path.join(this.getProjectRootDirectory(), relative_location_to_root);
+  public get BuildDirectory() : BuildDirectoryHelper  { return this.buildFolder; }
+
+  public get Location(): string { return this.getProjectRootDirectory(); }
+}
+
+class BuildDirectoryHelper {
+
+  private readonly location: string;
+
+  public constructor(location : string) {
+    this.location = location;
   }
 
-  public async Clear() {
-    if (await fs.exists(this.location)) {
-      return fs.rmdir(this.location);
+  public Clear() {
+    if (fs.existsSync(this.location)) {
+      return rimraf.sync(this.location);
     }
   }
 
   public get Location(): string { return this.location; }
 
-  public get IsCMakeCachePresent(): Promise<boolean> { return fs.exists(path.join(this.Location, 'CMakeCache.txt')); }
+  public get IsCMakeCachePresent(): boolean { return fs.existsSync(path.join(this.Location, 'CMakeCache.txt')); }
 }
 
 class TestProgramResult {
@@ -46,11 +60,11 @@ class TestProgramResult {
     this.result_file_location = normalizePath(path.join(location, filename));
   }
 
-  public get IsPresent(): Promise<boolean> { return fs.exists(this.result_file_location); }
+  public get IsPresent(): boolean { return fs.existsSync(this.result_file_location); }
 
   public async GetResultAsJson(): Promise<any> {
     expect(await this.IsPresent).to.eq(true, 'Test programm result file was not found');
-    const content = await fs.readFile(this.result_file_location);
+    const content = fs.readFileSync(this.result_file_location);
     expect(content.toLocaleString()).to.not.eq('');
 
     return JSON.parse(content.toString());
@@ -121,27 +135,109 @@ class FakeContextDefinition implements vscode.ExtensionContext {
   }
 }
 
+class CMakeToolsWorkspaceConfiguration implements vscode.WorkspaceConfiguration {
+
+  readonly [key: string]: any;
+  get<T>(section: string): T | undefined;
+  get<T>(section: string, defaultValue: T): T;
+  get(section: any, defaultValue?: any) : any {
+    if( this.values.hasOwnProperty(section)) {
+      return this.values[section];
+    } else {
+      if(this.original.has(section)) {
+        return this.original[section];
+      } else {
+        return defaultValue;
+      }
+    }
+  }
+  has(section: string): boolean {
+    const fakeHasSection :boolean = this.values.has(section);
+    const origHasSection :boolean = this.original.has(section);
+    return fakeHasSection || origHasSection;
+  }
+  inspect<T>(): { key: string; defaultValue?: T | undefined; globalValue?: T | undefined; workspaceValue?: T | undefined; workspaceFolderValue?: T | undefined; } | undefined {
+    throw new Error("Method not implemented.");
+  }
+  update(section: string, value: any): Thenable<void> {
+    this.values[section] = value;
+    return Promise.resolve();
+  }
+
+
+  private values : { [section: string] : any; } = {};
+  protected original: vscode.WorkspaceConfiguration;
+
+  public clear() {
+    this.values = {};
+  }
+
+  constructor( original: vscode.WorkspaceConfiguration) {
+    this.original = original;
+  }
+}
+
+class CMakeToolsSettingFile {
+
+  readonly originalValues: vscode.WorkspaceConfiguration;
+  readonly filepath : string;
+  private fakeValues : CMakeToolsWorkspaceConfiguration;
+  private originalFunction : any;
+
+  constructor(sandbox : sinon.SinonSandbox) {
+    this.originalValues = vscode.workspace.getConfiguration('cmake');
+    this.originalFunction = vscode.workspace.getConfiguration;
+    this.fakeValues = new CMakeToolsWorkspaceConfiguration(this.originalValues);
+    sandbox.stub(vscode.workspace, 'getConfiguration').callsFake(((section?: string, resource?: vscode.Uri) => {
+      return this.getConfiguration(section,resource);
+    }));
+  }
+
+  public changeSetting( key: string, element : any) : Thenable<void> {
+    return this.fakeValues.update(key, element);
+  }
+
+  public getConfiguration(section?: string, resource?: vscode.Uri) : WorkspaceConfiguration {
+    if( section == 'cmake') {
+      return this.fakeValues;
+    } else {
+      return this.originalFunction(section, resource);
+    }
+  }
+
+  public restore() {
+    this.fakeValues.clear();
+  }
+}
+
 class DefaultEnvironment {
 
   sandbox: sinon.SinonSandbox;
-  buildDir: BuildDirectory;
+  projectFolder: ProjectRootHelper;
   kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
+  setting : CMakeToolsSettingFile;
+
 
   public constructor(build_location: string = 'build',
                      executableResult: string = 'output.txt',
                      defaultkitRegExp = '^VisualStudio') {
-    this.buildDir = new BuildDirectory(build_location);
-    this.result = new TestProgramResult(this.buildDir.Location, executableResult);
+    this.projectFolder = new ProjectRootHelper(build_location);
+    this.result = new TestProgramResult(this.projectFolder.BuildDirectory.Location, executableResult);
     this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
+
 
     // clean build folder
     this.sandbox = sinon.sandbox.create();
 
     this.SetupShowQuickPickerStub([this.kitSelection]);
+    this.setting = new CMakeToolsSettingFile(this.sandbox);
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+
   }
+
+
 
   private SetupShowQuickPickerStub(selections: KitPickerHandle[]) {
     this.sandbox.stub(vscode.window, 'showQuickPick').callsFake((items, options): Thenable<string|undefined> => {
@@ -152,7 +248,10 @@ class DefaultEnvironment {
     });
   }
 
-  public teardown(): void { this.sandbox.restore(); }
+  public teardown(): void {
+    this.setting.restore();
+    this.sandbox.restore();
+  }
 }
 
 suite('Build', async() => {
@@ -175,7 +274,7 @@ suite('Build', async() => {
     await cmt.scanForKits();
     await cmt.selectKit();
 
-    await testEnv.buildDir.Clear();
+    await testEnv.projectFolder.BuildDirectory.Clear();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -187,7 +286,7 @@ suite('Build', async() => {
   test('Configure ', async() => {
     expect(await cmt.configure()).to.be.eq(0);
 
-    expect(await testEnv.buildDir.IsCMakeCachePresent).to.eql(true,'no expected cache presetruent');
+    expect(await testEnv.projectFolder.BuildDirectory.IsCMakeCachePresent).to.eql(true,'no expected cache presetruent');
   }).timeout(60000);
 
   test('Build', async() => {
@@ -205,4 +304,24 @@ suite('Build', async() => {
     const result = await testEnv.result.GetResultAsJson();
     expect(result['compiler']).to.eq('Microsoft Visual Studio');
   }).timeout(60000);
+
+  test('Configure and Build', async() => {
+    expect(await cmt.configure()).to.be.eq(0);
+    expect(await cmt.build()).to.be.eq(0);
+
+    const result = await testEnv.result.GetResultAsJson();
+    expect(result['compiler']).to.eq('Microsoft Visual Studio');
+  }).timeout(60000);
+
+  test('Test setting watcher', async() => {
+
+    expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
+    await testEnv.setting.changeSetting('buildDirectory', 'Hallo');
+    expect(config.buildDirectory).to.be.eq('Hallo');
+    testEnv.setting.restore();
+    expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
+
+  });
 });
+
+
