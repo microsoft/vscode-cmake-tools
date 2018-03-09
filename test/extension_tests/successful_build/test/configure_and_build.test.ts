@@ -19,7 +19,7 @@ suite('Build', async() => {
     }
     this.timeout(100000);
 
-    testEnv = new DefaultEnvironment();
+    testEnv = new DefaultEnvironment('test/extension_tests/successful_build/project_folder');
     cmt = await CMakeTools.create(testEnv.vsContext);
 
     // This test will use all on the same kit.
@@ -75,6 +75,5 @@ suite('Build', async() => {
     expect(config.buildDirectory).to.be.eq('Hallo');
     testEnv.setting.restore();
     expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-
   });
 });

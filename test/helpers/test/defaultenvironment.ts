@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 
-import {ProjectRootHelper} from '../cmake/projectroothekper';
+import {ProjectRootHelper} from '../cmake/projectroothelper';
 import {TestProgramResult} from '../testprogram/testprogramresult';
 import {FakeContextDefinition} from '../vscodefake/extensioncontext';
 import {QuickPickerHandleStrategy, SelectKitPickerHandle} from '../vscodefake/quickpicker';
@@ -16,11 +16,11 @@ export class DefaultEnvironment {
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
   setting: CMakeToolsSettingFile;
 
-
-  public constructor(build_location: string = 'build',
+  public constructor(projectRoot: string,
+                     buildLocation: string = 'build',
                      executableResult: string = 'output.txt',
                      defaultkitRegExp = '^VisualStudio') {
-    this.projectFolder = new ProjectRootHelper(build_location);
+    this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
     this.result = new TestProgramResult(this.projectFolder.BuildDirectory.Location, executableResult);
     this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
 
