@@ -4,7 +4,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 
 import {clearExistingKitConfigurationFile} from '../../../test_helpers';
-import { DefaultEnvironment } from '../../../helpers/test/defaultenvironment';
+import {DefaultEnvironment} from '../../../helpers/test/defaultenvironment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
 import config from '../../../../src/config';
@@ -41,7 +41,7 @@ suite('Build', async() => {
   test('Configure ', async() => {
     expect(await cmt.configure()).to.be.eq(0);
 
-    expect(testEnv.projectFolder.BuildDirectory.IsCMakeCachePresent).to.eql(true,'no expected cache presetruent');
+    expect(testEnv.projectFolder.BuildDirectory.IsCMakeCachePresent).to.eql(true, 'no expected cache presetruent');
   }).timeout(60000);
 
   test('Build', async() => {
@@ -78,5 +78,3 @@ suite('Build', async() => {
 
   });
 });
-
-
