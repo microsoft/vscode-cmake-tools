@@ -428,14 +428,20 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
   };
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
+  log.debug('Detected VsKit for version');
+  log.debug(` DisplayName: ${inst.displayName}`);
+  log.debug(` InstanceId: ${inst.instanceId}`);
+  log.debug(` InstallVersion: ${inst.installationVersion}`);
   if (version) {
     const generatorName: string|undefined = VsGenerators[version[1]];
     if (generatorName) {
+      log.debug(` Generator Present: ${generatorName}`);
       kit.preferredGenerator = {
         name: generatorName,
         platform: VsArchitectures[arch] as string || undefined,
       };
     }
+    log.debug(` Selected Prefered Generator Name: ${generatorName}`);
   }
 
   return kit;
