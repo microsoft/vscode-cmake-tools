@@ -13,11 +13,20 @@ interface BuildSystemConfiguration {
   expected_default_generator: string;
 }
 
+let workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
+if( workername === undefined) {
+  workername = 'DevPC';
+}
+
 const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
-  ['DevPC']: [{defaultKit: 'VisualStudio.11.0', expected_default_generator: 'Visual Studio 11 2012'}],
+  ['DevPC']: [{defaultKit: 'VisualStudio.14.0', expected_default_generator: 'Visual Studio 14 2015'}],
+  ['Visual Studio 2017']: [{defaultKit: 'Visual Studio Community 2017', expected_default_generator: 'Visual Studio 15 2017'}],
+  ['Visual Studio 2017 Preview']: [{defaultKit: 'Visual Studio Community 2017', expected_default_generator: 'Visual Studio 15 2017'}],
+  ['Visual Studio 2015']: [{defaultKit: 'VisualStudio.14.0', expected_default_generator: 'Visual Studio 14 2015'}],
+  ['Visual Studio 2013']: [{defaultKit: 'VisualStudio.11.0', expected_default_generator: 'Visual Studio 11 2012'}]
 };
 
-DefaultCompilerMakeSystem['DevPC'].forEach(buildsystem => {
+DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
   suite(`Prefered generators (${buildsystem.defaultKit})`, async() => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
