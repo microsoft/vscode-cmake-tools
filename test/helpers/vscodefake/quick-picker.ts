@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 
 export interface QuickPickerHandleStrategy {
-  Identifier: string;
+  identifier: string;
 
   handleQuickPick(items: any): any;
 }
@@ -10,7 +10,7 @@ export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
 
   constructor(readonly defaultKitLabelRegEx: string) {}
 
-  public get Identifier(): string { return 'Select a Kit'; }
+  public get identifier(): string { return 'Select a Kit'; }
 
   public handleQuickPick(items: any): any {
     const defaultKit: string[] = items.filter((item: any) => {

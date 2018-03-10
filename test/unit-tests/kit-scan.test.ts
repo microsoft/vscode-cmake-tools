@@ -24,7 +24,7 @@ function getTestRootFilePath(filename: string): string {
 
 
 function getTestResourceFilePath(filename: string): string {
-  return path.normalize(path.join(here, '../../../test/unit_tests', filename));
+  return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
 function getResourcePath(filename: string): string { return path.normalize(path.join(here, '../../..', filename)); }

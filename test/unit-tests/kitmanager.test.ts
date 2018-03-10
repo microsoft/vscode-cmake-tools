@@ -16,7 +16,7 @@ import * as state from '../../src/state';
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
-  return path.normalize(path.join(here, '../../../test/unit_tests', filename));
+  return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
 

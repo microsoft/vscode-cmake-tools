@@ -21,8 +21,8 @@ export CMT_TESTING=1
 
 # Run all tests with a workspace folder where no CMakeLists.txt exists
 # This prevents automatic loading of the extension.
-export CODE_TESTS_PATH=$ROOT/out/test/unit_tests
-export CODE_TESTS_WORKSPACE=$ROOT/test/unit_tests/test_project_without_cmakelists
+export CODE_TESTS_PATH=$ROOT/out/test/unit-tests
+export CODE_TESTS_WORKSPACE=$ROOT/test/unit-tests/test-project-without-cmakelists
 node ./node_modules/vscode/bin/test
 
 popd

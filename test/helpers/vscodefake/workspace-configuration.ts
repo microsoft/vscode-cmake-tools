@@ -1,24 +1,27 @@
 import * as vscode from 'vscode';
 
 class CMakeToolsWorkspaceConfiguration implements vscode.WorkspaceConfiguration {
+  private _values: {[section: string]: any;} = {};
+
+  constructor(protected _original: vscode.WorkspaceConfiguration) {}
 
   readonly [key: string]: any;
   get<T>(section: string): T|undefined;
   get<T>(section: string, defaultValue: T): T;
   get(section: any, defaultValue?: any): any {
-    if (this.values.hasOwnProperty(section)) {
-      return this.values[section];
+    if (this._values.hasOwnProperty(section)) {
+      return this._values[section];
     } else {
-      if (this.original.has(section)) {
-        return this.original[section];
+      if (this._original.has(section)) {
+        return this._original[section];
       } else {
         return defaultValue;
       }
     }
   }
   has(section: string): boolean {
-    const fakeHasSection: boolean = this.values.has(section);
-    const origHasSection: boolean = this.original.has(section);
+    const fakeHasSection: boolean = this._values.has(section);
+    const origHasSection: boolean = this._original.has(section);
     return fakeHasSection || origHasSection;
   }
   inspect<T>(): {
@@ -28,30 +31,20 @@ class CMakeToolsWorkspaceConfiguration implements vscode.WorkspaceConfiguration 
     throw new Error('Method not implemented.');
   }
   update(section: string, value: any): Thenable<void> {
-    this.values[section] = value;
+    this._values[section] = value;
     return Promise.resolve();
   }
-
-
-  private values: {[section: string]: any;} = {};
-  protected original: vscode.WorkspaceConfiguration;
-
-  public clear() { this.values = {}; }
-
-  constructor(original: vscode.WorkspaceConfiguration) { this.original = original; }
+  public clear() { this._values = {}; }
 }
 
 export class CMakeToolsSettingFile {
 
-  readonly originalValues: vscode.WorkspaceConfiguration;
+  readonly originalValues: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('cmake');
   readonly filepath: string;
-  readonly fakeValues: CMakeToolsWorkspaceConfiguration;
-  readonly originalFunction: any;
+  readonly fakeValues: CMakeToolsWorkspaceConfiguration = new CMakeToolsWorkspaceConfiguration(this.originalValues);
+  readonly originalFunction: any = vscode.workspace.getConfiguration;
 
   constructor(sandbox: sinon.SinonSandbox) {
-    this.originalValues = vscode.workspace.getConfiguration('cmake');
-    this.originalFunction = vscode.workspace.getConfiguration;
-    this.fakeValues = new CMakeToolsWorkspaceConfiguration(this.originalValues);
     sandbox.stub(vscode.workspace, 'getConfiguration').callsFake(((section?: string, resource?: vscode.Uri) => {
       return this.getConfiguration(section, resource);
     }));

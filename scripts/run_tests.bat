@@ -7,8 +7,8 @@ set CMT_TESTING=1
 
 REM Run all tests with a workspace folder where no CMakeLists.txt exists
 REM This prevents automatic loading of the extension.
-set CODE_TESTS_PATH=%~dp0\..\out\test\unit_tests
-set CODE_TESTS_WORKSPACE=%~dp0\..\test\unit_tests\test_project_without_cmakelists
+set CODE_TESTS_PATH=%~dp0\..\out\test\unit-tests
+set CODE_TESTS_WORKSPACE=%~dp0\..\test\unit-tests\test-project-without-cmakelists
 node ./node_modules/vscode/bin/test
 set TEST_ERRONO=%errorlevel%
 

@@ -29,9 +29,9 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/unit_tests/test_project_without_cmakelists",
+                "${workspaceRoot}/test/unit-tests/test-project-without-cmakelists",
                 "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/unit_tests"
+                "--extensionTestsPath=${workspaceRoot}/out/test/unit-tests"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -39,7 +39,7 @@
                 "${workspaceRoot}/out/*",
                 "${workspaceRoot}/out/src/*",
                 "${workspaceRoot}/out/test/*",
-                "${workspaceRoot}/out/test/unit_tests/*"
+                "${workspaceRoot}/out/test/unit-tests/*"
             ],
             "env": {
                 "CMT_TESTING": "1",
@@ -50,14 +50,14 @@
             // "smartStep": true
         },
         {
-            "name": "Launch Extension Tests (Empty project folder)",
+            "name": "Launch Extension Tests (without-cmakelist-file)",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/extension_tests/without_cmakelist_file/project_folder",
+                "${workspaceRoot}/test/extension-tests/without-cmakelist-file/project-folder",
                 "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/extension_tests/without_cmakelist_file"
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/without-cmakelist-file"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -65,8 +65,8 @@
                 "${workspaceRoot}/out/*",
                 "${workspaceRoot}/out/src/*",
                 "${workspaceRoot}/out/test/*",
-                "${workspaceRoot}/out/test/extension_tests/without_cmakelist_file/*",
-                "${workspaceRoot}/out/test/extension_tests/without_cmakelist_file/test/*"
+                "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/*",
+                "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/test/*"
             ],
 
             "preLaunchTask": "npm",
@@ -87,14 +87,14 @@
             // "smartStep": true
         },
         {
-            "name": "Launch Extension Tests (successful_build)",
+            "name": "Launch Extension Tests (successful-build)",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/extension_tests/successful_build/project_folder",
+                "${workspaceRoot}/test/extension-tests/successful-build/project-folder",
                 "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/extension_tests/successful_build"
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/successful-build"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -102,8 +102,8 @@
                 "${workspaceRoot}/out/*",
                 "${workspaceRoot}/out/src/*",
                 "${workspaceRoot}/out/test/*",
-                "${workspaceRoot}/out/test/extension_tests/successful_build/*",
-                "${workspaceRoot}/out/test/extension_tests/successful_build/test/*"
+                "${workspaceRoot}/out/test/extension-tests/successful-build/*",
+                "${workspaceRoot}/out/test/extension-tests/successful-build/test/*"
             ],
 
             "preLaunchTask": "npm",

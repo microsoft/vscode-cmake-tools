@@ -7,8 +7,8 @@ set CMT_TESTING=1
 
 REM Run all tests with a workspace folder where no CMakeLists.txt exists
 REM This prevents automatic loading of the extension.
-set CODE_TESTS_PATH=%~dp0\..\out\test\extension_tests\without_cmakelist_file
-set CODE_TESTS_WORKSPACE=%~dp0\..\test\extension_tests\without_cmakelist_file\project_folder
+set CODE_TESTS_PATH=%~dp0\..\out\test\extension-tests\without-cmakelist-file
+set CODE_TESTS_WORKSPACE=%~dp0\..\test\extension-tests\without-cmakelist-file\project-folder
 node ./node_modules/vscode/bin/test
 set TEST_ERRONO=%errorlevel%
 
@@ -25,8 +25,8 @@ set CMT_TESTING=1
 
 REM Run all tests with a workspace folder where no CMakeLists.txt exists
 REM This prevents automatic loading of the extension.
-set CODE_TESTS_PATH=%~dp0\..\out\test\extension_tests\successful_build
-set CODE_TESTS_WORKSPACE=%~dp0\..\test\extension_tests\successful_build\project_folder
+set CODE_TESTS_PATH=%~dp0\..\out\test\extension-tests\successful-build
+set CODE_TESTS_WORKSPACE=%~dp0\..\test\extension-tests\successful-build\project-folder
 node ./node_modules/vscode/bin/test
 set TEST_ERRONO=%errorlevel%
 

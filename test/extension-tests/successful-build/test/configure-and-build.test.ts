@@ -3,8 +3,8 @@ import {expect} from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 chai.use(chaiAsPromised);
 
-import {clearExistingKitConfigurationFile} from '../../../test_helpers';
-import {DefaultEnvironment} from '../../../helpers/test/defaultenvironment';
+import {clearExistingKitConfigurationFile} from '../../../test-helpers';
+import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
 import config from '../../../../src/config';
@@ -19,7 +19,7 @@ suite('Build', async() => {
     }
     this.timeout(100000);
 
-    testEnv = new DefaultEnvironment('test/extension_tests/successful_build/project_folder');
+    testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder');
     cmt = await CMakeTools.create(testEnv.vsContext);
 
     // This test will use all on the same kit.
@@ -29,7 +29,7 @@ suite('Build', async() => {
     await cmt.scanForKits();
     await cmt.selectKit();
 
-    testEnv.projectFolder.BuildDirectory.Clear();
+    testEnv.projectFolder.buildDirectory.clear();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -41,13 +41,13 @@ suite('Build', async() => {
   test('Configure ', async() => {
     expect(await cmt.configure()).to.be.eq(0);
 
-    expect(testEnv.projectFolder.BuildDirectory.IsCMakeCachePresent).to.eql(true, 'no expected cache presetruent');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(60000);
 
   test('Build', async() => {
     expect(await cmt.build()).to.be.eq(0);
 
-    const result = await testEnv.result.GetResultAsJson();
+    const result = await testEnv.result.getResultAsJson();
     expect(result['compiler']).to.eq('Microsoft Visual Studio');
   }).timeout(60000);
 
@@ -56,7 +56,7 @@ suite('Build', async() => {
     expect(await cmt.configure()).to.be.eq(0);
     expect(await cmt.build()).to.be.eq(0);
 
-    const result = await testEnv.result.GetResultAsJson();
+    const result = await testEnv.result.getResultAsJson();
     expect(result['compiler']).to.eq('Microsoft Visual Studio');
   }).timeout(60000);
 
@@ -64,7 +64,7 @@ suite('Build', async() => {
     expect(await cmt.configure()).to.be.eq(0);
     expect(await cmt.build()).to.be.eq(0);
 
-    const result = await testEnv.result.GetResultAsJson();
+    const result = await testEnv.result.getResultAsJson();
     expect(result['compiler']).to.eq('Microsoft Visual Studio');
   }).timeout(60000);
 

@@ -2,17 +2,22 @@ import * as vscode from 'vscode';
 import {TestMemento} from './memento';
 
 export class FakeContextDefinition implements vscode.ExtensionContext {
-
-  subscriptions: {dispose(): any;}[];
-  workspaceState: vscode.Memento;
-  globalState: vscode.Memento;
-  extensionPath: string;
-
-  asAbsolutePath(relativePath: string): string { return relativePath; }
-  storagePath: string|undefined;
-
-  constructor() {
-    this.globalState = new TestMemento();
-    this.workspaceState = new TestMemento();
+  get extensionPath(): string {
+    throw new Error('Method not implemented.');
   }
+
+  get storagePath(): string | undefined {
+    throw new Error('Method not implemented.');
+  }
+
+  get subscriptions(): {dispose(): any;}[] {
+    throw new Error('Method not implemented.');
+  }
+
+  workspaceState: vscode.Memento = new TestMemento();
+  globalState: vscode.Memento = new TestMemento();
+
+  asAbsolutePath(relativePath:string): string { return relativePath; }
+
+  constructor() {}
 }
