@@ -8,23 +8,20 @@ import {DefaultEnvironment} from '../../../helpers/test/defaultenvironment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
 
-interface buildsystem {
-  defaultKit: string,
-  expected_default_generator: string
+interface BuildSystemConfiguration {
+  defaultKit: string;
+  expected_default_generator: string;
 }
 
-const DefaultCompilerMakeSystem : { [os:string] : buildsystem[]} = {
-  ["DevPC"]: [
-    { defaultKit: "VisualStudio.14.0", expected_default_generator: "Visual Studio 14 2015"}
-  ],
+const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
+  ['DevPC']: [{defaultKit: 'VisualStudio.11.0', expected_default_generator: 'Visual Studio 11 2012'}],
+};
 
-}
-
-DefaultCompilerMakeSystem["DevPC"].forEach( (buildsystem) => {
+DefaultCompilerMakeSystem['DevPC'].forEach(buildsystem => {
   suite(`Prefered generators (${buildsystem.defaultKit})`, async() => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
-    let path_backup = process.env.PATH;
+    const path_backup = process.env.PATH;
 
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
       if (process.env.HasVs != 'true') {
@@ -32,10 +29,10 @@ DefaultCompilerMakeSystem["DevPC"].forEach( (buildsystem) => {
       }
       this.timeout(100000);
 
-      testEnv = new DefaultEnvironment(
-        'test/extension_tests/successful_build/project_folder',
-        'build', 'output.txt',
-        buildsystem.defaultKit);
+      testEnv = new DefaultEnvironment('test/extension_tests/successful_build/project_folder',
+                                       'build',
+                                       'output.txt',
+                                       buildsystem.defaultKit);
       cmt = await CMakeTools.create(testEnv.vsContext);
 
       // This test will use all on the same kit.
@@ -65,10 +62,10 @@ DefaultCompilerMakeSystem["DevPC"].forEach( (buildsystem) => {
       expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
     }).timeout(60000);
 
-    test.only('Get no error messages for missing preferred generators', async() => {
-      process.env.PATH = "";
+    test('Get no error messages for missing preferred generators', async() => {
+      process.env.PATH = '';
       await cmt.selectKit();
-      await testEnv.setting.changeSetting('preferredGenerators', ["Ninja", "Unix Makefiles"]);
+      await testEnv.setting.changeSetting('preferredGenerators', ['Ninja', 'Unix Makefiles']);
       expect(await cmt.build()).to.be.eq(0);
       const result = await testEnv.result.GetResultAsJson();
       expect(result['cmake-generator']).to.eq(buildsystem.expected_default_generator);
@@ -77,10 +74,10 @@ DefaultCompilerMakeSystem["DevPC"].forEach( (buildsystem) => {
 
     test('Use settings preferred generators', async() => {
       await cmt.selectKit();
-      await testEnv.setting.changeSetting('preferredGenerators', ["Ninja", "Unix Makefiles"]);
+      await testEnv.setting.changeSetting('preferredGenerators', ['Ninja', 'Unix Makefiles']);
       expect(await cmt.build()).to.be.eq(0);
       const result = await testEnv.result.GetResultAsJson();
-      expect(result['cmake-generator']).to.eq("Ninja");
+      expect(result['cmake-generator']).to.eq('Ninja');
       expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
     }).timeout(60000);
 
@@ -89,7 +86,7 @@ DefaultCompilerMakeSystem["DevPC"].forEach( (buildsystem) => {
       await testEnv.setting.changeSetting('preferredGenerators', []);
       expect(await cmt.build()).to.be.eq(0);
       const result = await testEnv.result.GetResultAsJson();
-      expect(result['cmake-generator']).to.eq("Ninja");
+      expect(result['cmake-generator']).to.eq('Ninja');
       expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
   });
