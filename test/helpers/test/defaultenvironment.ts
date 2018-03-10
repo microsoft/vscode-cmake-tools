@@ -15,6 +15,7 @@ export class DefaultEnvironment {
   result: TestProgramResult;
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
   setting: CMakeToolsSettingFile;
+  errorMessagesQueue: string[] = [];
 
   public constructor(projectRoot: string,
                      buildLocation: string = 'build',
@@ -30,7 +31,11 @@ export class DefaultEnvironment {
 
     this.SetupShowQuickPickerStub([this.kitSelection]);
     this.setting = new CMakeToolsSettingFile(this.sandbox);
+
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) => {
+      this.errorMessagesQueue = this.errorMessagesQueue.concat([message]);
+    });
   }
 
   private SetupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
