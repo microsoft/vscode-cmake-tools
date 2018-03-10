@@ -5,6 +5,10 @@
     #define _CMAKE_VERSION "0.0"
 #endif
 
+#ifndef _GENERATOR
+    #define _GENERATOR ""
+#endif
+
 std::string getCompilerName() {
     #if defined(__clang__)
 	    return "Clang/LLVM";
@@ -18,6 +22,7 @@ std::string getCompilerName() {
 int main(int, char**) {
     std::cout << "{\n";
     std::cout << "  \"compiler\": \"" << getCompilerName() << "\",\n";
+    std::cout << "  \"cmake-generator\": \"" << _GENERATOR << "\",\n";
     std::cout << "  \"cmake-version\": \"" << _CMAKE_VERSION << "\"\n";
     std::cout << "}\n";
 }
