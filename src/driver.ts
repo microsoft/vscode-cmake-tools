@@ -232,7 +232,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   async setKit(kit: Kit): Promise<void> {
     log.info(`Switching to kit: ${kit.name}`);
     const needs_clean = kitChangeNeedsClean(kit, this._kit);
-    await this.doSetKit(needs_clean, async () => { await this._setKit(kit); });
+    await this.doSetKit(needs_clean, async() => { await this._setKit(kit); });
   }
 
   private async _setKit(kit: Kit): Promise<void> {
@@ -306,7 +306,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> { return cb(); }
 
   private async _refreshExpansions() {
-    await this.doRefreshExpansions(async () => {
+    await this.doRefreshExpansions(async() => {
       this._sourceDirectory = util.normalizePath(await this.expandString(config.sourceDirectory));
       this._binaryDir = util.normalizePath(await this.expandString(config.buildDirectory));
     });
@@ -472,8 +472,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return gen;
       }
     }
-    vscode.window.showErrorMessage('Not of the preferred cmake generator found.\n' +
-                                     'Please install or configure your preferred generator needs in the settings.json or cmake-kit.json.\n');
+    vscode.window.showErrorMessage(
+        `Not of the preferred cmake generator found.
+Please install or configure your preferred generator needs in the settings.json or cmake-kit.json.`);
     return null;
   }
 
@@ -603,16 +604,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const save_good = await vscode.workspace.saveAll();
       if (!save_good) {
         log.debug('Saving open files failed');
-        const chosen = await vscode.window.showErrorMessage<
-            vscode.MessageItem>('Not all open documents were saved. Would you like to continue anyway?',
-                                {
-                                  title: 'Yes',
-                                  isCloseAffordance: false,
-                                },
-                                {
-                                  title: 'No',
-                                  isCloseAffordance: true,
-                                });
+        const chosen = await vscode.window.showErrorMessage<vscode.MessageItem>(
+            'Not all open documents were saved. Would you like to continue anyway?',
+            {
+              title: 'Yes',
+              isCloseAffordance: false,
+            },
+            {
+              title: 'No',
+              isCloseAffordance: true,
+            });
         return chosen !== undefined && (chosen.title === 'Yes');
       }
     }
