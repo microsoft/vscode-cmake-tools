@@ -14,7 +14,8 @@ export class DefaultEnvironment {
   kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
-  setting: CMakeToolsSettingFile = new CMakeToolsSettingFile(this.sandbox);
+  setting: CMakeToolsSettingFile;
+  errorMessagesQueue: string[] = [];
 
   public constructor(projectRoot: string,
                      buildLocation: string = 'build',
@@ -26,7 +27,12 @@ export class DefaultEnvironment {
     this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
     this.setupShowQuickPickerStub([this.kitSelection]);
 
+    this.setting = new CMakeToolsSettingFile(this.sandbox);
+
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) => {
+      this.errorMessagesQueue = this.errorMessagesQueue.concat([message]);
+    });
   }
 
   private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
