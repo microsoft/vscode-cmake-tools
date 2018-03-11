@@ -4,7 +4,7 @@ chai.use(chaiAsPromised);
 
 import {expect} from 'chai';
 
-import {clearExistingKitConfigurationFile, getExtension} from '../../../test_helpers';
+import {clearExistingKitConfigurationFile, getExtension} from '../../../test-helpers';
 
 // This tests will be skipped when a Visual Studio installation marker (Env.HasVs=true) is present.
 // It is not possible to hide an installation against the test. In that case

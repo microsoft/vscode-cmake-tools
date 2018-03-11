@@ -386,10 +386,12 @@ const VsArchitectures: {[key: string]: string} = {
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: {[key: string]: string} = {
-  14: 'Visual Studio 14 2015',
-  15: 'Visual Studio 15 2017',
+  11: 'Visual Studio 11 2012',
   VS120COMNTOOLS: 'Visual Studio 12 2013',
+  12: 'Visual Studio 12 2013',
   VS140COMNTOOLS: 'Visual Studio 14 2015',
+  14: 'Visual Studio 14 2015',
+  15: 'Visual Studio 15 2017'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
@@ -428,14 +430,20 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
   };
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
+  log.debug('Detected VsKit for version');
+  log.debug(` DisplayName: ${inst.displayName}`);
+  log.debug(` InstanceId: ${inst.instanceId}`);
+  log.debug(` InstallVersion: ${inst.installationVersion}`);
   if (version) {
     const generatorName: string|undefined = VsGenerators[version[1]];
     if (generatorName) {
+      log.debug(` Generator Present: ${generatorName}`);
       kit.preferredGenerator = {
         name: generatorName,
         platform: VsArchitectures[arch] as string || undefined,
       };
     }
+    log.debug(` Selected Prefered Generator Name: ${generatorName}`);
   }
 
   return kit;
@@ -608,7 +616,8 @@ export class KitManager implements vscode.Disposable {
    * selection, the current kit is kept. The only way it can reset to `null` is
    * if the active kit becomes somehow unavailable.
    */
-  async selectKit(): Promise<Kit|null> {
+  async selectKit(): Promise<Kit | null> {
+    log.debug(`Start selection of kits. Found ${this._kits.length} kits.`);
     if (this._kits.length == 0) {
       return null;
     }
@@ -632,6 +641,7 @@ export class KitManager implements vscode.Disposable {
       // No selection was made
       return null;
     } else {
+      log.debug('User selected kit ', JSON.stringify(chosen));
       this._setActiveKit(chosen.kit);
       return chosen.kit;
     }

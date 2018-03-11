@@ -599,12 +599,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.stop`
    */
   async stop(): Promise<boolean> {
-    const drv = await this.getCMakeDriverInstance();
+    const drv = await this._cmakeDriver;
     if (!drv) {
       return false;
     }
 
-    return drv.stopCurrentProcess();
+    return drv.stopCurrentProcess().then(() => {
+      this._cmakeDriver = Promise.resolve(null);
+      return true;
+    }, () =>{
+      return false;
+    });
   }
 
   /**

@@ -1,0 +1,4 @@
+{
+    "cmake.buildDirectory": "${workspaceRoot}/build",
+    "cmake.preferredGenerators": [ ]
+}
