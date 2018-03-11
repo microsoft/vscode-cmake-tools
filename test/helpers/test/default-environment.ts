@@ -29,9 +29,10 @@ export class DefaultEnvironment {
 
     this.setting = new CMakeToolsSettingFile(this.sandbox);
 
+    const errorQueue = this.errorMessagesQueue;
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
     this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) => {
-      this.errorMessagesQueue = this.errorMessagesQueue.concat([message]);
+      errorQueue.push(message);
     });
   }
 
