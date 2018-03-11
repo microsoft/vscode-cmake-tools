@@ -35,11 +35,11 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
 ],
   ['Visual Studio 2015']: [
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
-  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
+  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\MinGW\\bin'}
 ],
   ['Visual Studio 2013']: [
     {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
-  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
+  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\MinGW\\bin'}
 ]
 };
 
