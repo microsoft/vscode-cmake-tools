@@ -8,7 +8,6 @@ import {QuickPickerHandleStrategy, SelectKitPickerHandle} from '../vscodefake/qu
 import {CMakeToolsSettingFile} from '../vscodefake/workspace-configuration';
 
 export class DefaultEnvironment {
-
   sandbox: sinon.SinonSandbox = sinon.sandbox.create();
   projectFolder: ProjectRootHelper;
   kitSelection: SelectKitPickerHandle;
@@ -30,9 +29,7 @@ export class DefaultEnvironment {
     const errorQueue = this.errorMessagesQueue;
     this.setting = new CMakeToolsSettingFile(this.sandbox);
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
-    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) => {
-      errorQueue.push(message);
-    });
+    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) => { errorQueue.push(message); });
   }
 
   private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
@@ -44,8 +41,11 @@ export class DefaultEnvironment {
     });
   }
 
-  public teardown(): void {
-    this.sandbox.verifyAndRestore();
+  public teardown(): void { this.sandbox.verifyAndRestore(); }
+
+  public clean(): void {
+    this.errorMessagesQueue.length = 0;
+    this.vsContext.clean();
     this.setting.restore();
   }
 }

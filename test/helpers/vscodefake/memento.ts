@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export class TestMemento implements vscode.Memento {
-  private readonly storage: {[key: string]: any} = {};
+  private storage: {[key: string]: any} = {};
 
   public get<T>(key: string): T|undefined;
   public get<T>(key: string, defaultValue: T): T;
@@ -14,4 +14,5 @@ export class TestMemento implements vscode.Memento {
   }
   public update(key: string, value: any): Thenable<void> { return this.storage[key] = value; }
   public containsKey(key: string): boolean { return this.storage.hasOwnProperty(key); }
+  public clear() { this.storage = {}; }
 }
