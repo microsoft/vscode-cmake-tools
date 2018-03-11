@@ -27,9 +27,10 @@ export class DefaultEnvironment {
     this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
     this.setupShowQuickPickerStub([this.kitSelection]);
 
+    const errorQueue = this.errorMessagesQueue;
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
     this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) => {
-      this.errorMessagesQueue = this.errorMessagesQueue.concat([message]);
+      errorQueue.push(message);
     });
   }
 
