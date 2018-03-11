@@ -7,7 +7,7 @@ import {clearExistingKitConfigurationFile} from '../../../test-helpers';
 import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
-import { ITestCallbackContext } from 'mocha';
+import {ITestCallbackContext, IHookCallbackContext} from 'mocha';
 
 interface BuildSystemConfiguration {
   defaultKit: string;
@@ -16,56 +16,92 @@ interface BuildSystemConfiguration {
 }
 
 let workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
-if( workername === undefined) {
+if (workername === undefined) {
   workername = 'DevPC';
 }
 
 const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
   ['DevPC']: [
-    {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path:''},
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
+    {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: 'c:\\Temp'},
+    {
+      defaultKit: 'GCC',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: 'C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
+    },
+    {
+      defaultKit: 'Clang',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: 'C:\\Anaconda2\\Library\\bin;C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
+    }
   ],
   ['Visual Studio 2017']: [
     {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
+    {
+      defaultKit: 'GCC',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: 'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
+    }
   ],
   ['Visual Studio 2017 Preview']: [
     {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
-  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
-],
+    {
+      defaultKit: 'Clang',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: 'C:\\Program Files\\LLVM\\bin;C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
+    },
+    {
+      defaultKit: 'Clang',
+      expectedDefaultGenerator: 'Visual Studio 14 2015',
+      path: 'C:\\Program Files\\LLVM\\bin;C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
+    }
+  ],
   ['Visual Studio 2015']: [
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
-  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
-],
+    {
+      defaultKit: 'GCC',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: 'C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
+    }
+  ],
   ['Visual Studio 2013']: [
     {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
-  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\MinGW\\bin'}
-]
+    {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path: 'C:\\MinGW\\bin'}
+  ]
 };
 
-function isPreferedGeneratorInKit(defaultKit: string): boolean {
-  return RegExp('^VisualStudio').test(defaultKit);
-}
-
-function testWithPreferedGeneratorInKit(buildsystem : BuildSystemConfiguration) {
-  return (isPreferedGeneratorInKit(buildsystem.defaultKit) ? test : test.skip);
-}
 /*
 function testWithOutPreferedGeneratorInKit(buildsystem : BuildSystemConfiguration) {
   return (!isPreferedGeneratorInKit(buildsystem.defaultKit) ? test : test.skip);
 }*/
 
 DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
-  suite(`Prefered generators (${buildsystem.defaultKit})`, async() => {
+  suite.only(`Prefered generators (${buildsystem.defaultKit})`, async() => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
-    const path_backup = process.env.PATH;
+    const pathBackup = process.env.PATH;
+    const SCAN_TIMEOUT: number = 120000;
+    const BUILD_TIMEOUT: number = 120000;
+    const CLEANUP_TIMEOUT: number = 30000;
 
-    suiteSetup( async function(this: Mocha.IBeforeAndAfterContext) {
-      if (process.env.HasVs != 'true') {
-        this.skip();
+
+    function isPreferedGeneratorInKit(defaultKit: string): boolean { return RegExp('^VisualStudio').test(defaultKit); }
+
+    function skipTestWithoutPreferedGeneratorInKit(testContext: ITestCallbackContext|IHookCallbackContext): void {
+      if (!isPreferedGeneratorInKit(buildsystem.defaultKit)) {
+        testContext.skip();
       }
-      this.timeout(100000);
+    }
+
+    function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IHookCallbackContext): void {
+      if ((process.env.HasVs != 'true')) {
+        testContext.skip();
+      }
+    }
+
+    suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
+      skipTestIfVisualStudioIsNotPresent(this);
+
+      this.timeout(SCAN_TIMEOUT);
 
       testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                        'build',
@@ -79,9 +115,6 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
       process.env.PATH = buildsystem.path;
       await clearExistingKitConfigurationFile();
       await cmt.scanForKits();
-
-      await cmt.asyncDispose();
-      testEnv.teardown();
     });
 
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -95,30 +128,35 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     });
 
     teardown(async function(this: Mocha.IBeforeAndAfterContext) {
-      this.timeout(30000);
+      this.timeout(CLEANUP_TIMEOUT);
 
       await cmt.asyncDispose();
       testEnv.teardown();
 
-      process.env.PATH = path_backup;
+      process.env.PATH = pathBackup;
     });
 
     // Test only one visual studio, because there is only a preferred generator in kit by default
     // Prefered generator selection order is settings.json -> cmake-kit.json -> error
-    // testWithPreferedGeneratorInKit(buildsystem)('Use preferred generator from kit file', async() => {
-    //   await cmt.selectKit();
-    //   await testEnv.setting.changeSetting('preferredGenerators', []);
-    //   expect(await cmt.build()).to.be.eq(0);
-    //   const result = await testEnv.result.getResultAsJson();
-    //   expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
-    //   expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
-    // });
+    test('Use preferred generator from kit file', async function(this: ITestCallbackContext) {
+      skipTestWithoutPreferedGeneratorInKit(this);
+      this.timeout(BUILD_TIMEOUT);
 
-    testWithPreferedGeneratorInKit(buildsystem)('Get no error messages for missing preferred generators', async function(this : ITestCallbackContext) {
-      this.timeout(30000);
+      await cmt.selectKit();
+      await testEnv.setting.changeSetting('preferredGenerators', []);
+      expect(await cmt.build()).to.be.eq(0);
+      const result = await testEnv.result.getResultAsJson();
+      expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
+      expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
+    });
+
+    test('Get no error messages for missing preferred generators', async function(this: ITestCallbackContext) {
+      skipTestWithoutPreferedGeneratorInKit(this);
+      this.timeout(BUILD_TIMEOUT);
+
       process.env.PATH = '';
       await cmt.selectKit();
-      await testEnv.setting.changeSetting('preferredGenerators', ['Ninja', 'Unix Makefiles']);
+      await testEnv.setting.changeSetting('preferredGenerators', ['Ninja']);
       expect(await cmt.build()).to.be.eq(0);
       const result = await testEnv.result.getResultAsJson();
       expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
@@ -126,7 +164,8 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     });
 
     // // Test to non visual studio, in that case is no prefered generator in kit present by default
-    // testWithOutPreferedGeneratorInKit(buildsystem)('Use invalid preferred generators from settings.json', async() => {
+    // testWithOutPreferedGeneratorInKit(buildsystem)('Use invalid preferred generators from settings.json', async() =>
+    // {
     //   await cmt.selectKit();
     //   await testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
     //   expect(await cmt.build()).to.be.eq(-1);
@@ -134,18 +173,20 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     // });
 
     // This test will fail always because the driver
-    // testWithOutPreferedGeneratorInKit(buildsystem)('Non preferred generators configured in settings and kit', async function(this : ITestCallbackContext) {
+    // testWithOutPreferedGeneratorInKit(buildsystem)('Non preferred generators configured in settings and kit', async
+    // function(this : ITestCallbackContext) {
     //   this.timeout(10000);
     //   await cmt.selectKit();
     //   await testEnv.setting.changeSetting('preferredGenerators', []);
 
-    //   cmt.build().then(() =>{ }).catch((ex:Error) => expect(ex.message).to.be('Unable to determine CMake Generator to use'));// <--- this is wrong behavior to destorys the use
+    //   cmt.build().then(() =>{ }).catch((ex:Error) => expect(ex.message).to.be('Unable to determine CMake Generator to
+    //   use'));// <--- this is wrong behavior to destorys the use
 
     //   expect(testEnv.errorMessagesQueue.length).to.be.eq(1); // Message that no make system was found
     // });
 
-    test('Use preferred generators from settings.json', async function(this : ITestCallbackContext) {
-      this.timeout(30000);
+    test('Use preferred generators from settings.json', async function(this: ITestCallbackContext) {
+      this.timeout(BUILD_TIMEOUT);
 
       await cmt.selectKit();
       await testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles', 'MinGW Makefiles']);
@@ -153,7 +194,7 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
       const result = await testEnv.result.getResultAsJson();
       expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
       expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
-    }).timeout(60000);
+    });
 
   });
 });
