@@ -45,6 +45,7 @@ export class DefaultEnvironment {
 
   public teardown(): void {
     this.setting.restore();
-    this.sandbox.restore();
+    this.sandbox.verifyAndRestore();
+    this.sandbox.reset();
   }
 }

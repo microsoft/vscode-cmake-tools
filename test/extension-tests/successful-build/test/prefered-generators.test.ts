@@ -7,7 +7,7 @@ import {clearExistingKitConfigurationFile} from '../../../test-helpers';
 import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
-//import { ITestCallbackContext } from 'mocha';
+import { ITestCallbackContext } from 'mocha';
 
 interface BuildSystemConfiguration {
   defaultKit: string;
@@ -35,7 +35,7 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
 ],
   ['Visual Studio 2015']: [
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
-  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\MinGW\\bin'}
+  {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
 ],
   ['Visual Studio 2013']: [
     {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
@@ -114,7 +114,8 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     //   expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
     // });
 
-    testWithPreferedGeneratorInKit(buildsystem)('Get no error messages for missing preferred generators', async() => {
+    testWithPreferedGeneratorInKit(buildsystem)('Get no error messages for missing preferred generators', async function(this : ITestCallbackContext) {
+      this.timeout(30000);
       process.env.PATH = '';
       await cmt.selectKit();
       await testEnv.setting.changeSetting('preferredGenerators', ['Ninja', 'Unix Makefiles']);
@@ -143,7 +144,9 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     //   expect(testEnv.errorMessagesQueue.length).to.be.eq(1); // Message that no make system was found
     // });
 
-    test('Use preferred generators from settings.json', async() => {
+    test('Use preferred generators from settings.json', async function(this : ITestCallbackContext) {
+      this.timeout(30000);
+
       await cmt.selectKit();
       await testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles', 'MinGW Makefiles']);
       expect(await cmt.build()).to.be.eq(0);
