@@ -7,7 +7,7 @@ import {clearExistingKitConfigurationFile} from '../../../test-helpers';
 import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
-import { ITestCallbackContext } from 'mocha';
+//import { ITestCallbackContext } from 'mocha';
 
 interface BuildSystemConfiguration {
   defaultKit: string;
@@ -42,7 +42,7 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
   {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path:'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'}
 ]
 };
-/*
+
 function isPreferedGeneratorInKit(defaultKit: string): boolean {
   return RegExp('^VisualStudio').test(defaultKit);
 }
@@ -50,18 +50,21 @@ function isPreferedGeneratorInKit(defaultKit: string): boolean {
 function testWithPreferedGeneratorInKit(buildsystem : BuildSystemConfiguration) {
   return (isPreferedGeneratorInKit(buildsystem.defaultKit) ? test : test.skip);
 }
-
+/*
 function testWithOutPreferedGeneratorInKit(buildsystem : BuildSystemConfiguration) {
   return (!isPreferedGeneratorInKit(buildsystem.defaultKit) ? test : test.skip);
 }*/
 
 DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
-  suite.only(`Prefered generators (${buildsystem.defaultKit})`, async() => {
+  suite(`Prefered generators (${buildsystem.defaultKit})`, async() => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
     const path_backup = process.env.PATH;
 
     suiteSetup( async function(this: Mocha.IBeforeAndAfterContext) {
+      if (process.env.HasVs != 'true') {
+        this.skip();
+      }
       this.timeout(100000);
 
       testEnv = new DefaultEnvironment('test/extension_tests/successful_build/project_folder',
@@ -82,10 +85,6 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     });
 
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
-      if (process.env.HasVs != 'true') {
-        this.skip();
-      }
-
       testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                        'build',
                                        'output.txt',
@@ -115,15 +114,15 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     //   expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
     // });
 
-    // testWithPreferedGeneratorInKit(buildsystem)('Get no error messages for missing preferred generators', async() => {
-    //   process.env.PATH = '';
-    //   await cmt.selectKit();
-    //   await testEnv.setting.changeSetting('preferredGenerators', ['Ninja', 'Unix Makefiles']);
-    //   expect(await cmt.build()).to.be.eq(0);
-    //   const result = await testEnv.result.getResultAsJson();
-    //   expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
-    //   expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
-    // });
+    testWithPreferedGeneratorInKit(buildsystem)('Get no error messages for missing preferred generators', async() => {
+      process.env.PATH = '';
+      await cmt.selectKit();
+      await testEnv.setting.changeSetting('preferredGenerators', ['Ninja', 'Unix Makefiles']);
+      expect(await cmt.build()).to.be.eq(0);
+      const result = await testEnv.result.getResultAsJson();
+      expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
+      expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
+    });
 
     // // Test to non visual studio, in that case is no prefered generator in kit present by default
     // testWithOutPreferedGeneratorInKit(buildsystem)('Use invalid preferred generators from settings.json', async() => {
