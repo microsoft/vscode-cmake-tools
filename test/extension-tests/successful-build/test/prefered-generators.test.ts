@@ -10,7 +10,7 @@ import {CMakeTools} from '../../../../src/cmake-tools';
 
 interface BuildSystemConfiguration {
   defaultKit: string;
-  expected_default_generator: string;
+  expectedDefaultGenerator: string;
 }
 
 let workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
@@ -19,11 +19,11 @@ if( workername === undefined) {
 }
 
 const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
-  ['DevPC']: [{defaultKit: 'VisualStudio.14.0', expected_default_generator: 'Visual Studio 14 2015'}],
-  ['Visual Studio 2017']: [{defaultKit: 'Visual Studio Community 2017', expected_default_generator: 'Visual Studio 15 2017'}],
-  ['Visual Studio 2017 Preview']: [{defaultKit: 'Visual Studio Community 2017', expected_default_generator: 'Visual Studio 15 2017'}],
-  ['Visual Studio 2015']: [{defaultKit: 'VisualStudio.14.0', expected_default_generator: 'Visual Studio 14 2015'}],
-  ['Visual Studio 2013']: [{defaultKit: 'VisualStudio.11.0', expected_default_generator: 'Visual Studio 11 2012'}]
+  ['DevPC']: [{defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'}],
+  ['Visual Studio 2017']: [{defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'}],
+  ['Visual Studio 2017 Preview']: [{defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'}],
+  ['Visual Studio 2015']: [{defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'}],
+  ['Visual Studio 2013']: [{defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'}]
 };
 
 DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
@@ -67,7 +67,7 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
       await testEnv.setting.changeSetting('preferredGenerators', []);
       expect(await cmt.build()).to.be.eq(0);
       const result = await testEnv.result.getResultAsJson();
-      expect(result['cmake-generator']).to.eq(buildsystem.expected_default_generator);
+      expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
       expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
     }).timeout(60000);
 
@@ -77,7 +77,7 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
       await testEnv.setting.changeSetting('preferredGenerators', ['Ninja', 'Unix Makefiles']);
       expect(await cmt.build()).to.be.eq(0);
       const result = await testEnv.result.getResultAsJson();
-      expect(result['cmake-generator']).to.eq(buildsystem.expected_default_generator);
+      expect(result['cmake-generator']).to.eq(buildsystem.expectedDefaultGenerator);
       expect(testEnv.errorMessagesQueue.length).to.be.eq(0);
     }).timeout(60000);
 
