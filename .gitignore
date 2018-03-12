@@ -3,5 +3,6 @@ node_modules
 .browse.VC.db*
 *.old
 build/
-test/fakebin/*
+test/fakebin/
 .vscode-test
+.ci-build

@@ -2,9 +2,12 @@ cmake_minimum_required(VERSION 3.7)
 
 project(CMakeTools VERSION 0.11.0 LANGUAGES NONE)
 
+find_program(NODE_EXECUTABLE node)
 find_program(NPM_EXECUTABLE npm)
 find_program(VSCE_EXECUTABLE vsce)
 find_program(SPHINX_EXECUTABLE sphinx-build)
+
+include(CTest)
 
 get_filename_component(package_json package.json ABSOLUTE)
 get_filename_component(package_lock package-lock.json ABSOLUTE)
@@ -48,7 +51,7 @@ if(SPHINX_EXECUTABLE)
                 "${docs_dest}"
             )
     endif()
-    add_custom_target(docs
+    add_custom_target(docs ALL
         COMMAND ${SPHINX_EXECUTABLE}
             -W # Warning as error
             -q # Quiet. Only warnings and errors
@@ -69,6 +72,7 @@ if(SPHINX_EXECUTABLE)
         ${docs_copy}
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMENT "Generating documentation"
-        USES_TERMINAL
         )
 endif()
+
+add_subdirectory(test)

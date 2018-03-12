@@ -14,14 +14,12 @@ suite('Build', async() => {
   let testEnv: DefaultEnvironment;
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
+    if (process.env.HasVs != 'true') {
+      this.skip();
+    }
     this.timeout(100000);
 
-    const kit_re = '';
-    const build_loc = 'build';
-    const exe_res = 'output.txt';
-
-    testEnv
-        = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res, kit_re);
+    testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder');
     cmt = await CMakeTools.create(testEnv.vsContext);
 
     // This test will use all on the same kit.
@@ -50,7 +48,7 @@ suite('Build', async() => {
     expect(await cmt.build()).to.be.eq(0);
 
     const result = await testEnv.result.getResultAsJson();
-    expect(result['cookie']).to.eq('passed-cookie');
+    expect(result['compiler']).to.eq('Microsoft Visual Studio');
   }).timeout(60000);
 
 
@@ -59,7 +57,7 @@ suite('Build', async() => {
     expect(await cmt.build()).to.be.eq(0);
 
     const result = await testEnv.result.getResultAsJson();
-    expect(result['cookie']).to.eq('passed-cookie');
+    expect(result['compiler']).to.eq('Microsoft Visual Studio');
   }).timeout(60000);
 
   test('Configure and Build', async() => {
@@ -67,7 +65,7 @@ suite('Build', async() => {
     expect(await cmt.build()).to.be.eq(0);
 
     const result = await testEnv.result.getResultAsJson();
-    expect(result['cookie']).to.eq('passed-cookie');
+    expect(result['compiler']).to.eq('Microsoft Visual Studio');
   }).timeout(60000);
 
   test('Test setting watcher', async() => {
