@@ -2,7 +2,7 @@ param(
     # Path to CMake to use when configuring
     [Parameter()]
     [string]
-    $CMakePath
+    $CMakePath="cmake"
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,3 +33,5 @@ $targets = @("clang-0.25", "gcc-42.1", "gcc-666")
 foreach ($target in $targets) {
     Copy-Item $in_binary "$fakebin_dest/$target$ext"
 }
+
+Copy-Item $fakebin_src/configfiles/* -Destination $fakebin_dest -Recurse
