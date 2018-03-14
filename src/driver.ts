@@ -191,7 +191,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the environment and apply any needed
    * substitutions before returning it.
    */
-  async expandedEnvironment(): Promise<{[key: string]: string}> {
+  async getExpandedEnvironment(): Promise<{[key: string]: string}> {
     const env = {} as {[key: string]: string};
     await util.objectPairs(config.environment)
         .forEach(async ([key, value]) => env[key] = await this.expandString(value));
@@ -202,7 +202,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the configure environment and apply any needed
    * substitutions before returning it.
    */
-  async expandedConfigureEnvironment(): Promise<{[key: string]: string}> {
+  async getExpandedConfigureEnvironment(): Promise<{[key: string]: string}> {
     const config_env = {} as {[key: string]: string};
     await util.objectPairs(config.configureEnvironment)
         .forEach(async ([key, value]) => config_env[key] = await this.expandString(value));
@@ -618,15 +618,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Expand all flags
     const final_flags = flags.concat(settings_flags);
     const expanded_flags_promises
-        = final_flags.map(async (value: string) => this.expandString(value, await this.expandedConfigureEnvironment()));
+        = final_flags.map(async (value: string) => this.expandString(value, await this.getExpandedConfigureEnvironment()));
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
     // Setup temporary environment for the configure step
     const old_env = process.env;
     const configure_env = util.mergeEnvironment(old_env as proc.EnvironmentVariables,
-                                                await this.expandedEnvironment(),
-                                                await this.expandedConfigureEnvironment());
+                                                await this.getExpandedEnvironment(),
+                                                await this.getExpandedConfigureEnvironment());
     process.env = configure_env;
 
     const retc = await this.doConfigure(expanded_flags, consumer);
@@ -742,7 +742,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     })();
 
     const build_env = {} as {[key: string]: string};
-    await util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.expandedEnvironment()))
+    await util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.getExpandedEnvironment()))
         .forEach(async ([key, value]) => build_env[key] = await this.expandString(value));
 
     const args =
