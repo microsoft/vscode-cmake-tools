@@ -27,7 +27,7 @@ if (workername === undefined) {
 
 const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
   ['DevPC']: [
-    {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: 'c:\\Temp'},
+    {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
     {
       defaultKit: 'GCC',
       expectedDefaultGenerator: 'MinGW Makefiles',
@@ -104,7 +104,6 @@ function makeExtensionTestSuite(name: string,
     const context = { buildsystem: _buildsystem } as CmakeContext;
 
     suiteSetup(() => {
-      context.pathBackup = process.env.PATH!;
       context.testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                                'build',
                                                'output.txt',
@@ -114,6 +113,7 @@ function makeExtensionTestSuite(name: string,
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
       this.timeout(10000);
       context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
+      context.pathBackup = process.env.PATH!;
       if (context.buildsystem.path) {
         process.env.PATH = context.buildsystem.path;
       }
@@ -131,12 +131,11 @@ function makeExtensionTestSuite(name: string,
       this.timeout(10000);
       await context.cmt.asyncDispose();
       context.testEnv.clean();
+      process.env.PATH = context.pathBackup;
     });
 
     suiteTeardown(() => {
       context.testEnv.teardown();
-
-      process.env.PATH = context.pathBackup;
     });
 
     cb(context);
