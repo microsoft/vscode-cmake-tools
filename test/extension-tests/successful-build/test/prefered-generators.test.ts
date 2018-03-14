@@ -7,7 +7,7 @@ import {clearExistingKitConfigurationFile} from '../../../test-helpers';
 import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
-import {ITestCallbackContext, IHookCallbackContext} from 'mocha';
+import {ITestCallbackContext} from 'mocha';
 
 interface BuildSystemConfiguration {
   defaultKit: string;
@@ -98,11 +98,11 @@ function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: Cmake
 //   }
 // }
 
-function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IHookCallbackContext): void {
-  if ((process.env.HasVs != 'true')) {
-    testContext.skip();
-  }
-}
+// function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IHookCallbackContext): void {
+//   if ((process.env.HasVs != 'true')) {
+//     testContext.skip();
+//   }
+// }
 
 function makeExtensionTestSuite(name: string,
                                 _buildsystem: BuildSystemConfiguration,
