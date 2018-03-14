@@ -27,8 +27,11 @@ be generated).
 
 If specified, sets a value for ``CMAKE_INSTALL_PREFIX`` when running CMake
 configure. If not, no value will be passed.
+*Note that if ``CMAKE_INSTALL_PREFIX`` is set via ``cmake.configureArgs`` or
+``cmake.configureSettings``, ``cmake.installPrefix`` will be ignored.*
 
 - Default: ``null`` (Unspecified)
+- *Supports substitution*
 
 ``cmake.sourceDirectory``
 *************************
@@ -47,6 +50,53 @@ invoked before running CMake.
 - Default: ``true``
 
 .. _var-subs:
+
+``cmake.configureArgs``
+***************************
+
+A list containing CMake configure arguments, which will be
+passed onto CMake when configuring.
+
+- Default: ``null`` (Unspecified)
+- *Supports substitution*
+
+``cmake.configureSettings``
+***************************
+
+An object containing ``key : value`` pairs, which will be
+passed onto CMake when configuring.
+It does the same thing as passing ``-DVAR_NAME=ON`` via
+``cmake.configureArgs``.
+
+- Default: ``null`` (Unspecified)
+- *Supports substitution*
+
+``cmake.environment``
+***************************
+
+An object containing ``key : value`` pairs of environment variables,
+which will be passed onto CMake when configuring and to the compiler.
+
+- Default: ``null`` (Unspecified)
+- *Supports substitution*
+
+``cmake.configureEnvironment``
+***************************
+
+An object containing ``key : value`` pairs of environment variables,
+which will be passed onto CMake *ONLY* when configuring.
+
+- Default: ``null`` (Unspecified)
+- *Supports substitution*
+
+``cmake.buildEnvironment``
+***************************
+
+An object containing ``key : value`` pairs of environment variables,
+which will be passed *ONLY* onto the compiler.
+
+- Default: ``null`` (Unspecified)
+- *Supports substitution*
 
 Variable Substitution
 =====================
@@ -73,13 +123,17 @@ using ``${variable}`` syntax. The following built-in variables are expanded:
 ``${userHome}``
     The full path to the current user's home directory
 
+``${variant_identifier}``
+    *Replace ``variant_identifier`` with your variant identifier.*
+    The currently selected choice of the given variant identifier.
+
 Environment Variables
 *********************
 
 Additionally, environment variables may be substituted with ``${env:VARNAME}``
-syntax, where the string for the ``VARNAME`` environment variable will be
-replaced. If the named environment variable is undefined, an empty string
-will be expanded instead.
+and ``${env.VARNAME}`` syntax, where the string for the ``VARNAME`` environment
+variable will be replaced. If the named environment variable is undefined, an empty
+string will be expanded instead.
 
 Command Substitution
 ********************

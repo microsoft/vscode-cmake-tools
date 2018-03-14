@@ -188,6 +188,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * Get the environment and apply any needed
+   * substitutions before returning it.
+   */
+  async expandedEnvironment(): Promise<{[key: string]: string}> {
+    const env = {} as {[key: string]: string};
+    await util.objectPairs(config.environment)
+        .forEach(async ([key, value]) => env[key] = await this.expandString(value));
+    return env;
+  }
+
+  /**
    * Get the configure environment and apply any needed
    * substitutions before returning it.
    */
@@ -272,7 +283,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const cur_env = process.env as proc.EnvironmentVariables;
     const env = util.mergeEnvironment(cur_env,
                                       this.getKitEnvironmentVariablesObject(),
-                                      config.environment,
                                       (options && options.environment) ? options.environment : {});
     const exec_options = {...options, environment: env};
     return proc.execute(command, args, consumer, exec_options);
@@ -615,7 +625,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Setup temporary environment for the configure step
     const old_env = process.env;
     const configure_env = util.mergeEnvironment(old_env as proc.EnvironmentVariables,
-                                                config.environment,
+                                                await this.expandedEnvironment(),
                                                 await this.expandedConfigureEnvironment());
     process.env = configure_env;
 
@@ -732,7 +742,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     })();
 
     const build_env = {} as {[key: string]: string};
-    await util.objectPairs(config.buildEnvironment)
+    await util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.expandedEnvironment()))
         .forEach(async ([key, value]) => build_env[key] = await this.expandString(value));
 
     const args =

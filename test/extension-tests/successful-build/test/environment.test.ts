@@ -83,4 +83,26 @@ suite('[Environment]', async () => {
     expect(result['build-env'])
         .to.eq(path.basename(testEnv.projectFolder.location), '[buildEnvironment] substitution incorrect');
   }).timeout(60000);
+
+  test('Passing env-vars to CMake AND to the compiler', async () => {
+    // Set fake settings
+    testEnv.setting.changeSetting('environment', {_ENV: '${workspaceRootFolderName}'});
+
+    // Configure
+    expect(await cmt.configure()).to.be.eq(0, '[environment] configure failed');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+    const cache = await CMakeCache.fromPath(await cmt.cachePath);
+
+    const cacheEntry = cache.get('environment') as api.CacheEntry;
+    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[environment] unexpected cache entry type');
+    expect(cacheEntry.key).to.eq('environment', '[environment] unexpected cache entry key name');
+    expect(cacheEntry.as<string>())
+        .to.eq(path.basename(testEnv.projectFolder.location), '[environment] substitution incorrect');
+    expect(typeof cacheEntry.value).to.eq('string', '[environment] unexpected cache entry value type');
+
+    // Build
+    expect(await cmt.build()).to.be.eq(0, '[environment] build failed');
+    const result = await testEnv.result.getResultAsJson();
+    expect(result['env']).to.eq(path.basename(testEnv.projectFolder.location), '[environment] substitution incorrect');
+  }).timeout(60000);
 });
