@@ -153,6 +153,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this._kit as VSKit;
   }
 
+  /**
+   * Get replacements from the state manager and update driver relevant
+   * ones.
+   */
   private get _replacements(): {[key: string]: string|undefined} {
     const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
     const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
@@ -181,6 +185,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     this.stateManager.replacements = replacements;
 
     return replacements;
+  }
+
+  /**
+   * Get the configure environment and apply any needed
+   * substitutions before returning it.
+   */
+  async expandedConfigureEnvironment(): Promise<{[key: string]: string}> {
+    const config_env = {} as {[key: string]: string};
+    await util.objectPairs(config.configureEnvironment)
+        .forEach(async ([key, value]) => config_env[key] = await this.expandString(value));
+    return config_env;
   }
 
   /**
@@ -593,14 +608,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Expand all flags
     const final_flags = flags.concat(settings_flags);
     const expanded_flags_promises
-        = final_flags.map(async (value: string) => this.expandString(value, config.configureEnvironment));
+        = final_flags.map(async (value: string) => this.expandString(value, await this.expandedConfigureEnvironment()));
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
     // Setup temporary environment for the configure step
     const old_env = process.env;
-    const configure_env
-        = util.mergeEnvironment(old_env as proc.EnvironmentVariables, config.environment, config.configureEnvironment);
+    const configure_env = util.mergeEnvironment(old_env as proc.EnvironmentVariables,
+                                                config.environment,
+                                                await this.expandedConfigureEnvironment());
     process.env = configure_env;
 
     const retc = await this.doConfigure(expanded_flags, consumer);
@@ -715,17 +731,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [];
     })();
 
+    const build_env = {} as {[key: string]: string};
+    await util.objectPairs(config.buildEnvironment)
+        .forEach(async ([key, value]) => build_env[key] = await this.expandString(value));
+
     const args =
         ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(config.buildArgs,
                                                                                                   ['--'],
                                                                                                   generator_args,
                                                                                                   config.buildToolArgs);
-    const expanded_args_promises = args.map(async (value: string) => this.expandString(value, config.buildEnvironment));
+    const expanded_args_promises = args.map(async (value: string) => this.expandString(value, build_env));
     const expanded_args = await Promise.all(expanded_args_promises);
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
     const cmake = await paths.cmakePath;
-    const child = this.executeCommand(cmake, expanded_args, consumer, {environment: config.buildEnvironment});
+    const child = this.executeCommand(cmake, expanded_args, consumer, {environment: build_env});
     this._currentProcess = child;
     this._isBusy = true;
     await child.result;
