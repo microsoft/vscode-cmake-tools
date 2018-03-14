@@ -19,11 +19,7 @@ Contents:
 
     configuring
 
-Developer Reference
-===================
-
-`Documentation for the code itself is kept within the code, and is extracted via
-TypeDoc. See the developer reference documentation here <dev/index.html>`_.
+    development
 
 Indices and tables
 ==================

@@ -31,14 +31,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
 
   // A register function helps us bind the commands to the extension
   function register<K extends keyof CMakeTools>(name: K) {
-    return vscode.commands.registerCommand('cmake.' + name, () => {
+    return vscode.commands.registerCommand(`cmake.${name}`, () => {
       const id = util.randint(1000, 10000);
       return rollbar.invokeAsync(name, async () => {
-        const cmt = await cmt_pr;
-        log.debug(`[${id}]`, 'cmake.' + name, 'started');
-        const fn = (cmt[name] as Function).bind(cmt);
+        const cmt_inst = await cmt_pr;
+        log.debug(`[${id}]`, `cmake.${name}`, 'started');
+        const fn = (cmt_inst[name] as Function).bind(cmt_inst);
         await fn();
-        log.debug(`[${id}]`, 'cmake.' + name, 'finished');
+        log.debug(`[${id}]`, `cmake.${name}`, 'finished');
       });
     });
   }
@@ -66,7 +66,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
   // Push it so we get clean teardown.
   context.subscriptions.push(cmt);
 
-  context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => { return cmt; }));
+  context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
 
   // Return the extension
   INSTANCE = cmt;

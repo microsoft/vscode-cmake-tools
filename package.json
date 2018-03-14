@@ -315,6 +315,11 @@
           "default": 0,
           "description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs"
         },
+        "cmake.autoRestartBuild": {
+          "type": "boolean",
+          "default": false,
+          "description": "If 'true', requesting a build while a build is already running will stop and restart the build"
+        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,
@@ -652,6 +657,7 @@
     "compile": "./node_modules/.bin/tsc -watch -p ./",
     "compile-once": "./node_modules/.bin/tsc -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",
+    "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "docs": "node ./node_modules/.bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
   },
   "devDependencies": {
@@ -670,8 +676,10 @@
     "@types/xml2js": "^0.0.28",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
+    "clang-format": "^1.2.2",
     "mocha": "~3.4.2",
     "sinon": "^4.1.4",
+    "tslint": "^5.9.1",
     "typedoc": "^0.8.0",
     "typescript": "~2.3.0",
     "vscode": "~1.1.5"

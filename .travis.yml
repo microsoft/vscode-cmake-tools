@@ -45,3 +45,8 @@ script:
   - cmake --version
   - bash scripts/run_tests.sh
   - bash scripts/run_extension_tests.sh
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always

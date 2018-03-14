@@ -22,7 +22,7 @@ import * as rimraf from 'rimraf';
 export namespace fs {
 
 export function exists(fspath: string): Promise<boolean> {
-  return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); })
+  return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); });
 }
 
 export const readFile = promisify(fs_.readFile);
@@ -56,14 +56,14 @@ export async function mkdir_p(fspath: string): Promise<void> {
     await mkdir_p(parent);
   } else {
     if (!(await stat(parent)).isDirectory()) {
-      throw new Error("Cannot create ${fspath}: ${parent} is a non-directory");
+      throw new Error('Cannot create ${fspath}: ${parent} is a non-directory');
     }
   }
   if (!await exists(fspath)) {
     await mkdir(fspath);
   } else {
     if (!(await stat(fspath)).isDirectory()) {
-      throw new Error("Cannot mkdir_p on ${fspath}. It exists, and is not a directory!");
+      throw new Error('Cannot mkdir_p on ${fspath}. It exists, and is not a directory!');
     }
   }
 }
@@ -80,7 +80,7 @@ export function copyFile(inpath: string, outpath: string): Promise<void> {
     reader.on('open', _fd => {
       const writer = fs_.createWriteStream(outpath);
       writer.on('error', e => reject(e));
-      writer.on('open', _fd => { reader.pipe(writer); });
+      writer.on('open', _fd2 => { reader.pipe(writer); });
       writer.on('close', () => resolve());
     });
   });

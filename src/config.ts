@@ -19,8 +19,8 @@ export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal
 function readConfig<T>(key: string): T|null;
 function readConfig<T>(key: string, default_: T): T;
 function readConfig<T>(key: string, default_?: T): T|null {
-  const config = vscode.workspace.getConfiguration('cmake');
-  const value = config.get(key) as T | undefined;
+  const cmt_config = vscode.workspace.getConfiguration('cmake');
+  const value = cmt_config.get(key) as T | undefined;
   if (value === undefined) {
     if (default_ === undefined) {
       return null;
@@ -41,10 +41,10 @@ function readPrefixedConfig<T>(key: string): T|null;
 function readPrefixedConfig<T>(key: string, default_: T): T;
 function readPrefixedConfig<T>(key: string, default_?: T): T|null {
   const platmap = {
-    win32 : 'windows',
-    darwin : 'osx',
-    linux : 'linux',
-  } as {[k: string] : string};
+    win32: 'windows',
+    darwin: 'osx',
+    linux: 'linux',
+  } as {[k: string]: string};
   const platform = platmap[process.platform];
   if (default_ === undefined) {
     return readConfig(`${platform}.${key}`, readConfig<T>(`${key}`));
@@ -71,6 +71,8 @@ class ConfigurationReader {
   get saveBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('saveBeforeBuild'); }
 
   get clearOutputBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('clearOutputBeforeBuild'); }
+
+  get autoRestartBuild(): boolean { return !!readPrefixedConfig<boolean>('autoRestartBuild'); }
 
   get configureSettings(): any { return readPrefixedConfig<Object>('configureSettings'); }
 
@@ -104,13 +106,13 @@ class ConfigurationReader {
 
   get debugConfig(): any { return readPrefixedConfig<any>('debugConfig'); }
 
-  get environment() { return readPrefixedConfig<{[key: string] : string}>('environment', {}); }
+  get environment() { return readPrefixedConfig<{[key: string]: string}>('environment', {}); }
 
-  get configureEnvironment() { return readPrefixedConfig<{[key: string] : string}>('configureEnvironment', {}); }
+  get configureEnvironment() { return readPrefixedConfig<{[key: string]: string}>('configureEnvironment', {}); }
 
-  get buildEnvironment() { return readPrefixedConfig<{[key: string] : string}>('buildEnvironment', {}); }
+  get buildEnvironment() { return readPrefixedConfig<{[key: string]: string}>('buildEnvironment', {}); }
 
-  get testEnvironment() { return readPrefixedConfig<{[key: string] : string}>('testEnvironment', {}); }
+  get testEnvironment() { return readPrefixedConfig<{[key: string]: string}>('testEnvironment', {}); }
 
   get defaultVariants(): Object { return readPrefixedConfig<Object>('defaultVariants', {}); }
 
@@ -152,7 +154,7 @@ class ConfigurationReader {
    * @param cb A callback when the setting changes
    */
   onChange<K extends keyof ConfigurationReader>(setting: K, cb: (value: ConfigurationReader[K]) => void) {
-    const state = {value : this[setting]};
+    const state = {value: this[setting]};
     return vscode.workspace.onDidChangeConfiguration(() => {
       rollbar.invoke(`Callback changing setting: cmake.${setting}`, () => {
         const new_value = this[setting];

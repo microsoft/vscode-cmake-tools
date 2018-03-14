@@ -29,7 +29,7 @@ export function replaceAll(str: string, needle: string, what: string) {
  * @returns The modified string
  */
 export function removeAllPatterns(str: string, patterns: string[]): string {
-  return patterns.reduce((acc, needle) => { return replaceAll(acc, needle, ''); }, str);
+  return patterns.reduce((acc, needle) => replaceAll(acc, needle, ''), str);
 }
 
 /**
@@ -63,7 +63,7 @@ export function normalizePath(p: string, normalize_case = true): string {
  */
 export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
-    return !([ '', 'FALSE', 'OFF', '0', 'NOTFOUND', 'NO', 'N', 'IGNORE' ].indexOf(value) >= 0
+    return !(['', 'FALSE', 'OFF', '0', 'NOTFOUND', 'NO', 'N', 'IGNORE'].indexOf(value) >= 0
              || value.endsWith('-NOTFOUND'));
   }
   // Numbers/bools/etc. follow common C-style truthiness
@@ -75,8 +75,8 @@ export function isTruthy(value: (boolean|string|null|undefined|number)) {
  * `getOwnPropertyNames`
  * @param obj The object to iterate
  */
-export function objectPairs<V>(obj: {[key: string]: V}): [ string, V ][] {
-  return Object.getOwnPropertyNames(obj).map(key => ([ key, obj[key] ] as [string, V]));
+export function objectPairs<V>(obj: {[key: string]: V}): [string, V][] {
+  return Object.getOwnPropertyNames(obj).map(key => ([key, obj[key]] as [string, V]));
 }
 
 /**
@@ -132,8 +132,8 @@ export interface CMakeValue {
 
 export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   const ret: CMakeValue = {
-    type : 'UNKNOWN',
-    value : '',
+    type: 'UNKNOWN',
+    value: '',
   };
   if (value === true || value === false) {
     ret.type = 'BOOL';
@@ -141,14 +141,14 @@ export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   } else if (typeof (value) === 'string') {
     ret.type = 'STRING';
     ret.value = replaceAll(value, ';', '\\;');
-  } else if (value instanceof Number || typeof value === 'number') {
+  } else if (typeof value === 'number') {
     ret.type = 'STRING';
     ret.value = value.toString();
   } else if (value instanceof Array) {
     ret.type = 'STRING';
     ret.value = value.join(';');
   } else {
-    throw new Error(`Invalid value to convert to cmake value: ${value}`)
+    throw new Error(`Invalid value to convert to cmake value: ${value}`);
   }
   return ret;
 }
@@ -166,7 +166,7 @@ export async function termProc(child: child_process.ChildProcess) {
 async function _killTree(pid: number) {
   if (process.platform !== 'win32') {
     let children: number[] = [];
-    const stdout = (await execute('pgrep', [ '-P', pid.toString() ], null, {silent : true}).result).stdout.trim();
+    const stdout = (await execute('pgrep', ['-P', pid.toString()], null, {silent: true}).result).stdout.trim();
     if (!!stdout.length) {
       children = stdout.split('\n').map(line => Number.parseInt(line));
     }
@@ -183,10 +183,11 @@ async function _killTree(pid: number) {
         throw e;
       }
     }
-  } else {  // Because reasons, Node's proc.kill doesn't work on killing child
+  } else {
+    // Because reasons, Node's proc.kill doesn't work on killing child
     // processes transitively. We have to do a sad and manually kill the
     // task using taskkill.
-    child_process.exec('taskkill /pid ' + pid.toString() + ' /T /F');
+    child_process.exec(`taskkill /pid ${pid.toString()} /T /F`);
   }
 }
 
@@ -217,9 +218,9 @@ export function parseVersion(str: string): Version {
   }
   const [, major, minor, patch] = mat;
   return {
-    major : parseInt(major),
-    minor : parseInt(minor),
-    patch : parseInt(patch),
+    major: parseInt(major),
+    minor: parseInt(minor),
+    patch: parseInt(patch),
   };
 }
 
@@ -259,19 +260,19 @@ export function mergeEnvironment(...env: EnvironmentVariables[]) {
         acc2[key.toUpperCase()] = vars[key];
         return acc2;
       }, {});
-      return Object.assign({}, acc, norm_vars);
+      return {...acc, ...norm_vars};
     } else {
-      return Object.assign({}, acc, vars);
+      return {...acc, ...vars};
     }
-  }, {})
+  }, {});
 }
 
-export function parseCompileDefinition(str: string): [ string, string|null ] {
+export function parseCompileDefinition(str: string): [string, string|null] {
   if (/^\w+$/.test(str)) {
-    return [ str, null ];
+    return [str, null];
   } else {
     const key = str.split('=', 1)[0];
-    return [ key, str.substr(key.length + 1) ];
+    return [key, str.substr(key.length + 1)];
   }
 }
 

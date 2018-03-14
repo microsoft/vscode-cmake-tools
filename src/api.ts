@@ -75,7 +75,7 @@ export interface RawCompilationInfo {
 export interface CompilationInfo {
   file: string;
   compile?: RawCompilationInfo;
-  includeDirectories: {path: string; isSystem : boolean;}[];
+  includeDirectories: {path: string; isSystem: boolean;}[];
   compileDefinitions: {[define: string]: string|null};
   compileFlags: string[];
   compiler?: string;
