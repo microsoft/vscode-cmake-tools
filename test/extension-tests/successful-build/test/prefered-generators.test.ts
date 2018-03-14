@@ -16,6 +16,11 @@ interface BuildSystemConfiguration {
 }
 
 let workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
+
+if (process.env.TRAVIS_OS_NAME) {
+  workername = process.env.TRAVIS_OS_NAME;
+}
+
 if (workername === undefined) {
   workername = 'DevPC';
 }
@@ -27,6 +32,11 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
       defaultKit: 'GCC',
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: 'C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
+    },
+    {
+      defaultKit: 'Clang',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: 'C:\\Program Files\\LLVM\\bin'
     }
   ],
   ['Visual Studio 2017']: [
@@ -39,11 +49,6 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
   ],
   ['Visual Studio 2017 Preview']: [
     {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
-    {
-      defaultKit: 'Clang',
-      expectedDefaultGenerator: 'MinGW Makefiles',
-      path: 'C:\\Program Files\\LLVM\\bin;C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
-    },
     {
       defaultKit: 'Clang',
       expectedDefaultGenerator: 'Visual Studio 14 2015',
@@ -61,6 +66,14 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
   ['Visual Studio 2013']: [
     {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
     {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path: 'C:\\MinGW\\bin'}
+  ],
+  ['linux']: [
+    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
+    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
+  ],
+  ['osx']: [
+    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
+    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
   ]
 };
 
@@ -108,7 +121,9 @@ function makeExtensionTestSuite(name: string,
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
       this.timeout(10000);
       context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
-      process.env.PATH = context.buildsystem.path;
+      if (context.buildsystem.path) {
+        process.env.PATH = context.buildsystem.path;
+      }
 
       context.testEnv.projectFolder.buildDirectory.clear();
 
@@ -139,7 +154,7 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
 
     const BUILD_TIMEOUT: number = 120000;
 
-    suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) { skipTestIfVisualStudioIsNotPresent(this); });
+    //suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) { skipTestIfVisualStudioIsNotPresent(this); });
 
     // Test only one visual studio, because there is only a preferred generator in kit by default
     // Prefered generator selection order is settings.json -> cmake-kit.json -> error
