@@ -189,9 +189,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param instr The input string
    * @returns A string with the variable references replaced
    */
-  async expandString(instr: string): Promise<string> {
+  async expandString(instr: string, env?: proc.EnvironmentVariables): Promise<string> {
     // Update the replacements and get the updated values
     const replacements = this._replacements;
+
+    // Setup temporary environment
+    const old_env = process.env;
+    const custom_env = util.mergeEnvironment(old_env as proc.EnvironmentVariables, config.environment, env ? env : {});
+    process.env = custom_env;
 
     // We accumulate a list of substitutions that we need to make, preventing
     // recursively expanding or looping forever on bad replacements
@@ -210,11 +215,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
     }
 
-    // Setup custom configure environment
-    const old_env = process.env;
-    const configureEnv = util.mergeEnvironment(old_env as proc.EnvironmentVariables, config.configureEnvironment);
-    process.env = configureEnv;
-
     const env_re = /\$\{env:(.+?)\}/g;
     while ((mat = env_re.exec(instr))) {
       const full = mat[0];
@@ -231,9 +231,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       subs.set(full, repl);
     }
 
-    // Reset environment
-    process.env = old_env;
-
     const command_re = /\$\{command:(.+?)\}/g;
     while ((mat = command_re.exec(instr))) {
       const full = mat[0];
@@ -246,6 +243,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         subs.set(full, `${command_ret}`);
       } catch (e) { log.warning(`Exception while executing command ${command} for string: ${instr} (${e})`); }
     }
+
+    // Reset environment
+    process.env = old_env;
 
     let final_str = instr;
     subs.forEach((value, key) => { final_str = util.replaceAll(final_str, key, value); });
@@ -488,7 +488,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await(async(): Promise<boolean> => {
+      const generator_present = await (async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || this.testHaveCommand('ninja');
         }
@@ -565,8 +565,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     const settings_flags
-        = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = [ '--no-warn-unused-cli' ].concat(extra_args, config.configureArgs);
+        = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
+    const flags = ['--no-warn-unused-cli'].concat(extra_args, config.configureArgs);
 
     console.assert(!!this._kit);
     if (!this._kit) {
@@ -592,11 +592,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Expand all flags
     const final_flags = flags.concat(settings_flags);
-    const expanded_flags_promises = final_flags.map(async (value: string) => this.expandString(value));
+    const expanded_flags_promises
+        = final_flags.map(async (value: string) => this.expandString(value, config.configureEnvironment));
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
+    // Setup temporary environment for the configure step
+    const old_env = process.env;
+    const configure_env
+        = util.mergeEnvironment(old_env as proc.EnvironmentVariables, config.environment, config.configureEnvironment);
+    process.env = configure_env;
+
     const retc = await this.doConfigure(expanded_flags, consumer);
+
+    // Reset environment
+    process.env = old_env;
+
     this._onReconfiguredEmitter.fire();
     await this._refreshExpansions();
     return retc;
@@ -709,12 +720,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
                                                                                                   ['--'],
                                                                                                   generator_args,
                                                                                                   config.buildToolArgs);
-    const expanded_args_promises = args.map(async (value: string) => this.expandString(value));
+    const expanded_args_promises = args.map(async (value: string) => this.expandString(value, config.buildEnvironment));
     const expanded_args = await Promise.all(expanded_args_promises);
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
     const cmake = await paths.cmakePath;
-    const child = this.executeCommand(cmake, expandedArgs, consumer, {environment : config.buildEnvironment});
+    const child = this.executeCommand(cmake, expanded_args, consumer, {environment: config.buildEnvironment});
     this._currentProcess = child;
     this._isBusy = true;
     await child.result;
