@@ -33,11 +33,7 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: 'C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
     },
-    {
-      defaultKit: 'Clang',
-      expectedDefaultGenerator: 'MinGW Makefiles',
-      path: 'C:\\Program Files\\LLVM\\bin'
-    }
+    {defaultKit: 'Clang', expectedDefaultGenerator: 'MinGW Makefiles', path: 'C:\\Program Files\\LLVM\\bin'}
   ],
   ['Visual Studio 2017']: [
     {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
@@ -71,10 +67,12 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
     {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
     {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
   ],
-  ['osx']: [
-    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
-  ]
+  ['osx']: [{
+    defaultKit: 'Apple',
+    expectedDefaultGenerator: 'Unix Makefiles',
+    path:
+        '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin;/Applications/Xcode.app/Contents/Developer/usr/bin'
+  }]
 };
 
 interface CmakeContext {
@@ -154,7 +152,7 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
 
     const BUILD_TIMEOUT: number = 120000;
 
-    //suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) { skipTestIfVisualStudioIsNotPresent(this); });
+    // suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) { skipTestIfVisualStudioIsNotPresent(this); });
 
     // Test only one visual studio, because there is only a preferred generator in kit by default
     // Prefered generator selection order is settings.json -> cmake-kit.json -> error
