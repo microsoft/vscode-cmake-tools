@@ -7,7 +7,7 @@ import {clearExistingKitConfigurationFile} from '../../../test-helpers';
 import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
-import {ITestCallbackContext} from 'mocha';
+import {ITestCallbackContext, IHookCallbackContext} from 'mocha';
 
 interface BuildSystemConfiguration {
   defaultKit: string;
@@ -44,12 +44,7 @@ const DefaultCompilerMakeSystem: {[os: string]: BuildSystemConfiguration[]} = {
     }
   ],
   ['Visual Studio 2017 Preview']: [
-    {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
-    {
-      defaultKit: 'Clang',
-      expectedDefaultGenerator: 'Visual Studio 14 2015',
-      path: 'C:\\Program Files\\LLVM\\bin;C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
-    }
+    {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'}
   ],
   ['Visual Studio 2015']: [
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
@@ -96,11 +91,11 @@ function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: Cmake
 //   }
 // }
 
-// function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IHookCallbackContext): void {
-//   if ((process.env.HasVs != 'true')) {
-//     testContext.skip();
-//   }
-// }
+function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IHookCallbackContext): void {
+  if ((process.env.HasVs != 'true')) {
+    testContext.skip();
+  }
+}
 
 function makeExtensionTestSuite(name: string,
                                 _buildsystem: BuildSystemConfiguration,
@@ -152,7 +147,8 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
 
     const BUILD_TIMEOUT: number = 120000;
 
-    // suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) { skipTestIfVisualStudioIsNotPresent(this); });
+    // \todo Disable until travis and Mac Tests are ready.
+    suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) { skipTestIfVisualStudioIsNotPresent(this); });
 
     // Test only one visual studio, because there is only a preferred generator in kit by default
     // Prefered generator selection order is settings.json -> cmake-kit.json -> error
@@ -187,10 +183,10 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     //   await context.cmt.selectKit();
     //   await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
     //   expect(await context.cmt.build()).to.be.eq(-1);
-    //   expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1); // There should be a warning
+    //   expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1); // \todo Should be a warning?
     // });
 
-    // This test will fail always because the driver
+    // \todo  This test will fail always because the driver
     // test('Non preferred generators configured in settings and kit', async function(this : ITestCallbackContext) {
     //   skipTestWithPreferredGeneratorInKit(this, context);
     //   this.timeout(10000);
@@ -198,7 +194,7 @@ DefaultCompilerMakeSystem[workername].forEach(buildsystem => {
     //   await context.testEnv.setting.changeSetting('preferredGenerators', []);
 
     //   context.cmt.build().then(() =>{ }).catch((ex:Error) => expect(ex.message).to.be('Unable to determine CMake
-    //   Generator to use'));// <--- this is wrong behavior to destorys the use
+    //   Generator to use'));// <--- this is wrong behavior it breaks the output of a message or it is redundant
 
     //   expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1); // Message that no make system was found
     // });
