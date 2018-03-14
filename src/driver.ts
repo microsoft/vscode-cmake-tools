@@ -558,7 +558,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Only use the installPrefix config if the user didn't
     // provide one via configureSettings
-    if (!settings.CMAKE_INSTALL_PREFIX) {
+    if (!settings.CMAKE_INSTALL_PREFIX && this.installDir) {
       await this._refreshExpansions();
       settings.CMAKE_INSTALL_PREFIX = this.installDir;
     }
