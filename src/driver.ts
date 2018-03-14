@@ -155,7 +155,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private get _replacements(): {[key: string]: string|undefined} {
     const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
-    const user_dir = process.platform === 'win32' ? process.env['PROFILE']! : process.env['HOME']!;
+    const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
     const replacements = this.stateManager.replacements;
 
     // Update default replacements

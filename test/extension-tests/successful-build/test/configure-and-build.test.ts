@@ -14,7 +14,6 @@ suite('Build', async () => {
   let testEnv: DefaultEnvironment;
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
-    this.skip();
     if (process.env.HasVs != 'true') {
       this.skip();
     }
