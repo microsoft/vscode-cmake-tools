@@ -169,8 +169,17 @@ suite('Kits scan test', async () => {
     }).timeout(10000);
 
     // Fails because PATH is tried to split but a empty path is not splitable
-    test.skip('check empty kit file', async () => {
-      process.env['PATH'] = '';
+    test('check empty kit file', async () => {
+      process.env.PATH = '';
+
+      await km.initialize();
+
+      const newKitFileExists = await fs.exists(path_rescan_kit);
+      expect(newKitFileExists).to.be.true;
+    });
+
+    test('check empty kit file', async () => {
+      delete process.env["PATH"];
 
       await km.initialize();
 
