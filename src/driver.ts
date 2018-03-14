@@ -153,10 +153,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this._kit as VSKit;
   }
 
-  private get _replacements(): {[key: string] : string | undefined} {
+  private get _replacements(): {[key: string]: string|undefined} {
     const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
     const user_dir = process.platform === 'win32' ? process.env['PROFILE']! : process.env['HOME']!;
-    let replacements = this.stateManager.replacements;
+    const replacements = this.stateManager.replacements;
 
     // Update default replacements
     replacements['workspaceRoot'] = vscode.workspace.rootPath;
@@ -487,7 +487,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await(async(): Promise<boolean> => {
+      const generator_present = await (async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || this.testHaveCommand('ninja');
         }
@@ -591,7 +591,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Expand all flags
     const final_flags = flags.concat(settings_flags);
-    const expanded_flags_promises = final_flags.map(async (value: string) => await this.expandString(value));
+    const expanded_flags_promises = final_flags.map(async (value: string) => this.expandString(value));
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
