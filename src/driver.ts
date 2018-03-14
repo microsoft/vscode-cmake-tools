@@ -257,6 +257,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const cur_env = process.env as proc.EnvironmentVariables;
     const env = util.mergeEnvironment(cur_env,
                                       this.getKitEnvironmentVariablesObject(),
+                                      config.environment,
                                       (options && options.environment) ? options.environment : {});
     const exec_options = {...options, environment: env};
     return proc.execute(command, args, consumer, exec_options);
@@ -487,7 +488,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await (async(): Promise<boolean> => {
+      const generator_present = await(async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || this.testHaveCommand('ninja');
         }
@@ -564,8 +565,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     const settings_flags
-        = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = ['--no-warn-unused-cli'].concat(extra_args);
+        = util.objectPairs(settings).map(([ key, value ]) => _makeFlag(key, util.cmakeify(value as string)));
+    const flags = [ '--no-warn-unused-cli' ].concat(extra_args, config.configureArgs);
 
     console.assert(!!this._kit);
     if (!this._kit) {
@@ -713,7 +714,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
     const cmake = await paths.cmakePath;
-    const child = this.executeCommand(cmake, expanded_args, consumer);
+    const child = this.executeCommand(cmake, expandedArgs, consumer, {environment : config.buildEnvironment});
     this._currentProcess = child;
     this._isBusy = true;
     await child.result;
