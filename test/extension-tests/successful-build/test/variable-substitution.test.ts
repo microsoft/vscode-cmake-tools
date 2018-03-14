@@ -41,24 +41,6 @@ suite('[Variable Substitution]', async () => {
     testEnv.teardown();
   });
 
-  test('Check substitution within "cmake.installPrefix"', async () => {
-    // Set fake settings
-    testEnv.setting.changeSetting('installPrefix', '${workspaceRoot}/build/dist');
-
-    // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[cmakeInstallPrefix] configure failed');
-    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-    const cache = await CMakeCache.fromPath(await cmt.cachePath);
-
-    const cacheEntry = cache.get('CMAKE_INSTALL_PREFIX') as api.CacheEntry;
-    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[cmakeInstallPrefix] unexpected cache entry type');
-    expect(cacheEntry.key).to.eq('CMAKE_INSTALL_PREFIX', '[cmakeInstallPrefix] unexpected cache entry key name');
-    expect(cacheEntry.as<string>())
-        .to.eq(normalizePath(testEnv.projectFolder.buildDirectory.location.concat('/dist')),
-               '[cmakeInstallPrefix] substitution incorrect');
-    expect(typeof cacheEntry.value).to.eq('string', '[cmakeInstallPrefix] unexpected cache entry value type');
-  }).timeout(60000);
-
   test('Check substitution for "workspaceRoot"', async () => {
     // Set fake settings
     testEnv.setting.changeSetting('configureSettings', {workspaceRoot: '${workspaceRoot}'});
@@ -105,7 +87,8 @@ suite('[Variable Substitution]', async () => {
     expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[workspaceRootFolderName] unexpected cache entry type');
     expect(cacheEntry.key)
         .to.eq('workspaceRootFolderName', '[workspaceRootFolderName] unexpected cache entry key name');
-    expect(cacheEntry.as<string>()).to.eq(path.basename(testEnv.projectFolder.location), '[workspaceRootFolderName] substitution incorrect');
+    expect(cacheEntry.as<string>())
+        .to.eq(path.basename(testEnv.projectFolder.location), '[workspaceRootFolderName] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[workspaceRootFolderName] unexpected cache entry value type');
   }).timeout(60000);
 
@@ -179,5 +162,23 @@ suite('[Variable Substitution]', async () => {
     expect(cacheEntry2.key).to.eq('otherVariant', '[otherVariant] unexpected cache entry key name');
     expect(cacheEntry2.as<string>()).to.eq('option1', '[otherVariant] substitution incorrect');
     expect(typeof cacheEntry2.value).to.eq('string', '[otherVariant] unexpected cache entry value type');
+  }).timeout(60000);
+
+  test('Check substitution within "cmake.installPrefix"', async () => {
+    // Set fake settings
+    testEnv.setting.changeSetting('installPrefix', '${workspaceRoot}/build/dist');
+
+    // Configure
+    expect(await cmt.configure()).to.be.eq(0, '[cmakeInstallPrefix] configure failed');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+    const cache = await CMakeCache.fromPath(await cmt.cachePath);
+
+    const cacheEntry = cache.get('CMAKE_INSTALL_PREFIX') as api.CacheEntry;
+    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[cmakeInstallPrefix] unexpected cache entry type');
+    expect(cacheEntry.key).to.eq('CMAKE_INSTALL_PREFIX', '[cmakeInstallPrefix] unexpected cache entry key name');
+    expect(cacheEntry.as<string>())
+        .to.eq(normalizePath(testEnv.projectFolder.buildDirectory.location.concat('/dist')),
+               '[cmakeInstallPrefix] substitution incorrect');
+    expect(typeof cacheEntry.value).to.eq('string', '[cmakeInstallPrefix] unexpected cache entry value type');
   }).timeout(60000);
 });
