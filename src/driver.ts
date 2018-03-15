@@ -193,8 +193,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async getExpandedEnvironment(): Promise<{[key: string]: string}> {
     const env = {} as {[key: string]: string};
-    await util.objectPairs(config.environment)
-        .forEach(async ([key, value]) => env[key] = await this.expandString(value));
+    await Promise.resolve(util.objectPairs(config.environment)
+                              .forEach(async ([key, value]) => env[key] = await this.expandString(value)));
     return env;
   }
 
@@ -204,8 +204,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async getExpandedConfigureEnvironment(): Promise<{[key: string]: string}> {
     const config_env = {} as {[key: string]: string};
-    await util.objectPairs(config.configureEnvironment)
-        .forEach(async ([key, value]) => config_env[key] = await this.expandString(value));
+    await Promise.resolve(util.objectPairs(config.configureEnvironment)
+                              .forEach(async ([key, value]) => config_env[key] = await this.expandString(value)));
     return config_env;
   }
 
@@ -617,8 +617,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Expand all flags
     const final_flags = flags.concat(settings_flags);
-    const expanded_flags_promises
-        = final_flags.map(async (value: string) => this.expandString(value, await this.getExpandedConfigureEnvironment()));
+    const expanded_flags_promises = final_flags.map(
+        async (value: string) => this.expandString(value, await this.getExpandedConfigureEnvironment()));
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
@@ -742,8 +742,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     })();
 
     const build_env = {} as {[key: string]: string};
-    await util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.getExpandedEnvironment()))
-        .forEach(async ([key, value]) => build_env[key] = await this.expandString(value));
+    await Promise.resolve(
+        util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.getExpandedEnvironment()))
+            .forEach(async ([key, value]) => build_env[key] = await this.expandString(value)));
 
     const args =
         ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(config.buildArgs,
