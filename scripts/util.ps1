@@ -46,7 +46,7 @@ function Install-TestCMake ($Version) {
         $Matches[1]
     }
     else {
-        throw "Invalid CMake version number: $cmake_minor"
+        throw "Invalid CMake version number: $Version"
     }
 
     $cmake_files_url = "https://cmake.org/files/v$cmake_minor"
@@ -57,21 +57,13 @@ function Install-TestCMake ($Version) {
 
     New-Item $tmpdir -ItemType Directory -Force | Out-Null
 
-    if ($CMakeVersion -match "(\d+\.\d+)\.\d+") {
-        $cmake_minor = $Matches[1]
-        Write-Debug "CMake minor version is $cmake_minor"
-    }
-    else {
-        throw "Invalid CMake version string: $CMakeVersion"
-    }
-
     if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) {
         throw "Unimplemented for Windows"
     }
     elseif ($PSVersionTable.OS.StartsWith("Linux")) {
         # Install using the Linux self-extracting shell script executable
-        $installer_url = "$cmake_files_url/cmake-$CMakeVersion-Linux-x86_64.sh"
-        $installer_file = "/tmp/cmake-$CMakeVersion.sh"
+        $installer_url = "$cmake_files_url/cmake-$Version-Linux-x86_64.sh"
+        $installer_file = "/tmp/cmake-$Version.sh"
 
         Download-File -Url $installer_url -Path $installer_file
 
@@ -83,8 +75,8 @@ function Install-TestCMake ($Version) {
         Rename-Item $tmpdir $test_cmake_dir | Out-Null
     }
     elseif ($PSVersionTable.OS.StartsWith("Darwin")) {
-        $installer_url = "$cmake_files_url/cmake-$CMakeVersion-Darwin-x86_64.tar.gz"
-        $installer_file = Join-Path $tmpdir "/cmake-$CMakeVersion.tgz"
+        $installer_url = "$cmake_files_url/cmake-$Version-Darwin-x86_64.tar.gz"
+        $installer_file = Join-Path $tmpdir "/cmake-$Version.tgz"
 
         Download-File -Url $installer_url -Path $installer_file
         pushd /tmp
