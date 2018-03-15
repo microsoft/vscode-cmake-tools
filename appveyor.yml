@@ -8,4 +8,4 @@ image:
 install:
 - ps: Install-Product node 8.9.1 x64
 build_script:
-- ps: ./scripts/ci.ps1
+- pwsh: ./scripts/ci.ps1

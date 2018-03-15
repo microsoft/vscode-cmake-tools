@@ -136,7 +136,7 @@ function Install-TestCMake ($Version) {
 
     New-Item $tmpdir -ItemType Directory -Force | Out-Null
 
-    if ($PSVersionTable.Platform -eq "Windows") {
+    if ($PSVersionTable.OSStartsWith("Microsoft Windows")) {
         $zip_url = "$cmake_files_url/cmake-$Version-win64-x64.zip"
         $zip_file = Join-Path "/tmp" "cmake-$Version.zip"
         Write-Debug "Downloading $zip_url and saving it to $zip_file"
