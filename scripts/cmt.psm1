@@ -138,7 +138,7 @@ function Install-TestCMake ($Version) {
 
     if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) {
         $zip_url = "$cmake_files_url/cmake-$Version-win64-x64.zip"
-        $zip_file = Join-Path "/tmp" "cmake-$Version.zip"
+        $zip_file = Join-Path "$env:TEMP" "cmake-$Version.zip"
         Write-Debug "Downloading $zip_url and saving it to $zip_file"
         Get-RemoteFile -Url $zip_url -Path $zip_file
         Expand-Archive $zip_file -DestinationPath $tmpdir
