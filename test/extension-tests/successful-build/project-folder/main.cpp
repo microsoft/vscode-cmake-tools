@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 #ifndef _CMAKE_VERSION
     #define _CMAKE_VERSION "0.0"
@@ -15,9 +16,17 @@ std::string getCompilerName() {
     #endif
 }
 
+std::string get_env_var(const std::string& key) {
+    const auto env = std::getenv(key.c_str());
+    return env != nullptr ? env : "";
+}
+
 int main(int, char**) {
     std::cout << "{\n";
     std::cout << "  \"compiler\": \"" << getCompilerName() << "\",\n";
-    std::cout << "  \"cmake-version\": \"" << _CMAKE_VERSION << "\"\n";
+    std::cout << "  \"cmake-version\": \"" << _CMAKE_VERSION << "\",\n";
+    std::cout << "  \"configure-env\": \"" << get_env_var("_CONFIGURE_ENV") << "\",\n";
+    std::cout << "  \"build-env\": \"" << get_env_var("_BUILD_ENV") << "\",\n";
+    std::cout << "  \"env\": \"" << get_env_var("_ENV") << "\"\n";
     std::cout << "}\n";
 }

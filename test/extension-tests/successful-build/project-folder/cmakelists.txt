@@ -11,4 +11,11 @@ add_custom_command(
     COMMENT "Running in ${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-add_definitions(-D_CMAKE_VERSION="${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}")
+set(configureEnvironment "$ENV{_CONFIGURE_ENV}" CACHE STRING "configureEnvironment")
+set(buildEnvironment "$ENV{_BUILD_ENV}" CACHE STRING "buildEnvironment")
+set(environment "$ENV{_ENV}" CACHE STRING "environment")
+
+add_definitions(
+    -D_CMAKE_VERSION="${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}"
+    -D_CRT_SECURE_NO_WARNINGS
+)

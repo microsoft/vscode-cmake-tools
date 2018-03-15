@@ -267,6 +267,10 @@ export function mergeEnvironment(...env: EnvironmentVariables[]) {
   }, {});
 }
 
+export function normalizeEnvironmentVarname(varname: string) {
+  return process.platform == 'win32' ? varname.toLocaleLowerCase() : varname;
+}
+
 export function parseCompileDefinition(str: string): [string, string|null] {
   if (/^\w+$/.test(str)) {
     return [str, null];
