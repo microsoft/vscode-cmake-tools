@@ -52,6 +52,7 @@ if(SPHINX_EXECUTABLE)
             )
     endif()
     add_custom_target(docs ALL
+        DEPENDS npm-install
         COMMAND ${SPHINX_EXECUTABLE}
             -W # Warning as error
             -q # Quiet. Only warnings and errors
