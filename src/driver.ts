@@ -35,7 +35,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doConfigure(extra_args: string[],
+                                 consumer?: proc.OutputConsumer,
+                                 environment?: proc.EnvironmentVariables): Promise<number>;
 
   /**
    * Perform a clean configure. Deletes cached files before running the config
@@ -160,7 +162,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private get _replacements(): {[key: string]: string|undefined} {
     const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
     const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
-    const replacements = this.stateManager.replacements;
+    const replacements: {[key: string]: string|undefined} = {};
 
     // Update default replacements
     replacements['workspaceRoot'] = vscode.workspace.rootPath;
@@ -181,8 +183,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
       });
     }
-
-    this.stateManager.replacements = replacements;
 
     return replacements;
   }
@@ -219,10 +219,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Update the replacements and get the updated values
     const replacements = this._replacements;
 
-    // Setup temporary environment
-    const old_env = process.env;
-    const custom_env = util.mergeEnvironment(old_env as proc.EnvironmentVariables, config.environment, env ? env : {});
-    process.env = custom_env;
+    // Merge optional env parameter with process environment
+    env = env ? util.mergeEnvironment(process.env as proc.EnvironmentVariables, env)
+              : process.env as proc.EnvironmentVariables;
 
     // We accumulate a list of substitutions that we need to make, preventing
     // recursively expanding or looping forever on bad replacements
@@ -245,7 +244,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     while ((mat = env_re.exec(instr))) {
       const full = mat[0];
       const varname = mat[1];
-      const repl = process.env[varname.toLocaleLowerCase()] || '';
+      const repl = env[util.normalizeEnvironmentVarname(varname)] || '';
       subs.set(full, repl);
     }
 
@@ -253,7 +252,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     while ((mat = env2_re.exec(instr))) {
       const full = mat[0];
       const varname = mat[1];
-      const repl = process.env[varname.toLocaleLowerCase()] || '';
+      const repl = env[util.normalizeEnvironmentVarname(varname)] || '';
       subs.set(full, repl);
     }
 
@@ -269,9 +268,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         subs.set(full, `${command_ret}`);
       } catch (e) { log.warning(`Exception while executing command ${command} for string: ${instr} (${e})`); }
     }
-
-    // Reset environment
-    process.env = old_env;
 
     let final_str = instr;
     subs.forEach((value, key) => { final_str = util.replaceAll(final_str, key, value); });
@@ -615,25 +611,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
       flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
     }
 
+    // Get expanded configure environment
+    const expanded_configure_env = this.getExpandedConfigureEnvironment();
+
     // Expand all flags
     const final_flags = flags.concat(settings_flags);
-    const expanded_flags_promises = final_flags.map(
-        async (value: string) => this.expandString(value, await this.getExpandedConfigureEnvironment()));
+    const expanded_flags_promises
+        = final_flags.map(async (value: string) => this.expandString(value, await expanded_configure_env));
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
-    // Setup temporary environment for the configure step
-    const old_env = process.env;
-    const configure_env = util.mergeEnvironment(old_env as proc.EnvironmentVariables,
-                                                await this.getExpandedEnvironment(),
-                                                await this.getExpandedConfigureEnvironment());
-    process.env = configure_env;
+    const configure_env = util.mergeEnvironment(await this.getExpandedEnvironment(), await expanded_configure_env);
 
-    const retc = await this.doConfigure(expanded_flags, consumer);
-
-    // Reset environment
-    process.env = old_env;
-
+    const retc = await this.doConfigure(expanded_flags, consumer, configure_env);
     this._onReconfiguredEmitter.fire();
     await this._refreshExpansions();
     return retc;
