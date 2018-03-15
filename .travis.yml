@@ -1,11 +1,11 @@
 language: cpp
 
 os:
-  # - osx
+  - osx
   - linux
 
 compiler:
-  # - clang
+  - clang
   - gcc
 
 dist: trusty
