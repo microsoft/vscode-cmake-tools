@@ -28,7 +28,7 @@ New-Item $fakebin_dest -ItemType Directory -Force | Out-Null
 
 $in_binary = Join-Path $fakebin_build "FakeOutputGenerator$ext"
 
-$targets = @("clang-0.25", "gcc-42.1", "gcc-666")
+$targets = @("clang-0.25", "gcc-42.1", "gcc-666", "clang-8.1.0")
 
 foreach ($target in $targets) {
     Copy-Item $in_binary "$fakebin_dest/$target$ext"

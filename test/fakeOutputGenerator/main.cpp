@@ -3,20 +3,12 @@
 #include <string>
 
 std::string generateConfigFilename(std::string inputFileName) {
-    static const int EXT_LENGTH = 4;
-    static const char* CONFIG_EXTENSION = ".cfg";
-    std::string configFilePath = inputFileName;
-    if (configFilePath.length() > EXT_LENGTH) {
-        int extPosition = configFilePath.length() - EXT_LENGTH;
-        std::string fileEnd = configFilePath.substr(extPosition, EXT_LENGTH);
-
-        if (fileEnd[0] == '.') {
-            configFilePath = configFilePath.replace(extPosition, 4, CONFIG_EXTENSION);
-        } else {
-            configFilePath.append(CONFIG_EXTENSION);
-        }
-    }
-    return configFilePath;
+    #ifdef _WIN32
+    const std::string nameNoExt = inputFileName.substr(0, inputFileName.length() - 4);
+#else
+    const std::string nameNoExt = inputFileName;
+#endif
+    return nameNoExt + ".cfg";
 }
 
 int main(int argc, char** argv) {
