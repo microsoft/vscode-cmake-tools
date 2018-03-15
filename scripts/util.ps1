@@ -92,8 +92,7 @@ function Install-TestCMake ($Version) {
         Copy-Item `
             -Path "/tmp/cmake-$Version-Darwin-x86_64/CMake.app/Contents" `
             -Destination $test_cmake_dir `
-            -Recurse `
-            -Verbose
+            -Recurse
         # Get-ChildItem $test_cmake_dir -Recurse | Write-Host
     }
 
