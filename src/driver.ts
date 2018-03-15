@@ -601,7 +601,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     } break;
     case 'toolchainKit': {
       log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
-      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
+      const toolchainFile = util.normalizePath(await this.expandString(this._kit.toolchainFile))
+      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${toolchainFile}`);
     } break;
     default:
       log.debug('Kit requires no extra CMake arguments');
