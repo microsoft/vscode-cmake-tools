@@ -2,7 +2,11 @@ param(
     # CMake Version to test with
     [Parameter()]
     [string]
-    $CMakeVersion = "3.10.0"
+    $CMakeVersion = "3.10.0",
+    # Regex to match to run tests (Default is to run all tests)
+    [Parameter()]
+    [string]
+    $TestRegex = "."
 )
 $ErrorActionPreference = "Stop"
 
@@ -33,7 +37,7 @@ $retc = $LASTEXITCODE
 if ($retc) {
     throw "CMake build failed [$retc]"
 }
-& $cmake_binary -E chdir $bindir ctest --output-on-failure -j4
+& $cmake_binary -E chdir $bindir ctest --output-on-failure -j4 -R $TestRegex
 $retc = $LASTEXITCODE
 if ($retc) {
     throw "CTest failed [$retc]"
