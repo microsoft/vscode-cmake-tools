@@ -564,7 +564,7 @@ export class CMakeServerClient {
         pipe.on('error', e => {
           debugger;
           pipe.end();
-          params.onPipeError(e);
+          rollbar.takePromise('Pipe error from cmake-server', {pipe: pipe_file}, params.onPipeError(e));
           reject(e);
         });
         pipe.on('end', () => {

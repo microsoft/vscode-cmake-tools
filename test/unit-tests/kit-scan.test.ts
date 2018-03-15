@@ -42,7 +42,7 @@ suite('Kits scan test', async () => {
   test('Detect system kits never throws',
        async () => {
          // Don't care about the result, just check that we don't throw during the test
-         await expect(kit.scanForKits()).to.eventually.not.be.rejected;
+         await kit.scanForKits();
        })
       // Compiler detection can run a little slow
       .timeout(12000);
