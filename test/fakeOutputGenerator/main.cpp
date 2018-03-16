@@ -3,8 +3,8 @@
 #include <string>
 
 std::string generateConfigFilename(std::string inputFileName) {
-    #ifdef _WIN32
-    const std::string nameNoExt = inputFileName.substr(0, inputFileName.length() - 4);
+#ifdef _WIN32
+    const std::string nameNoExt = (inputFileName.rfind(".exe") == inputFileName.size() - 4) ? inputFileName.substr(0, inputFileName.length() - 4) : inputFileName;
 #else
     const std::string nameNoExt = inputFileName;
 #endif
