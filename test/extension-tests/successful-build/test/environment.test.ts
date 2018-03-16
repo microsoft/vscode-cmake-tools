@@ -16,9 +16,6 @@ suite('[Environment]', async () => {
   let testEnv: DefaultEnvironment;
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
-    if (process.env.HasVs != 'true') {
-      this.skip();
-    }
     this.timeout(100000);
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder');
