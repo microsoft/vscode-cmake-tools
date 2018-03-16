@@ -9,7 +9,7 @@ import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 import {CMakeTools} from '../../../../src/cmake-tools';
 import config from '../../../../src/config';
 
-suite('Build', async() => {
+suite('Build', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
@@ -40,13 +40,13 @@ suite('Build', async() => {
     testEnv.teardown();
   });
 
-  test('Configure ', async() => {
+  test('Configure', async () => {
     expect(await cmt.configure()).to.be.eq(0);
 
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(60000);
 
-  test('Build', async() => {
+  test('Build', async () => {
     expect(await cmt.build()).to.be.eq(0);
 
     const result = await testEnv.result.getResultAsJson();
@@ -54,7 +54,7 @@ suite('Build', async() => {
   }).timeout(60000);
 
 
-  test('Configure and Build', async() => {
+  test('Configure and Build', async () => {
     expect(await cmt.configure()).to.be.eq(0);
     expect(await cmt.build()).to.be.eq(0);
 
@@ -62,7 +62,7 @@ suite('Build', async() => {
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(60000);
 
-  test('Configure and Build', async() => {
+  test('Configure and Build', async () => {
     expect(await cmt.configure()).to.be.eq(0);
     expect(await cmt.build()).to.be.eq(0);
 
@@ -70,8 +70,7 @@ suite('Build', async() => {
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(60000);
 
-  test('Test setting watcher', async() => {
-
+  test('Test setting watcher', async () => {
     expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
     await testEnv.setting.changeSetting('buildDirectory', 'Hallo');
     expect(config.buildDirectory).to.be.eq('Hallo');

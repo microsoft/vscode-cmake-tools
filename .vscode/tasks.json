@@ -2,6 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "identifier": "npm",
             "type": "npm",
             "script": "compile",
             "problemMatcher": [

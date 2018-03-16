@@ -52,7 +52,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
   // Legacy disposal does nothing
   async asyncDispose() { this._cacheWatcher.dispose(); }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, environment?: proc.EnvironmentVariables):
+      Promise<number> {
     // Dup args so we can modify them
     const args = Array.from(args_);
     args.push('-H' + util.normalizePath(this.sourceDir));
@@ -60,7 +61,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push('-B' + bindir);
     const cmake = await paths.cmakePath;
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
-    const res = await this.executeCommand(cmake, args, outputConsumer).result;
+    const res = await this.executeCommand(cmake, args, outputConsumer, environment ? environment : {}).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
     if (res.retc == 0) {

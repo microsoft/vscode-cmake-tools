@@ -35,7 +35,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doConfigure(extra_args: string[],
+                                 consumer?: proc.OutputConsumer,
+                                 environment?: proc.EnvironmentVariables): Promise<number>;
 
   /**
    * Perform a clean configure. Deletes cached files before running the config
@@ -154,23 +156,72 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * Get replacements from the state manager and update driver relevant
+   * ones.
+   */
+  private get _replacements(): {[key: string]: string|undefined} {
+    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
+    const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
+    const replacements: {[key: string]: string|undefined} = {};
+
+    // Update default replacements
+    replacements['workspaceRoot'] = vscode.workspace.rootPath;
+    replacements['buildType'] = this.currentBuildType;
+    replacements['workspaceRootFolderName'] = path.basename(ws_root);
+    replacements['generator'] = this.generatorName || 'null';
+    replacements['projectName'] = this.projectName;
+    replacements['userHome'] = user_dir;
+
+    // Update Variant replacements
+    const variantSettings = this.stateManager.activeVariantSettings;
+    if (variantSettings) {
+      variantSettings.forEach((value: string, key: string) => {
+        if (key != 'buildType') {
+          replacements[key] = value;
+        } else {
+          replacements['buildLabel'] = value;
+        }
+      });
+    }
+
+    return replacements;
+  }
+
+  /**
+   * Get the environment and apply any needed
+   * substitutions before returning it.
+   */
+  async getExpandedEnvironment(): Promise<{[key: string]: string}> {
+    const env = {} as {[key: string]: string};
+    await Promise.resolve(util.objectPairs(config.environment)
+                              .forEach(async ([key, value]) => env[key] = await this.expandString(value)));
+    return env;
+  }
+
+  /**
+   * Get the configure environment and apply any needed
+   * substitutions before returning it.
+   */
+  async getExpandedConfigureEnvironment(): Promise<{[key: string]: string}> {
+    const config_env = {} as {[key: string]: string};
+    await Promise.resolve(util.objectPairs(config.configureEnvironment)
+                              .forEach(async ([key, value]) => config_env[key] = await this.expandString(value)));
+    return config_env;
+  }
+
+  /**
    * Replace ${variable} references in the given string with their corresponding
    * values.
    * @param instr The input string
    * @returns A string with the variable references replaced
    */
-  async expandString(instr: string): Promise<string> {
-    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
-    type StringObject = {[key: string]: string | undefined};
-    const user_dir = process.platform === 'win32' ? process.env['PROFILE']! : process.env['HOME']!;
-    const replacements: StringObject = {
-      workspaceRoot: vscode.workspace.rootPath,
-      buildType: this.currentBuildType,
-      workspaceRootFolderName: path.basename(ws_root),
-      generator: this.generatorName || 'null',
-      projectName: this.projectName,
-      userHome: user_dir,
-    };
+  async expandString(instr: string, env?: proc.EnvironmentVariables): Promise<string> {
+    // Update the replacements and get the updated values
+    const replacements = this._replacements;
+
+    // Merge optional env parameter with process environment
+    env = env ? util.mergeEnvironment(process.env as proc.EnvironmentVariables, env)
+              : process.env as proc.EnvironmentVariables;
 
     // We accumulate a list of substitutions that we need to make, preventing
     // recursively expanding or looping forever on bad replacements
@@ -193,7 +244,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     while ((mat = env_re.exec(instr))) {
       const full = mat[0];
       const varname = mat[1];
-      const repl = process.env[varname.toLocaleLowerCase()] || '';
+      const repl = env[util.normalizeEnvironmentVarname(varname)] || '';
+      subs.set(full, repl);
+    }
+
+    const env2_re = /\$\{env\.(.+?)\}/g;
+    while ((mat = env2_re.exec(instr))) {
+      const full = mat[0];
+      const varname = mat[1];
+      const repl = env[util.normalizeEnvironmentVarname(varname)] || '';
       subs.set(full, repl);
     }
 
@@ -309,6 +368,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     await this.doRefreshExpansions(async () => {
       this._sourceDirectory = util.normalizePath(await this.expandString(config.sourceDirectory));
       this._binaryDir = util.normalizePath(await this.expandString(config.buildDirectory));
+
+      const installPrefix = config.installPrefix;
+      if (installPrefix) {
+        this._installDir = util.normalizePath(await this.expandString(installPrefix));
+      }
     });
   }
 
@@ -325,6 +389,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get binaryDir(): string { return this._binaryDir; }
   private _binaryDir = '';
+
+  /**
+   * Directory where the targets will be installed.
+   */
+  get installDir(): string|null { return this._installDir; }
+  private _installDir: string|null = null;
 
   /**
    * @brief Get the path to the CMakeCache file in the build directory
@@ -439,7 +509,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const candidates = this.getPreferredGenerators();
     for (const gen of candidates) {
       const gen_name = gen.name;
-      const generator_present = await(async(): Promise<boolean> => {
+      const generator_present = await (async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
           return await this.testHaveCommand('ninja-build') || this.testHaveCommand('ninja');
         }
@@ -508,9 +578,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
       settings.CMAKE_BUILD_TYPE = this.currentBuildType;
     }
 
+    // Only use the installPrefix config if the user didn't
+    // provide one via configureSettings
+    if (!settings.CMAKE_INSTALL_PREFIX && this.installDir) {
+      await this._refreshExpansions();
+      settings.CMAKE_INSTALL_PREFIX = this.installDir;
+    }
+
     const settings_flags
         = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = ['--no-warn-unused-cli'].concat(extra_args);
+    const flags = ['--no-warn-unused-cli'].concat(extra_args, config.configureArgs);
 
     console.assert(!!this._kit);
     if (!this._kit) {
@@ -534,10 +611,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
       flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
     }
 
-    const final_flags = flags.concat(settings_flags);
-    log.trace('CMake flags are', JSON.stringify(final_flags));
+    // Get expanded configure environment
+    const expanded_configure_env = this.getExpandedConfigureEnvironment();
 
-    const retc = await this.doConfigure(final_flags, consumer);
+    // Expand all flags
+    const final_flags = flags.concat(settings_flags);
+    const expanded_flags_promises
+        = final_flags.map(async (value: string) => this.expandString(value, await expanded_configure_env));
+    const expanded_flags = await Promise.all(expanded_flags_promises);
+    log.trace('CMake flags are', JSON.stringify(expanded_flags));
+
+    const configure_env = util.mergeEnvironment(await this.getExpandedEnvironment(), await expanded_configure_env);
+
+    const retc = await this.doConfigure(expanded_flags, consumer, configure_env);
     this._onReconfiguredEmitter.fire();
     await this._refreshExpansions();
     return retc;
@@ -629,6 +715,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!ok) {
       return null;
     }
+
     const gen = this.generatorName;
     const generator_args = (() => {
       if (!gen)
@@ -643,10 +730,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
       else
         return [];
     })();
+
+    const build_env = {} as {[key: string]: string};
+    await Promise.resolve(
+        util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.getExpandedEnvironment()))
+            .forEach(async ([key, value]) => build_env[key] = await this.expandString(value)));
+
     const args =
-        ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target, '--'].concat(generator_args);
+        ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(config.buildArgs,
+                                                                                                  ['--'],
+                                                                                                  generator_args,
+                                                                                                  config.buildToolArgs);
+    const expanded_args_promises = args.map(async (value: string) => this.expandString(value, build_env));
+    const expanded_args = await Promise.all(expanded_args_promises);
+    log.trace('CMake build args are: ', JSON.stringify(expanded_args));
+
     const cmake = await paths.cmakePath;
-    const child = this.executeCommand(cmake, args, consumer);
+    const child = this.executeCommand(cmake, expanded_args, consumer, {environment: build_env});
     this._currentProcess = child;
     this._isBusy = true;
     await child.result;
