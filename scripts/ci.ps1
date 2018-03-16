@@ -29,4 +29,4 @@ $bindir = Join-Path $REPO_DIR ".ci-build"
 
 Invoke-ExternalCommand $cmake_binary "-H$REPO_DIR" "-B$bindir"
 Invoke-ExternalCommand $cmake_binary --build $bindir
-Invoke-ExternalCommand -WorkDir $bindir ctest --output-on-failure -j4 -R $TestRegex
+Invoke-ExternalCommand -WorkDir $bindir ctest --output-on-failure -j4 -R $TestRegex "-C" Debug

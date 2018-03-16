@@ -1,5 +1,5 @@
 function Invoke-ExternalCommand {
-    [CmdletBinding(PositionalBinding=$false)]
+    [CmdletBinding(PositionalBinding = $false)]
     param(
         # Ignore the exit code and return it unchanged
         [Parameter()]
@@ -49,6 +49,7 @@ function Invoke-TestPreparation {
         $CMakePath = "cmake"
     )
     $ErrorActionPreference = "Stop"
+
     $repo_dir = Split-Path $PSScriptRoot -Parent
     $fakebin_src = Join-Path $repo_dir "test/fakeOutputGenerator"
     $fakebin_build = Join-Path $fakebin_src "build"
@@ -61,7 +62,7 @@ function Invoke-TestPreparation {
     $ext = if ($PSVersionTable.Platform -eq "Unix") { "" } else { ".exe" }
     New-Item $fakebin_dest -ItemType Directory -Force | Out-Null
 
-    $in_binary = Join-Path $fakebin_build "FakeOutputGenerator$ext"
+    $in_binary = (Get-ChildItem $fakebin_build -Recurse -Filter "FakeOutputGenerator$ext").FullName
 
     $targets = @("clang-0.25", "gcc-42.1", "gcc-666", "clang-8.1.0")
 
@@ -74,6 +75,7 @@ function Invoke-TestPreparation {
 }
 
 function Get-RemoteFile ($Url, $Path) {
+    $ErrorActionPreference = "Stop"
     # Ensure that the parent directory is present
     Write-Debug "Downloading $Url to $Path"
     $parent = Split-Path $Path -Parent
@@ -99,6 +101,7 @@ function Get-RemoteFile ($Url, $Path) {
 }
 
 function Install-TestCMake ($Version) {
+    $ErrorActionPreference = "Stop"
     if ($PSVersionTable.Platform -eq "Unix") {
         $test_cmake_dir = Join-Path $env:HOME ".local/share/CMakeTools/test-cmake-root/$Version"
     }
@@ -106,11 +109,11 @@ function Install-TestCMake ($Version) {
         $test_cmake_dir = Join-Path $env:AppData "CMakeTools/test-cmake-root/$Version"
     }
 
-    if ($PSVersionTable.Platform -eq "Windows") {
-        $cmake_bin = Join-Path $test_cmake_dir "bin/cmake.exe"
+    if ($PSVersionTable.Platform -eq "Unix") {
+        $cmake_bin = Join-Path $test_cmake_dir "bin/cmake"
     }
     else {
-        $cmake_bin = Join-Path $test_cmake_dir "bin/cmake"
+        $cmake_bin = Join-Path $test_cmake_dir "bin/cmake.exe"
     }
 
     if (Test-Path $cmake_bin -PathType Leaf) {
@@ -127,7 +130,7 @@ function Install-TestCMake ($Version) {
 
     $cmake_files_url = "https://cmake.org/files/v$cmake_minor"
 
-    Write-Host "Installing CMake $Version for testing at $tenst_cmake_dir"
+    Write-Host "Installing CMake $Version for testing at $test_cmake_dir"
 
     $tmpdir = "$test_cmake_dir-tmp"
     if (Test-Path $tmpdir) {
