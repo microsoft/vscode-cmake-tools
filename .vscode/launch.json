@@ -20,7 +20,7 @@
             "env": {
                 "CMT_DEVRUN": "1"
             },
-            "preLaunchTask": "npm: compile",
+            "preLaunchTask": "npm",
             "smartStep": false
         },
         {
@@ -46,7 +46,7 @@
                 "CMT_QUIET_CONSOLE": "1",
                 "HasVs": "true"
             },
-            "preLaunchTask": "npm: compile"
+            "preLaunchTask": "npm"
             // "smartStep": true
         },
         {
@@ -69,7 +69,7 @@
                 "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/test/*"
             ],
 
-            "preLaunchTask": "npm: compile",
+            "preLaunchTask": "npm",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -106,7 +106,7 @@
                 "${workspaceRoot}/out/test/extension-tests/successful-build/test/*"
             ],
 
-            "preLaunchTask": "npm: compile",
+            "preLaunchTask": "npm",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
