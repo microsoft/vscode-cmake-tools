@@ -25,20 +25,26 @@ function Invoke-ExternalCommand {
     $arglist = $Command.Clone()
     $arglist = $arglist[1..$arglist.Length]
 
-    $more_args = @{}
-    if ($WorkDir) {
-        $more_args.WorkingDirectory = $WorkDir
+    if (! $WorkDir) {
+        $WorkDir = $PWD
     }
 
-    $proc = Start-Process -FilePath $program -ArgumentList $arglist -NoNewWindow -Wait -PassThru @more_args
+    Push-Location $WorkDir
+    try {
+        & $program @arglist | Out-Host
+        $retc = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
+
     if (! $PassThruExitCode) {
-        $retc = $proc.ExitCode
         if ($retc -ne 0) {
             throw "Executing program $program failed with exit code $retc"
         }
     }
     else {
-        return $proc.ExitCode
+        return $retc
     }
 }
 
@@ -167,12 +173,17 @@ function Install-TestCMake ($Version) {
         $installer_file = Join-Path $tmpdir "/cmake-$Version.tgz"
 
         Get-RemoteFile -Url $installer_url -Path $installer_file
-        pushd /tmp
-        & tar xf $installer_file
-        Copy-Item `
-            -Path "/tmp/cmake-$Version-Darwin-x86_64/CMake.app/Contents" `
-            -Destination $test_cmake_dir `
-            -Recurse
+        Push-Location /tmp
+        try {
+            & tar xf $installer_file
+            Copy-Item `
+                -Path "/tmp/cmake-$Version-Darwin-x86_64/CMake.app/Contents" `
+                -Destination $test_cmake_dir `
+                -Recurse
+        }
+        finally {
+            Pop-Location
+        }
     }
 
     Write-Host "Successfully created CMake installation for testing at $test_cmake_dir"
