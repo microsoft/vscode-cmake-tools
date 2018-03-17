@@ -18,5 +18,6 @@ set(environment "$ENV{_ENV}" CACHE STRING "environment")
 
 add_definitions(
     -D_CMAKE_VERSION="${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}"
+    -D_GENERATOR="${CMAKE_GENERATOR}"
     -D_CRT_SECURE_NO_WARNINGS
 )
