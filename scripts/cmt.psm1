@@ -130,15 +130,22 @@ function Invoke-TestPreparation {
     $repo_dir = Split-Path $PSScriptRoot -Parent
     $fakebin_src = Join-Path $repo_dir "test/fakeOutputGenerator"
     $fakebin_build = Join-Path $fakebin_src "build"
+    if (Test-Path $fakebin_build) {
+        Write-Verbose "Removing fakeOutputGenerator build dir: $fakebin_build"
+        Remove-Item $fakebin_build -Recurse
+    }
 
     Invoke-ChronicCommand "Configuring test utilities" $CMakePath "-H$fakebin_src" "-B$fakebin_build"
     Invoke-ChronicCommand "Building test utilities" $CMakePath --build $fakebin_build
 
     $fakebin_dest = Join-Path $repo_dir "test/fakebin"
-
-    $ext = if ($PSVersionTable.Platform -eq "Unix") { "" } else { ".exe" }
+    if (Test-Path $fakebin_dest) {
+        Write-Verbose "Removing fakebin executable directory: $fakebin_dest"
+        Remove-Item $fakebin_dest -Recurse
+    }
     New-Item $fakebin_dest -ItemType Directory -Force | Out-Null
 
+    $ext = if ($PSVersionTable.Platform -eq "Unix") { "" } else { ".exe" }
     $in_binary = (Get-ChildItem $fakebin_build -Recurse -Filter "FakeOutputGenerator$ext").FullName
 
     $targets = @("clang-0.25", "gcc-42.1", "gcc-666", "clang-8.1.0")

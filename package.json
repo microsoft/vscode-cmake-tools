@@ -659,7 +659,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "lint:nofix": "node ./node_modules/tslint/bin/tslint -p .",
-    "docs": "node ./node_modules/.bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
+    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
   },
   "devDependencies": {
     "@types/ajv": "^0.0.3",
