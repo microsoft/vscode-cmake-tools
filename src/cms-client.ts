@@ -14,6 +14,8 @@ import * as util from './util';
 
 const log = createLogger('cms-client');
 
+const ENABLE_CMSERVER_PROTO_DEBUG = false;
+
 const MESSAGE_WRAPPER_RE = /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" ==\]\s*([^]*)/;
 
 export class StartupError extends global.Error {
@@ -419,7 +421,9 @@ export class CMakeServerClient {
         throw new global.Error('Protocol error talking to CMake! Got this input: ' + input);
       }
       this._accInput = mat[2];
-      console.log(`Received message from cmake-server: ${mat[1]}`);
+      if (ENABLE_CMSERVER_PROTO_DEBUG) {
+        log.debug(`Received message from cmake-server: ${mat[1]}`);
+      }
       const message: SomeMessage = JSON.parse(mat[1]);
       this._onMessage(message);
     }
@@ -510,7 +514,9 @@ export class CMakeServerClient {
     const cookie = cp.cookie = Math.random().toString();
     const pr = new Promise((resolve, reject) => { this._promisesResolvers.set(cookie, {resolve, reject}); });
     const msg = JSON.stringify(cp);
-    console.log(`Sending message to cmake-server: ${msg}`);
+    if (ENABLE_CMSERVER_PROTO_DEBUG) {
+      log.debug(`Sending message to cmake-server: ${msg}`);
+    }
     this._pipe.write('\n[== "CMake Server" ==[\n');
     this._pipe.write(msg);
     this._pipe.write('\n]== "CMake Server" ==]\n');
