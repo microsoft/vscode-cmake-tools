@@ -1,3 +1,25 @@
+function Find-Program {
+    [CmdletBinding()]
+    param(
+        # Name of the program to find
+        [Parameter()]
+        [string]
+        $Name
+    )
+
+    $msg = "Searching for program $Name"
+    Write-Verbose $msg
+    $results = @(Get-Command -Name $Name -CommandType Application -ErrorAction SilentlyContinue)
+    if ($results.Length -eq 0) {
+        Write-Verbose "$msg - Not found"
+        return $null
+    }
+    $first = $results[0]
+    $item = Get-Item $First.Path
+    Write-Verbose "$msg - Found: ${item.FullName}"
+    return $item
+}
+
 function Invoke-ExternalCommand {
     [CmdletBinding(PositionalBinding = $false)]
     param(
@@ -12,17 +34,17 @@ function Invoke-ExternalCommand {
         # Command to execute
         [Parameter(ValueFromRemainingArguments = $True, Mandatory = $True)]
         [string[]]
-        $Command
+        $_Command,
+        # Don't pipe output to the host console
+        [Parameter()]
+        [switch]
+        $HideOutput
     )
 
     $ErrorActionPreference = "Stop"
 
-    $programs = (Get-Command -CommandType Application -Name $Command[0])
-    if ($programs.Length -eq 0) {
-        throw "No programs match the requested command"
-    }
-    $program = $programs[0].Path
-    $arglist = $Command.Clone()
+    $program = $_Command[0]
+    $arglist = $_Command.Clone()
     $arglist = $arglist[1..$arglist.Length]
 
     if (! $WorkDir) {
@@ -31,12 +53,24 @@ function Invoke-ExternalCommand {
 
     Push-Location $WorkDir
     try {
-        & $program @arglist | Out-Host
+        $ErrorActionPreference = "Continue"
+        if ($HideOutput) {
+            $output = & $program @arglist 2>&1
+        }
+        else {
+            & $program @arglist | Tee-Object -Variable output | Out-Host
+        }
         $retc = $LASTEXITCODE
     }
     finally {
+        $ErrorActionPreference = "Stop"
         Pop-Location
     }
+
+    $stderr = $output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }
+    $stdout = $output | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] }
+    $stderr = $stderr -join "`n"
+    $stdout = $stdout -join "`n"
 
     if (! $PassThruExitCode) {
         if ($retc -ne 0) {
@@ -44,8 +78,45 @@ function Invoke-ExternalCommand {
         }
     }
     else {
-        return $retc
+        return @{
+            ExitCode = $retc;
+            Output   = $stdout;
+            Error    = $stderr;
+        }
     }
+}
+
+function Invoke-ChronicCommand {
+    [CmdletBinding()]
+    param(
+        # Description for the command
+        [Parameter(Mandatory)]
+        [string]
+        $Description,
+        # The command to run
+        [Parameter(ValueFromRemainingArguments, Mandatory)]
+        [string[]]
+        $_Command_
+    )
+
+    $msg = "==> $Description"
+    Write-Host $msg
+    Write-Debug "About to execute $_Command_"
+    $closure = @{}
+    $measurement = Measure-Command {
+        $result = Invoke-ExternalCommand -HideOutput -PassThruExitCode @_Command_
+        $closure.Result = $result
+    }
+    $result = $closure.Result
+    if ($result.ExitCode -ne 0) {
+        Write-Host "$msg - Failed with status $($result.ExitCode)"
+        Write-Host $result.Output
+        Write-Error $result.Error
+        throw "Subcommand failed!"
+        return
+    }
+
+    Write-Host "$msg - Success [$([math]::round($measurement.TotalSeconds, 1)) seconds]"
 }
 
 function Invoke-TestPreparation {
@@ -60,8 +131,8 @@ function Invoke-TestPreparation {
     $fakebin_src = Join-Path $repo_dir "test/fakeOutputGenerator"
     $fakebin_build = Join-Path $fakebin_src "build"
 
-    Invoke-ExternalCommand $CMakePath "-H$fakebin_src" "-B$fakebin_build"
-    Invoke-ExternalCommand $CMakePath --build $fakebin_build
+    Invoke-ChronicCommand "Configuring test utilities" $CMakePath "-H$fakebin_src" "-B$fakebin_build"
+    Invoke-ChronicCommand "Building test utilities" $CMakePath --build $fakebin_build
 
     $fakebin_dest = Join-Path $repo_dir "test/fakebin"
 
@@ -189,4 +260,33 @@ function Install-TestCMake ($Version) {
     Write-Host "Successfully created CMake installation for testing at $test_cmake_dir"
     & $cmake_bin --version | Write-Host
     return $cmake_bin
+}
+
+function Invoke-VSCodeTest {
+    [CmdletBinding(PositionalBinding = $false)]
+    param(
+        # Description for the test
+        [Parameter(Position = 0, Mandatory)]
+        [string]
+        $Description,
+        # Directory holding the test runner
+        [Parameter(Mandatory)]
+        [string]
+        $TestsPath,
+        # Directory to use as the workspace
+        [Parameter(Mandatory)]
+        [string]
+        $Workspace
+    )
+    $ErrorActionPreference = "Stop"
+    $node = Find-Program node
+    if (! $node) {
+        throw "Cannot run tests: no 'node' command found"
+    }
+    $repo_dir = Split-Path $PSScriptRoot -Parent
+    $test_bin = Join-Path $repo_dir "/node_modules/vscode/bin/test"
+    $env:CMT_TESTING = 1
+    $env:CODE_TESTS_PATH = $TestsPath
+    $env:CODE_TESTS_WORKSPACE = $Workspace
+    Invoke-ChronicCommand "Executing VSCode test: $Description" $node $test_bin
 }

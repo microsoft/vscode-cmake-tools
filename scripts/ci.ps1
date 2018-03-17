@@ -7,26 +7,97 @@ param(
     # Regex to match to run tests (Default is to run all tests)
     [Parameter()]
     [string]
-    $TestRegex = "."
+    $TestRegex = ".",
+    # Target directory to copy documentation tree
+    [Parameter()]
+    [string]
+    $DocDestination
 )
 $ErrorActionPreference = "Stop"
 
+$CMakeToolsVersion = "0.11.0"
+
+# Import the utility modules
 Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
 
 # The root directory of our repository:
 $REPO_DIR = Split-Path $PSScriptRoot -Parent
-$SCRIPTS_DIR = Join-Path $REPO_DIR "scripts"
 
-Write-Verbose "Repository directory is $REPO_DIR"
+# Sanity check for npm
+$npm = Find-Program npm
+if (! $npm) {
+    throw "No 'npm' binary. Cannot build."
+}
 
+# Install dependencies for the project
+Invoke-ChronicCommand "npm install" $npm install
+
+# Now do the real compile
+Invoke-ChronicCommand "Compiling TypeScript" $npm run compile-once
+
+# Run TSLint to check for silly mistakes
+Invoke-ChronicCommand "Running TSLint" $npm run lint:nofix
+
+# Get the CMake binary that we will use to run our tests
 $cmake_binary = Install-TestCMake -Version $CMakeVersion
-Write-Host "cmake $cmake_binary"
 
-Write-Verbose "Preparing test utilities..."
+# Prepare to run our tests
 Invoke-TestPreparation -CMakePath $cmake_binary
 
-$bindir = Join-Path $REPO_DIR ".ci-build"
+Invoke-VSCodeTest "CMake Tools: Unit tests" `
+    -TestsPath "$REPO_DIR/out/test/unit-tests" `
+    -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
 
-Invoke-ExternalCommand $cmake_binary "-H$REPO_DIR" "-B$bindir"
-Invoke-ExternalCommand $cmake_binary --build $bindir
-Invoke-ExternalCommand -WorkDir $bindir ctest --output-on-failure -j4 -R $TestRegex "-C" Debug
+foreach ($name in @("vs-preferred-gen"; "successful-build"; "without-cmakelist-file"; )) {
+    Invoke-VSCodeTest "CMake Tools: $name" `
+        -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
+        -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
+}
+
+$doc_build = Join-Path $REPO_DIR "build/docs"
+$sphinx = Find-Program sphinx-build
+if (! $sphinx) {
+    Write-Warning "Install Sphinx to generate documentation"
+}
+else {
+    $command = @(
+        $sphinx;
+        "-W"; # Warnings are errors
+        "-q"; # Be quiet
+        "-C";
+        "-Dsource_suffix=.rst";
+        "-Dmaster_doc=index";
+        "-Dproject=CMake Tools";
+        "-Dversion=$CMakeToolsVersion";
+        "-Drelease=$CMakeToolsVersion";
+        "-Dpygments_style=sphinx";
+        "-Dhtml_theme=nature";
+        "-Dhtml_logo=$REPO_DIR/res/icon_190.svg";
+        "-bhtml";
+        "-j10";
+        "-a";
+        "$REPO_DIR/docs";
+        $doc_build
+    )
+    Invoke-ChronicCommand "Generating user documentation" @command
+}
+
+Invoke-ChronicCommand "Generating developer documentation" $npm run docs
+
+if ($DocDestination) {
+    Write-Information "Copying documentation tree to $DocDestination"
+    Remove-Item $DocDestination -Recurse -Force
+    Copy-Item $doc_build -Destination $DocDestination -Recurse
+}
+
+# Invoke-ExternalCommand $cmake_binary "-H$REPO_DIR" "-B$bindir"
+# Invoke-ExternalCommand $cmake_binary --build $bindir
+# Invoke-ExternalCommand -WorkDir $bindir ctest --output-on-failure -j4 -R $TestRegex "-C" Debug
+
+$vsce = Find-Program vsce
+if (! $vsce) {
+    Write-Warning "You don't have 'vsce' installed. We won't generate a .vsix package"
+}
+else {
+    Invoke-ChronicCommand "Generating VSIX package" $vsce package
+}
