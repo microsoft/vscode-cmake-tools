@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstdlib>
 
 #ifndef _CMAKE_VERSION
     #define _CMAKE_VERSION "0.0"
