@@ -4,10 +4,10 @@ param(
     [Parameter()]
     [string]
     $CMakeVersion = "3.10.0",
-    # Regex to match to run tests (Default is to run all tests)
+    # Run the named tests
     [Parameter()]
-    [string]
-    $TestRegex = ".",
+    [string[]]
+    $Test,
     # Target directory to copy documentation tree
     [Parameter()]
     [string]
@@ -22,6 +22,13 @@ Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
 
 # The root directory of our repository:
 $REPO_DIR = Split-Path $PSScriptRoot -Parent
+
+if ($Test) {
+    foreach ($testname in $Test) {
+        Invoke-SmokeTest $testname
+    }
+    return
+}
 
 # Sanity check for npm
 $npm = Find-Program npm
