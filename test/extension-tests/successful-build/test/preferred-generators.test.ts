@@ -86,11 +86,11 @@ function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: CMake
 }
 
 // Needed by test "Non preferred generators configured in settings and kit"
-// function skipTestWithPreferredGeneratorInKit(testContext: any, context :CMakeContext): void {
-//   if (isPreferedGeneratorInKit(context.buildsystem.defaultKit)) {
-//     testContext.skip();
-//   }
-// }
+function skipTestWithPreferredGeneratorInKit(testContext: any, context :CMakeContext): void {
+  if (isPreferedGeneratorInKit(context.buildSystem.defaultKit)) {
+    testContext.skip();
+  }
+}
 
 function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IHookCallbackContext): void {
   if ((process.env.HasVs != 'true')) {
@@ -178,29 +178,28 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
 
-    // \todo Add
-    // Test to non visual studio, in that case is no prefered generator in kit present by default
-    // test('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext)
-    // {
-    //   skipTestWithPreferredGeneratorInKit(this, context);
-    //   await context.cmt.selectKit();
-    //   await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
-    //   expect(await context.cmt.build()).to.be.eq(-1);
-    //   expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1); // \todo Should be a warning?
-    // });
+    test.only('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext)
+    {
+      skipTestWithPreferredGeneratorInKit(this, context);
+      await context.cmt.selectKit();
+      await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
+      await context.cmt.build().then(() =>{ }).then(()=>{}, () => {});
 
-    // \todo  This test will fail always and cmake server does not die
-    // test('Non preferred generators configured in settings and kit', async function(this : ITestCallbackContext) {
-    //   skipTestWithPreferredGeneratorInKit(this, context);
-    //   this.timeout(10000);
-    //   await context.cmt.selectKit();
-    //   await context.testEnv.setting.changeSetting('preferredGenerators', []);
+      expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
+      expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Not of the preferred cmake generator found.');
+    });
 
-    //   context.cmt.build().then(() =>{ }).catch((ex:Error) => expect(ex.message).to.be('Unable to determine CMake
-    //   Generator to use'));// <--- this is wrong behavior it breaks the output of a message or it is redundant
+    test('Non preferred generators configured in settings and kit', async function(this : ITestCallbackContext) {
+      skipTestWithPreferredGeneratorInKit(this, context);
+      this.timeout(10000);
+      await context.cmt.selectKit();
+      await context.testEnv.setting.changeSetting('preferredGenerators', []);
 
-    //   expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1); // Message that no make system was found
-    // });
+      await context.cmt.build().then(() =>{ }).then(()=>{}, () => {});
+
+      expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
+      expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Not of the preferred cmake generator found.');
+    });
 
     test('Use preferred generators from settings.json', async function(this: ITestCallbackContext) {
       this.timeout(BUILD_TIMEOUT);
