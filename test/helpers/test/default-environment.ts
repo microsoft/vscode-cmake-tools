@@ -27,8 +27,13 @@ export class DefaultEnvironment {
     this.setting = new CMakeToolsSettingFile(this.sandbox);
 
     const errorQueue = this.errorMessagesQueue;
-    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) => { errorQueue.push(message); });
-    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) : Thenable<string | undefined> => {
+      errorQueue.push(message);
+
+      return Promise.resolve(undefined);
+    });
+    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => (
+      {doOpen: false}));
   }
 
   private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
@@ -46,6 +51,5 @@ export class DefaultEnvironment {
     this.errorMessagesQueue.length = 0;
     this.vsContext.clean();
     this.setting.restore();
-    this.sandbox.restore();
   }
 }
