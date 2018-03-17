@@ -536,12 +536,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
           return gen;
         }
-        vscode.window.showErrorMessage(`Unknown CMake generator "${gen.name}"`);
         continue;
       } else {
         return gen;
       }
     }
+    vscode.window.showErrorMessage(
+      `Not of the preferred cmake generator found.
+Please install or configure your preferred generator needs in the settings.json or cmake-kit.json.`);
     return null;
   }
 
