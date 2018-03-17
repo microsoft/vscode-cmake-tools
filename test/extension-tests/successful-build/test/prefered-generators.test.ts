@@ -98,11 +98,14 @@ function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IH
   }
 }
 
-function makeExtensionTestSuite(name: string, expectedBuildSystem: KitEnvironment, cb: (context: CMakeContext) => void) {
+function makeExtensionTestSuite(name: string,
+                                expectedBuildSystem: KitEnvironment,
+                                cb: (context: CMakeContext) => void) {
   suite(name, () => {
-    const context = { buildSystem: expectedBuildSystem } as CMakeContext;
+    const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
     suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
+      skipTestIfVisualStudioIsNotPresent(this);
       this.timeout(10000);
       context.testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                                'build',
@@ -135,7 +138,11 @@ function makeExtensionTestSuite(name: string, expectedBuildSystem: KitEnvironmen
       process.env.PATH = context.pathBackup;
     });
 
-    suiteTeardown(() => { context.testEnv.teardown(); });
+    suiteTeardown(() => {
+      if (context.testEnv) {
+        context.testEnv.teardown();
+      }
+    });
 
     cb(context);
   });
@@ -143,11 +150,7 @@ function makeExtensionTestSuite(name: string, expectedBuildSystem: KitEnvironmen
 
 KITS_BY_PLATFORM[workername].forEach(buildSystem => {
   makeExtensionTestSuite(`Prefered generators (${buildSystem.defaultKit})`, buildSystem, (context: CMakeContext) => {
-
     const BUILD_TIMEOUT: number = 120000;
-
-    // \todo Disable until travis and Mac Tests are ready.
-    suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) { skipTestIfVisualStudioIsNotPresent(this); });
 
     // Test only one visual studio, because there is only a preferred generator in kit by default
     // Prefered generator selection order is settings.json -> cmake-kit.json -> error
@@ -209,6 +212,5 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length)
           .to.be.eq(0, 'Wrong message ' + context.testEnv.errorMessagesQueue[0]);
     });
-
   });
 });
