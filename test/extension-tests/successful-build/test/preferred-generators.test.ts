@@ -7,7 +7,7 @@ import {clearExistingKitConfigurationFile} from '../../../test-helpers';
 import {DefaultEnvironment} from '../../../helpers/test/default-environment';
 
 import {CMakeTools} from '../../../../src/cmake-tools';
-import {ITestCallbackContext, IHookCallbackContext} from 'mocha';
+import {ITestCallbackContext} from 'mocha';
 
 interface KitEnvironment {
   defaultKit: string;
@@ -22,7 +22,7 @@ if (process.env.TRAVIS_OS_NAME) {
 }
 
 if (workername === undefined) {
-  workername = 'DevPC';
+  workername = 'linux';
 }
 
 const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
@@ -92,20 +92,13 @@ function skipTestWithPreferredGeneratorInKit(testContext: any, context :CMakeCon
   }
 }
 
-function skipTestIfVisualStudioIsNotPresent(testContext: ITestCallbackContext|IHookCallbackContext): void {
-  if ((process.env.HasVs != 'true')) {
-    testContext.skip();
-  }
-}
-
 function makeExtensionTestSuite(name: string,
                                 expectedBuildSystem: KitEnvironment,
                                 cb: (context: CMakeContext) => void) {
-  suite(name, () => {
+  suite.only(name, () => {
     const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
     suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
-      skipTestIfVisualStudioIsNotPresent(this);
       this.timeout(10000);
       context.testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                                'build',
@@ -178,7 +171,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
 
-    test.only('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext)
+    test('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext)
     {
       skipTestWithPreferredGeneratorInKit(this, context);
       await context.cmt.selectKit();
