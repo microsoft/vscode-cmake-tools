@@ -108,23 +108,24 @@ function makeExtensionTestSuite(name: string, expectedBuildSystem: KitEnvironmen
                                                'build',
                                                'output.txt',
                                                context.buildSystem.defaultKit);
-    });
 
-    setup(async function(this: Mocha.IBeforeAndAfterContext) {
-      this.timeout(10000);
-      context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
       context.pathBackup = process.env.PATH!;
       if (context.buildSystem.path && context.buildSystem.path.length != 0) {
         process.env.PATH = context.buildSystem.path.join(process.platform == 'win32' ? ';' : ':');
       }
 
-      context.testEnv.projectFolder.buildDirectory.clear();
-
+      context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
       // This test will use all on the same kit.
       // No rescan of the tools is needed
       // No new kit selection is needed
       await clearExistingKitConfigurationFile();
       await context.cmt.scanForKits();
+    });
+
+    setup(async function(this: Mocha.IBeforeAndAfterContext) {
+      this.timeout(10000);
+      context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
+      context.testEnv.projectFolder.buildDirectory.clear();
     });
 
     teardown(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -139,6 +140,7 @@ function makeExtensionTestSuite(name: string, expectedBuildSystem: KitEnvironmen
     cb(context);
   });
 }
+
 KITS_BY_PLATFORM[workername].forEach(buildSystem => {
   makeExtensionTestSuite(`Prefered generators (${buildSystem.defaultKit})`, buildSystem, (context: CMakeContext) => {
 
