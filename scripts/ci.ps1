@@ -36,6 +36,12 @@ if (! $npm) {
     throw "No 'npm' binary. Cannot build."
 }
 
+$out_dir = Join-Path $REPO_DIR out
+if (Test-Path $out_dir) {
+    Write-Verbose "Removing out/ directory: $out_dir"
+    Remove-Item -Recurse $out_dir
+}
+
 # Install dependencies for the project
 Invoke-ChronicCommand "npm install" $npm install
 
