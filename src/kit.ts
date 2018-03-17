@@ -486,23 +486,28 @@ export async function scanForKits() {
                                       const isWin32 = process.platform === 'win32';
                                       pr.report({message: 'Scanning for CMake kits...'});
                                       // Search directories on `PATH` for compiler binaries
-                                      const pathvar = process.env['PATH']!;
-                                      const sep = isWin32 ? ';' : ':';
-                                      const path_elems = pathvar.split(sep);
+                                      const pathvar = process.env['PATH'];
+                                      if (pathvar) {
+                                        const sep = isWin32 ? ';' : ':';
+                                        const path_elems = pathvar.split(sep);
 
-                                      // Search them all in parallel
-                                      let prs = [] as Promise<Kit[]>[];
-                                      const compiler_kits
-                                          = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
-                                      prs = prs.concat(compiler_kits);
-                                      if (isWin32) {
-                                        const vs_kits = scanForVSKits(pr);
-                                        prs.push(vs_kits);
+                                        // Search them all in parallel
+                                        let prs = [] as Promise<Kit[]>[];
+                                        const compiler_kits
+                                            = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
+                                        prs = prs.concat(compiler_kits);
+                                        if (isWin32) {
+                                          const vs_kits = scanForVSKits(pr);
+                                          prs.push(vs_kits);
+                                        }
+                                        const arrays = await Promise.all(prs);
+                                        const kits = ([] as Kit[]).concat(...arrays);
+                                        kits.map(k => log.info(`Found Kit: ${k.name}`));
+                                        return kits;
+                                      } else {
+                                        log.info(`Path variable empty`);
+                                        return [];
                                       }
-                                      const arrays = await Promise.all(prs);
-                                      const kits = ([] as Kit[]).concat(...arrays);
-                                      kits.map(k => log.info(`Found Kit: ${k.name}`));
-                                      return kits;
                                     });
 }
 
