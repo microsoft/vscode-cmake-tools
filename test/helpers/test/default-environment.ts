@@ -22,7 +22,7 @@ export class DefaultEnvironment {
 
     if (!defaultkitRegExp) {
       if (process.platform == 'win32') {
-        defaultkitRegExp = '^Visual';
+        defaultkitRegExp = '^Visual ?Studio';
       } else {
         defaultkitRegExp = '.';
       }
