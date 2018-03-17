@@ -16,10 +16,7 @@ export class DefaultEnvironment {
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
   setting: CMakeToolsSettingFile = new CMakeToolsSettingFile(this.sandbox);
 
-  public constructor(projectRoot: string,
-                     buildLocation: string = 'build',
-                     executableResult: string = 'output.txt',
-                     defaultkitRegExp = '^VisualStudio') {
+  public constructor(projectRoot: string, buildLocation: string, executableResult: string, defaultkitRegExp: string) {
     this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
     this.result = new TestProgramResult(this.projectFolder.buildDirectory.location, executableResult);
 

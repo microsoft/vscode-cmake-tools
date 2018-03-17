@@ -19,7 +19,7 @@ suite('Build', async() => {
     }
     this.timeout(100000);
 
-    testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder');
+    testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt', '^VisualStudio');
     cmt = await CMakeTools.create(testEnv.vsContext);
 
     // This test will use all on the same kit.
