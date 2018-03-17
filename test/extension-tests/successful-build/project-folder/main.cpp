@@ -20,8 +20,8 @@ std::string getCompilerName() {
 }
 
 std::string get_env_var(const std::string& key) {
-    const auto env = std::getenv(key.c_str());
-    return env != nullptr ? env : "";
+    const char* env = std::getenv(key.c_str());
+    return env != NULL ? env : "";
 }
 
 int main(int, char**) {
