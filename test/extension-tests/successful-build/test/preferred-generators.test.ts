@@ -61,7 +61,7 @@ const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
     {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
   ],
   ['osx']: [{
-    defaultKit: 'Apple',
+    defaultKit: 'Clang',
     expectedDefaultGenerator: 'Unix Makefiles',
     path: [
       '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin',
@@ -125,7 +125,7 @@ function makeExtensionTestSuite(name: string,
     });
 
     teardown(async function(this: Mocha.IBeforeAndAfterContext) {
-      this.timeout(10000);
+      this.timeout(100000);
       await context.cmt.asyncDispose();
       context.testEnv.clean();
     });
@@ -175,6 +175,8 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
     test('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext)
     {
       skipTestWithPreferredGeneratorInKit(this, context);
+      this.timeout(BUILD_TIMEOUT);
+
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
       await context.cmt.build().then(() =>{ }).then(()=>{}, () => {});
@@ -185,7 +187,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
     test('Non preferred generators configured in settings and kit', async function(this : ITestCallbackContext) {
       skipTestWithPreferredGeneratorInKit(this, context);
-      this.timeout(10000);
+      this.timeout(BUILD_TIMEOUT);
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', []);
 
