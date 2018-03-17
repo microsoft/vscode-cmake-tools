@@ -22,7 +22,7 @@ if (process.env.TRAVIS_OS_NAME) {
 }
 
 if (workername === undefined) {
-  workername = 'linux';
+  workername = process.platform == 'win32' ? 'DevPC' : 'linux';
 }
 
 const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
@@ -99,7 +99,7 @@ function makeExtensionTestSuite(name: string,
     const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
     suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
-      this.timeout(10000);
+      this.timeout(100000);
       context.testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                                'build',
                                                'output.txt',
@@ -128,10 +128,11 @@ function makeExtensionTestSuite(name: string,
       this.timeout(10000);
       await context.cmt.asyncDispose();
       context.testEnv.clean();
-      process.env.PATH = context.pathBackup;
     });
 
     suiteTeardown(() => {
+      process.env.PATH = context.pathBackup;
+
       if (context.testEnv) {
         context.testEnv.teardown();
       }
