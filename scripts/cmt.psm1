@@ -288,5 +288,17 @@ function Invoke-VSCodeTest {
     $env:CMT_TESTING = 1
     $env:CODE_TESTS_PATH = $TestsPath
     $env:CODE_TESTS_WORKSPACE = $Workspace
+    $env:HasVs = if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) { "true" } else { "false" }
     Invoke-ChronicCommand "Executing VSCode test: $Description" $node $test_bin
+}
+
+
+function Invoke-SmokeTest($Name) {
+    $repo_dir = Split-Path $PSScriptRoot -Parent
+    if (! (Test-Path "$repo_dir/test/extension-tests/$Name")) {
+        throw "No such test with name '$Name'"
+    }
+    Invoke-VSCodeTest "CMake Tools: $Name" `
+        -TestsPath "$repo_dir/out/test/extension-tests/$Name" `
+        -Workspace "$repo_dir/test/extension-tests/$Name/project-folder"
 }
