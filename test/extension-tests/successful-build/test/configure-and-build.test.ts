@@ -16,12 +16,11 @@ suite('Build', async () => {
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
 
-    const kit_re = '';
     const build_loc = 'build';
     const exe_res = 'output.txt';
 
     testEnv
-        = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res, kit_re);
+        = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
     cmt = await CMakeTools.create(testEnv.vsContext);
 
     // This test will use all on the same kit.
