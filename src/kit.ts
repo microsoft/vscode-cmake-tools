@@ -228,7 +228,15 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
   // Get files in the directory
   if (pr)
     pr.report({message: `Checking ${dir} for compilers...`});
-  const bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
+  let bins: string[];
+  try {
+    bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
+  } catch (e) {
+    if (e.code == 'EACCESS' || e.code == 'EPERM') {
+      return [];
+    }
+    throw e;
+  }
   // Scan each binary in parallel
   const prs = bins.map(async bin => {
     log.trace('Checking file for compiler-ness:', bin);
