@@ -35,8 +35,7 @@ before_install:
 script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
 
 notifications:
-  webhooks:
-    urls: [https://webhooks.gitter.im/e/064f3494f67de1248aa0]
+  webhooks: [https://webhooks.gitter.im/e/064f3494f67de1248aa0]
   email:
     on_success: change
     on_failure: always
