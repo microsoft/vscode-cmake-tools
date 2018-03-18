@@ -5,6 +5,7 @@ import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
 import * as cms from './cms-client';
+import cfg from './config';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 import {createLogger} from './logging';
@@ -18,7 +19,12 @@ import * as util from './util';
 const log = createLogger('cms-driver');
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(stateman: StateManager) { super(stateman); }
+  private constructor(stateman: StateManager) {
+    super(stateman);
+    cfg.onChange('environment', () => this._restartClient());
+    cfg.onChange('configureEnvironment', () => this._restartClient());
+  }
+
   private _cmsClient: Promise<cms.CMakeServerClient>;
   private _globalSettings: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
