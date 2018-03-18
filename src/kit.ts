@@ -122,12 +122,14 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
       pr.report({message: `Getting GCC version for ${bin}`});
     const exec = await proc.execute(bin, ['-v']).result;
     if (exec.retc != 0) {
+      log.debug('Bad GCC binary ("-v" returns non-zero)', bin);
       return null;
     }
     const last_line = exec.stderr.trim().split('\n').reverse()[0];
     const version_re = /^gcc version (.*?) .*/;
     const version_match = version_re.exec(last_line);
     if (version_match === null) {
+      log.debug('Bad GCC binary', bin, '-v output:', exec.stderr);
       return null;
     }
     const version = version_match[1];
@@ -159,12 +161,14 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
       pr.report({message: `Getting Clang version for ${bin}`});
     const exec = await proc.execute(bin, ['-v']).result;
     if (exec.retc != 0) {
+      log.debug('Bad Clang binary ("-v" returns non-zero)', bin);
       return null;
     }
     const first_line = exec.stderr.split('\n')[0];
-    const version_re = /^clang version (.*?)[ -]/;
+    const version_re = /^(?:Apple LLVM|clang) version (.*?)[ -]/;
     const version_match = version_re.exec(first_line);
     if (version_match === null) {
+      log.debug('Bad Clang binary', bin, '-v output:', exec.stderr);
       return null;
     }
     const version = version_match[1];

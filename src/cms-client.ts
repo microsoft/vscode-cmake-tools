@@ -14,6 +14,8 @@ import * as util from './util';
 
 const log = createLogger('cms-client');
 
+const ENABLE_CMSERVER_PROTO_DEBUG = false;
+
 const MESSAGE_WRAPPER_RE = /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" ==\]\s*([^]*)/;
 
 export class StartupError extends global.Error {
@@ -366,6 +368,7 @@ export interface ClientInit {
 interface ClientInitPrivate extends ClientInit {
   onHello: (m: HelloMessage) => Promise<void>;
   onCrash: (retc: number, signal: string) => Promise<void>;
+  onPipeError(e: Error): Promise<void>;
   tmpdir: string;
 }
 
@@ -418,7 +421,9 @@ export class CMakeServerClient {
         throw new global.Error('Protocol error talking to CMake! Got this input: ' + input);
       }
       this._accInput = mat[2];
-      console.log(`Received message from cmake-server: ${mat[1]}`);
+      if (ENABLE_CMSERVER_PROTO_DEBUG) {
+        log.debug(`Received message from cmake-server: ${mat[1]}`);
+      }
       const message: SomeMessage = JSON.parse(mat[1]);
       this._onMessage(message);
     }
@@ -509,7 +514,9 @@ export class CMakeServerClient {
     const cookie = cp.cookie = Math.random().toString();
     const pr = new Promise((resolve, reject) => { this._promisesResolvers.set(cookie, {resolve, reject}); });
     const msg = JSON.stringify(cp);
-    console.log(`Sending message to cmake-server: ${msg}`);
+    if (ENABLE_CMSERVER_PROTO_DEBUG) {
+      log.debug(`Sending message to cmake-server: ${msg}`);
+    }
     this._pipe.write('\n[== "CMake Server" ==[\n');
     this._pipe.write(msg);
     this._pipe.write('\n]== "CMake Server" ==]\n');
@@ -530,7 +537,9 @@ export class CMakeServerClient {
 
   codemodel(params?: CodeModelParams): Promise<CodeModelContent> { return this.sendRequest('codemodel', params); }
 
-  private _onErrorData(data: Uint8Array) { log.error(`[cmake-server] ${data.toString()}`); }
+  private _onErrorData(data: Uint8Array) {
+    log.error(`Unexpected stderr/stdout data from CMake Server process: ${data.toString()}`);
+  }
 
   public async shutdown() {
     this._pipe.end();
@@ -543,7 +552,7 @@ export class CMakeServerClient {
     if (process.platform === 'win32') {
       pipe_file = '\\\\?\\pipe\\' + pipe_file;
     } else {
-      pipe_file = path.join(params.binaryDir, `.cmserver.${process.pid}`);
+      pipe_file = `/tmp/cmake-server-${Math.random()}`;
     }
     this._pipeFilePath = pipe_file;
     const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
@@ -555,12 +564,14 @@ export class CMakeServerClient {
     child.stdout.on('data', this._onErrorData.bind(this));
     child.stderr.on('data', this._onErrorData.bind(this));
     setTimeout(() => {
-      const end_promise = new Promise<void>(resolve => {
+      const end_promise = new Promise<void>((resolve, reject) => {
         const pipe = this._pipe = net.createConnection(pipe_file);
         pipe.on('data', this._onMoreData.bind(this));
-        pipe.on('error', () => {
+        pipe.on('error', e => {
           debugger;
           pipe.end();
+          rollbar.takePromise('Pipe error from cmake-server', {pipe: pipe_file}, params.onPipeError(e));
+          reject(e);
         });
         pipe.on('end', () => {
           pipe.end();
@@ -599,6 +610,11 @@ export class CMakeServerClient {
         onCrash: async retc => {
           if (!resolved) {
             reject(new StartupError(retc));
+          }
+        },
+        onPipeError: async e => {
+          if (!resolved) {
+            reject(e);
           }
         },
         onHello: async (msg: HelloMessage) => {

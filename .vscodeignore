@@ -9,6 +9,8 @@ tsconfig.json
 vsc-extension-quickstart.md
 build/**
 docs/**
+.ci-build/**
+.vscode-test/**
 cSpell.json
 CMakeLists.txt
 tslint.json

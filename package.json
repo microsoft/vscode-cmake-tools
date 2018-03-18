@@ -20,7 +20,7 @@
   ],
   "publisher": "vector-of-bool",
   "engines": {
-    "vscode": "^1.16.0"
+    "vscode": "^1.21.0"
   },
   "categories": [
     "Other"
@@ -658,7 +658,8 @@
     "compile-once": "./node_modules/.bin/tsc -p ./",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
-    "docs": "node ./node_modules/.bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
+    "lint:nofix": "node ./node_modules/tslint/bin/tslint -p .",
+    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
   },
   "devDependencies": {
     "@types/ajv": "^0.0.3",
@@ -682,7 +683,7 @@
     "tslint": "^5.9.1",
     "typedoc": "^0.8.0",
     "typescript": "~2.3.0",
-    "vscode": "~1.1.5"
+    "vscode": "1.1.13"
   },
   "dependencies": {
     "Polymer": "1.6.1--",

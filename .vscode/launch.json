@@ -122,6 +122,43 @@
                 }
             }
             // "smartStep": true
+        },
+        {
+            "name": "Launch Extension Tests (vs-preferred-gen)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceRoot}/test/extension-tests/vs-preferred-gen/project-folder",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/vs-preferred-gen"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*",
+                "${workspaceRoot}/out/src/*",
+                "${workspaceRoot}/out/test/*",
+                "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/*",
+                "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/test/*"
+            ],
+
+            "preLaunchTask": "npm",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
+            // "smartStep": true
         }
     ]
 }

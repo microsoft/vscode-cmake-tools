@@ -81,7 +81,7 @@ which will be passed onto CMake when configuring and to the compiler.
 - *Supports substitution*
 
 ``cmake.configureEnvironment``
-***************************
+******************************
 
 An object containing ``key : value`` pairs of environment variables,
 which will be passed onto CMake *ONLY* when configuring.

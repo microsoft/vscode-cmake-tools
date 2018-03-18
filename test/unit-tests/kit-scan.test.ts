@@ -42,7 +42,7 @@ suite('Kits scan test', async () => {
   test('Detect system kits never throws',
        async () => {
          // Don't care about the result, just check that we don't throw during the test
-         await expect(kit.scanForKits()).to.eventually.not.be.rejected;
+         await kit.scanForKits();
        })
       // Compiler detection can run a little slow
       .timeout(12000);
@@ -63,6 +63,15 @@ suite('Kits scan test', async () => {
     expect(compkit!.compilers).has.property('C').eq(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
     expect(compkit!.name).to.eq('Clang 0.25');
+  });
+
+  test('Detect an Apple-Clang compiler file', async () => {
+    const compiler = path.join(fakebin, 'clang-8.1.0');
+    const compkit = await kit.kitIfCompiler(compiler);
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').eq(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+    expect(compkit!.name).to.eq('Clang 8.1.0');
   });
 
   test('Detect non-compiler program', async () => {
@@ -90,18 +99,18 @@ suite('Kits scan test', async () => {
         await fs.rmdir(path_with_compilername);
       }
     });
-    test('Scan folder with compiler name', async () => {
+    test('Scan directory with compiler name', async () => {
       await fs.mkdir(path_with_compilername);
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(2);
+      expect(kits.length).to.eq(3);
     });
 
     test('Scan file with compiler name', async () => {
       await fs.writeFile(path_with_compilername, '');
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(2);
+      expect(kits.length).to.eq(3);
     });
   });
 
@@ -185,7 +194,7 @@ suite('Kits scan test', async () => {
 
       const kitFile = await readValidKitFile(path_rescan_kit);
       const nonVSKits = kitFile.filter(item => item.visualStudio == null);
-      expect(nonVSKits.length).to.be.eq(2);
+      expect(nonVSKits.length).to.be.eq(3);
     }).timeout(10000);
 
     test('check check combination of scan and old kits', async () => {
