@@ -46,14 +46,12 @@ const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
       [{defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'}],
   ['Visual Studio 2015']: [
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
+    {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
     {
       defaultKit: 'GCC',
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
-    }
-  ],
-  ['Visual Studio 2013']: [
-    {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
+    },
     {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']}
   ],
   ['linux']: [
@@ -65,7 +63,8 @@ const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
     expectedDefaultGenerator: 'Unix Makefiles',
     path: [
       '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin',
-      '/Applications/Xcode.app/Contents/Developer/usr/bin'
+      '/Applications/Xcode.app/Contents/Developer/usr/bin',
+      '/Users/travis/.local/share/CMakeTools/test-cmake-root/3.10.0/bin'
     ]
   }]
 };
