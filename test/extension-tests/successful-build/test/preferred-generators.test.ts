@@ -27,6 +27,7 @@ if (workername === undefined) {
 
 const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
   ['DevPC']: [
+    {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017', path: ['c:\\Temp']},
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: ['c:\\Temp']},
     {
       defaultKit: 'GCC',
@@ -76,7 +77,7 @@ interface CMakeContext {
   buildSystem: KitEnvironment;
 }
 
-function isPreferedGeneratorInKit(defaultKit: string): boolean { return defaultKit.startsWith('VisualStudio'); }
+function isPreferedGeneratorInKit(defaultKit: string): boolean { return RegExp("^Visual[ ]{0,1}Studio").test(defaultKit); }
 
 function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: CMakeContext): void {
   if (!isPreferedGeneratorInKit(context.buildSystem.defaultKit)) {
@@ -94,7 +95,7 @@ function skipTestWithPreferredGeneratorInKit(testContext: any, context :CMakeCon
 function makeExtensionTestSuite(name: string,
                                 expectedBuildSystem: KitEnvironment,
                                 cb: (context: CMakeContext) => void) {
-  suite.only(name, () => {
+  suite(name, () => {
     const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
     suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
