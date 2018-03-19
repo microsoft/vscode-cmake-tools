@@ -603,7 +603,7 @@ export class KitManager implements vscode.Disposable {
   private _kits = [] as Kit[];
 
   /**
-   * The path to user-specific the `cmake-kits.json` file
+   * The path to the user-specific `cmake-kits.json` file
    */
   private readonly _userKitsPath: string;
 
@@ -757,7 +757,7 @@ export class KitManager implements vscode.Disposable {
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
 
-    log.debug('Saving news kits to', this._userKitsPath);
+    log.debug('Saving new kits to', this._userKitsPath);
     await fs.mkdir_p(path.dirname(this._userKitsPath));
     const stripped_kits = new_kits.map((k: any) => {
       k.type = undefined;
