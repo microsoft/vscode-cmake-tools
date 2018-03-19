@@ -13,6 +13,7 @@ import * as proc from './proc';
 import {loadSchema} from './schema';
 import {StateManager} from './state';
 import {dropNulls, thisExtensionPath} from './util';
+import {MultiWatcher} from './watcher';
 
 const log = logging.createLogger('kit');
 
@@ -537,6 +538,68 @@ function descriptionForKit(kit: Kit) {
   }
 }
 
+export async function readKitsFile(filepath: string): Promise<Kit[]> {
+  if (!await fs.exists(filepath)) {
+    log.debug(`Not reading non-existent kits file: ${filepath}`);
+    return [];
+  }
+  log.debug('Reading kits file', filepath);
+  const content_str = await fs.readFile(filepath);
+  let kits_raw: object[] = [];
+  try {
+    kits_raw = json5.parse(content_str.toLocaleString());
+  } catch (e) {
+    log.error('Failed to parse cmake-kits.json:', e);
+    return [];
+  }
+  const validator = await loadSchema('schemas/kits-schema.json');
+  const is_valid = validator(kits_raw);
+  if (!is_valid) {
+    const errors = validator.errors!;
+    log.error(`Invalid cmake-kits.json (${filepath}):`);
+    for (const err of errors) {
+      log.error(` >> ${err.dataPath}: ${err.message}`);
+    }
+    return [];
+  }
+  const kits = kits_raw.map((item_): Kit|null => {
+    if ('compilers' in item_) {
+      const item = item_ as CompilerKit;
+      return {
+        type: 'compilerKit',
+        name: item.name,
+        compilers: item.compilers,
+        preferredGenerator: item.preferredGenerator,
+        cmakeSettings: item.cmakeSettings,
+      };
+    } else if ('toolchainFile' in item_) {
+      const item = item_ as ToolchainKit;
+      return {
+        type: 'toolchainKit',
+        name: item.name,
+        toolchainFile: item.toolchainFile,
+        preferredGenerator: item.preferredGenerator,
+        cmakeSettings: item.cmakeSettings,
+      };
+    } else if ('visualStudio' in item_) {
+      const item = item_ as VSKit;
+      return {
+        type: 'vsKit',
+        name: item.name,
+        visualStudio: item.visualStudio,
+        visualStudioArchitecture: item.visualStudioArchitecture,
+        preferredGenerator: item.preferredGenerator,
+        cmakeSettings: item.cmakeSettings,
+      };
+    } else {
+      vscode.window.showErrorMessage('Your cmake-kits.json file contains one or more invalid entries.');
+      return null;
+    }
+  });
+  log.info(`Successfully loaded ${kits.length} kits from ${filepath}`);
+  return dropNulls(kits);
+}
+
 /**
  * Class that manages and tracks Kits
  */
@@ -548,14 +611,19 @@ export class KitManager implements vscode.Disposable {
   private _kits = [] as Kit[];
 
   /**
-   * The path to the `cmake-kits.json` file
+   * The path to the user-specific `cmake-kits.json` file
    */
-  private readonly _kitsPath: string;
+  private readonly _userKitsPath: string;
+
+  /**
+   * The path to the project-specific `cmake-kits.json` file
+   */
+  private readonly _projectKitsPath: string;
 
   /**
    * Watches the file at `_kitsPath`.
    */
-  private readonly _kitsWatcher: vscode.FileSystemWatcher;
+  private readonly _kitsWatcher: MultiWatcher;
 
   /**
    * The active build kit
@@ -600,16 +668,17 @@ export class KitManager implements vscode.Disposable {
   constructor(readonly stateManager: StateManager, kitPath: string|null = null) {
     log.debug('Constructing KitManager');
     if (kitPath !== null) {
-      this._kitsPath = kitPath;
+      this._userKitsPath = kitPath;
     } else {
-      this._kitsPath = path.join(paths.dataDir, 'cmake-kits.json');
+      this._userKitsPath = path.join(paths.dataDir, 'cmake-kits.json');
     }
 
+    // TODO: multi-root
+    this._projectKitsPath = path.join(vscode.workspace.rootPath || '/null', '.vscode/cmake-kits.json');
+
     // Re-read the kits file when it is changed
-    this._kitsWatcher = vscode.workspace.createFileSystemWatcher(this._kitsPath);
-    this._kitsWatcher.onDidChange(_e => this._rereadKits());
-    this._kitsWatcher.onDidCreate(_e => this._rereadKits());
-    this._kitsWatcher.onDidDelete(_e => this._rereadKits());
+    this._kitsWatcher = new MultiWatcher(this._userKitsPath, this._projectKitsPath);
+    this._kitsWatcher.onAnyEvent(_e => this._rereadKits());
   }
 
   /**
@@ -628,7 +697,7 @@ export class KitManager implements vscode.Disposable {
    * selection, the current kit is kept. The only way it can reset to `null` is
    * if the active kit becomes somehow unavailable.
    */
-  async selectKit(): Promise<Kit | null> {
+  async selectKit(): Promise<Kit|null> {
     log.debug(`Start selection of kits. Found ${this._kits.length} kits.`);
     if (this._kits.length == 0) {
       return null;
@@ -696,8 +765,8 @@ export class KitManager implements vscode.Disposable {
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
 
-    log.debug('Saving news kits to', this._kitsPath);
-    await fs.mkdir_p(path.dirname(this._kitsPath));
+    log.debug('Saving new kits to', this._userKitsPath);
+    await fs.mkdir_p(path.dirname(this._userKitsPath));
     const stripped_kits = new_kits.map((k: any) => {
       k.type = undefined;
       return k;
@@ -711,11 +780,11 @@ export class KitManager implements vscode.Disposable {
         return 1;
       }
     });
-    await fs.writeFile(this._kitsPath, JSON.stringify(sorted_kits, null, 2));
+    await fs.writeFile(this._userKitsPath, JSON.stringify(sorted_kits, null, 2));
     // Sometimes the kit watcher does fire?? May be an upstream bug, so we'll
     // re-read now
     await this._rereadKits();
-    log.debug(this._kitsPath, 'saved');
+    log.debug(this._userKitsPath, 'saved');
   }
 
   /**
@@ -723,61 +792,13 @@ export class KitManager implements vscode.Disposable {
    * file in `rescanForKits`, or if the user otherwise edits the file manually.
    */
   private async _rereadKits() {
-    log.debug('Re-reading kits file', this._kitsPath);
-    const content_str = await fs.readFile(this._kitsPath);
-    let kits_raw: object[] = [];
-    try {
-      kits_raw = json5.parse(content_str.toLocaleString());
-    } catch (e) { log.error('Failed to parse cmake-kits.json:', e); }
-    const validator = await loadSchema('schemas/kits-schema.json');
-    const is_valid = validator(kits_raw);
-    if (!is_valid) {
-      const errors = validator.errors!;
-      log.error('Invalid cmake-kits.json:');
-      for (const err of errors) {
-        log.error(` >> ${err.dataPath}: ${err.message}`);
-      }
-      kits_raw = [];
-    } else {
-      log.info('Loading new set of kits');
+    const kits_acc: Kit[] = [];
+    for (const kit_path of [this._userKitsPath, this._projectKitsPath]) {
+      const more_kits = await readKitsFile(kit_path);
+      kits_acc.push(...more_kits);
     }
-    const new_kits = kits_raw.map((item_): Kit|null => {
-      if ('compilers' in item_) {
-        const item = item_ as CompilerKit;
-        return {
-          type: 'compilerKit',
-          name: item.name,
-          compilers: item.compilers,
-          preferredGenerator: item.preferredGenerator,
-          cmakeSettings: item.cmakeSettings,
-        };
-      } else if ('toolchainFile' in item_) {
-        const item = item_ as ToolchainKit;
-        return {
-          type: 'toolchainKit',
-          name: item.name,
-          toolchainFile: item.toolchainFile,
-          preferredGenerator: item.preferredGenerator,
-          cmakeSettings: item.cmakeSettings,
-        };
-      } else if ('visualStudio' in item_) {
-        const item = item_ as VSKit;
-        return {
-          type: 'vsKit',
-          name: item.name,
-          visualStudio: item.visualStudio,
-          visualStudioArchitecture: item.visualStudioArchitecture,
-          preferredGenerator: item.preferredGenerator,
-          cmakeSettings: item.cmakeSettings,
-        };
-      } else {
-        vscode.window.showErrorMessage('Your cmake-kits.json file contains one or more invalid entries.');
-        return null;
-      }
-    });
-    this._kits = dropNulls(new_kits);
-    log.info(`Successfully loaded ${this._kits.length} kits`);
     // Set the current kit to the one we have named
+    this._kits = kits_acc;
     const already_active_kit = this._kits.find(kit => kit.name === this.stateManager.activeKitName);
     this._setActiveKit(already_active_kit || null);
   }
@@ -787,7 +808,7 @@ export class KitManager implements vscode.Disposable {
    */
   async initialize() {
     log.debug('Second phase init for KitManager');
-    if (await fs.exists(this._kitsPath)) {
+    if (await fs.exists(this._userKitsPath)) {
       log.debug('Re-read kits file from prior session');
       // Load up the list of kits that we've saved
       await this._rereadKits();
@@ -814,8 +835,8 @@ export class KitManager implements vscode.Disposable {
    * Opens a text editor with the user-local `cmake-kits.json` file.
    */
   async openKitsEditor() {
-    log.debug('Opening TextEditor for', this._kitsPath);
-    const text = await vscode.workspace.openTextDocument(this._kitsPath);
+    log.debug('Opening TextEditor for', this._userKitsPath);
+    const text = await vscode.workspace.openTextDocument(this._userKitsPath);
     return vscode.window.showTextDocument(text);
   }
 }
