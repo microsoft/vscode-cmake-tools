@@ -182,7 +182,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       await context.cmt.build().then(() =>{ }).then(()=>{}, () => {});
 
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
-      expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Not of the preferred cmake generator found.');
+      expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
     test('Non preferred generators configured in settings and kit', async function(this : ITestCallbackContext) {
@@ -194,7 +194,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       await context.cmt.build().then(() =>{ }).then(()=>{}, () => {});
 
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
-      expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Not of the preferred cmake generator found.');
+      expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
     test('Use preferred generators from settings.json', async function(this: ITestCallbackContext) {
