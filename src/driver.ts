@@ -542,8 +542,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
     }
     vscode.window.showErrorMessage(
-      `Not of the preferred cmake generator found.
-Please install or configure your preferred generator needs in the settings.json or cmake-kit.json.`);
+      `Unable to determine what CMake generator to use.
+Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
     return null;
   }
 
