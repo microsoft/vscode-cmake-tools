@@ -3,7 +3,6 @@ image:
   - Visual Studio 2017
   - Visual Studio 2017 Preview
   - Visual Studio 2015
-  - Visual Studio 2013
 
 install:
   - ps: Install-Product node 8.9.1 x64

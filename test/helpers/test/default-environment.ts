@@ -14,7 +14,8 @@ export class DefaultEnvironment {
   kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
-  setting: CMakeToolsSettingFile = new CMakeToolsSettingFile(this.sandbox);
+  setting: CMakeToolsSettingFile;
+  errorMessagesQueue: string[] = [];
 
   public constructor(projectRoot: string, buildLocation: string, executableResult: string, defaultkitRegExp?: string) {
     this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
@@ -30,7 +31,16 @@ export class DefaultEnvironment {
     this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
     this.setupShowQuickPickerStub([this.kitSelection]);
 
-    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+    this.setting = new CMakeToolsSettingFile(this.sandbox);
+
+    const errorQueue = this.errorMessagesQueue;
+    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string) : Thenable<string | undefined> => {
+      errorQueue.push(message);
+
+      return Promise.resolve(undefined);
+    });
+    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => (
+      {doOpen: false}));
   }
 
   private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
@@ -42,8 +52,11 @@ export class DefaultEnvironment {
     });
   }
 
-  public teardown(): void {
+  public teardown(): void { this.sandbox.verifyAndRestore(); }
+
+  public clean(): void {
+    this.errorMessagesQueue.length = 0;
+    this.vsContext.clean();
     this.setting.restore();
-    this.sandbox.restore();
   }
 }

@@ -665,6 +665,7 @@ export class CMakeServerClient {
             resolved = true;
             resolve(client);
           } catch (e) {
+            await client.shutdown();
             resolved = true;
             reject(e);
           }
