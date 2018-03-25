@@ -49,7 +49,7 @@ export class CMakeToolsSettingFile {
 
   constructor(sandbox: sinon.SinonSandbox) {
     sandbox.stub(vscode.workspace, 'getConfiguration')
-        .callsFake(((section?: string, resource?: vscode.Uri) => { return this.getConfiguration(section, resource); }));
+        .callsFake(((section?: string, resource?: vscode.Uri) => this.getConfiguration(section, resource)));
   }
 
   public changeSetting(key: string, element: any): Thenable<void> { return this.fakeValues.update(key, element); }
