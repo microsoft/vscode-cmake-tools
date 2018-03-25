@@ -537,8 +537,8 @@ function descriptionForKit(kit: Kit) {
     return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
   }
   case 'compilerKit': {
-    const compilers = Object.keys(kit.compilers).map(k => `\n  ${k} = ${kit.compilers[k]}`);
-    return `Using compilers ${compilers.join(' ')}`;
+    const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers[k]}`);
+    return `Using compilers: ${compilers.join(', ')}`;
   }
   }
 }
