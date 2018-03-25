@@ -1,16 +1,10 @@
-import * as chai from 'chai';
-import {expect} from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-chai.use(chaiAsPromised);
+import * as api from '@cmt/api';
+import {CMakeCache} from '@cmt/cache';
+import {CMakeTools} from '@cmt/cmake-tools';
+import {normalizePath} from '@cmt/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 
-import {clearExistingKitConfigurationFile} from '../../../test-helpers';
-import {DefaultEnvironment} from '../../../helpers/test/default-environment';
-
-import * as api from '../../../../src/api';
 import * as path from 'path';
-import {CMakeCache} from '../../../../src/cache';
-import {CMakeTools} from '../../../../src/cmake-tools';
-import {normalizePath} from '../../../../src/util';
 
 suite('[Variable Substitution]', async () => {
   let cmt: CMakeTools;

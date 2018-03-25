@@ -1,13 +1,6 @@
-import * as chai from 'chai';
-import {expect} from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-chai.use(chaiAsPromised);
-
-import {clearExistingKitConfigurationFile} from '../../../test-helpers';
-import {DefaultEnvironment} from '../../../helpers/test/default-environment';
-
-import {CMakeTools} from '../../../../src/cmake-tools';
-import config from '../../../../src/config';
+import {CMakeTools} from '@cmt/cmake-tools';
+import config from '@cmt/config';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 
 suite('Build', async () => {
   let cmt: CMakeTools;
@@ -19,8 +12,7 @@ suite('Build', async () => {
     const build_loc = 'build';
     const exe_res = 'output.txt';
 
-    testEnv
-        = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
+    testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
     cmt = await CMakeTools.create(testEnv.vsContext);
 
     // This test will use all on the same kit.

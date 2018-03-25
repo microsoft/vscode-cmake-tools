@@ -542,7 +542,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
     }
     vscode.window.showErrorMessage(
-      `Unable to determine what CMake generator to use.
+        `Unable to determine what CMake generator to use.
 Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
     return null;
   }

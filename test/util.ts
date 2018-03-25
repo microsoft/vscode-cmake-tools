@@ -1,10 +1,19 @@
+import {CMakeTools} from '@cmt/cmake-tools';
+import paths from '@cmt/paths';
+import {fs} from '@cmt/pr';
+
+import * as chai from 'chai';
+import {expect} from 'chai';
+import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {CMakeTools} from '../src/cmake-tools';
+// re-exports:
+export {DefaultEnvironment} from './helpers/test/default-environment';
 
-import paths from '../src/paths';
-import {fs} from '../src/pr';
+chai.use(chaiAsPromised);
+
+export {expect};
 
 export async function clearExistingKitConfigurationFile() {
   await fs.writeFile(path.join(paths.dataDir, 'cmake-kits.json'), '[]');

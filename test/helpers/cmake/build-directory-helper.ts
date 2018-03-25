@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as rimraf from 'rimraf';
 
 export class BuildDirectoryHelper {
-  public constructor(private readonly _location: string) { }
+  public constructor(private readonly _location: string) {}
 
   public clear() {
     if (fs.existsSync(this._location)) {

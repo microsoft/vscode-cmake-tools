@@ -115,7 +115,7 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
 
 function cleanupResultsXML(messy: MessyResults): CTestResults {
   const testing_head = messy.Site.Testing[0];
-  if (testing_head.TestList.length === 1 && (testing_head.TestList[0] as any as string) === "") {
+  if (testing_head.TestList.length === 1 && (testing_head.TestList[0] as any as string) === '') {
     // XML parsing is obnoxious. This condition means that there are no tests,
     // but CTest is still enabled.
     return {

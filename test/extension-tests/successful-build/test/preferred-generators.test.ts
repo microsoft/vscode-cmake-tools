@@ -1,12 +1,5 @@
-import * as chai from 'chai';
-import {expect} from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-chai.use(chaiAsPromised);
-
-import {clearExistingKitConfigurationFile} from '../../../test-helpers';
-import {DefaultEnvironment} from '../../../helpers/test/default-environment';
-
-import {CMakeTools} from '../../../../src/cmake-tools';
+import {CMakeTools} from '@cmt/cmake-tools';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 import {ITestCallbackContext} from 'mocha';
 
 interface KitEnvironment {
@@ -77,7 +70,9 @@ interface CMakeContext {
   buildSystem: KitEnvironment;
 }
 
-function isPreferedGeneratorInKit(defaultKit: string): boolean { return RegExp("^Visual[ ]{0,1}Studio").test(defaultKit); }
+function isPreferedGeneratorInKit(defaultKit: string): boolean {
+  return RegExp('^Visual[ ]{0,1}Studio').test(defaultKit);
+}
 
 function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: CMakeContext): void {
   if (!isPreferedGeneratorInKit(context.buildSystem.defaultKit)) {
@@ -86,7 +81,7 @@ function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: CMake
 }
 
 // Needed by test "Non preferred generators configured in settings and kit"
-function skipTestWithPreferredGeneratorInKit(testContext: any, context :CMakeContext): void {
+function skipTestWithPreferredGeneratorInKit(testContext: any, context: CMakeContext): void {
   if (isPreferedGeneratorInKit(context.buildSystem.defaultKit)) {
     testContext.skip();
   }
@@ -172,26 +167,25 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
 
-    test('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext)
-    {
+    test('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext) {
       skipTestWithPreferredGeneratorInKit(this, context);
       this.timeout(BUILD_TIMEOUT);
 
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
-      await context.cmt.build().then(() =>{ }).then(()=>{}, () => {});
+      await context.cmt.build().then(() => {}).then(() => {}, () => {});
 
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
-    test('Non preferred generators configured in settings and kit', async function(this : ITestCallbackContext) {
+    test('Non preferred generators configured in settings and kit', async function(this: ITestCallbackContext) {
       skipTestWithPreferredGeneratorInKit(this, context);
       this.timeout(BUILD_TIMEOUT);
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', []);
 
-      await context.cmt.build().then(() =>{ }).then(()=>{}, () => {});
+      await context.cmt.build().then(() => {}).then(() => {}, () => {});
 
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');

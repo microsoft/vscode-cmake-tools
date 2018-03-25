@@ -188,7 +188,7 @@ suite('Kits scan test', async () => {
     });
 
     test('check empty kit file', async () => {
-      delete process.env["PATH"];
+      delete process.env['PATH'];
 
       await km.initialize();
 
