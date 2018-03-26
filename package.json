@@ -652,6 +652,10 @@
       }
     ]
   },
+  "_moduleAliases": {
+    "@cmt": "out/src/",
+    "@test": "out/test/"
+  },
   "scripts": {
     "vscode:prepublish": "./node_modules/.bin/tsc -p ./",
     "compile": "./node_modules/.bin/tsc -watch -p ./",
@@ -691,6 +695,7 @@
     "es6-promisify": "~5.0.0",
     "js-yaml": "^3.6.1",
     "json5": "^0.5.1",
+    "module-alias": "^2.0.6",
     "open": "0.0.5",
     "rimraf": "^2.5.4",
     "rollbar": "~2.2.8",
