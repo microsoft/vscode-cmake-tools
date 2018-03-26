@@ -173,7 +173,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
-      await context.cmt.build().then(() => {}).then(() => {}, () => {});
+      await expect(context.cmt.build()).to.eventually.be.rejected;
 
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
@@ -184,8 +184,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       this.timeout(BUILD_TIMEOUT);
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', []);
-
-      await context.cmt.build().then(() => {}).then(() => {}, () => {});
+      await expect(context.cmt.build()).to.eventually.be.rejected;
 
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');

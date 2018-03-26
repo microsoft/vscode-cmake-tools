@@ -18,9 +18,6 @@ addons:
     packages:
       - powershell
 
-env:
-  - CMAKE_VER=3.7.2
-
 before_install:
   - |
     if [ $TRAVIS_OS_NAME == "linux" ]; then
@@ -32,7 +29,7 @@ before_install:
       brew cask install powershell || exit 2
     fi
 
-script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1 -CMakeVersion $CMAKE_VER
+script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
 
 notifications:
   webhooks:
