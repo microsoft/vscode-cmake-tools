@@ -4,6 +4,8 @@
 
 'use strict';
 
+require('module-alias/register');
+
 import * as vscode from 'vscode';
 import * as logging from './logging';
 import * as util from './util';
