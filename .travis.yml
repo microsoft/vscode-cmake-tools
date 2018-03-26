@@ -19,7 +19,7 @@ addons:
       - powershell
 
 env:
-  - CMAKE_MINOR=3.7 CMAKE_VER=3.7.2
+  - CMAKE_VER=3.7.2
 
 before_install:
   - |
@@ -32,7 +32,7 @@ before_install:
       brew cask install powershell || exit 2
     fi
 
-script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
+script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1 -CMakeVersion $CMAKE_VER
 
 notifications:
   webhooks:
