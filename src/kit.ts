@@ -414,6 +414,12 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
   if (!variables) {
     return null;
   } else {
+    // For Ninja and Makefile generators, CMake searches for some compilers
+    // before it checks for cl.exe. We can force CMake to check cl.exe first by
+    // setting the CC and CXX environment variables when we want to do a
+    // configure.
+    variables.set('CC', 'cl.exe');
+    variables.set('CXX', 'cl.exe');
     return variables;
   }
 }
