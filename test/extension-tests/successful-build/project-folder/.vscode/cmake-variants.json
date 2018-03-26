@@ -16,7 +16,10 @@
         "default": "option1",
         "choices": {
             "option1": {
-                "short": "option1 short"
+                "short": "option1 short",
+                "env": {
+                    "TEST_VARIANT_ENV": "0cbfb6ae-f2ec-4017-8ded-89df8759c502"
+                }
             },
             "option2": {
                 "short": "option2 short"

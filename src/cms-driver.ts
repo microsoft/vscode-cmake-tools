@@ -29,6 +29,12 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _globalSettings: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
 
+  /**
+   * The previous configuration environment. Used to detect when we need to
+   * restart cmake-server
+   */
+  private _prevConfigureEnv = 'null';
+
   private _codeModel: null|cms.CodeModelContent;
   get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
   set codeModel(v: null|cms.CodeModelContent) {
@@ -140,10 +146,12 @@ export class CMakeServerClientDriver extends CMakeDriver {
     if (!bindir_before.length || !srcdir_before.length) {
       return;
     }
-    if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir) {
+    const new_env = JSON.stringify(await this.getConfigureTimeEnvironment());
+    if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir || new_env != this._prevConfigureEnv) {
       // Directories changed. We need to restart the driver
       await this._restartClient();
     }
+    this._prevConfigureEnv = new_env;
   }
 
   get targets(): RichTarget[] {
@@ -254,9 +262,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: await paths.cmakePath,
-      environment: util.mergeEnvironment(await this.getExpandedConfigureEnvironment(),
-                                         await this.getExpandedEnvironment(),
-                                         this.getKitEnvironmentVariablesObject()),
+      environment: await this.getConfigureTimeEnvironment(),
       onDirty: async () => { this._dirty = true; },
       onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
       onProgress: async _prog => {},
