@@ -52,6 +52,17 @@
                   "default": "static",
                   "description": "Sets the value of BUILD_SHARED on the CMake command line"
                 },
+                "env": {
+                  "type": "object",
+                  "description": "Environment variables to set during CMake configuration",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^\\w+$": {
+                      "type": "string",
+                      "description": "Value for the environment variable"
+                    }
+                  }
+                },
                 "settings": {
                   "type": "object",
                   "description": "The -D arguments to pass to CMake for this variant",
