@@ -470,8 +470,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent: true});
     try {
-      await child.result;
-      return true;
+      const result = await child.result;
+      return result.retc == 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
       if (e2.code == 'ENOENT') {
@@ -536,12 +536,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
           return gen;
         }
-        vscode.window.showErrorMessage(`Unknown CMake generator "${gen.name}"`);
         continue;
       } else {
         return gen;
       }
     }
+    vscode.window.showErrorMessage(
+        `Unable to determine what CMake generator to use.
+Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
     return null;
   }
 

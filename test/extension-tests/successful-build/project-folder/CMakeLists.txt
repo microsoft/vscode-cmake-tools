@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.0)
 project(TestBuildProcess VERSION 0.1.0)
 
 add_executable(TestBuildProcess main.cpp)
-target_compile_features(TestBuildProcess PRIVATE cxx_std_11)
+set_property(TARGET TestBuildProcess PROPERTY CXX_STANDARD 98)
 
 add_custom_command(
     TARGET TestBuildProcess
@@ -18,5 +18,6 @@ set(environment "$ENV{_ENV}" CACHE STRING "environment")
 
 add_definitions(
     -D_CMAKE_VERSION="${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}"
+    -D_GENERATOR="${CMAKE_GENERATOR}"
     -D_CRT_SECURE_NO_WARNINGS
 )

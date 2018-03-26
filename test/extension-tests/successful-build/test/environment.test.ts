@@ -1,15 +1,9 @@
-import * as chai from 'chai';
-import {expect} from 'chai';
-import * as chaiAsPromised from 'chai-as-promised';
-chai.use(chaiAsPromised);
-
-import {clearExistingKitConfigurationFile} from '../../../test-helpers';
-import {DefaultEnvironment} from '../../../helpers/test/default-environment';
+import * as api from '@cmt/api';
+import {CMakeCache} from '@cmt/cache';
+import {CMakeTools} from '@cmt/cmake-tools';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 
 import * as path from 'path';
-import * as api from '../../../../src/api';
-import {CMakeCache} from '../../../../src/cache';
-import {CMakeTools} from '../../../../src/cmake-tools';
 
 suite('[Environment]', async () => {
   let cmt: CMakeTools;

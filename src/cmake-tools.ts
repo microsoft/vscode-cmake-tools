@@ -327,6 +327,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if ((await this._cmakeDriver) === null) {
       log.debug('Starting new CMake driver');
       this._cmakeDriver = this._startNewCMakeDriver();
+
+      try {
+        await this._cmakeDriver;
+      } catch (ex) {
+        this._cmakeDriver = Promise.resolve(null);
+        throw ex;
+      }
     }
     return this._cmakeDriver;
   }
@@ -604,12 +611,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return false;
     }
 
-    return drv.stopCurrentProcess().then(() => {
-      this._cmakeDriver = Promise.resolve(null);
-      return true;
-    }, () =>{
-      return false;
-    });
+    return drv.stopCurrentProcess().then(
+        () => {
+          this._cmakeDriver = Promise.resolve(null);
+          return true;
+        },
+        () => false);
   }
 
   /**

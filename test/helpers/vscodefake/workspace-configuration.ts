@@ -25,7 +25,10 @@ class CMakeToolsWorkspaceConfiguration implements vscode.WorkspaceConfiguration 
     return fakeHasSection || origHasSection;
   }
   inspect<T>(): {
-    key: string; defaultValue?: T | undefined; globalValue?: T | undefined; workspaceValue?: T | undefined;
+    key: string;
+    defaultValue?: T | undefined;
+    globalValue?: T | undefined;
+    workspaceValue?: T | undefined;
     workspaceFolderValue?: T | undefined;
   }|undefined {
     throw new Error('Method not implemented.');
@@ -45,9 +48,8 @@ export class CMakeToolsSettingFile {
   readonly originalFunction: any = vscode.workspace.getConfiguration;
 
   constructor(sandbox: sinon.SinonSandbox) {
-    sandbox.stub(vscode.workspace, 'getConfiguration').callsFake(((section?: string, resource?: vscode.Uri) => {
-      return this.getConfiguration(section, resource);
-    }));
+    sandbox.stub(vscode.workspace, 'getConfiguration')
+        .callsFake(((section?: string, resource?: vscode.Uri) => this.getConfiguration(section, resource)));
   }
 
   public changeSetting(key: string, element: any): Thenable<void> { return this.fakeValues.update(key, element); }

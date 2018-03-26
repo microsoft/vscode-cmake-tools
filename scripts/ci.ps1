@@ -1,17 +1,17 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
     # CMake Version to test with
-    [Parameter()]
     [string]
     $CMakeVersion = "3.10.0",
     # Run the named tests
-    [Parameter()]
     [string[]]
     $Test,
     # Target directory to copy documentation tree
-    [Parameter()]
     [string]
-    $DocDestination
+    $DocDestination,
+    # Skip running tests
+    [switch]
+    $NoTest
 )
 $ErrorActionPreference = "Stop"
 
@@ -54,17 +54,19 @@ Invoke-ChronicCommand "Running TSLint" $npm run lint:nofix
 # Get the CMake binary that we will use to run our tests
 $cmake_binary = Install-TestCMake -Version $CMakeVersion
 
-# Prepare to run our tests
-Invoke-TestPreparation -CMakePath $cmake_binary
+if (! $NoTest) {
+    # Prepare to run our tests
+    Invoke-TestPreparation -CMakePath $cmake_binary
 
-Invoke-VSCodeTest "CMake Tools: Unit tests" `
-    -TestsPath "$REPO_DIR/out/test/unit-tests" `
-    -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
+    Invoke-VSCodeTest "CMake Tools: Unit tests" `
+        -TestsPath "$REPO_DIR/out/test/unit-tests" `
+        -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
 
-foreach ($name in @("vs-preferred-gen"; "successful-build"; "without-cmakelist-file"; )) {
-    Invoke-VSCodeTest "CMake Tools: $name" `
-        -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
-        -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
+    foreach ($name in @("vs-preferred-gen"; "successful-build"; "without-cmakelist-file"; )) {
+        Invoke-VSCodeTest "CMake Tools: $name" `
+            -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
+            -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
+    }
 }
 
 $doc_build = Join-Path $REPO_DIR "build/docs"
@@ -98,7 +100,7 @@ else {
 Invoke-ChronicCommand "Generating developer documentation" $npm run docs
 
 if ($DocDestination) {
-    Write-Information "Copying documentation tree to $DocDestination"
+    Write-Host "Copying documentation tree to $DocDestination"
     Remove-Item $DocDestination -Recurse -Force
     Copy-Item $doc_build -Destination $DocDestination -Recurse
 }

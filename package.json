@@ -57,7 +57,7 @@
     "commands": [
       {
         "command": "cmake.editKits",
-        "title": "Edit CMake Kits",
+        "title": "Edit user-local CMake kits",
         "category": "CMake"
       },
       {
