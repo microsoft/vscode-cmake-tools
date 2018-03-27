@@ -102,3 +102,10 @@ The option is itself a map with the following keys:
     A map of arbitrary CMake cache options to pass via the CMake command line
     with ``-D``. Similar to the ``cmake.configureSettings`` in
     ``settings.json``.
+
+``env``
+    A map of key-value string pairs specifying additional environment variables
+    to set during CMake *configure* (not build). These environment variables
+    take precedence over environment variables from ``settings.json``, the
+    currently set :ref:`kit <kits>`, and environment variables set by the
+    system.
