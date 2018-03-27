@@ -29,7 +29,7 @@ before_install:
       brew cask install powershell || exit 2
     fi
 
-script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1 -CMakeVersion $CMAKE_VER
+script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
 
 notifications:
   webhooks:
