@@ -103,10 +103,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the environment variables that should be set at CMake-configure time.
    */
   async getConfigureTimeEnvironment(): Promise<proc.EnvironmentVariables> {
-    return util.mergeEnvironment(await this.getExpandedConfigureEnvironment(),
-                                 this._variantEnv,
+    return util.mergeEnvironment(this.getKitEnvironmentVariablesObject(),
                                  await this.getExpandedEnvironment(),
-                                 this.getKitEnvironmentVariablesObject());
+                                 await this.getExpandedConfigureEnvironment(),
+                                 this._variantEnv);
   }
 
   /**
