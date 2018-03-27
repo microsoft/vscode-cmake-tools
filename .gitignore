@@ -6,3 +6,4 @@ build/
 test/fakebin/
 .vscode-test
 .ci-build
+*.vsix
