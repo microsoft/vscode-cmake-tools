@@ -287,6 +287,7 @@ export interface VSInstallation {
   installationPath: string;
   installationVersion: string;
   description: string;
+  isPrerelease: boolean;
 }
 
 /**
@@ -299,7 +300,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res/vswhere.exe');
   const vswhere_args = ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease'];
-  const vswhere_res = await proc.execute(vswhere_exe, vswhere_args).result;
+  const vswhere_res = await proc.executeFile(vswhere_exe, vswhere_args).result;
   if (vswhere_res.retc !== 0) {
     log.error('Failed to execute vswhere.exe:', vswhere_res.stdout);
     return [];
@@ -431,7 +432,9 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter):
     Promise<VSKit|null> {
-  const installName = inst.displayName || inst.instanceId;
+  const realDisplayName: string|undefined
+      = inst.displayName ? inst.isPrerelease ? `${inst.displayName} Preview` : inst.displayName : undefined;
+  const installName = realDisplayName || inst.instanceId;
   const name = `${installName} - ${arch}`;
   log.debug('Checking for kit: ' + name);
   if (pr) {
@@ -450,7 +453,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
   log.debug('Detected VsKit for version');
-  log.debug(` DisplayName: ${inst.displayName}`);
+  log.debug(` DisplayName: ${realDisplayName}`);
   log.debug(` InstanceId: ${inst.instanceId}`);
   log.debug(` InstallVersion: ${inst.installationVersion}`);
   if (version) {
