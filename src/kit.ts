@@ -465,7 +465,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
         platform: VsArchitectures[arch] as string || undefined,
       };
     }
-    log.debug(` Selected Prefered Generator Name: ${generatorName}`);
+    log.debug(` Selected Preferred Generator Name: ${generatorName}`);
   }
 
   return kit;

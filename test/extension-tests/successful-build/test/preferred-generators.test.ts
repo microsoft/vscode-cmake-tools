@@ -21,6 +21,31 @@ if (workername === undefined) {
 const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
   ['DevPC']: [
     {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017', path: ['c:\\Temp']},
+    {
+      defaultKit: 'Visual Studio Community 2017 Preview',
+      expectedDefaultGenerator: 'Visual Studio 15 2017',
+      path: ['c:\\Temp']
+    },
+    {
+      defaultKit: 'Visual Studio Professional 2017',
+      expectedDefaultGenerator: 'Visual Studio 15 2017',
+      path: ['c:\\Temp']
+    },
+    {
+      defaultKit: 'Visual Studio Professional 2017 Preview',
+      expectedDefaultGenerator: 'Visual Studio 15 2017',
+      path: ['c:\\Temp']
+    },
+    {
+      defaultKit: 'Visual Studio Enterprise 2017',
+      expectedDefaultGenerator: 'Visual Studio 15 2017',
+      path: ['c:\\Temp']
+    },
+    {
+      defaultKit: 'Visual Studio Enterprise 2017 Preview',
+      expectedDefaultGenerator: 'Visual Studio 15 2017',
+      path: ['c:\\Temp']
+    },
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: ['c:\\Temp']},
     {
       defaultKit: 'GCC',
@@ -70,27 +95,48 @@ interface CMakeContext {
   buildSystem: KitEnvironment;
 }
 
-function isPreferredGeneratorInKit(defaultKit: string): boolean {
-  return RegExp('^Visual[ ]{0,1}Studio').test(defaultKit);
+function isKitAvailable(context: CMakeContext): boolean {
+  const kits = context.cmt.getKits();
+  let isAvailable: boolean = false;
+  kits.forEach(value => {
+    if (value.name.includes(context.buildSystem.defaultKit))
+      isAvailable = true;
+  });
+
+  return isAvailable;
 }
 
-function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: CMakeContext): void {
-  if (!isPreferredGeneratorInKit(context.buildSystem.defaultKit)) {
-    testContext.skip();
-  }
+function isPreferredGeneratorAvailable(context: CMakeContext): boolean {
+  const kits = context.cmt.getKits();
+  let isAvailable: boolean = false;
+  kits.forEach(value => {
+    if (value.name.includes(context.buildSystem.defaultKit) && value.preferredGenerator)
+      isAvailable = true;
+  });
+
+  return isAvailable;
 }
 
-// Needed by test "No preferred generators configured in settings and kit"
-function skipTestWithPreferredGeneratorInKit(testContext: any, context: CMakeContext): void {
-  if (isPreferredGeneratorInKit(context.buildSystem.defaultKit)) {
+interface SkipOptions {
+  kitIsNotAvailable?: boolean;
+  preferredGeneratorIsAvailable?: boolean;
+  preferredGeneratorIsNotAvailable?: boolean;
+}
+
+function skipTestIf(skipOptions: SkipOptions, testContext: any, context: CMakeContext): void {
+  // Skip if kit is not available (matched by default name)
+  if (skipOptions.kitIsNotAvailable && !isKitAvailable(context))
     testContext.skip();
-  }
+
+  if ((skipOptions.preferredGeneratorIsAvailable && isPreferredGeneratorAvailable(context))
+      || (skipOptions.preferredGeneratorIsNotAvailable && !isPreferredGeneratorAvailable(context)))
+    testContext.skip();
 }
 
 function makeExtensionTestSuite(name: string,
                                 expectedBuildSystem: KitEnvironment,
                                 cb: (context: CMakeContext) => void) {
-  suite(name, () => {
+  suite.only(name, () => {
     const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
     suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -144,8 +190,9 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
     // Test only one visual studio, because there is only a preferred generator in kit by default
     // Preferred generator selection order is settings.json -> cmake-kit.json -> error
     test('Use preferred generator from kit file', async function(this: ITestCallbackContext) {
-      skipTestWithoutPreferredGeneratorInKit(this, context);
+      skipTestIf({preferredGeneratorIsNotAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
+
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', []);
       expect(await context.cmt.build()).to.be.eq(0);
@@ -154,8 +201,8 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
 
-    test('Get no error messages for missing preferred generators', async function(this: ITestCallbackContext) {
-      skipTestWithoutPreferredGeneratorInKit(this, context);
+    test('Use preferred generator from settings file', async function(this: ITestCallbackContext) {
+      skipTestIf({preferredGeneratorIsNotAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
 
       process.env.PATH = '';
@@ -167,8 +214,8 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
 
-    test('Use invalid preferred generators from settings.json', async function(this: ITestCallbackContext) {
-      skipTestWithPreferredGeneratorInKit(this, context);
+    test('Reject invalid preferred generator in settings file', async function(this: ITestCallbackContext) {
+      skipTestIf({preferredGeneratorIsAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
 
       await context.cmt.selectKit();
@@ -179,9 +226,10 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
-    test('No preferred generators configured in settings and kit', async function(this: ITestCallbackContext) {
-      skipTestWithPreferredGeneratorInKit(this, context);
+    test('Reject if all \'preferredGenerators\' fields are empty', async function(this: ITestCallbackContext) {
+      skipTestIf({preferredGeneratorIsAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
+
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', []);
       await expect(context.cmt.build()).to.eventually.be.rejected;
@@ -190,8 +238,10 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
-    test('Use preferred generators from settings.json', async function(this: ITestCallbackContext) {
+    test('Use preferred generator from settings.json', async function(this: ITestCallbackContext) {
+      skipTestIf({kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
+
       await context.cmt.selectKit();
       await context.testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles', 'MinGW Makefiles']);
       expect(await context.cmt.build()).to.be.eq(0);
