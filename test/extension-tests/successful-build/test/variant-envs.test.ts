@@ -37,7 +37,7 @@ suite('[Environment Variables in Variants]', async () => {
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
     const cacheEntry_ = cache.get('variantEnv');
-    expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not pressent');
+    expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
     const cacheEntry = cacheEntry_!;
     expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
     expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
