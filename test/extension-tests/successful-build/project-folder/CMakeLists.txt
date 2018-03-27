@@ -16,6 +16,8 @@ set(configureEnvironment "$ENV{_CONFIGURE_ENV}" CACHE STRING "configureEnvironme
 set(buildEnvironment "$ENV{_BUILD_ENV}" CACHE STRING "buildEnvironment")
 set(environment "$ENV{_ENV}" CACHE STRING "environment")
 
+set(variantEnv "$ENV{TEST_VARIANT_ENV}" CACHE STRING "variantEnv")
+
 add_definitions(
     -D_CMAKE_VERSION="${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}"
     -D_GENERATOR="${CMAKE_GENERATOR}"

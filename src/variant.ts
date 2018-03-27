@@ -6,6 +6,7 @@ import * as vscode from 'vscode';
 
 import * as logging from './logging';
 import {fs} from './pr';
+import {EnvironmentVariables} from './proc';
 import rollbar from './rollbar';
 import {loadSchema} from './schema';
 import {StateManager} from './state';
@@ -27,6 +28,7 @@ export interface VariantConfigurationOptions {
   settings?: ConfigureArguments;
   generator?: string;
   toolset?: string;
+  env?: EnvironmentVariables;
 }
 
 export interface VariantSetting {
@@ -37,9 +39,7 @@ export interface VariantSetting {
 
 export type VariantSet = Map<string, VariantSetting>;
 
-export interface VariantCombination extends vscode.QuickPickItem {
-  keywordSettings: Map<string, string>;
-}
+export interface VariantCombination extends vscode.QuickPickItem { keywordSettings: Map<string, string>; }
 
 export interface VariantFileContent {
   [key: string]: {default: string; description: string; choices: {[name: string]: VariantConfigurationOptions;};};
@@ -242,6 +242,7 @@ export class VariantManager implements vscode.Disposable {
                             settings: Object.assign({}, acc.settings, el.settings),
                             short: [acc.short, el.short].join(' ').trim(),
                             long: [acc.long, el.long].join(', '),
+                            env: util.mergeEnvironment(acc.env || {}, el.env || {}),
                           }),
                           init);
   }
