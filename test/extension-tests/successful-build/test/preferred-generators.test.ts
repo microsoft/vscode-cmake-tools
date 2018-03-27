@@ -37,7 +37,7 @@ const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
     }
   ],
   ['Visual Studio 2017 Preview']:
-      [{defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'}],
+      [{defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'}],
   ['Visual Studio 2015']: [
     {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
     {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
@@ -70,19 +70,19 @@ interface CMakeContext {
   buildSystem: KitEnvironment;
 }
 
-function isPreferedGeneratorInKit(defaultKit: string): boolean {
+function isPreferredGeneratorInKit(defaultKit: string): boolean {
   return RegExp('^Visual[ ]{0,1}Studio').test(defaultKit);
 }
 
 function skipTestWithoutPreferredGeneratorInKit(testContext: any, context: CMakeContext): void {
-  if (!isPreferedGeneratorInKit(context.buildSystem.defaultKit)) {
+  if (!isPreferredGeneratorInKit(context.buildSystem.defaultKit)) {
     testContext.skip();
   }
 }
 
-// Needed by test "Non preferred generators configured in settings and kit"
+// Needed by test "No preferred generators configured in settings and kit"
 function skipTestWithPreferredGeneratorInKit(testContext: any, context: CMakeContext): void {
-  if (isPreferedGeneratorInKit(context.buildSystem.defaultKit)) {
+  if (isPreferredGeneratorInKit(context.buildSystem.defaultKit)) {
     testContext.skip();
   }
 }
@@ -138,11 +138,11 @@ function makeExtensionTestSuite(name: string,
 }
 
 KITS_BY_PLATFORM[workername].forEach(buildSystem => {
-  makeExtensionTestSuite(`Prefered generators (${buildSystem.defaultKit})`, buildSystem, (context: CMakeContext) => {
+  makeExtensionTestSuite(`Preferred generators (${buildSystem.defaultKit})`, buildSystem, (context: CMakeContext) => {
     const BUILD_TIMEOUT: number = 120000;
 
     // Test only one visual studio, because there is only a preferred generator in kit by default
-    // Prefered generator selection order is settings.json -> cmake-kit.json -> error
+    // Preferred generator selection order is settings.json -> cmake-kit.json -> error
     test('Use preferred generator from kit file', async function(this: ITestCallbackContext) {
       skipTestWithoutPreferredGeneratorInKit(this, context);
       this.timeout(BUILD_TIMEOUT);
@@ -179,7 +179,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
-    test('Non preferred generators configured in settings and kit', async function(this: ITestCallbackContext) {
+    test('No preferred generators configured in settings and kit', async function(this: ITestCallbackContext) {
       skipTestWithPreferredGeneratorInKit(this, context);
       this.timeout(BUILD_TIMEOUT);
       await context.cmt.selectKit();
