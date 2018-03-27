@@ -1,8 +1,5 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    # CMake Version to test with
-    [string]
-    $CMakeVersion = "3.10.0",
     # Run the named tests
     [string[]]
     $Test,
@@ -52,7 +49,7 @@ Invoke-ChronicCommand "Compiling TypeScript" $npm run compile-once
 Invoke-ChronicCommand "Running TSLint" $npm run lint:nofix
 
 # Get the CMake binary that we will use to run our tests
-$cmake_binary = Install-TestCMake -Version $CMakeVersion
+$cmake_binary = Install-TestCMake -Version "3.10.0"
 
 if (! $NoTest) {
     # Prepare to run our tests
@@ -62,7 +59,7 @@ if (! $NoTest) {
         -TestsPath "$REPO_DIR/out/test/unit-tests" `
         -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
 
-    foreach ($name in @("vs-preferred-gen"; "successful-build"; "without-cmakelist-file"; )) {
+    foreach ($name in @("successful-build"; )) {
         Invoke-VSCodeTest "CMake Tools: $name" `
             -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
             -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
