@@ -199,7 +199,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
     // Test only one visual studio, because there is only a preferred generator in kit by default
     // Preferred generator selection order is settings.json -> cmake-kit.json -> error
-    test('Use preferred generator from kit file', async function(this: ITestCallbackContext) {
+    test(`Use preferred generator from kit file (${buildSystem.defaultKit})`, async function(this: ITestCallbackContext) {
       skipTestIf({preferredGeneratorIsNotAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
 
@@ -211,7 +211,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
 
-    test('Use preferred generator from settings file', async function(this: ITestCallbackContext) {
+    test(`Use preferred generator from settings file (${buildSystem.defaultKit})`, async function(this: ITestCallbackContext) {
       skipTestIf({preferredGeneratorIsNotAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
 
@@ -224,7 +224,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
     });
 
-    test('Reject invalid preferred generator in settings file', async function(this: ITestCallbackContext) {
+    test(`Reject invalid preferred generator in settings file (${buildSystem.defaultKit})`, async function(this: ITestCallbackContext) {
       skipTestIf({preferredGeneratorIsAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
 
@@ -236,7 +236,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
-    test('Reject if all \'preferredGenerators\' fields are empty', async function(this: ITestCallbackContext) {
+    test(`Reject if all \'preferredGenerators\' fields are empty (${buildSystem.defaultKit})`, async function(this: ITestCallbackContext) {
       skipTestIf({preferredGeneratorIsAvailable: true, kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
 
@@ -248,7 +248,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
       expect(context.testEnv.errorMessagesQueue[0]).to.be.contains('Unable to determine what CMake generator to use.');
     });
 
-    test('Use preferred generator from settings.json', async function(this: ITestCallbackContext) {
+    test(`Use preferred generator from settings.json (${buildSystem.defaultKit})`, async function(this: ITestCallbackContext) {
       skipTestIf({kitIsNotAvailable: true}, this, context);
       this.timeout(BUILD_TIMEOUT);
 
