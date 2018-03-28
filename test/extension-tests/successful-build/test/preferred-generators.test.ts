@@ -4,6 +4,7 @@ import {ITestCallbackContext} from 'mocha';
 
 interface KitEnvironment {
   defaultKit: string;
+  excludeKit?: string;
   expectedDefaultGenerator: string;
   path?: string[];
 }
@@ -20,11 +21,23 @@ if (workername === undefined) {
 
 const VISUAL_STUDIO_KITS: KitEnvironment[] = [
   // Visual Studio 2017
-  {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {
+    defaultKit: 'Visual Studio Community 2017',
+    excludeKit: 'Preview',
+    expectedDefaultGenerator: 'Visual Studio 15 2017'
+  },
   {defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
-  {defaultKit: 'Visual Studio Professional 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {
+    defaultKit: 'Visual Studio Professional 2017',
+    excludeKit: 'Preview',
+    expectedDefaultGenerator: 'Visual Studio 15 2017'
+  },
   {defaultKit: 'Visual Studio Professional 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
-  {defaultKit: 'Visual Studio Enterprise 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {
+    defaultKit: 'Visual Studio Enterprise 2017',
+    excludeKit: 'Preview',
+    expectedDefaultGenerator: 'Visual Studio 15 2017'
+  },
   {defaultKit: 'Visual Studio Enterprise 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
 
   // Visual Studio 2015
@@ -35,34 +48,39 @@ const VISUAL_STUDIO_KITS: KitEnvironment[] = [
 ];
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
-  ['windows']: VISUAL_STUDIO_KITS.concat([{
-    defaultKit: 'GCC',
-    expectedDefaultGenerator: 'MinGW Makefiles',
-    path: ['C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
-  }]),
+  ['windows']: VISUAL_STUDIO_KITS.concat([
+    {
+      defaultKit: 'GCC 7.2.0',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: ['C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
+    },
+    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']},
+    {defaultKit: 'Clang 4.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']},
+    {defaultKit: 'Clang 5.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}
+  ]),
   ['Visual Studio 2017']: VISUAL_STUDIO_KITS.concat([
     {
-      defaultKit: 'GCC',
+      defaultKit: 'GCC 7.2.0',
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles', path: ['C:\\cygwin64\\bin']}
+    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}
   ]),
   ['Visual Studio 2017 Preview']: VISUAL_STUDIO_KITS.concat(
-      [{defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles', path: ['C:\\cygwin64\\bin']}]),
+      [{defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}]),
   ['Visual Studio 2015']: VISUAL_STUDIO_KITS.concat([
     {
-      defaultKit: 'GCC',
+      defaultKit: 'GCC 7.2.0',
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
     {
-      defaultKit: 'GCC',
+      defaultKit: 'GCC 6.3.0',
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']},
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles', path: ['C:\\cygwin64\\bin']}
+    {defaultKit: 'GCC 5.3.0', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']},
+    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}
   ]),
   ['linux']: [
     {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
@@ -135,7 +153,8 @@ function makeExtensionTestSuite(name: string,
       context.testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                                'build',
                                                'output.txt',
-                                               context.buildSystem.defaultKit);
+                                               context.buildSystem.defaultKit,
+                                               context.buildSystem.excludeKit);
 
       context.pathBackup = process.env.PATH!;
       if (context.buildSystem.path && context.buildSystem.path.length != 0) {

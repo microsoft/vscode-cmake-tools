@@ -16,18 +16,22 @@ export class DefaultEnvironment {
   setting: CMakeToolsSettingFile;
   errorMessagesQueue: string[] = [];
 
-  public constructor(projectRoot: string, buildLocation: string, executableResult: string, defaultkitRegExp?: string) {
+  public constructor(projectRoot: string,
+                     buildLocation: string,
+                     executableResult: string,
+                     defaultKitLabel?: string,
+                     excludeKitLabel?: string) {
     this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
     this.result = new TestProgramResult(this.projectFolder.buildDirectory.location, executableResult);
 
-    if (!defaultkitRegExp) {
+    if (!defaultKitLabel) {
       if (process.platform == 'win32') {
-        defaultkitRegExp = '^Visual ?Studio';
+        defaultKitLabel = 'Visual';
       } else {
-        defaultkitRegExp = '.';
+        defaultKitLabel = ' ';
       }
     }
-    this.kitSelection = new SelectKitPickerHandle(defaultkitRegExp);
+    this.kitSelection = new SelectKitPickerHandle(defaultKitLabel, excludeKitLabel);
     this.setupShowQuickPickerStub([this.kitSelection]);
 
     this.setting = new CMakeToolsSettingFile(this.sandbox);

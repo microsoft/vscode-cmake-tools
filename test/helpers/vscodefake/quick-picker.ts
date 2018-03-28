@@ -8,7 +8,7 @@ export interface QuickPickerHandleStrategy {
 
 export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
 
-  constructor(readonly defaultKitLabelRegEx: string) {}
+  constructor(readonly defaultKitLabel: string, readonly excludeKitLabel?: string) {}
 
   public get identifier(): string { return 'Select a Kit'; }
 
@@ -16,7 +16,8 @@ export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
     const defaultKit: string[] = items.filter((item: any) => {
       const name: string = item.label;
       if (name) {
-        if (new RegExp(this.defaultKitLabelRegEx).test(name)) {
+        if (name.includes(this.defaultKitLabel)
+            && (this.excludeKitLabel ? !name.includes(this.excludeKitLabel) : true)) {
           return item;
         }
       } else {
