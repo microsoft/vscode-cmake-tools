@@ -72,13 +72,7 @@ export interface ExecutionOptions {
   cwd?: string;
 }
 
-export interface ExecFileOptions {
-  environment?: EnvironmentVariables;
-  shell?: string;
-  silent?: boolean;
-  cwd?: string;
-  encoding?: BufferEncoding;
-}
+export interface ExecFileOptions extends ExecutionOptions { encoding?: BufferEncoding; }
 
 /**
  * Execute a command and return the result
@@ -171,19 +165,12 @@ export function execute(command: string,
 }
 
 /**
- * Execute a command and return the result
+ * Execute a file and return the result
  * @param command The binary to execute
  * @param args The arguments to pass to the binary
- * @param outputConsumer An output consumer for the command execution
  * @param options Additional execution options
- *
- * @note Output from the command is accumulated into a single buffer: Commands
- * which produce a lot of output should be careful about memory constraints.
  */
-export function executeFile(command: string,
-                            args: string[],
-                            outputConsumer?: OutputConsumer|null,
-                            options?: ExecFileOptions): Subprocess {
+export function executeFile(command: string, args: string[], options?: ExecFileOptions): Promise<ExecutionResult> {
   if (options && options.silent !== true) {
     log.info('Executing command: '
              // We do simple quoting of arguments with spaces.
@@ -201,62 +188,13 @@ export function executeFile(command: string,
   const final_env = util.mergeEnvironment(process.env as EnvironmentVariables, options.environment || {});
 
   const exec_opts: proc.ExecOptionsWithStringEncoding
-      = {env: final_env, shell: options.shell, encoding: options.encoding || 'utf8'};
+      = {env: final_env, encoding: options.encoding || 'utf8', cwd: options.cwd};
 
-  if (options && options.cwd) {
-    exec_opts.cwd = options.cwd;
-  }
-
-  const child: proc.ChildProcess = proc.execFile(command, args, exec_opts);
-  const result = new Promise<ExecutionResult>((resolve, reject) => {
-    child.on('error', err => { reject(err); });
-    let stdout_acc = '';
-    let line_acc = '';
-    let stderr_acc = '';
-    let stderr_line_acc = '';
-    child.stdout.on('data', (data: Uint8Array) => {
-      const str = data.toString();
-      const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-      while (lines.length > 1) {
-        line_acc += lines[0];
-        if (outputConsumer) {
-          outputConsumer.output(line_acc);
-        }
-        line_acc = '';
-        // Erase the first line from the list
-        lines.splice(0, 1);
-      }
-      console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-      line_acc += lines[0];
-      stdout_acc += str;
-    });
-    child.stderr.on('data', (data: Uint8Array) => {
-      const str = data.toString();
-      const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-      while (lines.length > 1) {
-        stderr_line_acc += lines[0];
-        if (outputConsumer) {
-          outputConsumer.error(stderr_line_acc);
-        }
-        stderr_line_acc = '';
-        // Erase the first line from the list
-        lines.splice(0, 1);
-      }
-      console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-      stderr_line_acc += lines[0];
-      stderr_acc += str;
-    });
-    // Don't stop until the child stream is closed, otherwise we might not read
-    // the whole output of the command.
-    child.on('close', retc => {
-      if (line_acc && outputConsumer) {
-        outputConsumer.output(line_acc);
-      }
-      if (stderr_line_acc && outputConsumer) {
-        outputConsumer.error(stderr_line_acc);
-      }
-      resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
+  return new Promise<ExecutionResult>((resolve, reject) => {
+    proc.execFile(command, args, exec_opts, (error, stdout, stderr) => {
+      if (error)
+        return reject(error);
+      resolve({retc: 0, stdout, stderr});
     });
   });
-  return {child, result};
 }
