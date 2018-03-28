@@ -24,28 +24,21 @@ const DEFAULT_VS_KITS: KitEnvironment[] = [
   {
     defaultKit: 'Visual Studio Community 2017',
     excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017',
-    path: ['']
+    expectedDefaultGenerator: 'Visual Studio 15 2017'
   },
-  {defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017', path: ['']},
+  {defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
   {
     defaultKit: 'Visual Studio Professional 2017',
     excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017',
-    path: ['']
+    expectedDefaultGenerator: 'Visual Studio 15 2017'
   },
-  {
-    defaultKit: 'Visual Studio Professional 2017 Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017',
-    path: ['']
-  },
+  {defaultKit: 'Visual Studio Professional 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
   {
     defaultKit: 'Visual Studio Enterprise 2017',
     excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017',
-    path: ['']
+    expectedDefaultGenerator: 'Visual Studio 15 2017'
   },
-  {defaultKit: 'Visual Studio Enterprise 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017', path: ['']},
+  {defaultKit: 'Visual Studio Enterprise 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
 
   // Visual Studio 2015
   {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: ['']},
@@ -203,12 +196,12 @@ function makeExtensionTestSuite(name: string,
   });
 }
 
+// Preferred generator selection order is settings.json -> cmake-kit.json -> error
 KITS_BY_PLATFORM[workername].forEach(buildSystem => {
   makeExtensionTestSuite(`Preferred generators (${buildSystem.defaultKit})`, buildSystem, (context: CMakeContext) => {
     const BUILD_TIMEOUT: number = 120000;
 
-    // Test only one visual studio, because there is only a preferred generator in kit by default
-    // Preferred generator selection order is settings.json -> cmake-kit.json -> error
+    // This test is only valid for kits which have at least one preferred generator defined.
     test(`Use preferred generator from kit file (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
            skipTestIf({preferredGeneratorIsNotAvailable: true}, this, context);
@@ -224,18 +217,25 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
     test(`Use preferred generator from settings file (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
-           skipTestIf({preferredGeneratorIsNotAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
-           process.env.PATH = '';
            await context.cmt.selectKit();
-           await context.testEnv.setting.changeSetting('preferredGenerators', ['Ninja']);
+           await context.testEnv.setting.changeSetting('preferredGenerators',
+                                                       ['Ninja', 'Unix Makefiles', 'MinGW Makefiles']);
            expect(await context.cmt.build()).to.be.eq(0);
            const result = await context.testEnv.result.getResultAsJson();
-           expect(result['cmake-generator']).to.eq(buildSystem.expectedDefaultGenerator);
+
+           // We expect the VS 2017 kits to use the Ninja generator
+           if (context.buildSystem.defaultKit.includes('2017'))
+             expect(result['cmake-generator']).to.eq('Ninja');
+           else
+             expect(result['cmake-generator']).to.eq(context.buildSystem.expectedDefaultGenerator);
+
            expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
          });
 
+    // This test is NOT valid for kits which have any preferred generator defined
+    // since we expect CMT to reject the build.
     test(`Reject invalid preferred generator in settings file (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
            skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
@@ -250,6 +250,8 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
                .to.be.contains('Unable to determine what CMake generator to use.');
          });
 
+    // This test is NOT valid for kits which have any preferred generator defined
+    // since we expect CMT to reject the build.
     test(`Reject if all \'preferredGenerators\' fields are empty (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
            skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
@@ -259,7 +261,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            await context.testEnv.setting.changeSetting('preferredGenerators', []);
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
-           expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
+           expect(context.testEnv.errorMessagesQueue.length).to.eql(1);
            expect(context.testEnv.errorMessagesQueue[0])
                .to.be.contains('Unable to determine what CMake generator to use.');
          });
@@ -270,9 +272,9 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles', 'MinGW Makefiles']);
-           expect(await context.cmt.build()).to.be.eq(0);
+           expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
-           expect(result['cmake-generator']).to.eq(buildSystem.expectedDefaultGenerator);
+           expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);
            expect(context.testEnv.errorMessagesQueue.length)
                .to.be.eq(0, 'Wrong message ' + context.testEnv.errorMessagesQueue[0]);
          });
