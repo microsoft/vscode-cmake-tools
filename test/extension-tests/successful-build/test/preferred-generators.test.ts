@@ -24,27 +24,34 @@ const VISUAL_STUDIO_KITS: KitEnvironment[] = [
   {
     defaultKit: 'Visual Studio Community 2017',
     excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017'
+    expectedDefaultGenerator: 'Visual Studio 15 2017',
+    path: ['']
   },
-  {defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017', path: ['']},
   {
     defaultKit: 'Visual Studio Professional 2017',
     excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017'
+    expectedDefaultGenerator: 'Visual Studio 15 2017',
+    path: ['']
   },
-  {defaultKit: 'Visual Studio Professional 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {
+    defaultKit: 'Visual Studio Professional 2017 Preview',
+    expectedDefaultGenerator: 'Visual Studio 15 2017',
+    path: ['']
+  },
   {
     defaultKit: 'Visual Studio Enterprise 2017',
     excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017'
+    expectedDefaultGenerator: 'Visual Studio 15 2017',
+    path: ['']
   },
-  {defaultKit: 'Visual Studio Enterprise 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {defaultKit: 'Visual Studio Enterprise 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017', path: ['']},
 
   // Visual Studio 2015
-  {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
+  {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: ['']},
 
   // Visual Studio 2012
-  {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
+  {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012', path: ['']},
 ];
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
@@ -237,11 +244,6 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
-           // We need to clear the path for cygwin installations, else CMake will
-           // complain about sh.exe being present.
-           if (context.buildSystem.path && context.buildSystem.path[0].includes('cygwin'))
-             process.env.PATH = '';
-
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
            await expect(context.cmt.build()).to.eventually.be.rejected;
@@ -256,11 +258,6 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
-           // We need to clear the path for cygwin installations, else CMake will
-           // complain about sh.exe being present.
-           if (context.buildSystem.path && context.buildSystem.path[0].includes('cygwin'))
-             process.env.PATH = '';
-
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', []);
            await expect(context.cmt.build()).to.eventually.be.rejected;
@@ -270,15 +267,9 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
                .to.be.contains('Unable to determine what CMake generator to use.');
          });
 
-    test(`Use preferred generator from settings.json (${buildSystem.defaultKit})`,
+    test(`Use preferred generator from settings or kit file (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
            this.timeout(BUILD_TIMEOUT);
-
-           // We need to clear the path for cygwin installations, else CMake will
-           // complain about sh.exe being present.
-           if (context.buildSystem.path && context.buildSystem.path[0].includes('cygwin')) {
-             process.env.PATH = '';
-           }
 
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles', 'MinGW Makefiles']);
