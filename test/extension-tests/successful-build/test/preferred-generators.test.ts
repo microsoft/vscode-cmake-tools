@@ -54,9 +54,9 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
-    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']},
-    {defaultKit: 'Clang 4.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']},
-    {defaultKit: 'Clang 5.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}
+    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']},
+    {defaultKit: 'Clang 4.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']},
+    {defaultKit: 'Clang 5.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}
   ]),
   ['Visual Studio 2017']: VISUAL_STUDIO_KITS.concat([
     {
@@ -64,10 +64,10 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
-    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}
+    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}
   ]),
   ['Visual Studio 2017 Preview']: VISUAL_STUDIO_KITS.concat(
-      [{defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}]),
+      [{defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}]),
   ['Visual Studio 2015']: VISUAL_STUDIO_KITS.concat([
     {
       defaultKit: 'GCC 7.2.0',
@@ -80,7 +80,7 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
       path: ['C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
     {defaultKit: 'GCC 5.3.0', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']},
-    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\temp']}
+    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}
   ]),
   ['linux']: [
     {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
@@ -104,12 +104,15 @@ interface CMakeContext {
   buildSystem: KitEnvironment;
 }
 
+function checkKit(kitName: string, defaultKit: string, excludeKit?: string) {
+  return kitName.includes(defaultKit) && (excludeKit ? !kitName.includes(excludeKit) : true);
+}
+
 function isKitAvailable(context: CMakeContext): boolean {
   const kits = context.cmt.getKits();
   let isAvailable: boolean = false;
   kits.forEach(value => {
-    if (value.name.includes(context.buildSystem.defaultKit)
-        && (context.buildSystem.excludeKit ? !value.name.includes(context.buildSystem.excludeKit) : true))
+    if (checkKit(value.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit))
       isAvailable = true;
   });
 
@@ -120,8 +123,7 @@ function isPreferredGeneratorAvailable(context: CMakeContext): boolean {
   const kits = context.cmt.getKits();
   let isAvailable: boolean = false;
   kits.forEach(value => {
-    if (value.name.includes(context.buildSystem.defaultKit)
-        && (context.buildSystem.excludeKit ? !value.name.includes(context.buildSystem.excludeKit) : true)
+    if (checkKit(value.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit)
         && value.preferredGenerator)
       isAvailable = true;
   });
@@ -148,7 +150,7 @@ function skipTestIf(skipOptions: SkipOptions, testContext: any, context: CMakeCo
 function makeExtensionTestSuite(name: string,
                                 expectedBuildSystem: KitEnvironment,
                                 cb: (context: CMakeContext) => void) {
-  suite(name, () => {
+  suite.only(name, () => {
     const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
     suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -170,6 +172,7 @@ function makeExtensionTestSuite(name: string,
       // No new kit selection is needed
       await clearExistingKitConfigurationFile();
       await context.cmt.scanForKits();
+      skipTestIf({kitIsNotAvailable: true}, this, context);
     });
 
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -204,7 +207,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
     // Preferred generator selection order is settings.json -> cmake-kit.json -> error
     test(`Use preferred generator from kit file (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
-           skipTestIf({preferredGeneratorIsNotAvailable: true, kitIsNotAvailable: true}, this, context);
+           skipTestIf({preferredGeneratorIsNotAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
@@ -217,7 +220,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
     test(`Use preferred generator from settings file (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
-           skipTestIf({preferredGeneratorIsNotAvailable: true, kitIsNotAvailable: true}, this, context);
+           skipTestIf({preferredGeneratorIsNotAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
            process.env.PATH = '';
@@ -231,8 +234,13 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
     test(`Reject invalid preferred generator in settings file (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
-           skipTestIf({preferredGeneratorIsAvailable: true, kitIsNotAvailable: true}, this, context);
+           skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
+
+           // We need to clear the path for cygwin installations, else CMake will
+           // complain about sh.exe being present.
+           if (context.buildSystem.path && context.buildSystem.path[0].includes('cygwin'))
+             process.env.PATH = '';
 
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
@@ -245,8 +253,13 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
     test(`Reject if all \'preferredGenerators\' fields are empty (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
-           skipTestIf({preferredGeneratorIsAvailable: true, kitIsNotAvailable: true}, this, context);
+           skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
+
+           // We need to clear the path for cygwin installations, else CMake will
+           // complain about sh.exe being present.
+           if (context.buildSystem.path && context.buildSystem.path[0].includes('cygwin'))
+             process.env.PATH = '';
 
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', []);
@@ -259,8 +272,13 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
     test(`Use preferred generator from settings.json (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
-           skipTestIf({kitIsNotAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
+
+           // We need to clear the path for cygwin installations, else CMake will
+           // complain about sh.exe being present.
+           if (context.buildSystem.path && context.buildSystem.path[0].includes('cygwin')) {
+             process.env.PATH = '';
+           }
 
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles', 'MinGW Makefiles']);
