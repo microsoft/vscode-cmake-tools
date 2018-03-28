@@ -70,9 +70,8 @@ export interface ExecutionOptions {
   shell?: boolean;
   silent?: boolean;
   cwd?: string;
+  encoding?: BufferEncoding;
 }
-
-export interface ExecFileOptions extends ExecutionOptions { encoding?: BufferEncoding; }
 
 /**
  * Execute a command and return the result
@@ -111,6 +110,9 @@ export function execute(command: string,
     spawn_opts.cwd = options.cwd;
   }
   const child: proc.ChildProcess = proc.spawn(command, args, spawn_opts);
+  if (options.encoding)
+    child.stdout.setEncoding(options.encoding);
+
   const result = new Promise<ExecutionResult>((resolve, reject) => {
     child.on('error', err => { reject(err); });
     let stdout_acc = '';
@@ -162,39 +164,4 @@ export function execute(command: string,
     });
   });
   return {child, result};
-}
-
-/**
- * Execute a file and return the result
- * @param command The binary to execute
- * @param args The arguments to pass to the binary
- * @param options Additional execution options
- */
-export function executeFile(command: string, args: string[], options?: ExecFileOptions): Promise<ExecutionResult> {
-  if (options && options.silent !== true) {
-    log.info('Executing command: '
-             // We do simple quoting of arguments with spaces.
-             // This is only shown to the user,
-             // and doesn't have to be 100% correct.
-             + [command]
-                   .concat(args)
-                   .map(a => a.replace('"', '\"'))
-                   .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
-                   .join(' '));
-  }
-  if (!options) {
-    options = {};
-  }
-  const final_env = util.mergeEnvironment(process.env as EnvironmentVariables, options.environment || {});
-
-  const exec_opts: proc.ExecOptionsWithStringEncoding
-      = {env: final_env, encoding: options.encoding || 'utf8', cwd: options.cwd};
-
-  return new Promise<ExecutionResult>((resolve, reject) => {
-    proc.execFile(command, args, exec_opts, (error, stdout, stderr) => {
-      if (error)
-        return reject(error);
-      resolve({retc: 0, stdout, stderr});
-    });
-  });
 }
