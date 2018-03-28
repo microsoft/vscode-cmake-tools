@@ -104,7 +104,7 @@ interface CMakeContext {
   buildSystem: KitEnvironment;
 }
 
-function checkKit(kitName: string, defaultKit: string, excludeKit?: string) {
+function checkKit(kitName: string, defaultKit: string, excludeKit?: string): boolean {
   return kitName.includes(defaultKit) && (excludeKit ? !kitName.includes(excludeKit) : true);
 }
 
@@ -150,7 +150,7 @@ function skipTestIf(skipOptions: SkipOptions, testContext: any, context: CMakeCo
 function makeExtensionTestSuite(name: string,
                                 expectedBuildSystem: KitEnvironment,
                                 cb: (context: CMakeContext) => void) {
-  suite.only(name, () => {
+  suite(name, () => {
     const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
     suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
