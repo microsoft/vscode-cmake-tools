@@ -209,10 +209,10 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators', []);
-           expect(await context.cmt.build()).to.be.eq(0);
+           expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
-           expect(result['cmake-generator']).to.eq(buildSystem.expectedDefaultGenerator);
-           expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
+           expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);
+           expect(context.testEnv.errorMessagesQueue.length).to.eql(0);
          });
 
     test(`Use preferred generator from settings file (${buildSystem.defaultKit})`,
@@ -221,17 +221,16 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
 
            await context.cmt.selectKit();
            await context.testEnv.setting.changeSetting('preferredGenerators',
-                                                       ['Ninja', 'Unix Makefiles', 'MinGW Makefiles']);
-           expect(await context.cmt.build()).to.be.eq(0);
+                                                       ['NMake Makefiles', 'Unix Makefiles', 'MinGW Makefiles']);
+           expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
 
-           // We expect the VS 2017 kits to use the Ninja generator
-           if (context.buildSystem.defaultKit.includes('2017'))
-             expect(result['cmake-generator']).to.eq('Ninja');
-           else
-             expect(result['cmake-generator']).to.eq(context.buildSystem.expectedDefaultGenerator);
+           expect(result['cmake-generator'])
+               .to.eql(context.buildSystem.defaultKit.includes('Visual Studio')
+                           ? 'NMake Makefiles'
+                           : context.buildSystem.expectedDefaultGenerator);
 
-           expect(context.testEnv.errorMessagesQueue.length).to.be.eq(0);
+           expect(context.testEnv.errorMessagesQueue.length).to.eql(0);
          });
 
     // This test is NOT valid for kits which have any preferred generator defined
@@ -276,7 +275,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            const result = await context.testEnv.result.getResultAsJson();
            expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);
            expect(context.testEnv.errorMessagesQueue.length)
-               .to.be.eq(0, 'Wrong message ' + context.testEnv.errorMessagesQueue[0]);
+               .to.eql(0, 'Wrong message ' + context.testEnv.errorMessagesQueue[0]);
          });
   });
 });

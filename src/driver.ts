@@ -528,13 +528,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
           return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
         }
         if (gen_name == 'MinGW Makefiles') {
-          return platform === 'win32' && await this.testHaveCommand('make') || this.testHaveCommand('mingw32-make');
+          return platform === 'win32' && this.testHaveCommand('mingw32-make');
         }
         if (gen_name == 'NMake Makefiles') {
           return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
         }
         if (gen_name == 'Unix Makefiles') {
-          return !(await this.testHaveCommand('mingw32-make')) && this.testHaveCommand('make');
+          return this.testHaveCommand('make');
         }
         return false;
       })();
