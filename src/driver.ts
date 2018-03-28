@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import config from './config';
+import * as expand from './expand';
 import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
 import * as logging from './logging';
 import paths from './paths';
@@ -201,8 +202,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async getExpandedEnvironment(): Promise<{[key: string]: string}> {
     const env = {} as {[key: string]: string};
+    const opts = this.expansionOptions;
     await Promise.resolve(util.objectPairs(config.environment)
-                              .forEach(async ([key, value]) => env[key] = await this.expandString(value)));
+                              .forEach(async ([key, value]) => env[key] = await expand.expandString(value, opts)));
     return env;
   }
 
@@ -212,74 +214,43 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async getExpandedConfigureEnvironment(): Promise<{[key: string]: string}> {
     const config_env = {} as {[key: string]: string};
-    await Promise.resolve(util.objectPairs(config.configureEnvironment)
-                              .forEach(async ([key, value]) => config_env[key] = await this.expandString(value)));
+    const opts = this.expansionOptions;
+    await Promise.resolve(
+        util.objectPairs(config.configureEnvironment)
+            .forEach(async ([key, value]) => config_env[key] = await expand.expandString(value, opts)));
     return config_env;
   }
 
   /**
-   * Replace ${variable} references in the given string with their corresponding
-   * values.
-   * @param instr The input string
-   * @returns A string with the variable references replaced
+   * The options that will be passed to `expand.expandString` for this driver.
    */
-  async expandString(instr: string, env?: proc.EnvironmentVariables): Promise<string> {
-    // Update the replacements and get the updated values
-    const replacements = this._replacements;
+  get expansionOptions(): expand.ExpansionOptions {
+    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
+    const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
 
-    // Merge optional env parameter with process environment
-    env = env ? util.mergeEnvironment(process.env as proc.EnvironmentVariables, env)
-              : process.env as proc.EnvironmentVariables;
+    // Fill in default replacements
+    const vars: expand.ExpansionVars = {
+      workspaceRoot: ws_root,
+      buildType: this.currentBuildType,
+      workspaceRootFolderName: path.basename(ws_root),
+      generator: this.generatorName || 'null',
+      projectName: this.projectName,
+      userHome: user_dir,
+    };
 
-    // We accumulate a list of substitutions that we need to make, preventing
-    // recursively expanding or looping forever on bad replacements
-    const subs = new Map<string, string>();
-
-    const var_re = /\$\{(\w+)\}/g;
-    let mat: RegExpMatchArray|null = null;
-    while ((mat = var_re.exec(instr))) {
-      const full = mat[0];
-      const key = mat[1];
-      const repl = replacements[key];
-      if (!repl) {
-        log.warning(`Invalid variable reference ${full} in string: ${instr}`);
-      } else {
-        subs.set(full, repl);
-      }
+    // Update Variant replacements
+    const variantSettings = this.stateManager.activeVariantSettings;
+    if (variantSettings) {
+      variantSettings.forEach((value: string, key: string) => {
+        if (key != 'buildType') {
+          vars[key] = value;
+        } else {
+          vars['buildLabel'] = value;
+        }
+      });
     }
 
-    const env_re = /\$\{env:(.+?)\}/g;
-    while ((mat = env_re.exec(instr))) {
-      const full = mat[0];
-      const varname = mat[1];
-      const repl = env[util.normalizeEnvironmentVarname(varname)] || '';
-      subs.set(full, repl);
-    }
-
-    const env2_re = /\$\{env\.(.+?)\}/g;
-    while ((mat = env2_re.exec(instr))) {
-      const full = mat[0];
-      const varname = mat[1];
-      const repl = env[util.normalizeEnvironmentVarname(varname)] || '';
-      subs.set(full, repl);
-    }
-
-    const command_re = /\$\{command:(.+?)\}/g;
-    while ((mat = command_re.exec(instr))) {
-      const full = mat[0];
-      const command = mat[1];
-      if (subs.has(full)) {
-        continue;  // Don't execute commands more than once per string
-      }
-      try {
-        const command_ret = await vscode.commands.executeCommand(command);
-        subs.set(full, `${command_ret}`);
-      } catch (e) { log.warning(`Exception while executing command ${command} for string: ${instr} (${e})`); }
-    }
-
-    let final_str = instr;
-    subs.forEach((value, key) => { final_str = util.replaceAll(final_str, key, value); });
-    return final_str;
+    return {vars};
   }
 
   executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions):
@@ -380,12 +351,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private async _refreshExpansions() {
     await this.doRefreshExpansions(async () => {
-      this._sourceDirectory = util.normalizePath(await this.expandString(config.sourceDirectory));
-      this._binaryDir = util.normalizePath(await this.expandString(config.buildDirectory));
+      const opts = this.expansionOptions;
+      this._sourceDirectory = util.normalizePath(await expand.expandString(config.sourceDirectory, opts));
+      this._binaryDir = util.normalizePath(await expand.expandString(config.buildDirectory, opts));
 
       const installPrefix = config.installPrefix;
       if (installPrefix) {
-        this._installDir = util.normalizePath(await this.expandString(installPrefix));
+        this._installDir = util.normalizePath(await expand.expandString(installPrefix, opts));
       }
     });
   }
@@ -628,12 +600,13 @@ Please install or configure a preferred generator, or update settings.json or yo
     }
 
     // Get expanded configure environment
-    const expanded_configure_env = this.getExpandedConfigureEnvironment();
+    const expanded_configure_env = await this.getExpandedConfigureEnvironment();
 
     // Expand all flags
     const final_flags = flags.concat(settings_flags);
-    const expanded_flags_promises
-        = final_flags.map(async (value: string) => this.expandString(value, await expanded_configure_env));
+    const opts = this.expansionOptions;
+    const expanded_flags_promises = final_flags.map(
+        async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
@@ -746,16 +719,18 @@ Please install or configure a preferred generator, or update settings.json or yo
     })();
 
     const build_env = {} as {[key: string]: string};
+    const opts = this.expansionOptions;
     await Promise.resolve(
         util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.getExpandedEnvironment()))
-            .forEach(async ([key, value]) => build_env[key] = await this.expandString(value)));
+            .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
     const args =
         ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(config.buildArgs,
                                                                                                   ['--'],
                                                                                                   generator_args,
                                                                                                   config.buildToolArgs);
-    const expanded_args_promises = args.map(async (value: string) => this.expandString(value, build_env));
+    const expanded_args_promises
+        = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises);
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
