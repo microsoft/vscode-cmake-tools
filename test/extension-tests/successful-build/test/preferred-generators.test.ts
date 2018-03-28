@@ -40,19 +40,29 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
     expectedDefaultGenerator: 'MinGW Makefiles',
     path: ['C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
   }]),
-  ['Visual Studio 2017']: VISUAL_STUDIO_KITS.concat([{
-    defaultKit: 'GCC',
-    expectedDefaultGenerator: 'MinGW Makefiles',
-    path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
-  }]),
-  ['Visual Studio 2017 Preview']: VISUAL_STUDIO_KITS.concat([]),
+  ['Visual Studio 2017']: VISUAL_STUDIO_KITS.concat([
+    {
+      defaultKit: 'GCC',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
+    },
+    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles', path: ['C:\\cygwin64\\bin']}
+  ]),
+  ['Visual Studio 2017 Preview']: VISUAL_STUDIO_KITS.concat(
+      [{defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles', path: ['C:\\cygwin64\\bin']}]),
   ['Visual Studio 2015']: VISUAL_STUDIO_KITS.concat([
+    {
+      defaultKit: 'GCC',
+      expectedDefaultGenerator: 'MinGW Makefiles',
+      path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
+    },
     {
       defaultKit: 'GCC',
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']}
+    {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']},
+    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles', path: ['C:\\cygwin64\\bin']}
   ]),
   ['linux']: [
     {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
