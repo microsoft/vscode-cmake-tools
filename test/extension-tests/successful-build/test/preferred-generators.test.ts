@@ -15,64 +15,45 @@ if (process.env.TRAVIS_OS_NAME) {
 }
 
 if (workername === undefined) {
-  workername = process.platform == 'win32' ? 'DevPC' : 'linux';
+  workername = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'osx' : 'linux';
 }
 
-const KITS_BY_PLATFORM: {[os: string]: KitEnvironment[]} = {
-  ['DevPC']: [
-    {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017', path: ['c:\\Temp']},
-    {
-      defaultKit: 'Visual Studio Community 2017 Preview',
-      expectedDefaultGenerator: 'Visual Studio 15 2017',
-      path: ['c:\\Temp']
-    },
-    {
-      defaultKit: 'Visual Studio Professional 2017',
-      expectedDefaultGenerator: 'Visual Studio 15 2017',
-      path: ['c:\\Temp']
-    },
-    {
-      defaultKit: 'Visual Studio Professional 2017 Preview',
-      expectedDefaultGenerator: 'Visual Studio 15 2017',
-      path: ['c:\\Temp']
-    },
-    {
-      defaultKit: 'Visual Studio Enterprise 2017',
-      expectedDefaultGenerator: 'Visual Studio 15 2017',
-      path: ['c:\\Temp']
-    },
-    {
-      defaultKit: 'Visual Studio Enterprise 2017 Preview',
-      expectedDefaultGenerator: 'Visual Studio 15 2017',
-      path: ['c:\\Temp']
-    },
-    {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: ['c:\\Temp']},
-    {
-      defaultKit: 'GCC',
-      expectedDefaultGenerator: 'MinGW Makefiles',
-      path: ['C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
-    }
-  ],
-  ['Visual Studio 2017']: [
-    {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
-    {
-      defaultKit: 'GCC',
-      expectedDefaultGenerator: 'MinGW Makefiles',
-      path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
-    }
-  ],
-  ['Visual Studio 2017 Preview']:
-      [{defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'}],
-  ['Visual Studio 2015']: [
-    {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
-    {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
+const VISUAL_STUDIO_KITS: KitEnvironment[] = [
+  // Visual Studio 2017
+  {defaultKit: 'Visual Studio Community 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {defaultKit: 'Visual Studio Professional 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {defaultKit: 'Visual Studio Professional 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {defaultKit: 'Visual Studio Enterprise 2017', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {defaultKit: 'Visual Studio Enterprise 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+
+  // Visual Studio 2015
+  {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015'},
+
+  // Visual Studio 2012
+  {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012'},
+];
+
+const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
+  ['windows']: VISUAL_STUDIO_KITS.concat([{
+    defaultKit: 'GCC',
+    expectedDefaultGenerator: 'MinGW Makefiles',
+    path: ['C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
+  }]),
+  ['Visual Studio 2017']: VISUAL_STUDIO_KITS.concat([{
+    defaultKit: 'GCC',
+    expectedDefaultGenerator: 'MinGW Makefiles',
+    path: ['C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
+  }]),
+  ['Visual Studio 2017 Preview']: VISUAL_STUDIO_KITS.concat([]),
+  ['Visual Studio 2015']: VISUAL_STUDIO_KITS.concat([
     {
       defaultKit: 'GCC',
       expectedDefaultGenerator: 'MinGW Makefiles',
       path: ['C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin']
     },
     {defaultKit: 'GCC', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']}
-  ],
+  ]),
   ['linux']: [
     {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
     {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
