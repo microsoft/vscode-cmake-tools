@@ -165,38 +165,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
-   * Get replacements from the state manager and update driver relevant
-   * ones.
-   */
-  private get _replacements(): {[key: string]: string|undefined} {
-    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
-    const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
-    const replacements: {[key: string]: string|undefined} = {};
-
-    // Update default replacements
-    replacements['workspaceRoot'] = vscode.workspace.rootPath;
-    replacements['buildType'] = this.currentBuildType;
-    replacements['workspaceRootFolderName'] = path.basename(ws_root);
-    replacements['generator'] = this.generatorName || 'null';
-    replacements['projectName'] = this.projectName;
-    replacements['userHome'] = user_dir;
-
-    // Update Variant replacements
-    const variantSettings = this.stateManager.activeVariantSettings;
-    if (variantSettings) {
-      variantSettings.forEach((value: string, key: string) => {
-        if (key != 'buildType') {
-          replacements[key] = value;
-        } else {
-          replacements['buildLabel'] = value;
-        }
-      });
-    }
-
-    return replacements;
-  }
-
-  /**
    * Get the environment and apply any needed
    * substitutions before returning it.
    */
