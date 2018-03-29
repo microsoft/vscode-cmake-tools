@@ -106,31 +106,40 @@ interface CMakeContext {
   buildSystem: KitEnvironment;
 }
 
-function checkKit(kitName: string, defaultKit: string, excludeKit?: string): boolean {
+// This exactly matches the kit name
+function exactKitCheck(kitName: string, defaultKit: string): boolean { return kitName === defaultKit; }
+
+// This only does a fuzzy check with the ability to exclude kits which have a substring included
+// in their name.
+function fuzzyKitCheck(kitName: string, defaultKit: string, excludeKit?: string): boolean {
   return kitName.includes(defaultKit) && (excludeKit ? !kitName.includes(excludeKit) : true);
 }
 
+// Check if the kit provided by the buildSystem is available
+// by first doing an exact check and if that didn't yield any
+// results, a fuzzy check.
 function isKitAvailable(context: CMakeContext): boolean {
   const kits = context.cmt.getKits();
-  let isAvailable: boolean = false;
-  kits.forEach(value => {
-    if (checkKit(value.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit))
-      isAvailable = true;
-  });
-
-  return isAvailable;
+  return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit))
+      ? true
+      : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit))
+          ? true
+          : false;
 }
 
+// Check if the kit provided by the buildSystem has a preferred generator
+// defined in the kits file.
 function isPreferredGeneratorAvailable(context: CMakeContext): boolean {
   const kits = context.cmt.getKits();
-  let isAvailable: boolean = false;
-  kits.forEach(value => {
-    if (checkKit(value.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit)
-        && value.preferredGenerator)
-      isAvailable = true;
-  });
-
-  return isAvailable;
+  return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit) && kit.preferredGenerator ? true
+                                                                                                            : false)
+      ? true
+      : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit)
+                          && kit.preferredGenerator
+                      ? true
+                      : false)
+          ? true
+          : false;
 }
 
 interface SkipOptions {
