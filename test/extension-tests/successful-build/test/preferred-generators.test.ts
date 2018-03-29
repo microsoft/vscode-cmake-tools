@@ -16,7 +16,7 @@ if (process.env.TRAVIS_OS_NAME) {
 }
 
 if (workername === undefined) {
-  workername = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'osx' : 'linux';
+  workername = process.platform;
 }
 
 const DEFAULT_VS_KITS: KitEnvironment[] = [
@@ -75,7 +75,7 @@ const DEFAULT_MINGW_KITS: KitEnvironment[] = [
 const DEFAULT_WINDOWS_KITS: KitEnvironment[] = DEFAULT_VS_KITS.concat(DEFAULT_CYGWIN_KITS, DEFAULT_MINGW_KITS);
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
-  ['windows']: DEFAULT_WINDOWS_KITS,
+  ['win32']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2017']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2017 Preview']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2015']: DEFAULT_WINDOWS_KITS,
@@ -83,6 +83,11 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
     {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
     {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
   ],
+  ['darwin']: [
+    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
+    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
+  ],
+  // This is a special case for travis
   ['osx']: [{
     defaultKit: 'Clang',
     expectedDefaultGenerator: 'Unix Makefiles',
