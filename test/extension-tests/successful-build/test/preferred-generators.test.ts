@@ -49,8 +49,8 @@ const DEFAULT_VS_KITS: KitEnvironment[] = [
 
 const DEFAULT_CYGWIN_KITS: KitEnvironment[] = [
   {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']},
-  {defaultKit: 'Clang 4.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']},
-  {defaultKit: 'Clang 5.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}
+  {defaultKit: 'Clang 4.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}
+  //,{defaultKit: 'Clang 5.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}
 ];
 
 const DEFAULT_MINGW_KITS: KitEnvironment[] = [

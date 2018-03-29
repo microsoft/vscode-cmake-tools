@@ -149,7 +149,7 @@ export class VariantManager implements vscode.Disposable {
         if (filepath.endsWith('.json')) {
           new_variants = json5.parse(content);
         } else {
-          new_variants = yaml.load(content);
+          new_variants = yaml.load(content) as VariantFileContent;
         }
       } catch (e) { log.error(`Error parsing ${filepath}: ${e}`); }
     }
