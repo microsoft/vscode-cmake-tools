@@ -13,17 +13,22 @@ export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
   public get identifier(): string { return 'Select a Kit'; }
 
   public handleQuickPick(items: any): any {
-    const defaultKit: string[] = items.filter((item: any) => {
+    let defaultKit: string[]|undefined = items.filter((item: any) => {
       const name: string = item.label;
-      if (name) {
-        if (name.includes(this.defaultKitLabel)
-            && (this.excludeKitLabel ? !name.includes(this.excludeKitLabel) : true)) {
-          return item;
-        }
-      } else {
-        return;
-      }
+      return name ? (name === this.defaultKitLabel ? item : undefined) : undefined;
     });
+
+    if (!defaultKit || defaultKit.length === 0) {
+      defaultKit = items.filter((item: any) => {
+        const name: string = item.label;
+        return name ? (name.includes(this.defaultKitLabel)
+                               && (this.excludeKitLabel ? !name.includes(this.excludeKitLabel) : true)
+                           ? item
+                           : undefined)
+                    : undefined;
+      });
+    }
+
     if (defaultKit && defaultKit.length != 0) {
       return Promise.resolve(defaultKit[0]);
     } else {
