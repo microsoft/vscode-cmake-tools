@@ -344,6 +344,7 @@ const MSVC_ENVIRONMENT_VARIABLES = [
   'WINDOWSSDKDIR',
   'WINDOWSSDKLIBVERSION',
   'WINDOWSSDKVERSION',
+  'VISUALSTUDIOVERSION'
 ];
 
 /**
@@ -417,6 +418,17 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
   if (!variables) {
     return null;
   } else {
+    // This is a very *hacky* and sub-optimal solution, but it
+    // works for now. This *helps* CMake make the right decision
+    // when you have the release and pre-release edition of the same
+    // VS version installed. I don't really know why or what causes
+    // this issue, but this here seems to work. It basically just sets
+    // the VS{vs_version_number}COMNTOOLS environment variable to contain
+    // the path to the Common7 directory.
+    const vs_version = variables.get('VISUALSTUDIOVERSION');
+    if (vs_version)
+      variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir);
+
     // For Ninja and Makefile generators, CMake searches for some compilers
     // before it checks for cl.exe. We can force CMake to check cl.exe first by
     // setting the CC and CXX environment variables when we want to do a
