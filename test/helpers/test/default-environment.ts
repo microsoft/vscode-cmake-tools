@@ -24,6 +24,8 @@ export class DefaultEnvironment {
     this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
     this.result = new TestProgramResult(this.projectFolder.buildDirectory.location, executableResult);
 
+    if (!defaultKitLabel)
+      defaultKitLabel = '';
     this.kitSelection = new SelectKitPickerHandle(defaultKitLabel, excludeKitLabel);
     this.setupShowQuickPickerStub([this.kitSelection]);
 
