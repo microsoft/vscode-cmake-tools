@@ -299,12 +299,25 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res/vswhere.exe');
-  const vswhere_args =
-      ['/c', 'chcp 65001 |', vswhere_exe, '-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease'];
-  const vswhere_res = await proc.execute('cmd.exe', vswhere_args, null, {silent: true, encoding: 'utf8'}).result;
+  const sys32_path = path.join(process.env.WINDIR as string, 'System32');
+
+  const vswhere_args = [
+    '/c',
+    `${sys32_path}\\chcp 65001 |`,
+    vswhere_exe,
+    '-all',
+    '-format',
+    'json',
+    '-products',
+    '*',
+    '-legacy',
+    '-prerelease'
+  ];
+  const vswhere_res
+      = await proc.execute(`${sys32_path}\\cmd.exe`, vswhere_args, null, {silent: true, encoding: 'utf8'}).result;
 
   if (vswhere_res.retc !== 0) {
-    log.error('Failed to execute vswhere.exe:', vswhere_res.stdout);
+    log.error('Failed to execute vswhere.exe:', vswhere_res.stderr);
     return [];
   }
 
