@@ -4,9 +4,7 @@ import {CMakeTools} from '@cmt/cmake-tools';
 import {normalizePath} from '@cmt/util';
 import {DefaultEnvironment, expect} from '@test/util';
 
-// tslint:disable:no-unused-expression
-
-suite.only('[Toolchain Substitution]', async () => {
+suite('[Toolchain Substitution]', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
@@ -19,9 +17,7 @@ suite.only('[Toolchain Substitution]', async () => {
                                      'Test Toolchain');
     cmt = await CMakeTools.create(testEnv.vsContext);
 
-    // One time scan and selection
-    // await clearExistingKitConfigurationFile();
-    // await cmt.scanForKits();
+    // We just need to select our test toolchain
     await cmt.selectKit();
 
     testEnv.projectFolder.buildDirectory.clear();
@@ -33,7 +29,7 @@ suite.only('[Toolchain Substitution]', async () => {
     testEnv.teardown();
   });
 
-  test.only('Check substitution within toolchain kits', async () => {
+  test('Check substitution within toolchain kits', async () => {
         // Set preferred generators
         testEnv.setting.changeSetting('preferredGenerators', ['NMake Makefiles', 'Unix Makefiles', 'MinGW Makefiles']);
 
@@ -43,6 +39,7 @@ suite.only('[Toolchain Substitution]', async () => {
         const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
         const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as api.CacheEntry;
+        // tslint:disable-next-line:no-unused-expression
         expect(cacheEntry).to.not.be.null;
         expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
         expect(normalizePath(cacheEntry.as<string>()))
