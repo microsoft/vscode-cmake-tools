@@ -8,7 +8,9 @@ import config from './config';
 import {CMakeGenerator} from './kit';
 import {createLogger} from './logging';
 import {fs} from './pr';
+import * as proc from './proc';
 import rollbar from './rollbar';
+import * as util from './util';
 
 const log = createLogger('cms-client');
 
@@ -509,9 +511,10 @@ export class CMakeServerClient {
       pipe_file = `/tmp/cmake-server-${Math.random()}`;
     }
     this._pipeFilePath = pipe_file;
+    const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
     const child = this._proc
         = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
-            env: params.environment,
+            env: final_env,
           });
     log.debug(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', this._onErrorData.bind(this));
