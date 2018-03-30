@@ -2,7 +2,7 @@ import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
 import {normalizePath} from '@cmt/util';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {DefaultEnvironment, expect} from '@test/util';
 
 // tslint:disable:no-unused-expression
 
