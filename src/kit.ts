@@ -364,7 +364,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   const fname = Math.random().toString() + '.bat';
   const batpath = path.join(paths.tmpDir, `vs-cmt-${fname}`);
   await fs.writeFile(batpath, bat.join('\r\n'));
-  const res = await proc.execute(batpath, [], null, {shell: true}).result;
+  const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
   const output = res.stdout;
 
