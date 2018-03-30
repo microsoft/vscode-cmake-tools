@@ -44,11 +44,9 @@ suite.only('[Toolchain Substitution]', async () => {
 
         const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as api.CacheEntry;
         expect(cacheEntry).to.not.be.null;
-        expect(cacheEntry.type).to.eq(api.CacheEntryType.Uninitialized, '[toolchain] unexpected cache entry type');
         expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
         expect(normalizePath(cacheEntry.as<string>()))
             .to.eq(normalizePath(testEnv.projectFolder.location.concat('/test-toolchain.cmake')),
                    '[toolchain] substitution incorrect');
-        expect(typeof cacheEntry.value).to.eq('string', '[toolchain] unexpected cache entry value type');
       }).timeout(60000);
 });
