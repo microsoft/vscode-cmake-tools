@@ -102,4 +102,10 @@ if ($DocDestination) {
     Copy-Item $doc_build -Destination $DocDestination -Recurse
 }
 
-Invoke-ChronicCommand "Generating VSIX package" $npm run vsce package
+$vsce = Find-Program vsce
+if (! $vsce) {
+    Write-Warning "You don't have 'vsce' installed. We won't generate a .vsix package"
+}
+else {
+    Invoke-ChronicCommand "Generating VSIX package" $vsce package
+}
