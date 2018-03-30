@@ -663,7 +663,8 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "lint:nofix": "node ./node_modules/tslint/bin/tslint -p .",
-    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
+    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/",
+    "vsce": "node ./node_modules/.bin/vsce"
   },
   "devDependencies": {
     "@types/ajv": "^0.0.3",
@@ -687,6 +688,7 @@
     "tslint": "^5.9.1",
     "typedoc": "^0.8.0",
     "typescript": "~2.3.0",
+    "vsce": "^1.37.6",
     "vscode": "1.1.13"
   },
   "dependencies": {
