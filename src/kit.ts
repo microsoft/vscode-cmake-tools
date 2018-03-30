@@ -287,6 +287,7 @@ export interface VSInstallation {
   installationPath: string;
   installationVersion: string;
   description: string;
+  isPrerelease: boolean;
 }
 
 /**
@@ -298,12 +299,18 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res/vswhere.exe');
-  const vswhere_args = ['-all', '-format', 'json', '-products', '*', '-legacy', '-prerelease'];
-  const vswhere_res = await proc.execute(vswhere_exe, vswhere_args).result;
+  const sys32_path = path.join(process.env.WINDIR as string, 'System32');
+
+  const vswhere_args =
+      ['/c', `${sys32_path}\\chcp 65001 | ${vswhere_exe} -all -format json -products * -legacy -prerelease`];
+  const vswhere_res
+      = await proc.execute(`${sys32_path}\\cmd.exe`, vswhere_args, null, {silent: true, encoding: 'utf8'}).result;
+
   if (vswhere_res.retc !== 0) {
-    log.error('Failed to execute vswhere.exe:', vswhere_res.stdout);
+    log.error('Failed to execute vswhere.exe:', vswhere_res.stderr);
     return [];
   }
+
   const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
   for (const inst of vs_installs) {
     if (inst_ids.indexOf(inst.instanceId) < 0) {
@@ -341,6 +348,7 @@ const MSVC_ENVIRONMENT_VARIABLES = [
   'WINDOWSSDKDIR',
   'WINDOWSSDKLIBVERSION',
   'WINDOWSSDKVERSION',
+  'VISUALSTUDIOVERSION'
 ];
 
 /**
@@ -359,20 +367,23 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   const fname = Math.random().toString() + '.bat';
   const batpath = path.join(paths.tmpDir, `vs-cmt-${fname}`);
   await fs.writeFile(batpath, bat.join('\r\n'));
-  const res = await proc.execute(batpath, [], null, {shell: true}).result;
+  const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
   const output = res.stdout;
+
   if (res.retc !== 0) {
+    if (output.includes('Invalid host architecture') || output.includes('Error in script usage'))
+      return;
+
     console.log(`Error running ${devbat}`, output);
     return;
   }
-  if (output.includes('Invalid host architecture') || output.includes('Error in script usage')) {
-    return;
-  }
+
   if (!output) {
     console.log(`Environment detection for using ${devbat} failed`);
     return;
   }
+
   const vars
       = output.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
           const mat = /(\w+) := ?(.*)/.exec(line);
@@ -383,6 +394,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
           }
           return acc;
         }, new Map());
+
   return vars;
 }
 
@@ -414,6 +426,17 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
   if (!variables) {
     return null;
   } else {
+    // This is a very *hacky* and sub-optimal solution, but it
+    // works for now. This *helps* CMake make the right decision
+    // when you have the release and pre-release edition of the same
+    // VS version installed. I don't really know why or what causes
+    // this issue, but this here seems to work. It basically just sets
+    // the VS{vs_version_number}COMNTOOLS environment variable to contain
+    // the path to the Common7 directory.
+    const vs_version = variables.get('VISUALSTUDIOVERSION');
+    if (vs_version)
+      variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir);
+
     // For Ninja and Makefile generators, CMake searches for some compilers
     // before it checks for cl.exe. We can force CMake to check cl.exe first by
     // setting the CC and CXX environment variables when we want to do a
@@ -431,7 +454,9 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter):
     Promise<VSKit|null> {
-  const installName = inst.displayName || inst.instanceId;
+  const realDisplayName: string|undefined
+      = inst.displayName ? inst.isPrerelease ? `${inst.displayName} Preview` : inst.displayName : undefined;
+  const installName = realDisplayName || inst.instanceId;
   const name = `${installName} - ${arch}`;
   log.debug('Checking for kit: ' + name);
   if (pr) {
@@ -450,7 +475,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
   log.debug('Detected VsKit for version');
-  log.debug(` DisplayName: ${inst.displayName}`);
+  log.debug(` DisplayName: ${realDisplayName}`);
   log.debug(` InstanceId: ${inst.instanceId}`);
   log.debug(` InstallVersion: ${inst.installationVersion}`);
   if (version) {
@@ -462,7 +487,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
         platform: VsArchitectures[arch] as string || undefined,
       };
     }
-    log.debug(` Selected Prefered Generator Name: ${generatorName}`);
+    log.debug(` Selected Preferred Generator Name: ${generatorName}`);
   }
 
   return kit;

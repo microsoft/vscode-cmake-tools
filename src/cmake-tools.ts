@@ -369,6 +369,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   selectKit() { return this._kitManager.selectKit(); }
 
   /**
+   * Primarily a helper function for the preferred-generators tests
+   */
+  getKits() { return this._kitManager.kits; }
+
+  /**
    * The `DiagnosticCollection` for the CMake configure diagnostics.
    */
   private readonly _configureDiagnostics = vscode.languages.createDiagnosticCollection('cmake-configure-diags');

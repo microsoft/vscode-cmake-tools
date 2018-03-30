@@ -63,15 +63,14 @@ export interface Subprocess {
   child: proc.ChildProcess;
 }
 
-export interface EnvironmentVariables {
-  [key: string]: string;
-}
+export interface EnvironmentVariables { [key: string]: string; }
 
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
   shell?: boolean;
   silent?: boolean;
   cwd?: string;
+  encoding?: BufferEncoding;
 }
 
 /**
@@ -111,6 +110,9 @@ export function execute(command: string,
     spawn_opts.cwd = options.cwd;
   }
   const child: proc.ChildProcess = proc.spawn(command, args, spawn_opts);
+  if (options.encoding)
+    child.stdout.setEncoding(options.encoding);
+
   const result = new Promise<ExecutionResult>((resolve, reject) => {
     child.on('error', err => { reject(err); });
     let stdout_acc = '';
