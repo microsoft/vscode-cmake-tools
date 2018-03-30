@@ -617,11 +617,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     return drv.stopCurrentProcess().then(
-        () => {
-          this._cmakeDriver = Promise.resolve(null);
-          return true;
-        },
-        () => false);
+      () => {
+        this._cmakeDriver = Promise.resolve(null);
+        return true;
+      },
+      () => false);
   }
 
   /**
@@ -787,11 +787,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.quickStart`
    */
   public async quickStart(): Promise<Number> {
-    let sourceDir = vscode.workspace.rootPath!;
-    if( vscode.workspace.workspaceFolders !== null) {
-      sourceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
+    if (vscode.workspace.workspaceFolders === undefined) {
+      vscode.window.showErrorMessage('No folder is open.');
+      return -2;
     }
 
+    const sourceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
     const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
 
     if (await fs.exists(mainListFile)) {
