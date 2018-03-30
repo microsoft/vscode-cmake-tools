@@ -10,6 +10,8 @@ suite('[Toolchain Substitution]', async () => {
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
+    if (process.platform === 'win32')
+      this.skip();
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                      'build',
@@ -17,7 +19,8 @@ suite('[Toolchain Substitution]', async () => {
                                      'Test Toolchain');
     cmt = await CMakeTools.create(testEnv.vsContext);
 
-    // We just need to select our test toolchain
+    // Set preferred generators
+    testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles']);
     await cmt.selectKit();
 
     testEnv.projectFolder.buildDirectory.clear();
@@ -30,20 +33,17 @@ suite('[Toolchain Substitution]', async () => {
   });
 
   test('Check substitution within toolchain kits', async () => {
-        // Set preferred generators
-        testEnv.setting.changeSetting('preferredGenerators', ['NMake Makefiles', 'Unix Makefiles', 'MinGW Makefiles']);
+    // Configure
+    expect(await cmt.configure()).to.be.eq(0, '[toolchain] configure failed');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+    const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
-        // Configure
-        expect(await cmt.configure()).to.be.eq(0, '[toolchain] configure failed');
-        expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-        const cache = await CMakeCache.fromPath(await cmt.cachePath);
-
-        const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as api.CacheEntry;
-        // tslint:disable-next-line:no-unused-expression
-        expect(cacheEntry).to.not.be.null;
-        expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
-        expect(normalizePath(cacheEntry.as<string>()))
-            .to.eq(normalizePath(testEnv.projectFolder.location.concat('/test-toolchain.cmake')),
-                   '[toolchain] substitution incorrect');
-      }).timeout(60000);
+    const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as api.CacheEntry;
+    // tslint:disable-next-line:no-unused-expression
+    expect(cacheEntry).to.not.be.null;
+    expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
+    expect(normalizePath(cacheEntry.as<string>()))
+        .to.eq(normalizePath(testEnv.projectFolder.location.concat('/test-toolchain.cmake')),
+               '[toolchain] substitution incorrect');
+  }).timeout(60000);
 });
