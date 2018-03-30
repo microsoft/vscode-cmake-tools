@@ -367,17 +367,20 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   const res = await proc.execute(batpath, [], null, {shell: true}).result;
   await fs.unlink(batpath);
   const output = res.stdout;
+
   if (res.retc !== 0) {
+    if (output.includes('Invalid host architecture') || output.includes('Error in script usage'))
+      return;
+
     console.log(`Error running ${devbat}`, output);
     return;
   }
-  if (output.includes('Invalid host architecture') || output.includes('Error in script usage')) {
-    return;
-  }
+
   if (!output) {
     console.log(`Environment detection for using ${devbat} failed`);
     return;
   }
+
   const vars
       = output.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
           const mat = /(\w+) := ?(.*)/.exec(line);
@@ -388,6 +391,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
           }
           return acc;
         }, new Map());
+
   return vars;
 }
 
