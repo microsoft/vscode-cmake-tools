@@ -24,13 +24,6 @@ export class DefaultEnvironment {
     this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
     this.result = new TestProgramResult(this.projectFolder.buildDirectory.location, executableResult);
 
-    if (!defaultKitLabel) {
-      if (process.platform == 'win32') {
-        defaultKitLabel = 'Visual';
-      } else {
-        defaultKitLabel = ' ';
-      }
-    }
     this.kitSelection = new SelectKitPickerHandle(defaultKitLabel, excludeKitLabel);
     this.setupShowQuickPickerStub([this.kitSelection]);
 
