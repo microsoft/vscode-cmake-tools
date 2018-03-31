@@ -617,11 +617,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     return drv.stopCurrentProcess().then(
-        () => {
-          this._cmakeDriver = Promise.resolve(null);
-          return true;
-        },
-        () => false);
+      () => {
+        this._cmakeDriver = Promise.resolve(null);
+        return true;
+      },
+      () => false);
   }
 
   /**
@@ -787,13 +787,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.quickStart`
    */
   public async quickStart(): Promise<Number> {
-    const drv = await this.getCMakeDriverInstance();
-    if (!drv) {
-      vscode.window.showErrorMessage('CMake driver is not yet ready.');
+    if (vscode.workspace.workspaceFolders === undefined) {
+      vscode.window.showErrorMessage('No folder is open.');
       return -2;
     }
 
-    if (await fs.exists(drv.mainListFile)) {
+    const sourceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
+    const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
+
+    if (await fs.exists(mainListFile)) {
       vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
       return -1;
     }
@@ -838,11 +840,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       '',
     ].join('\n');
 
-    const source_dir = await this.sourceDir;
-
     if (type === 'Library') {
-      if (!(await fs.exists(path.join(source_dir, project_name + '.cpp')))) {
-        await fs.writeFile(path.join(source_dir, project_name + '.cpp'), [
+      if (!(await fs.exists(path.join(sourceDir, project_name + '.cpp')))) {
+        await fs.writeFile(path.join(sourceDir, project_name + '.cpp'), [
           '#include <iostream>',
           '',
           'void say_hello(){',
@@ -852,8 +852,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         ].join('\n'));
       }
     } else {
-      if (!(await fs.exists(path.join(source_dir, 'main.cpp')))) {
-        await fs.writeFile(path.join(source_dir, 'main.cpp'), [
+      if (!(await fs.exists(path.join(sourceDir, 'main.cpp')))) {
+        await fs.writeFile(path.join(sourceDir, 'main.cpp'), [
           '#include <iostream>',
           '',
           'int main(int, char**) {',
@@ -863,9 +863,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         ].join('\n'));
       }
     }
-    const main_list_file = await this.mainListFile;
-    await fs.writeFile(main_list_file, init);
-    const doc = await vscode.workspace.openTextDocument(main_list_file);
+    await fs.writeFile(mainListFile, init);
+    const doc = await vscode.workspace.openTextDocument(mainListFile);
     await vscode.window.showTextDocument(doc);
     return this.configure();
   }
