@@ -810,7 +810,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!project_name)
         return -2;
 
-      const target_type = (await vscode.window.showQuickPick(projectTypeDescriptions));
+      const target_type = (await vscode.window.showQuickPick(projectTypeDescriptions, {
+        placeHolder: 'Select a project type',
+      }));
       if (!target_type)
         return -3;
 
