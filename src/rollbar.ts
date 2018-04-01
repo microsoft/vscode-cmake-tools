@@ -2,12 +2,16 @@
  * Wrapper around Rollbar, for error reporting.
  */ /** */
 
+import * as path from 'path';
 import * as vscode from 'vscode';
+
 import Rollbar = require('rollbar');
 
 import * as logging from './logging';
 
 const log = logging.createLogger('rollbar');
+
+const SRC_ROOT = path.dirname(__dirname);
 
 /**
  * The wrapper around Rollbar. Presents a nice functional API.
@@ -16,7 +20,16 @@ class RollbarController {
   /**
    * The payload to send with any messages. Can be updated via `updatePayload`.
    */
-  private readonly _payload: object = {platform: 'client'};
+  private readonly _payload: object = {
+    platform: 'client',
+    server: {
+      // Because extensions are installed in a user-local directory, the
+      // absolute path to the source files will be different on each machine.
+      // If we set the root directory of the source tree then Rollbar will be
+      // able to better merge identical issues.
+      root: SRC_ROOT,
+    },
+  };
 
   /**
    * The Rollbar client instance we use to communicate.
