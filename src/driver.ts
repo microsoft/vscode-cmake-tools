@@ -190,15 +190,28 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * Get the vscode root workspace folder.
+   *
+   * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a `file://` scheme.
+   */
+  private get _workspaceRootPath() {
+    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders[0].uri.scheme !== 'file') {
+      return null;
+    }
+    return util.normalizePath(vscode.workspace.workspaceFolders[0].uri.fsPath);
+  }
+
+  /**
    * The options that will be passed to `expand.expandString` for this driver.
    */
   get expansionOptions(): expand.ExpansionOptions {
-    const ws_root = util.normalizePath(vscode.workspace.rootPath || '.');
+    const ws_root = this._workspaceRootPath || '.';
     const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
       workspaceRoot: ws_root,
+      workspaceFolder: ws_root,
       buildType: this.currentBuildType,
       workspaceRootFolderName: path.basename(ws_root),
       generator: this.generatorName || 'null',
