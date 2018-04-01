@@ -46,6 +46,11 @@ export interface BaseKit {
    * Additional settings to pass to CMake
    */
   cmakeSettings?: {[key: string]: string};
+
+  /**
+   * Additional environment variables for the kit
+   */
+  environmentVariables?: proc.EnvironmentVariables;
 }
 
 /**

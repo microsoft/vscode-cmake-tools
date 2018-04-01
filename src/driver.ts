@@ -16,7 +16,7 @@ import * as proc from './proc';
 import rollbar from './rollbar';
 import {StateManager} from './state';
 import * as util from './util';
-import {ConfigureArguments, VariantConfigurationOptions} from './variant';
+import {ConfigureArguments, VariantOption} from './variant';
 
 const log = logging.createLogger('driver');
 
@@ -259,6 +259,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug('CMakeDriver Kit set to', kit.name);
 
     this._kitEnvironmentVariables = new Map();
+    if (this._kit.environmentVariables) {
+      util.objectPairs(this._kit.environmentVariables).forEach(([k, v]) => this._kitEnvironmentVariables.set(k, v));
+    }
     switch (this._kit.type) {
     case 'vsKit': {
       const vars = await getVSKitEnvironment(this._kit);
@@ -266,7 +269,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         log.error('Invalid VS environment:', this._kit.name);
         log.error('We couldn\'t find the required environment variables');
       } else {
-        this._kitEnvironmentVariables = vars;
+        vars.forEach((val, key) => this._kitEnvironmentVariables.set(key, val));
       }
       break;
     }
@@ -304,7 +307,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Change the current options from the variant.
    * @param opts The new options
    */
-  async setVariantOptions(opts: VariantConfigurationOptions) {
+  async setVariantOptions(opts: VariantOption) {
     log.debug('Setting new variant', opts.long || '(Unnamed)');
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;

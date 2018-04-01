@@ -251,7 +251,7 @@ export function versionLess(lhs: Version, rhs: Version|string): boolean {
   return !versionGreater(lhs, rhs) && !versionEquals(lhs, rhs);
 }
 
-export function mergeEnvironment(...env: EnvironmentVariables[]) {
+export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
   return env.reduce((acc, vars) => {
     if (process.platform === 'win32') {
       // Env vars on windows are case insensitive, so we take the ones from
