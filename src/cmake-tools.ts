@@ -2,7 +2,6 @@
  * Root of the extension
  */
 import * as http from 'http';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ws from 'ws';
 
@@ -27,6 +26,7 @@ import {StateManager} from './state';
 import {StatusBar} from './status';
 import * as util from './util';
 import {VariantManager} from './variant';
+import {CMakeQuickStart, projectTypeDescriptions} from './quickstart';
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -788,85 +788,43 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   public async quickStart(): Promise<Number> {
     if (vscode.workspace.workspaceFolders === undefined) {
-      vscode.window.showErrorMessage('No folder is open.');
-      return -2;
-    }
-
-    const sourceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
-    const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
-
-    if (await fs.exists(mainListFile)) {
-      vscode.window.showErrorMessage('This workspace already contains a CMakeLists.txt!');
+      vscode.window.showErrorMessage('CMake Quick Start: No open folder found.');
       return -1;
     }
 
-    const project_name = await vscode.window.showInputBox({
-      prompt: 'Enter a name for the new project',
-      validateInput: (value: string): string => {
-        if (!value.length)
-          return 'A project name is required';
-        return '';
-      },
-    });
-    if (!project_name)
-      return -1;
+    const sourcePath = vscode.workspace.workspaceFolders![0].uri.fsPath;
+    log.debug("Workspace folders: ", JSON.stringify(vscode.workspace.workspaceFolders));
+    log.debug("Using workspace folder as source folders ", sourcePath);
 
-    const target_type = (await vscode.window.showQuickPick([
-      {
-        label: 'Library',
-        description: 'Create a library',
-      },
-      {label: 'Executable', description: 'Create an executable'}
-    ]));
+    try {
+      const helper = new CMakeQuickStart(sourcePath);
 
-    if (!target_type)
-      return -1;
+      const project_name = await vscode.window.showInputBox({
+        prompt: 'Enter a name for the new project',
+        validateInput: (value: string): string => {
+          if (!value.length)
+            return 'A project name is required';
+          return '';
+        },
+      });
+      if (!project_name)
+        return -2;
 
-    const type = target_type.label;
+      const target_type = (await vscode.window.showQuickPick(projectTypeDescriptions));
+      if (!target_type)
+        return -3;
 
-    const init = [
-      'cmake_minimum_required(VERSION 3.0.0)',
-      `project(${project_name} VERSION 0.1.0)`,
-      '',
-      'include(CTest)',
-      'enable_testing()',
-      '',
-      type == 'Library' ? `add_library(${project_name} ${project_name}.cpp)`
-                        : `add_executable(${project_name} main.cpp)`,
-      '',
-      'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
-      'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
-      'include(CPack)',
-      '',
-    ].join('\n');
+      await helper.createProject(project_name, target_type.type);
 
-    if (type === 'Library') {
-      if (!(await fs.exists(path.join(sourceDir, project_name + '.cpp')))) {
-        await fs.writeFile(path.join(sourceDir, project_name + '.cpp'), [
-          '#include <iostream>',
-          '',
-          'void say_hello(){',
-          `    std::cout << "Hello, from ${project_name}!\\n";`,
-          '}',
-          '',
-        ].join('\n'));
-      }
-    } else {
-      if (!(await fs.exists(path.join(sourceDir, 'main.cpp')))) {
-        await fs.writeFile(path.join(sourceDir, 'main.cpp'), [
-          '#include <iostream>',
-          '',
-          'int main(int, char**) {',
-          '   std::cout << "Hello, world!\\n";',
-          '}',
-          '',
-        ].join('\n'));
-      }
+      const doc = await vscode.workspace.openTextDocument(helper.sourceCodeFilePath);
+      await vscode.window.showTextDocument(doc);
+      return this.configure();
+
+    } catch (err) {
+      vscode.window.showErrorMessage(err.message);
+      log.debug(err);
+      return -4;
     }
-    await fs.writeFile(mainListFile, init);
-    const doc = await vscode.workspace.openTextDocument(mainListFile);
-    await vscode.window.showTextDocument(doc);
-    return this.configure();
   }
 
   /**
