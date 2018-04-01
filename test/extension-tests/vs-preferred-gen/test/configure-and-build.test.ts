@@ -15,8 +15,7 @@ suite('Build', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/vs-preferred-gen/project-folder',
                                      'build',
-                                     'output.txt',
-                                     '^Visual ?Studio');
+                                     'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext);
 
     // This test will use all on the same kit.
