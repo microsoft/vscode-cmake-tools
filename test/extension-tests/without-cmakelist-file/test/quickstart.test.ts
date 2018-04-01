@@ -1,8 +1,8 @@
-import * as path from 'path';
 import {CMakeTools} from '@cmt/cmake-tools';
+import {fs} from '@cmt/pr';
+import {ProjectType} from '@cmt/quickstart';
 import {DefaultEnvironment, expect} from '@test/util';
-import {ProjectType } from '@cmt/quickstart';
-import { fs } from '@cmt/pr';
+import * as path from 'path';
 
 
 suite('[Quickstart]', async () => {
@@ -12,9 +12,8 @@ suite('[Quickstart]', async () => {
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
 
-    testEnv = new DefaultEnvironment('test/extension-tests/without-cmakelist-file/project-folder',
-                                     'build',
-                                     'output.txt');
+    testEnv
+        = new DefaultEnvironment('test/extension-tests/without-cmakelist-file/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext);
   });
 
@@ -23,7 +22,6 @@ suite('[Quickstart]', async () => {
     await cmt.asyncDispose();
     testEnv.projectFolder.clear();
     testEnv.teardown();
-
   });
 
   test('Test create new project', async () => {
@@ -44,6 +42,10 @@ suite('[Quickstart]', async () => {
 
     // Check execution of configure()
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache is present');
+
+    // Check opening of main file
+    expect(testEnv.openTextDocumentQueue.length).to.be.eq(1);
+    expect(testEnv.openTextDocumentQueue[0]).to.be.contains('main.cpp');
   }).timeout(120000);
 
   test('Test error on CMakeLists.txt file present', async () => {
