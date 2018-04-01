@@ -20,6 +20,7 @@ const log = createLogger('expand');
  */
 export interface RequiredExpansionContextVars {
   workspaceRoot: string;
+  workspaceFolder: string;
   buildType: string;
   workspaceRootFolderName: string;
   generator: string;
