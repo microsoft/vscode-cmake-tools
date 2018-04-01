@@ -196,7 +196,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private get _workspaceRootPath() {
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders[0].uri.scheme !== 'file') {
-      return null
+      return null;
     }
     return util.normalizePath(vscode.workspace.workspaceFolders[0].uri.fsPath);
   }
