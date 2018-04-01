@@ -27,6 +27,11 @@ suite('[Quickstart]', async () => {
   });
 
   test('Test create new project', async () => {
+    // select default kit
+    await cmt.scanForKits();
+    await cmt.selectKit();
+
+    // run quick start
     testEnv.quickStartProjectTypeSelection.type = ProjectType.Exectable;
     testEnv.quickStartProjectNameInput.projectName = 'Hallo';
     expect(await cmt.quickStart()).to.be.eq(0);
