@@ -1,3 +1,5 @@
+import {CMakeToolsAPI} from '@cmt/api';
+import {isCMakeListFilePresent} from '@cmt/util';
 import * as fsNode from 'fs';
 import * as path from 'path';
 
@@ -24,9 +26,7 @@ export class CMakeQuickStart {
   public readonly cmakeFilePath: string;
   public readonly sourceCodeFilePath: string;
 
-  constructor(readonly workingPath: string,
-      readonly projectName: string,
-      readonly type: ProjectType) {
+  constructor(readonly workingPath: string, readonly projectName: string, readonly type: ProjectType) {
 
     if (type == ProjectType.Exectable) {
       this.sourceCodeFilePath = path.join(this.workingPath, 'main.cpp');
@@ -98,4 +98,52 @@ export class CMakeQuickStart {
     await this.createCMakeListFile();
     await this.createExampleSourcecodeFile();
   }
+}
+
+export interface QuickStartCallbacks {
+  onProjectNameRequest: () => Promise<string|undefined>;
+  onProjectTypeRequest: (items: ProjectTypeDesciptor[]) => Promise<ProjectTypeDesciptor|undefined>;
+  onOpenSourceFiles: (filePaths: string) => void;
+  onError: (message: string) => void;
+}
+
+export enum QuickStartErrors {
+  NONE = 0,
+  NO_FOLDER = -1,
+  PRESENT_CMAKELISTFILE = -2,
+  EMPTY_FIELD
+}
+
+export async function quickstartWorkflow(workspaceFolders: string[],
+                                         cmt: CMakeToolsAPI,
+                                         callbacks: QuickStartCallbacks): Promise<QuickStartErrors> {
+  if (workspaceFolders.length == 0) {
+    callbacks.onError('CMake Quick Start: No open folder found.');
+    return QuickStartErrors.NO_FOLDER;
+  }
+
+  const sourcePath = workspaceFolders[0];
+
+  if (await isCMakeListFilePresent(sourcePath)) {
+    callbacks.onError('Source code directory contains already a CMakeLists.txt');
+    return QuickStartErrors.PRESENT_CMAKELISTFILE;
+  }
+
+  const projectName = await callbacks.onProjectNameRequest();
+  if (!projectName) {
+    return QuickStartErrors.EMPTY_FIELD;
+  }
+
+  const projectType = await callbacks.onProjectTypeRequest(projectTypeDescriptions);
+  if (!projectType) {
+    return QuickStartErrors.EMPTY_FIELD;
+  }
+
+  const helper = new CMakeQuickStart(sourcePath, projectName, projectType.type);
+  await helper.createProject();
+
+  callbacks.onOpenSourceFiles(helper.sourceCodeFilePath);
+
+  await cmt.configure();
+  return QuickStartErrors.NONE;
 }

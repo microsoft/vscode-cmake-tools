@@ -21,13 +21,12 @@ import {NagManager} from './nag';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
+import {QuickStartCallbacks, quickstartWorkflow} from './quickstart';
 import rollbar from './rollbar';
 import {StateManager} from './state';
 import {StatusBar} from './status';
 import * as util from './util';
 import {VariantManager} from './variant';
-import {CMakeQuickStart, projectTypeDescriptions} from './quickstart';
-import { isCMakeListFilePresent } from './util';
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
@@ -617,12 +616,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return false;
     }
 
-    return drv.stopCurrentProcess().then(
-      () => {
-        this._cmakeDriver = Promise.resolve(null);
-        return true;
-      },
-      () => false);
+    return drv.stopCurrentProcess().then(() => {
+      this._cmakeDriver = Promise.resolve(null);
+      return true;
+    }, () => false);
   }
 
   /**
@@ -788,49 +785,37 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.quickStart`
    */
   public async quickStart(): Promise<Number> {
-    if (vscode.workspace.workspaceFolders === undefined) {
-      vscode.window.showErrorMessage('CMake Quick Start: No open folder found.');
-      return -1;
-    }
+    const folders: string[] = vscode.workspace.workspaceFolders === undefined
+        ? []
+        : (vscode.workspace.workspaceFolders!).map(item => item.uri.fsPath);
 
-    const sourcePath = vscode.workspace.workspaceFolders![0].uri.fsPath;
-    log.debug("Workspace folders: ", JSON.stringify(vscode.workspace.workspaceFolders));
-    log.debug("Using workspace folder as source folders ", sourcePath);
-
-    try {
-      if(await isCMakeListFilePresent(sourcePath)) {
-        vscode.window.showErrorMessage('Source code directory contains already a CMakeLists.txt');
-        return -2;
+    const callbacks: QuickStartCallbacks = {
+      onError: message => { vscode.window.showErrorMessage(message); },
+      onProjectNameRequest: async () => {
+        const ret = await vscode.window.showInputBox({
+          prompt: 'Enter a name for the new project',
+          validateInput: (value: string): string => {
+            if (!value.length)
+              return 'A project name is required';
+            return '';
+          },
+        });
+        return ret;
+      },
+      onProjectTypeRequest: async items => {
+        return vscode.window.showQuickPick(items, {
+          placeHolder: 'Select a project type',
+        });
+      },
+      onOpenSourceFiles: async file => {
+        const doc = await vscode.workspace.openTextDocument(file);
+        await vscode.window.showTextDocument(doc);
       }
+    };
 
-      const project_name = await vscode.window.showInputBox({
-        prompt: 'Enter a name for the new project',
-        validateInput: (value: string): string => {
-          if (!value.length)
-            return 'A project name is required';
-          return '';
-        },
-      });
-      if (!project_name)
-        return -3;
+    const retValue = await quickstartWorkflow(folders, this, callbacks);
 
-      const target_type = (await vscode.window.showQuickPick(projectTypeDescriptions, {
-        placeHolder: 'Select a project type',
-      }));
-      if (!target_type)
-        return -4;
-
-      const helper = new CMakeQuickStart(sourcePath, project_name, target_type.type);
-      await helper.createProject();
-
-      const doc = await vscode.workspace.openTextDocument(helper.sourceCodeFilePath);
-      await vscode.window.showTextDocument(doc);
-      return this.configure();
-
-    } catch (err) {
-      log.debug(err);
-      return -5;
-    }
+    return retValue;
   }
 
   /**
