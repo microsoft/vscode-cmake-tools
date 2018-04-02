@@ -58,7 +58,7 @@ function Invoke-ExternalCommand {
             $output = & $program @arglist 2>&1
         }
         else {
-            & $program @arglist | Tee-Object -Variable output | Out-Host
+            & $program @arglist 2>&1 | Tee-Object -Variable output | Out-Host
         }
         $retc = $LASTEXITCODE
     }
@@ -111,12 +111,171 @@ function Invoke-ChronicCommand {
     if ($result.ExitCode -ne 0) {
         Write-Host "$msg - Failed with status $($result.ExitCode)"
         Write-Host $result.Output
-        Write-Error $result.Error
+        Write-Host -ForegroundColor Red $($result.Error)
         throw "Subcommand failed!"
         return
     }
 
     Write-Host "$msg - Success [$([math]::round($measurement.TotalSeconds, 1)) seconds]"
+}
+
+function Build-SphinxDocumentation {
+    [CmdletBinding(PositionalBinding = $false)]
+    param(
+        # The source directory
+        [Parameter(Position = 0)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $InPath,
+        # The destination directory for the documentation
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $OutPath,
+        # The name of the project
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $ProjectName,
+        # The source file suffix for documentation
+        [string]
+        [PSDefaultValue(Help = ".rst")]
+        [ValidateNotNullOrEmpty()]
+        $SourceSuffix = ".rst",
+        # The master document
+        [string]
+        [ValidateNotNullOrEmpty()]
+        $MasterDoc = "index",
+        # The version that is being built
+        [Parameter(Mandatory)]
+        [string]
+        [ValidateNotNullOrEmpty()]
+        $Version,
+        # The release that is being built
+        [Parameter()]
+        [string]
+        [ValidateNotNullOrEmpty()]
+        [PSDefaultValue(Help = 'The value of $Version')]
+        $Release = $Version,
+        # Path to a logo
+        [string]
+        $Logo,
+        # The number of parallel build jobs
+        [Int32]
+        $Jobs,
+        # Build all docs, instead of just the unchanged
+        [switch]
+        $All,
+        # Treat warnings as errors
+        [switch]
+        $WarningsAsErrors,
+        # Be quiet
+        [switch]
+        $Quiet,
+        # The sphinx-build executable
+        [string]
+        $SphinxProgram
+    )
+    $ErrorActionPreference = "Stop"
+    if (! $SphinxProgram) {
+        $SphinxProgram = Find-Program sphinx-build
+    }
+    if (! $SphinxProgram) {
+        throw "Unable to build. No sphinx-build program is available."
+    }
+    $sphinx_cmd = @(
+        $SphinxProgram;
+        "-C";
+        "-Dproject=$ProjectName";
+        "-Dsource_suffix=$SourceSuffix";
+        "-Dmaster_doc=$MasterDoc";
+        "-Dversion=$Version";
+        "-Drelease=$Release",
+        "-Dpygments_style=sphinx",
+        "-Dhtml_theme=nature"
+        "-bhtml"
+    )
+
+    if ($Logo) {
+        $sphinx_cmd += "-Dhtml_logo=$(Resolve-Path $Logo)"
+    }
+
+    if ($Jobs) {
+        $sphinx_cmd += "-j$Jobs"
+    }
+
+    if ($All) {
+        $sphinx_cmd += "-a"
+    }
+
+    if ($WarningsAsErrors) {
+        $sphinx_cmd += "-W"
+    }
+
+    if ($Quiet) {
+        $sphinx_cmd += "-q"
+    }
+
+    $sphinx_cmd += Resolve-Path $InPath
+    $sphinx_cmd += [IO.Path]::GetFullPath($OutPath)
+
+    Write-Host "Running sphinx-build"
+    $res = Invoke-ExternalCommand -PassThruExitCode @sphinx_cmd
+    Write-Host "Running sphinx-build - Done"
+    if ($res.ExitCode -ne 0) {
+        throw "Error while generating Sphinx documentation (See above)."
+    }
+}
+
+function Watch-Directory {
+    [CmdletBinding()]
+    param(
+        # Directory containing files to watch
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        $Path,
+        # Script block to run on file changes
+        [Parameter(Mandatory)]
+        [scriptblock]
+        $ScriptBlock
+    )
+    $ErrorActionPreference = "Stop"
+    $timer = New-Object Timers.Timer -Property @{
+        Interval  = 1000
+        AutoReset = $false
+    }
+    $watcher = New-Object IO.FileSystemWatcher $Path, "*" -Property @{
+        IncludeSubdirectories = $true;
+        EnableRaisingEvents   = $true;
+        NotifyFilter          = [IO.NotifyFilters]::LastWrite;
+    }
+    $sub = Register-ObjectEvent $watcher -EventName "Changed" -MessageData $timer -Action {
+        $ErrorActionPreference = "Stop"
+        $timer = $Event.MessageData
+        try {
+            $timer.Stop()
+            $timer.Start()
+        }
+        catch {
+            Write-Host "There was error $_"
+        }
+    }
+    $timer_sub = Register-ObjectEvent $timer -EventName "Elapsed" -MessageData $ScriptBlock -Action {
+        Write-Host "File changes detected"
+        & $Event.MessageData
+    }
+    $timer.Start()
+    try {
+        while ($true) {
+            Start-Sleep -Milliseconds 500
+        }
+    }
+    finally {
+        Unregister-Event -SubscriptionId $sub.Id
+        Unregister-Event -SubscriptionId $timer_sub.Id
+        $watcher.Dispose()
+        $timer.Dispose()
+    }
 }
 
 function Invoke-TestPreparation {
