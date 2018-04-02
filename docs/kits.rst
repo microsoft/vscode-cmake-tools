@@ -3,7 +3,27 @@
 CMake Kits
 ##########
 
-**Kits** define the tools used to configure and build a project.
+A *kit* encompasses project-agnostic and configuration-agnostic information
+about how to build code. A kit can include:
+
+- *A set of compilers for some set of languages* - These are locked at specific
+  versions such that you can switch your compiler version quickly and easily.
+- *A Visual Studio installation* - Building for VS is more complicated than
+  simply finding the necessary compiler executable. Visual C++ requires certain
+  environment variables to be set to tell it how to find and link to the
+  Visual C++ toolchain headers and libraries.
+- A toolchain file! This is the lowest-level way to instruct CMake how to
+  compile and link for a target. CMake Tools handles toolchain files using
+  kits.
+
+Kits are mostly CMake-generator-agnostic, although Visual Studio kits will have
+a "preferred" generator that will be used as a fallback to ensure a matching
+MSBuild and .sln generator is used for the Visual C++ compiler.
+
+.. note::
+    If you use `Ninja <https://ninja-build.org/>`_ there is no need to worry
+    about Visual Studio CMake Generators. CMake Tools will prefer Ninja if it is
+    present unless configured otherwise.
 
 .. note::
     If you change the active Kit while a project is configured, the project
@@ -12,22 +32,58 @@ CMake Kits
 How Are Kits Found and Defined?
 ===============================
 
-Upon first startup, CMake Tools will scan the system for available toolchains.
-It looks in certain directories for the presence of compilers or Visual Studio
-installations (using ``vswhere``) to populate the initial list of Kits.
+Upon first startup, CMake Tools will :ref:`scan the system <kit-scan>` for
+available toolchains. It looks in certain directories for the presence of
+compilers or Visual Studio installations (using ``vswhere``) to populate the
+initial list of Kits.
 
-The list of kits is stored in a user-local file, which you can edit by invoking
-*Edit CMake Kits* from the command palette. It will open the ``cmake-kits.json``
-file:
+.. _user-local-kits:
+
+User-Local Kits
+***************
+
+User-local kits are kits that are available to a particular user for all
+projects open with CMake Tools.
+
+The user-local list of kits is stored in a user-owned file, which you can edit
+by invoking *Edit CMake Kits* from the command palette. It will open the
+``cmake-kits.json`` file:
 
 .. image:: res/kits_json.png
     :align: center
 
+This file can be manually modified to define new global kits, and the contents
+of this file will also be automatically controlled by CMake Tools via the
+:ref:`automated kit scanning <kit-scan>`.
+
+.. warning::
+    Don't modify any of the kits that CMake Tools defines itself: It will
+    overwrite any modifications during :ref:`kit scanning <kit-scan>`. See
+    below for more information.
+
+Project Kits
+************
+
+The default user-local kits are available for all projects using CMake Tools
+for a user. In addition, one can define project-local kits by creating a
+``.vscode/cmake-kits.json`` file in the project directory. The contents of this
+file must be managed manually, but CMake Tools will automatically reload and
+refresh when it sees this file added, removed, or changed. When changing kits,
+both user-local and project-local kits will be available for selection.
+
+An example usage of project-local kits is if the project defines its own
+CMake toolchain file(s). A :ref:`toolchain kit <toolchain-kits>` can be defined
+that specifies this file to be loaded. The ``.vscode/cmake-kits.json`` file can
+be committed to source control and shared with other developers for easier
+collaboration on the named toolchain.
+
+.. _kit-scan:
+
 Scanning Process
 ****************
 
-The contents of this file can be updated by running *Scan for Kits* in the
-command palette. The following steps are taken to find available kits:
+:ref:`user-local-kits` can be updated by running *Scan for Kits* in the
+command palette. The following process occurs to find available kits:
 
 #. **Search the current PATH for compilers**
 
@@ -50,18 +106,17 @@ command palette. The following steps are taken to find available kits:
 
 #. **Ask VSWhere about Visual Studio installations**
 
-    CMake tools will search for an installed ``vswhere.exe`` executable and
-    invoke it to ask about existing Visual Studio instances installed on
-    the system.
+    CMake tools includes a bundled ``vswhere.exe`` which it uses to ask about
+    existing Visual Studio instances installed on the system.
 
     For each of ``x86``, ``amd64``, ``x86_amd64``, ``x86_arm``, ``amd64_arm``,
     and ``amd64_x86``, CMake Tools will check for installed Visual C++
     environments. A kit is generated for each existing MSVC toolchain.
 
-#. **Save results to cmake-kits.json**
+#. **Save results to the user-local kits file**
 
-    When finished, the ``cmake-kits.json`` file will be updated with the new
-    kit information.
+    When finished, the :ref:`user-local <user-local-kits>` ``cmake-kits.json``
+    file will be updated with the new kit information.
 
     .. warning::
 
@@ -73,12 +128,16 @@ command palette. The following steps are taken to find available kits:
         CMake Tools will not delete entries from ``cmake-kits.json``, only add
         and update existing ones.
 
+.. _kit-types:
+
 Kit Types
 =========
 
 CMake defines three types of kits: *compiler kits*, *Visual Studio kits*, and
 *toolchain file kits*. They are distinguished by the properties present in
 their definition in ``cmake-kits.json``.
+
+.. _compiler-kits:
 
 Compiler Kits
 *************
@@ -99,6 +158,8 @@ built-in support for finding these, but any language can be specified:
         }
     }
 
+.. _toolchain-kits:
+
 Toolchain Kits
 **************
 
@@ -113,6 +174,8 @@ CMake toolchain file as a kit:
     }
 
 CMake Tools will pass this path for ``CMAKE_TOOLCHAIN_FILE`` during configure.
+
+.. _vs-kits:
 
 Visual Studio Kits
 ******************
@@ -133,6 +196,8 @@ The ``visualStudio`` key corresponds to a name of a Visual Studio installation
 obtained from VSWhere. The ``visualStudioArchitecture`` key corresponds to a
 Visual Studio target architecture that would be passed to the ``vcvarsall.bat``
 file when entering the VS dev environment.
+
+.. _kit-common-options:
 
 Common Options
 **************
