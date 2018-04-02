@@ -117,7 +117,7 @@ using ``${variable}`` syntax. The following built-in variables are expanded:
     The name of the CMake generator, eg. ``Ninja``
 
 ``${projectName}``
-    The name of the CMake project. Isn't expanded fully until project has been
+    The name of the CMake project. Isn't expanded fully until project has beenX
     configured once. Before configuring, expands to "Unknown Project".
 
 ``${userHome}``
