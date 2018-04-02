@@ -23,14 +23,14 @@ suite('QuickStart test', async () => {
   test('CMakeLists.txt exists', async () => {
     await fs.writeFile(path.join(working_path, 'CMakeLists.txt'), 'Dummy');
 
-    expect(() => new CMakeQuickStart(working_path)).to.throws(
+    expect(() => new CMakeQuickStart(working_path, "", ProjectType.Exectable)).to.throws(
         'Source code directory contains already a CMakeLists.txt');
   });
 
 
   test('Create library', async () => {
-    const obj = new CMakeQuickStart(working_path);
-    await obj.createProject('libraryTest', ProjectType.Library);
+    const obj = new CMakeQuickStart(working_path, 'libraryTest', ProjectType.Library);
+    await obj.createProject();
 
     // Check cmake file
     const cmakeFilePath = path.join(working_path, 'CMakeLists.txt');
@@ -50,16 +50,16 @@ suite('QuickStart test', async () => {
   test('Create library file exists', async () => {
     const libraryBodyFilePath = path.join(working_path, 'libraryTest.cpp');
     await fs.writeFile(libraryBodyFilePath, 'OldFile');
-    const obj = new CMakeQuickStart(working_path);
-    await obj.createProject('libraryTest', ProjectType.Exectable);
+    const obj = new CMakeQuickStart(working_path, 'libraryTest', ProjectType.Exectable);
+    await obj.createProject();
 
     const libraryBodyFileContent = (await fs.readFile(libraryBodyFilePath)).toString();
     expect(libraryBodyFileContent, 'libraryTest.cpp file is overwritten unexpected.').to.contain('OldFile');
   });
 
   test('Create executeable', async () => {
-    const obj = new CMakeQuickStart(working_path);
-    await obj.createProject('executableTest', ProjectType.Exectable);
+    const obj = new CMakeQuickStart(working_path, 'executableTest', ProjectType.Exectable);
+    await obj.createProject();
 
     // Check cmake file
     const cmakeFilePath = path.join(working_path, 'CMakeLists.txt');
@@ -79,8 +79,8 @@ suite('QuickStart test', async () => {
   test('Create executable file exists', async () => {
     const mainFilePath = path.join(working_path, 'main.cpp');
     await fs.writeFile(mainFilePath, 'OldFile');
-    const obj = new CMakeQuickStart(working_path);
-    await obj.createProject('executableTest', ProjectType.Exectable);
+    const obj = new CMakeQuickStart(working_path,'executableTest', ProjectType.Exectable);
+    await obj.createProject();
 
     const mainBodyFileContent = (await fs.readFile(mainFilePath)).toString();
     expect(mainBodyFileContent, 'Main body file is overwritten unexpected.').to.contain('OldFile');

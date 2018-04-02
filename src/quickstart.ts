@@ -22,24 +22,17 @@ export const projectTypeDescriptions: ProjectTypeDesciptor[] = [
 export class CMakeQuickStart {
 
   public readonly cmakeFilePath: string;
-  public project_name: string|undefined;
-  private _type: ProjectType|undefined;
-  private _sourceCodeFilePath: string;
+  public readonly sourceCodeFilePath: string;
 
-  public get sourceCodeFilePath() { return this._sourceCodeFilePath; }
+  constructor(readonly workingPath: string,
+      readonly projectName: string,
+      readonly type: ProjectType) {
 
-  public set type(type: ProjectType|undefined) {
     if (type == ProjectType.Exectable) {
-      this._sourceCodeFilePath = path.join(this.workingPath, 'main.cpp');
+      this.sourceCodeFilePath = path.join(this.workingPath, 'main.cpp');
     } else {
-      this._sourceCodeFilePath = path.join(this.workingPath, `${this.project_name}.cpp`);
+      this.sourceCodeFilePath = path.join(this.workingPath, `${projectName}.cpp`);
     }
-    this._type = type;
-  }
-
-  public get type(): ProjectType|undefined { return this._type; }
-
-  constructor(readonly workingPath: string) {
 
     this.cmakeFilePath = path.join(this.workingPath, 'CMakeLists.txt');
 
@@ -51,13 +44,13 @@ export class CMakeQuickStart {
   private async createCMakeListFile() {
     const init = [
       'cmake_minimum_required(VERSION 3.0.0)',
-      `project(${this.project_name} VERSION 0.1.0)`,
+      `project(${this.projectName} VERSION 0.1.0)`,
       '',
       'include(CTest)',
       'enable_testing()',
       '',
-      this.type == ProjectType.Library ? `add_library(${this.project_name} ${this.project_name}.cpp)`
-                                       : `add_executable(${this.project_name} main.cpp)`,
+      this.type == ProjectType.Library ? `add_library(${this.projectName} ${this.projectName}.cpp)`
+                                       : `add_executable(${this.projectName} main.cpp)`,
       '',
       'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
       'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
@@ -73,7 +66,7 @@ export class CMakeQuickStart {
       '#include <iostream>',
       '',
       'void say_hello(){',
-      `    std::cout << "Hello, from ${this.project_name}!\\n";`,
+      `    std::cout << "Hello, from ${this.projectName}!\\n";`,
       '}',
       '',
     ].join('\n'));
@@ -101,10 +94,7 @@ export class CMakeQuickStart {
     }
   }
 
-  public async createProject(project_name: string, type: ProjectType) {
-    this.project_name = project_name;
-    this.type = type;
-
+  public async createProject() {
     await this.createCMakeListFile();
     await this.createExampleSourcecodeFile();
   }

@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {EnvironmentVariables, execute} from './proc';
+import { fs } from './pr';
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -291,3 +292,7 @@ export function thisExtension() {
 export function thisExtensionPath(): string { return thisExtension().extensionPath; }
 
 export function dropNulls<T>(items: (T|null)[]): T[] { return items.filter(item => item !== null) as T[]; }
+
+export function isCMakeListFilePresent(sourcePath: string): Promise<boolean> {
+  return fs.exists(path.join(sourcePath, "CMakeLists.txt"));
+}
