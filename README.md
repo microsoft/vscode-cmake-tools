@@ -1,5 +1,7 @@
 # CMake Tools
 
+[![Gitter chat](https://badges.gitter.im/vscode-cmake-tools/Lobby.png)](https://gitter.im/vscode-cmake-tools/Lobby)
+
 [CMake Tools](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools) provides the native developer a full-featured, convenient, and
 powerful configure+build workflow for CMake-based projects within the
 Visual Studio Code editor.
