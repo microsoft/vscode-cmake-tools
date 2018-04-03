@@ -1,9 +1,9 @@
 import {CMakeToolsAPI} from '@cmt/api';
 import {isCMakeListFilePresent} from '@cmt/util';
+import {fs} from './pr';
+
 import * as fsNode from 'fs';
 import * as path from 'path';
-
-import {fs} from './pr';
 
 export enum ProjectType {
   Library,
@@ -36,12 +36,13 @@ export class CMakeQuickStart {
 
     this.cmakeFilePath = path.join(this.workingPath, 'CMakeLists.txt');
 
-    if (fsNode.existsSync(this.cmakeFilePath)) {
-      throw Error('Source code directory contains already a CMakeLists.txt');
-    }
   }
 
-  private async createCMakeListFile() {
+  private async createCMakeListFile() : Promise<boolean>{
+    if (fsNode.existsSync(this.cmakeFilePath)) {
+      return false;
+    }
+
     const init = [
       'cmake_minimum_required(VERSION 3.0.0)',
       `project(${this.projectName} VERSION 0.1.0)`,
@@ -50,7 +51,7 @@ export class CMakeQuickStart {
       'enable_testing()',
       '',
       this.type == ProjectType.Library ? `add_library(${this.projectName} ${this.projectName}.cpp)`
-                                       : `add_executable(${this.projectName} main.cpp)`,
+      : `add_executable(${this.projectName} main.cpp)`,
       '',
       'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
       'set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})',
@@ -58,7 +59,9 @@ export class CMakeQuickStart {
       '',
     ].join('\n');
 
-    return fs.writeFile(this.cmakeFilePath, init);
+    await fs.writeFile(this.cmakeFilePath, init);
+
+    return true;
   }
 
   private async createLibrarySourceFile() {
@@ -83,67 +86,78 @@ export class CMakeQuickStart {
     ].join('\n'));
   }
 
-  private async createExampleSourcecodeFile() {
+  private async createExampleSourcecodeFile() : Promise<boolean> {
     if (!(await fs.exists(this.sourceCodeFilePath))) {
       switch (this.type) {
       case ProjectType.Library:
-        return this.createLibrarySourceFile();
+        await this.createLibrarySourceFile();
+        break;
       case ProjectType.Exectable:
-        return this.createMainSourceCodeFile();
+        await this.createMainSourceCodeFile();
+        break;
       }
+      return true;
+    } else {
+      return false;
     }
   }
 
-  public async createProject() {
-    await this.createCMakeListFile();
-    await this.createExampleSourcecodeFile();
+  public async createProject() : Promise<boolean>{
+    let createdFiles = await this.createCMakeListFile();
+    createdFiles = createdFiles && await this.createExampleSourcecodeFile();
+
+    return createdFiles;
   }
 }
 
-export interface QuickStartCallbacks {
+export interface UiControlCallbacks {
   onProjectNameRequest: () => Promise<string|undefined>;
   onProjectTypeRequest: (items: ProjectTypeDesciptor[]) => Promise<ProjectTypeDesciptor|undefined>;
   onOpenSourceFiles: (filePaths: string) => void;
   onError: (message: string) => void;
+  onWarning: (message: string) => void;
 }
 
-export enum QuickStartErrors {
+export enum ControlErrors {
   NONE = 0,
   NO_FOLDER = -1,
   PRESENT_CMAKELISTFILE = -2,
-  EMPTY_FIELD
+  EMPTY_FIELD,
+  PRE_EXISTING_FILES
 }
 
-export async function quickstartWorkflow(workspaceFolders: string[],
+export async function runUiControl(workspaceFolders: string[],
                                          cmt: CMakeToolsAPI,
-                                         callbacks: QuickStartCallbacks): Promise<QuickStartErrors> {
+                                         callbacks: UiControlCallbacks): Promise<ControlErrors> {
   if (workspaceFolders.length == 0) {
     callbacks.onError('CMake Quick Start: No open folder found.');
-    return QuickStartErrors.NO_FOLDER;
+    return ControlErrors.NO_FOLDER;
   }
 
   const sourcePath = workspaceFolders[0];
 
   if (await isCMakeListFilePresent(sourcePath)) {
     callbacks.onError('Source code directory contains already a CMakeLists.txt');
-    return QuickStartErrors.PRESENT_CMAKELISTFILE;
+    return ControlErrors.PRESENT_CMAKELISTFILE;
   }
 
   const projectName = await callbacks.onProjectNameRequest();
   if (!projectName) {
-    return QuickStartErrors.EMPTY_FIELD;
+    return ControlErrors.EMPTY_FIELD;
   }
 
   const projectType = await callbacks.onProjectTypeRequest(projectTypeDescriptions);
   if (!projectType) {
-    return QuickStartErrors.EMPTY_FIELD;
+    return ControlErrors.EMPTY_FIELD;
   }
 
   const helper = new CMakeQuickStart(sourcePath, projectName, projectType.type);
-  await helper.createProject();
+  if( !await helper.createProject()) {
+    callbacks.onWarning('Not all files are created, because they exist already.');
+  }
 
   callbacks.onOpenSourceFiles(helper.sourceCodeFilePath);
 
   await cmt.configure();
-  return QuickStartErrors.NONE;
+  return ControlErrors.NONE;
 }

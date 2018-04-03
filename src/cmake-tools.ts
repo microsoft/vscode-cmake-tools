@@ -21,7 +21,7 @@ import {NagManager} from './nag';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
-import {QuickStartCallbacks, quickstartWorkflow} from './quickstart';
+import * as quickStart from './quickstart';
 import rollbar from './rollbar';
 import {StateManager} from './state';
 import {StatusBar} from './status';
@@ -789,8 +789,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         ? []
         : (vscode.workspace.workspaceFolders!).map(item => item.uri.fsPath);
 
-    const callbacks: QuickStartCallbacks = {
+    const callbacks: quickStart.UiControlCallbacks = {
       onError: message => { vscode.window.showErrorMessage(message); },
+      onWarning: message => { vscode.window.showWarningMessage(message); },
       onProjectNameRequest: async () => {
         const ret = await vscode.window.showInputBox({
           prompt: 'Enter a name for the new project',
@@ -813,7 +814,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     };
 
-    const retValue = await quickstartWorkflow(folders, this, callbacks);
+    const retValue = await quickStart.runUiControl(folders, this, callbacks);
 
     return retValue;
   }
