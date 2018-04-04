@@ -19,6 +19,7 @@ Selecting a Kit
 ---------------
 
 Before we can configure, you must select a *Kit*.
+:ref:`(Read more about kits) <kits>`.
 
 What are kits?
     Kits represent a *toolchain*: A set of compilers, linkers, or other tools
@@ -59,11 +60,9 @@ Selecting a Variant
 -------------------
 
 Similar to selecting a kit, we must select a *Variant*.
+:ref:`(Read more about variants) <variants>`.
 
-What are variants?
-    Variants represent a set of common compilation options that change the type
-    of binaries that will be emitted. This includes Debug, Release, MinSizeRel,
-    etc.
+Before selecting a variant, the variant slot on the statusbar will read *Unknown*:
 
 .. image:: res/no_variant.png
     :align: center
@@ -77,10 +76,12 @@ command from the command palette. A quick-pick will appear:
 The active build variant will be displayed on the same statusbar button, along
 with the project name and extension status.
 
-CMake Tools will load up the default variant when it doesn't detect a prior
-selection. For the default variant, this will be ``Debug``.
+.. note::
+    Just like with kits, CMake will ask you which variant to build if you
+    haven't already made a selection.
 
-Find out more on the :ref:`variants` page.
+Variants can be customized to a wide variety of purposes. Find out more on the
+:ref:`variants` page.
 
 Running Configuration
 =====================
@@ -98,7 +99,6 @@ the live output from CMake as configuration runs:
 
 At this point, CMake Tools has loaded information about your project and you are
 free to roam about the cabin.
-
 
 Building Your Project
 *********************
@@ -125,3 +125,12 @@ build progress bar:
     :align: center
 
 The build can be stopped by clicking the *Stop* button.
+
+Accessing Build Results
+***********************
+
+By default, CMake Tools writes build output to the ``build/`` subdirectory of
+your source tree, so build results are visible from the file explorer within
+Visual Studio Code. This can be changed by changing the
+:ref:`cmake.buildDirectory <conf-cmake.buildDirectory>` setting.
+
