@@ -13,6 +13,8 @@ in their strings. See the :ref:`var-subs` section
 Available Settings
 ==================
 
+.. _conf-cmake.buildDirectory:
+
 ``cmake.buildDirectory``
 ************************
 
