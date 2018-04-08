@@ -2,9 +2,9 @@ Getting Started
 ###############
 
 Assuming you already have a CMake project to configure, skip to the
-:ref:`configuring` section.
+:ref:`gs-configuring` section.
 
-.. _configuring:
+.. _gs-configuring:
 
 Configuring Your Project
 ************************
@@ -90,6 +90,10 @@ Configuration can be run by clicking the project button in the statusbar and
 changing the build type, by running the *CMake: Configure* command from the
 command palette, or by running a build when configuration has not yet taken
 place.
+
+.. note::
+    Read more about How CMake Tools performs CMake configuration on the
+    :ref:`configuring` page.
 
 When configuration runs, the *CMake/Build* output panel will reveal and show
 the live output from CMake as configuration runs:

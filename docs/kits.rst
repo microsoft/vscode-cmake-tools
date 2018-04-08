@@ -72,7 +72,7 @@ refresh when it sees this file added, removed, or changed. When changing kits,
 both user-local and project-local kits will be available for selection.
 
 An example usage of project-local kits is if the project defines its own
-CMake toolchain file(s). A :ref:`toolchain kit <toolchain-kits>` can be defined
+CMake toolchain file(s). A :ref:`toolchain kit <kits.types.toolchain>` can be defined
 that specifies this file to be loaded. The ``.vscode/cmake-kits.json`` file can
 be committed to source control and shared with other developers for easier
 collaboration on the named toolchain.
@@ -128,7 +128,7 @@ command palette. The following process occurs to find available kits:
         CMake Tools will not delete entries from ``cmake-kits.json``, only add
         and update existing ones.
 
-.. _kit-types:
+.. _kits.types:
 
 Kit Types
 =========
@@ -137,7 +137,11 @@ CMake defines three types of kits: *compiler kits*, *Visual Studio kits*, and
 *toolchain file kits*. They are distinguished by the properties present in
 their definition in ``cmake-kits.json``.
 
-.. _compiler-kits:
+.. seealso::
+
+    - :ref:`configuring.how` - Explains how kits are applied during configuration
+
+.. _kits.types.compiler:
 
 Compiler Kits
 *************
@@ -158,7 +162,7 @@ built-in support for finding these, but any language can be specified:
         }
     }
 
-.. _toolchain-kits:
+.. _kits.types.toolchain:
 
 Toolchain Kits
 **************
@@ -175,7 +179,7 @@ CMake toolchain file as a kit:
 
 CMake Tools will pass this path for ``CMAKE_TOOLCHAIN_FILE`` during configure.
 
-.. _vs-kits:
+.. _kits.types.vs:
 
 Visual Studio Kits
 ******************
@@ -197,18 +201,22 @@ obtained from VSWhere. The ``visualStudioArchitecture`` key corresponds to a
 Visual Studio target architecture that would be passed to the ``vcvarsall.bat``
 file when entering the VS dev environment.
 
-.. _kit-common-options:
+.. _kits.common:
 
 Common Options
 **************
 
 All kit types also support some additional options:
 
+.. _kits.common.preferredGenerator:
+
 ``preferredGenerator``
     The CMake generator that should be used with this kit if not the default.
     CMake Tools will still search in ``cmake.preferredGenerators`` from
     ``settings.json``, but will fall back to this option if no generator
     from the user settings is available
+
+.. _kits.common.cmakeSettings:
 
 ``cmakeSettings``
     A JSON object that will be passed as a list of cache settings when running

@@ -24,6 +24,8 @@ be generated).
 - Default: ``${workspaceRoot}/build``.
 - *Supports substitution*
 
+.. _conf-cmake.installPrefix:
+
 ``cmake.installPrefix``
 ***********************
 
@@ -62,6 +64,8 @@ passed onto CMake when configuring.
 - Default: ``null`` (Unspecified)
 - *Supports substitution*
 
+.. _conf-cmake.configureSettings:
+
 ``cmake.configureSettings``
 ***************************
 
@@ -73,6 +77,22 @@ It does the same thing as passing ``-DVAR_NAME=ON`` via
 - Default: ``null`` (Unspecified)
 - *Supports substitution*
 
+.. _conf-cmake.configureArgs:
+
+``cmake.configureArgs``
+***********************
+
+Arguments to CMake that will be passed during the configure process.
+
+- Default: ``[]`` (Empty array, no arguments)
+- *Supports substitution*
+
+.. warning::
+    **Always** prefer to use ``cmake.configureSettings`` or :ref:`variants`.
+    *Never* pass ``-D`` arguments using this setting.
+
+.. _conf-cmake.environment:
+
 ``cmake.environment``
 ***************************
 
@@ -81,6 +101,8 @@ which will be passed onto CMake when configuring and to the compiler.
 
 - Default: ``null`` (Unspecified)
 - *Supports substitution*
+
+.. _conf-cmake.configureEnvironment:
 
 ``cmake.configureEnvironment``
 ******************************
@@ -99,6 +121,23 @@ which will be passed *ONLY* onto the compiler.
 
 - Default: ``null`` (Unspecified)
 - *Supports substitution*
+
+.. _conf-cmake.preferredGenerators:
+
+``cmake.preferredGenerators``
+*****************************
+
+A list of strings of generator names to try in order when configuring a CMake
+project for the first time.
+
+.. _conf-cmake.generator:
+
+``cmake.generator``
+*******************
+
+Set to a string to override CMake Tools' *preferred generator* logic. If this is
+set, CMake will unconditionally use it as the ``-G`` CMake generator command
+line argument.
 
 Variable Substitution
 =====================

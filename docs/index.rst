@@ -17,6 +17,8 @@ Contents:
     kits
     variants
 
+    configuring
+
     settings
 
     development

@@ -89,6 +89,8 @@ Each *setting* in the variant is an object with the following keys:
     A mapping of possible options for the setting. A variant setting can have an
     arbitrary number of possible options. See the section below on options.
 
+.. _variants.opts:
+
 Variant Options
 ***************
 
