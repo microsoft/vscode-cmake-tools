@@ -61,7 +61,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push('-B' + bindir);
     const cmake = await paths.cmakePath;
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
-    const env = await this.getConfigureTimeEnvironment();
+    const env = await this.getConfigureEnvironment();
     const res = await this.executeCommand(cmake, args, outputConsumer, env).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
