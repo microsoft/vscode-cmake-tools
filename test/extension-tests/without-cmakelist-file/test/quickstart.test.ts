@@ -70,6 +70,15 @@ suite('[Quickstart]', async () => {
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(false, 'expected cache not present');
   }).timeout(120000);
 
+  test('Test null project name', async () => {
+    testEnv.quickStartProjectNameInput.projectName = null;
+
+    expect(await cmt.quickStart()).to.be.not.eq(0);
+
+    // Check execution of configure()
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(false, 'expected cache not present');
+  }).timeout(120000);
+
   test('Test abort project type', async () => {
     testEnv.quickStartProjectNameInput.projectName = 'Hallo';
     testEnv.quickStartProjectTypeSelection.abort = true;

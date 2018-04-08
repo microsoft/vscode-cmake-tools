@@ -21,7 +21,7 @@ import {NagManager} from './nag';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
-import * as quickStart from './quickstart';
+import * as quickstart from './quickstart';
 import rollbar from './rollbar';
 import {StateManager} from './state';
 import {StatusBar} from './status';
@@ -789,14 +789,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         ? []
         : (vscode.workspace.workspaceFolders!).map(item => item.uri.fsPath);
 
-    const callbacks: quickStart.UiControlCallbacks = {
+    const callbacks: quickstart.UiControlCallbacks = {
       onError: message => { vscode.window.showErrorMessage(message); },
       onWarning: message => { vscode.window.showWarningMessage(message); },
       onProjectNameRequest: async () => {
         const ret = await vscode.window.showInputBox({
           prompt: 'Enter a name for the new project',
-          validateInput: (value: string): string => {
-            if (!value.length)
+          validateInput: (value: string | null): string => {
+            if ((value !== null) && (!value.length))
               return 'A project name is required';
             return '';
           },
@@ -808,13 +808,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           placeHolder: 'Select a project type',
         });
       },
-      onOpenSourceFiles: async file => {
-        const doc = await vscode.workspace.openTextDocument(file);
-        await vscode.window.showTextDocument(doc);
+      onOpenSourceFiles: async( files : quickstart.GeneratedProjectFiles) => {
+        if( files.sourceFiles.length != 0) {
+          const doc = await vscode.workspace.openTextDocument(files.sourceFiles[0]);
+          await vscode.window.showTextDocument(doc);
+        }
       }
     };
 
-    const retValue = await quickStart.runUiControl(folders, this, callbacks);
+    const retValue = await quickstart.runUiControl(folders, this, callbacks);
 
     return retValue;
   }

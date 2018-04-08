@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import { ProjectTypeDesciptor, ProjectType } from '@cmt/quickstart';
+import { ProjectTypeDesciption, ProjectType } from '@cmt/quickstart';
 
 export interface QuickPickerHandleStrategy {
   identifier: string;
@@ -13,7 +13,7 @@ export class SelectProjectTypePickerHandle implements QuickPickerHandleStrategy 
 
   public get identifier(): string { return 'Select a project type'; }
 
-  public handleQuickPick(items: ProjectTypeDesciptor[]): any {
+  public handleQuickPick(items: ProjectTypeDesciption[]): any {
     if (this.abort) {
       return null;
     }

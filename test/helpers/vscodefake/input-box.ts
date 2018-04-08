@@ -1,18 +1,16 @@
 
 
 export interface InputBoxPromt {
-    identifier: string;
+  identifier: string;
 
-    provideResponse(): string;
+  provideResponse(): string|null;
 }
 
 
 export class QuickStartProjectNameInputBox implements InputBoxPromt {
-    identifier: string = 'Enter a name for the new project';
+  identifier: string = 'Enter a name for the new project';
 
-    public projectName : string = "";
+  public projectName: string|null;
 
-    provideResponse(): string {
-        return this.projectName;
-    }
+  provideResponse(): string|null { return this.projectName; }
 }

@@ -78,7 +78,7 @@ export class DefaultEnvironment {
 
   private setupShowInputBoxStub(selections: InputBoxPromt[]) {
     this.sandbox.stub(vscode.window, 'showInputBox')
-        .callsFake((options: vscode.InputBoxOptions): Thenable<string|undefined> => {
+        .callsFake((options: vscode.InputBoxOptions): Thenable<string|null> => {
           for (const selector of selections) {
             if (options.prompt == selector.identifier) {
               return Promise.resolve(selector.provideResponse());
