@@ -694,6 +694,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const target_name = this._stateManager.launchTargetName;
     const chosen = (await this.executableTargets).find(e => e.name == target_name);
     if (!chosen) {
+      log.showChannel();
+      log.warning('=======================================================');
+      log.warning('No executable target was found to launch. Please check:');
+      log.warning(' - Have you called add_executable() in your CMake project?');
+      log.warning(' - Have you executed a successful CMake configure? ');
+      log.warning('No program will be executed');
       return null;
     }
     return chosen.path;
