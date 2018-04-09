@@ -1,8 +1,12 @@
+.. _getting-started:
+
 Getting Started
 ###############
 
 Assuming you already have a CMake project to configure, skip to the
-:ref:`gs-configuring` section.
+:ref:`gs.configuring` section.
+
+.. _gs.quickstart:
 
 CMake Tools' *Quick Start*
 **************************
@@ -31,7 +35,7 @@ CMake Tools will then prompt you for the following information:
 Once this information is collected, CMake will try an initial configure and
 build of the project straight away.
 
-.. _gs-configuring:
+.. _gs.configuring:
 
 Configuring Your Project
 ************************
@@ -129,6 +133,8 @@ free to roam about the cabin.
 
 .. seealso::
     - :ref:`configuring`
+
+.. _gs.building:
 
 Building Your Project
 *********************
