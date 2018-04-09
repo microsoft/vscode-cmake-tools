@@ -18,6 +18,8 @@ Contents:
     variants
 
     configuring
+    building
+    debugging
 
     settings
 

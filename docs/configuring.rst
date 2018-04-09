@@ -135,7 +135,7 @@ consideration to run the configuration:
 
 All of the above are taken into account to perform the configure. Once finished,
 CMake Tools will load project information from CMake and generate diagnostics
-based on CMake's output. You are now ready to build!
+based on CMake's output. :ref:`You are now ready to build! <building>`
 
 Configuring Outside of CMake Tools
 **********************************

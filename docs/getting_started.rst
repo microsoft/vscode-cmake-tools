@@ -4,6 +4,33 @@ Getting Started
 Assuming you already have a CMake project to configure, skip to the
 :ref:`gs-configuring` section.
 
+CMake Tools' *Quick Start*
+**************************
+
+CMake Tools provides a *CMake: Quick Start* command to quickly generate a very
+bare-bones CMake project that can be configured and built with minimal friction.
+
+Start by selecting *CMake: Quick Start* from the command palette:
+
+.. image:: res/quickstart.png
+    :align: center
+
+CMake Tools will then prompt you for the following information:
+
+#. *The project name* - Will be written to the generated ``CMakeLists.txt`` and
+   a few initial source files.
+#. *The project type* - Decides what initial source files to write. Not hugely
+   important as the project can be tweaked arbitrarily after generation.
+   Currently offers two choices:
+
+   - *Library* - Writes an ``add_library()`` command and a basic source and
+     header file.
+   - *Executable* - Writes an ``add_executable()`` command and a basic source
+     file with a *Hello, world* style ``main()`` function.
+
+Once this information is collected, CMake will try an initial configure and
+build of the project straight away.
+
 .. _gs-configuring:
 
 Configuring Your Project
@@ -91,10 +118,6 @@ changing the build type, by running the *CMake: Configure* command from the
 command palette, or by running a build when configuration has not yet taken
 place.
 
-.. note::
-    Read more about How CMake Tools performs CMake configuration on the
-    :ref:`configuring` page.
-
 When configuration runs, the *CMake/Build* output panel will reveal and show
 the live output from CMake as configuration runs:
 
@@ -103,6 +126,9 @@ the live output from CMake as configuration runs:
 
 At this point, CMake Tools has loaded information about your project and you are
 free to roam about the cabin.
+
+.. seealso::
+    - :ref:`configuring`
 
 Building Your Project
 *********************
@@ -129,6 +155,9 @@ build progress bar:
     :align: center
 
 The build can be stopped by clicking the *Stop* button.
+
+.. seealso::
+    - :ref:`building`
 
 Accessing Build Results
 ***********************

@@ -94,7 +94,7 @@ Arguments to CMake that will be passed during the configure process.
 .. _conf-cmake.environment:
 
 ``cmake.environment``
-***************************
+*********************
 
 An object containing ``key : value`` pairs of environment variables,
 which will be passed onto CMake when configuring and to the compiler.
@@ -113,6 +113,8 @@ which will be passed onto CMake *ONLY* when configuring.
 - Default: ``null`` (Unspecified)
 - *Supports substitution*
 
+.. _conf-cmake.buildEnvironment:
+
 ``cmake.buildEnvironment``
 ***************************
 
@@ -121,6 +123,32 @@ which will be passed *ONLY* onto the compiler.
 
 - Default: ``null`` (Unspecified)
 - *Supports substitution*
+
+.. _conf-cmake.buildArgs:
+
+``cmake.buildArgs``
+*******************
+
+An array of additional arguments to pass to ``cmake --build``.
+
+- Default: ``[]`` (Empty array, no additional arguments)
+- *Supports substitution*
+
+.. seealso::
+    - :ref:`building.how`
+
+.. _conf-cmake.buildToolArgs:
+
+``cmake.buildToolArgs``
+***********************
+
+An array of additional arguments to pass to *the underlying build tool*.
+
+- Default: ``[]`` (Empty array, no additional arguments)
+- *Supports substitution*
+
+.. seealso::
+    - :ref:`building.how`
 
 .. _conf-cmake.preferredGenerators:
 
