@@ -354,6 +354,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Implementation of `cmake.viewLog`
+   */
+  async viewLog() {
+    await logging.showLogFile();
+  }
+
+  /**
    * Implementation of `cmake.editKits`
    */
   editKits() { return this._kitManager.openKitsEditor(); }

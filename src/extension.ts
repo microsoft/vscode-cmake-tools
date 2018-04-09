@@ -42,9 +42,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
         const ret = await fn();
         try {
           log.debug(`[${id}] cmake.${name} finished (returned ${JSON.stringify(ret)})`);
-        } catch (e) {
-          log.debug(`[${id}] cmake.${name} finished (returned an unserializable value)`);
-        }
+        } catch (e) { log.debug(`[${id}] cmake.${name} finished (returned an unserializable value)`); }
         return ret;
       });
     });
@@ -56,7 +54,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
     'build',        'setVariant',       'install',          'editCache',      'clean',
     'cleanRebuild', 'buildWithTarget',  'setDefaultTarget', 'ctest',          'stop',
     'quickStart',   'launchTargetPath', 'debugTarget',      'launchTarget',   'selectLaunchTarget',
-    'resetState',
+    'resetState',   'viewLog',
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 

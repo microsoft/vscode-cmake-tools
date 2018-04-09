@@ -113,15 +113,19 @@ export interface Stringable {
 
 let _LOGGER: Promise<NodeJS.WritableStream>;
 
+function logFilePath(): string {
+  return path.join(paths.dataDir, 'log.txt');
+}
+
 async function _openLogFile() {
   if (!_LOGGER) {
     _LOGGER = (async () => {
-      const logfilepath = path.join(paths.dataDir, 'log.txt');
-      await fs.mkdir_p(path.dirname(logfilepath));
-      if (await fs.exists(logfilepath)) {
-        return node_fs.createWriteStream(logfilepath, {flags: 'r+'});
+      const fpath = logFilePath();
+      await fs.mkdir_p(path.dirname(fpath));
+      if (await fs.exists(fpath)) {
+        return node_fs.createWriteStream(fpath, {flags: 'r+'});
       } else {
-        return node_fs.createWriteStream(logfilepath, {flags: 'w'});
+        return node_fs.createWriteStream(fpath, {flags: 'w'});
       }
     })();
   }
@@ -213,6 +217,10 @@ class Logger {
 }
 
 export function createLogger(tag: string) { return new Logger(tag); }
+
+export async function showLogFile(): Promise<void> {
+  await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(logFilePath()));
+}
 
 // The imports aren't needed immediately, so we can drop them all the way down
 // here since we may have circular imports
