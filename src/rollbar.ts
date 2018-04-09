@@ -144,9 +144,9 @@ class RollbarController {
    * @param additional Additional data to log
    * @param func The block to call
    */
-  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): Promise<T>;
-  invokeAsync<T>(what: string, func: () => Promise<T>): Promise<T>;
-  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): Promise<T> {
+  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): void;
+  invokeAsync<T>(what: string, func: () => Promise<T>): void;
+  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): void {
     if (!func) {
       func = additional as () => Promise<T>;
       additional = {};
@@ -154,7 +154,6 @@ class RollbarController {
     log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
     const pr = func();
     this.takePromise(what, additional, pr);
-    return pr;
   }
 
   /**

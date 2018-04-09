@@ -35,16 +35,18 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
   function register<K extends keyof CMakeTools>(name: K) {
     return vscode.commands.registerCommand(`cmake.${name}`, () => {
       const id = util.randint(1000, 10000);
-      return rollbar.invokeAsync(name, async () => {
-        const cmt_inst = await cmt_pr;
+      const pr = (async () => {
         log.debug(`[${id}]`, `cmake.${name}`, 'started');
+        const cmt_inst = await cmt_pr;
         const fn = (cmt_inst[name] as Function).bind(cmt_inst);
         const ret = await fn();
         try {
           log.debug(`[${id}] cmake.${name} finished (returned ${JSON.stringify(ret)})`);
         } catch (e) { log.debug(`[${id}] cmake.${name} finished (returned an unserializable value)`); }
         return ret;
-      });
+      })();
+      rollbar.takePromise(name, {}, pr);
+      return pr;
     });
   }
 
