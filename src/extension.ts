@@ -39,8 +39,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
         const cmt_inst = await cmt_pr;
         log.debug(`[${id}]`, `cmake.${name}`, 'started');
         const fn = (cmt_inst[name] as Function).bind(cmt_inst);
-        await fn();
-        log.debug(`[${id}]`, `cmake.${name}`, 'finished');
+        const ret = await fn();
+        try {
+          log.debug(`[${id}] cmake.${name} finished (returned ${JSON.stringify(ret)})`);
+        } catch (e) {
+          log.debug(`[${id}] cmake.${name} finished (returned an unserializable value)`);
+        }
+        return ret;
       });
     });
   }
