@@ -22,6 +22,7 @@ Contents:
     debugging
 
     settings
+    troubleshooting
 
     development
 

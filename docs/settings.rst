@@ -167,6 +167,22 @@ Set to a string to override CMake Tools' *preferred generator* logic. If this is
 set, CMake will unconditionally use it as the ``-G`` CMake generator command
 line argument.
 
+.. _conf-cmake.loggingLevel:
+
+``cmake.loggingLevel``
+**********************
+
+An enumerated string setting to change the amount of output CMake Tools
+produces in its output channel. Set to one of "trace", "debug", "info", "note",
+"warning", "error", or "fatal", with "trace" being the most verbose.
+
+- Default: ``info``
+
+.. note::
+    Regardless of the logging level, CMake Tools writes *all* levels of logging
+    to the CMake Tools log file. This file is useful for
+    :ref:`troubleshooting <troubleshooting>`.
+
 Variable Substitution
 =====================
 
