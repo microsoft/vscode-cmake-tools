@@ -2,11 +2,10 @@ language: cpp
 
 os:
   - osx
-  # - linux
+  - linux
 
 compiler:
-  - clang
-  # - gcc
+  - gcc
 
 dist: trusty
 sudo: false
