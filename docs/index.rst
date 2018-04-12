@@ -30,6 +30,8 @@ Contents:
 
     development
 
+    changelog
+
 Indices and tables
 ==================
 
