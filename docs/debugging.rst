@@ -4,7 +4,7 @@ Target Debugging and Launching
 ##############################
 
 CMake Tools removes some of the friction required in setting up debugging.
-Because C and C++ projects may define multiple (sometimes dozens or even h
+Because C and C++ projects may define multiple (sometimes dozens or even
 hundreds) of executables, creating a ``launch.json`` may be difficult, tedious,
 and error-prone.
 

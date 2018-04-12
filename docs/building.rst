@@ -27,7 +27,7 @@ one.
     information, so no progress bar will be visible.
 
 The results of the build will be written to the directory specified by
-:ref:`conf-cmake.buildDirectory`. This default to a subdirectory of the project
+:ref:`conf-cmake.buildDirectory`. This defaults to a subdirectory of the project
 directory, so the build results will be visible within the project explorer.
 The exact file paths will depend on the CMake project configuration.
 
@@ -73,8 +73,8 @@ How CMake Tools Builds
 Build Flags
 ===========
 
-CMake Tools builds using the ``--build`` flag to CMake. This flag is used as
-a generator-agnostic build invocation tool. CMake tools also passes
+CMake Tools builds by passing the ``--build`` flag to CMake. This flag is used
+as a generator-agnostic build invocation tool. CMake tools also passes
 ``--config <build-type>`` based on the current build type from the active
 :ref:`variant <variants>`. This instructs multi-conf build tools on what
 configuration they should build.

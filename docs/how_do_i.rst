@@ -50,7 +50,7 @@ Set Up Include Paths for C++ IntelliSense?
 ******************************************
 
 CMake Tool's won't do this on its own, but you can `use compile_commands.json
-in conjunction with Microsoft's cpptools extension.
+in conjunction with Microsoft's cpptools extension
 <https://github.com/Microsoft/vscode-cpptools/blob/f5b2d3018253447b462aa5eb73c2099c68ebb24e/Documentation/Getting%20started%20with%20IntelliSense%20configuration.md>`_.
 
 Set the value of ``compileCommands`` to point to ``<build-dir>/compile_commands.json``,

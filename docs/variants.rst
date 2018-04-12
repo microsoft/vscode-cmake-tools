@@ -23,7 +23,7 @@ configure and build with that build type.
 
 For smaller or simple projects, providing a custom ``cmake-variants.yaml`` is
 unnecessary, and the default CMake build types will work just fine. Large
-projects with more complex configuration options make want to specify
+projects with more complex configuration options may want to specify
 additional build variants.
 
 The variants file can be placed in the root of the project directory, or in the
@@ -49,12 +49,13 @@ A simple two-setting ``cmake-variants.yaml`` might look like this:
     :align: center
 
 This file defines two variant **settings**: *buildType* and *useOpenGL*. They
-each have two **options** defined by the ``choices`` key.
+each have two **options** defined by the ``choices`` key. A combination of the
+**options** from a set of **settings** forms a **variant**.
 
-In total, the number of possible variants is defined by the cartesian product
-of the possible choices. Two **settings** each with two **options** creates
-*four* variants. When we ask to change the build type, CMake Tools will present
-each possible combination in a quickpick:
+In total, the number of possible **variants** is defined by the cartesian
+product of the possible choices. Two **settings** each with two **options**
+creates *four* variants. When we ask to change the build type, CMake Tools will
+present each possible combination in a quickpick:
 
 .. image:: res/custom_variant_selector.png
     :align: center
@@ -75,11 +76,11 @@ that controls the ``ENABLE_OPENGL`` CMake option.
 Variant Settings
 ****************
 
-Each *setting* in the variant is an object with the following keys:
+Each *setting* in the variant is an object with only the following keys:
 
 ``default``
-    A string to set as the default value for the variant option. The string here
-    must correspond to an option from ``choices``.
+    A string to set as the default *choice* for the variant option. The string
+    here must correspond to an option from ``choices``.
 
 ``description``
     An optional string to describe what the option controls. CMake Tools ignores
@@ -98,7 +99,8 @@ Variant options appear under the ``choices`` key for a variant setting. Each is
 required to have an unique name, but the name itself is unimportant to CMake
 Tools.
 
-The option is itself a map with the following keys:
+A choice may specify any of the following options (the only requirement is the
+``short``):
 
 ``short``
     A short human-readable string to describe the option.
@@ -126,6 +128,8 @@ The option is itself a map with the following keys:
     currently set :ref:`kit <kits>`, and environment variables set by the
     system.
 
+The above options are only valid under entries in the ``choices`` map.
+
 How Variants Are Applied
 ========================
 
@@ -140,7 +144,7 @@ CMake process:
 #. All ``settings`` from the chosen options are passed as ``-D`` arguments to
    the CMake process.
 #. The ``buildType`` is used for ``CMAKE_BUILD_TYPE``, the ``--config``
-   parameter to the build (For multi-conf generators), and for the CTest
+   flag for the build (For multi-conf generators), and for the CTest
    ``--config`` flag.
 #. If ``linkage`` is ``true``, ``BUILD_SHARED_LIBS`` is set to ``ON``. If
    ``linkage`` is ``false``, ``BUILD_SHARED_LIBS`` is set to ``OFF``. If not

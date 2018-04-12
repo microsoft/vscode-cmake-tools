@@ -108,7 +108,7 @@ The active build variant will be displayed on the same statusbar button, along
 with the project name and extension status.
 
 .. note::
-    Just like with kits, CMake will ask you which variant to build if you
+    Just like with kits, CMake Tools will ask you which variant to build if you
     haven't already made a selection.
 
 Variants can be customized to a wide variety of purposes. Find out more on the

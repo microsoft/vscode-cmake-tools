@@ -12,7 +12,7 @@ about how to build code. A kit can include:
   simply finding the necessary compiler executable. Visual C++ requires certain
   environment variables to be set to tell it how to find and link to the
   Visual C++ toolchain headers and libraries.
-- A toolchain file! This is the lowest-level way to instruct CMake how to
+- *A toolchain file* - This is the lowest-level way to instruct CMake how to
   compile and link for a target. CMake Tools handles toolchain files using
   kits.
 

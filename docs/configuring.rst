@@ -66,7 +66,7 @@ things must be discussed:
 How CMake Tools Configures
 **************************
 
-CMake Tools speaks to CMake over *CMake Server*, a execution mode of CMake
+CMake Tools speaks to CMake over *CMake Server*, an execution mode of CMake
 wherein a persistent connection is held open to query information and get
 project information.
 

@@ -31,11 +31,13 @@ be generated).
 
 If specified, sets a value for ``CMAKE_INSTALL_PREFIX`` when running CMake
 configure. If not, no value will be passed.
-*Note that if ``CMAKE_INSTALL_PREFIX`` is set via ``cmake.configureArgs`` or
-``cmake.configureSettings``, ``cmake.installPrefix`` will be ignored.*
 
 - Default: ``null`` (Unspecified)
 - *Supports substitution*
+
+.. note::
+    If ``CMAKE_INSTALL_PREFIX`` is set via ``cmake.configureArgs`` or
+    ``cmake.configureSettings``, ``cmake.installPrefix`` will be ignored.
 
 ``cmake.sourceDirectory``
 *************************
@@ -52,17 +54,6 @@ If ``true`` (the default), saves open text documents when build or configure is
 invoked before running CMake.
 
 - Default: ``true``
-
-.. _var-subs:
-
-``cmake.configureArgs``
-***************************
-
-A list containing CMake configure arguments, which will be
-passed onto CMake when configuring.
-
-- Default: ``null`` (Unspecified)
-- *Supports substitution*
 
 .. _conf-cmake.configureSettings:
 
@@ -182,6 +173,8 @@ produces in its output channel. Set to one of "trace", "debug", "info", "note",
     Regardless of the logging level, CMake Tools writes *all* levels of logging
     to the CMake Tools log file. This file is useful for
     :ref:`troubleshooting <troubleshooting>`.
+
+.. _var-subs:
 
 Variable Substitution
 =====================
