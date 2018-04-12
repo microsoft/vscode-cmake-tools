@@ -9,16 +9,23 @@ Visual Studio Code editor.
 This extension itself *does not* provide language support for the CMake
 scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
 
-## Calling All Users:
+# CALLING ALL USERS:
 
-One of the number-one most important things I need help with is _documentation_.
-The changelog may mention all important changes and features, but it's hard for
-a new user to get acclimated and find all the features and options.
+I need *your* help! I've been working the past few months on the final pre-1.0
+release version. It includes a large rewrite and refactor along with some new
+features and stability improvements, but I want to get some proper user-testing
+done before pushing out changes to all users.
 
-If you'd like to help, please head on over to the GitHub project's wiki, or
-add a PR for relevant information in the `docs/` subdirectory.
+This is where you come in: If you are willing to give the beta release a try,
+Head over to the [releases](https://github.com/vector-of-bool/vscode-cmake-tools/releases)
+page, download the `.vsix` package, and give it a test drive.
 
-## What's New?
+The 0.11.0 beta includes [new documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/index.html) as well, so feel free to give it a look and provide feedback.
+
+For more information, see [this issue](https://github.com/vector-of-bool/vscode-cmake-tools/issues/274) and/or read
+[this blog post](https://vector-of-bool.github.io/2017/12/15/cmt-1.0-and-beta.html).
+
+# What's New?
 
 ### **0.10.0**
 - VS 2017 environment detection! Finally! **Note:** We use `vswhere` to find the
@@ -42,6 +49,15 @@ add a PR for relevant information in the `docs/` subdirectory.
     variable to the root path of the Emscripten SDK
     (Contains `cmake/Modules/Platform/Emscripten.cmake`)
   - Fix environment variables not passing from `settings.json` to configuration.
+- **0.10.3**:
+  - Bugfixes:
+    - Debugging works again in the VSCode October update
+    - Various
+- **0.10.4**:
+  - Tweaks:
+    - VSWhere is now bundled with the extension, so it isn't required to be
+      installed at a specific version. Fixes #254 and #235.
+  - Request for feedback and beta testing.
 
 As always: Please report any issues, questions, or comments to the GitHub
 project issues list!

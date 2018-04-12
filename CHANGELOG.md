@@ -23,6 +23,15 @@
     variable to the root path of the Emscripten SDK
     (Contains `cmake/Modules/Platform/Emscripten.cmake`)
   - Fix environment variables not passing from `settings.json` to configuration.
+- **0.10.3**:
+  - Bugfixes:
+    - Debugging works again in the VSCode October update
+    - Various
+- **0.10.4**:
+  - Tweaks:
+    - VSWhere is now bundled with the extension, so it isn't required to be
+      installed at a specific version. Fixes #254 and #235.
+  - Request for feedback and beta testing.
 
 ### **0.9.0**
 

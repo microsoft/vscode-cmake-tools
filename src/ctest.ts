@@ -88,7 +88,6 @@ interface MessyResults {
     }[];
   };
 }
-// clang-format on
 
 function parseXMLString<T>(xml: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -112,6 +111,7 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
   }
   return buffer.toString('utf-8');
 }
+// clang-format on
 
 function cleanupResultsXML(messy: MessyResults): CTestResults {
   const testing_head = messy.Site.Testing[0];
