@@ -25,4 +25,4 @@ Here's a quick summary:
 0.10.x and Older
 ****************
 
-The old (pre-0.11.0) changelog can be found in `here <todo>`_.
+The old (pre-0.11.0) changelog can be found in `here <https://github.com/vector-of-bool/vscode-cmake-tools/blob/develop/CHANGELOG.pre-0.11.0.md>`_.
