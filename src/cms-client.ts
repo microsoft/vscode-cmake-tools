@@ -511,7 +511,8 @@ export class CMakeServerClient {
       pipe_file = `/tmp/cmake-server-${Math.random()}`;
     }
     this._pipeFilePath = pipe_file;
-    const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables, params.environment);
+    const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables,
+                                            params.environment as proc.EnvironmentVariables);
     const child = this._proc
         = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
             env: final_env,
