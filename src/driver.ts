@@ -103,10 +103,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Get the environment variables that should be set at CMake-configure time.
    */
-  async getConfigureTimeEnvironment(): Promise<proc.EnvironmentVariables> {
+  async getConfigureEnvironment(): Promise<proc.EnvironmentVariables> {
     return util.mergeEnvironment(this.getKitEnvironmentVariablesObject(),
                                  await this.getExpandedEnvironment(),
-                                 await this.getExpandedConfigureEnvironment(),
+                                 await this.getBaseConfigureEnvironment(),
                                  this._variantEnv);
   }
 
@@ -180,7 +180,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the configure environment and apply any needed
    * substitutions before returning it.
    */
-  async getExpandedConfigureEnvironment(): Promise<{[key: string]: string}> {
+  async getBaseConfigureEnvironment(): Promise<{[key: string]: string}> {
     const config_env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
     await Promise.resolve(
@@ -584,7 +584,7 @@ Please install or configure a preferred generator, or update settings.json or yo
     }
 
     // Get expanded configure environment
-    const expanded_configure_env = await this.getExpandedConfigureEnvironment();
+    const expanded_configure_env = await this.getConfigureEnvironment();
 
     // Expand all flags
     const final_flags = flags.concat(settings_flags);

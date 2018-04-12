@@ -146,7 +146,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     if (!bindir_before.length || !srcdir_before.length) {
       return;
     }
-    const new_env = JSON.stringify(await this.getConfigureTimeEnvironment());
+    const new_env = JSON.stringify(await this.getConfigureEnvironment());
     if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir || new_env != this._prevConfigureEnv) {
       // Directories changed. We need to restart the driver
       await this._restartClient();
@@ -262,7 +262,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: await paths.cmakePath,
-      environment: await this.getConfigureTimeEnvironment(),
+      environment: await this.getConfigureEnvironment(),
       onDirty: async () => { this._dirty = true; },
       onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
       onProgress: async _prog => {},

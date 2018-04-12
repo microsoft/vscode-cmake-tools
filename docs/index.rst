@@ -5,7 +5,8 @@ CMake Tools for Visual Studio Code
 ==================================
 
 CMake Tools is an extension designed to make working with CMake-based projects
-a breeze.
+as easy as possible. If you are new, check the :ref:`getting-started` docs. Also
+check the :ref:`how-do-i` docs and the :ref:`faq`.
 
 Contents:
 
@@ -18,6 +19,14 @@ Contents:
     variants
 
     configuring
+    building
+    debugging
+
+    settings
+    troubleshooting
+
+    faq
+    how_do_i
 
     development
 

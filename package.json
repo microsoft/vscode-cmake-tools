@@ -41,6 +41,7 @@
     "onCommand:cmake.debugTarget",
     "onCommand:cmake.editCache",
     "onCommand:cmake.editKits",
+    "onCommand:cmake.viewLog",
     "onCommand:cmake.install",
     "onCommand:cmake.launchTarget",
     "onCommand:cmake.launchTargetPath",
@@ -55,6 +56,11 @@
   "main": "./out/src/extension",
   "contributes": {
     "commands": [
+      {
+        "command": "cmake.viewLog",
+        "title": "Open the CMake Tools log file",
+        "category": "CMake"
+      },
       {
         "command": "cmake.editKits",
         "title": "Edit user-local CMake kits",

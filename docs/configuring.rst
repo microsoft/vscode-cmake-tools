@@ -1,145 +1,166 @@
-.. _settings:
+.. _configuring:
 
-Configuring CMake Tools
-#######################
+CMake Configuring
+#################
 
-CMake Tools supports a variety of settings that can be set at the user or
-workspace level via VSCode's ``settings.json`` file. This page talks about
-the available options and how they are used.
+CMake Tools wraps the CMake *configure* process separately from the *build*
+process.
 
-Options marked with *Supports substitution* allow variable references to appear
-in their strings. See the :ref:`var-subs` section
+A Crash-Course on CMake's Configuration Process
+***********************************************
 
-Available Settings
-==================
+For those new to CMake, *Configure* refers to the process of detecting
+requirements and generating the build files that will produce the final
+compiled artifacts.
 
-``cmake.buildDirectory``
-************************
+To understand how CMake Tools interacts with CMake's configure process, a few
+things must be discussed:
 
-Specify the build directory (The root directory where ``CMakeCache.txt`` will
-be generated).
+- The *CMake Cache* is a list of key-value pairs that persist between
+  executions of the configure process. It contains a few different types of
+  values:
 
-- Default: ``${workspaceRoot}/build``.
-- *Supports substitution*
+  - Values that are often heavy or slow to compute, such as whether a ``-flag``
+    or ``#include`` file is supported by the compiler.
+  - Values that rarely change, such as the path to a header/library.
+  - Values that offer control to the developer, such as ``BUILD_TESTING``
+    to determine whether or not to build test libraries/executables.
 
-``cmake.installPrefix``
-***********************
+- *Cache initializer arguments* are the arguments passed to CMake that set
+  values in the cache before any CMake scripts are executed. This lets one
+  control build settings. On the CMake command line, these appear as ``-D``
+  arguments [#cache-init]_.
 
-If specified, sets a value for ``CMAKE_INSTALL_PREFIX`` when running CMake
-configure. If not, no value will be passed.
-*Note that if ``CMAKE_INSTALL_PREFIX`` is set via ``cmake.configureArgs`` or
-``cmake.configureSettings``, ``cmake.installPrefix`` will be ignored.*
+- Unless overwritten or deleted, values in the CMake Cache will persist between
+  executions of CMake.
 
-- Default: ``null`` (Unspecified)
-- *Supports substitution*
+- The result of a *configure* depends on the CMake *Generator*. The *Generator*
+  tells CMake what kind of tool will be used to compile and generate the results
+  of the build, since CMake doesn't do the build itself. There are several
+  families of generators available:
 
-``cmake.sourceDirectory``
-*************************
+  - *Ninja* - Emits files for the `Ninja build tool <https://ninja-build.org/>`_.
+    This is the generator CMake Tools will always try first, unless configured
+    otherwise. (See :ref:`conf-cmake.preferredGenerators`).
+  - *Makefile* - Emits a ``Makefile`` for the project that can be built via
+    ``make``.
+  - *Visual Studio* - Emits visual studio solutions and project files. There are
+    many different Visual Studio generators, so it is recommended to let CMake
+    Tools automatically determine the appropriate generator.
 
-Directory where the root ``CMakeLists.txt`` will be found.
+  Regardless of generator, CMake Tools will always support building from within
+  Visual Studio Code. Choosing a particular generator is unimportant
+  [#use-ninja]_.
 
-- Default: ``${workspaceRoot}``
-- *Supports substitution*
+.. Check if this still applies in the future:
 
-``cmake.saveBeforeBuild``
-*************************
+.. [#cache-init]
+    CMake also supports a ``-C`` argument, but this isn't used by or
+    configurable from CMake Tools.
 
-If ``true`` (the default), saves open text documents when build or configure is
-invoked before running CMake.
+.. [#use-ninja]
+    But you should use `Ninja <https://ninja-build.org/>`_.
 
-- Default: ``true``
+.. _configuring.how:
 
-.. _var-subs:
+How CMake Tools Configures
+**************************
 
-``cmake.configureArgs``
-***************************
+CMake Tools speaks to CMake over *CMake Server*, an execution mode of CMake
+wherein a persistent connection is held open to query information and get
+project information.
 
-A list containing CMake configure arguments, which will be
-passed onto CMake when configuring.
+When CMake Tools runs the configure step, it takes a few things into
+consideration to run the configuration:
 
-- Default: ``null`` (Unspecified)
-- *Supports substitution*
+#. *The active kit* - :ref:`CMake Tools' Kits <kits>` tell CMake Tools about the
+   toolchains available on your system that can be used with CMake to build
+   your projects.
 
-``cmake.configureSettings``
-***************************
+   -  For :ref:`kits.types.toolchain`, CMake Tools sets the CMake cache variable
+      ``CMAKE_TOOLCHAIN_FILE`` to the path to the file specified by the kit.
+   -  For :ref:`kits.types.compiler`, CMake Tools sets the ``CMAKE_<LANG>_COMPILER``
+      cache variable to point to the path for each ``<LANG>`` defined in the
+      kit.
+   -  For :ref:`kits.types.vs`, CMake Tools starts the CMake Server process with the
+      environment variables necessary to use the selected Visual Studio
+      installation. It also sets ``CC`` and ``CXX`` to ``cl.exe`` to force
+      CMake to detect the Visual C++ compiler as the primary compiler, even if
+      other compilers like GCC are present on the ``$PATH``.
 
-An object containing ``key : value`` pairs, which will be
-passed onto CMake when configuring.
-It does the same thing as passing ``-DVAR_NAME=ON`` via
-``cmake.configureArgs``.
+   Each kit may also define additional cache variable settings requires for the
+   kit to operate. A kit may also define a ``preferredGenerator``.
 
-- Default: ``null`` (Unspecified)
-- *Supports substitution*
+   .. seealso::
+      - :ref:`kits` - Describes how Kits work
+      - :ref:`kits.types` - The different types of kits
 
-``cmake.environment``
-***************************
+#. *The generator to use* - CMake Tools tries not to let CMake decide implicitly
+   on which generator to use. Instead it tries to detect a "preferred" generator
+   from a variety of sources, stopping when it finds a valid generator:
 
-An object containing ``key : value`` pairs of environment variables,
-which will be passed onto CMake when configuring and to the compiler.
+   #. The config setting :ref:`conf-cmake.generator`.
+   #. The config setting :ref:`conf-cmake.preferredGenerators` - Each element
+      in this list is checked for validity, and if one matches, it is chosen.
+      The list has a reasonable default that will work for most environments.
+   #. The kit's :ref:`preferredGenerator <kits.common.preferredGenerator>`
+      attribute. Automatically generated Visual Studio kits will set this
+      attribute to the Visual Studio generator matching their version.
+   #. If no generator is found, CMake Tools produces an error.
 
-- Default: ``null`` (Unspecified)
-- *Supports substitution*
+#. *The configuration options* - CMake Tools has a variety of locations where
+   configuration options can be defined. They are searched in order and merged
+   together, with later searches taking precedence in case of overlapping keys:
 
-``cmake.configureEnvironment``
-******************************
+   #. The :ref:`conf-cmake.configureSettings` option from ``settings.json``.
+   #. The ``settings`` value from the active :ref:`variants.opts`.
+   #. ``BUILD_SHARED_LIBS`` is set based on :ref:`variants.opts`.
+   #. ``CMAKE_BUILD_TYPE`` is set based on :ref:`variants.opts`.
+   #. ``CMAKE_INSTALL_PREFIX`` is set based on :ref:`conf-cmake.installPrefix`.
+   #. ``CMAKE_TOOLCHAIN_FILE`` is set for :ref:`kits.types.toolchain`.
+   #. The :ref:`cmakeSettings <kits.common.cmakeSettings>` attribute on the
+      active kit.
 
-An object containing ``key : value`` pairs of environment variables,
-which will be passed onto CMake *ONLY* when configuring.
+   Additionally, :ref:`conf-cmake.configureArgs` are passed *before* any of
+   the above.
 
-- Default: ``null`` (Unspecified)
-- *Supports substitution*
+#. *The configure environment* - CMake Tools sets environment variables for the
+   child process it runs for CMake. Like the configuration options, values are
+   merged from different sources, with later sources taking precedence:
 
-``cmake.buildEnvironment``
-***************************
+   #. The environment variables required by the active :ref:`kit <kits>`.
+   #. The value of :ref:`conf-cmake.environment`.
+   #. The value of :ref:`conf-cmake.configureEnvironment`.
+   #. The environment variables required by the active :ref:`variant <variants>`.
 
-An object containing ``key : value`` pairs of environment variables,
-which will be passed *ONLY* onto the compiler.
+All of the above are taken into account to perform the configure. Once finished,
+CMake Tools will load project information from CMake and generate diagnostics
+based on CMake's output. :ref:`You are now ready to build! <building>`
 
-- Default: ``null`` (Unspecified)
-- *Supports substitution*
+Configuring Outside of CMake Tools
+**********************************
 
-Variable Substitution
-=====================
+CMake Tools is built to play nicely with an external CMake process. If you
+choose to run CMake from another command line or other IDE/tool, all should
+work successfully (provided the host environment is set up properly).
 
-Some options support the replacement of special values in their string value
-using ``${variable}`` syntax. The following built-in variables are expanded:
+Nevertheless, be aware: CMake Tools will be unaware of any changes made by an
+external CMake process, and you will need to re-run the CMake configure within
+CMake Tools to have up-to-date project information.
 
-``${workspaceRoot}``
-    The full path to the workspace root directory
+A "Clean" Configure
+*******************
 
-``${workspaceRootFolderName}``
-    The name of the leaf directory in the workspace directory path
+CMake Tools also has the concept of a "clean configure," executed by running
+*CMake: Delete cached built settings and reconfigure*. The process consists
+simply of deleting the ``CMakeCache.txt`` file and ``CMakeFiles`` directory
+from the build directory. This is enough to reset all of CMake's default state.
+Should additional cleaning be necessary, it must be done by hand.
 
-``${buildType}``
-    The current CMake build type, eg. ``Debug``, ``Release``, ``MinSizeRel``
+This process is required for certain build system changes, but may be convenient
+as a "reset" if you have tweaked any configuration settings outside of CMake
+Tools.
 
-``${generator}``
-    The name of the CMake generator, eg. ``Ninja``
-
-``${projectName}``
-    The name of the CMake project. Isn't expanded fully until project has been
-    configured once. Before configuring, expands to "Unknown Project".
-
-``${userHome}``
-    The full path to the current user's home directory
-
-``${variant_identifier}``
-    *Replace ``variant_identifier`` with your variant identifier.*
-    The currently selected choice of the given variant identifier.
-
-Environment Variables
-*********************
-
-Additionally, environment variables may be substituted with ``${env:VARNAME}``
-and ``${env.VARNAME}`` syntax, where the string for the ``VARNAME`` environment
-variable will be replaced. If the named environment variable is undefined, an empty
-string will be expanded instead.
-
-Command Substitution
-********************
-
-CMake Tools also supports expanding of VSCode commands, similar to
-``launch.json``. Running a command ``${command:foo.bar}`` will execute the
-``foo.bar`` VSCode command and replace the string value. Beware of long-running
-commands! It is unspecified when and how many times CMake Tools will execute a
-command for a given expansion.
+CMake Tools will also do this *automatically* if you change the active
+:ref:`kit <kits>`. CMake can't yet properly handle changing the toolchain
+without deleting the configuration data.
