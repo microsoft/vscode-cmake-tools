@@ -29,7 +29,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   private constructor(state: StateManager) { super(state); }
 
   private _needsReconfigure = true;
-  get needsReconfigure() { return this._needsReconfigure; }
+  async checkNeedsReconfigure(): Promise<boolean> { return this._needsReconfigure; }
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._needsReconfigure = true;

@@ -18,6 +18,20 @@ import * as util from './util';
 
 const log = createLogger('cms-driver');
 
+class CMakeInputFile {
+  constructor(readonly filePath: string, readonly mtime: Date) {}
+
+  async hasBeenModified(): Promise<boolean> {
+    const stat = await fs.stat(this.filePath);
+    return stat.mtime.valueOf() > this.mtime.valueOf();
+  }
+
+  static async create(filePath: string): Promise<CMakeInputFile> {
+    const stat = await fs.stat(filePath);
+    return new CMakeInputFile(filePath, stat.mtime);
+  }
+}
+
 export class CMakeServerClientDriver extends CMakeDriver {
   private constructor(stateman: StateManager) {
     super(stateman);
@@ -28,6 +42,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _cmsClient: Promise<cms.CMakeServerClient>;
   private _globalSettings: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
+  private _cmakeInputs: CMakeInputFile[] = [];
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -86,7 +101,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
     try {
       await cl.configure({cacheArguments: args});
       await cl.compute();
-      this._dirty = false;
     } catch (e) {
       if (e instanceof cms.ServerError) {
         log.error(`Error during CMake configure: ${e}`);
@@ -100,12 +114,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doPreBuild(): Promise<boolean> {
-    if (this._dirty) {
-      const retc = await this.configure([]);
-      if (retc !== 0) {
-        return false;
-      }
-    }
     return true;
   }
 
@@ -116,6 +124,16 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async _refreshPostConfigure(): Promise<void> {
     const cl = await this._cmsClient;
+    const cmake_inputs = await cl.cmakeInputs();
+    // Scan all the CMake inputs and capture their mtime so we can check for
+    // out-of-dateness later
+    this._cmakeInputs
+        = await Promise.all(util.map(util.flatMap(cmake_inputs.buildFiles, entry => entry.sources), src => {
+            if (!path.isAbsolute(src)) {
+              src = util.normalizePath(path.join(cmake_inputs.sourceDirectory, src));
+            }
+            return CMakeInputFile.create(src);
+          }));
     const clcache = await cl.getCMakeCacheContent();
     this._cacheEntries = clcache.cache.reduce((acc, el) => {
       const entry_map: {[key: string]: api.CacheEntryType|undefined} = {
@@ -189,14 +207,22 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
 
-  private _dirty = true;
-  markDirty() { this._dirty = true; }
-  get needsReconfigure(): boolean { return this._dirty; }
+  async checkNeedsReconfigure(): Promise<boolean> {
+    if (this._cmakeInputs.length === 0) {
+      return true;
+    }
+    for (const input of this._cmakeInputs) {
+      if (await input.hasBeenModified()) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
-    this._dirty = true;
+    this._cmakeInputs = [];  // Empty inputs implies dirtyness
     await (await this._cmsClient).shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
@@ -263,7 +289,11 @@ export class CMakeServerClientDriver extends CMakeDriver {
       sourceDir: this.sourceDir,
       cmakePath: await paths.cmakePath,
       environment: await this.getConfigureEnvironment(),
-      onDirty: async () => { this._dirty = true; },
+      onDirty: async () => {
+        // cmake-server has dirty check issues, so we implement our own dirty
+        // checking. Maybe in the future this can be useful for auto-configuring
+        // on file changes?
+      },
       onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
       onProgress: async _prog => {},
       pickGenerator: () => this.getBestGenerator(),
