@@ -516,6 +516,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       populateCollection(this._buildDiagnostics, file_diags);
       return rc === null ? -1 : rc;
     } finally {
+      this._statusBar.setStatusMessage('Ready');
       this._statusBar.setIsBusy(false);
       consumer.dispose();
     }
