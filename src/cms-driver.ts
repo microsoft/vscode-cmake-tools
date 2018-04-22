@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {InputFile, InputFileSet} from '@cmt/dirty';
+import {InputFileSet} from '@cmt/dirty';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
