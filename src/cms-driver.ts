@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import {InputFile, InputFileSet} from '@cmt/dirty';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
@@ -18,20 +19,6 @@ import * as util from './util';
 
 const log = createLogger('cms-driver');
 
-class CMakeInputFile {
-  constructor(readonly filePath: string, readonly mtime: Date) {}
-
-  async hasBeenModified(): Promise<boolean> {
-    const stat = await fs.stat(this.filePath);
-    return stat.mtime.valueOf() > this.mtime.valueOf();
-  }
-
-  static async create(filePath: string): Promise<CMakeInputFile> {
-    const stat = await fs.stat(filePath);
-    return new CMakeInputFile(filePath, stat.mtime);
-  }
-}
-
 export class CMakeServerClientDriver extends CMakeDriver {
   private constructor(stateman: StateManager) {
     super(stateman);
@@ -42,7 +29,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _cmsClient: Promise<cms.CMakeServerClient>;
   private _globalSettings: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
-  private _cmakeInputs: CMakeInputFile[] = [];
+  private _cmakeInputFileSet = InputFileSet.createEmpty();
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -113,9 +100,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return 0;
   }
 
-  async doPreBuild(): Promise<boolean> {
-    return true;
-  }
+  async doPreBuild(): Promise<boolean> { return true; }
 
   async doPostBuild(): Promise<boolean> {
     await this._refreshPostConfigure();
@@ -127,13 +112,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     const cmake_inputs = await cl.cmakeInputs();
     // Scan all the CMake inputs and capture their mtime so we can check for
     // out-of-dateness later
-    this._cmakeInputs
-        = await Promise.all(util.map(util.flatMap(cmake_inputs.buildFiles, entry => entry.sources), src => {
-            if (!path.isAbsolute(src)) {
-              src = util.normalizePath(path.join(cmake_inputs.sourceDirectory, src));
-            }
-            return CMakeInputFile.create(src);
-          }));
+    this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
     const clcache = await cl.getCMakeCacheContent();
     this._cacheEntries = clcache.cache.reduce((acc, el) => {
       const entry_map: {[key: string]: api.CacheEntryType|undefined} = {
@@ -208,21 +187,17 @@ export class CMakeServerClientDriver extends CMakeDriver {
   get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
 
   async checkNeedsReconfigure(): Promise<boolean> {
-    if (this._cmakeInputs.length === 0) {
+    // If we have no input files, we probably haven't configured yet
+    if (this._cmakeInputFileSet.inputFiles.length === 0) {
       return true;
     }
-    for (const input of this._cmakeInputs) {
-      if (await input.hasBeenModified()) {
-        return true;
-      }
-    }
-    return false;
+    return this._cmakeInputFileSet.checkOutOfDate();
   }
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
-    this._cmakeInputs = [];  // Empty inputs implies dirtyness
+    this._cmakeInputFileSet = InputFileSet.createEmpty();
     await (await this._cmsClient).shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
