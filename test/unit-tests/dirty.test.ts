@@ -1,4 +1,5 @@
 import { InputFile, InputFileSet } from '@cmt/dirty';
+import * as util from '@cmt/util';
 import {expect} from '@test/util';
 import * as path from 'path';
 import { fs } from '@cmt/pr';
@@ -65,7 +66,7 @@ suite('Dirty file checking', async () => {
 
   test('Input file set maps files correctly', async () => {
     const foo_subdir = path.join(here, 'foo');
-    const dummy_file = path.join(foo_subdir, 'dummy_file');
+    const dummy_file = util.normalizePath(path.join(foo_subdir, 'dummy_file'));
     const fileset = await InputFileSet.create({
       buildFiles: [{
         isCMake: false,
