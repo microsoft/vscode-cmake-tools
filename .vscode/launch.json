@@ -159,6 +159,23 @@
                 }
             }
             // "smartStep": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Backend tests",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-u",
+                "tdd",
+                "--timeout",
+                "999999",
+                "--colors",
+                "-r",
+                "ts-node/register",
+                "${workspaceFolder}/test/backend-unit-tests/**/*.test.ts"
+            ],
+            "internalConsoleOptions": "openOnSessionStart"
         }
     ]
 }

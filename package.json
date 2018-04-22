@@ -690,6 +690,7 @@
     "clang-format": "^1.2.2",
     "mocha": "~3.4.2",
     "sinon": "^4.1.4",
+    "ts-node": "^6.0.0",
     "tslint": "^5.9.1",
     "typedoc": "^0.8.0",
     "typescript": "~2.3.0",
