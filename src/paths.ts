@@ -95,8 +95,7 @@ class Paths {
             }
           }
         }
-        // We've got nothing...
-        throw new Error('No CMake found on $PATH');
+        return '';
       }
       return on_path;
     }

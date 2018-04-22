@@ -2,15 +2,15 @@
  * Defines base class for CMake drivers
  */ /** */
 
-import * as path from 'path';
-import * as vscode from 'vscode';
+ import * as path from 'path';
+ import * as vscode from 'vscode';
 
-import * as api from './api';
-import config from './config';
-import * as expand from './expand';
-import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
-import * as logging from './logging';
-import paths from './paths';
+ import * as api from './api';
+ import config from './config';
+ import {CMakeExecutable} from '@cmt/cmake/cmake_executable';
+ import * as expand from './expand';
+ import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
+ import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -76,7 +76,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(readonly stateManager: StateManager) {}
+  protected constructor(readonly cmake: CMakeExecutable, readonly stateManager: StateManager) {}
 
   /**
    * Dispose the driver. This disposes some things synchronously, but also
@@ -192,7 +192,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Get the vscode root workspace folder.
    *
-   * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a `file://` scheme.
+   * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
+   * `file://` scheme.
    */
   private get _workspaceRootPath() {
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders[0].uri.scheme !== 'file') {
@@ -718,7 +719,7 @@ Please install or configure a preferred generator, or update settings.json or yo
     const expanded_args = await Promise.all(expanded_args_promises);
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
-    const cmake = await paths.cmakePath;
+    const cmake = this.cmake.path;
     const child = this.executeCommand(cmake, expanded_args, consumer, {environment: build_env});
     this._currentProcess = child;
     this._isBusy = true;
