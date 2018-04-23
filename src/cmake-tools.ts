@@ -419,10 +419,40 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Save all open files. "maybe" because the user may have disabled auto-saving
+   * with `config.saveBeforeBuild`.
+   */
+  async maybeAutoSaveAll(): Promise<boolean> {
+    // Save open files before we configure/build
+    if (config.saveBeforeBuild) {
+      log.debug('Saving open files before configure/build');
+      const save_good = await vscode.workspace.saveAll();
+      if (!save_good) {
+        log.debug('Saving open files failed');
+        const chosen = await vscode.window.showErrorMessage<
+            vscode.MessageItem>('Not all open documents were saved. Would you like to continue anyway?',
+                                {
+                                  title: 'Yes',
+                                  isCloseAffordance: false,
+                                },
+                                {
+                                  title: 'No',
+                                  isCloseAffordance: true,
+                                });
+        return chosen !== undefined && (chosen.title === 'Yes');
+      }
+    }
+    return true;
+  }
+
+  /**
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
   private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
+    if (!await this.maybeAutoSaveAll()) {
+      return -1;
+    }
     if (!this._kitManager.hasActiveKit) {
       log.debug('No kit selected yet. Asking for a Kit first.');
       await this.selectKit();
@@ -473,7 +503,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async _needsReconfigure(): Promise<boolean> {
     const drv = await this.getCMakeDriverInstance();
-    if (!drv || drv.needsReconfigure) {
+    if (!drv || await drv.checkNeedsReconfigure()) {
       return true;
     } else {
       return false;
@@ -484,8 +514,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
-    // First, reconfigure if necessary
-    if (await this._needsReconfigure()) {
+    // First, save open files
+    if (!await this.maybeAutoSaveAll()) {
+      return -1;
+    }
+    // Then check that we might need to re-configure
+    const needs_conf = await this._needsReconfigure();
+    if (needs_conf) {
       const retc = await this.configure();
       if (retc) {
         return retc;

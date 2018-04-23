@@ -464,6 +464,7 @@ export class CMakeServerClient {
   sendRequest(t: 'configure', p: ConfigureParams): Promise<ConfigureContent>;
   sendRequest(t: 'compute', p?: ComputeParams): Promise<ComputeContent>;
   sendRequest(t: 'codemodel', p?: CodeModelParams): Promise<CodeModelContent>;
+  sendRequest(t: 'cmakeInputs', p?: CMakeInputsParams): Promise<CMakeInputsContent>;
   sendRequest(T: 'cache', p?: CacheParams): Promise<CacheContent>;
   sendRequest(type: string, params: any = {}): Promise<any> {
     const cp = {type, ...params};
@@ -492,6 +493,8 @@ export class CMakeServerClient {
   compute(params?: ComputeParams): Promise<ComputeParams> { return this.sendRequest('compute', params); }
 
   codemodel(params?: CodeModelParams): Promise<CodeModelContent> { return this.sendRequest('codemodel', params); }
+
+  cmakeInputs(params?: CMakeInputsParams): Promise<CMakeInputsContent> { return this.sendRequest('cmakeInputs', params); }
 
   private _onErrorData(data: Uint8Array) {
     log.error(`Unexpected stderr/stdout data from CMake Server process: ${data.toString()}`);
