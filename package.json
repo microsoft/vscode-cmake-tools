@@ -51,8 +51,8 @@
     "onCommand:cmake.selectLaunchTarget",
     "onCommand:cmake.setVariant",
     "onCommand:cmake.stop",
-		"workspaceContains:CMakeLists.txt",
-		"workspaceContains:.vscode/cmake-kits.json"
+    "workspaceContains:CMakeLists.txt",
+    "workspaceContains:.vscode/cmake-kits.json"
   ],
   "main": "./out/src/extension",
   "contributes": {
