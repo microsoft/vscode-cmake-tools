@@ -4,14 +4,14 @@
  * Module for getting "nags" from a remote.
  */ /** */
 
+import * as ajv from 'ajv';
+import * as https from 'https';
+import * as yaml from 'js-yaml';
 import * as vscode from 'vscode';
 
-import * as https from 'https';
+// tslint:disable:no-console
 
-import * as yaml from 'js-yaml';
-import * as ajv from 'ajv';
-
-const open = require('open') as((url: string, appName?: string, callback?: Function) => void);
+const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 const NAG_REMOTE_URL = 'https://vector-of-bool.github.io/vscode-cmt-nags.yaml';
 
@@ -28,37 +28,37 @@ export interface Nag {
   resetSeconds: number;
 }
 
-export function parseNagData(items: any): Nag[] | null {
-  const validator = new ajv({allErrors : true, format : 'full'}).compile({
-    type : 'object',
-    properties : {
-      nags : {
-        type : 'array',
-        items : {
-          type : 'object',
-          properties : {
-            message : {type : 'string'},
-            id : {type : 'string'},
-            resetSeconds : {type : 'number'},
-            items : {
-              type : 'array',
-              items : {
-                type : 'object',
-                properties : {
-                  title : {type : 'string'},
-                  isCloseAffordance : {type : 'boolean'},
-                  openLink : {type : 'string'},
-                  askLater : {type : 'boolean'},
-                  neverAgain : {type : 'boolean'},
+export function parseNagData(items: any): Nag[]|null {
+  const validator = new ajv({allErrors: true, format: 'full'}).compile({
+    type: 'object',
+    properties: {
+      nags: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            message: {type: 'string'},
+            id: {type: 'string'},
+            resetSeconds: {type: 'number'},
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: {type: 'string'},
+                  isCloseAffordance: {type: 'boolean'},
+                  openLink: {type: 'string'},
+                  askLater: {type: 'boolean'},
+                  neverAgain: {type: 'boolean'},
                 },
-                required : [
+                required: [
                   'title',
                   'isCloseAffordance',
                 ],
               },
             },
           },
-          required : [
+          required: [
             'message',
             'items',
             'id',
@@ -67,7 +67,7 @@ export function parseNagData(items: any): Nag[] | null {
         },
       },
     },
-    required : [
+    required: [
       'nags',
     ],
   });
@@ -84,7 +84,7 @@ export function parseNagData(items: any): Nag[] | null {
 }
 
 
-export function parseNagYAML(str: string): Nag[] | null {
+export function parseNagYAML(str: string): Nag[]|null {
   try {
     const raw_data = yaml.load(str);
     return parseNagData(raw_data);
@@ -96,17 +96,15 @@ export function parseNagYAML(str: string): Nag[] | null {
 
 interface NagState {
   nagsByID: {
-    [id: string] : undefined | {
-      nextShowTimeMS : number,
-      neverAgain : boolean,
+    [id: string]: undefined|{
+      nextShowTimeMS: number,
+      neverAgain: boolean,
     };
   };
 }
 
 
-function writeNagState(ext: vscode.ExtensionContext, state: NagState) {
-  ext.globalState.update('nagState', state);
-}
+function writeNagState(ext: vscode.ExtensionContext, state: NagState) { ext.globalState.update('nagState', state); }
 
 function getOrInitNagState(ext: vscode.ExtensionContext): NagState {
   const state = ext.globalState.get<NagState>('nagState');
@@ -114,7 +112,7 @@ function getOrInitNagState(ext: vscode.ExtensionContext): NagState {
     return state;
   }
   const init_state: NagState = {
-    nagsByID : {
+    nagsByID: {
 
     }
   };
@@ -124,14 +122,14 @@ function getOrInitNagState(ext: vscode.ExtensionContext): NagState {
 
 export class NagManager {
   get onNag() { return this._nagEmitter.event; }
-  private _nagEmitter = new vscode.EventEmitter<Nag>();
-  private _nagState = getOrInitNagState(this.extensionContext);
+  private readonly _nagEmitter = new vscode.EventEmitter<Nag>();
+  private readonly _nagState = getOrInitNagState(this.extensionContext);
   private _writeNagState() { writeNagState(this.extensionContext, this._nagState); }
 
   constructor(readonly extensionContext: vscode.ExtensionContext) {}
 
   private _pollRemoteForNags() {
-    const req = https.get(NAG_REMOTE_URL, (res) => {
+    const req = https.get(NAG_REMOTE_URL, res => {
       if (res.statusCode !== 200) {
         // Stop trying.
         console.error('Not polling for CMake-Tools updates.');
@@ -155,7 +153,7 @@ export class NagManager {
             });
       });
     });
-    req.on('error', (err) => {
+    req.on('error', err => {
       console.error('Error polling remote for nags', err);
       setTimeout(() => {
         // Poll again in ten minutes
@@ -192,14 +190,14 @@ export class NagManager {
       if (chosen.askLater) {
         // We'll ask again when the reset timer is met
         state.nagsByID[nag.id] = {
-          neverAgain : false,
-          nextShowTimeMS : next_time_ms,
+          neverAgain: false,
+          nextShowTimeMS: next_time_ms,
         };
       } else if (chosen.neverAgain) {
         // User doesn't want to be bothered again
         state.nagsByID[nag.id] = {
-          neverAgain : true,  // Prevents this nag from ever reappearing
-          nextShowTimeMS : next_time_ms,
+          neverAgain: true,  // Prevents this nag from ever reappearing
+          nextShowTimeMS: next_time_ms,
         };
       }
       if (chosen.openLink) {
@@ -214,8 +212,6 @@ export class NagManager {
   start() {
     try {
       this._pollRemoteForNags();
-    } catch (e) {
-      console.error('Error starting up initial event polling.', e);
-    }
+    } catch (e) { console.error('Error starting up initial event polling.', e); }
   }
-};
+}

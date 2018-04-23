@@ -1,0 +1,6 @@
+[
+    {
+        "name": "Test Toolchain",
+        "toolchainFile": "${workspaceRoot}\\test-toolchain.cmake"
+    }
+]

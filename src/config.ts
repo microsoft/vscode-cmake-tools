@@ -1,161 +1,126 @@
+/**
+ * Provides a typed interface to CMake Tools' configuration options. You'll want
+ * to import the `config` default export, which is an instance of the
+ * `ConfigurationReader` class.
+ */ /** */
+
 import * as os from 'os';
-import * as path from 'path';
 import * as vscode from 'vscode';
-import * as util from './util';
 
-import {Maybe} from './util';
+import rollbar from './rollbar';
 
-export class ConfigurationReader {
-  public readConfig<T>(key: string, default_: Maybe<T> = null): Maybe<T> {
-    const config = vscode.workspace.getConfiguration('cmake');
-    const value = config.get(key);
-    return (value !== undefined) ? value as T : default_;
-  }
+export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
-  private _escapePaths(obj: Object) {
-    return Object.getOwnPropertyNames(obj).reduce(
-      (acc, key: string) => {
-        acc[key] = util.replaceVars(obj[key]);
-        return acc;
-      },
-      {});
-  }
-
-  private _readPrefixed<T>(key): T|null {
-    const platform = {win32: 'windows',
-                      darwin: 'osx',
-                      linux: 'linux'}[os.platform()];
-    return this.readConfig<T>(
-        `${platform}.${key}`, this.readConfig<T>(`${key}`));
-  }
-
-  get buildDirectory(): string {
-    return this._readPrefixed<string>('buildDirectory')!;
-  }
-
-  get installPrefix(): Maybe<string> {
-    return this._readPrefixed<string>('installPrefix')!;
-  }
-
-  get sourceDirectory(): string {
-    return this._readPrefixed<string>('sourceDirectory') as string;
-  }
-
-  get buildBeforeRun(): boolean {
-    return !!this._readPrefixed<boolean>('buildBeforeRun');
-  }
-
-  get saveBeforeBuild(): boolean {
-    return !!this._readPrefixed<boolean>('saveBeforeBuild');
-  }
-
-  get clearOutputBeforeBuild(): boolean {
-    return !!this._readPrefixed<boolean>('clearOutputBeforeBuild');
-  }
-
-  get configureSettings(): any {
-    return this._readPrefixed<Object>('configureSettings');
-  }
-
-  get initialBuildType(): Maybe<string> {
-    return this._readPrefixed<string>('initialBuildType');
-  }
-
-  get preferredGenerators(): string[] {
-    return this._readPrefixed<string[]>('preferredGenerators') || [];
-  }
-
-  get generator(): Maybe<string> {
-    return this._readPrefixed<string>('generator');
-  }
-
-  get toolset(): Maybe<string> {
-    return this._readPrefixed<string>('toolset');
-  }
-
-  get platform(): Maybe<string> {
-    return this._readPrefixed<string>('platform');
-  }
-
-  get configureArgs(): string[] {
-    return this._readPrefixed<string[]>('configureArgs')!;
-  }
-
-  get buildArgs(): string[] {
-    return this._readPrefixed<string[]>('buildArgs')!;
-  }
-
-  get buildToolArgs(): string[] {
-    return this._readPrefixed<string[]>('buildToolArgs')!;
-  }
-
-  get parallelJobs(): Maybe<number> {
-    return this._readPrefixed<number>('parallelJobs');
-  }
-
-  get ctest_parallelJobs(): Maybe<number> {
-    return this._readPrefixed<number>('ctest.parallelJobs');
-  }
-
-  get parseBuildDiagnostics(): boolean {
-    return !!this._readPrefixed<boolean>('parseBuildDiagnostics');
-  }
-
-  get enableOutputParsers(): Maybe<string[]> {
-    return this._readPrefixed<string[]>('enableOutputParsers');
-  }
-
-  get cmakePath(): string {
-    return this._readPrefixed<string>('cmakePath') || 'cmake';
-  }
-
-  get ctestPath(): string {
-    const ctest_path = this._readPrefixed<string>('ctestPath');
-    if (!ctest_path) {
-      const cmake = this.cmakePath;
-      if (cmake === 'cmake' || cmake === 'cmake.exe') {
-        return 'ctest';
-      }
-      return path.join(path.dirname(cmake), 'ctest')
+/**
+ * Read a config value from `settings.json`
+ * @param key The configuration setting name
+ * @param default_ The default value to return, if the setting is missing
+ */
+function readConfig<T>(key: string): T|null;
+function readConfig<T>(key: string, default_: T): T;
+function readConfig<T>(key: string, default_?: T): T|null {
+  const cmt_config = vscode.workspace.getConfiguration('cmake');
+  const value = cmt_config.get(key) as T | undefined;
+  if (value === undefined) {
+    if (default_ === undefined) {
+      return null;
+    } else {
+      return default_;
     }
-    else {
-      return ctest_path;
-    }
+  } else {
+    return value;
   }
+}
 
-  get debugConfig(): any {
-    return this._readPrefixed<any>('debugConfig');
+/**
+ * Read a config value from `settings.json`, which may be prefixed by the
+ * platform name.
+ * @param key The configuration setting name
+ */
+function readPrefixedConfig<T>(key: string): T|null;
+function readPrefixedConfig<T>(key: string, default_: T): T;
+function readPrefixedConfig<T>(key: string, default_?: T): T|null {
+  const platmap = {
+    win32: 'windows',
+    darwin: 'osx',
+    linux: 'linux',
+  } as {[k: string]: string};
+  const platform = platmap[process.platform];
+  if (default_ === undefined) {
+    return readConfig(`${platform}.${key}`, readConfig<T>(`${key}`));
+  } else {
+    return readConfig(`${platform}.${key}`, readConfig<T>(`${key}`, default_));
   }
+}
 
-  get environment() {
-    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('environment') || {});
-  }
 
-  get configureEnvironment() {
-    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('configureEnvironment') || {});
-  }
+/**
+ * This class exposes a number of readonly properties which can be used to
+ * access configuration options. Each property corresponds to a value in
+ * `settings.json`. See `package.json` for CMake Tools to see the information
+ * on each property. An underscore in a property name corresponds to a dot `.`
+ * in the setting name.
+ */
+class ConfigurationReader {
+  get buildDirectory(): string { return readPrefixedConfig<string>('buildDirectory')!; }
 
-  get buildEnvironment() {
-    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('buildEnvironment') || {});
-  }
+  get installPrefix(): string|null { return readPrefixedConfig<string>('installPrefix')!; }
 
-  get testEnvironment() {
-    return this._escapePaths(this._readPrefixed<{[key: string]: string}>('testEnvironment') || {});
-  }
+  get sourceDirectory(): string { return readPrefixedConfig<string>('sourceDirectory') as string; }
 
-  get defaultVariants(): Object {
-    return this._readPrefixed<Object>('defaultVariants') || {};
-  }
+  get saveBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('saveBeforeBuild'); }
 
-  get ctestArgs(): string[] {
-    return this._readPrefixed<string[]>('ctestArgs') || [];
-  }
+  get clearOutputBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('clearOutputBeforeBuild'); }
 
-  get useCMakeServer(): boolean {
-    return this._readPrefixed<boolean>('useCMakeServer') || false;
-  }
+  get autoRestartBuild(): boolean { return !!readPrefixedConfig<boolean>('autoRestartBuild'); }
 
-  public get numJobs(): number {
+  get configureSettings(): any { return readPrefixedConfig<Object>('configureSettings'); }
+
+  get initialBuildType(): string|null { return readPrefixedConfig<string>('initialBuildType'); }
+
+  get preferredGenerators(): string[] { return readPrefixedConfig<string[]>('preferredGenerators', []); }
+
+  get generator(): string|null { return readPrefixedConfig<string>('generator'); }
+
+  get toolset(): string|null { return readPrefixedConfig<string>('toolset'); }
+
+  get platform(): string|null { return readPrefixedConfig<string>('platform'); }
+
+  get configureArgs(): string[] { return readPrefixedConfig<string[]>('configureArgs')!; }
+
+  get buildArgs(): string[] { return readPrefixedConfig<string[]>('buildArgs')!; }
+
+  get buildToolArgs(): string[] { return readPrefixedConfig<string[]>('buildToolArgs')!; }
+
+  get parallelJobs(): number|null { return readPrefixedConfig<number>('parallelJobs'); }
+
+  get ctest_parallelJobs(): number|null { return readPrefixedConfig<number>('ctest.parallelJobs'); }
+
+  get parseBuildDiagnostics(): boolean { return !!readPrefixedConfig<boolean>('parseBuildDiagnostics'); }
+
+  get enableOutputParsers(): string[]|null { return readPrefixedConfig<string[]>('enableOutputParsers'); }
+
+  get raw_cmakePath(): string { return readPrefixedConfig<string>('cmakePath', 'auto'); }
+
+  get raw_ctestPath(): string { return readPrefixedConfig<string>('ctestPath', 'auto'); }
+
+  get debugConfig(): any { return readPrefixedConfig<any>('debugConfig'); }
+
+  get environment() { return readPrefixedConfig<{[key: string]: string}>('environment', {}); }
+
+  get configureEnvironment() { return readPrefixedConfig<{[key: string]: string}>('configureEnvironment', {}); }
+
+  get buildEnvironment() { return readPrefixedConfig<{[key: string]: string}>('buildEnvironment', {}); }
+
+  get testEnvironment() { return readPrefixedConfig<{[key: string]: string}>('testEnvironment', {}); }
+
+  get defaultVariants(): Object { return readPrefixedConfig<Object>('defaultVariants', {}); }
+
+  get ctestArgs(): string[] { return readPrefixedConfig<string[]>('ctestArgs', []); }
+
+  get useCMakeServer(): boolean { return readPrefixedConfig<boolean>('useCMakeServer', true); }
+
+  get numJobs(): number {
     const jobs = this.parallelJobs;
     if (!!jobs) {
       return jobs;
@@ -163,7 +128,7 @@ export class ConfigurationReader {
     return os.cpus().length + 2;
   }
 
-  public get numCTestJobs(): number {
+  get numCTestJobs(): number {
     const ctest_jobs = this.ctest_parallelJobs;
     if (!ctest_jobs) {
       return this.numJobs;
@@ -171,14 +136,36 @@ export class ConfigurationReader {
     return ctest_jobs;
   }
 
-  public get mingwSearchDirs(): string[] {
-    return this._readPrefixed<string[]>('mingwSearchDirs') || [];
-  }
+  get mingwSearchDirs(): string[] { return readPrefixedConfig<string[]>('mingwSearchDirs', []); }
 
-  public get emscriptenSearchDirs(): string[] {
-    return this._readPrefixed<string[]>('emscriptenSearchDirs') || [];
+  get emscriptenSearchDirs(): string[] { return readPrefixedConfig<string[]>('emscriptenSearchDirs', []); }
+
+  get loggingLevel(): LogLevelKey {
+    if (process.env['CMT_LOGGING_LEVEL']) {
+      return process.env['CMT_LOGGING_LEVEL']! as LogLevelKey;
+    }
+    return readPrefixedConfig<LogLevelKey>('loggingLevel', 'info');
+  }
+  get enableTraceLogging(): boolean { return readPrefixedConfig<boolean>('enableTraceLogging', false); }
+
+  /**
+   * Watch for changes on a particular setting
+   * @param setting The name of the setting to watch
+   * @param cb A callback when the setting changes
+   */
+  onChange<K extends keyof ConfigurationReader>(setting: K, cb: (value: ConfigurationReader[K]) => void) {
+    const state = {value: this[setting]};
+    return vscode.workspace.onDidChangeConfiguration(() => {
+      rollbar.invoke(`Callback changing setting: cmake.${setting}`, () => {
+        const new_value = this[setting];
+        if (new_value !== state.value) {
+          state.value = new_value;
+          cb(new_value);
+        }
+      });
+    });
   }
 }
 
-export const config = new ConfigurationReader();
+const config = new ConfigurationReader();
 export default config;
