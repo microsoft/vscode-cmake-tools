@@ -28,6 +28,8 @@ import {StatusBar} from './status';
 import * as util from './util';
 import {VariantManager} from './variant';
 
+const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
+
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
 
@@ -770,7 +772,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
     if (drv instanceof LegacyCMakeDriver) {
-      vscode.window.showWarningMessage('Target debugging is no longer supported with the legacy driver');
+      vscode.window
+          .showWarningMessage('Target debugging is no longer supported with the legacy driver', {
+            title: 'Learn more',
+            isLearnMore: true,
+          })
+          .then(item => {
+            if (item && item.isLearnMore) {
+              open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+            }
+          });
       return null;
     }
     // Ensure that we've configured the project already. If we haven't, `getLaunchTargetPath` won't see any executable
