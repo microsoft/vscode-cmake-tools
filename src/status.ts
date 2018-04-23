@@ -186,6 +186,9 @@ export class StatusBar implements vscode.Disposable {
     if (this._isBusy) {
       this._buildButton.show();
     }
+    else{
+      this._progress = null;
+    }
   }
 
   /**
