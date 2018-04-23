@@ -118,7 +118,7 @@ type MaybeCompilerKitPr = Promise<CompilerKit|null>;
 export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCompilerKitPr {
   const fname = path.basename(bin);
   // Check by filename what the compiler might be. This is just heuristic.
-  const gcc_regex = /^gcc(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
+  const gcc_regex = /^((\w+-)*)gcc(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
   const clang_regex = /^clang(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
   const gcc_res = gcc_regex.exec(fname);
   const clang_res = clang_regex.exec(fname);
