@@ -56,6 +56,15 @@ suite('Kits scan test', async () => {
     expect(compkit!.name).to.eq('GCC 42.1');
   });
 
+  test('Detect a GCC cross compiler compiler file', async () => {
+    const compiler = path.join(fakebin, 'cross-compile-gcc');
+    const compkit = await kit.kitIfCompiler(compiler);
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').equal(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+    expect(compkit!.name).to.eq('GCC 0.2.1000');
+  });
+
   test('Detect a Clang compiler file', async () => {
     const compiler = path.join(fakebin, 'clang-0.25');
     const compkit = await kit.kitIfCompiler(compiler);
