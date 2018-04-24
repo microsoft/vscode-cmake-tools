@@ -139,7 +139,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
       return null;
     }
     const version = version_match[1];
-    const gxx_fname = fname.replace(/^gcc/, 'g++');
+    const gxx_fname = fname.replace(/gcc/, 'g++');
     const gxx_bin = path.join(path.dirname(bin), gxx_fname);
     const name = `GCC ${version}`;
     log.debug('Detected GCC compiler kit:', bin);
