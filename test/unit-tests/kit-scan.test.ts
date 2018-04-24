@@ -112,14 +112,14 @@ suite('Kits scan test', async () => {
       await fs.mkdir(path_with_compilername);
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(3);
+      expect(kits.length).to.eq(4);
     });
 
     test('Scan file with compiler name', async () => {
       await fs.writeFile(path_with_compilername, '');
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(3);
+      expect(kits.length).to.eq(4);
     });
   });
 
@@ -212,7 +212,7 @@ suite('Kits scan test', async () => {
 
       const kitFile = await readValidKitFile(path_rescan_kit);
       const nonVSKits = kitFile.filter(item => item.visualStudio == null);
-      expect(nonVSKits.length).to.be.eq(3);
+      expect(nonVSKits.length).to.be.eq(4);
     }).timeout(10000);
 
     test('check check combination of scan and old kits', async () => {
