@@ -11,6 +11,16 @@ and error-prone.
 If you define any executable targets via CMake, CMake Tools will be aware of
 them and allow you to start a debugger on them.
 
+.. note::
+    Debugging is only supported when using *CMake Server* mode. This mode will
+    be enabled automatically on CMake versions at least as new as 3.7.2, but is
+    completely unavailable on older CMake versions.
+
+    Target debugging used to be supported on prior versions, but was difficult
+    and error-prone, creating more problems than it solved. If you are running
+    an older CMake version and wish to use target debugging, you'll have to
+    update your CMake version.
+
 Selecting a Launch Target
 *************************
 

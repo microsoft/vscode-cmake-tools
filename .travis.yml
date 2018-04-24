@@ -33,6 +33,7 @@ script: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
 notifications:
   webhooks:
     - https://webhooks.gitter.im/e/064f3494f67de1248aa0
+    - https://webhooks.gitter.im/e/cfff11fc076f431c1edf
   email:
     on_success: change
     on_failure: always

@@ -240,6 +240,15 @@ export function versionGreater(lhs: Version, rhs: Version|string): boolean {
   return false;
 }
 
+export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<Out>): Iterable<Out> {
+  for (const elem of rng) {
+    const mapped = fn(elem);
+    for (const other_elem of mapped) {
+      yield other_elem;
+    }
+  }
+}
+
 export function versionEquals(lhs: Version, rhs: Version|string): boolean {
   if (typeof (rhs) === 'string') {
     return versionEquals(lhs, parseVersion(rhs));
