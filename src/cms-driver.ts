@@ -1,12 +1,12 @@
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import {InputFileSet} from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {InputFileSet} from '@cmt/dirty';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
 import * as cms from './cms-client';
-import {CMakeExecutable} from '@cmt/cmake/cmake_executable';
 import config from './config';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';

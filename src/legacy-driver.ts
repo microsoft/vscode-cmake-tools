@@ -3,12 +3,12 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
- import * as path from 'path';
- import * as vscode from 'vscode';
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import * as path from 'path';
+import * as vscode from 'vscode';
 
- import * as api from './api';
- import {CMakeCache} from './cache';
- import {CMakeExecutable} from '@cmt/cmake/cmake_executable';
+import * as api from './api';
+import {CMakeCache} from './cache';
 import {CompilationDatabase} from './compdb';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';

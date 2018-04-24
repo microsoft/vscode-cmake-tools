@@ -9,13 +9,13 @@ export interface CMakeExecutable {
   minimalServerModeVersion: util.Version;
 }
 
-export async function getCMakeExecutableInformation(path: string): Promise<CMakeExecutable> {
+export async function getCMakeExecutableInformation(path: string|null): Promise<CMakeExecutable> {
   const cmake = {path, isPresent: false, minimalServerModeVersion: util.parseVersion('3.7.1')} as CMakeExecutable;
 
-  if( path.length != 0) {
+  if (path && path.length != 0) {
     try {
-        const version_ex = await proc.execute(path, ['--version']).result;
-        if (version_ex.retc === 0 && version_ex.stdout) {
+      const version_ex = await proc.execute(path, ['--version']).result;
+      if (version_ex.retc === 0 && version_ex.stdout) {
         cmake.isPresent = true;
 
         console.assert(version_ex.stdout);
@@ -24,16 +24,12 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
 
         // We purposefully exclude versions <3.7.1, which have some major CMake
         // server bugs
-        if (util.versionGreater(cmake.version, cmake.minimalServerModeVersion)) {
-            cmake.isServerModeSupported = true;
-        } else {
-            cmake.isServerModeSupported = false;
-        }
-        }
+        cmake.isServerModeSupported = util.versionGreater(cmake.version, cmake.minimalServerModeVersion);
+      }
     } catch (ex) {
-        if (ex.code != 'ENOENT') {
+      if (ex.code != 'ENOENT') {
         throw ex;
-        }
+      }
     }
   }
   return cmake;

@@ -2,15 +2,15 @@
  * Defines base class for CMake drivers
  */ /** */
 
- import * as path from 'path';
- import * as vscode from 'vscode';
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import * as path from 'path';
+import * as vscode from 'vscode';
 
- import * as api from './api';
- import config from './config';
- import {CMakeExecutable} from '@cmt/cmake/cmake_executable';
- import * as expand from './expand';
- import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
- import * as logging from './logging';
+import * as api from './api';
+import config from './config';
+import * as expand from './expand';
+import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
+import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -76,7 +76,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(readonly cmake: CMakeExecutable, readonly stateManager: StateManager) {}
+  protected constructor(public readonly cmake: CMakeExecutable, readonly stateManager: StateManager) {}
 
   /**
    * Dispose the driver. This disposes some things synchronously, but also

@@ -1,6 +1,8 @@
 /**
  * Root of the extension
  */
+import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import {versionToString} from '@cmt/util';
 import * as http from 'http';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -9,7 +11,6 @@ import * as ws from 'ws';
 import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
-import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake_executable';
 import {CMakeServerClientDriver} from './cms-driver';
 import config from './config';
 import {CTestDriver} from './ctest';
@@ -180,8 +181,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (cmake.isServerModeSupported) {
         drv = await CMakeServerClientDriver.create(cmake, this._stateManager, kit);
       } else {
-        log.info(`CMake Server is not available with the current CMake executable. Please upgrade to CMake ${
-            cmake.minimalServerModeVersion} or newer.`);
+        log.warning(
+            `CMake Server is not available with the current CMake executable. Please upgrade to CMake
+            ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
         drv = await LegacyCMakeDriver.create(cmake, this._stateManager, kit);
       }
     } else {
@@ -214,9 +216,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
-    const cmake = await paths.cmakePath;
     if (drv) {
-      return drv.executeCommand(cmake, args, undefined, options).result;
+      return drv.executeCommand(drv.cmake.path, args, undefined, options).result;
     } else {
       throw new Error('Unable to execute cmake command, there is no valid cmake driver instance.');
     }
