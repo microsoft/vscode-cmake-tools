@@ -2,6 +2,8 @@
 
 [Also check the changelog in the end-user documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html).
 
+**0.11.1** includes several [fixes and tweaks](https://github.com/vector-of-bool/vscode-cmake-tools/milestone/7?closed=1).
+
 The **0.11.0** release marks a monumental change for this project. Besides
 overhauling the development and testing process, three particular things are
 most notable to users:

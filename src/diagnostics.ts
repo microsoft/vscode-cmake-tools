@@ -144,7 +144,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
         };
         const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
-        const filepath = path.isAbsolute(filename) ? filename : util.normalizePath(path.join(this.sourceDir, filename));
+        const filepath = path.isAbsolute(filename) ? filename : util.normalizePath(path.join(this.sourceDir, filename), false);
         this._errorState.diag = {
           filepath,
           diag: vsdiag,
@@ -354,7 +354,7 @@ export class CompileOutputConsumer implements OutputConsumer {
   createDiagnostics(build_dir: string): FileDiagnostic[] {
     const diags_by_file = new Map<string, vscode.Diagnostic[]>();
 
-    const make_abs = (p: string) => util.normalizePath(path.isAbsolute(p) ? p : path.join(build_dir, p));
+    const make_abs = (p: string) => util.normalizePath(path.isAbsolute(p) ? p : path.join(build_dir, p), false);
     const severity_of = (p: string) => {
       switch (p) {
       case 'warning':

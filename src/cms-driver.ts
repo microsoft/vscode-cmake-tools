@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import {InputFileSet} from '@cmt/dirty';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
@@ -28,6 +29,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _cmsClient: Promise<cms.CMakeServerClient>;
   private _globalSettings: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
+  private _cmakeInputFileSet = InputFileSet.createEmpty();
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -86,7 +88,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
     try {
       await cl.configure({cacheArguments: args});
       await cl.compute();
-      this._dirty = false;
     } catch (e) {
       if (e instanceof cms.ServerError) {
         log.error(`Error during CMake configure: ${e}`);
@@ -99,15 +100,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return 0;
   }
 
-  async doPreBuild(): Promise<boolean> {
-    if (this._dirty) {
-      const retc = await this.configure([]);
-      if (retc !== 0) {
-        return false;
-      }
-    }
-    return true;
-  }
+  async doPreBuild(): Promise<boolean> { return true; }
 
   async doPostBuild(): Promise<boolean> {
     await this._refreshPostConfigure();
@@ -116,6 +109,10 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async _refreshPostConfigure(): Promise<void> {
     const cl = await this._cmsClient;
+    const cmake_inputs = await cl.cmakeInputs();
+    // Scan all the CMake inputs and capture their mtime so we can check for
+    // out-of-dateness later
+    this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
     const clcache = await cl.getCMakeCacheContent();
     this._cacheEntries = clcache.cache.reduce((acc, el) => {
       const entry_map: {[key: string]: api.CacheEntryType|undefined} = {
@@ -189,14 +186,18 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
 
-  private _dirty = true;
-  markDirty() { this._dirty = true; }
-  get needsReconfigure(): boolean { return this._dirty; }
+  async checkNeedsReconfigure(): Promise<boolean> {
+    // If we have no input files, we probably haven't configured yet
+    if (this._cmakeInputFileSet.inputFiles.length === 0) {
+      return true;
+    }
+    return this._cmakeInputFileSet.checkOutOfDate();
+  }
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
-    this._dirty = true;
+    this._cmakeInputFileSet = InputFileSet.createEmpty();
     await (await this._cmsClient).shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
@@ -263,7 +264,11 @@ export class CMakeServerClientDriver extends CMakeDriver {
       sourceDir: this.sourceDir,
       cmakePath: this.cmake.path,
       environment: await this.getConfigureEnvironment(),
-      onDirty: async () => { this._dirty = true; },
+      onDirty: async () => {
+        // cmake-server has dirty check issues, so we implement our own dirty
+        // checking. Maybe in the future this can be useful for auto-configuring
+        // on file changes?
+      },
       onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
       onProgress: async _prog => {},
       pickGenerator: () => this.getBestGenerator(),

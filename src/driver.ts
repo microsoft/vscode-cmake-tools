@@ -51,7 +51,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Check if we need to reconfigure, such as if an important file has changed
    */
-  abstract get needsReconfigure(): boolean;
+  abstract checkNeedsReconfigure(): Promise<boolean>;
 
   /**
    * List of targets known to CMake
@@ -522,7 +522,7 @@ Please install or configure a preferred generator, or update settings.json or yo
   get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
 
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
-    const pre_check_ok = await this._beforeConfigure();
+    const pre_check_ok = await this._beforeConfigureOrBuild();
     if (!pre_check_ok) {
       return -1;
     }
@@ -619,11 +619,11 @@ Please install or configure a preferred generator, or update settings.json or yo
   }
 
   /**
-   * Execute pre-configure tasks to check if we are ready to run a full
+   * Execute pre-configure/build tasks to check if we are ready to run a full
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async _beforeConfigure(): Promise<boolean> {
+  private async _beforeConfigureOrBuild(): Promise<boolean> {
     log.debug('Runnnig pre-configure checks and steps');
     if (this._isBusy) {
       if (config.autoRestartBuild) {
@@ -653,26 +653,6 @@ Please install or configure a preferred generator, or update settings.json or yo
       return false;
     }
 
-    // Save open files before we configure/build
-    if (config.saveBeforeBuild) {
-      log.debug('Saving open files before configure/build');
-      const save_good = await vscode.workspace.saveAll();
-      if (!save_good) {
-        log.debug('Saving open files failed');
-        const chosen = await vscode.window.showErrorMessage<
-            vscode.MessageItem>('Not all open documents were saved. Would you like to continue anyway?',
-                                {
-                                  title: 'Yes',
-                                  isCloseAffordance: false,
-                                },
-                                {
-                                  title: 'No',
-                                  isCloseAffordance: true,
-                                });
-        return chosen !== undefined && (chosen.title === 'Yes');
-      }
-    }
-
     return true;
   }
 
@@ -683,7 +663,7 @@ Please install or configure a preferred generator, or update settings.json or yo
   private _currentProcess: proc.Subprocess|null = null;
 
   private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
-    const ok = await this._beforeConfigure();
+    const ok = await this._beforeConfigureOrBuild();
     if (!ok) {
       return null;
     }
