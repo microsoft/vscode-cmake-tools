@@ -62,7 +62,7 @@ suite('Kits scan test', async () => {
     expect(compkit).to.not.be.null;
     expect(compkit!.compilers).has.property('C').equal(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
-    expect(compkit!.name).to.eq('GCC 0.2.1000');
+    expect(compkit!.name).to.eq('GCC for cross-compile 0.2.1000');
   });
 
   test('Detect a Clang compiler file', async () => {

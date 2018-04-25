@@ -141,7 +141,13 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
     const version = version_match[1];
     const gxx_fname = fname.replace(/gcc/, 'g++');
     const gxx_bin = path.join(path.dirname(bin), gxx_fname);
-    const name = `GCC ${version}`;
+    const target_triple_re = /((\w+-)+)gcc.*/;
+    const target_triple_match = target_triple_re.exec(fname);
+    let description = "";
+    if (target_triple_match !== null) {
+      description += `for ${target_triple_match[1].slice(0, -1)} `;
+    }
+    const name = `GCC ${description}${version}`;
     log.debug('Detected GCC compiler kit:', bin);
     if (await fs.exists(gxx_bin)) {
       return {
@@ -318,7 +324,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
 
   const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
   for (const inst of vs_installs) {
-    if (inst_ids.indexOf(inst.instanceId) < 0) {
+    if ((inst_ids.indexOf(inst.instanceId) < 0) && (inst.displayName)) {
       installs.push(inst);
       inst_ids.push(inst.instanceId);
     }
@@ -374,7 +380,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   await fs.writeFile(batpath, bat.join('\r\n'));
   const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
-  const output = res.stdout;
+  const output = (res.stdout) ? res.stdout : res.stderr;
 
   if (res.retc !== 0) {
     if (output.includes('Invalid host architecture') || output.includes('Error in script usage'))
