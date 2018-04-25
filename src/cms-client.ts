@@ -518,7 +518,7 @@ export class CMakeServerClient {
                                             params.environment as proc.EnvironmentVariables);
     const child = this._proc
         = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
-            env: final_env,
+            env: final_env, cwd: params.binaryDir
           });
     log.debug(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', this._onErrorData.bind(this));
