@@ -12,6 +12,10 @@ param(
 )
 $ErrorActionPreference = "Stop"
 
+if ($PSVersionTable.PSVersion.Major -lt 6) {
+    Write-Error -Message "This script requires at least powershell 6"
+}
+
 $CMakeToolsVersion = "0.11.0"
 
 # Import the utility modules
