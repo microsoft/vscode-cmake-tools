@@ -318,7 +318,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.debug('Not starting CMake driver: no kits defined');
       return null;
     }
-    const cmakePath = await paths.cmakePath;
+    let cmakePath = await paths.cmakePath;
+    if (cmakePath === null)
+      cmakePath = '';
     const cmake = await getCMakeExecutableInformation(cmakePath);
     if (!cmake.isPresent) {
       vscode.window.showErrorMessage(`Bad CMake executable "${

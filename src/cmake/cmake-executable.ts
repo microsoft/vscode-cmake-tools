@@ -9,10 +9,10 @@ export interface CMakeExecutable {
   minimalServerModeVersion: util.Version;
 }
 
-export async function getCMakeExecutableInformation(path: string|null): Promise<CMakeExecutable> {
+export async function getCMakeExecutableInformation(path: string): Promise<CMakeExecutable> {
   const cmake = {path, isPresent: false, minimalServerModeVersion: util.parseVersion('3.7.1')} as CMakeExecutable;
 
-  if (path && path.length != 0) {
+  if (path.length != 0) {
     try {
       const version_ex = await proc.execute(path, ['--version']).result;
       if (version_ex.retc === 0 && version_ex.stdout) {

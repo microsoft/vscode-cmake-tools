@@ -65,13 +65,17 @@ class Paths {
   }
 
   get cmakePath(): Promise<string|null> { return this._getCMakePath(); }
-  get ctestPath(): Promise<string> { return this._getCTestPath(); }
+  get ctestPath(): Promise<string|null> { return this._getCTestPath(); }
 
-  private async _getCTestPath(): Promise<string> {
+  private async _getCTestPath(): Promise<string|null> {
     const ctest_path = config.raw_ctestPath;
     if (!ctest_path || ctest_path == 'auto') {
       const cmake = await this.cmakePath;
-      return path.join(path.dirname(cmake!), 'ctest');
+      if (cmake === null) {
+        return null;
+      } else {
+        return path.join(path.dirname(cmake), 'ctest');
+      }
     } else {
       return ctest_path;
     }
