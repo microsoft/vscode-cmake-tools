@@ -324,7 +324,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
 
   const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
   for (const inst of vs_installs) {
-    if ((inst_ids.indexOf(inst.instanceId) < 0) && (inst.displayName)) {
+    if (inst_ids.indexOf(inst.instanceId) < 0) {
       installs.push(inst);
       inst_ids.push(inst.instanceId);
     }
