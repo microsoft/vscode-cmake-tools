@@ -56,9 +56,7 @@ export interface SiteData {
   Testing: TestingData;
 }
 
-export interface CTestResults {
-  Site: SiteData;
-}
+export interface CTestResults { Site: SiteData; }
 
 interface EncodedMeasurementValue {
   $: {encoding?: string; compression?: string;};
@@ -345,29 +343,29 @@ export class CTestDriver implements vscode.Disposable {
     log.showChannel();
     this._decorationManager.clearFailingTestDecorations();
 
-    const configuration = driver.currentBuildType;
     const ctestpath = await paths.ctestPath;
-    if (ctestpath) {
-      const child
-          = driver.executeCommand(ctestpath,
-                                  [`-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure']
-                                      .concat(config.ctestArgs),
-                                  new CTestOutputLogger(),
-                                  {environment: config.testEnvironment, cwd: driver.binaryDir});
-
-      const res = await child.result;
-      await this.reloadTests(driver);
-      if (res.retc === null) {
-        log.info('CTest run was terminated');
-        return -1;
-      } else {
-        log.info('CTest finished with return code', res.retc);
-      }
-      return res.retc;
-    } else {
+    if (ctestpath === null) {
       log.info('CTest path is not set');
       return -2;
     }
+
+    const configuration = driver.currentBuildType;
+    const child
+        = driver.executeCommand(ctestpath,
+                                [`-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure']
+                                    .concat(config.ctestArgs),
+                                new CTestOutputLogger(),
+                                {environment: config.testEnvironment, cwd: driver.binaryDir});
+
+    const res = await child.result;
+    await this.reloadTests(driver);
+    if (res.retc === null) {
+      log.info('CTest run was terminated');
+      return -1;
+    } else {
+      log.info('CTest finished with return code', res.retc);
+    }
+    return res.retc;
   }
 
   /**
