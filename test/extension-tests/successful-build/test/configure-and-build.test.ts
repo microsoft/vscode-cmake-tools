@@ -1,6 +1,7 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import config from '@cmt/config';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
 
 suite('Build', async () => {
   let cmt: CMakeTools;
@@ -53,11 +54,18 @@ suite('Build', async () => {
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(60000);
 
-  test('Configure and Build', async () => {
+  test('Configure and Build run target', async () => {
     expect(await cmt.configure()).to.be.eq(0);
+
+    const targets = await cmt.targets;
+    const runTestTargetElement = targets.find(item => item.name === 'runTestTarget');
+    expect(runTestTargetElement).to.be.not.an('undefined');
+
+    await cmt.setDefaultTarget('runTestTarget');
     expect(await cmt.build()).to.be.eq(0);
 
-    const result = await testEnv.result.getResultAsJson();
+    const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
+    const result = await resultFile.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(60000);
 
