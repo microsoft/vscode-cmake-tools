@@ -64,20 +64,24 @@ class Paths {
     });
   }
 
-  get cmakePath(): Promise<string> { return this._getCMakePath(); }
-  get ctestPath(): Promise<string> { return this._getCTestPath(); }
+  get cmakePath(): Promise<string|null> { return this._getCMakePath(); }
+  get ctestPath(): Promise<string|null> { return this._getCTestPath(); }
 
-  private async _getCTestPath(): Promise<string> {
+  private async _getCTestPath(): Promise<string|null> {
     const ctest_path = config.raw_ctestPath;
     if (!ctest_path || ctest_path == 'auto') {
       const cmake = await this.cmakePath;
-      return path.join(path.dirname(cmake), 'ctest');
+      if (cmake === null) {
+        return null;
+      } else {
+        return path.join(path.dirname(cmake), 'ctest');
+      }
     } else {
       return ctest_path;
     }
   }
 
-  private async _getCMakePath(): Promise<string> {
+  private async _getCMakePath(): Promise<string|null> {
     const raw = config.raw_cmakePath;
     if (raw == 'auto' || raw == 'cmake') {
       // We start by searching $PATH for cmake
@@ -95,8 +99,7 @@ class Paths {
             }
           }
         }
-        // We've got nothing...
-        throw new Error('No CMake found on $PATH');
+        return null;
       }
       return on_path;
     }

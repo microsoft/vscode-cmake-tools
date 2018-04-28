@@ -240,6 +240,8 @@ export function versionGreater(lhs: Version, rhs: Version|string): boolean {
   return false;
 }
 
+export function versionToString(ver: Version): string { return `${ver.major}.${ver.minor}.${ver.patch}`; }
+
 export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<Out>): Iterable<Out> {
   for (const elem of rng) {
     const mapped = fn(elem);

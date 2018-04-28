@@ -56,9 +56,7 @@ export interface SiteData {
   Testing: TestingData;
 }
 
-export interface CTestResults {
-  Site: SiteData;
-}
+export interface CTestResults { Site: SiteData; }
 
 interface EncodedMeasurementValue {
   $: {encoding?: string; compression?: string;};
@@ -345,9 +343,15 @@ export class CTestDriver implements vscode.Disposable {
     log.showChannel();
     this._decorationManager.clearFailingTestDecorations();
 
+    const ctestpath = await paths.ctestPath;
+    if (ctestpath === null) {
+      log.info('CTest path is not set');
+      return -2;
+    }
+
     const configuration = driver.currentBuildType;
     const child
-        = driver.executeCommand(await paths.ctestPath,
+        = driver.executeCommand(ctestpath,
                                 [`-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure']
                                     .concat(config.ctestArgs),
                                 new CTestOutputLogger(),

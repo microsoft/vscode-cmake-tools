@@ -59,6 +59,8 @@ if (! $NoTest) {
     # Prepare to run our tests
     Invoke-TestPreparation -CMakePath $cmake_binary
 
+    Invoke-MochaTest "CMake Tools: Backend tests"
+
     Invoke-VSCodeTest "CMake Tools: Unit tests" `
         -TestsPath "$REPO_DIR/out/test/unit-tests" `
         -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"

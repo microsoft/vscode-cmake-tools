@@ -1,6 +1,8 @@
 /**
  * Root of the extension
  */
+import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import {versionToString} from '@cmt/util';
 import * as http from 'http';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -21,11 +23,9 @@ import * as logging from './logging';
 import {NagManager} from './nag';
 import paths from './paths';
 import {fs} from './pr';
-import * as proc from './proc';
 import rollbar from './rollbar';
 import {StateManager} from './state';
 import {StatusBar} from './status';
-import * as util from './util';
 import {VariantManager} from './variant';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
@@ -169,32 +169,26 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Start up a new CMake driver and return it. This is so that the initialization
    * of the driver is atomic to those using it
    */
-  private async _startNewCMakeDriver(): Promise<CMakeDriver> {
+  private async _startNewCMakeDriver(cmake: CMakeExecutable): Promise<CMakeDriver> {
     const kit = this._kitManager.activeKit;
     log.debug('Starting CMake driver');
-    const cmake = await paths.cmakePath;
-    const version_ex = await proc.execute(cmake, ['--version']).result;
-    if (version_ex.retc !== 0 || !version_ex.stdout) {
-      throw new Error(`Bad CMake executable "${cmake}". Is it installed and a valid executable?`);
+    if (!cmake.isPresent) {
+      throw new Error(`Bad CMake executable "${cmake.path}".`);
     }
 
     let drv: CMakeDriver;
     if (config.useCMakeServer) {
-      console.assert(version_ex.stdout);
-      const version_re = /cmake version (.*?)\r?\n/;
-      const version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
-      // We purposefully exclude versions <3.7.1, which have some major CMake
-      // server bugs
-      if (util.versionGreater(version, '3.7.1')) {
-        drv = await CMakeServerClientDriver.create(this._stateManager, kit);
+      if (cmake.isServerModeSupported) {
+        drv = await CMakeServerClientDriver.create(cmake, this._stateManager, kit);
       } else {
-        log.info(
-            'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
-        drv = await LegacyCMakeDriver.create(this._stateManager, kit);
+        log.warning(
+            `CMake Server is not available with the current CMake executable. Please upgrade to CMake
+            ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
+        drv = await LegacyCMakeDriver.create(cmake, this._stateManager, kit);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
-      drv = await LegacyCMakeDriver.create(this._stateManager, kit);
+      drv = await LegacyCMakeDriver.create(cmake, this._stateManager, kit);
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = drv.projectName;
@@ -222,9 +216,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
-    const cmake = await paths.cmakePath;
     if (drv) {
-      return drv.executeCommand(cmake, args, undefined, options).result;
+      return drv.executeCommand(drv.cmake.path, args, undefined, options).result;
     } else {
       throw new Error('Unable to execute cmake command, there is no valid cmake driver instance.');
     }
@@ -325,10 +318,19 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.debug('Not starting CMake driver: no kits defined');
       return null;
     }
+    let cmakePath = await paths.cmakePath;
+    if (cmakePath === null)
+      cmakePath = '';
+    const cmake = await getCMakeExecutableInformation(cmakePath);
+    if (!cmake.isPresent) {
+      vscode.window.showErrorMessage(`Bad CMake executable "${
+          cmake.path}". Is it installed or settings contain the correct path (cmake.cmakePath)?`);
+      return null;
+    }
 
     if ((await this._cmakeDriver) === null) {
       log.debug('Starting new CMake driver');
-      this._cmakeDriver = this._startNewCMakeDriver();
+      this._cmakeDriver = this._startNewCMakeDriver(cmake);
 
       try {
         await this._cmakeDriver;
@@ -358,9 +360,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.viewLog`
    */
-  async viewLog() {
-    await logging.showLogFile();
-  }
+  async viewLog() { await logging.showLogFile(); }
 
   /**
    * Implementation of `cmake.editKits`
@@ -661,12 +661,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return false;
     }
 
-    return drv.stopCurrentProcess().then(
-      () => {
-        this._cmakeDriver = Promise.resolve(null);
-        return true;
-      },
-      () => false);
+    return drv.stopCurrentProcess().then(() => {
+      this._cmakeDriver = Promise.resolve(null);
+      return true;
+    }, () => false);
   }
 
   /**

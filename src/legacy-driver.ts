@@ -3,6 +3,7 @@
  * Can also talk to newer versions of CMake via the command line.
  */ /** */
 
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -13,7 +14,6 @@ import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 // import * as proc from './proc';
 import * as logging from './logging';
-import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -26,7 +26,7 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
-  private constructor(state: StateManager) { super(state); }
+  private constructor(cmake: CMakeExecutable, state: StateManager) { super(cmake, state); }
 
   private _needsReconfigure = true;
   async checkNeedsReconfigure(): Promise<boolean> { return this._needsReconfigure; }
@@ -52,14 +52,13 @@ export class LegacyCMakeDriver extends CMakeDriver {
   // Legacy disposal does nothing
   async asyncDispose() { this._cacheWatcher.dispose(); }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer):
-      Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     // Dup args so we can modify them
     const args = Array.from(args_);
     args.push('-H' + util.normalizePath(this.sourceDir));
     const bindir = util.normalizePath(this.binaryDir);
     args.push('-B' + bindir);
-    const cmake = await paths.cmakePath;
+    const cmake = this.cmake.path;
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
@@ -102,9 +101,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(state: StateManager, kit: Kit|null): Promise<LegacyCMakeDriver> {
+  static async create(cmake: CMakeExecutable, state: StateManager, kit: Kit|null): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver(state), kit);
+    return this.createDerived(new LegacyCMakeDriver(cmake, state), kit);
   }
 
   get targets() { return []; }

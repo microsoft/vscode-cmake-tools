@@ -1,7 +1,8 @@
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import {InputFileSet} from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {InputFileSet} from '@cmt/dirty';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
@@ -10,7 +11,6 @@ import config from './config';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 import {createLogger} from './logging';
-import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -20,8 +20,8 @@ import * as util from './util';
 const log = createLogger('cms-driver');
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(stateman: StateManager) {
-    super(stateman);
+  private constructor(cmake: CMakeExecutable, stateman: StateManager) {
+    super(cmake, stateman);
     config.onChange('environment', () => this._restartClient());
     config.onChange('configureEnvironment', () => this._restartClient());
   }
@@ -262,7 +262,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return cms.CMakeServerClient.start({
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
-      cmakePath: await paths.cmakePath,
+      cmakePath: this.cmake.path,
       environment: await this.getConfigureEnvironment(),
       onDirty: async () => {
         // cmake-server has dirty check issues, so we implement our own dirty
@@ -280,7 +280,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(state: StateManager, kit: Kit|null): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(state), kit);
+  static async create(cmake: CMakeExecutable, state: StateManager, kit: Kit|null): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, state), kit);
   }
 }

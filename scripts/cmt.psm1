@@ -468,3 +468,24 @@ function Invoke-SmokeTest($Name) {
         -TestsPath "$repo_dir/out/test/extension-tests/$Name" `
         -Workspace "$repo_dir/test/extension-tests/$Name/project-folder"
 }
+
+function Invoke-MochaTest {
+    [CmdletBinding(PositionalBinding = $false)]
+    param(
+        # Description for the test
+        [Parameter(Position = 0, Mandatory)]
+        [string]
+        $Description
+    )
+    $ErrorActionPreference = "Stop"
+    $repo_dir = Split-Path $PSScriptRoot -Parent
+    $test_bin = Join-Path $repo_dir "/node_modules/mocha/bin/_mocha"
+    $test_runner_args = @(
+        $test_bin;
+        "--ui"; "tdd";
+        "-r"; "ts-node/register";
+        "${repo_dir}/test/backend-unit-tests/**/*.test.ts")
+
+    $test_runner_all_args = $test_runner_args -join ' '
+    Invoke-ChronicCommand "Executing VSCode test: $Description" @test_runner_args
+}
