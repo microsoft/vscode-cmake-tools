@@ -3,6 +3,9 @@ param(
     # Run the named tests
     [string[]]
     $Test,
+    # Build the docs only
+    [switch]
+    $Docs,
     # Target directory to copy documentation tree
     [string]
     $DocDestination,
@@ -35,6 +38,10 @@ if ($Test) {
 $npm = Find-Program npm
 if (! $npm) {
     throw "No 'npm' binary. Cannot build."
+}
+
+if ($Docs) {
+    return Build-DevDocs
 }
 
 $out_dir = Join-Path $REPO_DIR out
@@ -100,7 +107,7 @@ else {
     Invoke-ChronicCommand "Generating user documentation" @command
 }
 
-Invoke-ChronicCommand "Generating developer documentation" $npm run docs
+Build-DevDocs
 
 if ($DocDestination) {
     Write-Host "Copying documentation tree to $DocDestination"
