@@ -4,6 +4,7 @@
  */ /** */
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import {WorkspaceContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -17,7 +18,6 @@ import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from './state';
 import * as util from './util';
 
 const log = logging.createLogger('legacy-driver');
@@ -26,7 +26,7 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, state: StateManager) { super(cmake, state); }
+  private constructor(cmake: CMakeExecutable, readonly ws: WorkspaceContext) { super(cmake, ws); }
 
   private _needsReconfigure = true;
   async checkNeedsReconfigure(): Promise<boolean> { return this._needsReconfigure; }
@@ -101,9 +101,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(cmake: CMakeExecutable, state: StateManager, kit: Kit|null): Promise<LegacyCMakeDriver> {
+  static async create(cmake: CMakeExecutable, ws: WorkspaceContext, kit: Kit|null): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver(cmake, state), kit);
+    return this.createDerived(new LegacyCMakeDriver(cmake, ws), kit);
   }
 
   get targets() { return []; }

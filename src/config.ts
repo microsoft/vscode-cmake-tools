@@ -12,113 +12,124 @@ import rollbar from './rollbar';
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
 /**
- * Read a config value from `settings.json`
- * @param key The configuration setting name
- * @param default_ The default value to return, if the setting is missing
- */
-function readConfig<T>(key: string): T|null;
-function readConfig<T>(key: string, default_: T): T;
-function readConfig<T>(key: string, default_?: T): T|null {
-  const cmt_config = vscode.workspace.getConfiguration('cmake');
-  const value = cmt_config.get(key) as T | undefined;
-  if (value === undefined) {
-    if (default_ === undefined) {
-      return null;
-    } else {
-      return default_;
-    }
-  } else {
-    return value;
-  }
-}
-
-/**
- * Read a config value from `settings.json`, which may be prefixed by the
- * platform name.
- * @param key The configuration setting name
- */
-function readPrefixedConfig<T>(key: string): T|null;
-function readPrefixedConfig<T>(key: string, default_: T): T;
-function readPrefixedConfig<T>(key: string, default_?: T): T|null {
-  const platmap = {
-    win32: 'windows',
-    darwin: 'osx',
-    linux: 'linux',
-  } as {[k: string]: string};
-  const platform = platmap[process.platform];
-  if (default_ === undefined) {
-    return readConfig(`${platform}.${key}`, readConfig<T>(`${key}`));
-  } else {
-    return readConfig(`${platform}.${key}`, readConfig<T>(`${key}`, default_));
-  }
-}
-
-
-/**
  * This class exposes a number of readonly properties which can be used to
  * access configuration options. Each property corresponds to a value in
  * `settings.json`. See `package.json` for CMake Tools to see the information
  * on each property. An underscore in a property name corresponds to a dot `.`
  * in the setting name.
  */
-class ConfigurationReader {
-  get buildDirectory(): string { return readPrefixedConfig<string>('buildDirectory')!; }
+export class ConfigurationReader {
+  private constructor(readonly workspacePath: string) {}
 
-  get installPrefix(): string|null { return readPrefixedConfig<string>('installPrefix')!; }
+  /**
+   * Read a config value from `settings.json`
+   * @param key The configuration setting name
+   * @param default_ The default value to return, if the setting is missing
+   */
+  readConfig<T>(key: string): T|null;
+  readConfig<T>(key: string, default_: T): T;
+  readConfig<T>(key: string, default_?: T): T | null {
+    const cmt_config = vscode.workspace.getConfiguration('cmake', vscode.Uri.file(this.workspacePath));
+    const value = cmt_config.get(key) as T | undefined;
+    if (value === undefined) {
+      if (default_ === undefined) {
+        return null;
+      } else {
+        return default_;
+      }
+    } else {
+      return value;
+    }
+  }
 
-  get sourceDirectory(): string { return readPrefixedConfig<string>('sourceDirectory') as string; }
+  /**
+   * Read a config value from `settings.json`, which may be prefixed by the
+   * platform name.
+   * @param key The configuration setting name
+   */
+  readPrefixedConfig<T>(key: string): T|null;
+  readPrefixedConfig<T>(key: string, default_: T): T;
+  readPrefixedConfig<T>(key: string, default_?: T): T|null {
+    const platmap = {
+      win32: 'windows',
+      darwin: 'osx',
+      linux: 'linux',
+    } as {[k: string]: string};
+    const platform = platmap[process.platform];
+    if (default_ === undefined) {
+      return this.readConfig(`${platform}.${key}`, this.readConfig<T>(`${key}`));
+    } else {
+      return this.readConfig(`${platform}.${key}`, this.readConfig<T>(`${key}`, default_));
+    }
+  }
 
-  get saveBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('saveBeforeBuild'); }
+  /**
+   * Get a configuration object relevant to the given workspace directory. This
+   * supports multiple workspaces having differing configs.
+   *
+   * @param workspacePath A directory to use for the config
+   */
+  static createForDirectory(workspacePath: string): ConfigurationReader {
+    return new ConfigurationReader(workspacePath);
+  }
 
-  get clearOutputBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('clearOutputBeforeBuild'); }
+  get buildDirectory(): string { return this.readPrefixedConfig<string>('buildDirectory')!; }
 
-  get autoRestartBuild(): boolean { return !!readPrefixedConfig<boolean>('autoRestartBuild'); }
+  get installPrefix(): string|null { return this.readPrefixedConfig<string>('installPrefix')!; }
 
-  get configureSettings(): any { return readPrefixedConfig<Object>('configureSettings'); }
+  get sourceDirectory(): string { return this.readPrefixedConfig<string>('sourceDirectory') as string; }
 
-  get initialBuildType(): string|null { return readPrefixedConfig<string>('initialBuildType'); }
+  get saveBeforeBuild(): boolean { return !!this.readPrefixedConfig<boolean>('saveBeforeBuild'); }
 
-  get preferredGenerators(): string[] { return readPrefixedConfig<string[]>('preferredGenerators', []); }
+  get clearOutputBeforeBuild(): boolean { return !!this.readPrefixedConfig<boolean>('clearOutputBeforeBuild'); }
 
-  get generator(): string|null { return readPrefixedConfig<string>('generator'); }
+  get autoRestartBuild(): boolean { return !!this.readPrefixedConfig<boolean>('autoRestartBuild'); }
 
-  get toolset(): string|null { return readPrefixedConfig<string>('toolset'); }
+  get configureSettings(): any { return this.readPrefixedConfig<Object>('configureSettings'); }
 
-  get platform(): string|null { return readPrefixedConfig<string>('platform'); }
+  get initialBuildType(): string|null { return this.readPrefixedConfig<string>('initialBuildType'); }
 
-  get configureArgs(): string[] { return readPrefixedConfig<string[]>('configureArgs')!; }
+  get preferredGenerators(): string[] { return this.readPrefixedConfig<string[]>('preferredGenerators', []); }
 
-  get buildArgs(): string[] { return readPrefixedConfig<string[]>('buildArgs')!; }
+  get generator(): string|null { return this.readPrefixedConfig<string>('generator'); }
 
-  get buildToolArgs(): string[] { return readPrefixedConfig<string[]>('buildToolArgs')!; }
+  get toolset(): string|null { return this.readPrefixedConfig<string>('toolset'); }
 
-  get parallelJobs(): number|null { return readPrefixedConfig<number>('parallelJobs'); }
+  get platform(): string|null { return this.readPrefixedConfig<string>('platform'); }
 
-  get ctest_parallelJobs(): number|null { return readPrefixedConfig<number>('ctest.parallelJobs'); }
+  get configureArgs(): string[] { return this.readPrefixedConfig<string[]>('configureArgs')!; }
 
-  get parseBuildDiagnostics(): boolean { return !!readPrefixedConfig<boolean>('parseBuildDiagnostics'); }
+  get buildArgs(): string[] { return this.readPrefixedConfig<string[]>('buildArgs')!; }
 
-  get enableOutputParsers(): string[]|null { return readPrefixedConfig<string[]>('enableOutputParsers'); }
+  get buildToolArgs(): string[] { return this.readPrefixedConfig<string[]>('buildToolArgs')!; }
 
-  get raw_cmakePath(): string { return readPrefixedConfig<string>('cmakePath', 'auto'); }
+  get parallelJobs(): number|null { return this.readPrefixedConfig<number>('parallelJobs'); }
 
-  get raw_ctestPath(): string { return readPrefixedConfig<string>('ctestPath', 'auto'); }
+  get ctest_parallelJobs(): number|null { return this.readPrefixedConfig<number>('ctest.parallelJobs'); }
 
-  get debugConfig(): any { return readPrefixedConfig<any>('debugConfig'); }
+  get parseBuildDiagnostics(): boolean { return !!this.readPrefixedConfig<boolean>('parseBuildDiagnostics'); }
 
-  get environment() { return readPrefixedConfig<{[key: string]: string}>('environment', {}); }
+  get enableOutputParsers(): string[]|null { return this.readPrefixedConfig<string[]>('enableOutputParsers'); }
 
-  get configureEnvironment() { return readPrefixedConfig<{[key: string]: string}>('configureEnvironment', {}); }
+  get raw_cmakePath(): string { return this.readPrefixedConfig<string>('cmakePath', 'auto'); }
 
-  get buildEnvironment() { return readPrefixedConfig<{[key: string]: string}>('buildEnvironment', {}); }
+  get raw_ctestPath(): string { return this.readPrefixedConfig<string>('ctestPath', 'auto'); }
 
-  get testEnvironment() { return readPrefixedConfig<{[key: string]: string}>('testEnvironment', {}); }
+  get debugConfig(): any { return this.readPrefixedConfig<any>('debugConfig'); }
 
-  get defaultVariants(): Object { return readPrefixedConfig<Object>('defaultVariants', {}); }
+  get environment() { return this.readPrefixedConfig<{[key: string]: string}>('environment', {}); }
 
-  get ctestArgs(): string[] { return readPrefixedConfig<string[]>('ctestArgs', []); }
+  get configureEnvironment() { return this.readPrefixedConfig<{[key: string]: string}>('configureEnvironment', {}); }
 
-  get useCMakeServer(): boolean { return readPrefixedConfig<boolean>('useCMakeServer', true); }
+  get buildEnvironment() { return this.readPrefixedConfig<{[key: string]: string}>('buildEnvironment', {}); }
+
+  get testEnvironment() { return this.readPrefixedConfig<{[key: string]: string}>('testEnvironment', {}); }
+
+  get defaultVariants(): Object { return this.readPrefixedConfig<Object>('defaultVariants', {}); }
+
+  get ctestArgs(): string[] { return this.readPrefixedConfig<string[]>('ctestArgs', []); }
+
+  get useCMakeServer(): boolean { return this.readPrefixedConfig<boolean>('useCMakeServer', true); }
 
   get numJobs(): number {
     const jobs = this.parallelJobs;
@@ -136,17 +147,17 @@ class ConfigurationReader {
     return ctest_jobs;
   }
 
-  get mingwSearchDirs(): string[] { return readPrefixedConfig<string[]>('mingwSearchDirs', []); }
+  get mingwSearchDirs(): string[] { return this.readPrefixedConfig<string[]>('mingwSearchDirs', []); }
 
-  get emscriptenSearchDirs(): string[] { return readPrefixedConfig<string[]>('emscriptenSearchDirs', []); }
+  get emscriptenSearchDirs(): string[] { return this.readPrefixedConfig<string[]>('emscriptenSearchDirs', []); }
 
   get loggingLevel(): LogLevelKey {
     if (process.env['CMT_LOGGING_LEVEL']) {
       return process.env['CMT_LOGGING_LEVEL']! as LogLevelKey;
     }
-    return readPrefixedConfig<LogLevelKey>('loggingLevel', 'info');
+    return this.readPrefixedConfig<LogLevelKey>('loggingLevel', 'info');
   }
-  get enableTraceLogging(): boolean { return readPrefixedConfig<boolean>('enableTraceLogging', false); }
+  get enableTraceLogging(): boolean { return this.readPrefixedConfig<boolean>('enableTraceLogging', false); }
 
   /**
    * Watch for changes on a particular setting
@@ -166,6 +177,3 @@ class ConfigurationReader {
     });
   }
 }
-
-const config = new ConfigurationReader();
-export default config;

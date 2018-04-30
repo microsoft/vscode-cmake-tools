@@ -186,7 +186,7 @@ function makeExtensionTestSuite(name: string,
         process.env.PATH = context.buildSystem.path.join(process.platform == 'win32' ? ';' : ':');
       }
 
-      context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
+      context.cmt = await CMakeTools.create(context.testEnv.vsContext, context.testEnv.wsContext);
       // This test will use all on the same kit.
       // No rescan of the tools is needed
       // No new kit selection is needed
@@ -197,7 +197,7 @@ function makeExtensionTestSuite(name: string,
 
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
       this.timeout(10000);
-      context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
+      context.cmt = await CMakeTools.create(context.testEnv.vsContext, context.testEnv.wsContext);
       context.testEnv.projectFolder.buildDirectory.clear();
     });
 

@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as cache from './cache';
-import config from './config';
+import {ConfigurationReader} from './config';
 import {CMakeGenerator} from './kit';
 import {createLogger} from './logging';
 import {fs} from './pr';
@@ -551,7 +551,7 @@ export class CMakeServerClient {
     }, 1000);
   }
 
-  public static async start(params: ClientInit): Promise<CMakeServerClient> {
+  public static async start(config: ConfigurationReader, params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
     const tmpdir = path.join(vscode.workspace.rootPath!, '.vscode');
     // Ensure the binary directory exists

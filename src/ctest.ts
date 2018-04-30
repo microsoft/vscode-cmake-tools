@@ -1,13 +1,12 @@
+import {WorkspaceContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
 import * as api from './api';
-import config from './config';
 import {CMakeDriver} from './driver';
 import * as logging from './logging';
-import paths from './paths';
 import {fs} from './pr';
 import {OutputConsumer} from './proc';
 import * as util from './util';
@@ -293,7 +292,9 @@ class CTestOutputLogger implements OutputConsumer {
 }
 
 export class CTestDriver implements vscode.Disposable {
+  constructor(readonly ws: WorkspaceContext) {}
   private readonly _decorationManager = new DecorationManager();
+
   private _testingEnabled: boolean = false;
   get testingEnabled(): boolean { return this._testingEnabled; }
   set testingEnabled(v: boolean) {
@@ -343,19 +344,19 @@ export class CTestDriver implements vscode.Disposable {
     log.showChannel();
     this._decorationManager.clearFailingTestDecorations();
 
-    const ctestpath = await paths.ctestPath;
+    const ctestpath = await this.ws.ctestPath;
     if (ctestpath === null) {
       log.info('CTest path is not set');
       return -2;
     }
 
     const configuration = driver.currentBuildType;
-    const child
-        = driver.executeCommand(ctestpath,
-                                [`-j${config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure']
-                                    .concat(config.ctestArgs),
-                                new CTestOutputLogger(),
-                                {environment: config.testEnvironment, cwd: driver.binaryDir});
+    const child = driver.executeCommand(
+        ctestpath,
+        [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
+            this.ws.config.ctestArgs),
+        new CTestOutputLogger(),
+        {environment: this.ws.config.testEnvironment, cwd: driver.binaryDir});
 
     const res = await child.result;
     await this.reloadTests(driver);

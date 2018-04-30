@@ -1,5 +1,4 @@
 import {CMakeTools} from '@cmt/cmake-tools';
-import config from '@cmt/config';
 
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 
@@ -16,7 +15,7 @@ suite('Build', async () => {
     testEnv = new DefaultEnvironment('test/extension-tests/vs-preferred-gen/project-folder',
                                      'build',
                                      'output.txt');
-    cmt = await CMakeTools.create(testEnv.vsContext);
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -65,10 +64,10 @@ suite('Build', async () => {
   }).timeout(60000);
 
   test('Test setting watcher', async () => {
-    expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
+    expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
     await testEnv.setting.changeSetting('buildDirectory', 'Hallo');
-    expect(config.buildDirectory).to.be.eq('Hallo');
+    expect(testEnv.wsContext.config.buildDirectory).to.be.eq('Hallo');
     testEnv.setting.restore();
-    expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
+    expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
   });
 });

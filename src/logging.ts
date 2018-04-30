@@ -48,7 +48,7 @@ function levelName(level: LogLevel): LogLevelKey {
  * @param level The log level to check
  */
 function levelEnabled(level: LogLevel): boolean {
-  const strlevel = config.loggingLevel;
+  const strlevel = vscode.workspace.getConfiguration('cmake').get<LogLevelKey>('loggingLevel', 'info');
   switch (strlevel) {
   case 'trace':
     return level >= LogLevel.Trace;
@@ -113,9 +113,7 @@ export interface Stringable {
 
 let _LOGGER: Promise<NodeJS.WritableStream>;
 
-function logFilePath(): string {
-  return path.join(paths.dataDir, 'log.txt');
-}
+function logFilePath(): string { return path.join(paths.dataDir, 'log.txt'); }
 
 async function _openLogFile() {
   if (!_LOGGER) {
@@ -141,7 +139,8 @@ class SingletonLogger {
   private get _channel() { return channelManager.get('CMake/Build'); }
 
   private _log(level: LogLevel, ...args: Stringable[]) {
-    if (level == LogLevel.Trace && !config.enableTraceLogging && !levelEnabled(LogLevel.Trace)) {
+    const trace = vscode.workspace.getConfiguration('cmake').get('loggingLevel', false);
+    if (level == LogLevel.Trace && !trace && !levelEnabled(LogLevel.Trace)) {
       return;
     }
     const user_message = args.map(a => a.toString()).join(' ');
@@ -226,6 +225,5 @@ export async function showLogFile(): Promise<void> {
 // here since we may have circular imports
 import * as util from './util';
 import {fs} from './pr';
-import config from './config';
 import {LogLevelKey} from './config';
 import paths from './paths';

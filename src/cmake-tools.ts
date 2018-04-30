@@ -12,7 +12,6 @@ import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
 import {CMakeServerClientDriver} from './cms-driver';
-import config from './config';
 import {CTestDriver} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
@@ -21,12 +20,12 @@ import {KitManager} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
-import paths from './paths';
 import {fs} from './pr';
 import rollbar from './rollbar';
 import {StateManager} from './state';
 import {StatusBar} from './status';
 import {VariantManager} from './variant';
+import { WorkspaceContext } from '@cmt/workspace';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
@@ -60,7 +59,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    *
    * This is private. You must call `create` to get an instance.
    */
-  private constructor(readonly extensionContext: vscode.ExtensionContext) {
+  private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: WorkspaceContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     log.debug('Constructing new CMakeTools instance');
 
@@ -177,18 +176,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver;
-    if (config.useCMakeServer) {
+    if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver.create(cmake, this._stateManager, kit);
+        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
-        drv = await LegacyCMakeDriver.create(cmake, this._stateManager, kit);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
-      drv = await LegacyCMakeDriver.create(cmake, this._stateManager, kit);
+      drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = drv.projectName;
@@ -318,7 +317,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.debug('Not starting CMake driver: no kits defined');
       return null;
     }
-    let cmakePath = await paths.cmakePath;
+    let cmakePath = await this.workspaceContext.cmakePath;
     if (cmakePath === null)
       cmakePath = '';
     const cmake = await getCMakeExecutableInformation(cmakePath);
@@ -349,9 +348,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * The purpose of making this the only way to create an instance is to prevent
    * us from creating uninitialized instances of the CMake Tools extension.
    */
-  static async create(ctx: vscode.ExtensionContext): Promise<CMakeTools> {
+  static async create(ctx: vscode.ExtensionContext, wsc: WorkspaceContext): Promise<CMakeTools> {
     log.debug('Safe constructing new CMakeTools instance');
-    const inst = new CMakeTools(ctx);
+    const inst = new CMakeTools(ctx, wsc);
     await inst._init();
     log.debug('CMakeTools instance initialization complete.');
     return inst;
@@ -426,7 +425,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async maybeAutoSaveAll(): Promise<boolean> {
     // Save open files before we configure/build
-    if (config.saveBeforeBuild) {
+    if (this.workspaceContext.config.saveBeforeBuild) {
       log.debug('Saving open files before configure/build');
       const save_good = await vscode.workspace.saveAll();
       if (!save_good) {
@@ -471,7 +470,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return -1;
       }
     }
-    if (config.clearOutputBeforeBuild) {
+    if (this.workspaceContext.config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
     }
     log.showChannel();
@@ -527,7 +526,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (retc) {
         return retc;
       }
-    } else if (config.clearOutputBeforeBuild) {
+    } else if (this.workspaceContext.config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
     }
     const drv = await this.getCMakeDriverInstance();
@@ -633,7 +632,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.build();
   }
 
-  private readonly _ctestController = new CTestDriver();
+  private readonly _ctestController = new CTestDriver(this.workspaceContext);
   async ctest(): Promise<number> {
     const build_retc = await this.build();
     if (build_retc !== 0) {
@@ -815,7 +814,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         },
       ];
     }
-    const user_config = config.debugConfig;
+    const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
     debug_config.program = target_path;
     await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
