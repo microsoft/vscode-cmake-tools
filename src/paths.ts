@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as which from 'which';
 
 import {fs} from './pr';
-import { WorkspaceContext } from '@cmt/workspace';
+import { DirectoryContext } from '@cmt/workspace';
 
 /**
  * Directory class.
@@ -64,7 +64,7 @@ class Paths {
     });
   }
 
-  async getCTestPath(wsc: WorkspaceContext): Promise<string|null> {
+  async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
     const ctest_path = wsc.config.raw_ctestPath;
     if (!ctest_path || ctest_path == 'auto') {
       const cmake = await this.getCMakePath(wsc);
@@ -78,7 +78,7 @@ class Paths {
     }
   }
 
-  async getCMakePath(wsc: WorkspaceContext): Promise<string|null> {
+  async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
     const raw = wsc.config.raw_cmakePath;
     if (raw == 'auto' || raw == 'cmake') {
       // We start by searching $PATH for cmake

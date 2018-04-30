@@ -15,7 +15,7 @@ import * as proc from './proc';
 import rollbar from './rollbar';
 import * as util from './util';
 import {ConfigureArguments, VariantOption} from './variant';
-import {WorkspaceContext} from './workspace';
+import {DirectoryContext} from './workspace';
 
 const log = logging.createLogger('driver');
 
@@ -75,7 +75,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: WorkspaceContext) {}
+  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext) {}
 
   /**
    * Dispose the driver. This disposes some things synchronously, but also

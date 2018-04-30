@@ -25,7 +25,7 @@ import rollbar from './rollbar';
 import {StateManager} from './state';
 import {StatusBar} from './status';
 import {VariantManager} from './variant';
-import { WorkspaceContext } from '@cmt/workspace';
+import { DirectoryContext } from '@cmt/workspace';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
@@ -59,7 +59,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    *
    * This is private. You must call `create` to get an instance.
    */
-  private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: WorkspaceContext) {
+  private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     log.debug('Constructing new CMakeTools instance');
 
@@ -348,7 +348,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * The purpose of making this the only way to create an instance is to prevent
    * us from creating uninitialized instances of the CMake Tools extension.
    */
-  static async create(ctx: vscode.ExtensionContext, wsc: WorkspaceContext): Promise<CMakeTools> {
+  static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext): Promise<CMakeTools> {
     log.debug('Safe constructing new CMakeTools instance');
     const inst = new CMakeTools(ctx, wsc);
     await inst._init();

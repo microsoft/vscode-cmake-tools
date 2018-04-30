@@ -6,7 +6,7 @@ import {TestProgramResult} from '../testprogram/test-program-result';
 import {FakeContextDefinition} from '../vscodefake/extensioncontext';
 import {QuickPickerHandleStrategy, SelectKitPickerHandle} from '../vscodefake/quick-picker';
 import {CMakeToolsSettingFile} from '../vscodefake/workspace-configuration';
-import { WorkspaceContext } from '@cmt/workspace';
+import { DirectoryContext } from '@cmt/workspace';
 import { StateManager } from '@cmt/state';
 
 export class DefaultEnvironment {
@@ -15,7 +15,7 @@ export class DefaultEnvironment {
   kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
-  public wsContext = WorkspaceContext.createForDirectory(vscode.workspace.rootPath!, new StateManager(this.vsContext));
+  public wsContext = DirectoryContext.createForDirectory(vscode.workspace.rootPath!, new StateManager(this.vsContext));
   setting: CMakeToolsSettingFile;
   errorMessagesQueue: string[] = [];
 

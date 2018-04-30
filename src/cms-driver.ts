@@ -14,12 +14,12 @@ import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
 import * as util from './util';
-import {WorkspaceContext} from './workspace';
+import {DirectoryContext} from './workspace';
 
 const log = createLogger('cms-driver');
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, private readonly _ws: WorkspaceContext) {
+  private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext) {
     super(cmake, _ws);
     this._ws.config.onChange('environment', () => this._restartClient());
     this._ws.config.onChange('configureEnvironment', () => this._restartClient());
@@ -279,7 +279,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, wsc: WorkspaceContext, kit: Kit|null): Promise<CMakeServerClientDriver> {
+  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null): Promise<CMakeServerClientDriver> {
     return this.createDerived(new CMakeServerClientDriver(cmake, wsc), kit);
   }
 }

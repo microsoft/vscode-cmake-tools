@@ -1,4 +1,4 @@
-import {WorkspaceContext} from '@cmt/workspace';
+import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as xml2js from 'xml2js';
@@ -292,7 +292,7 @@ class CTestOutputLogger implements OutputConsumer {
 }
 
 export class CTestDriver implements vscode.Disposable {
-  constructor(readonly ws: WorkspaceContext) {}
+  constructor(readonly ws: DirectoryContext) {}
   private readonly _decorationManager = new DecorationManager();
 
   private _testingEnabled: boolean = false;
