@@ -490,7 +490,8 @@ function Invoke-MochaTest {
     Invoke-ChronicCommand "Executing VSCode test: $Description" @test_runner_args
 }
 
-function Build-DevDocs {
+function Build-DevDocs() {
     $ErrorActionPreference = "Stop"
+    $npm = Find-Program npm
     Invoke-ChronicCommand "Generating developer documentation" $npm run docs
 }
