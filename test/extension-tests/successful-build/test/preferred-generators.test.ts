@@ -231,7 +231,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.config.updatePartial({preferredGenerators: []});
+           context.testEnv.config.updatePartial({preferredGenerators: []});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
            expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);
@@ -243,7 +243,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.config.updatePartial({
+           context.testEnv.config.updatePartial({
              preferredGenerators: [
                'NMake Makefiles',
                'Unix Makefiles',
@@ -269,7 +269,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.config.updatePartial({preferredGenerators: ['BlaBla']});
+           context.testEnv.config.updatePartial({preferredGenerators: ['BlaBla']});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
            expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
@@ -285,7 +285,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.config.updatePartial({preferredGenerators: []});
+           context.testEnv.config.updatePartial({preferredGenerators: []});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
            expect(context.testEnv.errorMessagesQueue.length).to.eql(1);
@@ -298,7 +298,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles', 'MinGW Makefiles']});
+           context.testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles', 'MinGW Makefiles']});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
            expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);

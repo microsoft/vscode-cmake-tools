@@ -8,8 +8,6 @@ import * as util from '@cmt/util';
 import * as os from 'os';
 import * as vscode from 'vscode';
 
-import rollbar from './rollbar';
-
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
 interface HardEnv {
@@ -66,7 +64,7 @@ type EmittersOf<T> = {
 export class ConfigurationReader implements vscode.Disposable {
   private _updateSubscription?: vscode.Disposable;
 
-  constructor(private _configData: ExtensionConfigurationSettings) {}
+  constructor(private readonly _configData: ExtensionConfigurationSettings) {}
 
   get configData() { return this._configData; }
 
@@ -109,14 +107,19 @@ export class ConfigurationReader implements vscode.Disposable {
 
   update(newData: ExtensionConfigurationSettings) { this.updatePartial(newData); }
   updatePartial(newData: Partial<ExtensionConfigurationSettings>) {
+    const old_values = {...this.configData};
     Object.assign(this.configData, newData);
     for (const key_ of Object.getOwnPropertyNames(newData)) {
       const key = key_ as keyof ExtensionConfigurationSettings;
       if (!(key in this._emitters)) {
-        continue; // Extension config we load has some additional properties we don't care about.
+        continue;  // Extension config we load has some additional properties we don't care about.
       }
-      const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
-      em.fire(newData[key]);
+      const new_value = this.configData[key];
+      const old_value = old_values[key];
+      if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
+        const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
+        em.fire(newData[key]);
+      }
     }
   }
 
@@ -204,7 +207,7 @@ export class ConfigurationReader implements vscode.Disposable {
   }
   get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
 
-  private _emitters: EmittersOf<ExtensionConfigurationSettings> = {
+  private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
     cmakePath: new vscode.EventEmitter<string>(),
     buildDirectory: new vscode.EventEmitter<string>(),
     installPrefix: new vscode.EventEmitter<string|null>(),

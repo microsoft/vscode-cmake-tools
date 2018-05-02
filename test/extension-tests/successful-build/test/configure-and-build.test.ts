@@ -70,7 +70,7 @@ suite('Build', async () => {
 
   test('Test setting watcher', async () => {
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-    await testEnv.config.updatePartial({buildDirectory: 'Hallo'});
+    testEnv.config.updatePartial({buildDirectory: 'Hallo'});
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('Hallo');
     testEnv.config.updatePartial({buildDirectory: '${workspaceRoot}/build'});
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');

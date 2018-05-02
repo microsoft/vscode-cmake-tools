@@ -302,3 +302,21 @@ export function thisExtension() {
 export function thisExtensionPath(): string { return thisExtension().extensionPath; }
 
 export function dropNulls<T>(items: (T|null)[]): T[] { return items.filter(item => item !== null) as T[]; }
+
+export enum Ordering {
+  Greater,
+  Equivalent,
+  Less,
+}
+
+export function compare(a: any, b: any): Ordering {
+  const a_json = JSON.stringify(a);
+  const b_json = JSON.stringify(b);
+  if (a_json < b_json) {
+    return Ordering.Less;
+  } else if (a_json > b_json) {
+    return Ordering.Greater;
+  } else {
+    return Ordering.Equivalent;
+  }
+}
