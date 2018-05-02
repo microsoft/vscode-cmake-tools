@@ -1,5 +1,5 @@
 /**
- * Module for dealing with multiple workspaces
+ * Module for dealing with multiple workspace directories
  */ /** */
 
 import {ConfigurationReader} from '@cmt/config';
@@ -11,8 +11,6 @@ import {StateManager} from '@cmt/state';
  * a state management object.
  */
 export class DirectoryContext {
-  // Currently only contains the config object, but will later have the
-  // directory-local state
   constructor(
       /**
        * The configuration for the associated directory.
@@ -24,11 +22,25 @@ export class DirectoryContext {
       public readonly state: StateManager,
   ) {}
 
+  /**
+   * Create a context object for the given path to a directory.
+   * @param dir The directory for which to create a context
+   * @param state The state that will be associated with the returned context
+   */
   static createForDirectory(dir: string, state: StateManager): DirectoryContext {
     const config = ConfigurationReader.createForDirectory(dir);
     return new DirectoryContext(config, state);
   }
 
-  get cmakePath(): Promise<string|null> { return paths.getCMakePath(this); }
+  /**
+   * The path to a CMake executable associated with this directory. This should
+   * be used over `ConfigurationReader.cmakePath` because it will do additional
+   * path expansion and searching.
+   */
+  get cmakePath(): Promise<string | null> { return paths.getCMakePath(this); }
+  /**
+   * The CTest executable for the directory. See `cmakePath` for more
+   * information.
+   */
   get ctestPath(): Promise<string|null> { return paths.getCTestPath(this); }
 }
