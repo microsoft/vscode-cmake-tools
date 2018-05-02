@@ -12,9 +12,7 @@ suite('Build', async () => {
     }
     this.timeout(100000);
 
-    testEnv = new DefaultEnvironment('test/extension-tests/vs-preferred-gen/project-folder',
-                                     'build',
-                                     'output.txt');
+    testEnv = new DefaultEnvironment('test/extension-tests/vs-preferred-gen/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
@@ -65,9 +63,9 @@ suite('Build', async () => {
 
   test('Test setting watcher', async () => {
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-    await testEnv.setting.changeSetting('buildDirectory', 'Hallo');
+    await testEnv.config.updatePartial({buildDirectory: 'Hallo'});
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('Hallo');
-    testEnv.setting.restore();
+    testEnv.config.updatePartial({buildDirectory: '${workspaceRoot}/build'});
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
   });
 });

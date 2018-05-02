@@ -1,6 +1,6 @@
 import {CMakeTools} from '@cmt/cmake-tools';
+import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
-import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
 
 suite('Build', async () => {
   let cmt: CMakeTools;
@@ -70,9 +70,9 @@ suite('Build', async () => {
 
   test('Test setting watcher', async () => {
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-    await testEnv.setting.changeSetting('buildDirectory', 'Hallo');
+    await testEnv.config.updatePartial({buildDirectory: 'Hallo'});
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('Hallo');
-    testEnv.setting.restore();
+    testEnv.config.updatePartial({buildDirectory: '${workspaceRoot}/build'});
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
   });
 });

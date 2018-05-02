@@ -20,7 +20,7 @@ suite('[Toolchain Substitution]', async () => {
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // Set preferred generators
-    testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles']);
+    testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles']});
     await cmt.selectKit();
 
     testEnv.projectFolder.buildDirectory.clear();

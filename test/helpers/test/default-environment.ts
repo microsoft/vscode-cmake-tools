@@ -1,3 +1,6 @@
+import {ConfigurationReader} from '@cmt/config';
+import {StateManager} from '@cmt/state';
+import {DirectoryContext} from '@cmt/workspace';
 import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 
@@ -5,9 +8,6 @@ import {ProjectRootHelper} from '../cmake/project-root-helper';
 import {TestProgramResult} from '../testprogram/test-program-result';
 import {FakeContextDefinition} from '../vscodefake/extensioncontext';
 import {QuickPickerHandleStrategy, SelectKitPickerHandle} from '../vscodefake/quick-picker';
-import {CMakeToolsSettingFile} from '../vscodefake/workspace-configuration';
-import { DirectoryContext } from '@cmt/workspace';
-import { StateManager } from '@cmt/state';
 
 export class DefaultEnvironment {
   sandbox: sinon.SinonSandbox = sinon.sandbox.create();
@@ -15,8 +15,8 @@ export class DefaultEnvironment {
   kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
   public vsContext: FakeContextDefinition = new FakeContextDefinition();
-  public wsContext = DirectoryContext.createForDirectory(vscode.workspace.rootPath!, new StateManager(this.vsContext));
-  setting: CMakeToolsSettingFile;
+  public config = ConfigurationReader.createForDirectory(vscode.workspace.rootPath!);
+  public wsContext = new DirectoryContext(this.config, new StateManager(this.vsContext));
   errorMessagesQueue: string[] = [];
 
   public constructor(projectRoot: string,
@@ -33,8 +33,6 @@ export class DefaultEnvironment {
 
     this.kitSelection = new SelectKitPickerHandle(defaultKitLabel, excludeKitLabel);
     this.setupShowQuickPickerStub([this.kitSelection]);
-
-    this.setting = new CMakeToolsSettingFile(this.sandbox);
 
     const errorQueue = this.errorMessagesQueue;
     this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string): Thenable<string|undefined> => {
@@ -59,6 +57,5 @@ export class DefaultEnvironment {
   public clean(): void {
     this.errorMessagesQueue.length = 0;
     this.vsContext.clean();
-    this.setting.restore();
   }
 }
