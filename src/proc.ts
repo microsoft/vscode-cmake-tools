@@ -5,6 +5,7 @@
 import * as proc from 'child_process';
 
 import {createLogger} from './logging';
+import rollbar from './rollbar';
 import * as util from './util';
 
 const log = createLogger('proc');
