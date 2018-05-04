@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as expand from './expand';
-import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
+import {CMakeGenerator, getVSKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
@@ -131,39 +131,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private _kit: Kit|null = null;
 
   /**
-   * Get the current kit as a `CompilerKit`.
-   *
-   * @precondition `this._kit` is non-`null` and `this._kit.type` is `compilerKit`.
-   * Guarded with an `assert`
-   */
-  private get _compilerKit() {
-    console.assert(this._kit && this._kit.type == 'compilerKit', JSON.stringify(this._kit));
-    return this._kit as CompilerKit;
-  }
-
-  /**
-   * Get the current kit as a `ToolchainKit`.
-   *
-   * @precondition `this._kit` is non-`null` and `this._kit.type` is `toolchainKit`.
-   * Guarded with an `assert`
-   */
-  private get _toolchainFileKit() {
-    console.assert(this._kit && this._kit.type == 'toolchainKit', JSON.stringify(this._kit));
-    return this._kit as ToolchainKit;
-  }
-
-  /**
-   * Get the current kit as a `VSKit`.
-   *
-   * @precondition `this._kit` is non-`null` and `this._kit.type` is `vsKit`.
-   * Guarded with an `assert`
-   */
-  private get _vsKit() {
-    console.assert(this._kit && this._kit.type == 'vsKit', JSON.stringify(this._kit));
-    return this._kit as VSKit;
-  }
-
-  /**
    * Get the environment and apply any needed
    * substitutions before returning it.
    */
@@ -262,8 +229,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (this._kit.environmentVariables) {
       util.objectPairs(this._kit.environmentVariables).forEach(([k, v]) => this._kitEnvironmentVariables.set(k, v));
     }
-    switch (this._kit.type) {
-    case 'vsKit': {
+    if (this._kit.visualStudio && this._kit.visualStudioArchitecture) {
       const vars = await getVSKitEnvironment(this._kit);
       if (!vars) {
         log.error('Invalid VS environment:', this._kit.name);
@@ -271,11 +237,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       } else {
         vars.forEach((val, key) => this._kitEnvironmentVariables.set(key, val));
       }
-      break;
-    }
-    default: {
-      // Other kits don't have environment variables
-    }
     }
   }
 
@@ -565,20 +526,16 @@ Please install or configure a preferred generator, or update settings.json or yo
     if (!this._kit) {
       throw new Error('No kit is set!');
     }
-    switch (this._kit.type) {
-    case 'compilerKit': {
-      log.debug('Using compilerKit', this._kit.name, 'for usage');
+    if (this._kit.compilers) {
+      log.debug('Using compilers in', this._kit.name, 'for configure');
       flags.push(
           ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
-    } break;
-    case 'toolchainKit': {
+    }
+    if (this._kit.toolchainFile) {
+
       log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
       flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
-    } break;
-    default:
-      log.debug('Kit requires no extra CMake arguments');
     }
-
     if (this._kit.cmakeSettings) {
       flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
     }
@@ -688,11 +645,8 @@ Please install or configure a preferred generator, or update settings.json or yo
         util.objectPairs(util.mergeEnvironment(this.ws.config.buildEnvironment, await this.getExpandedEnvironment()))
             .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
-    const args =
-        ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(this.ws.config.buildArgs,
-                                                                                                  ['--'],
-                                                                                                  generator_args,
-                                                                                                  this.ws.config.buildToolArgs);
+    const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
+                     .concat(this.ws.config.buildArgs, ['--'], generator_args, this.ws.config.buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises);

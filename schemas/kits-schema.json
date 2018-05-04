@@ -1,148 +1,74 @@
 {
     "type": "array",
     "description": "CMake Kits",
-    "definitions": {
-        "commonOptions": {
-            "type": "object",
-            "properties": {
-                "environmentVariables": {
-                    "type": "object",
-                    "patternProperties": {
-                        ".*": {
-                            "type": "string",
-                            "description": "Value for the environment variable"
-                        }
-                    }
-                },
-                "cmakeSettings": {
-                    "type": "object",
-                    "patternProperties": {
-                        ".*": {
-                            "description": "Value for the CMake Setting"
-                        }
-                    }
-                },
-                "preferredGenerator": {
-                    "type": "object",
-                    "description": "Set a preferred CMake generator for this Kit",
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "Name of the generator to use"
-                        },
-                        "platform": {
-                            "type": "string",
-                            "description": "CMake platform for -A argument"
-                        },
-                        "toolset": {
-                            "type": "string",
-                            "description": "CMake toolset for -T argument"
-                        }
-                    },
-                    "required": [
-                        "name"
-                    ]
-                }
-            }
-        },
-        "baseKit": {
-            "allOf": [
-                {
-                    "$ref": "#/definitions/commonOptions"
-                },
-                {
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "type": "string",
-                            "description": "Name for this Kit"
-                        }
-                    },
-                    "required": [
-                        "name"
-                    ]
-                }
-            ]
-        }
-    },
     "items": {
         "type": "object",
         "description": "A kit",
-        "name": {
-            "type": "string",
-            "description": "Name of this kit"
-        },
-        "allOf": [
-            {
-                "$ref": "#/definitions/baseKit"
+        "additionalProperties": false,
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "Name of this kit"
             },
-            {
-                "oneOf": [
-                    {
-                        "properties": {
-                            "compilers": {
-                                "type": "object",
-                                "patternProperties": {
-                                    "\\w+": {
-                                        "type": "string",
-                                        "description": "Path to a compiler for this language"
-                                    }
-                                }
-                            }
-                        },
-                        "required": [
-                            "name",
-                            "compilers"
-                        ]
-                    },
-                    {
-                        "properties": {
-                            "toolchainFile": {
-                                "type": "string",
-                                "description": "Path to a toolchain file"
-                            }
-                        },
-                        "required": [
-                            "name",
-                            "toolchainFile"
-                        ]
-                    },
-                    {
-                        "properties": {
-                            "visualStudio": {
-                                "type": "string",
-                                "description": "Name of the Visual Studio product"
-                            },
-                            "visualStudioArchitecture": {
-                                "type": "string",
-                                "description": "Architecture to target"
-                            },
-                            "preferredGenerator": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string"
-                                    },
-                                    "platform": {
-                                        "type": "string"
-                                    },
-                                    "toolset": {
-                                        "type": "string"
-                                    }
-                                },
-                                "required": [
-                                    "name"
-                                ]
-                            }
-                        },
-                        "required": [
-                            "name",
-                            "visualStudio",
-                            "visualStudioArchitecture"
-                        ]
+            "compilers": {
+                "type": "object",
+                "patternProperties": {
+                    "\\w+": {
+                        "type": "string",
+                        "description": "Path to a compiler for this language"
                     }
+                }
+            },
+            "toolchainFile": {
+                "type": "string",
+                "description": "Path to a toolchain file"
+            },
+            "visualStudio": {
+                "type": "string",
+                "description": "Name of the Visual Studio product"
+            },
+            "visualStudioArchitecture": {
+                "type": "string",
+                "description": "Architecture to target"
+            },
+            "environmentVariables": {
+                "type": "object",
+                "patternProperties": {
+                    ".*": {
+                        "type": "string",
+                        "description": "Value for the environment variable"
+                    }
+                }
+            },
+            "cmakeSettings": {
+                "type": "object",
+                "patternProperties": {
+                    ".*": {
+                        "description": "Value for the CMake Setting"
+                    }
+                }
+            },
+            "preferredGenerator": {
+                "type": "object",
+                "description": "Set a preferred CMake generator for this Kit",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "Name of the generator to use"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "description": "CMake platform for -A argument"
+                    },
+                    "toolset": {
+                        "type": "string",
+                        "description": "CMake toolset for -T argument"
+                    }
+                },
+                "required": [
+                    "name"
                 ]
             }
-        ]
+        }
     }
 }
