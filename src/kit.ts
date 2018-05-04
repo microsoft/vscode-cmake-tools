@@ -12,7 +12,7 @@ import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from './schema';
 import {StateManager} from './state';
-import {dropNulls, thisExtensionPath, compare, Ordering} from './util';
+import {compare, dropNulls, Ordering, thisExtensionPath} from './util';
 import {MultiWatcher} from './watcher';
 
 const log = logging.createLogger('kit');
@@ -538,7 +538,7 @@ function descriptionForKit(kit: Kit) {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
     return `Using compilers: ${compilers.join(', ')}`;
   }
-  return 'Unspecified (Let CMake guess)';
+  return 'Unspecified (Let CMake guess what compilers and environment to use)';
 }
 
 export async function readKitsFile(filepath: string): Promise<Kit[]> {
@@ -679,7 +679,7 @@ export class KitManager implements vscode.Disposable {
     log.debug('Opening kit selection QuickPick');
     const items = this._kits.map((kit): KitItem => {
       return {
-        label: kit.name,
+        label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
         description: descriptionForKit(kit),
         kit,
       };
@@ -737,10 +737,7 @@ export class KitManager implements vscode.Disposable {
 
     log.debug('Saving new kits to', this._userKitsPath);
     await fs.mkdir_p(path.dirname(this._userKitsPath));
-    const stripped_kits = new_kits.map((k: any) => {
-      k.type = undefined;
-      return k;
-    });
+    const stripped_kits = new_kits.filter(k => k.name !== '__unspec__');
     const sorted_kits = stripped_kits.sort((a, b) => {
       if (a.name == b.name) {
         return 0;
@@ -767,6 +764,9 @@ export class KitManager implements vscode.Disposable {
       const more_kits = await readKitsFile(kit_path);
       kits_acc.push(...more_kits);
     }
+    kits_acc.push({
+      name: '__unspec__',
+    });
     // Set the current kit to the one we have named
     this._kits = kits_acc;
     const already_active_kit = this._kits.find(kit => kit.name === this.stateManager.activeKitName);
