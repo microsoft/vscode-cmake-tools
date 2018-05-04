@@ -319,4 +319,15 @@ suite('Diagnostics', async () => {
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gnuLDDiagnostics).to.have.length(0);
   });
+
+  test('Parse GCC error on line zero', () => {
+    const lines = [
+      '/foo.h:66:0: warning: ignoring #pragma comment [-Wunknown-pragmas]'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.gccDiagnostics).to.have.length(1);
+    expect(build_consumer.gccDiagnostics[0].file).to.eq('/foo.h');
+    expect(build_consumer.gccDiagnostics[0].location.start.line).to.eq(65);
+    expect(build_consumer.gccDiagnostics[0].location.start.character).to.eq(0);
+  });
 });

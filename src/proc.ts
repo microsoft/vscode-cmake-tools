@@ -120,47 +120,58 @@ export function execute(command: string,
     let stderr_acc = '';
     let stderr_line_acc = '';
     child.stdout.on('data', (data: Uint8Array) => {
-      const str = data.toString();
-      const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-      while (lines.length > 1) {
-        line_acc += lines[0];
-        if (outputConsumer) {
-          outputConsumer.output(line_acc);
+      rollbar.invoke('Processing "data" event from proc stdout', {data, command, args}, () => {
+        const str = data.toString();
+        const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
+        while (lines.length > 1) {
+          line_acc += lines[0];
+          if (outputConsumer) {
+            outputConsumer.output(line_acc);
+          }
+          line_acc = '';
+          // Erase the first line from the list
+          lines.splice(0, 1);
         }
-        line_acc = '';
-        // Erase the first line from the list
-        lines.splice(0, 1);
-      }
-      console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-      line_acc += lines[0];
-      stdout_acc += str;
+        console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
+        line_acc += lines[0];
+        stdout_acc += str;
+      });
     });
     child.stderr.on('data', (data: Uint8Array) => {
-      const str = data.toString();
-      const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-      while (lines.length > 1) {
-        stderr_line_acc += lines[0];
-        if (outputConsumer) {
-          outputConsumer.error(stderr_line_acc);
+      rollbar.invoke('Processing "data" event from proc stderr', {data, command, args}, () => {
+        const str = data.toString();
+        const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
+        while (lines.length > 1) {
+          stderr_line_acc += lines[0];
+          if (outputConsumer) {
+            outputConsumer.error(stderr_line_acc);
+          }
+          stderr_line_acc = '';
+          // Erase the first line from the list
+          lines.splice(0, 1);
         }
-        stderr_line_acc = '';
-        // Erase the first line from the list
-        lines.splice(0, 1);
-      }
-      console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-      stderr_line_acc += lines[0];
-      stderr_acc += str;
+        console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
+        stderr_line_acc += lines[0];
+        stderr_acc += str;
+      });
     });
     // Don't stop until the child stream is closed, otherwise we might not read
     // the whole output of the command.
     child.on('close', retc => {
-      if (line_acc && outputConsumer) {
-        outputConsumer.output(line_acc);
+      try {
+        rollbar.invoke('Resolving process on "close" event', {line_acc, stderr_line_acc, command, retc}, () => {
+          if (line_acc && outputConsumer) {
+            outputConsumer.output(line_acc);
+          }
+          if (stderr_line_acc && outputConsumer) {
+            outputConsumer.error(stderr_line_acc);
+          }
+          resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
+        });
+      } catch (_) {
+        // No error handling since Rollbar has taken the error.
+        resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
       }
-      if (stderr_line_acc && outputConsumer) {
-        outputConsumer.error(stderr_line_acc);
-      }
-      resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
     });
   });
   return {child, result};

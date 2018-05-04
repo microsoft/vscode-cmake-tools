@@ -14,6 +14,14 @@ import * as util from './util';
 const cmake_logger = logging.createLogger('cmake');
 const build_logger = logging.createLogger('build');
 
+function oneLess(num: number|string): number {
+  if (typeof num === 'string') {
+    return oneLess(parseInt(num));
+  } else {
+    return Math.max(0, num - 1);
+  }
+}
+
 export interface RawDiagnostic {
   full: string;
   file: string;
@@ -137,14 +145,15 @@ export class CMakeOutputConsumer implements OutputConsumer {
         const [_full, level, filename, linestr, command] = result;
         // tslint:disable-next-line
         _full;  // unused
-        const lineno = Number.parseInt(linestr) - 1;
+        const lineno = oneLess(linestr);
         const diagmap: {[k: string]: vscode.DiagnosticSeverity} = {
           Warning: vscode.DiagnosticSeverity.Warning,
           Error: vscode.DiagnosticSeverity.Error,
         };
         const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
-        const filepath = path.isAbsolute(filename) ? filename : util.normalizePath(path.join(this.sourceDir, filename), false);
+        const filepath
+            = path.isAbsolute(filename) ? filename : util.normalizePath(path.join(this.sourceDir, filename), false);
         this._errorState.diag = {
           filepath,
           diag: vsdiag,
@@ -251,12 +260,13 @@ export class CompileOutputConsumer implements OutputConsumer {
     // Tricksy compiler error looks like a linker error:
     if (line.endsWith('required from here'))
       return null;
-    const [full, file, lineno, message] = res;
+    const [full, file, lineno_, message] = res;
+    const lineno = oneLess(lineno_);
     if (file && lineno && message) {
       return {
         full,
         file,
-        location: new vscode.Range(parseInt(lineno) - 1, 0, parseInt(lineno) - 1, 999),
+        location: new vscode.Range(lineno, 0, lineno, 999),
         severity: 'error',
         message,
       };
@@ -272,19 +282,19 @@ export class CompileOutputConsumer implements OutputConsumer {
     const [full, file, location, severity, code, message] = res;
     const range = (() => {
       const parts = location.split(',');
-      const n0 = parseInt(parts[0]);
+      const n0 = oneLess(parts[0]);
       if (parts.length === 1)
-        return new vscode.Range(n0 - 1, 0, n0 - 1, 999);
-      if (parts.length === 2)
-        return new vscode.Range(Number.parseInt(parts[0]) - 1,
-                                Number.parseInt(parts[1]) - 1,
-                                Number.parseInt(parts[0]) - 1,
-                                Number.parseInt(parts[1]) - 1);
-      if (parts.length === 4)
-        return new vscode.Range(Number.parseInt(parts[0]) - 1,
-                                Number.parseInt(parts[1]) - 1,
-                                Number.parseInt(parts[2]) - 1,
-                                Number.parseInt(parts[3]) - 1);
+        return new vscode.Range(n0, 0, n0, 999);
+      if (parts.length === 2) {
+        const n1 = oneLess(parts[1]);
+        return new vscode.Range(n0, n1, n0, n1);
+      }
+      if (parts.length === 4) {
+        const n1 = oneLess(parts[1]);
+        const n2 = oneLess(parts[2]);
+        const n3 = oneLess(parts[3]);
+        return new vscode.Range(n0, n1, n2, n3);
+      }
       throw new Error('Unable to determine location of MSVC diagnostic');
     })();
     return {
@@ -302,12 +312,14 @@ export class CompileOutputConsumer implements OutputConsumer {
       // Try to parse for GCC
       const gcc_mat = this._gcc_re.exec(line);
       if (gcc_mat) {
-        const [full, file, lineno, column, severity, message] = gcc_mat;
-        if (file && lineno && column && severity && message) {
+        const [full, file, lineno_, column_, severity, message] = gcc_mat;
+        if (file && lineno_ && column_ && severity && message) {
+          const lineno = oneLess(lineno_);
+          const column = oneLess(column_);
           this._gccDiagnostics.push({
             full,
             file,
-            location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
+            location: new vscode.Range(lineno, column, lineno, 999),
             severity,
             message,
           });
@@ -325,7 +337,7 @@ export class CompileOutputConsumer implements OutputConsumer {
           this._ghsDiagnostics.push({
             full,
             file,
-            location: new vscode.Range(parseInt(lineno) - 1, parseInt(column) - 1, parseInt(lineno) - 1, 999),
+            location: new vscode.Range(oneLess(lineno), oneLess(column), oneLess(lineno), 999),
             severity,
             message
           });
