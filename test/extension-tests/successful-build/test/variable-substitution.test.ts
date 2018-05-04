@@ -14,7 +14,7 @@ suite('[Variable Substitution]', async () => {
     this.timeout(100000);
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-    cmt = await CMakeTools.create(testEnv.vsContext);
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -34,7 +34,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for "workspaceRoot"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {workspaceRoot: '${workspaceRoot}'});
+    testEnv.config.updatePartial({configureSettings: {workspaceRoot: '${workspaceRoot}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[workspaceRoot] configure failed');
@@ -51,7 +51,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for "workspaceFolder"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {workspaceFolder: '${workspaceFolder}'});
+    testEnv.config.updatePartial({configureSettings: {workspaceFolder: '${workspaceFolder}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[workspaceFolder] configure failed');
@@ -68,7 +68,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for "buildType"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {buildType: '${buildType}'});
+    testEnv.config.updatePartial({configureSettings: {buildType: '${buildType}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[buildType] configure failed');
@@ -84,7 +84,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for "workspaceRootFolderName"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {workspaceRootFolderName: '${workspaceRootFolderName}'});
+    testEnv.config.updatePartial({configureSettings: {workspaceRootFolderName: '${workspaceRootFolderName}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[workspaceRootFolderName] configure failed');
@@ -102,7 +102,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for "generator"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {generator: '${generator}'});
+    testEnv.config.updatePartial({configureSettings: {generator: '${generator}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[generator] configure failed');
@@ -119,7 +119,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for "projectName"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {projectName: '${projectName}'});
+    testEnv.config.updatePartial({configureSettings: {projectName: '${projectName}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[projectName] configure failed');
@@ -135,7 +135,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for "userHome"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {userHome: '${userHome}'});
+    testEnv.config.updatePartial({configureSettings: {userHome: '${userHome}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[userHome] configure failed');
@@ -152,7 +152,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for variant names', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureSettings', {buildLabel: '${buildLabel}', otherVariant: '${otherVariant}'});
+    testEnv.config.updatePartial({configureSettings: {buildLabel: '${buildLabel}', otherVariant: '${otherVariant}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[variant names] configure failed');
@@ -174,7 +174,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution within "cmake.installPrefix"', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('installPrefix', '${workspaceRoot}/build/dist');
+    testEnv.config.updatePartial({installPrefix: '${workspaceRoot}/build/dist'});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[cmakeInstallPrefix] configure failed');

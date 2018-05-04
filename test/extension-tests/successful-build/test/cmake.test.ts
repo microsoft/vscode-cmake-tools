@@ -12,7 +12,7 @@ suite('cmake', async () => {
     const exe_res = 'output.txt';
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-    cmt = await CMakeTools.create(testEnv.vsContext);
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -31,10 +31,10 @@ suite('cmake', async () => {
   });
 
   test('No cmake present message', async () => {
-    testEnv.setting.changeSetting('cmakePath', 'cmake3');
-    await cmt.allTargetName; // Using an cmaketools command which creates the instance once.
+    testEnv.config.updatePartial({cmakePath: 'cmake3'});
+    await cmt.allTargetName;  // Using an cmaketools command which creates the instance once.
 
-    expect(testEnv.errorMessagesQueue.length).to.eql(1); // Expect only cmake error message
+    expect(testEnv.errorMessagesQueue.length).to.eql(1);  // Expect only cmake error message
     expect(testEnv.errorMessagesQueue[0])
         .to.be.contains('Is it installed or settings contain the correct path (cmake.cmakePath)?');
   }).timeout(60000);

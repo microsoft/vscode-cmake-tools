@@ -7,16 +7,15 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
-import config from './config';
 import * as expand from './expand';
 import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from './state';
 import * as util from './util';
 import {ConfigureArguments, VariantOption} from './variant';
+import {DirectoryContext} from './workspace';
 
 const log = logging.createLogger('driver');
 
@@ -76,7 +75,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(public readonly cmake: CMakeExecutable, readonly stateManager: StateManager) {}
+  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext) {}
 
   /**
    * Dispose the driver. This disposes some things synchronously, but also
@@ -116,9 +115,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
   private readonly _projectNameChangedEmitter = new vscode.EventEmitter<string>();
 
-  public get projectName(): string { return this.stateManager.projectName || 'Unknown Project'; }
+  public get projectName(): string { return this.ws.state.projectName || 'Unknown Project'; }
   protected doSetProjectName(v: string) {
-    this.stateManager.projectName = v;
+    this.ws.state.projectName = v;
     this._projectNameChangedEmitter.fire(v);
   }
 
@@ -171,7 +170,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   async getExpandedEnvironment(): Promise<{[key: string]: string}> {
     const env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
-    await Promise.resolve(util.objectPairs(config.environment)
+    await Promise.resolve(util.objectPairs(this.ws.config.environment)
                               .forEach(async ([key, value]) => env[key] = await expand.expandString(value, opts)));
     return env;
   }
@@ -184,7 +183,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const config_env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
     await Promise.resolve(
-        util.objectPairs(config.configureEnvironment)
+        util.objectPairs(this.ws.config.configureEnvironment)
             .forEach(async ([key, value]) => config_env[key] = await expand.expandString(value, opts)));
     return config_env;
   }
@@ -221,7 +220,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
 
     // Update Variant replacements
-    const variantSettings = this.stateManager.activeVariantSettings;
+    const variantSettings = this.ws.state.activeVariantSettings;
     if (variantSettings) {
       variantSettings.forEach((value: string, key: string) => {
         if (key != 'buildType') {
@@ -337,10 +336,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _refreshExpansions() {
     await this.doRefreshExpansions(async () => {
       const opts = this.expansionOptions;
-      this._sourceDirectory = util.normalizePath(await expand.expandString(config.sourceDirectory, opts));
-      this._binaryDir = util.normalizePath(await expand.expandString(config.buildDirectory, opts));
+      this._sourceDirectory = util.normalizePath(await expand.expandString(this.ws.config.sourceDirectory, opts));
+      this._binaryDir = util.normalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
 
-      const installPrefix = config.installPrefix;
+      const installPrefix = this.ws.config.installPrefix;
       if (installPrefix) {
         this._installDir = util.normalizePath(await expand.expandString(installPrefix, opts));
       }
@@ -453,7 +452,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   getPreferredGenerators(): CMakeGenerator[] {
-    const user_preferred = config.preferredGenerators.map(g => ({name: g}));
+    const user_preferred = this.ws.config.preferredGenerators.map(g => ({name: g}));
     if (this._kit && this._kit.preferredGenerator) {
       // The kit has a preferred generator attached as well
       user_preferred.push(this._kit.preferredGenerator);
@@ -466,13 +465,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async getBestGenerator(): Promise<CMakeGenerator|null> {
     // User can override generator with a setting
-    const user_generator = config.generator;
+    const user_generator = this.ws.config.generator;
     if (user_generator) {
       log.debug(`Using generator from user configuration: ${user_generator}`);
       return {
         name: user_generator,
-        platform: config.platform || undefined,
-        toolset: config.toolset || undefined,
+        platform: this.ws.config.platform || undefined,
+        toolset: this.ws.config.toolset || undefined,
       };
     }
     log.debug('Trying to detect generator supported by system');
@@ -527,7 +526,7 @@ Please install or configure a preferred generator, or update settings.json or yo
       return -1;
     }
 
-    const settings = {...config.configureSettings};
+    const settings = {...this.ws.config.configureSettings};
 
     const _makeFlag = (key: string, cmval: util.CMakeValue) => {
       switch (cmval.type) {
@@ -560,7 +559,7 @@ Please install or configure a preferred generator, or update settings.json or yo
 
     const settings_flags
         = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = ['--no-warn-unused-cli'].concat(extra_args, config.configureArgs);
+    const flags = ['--no-warn-unused-cli'].concat(extra_args, this.ws.config.configureArgs);
 
     console.assert(!!this._kit);
     if (!this._kit) {
@@ -626,7 +625,7 @@ Please install or configure a preferred generator, or update settings.json or yo
   private async _beforeConfigureOrBuild(): Promise<boolean> {
     log.debug('Runnnig pre-configure checks and steps');
     if (this._isBusy) {
-      if (config.autoRestartBuild) {
+      if (this.ws.config.autoRestartBuild) {
         log.debug('Stopping current CMake task.');
         vscode.window.showInformationMessage('Stopping current CMake task and starting new build.');
         await this.stopCurrentProcess();
@@ -673,7 +672,7 @@ Please install or configure a preferred generator, or update settings.json or yo
       if (!gen)
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return ['-j', config.numJobs.toString()];
+        return ['-j', this.ws.config.numJobs.toString()];
       else if (gen.includes('Visual Studio'))
         return [
           '/m',
@@ -686,14 +685,14 @@ Please install or configure a preferred generator, or update settings.json or yo
     const build_env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
     await Promise.resolve(
-        util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.getExpandedEnvironment()))
+        util.objectPairs(util.mergeEnvironment(this.ws.config.buildEnvironment, await this.getExpandedEnvironment()))
             .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
     const args =
-        ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(config.buildArgs,
+        ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(this.ws.config.buildArgs,
                                                                                                   ['--'],
                                                                                                   generator_args,
-                                                                                                  config.buildToolArgs);
+                                                                                                  this.ws.config.buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises);

@@ -7,23 +7,22 @@ import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
 import * as cms from './cms-client';
-import config from './config';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 import {createLogger} from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from './state';
 import * as util from './util';
+import {DirectoryContext} from './workspace';
 
 const log = createLogger('cms-driver');
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, stateman: StateManager) {
-    super(cmake, stateman);
-    config.onChange('environment', () => this._restartClient());
-    config.onChange('configureEnvironment', () => this._restartClient());
+  private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext) {
+    super(cmake, _ws);
+    this._ws.config.onChange('environment', () => this._restartClient());
+    this._ws.config.onChange('configureEnvironment', () => this._restartClient());
   }
 
   private _cmsClient: Promise<cms.CMakeServerClient>;
@@ -259,7 +258,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   private async _startNewClient() {
-    return cms.CMakeServerClient.start({
+    return cms.CMakeServerClient.start(this._ws.config, {
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: this.cmake.path,
@@ -280,7 +279,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, state: StateManager, kit: Kit|null): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, state), kit);
+  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, wsc), kit);
   }
 }

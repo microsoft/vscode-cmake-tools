@@ -13,7 +13,7 @@ suite('[Environment]', async () => {
     this.timeout(100000);
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-    cmt = await CMakeTools.create(testEnv.vsContext);
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -33,7 +33,11 @@ suite('[Environment]', async () => {
 
   test('Passing env-vars to CMake but not to the compiler', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('configureEnvironment', {_CONFIGURE_ENV: '${workspaceRootFolderName}'});
+    testEnv.config.updatePartial({
+      configureEnvironment: {
+        _CONFIGURE_ENV: '${workspaceRootFolderName}',
+      },
+    });
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[configureEnvironment] configure failed');
@@ -55,7 +59,7 @@ suite('[Environment]', async () => {
 
   test('Passing env-vars to the compiler but not to CMake', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('buildEnvironment', {_BUILD_ENV: '${workspaceRootFolderName}'});
+    testEnv.config.updatePartial({buildEnvironment: {_BUILD_ENV: '${workspaceRootFolderName}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[buildEnvironment] configure failed');
@@ -77,7 +81,7 @@ suite('[Environment]', async () => {
 
   test('Passing env-vars to CMake AND to the compiler', async () => {
     // Set fake settings
-    testEnv.setting.changeSetting('environment', {_ENV: '${workspaceRootFolderName}'});
+    testEnv.config.updatePartial({environment: {_ENV: '${workspaceRootFolderName}'}});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[environment] configure failed');

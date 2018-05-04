@@ -186,7 +186,7 @@ function makeExtensionTestSuite(name: string,
         process.env.PATH = context.buildSystem.path.join(process.platform == 'win32' ? ';' : ':');
       }
 
-      context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
+      context.cmt = await CMakeTools.create(context.testEnv.vsContext, context.testEnv.wsContext);
       // This test will use all on the same kit.
       // No rescan of the tools is needed
       // No new kit selection is needed
@@ -197,7 +197,7 @@ function makeExtensionTestSuite(name: string,
 
     setup(async function(this: Mocha.IBeforeAndAfterContext) {
       this.timeout(10000);
-      context.cmt = await CMakeTools.create(context.testEnv!.vsContext);
+      context.cmt = await CMakeTools.create(context.testEnv.vsContext, context.testEnv.wsContext);
       context.testEnv.projectFolder.buildDirectory.clear();
     });
 
@@ -231,7 +231,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.setting.changeSetting('preferredGenerators', []);
+           context.testEnv.config.updatePartial({preferredGenerators: []});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
            expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);
@@ -243,8 +243,13 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.setting.changeSetting('preferredGenerators',
-                                                       ['NMake Makefiles', 'Unix Makefiles', 'MinGW Makefiles']);
+           context.testEnv.config.updatePartial({
+             preferredGenerators: [
+               'NMake Makefiles',
+               'Unix Makefiles',
+               'MinGW Makefiles',
+             ],
+           });
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
 
@@ -264,7 +269,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.setting.changeSetting('preferredGenerators', ['BlaBla']);
+           context.testEnv.config.updatePartial({preferredGenerators: ['BlaBla']});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
            expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
@@ -280,7 +285,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.setting.changeSetting('preferredGenerators', []);
+           context.testEnv.config.updatePartial({preferredGenerators: []});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
            expect(context.testEnv.errorMessagesQueue.length).to.eql(1);
@@ -293,7 +298,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
 
            await context.cmt.selectKit();
-           await context.testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles', 'MinGW Makefiles']);
+           context.testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles', 'MinGW Makefiles']});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
            expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);

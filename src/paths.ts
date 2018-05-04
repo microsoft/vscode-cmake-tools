@@ -5,8 +5,8 @@
 import * as path from 'path';
 import * as which from 'which';
 
-import config from './config';
 import {fs} from './pr';
+import { DirectoryContext } from '@cmt/workspace';
 
 /**
  * Directory class.
@@ -64,13 +64,10 @@ class Paths {
     });
   }
 
-  get cmakePath(): Promise<string|null> { return this._getCMakePath(); }
-  get ctestPath(): Promise<string|null> { return this._getCTestPath(); }
-
-  private async _getCTestPath(): Promise<string|null> {
-    const ctest_path = config.raw_ctestPath;
+  async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
+    const ctest_path = wsc.config.raw_ctestPath;
     if (!ctest_path || ctest_path == 'auto') {
-      const cmake = await this.cmakePath;
+      const cmake = await this.getCMakePath(wsc);
       if (cmake === null) {
         return null;
       } else {
@@ -81,8 +78,8 @@ class Paths {
     }
   }
 
-  private async _getCMakePath(): Promise<string|null> {
-    const raw = config.raw_cmakePath;
+  async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
+    const raw = wsc.config.raw_cmakePath;
     if (raw == 'auto' || raw == 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');
