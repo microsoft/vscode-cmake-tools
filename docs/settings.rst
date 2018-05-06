@@ -24,6 +24,15 @@ be generated).
 - Default: ``${workspaceRoot}/build``.
 - *Supports substitution*
 
+.. _conf-cmake.cmakePath:
+
+``cmake.cmakePath``
+*******************
+
+Specify location of the cmake executable.
+
+- Default: ``cmake`` in the PATH variable of the operation system
+
 .. _conf-cmake.installPrefix:
 
 ``cmake.installPrefix``
