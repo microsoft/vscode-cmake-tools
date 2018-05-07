@@ -515,7 +515,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[], pr?: ProgressReporter): Promise<Kit[]> {
+async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[]): Promise<Kit[]> {
   const kits = await scanDirectory(dir, async(binPath): Promise<Kit[]|null> => {
     if (!path.basename(binPath).startsWith('clang-cl')) {
       return null;
@@ -543,9 +543,9 @@ async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[], 
   return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangCLKits(searchPaths: string[], pr?: ProgressReporter): Promise<Promise<Kit[]>[]> {
+export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise<Kit[]>[]> {
   const vs_installs = await vsInstallations();
-  const results = searchPaths.map(p => scanDirForClangCLKits(p, vs_installs, pr));
+  const results = searchPaths.map(p => scanDirForClangCLKits(p, vs_installs));
   return results;
 }
 
@@ -582,7 +582,7 @@ export async function scanForKits() {
       if (isWin32) {
         const vs_kits = scanForVSKits(pr);
         const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...path_elems];
-        const clang_cl_kits = await scanForClangCLKits(clang_cl_path, pr);
+        const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
         prs.push(vs_kits);
         prs = prs.concat(clang_cl_kits);
       }
