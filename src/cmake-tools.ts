@@ -1,7 +1,9 @@
 /**
  * Root of the extension
  */
+import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import {Debugger} from '@cmt/debugger';
 import {versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
@@ -786,29 +788,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       // The user has nothing selected and cancelled the prompt to select a target.
       return null;
     }
-    const is_msvc
-        = drv.compilerID ? drv.compilerID.includes('MSVC') : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
-    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb';
-    const debug_config: vscode.DebugConfiguration = {
-      type: is_msvc ? 'cppvsdbg' : 'cppdbg',
-      name: `Debug ${target_path}`,
-      request: 'launch',
-      cwd: '${workspaceRoot}',
-      args: [],
-      MIMode: mi_mode,
-    };
-    if (mi_mode == 'gdb') {
-      debug_config['setupCommands'] = [
-        {
-          description: 'Enable pretty-printing for gdb',
-          text: '-enable-pretty-printing',
-          ignoreFailures: true,
-        },
-      ];
-    }
+
+    const cache = await CMakeCache.fromPath(drv.cachePath);
+    const debug_config = Debugger.getDebugConfigurationFromCache(cache, target_path, target_path) as vscode.DebugConfiguration;
+
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
-    debug_config.program = target_path;
     await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
     return vscode.debug.activeDebugSession!;
   }
