@@ -76,6 +76,53 @@ export interface Kit {
   toolchainFile?: string;
 }
 
+interface ClangVersion {
+  fullVersion: string;
+  version: string;
+  target?: string;
+  threadModel?: string;
+  installedDir?: string;
+}
+
+async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
+  log.debug('Testing Clang-ish binary:', binPath);
+  const exec = await proc.execute(binPath, ['-v']).result;
+  if (exec.retc != 0) {
+    log.debug('Bad Clang binary ("-v" returns non-zero)', binPath);
+    return null;
+  }
+  const first_line = exec.stderr.split('\n')[0];
+  const version_re = /^(?:Apple LLVM|clang) version (.*?)[ -]/;
+  const version_match = version_re.exec(first_line);
+  if (version_match === null) {
+    log.debug('Bad Clang binary', binPath, '-v output:', exec.stderr);
+    return null;
+  }
+  const version = version_match[1];
+  const target_mat = /Target:\s+(.*)/.exec(exec.stderr);
+  let target: string|undefined;
+  if (target_mat) {
+    target = target_mat[1];
+  }
+  const thread_model_mat = /Thread model:\s+(.*)/.exec(exec.stderr);
+  let threadModel: string|undefined;
+  if (thread_model_mat) {
+    threadModel = thread_model_mat[1];
+  }
+  const install_dir_mat = /InstalledDir:\s+(.*)/.exec(exec.stderr);
+  let installedDir: string | undefined;
+  if (install_dir_mat) {
+    installedDir = install_dir_mat[1];
+  }
+  return {
+    fullVersion: first_line,
+    version,
+    target,
+    threadModel,
+    installedDir,
+  };
+}
+
 /**
  * Convert a binary (by path) to a CompilerKit. This checks if the named binary
  * is a GCC or Clang compiler and gets its version. If it is not a compiler,
@@ -131,22 +178,13 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     log.debug('Testing Clang-ish binary:', bin);
     if (pr)
       pr.report({message: `Getting Clang version for ${bin}`});
-    const exec = await proc.execute(bin, ['-v']).result;
-    if (exec.retc != 0) {
-      log.debug('Bad Clang binary ("-v" returns non-zero)', bin);
-      return null;
+    const version = await getClangVersion(bin);
+    if (version === null) {
+      return version;
     }
-    const first_line = exec.stderr.split('\n')[0];
-    const version_re = /^(?:Apple LLVM|clang) version (.*?)[ -]/;
-    const version_match = version_re.exec(first_line);
-    if (version_match === null) {
-      log.debug('Bad Clang binary', bin, '-v output:', exec.stderr);
-      return null;
-    }
-    const version = version_match[1];
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
-    const name = `Clang ${version}`;
+    const name = `Clang ${version.version}`;
     log.debug('Detected Clang compiler:', bin);
     if (await fs.exists(clangxx_bin)) {
       return {
@@ -169,12 +207,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
   }
 }
 
-/**
- * Scans a directory for compiler binaries.
- * @param dir Directory containing candidate binaries
- * @returns A list of CompilerKits found
- */
-export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter): Promise<Kit[]> {
+async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Promise<Ret|null>): Promise<Ret[]> {
   if (!await fs.exists(dir)) {
     log.debug('Skipping scan of not existing path', dir);
     return [];
@@ -183,7 +216,6 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
   log.debug('Scanning directory', dir, 'for compilers');
   try {
     const stat = await fs.stat(dir);
-
     if (!stat.isDirectory()) {
       console.log('Skipping scan of non-directory', dir);
       return [];
@@ -195,9 +227,8 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
     }
     throw e;
   }
+
   // Get files in the directory
-  if (pr)
-    pr.report({message: `Checking ${dir} for compilers...`});
   let bins: string[];
   try {
     bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
@@ -207,14 +238,22 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
     }
     throw e;
   }
-  // Scan each binary in parallel
-  const prs = bins.map(async bin => {
+
+  const prs = await Promise.all(bins.map(b => mapper(b)));
+  return dropNulls(prs);
+}
+
+/**
+ * Scans a directory for compiler binaries.
+ * @param dir Directory containing candidate binaries
+ * @returns A list of CompilerKits found
+ */
+export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter): Promise<Kit[]> {
+  const kits = await scanDirectory(dir, async bin => {
     log.trace('Checking file for compiler-ness:', bin);
     try {
-
       return await kitIfCompiler(bin, pr);
     } catch (e) {
-
       log.warning('Failed to check binary', bin, 'by exception:', e);
       const stat = await fs.stat(bin);
       log.debug('File infos: ',
@@ -239,7 +278,6 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
       throw e;
     }
   });
-  const kits = dropNulls(await Promise.all(prs));
   log.debug('Found', kits.length, 'kits in directory', dir);
   return kits;
 }
@@ -477,6 +515,40 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   return ([] as Kit[]).concat(...vs_kits);
 }
 
+async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[], pr?: ProgressReporter): Promise<Kit[]> {
+  const kits = await scanDirectory(dir, async(binPath): Promise<Kit[]|null> => {
+    if (!path.basename(binPath).startsWith('clang-cl')) {
+      return null;
+    }
+    const version = await getClangVersion(binPath);
+    if (version === null) {
+      return null;
+    }
+    return vsInstalls.map((vs): Kit => {
+      const realDisplayName: string|undefined
+          = vs.displayName ? vs.isPrerelease ? `${vs.displayName} Preview` : vs.displayName : undefined;
+      const installName = realDisplayName || vs.instanceId;
+      const vs_arch = (version.target && version.target.includes('i686-pc')) ? 'x86' : 'amd64';
+      return {
+        name: `Clang ${version.version} for MSVC with ${installName} (${vs_arch})`,
+        visualStudio: vs.instanceId,
+        visualStudioArchitecture: vs_arch,
+        compilers: {
+          C: binPath,
+          CXX: binPath,
+        },
+      };
+    });
+  });
+  return ([] as Kit[]).concat(...kits);
+}
+
+export async function scanForClangCLKits(searchPaths: string[], pr?: ProgressReporter): Promise<Promise<Kit[]>[]> {
+  const vs_installs = await vsInstallations();
+  const results = searchPaths.map(p => scanDirForClangCLKits(p, vs_installs, pr));
+  return results;
+}
+
 export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
   console.assert(kit.visualStudio);
   console.assert(kit.visualStudioArchitecture);
@@ -503,14 +575,16 @@ export async function scanForKits() {
     if (pathvar) {
       const sep = isWin32 ? ';' : ':';
       const path_elems = pathvar.split(sep);
-
       // Search them all in parallel
       let prs = [] as Promise<Kit[]>[];
       const compiler_kits = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
       prs = prs.concat(compiler_kits);
       if (isWin32) {
         const vs_kits = scanForVSKits(pr);
+        const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...path_elems];
+        const clang_cl_kits = await scanForClangCLKits(clang_cl_path, pr);
         prs.push(vs_kits);
+        prs = prs.concat(clang_cl_kits);
       }
       const arrays = await Promise.all(prs);
       const kits = ([] as Kit[]).concat(...arrays);
