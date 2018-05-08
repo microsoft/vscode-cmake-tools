@@ -118,7 +118,7 @@ type MaybeCompilerKitPr = Promise<CompilerKit|null>;
 export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCompilerKitPr {
   const fname = path.basename(bin);
   // Check by filename what the compiler might be. This is just heuristic.
-  const gcc_regex = /^gcc(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
+  const gcc_regex = /^((\w+-)*)gcc(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
   const clang_regex = /^clang(-\d+(\.\d+(\.\d+)?)?)?(\.exe)?$/;
   const gcc_res = gcc_regex.exec(fname);
   const clang_res = clang_regex.exec(fname);
@@ -139,9 +139,15 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): MaybeCo
       return null;
     }
     const version = version_match[1];
-    const gxx_fname = fname.replace(/^gcc/, 'g++');
+    const gxx_fname = fname.replace(/gcc/, 'g++');
     const gxx_bin = path.join(path.dirname(bin), gxx_fname);
-    const name = `GCC ${version}`;
+    const target_triple_re = /((\w+-)+)gcc.*/;
+    const target_triple_match = target_triple_re.exec(fname);
+    let description = "";
+    if (target_triple_match !== null) {
+      description += `for ${target_triple_match[1].slice(0, -1)} `;
+    }
+    const name = `GCC ${description}${version}`;
     log.debug('Detected GCC compiler kit:', bin);
     if (await fs.exists(gxx_bin)) {
       return {
@@ -374,7 +380,7 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
   await fs.writeFile(batpath, bat.join('\r\n'));
   const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
-  const output = res.stdout;
+  const output = (res.stdout) ? res.stdout : res.stderr;
 
   if (res.retc !== 0) {
     if (output.includes('Invalid host architecture') || output.includes('Error in script usage'))
