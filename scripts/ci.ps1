@@ -72,7 +72,7 @@ if (! $NoTest) {
         -TestsPath "$REPO_DIR/out/test/unit-tests" `
         -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
 
-    foreach ($name in @("vs-preferred-gen"; "successful-build"; "without-cmakelist-file"; )) {
+    foreach ($name in @("vs-preferred-gen"; "successful-build"; )) {
         Invoke-VSCodeTest "CMake Tools: $name" `
             -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
             -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
