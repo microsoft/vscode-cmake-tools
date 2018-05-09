@@ -31,7 +31,8 @@ be generated).
 
 Specify location of the cmake executable.
 
-- Default: ``cmake`` in the PATH variable of the operation system
+- Default: ``cmake``, which causes CMake Tools to search the ``PATH`` environment
+  variable, as well as some hard-coded guesses.
 
 .. _conf-cmake.installPrefix:
 
