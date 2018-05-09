@@ -6,6 +6,7 @@ export namespace Debugger {
 export interface Configuration {
   type: string;
   name: string;
+  request: string;
   [key: string]: any;
 }
 
