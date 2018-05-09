@@ -225,7 +225,11 @@ export class StatusBar implements vscode.Disposable {
   }
 
   setActiveKitName(v: string) {
-    this._activeKitName = v;
+    if (v === '__unspec__') {
+      this._activeKitName = '[No active kit]';
+    } else {
+      this._activeKitName = v;
+    }
     this._reloadKitsButton();
   }
   private _activeKitName: string = '';

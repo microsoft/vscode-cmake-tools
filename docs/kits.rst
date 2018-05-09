@@ -29,6 +29,10 @@ MSBuild and .sln generator is used for the Visual C++ compiler.
     If you change the active Kit while a project is configured, the project
     configuration will be re-generated with the chosen kit.
 
+.. note::
+    Using a kit is recommended but optional. Opting-out of using kits will
+    cause CMake to perform its own automatic detection.
+
 How Are Kits Found and Defined?
 ===============================
 
@@ -130,12 +134,13 @@ command palette. The following process occurs to find available kits:
 
 .. _kits.types:
 
-Kit Types
-=========
+Kit Options
+===========
 
-CMake defines three types of kits: *compiler kits*, *Visual Studio kits*, and
-*toolchain file kits*. They are distinguished by the properties present in
-their definition in ``cmake-kits.json``.
+CMake defines several different options that can be specified on each kit in
+their definition in ``cmake-kits.json``, and these options can be
+mixed-and-matched as needed. For example, A single kit may request a
+Visual Studio environment while specifying ``clang-cl`` as a compiler.
 
 .. seealso::
 
@@ -143,10 +148,11 @@ their definition in ``cmake-kits.json``.
 
 .. _kits.types.compiler:
 
-Compiler Kits
-*************
+Compilers
+*********
 
-A compiler kit simply lists the paths to compilers for CMake languages.
+Specifying language compilers is as simple as listing the paths to compilers
+for CMake languages.
 
 The most common CMake languages are ``C`` and ``CXX``, and CMake Tools has
 built-in support for finding these, but any language can be specified:
@@ -164,11 +170,11 @@ built-in support for finding these, but any language can be specified:
 
 .. _kits.types.toolchain:
 
-Toolchain Kits
-**************
+Toolchain
+*********
 
 CMake Tools will not automatically detect them, but you can also specify a
-CMake toolchain file as a kit:
+CMake toolchain file in a kit:
 
 .. code:: json
 
@@ -181,8 +187,8 @@ CMake Tools will pass this path for ``CMAKE_TOOLCHAIN_FILE`` during configure.
 
 .. _kits.types.vs:
 
-Visual Studio Kits
-******************
+Visual Studio
+*************
 
 CMake Tools will automatically setup the environment for working with Visual C++
 when you use a Visual Studio code. It is advised to let CMake Tools
@@ -201,12 +207,17 @@ obtained from VSWhere. The ``visualStudioArchitecture`` key corresponds to a
 Visual Studio target architecture that would be passed to the ``vcvarsall.bat``
 file when entering the VS dev environment.
 
+.. note::
+    To use Visual C++, *both* of ``visualStudio`` and
+    ``visualStudioArchitecture`` *must* be specified. Omitting one will not
+    work.
+
 .. _kits.common:
 
-Common Options
-**************
+Generic Options
+***************
 
-All kit types also support some additional options:
+In addition to the above options, the following may be specified:
 
 .. _kits.common.preferredGenerator:
 
