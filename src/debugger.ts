@@ -10,7 +10,7 @@ export interface Configuration {
   [key: string]: any;
 }
 
-function createGdbDebugConfiguration(debuggerPath: string, targetName: string, targetPath: string): Configuration {
+function createGDBDebugConfiguration(debuggerPath: string, targetName: string, targetPath: string): Configuration {
   return {
     type: 'cppdbg',
     name: `Debug ${targetName}`,
@@ -30,7 +30,7 @@ function createGdbDebugConfiguration(debuggerPath: string, targetName: string, t
   };
 }
 
-function createLldbDebugConfiguration(debuggerPath: string, targetName: string, targetPath: string): Configuration {
+function createLLDBDebugConfiguration(debuggerPath: string, targetName: string, targetPath: string): Configuration {
   return {
     type: 'cppdbg',
     name: `Debug ${targetName}`,
@@ -43,7 +43,7 @@ function createLldbDebugConfiguration(debuggerPath: string, targetName: string, 
   };
 }
 
-function createMsvcDebugConfiguration(targetName: string, targetPath: string): Configuration {
+function createMSVCDebugConfiguration(targetName: string, targetPath: string): Configuration {
   return {
     type: 'cppvsdbg',
     name: `Debug ${targetName}`,
@@ -54,8 +54,8 @@ function createMsvcDebugConfiguration(targetName: string, targetPath: string): C
   };
 }
 
-function testGdbDebuggerPath(debugger_path: string): boolean { return debugger_path.search(/gdb/i) != -1; }
-function testLldbDebuggerPath(debugger_path: string): boolean { return debugger_path.search(/lldb/i) != -1; }
+function testGDBDebuggerPath(binPath: string): boolean { return binPath.search(/gdb/i) != -1; }
+function testLLDBDebuggerPath(binPath: string): boolean { return binPath.search(/lldb/i) != -1; }
 
 function searchForCompilerPath(cache: CMakeCache): string|null {
   const languages = ['CXX', 'C', 'CUDA'];
@@ -76,7 +76,7 @@ export function getDebugConfigurationFromCache(cache: CMakeCache, targetName: st
     const linker = entry.value as string;
     const is_msvc_linker = linker.endsWith('link.exe');
     if (is_msvc_linker) {
-      return createMsvcDebugConfiguration(targetName, targetPath);
+      return createMSVCDebugConfiguration(targetName, targetPath);
     }
   }
 
@@ -86,19 +86,19 @@ export function getDebugConfigurationFromCache(cache: CMakeCache, targetName: st
   }
 
   const clang_debugger_path = compiler_path.replace('clang++', 'lldb').replace('clang', 'lldb');
-  if (testLldbDebuggerPath(clang_debugger_path)) {
-    return createLldbDebugConfiguration(clang_debugger_path, targetName, targetPath);
+  if (testLLDBDebuggerPath(clang_debugger_path)) {
+    return createLLDBDebugConfiguration(clang_debugger_path, targetName, targetPath);
   }
 
   const gdb_debugger_path
       = compiler_path.replace('g++', 'gdb').replace('gcc', 'gdb').replace('clang++', 'gdb').replace('clang', 'gdb');
-  if (testGdbDebuggerPath(gdb_debugger_path)) {
-    return createGdbDebugConfiguration(gdb_debugger_path, targetName, targetPath);
+  if (testGDBDebuggerPath(gdb_debugger_path)) {
+    return createGDBDebugConfiguration(gdb_debugger_path, targetName, targetPath);
   }
 
   const is_msvc_compiler = compiler_path.endsWith('cl.exe');
   if (is_msvc_compiler) {
-    return createMsvcDebugConfiguration(targetName, targetPath);
+    return createMSVCDebugConfiguration(targetName, targetPath);
   }
 
   return {type: '', name: '', request: ''} as Configuration;
