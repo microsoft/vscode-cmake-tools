@@ -29,6 +29,10 @@ MSBuild and .sln generator is used for the Visual C++ compiler.
     If you change the active Kit while a project is configured, the project
     configuration will be re-generated with the chosen kit.
 
+.. note::
+    Using a kit is recommended but optional. Opting-out of using kits will
+    cause CMake to perform its own automatic detection.
+
 How Are Kits Found and Defined?
 ===============================
 
