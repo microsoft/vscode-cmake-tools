@@ -494,10 +494,12 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
  */
 export async function scanForKits() {
   log.debug('Scanning for Kits on system');
-  const prog = {location: vscode.ProgressLocation.Window, title: 'Scanning for kits'};
+  const prog = {
+    location: vscode.ProgressLocation.Notification, title: 'Scanning for kits',
+  };
   return vscode.window.withProgress(prog, async pr => {
     const isWin32 = process.platform === 'win32';
-    pr.report({message: 'Scanning for CMake kits...'});
+    pr.report({ message: 'Scanning for CMake kits...' });
     // Search directories on `PATH` for compiler binaries
     const pathvar = process.env['PATH']!;
     if (pathvar) {
@@ -668,9 +670,51 @@ export class KitManager implements vscode.Disposable {
    * if the active kit becomes somehow unavailable.
    */
   async selectKit(): Promise<Kit|null> {
+    console.assert(this._kits.length > 0, 'No kit is present? Should at least have __unspec__ kit.');
     log.debug(`Start selection of kits. Found ${this._kits.length} kits.`);
-    if (this._kits.length == 0) {
-      return null;
+
+    if (this._kits.length === 1 && this._kits[0].name === '__unspec__') {
+      interface FirstScanItem extends vscode.MessageItem {
+        action: 'scan'|'use-unspec'|'cancel';
+      }
+      const choices: FirstScanItem[] = [
+        {
+          title: 'Scan for kits',
+          action: 'scan',
+        },
+        {
+          title: 'Do not use a kit',
+          action: 'use-unspec',
+        },
+        {
+          title: 'Close',
+          isCloseAffordance: true,
+          action: 'cancel',
+        }
+      ];
+      const chosen = await vscode.window.showInformationMessage(
+          'No CMake kits are available. What would you like to do?',
+          {
+            modal: true,
+          },
+          ...choices,
+      );
+      if (!chosen) {
+        return null;
+      }
+      switch (chosen.action) {
+      case 'scan': {
+        await this.rescanForKits();
+        return this.selectKit();
+      }
+      case 'use-unspec': {
+        this._setActiveKit({name: '__unspec__'});
+        return this.activeKit;
+      }
+      case 'cancel': {
+        return null;
+      }
+      }
     }
 
     interface KitItem extends vscode.QuickPickItem {
@@ -684,17 +728,17 @@ export class KitManager implements vscode.Disposable {
         kit,
       };
     });
-    const chosen = await vscode.window.showQuickPick(items, {
+    const chosen_kit = await vscode.window.showQuickPick(items, {
       placeHolder: 'Select a Kit',
     });
-    if (chosen === undefined) {
+    if (chosen_kit === undefined) {
       log.debug('User cancelled Kit selection');
       // No selection was made
       return null;
     } else {
-      log.debug('User selected kit ', JSON.stringify(chosen));
-      this._setActiveKit(chosen.kit);
-      return chosen.kit;
+      log.debug('User selected kit ', JSON.stringify(chosen_kit));
+      this._setActiveKit(chosen_kit.kit);
+      return chosen_kit.kit;
     }
   }
 
