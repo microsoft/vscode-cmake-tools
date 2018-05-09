@@ -307,13 +307,14 @@ function Invoke-TestPreparation {
     $ext = if ($PSVersionTable.Platform -eq "Unix") { "" } else { ".exe" }
     $in_binary = (Get-ChildItem $fakebin_build -Recurse -Filter "FakeOutputGenerator$ext").FullName
 
-    $targets = @("clang-0.25", "gcc-42.1", "gcc-666", "clang-8.1.0")
+    $cfg_dir = Join-Path -Path $fakebin_src -ChildPath "configfiles"
+    $targets = Get-ChildItem -Path $cfg_dir -File | ForEach-Object { $_.BaseName }
 
     foreach ($target in $targets) {
         Copy-Item $in_binary "$fakebin_dest/$target$ext"
     }
 
-    Copy-Item $fakebin_src/configfiles/* -Destination $fakebin_dest -Recurse
+    Copy-Item $cfg_dir/* -Destination $fakebin_dest -Recurse
 
 }
 

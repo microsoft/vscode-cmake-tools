@@ -56,6 +56,15 @@ suite('Kits scan test', async () => {
     expect(compkit!.name).to.eq('GCC 42.1');
   });
 
+  test('Detect a GCC cross compiler compiler file', async () => {
+    const compiler = path.join(fakebin, 'cross-compile-gcc');
+    const compkit = await kit.kitIfCompiler(compiler);
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').equal(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+    expect(compkit!.name).to.eq('GCC for cross-compile 0.2.1000');
+  });
+
   test('Detect a Clang compiler file', async () => {
     const compiler = path.join(fakebin, 'clang-0.25');
     const compkit = await kit.kitIfCompiler(compiler);
@@ -103,14 +112,14 @@ suite('Kits scan test', async () => {
       await fs.mkdir(path_with_compilername);
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(3);
+      expect(kits.length).to.eq(4);
     });
 
     test('Scan file with compiler name', async () => {
       await fs.writeFile(path_with_compilername, '');
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(3);
+      expect(kits.length).to.eq(4);
     });
   });
 
@@ -203,7 +212,7 @@ suite('Kits scan test', async () => {
 
       const kitFile = await readValidKitFile(path_rescan_kit);
       const nonVSKits = kitFile.filter(item => item.visualStudio == null);
-      expect(nonVSKits.length).to.be.eq(3);
+      expect(nonVSKits.length).to.be.eq(4);
     }).timeout(10000);
 
     test('check check combination of scan and old kits', async () => {
