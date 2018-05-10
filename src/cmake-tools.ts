@@ -25,11 +25,16 @@ import {fs} from './pr';
 import rollbar from './rollbar';
 import {StatusBar} from './status';
 import {VariantManager} from './variant';
+import paths from '@cmt/paths';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
+
+function convertMingwDirsToSearchPaths( mingwDirs : string[]) : string[] {
+  return mingwDirs.map( mingwDir => path.join(mingwDir, 'bin'));
+}
 
 /**
  * Class implementing the extension. It's all here!
@@ -109,7 +114,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * It's up to the kit manager to do all things related to kits. Has two-phase
    * init.
    */
-  private readonly _kitManager = new KitManager(this.workspaceContext.state);
+  private readonly _kitManager = new KitManager(this.workspaceContext.state, convertMingwDirsToSearchPaths(this.workspaceContext.config.mingwSearchDirs));
 
   /**
    * The variant manager keeps track of build variants. Has two-phase init.

@@ -132,7 +132,7 @@ suite('Kits scan test', async () => {
       sandbox = sinon.sandbox.create();
       const stateMock = sandbox.createStubInstance(state.StateManager);
       sandbox.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
-      km = new kit.KitManager(stateMock, path_rescan_kit);
+      km = new kit.KitManager(stateMock, [], path_rescan_kit);
 
       // Mock showInformationMessage to suppress needed user choice
       sandbox.stub(vscode.window, 'showInformationMessage')

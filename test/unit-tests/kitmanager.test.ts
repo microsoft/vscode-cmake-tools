@@ -29,7 +29,7 @@ suite('Kits test', async () => {
       const stateMock = gui_sandbox.createStubInstance(state.StateManager);
       sinon.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
       const kit_file = getTestResourceFilePath('test_kit.json');
-      km = new kit.KitManager(stateMock, kit_file);
+      km = new kit.KitManager(stateMock, [], kit_file);
     });
     teardown(async () => { gui_sandbox.restore(); });
 
@@ -56,7 +56,7 @@ suite('Kits test', async () => {
     const stateMock = sinon.createStubInstance(state.StateManager);
     let storedActivatedKitName: string = '';
     sinon.stub(stateMock, 'activeKitName').get(() => null).set(kit_ => storedActivatedKitName = kit_);
-    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, [], getTestResourceFilePath('test_kit.json'));
     await km.initialize();
     // Check that each time we change the kit, it fires a signal
     let fired_kit: string|null = null;
@@ -76,7 +76,7 @@ suite('Kits test', async () => {
   test('KitManager test load of kit from test file', async () => {
     const stateMock = sinon.createStubInstance(state.StateManager);
     sinon.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
-    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, [], getTestResourceFilePath('test_kit.json'));
 
     await km.initialize();
 
@@ -97,7 +97,7 @@ suite('Kits test', async () => {
     const stateMock = sinon.createStubInstance(state.StateManager);
 
     sinon.stub(stateMock, 'activeKitName').get(() => 'ToolchainKit 1').set(() => {});
-    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, [], getTestResourceFilePath('test_kit.json'));
 
     await km.initialize();
 
@@ -112,7 +112,7 @@ suite('Kits test', async () => {
     const stateMock = sinon.createStubInstance(state.StateManager);
     sinon.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
 
-    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, [], getTestResourceFilePath('test_kit.json'));
     await km.initialize();
 
     expect(km.activeKit).to.be.null;
@@ -124,7 +124,7 @@ suite('Kits test', async () => {
     let storedActivatedKitName = 'not replaced';
     sinon.stub(stateMock, 'activeKitName').get(() => 'Unknown').set(kit_ => storedActivatedKitName = kit_);
 
-    const km = new kit.KitManager(stateMock, getTestResourceFilePath('test_kit.json'));
+    const km = new kit.KitManager(stateMock, [], getTestResourceFilePath('test_kit.json'));
     await km.initialize();
 
     expect(km.activeKit).to.be.null;
