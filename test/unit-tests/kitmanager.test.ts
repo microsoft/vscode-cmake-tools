@@ -80,14 +80,16 @@ suite('Kits test', async () => {
 
     await km.initialize();
 
-    expect(km.kits.length).to.eq(6);
-    expect(km.kits[0].name).to.eq('CompilerKit 1');
-    expect(km.kits[1].name).to.eq('CompilerKit 2');
-    expect(km.kits[2].name).to.eq('CompilerKit 3 with PreferedGenerator');
-    expect(km.kits[3].name).to.eq('ToolchainKit 1');
-    expect(km.kits[4].name).to.eq('VSCode Kit 1');
-    expect(km.kits[5].name).to.eq('VSCode Kit 2');
-
+    const names = km.kits.map(k => k.name);
+    expect(names).to.deep.eq([
+      'CompilerKit 1',
+      'CompilerKit 2',
+      'CompilerKit 3 with PreferedGenerator',
+      'ToolchainKit 1',
+      'VSCode Kit 1',
+      'VSCode Kit 2',
+      '__unspec__',
+    ]);
     km.dispose();
   });
 
