@@ -25,7 +25,6 @@ import {fs} from './pr';
 import rollbar from './rollbar';
 import {StatusBar} from './status';
 import {VariantManager} from './variant';
-import paths from '@cmt/paths';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
