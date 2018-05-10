@@ -51,8 +51,16 @@ function createMSVCDebugConfiguration(targetName: string, targetPath: string): C
   };
 }
 
-function testGDBDebuggerPath(binPath: string): boolean { return binPath.search(/gdb/i) != -1; }
-function testLLDBDebuggerPath(binPath: string): boolean { return binPath.search(/lldb/i) != -1; }
+const possible_debuggers: {
+  [debugger_name: string]: {
+    mi_mode: string,
+    config_factory: (debugger_path: string, target_name: string, target_path: string) => Configuration
+  }
+}
+= {
+    gdb: {mi_mode: 'gdb', config_factory: createGDBDebugConfiguration},
+    lldb: {mi_mode: 'lldb', config_factory: createLLDBDebugConfiguration}
+  };
 
 function searchForCompilerPath(cache: CMakeCache): string|null {
   const languages = ['CXX', 'C', 'CUDA'];
@@ -66,8 +74,10 @@ function searchForCompilerPath(cache: CMakeCache): string|null {
   return null;
 }
 
-export function getDebugConfigurationFromCache(cache: CMakeCache, targetName: string, targetPath: string):
-    Configuration {
+export function getDebugConfigurationFromCache(cache: CMakeCache,
+                                               targetName: string,
+                                               targetPath: string,
+                                               platform: string): Configuration {
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
     const linker = entry.value as string;
@@ -84,15 +94,17 @@ export function getDebugConfigurationFromCache(cache: CMakeCache, targetName: st
 
   const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
   const clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-  if (testLLDBDebuggerPath(clang_debugger_path)) {
+
+  if (clang_debugger_path.search(/lldb/) != -1) {
     return createLLDBDebugConfiguration(clang_debugger_path, targetName, targetPath);
   }
 
+  const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
+  const description = possible_debuggers[debugger_name];
   const gcc_compiler_regex = /(g\+\+|gcc)+/gi;
-  const gdb_debugger_path
-      = compiler_path.replace(gcc_compiler_regex, 'gdb');
-  if (testGDBDebuggerPath(gdb_debugger_path)) {
-    return createGDBDebugConfiguration(gdb_debugger_path, targetName, targetPath);
+  const gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.mi_mode);
+  if (gdb_debugger_path.search(new RegExp(description.mi_mode)) != -1) {
+    return description.config_factory(gdb_debugger_path, targetName, targetPath);
   }
 
   const is_msvc_compiler = compiler_path.endsWith('cl.exe');
