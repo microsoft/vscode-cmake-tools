@@ -6,7 +6,7 @@ chai.use(chaiAsPromised);
 
 import {expect} from 'chai';
 import {CMakeCache} from '../../src/cache';
-import {Debugger} from '@cmt/debugger';
+import * as Debugger from '@cmt/debugger';
 
 // tslint:disable:no-unused-expression
 
@@ -15,7 +15,7 @@ function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
-suite('Select debugger', async () => {
+suite.only('Select debugger', async () => {
   test('Create debug config from cache - clang', async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
     const config = Debugger.getDebugConfigurationFromCache(cache, 'Test', 'Target');

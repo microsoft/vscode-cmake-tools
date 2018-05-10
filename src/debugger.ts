@@ -1,8 +1,5 @@
 import {CMakeCache} from '@cmt/cache';
 
-
-export namespace Debugger {
-
 export interface Configuration {
   type: string;
   name: string;
@@ -85,13 +82,15 @@ export function getDebugConfigurationFromCache(cache: CMakeCache, targetName: st
     throw Error('No compiler found in cache file.');  // MSVC should be already found by CMAKE_LINKER
   }
 
-  const clang_debugger_path = compiler_path.replace('clang++', 'lldb').replace('clang', 'lldb');
+  const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
+  const clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
   if (testLLDBDebuggerPath(clang_debugger_path)) {
     return createLLDBDebugConfiguration(clang_debugger_path, targetName, targetPath);
   }
 
+  const gcc_compiler_regex = /(g\+\+|gcc)+/gi;
   const gdb_debugger_path
-      = compiler_path.replace('g++', 'gdb').replace('gcc', 'gdb').replace('clang++', 'gdb').replace('clang', 'gdb');
+      = compiler_path.replace(gcc_compiler_regex, 'gdb');
   if (testGDBDebuggerPath(gdb_debugger_path)) {
     return createGDBDebugConfiguration(gdb_debugger_path, targetName, targetPath);
   }
@@ -102,5 +101,4 @@ export function getDebugConfigurationFromCache(cache: CMakeCache, targetName: st
   }
 
   return {type: '', name: '', request: ''} as Configuration;
-}
 }

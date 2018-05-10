@@ -3,7 +3,6 @@
  */
 import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
-import {Debugger} from '@cmt/debugger';
 import {versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
@@ -12,6 +11,7 @@ import * as vscode from 'vscode';
 import * as ws from 'ws';
 
 import * as api from './api';
+import * as debugger_config from '@cmt/debugger';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
 import {CMakeServerClientDriver} from './cms-driver';
@@ -790,10 +790,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     const cache = await CMakeCache.fromPath(drv.cachePath);
-    const debug_config = Debugger.getDebugConfigurationFromCache(cache, target_path, target_path);
+    const debug_config = debugger_config.getDebugConfigurationFromCache(cache, target_path, target_path);
 
+    // add debug configuration from settings
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
+
     await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
     return vscode.debug.activeDebugSession!;
   }
