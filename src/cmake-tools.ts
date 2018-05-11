@@ -17,7 +17,7 @@ import {CTestDriver} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
 import {CMakeDriver} from './driver';
-import {KitManager} from './kit';
+import {Kit} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
@@ -106,12 +106,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * It's up to the kit manager to do all things related to kits. Has two-phase
-   * init.
-   */
-  private readonly _kitManager = new KitManager(this.workspaceContext.state);
-
-  /**
    * The variant manager keeps track of build variants. Has two-phase init.
    */
   private readonly _variantManager = new VariantManager(this.workspaceContext.state);
@@ -143,7 +137,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Dispose of the extension asynchronously.
    */
   async asyncDispose() {
-    this._kitManager.dispose();
     this._configureDiagnostics.dispose();
     if (this._cmakeDriver) {
       const drv = await this._cmakeDriver;
@@ -161,7 +154,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * of the driver is atomic to those using it
    */
   private async _startNewCMakeDriver(cmake: CMakeExecutable): Promise<CMakeDriver> {
-    const kit = this._kitManager.activeKit;
+    const kit = this.activeKit;
     log.debug('Starting CMake driver');
     if (!cmake.isPresent) {
       throw new Error(`Bad CMake executable "${cmake.path}".`);
@@ -256,9 +249,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.short);
     // Restore the debug target
     this._statusBar.setLaunchTargetName(this.workspaceContext.state.launchTargetName || '');
-    // Start up the kit manager
-    await this._kitManager.initialize();
-    this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name : '');
 
     // Hook up event handlers
     // Listen for the variant to change
@@ -273,20 +263,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       });
     });
-    // Listen for the kit to change
-    this._kitManager.onActiveKitChanged(kit => {
-      log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
-      rollbar.invokeAsync('Changing CMake kit', async () => {
-        if (kit) {
-          log.debug('Injecting new Kit into CMake driver');
-          const drv = await this._cmakeDriver;
-          if (drv) {
-            await drv.setKit(kit);
-          }
-        }
-        this._statusBar.setActiveKitName(kit ? kit.name : '');
-      });
-    });
     this._ctestController.onTestingEnabledChanged(enabled => { this._statusBar.ctestEnabled = enabled; });
     this._ctestController.onResultsChanged(res => { this._statusBar.testResults = res; });
 
@@ -294,6 +270,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     // Additional, non-extension: Start up nagging.
     this._nagManager.start();
+  }
+
+  async setKit(kit: Kit | null) {
+    this._activeKit = kit;
+    if (kit) {
+      log.debug('Injecting new Kit into CMake driver');
+      const drv = await this._cmakeDriver;
+      if (drv) {
+        await drv.setKit(kit);
+      }
+    }
   }
 
   /**
@@ -305,8 +292,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * exceptions would assign a null driver and it is possible to create a new driver instance later again.
    */
   async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
-    if (!this._kitManager.hasActiveKit) {
-      log.debug('Not starting CMake driver: no kits defined');
+    if (!this.activeKit) {
+      log.debug('Not starting CMake driver: No active kit');
       return null;
     }
     let cmakePath = await this.workspaceContext.cmakePath;
@@ -353,25 +340,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async viewLog() { await logging.showLogFile(); }
 
-  /**
-   * Implementation of `cmake.editKits`
-   */
-  editKits() { return this._kitManager.openKitsEditor(); }
-
-  /**
-   * Implementation of `cmake.scanForKits`
-   */
-  scanForKits() { return this._kitManager.rescanForKits(); }
-
-  /**
-   * Implementation of `cmake.selectKit`
-   */
-  selectKit() { return this._kitManager.selectKit(); }
-
-  /**
-   * Primarily a helper function for the preferred-generators tests
-   */
-  getKits() { return this._kitManager.kits; }
+  private _activeKit: Kit | null = null;
+  get activeKit(): Kit | null {
+    return this._activeKit;
+  }
 
   /**
    * The `DiagnosticCollection` for the CMake configure diagnostics.
@@ -446,14 +418,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!await this.maybeAutoSaveAll()) {
       return -1;
     }
-    if (!this._kitManager.hasActiveKit) {
-      log.debug('No kit selected yet. Asking for a Kit first.');
-      await this.selectKit();
-    }
-    if (!this._kitManager.hasActiveKit) {
-      log.debug('No kit selected. Abort configure.');
-      vscode.window.showErrorMessage('Cannot configure without a Kit');
-      return -1;
+    if (!this.activeKit) {
+      throw new Error('Cannot configure: No kit is active for this CMake Tools');
     }
     if (!this._variantManager.haveVariant) {
       await this._variantManager.selectVariant();

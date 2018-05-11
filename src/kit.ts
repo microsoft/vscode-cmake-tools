@@ -535,7 +535,7 @@ export async function scanForKits() {
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
  */
-function descriptionForKit(kit: Kit) {
+export function descriptionForKit(kit: Kit) {
   if (kit.toolchainFile) {
     return `Kit for toolchain file ${kit.toolchainFile}`;
   }
@@ -710,7 +710,7 @@ export class KitManager implements vscode.Disposable {
       }
       switch (chosen.action) {
       case 'scan': {
-        await this.rescanForKits();
+        // await this.rescanForKits();
         return this.selectKit();
       }
       case 'use-unspec': {
@@ -761,50 +761,6 @@ export class KitManager implements vscode.Disposable {
   }
 
   /**
-   * Rescan the system for kits.
-   *
-   * This will update the `cmake-kits.json` file with any newly discovered kits,
-   * and rewrite any previously discovered kits with the new data.
-   */
-  async rescanForKits() {
-    log.debug('Rescanning for Kits');
-    // clang-format off
-    const old_kits_by_name = this._kits.reduce(
-      (acc, kit) => ({...acc, [kit.name]: kit}),
-      {} as{[kit: string]: Kit}
-    );
-    const discovered_kits = await scanForKits();
-    const new_kits_by_name = discovered_kits.reduce(
-      (acc, new_kit) => {
-        acc[new_kit.name] = new_kit;
-        return acc;
-      },
-      old_kits_by_name
-    );
-    // clang-format on
-
-    const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-
-    log.debug('Saving new kits to', this._userKitsPath);
-    await fs.mkdir_p(path.dirname(this._userKitsPath));
-    const stripped_kits = new_kits.filter(k => k.name !== '__unspec__');
-    const sorted_kits = stripped_kits.sort((a, b) => {
-      if (a.name == b.name) {
-        return 0;
-      } else if (a.name < b.name) {
-        return -1;
-      } else {
-        return 1;
-      }
-    });
-    await fs.writeFile(this._userKitsPath, JSON.stringify(sorted_kits, null, 2));
-    // Sometimes the kit watcher does fire?? May be an upstream bug, so we'll
-    // re-read now
-    await this._rereadKits();
-    log.debug(this._userKitsPath, 'saved');
-  }
-
-  /**
    * Reread the `cmake-kits.json` file. This will be called if we write the
    * file in `rescanForKits`, or if the user otherwise edits the file manually.
    */
@@ -832,32 +788,7 @@ export class KitManager implements vscode.Disposable {
       log.debug('Re-read kits file from prior session');
       // Load up the list of kits that we've saved
       await this._rereadKits();
-    } else {
-      await this.rescanForKits();
-      interface DoOpen extends vscode.MessageItem {
-        doOpen: boolean;
-      }
-      const item = await vscode.window.showInformationMessage<DoOpen>(
-          'CMake Tools has scanned for available kits and saved them to a file. Would you like to edit the Kits file?',
-          {},
-          {title: 'Yes', doOpen: true},
-          {title: 'No', isCloseAffordance: true, doOpen: false});
-      if (item === undefined) {
-        return;
-      }
-      if (item.doOpen) {
-        await this.openKitsEditor();
-      }
     }
-  }
-
-  /**
-   * Opens a text editor with the user-local `cmake-kits.json` file.
-   */
-  async openKitsEditor() {
-    log.debug('Opening TextEditor for', this._userKitsPath);
-    const text = await vscode.workspace.openTextDocument(this._userKitsPath);
-    return vscode.window.showTextDocument(text);
   }
 }
 
