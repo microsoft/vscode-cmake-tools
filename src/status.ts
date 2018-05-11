@@ -132,7 +132,7 @@ export class StatusBar implements vscode.Disposable {
   /**
    * The name of the currently active target to build
    */
-  private _targetName: string;
+  private _targetName: string = '';
   public get targetName(): string { return this._targetName; }
   public set targetName(v: string) {
     this._targetName = v;

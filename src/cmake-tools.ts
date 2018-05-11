@@ -50,7 +50,8 @@ const build_log = logging.createLogger('build');
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _http_server: http.Server;
-  private _ws_server: ws.Server;
+  // TODO: Refactor to make this assertion unecessary
+  private _ws_server!: ws.Server;
 
   private readonly _nagManager = new NagManager(this.extensionContext);
 
@@ -800,7 +801,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return vscode.debug.activeDebugSession!;
   }
 
-  private _launchTerminal: vscode.Terminal|null;
+  private _launchTerminal: vscode.Terminal|null = null;
 
   /**
    * Implementation of `cmake.launchTarget`
