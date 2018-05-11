@@ -1,13 +1,15 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
+import {scanForKits} from '@cmt/kit';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
-
 import * as path from 'path';
 
 suite('[Environment]', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
+
+  const kits = await scanForKits();
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
@@ -19,8 +21,7 @@ suite('[Environment]', async () => {
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
-    await cmt.scanForKits();
-    await cmt.selectKit();
+    await cmt.setKit(kits[0]);
 
     testEnv.projectFolder.buildDirectory.clear();
   });
