@@ -173,7 +173,7 @@ function makeExtensionTestSuite(name: string,
   suite(name, () => {
     const context = {buildSystem: expectedBuildSystem} as CMakeContext;
 
-    suiteSetup(async function(this: Mocha.IBeforeAndAfterContext) {
+    suiteSetup(async function(this: Mocha.IHookCallbackContext) {
       this.timeout(100000);
       context.testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                                'build',
