@@ -338,7 +338,7 @@ export interface ErrorMessage extends CookiedMessage {
 }
 
 export class ServerError extends global.Error implements ErrorMessage {
-  type: 'error';
+  type: 'error' = 'error';
   constructor(e: ErrorMessage,
               public errorMessage = e.errorMessage,
               public cookie = e.cookie,
@@ -359,8 +359,9 @@ export class CMakeServerClient {
   private _accInput: string = '';
   private readonly _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
   private readonly _params: ClientInitPrivate;
-  private _endPromise: Promise<void>;
-  private _pipe: net.Socket;
+  // TODO: Refactor init so these init-assertions are not necessary
+  private _endPromise!: Promise<void>;
+  private _pipe!: net.Socket;
   private readonly _pipeFilePath: string;
 
   private _onMoreData(data: Uint8Array) {
