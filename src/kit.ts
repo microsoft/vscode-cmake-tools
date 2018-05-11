@@ -111,7 +111,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     const gxx_bin = path.join(path.dirname(bin), gxx_fname);
     const target_triple_re = /((\w+-)+)gcc.*/;
     const target_triple_match = target_triple_re.exec(fname);
-    let description = "";
+    let description = '';
     if (target_triple_match !== null) {
       description += `for ${target_triple_match[1].slice(0, -1)} `;
     }
@@ -501,11 +501,12 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
 export async function scanForKits() {
   log.debug('Scanning for Kits on system');
   const prog = {
-    location: vscode.ProgressLocation.Notification, title: 'Scanning for kits',
+    location: vscode.ProgressLocation.Notification,
+    title: 'Scanning for kits',
   };
   return vscode.window.withProgress(prog, async pr => {
     const isWin32 = process.platform === 'win32';
-    pr.report({ message: 'Scanning for CMake kits...' });
+    pr.report({message: 'Scanning for CMake kits...'});
     // Search directories on `PATH` for compiler binaries
     const pathvar = process.env['PATH']!;
     if (pathvar) {
@@ -577,221 +578,6 @@ export async function readKitsFile(filepath: string): Promise<Kit[]> {
   log.info(`Successfully loaded ${kits.length} kits from ${filepath}`);
   return dropNulls(kits);
 }
-
-/**
- * Class that manages and tracks Kits
- */
-export class KitManager implements vscode.Disposable {
-  /**
-   * The known kits
-   */
-  get kits() { return this._kits; }
-  private _kits = [] as Kit[];
-
-  /**
-   * The path to the user-specific `cmake-kits.json` file
-   */
-  private readonly _userKitsPath: string;
-
-  /**
-   * The path to the project-specific `cmake-kits.json` file
-   */
-  private readonly _projectKitsPath: string;
-
-  /**
-   * Watches the file at `_kitsPath`.
-   */
-  private readonly _kitsWatcher: MultiWatcher;
-
-  /**
-   * The active build kit
-   */
-  get activeKit() { return this._activeKit; }
-  private _activeKit: Kit|null = null;
-
-  /**
-   * The kit manager has a selected kit.
-   */
-  get hasActiveKit() { return this._activeKit !== null; }
-
-  /**
-   * Event emitted when the Kit changes. This can be via user action, by the
-   * available kits changing, or on initial load when the prior workspace kit
-   * is reloaded.
-   */
-  get onActiveKitChanged() { return this._activeKitChangedEmitter.event; }
-  private readonly _activeKitChangedEmitter = new vscode.EventEmitter<Kit|null>();
-
-  /**
-   * Change the current kit. Commits the current kit name to workspace-local
-   * persistent state so that the same kit is reloaded when the user opens
-   * the workspace again.
-   * @param kit The new Kit
-   */
-  private _setActiveKit(kit: Kit|null) {
-    log.debug('Active kit set to', kit ? kit.name : 'null');
-    if (kit) {
-      this.stateManager.activeKitName = kit.name;
-    } else {
-      this.stateManager.activeKitName = null;
-    }
-    this._activeKit = kit;
-    this._activeKitChangedEmitter.fire(kit);
-  }
-
-  /**
-   * Create a new kit manager.
-   * @param stateManager The workspace state manager
-   */
-  constructor(readonly stateManager: StateManager, kitPath: string|null = null) {
-    log.debug('Constructing KitManager');
-    if (kitPath !== null) {
-      this._userKitsPath = kitPath;
-    } else {
-      this._userKitsPath = path.join(paths.dataDir, 'cmake-kits.json');
-    }
-
-    // TODO: multi-root
-    this._projectKitsPath = path.join(vscode.workspace.rootPath || '/null', '.vscode/cmake-kits.json');
-
-    // Re-read the kits file when it is changed
-    this._kitsWatcher = new MultiWatcher(this._userKitsPath, this._projectKitsPath);
-    this._kitsWatcher.onAnyEvent(_e => this._rereadKits());
-  }
-
-  /**
-   * Dispose the kit manager
-   */
-  dispose() {
-    log.debug('Disposing KitManager');
-    this._kitsWatcher.dispose();
-    this._activeKitChangedEmitter.dispose();
-  }
-
-  /**
-   * Shows a QuickPick that lets the user select a new kit.
-   * @returns The selected Kit, or `null` if the user cancelled the selection
-   * @note The user cannot reset the active kit to `null`. If they make no
-   * selection, the current kit is kept. The only way it can reset to `null` is
-   * if the active kit becomes somehow unavailable.
-   */
-  async selectKit(): Promise<Kit|null> {
-    console.assert(this._kits.length > 0, 'No kit is present? Should at least have __unspec__ kit.');
-    log.debug(`Start selection of kits. Found ${this._kits.length} kits.`);
-
-    if (this._kits.length === 1 && this._kits[0].name === '__unspec__') {
-      interface FirstScanItem extends vscode.MessageItem {
-        action: 'scan'|'use-unspec'|'cancel';
-      }
-      const choices: FirstScanItem[] = [
-        {
-          title: 'Scan for kits',
-          action: 'scan',
-        },
-        {
-          title: 'Do not use a kit',
-          action: 'use-unspec',
-        },
-        {
-          title: 'Close',
-          isCloseAffordance: true,
-          action: 'cancel',
-        }
-      ];
-      const chosen = await vscode.window.showInformationMessage(
-          'No CMake kits are available. What would you like to do?',
-          {
-            modal: true,
-          },
-          ...choices,
-      );
-      if (!chosen) {
-        return null;
-      }
-      switch (chosen.action) {
-      case 'scan': {
-        // await this.rescanForKits();
-        return this.selectKit();
-      }
-      case 'use-unspec': {
-        this._setActiveKit({name: '__unspec__'});
-        return this.activeKit;
-      }
-      case 'cancel': {
-        return null;
-      }
-      }
-    }
-
-    interface KitItem extends vscode.QuickPickItem {
-      kit: Kit;
-    }
-    log.debug('Opening kit selection QuickPick');
-    const items = this._kits.map((kit): KitItem => {
-      return {
-        label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
-        description: descriptionForKit(kit),
-        kit,
-      };
-    });
-    const chosen_kit = await vscode.window.showQuickPick(items, {
-      placeHolder: 'Select a Kit',
-    });
-    if (chosen_kit === undefined) {
-      log.debug('User cancelled Kit selection');
-      // No selection was made
-      return null;
-    } else {
-      log.debug('User selected kit ', JSON.stringify(chosen_kit));
-      this._setActiveKit(chosen_kit.kit);
-      return chosen_kit.kit;
-    }
-  }
-
-  async selectKitByName(kitName: string): Promise<Kit|null> {
-    log.debug('Setting active Kit by name', kitName);
-    const chosen = this._kits.find(k => k.name == kitName);
-    if (chosen === undefined) {
-      log.warning('Kit set by name to non-existent kit:', kitName);
-      return null;
-    } else {
-      this._setActiveKit(chosen);
-      return chosen;
-    }
-  }
-
-  /**
-   * Reread the `cmake-kits.json` file. This will be called if we write the
-   * file in `rescanForKits`, or if the user otherwise edits the file manually.
-   */
-  private async _rereadKits() {
-    const kits_acc: Kit[] = [];
-    for (const kit_path of [this._userKitsPath, this._projectKitsPath]) {
-      const more_kits = await readKitsFile(kit_path);
-      kits_acc.push(...more_kits);
-    }
-    kits_acc.push({
-      name: '__unspec__',
-    });
-    // Set the current kit to the one we have named
-    this._kits = kits_acc;
-    const already_active_kit = this._kits.find(kit => kit.name === this.stateManager.activeKitName);
-    this._setActiveKit(already_active_kit || null);
-  }
-
-  /**
-   * Initialize the kits manager. Must be called before using an instance.
-   */
-  async initialize() {
-    log.debug('Second phase init for KitManager');
-    if (await fs.exists(this._userKitsPath)) {
-      log.debug('Re-read kits file from prior session');
-      // Load up the list of kits that we've saved
-      await this._rereadKits();
-    }
-  }
-}
-
 
 export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   if (!oldKit) {

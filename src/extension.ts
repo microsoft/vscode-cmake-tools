@@ -25,6 +25,7 @@ import {DirectoryContext} from '@cmt/workspace';
 import {StateManager} from '@cmt/state';
 import {Kit, readKitsFile, scanForKits, descriptionForKit} from '@cmt/kit';
 import {fs} from '@cmt/pr';
+import {MultiWatcher} from '@cmt/watcher';
 
 let INSTANCE: CMakeTools|null = null;
 
@@ -169,6 +170,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private async _setActiveWorkspace(ws: vscode.WorkspaceFolder|null) {
     this._activeWorkspace = ws;
+    this._kitsWatcher.dispose();
     if (ws) {
       const inst = this._cmakeToolsInstances.get(ws.name);
       if (!inst) {
@@ -176,7 +178,12 @@ class ExtensionManager implements vscode.Disposable {
                       {wsUri: ws.uri.toString()});
         return;
       }
+      console.assert(this._workspaceKitsPath, 'No kits path for workspace?');
+      this._kitsWatcher = new MultiWatcher(this._userKitsPath, this._workspaceKitsPath!);
+    } else {
+      this._kitsWatcher = new MultiWatcher(this._userKitsPath);
     }
+    this._kitsWatcher.onAnyEvent(_ => rollbar.invokeAsync('Re-reading kits', () => this._rereadKits()));
     await this._rereadKits();
   }
 
@@ -205,6 +212,8 @@ class ExtensionManager implements vscode.Disposable {
    * The kits available from the workspace kits file
    */
   private _wsKits: Kit[] = [];
+
+  private _kitsWatcher: MultiWatcher = new MultiWatcher(this._userKitsPath);
 
   private get _allKits(): Kit[] { return this._userKits.concat(this._wsKits); }
 
@@ -373,6 +382,53 @@ class ExtensionManager implements vscode.Disposable {
       return;
     }
   }
+
+  withCMakeTools<Ret>(def: Ret, fn: (cmt: CMakeTools) => Ret | Thenable<Ret>): Thenable<Ret> {
+    const cmt = this._activeCMakeTools;
+    if (!cmt) {
+      vscode.window.showErrorMessage('CMake Tools is not available without an open workspace');
+      return Promise.resolve(def);
+    }
+    return Promise.resolve(fn(cmt));
+  }
+
+  cleanConfigure() { return this.withCMakeTools(-1, cmt => cmt.cleanConfigure()); }
+
+  configure() { return this.withCMakeTools(-1, cmt => cmt.configure()); }
+
+  build() { return this.withCMakeTools(-1, cmt => cmt.build()); }
+
+  setVariant() { return this.withCMakeTools(false, cmt => cmt.setVariant()); }
+
+  install() { return this.withCMakeTools(-1, cmt => cmt.install()); }
+
+  editCache() { return this.withCMakeTools(undefined, cmt => cmt.editCache()); }
+
+  clean() { return this.withCMakeTools(-1, cmt => cmt.clean()); }
+
+  cleanRebuild() { return this.withCMakeTools(-1, cmt => cmt.cleanRebuild()); }
+
+  buildWithTarget() { return this.withCMakeTools(-1, cmt => cmt.buildWithTarget()); }
+
+  setDefaultTarget() { return this.withCMakeTools(undefined, cmt => cmt.setDefaultTarget()); }
+
+  ctest() { return this.withCMakeTools(-1, cmt => cmt.ctest()); }
+
+  stop() { return this.withCMakeTools(false, cmt => cmt.stop()); }
+
+  quickStart() { return this.withCMakeTools(-1, cmt => cmt.quickStart()); }
+
+  launchTargetPath() { return this.withCMakeTools(null, cmt => cmt.launchTargetPath()); }
+
+  debugTarget() { return this.withCMakeTools(null, cmt => cmt.debugTarget()); }
+
+  launchTarget() { return this.withCMakeTools(null, cmt => cmt.launchTarget()); }
+
+  selectLaunchTarget() { return this.withCMakeTools(null, cmt => cmt.selectLaunchTarget()); }
+
+  resetState() { return this.withCMakeTools(null, cmt => cmt.resetState()); }
+
+  viewLog() { return this.withCMakeTools(null, cmt => cmt.viewLog()); }
 }
 
 /**
@@ -411,14 +467,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
-    'editKits',
-    'scanForKits',
-    'selectKit',
-    // 'editKits',     'scanForKits',      'selectKit',        'cleanConfigure', 'configure',
-    // 'build',        'setVariant',       'install',          'editCache',      'clean',
-    // 'cleanRebuild', 'buildWithTarget',  'setDefaultTarget', 'ctest',          'stop',
-    // 'quickStart',   'launchTargetPath', 'debugTarget',      'launchTarget',   'selectLaunchTarget',
-    // 'resetState',   'viewLog',
+    'editKits',     'scanForKits',      'selectKit',        'cleanConfigure', 'configure',
+    'build',        'setVariant',       'install',          'editCache',      'clean',
+    'cleanRebuild', 'buildWithTarget',  'setDefaultTarget', 'ctest',          'stop',
+    'quickStart',   'launchTargetPath', 'debugTarget',      'launchTarget',   'selectLaunchTarget',
+    'resetState',   'viewLog',
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 
