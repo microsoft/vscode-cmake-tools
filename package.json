@@ -733,7 +733,7 @@
     "ts-node": "^6.0.0",
     "tslint": "^5.9.1",
     "typedoc": "^0.8.0",
-    "typescript": "~2.3.0",
+    "typescript": "~2.8.3",
     "vscode": "1.1.17"
   },
   "dependencies": {

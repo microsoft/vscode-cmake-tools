@@ -324,7 +324,7 @@ export class CTestDriver implements vscode.Disposable {
   private readonly _testsChangedEmitter = new vscode.EventEmitter<api.Test[]>();
   readonly onTestsChanged = this._testsChangedEmitter.event;
 
-  private _testResults: CTestResults|null;
+  private _testResults: CTestResults|null = null;
   get testResults(): CTestResults|null { return this._testResults; }
   set testResults(v: CTestResults|null) {
     this._testResults = v;
