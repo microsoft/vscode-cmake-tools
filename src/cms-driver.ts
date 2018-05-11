@@ -25,8 +25,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
     this._ws.config.onChange('configureEnvironment', () => this._restartClient());
   }
 
-  private _cmsClient: Promise<cms.CMakeServerClient>;
-  private _globalSettings: cms.GlobalSettingsContent;
+  // TODO: Refactor to make this assertion unecessary
+  private _cmsClient!: Promise<cms.CMakeServerClient>;
+  private _globalSettings!: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
   private _cmakeInputFileSet = InputFileSet.createEmpty();
 
@@ -36,7 +37,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
    */
   private _prevConfigureEnv = 'null';
 
-  private _codeModel: null|cms.CodeModelContent;
+  // TODO: Refactor to make this assertion unecessary
+  private _codeModel!: null|cms.CodeModelContent;
   get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
   set codeModel(v: null|cms.CodeModelContent) {
     this._codeModel = v;
