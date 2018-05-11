@@ -11,9 +11,7 @@ import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from './schema';
-import {StateManager} from './state';
 import {compare, dropNulls, Ordering, thisExtensionPath} from './util';
-import {MultiWatcher} from './watcher';
 
 const log = logging.createLogger('kit');
 
