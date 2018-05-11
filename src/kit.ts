@@ -609,7 +609,7 @@ export class KitManager implements vscode.Disposable {
    * The active build kit
    */
   get activeKit() { return this._activeKit; }
-  private _activeKit: Kit|null;
+  private _activeKit: Kit|null = null;
 
   /**
    * The kit manager has a selected kit.
