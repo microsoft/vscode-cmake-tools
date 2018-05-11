@@ -17,8 +17,9 @@ function getTestResourceFilePath(filename: string): string {
 
 suite.only('Select debugger', async () => {
   test('Create debug config from cache - clang', async () => {
+    const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
-    const config = Debugger.getDebugConfigurationFromCache(cache, 'Test', 'Target', 'linux');
+    const config = Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
 
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('lldb');
@@ -27,9 +28,10 @@ suite.only('Select debugger', async () => {
   });
 
   test('Create debug config from cache - GCC', async () => {
+    const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
-    const config = Debugger.getDebugConfigurationFromCache(cache, 'Test', 'Target', 'linux');
+    const config = Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
 
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
@@ -38,9 +40,10 @@ suite.only('Select debugger', async () => {
   });
 
   test('Create debug config from cache - GCC Apple', async () => {
+    const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
-    const config = Debugger.getDebugConfigurationFromCache(cache, 'Test', 'Target', 'darwin');
+    const config = Debugger.getDebugConfigurationFromCache(cache, target, 'darwin');
 
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('lldb');
@@ -49,9 +52,10 @@ suite.only('Select debugger', async () => {
   });
 
   test('Create debug config from cache - g++', async () => {
+    const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-g++.txt'));
 
-    const config = Debugger.getDebugConfigurationFromCache(cache, 'Test', 'Target', 'linux');
+    const config = Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
 
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
@@ -61,9 +65,10 @@ suite.only('Select debugger', async () => {
 
 
   test('Create debug config from cache - Visual Studio Community 2017', async () => {
+    const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-msvc-com-2017.txt'));
 
-    const config = Debugger.getDebugConfigurationFromCache(cache, 'Test', 'Target', 'win32');
+    const config = Debugger.getDebugConfigurationFromCache(cache, target, 'win32');
 
     expect(config.name).to.be.eq('Debug Test');
     expect(config.type).to.be.eq('cppvsdbg');

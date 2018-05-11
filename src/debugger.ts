@@ -1,3 +1,4 @@
+import {ExecutableTarget} from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 
 export interface Configuration {
@@ -7,10 +8,10 @@ export interface Configuration {
   [key: string]: any;
 }
 
-function createGDBDebugConfiguration(debuggerPath: string, targetName: string, targetPath: string): Configuration {
+function createGDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Configuration {
   return {
     type: 'cppdbg',
-    name: `Debug ${targetName}`,
+    name: `Debug ${target.name}`,
     request: 'launch',
     cwd: '${workspaceRoot}',
     args: [],
@@ -23,39 +24,37 @@ function createGDBDebugConfiguration(debuggerPath: string, targetName: string, t
         ignoreFailures: true,
       },
     ],
-    program: targetPath
+    program: target.path
   };
 }
 
-function createLLDBDebugConfiguration(debuggerPath: string, targetName: string, targetPath: string): Configuration {
+function createLLDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Configuration {
   return {
     type: 'cppdbg',
-    name: `Debug ${targetName}`,
+    name: `Debug ${target.name}`,
     request: 'launch',
     cwd: '${workspaceRoot}',
     args: [],
     MIMode: 'lldb',
     miDebuggerPath: debuggerPath,
-    program: targetPath
+    program: target.path
   };
 }
 
-function createMSVCDebugConfiguration(targetName: string, targetPath: string): Configuration {
+function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
   return {
     type: 'cppvsdbg',
-    name: `Debug ${targetName}`,
+    name: `Debug ${target.name}`,
     request: 'launch',
     cwd: '${workspaceRoot}',
     args: [],
-    program: targetPath
+    program: target.path
   };
 }
 
 const possible_debuggers: {
-  [debugger_name: string]: {
-    mi_mode: string,
-    config_factory: (debugger_path: string, target_name: string, target_path: string) => Configuration
-  }
+  [debugger_name: string]:
+      {mi_mode: string, config_factory: (debugger_path: string, target: ExecutableTarget) => Configuration}
 }
 = {
     gdb: {mi_mode: 'gdb', config_factory: createGDBDebugConfiguration},
@@ -74,16 +73,14 @@ function searchForCompilerPath(cache: CMakeCache): string|null {
   return null;
 }
 
-export function getDebugConfigurationFromCache(cache: CMakeCache,
-                                               targetName: string,
-                                               targetPath: string,
-                                               platform: string): Configuration {
+export function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string):
+    Configuration {
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
     const linker = entry.value as string;
     const is_msvc_linker = linker.endsWith('link.exe');
     if (is_msvc_linker) {
-      return createMSVCDebugConfiguration(targetName, targetPath);
+      return createMSVCDebugConfiguration(target);
     }
   }
 
@@ -96,7 +93,7 @@ export function getDebugConfigurationFromCache(cache: CMakeCache,
   const clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
 
   if (clang_debugger_path.search(/lldb/) != -1) {
-    return createLLDBDebugConfiguration(clang_debugger_path, targetName, targetPath);
+    return createLLDBDebugConfiguration(clang_debugger_path, target);
   }
 
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
@@ -104,12 +101,12 @@ export function getDebugConfigurationFromCache(cache: CMakeCache,
   const gcc_compiler_regex = /(g\+\+|gcc)+/gi;
   const gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.mi_mode);
   if (gdb_debugger_path.search(new RegExp(description.mi_mode)) != -1) {
-    return description.config_factory(gdb_debugger_path, targetName, targetPath);
+    return description.config_factory(gdb_debugger_path, target);
   }
 
   const is_msvc_compiler = compiler_path.endsWith('cl.exe');
   if (is_msvc_compiler) {
-    return createMSVCDebugConfiguration(targetName, targetPath);
+    return createMSVCDebugConfiguration(target);
   }
 
   return {type: '', name: '', request: ''} as Configuration;
