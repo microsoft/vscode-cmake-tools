@@ -189,15 +189,16 @@ suite('Kits scan test', async () => {
       expect(nonVSKits.length).to.be.eq(0);
     }).timeout(10000);
 
-    // Fails because PATH is tried to split but a empty path is not splitable
     test('check empty kit file', async () => {
+      // mingwSearchDirs is cleared by setup method
       process.env.PATH = '';
 
       await km.initialize();
 
-      const newKitFileExists = await fs.exists(path_rescan_kit);
-      expect(newKitFileExists).to.be.true;
-    });
+      const kitFile = await readValidKitFile(path_rescan_kit);
+      const nonVSKits = kitFile.filter(item => item.visualStudio == null);
+      expect(nonVSKits.length).to.be.eq(0);
+    }).timeout(10000);
 
     test('check fake compilers in kit file', async () => {
       process.env['PATH'] = getTestRootFilePath('fakebin');
