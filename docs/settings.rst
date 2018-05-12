@@ -24,6 +24,16 @@ be generated).
 - Default: ``${workspaceRoot}/build``.
 - *Supports substitution*
 
+.. _conf-cmake.cmakePath:
+
+``cmake.cmakePath``
+*******************
+
+Specify location of the cmake executable.
+
+- Default: ``cmake``, which causes CMake Tools to search the ``PATH`` environment
+  variable, as well as some hard-coded guesses.
+
 .. _conf-cmake.installPrefix:
 
 ``cmake.installPrefix``
