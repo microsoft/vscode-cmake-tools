@@ -27,8 +27,6 @@ import {Kit, readKitsFile, scanForKits, descriptionForKit} from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
 
-let INSTANCE: CMakeTools|null = null;
-
 /**
  * A class to manage the extension.
  *
@@ -39,8 +37,6 @@ let INSTANCE: CMakeTools|null = null;
  * necessitate user input, this class acts as intermediary and will send
  * important information down to the lower layers.
  */
-
-
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {}
 
@@ -116,6 +112,21 @@ class ExtensionManager implements vscode.Disposable {
       return ret;
     }
     return null;
+  }
+
+  private async _ensureActiveKit(): Promise<boolean> {
+    const cmt = this._activeCMakeTools;
+    if (!cmt) {
+      return false;
+    }
+    if (cmt.activeKit) {
+      return true;
+    }
+    const did_choose_kit = await this.selectKit();
+    if (!did_choose_kit) {
+      return false;
+    }
+    return !!cmt.activeKit;
   }
 
   /**
@@ -307,7 +318,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Show UI to allow the user to select an active kit
    */
-  async selectKit() {
+  async selectKit(): Promise<boolean> {
     log.debug('Start selection of kits. Found', this._allKits.length, 'kits.');
 
     if (this._allKits.length === 1 && this._allKits[0].name === '__unspec__') {
@@ -337,20 +348,19 @@ class ExtensionManager implements vscode.Disposable {
           ...choices,
       );
       if (!chosen) {
-        return null;
+        return false;
       }
       switch (chosen.action) {
       case 'scan': {
         await this.scanForKits();
-        await this.selectKit();
-        return;
+        return this.selectKit();
       }
       case 'use-unspec': {
         this._setKit({name: '__unspec__'});
-        return;
+        return true;
       }
       case 'cancel': {
-        return;
+        return false;
       }
       }
     }
@@ -375,18 +385,21 @@ class ExtensionManager implements vscode.Disposable {
     if (chosen_kit === undefined) {
       log.debug('User cancelled Kit selection');
       // No selection was made
-      return;
+      return false;
     } else {
       log.debug('User selected kit ', JSON.stringify(chosen_kit));
       this._setKit(chosen_kit.kit);
-      return;
+      return true;
     }
   }
 
-  withCMakeTools<Ret>(def: Ret, fn: (cmt: CMakeTools) => Ret | Thenable<Ret>): Thenable<Ret> {
+  async withCMakeTools<Ret>(def: Ret, fn: (cmt: CMakeTools) => Ret | Thenable<Ret>): Promise<Ret> {
     const cmt = this._activeCMakeTools;
     if (!cmt) {
       vscode.window.showErrorMessage('CMake Tools is not available without an open workspace');
+      return Promise.resolve(def);
+    }
+    if (!await this._ensureActiveKit()) {
       return Promise.resolve(def);
     }
     return Promise.resolve(fn(cmt));
@@ -431,21 +444,18 @@ class ExtensionManager implements vscode.Disposable {
   viewLog() { return this.withCMakeTools(null, cmt => cmt.viewLog()); }
 }
 
+let _EXT_MANAGER: ExtensionManager|null = null;
+
 /**
  * Starts up the extension.
  * @param context The extension context
  * @returns A promise that will resolve when the extension is ready for use
  */
-export async function activate(context: vscode.ExtensionContext): Promise<CMakeTools> {
-  const ext = new ExtensionManager(context);
+export async function activate(context: vscode.ExtensionContext) {
+  const ext = _EXT_MANAGER = new ExtensionManager(context);
   for (const wsf of vscode.workspace.workspaceFolders || []) {
     await ext.loadForWorkspaceFolder(wsf);
   }
-  // Create a WorkspaceContext for the current workspace. In the future, this will
-  // instantiate for each directory in a workspace
-  const ws = DirectoryContext.createForDirectory(vscode.workspace.rootPath!, new StateManager(context));
-  // Create a new instance and initailize.
-  const cmt_pr = CMakeTools.create(context, ws);
 
   // A register function helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
@@ -483,23 +493,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<CMakeT
     context.subscriptions.push(register(key));
   }
 
-  const cmt = await cmt_pr;
-
-  // Push it so we get clean teardown.
-  context.subscriptions.push(cmt);
-
-  context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
-
-  // Return the extension
-  INSTANCE = cmt;
-  return INSTANCE;
+  // TODO: Return the extension API
+  // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
 }
 
 // this method is called when your extension is deactivated
 export async function deactivate() {
   log.debug('Deactivate CMakeTools');
   //   outputChannels.dispose();
-  if (INSTANCE) {
-    await INSTANCE.asyncDispose();
+  if (_EXT_MANAGER) {
+    await _EXT_MANAGER.asyncDispose();
   }
 }
