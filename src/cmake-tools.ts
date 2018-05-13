@@ -110,7 +110,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * It's up to the kit manager to do all things related to kits. Has two-phase
    * init.
    */
-  private readonly _kitManager = new KitManager(this.workspaceContext.state);
+  private readonly _kitManager = new KitManager(this.workspaceContext.state, this.workspaceContext.config);
 
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
