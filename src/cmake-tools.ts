@@ -3,6 +3,8 @@
  */
 import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import * as debugger_config from '@cmt/debugger';
+import {getDebugConfigurationFromKit} from '@cmt/debugger';
 import {versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
@@ -11,7 +13,6 @@ import * as vscode from 'vscode';
 import * as ws from 'ws';
 
 import * as api from './api';
-import * as debugger_config from '@cmt/debugger';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
 import {CMakeServerClientDriver} from './cms-driver';
@@ -808,8 +809,31 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    const cache = await CMakeCache.fromPath(drv.cachePath);
-    const debug_config = debugger_config.getDebugConfigurationFromCache(cache, target, process.platform);
+    let debug_config;
+
+    try {
+      const kit = this._kitManager.activeKit;
+      if (kit !== null && kit.debugger !== undefined) {
+        debug_config = await getDebugConfigurationFromKit(kit.debugger, target);
+      }
+
+      if (debug_config === undefined) {
+        const cache = await CMakeCache.fromPath(drv.cachePath);
+        debug_config = await debugger_config.getDebugConfigurationFromCache(cache, target, process.platform);
+      }
+    } catch (error) {
+      vscode.window
+          .showErrorMessage(error.message, {
+            title: 'Learn more',
+            isLearnMore: true,
+          })
+          .then(item => {
+            if (item && item.isLearnMore) {
+              open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+            }
+          });
+      return null;
+    }
 
     // add debug configuration from settings
     const user_config = this.workspaceContext.config.debugConfig;

@@ -27,7 +27,7 @@ CMAKE_AR:FILEPATH=/usr/bin/ar
 CMAKE_BUILD_TYPE:STRING=Debug
 
 //CXX compiler
-CMAKE_CXX_COMPILER:FILEPATH=/usr/local/bin/g++
+CMAKE_CXX_COMPILER:FILEPATH=g++
 
 //Flags used by the compiler during all build types.
 CMAKE_CXX_FLAGS:STRING=
