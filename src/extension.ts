@@ -8,7 +8,6 @@ require('module-alias/register');
 
 import * as vscode from 'vscode';
 import * as path from 'path';
-import paths from './paths';
 import * as logging from './logging';
 import * as util from './util';
 
@@ -23,7 +22,7 @@ import CMakeTools from './cmake-tools';
 import rollbar from './rollbar';
 import {DirectoryContext} from '@cmt/workspace';
 import {StateManager} from '@cmt/state';
-import {Kit, readKitsFile, scanForKits, descriptionForKit} from '@cmt/kit';
+import {Kit, readKitsFile, scanForKits, descriptionForKit, USER_KITS_FILEPATH} from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
 
@@ -190,18 +189,13 @@ class ExtensionManager implements vscode.Disposable {
         return;
       }
       console.assert(this._workspaceKitsPath, 'No kits path for workspace?');
-      this._kitsWatcher = new MultiWatcher(this._userKitsPath, this._workspaceKitsPath!);
+      this._kitsWatcher = new MultiWatcher(USER_KITS_FILEPATH, this._workspaceKitsPath!);
     } else {
-      this._kitsWatcher = new MultiWatcher(this._userKitsPath);
+      this._kitsWatcher = new MultiWatcher(USER_KITS_FILEPATH);
     }
     this._kitsWatcher.onAnyEvent(_ => rollbar.invokeAsync('Re-reading kits', () => this._rereadKits()));
     await this._rereadKits();
   }
-
-  /**
-   * The path to the user-local kits file.
-   */
-  private readonly _userKitsPath: string = path.join(paths.dataDir, 'cmake-kits.json');
 
   /**
    * The path to the workspace-local kits file, dependent on the path to the
@@ -224,7 +218,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private _wsKits: Kit[] = [];
 
-  private _kitsWatcher: MultiWatcher = new MultiWatcher(this._userKitsPath);
+  private _kitsWatcher: MultiWatcher = new MultiWatcher(USER_KITS_FILEPATH);
 
   private get _allKits(): Kit[] { return this._userKits.concat(this._wsKits); }
 
@@ -233,7 +227,7 @@ class ExtensionManager implements vscode.Disposable {
    * update the kit loaded into the current backend if applicable.
    */
   private async _rereadKits() {
-    const user_kits: Kit[] = await readKitsFile(this._userKitsPath);
+    const user_kits: Kit[] = await readKitsFile(USER_KITS_FILEPATH);
     let ws_kits: Kit[] = [];
     if (this._workspaceKitsPath) {
       ws_kits = await readKitsFile(this._workspaceKitsPath);
@@ -269,8 +263,8 @@ class ExtensionManager implements vscode.Disposable {
    * Opens a text editor with the user-local `cmake-kits.json` file.
    */
   async editKits() {
-    log.debug('Opening TextEditor for', this._userKitsPath);
-    const doc = await vscode.workspace.openTextDocument(this._userKitsPath);
+    log.debug('Opening TextEditor for', USER_KITS_FILEPATH);
+    const doc = await vscode.workspace.openTextDocument(USER_KITS_FILEPATH);
     return vscode.window.showTextDocument(doc);
   }
 
@@ -296,8 +290,8 @@ class ExtensionManager implements vscode.Disposable {
     );
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-    log.debug('Saving new kits to', this._userKitsPath);
-    await fs.mkdir_p(path.dirname(this._userKitsPath));
+    log.debug('Saving new kits to', USER_KITS_FILEPATH);
+    await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
     const stripped_kits = new_kits.filter(k => k.name !== '__unspec__');
     const sorted_kits = stripped_kits.sort((a, b) => {
       if (a.name == b.name) {
@@ -308,11 +302,11 @@ class ExtensionManager implements vscode.Disposable {
         return 1;
       }
     });
-    await fs.writeFile(this._userKitsPath, JSON.stringify(sorted_kits, null, 2));
+    await fs.writeFile(USER_KITS_FILEPATH, JSON.stringify(sorted_kits, null, 2));
     // Sometimes the kit watcher does not fire?? May be an upstream bug, so we'll
     // re-read now
     await this._rereadKits();
-    log.debug(this._userKitsPath, 'saved');
+    log.debug(USER_KITS_FILEPATH, 'saved');
   }
 
   /**
