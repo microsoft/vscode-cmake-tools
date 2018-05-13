@@ -113,7 +113,7 @@ suite('Kits scan test', async () => {
     test('check empty kit list if no compilers in path', async () => {
       const partial_path = getPathWithoutCompilers();
       const kits = await kit.scanDirForCompilerKits(partial_path);
-      const nonVSKits = kits.filter(item => item.visualStudio == null);
+      const nonVSKits = kits.filter(item => !!item.visualStudio);
       expect(nonVSKits.length).to.be.eq(0);
     }).timeout(10000);
 

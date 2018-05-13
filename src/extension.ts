@@ -68,7 +68,7 @@ class ExtensionManager implements vscode.Disposable {
       if (inst === this._activeCMakeTools) {
         this._activeWorkspace = null;
         // Forget about the workspace
-        this._setActiveWorkspace(null);
+        await this._setActiveWorkspace(null);
       }
       // Drop the instance from our table. Forget about it.
       this._cmakeToolsInstances.delete(removed.name);
@@ -85,7 +85,7 @@ class ExtensionManager implements vscode.Disposable {
    * The CMake Tools backend instances available in the extension. The reason
    * for multiple is so that each workspace folder may have its own unique instance
    */
-  private _cmakeToolsInstances: Map<string, CMakeTools> = new Map();
+  private readonly _cmakeToolsInstances: Map<string, CMakeTools> = new Map();
 
   /**
    * The active workspace folder. This controls several aspects of the extension,
@@ -167,7 +167,7 @@ class ExtensionManager implements vscode.Disposable {
     this._cmakeToolsInstances.set(ws.name, new_cmt);
     // If we didn't have anything active, mark the freshly loaded instance as active
     if (this._activeWorkspace === null) {
-      this._setActiveWorkspace(ws);
+      await this._setActiveWorkspace(ws);
     }
     // Return the newly created instance
     return new_cmt;
@@ -243,10 +243,10 @@ class ExtensionManager implements vscode.Disposable {
         const new_with_cur_name = this._allKits.find(k => k.name == cur_name);
         if (new_with_cur_name) {
           // Set the newly loaded kit with the same name as the active kit
-          this._setKit(new_with_cur_name);
+          await this._setKit(new_with_cur_name);
         } else {
           // No kit is loaded anymore... Reset.
-          this._setKit(null);
+          await this._setKit(null);
         }
       }
     }
@@ -350,7 +350,7 @@ class ExtensionManager implements vscode.Disposable {
         return this.selectKit();
       }
       case 'use-unspec': {
-        this._setKit({name: '__unspec__'});
+        await this._setKit({name: '__unspec__'});
         return true;
       }
       case 'cancel': {
@@ -382,7 +382,7 @@ class ExtensionManager implements vscode.Disposable {
       return false;
     } else {
       log.debug('User selected kit ', JSON.stringify(chosen_kit));
-      this._setKit(chosen_kit.kit);
+      await this._setKit(chosen_kit.kit);
       return true;
     }
   }
