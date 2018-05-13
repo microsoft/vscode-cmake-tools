@@ -1,5 +1,6 @@
 import {CMakeTools} from '@cmt/cmake-tools';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {Kit, scanForKits} from '@cmt/kit';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import {ITestCallbackContext} from 'mocha';
 
 interface KitEnvironment {
@@ -83,8 +84,11 @@ const DEFAULT_MINGW_KITS: KitEnvironment[] = [
 const DEFAULT_WINDOWS_KITS: KitEnvironment[] = DEFAULT_VS_KITS.concat(DEFAULT_CYGWIN_KITS, DEFAULT_MINGW_KITS);
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
-  ['win32']: DEFAULT_WINDOWS_KITS.concat(
-      [{defaultKit: 'Clang 5.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: [' C:\\Program Files\\LLVM\\bin']}]),
+  ['win32']: DEFAULT_WINDOWS_KITS.concat([{
+    defaultKit: 'Clang 5.0.1',
+    expectedDefaultGenerator: 'Unix Makefiles',
+    path: [' C:\\Program Files\\LLVM\\bin'],
+  }]),
   ['Visual Studio 2017']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2017 Preview']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2015']: DEFAULT_WINDOWS_KITS,
@@ -110,6 +114,7 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
 
 interface CMakeContext {
   cmt: CMakeTools;
+  kits: Kit[];
   testEnv: DefaultEnvironment;
   pathBackup: string;
   buildSystem: KitEnvironment;
@@ -128,7 +133,7 @@ function fuzzyKitCheck(kitName: string, defaultKit: string, excludeKit?: string)
 // by first doing an exact check and if that didn't yield any
 // results, a fuzzy check.
 function isKitAvailable(context: CMakeContext): boolean {
-  const kits = context.cmt.getKits();
+  const kits = context.kits;
   return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit))
       ? true
       : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit))
@@ -139,7 +144,7 @@ function isKitAvailable(context: CMakeContext): boolean {
 // Check if the kit provided by the buildSystem has a preferred generator
 // defined in the kits file.
 function isPreferredGeneratorAvailable(context: CMakeContext): boolean {
-  const kits = context.cmt.getKits();
+  const kits = context.kits;
   return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit) && kit.preferredGenerator ? true
                                                                                                             : false)
       ? true
@@ -191,7 +196,7 @@ function makeExtensionTestSuite(name: string,
       // No rescan of the tools is needed
       // No new kit selection is needed
       await clearExistingKitConfigurationFile();
-      await context.cmt.scanForKits();
+      context.kits = await scanForKits();
       skipTestIf({kitIsNotAvailable: true}, this, context);
     });
 
@@ -230,7 +235,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            skipTestIf({preferredGeneratorIsNotAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
-           await context.cmt.selectKit();
+           await context.cmt.setKit(await getFirstSystemKit());
            context.testEnv.config.updatePartial({preferredGenerators: []});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
@@ -242,7 +247,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
          async function(this: ITestCallbackContext) {
            this.timeout(BUILD_TIMEOUT);
 
-           await context.cmt.selectKit();
+           await context.cmt.setKit(await getFirstSystemKit());
            context.testEnv.config.updatePartial({
              preferredGenerators: [
                'NMake Makefiles',
@@ -268,7 +273,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
-           await context.cmt.selectKit();
+           await context.cmt.setKit(await getFirstSystemKit());
            context.testEnv.config.updatePartial({preferredGenerators: ['BlaBla']});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
@@ -284,7 +289,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
 
-           await context.cmt.selectKit();
+           await context.cmt.setKit(await getFirstSystemKit());
            context.testEnv.config.updatePartial({preferredGenerators: []});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
@@ -297,7 +302,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
          async function(this: ITestCallbackContext) {
            this.timeout(BUILD_TIMEOUT);
 
-           await context.cmt.selectKit();
+           await context.cmt.setKit(await getFirstSystemKit());
            context.testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles', 'MinGW Makefiles']});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
