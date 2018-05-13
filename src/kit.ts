@@ -2,6 +2,8 @@
  * Module for controlling and working with Kits.
  */ /** */
 
+import {ConfigurationReader} from '@cmt/config';
+import {StateManager} from '@cmt/state';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -501,7 +503,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits() {
+export async function scanForKits(scanPaths: string[] = []) {
   log.debug('Scanning for Kits on system');
   const prog = {
     location: vscode.ProgressLocation.Notification,
@@ -514,11 +516,13 @@ export async function scanForKits() {
     const pathvar = process.env['PATH']!;
     if (pathvar) {
       const sep = isWin32 ? ';' : ':';
-      const path_elems = pathvar.split(sep);
+      scanPaths = scanPaths.concat(pathvar.split(sep));
+    }
 
+    if (scanPaths) {
       // Search them all in parallel
       let prs = [] as Promise<Kit[]>[];
-      const compiler_kits = path_elems.map(path_el => scanDirForCompilerKits(path_el, pr));
+      const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
       prs = prs.concat(compiler_kits);
       if (isWin32) {
         const vs_kits = scanForVSKits(pr);
@@ -580,6 +584,10 @@ export async function readKitsFile(filepath: string): Promise<Kit[]> {
   const kits = kits_raw as Kit[];
   log.info(`Successfully loaded ${kits.length} kits from ${filepath}`);
   return dropNulls(kits);
+}
+
+function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
+  return mingwDirs.map(mingwDir => path.join(mingwDir, 'bin'));
 }
 
 /**
