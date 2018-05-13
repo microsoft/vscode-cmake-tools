@@ -134,7 +134,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   } else {
     clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
 
-    if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
+    if ((clang_debugger_path.search(new RegExp('gdb')) != -1)) {
       return createGDBDebugConfiguration(clang_debugger_path, target);
     }
   }
