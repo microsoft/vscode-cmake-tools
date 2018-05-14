@@ -25,6 +25,7 @@ import {StateManager} from '@cmt/state';
 import {Kit, readKitsFile, scanForKits, descriptionForKit, USER_KITS_FILEPATH} from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
+import {ConfigurationReader} from '@cmt/config';
 
 /**
  * A class to manage the extension.
@@ -281,8 +282,20 @@ class ExtensionManager implements vscode.Disposable {
         (acc, kit) => ({...acc, [kit.name]: kit}),
         {} as {[kit: string]: Kit},
     );
+    // Determine the MinGW search dirs that are available
+    const cmt = this._activeCMakeTools;
+    let mingw_dirs: string[];
+    if (!cmt) {
+      // No CMake Tools, but we can still do a scan.
+      const config = ConfigurationReader.loadForPath(process.cwd());
+      mingw_dirs = config.mingwSearchDirs;
+    } else {
+      mingw_dirs = cmt.workspaceContext.config.mingwSearchDirs;
+    }
     // Do the actual scan:
-    const discovered_kits = await scanForKits();
+    const discovered_kits = await scanForKits({
+      minGWSearchDirs: mingw_dirs,
+    });
     // Update the new kits we know about.
     const new_kits_by_name = discovered_kits.reduce(
         (acc, kit) => ({...acc, [kit.name]: kit}),
