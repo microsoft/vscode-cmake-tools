@@ -524,6 +524,9 @@ export async function scanForKits(opt?: KitScanOptions) {
     }
     scan_dirs = env_elems;
   }
+  if (opt.minGWSearchDirs) {
+    scan_dirs = scan_dirs.concat(convertMingwDirsToSearchPaths(opt.minGWSearchDirs));
+  }
   log.debug('Scanning for Kits on system');
   const prog = {
     location: vscode.ProgressLocation.Notification,
