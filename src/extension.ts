@@ -272,7 +272,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Rescan the system for kits and save them to the user-local kits file
    */
-  async scanForKits() {
+  async scanForKits(): Promise<boolean> {
     log.debug('Rescanning for kits');
     // Convert the kits into a by-name mapping so that we can restore the ones
     // we know about after the fact.
@@ -318,13 +318,40 @@ class ExtensionManager implements vscode.Disposable {
       await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
       await fs.writeFile(USER_KITS_FILEPATH, JSON.stringify(sorted_kits, null, 2));
     } catch (e) {
-      vscode.window.showErrorMessage(`Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`);
-      return;
+      interface FailOptions extends vscode.MessageItem {
+        do: 'retry' | 'cancel';
+      }
+      const pr = vscode.window
+          .showErrorMessage<FailOptions>(
+              `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
+              {
+                title: 'Retry',
+                do: 'retry',
+              },
+              {
+                title: 'Cancel',
+                do: 'cancel',
+              },
+              )
+          .then(choice => {
+            if (!choice) {
+              return false;
+            }
+            switch (choice.do) {
+            case 'retry':
+              return this.scanForKits();
+            case 'cancel':
+              return false;
+            }
+        });
+      rollbar.takePromise('retry-kit-save-fail', {}, pr);
+      return false;
     }
     // Sometimes the kit watcher does not fire?? May be an upstream bug, so we'll
     // re-read now
     await this._rereadKits();
     log.debug(USER_KITS_FILEPATH, 'saved');
+    return true;
   }
 
   /**
