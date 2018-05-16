@@ -303,8 +303,6 @@ class ExtensionManager implements vscode.Disposable {
     );
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-    log.debug('Saving new kits to', USER_KITS_FILEPATH);
-    await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
     const stripped_kits = new_kits.filter(k => k.name !== '__unspec__');
     const sorted_kits = stripped_kits.sort((a, b) => {
       if (a.name == b.name) {
@@ -315,7 +313,14 @@ class ExtensionManager implements vscode.Disposable {
         return 1;
       }
     });
-    await fs.writeFile(USER_KITS_FILEPATH, JSON.stringify(sorted_kits, null, 2));
+    try {
+      log.debug('Saving new kits to', USER_KITS_FILEPATH);
+      await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
+      await fs.writeFile(USER_KITS_FILEPATH, JSON.stringify(sorted_kits, null, 2));
+    } catch (e) {
+      vscode.window.showErrorMessage(`Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`);
+      return;
+    }
     // Sometimes the kit watcher does not fire?? May be an upstream bug, so we'll
     // re-read now
     await this._rereadKits();
