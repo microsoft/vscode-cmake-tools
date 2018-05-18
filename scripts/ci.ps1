@@ -34,10 +34,22 @@ if ($Test) {
     return
 }
 
-# Sanity check for npm
-$npm = Find-Program npm
-if (! $npm) {
-    throw "No 'npm' binary. Cannot build."
+# Sanity check for yarn
+$yarn = Find-Program yarn
+if (! $yarn) {
+    $npm = Find-Program npm
+    if (! $npm ) {
+        throw "No 'yarn' binary, and not 'npm' to install it. Cannot build."
+    }
+    else {
+        try {
+            Invoke-ChronicCommand "Install yarn" $npm install --global yarn
+        }
+        catch {
+            Write-Error "Failed to install 'yarn' globally. Please install yarn to continue."
+        }
+        $yarn = Find-Program yarn
+    }
 }
 
 if ($Docs) {
@@ -51,13 +63,13 @@ if (Test-Path $out_dir) {
 }
 
 # Install dependencies for the project
-Invoke-ChronicCommand "npm install" $npm install
+Invoke-ChronicCommand "yarn install" $yarn install
 
 # Now do the real compile
-Invoke-ChronicCommand "Compiling TypeScript" $npm run compile-once
+Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-once
 
 # Run TSLint to check for silly mistakes
-Invoke-ChronicCommand "Running TSLint" $npm run lint:nofix
+Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
 
 # Get the CMake binary that we will use to run our tests
 $cmake_binary = Install-TestCMake -Version "3.10.0"
@@ -72,7 +84,7 @@ if (! $NoTest) {
         -TestsPath "$REPO_DIR/out/test/unit-tests" `
         -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
 
-    foreach ($name in @("vs-preferred-gen"; "successful-build"; )) {
+    foreach ($name in @("successful-build"; )) {
         Invoke-VSCodeTest "CMake Tools: $name" `
             -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
             -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"

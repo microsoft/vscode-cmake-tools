@@ -48,7 +48,8 @@ const build_log = logging.createLogger('build');
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _http_server: http.Server;
-  private _ws_server: ws.Server;
+  // TODO: Refactor to make this assertion unecessary
+  private _ws_server!: ws.Server;
 
   private readonly _nagManager = new NagManager(this.extensionContext);
 
@@ -109,7 +110,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * It's up to the kit manager to do all things related to kits. Has two-phase
    * init.
    */
-  private readonly _kitManager = new KitManager(this.workspaceContext.state);
+  private readonly _kitManager = new KitManager(this.workspaceContext.state, this.workspaceContext.config);
 
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
@@ -813,7 +814,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return vscode.debug.activeDebugSession!;
   }
 
-  private _launchTerminal: vscode.Terminal|null;
+  private _launchTerminal: vscode.Terminal|null = null;
 
   /**
    * Implementation of `cmake.launchTarget`

@@ -493,6 +493,6 @@ function Invoke-MochaTest {
 
 function Build-DevDocs() {
     $ErrorActionPreference = "Stop"
-    $npm = Find-Program npm
-    Invoke-ChronicCommand "Generating developer documentation" $npm run docs
+    $yarn = Find-Program yarn
+    Invoke-ChronicCommand "Generating developer documentation" $yarn run docs
 }
