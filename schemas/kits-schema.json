@@ -68,24 +68,6 @@
                 "required": [
                     "name"
                 ]
-            },
-            "debugger": {
-                "type": "object",
-                "description": "Contains all options to configure the cmake debugger calls",
-                "properties": {
-                    "type": {
-                        "type": "string",
-                        "enum": ["Visual Studio", "LLDB", "GDB"],
-                        "description": "Type of debugger, it is used to define the MiMode and Cppdbg"
-                    },
-                    "debuggerPath": {
-                        "type": "string",
-                        "description": "Path to gdb or lldb executable"
-                    }
-                },
-                "required": [
-                    "type"
-                ]
             }
         }
     }

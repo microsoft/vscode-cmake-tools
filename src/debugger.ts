@@ -159,30 +159,3 @@ export async function checkDebugger(debugger_path: string): Promise<boolean> {
   const res = await proc.execute(debugger_path, ['--version'], null, {shell: true}).result;
   return res.retc == 0;
 }
-
-export async function getDebugConfigurationFromKit(debuggerConfig: DebuggerConfiguration,
-                                                   target: ExecutableTarget): Promise<Configuration> {
-  const debugger_path = debuggerConfig.debuggerPath;
-
-  switch (debuggerConfig.type) {
-  case DebuggerType.VISUALSTUDIO:
-    return createMSVCDebugConfiguration(target);
-
-  case DebuggerType.GDB:
-    if (debugger_path !== undefined && await checkDebugger(debugger_path)) {
-      return createGDBDebugConfiguration(debugger_path, target);
-    } else {
-      throw new Error(`Unable to find GDB debugger (${debugger_path})`);
-    }
-
-  case DebuggerType.LLDB:
-    if (debugger_path !== undefined && await checkDebugger(debugger_path)) {
-      return createLLDBDebugConfiguration(debugger_path, target);
-    } else {
-      throw new Error(`Unable to find LLDB debugger (${debugger_path})`);
-    }
-
-  default:
-    throw new Error(`Invalid debugger type (${debuggerConfig.type}).`);
-  }
-}

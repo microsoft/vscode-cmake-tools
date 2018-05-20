@@ -3,7 +3,6 @@
  */ /** */
 
 import {ConfigurationReader} from '@cmt/config';
-import {DebuggerConfiguration} from '@cmt/debugger';
 import {StateManager} from '@cmt/state';
 import * as json5 from 'json5';
 import * as path from 'path';
@@ -76,11 +75,6 @@ export interface Kit {
    * Path to a CMake toolchain file.
    */
   toolchainFile?: string;
-
-  /**
-   * Configuration options for the debugger in cmaketools
-   */
-  debugger?: DebuggerConfiguration;
 }
 
 /**
