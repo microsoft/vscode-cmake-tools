@@ -86,6 +86,27 @@ function Invoke-ExternalCommand {
     }
 }
 
+function Add_EnvPath {
+    [CmdletBinding()]
+    param(
+        # Path to add to process environment path
+        [Parameter(Mandatory)]
+        [string]
+        $Path
+    )
+
+    $tmp_path = [System.Environment]::GetEnvironmentVariable('Path',[System.EnvironmentVariableTarget]::Process);
+    $separator = ":";
+    if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) {
+        $separator = ";"
+    }
+
+    $tmp_path = $Path + $separator + $tmp_path;
+
+    [System.Environment]::SetEnvironmentVariable('Path',$tmp_path,[System.EnvironmentVariableTarget]::Process);
+
+}
+
 function Invoke-ChronicCommand {
     [CmdletBinding()]
     param(
@@ -427,6 +448,71 @@ function Install-TestCMake ($Version) {
     Write-Host "Successfully created CMake installation for testing at $test_cmake_dir"
     & $cmake_bin --version | Write-Host
     return $cmake_bin
+}
+
+function Install-TestNinjaMakeSystem ($Version) {
+    $ErrorActionPreference = "Stop"
+    if ($PSVersionTable.Platform -eq "Unix") {
+        $test_bin_dir = Join-Path $env:HOME ".local/share/CMakeTools/test-ninja-root/$Version"
+    }
+    else {
+        $test_bin_dir = Join-Path $env:AppData "CMakeTools/test-ninja-root/$Version"
+    }
+
+    if ($PSVersionTable.Platform -eq "Unix") {
+        $ninja_bin = Join-Path $test_bin_dir "ninja"
+    }
+    else {
+        $ninja_bin = Join-Path $test_bin_dir "ninja.exe"
+    }
+
+    if (Test-Path $ninja_bin -PathType Leaf) {
+        Write-Host "Using existing Ninja test root at $test_bin_dir"
+        return $ninja_bin
+    }
+
+    $ninja_files_url = "https://github.com/ninja-build/ninja/releases/download/v$Version"
+
+    Write-Host "Installing Ninja $Version for testing at $test_bin_dir"
+
+    $tmp_test_bin_dir = "$test_bin_dir-tmp"
+    if (Test-Path $tmp_test_bin_dir) {
+        Remove-Item $tmp_test_bin_dir -Recurse
+    }
+    New-Item $tmp_test_bin_dir -ItemType Directory -Force | Out-Null
+
+    if (Test-Path $test_bin_dir) {
+        Remove-Item $test_bin_dir -Recurse
+    }
+    New-Item $test_bin_dir -ItemType Directory -Force | Out-Null
+
+
+    $zip_url = ""
+    if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) {
+        $zip_url = "$ninja_files_url/ninja-win.zip"
+    } elseif ($PSVersionTable.OS.StartsWith("Linux")) {
+        $zip_url = "$ninja_files_url/ninja-linux.zip"
+    } elseif ($PSVersionTable.OS.StartsWith("Darwin")) {
+        $zip_url = "$ninja_files_url/ninja-mac.zip"
+    }
+    Write-Host "URL dir: $zip_url"
+
+    $zip_file = Join-Path "$tmp_test_bin_dir" "ninja.zip"
+    Write-Host "Downloading $zip_url and saving it to $zip_file"
+    Get-RemoteFile -Url $zip_url -Path $zip_file
+    Expand-Archive $zip_file -DestinationPath $tmp_test_bin_dir
+    Remove-Item "$tmp_test_bin_dir/ninja.zip"
+    Copy-Item -Path "$tmp_test_bin_dir/*" -Destination "$test_bin_dir/" -Force
+
+    if (!$PSVersionTable.OS.StartsWith("Microsoft Windows")) {
+        chmod 755 $ninja_bin
+    }
+
+    Remove-Item $tmp_test_bin_dir -Recurse
+
+    Write-Host "Successfully created Ninja installation for testing at $test_bin_dir"
+    & $ninja_bin --version | Write-Host
+    return $ninja_bin
 }
 
 function Invoke-VSCodeTest {
