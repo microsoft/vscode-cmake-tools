@@ -42,7 +42,7 @@ suite('Build', async () => {
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(60000);
+  }).timeout(100000);
 
 
   test('Configure and Build', async () => {
@@ -51,7 +51,7 @@ suite('Build', async () => {
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(60000);
+  }).timeout(100000);
 
   test('Configure and Build run target', async () => {
     expect(await cmt.configure()).to.be.eq(0);
@@ -66,7 +66,7 @@ suite('Build', async () => {
     const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
     const result = await resultFile.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(60000);
+  }).timeout(100000);
 
   test('Test setting watcher', async () => {
     expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
