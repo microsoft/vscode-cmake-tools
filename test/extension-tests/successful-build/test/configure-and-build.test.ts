@@ -67,12 +67,4 @@ suite('Build', async () => {
     const result = await resultFile.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(100000);
-
-  test('Test setting watcher', async () => {
-    expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-    testEnv.config.updatePartial({buildDirectory: 'Hallo'});
-    expect(testEnv.wsContext.config.buildDirectory).to.be.eq('Hallo');
-    testEnv.config.updatePartial({buildDirectory: '${workspaceRoot}/build'});
-    expect(testEnv.wsContext.config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-  });
 });
