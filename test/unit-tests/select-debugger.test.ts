@@ -7,6 +7,8 @@ chai.use(chaiAsPromised);
 import {expect} from 'chai';
 import {CMakeCache} from '../../src/cache';
 import * as Debugger from '@cmt/debugger';
+import * as proc from '@cmt/proc';
+import * as sinon from 'sinon';
 
 // tslint:disable:no-unused-expression
 
@@ -15,30 +17,35 @@ function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
-function getFakeBin(): string { return path.normalize(path.join(here, '../../../test/fakebin')); }
-
 suite('Select debugger', async () => {
-  let path_backup: string|undefined = '';
+  const sandbox: sinon.SinonSandbox = sinon.createSandbox();
 
-  setup(() => {
-    path_backup = process.env.PATH;
-    process.env['PATH'] = getFakeBin();
-  });
+  teardown(() => { sandbox.verifyAndRestore(); });
 
-  teardown(() => { process.env['PATH'] = path_backup; });
+  test('Create debug config from cache - clang with fallback to gdb', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.withArgs('lldb').returns(
+        {result: {retc: -1}});  // Linux needs a separate installation of lldb -> fallback test
+    stub.returns({result: {retc: 0}});
 
-  test('Create debug config from cache - clang', async () => {
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
     const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
 
     expect(config.name).to.be.eq('Debug Test');
-    expect(config['MIMode']).to.be.eq('lldb');
+    expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
-    expect(config['miDebuggerPath']).to.be.eq('lldb');
+    expect(config['miDebuggerPath']).to.be.eq('gdb');
+    expect(stub.called).to.be.true;
+
+    expect(stub.calledWith('lldb')).to.be.true;
+    expect(stub.calledWith('gdb')).to.be.true;
   });
 
   test('Create debug config from cache - GCC', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.returns({result: {retc: 0}});
+
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
@@ -48,9 +55,30 @@ suite('Select debugger', async () => {
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
     expect(config['miDebuggerPath']).to.be.eq('gdb');
+    expect(stub.calledWith('gdb')).to.be.true;
+  });
+
+  test('Create debug config from cache - GCC 5 fallback test', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.withArgs('gdb').returns({result: {retc: 0}});
+    stub.returns({result: {retc: -2}});
+
+    const target = {name: 'Test', path: 'Target'};
+    const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
+
+    expect(config.name).to.be.eq('Debug Test');
+    expect(config['MIMode']).to.be.eq('gdb');
+    expect(config.type).to.be.eq('cppdbg');
+    expect(config['miDebuggerPath']).to.be.eq('gdb');
+    expect(stub.calledWith('gdb')).to.be.true;
   });
 
   test('Create debug config from cache - GCC Apple', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.returns({result: {retc: 0}});
+
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
@@ -60,9 +88,13 @@ suite('Select debugger', async () => {
     expect(config['MIMode']).to.be.eq('lldb');
     expect(config.type).to.be.eq('cppdbg');
     expect(config['miDebuggerPath']).to.be.eq('lldb');
+    expect(stub.calledWith('lldb')).to.be.true;
   });
 
   test('Create debug config from cache - g++', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.returns({result: {retc: 0}});
+
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-g++.txt'));
 
@@ -72,6 +104,7 @@ suite('Select debugger', async () => {
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
     expect(config['miDebuggerPath']).to.be.eq('gdb');
+    expect(stub.calledOnceWith('gdb')).to.be.true;
   });
 
   test('Create debug config from cache - Visual Studio Community 2017', async () => {

@@ -66,6 +66,10 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
 }
 
 async function createLLDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<Configuration> {
+  if (!await checkDebugger(debuggerPath)) {
+    throw new Error(`Unable to find GDB in default search path and ${debuggerPath}.`);
+  }
+
   return {
     type: 'cppdbg',
     name: `Debug ${target.name}`,

@@ -19,8 +19,6 @@ export class DefaultEnvironment {
   public wsContext = new DirectoryContext(this.config, new StateManager(this.vsContext));
   errorMessagesQueue: string[] = [];
 
-  public vs_debug_start_debugging: sinon.SinonStub;
-
   public constructor(projectRoot: string,
                      buildLocation: string,
                      executableResult: string,
@@ -42,9 +40,8 @@ export class DefaultEnvironment {
 
       return Promise.resolve(undefined);
     });
-    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
 
-    this.vs_debug_start_debugging = this.sandbox.stub(vscode.debug, 'startDebugging');
+    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
   }
 
   private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
