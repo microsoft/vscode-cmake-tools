@@ -35,7 +35,7 @@ suite('Build', async () => {
     expect(await cmt.configure()).to.be.eq(0);
 
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
-  }).timeout(60000);
+  }).timeout(100000);
 
   test('Build', async () => {
     expect(await cmt.build()).to.be.eq(0);
