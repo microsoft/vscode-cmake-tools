@@ -86,27 +86,6 @@ function Invoke-ExternalCommand {
     }
 }
 
-function Add_EnvPath {
-    [CmdletBinding()]
-    param(
-        # Path to add to process environment path
-        [Parameter(Mandatory)]
-        [string]
-        $Path
-    )
-
-    $tmp_path = [System.Environment]::GetEnvironmentVariable('Path',[System.EnvironmentVariableTarget]::Process);
-    $separator = ":";
-    if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) {
-        $separator = ";"
-    }
-
-    $tmp_path = $Path + $separator + $tmp_path;
-
-    [System.Environment]::SetEnvironmentVariable('Path',$tmp_path,[System.EnvironmentVariableTarget]::Process);
-
-}
-
 function Invoke-ChronicCommand {
     [CmdletBinding()]
     param(

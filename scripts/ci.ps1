@@ -77,8 +77,8 @@ $cmake_binary = Install-TestCMake -Version "3.10.0"
 # Get the Ninja binary that we will use to run our tests
 $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"
 
-# Add Ninja to path variable of system
-Add_EnvPath ((get-item $ninja_binary).Directory.Parent.FullName)
+# Add ninja to search path environment variable
+$Env:PATH = $Env:PATH + [System.IO.Path]::PathSeparator + (get-item $ninja_binary).Directory.FullName
 
 if (! $NoTest) {
     # Prepare to run our tests
