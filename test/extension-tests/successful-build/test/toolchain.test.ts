@@ -45,5 +45,5 @@ suite('[Toolchain Substitution]', async () => {
     expect(normalizePath(cacheEntry.as<string>()))
         .to.eq(normalizePath(testEnv.projectFolder.location.concat('/test-toolchain.cmake')),
                '[toolchain] substitution incorrect');
-  }).timeout(60000);
+  }).timeout(100000);
 });

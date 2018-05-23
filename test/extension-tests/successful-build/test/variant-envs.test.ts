@@ -44,5 +44,5 @@ suite('[Environment Variables in Variants]', async () => {
     expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
     expect(cacheEntry.as<string>())
         .to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');
-  }).timeout(60000);
+  }).timeout(100000);
 });
