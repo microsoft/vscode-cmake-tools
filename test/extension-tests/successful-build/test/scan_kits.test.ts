@@ -29,5 +29,5 @@ suite('[MinGW Tests]', async () => {
     const is_kit_MinGW_w64_present = kits.find(kit => kit.name.search(/x86_64-w64-mingw32/g) != -1) ? true : false;
     expect(is_kit_MinGW_present).to.be.true;
     expect(is_kit_MinGW_w64_present).to.be.true;
-  }).timeout(60000);
+  }).timeout(100000);
 });
