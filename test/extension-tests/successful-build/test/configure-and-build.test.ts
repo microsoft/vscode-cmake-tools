@@ -18,9 +18,9 @@ suite('Build', async () => {
     // This test will use all on the same kit.
     // No rescan of the tools is needed
     // No new kit selection is needed
-    await clearExistingKitConfigurationFile();
-    await cmt.scanForKits();
-    await cmt.selectKit();
+    //await clearExistingKitConfigurationFile();
+    //await cmt.scanForKits();
+    //await cmt.selectKit();
 
     testEnv.projectFolder.buildDirectory.clear();
   });
@@ -67,4 +67,38 @@ suite('Build', async () => {
     const result = await resultFile.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(100000);
+
+  test('Test kit switch after missing preferred generator', async () => {
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build();
+
+    testEnv.kitSelection.defaultKitLabel="VisualStudio";
+    await cmt.selectKit();
+
+    await cmt.build();
+    const result1 = await testEnv.result.getResultAsJson();
+    expect(result1['compiler']).to.eql('Microsoft Visual Studio');
+  }).timeout(100000);
+
+  test.only('Test kit switch between different preferrred generators and compilers', async () => {
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build(); // Test invalid build target (like all on visual studio project<)
+    //const result = await testEnv.result.getResultAsJson();
+
+    //expect(result['compiler']).to.eql('GNU GCC/G++');
+
+    testEnv.kitSelection.defaultKitLabel="VisualStudio";
+    await cmt.selectKit();
+
+    await cmt.build();
+    const result1 = await testEnv.result.getResultAsJson();
+    expect(result1['compiler']).to.eql('Microsoft Visual Studio');
+
+    // The test did not clean up the build directory so that the vs compiler is used
+  }).timeout(100000);
+
 });

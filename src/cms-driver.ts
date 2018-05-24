@@ -77,7 +77,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
-    const cl = await this._cmsClient;
+    await this.kitSwitchProcess;
+    let cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
       if (consumer) {
         for (const line of msg.split('\n')) {
@@ -197,15 +198,23 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
+  public kitSwitchProcess: Promise<void> = Promise.resolve();
+
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    this.kitSwitchProcess = new Promise(async(resolve) => {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
-    await (await this._cmsClient).shutdown();
+    const client = await this._cmsClient;
+    await client.shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
       await fs.rmdir(this.binaryDir);
     }
     await cb();
     await this._restartClient();
+
+    resolve();
+  });
+  return this.kitSwitchProcess;
   }
 
   async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
