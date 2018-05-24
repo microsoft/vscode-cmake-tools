@@ -58,6 +58,18 @@ suite('Select debugger', async () => {
     expect(stub.calledWith('gdb')).to.be.true;
   });
 
+  test('Create debug config from cache invalid gdb', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.returns({result: {retc: -1}});
+
+    const target = {name: 'Test', path: 'Target'};
+    const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
+
+    expect(config.name).to.be.eq('');
+  });
+
   test('Create debug config from cache - GCC 5 fallback test', async () => {
     const stub = sandbox.stub(proc, 'execute');
     stub.withArgs('gdb').returns({result: {retc: 0}});
