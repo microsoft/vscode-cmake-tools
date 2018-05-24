@@ -1,5 +1,6 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import {DefaultEnvironment, expect} from '@test/util';
+import sinon = require('sinon');
 
 // tslint:disable:no-unused-expression
 
@@ -12,6 +13,7 @@ suite('[Debug/Lauch interface]', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+    await cmt.scanForKits();
 
     testEnv.projectFolder.buildDirectory.clear();
     await cmt.selectKit();
@@ -29,10 +31,8 @@ suite('[Debug/Lauch interface]', async () => {
     expect(executablesTargets.length).to.be.not.eq(0);
     await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
-    const debug_session = await cmt.debugTarget();
-
-    expect(debug_session).to.be.be.not.null;
-    expect(debug_session!.name).to.be.eq('Debug TestBuildProcess');
+    await cmt.debugTarget();
+    sinon.assert.calledWith(testEnv.vs_debug_start_debugging);
   }).timeout(60000);
 
   test('Test launchTargetPath for use in other extensions or launch.json', async () => {
