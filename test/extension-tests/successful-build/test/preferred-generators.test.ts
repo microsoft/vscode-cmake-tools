@@ -7,7 +7,7 @@ interface KitEnvironment {
   excludeKit?: RegExp;
   expectedDefaultGenerator: RegExp;
   path?: string[];
-  isVsNewerThen14?: boolean;
+  isVsNewerThan14?: boolean;
 }
 
 let workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
@@ -26,33 +26,33 @@ const DEFAULT_VS_KITS: KitEnvironment[] = [
     defaultKit: /^Visual Studio Community 2017/,
     excludeKit: /Preview/,
     expectedDefaultGenerator: /^Visual Studio 15 2017/,
-    isVsNewerThen14: true
+    isVsNewerThan14: true
   },
-  {defaultKit: /^Visual Studio Community 2017 Preview/, expectedDefaultGenerator: /^Visual Studio 15 2017/, isVsNewerThen14: true},
+  {defaultKit: /^Visual Studio Community 2017 Preview/, expectedDefaultGenerator: /^Visual Studio 15 2017/, isVsNewerThan14: true},
   {
     defaultKit: /^Visual Studio Professional 2017/,
     excludeKit: /Preview/,
     expectedDefaultGenerator: /Visual Studio 15 2017/,
-    isVsNewerThen14: true
+    isVsNewerThan14: true
   },
-  {defaultKit: /^Visual Studio Professional 2017 Preview/, expectedDefaultGenerator: /^Visual Studio 15 2017/, isVsNewerThen14: true},
+  {defaultKit: /^Visual Studio Professional 2017 Preview/, expectedDefaultGenerator: /^Visual Studio 15 2017/, isVsNewerThan14: true},
   {
     defaultKit: /^Visual Studio Enterprise 2017/,
     excludeKit: /Preview/,
     expectedDefaultGenerator: /^Visual Studio 15 2017/,
-    isVsNewerThen14: true
+    isVsNewerThan14: true
   },
   {
     defaultKit: /^Visual Studio Enterprise 2017 Preview/,
     expectedDefaultGenerator: /^Visual Studio 15 2017/,
-    isVsNewerThen14: true
+    isVsNewerThan14: true
   },
 
   // Visual Studio 2015
-  {defaultKit: /^VisualStudio.14.0/, expectedDefaultGenerator: /^Visual Studio 14 2015/, path: [''], isVsNewerThen14: false},
+  {defaultKit: /^VisualStudio.14.0/, expectedDefaultGenerator: /^Visual Studio 14 2015/, path: [''], isVsNewerThan14: false},
 
   // Visual Studio 2012
-  {defaultKit: /^VisualStudio.11.0/, expectedDefaultGenerator: /^Visual Studio 11 2012/, path: [''], isVsNewerThen14: false},
+  {defaultKit: /^VisualStudio.11.0/, expectedDefaultGenerator: /^Visual Studio 11 2012/, path: [''], isVsNewerThan14: false},
 ];
 
 const DEFAULT_CYGWIN_KITS: KitEnvironment[] = [
@@ -262,7 +262,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            const result = await context.testEnv.result.getResultAsJson();
 
            expect(result['cmake-generator'])
-               .to.be.match((context.buildSystem.isVsNewerThen14 === true) ? /^NMake Makefiles/
+               .to.be.match((context.buildSystem.isVsNewerThan14 === true) ? /^NMake Makefiles/
                            : context.buildSystem.expectedDefaultGenerator);
 
            expect(context.testEnv.errorMessagesQueue.length).to.eql(0);
