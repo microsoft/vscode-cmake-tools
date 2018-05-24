@@ -11,6 +11,7 @@ import * as proc from '@cmt/proc';
 import * as sinon from 'sinon';
 
 // tslint:disable:no-unused-expression
+// tslint:disable:no-floating-promises
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
