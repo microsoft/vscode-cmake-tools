@@ -78,7 +78,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
     await this.kitSwitchProcess;
-    let cl = await this._cmsClient;
+    const cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
       if (consumer) {
         for (const line of msg.split('\n')) {
@@ -105,13 +105,13 @@ export class CMakeServerClientDriver extends CMakeDriver {
   async doPreBuild(): Promise<boolean> { return true; }
 
   async doPostBuild(): Promise<boolean> {
-    await this._refreshPostConfigure();
+    await this._refreshPostConfigure(); // <-- 2. Call this one
     return true;
   }
 
   async _refreshPostConfigure(): Promise<void> {
     const cl = await this._cmsClient;
-    const cmake_inputs = await cl.cmakeInputs();
+    const cmake_inputs = await cl.cmakeInputs(); // <-- 1. This line generates the error
     // Scan all the CMake inputs and capture their mtime so we can check for
     // out-of-dateness later
     this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
@@ -201,7 +201,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   public kitSwitchProcess: Promise<void> = Promise.resolve();
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
-    this.kitSwitchProcess = new Promise(async(resolve) => {
+    this.kitSwitchProcess = new Promise(async resolve => {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
     const client = await this._cmsClient;
     await client.shutdown();

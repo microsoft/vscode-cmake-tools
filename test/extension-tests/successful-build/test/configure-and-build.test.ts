@@ -1,6 +1,6 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {DefaultEnvironment, expect} from '@test/util';
 
 suite('Build', async () => {
   let cmt: CMakeTools;
@@ -82,7 +82,7 @@ suite('Build', async () => {
     expect(result1['compiler']).to.eql('Microsoft Visual Studio');
   }).timeout(100000);
 
-  test.only('Test kit switch between different preferrred generators and compilers', async () => {
+  test.only('Test kit switch between different preferrred generators and compilers', async () => { // Failed
     testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
     await cmt.selectKit();
 
@@ -101,4 +101,111 @@ suite('Build', async () => {
     // The test did not clean up the build directory so that the vs compiler is used
   }).timeout(100000);
 
+  test.only('Test kit switch kits after configure', async () => { // Failed
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build(); // Test invalid build target (like all on visual studio project<)
+    //const result = await testEnv.result.getResultAsJson();
+
+    //expect(result['compiler']).to.eql('GNU GCC/G++');
+
+    testEnv.kitSelection.defaultKitLabel="VisualStudio";
+    await cmt.selectKit();
+    await cmt.configure();
+
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('GNU GCC/G++');
+  }).timeout(100000);
+
+  test.only('Test build twice', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('GNU GCC/G++');
+  }).timeout(100000);
+
+  test.only('Test build twice with clean', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.clean();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('GNU GCC/G++');
+  }).timeout(100000);
+
+  test.only('Test build twice with clean configure', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.cleanConfigure();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('GNU GCC/G++');
+  }).timeout(100000);
+
+  test.only('Test build twice with rebuild configure', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.cleanRebuild();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('GNU GCC/G++');
+  }).timeout(100000);
+
+
+  test.only('Test build twice', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="VisualStudio";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('Microsoft Visual Studio');
+  }).timeout(100000);
+
+  test.only('Test build twice with clean', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="VisualStudio";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.clean();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('Microsoft Visual Studio'');
+  }).timeout(100000);
+
+  test.only('Test build twice with clean configure', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="VisualStudio";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.cleanConfigure();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('Microsoft Visual Studio');
+  }).timeout(100000);
+
+  test.only('Test build twice with rebuild configure', async () => { // OK
+    testEnv.kitSelection.defaultKitLabel="VisualStudio";
+    await cmt.selectKit();
+
+    await cmt.build();
+    await cmt.cleanRebuild();
+    await cmt.build();
+    // const result1 = await testEnv.result.getResultAsJson();
+    // expect(result1['compiler']).to.eql('Microsoft Visual Studio');
+  }).timeout(100000);
 });
