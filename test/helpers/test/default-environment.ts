@@ -22,13 +22,13 @@ export class DefaultEnvironment {
   public constructor(projectRoot: string,
                      buildLocation: string,
                      executableResult: string,
-                     defaultKitLabel?: string,
-                     excludeKitLabel?: string) {
+                     defaultKitLabel?: RegExp,
+                     excludeKitLabel?: RegExp) {
     this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
     this.result = new TestProgramResult(this.projectFolder.buildDirectory.location, executableResult);
 
     if (!defaultKitLabel) {
-      defaultKitLabel = process.platform === 'win32' ? 'Visual' : '';
+      defaultKitLabel = process.platform === 'win32' ? /^Visual/ : /\s\S/;
     }
 
     this.kitSelection = new SelectKitPickerHandle(defaultKitLabel, excludeKitLabel);
