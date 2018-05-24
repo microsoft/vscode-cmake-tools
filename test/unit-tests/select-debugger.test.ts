@@ -17,7 +17,7 @@ function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
-suite('Select debugger', async () => {
+suite.only('Select debugger', async () => {
   const sandbox: sinon.SinonSandbox = sinon.createSandbox();
 
   teardown(() => { sandbox.verifyAndRestore(); });
@@ -58,16 +58,14 @@ suite('Select debugger', async () => {
     expect(stub.calledWith('gdb')).to.be.true;
   });
 
-  test('Create debug config from cache invalid gdb', async () => {
+  test.only('Create debug config from cache invalid gdb', async () => {
     const stub = sandbox.stub(proc, 'execute');
     stub.returns({result: {retc: -1}});
 
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
-    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
-
-    expect(config.name).to.be.eq('');
+    expect(Debugger.getDebugConfigurationFromCache(cache, target, 'linux')).to.be.rejectedWith(Error);
   });
 
   test('Create debug config from cache - GCC 5 fallback test', async () => {
