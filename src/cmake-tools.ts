@@ -799,17 +799,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (await this._needsReconfigure()) {
       const rc = await this.configure();
       if (rc !== 0) {
+        log.debug('Configuration of project failed.');
         return null;
       }
     }
     const target = await this.getOrSelectLaunchTarget();
     if (!target) {
       // The user has nothing selected and cancelled the prompt to select a target.
+      log.debug('No target selected.');
       return null;
     }
 
     let debug_config;
-
     try {
       const cache = await CMakeCache.fromPath(drv.cachePath);
       debug_config = await debugger_config.getDebugConfigurationFromCache(cache, target, process.platform);
@@ -826,6 +827,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
             }
           });
+      log.debug('Problem to get debug from cache.', error);
       return null;
     }
 
