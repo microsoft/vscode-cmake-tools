@@ -388,6 +388,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.configure`
    */
   configure(extra_args: string[] = []) {
+    log.debug("Run configure ", extra_args);
     return this._doConfigure(async consumer => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
@@ -508,6 +509,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
+    log.debug("Run build", target_? target_ : "");
     // First, save open files
     if (!await this.maybeAutoSaveAll()) {
       return -1;

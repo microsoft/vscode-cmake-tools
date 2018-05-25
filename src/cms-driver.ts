@@ -27,9 +27,11 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   // TODO: Refactor to make this assertion unecessary
   private _cmsClient!: Promise<cms.CMakeServerClient>;
+  private _clientChangeInProgress: Promise<void> = Promise.resolve();
   private _globalSettings!: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
   private _cmakeInputFileSet = InputFileSet.createEmpty();
+
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -77,7 +79,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
-    await this.kitSwitchProcess;
+    await this._clientChangeInProgress;
     const cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
       if (consumer) {
@@ -139,18 +141,19 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
-    const bindir_before = this.binaryDir;
-    const srcdir_before = this.sourceDir;
-    await cb();
-    if (!bindir_before.length || !srcdir_before.length) {
-      return;
-    }
-    const new_env = JSON.stringify(await this.getConfigureEnvironment());
-    if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir || new_env != this._prevConfigureEnv) {
-      // Directories changed. We need to restart the driver
-      await this._restartClient();
-    }
-    this._prevConfigureEnv = new_env;
+      log.debug("Run doRefreshExpansions");
+      const bindir_before = this.binaryDir;
+      const srcdir_before = this.sourceDir;
+      await cb();
+      if (!bindir_before.length || !srcdir_before.length) {
+        return;
+      }
+      const new_env = JSON.stringify(await this.getConfigureEnvironment());
+      if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir || new_env != this._prevConfigureEnv) {
+        // Directories changed. We need to restart the driver
+        await this._restartClient();
+      }
+      this._prevConfigureEnv = new_env;
   }
 
   get targets(): RichTarget[] {
@@ -198,10 +201,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
-  public kitSwitchProcess: Promise<void> = Promise.resolve();
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
-    this.kitSwitchProcess = new Promise(async resolve => {
+    this._clientChangeInProgress = new Promise(async resolve => {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
     const client = await this._cmsClient;
     await client.shutdown();
@@ -214,7 +216,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
     resolve();
   });
-  return this.kitSwitchProcess;
+  return this._clientChangeInProgress;
   }
 
   async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {

@@ -101,7 +101,7 @@ suite('Build', async () => {
     // The test did not clean up the build directory so that the vs compiler is used
   }).timeout(100000);
 
-  test.only('Test kit switch between different preferrred generators and same compiler', async () => { // Failed
+  test('Test kit switch between different preferrred generators and same compiler', async () => { // Failed
     testEnv.config.updatePartial({preferredGenerators: []});
 
     testEnv.kitSelection.defaultKitLabel="GCC 4.8.1";
