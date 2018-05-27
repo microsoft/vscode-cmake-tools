@@ -14,7 +14,7 @@ if (process.env.TRAVIS_OS_NAME) {
   workername = process.env.TRAVIS_OS_NAME;
 }
 
-suite.only('Build', async () => {
+suite('Build', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
@@ -170,7 +170,7 @@ suite.only('Build', async () => {
     expect(result1['cmake-generator']).to.eql(compiler[1].generator);
   }).timeout(100000);
 
-  test.only('Test kit switch kits after configure', async function(this: ITestCallbackContext) {
+  test('Test kit switch kits after configure', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:string, generator: string}[]} = { ['linux']: [
       {kitLabel: 'Generator switch test GCC Make', generator: 'Unix Makefiles' },
