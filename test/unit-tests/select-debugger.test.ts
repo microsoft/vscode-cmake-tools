@@ -18,7 +18,7 @@ function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit-tests', filename));
 }
 
-suite.only('Select debugger', async () => {
+suite('Select debugger', async () => {
   const sandbox: sinon.SinonSandbox = sinon.createSandbox();
 
   teardown(() => { sandbox.verifyAndRestore(); });
@@ -59,7 +59,7 @@ suite.only('Select debugger', async () => {
     expect(stub.calledWith('gdb')).to.be.true;
   });
 
-  test.only('Create debug config from cache invalid gdb', async () => {
+  test('Create debug config from cache invalid gdb', async () => {
     const stub = sandbox.stub(proc, 'execute');
     stub.returns({result: {retc: -1}});
 
