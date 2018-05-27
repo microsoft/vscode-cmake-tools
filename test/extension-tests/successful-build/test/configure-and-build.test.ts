@@ -196,7 +196,7 @@ suite('Build', async () => {
 
     await cmt.build();
     const result1 = await testEnv.result.getResultAsJson();
-    expect(result1['compiler']).to.eql(compiler[0].generator);
+    expect(result1['generator']).to.eql(compiler[0].generator);
   }).timeout(200000);
 
   test('Test build twice', async function(this: ITestCallbackContext) {
