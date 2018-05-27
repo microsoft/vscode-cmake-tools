@@ -29,8 +29,8 @@
     {
     "name": "Generator switch test GCC Make",
     "compilers": {
-      "CXX": "g++.exe",
-      "C": "gcc.exe"
+      "CXX": "g++",
+      "C": "gcc"
     },
     "preferredGenerator": {
       "name": "Unix Makefiles"
@@ -39,8 +39,8 @@
   {
     "name": "Generator switch test GCC Ninja",
     "compilers": {
-      "CXX": "g++.exe",
-      "C": "gcc.exe"
+      "CXX": "g++",
+      "C": "gcc"
     },
     "preferredGenerator": {
       "name": "Ninja"
