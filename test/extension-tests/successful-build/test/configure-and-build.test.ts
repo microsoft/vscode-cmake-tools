@@ -18,7 +18,7 @@ suite.only('Build', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  suiteSetup(async function(this: Mocha.IHookCallbackContext)  {
     this.timeout(100000);
 
     const build_loc = 'build';
@@ -33,14 +33,27 @@ suite.only('Build', async () => {
     await clearExistingKitConfigurationFile();
     await cmt.scanForKits();
     await cmt.selectKit();
+    await cmt.asyncDispose();
+  });
 
+  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+    this.timeout(100000);
+
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+    await cmt.selectKit();
     testEnv.projectFolder.buildDirectory.clear();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
-    this.timeout(30000);
+    this.timeout(100000);
     await cmt.asyncDispose();
-    testEnv.teardown();
+    testEnv.clean();
+  });
+
+  suiteTeardown(() => {
+    if (testEnv) {
+      testEnv.teardown();
+    }
   });
 
   test('Configure', async () => {
@@ -84,7 +97,7 @@ suite.only('Build', async () => {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:string, compiler:string}[]} = { ['linux']: [
       {kitLabel: 'GCC 4.8.4', compiler:'GNU GCC/G++' },
-      {kitLabel: 'Clang 5.0.0', compiler:'Clang/LLVM' }],
+      {kitLabel: 'Clang 5.0.0', compiler:'GNU GCC/G++' }],
       ['win32']: [
       {kitLabel: 'GCC 4.8.1', compiler:'GNU GCC/G++' },
       {kitLabel: 'VisualStudio', compiler:'Microsoft Visual Studio' }
@@ -110,7 +123,7 @@ suite.only('Build', async () => {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:string, compiler:string}[]} = { ['linux']: [
       {kitLabel: 'GCC 4.8.4', compiler:'GNU GCC/G++' },
-      {kitLabel: 'Clang 5.0.0', compiler:'Clang/LLVM' }],
+      {kitLabel: 'Clang 5.0.0', compiler:'GNU GCC/G++' }],
       ['win32']: [
       {kitLabel: 'GCC 4.8.1', compiler:'GNU GCC/G++' },
       {kitLabel: 'VisualStudio', compiler:'Microsoft Visual Studio' }
@@ -157,7 +170,7 @@ suite.only('Build', async () => {
     expect(result1['cmake-generator']).to.eql(compiler[1].generator);
   }).timeout(100000);
 
-  test('Test kit switch kits after configure', async function(this: ITestCallbackContext) {
+  test.only('Test kit switch kits after configure', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:string, generator: string}[]} = { ['linux']: [
       {kitLabel: 'Generator switch test GCC Make', generator: 'Unix Makefiles' },
@@ -184,7 +197,7 @@ suite.only('Build', async () => {
     await cmt.build();
     const result1 = await testEnv.result.getResultAsJson();
     expect(result1['compiler']).to.eql(compiler[0].kitLabel);
-  }).timeout(100000);
+  }).timeout(200000);
 
   test('Test build twice', async function(this: ITestCallbackContext) {
     await cmt.selectKit();
