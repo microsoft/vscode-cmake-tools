@@ -45,22 +45,66 @@ suite('[Debug/Lauch interface]', async () => {
     expect(await cmt.launchTargetPath()).to.be.eq(executablesTargets[0].path);
   });
 
-  test.only('Test build on launch', async () => {
-        const executablesTargets = await cmt.executableTargets;
-        expect(executablesTargets.length).to.be.not.eq(0);
-        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+  test('Test build on launch (default)', async () => {
+    testEnv.config.updatePartial({buildBeforeRun: undefined});
 
-        const launchProgrammPath = await cmt.launchTargetPath();
-        expect(launchProgrammPath).to.be.not.null;
-        const validPath: string = launchProgrammPath!;
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
-        // Check that the compiled files does not exist
-        fs.unlinkSync(validPath);
-        expect(fs.existsSync(validPath)).to.be.false;
+    const launchProgrammPath = await cmt.launchTargetPath();
+    expect(launchProgrammPath).to.be.not.null;
+    const validPath: string = launchProgrammPath!;
 
-        await cmt.launchTargetPath();
+    // Check that the compiled files does not exist
+    fs.unlinkSync(validPath);
+    expect(fs.existsSync(validPath)).to.be.false;
 
-        // Check that it is compiled as a new file
-        expect(fs.existsSync(validPath)).to.be.true;
-      }).timeout(60000);
+    await cmt.launchTargetPath();
+
+    // Check that it is compiled as a new file
+    expect(fs.existsSync(validPath)).to.be.false;
+  }).timeout(60000);
+
+  test('Test build on launch on by config', async () => {
+    testEnv.config.updatePartial({buildBeforeRun: true});
+
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    const launchProgrammPath = await cmt.launchTargetPath();
+    expect(launchProgrammPath).to.be.not.null;
+    const validPath: string = launchProgrammPath!;
+
+    // Check that the compiled files does not exist
+    fs.unlinkSync(validPath);
+    expect(fs.existsSync(validPath)).to.be.false;
+
+    await cmt.launchTargetPath();
+
+    // Check that it is compiled as a new file
+    expect(fs.existsSync(validPath)).to.be.true;
+  }).timeout(60000);
+
+  test('Test build on launch off by config', async () => {
+    testEnv.config.updatePartial({buildBeforeRun: false});
+
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    const launchProgrammPath = await cmt.launchTargetPath();
+    expect(launchProgrammPath).to.be.not.null;
+    const validPath: string = launchProgrammPath!;
+
+    // Check that the compiled files does not exist
+    fs.unlinkSync(validPath);
+    expect(fs.existsSync(validPath)).to.be.false;
+
+    await cmt.launchTargetPath();
+
+    // Check that it is compiled as a new file
+    expect(fs.existsSync(validPath)).to.be.false;
+  }).timeout(60000);
 });

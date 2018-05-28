@@ -785,7 +785,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    const buildOnLaunch = true;
+    const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
     if (buildOnLaunch || isReconfigurationNeeded) {
       const rc_build = await this.build();
       if (rc_build !== 0) {
