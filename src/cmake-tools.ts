@@ -769,7 +769,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
     // executable targets and may show an uneccessary prompt to the user
-    const isReconfigurationNeeded = await this._needsReconfigure()
+    const isReconfigurationNeeded = await this._needsReconfigure();
     if (isReconfigurationNeeded) {
       const rc = await this.configure();
       if (rc !== 0) {
@@ -831,7 +831,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    let targetExecutable = await this.PrepareLaunchTargetExecutable();
+    const targetExecutable = await this.PrepareLaunchTargetExecutable();
     if (!targetExecutable) {
       return null;
     }
