@@ -21,6 +21,12 @@ them and allow you to start a debugger on them.
     an older CMake version and wish to use target debugging, you'll have to
     update your CMake version.
 
+The launch or debug of an executable target will build it by default.
+
+.. note::
+    The build on launch can be disabled over the settings, see
+    :ref:`conf-cmake.buildBeforeRun`.
+
 Selecting a Launch Target
 *************************
 
