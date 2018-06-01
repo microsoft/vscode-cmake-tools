@@ -89,7 +89,7 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
   ['Visual Studio 2017 Preview']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2015']: DEFAULT_WINDOWS_KITS,
   ['linux']: [
-    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
+   // {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
     {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
   ],
   ['darwin']: [
@@ -140,15 +140,14 @@ function isKitAvailable(context: CMakeContext): boolean {
 // defined in the kits file.
 function isPreferredGeneratorAvailable(context: CMakeContext): boolean {
   const kits = context.cmt.getKits();
-  return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit) && kit.preferredGenerator ? true
-                                                                                                            : false)
-      ? true
-      : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit)
-                          && kit.preferredGenerator
-                      ? true
-                      : false)
-          ? true
-          : false;
+
+  const foundExactKit = kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit));
+  if (foundExactKit && foundExactKit.preferredGenerator) {
+    return true;
+  } else {
+    const fuzzyKit = kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit));
+    return (fuzzyKit && fuzzyKit.preferredGenerator) ? true : false;
+  }
 }
 
 interface SkipOptions {
