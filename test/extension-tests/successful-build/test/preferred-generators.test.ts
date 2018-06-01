@@ -89,7 +89,7 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
   ['Visual Studio 2017 Preview']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2015']: DEFAULT_WINDOWS_KITS,
   ['linux']: [
-   // {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
+    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
     {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
   ],
   ['darwin']: [
