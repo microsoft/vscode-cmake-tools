@@ -1,4 +1,4 @@
-import {ConfigurationReader, ExtensionConfigurationSettings} from '@cmt/config';
+import {ConfigurationReader} from '@cmt/config';
 import * as ajv from 'ajv';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
