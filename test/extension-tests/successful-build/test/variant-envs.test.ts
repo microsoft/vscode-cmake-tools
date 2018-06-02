@@ -6,6 +6,8 @@ import {fs} from '@cmt/pr';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 import * as path from 'path';
 
+// tslint:disable:no-unused-expression
+
 suite('[Environment Variables in Variants]', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
@@ -65,10 +67,10 @@ suite('[Environment Variables in Variants]', async () => {
     testEnv.config.updatePartial({
       defaultVariants: {
         buildType: {
-          'default': 'debug-label',
-          'choices': {
-            'debug-label': {'short': 'debug-label short', 'buildType': 'Debug'},
-            'not-debug': {'short': 'not-debug short', 'buildType': 'Release'}
+          default: 'debug-label',
+          choices: {
+            'debug-label': {short: 'debug-label short', buildType: 'Debug'},
+            'not-debug': {short: 'not-debug short', buildType: 'Release'}
           }
         },
         otherVariant: {
