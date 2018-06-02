@@ -531,28 +531,28 @@
         "cmake.defaultVariants": {
           "type": "object",
           "$schema": "schemas/variants-schema.json",
-          "default": {
-            "buildType": {
-              "default$": "debug",
-              "description$": "The build type to use",
+          "buildType": {
+            "default": "debug",
+            "description": "The build type",
+            "choices": {
               "debug": {
-                "oneWordSummary$": "Debug",
-                "description$": "Emit debug information without performing optimizations",
+                "short": "Debug",
+                "long": "Emit debug information without performing optimizations",
                 "buildType": "Debug"
               },
               "release": {
-                "oneWordSummary$": "Release",
-                "description$": "Enable optimizations, omit debug info",
+                "short": "Release",
+                "long": "Enable optimizations, omit debug info",
                 "buildType": "Release"
               },
               "minsize": {
-                "oneWordSummary$": "MinSizeRel",
-                "description$": "Optimize for smallest binary size",
+                "short": "MinSizeRel",
+                "long": "Optimize for smallest binary size",
                 "buildType": "MinSizeRel"
               },
               "reldeb": {
-                "oneWordSummary$": "RelWithDebInfo",
-                "description$": "Perform optimizations AND include debugging information",
+                "short": "RelWithDebInfo",
+                "long": "Perform optimizations AND include debugging information",
                 "buildType": "RelWithDebInfo"
               }
             }
