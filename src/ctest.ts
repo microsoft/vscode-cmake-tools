@@ -379,7 +379,7 @@ export class CTestDriver implements vscode.Disposable {
     const build_config = driver.currentBuildType;
     const result
         = await driver
-              .executeCommand('ctest', ['-N', '-C', build_config], undefined, {cwd: driver.binaryDir, silent: true})
+              .executeCommand(await paths.ctestPath, ['-N', '-C', build_config], undefined, {cwd: driver.binaryDir, silent: true})
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
