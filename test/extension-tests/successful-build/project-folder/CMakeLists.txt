@@ -23,3 +23,9 @@ add_definitions(
     -D_GENERATOR="${CMAKE_GENERATOR}"
     -D_CRT_SECURE_NO_WARNINGS
 )
+
+add_custom_target(runTestTarget DEPENDS TestBuildProcess
+    COMMAND $<TARGET_FILE:TestBuildProcess> > output_target.txt
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Run test target"
+)

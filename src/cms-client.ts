@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as cache from './cache';
-import config from './config';
+import {ConfigurationReader} from './config';
 import {CMakeGenerator} from './kit';
 import {createLogger} from './logging';
 import {fs} from './pr';
@@ -338,7 +338,7 @@ export interface ErrorMessage extends CookiedMessage {
 }
 
 export class ServerError extends global.Error implements ErrorMessage {
-  type: 'error';
+  type: 'error' = 'error';
   constructor(e: ErrorMessage,
               public errorMessage = e.errorMessage,
               public cookie = e.cookie,
@@ -359,8 +359,9 @@ export class CMakeServerClient {
   private _accInput: string = '';
   private readonly _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
   private readonly _params: ClientInitPrivate;
-  private _endPromise: Promise<void>;
-  private _pipe: net.Socket;
+  // TODO: Refactor init so these init-assertions are not necessary
+  private _endPromise!: Promise<void>;
+  private _pipe!: net.Socket;
   private readonly _pipeFilePath: string;
 
   private _onMoreData(data: Uint8Array) {
@@ -518,7 +519,7 @@ export class CMakeServerClient {
                                             params.environment as proc.EnvironmentVariables);
     const child = this._proc
         = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
-            env: final_env,
+            env: final_env, cwd: params.binaryDir
           });
     log.debug(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', this._onErrorData.bind(this));
@@ -551,7 +552,7 @@ export class CMakeServerClient {
     }, 1000);
   }
 
-  public static async start(params: ClientInit): Promise<CMakeServerClient> {
+  public static async start(config: ConfigurationReader, params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
     const tmpdir = path.join(vscode.workspace.rootPath!, '.vscode');
     // Ensure the binary directory exists
