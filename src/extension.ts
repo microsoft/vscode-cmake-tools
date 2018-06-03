@@ -19,6 +19,8 @@ const log = logging.createLogger('extension');
 
 import CMakeTools from './cmake-tools';
 import rollbar from './rollbar';
+import {DirectoryContext} from '@cmt/workspace';
+import {StateManager} from '@cmt/state';
 
 let INSTANCE: CMakeTools|null = null;
 
@@ -28,8 +30,11 @@ let INSTANCE: CMakeTools|null = null;
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext): Promise<CMakeTools> {
+  // Create a WorkspaceContext for the current workspace. In the future, this will
+  // instantiate for each directory in a workspace
+  const ws = DirectoryContext.createForDirectory(vscode.workspace.rootPath!, new StateManager(context));
   // Create a new instance and initailize.
-  const cmt_pr = CMakeTools.create(context);
+  const cmt_pr = CMakeTools.create(context, ws);
 
   // A register function helps us bind the commands to the extension
   function register<K extends keyof CMakeTools>(name: K) {

@@ -1,7 +1,6 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
-
 import * as chai from 'chai';
 import {expect} from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';

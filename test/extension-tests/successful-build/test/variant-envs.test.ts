@@ -11,7 +11,7 @@ suite('[Environment Variables in Variants]', async () => {
     this.timeout(100000);
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
-    cmt = await CMakeTools.create(testEnv.vsContext);
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -44,5 +44,5 @@ suite('[Environment Variables in Variants]', async () => {
     expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
     expect(cacheEntry.as<string>())
         .to.eq('0cbfb6ae-f2ec-4017-8ded-89df8759c502', '[variantEnv] incorrect environment variable');
-  }).timeout(60000);
+  }).timeout(100000);
 });

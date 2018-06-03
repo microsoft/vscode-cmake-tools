@@ -1,5 +1,5 @@
 import {CMakeTools} from '@cmt/cmake-tools';
-import config from '@cmt/config';
+import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 
 suite('Build', async () => {
@@ -13,7 +13,7 @@ suite('Build', async () => {
     const exe_res = 'output.txt';
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
-    cmt = await CMakeTools.create(testEnv.vsContext);
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -35,14 +35,14 @@ suite('Build', async () => {
     expect(await cmt.configure()).to.be.eq(0);
 
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
-  }).timeout(60000);
+  }).timeout(100000);
 
   test('Build', async () => {
     expect(await cmt.build()).to.be.eq(0);
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(60000);
+  }).timeout(100000);
 
 
   test('Configure and Build', async () => {
@@ -51,21 +51,20 @@ suite('Build', async () => {
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(60000);
+  }).timeout(100000);
 
-  test('Configure and Build', async () => {
+  test('Configure and Build run target', async () => {
     expect(await cmt.configure()).to.be.eq(0);
+
+    const targets = await cmt.targets;
+    const runTestTargetElement = targets.find(item => item.name === 'runTestTarget');
+    expect(runTestTargetElement).to.be.not.an('undefined');
+
+    await cmt.setDefaultTarget('runTestTarget');
     expect(await cmt.build()).to.be.eq(0);
 
-    const result = await testEnv.result.getResultAsJson();
+    const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
+    const result = await resultFile.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(60000);
-
-  test('Test setting watcher', async () => {
-    expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-    await testEnv.setting.changeSetting('buildDirectory', 'Hallo');
-    expect(config.buildDirectory).to.be.eq('Hallo');
-    testEnv.setting.restore();
-    expect(config.buildDirectory).to.be.eq('${workspaceRoot}/build');
-  });
+  }).timeout(100000);
 });

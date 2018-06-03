@@ -307,13 +307,14 @@ function Invoke-TestPreparation {
     $ext = if ($PSVersionTable.Platform -eq "Unix") { "" } else { ".exe" }
     $in_binary = (Get-ChildItem $fakebin_build -Recurse -Filter "FakeOutputGenerator$ext").FullName
 
-    $targets = @("clang-0.25", "gcc-42.1", "gcc-666", "clang-8.1.0")
+    $cfg_dir = Join-Path -Path $fakebin_src -ChildPath "configfiles"
+    $targets = Get-ChildItem -Path $cfg_dir -File | ForEach-Object { $_.BaseName }
 
     foreach ($target in $targets) {
         Copy-Item $in_binary "$fakebin_dest/$target$ext"
     }
 
-    Copy-Item $fakebin_src/configfiles/* -Destination $fakebin_dest -Recurse
+    Copy-Item $cfg_dir/* -Destination $fakebin_dest -Recurse
 
 }
 
@@ -428,6 +429,71 @@ function Install-TestCMake ($Version) {
     return $cmake_bin
 }
 
+function Install-TestNinjaMakeSystem ($Version) {
+    $ErrorActionPreference = "Stop"
+    if ($PSVersionTable.Platform -eq "Unix") {
+        $test_bin_dir = Join-Path $env:HOME ".local/share/CMakeTools/test-ninja-root/$Version"
+    }
+    else {
+        $test_bin_dir = Join-Path $env:AppData "CMakeTools/test-ninja-root/$Version"
+    }
+
+    if ($PSVersionTable.Platform -eq "Unix") {
+        $ninja_bin = Join-Path $test_bin_dir "ninja"
+    }
+    else {
+        $ninja_bin = Join-Path $test_bin_dir "ninja.exe"
+    }
+
+    if (Test-Path $ninja_bin -PathType Leaf) {
+        Write-Host "Using existing Ninja test root at $test_bin_dir"
+        return $ninja_bin
+    }
+
+    $ninja_files_url = "https://github.com/ninja-build/ninja/releases/download/v$Version"
+
+    Write-Host "Installing Ninja $Version for testing at $test_bin_dir"
+
+    $tmp_test_bin_dir = "$test_bin_dir-tmp"
+    if (Test-Path $tmp_test_bin_dir) {
+        Remove-Item $tmp_test_bin_dir -Recurse
+    }
+    New-Item $tmp_test_bin_dir -ItemType Directory -Force | Out-Null
+
+    if (Test-Path $test_bin_dir) {
+        Remove-Item $test_bin_dir -Recurse
+    }
+    New-Item $test_bin_dir -ItemType Directory -Force | Out-Null
+
+
+    $zip_url = ""
+    if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) {
+        $zip_url = "$ninja_files_url/ninja-win.zip"
+    } elseif ($PSVersionTable.OS.StartsWith("Linux")) {
+        $zip_url = "$ninja_files_url/ninja-linux.zip"
+    } elseif ($PSVersionTable.OS.StartsWith("Darwin")) {
+        $zip_url = "$ninja_files_url/ninja-mac.zip"
+    }
+    Write-Host "URL dir: $zip_url"
+
+    $zip_file = Join-Path "$tmp_test_bin_dir" "ninja.zip"
+    Write-Host "Downloading $zip_url and saving it to $zip_file"
+    Get-RemoteFile -Url $zip_url -Path $zip_file
+    Expand-Archive $zip_file -DestinationPath $tmp_test_bin_dir
+    Remove-Item "$tmp_test_bin_dir/ninja.zip"
+    Copy-Item -Path "$tmp_test_bin_dir/*" -Destination "$test_bin_dir/" -Force
+
+    if (!$PSVersionTable.OS.StartsWith("Microsoft Windows")) {
+        chmod 755 $ninja_bin
+    }
+
+    Remove-Item $tmp_test_bin_dir -Recurse
+
+    Write-Host "Successfully created Ninja installation for testing at $test_bin_dir"
+    & $ninja_bin --version | Write-Host
+    return $ninja_bin
+}
+
 function Invoke-VSCodeTest {
     [CmdletBinding(PositionalBinding = $false)]
     param(
@@ -467,4 +533,31 @@ function Invoke-SmokeTest($Name) {
     Invoke-VSCodeTest "CMake Tools: $Name" `
         -TestsPath "$repo_dir/out/test/extension-tests/$Name" `
         -Workspace "$repo_dir/test/extension-tests/$Name/project-folder"
+}
+
+function Invoke-MochaTest {
+    [CmdletBinding(PositionalBinding = $false)]
+    param(
+        # Description for the test
+        [Parameter(Position = 0, Mandatory)]
+        [string]
+        $Description
+    )
+    $ErrorActionPreference = "Stop"
+    $repo_dir = Split-Path $PSScriptRoot -Parent
+    $test_bin = Join-Path $repo_dir "/node_modules/mocha/bin/_mocha"
+    $test_runner_args = @(
+        $test_bin;
+        "--ui"; "tdd";
+        "-r"; "ts-node/register";
+        "${repo_dir}/test/backend-unit-tests/**/*.test.ts")
+
+    $test_runner_all_args = $test_runner_args -join ' '
+    Invoke-ChronicCommand "Executing VSCode test: $Description" @test_runner_args
+}
+
+function Build-DevDocs() {
+    $ErrorActionPreference = "Stop"
+    $yarn = Find-Program yarn
+    Invoke-ChronicCommand "Generating developer documentation" $yarn run docs
 }
