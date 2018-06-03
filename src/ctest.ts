@@ -386,7 +386,7 @@ export class CTestDriver implements vscode.Disposable {
       log.info('CTest path is not set');
       return this.tests = [];
     }
-	
+
     const build_config = driver.currentBuildType;
     const result
         = await driver
