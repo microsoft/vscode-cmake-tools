@@ -12,6 +12,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     buildBeforeRun: true,
     clearOutputBeforeBuild: true,
     configureSettings: {},
+    cacheInit: null,
     preferredGenerators: [],
     generator: null,
     toolset: null,

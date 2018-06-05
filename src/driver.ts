@@ -532,12 +532,27 @@ Please install or configure a preferred generator, or update settings.json or yo
           ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
     }
     if (this._kit.toolchainFile) {
-
       log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
       flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
     }
     if (this._kit.cmakeSettings) {
       flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
+    }
+
+    const cache_init_conf = this.ws.config.cacheInit;
+    let cache_init: string[] = [];
+    if (cache_init_conf === null) {
+      // Do nothing
+    } else if (typeof cache_init_conf === 'string') {
+      cache_init = [cache_init_conf];
+    } else {
+      cache_init = cache_init_conf;
+    }
+    for (let init of cache_init) {
+      if (!path.isAbsolute(init)) {
+        init = path.join(this.sourceDir, init);
+      }
+      flags.push('-C', init);
     }
 
     // Get expanded configure environment

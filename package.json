@@ -267,10 +267,21 @@
           "description": "CMake variables to set on the command line",
           "scope": "resource"
         },
-        "cmake.initialBuildType": {
-          "type": "null",
-          "default": null,
-          "description": "[[This option is deprecated and will no longer be used]]",
+        "cmake.cacheInit": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Path to an cache-initializing CMake file"
+            },
+            {
+              "type": "array",
+              "description": "List of cache initializer files",
+              "items": {
+                "type": "string",
+                "description": "A cache initializing CMake file"
+              }
+            }
+          ],
           "scope": "resource"
         },
         "cmake.preferredGenerators": {
