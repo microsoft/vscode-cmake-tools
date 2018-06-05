@@ -295,9 +295,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> { return cb(); }
 
   private async _refreshExpansions() {
-    log.debug("Run _refreshExpansions");
+    log.debug('Run _refreshExpansions');
     return this.doRefreshExpansions(async () => {
-      log.debug("Run _refreshExpansions cb");
+      log.debug('Run _refreshExpansions cb');
       const opts = this.expansionOptions;
       this._sourceDirectory = util.normalizePath(await expand.expandString(this.ws.config.sourceDirectory, opts));
       this._binaryDir = util.normalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
@@ -484,7 +484,7 @@ Please install or configure a preferred generator, or update settings.json or yo
   get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
 
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
-    log.debug("Start configure ", extra_args);
+    log.debug('Start configure ', extra_args);
     const pre_check_ok = await this._beforeConfigureOrBuild();
     if (!pre_check_ok) {
       return -1;
@@ -554,8 +554,7 @@ Please install or configure a preferred generator, or update settings.json or yo
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
-    // This resets for the cms-driver the client
-    // clears the configuration of cmake server
+    // Expand all important paths
     await this._refreshExpansions();
 
     const retc = await this.doConfigure(expanded_flags, consumer);
@@ -565,7 +564,7 @@ Please install or configure a preferred generator, or update settings.json or yo
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
-    log.debug("Start build", target);
+    log.debug('Start build', target);
     const pre_build_ok = await this.doPreBuild();
     if (!pre_build_ok) {
       return -1;
