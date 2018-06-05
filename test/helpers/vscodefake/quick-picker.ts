@@ -8,21 +8,21 @@ export interface QuickPickerHandleStrategy {
 
 export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
 
-  constructor(readonly defaultKitLabel: string, readonly excludeKitLabel?: string) {}
+  constructor(readonly defaultKitLabel: RegExp, readonly excludeKitLabel?: RegExp) {}
 
   public get identifier(): string { return 'Select a Kit'; }
 
   public handleQuickPick(items: any): any {
     let defaultKit: string[]|undefined = items.filter((item: any) => {
       const name: string = item.label;
-      return name ? (name === this.defaultKitLabel ? item : undefined) : undefined;
+      return name ? (this.defaultKitLabel.test(name) ? item : undefined) : undefined;
     });
 
     if (!defaultKit || defaultKit.length === 0) {
       defaultKit = items.filter((item: any) => {
         const name: string = item.label;
-        return name ? (name.includes(this.defaultKitLabel)
-                               && (this.excludeKitLabel ? !name.includes(this.excludeKitLabel) : true)
+        return name ? (this.defaultKitLabel.test(name)
+                               && (this.excludeKitLabel ? !this.excludeKitLabel.test(name) : true)
                            ? item
                            : undefined)
                     : undefined;
