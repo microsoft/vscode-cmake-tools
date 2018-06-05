@@ -3,7 +3,7 @@
  */
 import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
-import * as debugger_config from '@cmt/debugger';
+import * as debugger_mod from '@cmt/debugger';
 import {versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
@@ -768,8 +768,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     // Ask the user if we don't already have a target
     await this.selectLaunchTarget();
-    const chosen = await this.getCurrentLaunchTarget();
-    return chosen;
+    return this.getCurrentLaunchTarget();
   }
 
   /**
@@ -813,13 +812,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let debug_config;
     try {
       const cache = await CMakeCache.fromPath(drv.cachePath);
-      debug_config = await debugger_config.getDebugConfigurationFromCache(cache, target, process.platform);
-
-      log.info( "Debug configuration from cache: ", JSON.stringify(debug_config));
+      debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, target, process.platform);
+      log.info('Debug configuration from cache: ', JSON.stringify(debug_config));
     } catch (error) {
       vscode.window
           .showErrorMessage(error.message, {
-            title: 'Learn more',
+            title: 'Debugging documentation',
             isLearnMore: true,
           })
           .then(item => {
@@ -831,12 +829,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
+    if (debug_config === null) {
+      vscode.window.showErrorMessage('Unable to generate a debugging configuration.');
+      return null;
+    }
+
     // add debug configuration from settings
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
-    log.info( "Starting debugger with following configuration. ", JSON.stringify({
+    log.info('Starting debugger with following configuration.', JSON.stringify({
       workspace: vscode.workspace.workspaceFolders![0].uri.toString(),
-      config: debug_config}));
+      config: debug_config,
+    }));
     await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
     return vscode.debug.activeDebugSession!;
   }
