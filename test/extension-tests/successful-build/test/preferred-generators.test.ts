@@ -3,10 +3,11 @@ import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@te
 import {ITestCallbackContext} from 'mocha';
 
 interface KitEnvironment {
-  defaultKit: string;
-  excludeKit?: string;
-  expectedDefaultGenerator: string;
+  defaultKit: RegExp;
+  excludeKit?: RegExp;
+  expectedDefaultGenerator: RegExp;
   path?: string[];
+  isVsNewerThan14?: boolean;
 }
 
 let workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
@@ -22,84 +23,112 @@ if (workername === undefined) {
 const DEFAULT_VS_KITS: KitEnvironment[] = [
   // Visual Studio 2017
   {
-    defaultKit: 'Visual Studio Community 2017',
-    excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017'
+    defaultKit: /^Visual Studio Community 2017/,
+    excludeKit: /Preview/,
+    expectedDefaultGenerator: /^Visual Studio 15 2017/,
+    isVsNewerThan14: true
   },
-  {defaultKit: 'Visual Studio Community 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
   {
-    defaultKit: 'Visual Studio Professional 2017',
-    excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017'
+    defaultKit: /^Visual Studio Community 2017 Preview/,
+    expectedDefaultGenerator: /^Visual Studio 15 2017/,
+    isVsNewerThan14: true
   },
-  {defaultKit: 'Visual Studio Professional 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
   {
-    defaultKit: 'Visual Studio Enterprise 2017',
-    excludeKit: 'Preview',
-    expectedDefaultGenerator: 'Visual Studio 15 2017'
+    defaultKit: /^Visual Studio Professional 2017/,
+    excludeKit: /Preview/,
+    expectedDefaultGenerator: /Visual Studio 15 2017/,
+    isVsNewerThan14: true
   },
-  {defaultKit: 'Visual Studio Enterprise 2017 Preview', expectedDefaultGenerator: 'Visual Studio 15 2017'},
+  {
+    defaultKit: /^Visual Studio Professional 2017 Preview/,
+    expectedDefaultGenerator: /^Visual Studio 15 2017/,
+    isVsNewerThan14: true
+  },
+  {
+    defaultKit: /^Visual Studio Enterprise 2017/,
+    excludeKit: /Preview/,
+    expectedDefaultGenerator: /^Visual Studio 15 2017/,
+    isVsNewerThan14: true
+  },
+  {
+    defaultKit: /^Visual Studio Enterprise 2017 Preview/,
+    expectedDefaultGenerator: /^Visual Studio 15 2017/,
+    isVsNewerThan14: true
+  },
 
   // Visual Studio 2015
-  {defaultKit: 'VisualStudio.14.0', expectedDefaultGenerator: 'Visual Studio 14 2015', path: ['']},
+  {
+    defaultKit: /^VisualStudio.14.0/,
+    expectedDefaultGenerator: /^Visual Studio 14 2015/,
+    path: [''],
+    isVsNewerThan14: false
+  },
 
   // Visual Studio 2012
-  {defaultKit: 'VisualStudio.11.0', expectedDefaultGenerator: 'Visual Studio 11 2012', path: ['']},
+  {
+    defaultKit: /^VisualStudio.11.0/,
+    expectedDefaultGenerator: /^Visual Studio 11 2012/,
+    path: [''],
+    isVsNewerThan14: false
+  },
 ];
 
 const DEFAULT_CYGWIN_KITS: KitEnvironment[] = [
-  {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']},
-  {defaultKit: 'Clang 4.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: ['c:\\cygwin64\\bin']}
+  {defaultKit: /^GCC 6.4.0/, expectedDefaultGenerator: /^Unix Makefiles/, path: ['c:\\cygwin64\\bin']},
+  {defaultKit: /^Clang 4.0.1/, expectedDefaultGenerator: /^Unix Makefiles/, path: ['c:\\cygwin64\\bin']}
 ];
 
 const DEFAULT_MINGW_KITS: KitEnvironment[] = [
   {
-    defaultKit: 'GCC 7.3.0',
-    expectedDefaultGenerator: 'MinGW Makefiles',
+    defaultKit: /^GCC 7.3.0/,
+    expectedDefaultGenerator: /^MinGW Makefiles/,
     path: [
       'C:\\Program Files\\mingw-w64\\x86_64-7.3.0-posix-seh-rt_v5-rev0\\mingw64\\bin',
       'C:\\mingw-w64\\x86_64-7.3.0-posix-seh-rt_v5-rev0\\mingw64\\bin'
     ]
   },
   {
-    defaultKit: 'GCC 7.2.0',
-    expectedDefaultGenerator: 'MinGW Makefiles',
+    defaultKit: /^GCC 7.2.0/,
+    expectedDefaultGenerator: /^MinGW Makefiles/,
     path: [
       'C:\\Program Files\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin',
       'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
     ]
   },
   {
-    defaultKit: 'GCC 6.3.0',
-    expectedDefaultGenerator: 'MinGW Makefiles',
+    defaultKit: /^GCC 6.3.0/,
+    expectedDefaultGenerator: /^MinGW Makefiles/,
     path: [
       'C:\\Program Files\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin',
       'C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin'
     ]
   },
-  {defaultKit: 'GCC 5.3.0', expectedDefaultGenerator: 'MinGW Makefiles', path: ['C:\\MinGW\\bin']}
+  {defaultKit: /^GCC 5.3.0/, expectedDefaultGenerator: /^MinGW Makefiles/, path: ['C:\\MinGW\\bin']}
 ];
 
 const DEFAULT_WINDOWS_KITS: KitEnvironment[] = DEFAULT_VS_KITS.concat(DEFAULT_CYGWIN_KITS, DEFAULT_MINGW_KITS);
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
-  ['win32']: DEFAULT_WINDOWS_KITS.concat(
-      [{defaultKit: 'Clang 5.0.1', expectedDefaultGenerator: 'Unix Makefiles', path: [' C:\\Program Files\\LLVM\\bin']}]),
+  ['win32']: DEFAULT_WINDOWS_KITS.concat([{
+    defaultKit: /^Clang 5.0.1/,
+    expectedDefaultGenerator: /^Unix Makefiles/,
+    path: [' C:\\Program Files\\LLVM\\bin']
+  }]),
   ['Visual Studio 2017']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2017 Preview']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2015']: DEFAULT_WINDOWS_KITS,
   ['linux']: [
-    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
-    {defaultKit: 'GCC 6.4.0', expectedDefaultGenerator: 'Unix Makefiles'}
+    {defaultKit: /Clang/, expectedDefaultGenerator: /Unix Makefiles/},
+    {defaultKit: /GCC/, expectedDefaultGenerator: /Unix Makefiles/}
   ],
   ['darwin']: [
-    {defaultKit: 'Clang', expectedDefaultGenerator: 'Unix Makefiles'},
-    {defaultKit: 'GCC', expectedDefaultGenerator: 'Unix Makefiles'}
+    {defaultKit: /^Clang/, expectedDefaultGenerator: /^Unix Makefiles/},
+    {defaultKit: /^GCC/, expectedDefaultGenerator: /^Unix Makefiles/}
   ],
   // This is a special case for travis
   ['osx']: [{
-    defaultKit: 'Clang',
-    expectedDefaultGenerator: 'Unix Makefiles',
+    defaultKit: /^Clang/,
+    expectedDefaultGenerator: /^Unix Makefiles/,
     path: [
       '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin',
       '/Applications/Xcode.app/Contents/Developer/usr/bin',
@@ -116,12 +145,12 @@ interface CMakeContext {
 }
 
 // This exactly matches the kit name
-function exactKitCheck(kitName: string, defaultKit: string): boolean { return kitName === defaultKit; }
+function exactKitCheck(kitName: string, defaultKit: RegExp): boolean { return defaultKit.test(kitName); }
 
 // This only does a fuzzy check with the ability to exclude kits which have a substring included
 // in their name.
-function fuzzyKitCheck(kitName: string, defaultKit: string, excludeKit?: string): boolean {
-  return kitName.includes(defaultKit) && (excludeKit ? !kitName.includes(excludeKit) : true);
+function fuzzyKitCheck(kitName: string, defaultKit: RegExp, excludeKit?: RegExp): boolean {
+  return defaultKit.test(kitName) && (excludeKit ? !excludeKit.test(kitName) : true);
 }
 
 // Check if the kit provided by the buildSystem is available
@@ -234,7 +263,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            context.testEnv.config.updatePartial({preferredGenerators: []});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
-           expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);
+           expect(result['cmake-generator']).to.match(buildSystem.expectedDefaultGenerator);
            expect(context.testEnv.errorMessagesQueue.length).to.eql(0);
          });
 
@@ -254,9 +283,9 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            const result = await context.testEnv.result.getResultAsJson();
 
            expect(result['cmake-generator'])
-               .to.eql(context.buildSystem.defaultKit.includes('Visual Studio')
-                           ? 'NMake Makefiles'
-                           : context.buildSystem.expectedDefaultGenerator);
+               .to.be.match((context.buildSystem.isVsNewerThan14 === true)
+                                ? /^NMake Makefiles/
+                                : context.buildSystem.expectedDefaultGenerator);
 
            expect(context.testEnv.errorMessagesQueue.length).to.eql(0);
          });
@@ -301,7 +330,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            context.testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles', 'MinGW Makefiles']});
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();
-           expect(result['cmake-generator']).to.eql(buildSystem.expectedDefaultGenerator);
+           expect(result['cmake-generator']).to.match(buildSystem.expectedDefaultGenerator);
            expect(context.testEnv.errorMessagesQueue.length)
                .to.eql(0, 'Wrong message ' + context.testEnv.errorMessagesQueue[0]);
          });
