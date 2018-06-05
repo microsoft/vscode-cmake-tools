@@ -28,14 +28,22 @@ const DEFAULT_VS_KITS: KitEnvironment[] = [
     expectedDefaultGenerator: /^Visual Studio 15 2017/,
     isVsNewerThan14: true
   },
-  {defaultKit: /^Visual Studio Community 2017 Preview/, expectedDefaultGenerator: /^Visual Studio 15 2017/, isVsNewerThan14: true},
+  {
+    defaultKit: /^Visual Studio Community 2017 Preview/,
+    expectedDefaultGenerator: /^Visual Studio 15 2017/,
+    isVsNewerThan14: true
+  },
   {
     defaultKit: /^Visual Studio Professional 2017/,
     excludeKit: /Preview/,
     expectedDefaultGenerator: /Visual Studio 15 2017/,
     isVsNewerThan14: true
   },
-  {defaultKit: /^Visual Studio Professional 2017 Preview/, expectedDefaultGenerator: /^Visual Studio 15 2017/, isVsNewerThan14: true},
+  {
+    defaultKit: /^Visual Studio Professional 2017 Preview/,
+    expectedDefaultGenerator: /^Visual Studio 15 2017/,
+    isVsNewerThan14: true
+  },
   {
     defaultKit: /^Visual Studio Enterprise 2017/,
     excludeKit: /Preview/,
@@ -49,10 +57,20 @@ const DEFAULT_VS_KITS: KitEnvironment[] = [
   },
 
   // Visual Studio 2015
-  {defaultKit: /^VisualStudio.14.0/, expectedDefaultGenerator: /^Visual Studio 14 2015/, path: [''], isVsNewerThan14: false},
+  {
+    defaultKit: /^VisualStudio.14.0/,
+    expectedDefaultGenerator: /^Visual Studio 14 2015/,
+    path: [''],
+    isVsNewerThan14: false
+  },
 
   // Visual Studio 2012
-  {defaultKit: /^VisualStudio.11.0/, expectedDefaultGenerator: /^Visual Studio 11 2012/, path: [''], isVsNewerThan14: false},
+  {
+    defaultKit: /^VisualStudio.11.0/,
+    expectedDefaultGenerator: /^Visual Studio 11 2012/,
+    path: [''],
+    isVsNewerThan14: false
+  },
 ];
 
 const DEFAULT_CYGWIN_KITS: KitEnvironment[] = [
@@ -91,14 +109,17 @@ const DEFAULT_MINGW_KITS: KitEnvironment[] = [
 const DEFAULT_WINDOWS_KITS: KitEnvironment[] = DEFAULT_VS_KITS.concat(DEFAULT_CYGWIN_KITS, DEFAULT_MINGW_KITS);
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
-  ['win32']: DEFAULT_WINDOWS_KITS.concat(
-      [{defaultKit: /^Clang 5.0.1/, expectedDefaultGenerator: /^Unix Makefiles/, path: [' C:\\Program Files\\LLVM\\bin']}]),
+  ['win32']: DEFAULT_WINDOWS_KITS.concat([{
+    defaultKit: /^Clang 5.0.1/,
+    expectedDefaultGenerator: /^Unix Makefiles/,
+    path: [' C:\\Program Files\\LLVM\\bin']
+  }]),
   ['Visual Studio 2017']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2017 Preview']: DEFAULT_WINDOWS_KITS,
   ['Visual Studio 2015']: DEFAULT_WINDOWS_KITS,
   ['linux']: [
-    {defaultKit: /^Clang/, expectedDefaultGenerator: /^Unix Makefiles/},
-    {defaultKit: /^GCC/, expectedDefaultGenerator: /^Unix Makefiles/}
+    {defaultKit: /Clang/, expectedDefaultGenerator: /Unix Makefiles/},
+    {defaultKit: /GCC/, expectedDefaultGenerator: /Unix Makefiles/}
   ],
   ['darwin']: [
     {defaultKit: /^Clang/, expectedDefaultGenerator: /^Unix Makefiles/},
@@ -262,8 +283,9 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            const result = await context.testEnv.result.getResultAsJson();
 
            expect(result['cmake-generator'])
-               .to.be.match((context.buildSystem.isVsNewerThan14 === true) ? /^NMake Makefiles/
-                           : context.buildSystem.expectedDefaultGenerator);
+               .to.be.match((context.buildSystem.isVsNewerThan14 === true)
+                                ? /^NMake Makefiles/
+                                : context.buildSystem.expectedDefaultGenerator);
 
            expect(context.testEnv.errorMessagesQueue.length).to.eql(0);
          });
