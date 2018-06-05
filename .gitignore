@@ -4,7 +4,7 @@ node_modules
 *.old
 build/
 test/fakebin/
-.vscode-test
+.vscode-test/
 .ci-build
 *.vsix
 npm-debug.log
