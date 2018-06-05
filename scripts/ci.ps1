@@ -133,10 +133,4 @@ if ($DocDestination) {
     Copy-Item $doc_build -Destination $DocDestination -Recurse
 }
 
-$vsce = Find-Program vsce
-if (! $vsce) {
-    Write-Warning "You don't have 'vsce' installed. We won't generate a .vsix package"
-}
-else {
-    Invoke-ChronicCommand "Generating VSIX package" $vsce package
-}
+Invoke-ChronicCommand "Generating VSIX package" $yarn package
