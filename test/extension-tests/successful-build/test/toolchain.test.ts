@@ -16,7 +16,7 @@ suite('[Toolchain Substitution]', async () => {
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                      'build',
                                      'output.txt',
-                                     'Test Toolchain');
+                                     /Test Toolchain/);
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // Set preferred generators

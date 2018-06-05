@@ -10,7 +10,7 @@ import {FakeContextDefinition} from '../vscodefake/extensioncontext';
 import {QuickPickerHandleStrategy, SelectKitPickerHandle} from '../vscodefake/quick-picker';
 
 export class DefaultEnvironment {
-  sandbox: sinon.SinonSandbox = sinon.sandbox.create();
+  sandbox: sinon.SinonSandbox = sinon.createSandbox();
   projectFolder: ProjectRootHelper;
   kitSelection: SelectKitPickerHandle;
   result: TestProgramResult;
@@ -18,17 +18,18 @@ export class DefaultEnvironment {
   public config = ConfigurationReader.createForDirectory(vscode.workspace.rootPath!);
   public wsContext = new DirectoryContext(this.config, new StateManager(this.vsContext));
   errorMessagesQueue: string[] = [];
+  public vs_debug_start_debugging: sinon.SinonStub;
 
   public constructor(projectRoot: string,
                      buildLocation: string,
                      executableResult: string,
-                     defaultKitLabel?: string,
-                     excludeKitLabel?: string) {
+                     defaultKitLabel?: RegExp,
+                     excludeKitLabel?: RegExp) {
     this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
     this.result = new TestProgramResult(this.projectFolder.buildDirectory.location, executableResult);
 
     if (!defaultKitLabel) {
-      defaultKitLabel = process.platform === 'win32' ? 'Visual' : '';
+      defaultKitLabel = process.platform === 'win32' ? /^Visual/ : /\s\S/;
     }
 
     this.kitSelection = new SelectKitPickerHandle(defaultKitLabel, excludeKitLabel);
@@ -40,6 +41,7 @@ export class DefaultEnvironment {
 
       return Promise.resolve(undefined);
     });
+    this.vs_debug_start_debugging = this.sandbox.stub(vscode.debug, 'startDebugging');
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
   }
 
