@@ -1,7 +1,9 @@
 /**
  * Root of the extension
  */
+import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import * as debugger_config from '@cmt/debugger';
 import {versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
@@ -696,7 +698,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.selectLaunchTarget`
    */
-  async selectLaunchTarget(): Promise<string|null> {
+  async selectLaunchTarget(): Promise<string|null> { return this.setLaunchTargetByName(); }
+
+  /**
+   * Used by vscode and as test interface
+   */
+  async setLaunchTargetByName(name?: string|null) {
     if (await this._needsReconfigure()) {
       const rc = await this.configure();
       if (rc !== 0) {
@@ -713,7 +720,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                             description: '',
                                             detail: e.path,
                                           }));
-    const chosen = await vscode.window.showQuickPick(choices);
+    let chosen: {label: string, detail: string}|undefined = undefined;
+    if (!name) {
+      chosen = await vscode.window.showQuickPick(choices);
+    } else {
+      chosen = choices.find(choice => choice.label == name);
+    }
     if (!chosen) {
       return null;
     }
@@ -722,12 +734,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return chosen.detail;
   }
 
+  async getCurrentLaunchTarget(): Promise<api.ExecutableTarget|null> {
+    const target_name = this.workspaceContext.state.launchTargetName;
+    const target = (await this.executableTargets).find(e => e.name == target_name);
+
+    if (!target) {
+      return null;
+    }
+    return target;
+  }
+
   /**
    * Implementation of `cmake.launchTargetPath`
    */
   async launchTargetPath(): Promise<string|null> {
-    const target_name = this.workspaceContext.state.launchTargetName;
-    const chosen = (await this.executableTargets).find(e => e.name == target_name);
+    const chosen = await this.getCurrentLaunchTarget();
     if (!chosen) {
       log.showChannel();
       log.warning('=======================================================');
@@ -740,15 +761,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return chosen.path;
   }
 
-  launchTargetProgramPath(): Promise<string|null> { return this.launchTargetPath(); }
-
-  async getLaunchTargetPath(): Promise<string|null> {
-    const current = await this.launchTargetPath();
+  async getOrSelectLaunchTarget(): Promise<api.ExecutableTarget|null> {
+    const current = await this.getCurrentLaunchTarget();
     if (current) {
       return current;
     }
     // Ask the user if we don't already have a target
-    const chosen = await this.selectLaunchTarget();
+    await this.selectLaunchTarget();
+    const chosen = await this.getCurrentLaunchTarget();
     return chosen;
   }
 
@@ -774,42 +794,49 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           });
       return null;
     }
-    // Ensure that we've configured the project already. If we haven't, `getLaunchTargetPath` won't see any executable
-    // targets and may show an uneccessary prompt to the user
+    // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
+    // executable targets and may show an uneccessary prompt to the user
     if (await this._needsReconfigure()) {
       const rc = await this.configure();
       if (rc !== 0) {
+        log.debug('Configuration of project failed.');
         return null;
       }
     }
-    const target_path = await this.getLaunchTargetPath();
-    if (!target_path) {
+    const target = await this.getOrSelectLaunchTarget();
+    if (!target) {
       // The user has nothing selected and cancelled the prompt to select a target.
+      log.debug('No target selected.');
       return null;
     }
-    const is_msvc
-        = drv.compilerID ? drv.compilerID.includes('MSVC') : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
-    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb';
-    const debug_config: vscode.DebugConfiguration = {
-      type: is_msvc ? 'cppvsdbg' : 'cppdbg',
-      name: `Debug ${target_path}`,
-      request: 'launch',
-      cwd: '${workspaceRoot}',
-      args: [],
-      MIMode: mi_mode,
-    };
-    if (mi_mode == 'gdb') {
-      debug_config['setupCommands'] = [
-        {
-          description: 'Enable pretty-printing for gdb',
-          text: '-enable-pretty-printing',
-          ignoreFailures: true,
-        },
-      ];
+
+    let debug_config;
+    try {
+      const cache = await CMakeCache.fromPath(drv.cachePath);
+      debug_config = await debugger_config.getDebugConfigurationFromCache(cache, target, process.platform);
+
+      log.info( "Debug configuration from cache: ", JSON.stringify(debug_config));
+    } catch (error) {
+      vscode.window
+          .showErrorMessage(error.message, {
+            title: 'Learn more',
+            isLearnMore: true,
+          })
+          .then(item => {
+            if (item && item.isLearnMore) {
+              open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+            }
+          });
+      log.debug('Problem to get debug from cache.', error);
+      return null;
     }
+
+    // add debug configuration from settings
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
-    debug_config.program = target_path;
+    log.info( "Starting debugger with following configuration. ", JSON.stringify({
+      workspace: vscode.workspace.workspaceFolders![0].uri.toString(),
+      config: debug_config}));
     await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
     return vscode.debug.activeDebugSession!;
   }
@@ -820,15 +847,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.launchTarget`
    */
   async launchTarget() {
-    const target_path = await this.getLaunchTargetPath();
-    if (!target_path) {
+    const target = await this.getOrSelectLaunchTarget();
+    if (!target) {
       // The user has nothing selected and cancelled the prompt to select
       // a target.
       return null;
     }
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal('CMake/Launch');
-    this._launchTerminal.sendText(target_path);
+    this._launchTerminal.sendText(target.path);
     this._launchTerminal.show();
     return this._launchTerminal;
   }
