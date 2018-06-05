@@ -213,7 +213,7 @@ export class VariantManager implements vscode.Disposable {
     this._variantFileWatcher.onAnyEvent(
         e => { rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`, () => this._reloadVariantsFile(e.fsPath)); });
 
-    config.onChange<'defaultVariants'>('defaultVariants', () => {
+    config.onChange('defaultVariants', () => {
       rollbar.invokeAsync(`Reloading variants from settings`, () => this._reloadVariantsFile());
     });
   }

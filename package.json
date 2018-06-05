@@ -531,29 +531,31 @@
         "cmake.defaultVariants": {
           "type": "object",
           "$schema": "schemas/variants-schema.json",
-          "buildType": {
-            "default": "debug",
-            "description": "The build type",
-            "choices": {
-              "debug": {
-                "short": "Debug",
-                "long": "Emit debug information without performing optimizations",
-                "buildType": "Debug"
-              },
-              "release": {
-                "short": "Release",
-                "long": "Enable optimizations, omit debug info",
-                "buildType": "Release"
-              },
-              "minsize": {
-                "short": "MinSizeRel",
-                "long": "Optimize for smallest binary size",
-                "buildType": "MinSizeRel"
-              },
-              "reldeb": {
-                "short": "RelWithDebInfo",
-                "long": "Perform optimizations AND include debugging information",
-                "buildType": "RelWithDebInfo"
+          "default": {
+            "buildType": {
+              "default": "debug",
+              "description": "The build type",
+              "choices": {
+                "debug": {
+                  "short": "Debug",
+                  "long": "Emit debug information without performing optimizations",
+                  "buildType": "Debug"
+                },
+                "release": {
+                  "short": "Release",
+                  "long": "Enable optimizations, omit debug info",
+                  "buildType": "Release"
+                },
+                "minsize": {
+                  "short": "MinSizeRel",
+                  "long": "Optimize for smallest binary size",
+                  "buildType": "MinSizeRel"
+                },
+                "reldeb": {
+                  "short": "RelWithDebInfo",
+                  "long": "Perform optimizations AND include debugging information",
+                  "buildType": "RelWithDebInfo"
+                }
               }
             }
           },
