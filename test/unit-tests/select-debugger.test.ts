@@ -32,7 +32,10 @@ suite('Select debugger', async () => {
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
     const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
-
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
@@ -51,7 +54,10 @@ suite('Select debugger', async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
     const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
-
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
@@ -78,7 +84,10 @@ suite('Select debugger', async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
     const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
-
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
@@ -94,7 +103,10 @@ suite('Select debugger', async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
     const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin');
-
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('lldb');
     expect(config.type).to.be.eq('cppdbg');
@@ -110,7 +122,10 @@ suite('Select debugger', async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-g++.txt'));
 
     const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux');
-
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
@@ -123,7 +138,10 @@ suite('Select debugger', async () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-msvc-com-2017.txt'));
 
     const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'win32');
-
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
     expect(config.name).to.be.eq('Debug Test');
     expect(config.type).to.be.eq('cppvsdbg');
   });

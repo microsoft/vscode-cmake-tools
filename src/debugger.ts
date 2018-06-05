@@ -4,7 +4,7 @@ import * as proc from '@cmt/proc';
 
 
 export enum DebuggerType {
-  VISUALSTUDIO = 'Visual Studio',
+  VisualStudio = 'Visual Studio',
   LLDB = 'LLDB',
   GDB = 'GDB',
   // LAUNCH // Future
@@ -93,14 +93,25 @@ function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
   };
 }
 
-const possible_debuggers: {
-  [debugger_name: string]:
-      {mi_mode: string, config_factory: (debugger_path: string, target: ExecutableTarget) => Promise<Configuration>}
-}
-= {
-    gdb: {mi_mode: 'gdb', config_factory: createGDBDebugConfiguration},
-    lldb: {mi_mode: 'lldb', config_factory: createLLDBDebugConfiguration}
+type DebuggerMIMode = 'gdb'|'lldb';
+
+type DebuggerGenerators = {
+  [MIMode in DebuggerMIMode]: {
+    miMode: MIMode,
+    createConfig(debuggerPath: string, target: ExecutableTarget): Promise<Configuration>,
   };
+};
+
+const DEBUG_GEN: DebuggerGenerators = {
+  gdb: {
+    miMode: 'gdb',
+    createConfig: createGDBDebugConfiguration,
+  },
+  lldb: {
+    miMode: 'lldb',
+    createConfig: createLLDBDebugConfiguration,
+  },
+};
 
 function searchForCompilerPathInCache(cache: CMakeCache): string|null {
   const languages = ['CXX', 'C', 'CUDA'];
@@ -114,9 +125,8 @@ function searchForCompilerPathInCache(cache: CMakeCache): string|null {
   return null;
 }
 
-
 export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string):
-    Promise<Configuration> {
+    Promise<Configuration|null> {
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
     const linker = entry.value as string;
@@ -144,11 +154,11 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   }
 
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
-  const description = possible_debuggers[debugger_name];
+  const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /(g\+\+|gcc)+/gi;
-  const gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.mi_mode);
-  if (gdb_debugger_path.search(new RegExp(description.mi_mode)) != -1) {
-    return description.config_factory(gdb_debugger_path, target);
+  const gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.miMode);
+  if (gdb_debugger_path.search(new RegExp(description.miMode)) != -1) {
+    return description.createConfig(gdb_debugger_path, target);
   }
 
   const is_msvc_compiler = compiler_path.endsWith('cl.exe');
@@ -156,10 +166,10 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     return createMSVCDebugConfiguration(target);
   }
 
-  return {type: '', name: '', request: ''} as Configuration;
+  return null;
 }
 
-export async function checkDebugger(debugger_path: string): Promise<boolean> {
-  const res = await proc.execute(debugger_path, ['--version'], null, {shell: true}).result;
+export async function checkDebugger(debuggerPath: string): Promise<boolean> {
+  const res = await proc.execute(debuggerPath, ['--version'], null, {shell: true}).result;
   return res.retc == 0;
 }
