@@ -748,7 +748,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.launchTargetPath`
    */
   async launchTargetPath(): Promise<string|null> {
-    const executable = await this.PrepareLaunchTargetExecutable();
+    const executable = await this.prepareLaunchTargetExecutable();
     if (!executable) {
       log.showChannel();
       log.warning('=======================================================');
@@ -761,7 +761,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return executable.path;
   }
 
-  async PrepareLaunchTargetExecutable(): Promise<api.ExecutableTarget|null> {
+  async prepareLaunchTargetExecutable(): Promise<api.ExecutableTarget|null> {
     const chosen = await this.getCurrentLaunchTarget();
     if (!chosen) {
       return null;
@@ -830,7 +830,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    const targetExecutable = await this.PrepareLaunchTargetExecutable();
+    const targetExecutable = await this.prepareLaunchTargetExecutable();
     if (!targetExecutable) {
       return null;
     }
@@ -838,7 +838,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let debug_config;
     try {
       const cache = await CMakeCache.fromPath(drv.cachePath);
-      debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, target, process.platform);
+      debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, targetExecutable, process.platform);
       log.info('Debug configuration from cache: ', JSON.stringify(debug_config));
     } catch (error) {
       vscode.window
@@ -877,7 +877,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.launchTarget`
    */
   async launchTarget() {
-    const executable = await this.PrepareLaunchTargetExecutable();
+    const executable = await this.prepareLaunchTargetExecutable();
     if (!executable) {
       // The user has nothing selected and cancelled the prompt to select
       // a target.
