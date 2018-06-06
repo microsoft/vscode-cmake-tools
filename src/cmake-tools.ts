@@ -117,7 +117,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
    */
-  private readonly _variantManager = new VariantManager(this.workspaceContext.state);
+  private readonly _variantManager = new VariantManager(this.workspaceContext.state, this.workspaceContext.config);
 
   /**
    * The object in charge of talking to CMake. It starts empty (null) because
