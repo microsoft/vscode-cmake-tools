@@ -132,6 +132,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get saveBeforeBuild(): boolean { return !!this.configData.saveBeforeBuild; }
 
+  get buildBeforeRun(): boolean { return this.configData.buildBeforeRun; }
+
   get clearOutputBeforeBuild(): boolean { return !!this.configData.clearOutputBeforeBuild; }
 
   get autoRestartBuild(): boolean { return !!this.configData.autoRestartBuild; }

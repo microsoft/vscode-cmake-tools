@@ -27,9 +27,11 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   // TODO: Refactor to make this assertion unecessary
   private _cmsClient!: Promise<cms.CMakeServerClient>;
+  private _clientChangeInProgress: Promise<void> = Promise.resolve();
   private _globalSettings!: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
   private _cmakeInputFileSet = InputFileSet.createEmpty();
+
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -77,6 +79,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
+    await this._clientChangeInProgress;
     const cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
       if (consumer) {
@@ -110,7 +113,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async _refreshPostConfigure(): Promise<void> {
     const cl = await this._cmsClient;
-    const cmake_inputs = await cl.cmakeInputs();
+    const cmake_inputs = await cl.cmakeInputs();  // <-- 1. This line generates the error
     // Scan all the CMake inputs and capture their mtime so we can check for
     // out-of-dateness later
     this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
@@ -138,6 +141,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
+    log.debug('Run doRefreshExpansions');
     const bindir_before = this.binaryDir;
     const srcdir_before = this.sourceDir;
     await cb();
@@ -197,15 +201,22 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
-  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+
+  private async _setKitAndRestart(need_clean: boolean, cb: () => Promise<void>) {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
-    await (await this._cmsClient).shutdown();
+    const client = await this._cmsClient;
+    await client.shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
       await fs.rmdir(this.binaryDir);
     }
     await cb();
     await this._restartClient();
+  }
+
+  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
+    return this._clientChangeInProgress;
   }
 
   async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {

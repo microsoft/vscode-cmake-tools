@@ -24,6 +24,15 @@ be generated).
 - Default: ``${workspaceRoot}/build``.
 - *Supports substitution*
 
+.. _conf-cmake.buildBeforeRun:
+
+``cmake.buildBeforeRun``
+************************
+
+Specifices build before launch or debug of an executable target.
+
+- Default: ``true``
+
 .. _conf-cmake.cmakePath:
 
 ``cmake.cmakePath``
