@@ -23,6 +23,7 @@ export interface ExtensionConfigurationSettings {
   buildBeforeRun: boolean;
   clearOutputBeforeBuild: boolean;
   configureSettings: {[key: string]: any};
+  cacheInit: string|string[]|null;
   preferredGenerators: string[];
   generator: string|null;
   toolset: string|null;
@@ -139,6 +140,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get configureSettings(): any { return this.configData.configureSettings; }
 
+  get cacheInit() { return this.configData.cacheInit; }
+
   get preferredGenerators(): string[] { return this.configData.preferredGenerators; }
 
   get generator(): string|null { return this.configData.generator; }
@@ -218,6 +221,7 @@ export class ConfigurationReader implements vscode.Disposable {
     buildBeforeRun: new vscode.EventEmitter<boolean>(),
     clearOutputBeforeBuild: new vscode.EventEmitter<boolean>(),
     configureSettings: new vscode.EventEmitter<{[key: string]: any}>(),
+    cacheInit: new vscode.EventEmitter<string|string[]|null>(),
     preferredGenerators: new vscode.EventEmitter<string[]>(),
     generator: new vscode.EventEmitter<string|null>(),
     toolset: new vscode.EventEmitter<string|null>(),

@@ -93,6 +93,18 @@ suite('Build', async () => {
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(100000);
 
+  test('Configure with cache-initializer', async () => {
+    testEnv.config.updatePartial({
+      cacheInit: 'TestCacheInit.cmake'
+    });
+    expect(await cmt.configure()).to.be.eq(0);
+    await cmt.setDefaultTarget('runTestTarget');
+    expect(await cmt.build()).to.be.eq(0);
+    const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
+    const result = await resultFile.getResultAsJson();
+    expect(result['cookie']).to.eq('cache-init-cookie');
+  }).timeout(100000);
+
   test('Test kit switch after missing preferred generator', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:RegExp, compiler:string}[]} = { ['linux']: [
