@@ -169,15 +169,14 @@ function isKitAvailable(context: CMakeContext): boolean {
 // defined in the kits file.
 function isPreferredGeneratorAvailable(context: CMakeContext): boolean {
   const kits = context.cmt.getKits();
-  return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit) && kit.preferredGenerator ? true
-                                                                                                            : false)
-      ? true
-      : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit)
-                          && kit.preferredGenerator
-                      ? true
-                      : false)
-          ? true
-          : false;
+
+  const foundExactKit = kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit));
+  if (foundExactKit && foundExactKit.preferredGenerator) {
+    return true;
+  } else {
+    const fuzzyKit = kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit));
+    return (fuzzyKit && fuzzyKit.preferredGenerator) ? true : false;
+  }
 }
 
 interface SkipOptions {

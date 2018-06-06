@@ -956,6 +956,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
     vs: k.visualStudio,
     vsArch: k.visualStudioArchitecture,
     tc: k.toolchainFile,
+    preferredGenerator: k.preferredGenerator? k.preferredGenerator.name : null
   });
   const new_imp = important_params(newKit);
   const old_imp = important_params(oldKit);

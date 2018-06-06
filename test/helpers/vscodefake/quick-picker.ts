@@ -8,7 +8,7 @@ export interface QuickPickerHandleStrategy {
 
 export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
 
-  constructor(readonly defaultKitLabel: RegExp, readonly excludeKitLabel?: RegExp) {}
+  constructor(public defaultKitLabel: RegExp, readonly excludeKitLabel?: RegExp) {}
 
   public get identifier(): string { return 'Select a Kit'; }
 
