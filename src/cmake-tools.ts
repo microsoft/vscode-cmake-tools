@@ -841,7 +841,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     try {
       const cache = await CMakeCache.fromPath(drv.cachePath);
       debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, targetExecutable, process.platform);
-      log.info('Debug configuration from cache: ', JSON.stringify(debug_config));
+      log.debug('Debug configuration from cache: ', JSON.stringify(debug_config));
     } catch (error) {
       vscode.window
           .showErrorMessage(error.message, {
@@ -865,7 +865,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // add debug configuration from settings
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
-    log.info('Starting debugger with following configuration.', JSON.stringify({
+    log.debug('Starting debugger with following configuration.', JSON.stringify({
       workspace: vscode.workspace.workspaceFolders![0].uri.toString(),
       config: debug_config,
     }));
