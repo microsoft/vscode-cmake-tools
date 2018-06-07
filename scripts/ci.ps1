@@ -16,16 +16,20 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ($PSVersionTable.PSVersion.Major -lt 6) {
-    Write-Error -Message "This script requires at least powershell 6"
+    throw "This script requires at least powershell 6"
 }
 
-$CMakeToolsVersion = "0.11.0"
+# The root directory of our repository:
+$REPO_DIR = Split-Path $PSScriptRoot -Parent
+
+$Package = Get-Content (Join-Path $REPO_DIR "package.json") | ConvertFrom-Json
+
+$CMakeToolsVersion = $Package.version
 
 # Import the utility modules
 Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
 
-# The root directory of our repository:
-$REPO_DIR = Split-Path $PSScriptRoot -Parent
+$DOC_BUILD_DIR = Join-Path $REPO_DIR "build/docs"
 
 if ($Test) {
     foreach ($testname in $Test) {
@@ -53,6 +57,10 @@ if (! $yarn) {
 }
 
 if ($Docs) {
+    Build-UserDocs `
+        -RepoDir $REPO_DIR `
+        -Version $CMakeToolsVersion `
+        -Out $DOC_BUILD_DIR
     return Build-DevDocs
 }
 
@@ -97,40 +105,16 @@ if (! $NoTest) {
     }
 }
 
-$doc_build = Join-Path $REPO_DIR "build/docs"
-$sphinx = Find-Program sphinx-build
-if (! $sphinx) {
-    Write-Warning "Install Sphinx to generate documentation"
-}
-else {
-    $command = @(
-        $sphinx;
-        "-W"; # Warnings are errors
-        "-q"; # Be quiet
-        "-C";
-        "-Dsource_suffix=.rst";
-        "-Dmaster_doc=index";
-        "-Dproject=CMake Tools";
-        "-Dversion=$CMakeToolsVersion";
-        "-Drelease=$CMakeToolsVersion";
-        "-Dpygments_style=sphinx";
-        "-Dhtml_theme=nature";
-        "-Dhtml_logo=$REPO_DIR/res/icon_190.svg";
-        "-bhtml";
-        "-j10";
-        "-a";
-        "$REPO_DIR/docs";
-        $doc_build
-    )
-    Invoke-ChronicCommand "Generating user documentation" @command
-}
-
 Build-DevDocs
+Build-UserDocs `
+    -RepoDir $REPO_DIR `
+    -Version $CMakeToolsVersion`
+    -Out $DOC_BUILD_DIR
 
 if ($DocDestination) {
     Write-Host "Copying documentation tree to $DocDestination"
     Remove-Item $DocDestination -Recurse -Force
-    Copy-Item $doc_build -Destination $DocDestination -Recurse
+    Copy-Item $DOC_BUILD_DIR -Destination $DocDestination -Recurse
 }
 
 $vsce = Find-Program vsce

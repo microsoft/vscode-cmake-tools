@@ -469,9 +469,11 @@ function Install-TestNinjaMakeSystem ($Version) {
     $zip_url = ""
     if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) {
         $zip_url = "$ninja_files_url/ninja-win.zip"
-    } elseif ($PSVersionTable.OS.StartsWith("Linux")) {
+    }
+    elseif ($PSVersionTable.OS.StartsWith("Linux")) {
         $zip_url = "$ninja_files_url/ninja-linux.zip"
-    } elseif ($PSVersionTable.OS.StartsWith("Darwin")) {
+    }
+    elseif ($PSVersionTable.OS.StartsWith("Darwin")) {
         $zip_url = "$ninja_files_url/ninja-mac.zip"
     }
     Write-Host "URL dir: $zip_url"
@@ -560,4 +562,34 @@ function Build-DevDocs() {
     $ErrorActionPreference = "Stop"
     $yarn = Find-Program yarn
     Invoke-ChronicCommand "Generating developer documentation" $yarn run docs
+}
+
+function Build-UserDocs($Out, $RepoDir, $Version) {
+    $ErrorActionPreference = "Stop"
+    $sphinx = Find-Program sphinx-build
+    if (! $sphinx) {
+        Write-Warning "Install Sphinx to generate documentation"
+    }
+    else {
+        $command = @(
+            $sphinx;
+            "-W"; # Warnings are errors
+            "-q"; # Be quiet
+            "-C";
+            "-Dsource_suffix=.rst";
+            "-Dmaster_doc=index";
+            "-Dproject=CMake Tools";
+            "-Dversion=$Version";
+            "-Drelease=$Version";
+            "-Dpygments_style=sphinx";
+            "-Dhtml_theme=nature";
+            "-Dhtml_logo=$RepoDir/res/icon_190.svg";
+            "-bhtml";
+            "-j10";
+            "-a";
+            "$RepoDir/docs";
+            $Out
+        )
+        Invoke-ChronicCommand "Generating user documentation" @command
+    }
 }
