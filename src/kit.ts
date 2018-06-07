@@ -15,6 +15,7 @@ import * as proc from './proc';
 import {loadSchema} from './schema';
 import {compare, dropNulls, Ordering, thisExtensionPath} from './util';
 import {MultiWatcher} from './watcher';
+import rollbar from '@cmt/rollbar';
 
 const log = logging.createLogger('kit');
 
@@ -687,6 +688,17 @@ export class KitManager implements vscode.Disposable {
   private readonly _kitsWatcher: MultiWatcher;
 
   /**
+   * Watches for text editor changes. If the edit was to a kits file, we reload
+   * kits. We do this in addition to the FS watcher because the FS watcher is
+   * not reliable on all platforms.
+   */
+  private readonly _editorWatcher = vscode.workspace.onDidSaveTextDocument(doc => {
+    if (doc.uri.fsPath === this._userKitsPath || doc.uri.fsPath === this._projectKitsPath) {
+      rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
+    }
+  });
+
+  /**
    * The active build kit
    */
   get activeKit() { return this._activeKit; }
@@ -749,6 +761,7 @@ export class KitManager implements vscode.Disposable {
     log.debug('Disposing KitManager');
     this._kitsWatcher.dispose();
     this._activeKitChangedEmitter.dispose();
+    this._editorWatcher.dispose();
   }
 
   /**
