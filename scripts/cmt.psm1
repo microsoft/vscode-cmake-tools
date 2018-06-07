@@ -584,6 +584,7 @@ function Build-UserDocs($Out, $RepoDir, $Version) {
             "-Dpygments_style=sphinx";
             "-Dhtml_theme=nature";
             "-Dhtml_logo=$RepoDir/res/icon_190.svg";
+            "-Dhtml_favicon=$RepoDir/res/icon_64.png";
             "-bhtml";
             "-j10";
             "-a";
