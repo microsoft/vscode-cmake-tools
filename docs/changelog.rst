@@ -29,6 +29,10 @@ release. It is now a developer-ready tool that is suitable for everyday work!
   during Quick Debugging.
 - Fix for intermittent "Not yet configured" errors.
 
+A few issues slated for 1.0.0 fell through as the schedule slipped. If you
+expected a feature in 1.0.0 that isn't listed above, it will be available in
+1.0.1.
+
 .. [#counter] If you don't agree, please open a bug report!
 
 .. _changes-0.11.0:
