@@ -1,6 +1,11 @@
 /**
  * Root of the extension
  */
+import {CMakeCache} from '@cmt/cache';
+import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import * as debugger_mod from '@cmt/debugger';
+import {versionToString} from '@cmt/util';
+import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -10,7 +15,6 @@ import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
 import {CMakeServerClientDriver} from './cms-driver';
-import config from './config';
 import {CTestDriver} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
@@ -19,13 +23,9 @@ import {KitManager} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
-import paths from './paths';
 import {fs} from './pr';
-import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from './state';
 import {StatusBar} from './status';
-import * as util from './util';
 import {VariantManager} from './variant';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
@@ -50,7 +50,8 @@ const build_log = logging.createLogger('build');
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _http_server: http.Server;
-  private _ws_server: ws.Server;
+  // TODO: Refactor to make this assertion unecessary
+  private _ws_server!: ws.Server;
 
   private readonly _nagManager = new NagManager(this.extensionContext);
 
@@ -60,7 +61,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    *
    * This is private. You must call `create` to get an instance.
    */
-  private constructor(readonly extensionContext: vscode.ExtensionContext) {
+  private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     log.debug('Constructing new CMakeTools instance');
 
@@ -108,22 +109,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * The state manager for the class. Workspace-persistent state is kept in here
-   * on a vscode Memento so that we don't have to bother worrying about keeping
-   * it persisted.
-   */
-  private readonly _stateManager = new StateManager(this.extensionContext);
-
-  /**
    * It's up to the kit manager to do all things related to kits. Has two-phase
    * init.
    */
-  private readonly _kitManager = new KitManager(this._stateManager);
+  private readonly _kitManager = new KitManager(this.workspaceContext.state, this.workspaceContext.config);
 
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
    */
-  private readonly _variantManager = new VariantManager(this._stateManager);
+  private readonly _variantManager = new VariantManager(this.workspaceContext.state, this.workspaceContext.config);
 
   /**
    * The object in charge of talking to CMake. It starts empty (null) because
@@ -169,32 +163,26 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Start up a new CMake driver and return it. This is so that the initialization
    * of the driver is atomic to those using it
    */
-  private async _startNewCMakeDriver(): Promise<CMakeDriver> {
+  private async _startNewCMakeDriver(cmake: CMakeExecutable): Promise<CMakeDriver> {
     const kit = this._kitManager.activeKit;
     log.debug('Starting CMake driver');
-    const cmake = await paths.cmakePath;
-    const version_ex = await proc.execute(cmake, ['--version']).result;
-    if (version_ex.retc !== 0 || !version_ex.stdout) {
-      throw new Error(`Bad CMake executable "${cmake}". Is it installed and a valid executable?`);
+    if (!cmake.isPresent) {
+      throw new Error(`Bad CMake executable "${cmake.path}".`);
     }
 
     let drv: CMakeDriver;
-    if (config.useCMakeServer) {
-      console.assert(version_ex.stdout);
-      const version_re = /cmake version (.*?)\r?\n/;
-      const version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
-      // We purposefully exclude versions <3.7.1, which have some major CMake
-      // server bugs
-      if (util.versionGreater(version, '3.7.1')) {
-        drv = await CMakeServerClientDriver.create(this._stateManager, kit);
+    if (this.workspaceContext.config.useCMakeServer) {
+      if (cmake.isServerModeSupported) {
+        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit);
       } else {
-        log.info(
-            'CMake Server is not available with the current CMake executable. Please upgrade to CMake 3.7.2 or newer.');
-        drv = await LegacyCMakeDriver.create(this._stateManager, kit);
+        log.warning(
+            `CMake Server is not available with the current CMake executable. Please upgrade to CMake
+            ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
-      drv = await LegacyCMakeDriver.create(this._stateManager, kit);
+      drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     const project = drv.projectName;
@@ -222,9 +210,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
-    const cmake = await paths.cmakePath;
     if (drv) {
-      return drv.executeCommand(cmake, args, undefined, options).result;
+      return drv.executeCommand(drv.cmake.path, args, undefined, options).result;
     } else {
       throw new Error('Unable to execute cmake command, there is no valid cmake driver instance.');
     }
@@ -271,7 +258,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Set the status bar message
     this._statusBar.setBuildTypeLabel(this._variantManager.activeVariantOptions.short);
     // Restore the debug target
-    this._statusBar.setLaunchTargetName(this._stateManager.launchTargetName || '');
+    this._statusBar.setLaunchTargetName(this.workspaceContext.state.launchTargetName || '');
     // Start up the kit manager
     await this._kitManager.initialize();
     this._statusBar.setActiveKitName(this._kitManager.activeKit ? this._kitManager.activeKit.name : '');
@@ -325,10 +312,19 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.debug('Not starting CMake driver: no kits defined');
       return null;
     }
+    let cmakePath = await this.workspaceContext.cmakePath;
+    if (cmakePath === null)
+      cmakePath = '';
+    const cmake = await getCMakeExecutableInformation(cmakePath);
+    if (!cmake.isPresent) {
+      vscode.window.showErrorMessage(`Bad CMake executable "${
+          cmake.path}". Is it installed or settings contain the correct path (cmake.cmakePath)?`);
+      return null;
+    }
 
     if ((await this._cmakeDriver) === null) {
       log.debug('Starting new CMake driver');
-      this._cmakeDriver = this._startNewCMakeDriver();
+      this._cmakeDriver = this._startNewCMakeDriver(cmake);
 
       try {
         await this._cmakeDriver;
@@ -347,9 +343,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * The purpose of making this the only way to create an instance is to prevent
    * us from creating uninitialized instances of the CMake Tools extension.
    */
-  static async create(ctx: vscode.ExtensionContext): Promise<CMakeTools> {
+  static async create(ctx: vscode.ExtensionContext, wsc: DirectoryContext): Promise<CMakeTools> {
     log.debug('Safe constructing new CMakeTools instance');
-    const inst = new CMakeTools(ctx);
+    const inst = new CMakeTools(ctx, wsc);
     await inst._init();
     log.debug('CMakeTools instance initialization complete.');
     return inst;
@@ -358,9 +354,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.viewLog`
    */
-  async viewLog() {
-    await logging.showLogFile();
-  }
+  async viewLog() { await logging.showLogFile(); }
 
   /**
    * Implementation of `cmake.editKits`
@@ -396,6 +390,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.configure`
    */
   configure(extra_args: string[] = []) {
+    log.debug("Run configure ", extra_args);
     return this._doConfigure(async consumer => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
@@ -426,7 +421,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async maybeAutoSaveAll(): Promise<boolean> {
     // Save open files before we configure/build
-    if (config.saveBeforeBuild) {
+    if (this.workspaceContext.config.saveBeforeBuild) {
       log.debug('Saving open files before configure/build');
       const save_good = await vscode.workspace.saveAll();
       if (!save_good) {
@@ -471,7 +466,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return -1;
       }
     }
-    if (config.clearOutputBeforeBuild) {
+    if (this.workspaceContext.config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
     }
     log.showChannel();
@@ -516,6 +511,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
+    log.debug("Run build", target_? target_ : "");
     // First, save open files
     if (!await this.maybeAutoSaveAll()) {
       return -1;
@@ -527,14 +523,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (retc) {
         return retc;
       }
-    } else if (config.clearOutputBeforeBuild) {
+    } else if (this.workspaceContext.config.clearOutputBeforeBuild) {
       log.clearOutputChannel();
     }
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       throw new Error('Impossible: CMake driver died immediately after successful configure');
     }
-    const target = target_ ? target_ : this._stateManager.defaultBuildTarget || await this.allTargetName;
+    const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
     const consumer = new diags.CMakeBuildConsumer();
     try {
       this._statusBar.setStatusMessage('Building');
@@ -633,7 +629,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.build();
   }
 
-  private readonly _ctestController = new CTestDriver();
+  private readonly _ctestController = new CTestDriver(this.workspaceContext);
   async ctest(): Promise<number> {
     const build_retc = await this.build();
     if (build_retc !== 0) {
@@ -661,12 +657,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return false;
     }
 
-    return drv.stopCurrentProcess().then(
-      () => {
-        this._cmakeDriver = Promise.resolve(null);
-        return true;
-      },
-      () => false);
+    return drv.stopCurrentProcess().then(() => {
+      this._cmakeDriver = Promise.resolve(null);
+      return true;
+    }, () => false);
   }
 
   /**
@@ -683,9 +677,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * The target that will be built with a regular build invocation
    */
-  public get defaultBuildTarget(): string|null { return this._stateManager.defaultBuildTarget; }
+  public get defaultBuildTarget(): string|null { return this.workspaceContext.state.defaultBuildTarget; }
   private async _setDefaultBuildTarget(v: string) {
-    this._stateManager.defaultBuildTarget = v;
+    this.workspaceContext.state.defaultBuildTarget = v;
     this._statusBar.targetName = v || await this.allTargetName;
   }
 
@@ -706,7 +700,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.selectLaunchTarget`
    */
-  async selectLaunchTarget(): Promise<string|null> {
+  async selectLaunchTarget(): Promise<string|null> { return this.setLaunchTargetByName(); }
+
+  /**
+   * Used by vscode and as test interface
+   */
+  async setLaunchTargetByName(name?: string|null) {
     if (await this._needsReconfigure()) {
       const rc = await this.configure();
       if (rc !== 0) {
@@ -723,22 +722,36 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                             description: '',
                                             detail: e.path,
                                           }));
-    const chosen = await vscode.window.showQuickPick(choices);
+    let chosen: {label: string, detail: string}|undefined = undefined;
+    if (!name) {
+      chosen = await vscode.window.showQuickPick(choices);
+    } else {
+      chosen = choices.find(choice => choice.label == name);
+    }
     if (!chosen) {
       return null;
     }
-    this._stateManager.launchTargetName = chosen.label;
+    this.workspaceContext.state.launchTargetName = chosen.label;
     this._statusBar.setLaunchTargetName(chosen.label);
     return chosen.detail;
+  }
+
+  async getCurrentLaunchTarget(): Promise<api.ExecutableTarget|null> {
+    const target_name = this.workspaceContext.state.launchTargetName;
+    const target = (await this.executableTargets).find(e => e.name == target_name);
+
+    if (!target) {
+      return null;
+    }
+    return target;
   }
 
   /**
    * Implementation of `cmake.launchTargetPath`
    */
   async launchTargetPath(): Promise<string|null> {
-    const target_name = this._stateManager.launchTargetName;
-    const chosen = (await this.executableTargets).find(e => e.name == target_name);
-    if (!chosen) {
+    const executable = await this.prepareLaunchTargetExecutable();
+    if (!executable) {
       log.showChannel();
       log.warning('=======================================================');
       log.warning('No executable target was found to launch. Please check:');
@@ -747,19 +760,53 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.warning('No program will be executed');
       return null;
     }
-    return chosen.path;
+    return executable.path;
   }
 
-  launchTargetProgramPath(): Promise<string|null> { return this.launchTargetPath(); }
+  async prepareLaunchTargetExecutable(): Promise<api.ExecutableTarget|null> {
+    const chosen = await this.getCurrentLaunchTarget();
+    if (!chosen) {
+      return null;
+    }
 
-  async getLaunchTargetPath(): Promise<string|null> {
-    const current = await this.launchTargetPath();
+    // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
+    // executable targets and may show an uneccessary prompt to the user
+    const isReconfigurationNeeded = await this._needsReconfigure();
+    if (isReconfigurationNeeded) {
+      const rc = await this.configure();
+      if (rc !== 0) {
+        log.debug('Configuration of project failed.');
+        return null;
+      }
+    }
+
+    const target = await this.getOrSelectLaunchTarget();
+    if (!target) {
+      // The user has nothing selected and cancelled the prompt to select a target.
+      log.debug('No target selected.');
+      return null;
+    }
+
+    const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
+    if (buildOnLaunch || isReconfigurationNeeded) {
+      const rc_build = await this.build();
+      if (rc_build !== 0) {
+        log.debug('Build failed');
+        return null;
+      }
+    }
+
+    return chosen;
+  }
+
+  async getOrSelectLaunchTarget(): Promise<api.ExecutableTarget|null> {
+    const current = await this.getCurrentLaunchTarget();
     if (current) {
       return current;
     }
     // Ask the user if we don't already have a target
-    const chosen = await this.selectLaunchTarget();
-    return chosen;
+    await this.selectLaunchTarget();
+    return this.getCurrentLaunchTarget();
   }
 
   /**
@@ -784,61 +831,63 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           });
       return null;
     }
-    // Ensure that we've configured the project already. If we haven't, `getLaunchTargetPath` won't see any executable
-    // targets and may show an uneccessary prompt to the user
-    if (await this._needsReconfigure()) {
-      const rc = await this.configure();
-      if (rc !== 0) {
-        return null;
-      }
-    }
-    const target_path = await this.getLaunchTargetPath();
-    if (!target_path) {
-      // The user has nothing selected and cancelled the prompt to select a target.
+
+    const targetExecutable = await this.prepareLaunchTargetExecutable();
+    if (!targetExecutable) {
       return null;
     }
-    const is_msvc
-        = drv.compilerID ? drv.compilerID.includes('MSVC') : (drv.linkerID ? drv.linkerID.includes('MSVC') : false);
-    const mi_mode = process.platform == 'darwin' ? 'lldb' : 'gdb';
-    const debug_config: vscode.DebugConfiguration = {
-      type: is_msvc ? 'cppvsdbg' : 'cppdbg',
-      name: `Debug ${target_path}`,
-      request: 'launch',
-      cwd: '${workspaceRoot}',
-      args: [],
-      MIMode: mi_mode,
-    };
-    if (mi_mode == 'gdb') {
-      debug_config['setupCommands'] = [
-        {
-          description: 'Enable pretty-printing for gdb',
-          text: '-enable-pretty-printing',
-          ignoreFailures: true,
-        },
-      ];
+
+    let debug_config;
+    try {
+      const cache = await CMakeCache.fromPath(drv.cachePath);
+      debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, targetExecutable, process.platform);
+      log.debug('Debug configuration from cache: ', JSON.stringify(debug_config));
+    } catch (error) {
+      vscode.window
+          .showErrorMessage(error.message, {
+            title: 'Debugging documentation',
+            isLearnMore: true,
+          })
+          .then(item => {
+            if (item && item.isLearnMore) {
+              open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
+            }
+          });
+      log.debug('Problem to get debug from cache.', error);
+      return null;
     }
-    const user_config = config.debugConfig;
+
+    if (debug_config === null) {
+      vscode.window.showErrorMessage('Unable to generate a debugging configuration.');
+      return null;
+    }
+
+    // add debug configuration from settings
+    const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
-    debug_config.program = target_path;
+    log.debug('Starting debugger with following configuration.', JSON.stringify({
+      workspace: vscode.workspace.workspaceFolders![0].uri.toString(),
+      config: debug_config,
+    }));
     await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
     return vscode.debug.activeDebugSession!;
   }
 
-  private _launchTerminal: vscode.Terminal|null;
+  private _launchTerminal: vscode.Terminal|null = null;
 
   /**
    * Implementation of `cmake.launchTarget`
    */
   async launchTarget() {
-    const target_path = await this.getLaunchTargetPath();
-    if (!target_path) {
+    const executable = await this.prepareLaunchTargetExecutable();
+    if (!executable) {
       // The user has nothing selected and cancelled the prompt to select
       // a target.
       return null;
     }
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal('CMake/Launch');
-    this._launchTerminal.sendText(target_path);
+    this._launchTerminal.sendText(executable.path);
     this._launchTerminal.show();
     return this._launchTerminal;
   }
@@ -933,7 +982,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.resetState`
    */
   async resetState() {
-    this._stateManager.reset();
+    this.workspaceContext.state.reset();
     vscode.commands.executeCommand('workbench.action.reloadWindow');
   }
 

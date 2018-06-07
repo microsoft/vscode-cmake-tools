@@ -4,55 +4,56 @@
  * `ConfigurationReader` class.
  */ /** */
 
+import * as util from '@cmt/util';
 import * as os from 'os';
 import * as vscode from 'vscode';
 
-import rollbar from './rollbar';
-
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
-/**
- * Read a config value from `settings.json`
- * @param key The configuration setting name
- * @param default_ The default value to return, if the setting is missing
- */
-function readConfig<T>(key: string): T|null;
-function readConfig<T>(key: string, default_: T): T;
-function readConfig<T>(key: string, default_?: T): T|null {
-  const cmt_config = vscode.workspace.getConfiguration('cmake');
-  const value = cmt_config.get(key) as T | undefined;
-  if (value === undefined) {
-    if (default_ === undefined) {
-      return null;
-    } else {
-      return default_;
-    }
-  } else {
-    return value;
-  }
+interface HardEnv {
+  [key: string]: string;
 }
 
-/**
- * Read a config value from `settings.json`, which may be prefixed by the
- * platform name.
- * @param key The configuration setting name
- */
-function readPrefixedConfig<T>(key: string): T|null;
-function readPrefixedConfig<T>(key: string, default_: T): T;
-function readPrefixedConfig<T>(key: string, default_?: T): T|null {
-  const platmap = {
-    win32: 'windows',
-    darwin: 'osx',
-    linux: 'linux',
-  } as {[k: string]: string};
-  const platform = platmap[process.platform];
-  if (default_ === undefined) {
-    return readConfig(`${platform}.${key}`, readConfig<T>(`${key}`));
-  } else {
-    return readConfig(`${platform}.${key}`, readConfig<T>(`${key}`, default_));
-  }
+export interface ExtensionConfigurationSettings {
+  cmakePath: string;
+  buildDirectory: string;
+  installPrefix: string|null;
+  sourceDirectory: string;
+  saveBeforeBuild: boolean;
+  buildBeforeRun: boolean;
+  clearOutputBeforeBuild: boolean;
+  configureSettings: {[key: string]: any};
+  cacheInit: string|string[]|null;
+  preferredGenerators: string[];
+  generator: string|null;
+  toolset: string|null;
+  platform: string|null;
+  configureArgs: string[];
+  buildArgs: string[];
+  buildToolArgs: string[];
+  parallelJobs: number;
+  ctestPath: string;
+  ctest: {parallelJobs: number;};
+  autoRestartBuild: boolean;
+  parseBuildDiagnostics: boolean;
+  enabledOutputParsers: string[];
+  debugConfig: object;
+  defaultVariants: object;
+  ctestArgs: string[];
+  environment: HardEnv;
+  configureEnvironment: HardEnv;
+  buildEnvironment: HardEnv;
+  testEnvironment: HardEnv;
+  mingwSearchDirs: string[];
+  emscriptenSearchDirs: string[];
+  useCMakeServer: boolean;
+  enableTraceLogging: boolean;
+  loggingLevel: LogLevelKey;
 }
 
+type EmittersOf<T> = {
+  readonly[Key in keyof T]: vscode.EventEmitter<T[Key]>;
+};
 
 /**
  * This class exposes a number of readonly properties which can be used to
@@ -61,64 +62,127 @@ function readPrefixedConfig<T>(key: string, default_?: T): T|null {
  * on each property. An underscore in a property name corresponds to a dot `.`
  * in the setting name.
  */
-class ConfigurationReader {
-  get buildDirectory(): string { return readPrefixedConfig<string>('buildDirectory')!; }
+export class ConfigurationReader implements vscode.Disposable {
+  private _updateSubscription?: vscode.Disposable;
 
-  get installPrefix(): string|null { return readPrefixedConfig<string>('installPrefix')!; }
+  constructor(private readonly _configData: ExtensionConfigurationSettings) {}
 
-  get sourceDirectory(): string { return readPrefixedConfig<string>('sourceDirectory') as string; }
+  get configData() { return this._configData; }
 
-  get saveBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('saveBeforeBuild'); }
+  dispose() {
+    if (this._updateSubscription) {
+      this._updateSubscription.dispose();
+    }
+  }
 
-  get clearOutputBeforeBuild(): boolean { return !!readPrefixedConfig<boolean>('clearOutputBeforeBuild'); }
+  /**
+   * Get a configuration object relevant to the given workspace directory. This
+   * supports multiple workspaces having differing configs.
+   *
+   * @param workspacePath A directory to use for the config
+   */
+  static createForDirectory(dirPath: string): ConfigurationReader {
+    const data = ConfigurationReader.loadForPath(dirPath);
+    const reader = new ConfigurationReader(data);
+    reader._updateSubscription = vscode.workspace.onDidChangeConfiguration(e => {
+      if (e.affectsConfiguration('cmake', vscode.Uri.file(dirPath))) {
+        const new_data = ConfigurationReader.loadForPath(dirPath);
+        reader.update(new_data);
+      }
+    });
+    return reader;
+  }
 
-  get autoRestartBuild(): boolean { return !!readPrefixedConfig<boolean>('autoRestartBuild'); }
+  static loadForPath(filePath: string): ExtensionConfigurationSettings {
+    const data = vscode.workspace.getConfiguration('cmake', vscode.Uri.file(filePath)) as any as
+        ExtensionConfigurationSettings;
+    const platmap = {
+      win32: 'windows',
+      darwin: 'osx',
+      linux: 'linux',
+    } as {[k: string]: string};
+    const platform = platmap[process.platform];
+    const for_platform = (data as any)[platform] as ExtensionConfigurationSettings | undefined;
+    return {...data, ...(for_platform || {})};
+  }
 
-  get configureSettings(): any { return readPrefixedConfig<Object>('configureSettings'); }
+  update(newData: ExtensionConfigurationSettings) { this.updatePartial(newData); }
+  updatePartial(newData: Partial<ExtensionConfigurationSettings>) {
+    const old_values = {...this.configData};
+    Object.assign(this.configData, newData);
+    for (const key_ of Object.getOwnPropertyNames(newData)) {
+      const key = key_ as keyof ExtensionConfigurationSettings;
+      if (!(key in this._emitters)) {
+        continue;  // Extension config we load has some additional properties we don't care about.
+      }
+      const new_value = this.configData[key];
+      const old_value = old_values[key];
+      if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
+        const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
+        em.fire(newData[key]);
+      }
+    }
+  }
 
-  get initialBuildType(): string|null { return readPrefixedConfig<string>('initialBuildType'); }
+  get buildDirectory(): string { return this.configData.buildDirectory; }
 
-  get preferredGenerators(): string[] { return readPrefixedConfig<string[]>('preferredGenerators', []); }
+  get installPrefix(): string|null { return this.configData.installPrefix; }
 
-  get generator(): string|null { return readPrefixedConfig<string>('generator'); }
+  get sourceDirectory(): string { return this.configData.sourceDirectory as string; }
 
-  get toolset(): string|null { return readPrefixedConfig<string>('toolset'); }
+  get saveBeforeBuild(): boolean { return !!this.configData.saveBeforeBuild; }
 
-  get platform(): string|null { return readPrefixedConfig<string>('platform'); }
+  get buildBeforeRun(): boolean { return this.configData.buildBeforeRun; }
 
-  get configureArgs(): string[] { return readPrefixedConfig<string[]>('configureArgs')!; }
+  get clearOutputBeforeBuild(): boolean { return !!this.configData.clearOutputBeforeBuild; }
 
-  get buildArgs(): string[] { return readPrefixedConfig<string[]>('buildArgs')!; }
+  get autoRestartBuild(): boolean { return !!this.configData.autoRestartBuild; }
 
-  get buildToolArgs(): string[] { return readPrefixedConfig<string[]>('buildToolArgs')!; }
+  get configureSettings(): any { return this.configData.configureSettings; }
 
-  get parallelJobs(): number|null { return readPrefixedConfig<number>('parallelJobs'); }
+  get cacheInit() { return this.configData.cacheInit; }
 
-  get ctest_parallelJobs(): number|null { return readPrefixedConfig<number>('ctest.parallelJobs'); }
+  get preferredGenerators(): string[] { return this.configData.preferredGenerators; }
 
-  get parseBuildDiagnostics(): boolean { return !!readPrefixedConfig<boolean>('parseBuildDiagnostics'); }
+  get generator(): string|null { return this.configData.generator; }
 
-  get enableOutputParsers(): string[]|null { return readPrefixedConfig<string[]>('enableOutputParsers'); }
+  get toolset(): string|null { return this.configData.toolset; }
 
-  get raw_cmakePath(): string { return readPrefixedConfig<string>('cmakePath', 'auto'); }
+  get platform(): string|null { return this.configData.platform; }
 
-  get raw_ctestPath(): string { return readPrefixedConfig<string>('ctestPath', 'auto'); }
+  get configureArgs(): string[] { return this.configData.configureArgs; }
 
-  get debugConfig(): any { return readPrefixedConfig<any>('debugConfig'); }
+  get buildArgs(): string[] { return this.configData.buildArgs; }
 
-  get environment() { return readPrefixedConfig<{[key: string]: string}>('environment', {}); }
+  get buildToolArgs(): string[] { return this.configData.buildToolArgs; }
 
-  get configureEnvironment() { return readPrefixedConfig<{[key: string]: string}>('configureEnvironment', {}); }
+  get parallelJobs(): number|null { return this.configData.parallelJobs; }
 
-  get buildEnvironment() { return readPrefixedConfig<{[key: string]: string}>('buildEnvironment', {}); }
+  get ctest_parallelJobs(): number|null { return this.configData.ctest.parallelJobs; }
 
-  get testEnvironment() { return readPrefixedConfig<{[key: string]: string}>('testEnvironment', {}); }
+  get parseBuildDiagnostics(): boolean { return !!this.configData.parseBuildDiagnostics; }
 
-  get defaultVariants(): Object { return readPrefixedConfig<Object>('defaultVariants', {}); }
+  get enableOutputParsers(): string[]|null { return this.configData.enabledOutputParsers; }
 
-  get ctestArgs(): string[] { return readPrefixedConfig<string[]>('ctestArgs', []); }
+  get raw_cmakePath(): string { return this.configData.cmakePath; }
 
-  get useCMakeServer(): boolean { return readPrefixedConfig<boolean>('useCMakeServer', true); }
+  get raw_ctestPath(): string { return this.configData.ctestPath; }
+
+  get debugConfig(): any { return this.configData.debugConfig; }
+
+  get environment() { return this.configData.environment; }
+
+  get configureEnvironment() { return this.configData.configureEnvironment; }
+
+  get buildEnvironment() { return this.configData.buildEnvironment; }
+
+  get testEnvironment() { return this.configData.testEnvironment; }
+
+  get defaultVariants(): Object { return this.configData.defaultVariants; }
+
+  get ctestArgs(): string[] { return this.configData.ctestArgs; }
+
+  get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
   get numJobs(): number {
     const jobs = this.parallelJobs;
@@ -136,36 +200,64 @@ class ConfigurationReader {
     return ctest_jobs;
   }
 
-  get mingwSearchDirs(): string[] { return readPrefixedConfig<string[]>('mingwSearchDirs', []); }
+  get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
 
-  get emscriptenSearchDirs(): string[] { return readPrefixedConfig<string[]>('emscriptenSearchDirs', []); }
+  get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
 
   get loggingLevel(): LogLevelKey {
     if (process.env['CMT_LOGGING_LEVEL']) {
       return process.env['CMT_LOGGING_LEVEL']! as LogLevelKey;
     }
-    return readPrefixedConfig<LogLevelKey>('loggingLevel', 'info');
+    return this.configData.loggingLevel;
   }
-  get enableTraceLogging(): boolean { return readPrefixedConfig<boolean>('enableTraceLogging', false); }
+  get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
+
+  private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
+    cmakePath: new vscode.EventEmitter<string>(),
+    buildDirectory: new vscode.EventEmitter<string>(),
+    installPrefix: new vscode.EventEmitter<string|null>(),
+    sourceDirectory: new vscode.EventEmitter<string>(),
+    saveBeforeBuild: new vscode.EventEmitter<boolean>(),
+    buildBeforeRun: new vscode.EventEmitter<boolean>(),
+    clearOutputBeforeBuild: new vscode.EventEmitter<boolean>(),
+    configureSettings: new vscode.EventEmitter<{[key: string]: any}>(),
+    cacheInit: new vscode.EventEmitter<string|string[]|null>(),
+    preferredGenerators: new vscode.EventEmitter<string[]>(),
+    generator: new vscode.EventEmitter<string|null>(),
+    toolset: new vscode.EventEmitter<string|null>(),
+    platform: new vscode.EventEmitter<string|null>(),
+    configureArgs: new vscode.EventEmitter<string[]>(),
+    buildArgs: new vscode.EventEmitter<string[]>(),
+    buildToolArgs: new vscode.EventEmitter<string[]>(),
+    parallelJobs: new vscode.EventEmitter<number>(),
+    ctestPath: new vscode.EventEmitter<string>(),
+    ctest: new vscode.EventEmitter<{parallelJobs: number;}>(),
+    autoRestartBuild: new vscode.EventEmitter<boolean>(),
+    parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
+    enabledOutputParsers: new vscode.EventEmitter<string[]>(),
+    debugConfig: new vscode.EventEmitter<object>(),
+    defaultVariants: new vscode.EventEmitter<object>(),
+    ctestArgs: new vscode.EventEmitter<string[]>(),
+    environment: new vscode.EventEmitter<HardEnv>(),
+    configureEnvironment: new vscode.EventEmitter<HardEnv>(),
+    buildEnvironment: new vscode.EventEmitter<HardEnv>(),
+    testEnvironment: new vscode.EventEmitter<HardEnv>(),
+    mingwSearchDirs: new vscode.EventEmitter<string[]>(),
+    emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
+    useCMakeServer: new vscode.EventEmitter<boolean>(),
+    enableTraceLogging: new vscode.EventEmitter<boolean>(),
+    loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+  };
 
   /**
    * Watch for changes on a particular setting
    * @param setting The name of the setting to watch
    * @param cb A callback when the setting changes
    */
-  onChange<K extends keyof ConfigurationReader>(setting: K, cb: (value: ConfigurationReader[K]) => void) {
-    const state = {value: this[setting]};
-    return vscode.workspace.onDidChangeConfiguration(() => {
-      rollbar.invoke(`Callback changing setting: cmake.${setting}`, () => {
-        const new_value = this[setting];
-        if (new_value !== state.value) {
-          state.value = new_value;
-          cb(new_value);
-        }
-      });
-    });
+  onChange<K extends keyof ExtensionConfigurationSettings>(setting: K,
+                                                           cb: (value: ExtensionConfigurationSettings[K]) => void):
+      vscode.Disposable {
+    const emitter: vscode.EventEmitter<ExtensionConfigurationSettings[K]> = this._emitters[setting];
+    return emitter.event(cb);
   }
 }
-
-const config = new ConfigurationReader();
-export default config;

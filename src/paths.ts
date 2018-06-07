@@ -5,8 +5,8 @@
 import * as path from 'path';
 import * as which from 'which';
 
-import config from './config';
 import {fs} from './pr';
+import { DirectoryContext } from '@cmt/workspace';
 
 /**
  * Directory class.
@@ -64,21 +64,22 @@ class Paths {
     });
   }
 
-  get cmakePath(): Promise<string> { return this._getCMakePath(); }
-  get ctestPath(): Promise<string> { return this._getCTestPath(); }
-
-  private async _getCTestPath(): Promise<string> {
-    const ctest_path = config.raw_ctestPath;
+  async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
+    const ctest_path = wsc.config.raw_ctestPath;
     if (!ctest_path || ctest_path == 'auto') {
-      const cmake = await this.cmakePath;
-      return path.join(path.dirname(cmake), 'ctest');
+      const cmake = await this.getCMakePath(wsc);
+      if (cmake === null) {
+        return null;
+      } else {
+        return path.join(path.dirname(cmake), 'ctest');
+      }
     } else {
       return ctest_path;
     }
   }
 
-  private async _getCMakePath(): Promise<string> {
-    const raw = config.raw_cmakePath;
+  async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
+    const raw = wsc.config.raw_cmakePath;
     if (raw == 'auto' || raw == 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');
@@ -95,8 +96,7 @@ class Paths {
             }
           }
         }
-        // We've got nothing...
-        throw new Error('No CMake found on $PATH');
+        return null;
       }
       return on_path;
     }

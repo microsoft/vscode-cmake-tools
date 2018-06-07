@@ -16,11 +16,11 @@ suite('[Toolchain Substitution]', async () => {
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
                                      'build',
                                      'output.txt',
-                                     'Test Toolchain');
-    cmt = await CMakeTools.create(testEnv.vsContext);
+                                     /Test Toolchain/);
+    cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // Set preferred generators
-    testEnv.setting.changeSetting('preferredGenerators', ['Unix Makefiles']);
+    testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles']});
     await cmt.selectKit();
 
     testEnv.projectFolder.buildDirectory.clear();
@@ -45,5 +45,5 @@ suite('[Toolchain Substitution]', async () => {
     expect(normalizePath(cacheEntry.as<string>()))
         .to.eq(normalizePath(testEnv.projectFolder.location.concat('/test-toolchain.cmake')),
                '[toolchain] substitution incorrect');
-  }).timeout(60000);
+  }).timeout(100000);
 });

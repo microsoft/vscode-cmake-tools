@@ -1,3 +1,4 @@
+import {ConfigurationReader} from '@cmt/config';
 import * as ajv from 'ajv';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
@@ -183,6 +184,7 @@ export class VariantManager implements vscode.Disposable {
    */
   private readonly _variantFileWatcher = new MultiWatcher();
 
+
   dispose() {
     this._variantFileWatcher.dispose();
     this._activeVariantChanged.dispose();
@@ -192,7 +194,7 @@ export class VariantManager implements vscode.Disposable {
    * Create a new VariantManager
    * @param stateManager The state manager for this instance
    */
-  constructor(readonly stateManager: StateManager) {
+  constructor(readonly stateManager: StateManager, readonly config: ConfigurationReader) {
     log.debug('Constructing VariantManager');
     if (!vscode.workspace.workspaceFolders) {
       return;  // Nothing we can do. We have no directory open
@@ -210,6 +212,19 @@ export class VariantManager implements vscode.Disposable {
     }
     this._variantFileWatcher.onAnyEvent(
         e => { rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`, () => this._reloadVariantsFile(e.fsPath)); });
+
+    config.onChange('defaultVariants', () => {
+      rollbar.invokeAsync(`Reloading variants from settings`, () => this._reloadVariantsFile());
+    });
+  }
+
+  private loadVariantsFromSettings(): VarFileRoot {
+    const collectionOfVariantsFromConfig = this.config.defaultVariants;
+    if (collectionOfVariantsFromConfig) {
+      return collectionOfVariantsFromConfig as VarFileRoot;
+    } else {
+      return DEFAULT_VARIANTS as VarFileRoot;
+    }
   }
 
   private async _reloadVariantsFile(filepath?: string) {
@@ -236,7 +251,7 @@ export class VariantManager implements vscode.Disposable {
       }
     }
 
-    let new_variants = DEFAULT_VARIANTS;
+    let new_variants = this.loadVariantsFromSettings();
     // Check once more that we have a file to read
     if (filepath && await fs.exists(filepath)) {
       const content = (await fs.readFile(filepath)).toString();

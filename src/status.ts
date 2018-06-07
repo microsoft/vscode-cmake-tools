@@ -132,7 +132,7 @@ export class StatusBar implements vscode.Disposable {
   /**
    * The name of the currently active target to build
    */
-  private _targetName: string;
+  private _targetName: string = '';
   public get targetName(): string { return this._targetName; }
   public set targetName(v: string) {
     this._targetName = v;
@@ -225,7 +225,11 @@ export class StatusBar implements vscode.Disposable {
   }
 
   setActiveKitName(v: string) {
-    this._activeKitName = v;
+    if (v === '__unspec__') {
+      this._activeKitName = '[No active kit]';
+    } else {
+      this._activeKitName = v;
+    }
     this._reloadKitsButton();
   }
   private _activeKitName: string = '';

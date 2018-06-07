@@ -24,6 +24,25 @@ be generated).
 - Default: ``${workspaceRoot}/build``.
 - *Supports substitution*
 
+.. _conf-cmake.buildBeforeRun:
+
+``cmake.buildBeforeRun``
+************************
+
+If ``true``, build the launch/debug target before letting it execute.
+
+- Default: ``true``
+
+.. _conf-cmake.cmakePath:
+
+``cmake.cmakePath``
+*******************
+
+Specify location of the cmake executable.
+
+- Default: ``cmake``, which causes CMake Tools to search the ``PATH`` environment
+  variable, as well as some hard-coded guesses.
+
 .. _conf-cmake.installPrefix:
 
 ``cmake.installPrefix``
@@ -81,6 +100,26 @@ Arguments to CMake that will be passed during the configure process.
 .. warning::
     **Always** prefer to use ``cmake.configureSettings`` or :ref:`variants`.
     *Never* pass ``-D`` arguments using this setting.
+
+.. _conf-cmake.cacheInit:
+
+``cmake.cacheInit``
+*******************
+
+Path or list of paths to cache-initialization files. Passed to CMake via the
+``-C`` command-line argument.
+
+- Default: ``[]`` (Empty array, no cache initializer files)
+
+.. _conf-cmake.mingwSearchDirs:
+
+``cmake.mingwSearchDirs``
+*************************
+
+List of paths to search for a MinGW installation. This means that GCC does not
+need to be on your ``$PATH`` for it to be found via Kit scanning.
+
+- Default: ``["C:\\MinGW"]`` (Search in C:\\MinGW for a MinGW installation)
 
 .. _conf-cmake.environment:
 
@@ -157,6 +196,14 @@ project for the first time.
 Set to a string to override CMake Tools' *preferred generator* logic. If this is
 set, CMake will unconditionally use it as the ``-G`` CMake generator command
 line argument.
+
+.. _conf-cmake.defaultVariants:
+
+``cmake.defaultVariants``
+*************************
+
+Override the default set of variants that will be supplied when no variants file
+is present. See :ref:`variants`.
 
 .. _conf-cmake.loggingLevel:
 

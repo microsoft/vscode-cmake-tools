@@ -1,35 +1,37 @@
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import {InputFileSet} from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {InputFileSet} from '@cmt/dirty';
 import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
 import * as cms from './cms-client';
-import config from './config';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 import {createLogger} from './logging';
-import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from './state';
 import * as util from './util';
+import {DirectoryContext} from './workspace';
 
 const log = createLogger('cms-driver');
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(stateman: StateManager) {
-    super(stateman);
-    config.onChange('environment', () => this._restartClient());
-    config.onChange('configureEnvironment', () => this._restartClient());
+  private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext) {
+    super(cmake, _ws);
+    this._ws.config.onChange('environment', () => this._restartClient());
+    this._ws.config.onChange('configureEnvironment', () => this._restartClient());
   }
 
-  private _cmsClient: Promise<cms.CMakeServerClient>;
-  private _globalSettings: cms.GlobalSettingsContent;
+  // TODO: Refactor to make this assertion unecessary
+  private _cmsClient!: Promise<cms.CMakeServerClient>;
+  private _clientChangeInProgress: Promise<void> = Promise.resolve();
+  private _globalSettings!: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
   private _cmakeInputFileSet = InputFileSet.createEmpty();
+
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -37,7 +39,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
    */
   private _prevConfigureEnv = 'null';
 
-  private _codeModel: null|cms.CodeModelContent;
+  // TODO: Refactor to make this assertion unecessary
+  private _codeModel!: null|cms.CodeModelContent;
   get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
   set codeModel(v: null|cms.CodeModelContent) {
     this._codeModel = v;
@@ -76,6 +79,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
+    await this._clientChangeInProgress;
     const cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
       if (consumer) {
@@ -109,7 +113,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async _refreshPostConfigure(): Promise<void> {
     const cl = await this._cmsClient;
-    const cmake_inputs = await cl.cmakeInputs();
+    const cmake_inputs = await cl.cmakeInputs();  // <-- 1. This line generates the error
     // Scan all the CMake inputs and capture their mtime so we can check for
     // out-of-dateness later
     this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
@@ -137,6 +141,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
+    log.debug('Run doRefreshExpansions');
     const bindir_before = this.binaryDir;
     const srcdir_before = this.sourceDir;
     await cb();
@@ -196,15 +201,22 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
-  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+
+  private async _setKitAndRestart(need_clean: boolean, cb: () => Promise<void>) {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
-    await (await this._cmsClient).shutdown();
+    const client = await this._cmsClient;
+    await client.shutdown();
     if (need_clean) {
       log.debug('Wiping build directory');
       await fs.rmdir(this.binaryDir);
     }
     await cb();
     await this._restartClient();
+  }
+
+  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
+    return this._clientChangeInProgress;
   }
 
   async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
@@ -259,10 +271,10 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   private async _startNewClient() {
-    return cms.CMakeServerClient.start({
+    return cms.CMakeServerClient.start(this._ws.config, {
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
-      cmakePath: await paths.cmakePath,
+      cmakePath: this.cmake.path,
       environment: await this.getConfigureEnvironment(),
       onDirty: async () => {
         // cmake-server has dirty check issues, so we implement our own dirty
@@ -280,7 +292,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(state: StateManager, kit: Kit|null): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(state), kit);
+  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, wsc), kit);
   }
 }

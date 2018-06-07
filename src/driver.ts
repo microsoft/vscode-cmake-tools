@@ -2,21 +2,20 @@
  * Defines base class for CMake drivers
  */ /** */
 
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
-import config from './config';
 import * as expand from './expand';
-import {CMakeGenerator, CompilerKit, getVSKitEnvironment, Kit, kitChangeNeedsClean, ToolchainKit, VSKit} from './kit';
+import {CMakeGenerator, getVSKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
-import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {StateManager} from './state';
 import * as util from './util';
 import {ConfigureArguments, VariantOption} from './variant';
+import {DirectoryContext} from './workspace';
 
 const log = logging.createLogger('driver');
 
@@ -76,7 +75,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(readonly stateManager: StateManager) {}
+  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext) {}
 
   /**
    * Dispose the driver. This disposes some things synchronously, but also
@@ -116,9 +115,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
   private readonly _projectNameChangedEmitter = new vscode.EventEmitter<string>();
 
-  public get projectName(): string { return this.stateManager.projectName || 'Unknown Project'; }
+  public get projectName(): string { return this.ws.state.projectName || 'Unknown Project'; }
   protected doSetProjectName(v: string) {
-    this.stateManager.projectName = v;
+    this.ws.state.projectName = v;
     this._projectNameChangedEmitter.fire(v);
   }
 
@@ -132,46 +131,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private _kit: Kit|null = null;
 
   /**
-   * Get the current kit as a `CompilerKit`.
-   *
-   * @precondition `this._kit` is non-`null` and `this._kit.type` is `compilerKit`.
-   * Guarded with an `assert`
-   */
-  private get _compilerKit() {
-    console.assert(this._kit && this._kit.type == 'compilerKit', JSON.stringify(this._kit));
-    return this._kit as CompilerKit;
-  }
-
-  /**
-   * Get the current kit as a `ToolchainKit`.
-   *
-   * @precondition `this._kit` is non-`null` and `this._kit.type` is `toolchainKit`.
-   * Guarded with an `assert`
-   */
-  private get _toolchainFileKit() {
-    console.assert(this._kit && this._kit.type == 'toolchainKit', JSON.stringify(this._kit));
-    return this._kit as ToolchainKit;
-  }
-
-  /**
-   * Get the current kit as a `VSKit`.
-   *
-   * @precondition `this._kit` is non-`null` and `this._kit.type` is `vsKit`.
-   * Guarded with an `assert`
-   */
-  private get _vsKit() {
-    console.assert(this._kit && this._kit.type == 'vsKit', JSON.stringify(this._kit));
-    return this._kit as VSKit;
-  }
-
-  /**
    * Get the environment and apply any needed
    * substitutions before returning it.
    */
   async getExpandedEnvironment(): Promise<{[key: string]: string}> {
     const env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
-    await Promise.resolve(util.objectPairs(config.environment)
+    await Promise.resolve(util.objectPairs(this.ws.config.environment)
                               .forEach(async ([key, value]) => env[key] = await expand.expandString(value, opts)));
     return env;
   }
@@ -184,7 +150,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const config_env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
     await Promise.resolve(
-        util.objectPairs(config.configureEnvironment)
+        util.objectPairs(this.ws.config.configureEnvironment)
             .forEach(async ([key, value]) => config_env[key] = await expand.expandString(value, opts)));
     return config_env;
   }
@@ -192,7 +158,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Get the vscode root workspace folder.
    *
-   * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a `file://` scheme.
+   * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
+   * `file://` scheme.
    */
   private get _workspaceRootPath() {
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders[0].uri.scheme !== 'file') {
@@ -220,7 +187,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
 
     // Update Variant replacements
-    const variantSettings = this.stateManager.activeVariantSettings;
+    const variantSettings = this.ws.state.activeVariantSettings;
     if (variantSettings) {
       variantSettings.forEach((value: string, key: string) => {
         if (key != 'buildType') {
@@ -262,8 +229,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (this._kit.environmentVariables) {
       util.objectPairs(this._kit.environmentVariables).forEach(([k, v]) => this._kitEnvironmentVariables.set(k, v));
     }
-    switch (this._kit.type) {
-    case 'vsKit': {
+    if (this._kit.visualStudio && this._kit.visualStudioArchitecture) {
       const vars = await getVSKitEnvironment(this._kit);
       if (!vars) {
         log.error('Invalid VS environment:', this._kit.name);
@@ -271,11 +237,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       } else {
         vars.forEach((val, key) => this._kitEnvironmentVariables.set(key, val));
       }
-      break;
-    }
-    default: {
-      // Other kits don't have environment variables
-    }
     }
   }
 
@@ -334,12 +295,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> { return cb(); }
 
   private async _refreshExpansions() {
-    await this.doRefreshExpansions(async () => {
+    log.debug('Run _refreshExpansions');
+    return this.doRefreshExpansions(async () => {
+      log.debug('Run _refreshExpansions cb');
       const opts = this.expansionOptions;
-      this._sourceDirectory = util.normalizePath(await expand.expandString(config.sourceDirectory, opts));
-      this._binaryDir = util.normalizePath(await expand.expandString(config.buildDirectory, opts));
+      this._sourceDirectory = util.normalizePath(await expand.expandString(this.ws.config.sourceDirectory, opts));
+      this._binaryDir = util.normalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
 
-      const installPrefix = config.installPrefix;
+      const installPrefix = this.ws.config.installPrefix;
       if (installPrefix) {
         this._installDir = util.normalizePath(await expand.expandString(installPrefix, opts));
       }
@@ -452,7 +415,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   getPreferredGenerators(): CMakeGenerator[] {
-    const user_preferred = config.preferredGenerators.map(g => ({name: g}));
+    const user_preferred = this.ws.config.preferredGenerators.map(g => ({name: g}));
     if (this._kit && this._kit.preferredGenerator) {
       // The kit has a preferred generator attached as well
       user_preferred.push(this._kit.preferredGenerator);
@@ -465,13 +428,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async getBestGenerator(): Promise<CMakeGenerator|null> {
     // User can override generator with a setting
-    const user_generator = config.generator;
+    const user_generator = this.ws.config.generator;
     if (user_generator) {
       log.debug(`Using generator from user configuration: ${user_generator}`);
       return {
         name: user_generator,
-        platform: config.platform || undefined,
-        toolset: config.toolset || undefined,
+        platform: this.ws.config.platform || undefined,
+        toolset: this.ws.config.toolset || undefined,
       };
     }
     log.debug('Trying to detect generator supported by system');
@@ -521,12 +484,13 @@ Please install or configure a preferred generator, or update settings.json or yo
   get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
 
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
+    log.debug('Start configure ', extra_args);
     const pre_check_ok = await this._beforeConfigureOrBuild();
     if (!pre_check_ok) {
       return -1;
     }
 
-    const settings = {...config.configureSettings};
+    const settings = {...this.ws.config.configureSettings};
 
     const _makeFlag = (key: string, cmval: util.CMakeValue) => {
       switch (cmval.type) {
@@ -559,28 +523,39 @@ Please install or configure a preferred generator, or update settings.json or yo
 
     const settings_flags
         = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = ['--no-warn-unused-cli'].concat(extra_args, config.configureArgs);
+    const flags = ['--no-warn-unused-cli'].concat(extra_args, this.ws.config.configureArgs);
 
     console.assert(!!this._kit);
     if (!this._kit) {
       throw new Error('No kit is set!');
     }
-    switch (this._kit.type) {
-    case 'compilerKit': {
-      log.debug('Using compilerKit', this._kit.name, 'for usage');
+    if (this._kit.compilers) {
+      log.debug('Using compilers in', this._kit.name, 'for configure');
       flags.push(
           ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
-    } break;
-    case 'toolchainKit': {
+    }
+    if (this._kit.toolchainFile) {
       log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
       flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
-    } break;
-    default:
-      log.debug('Kit requires no extra CMake arguments');
     }
-
     if (this._kit.cmakeSettings) {
       flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
+    }
+
+    const cache_init_conf = this.ws.config.cacheInit;
+    let cache_init: string[] = [];
+    if (cache_init_conf === null) {
+      // Do nothing
+    } else if (typeof cache_init_conf === 'string') {
+      cache_init = [cache_init_conf];
+    } else {
+      cache_init = cache_init_conf;
+    }
+    for (let init of cache_init) {
+      if (!path.isAbsolute(init)) {
+        init = path.join(this.sourceDir, init);
+      }
+      flags.push('-C', init);
     }
 
     // Get expanded configure environment
@@ -594,13 +569,17 @@ Please install or configure a preferred generator, or update settings.json or yo
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
-    const retc = await this.doConfigure(expanded_flags, consumer);
-    this._onReconfiguredEmitter.fire();
+    // Expand all important paths
     await this._refreshExpansions();
+
+    const retc = await this.doConfigure(expanded_flags, consumer);
+
+    this._onReconfiguredEmitter.fire();
     return retc;
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
+    log.debug('Start build', target);
     const pre_build_ok = await this.doPreBuild();
     if (!pre_build_ok) {
       return -1;
@@ -625,7 +604,7 @@ Please install or configure a preferred generator, or update settings.json or yo
   private async _beforeConfigureOrBuild(): Promise<boolean> {
     log.debug('Runnnig pre-configure checks and steps');
     if (this._isBusy) {
-      if (config.autoRestartBuild) {
+      if (this.ws.config.autoRestartBuild) {
         log.debug('Stopping current CMake task.');
         vscode.window.showInformationMessage('Stopping current CMake task and starting new build.');
         await this.stopCurrentProcess();
@@ -672,7 +651,7 @@ Please install or configure a preferred generator, or update settings.json or yo
       if (!gen)
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return ['-j', config.numJobs.toString()];
+        return ['-j', this.ws.config.numJobs.toString()];
       else if (gen.includes('Visual Studio'))
         return [
           '/m',
@@ -685,20 +664,17 @@ Please install or configure a preferred generator, or update settings.json or yo
     const build_env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
     await Promise.resolve(
-        util.objectPairs(util.mergeEnvironment(config.buildEnvironment, await this.getExpandedEnvironment()))
+        util.objectPairs(util.mergeEnvironment(this.ws.config.buildEnvironment, await this.getExpandedEnvironment()))
             .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
-    const args =
-        ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target].concat(config.buildArgs,
-                                                                                                  ['--'],
-                                                                                                  generator_args,
-                                                                                                  config.buildToolArgs);
+    const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
+                     .concat(this.ws.config.buildArgs, ['--'], generator_args, this.ws.config.buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises);
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
-    const cmake = await paths.cmakePath;
+    const cmake = this.cmake.path;
     const child = this.executeCommand(cmake, expanded_args, consumer, {environment: build_env});
     this._currentProcess = child;
     this._isBusy = true;

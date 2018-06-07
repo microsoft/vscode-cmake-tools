@@ -14,6 +14,7 @@ import * as ajv from 'ajv';
 import * as kit from '../../src/kit';
 import {fs} from '../../src/pr';
 import * as state from '../../src/state';
+import * as config from '../../src/config';
 
 // tslint:disable:no-unused-expression
 
@@ -45,7 +46,7 @@ suite('Kits scan test', async () => {
          await kit.scanForKits();
        })
       // Compiler detection can run a little slow
-      .timeout(12000);
+      .timeout(60000);
 
   test('Detect a GCC compiler file', async () => {
     const compiler = path.join(fakebin, 'gcc-42.1');
@@ -54,6 +55,15 @@ suite('Kits scan test', async () => {
     expect(compkit!.compilers).has.property('C').equal(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
     expect(compkit!.name).to.eq('GCC 42.1');
+  });
+
+  test('Detect a GCC cross compiler compiler file', async () => {
+    const compiler = path.join(fakebin, 'cross-compile-gcc');
+    const compkit = await kit.kitIfCompiler(compiler);
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').equal(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+    expect(compkit!.name).to.eq('GCC for cross-compile 0.2.1000');
   });
 
   test('Detect a Clang compiler file', async () => {
@@ -103,14 +113,14 @@ suite('Kits scan test', async () => {
       await fs.mkdir(path_with_compilername);
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(3);
+      expect(kits.length).to.eq(4);
     });
 
     test('Scan file with compiler name', async () => {
       await fs.writeFile(path_with_compilername, '');
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(3);
+      expect(kits.length).to.eq(4);
     });
   });
 
@@ -120,10 +130,12 @@ suite('Kits scan test', async () => {
     let sandbox: sinon.SinonSandbox;
     let path_backup: string|undefined;
     setup(async () => {
-      sandbox = sinon.sandbox.create();
+      sandbox = sinon.createSandbox();
       const stateMock = sandbox.createStubInstance(state.StateManager);
+      const configMock = sinon.createStubInstance(config.ConfigurationReader);
+      sandbox.stub(configMock, 'mingwSearchDirs').get(() => []);
       sandbox.stub(stateMock, 'activeKitName').get(() => null).set(() => {});
-      km = new kit.KitManager(stateMock, path_rescan_kit);
+      km = new kit.KitManager(stateMock, configMock, path_rescan_kit);
 
       // Mock showInformationMessage to suppress needed user choice
       sandbox.stub(vscode.window, 'showInformationMessage')
@@ -177,24 +189,16 @@ suite('Kits scan test', async () => {
       expect(nonVSKits.length).to.be.eq(0);
     }).timeout(10000);
 
-    // Fails because PATH is tried to split but a empty path is not splitable
     test('check empty kit file', async () => {
+      // mingwSearchDirs is cleared by setup method
       process.env.PATH = '';
 
       await km.initialize();
 
-      const newKitFileExists = await fs.exists(path_rescan_kit);
-      expect(newKitFileExists).to.be.true;
-    });
-
-    test('check empty kit file', async () => {
-      delete process.env['PATH'];
-
-      await km.initialize();
-
-      const newKitFileExists = await fs.exists(path_rescan_kit);
-      expect(newKitFileExists).to.be.true;
-    });
+      const kitFile = await readValidKitFile(path_rescan_kit);
+      const nonVSKits = kitFile.filter(item => item.visualStudio == null);
+      expect(nonVSKits.length).to.be.eq(0);
+    }).timeout(10000);
 
     test('check fake compilers in kit file', async () => {
       process.env['PATH'] = getTestRootFilePath('fakebin');
@@ -203,7 +207,7 @@ suite('Kits scan test', async () => {
 
       const kitFile = await readValidKitFile(path_rescan_kit);
       const nonVSKits = kitFile.filter(item => item.visualStudio == null);
-      expect(nonVSKits.length).to.be.eq(3);
+      expect(nonVSKits.length).to.be.eq(4);
     }).timeout(10000);
 
     test('check check combination of scan and old kits', async () => {
