@@ -272,7 +272,7 @@ export class VariantManager implements vscode.Disposable {
         log.error(` >> ${err.dataPath}: ${err.message}`);
       }
       new_variants = DEFAULT_VARIANTS;
-      log.info('Loaded internal default variants');
+      log.info('Loaded default variants');
     } else {
       log.info('Loaded new set of variants');
     }
