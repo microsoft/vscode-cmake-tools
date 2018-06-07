@@ -5,6 +5,9 @@ Changelog and History
 
 .. _changes-1.0.0:
 
+1.0.0
+*****
+
 CMake Tools 1.0.0 is a minor change over 0.11.x, but marks the first "stable"
 release. It is now a developer-ready tool that is suitable for everyday work!
 [#counter]_
