@@ -1,3 +1,10 @@
 out
 node_modules
 .browse.VC.db*
+*.old
+build/
+test/fakebin/
+.vscode-test/
+.ci-build
+*.vsix
+npm-debug.log

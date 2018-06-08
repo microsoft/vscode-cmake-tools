@@ -1,48 +1,95 @@
+/**
+ * Extension startup/teardown
+ */ /** */
+
 'use strict';
 
+require('module-alias/register');
+
 import * as vscode from 'vscode';
-import * as api from './api';
-import * as wrapper from './wrapper';
+import * as logging from './logging';
+import * as util from './util';
 
-export async function activate(context: vscode.ExtensionContext): Promise<api.CMakeToolsAPI | null> {
-    let cmake: wrapper.CMakeToolsWrapper | null = null;
-    try {
-        cmake = await wrapper.CMakeToolsWrapper.startup(context);
-    } catch (e) {
-        debugger;
-        console.error('Error during CMake Tools initialization!', e);
-    }
-    if (cmake) {
-        function register(name, fn) {
-            fn = fn.bind(cmake);
-            return vscode.commands.registerCommand(name, _ => fn());
-        }
+const log = logging.createLogger('extension');
 
-        for (const key of [
-            'configure',
-            'build',
-            'install',
-            'jumpToCacheFile',
-            'clean',
-            'cleanConfigure',
-            'cleanRebuild',
-            'buildWithTarget',
-            'setDefaultTarget',
-            'setBuildType',
-            'ctest',
-            'stop',
-            'quickStart',
-            'debugTarget',
-            'selectDebugTarget',
-            'selectEnvironments',
-        ]) {
-            context.subscriptions.push(register('cmake.' + key, cmake[key as string]));
-        }
-    }
+// import * as api from './api';
+// import { CMakeToolsWrapper } from './wrapper';
+// import { log } from './logging';
+// import { outputChannels } from "./util";
 
-    return cmake;
+import CMakeTools from './cmake-tools';
+import rollbar from './rollbar';
+import {DirectoryContext} from '@cmt/workspace';
+import {StateManager} from '@cmt/state';
+
+let INSTANCE: CMakeTools|null = null;
+
+/**
+ * Starts up the extension.
+ * @param context The extension context
+ * @returns A promise that will resolve when the extension is ready for use
+ */
+export async function activate(context: vscode.ExtensionContext): Promise<CMakeTools> {
+  // Create a WorkspaceContext for the current workspace. In the future, this will
+  // instantiate for each directory in a workspace
+  const ws = DirectoryContext.createForDirectory(vscode.workspace.rootPath!, new StateManager(context));
+  // Create a new instance and initailize.
+  const cmt_pr = CMakeTools.create(context, ws);
+
+  // A register function helps us bind the commands to the extension
+  function register<K extends keyof CMakeTools>(name: K) {
+    return vscode.commands.registerCommand(`cmake.${name}`, () => {
+      const id = util.randint(1000, 10000);
+      const pr = (async () => {
+        log.debug(`[${id}]`, `cmake.${name}`, 'started');
+        const cmt_inst = await cmt_pr;
+        const fn = (cmt_inst[name] as Function).bind(cmt_inst);
+        const ret = await fn();
+        try {
+          log.debug(`[${id}] cmake.${name} finished (returned ${JSON.stringify(ret)})`);
+        } catch (e) { log.debug(`[${id}] cmake.${name} finished (returned an unserializable value)`); }
+        return ret;
+      })();
+      rollbar.takePromise(name, {}, pr);
+      return pr;
+    });
+  }
+
+  // List of functions that will be bound commands
+  const funs: (keyof CMakeTools)[] = [
+    'editKits',     'scanForKits',      'selectKit',        'cleanConfigure', 'configure',
+    'build',        'setVariant',       'install',          'editCache',      'clean',
+    'cleanRebuild', 'buildWithTarget',  'setDefaultTarget', 'ctest',          'stop',
+    'quickStart',   'launchTargetPath', 'debugTarget',      'launchTarget',   'selectLaunchTarget',
+    'resetState',   'viewLog',
+    // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
+  ];
+
+  // Register the functions before the extension is done loading so that fast
+  // fingers won't cause "unregistered command" errors while CMake Tools starts
+  // up. The command wrapper will await on the extension promise.
+  for (const key of funs) {
+    log.trace(`Register CMakeTools extension command cmake.${key}`);
+    context.subscriptions.push(register(key));
+  }
+
+  const cmt = await cmt_pr;
+
+  // Push it so we get clean teardown.
+  context.subscriptions.push(cmt);
+
+  context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
+
+  // Return the extension
+  INSTANCE = cmt;
+  return INSTANCE;
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {
+export async function deactivate() {
+  log.debug('Deactivate CMakeTools');
+  //   outputChannels.dispose();
+  if (INSTANCE) {
+    await INSTANCE.asyncDispose();
+  }
 }

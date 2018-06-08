@@ -1,0 +1,6 @@
+{
+    "cmake.useCMakeServer": true,
+    "cmake.configureEnvironment": {
+        "HOME": "/home/colby-TEST-APPENDED"
+    }
+}

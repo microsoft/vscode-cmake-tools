@@ -7,7 +7,9 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
+            "args": [
+                "--extensionDevelopmentPath=${workspaceRoot}"
+            ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
@@ -15,24 +17,165 @@
                 "${workspaceRoot}/out/src/*",
                 "${workspaceRoot}/out/test/*"
             ],
+            "env": {
+                "CMT_DEVRUN": "1"
+            },
             "preLaunchTask": "npm",
-            "smartStep": true
+            "smartStep": false
         },
         {
             "name": "Launch Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["${workspaceRoot}/test/test_project", "--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test"],
+            "args": [
+                "${workspaceRoot}/test/unit-tests/test-project-without-cmakelists",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/unit-tests"
+            ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
                 "${workspaceRoot}/out/*",
                 "${workspaceRoot}/out/src/*",
-                "${workspaceRoot}/out/test/*"
+                "${workspaceRoot}/out/test/*",
+                "${workspaceRoot}/out/test/unit-tests/*"
             ],
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "HasVs": "true"
+            },
             "preLaunchTask": "npm"
             // "smartStep": true
+        },
+        {
+            "name": "Launch Extension Tests (without-cmakelist-file)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceRoot}/test/extension-tests/without-cmakelist-file/project-folder",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/without-cmakelist-file"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*",
+                "${workspaceRoot}/out/src/*",
+                "${workspaceRoot}/out/test/*",
+                "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/*",
+                "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/test/*"
+            ],
+
+            "preLaunchTask": "npm",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
+            // "smartStep": true
+        },
+        {
+            "name": "Launch Extension Tests (successful-build)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceRoot}/test/extension-tests/successful-build/project-folder",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/successful-build"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*",
+                "${workspaceRoot}/out/src/*",
+                "${workspaceRoot}/out/test/*",
+                "${workspaceRoot}/out/test/extension-tests/successful-build/*",
+                "${workspaceRoot}/out/test/extension-tests/successful-build/test/*"
+            ],
+
+            "preLaunchTask": "npm",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
+            // "smartStep": true
+        },
+        {
+            "name": "Launch Extension Tests (vs-preferred-gen)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceRoot}/test/extension-tests/vs-preferred-gen/project-folder",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/vs-preferred-gen"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*",
+                "${workspaceRoot}/out/src/*",
+                "${workspaceRoot}/out/test/*",
+                "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/*",
+                "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/test/*"
+            ],
+
+            "preLaunchTask": "npm",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
+            // "smartStep": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Backend tests",
+            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "args": [
+                "-u",
+                "tdd",
+                "--timeout",
+                "999999",
+                "--colors",
+                "-r",
+                "ts-node/register",
+                "${workspaceFolder}/test/backend-unit-tests/**/*.test.ts"
+            ],
+            "internalConsoleOptions": "openOnSessionStart"
         }
     ]
 }

@@ -1,0 +1,49 @@
+[
+    {
+        "name": "Test Toolchain",
+        "toolchainFile": "${workspaceRoot}\\test-toolchain.cmake"
+    },
+    {
+    "name": "Generator switch test GCC Mingw - Win",
+    "compilers": {
+      "CXX": "C:\\MinGW\\bin\\g++.exe",
+      "C": "C:\\MinGW\\bin\\gcc.exe"
+    },
+    "preferredGenerator": {
+      "name": "MinGW Makefiles"
+    },
+    "environmentVariables": {
+      "PATH": "${env:PATH};C:\\MinGW\\bin"
+    }
+  },
+  {
+    "name": "Generator switch test GCC Ninja - Win",
+    "compilers": {
+      "CXX": "C:\\MinGW\\bin\\g++.exe",
+      "C": "C:\\MinGW\\bin\\gcc.exe"
+    },
+    "preferredGenerator": {
+      "name": "Ninja"
+    }
+  } ,
+    {
+    "name": "Generator switch test GCC Make",
+    "compilers": {
+      "CXX": "g++",
+      "C": "gcc"
+    },
+    "preferredGenerator": {
+      "name": "Unix Makefiles"
+    }
+  },
+  {
+    "name": "Generator switch test GCC Ninja",
+    "compilers": {
+      "CXX": "g++",
+      "C": "gcc"
+    },
+    "preferredGenerator": {
+      "name": "Ninja"
+    }
+  }
+]

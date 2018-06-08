@@ -1,0 +1,71 @@
+---
+Language:        JavaScript
+# BasedOnStyle:  WebKit
+# Keep them together. Would be preferable to put all arguments on a new line
+AlignAfterOpenBracket: true
+# Newline escapes should be aligned, they're prettier that way
+AlignEscapedNewlinesLeft: false
+# Same with OpenBracket alignment. No need for that.
+AlignOperands:   false
+# Purdy
+AlignTrailingComments: true
+# Yuck:
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: true
+# Ew, no.
+AlwaysBreakAfterDefinitionReturnType: false
+# Not mandatory...
+AlwaysBreakTemplateDeclarations: false
+# Readability:
+AlwaysBreakBeforeMultilineStrings: true
+# Nice...
+BreakBeforeBinaryOperators: All
+BreakBeforeTernaryOperators: true
+# Yessir
+BreakConstructorInitializersBeforeComma: true
+# Please, keep it readable:
+BinPackParameters: false
+BinPackArguments: false
+# Not a hard and fast rule, but yeah
+ColumnLimit:     120
+# No need
+IndentCaseLabels: false
+# Gross
+IndentWrappedFunctionNames: false
+IndentFunctionDeclarationAfterType: false
+# Two empty lines are useful as physical seperators
+MaxEmptyLinesToKeep: 2
+KeepEmptyLinesAtTheStartOfBlocks: true
+# These feel about right...
+PenaltyBreakBeforeFirstCallParameter: 600
+PenaltyBreakComment: 300
+PenaltyBreakString: 1000
+PenaltyBreakFirstLessLess: 120
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 60
+# Keep it away:
+SpacesBeforeTrailingComments: 2
+IndentWidth:     2
+TabWidth:        8
+UseTab:          Never
+# Attach is the One True Brace Style
+BreakBeforeBraces: Attach
+# Used to do this, not anymore
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInAngles:  false
+SpaceInEmptyParentheses: false
+SpacesInCStyleCastParentheses: false
+SpaceAfterCStyleCast: false
+SpacesInContainerLiterals: false
+SpaceBeforeAssignmentOperators: true
+ContinuationIndentWidth: 4
+SpaceBeforeParens: ControlStatements
+JavaScriptWrapImports: true
+JavaScriptQuotes: Single
+DisableFormat:   false
+...
