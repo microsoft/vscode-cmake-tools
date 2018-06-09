@@ -156,7 +156,7 @@ suite('Build', async () => {
     expect(result1['compiler']).to.eql(compiler[1].compiler);
   }).timeout(100000);
 
-  test.only('Test kit switch between different preferred generators and same compiler', async function(this: ITestCallbackContext) {
+  test('Test kit switch between different preferred generators and same compiler', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:RegExp, generator: string}[]} = { ['linux']: [
       {kitLabel: /^Generator switch test GCC Make/, generator: 'Unix Makefiles' },
