@@ -142,33 +142,33 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test.only('Test kit switch between different preferred generators and compilers',
-       async function(this: ITestCallbackContext) {
-         // Select compiler build node dependent
-         const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
-           linux: [
-             {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
-             {kitLabel: /^Clang \d/, compiler: 'Clang/LLVM'},
-           ],
-           win32: [
-             {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
-             {kitLabel: /^VisualStudio/, compiler: 'Microsoft Visual Studio'}
-           ]
-         };
-         if (!(workername in os_compilers))
-           this.skip();
-         const compiler = os_compilers[workername];
+            async function(this: ITestCallbackContext) {
+              // Select compiler build node dependent
+              const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+                linux: [
+                  {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
+                  {kitLabel: /^Clang \d/, compiler: 'Clang/LLVM'},
+                ],
+                win32: [
+                  {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
+                  {kitLabel: /^VisualStudio/, compiler: 'Microsoft Visual Studio'}
+                ]
+              };
+              if (!(workername in os_compilers))
+                this.skip();
+              const compiler = os_compilers[workername];
 
-         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-         await cmt.selectKit();
-         await cmt.build();
+              testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+              await cmt.selectKit();
+              await cmt.build();
 
-         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-         await cmt.selectKit();
-         await cmt.build();
+              testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+              await cmt.selectKit();
+              await cmt.build();
 
-         const result1 = await testEnv.result.getResultAsJson();
-         expect(result1['compiler']).to.eql(compiler[1].compiler);
-       })
+              const result1 = await testEnv.result.getResultAsJson();
+              expect(result1['compiler']).to.eql(compiler[1].compiler);
+            })
       .timeout(100000);
 
   test('Test kit switch between different preferred generators and same compiler',

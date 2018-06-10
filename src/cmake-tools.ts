@@ -4,6 +4,7 @@
 import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import * as debugger_mod from '@cmt/debugger';
+import {Strand} from '@cmt/strand';
 import {versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
@@ -19,7 +20,7 @@ import {CTestDriver} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
 import {CMakeDriver} from './driver';
-import {KitManager, Kit} from './kit';
+import {KitManager} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
@@ -118,6 +119,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * The variant manager keeps track of build variants. Has two-phase init.
    */
   private readonly _variantManager = new VariantManager(this.workspaceContext.state, this.workspaceContext.config);
+
+  /**
+   * A strand to serialize operations with the CMake driver
+   */
+  private readonly _driverStrand = new Strand();
 
   /**
    * The object in charge of talking to CMake. It starts empty (null) because
@@ -279,7 +285,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Listen for the kit to change
     this._kitManager.onActiveKitChanged(kit => {
       log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
-      this._reloadKit(kit);
+      rollbar.invokeAsync('Changing CMake kit', () => this._driverStrand.execute(async () => {
+        if (kit) {
+          log.debug('Injecting new Kit into CMake driver');
+          const drv = await this._cmakeDriver;
+          if (drv) {
+            await drv.setKit(kit);
+          }
+        }
+        this._statusBar.setActiveKitName(kit ? kit.name : '');
+      }));
     });
     this._ctestController.onTestingEnabledChanged(enabled => { this._statusBar.ctestEnabled = enabled; });
     this._ctestController.onResultsChanged(res => { this._statusBar.testResults = res; });
@@ -291,30 +306,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * A promise that will resolve once kits have been successfully loaded
-   */
-  private _loadingKit = Promise.resolve();
-
-  /**
-   * Load a new kit. Sets `_loadingKit` to a new promise.
-   * @param kit The kit to set
-   */
-  private _reloadKit(kit: Kit|null) {
-    this._loadingKit = this._doReloadKit(kit);
-  }
-
-  private async _doReloadKit(kit: Kit|null) {
-    if (kit) {
-      log.debug('Injecting new Kit into CMake driver');
-      const drv = await this._cmakeDriver;
-      if (drv) {
-        await drv.setKit(kit);
-      }
-    }
-    this._statusBar.setActiveKitName(kit ? kit.name : '');
-  }
-
-  /**
    * Returns, if possible a cmake driver instance. To creation the driver instance,
    * there are preconditions that should be fulfilled, such as an active kit is selected.
    * These preconditions are checked before it driver instance creation. When creating a
@@ -322,42 +313,35 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * This ensures that user commands can always be executed, because error criterials like
    * exceptions would assign a null driver and it is possible to create a new driver instance later again.
    */
-  async getRawCMakeDriverInstance(): Promise<CMakeDriver|null> {
-    if (!this._kitManager.hasActiveKit) {
-      log.debug('Not starting CMake driver: no kits defined');
-      return null;
-    }
-    let cmakePath = await this.workspaceContext.cmakePath;
-    if (cmakePath === null)
-      cmakePath = '';
-    const cmake = await getCMakeExecutableInformation(cmakePath);
-    if (!cmake.isPresent) {
-      vscode.window.showErrorMessage(`Bad CMake executable "${
-          cmake.path}". Is it installed or settings contain the correct path (cmake.cmakePath)?`);
-      return null;
-    }
-
-    if ((await this._cmakeDriver) === null) {
-      log.debug('Starting new CMake driver');
-      this._cmakeDriver = this._startNewCMakeDriver(cmake);
-
-      try {
-        await this._cmakeDriver;
-      } catch (ex) {
-        this._cmakeDriver = Promise.resolve(null);
-        throw ex;
+  async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
+    return this._driverStrand.execute(async () => {
+      if (!this._kitManager.hasActiveKit) {
+        log.debug('Not starting CMake driver: no kits defined');
+        return null;
       }
-    }
-    return this._cmakeDriver;
-  }
+      let cmakePath = await this.workspaceContext.cmakePath;
+      if (cmakePath === null)
+        cmakePath = '';
+      const cmake = await getCMakeExecutableInformation(cmakePath);
+      if (!cmake.isPresent) {
+        vscode.window.showErrorMessage(`Bad CMake executable "${
+            cmake.path}". Is it installed or settings contain the correct path (cmake.cmakePath)?`);
+        return null;
+      }
 
-  /**
-   * Return a CMake driver instance that is guaranteed to not be in the midst of
-   * reloading.
-   */
-  async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
-    await this._loadingKit;
-    return this.getRawCMakeDriverInstance();
+      if ((await this._cmakeDriver) === null) {
+        log.debug('Starting new CMake driver');
+        this._cmakeDriver = this._startNewCMakeDriver(cmake);
+
+        try {
+          await this._cmakeDriver;
+        } catch (ex) {
+          this._cmakeDriver = Promise.resolve(null);
+          throw ex;
+        }
+      }
+      return this._cmakeDriver;
+    });
   }
 
   /**
