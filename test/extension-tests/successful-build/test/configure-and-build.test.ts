@@ -1,8 +1,11 @@
 import {CMakeTools} from '@cmt/cmake-tools';
+import {fs} from '@cmt/pr';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 import {ITestCallbackContext} from 'mocha';
+import * as path from 'path';
 
+// tslint:disable:no-unused-expression
 
 let workername: string = process.platform;
 
@@ -17,6 +20,7 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
+  let compdb_cp_path: string;
 
   suiteSetup(async function(this: Mocha.IHookCallbackContext) {
     this.timeout(100000);
@@ -25,6 +29,7 @@ suite('Build', async () => {
     const exe_res = 'output.txt';
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
+    compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
@@ -50,9 +55,12 @@ suite('Build', async () => {
     testEnv.clean();
   });
 
-  suiteTeardown(() => {
+  suiteTeardown(async () => {
     if (testEnv) {
       testEnv.teardown();
+    }
+    if (await fs.exists(compdb_cp_path)) {
+      await fs.unlink(compdb_cp_path);
     }
   });
 
@@ -141,7 +149,6 @@ suite('Build', async () => {
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
          await cmt.selectKit();
          await cmt.build();
-
 
          testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
          await cmt.selectKit();
@@ -254,5 +261,17 @@ suite('Build', async () => {
     await cmt.build();
 
     await testEnv.result.getResultAsJson();
+  }).timeout(100000);
+
+  test('Copy compile_commands.json to a pre-determined path', async () => {
+    await cmt.selectKit();
+    expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
+    let retc = await cmt.configure();
+    expect(retc).to.eq(0);
+    expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
+    testEnv.config.updatePartial({copyCompileCommands: compdb_cp_path});
+    retc = await cmt.configure();
+    expect(retc).to.eq(0);
+    expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
   }).timeout(100000);
 });
