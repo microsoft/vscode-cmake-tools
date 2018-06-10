@@ -11,13 +11,7 @@
 #endif
 
 std::string getCompilerName() {
-    #if defined(__clang__)
-	    return "Clang/LLVM";
-    #elif defined(__GNUC__) || defined(__GNUG__)
-        return "GNU GCC/G++";
-    #elif defined(_MSC_VER)
-        return "Microsoft Visual Studio";
-    #endif
+    return C_COMPILER_ID;
 }
 
 std::string get_env_var(const std::string& key) {
