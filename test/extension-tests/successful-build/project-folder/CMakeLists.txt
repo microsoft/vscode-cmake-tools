@@ -28,6 +28,7 @@ add_definitions(
 
 target_compile_definitions(TestBuildProcess PRIVATE
     "CMT_COOKIE=\"${CMT_COOKIE}\""
+    "C_COMPILER_ID=\"${CMAKE_C_COMPILER_ID}\""
 )
 
 add_custom_target(runTestTarget DEPENDS TestBuildProcess

@@ -114,14 +114,8 @@ suite('Build', async () => {
   test('Test kit switch after missing preferred generator', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
     const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
-      linux: [
-        {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
-        {kitLabel: /^Clang \d/, compiler: 'Clang/LLVM'},
-      ],
-      win32: [
-        {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
-        {kitLabel: /^VisualStudio/, compiler: 'Microsoft Visual Studio'}
-      ],
+      linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
+      win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
     };
     if (!(workername in os_compilers))
       this.skip();
@@ -145,14 +139,8 @@ suite('Build', async () => {
        async function(this: ITestCallbackContext) {
          // Select compiler build node dependent
          const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
-           linux: [
-             {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
-             {kitLabel: /^Clang \d/, compiler: 'Clang/LLVM'},
-           ],
-           win32: [
-             {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
-             {kitLabel: /^VisualStudio/, compiler: 'Microsoft Visual Studio'}
-           ]
+           linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
+           win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
          };
          if (!(workername in os_compilers))
            this.skip();
