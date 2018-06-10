@@ -643,6 +643,12 @@
           "description": "Directories where Emscripten may be installed",
           "scope": "window"
         },
+        "cmake.copyCompileCommands": {
+          "type": "string",
+          "default": null,
+          "description": "Copy compile_commands.json to this location after a successful configure",
+          "scope": "resource"
+        },
         "cmake.useCMakeServer": {
           "type": "boolean",
           "default": true,
