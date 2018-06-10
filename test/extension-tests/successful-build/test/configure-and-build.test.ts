@@ -115,15 +115,14 @@ suite('Build', async () => {
     // Select compiler build node dependent
     const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
       linux: [
-        {kitLabel: /^GCC/, compiler: 'GNU GCC/G++'},
-        {kitLabel: /^Clang/, compiler: 'Clang/LLVM'},
+        {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
+        {kitLabel: /^Clang \d/, compiler: 'Clang/LLVM'},
       ],
       win32: [
-        {kitLabel: /^GCC/, compiler: 'GNU GCC/G++'},
+        {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
         {kitLabel: /^VisualStudio/, compiler: 'Microsoft Visual Studio'}
       ],
     };
-    this.skip();  // XXX: Fix race between setting kit and building
     if (!(workername in os_compilers))
       this.skip();
     const compiler = os_compilers[workername];
@@ -142,20 +141,19 @@ suite('Build', async () => {
     expect(result1['compiler']).to.eql(compiler[1].compiler);
   }).timeout(100000);
 
-  test('Test kit switch between different preferred generators and compilers',
+  test.only('Test kit switch between different preferred generators and compilers',
        async function(this: ITestCallbackContext) {
          // Select compiler build node dependent
          const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
            linux: [
-             {kitLabel: /^GCC/, compiler: 'GNU GCC/G++'},
-             {kitLabel: /^Clang/, compiler: 'Clang/LLVM'},
+             {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
+             {kitLabel: /^Clang \d/, compiler: 'Clang/LLVM'},
            ],
            win32: [
-             {kitLabel: /^GCC/, compiler: 'GNU GCC/G++'},
+             {kitLabel: /^GCC \d/, compiler: 'GNU GCC/G++'},
              {kitLabel: /^VisualStudio/, compiler: 'Microsoft Visual Studio'}
            ]
          };
-         this.skip();  // XXX: Fix race between setting kit and building
          if (!(workername in os_compilers))
            this.skip();
          const compiler = os_compilers[workername];
@@ -186,7 +184,6 @@ suite('Build', async () => {
              {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja'}
            ]
          };
-         this.skip();  // XXX: Fix race between setting kit and building
          if (!(workername in os_compilers))
            this.skip();
          const compiler = os_compilers[workername];
@@ -218,7 +215,6 @@ suite('Build', async () => {
         {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja'}
       ]
     };
-    this.skip();  // XXX: Fix race between setting kit and building
     if (!(workername in os_compilers))
       this.skip();
     const compiler = os_compilers[workername];

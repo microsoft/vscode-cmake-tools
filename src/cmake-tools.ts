@@ -19,7 +19,7 @@ import {CTestDriver} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
 import {CMakeDriver} from './driver';
-import {KitManager} from './kit';
+import {KitManager, Kit} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
@@ -279,16 +279,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Listen for the kit to change
     this._kitManager.onActiveKitChanged(kit => {
       log.debug('Active CMake Kit changed:', kit ? kit.name : 'null');
-      rollbar.invokeAsync('Changing CMake kit', async () => {
-        if (kit) {
-          log.debug('Injecting new Kit into CMake driver');
-          const drv = await this._cmakeDriver;
-          if (drv) {
-            await drv.setKit(kit);
-          }
-        }
-        this._statusBar.setActiveKitName(kit ? kit.name : '');
-      });
+      this._reloadKit(kit);
     });
     this._ctestController.onTestingEnabledChanged(enabled => { this._statusBar.ctestEnabled = enabled; });
     this._ctestController.onResultsChanged(res => { this._statusBar.testResults = res; });
@@ -300,6 +291,30 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * A promise that will resolve once kits have been successfully loaded
+   */
+  private _loadingKit = Promise.resolve();
+
+  /**
+   * Load a new kit. Sets `_loadingKit` to a new promise.
+   * @param kit The kit to set
+   */
+  private _reloadKit(kit: Kit|null) {
+    this._loadingKit = this._doReloadKit(kit);
+  }
+
+  private async _doReloadKit(kit: Kit|null) {
+    if (kit) {
+      log.debug('Injecting new Kit into CMake driver');
+      const drv = await this._cmakeDriver;
+      if (drv) {
+        await drv.setKit(kit);
+      }
+    }
+    this._statusBar.setActiveKitName(kit ? kit.name : '');
+  }
+
+  /**
    * Returns, if possible a cmake driver instance. To creation the driver instance,
    * there are preconditions that should be fulfilled, such as an active kit is selected.
    * These preconditions are checked before it driver instance creation. When creating a
@@ -307,7 +322,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * This ensures that user commands can always be executed, because error criterials like
    * exceptions would assign a null driver and it is possible to create a new driver instance later again.
    */
-  async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
+  async getRawCMakeDriverInstance(): Promise<CMakeDriver|null> {
     if (!this._kitManager.hasActiveKit) {
       log.debug('Not starting CMake driver: no kits defined');
       return null;
@@ -334,6 +349,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     }
     return this._cmakeDriver;
+  }
+
+  /**
+   * Return a CMake driver instance that is guaranteed to not be in the midst of
+   * reloading.
+   */
+  async getCMakeDriverInstance(): Promise<CMakeDriver | null> {
+    await this._loadingKit;
+    return this.getRawCMakeDriverInstance();
   }
 
   /**
@@ -390,7 +414,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.configure`
    */
   configure(extra_args: string[] = []) {
-    log.debug("Run configure ", extra_args);
+    log.debug('Run configure ', extra_args);
     return this._doConfigure(async consumer => {
       const drv = await this.getCMakeDriverInstance();
       if (drv) {
@@ -511,7 +535,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
-    log.debug("Run build", target_? target_ : "");
+    log.debug('Run build', target_ ? target_ : '');
     // First, save open files
     if (!await this.maybeAutoSaveAll()) {
       return -1;
