@@ -123,7 +123,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * A strand to serialize operations with the CMake driver
    */
-  private _driverStrand = new Strand();
+  private readonly _driverStrand = new Strand();
 
   /**
    * The object in charge of talking to CMake. It starts empty (null) because
