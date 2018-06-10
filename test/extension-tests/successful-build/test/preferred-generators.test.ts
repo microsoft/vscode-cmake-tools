@@ -110,7 +110,7 @@ const DEFAULT_WINDOWS_KITS: KitEnvironment[] = DEFAULT_VS_KITS.concat(DEFAULT_CY
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
   ['win32']: DEFAULT_WINDOWS_KITS.concat([{
-    defaultKit: /^Clang/,
+    defaultKit: /^Clang .* for MSVC/,
     expectedDefaultGenerator: /^Unix Makefiles/,
     path: [' C:\\Program Files\\LLVM\\bin']
   }]),
