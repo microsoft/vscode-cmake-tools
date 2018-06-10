@@ -108,10 +108,10 @@ suite('Build', async () => {
   test('Test kit switch after missing preferred generator', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:RegExp, compiler:string}[]} = { ['linux']: [
-      {kitLabel: /^GCC 4.8.4/, compiler:'GNU GCC/G++' },
-      {kitLabel: /^Clang 5.0.0/, compiler:'GNU GCC/G++' }],
+      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
+      {kitLabel: /^Clang \d/, compiler:'Clang/LLVM' }],
       ['win32']: [
-      {kitLabel: /^GCC 4.8.1/, compiler:'GNU GCC/G++' },
+      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
       {kitLabel: /^VisualStudio/, compiler:'Microsoft Visual Studio' }
     ]};
     if( !(workername in os_compilers)) this.skip();
@@ -131,13 +131,13 @@ suite('Build', async () => {
     expect(result1['compiler']).to.eql(compiler[1].compiler);
   }).timeout(100000);
 
-  test('Test kit switch between different preferred generators and compilers', async function(this: ITestCallbackContext) {
+  test.only('Test kit switch between different preferred generators and compilers', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
     const os_compilers : {[osName: string]: { kitLabel:RegExp, compiler:string}[]} = { ['linux']: [
-      {kitLabel: /^GCC 4.8.4/, compiler:'GNU GCC/G++' },
-      {kitLabel: /^Clang 5.0.0/, compiler:'GNU GCC/G++' }],
+      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
+      {kitLabel: /^Clang \d/, compiler:'Clang/LLVM' }],
       ['win32']: [
-      {kitLabel: /^GCC 4.8.1/, compiler:'GNU GCC/G++' },
+      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
       {kitLabel: /^VisualStudio/, compiler:'Microsoft Visual Studio' }
     ]};
     if( !(workername in os_compilers)) this.skip();
