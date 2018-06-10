@@ -114,9 +114,9 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
     expectedDefaultGenerator: /^Unix Makefiles/,
     path: [' C:\\Program Files\\LLVM\\bin']
   }]),
-  ['Visual Studio 2017']: DEFAULT_WINDOWS_KITS,
-  ['Visual Studio 2017 Preview']: DEFAULT_WINDOWS_KITS,
-  ['Visual Studio 2015']: DEFAULT_WINDOWS_KITS,
+  ['Visual Studio 2017']: DEFAULT_VS_KITS,
+  ['Visual Studio 2017 Preview']: DEFAULT_VS_KITS,
+  ['Visual Studio 2015']: DEFAULT_VS_KITS,
   ['linux']: [
     {defaultKit: /Clang/, expectedDefaultGenerator: /Unix Makefiles/},
     {defaultKit: /GCC/, expectedDefaultGenerator: /Unix Makefiles/}
