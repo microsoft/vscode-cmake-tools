@@ -141,6 +141,8 @@ class ExtensionManager implements vscode.Disposable {
    */
   async asyncDispose() {
     this._subWorkspaceFoldersChanged.dispose();
+    this._kitsWatcher.dispose();
+    this._editorWatcher.dispose();
     // Dispose of each CMake Tools we still have loaded
     for (const cmt of this._cmakeToolsInstances.values()) {
       await cmt.asyncDispose();
@@ -220,6 +222,16 @@ class ExtensionManager implements vscode.Disposable {
   private _wsKits: Kit[] = [];
 
   private _kitsWatcher: MultiWatcher = new MultiWatcher(USER_KITS_FILEPATH);
+
+  private readonly _editorWatcher = vscode.workspace.onDidSaveTextDocument(doc => {
+    if (doc.uri.fsPath === USER_KITS_FILEPATH) {
+      rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
+    } else if (this._workspaceKitsPath && doc.uri.fsPath === this._workspaceKitsPath) {
+      rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
+    } else {
+      // Ignore
+    }
+  });
 
   private get _allKits(): Kit[] { return this._userKits.concat(this._wsKits); }
 

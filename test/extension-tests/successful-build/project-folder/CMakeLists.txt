@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(TestBuildProcess VERSION 0.1.0)
 
+set(CMT_COOKIE passed-cookie CACHE STRING "Cookie to be written by the main executable")
+
 add_executable(TestBuildProcess main.cpp)
 set_property(TARGET TestBuildProcess PROPERTY CXX_STANDARD 98)
 
@@ -22,6 +24,11 @@ add_definitions(
     -D_CMAKE_VERSION="${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}"
     -D_GENERATOR="${CMAKE_GENERATOR}"
     -D_CRT_SECURE_NO_WARNINGS
+)
+
+target_compile_definitions(TestBuildProcess PRIVATE
+    "CMT_COOKIE=\"${CMT_COOKIE}\""
+    "C_COMPILER_ID=\"${CMAKE_C_COMPILER_ID}\""
 )
 
 add_custom_target(runTestTarget DEPENDS TestBuildProcess

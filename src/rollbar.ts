@@ -179,7 +179,10 @@ class RollbarController {
   }
 
   takePromise<T>(what: string, additional: object, pr: Thenable<T>): void {
-    pr.then(() => {}, e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); });
+    pr.then(
+        () => {},
+        e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); },
+    );
   }
 }
 

@@ -11,13 +11,7 @@
 #endif
 
 std::string getCompilerName() {
-    #if defined(__clang__)
-	    return "Clang/LLVM";
-    #elif defined(__GNUC__) || defined(__GNUG__)
-        return "GNU GCC/G++";
-    #elif defined(_MSC_VER)
-        return "Microsoft Visual Studio";
-    #endif
+    return C_COMPILER_ID;
 }
 
 std::string get_env_var(const std::string& key) {
@@ -28,7 +22,7 @@ std::string get_env_var(const std::string& key) {
 int main(int, char**) {
     std::cout << "{\n";
     std::cout << "  \"compiler\": \"" << getCompilerName() << "\",\n";
-    std::cout << "  \"cookie\": \"passed-cookie\",\n";
+    std::cout << "  \"cookie\": \"" CMT_COOKIE "\",\n";
     std::cout << "  \"cmake-version\": \"" << _CMAKE_VERSION << "\",\n";
     std::cout << "  \"cmake-generator\": \"" << _GENERATOR << "\",\n";
     std::cout << "  \"configure-env\": \"" << get_env_var("_CONFIGURE_ENV") << "\",\n";

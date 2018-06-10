@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "0.11.1",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -268,10 +268,21 @@
           "description": "CMake variables to set on the command line",
           "scope": "resource"
         },
-        "cmake.initialBuildType": {
-          "type": "null",
-          "default": null,
-          "description": "[[This option is deprecated and will no longer be used]]",
+        "cmake.cacheInit": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Path to an cache-initializing CMake file"
+            },
+            {
+              "type": "array",
+              "description": "List of cache initializer files",
+              "items": {
+                "type": "string",
+                "description": "A cache initializing CMake file"
+              }
+            }
+          ],
           "scope": "resource"
         },
         "cmake.preferredGenerators": {
@@ -534,27 +545,29 @@
           "$schema": "schemas/variants-schema.json",
           "default": {
             "buildType": {
-              "default$": "debug",
-              "description$": "The build type to use",
-              "debug": {
-                "oneWordSummary$": "Debug",
-                "description$": "Emit debug information without performing optimizations",
-                "buildType": "Debug"
-              },
-              "release": {
-                "oneWordSummary$": "Release",
-                "description$": "Enable optimizations, omit debug info",
-                "buildType": "Release"
-              },
-              "minsize": {
-                "oneWordSummary$": "MinSizeRel",
-                "description$": "Optimize for smallest binary size",
-                "buildType": "MinSizeRel"
-              },
-              "reldeb": {
-                "oneWordSummary$": "RelWithDebInfo",
-                "description$": "Perform optimizations AND include debugging information",
-                "buildType": "RelWithDebInfo"
+              "default": "debug",
+              "description": "The build type",
+              "choices": {
+                "debug": {
+                  "short": "Debug",
+                  "long": "Emit debug information without performing optimizations",
+                  "buildType": "Debug"
+                },
+                "release": {
+                  "short": "Release",
+                  "long": "Enable optimizations, omit debug info",
+                  "buildType": "Release"
+                },
+                "minsize": {
+                  "short": "MinSizeRel",
+                  "long": "Optimize for smallest binary size",
+                  "buildType": "MinSizeRel"
+                },
+                "reldeb": {
+                  "short": "RelWithDebInfo",
+                  "long": "Perform optimizations AND include debugging information",
+                  "buildType": "RelWithDebInfo"
+                }
               }
             }
           },
@@ -630,6 +643,12 @@
           "default": [],
           "description": "Directories where Emscripten may be installed",
           "scope": "window"
+        },
+        "cmake.copyCompileCommands": {
+          "type": "string",
+          "default": null,
+          "description": "Copy compile_commands.json to this location after a successful configure",
+          "scope": "resource"
         },
         "cmake.useCMakeServer": {
           "type": "boolean",

@@ -3,7 +3,42 @@
 Changelog and History
 #####################
 
-.. _change-0.11.0:
+.. _changes-1.0.0:
+
+1.0.0
+*****
+
+CMake Tools 1.0.0 is a minor change over 0.11.x, but marks the first "stable"
+release. It is now a developer-ready tool that is suitable for everyday work!
+[#counter]_
+
+1.0.0 contains the following improvements and fixes over 0.11.x:
+
+- Option to build on ``cmake.launchTargetPath`` (Launch-before-debug).
+  See :ref:`conf-cmake.buildBeforeRun`.
+- `LLVM for Windows <https://llvm.org/builds/>`_ is now supported as an
+  auto-detected Kit type.
+- To support LLVM for Windows, kit options can now be freely mixed-and-matched,
+  eg. setting a toolchain file along with a Visual Studio environment.
+- Cache initialization files are now supported in ``settings.json``. See
+  :ref:`conf-cmake.cacheInit`.
+- Kits are now **optional**. If no kit is active, CMake Tools will ask you if
+  you want to scan, select a kit, or opt-out of kits. If no kit is chosen, CMake
+  Tools will let CMake decide what to do.
+- GCC cross-compilers are now detected as regular compilers for compiler kits.
+- Setting :ref:`conf-cmake.defaultVariants` is respected again.
+- Setting :ref:`conf-cmake.mingwSearchDirs` is respected again.
+- CMake Tools will attempt to set the path to the debugger (``gdb`` or ``lldb``)
+  during Quick Debugging.
+- Fix for intermittent "Not yet configured" errors.
+
+A few issues slated for 1.0.0 fell through as the schedule slipped. If you
+expected a feature in 1.0.0 that isn't listed above, it will be available in
+1.0.1.
+
+.. [#counter] If you don't agree, please open a bug report!
+
+.. _changes-0.11.0:
 
 0.11.1
 ******

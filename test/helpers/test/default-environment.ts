@@ -10,38 +10,37 @@ import {FakeContextDefinition} from '../vscodefake/extensioncontext';
 import {QuickPickerHandleStrategy, SelectKitPickerHandle} from '../vscodefake/quick-picker';
 
 export class DefaultEnvironment {
-  sandbox: sinon.SinonSandbox = sinon.sandbox.create();
-  projectFolder: ProjectRootHelper;
-  kitSelection: SelectKitPickerHandle;
-  result: TestProgramResult;
-  public vsContext: FakeContextDefinition = new FakeContextDefinition();
-  public config = ConfigurationReader.createForDirectory(vscode.workspace.rootPath!);
-  public wsContext = new DirectoryContext(this.config, new StateManager(this.vsContext));
-  errorMessagesQueue: string[] = [];
 
-  public constructor(projectRoot: string,
-                     buildLocation: string,
-                     executableResult: string,
-                     defaultKitLabel?: string,
-                     excludeKitLabel?: string) {
-    this.projectFolder = new ProjectRootHelper(projectRoot, buildLocation);
-    this.result = new TestProgramResult(this.projectFolder.buildDirectory.location, executableResult);
-
-    if (!defaultKitLabel) {
-      defaultKitLabel = process.platform === 'win32' ? 'Visual' : '';
-    }
-
-    this.kitSelection = new SelectKitPickerHandle(defaultKitLabel, excludeKitLabel);
+  public constructor(readonly projectRoot: string,
+                     readonly buildLocation: string,
+                     readonly executableResult: string,
+                     private readonly _defaultKitLabelIn?: RegExp,
+                     readonly excludeKitLabel?: RegExp) {
     this.setupShowQuickPickerStub([this.kitSelection]);
 
     const errorQueue = this.errorMessagesQueue;
     this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string): Thenable<string|undefined> => {
       errorQueue.push(message);
-
       return Promise.resolve(undefined);
     });
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
   }
+
+  readonly sandbox = sinon.createSandbox();
+  readonly projectFolder = new ProjectRootHelper(this.projectRoot, this.buildLocation);
+  readonly result: TestProgramResult
+      = new TestProgramResult(this.projectFolder.buildDirectory.location, this.executableResult);
+  readonly defaultKitLabel
+      = this._defaultKitLabelIn ? this._defaultKitLabelIn : (process.platform === 'win32' ? /^Visual/ : /\s\S/);
+  readonly vsContext: FakeContextDefinition = new FakeContextDefinition();
+  private _config = ConfigurationReader.createForDirectory(vscode.workspace.rootPath!);
+  public get config() { return this._config; }
+  private _wsContext = new DirectoryContext(this.config, new StateManager(this.vsContext));
+  public get wsContext() { return this._wsContext; }
+
+  readonly errorMessagesQueue: string[] = [];
+  readonly vs_debug_start_debugging: sinon.SinonStub = this.sandbox.stub(vscode.debug, 'startDebugging');
+  readonly kitSelection = new SelectKitPickerHandle(this.defaultKitLabel, this.excludeKitLabel);
 
   private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
     this.sandbox.stub(vscode.window, 'showQuickPick').callsFake((items, options): Thenable<string|undefined> => {
@@ -57,5 +56,7 @@ export class DefaultEnvironment {
   public clean(): void {
     this.errorMessagesQueue.length = 0;
     this.vsContext.clean();
+    this._config = ConfigurationReader.createForDirectory(this.projectFolder.location);
+    this._wsContext = new DirectoryContext(this._config, new StateManager(this.vsContext));
   }
 }

@@ -1,17 +1,10 @@
 # What's New?
 
-[Also check the changelog in the end-user documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html).
+[See the full changelog in the end-user documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html).
 
-**0.11.1** includes several [fixes and tweaks](https://github.com/vector-of-bool/vscode-cmake-tools/milestone/7?closed=1).
+**1.0.0** features several fixes and tweaks over 0.11.1. Highlights include:
 
-The **0.11.0** release marks a monumental change for this project. Besides
-overhauling the development and testing process, three particular things are
-most notable to users:
-
-- [Thorough end-user documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/)
-  is now available.
-- CMake Tools includes automated opt-in error-report sending. The first time
-  you load CMake Tools it will ask your permission to send error and exception
-  data to Rollbar for cataloging and triage.
-- CMake Tools now has the concept of *Kits* to represent how to build your
-  project. [Read more in the new documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/kits.html).
+- Kits are now optional. Opting-out of a kit will use default CMake detection.
+- LLVM for Windows is supported as a kit.
+- Cache-init files are supported (The CMake `-C` argument).
+- GCC cross-compilers are now detected in kit scans.

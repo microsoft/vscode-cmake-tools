@@ -295,7 +295,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> { return cb(); }
 
   private async _refreshExpansions() {
-    await this.doRefreshExpansions(async () => {
+    log.debug('Run _refreshExpansions');
+    return this.doRefreshExpansions(async () => {
+      log.debug('Run _refreshExpansions cb');
       const opts = this.expansionOptions;
       this._sourceDirectory = util.normalizePath(await expand.expandString(this.ws.config.sourceDirectory, opts));
       this._binaryDir = util.normalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
@@ -303,6 +305,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const installPrefix = this.ws.config.installPrefix;
       if (installPrefix) {
         this._installDir = util.normalizePath(await expand.expandString(installPrefix, opts));
+      }
+
+      const copyCompileCommands = this.ws.config.copyCompileCommands;
+      if (copyCompileCommands) {
+        this._copyCompileCommandsPath = util.normalizePath(await expand.expandString(copyCompileCommands, opts));
       }
     });
   }
@@ -326,6 +333,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get installDir(): string|null { return this._installDir; }
   private _installDir: string|null = null;
+
+  /**
+   * Path to copy compile_commands.json to
+   */
+  get copyCompileCommandsPath(): string|null { return this._copyCompileCommandsPath; }
+  private _copyCompileCommandsPath: string|null = null;
 
   /**
    * @brief Get the path to the CMakeCache file in the build directory
@@ -482,6 +495,7 @@ Please install or configure a preferred generator, or update settings.json or yo
   get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
 
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
+    log.debug('Start configure ', extra_args);
     const pre_check_ok = await this._beforeConfigureOrBuild();
     if (!pre_check_ok) {
       return -1;
@@ -532,12 +546,27 @@ Please install or configure a preferred generator, or update settings.json or yo
           ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
     }
     if (this._kit.toolchainFile) {
-
       log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
       flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
     }
     if (this._kit.cmakeSettings) {
       flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
+    }
+
+    const cache_init_conf = this.ws.config.cacheInit;
+    let cache_init: string[] = [];
+    if (cache_init_conf === null) {
+      // Do nothing
+    } else if (typeof cache_init_conf === 'string') {
+      cache_init = [cache_init_conf];
+    } else {
+      cache_init = cache_init_conf;
+    }
+    for (let init of cache_init) {
+      if (!path.isAbsolute(init)) {
+        init = path.join(this.sourceDir, init);
+      }
+      flags.push('-C', init);
     }
 
     // Get expanded configure environment
@@ -551,13 +580,19 @@ Please install or configure a preferred generator, or update settings.json or yo
     const expanded_flags = await Promise.all(expanded_flags_promises);
     log.trace('CMake flags are', JSON.stringify(expanded_flags));
 
-    const retc = await this.doConfigure(expanded_flags, consumer);
-    this._onReconfiguredEmitter.fire();
+    // Expand all important paths
     await this._refreshExpansions();
+
+    const retc = await this.doConfigure(expanded_flags, consumer);
+
+    await this._copyCompDB();
+
+    this._onReconfiguredEmitter.fire();
     return retc;
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
+    log.debug('Start build', target);
     const pre_build_ok = await this.doPreBuild();
     if (!pre_build_ok) {
       return -1;
@@ -571,6 +606,7 @@ Please install or configure a preferred generator, or update settings.json or yo
       return -1;
     }
     await this._refreshExpansions();
+    await this._copyCompDB();
     return (await child.result).retc;
   }
 
@@ -660,6 +696,31 @@ Please install or configure a preferred generator, or update settings.json or yo
     this._isBusy = false;
     this._currentProcess = null;
     return child;
+  }
+
+  private async _copyCompDB(): Promise<void> {
+    const copy_dest = this.ws.config.copyCompileCommands;
+    if (!copy_dest) {
+      return;
+    }
+    const compdb_path = path.join(this.binaryDir, 'compile_commands.json');
+    if (await fs.exists(compdb_path)) {
+      const pardir = path.dirname(copy_dest);
+      try {
+        await fs.mkdir_p(pardir);
+      } catch (e) {
+        vscode.window.showErrorMessage(`Tried to copy "${compdb_path}" to "${copy_dest}", but failed to create ` +
+                                       `the parent directory "${pardir}": ${e}`);
+        return;
+      }
+      try {
+        await fs.copyFile(compdb_path, copy_dest);
+      } catch (e) {
+        // Just display the error. It's the best we can do.
+        vscode.window.showErrorMessage(`Failed to copy "${compdb_path}" to "${copy_dest}": ${e}`);
+        return;
+      }
+    }
   }
 
   /**
