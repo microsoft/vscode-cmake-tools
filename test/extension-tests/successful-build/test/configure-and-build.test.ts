@@ -1,7 +1,7 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
-import {DefaultEnvironment, expect, clearExistingKitConfigurationFile} from '@test/util';
-import { ITestCallbackContext } from 'mocha';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {ITestCallbackContext} from 'mocha';
 
 
 let workername: string = process.platform;
@@ -18,7 +18,7 @@ suite('Build', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
-  suiteSetup(async function(this: Mocha.IHookCallbackContext)  {
+  suiteSetup(async function(this: Mocha.IHookCallbackContext) {
     this.timeout(100000);
 
     const build_loc = 'build';
@@ -94,9 +94,7 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Configure with cache-initializer', async () => {
-    testEnv.config.updatePartial({
-      cacheInit: 'TestCacheInit.cmake'
-    });
+    testEnv.config.updatePartial({cacheInit: 'TestCacheInit.cmake'});
     expect(await cmt.configure()).to.be.eq(0);
     await cmt.setDefaultTarget('runTestTarget');
     expect(await cmt.build()).to.be.eq(0);
@@ -107,23 +105,21 @@ suite('Build', async () => {
 
   test('Test kit switch after missing preferred generator', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
-    const os_compilers : {[osName: string]: { kitLabel:RegExp, compiler:string}[]} = { ['linux']: [
-      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
-      {kitLabel: /^Clang \d/, compiler:'Clang/LLVM' }],
-      ['win32']: [
-      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
-      {kitLabel: /^VisualStudio/, compiler:'Microsoft Visual Studio' }
-    ]};
-    if( !(workername in os_compilers)) this.skip();
+    const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+      linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
+      win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
+    };
+    if (!(workername in os_compilers))
+      this.skip();
     const compiler = os_compilers[workername];
 
     // Run test
-    testEnv.kitSelection.defaultKitLabel=compiler[0].kitLabel;
+    testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
     await cmt.selectKit();
 
     await cmt.build();
 
-    testEnv.kitSelection.defaultKitLabel=compiler[1].kitLabel;
+    testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
     await cmt.selectKit();
 
     await cmt.build();
@@ -131,79 +127,89 @@ suite('Build', async () => {
     expect(result1['compiler']).to.eql(compiler[1].compiler);
   }).timeout(100000);
 
-  test.only('Test kit switch between different preferred generators and compilers', async function(this: ITestCallbackContext) {
-    // Select compiler build node dependent
-    const os_compilers : {[osName: string]: { kitLabel:RegExp, compiler:string}[]} = { ['linux']: [
-      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
-      {kitLabel: /^Clang \d/, compiler:'Clang/LLVM' }],
-      ['win32']: [
-      {kitLabel: /^GCC \d/, compiler:'GNU GCC/G++' },
-      {kitLabel: /^VisualStudio/, compiler:'Microsoft Visual Studio' }
-    ]};
-    if( !(workername in os_compilers)) this.skip();
-    const compiler = os_compilers[workername];
+  test('Test kit switch between different preferred generators and compilers',
+       async function(this: ITestCallbackContext) {
+         // Select compiler build node dependent
+         const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+           linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
+           win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
+         };
+         if (!(workername in os_compilers))
+           this.skip();
+         const compiler = os_compilers[workername];
 
-    testEnv.kitSelection.defaultKitLabel=compiler[0].kitLabel;
-    await cmt.selectKit();
-    await cmt.build();
+         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+         await cmt.selectKit();
+         await cmt.build();
 
 
-    testEnv.kitSelection.defaultKitLabel=compiler[1].kitLabel;
-    await cmt.selectKit();
-    await cmt.build();
+         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+         await cmt.selectKit();
+         await cmt.build();
 
-    const result1 = await testEnv.result.getResultAsJson();
-    expect(result1['compiler']).to.eql(compiler[1].compiler);
-  }).timeout(100000);
+         const result1 = await testEnv.result.getResultAsJson();
+         expect(result1['compiler']).to.eql(compiler[1].compiler);
+       })
+      .timeout(100000);
 
-  test('Test kit switch between different preferred generators and same compiler', async function(this: ITestCallbackContext) {
-    // Select compiler build node dependent
-    const os_compilers : {[osName: string]: { kitLabel:RegExp, generator: string}[]} = { ['linux']: [
-      {kitLabel: /^Generator switch test GCC Make/, generator: 'Unix Makefiles' },
-      {kitLabel: /^Generator switch test GCC Ninja/, generator: 'Ninja' }],
-      ['win32']: [
-      {kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-      {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
-    ]};
-    if( !(workername in os_compilers)) this.skip();
-    const compiler = os_compilers[workername];
+  test('Test kit switch between different preferred generators and same compiler',
+       async function(this: ITestCallbackContext) {
+         // Select compiler build node dependent
+         const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
+           linux: [
+             {kitLabel: /^Generator switch test GCC Make/, generator: 'Unix Makefiles'},
+             {kitLabel: /^Generator switch test GCC Ninja/, generator: 'Ninja'}
+           ],
+           win32: [
+             {kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles'},
+             {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja'}
+           ]
+         };
+         if (!(workername in os_compilers))
+           this.skip();
+         const compiler = os_compilers[workername];
 
-    testEnv.config.updatePartial({preferredGenerators: []});
-    testEnv.kitSelection.defaultKitLabel=compiler[0].kitLabel;
-    await cmt.selectKit();
+         testEnv.config.updatePartial({preferredGenerators: []});
+         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+         await cmt.selectKit();
 
-    await cmt.build();
+         await cmt.build();
 
-    testEnv.kitSelection.defaultKitLabel=compiler[1].kitLabel;
-    await cmt.selectKit();
+         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+         await cmt.selectKit();
 
-    await cmt.build();
-    const result1 = await testEnv.result.getResultAsJson();
-    expect(result1['cmake-generator']).to.eql(compiler[1].generator);
-  }).timeout(100000);
+         await cmt.build();
+         const result1 = await testEnv.result.getResultAsJson();
+         expect(result1['cmake-generator']).to.eql(compiler[1].generator);
+       })
+      .timeout(100000);
 
   test('Test kit switch kits after configure', async function(this: ITestCallbackContext) {
     // Select compiler build node dependent
-    const os_compilers : {[osName: string]: { kitLabel:RegExp, generator: string}[]} = { ['linux']: [
-      {kitLabel: /^Generator switch test GCC Make/, generator: 'Unix Makefiles' },
-      {kitLabel: /^Generator switch test GCC Ninja/, generator: 'Ninja' }],
-      ['win32']: [
-      {kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-      {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
-    ]};
-    if( !(workername in os_compilers)) this.skip();
+    const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
+      linux: [
+        {kitLabel: /^Generator switch test GCC Make/, generator: 'Unix Makefiles'},
+        {kitLabel: /^Generator switch test GCC Ninja/, generator: 'Ninja'}
+      ],
+      win32: [
+        {kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles'},
+        {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja'}
+      ]
+    };
+    if (!(workername in os_compilers))
+      this.skip();
     const compiler = os_compilers[workername];
 
-    testEnv.kitSelection.defaultKitLabel=compiler[0].kitLabel;
+    testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
     await cmt.selectKit();
 
     await cmt.build();
 
-    testEnv.kitSelection.defaultKitLabel=compiler[1].kitLabel;
+    testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
     await cmt.selectKit();
     await cmt.configure();
 
-    testEnv.kitSelection.defaultKitLabel=compiler[0].kitLabel;
+    testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
     await cmt.selectKit();
 
     await cmt.build();
