@@ -3,6 +3,7 @@
  */ /** */
 
 import {ConfigurationReader} from '@cmt/config';
+import rollbar from '@cmt/rollbar';
 import {StateManager} from '@cmt/state';
 import * as json5 from 'json5';
 import * as path from 'path';
@@ -15,7 +16,6 @@ import * as proc from './proc';
 import {loadSchema} from './schema';
 import {compare, dropNulls, Ordering, thisExtensionPath} from './util';
 import {MultiWatcher} from './watcher';
-import rollbar from '@cmt/rollbar';
 
 const log = logging.createLogger('kit');
 
@@ -76,6 +76,11 @@ export interface Kit {
    * Path to a CMake toolchain file.
    */
   toolchainFile?: string;
+
+  /**
+   * If `true`, keep this kit around even if it seems out-of-date
+   */
+  keep?: boolean;
 }
 
 interface ClangVersion {
@@ -112,7 +117,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     threadModel = thread_model_mat[1];
   }
   const install_dir_mat = /InstalledDir:\s+(.*)/.exec(exec.stderr);
-  let installedDir: string | undefined;
+  let installedDir: string|undefined;
   if (install_dir_mat) {
     installedDir = install_dir_mat[1];
   }
@@ -669,8 +674,9 @@ export class KitManager implements vscode.Disposable {
   /**
    * The known kits
    */
-  get kits() { return this._kits; }
-  private _kits = [] as Kit[];
+  get kits(): Kit[] { return ([] as Kit[]).concat(this._userKits).concat(this._projectKits); }
+  private _userKits: Kit[] = [];
+  private _projectKits: Kit[] = [];
 
   /**
    * The path to the user-specific `cmake-kits.json` file
@@ -772,10 +778,10 @@ export class KitManager implements vscode.Disposable {
    * if the active kit becomes somehow unavailable.
    */
   async selectKit(): Promise<Kit|null> {
-    console.assert(this._kits.length > 0, 'No kit is present? Should at least have __unspec__ kit.');
-    log.debug(`Start selection of kits. Found ${this._kits.length} kits.`);
+    console.assert(this.kits.length > 0, 'No kit is present? Should at least have __unspec__ kit.');
+    log.debug(`Start selection of kits. Found ${this.kits.length} kits.`);
 
-    if (this._kits.length === 1 && this._kits[0].name === '__unspec__') {
+    if (this.kits.length === 1 && this.kits[0].name === '__unspec__') {
       interface FirstScanItem extends vscode.MessageItem {
         action: 'scan'|'use-unspec'|'cancel';
       }
@@ -823,7 +829,7 @@ export class KitManager implements vscode.Disposable {
       kit: Kit;
     }
     log.debug('Opening kit selection QuickPick');
-    const items = this._kits.map((kit): KitItem => {
+    const items = this.kits.map((kit): KitItem => {
       return {
         label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
         description: descriptionForKit(kit),
@@ -846,7 +852,7 @@ export class KitManager implements vscode.Disposable {
 
   async selectKitByName(kitName: string): Promise<Kit|null> {
     log.debug('Setting active Kit by name', kitName);
-    const chosen = this._kits.find(k => k.name == kitName);
+    const chosen = this.kits.find(k => k.name == kitName);
     if (chosen === undefined) {
       log.warning('Kit set by name to non-existent kit:', kitName);
       return null;
@@ -865,7 +871,7 @@ export class KitManager implements vscode.Disposable {
   async rescanForKits() {
     log.debug('Rescanning for Kits');
     // clang-format off
-    const old_kits_by_name = this._kits.reduce(
+    const old_kits_by_name = this._userKits.reduce(
       (acc, kit) => ({...acc, [kit.name]: kit}),
       {} as{[kit: string]: Kit}
     );
@@ -881,9 +887,66 @@ export class KitManager implements vscode.Disposable {
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
 
-    log.debug('Saving new kits to', this._userKitsPath);
+    this._setKits({user: new_kits, project: this._projectKits});
+    await this._writeUserKitsFile(new_kits);
+    this._pruneOutdatedKitsAsync();
+  }
+
+  private _pruneOutdatedKitsAsync() {
+    for (const kit of this._userKits) {
+      if (kit.keep === true) {
+        continue;  // Kit is explicitly marked to be kept
+      }
+      if (kit.compilers) {
+        for (const lang in kit.compilers) {
+          const comp_path = kit.compilers[lang];
+          let exists_pr: Promise<boolean>;
+          if (path.isAbsolute(comp_path)) {
+            exists_pr = fs.exists(comp_path);
+          } else {
+            exists_pr = paths.which(comp_path).then(v => v !== null);
+          }
+          const pr = exists_pr.then(async exists => {
+            if (exists) {
+              return;
+            }
+            // This kit contains a compiler that does not exist. What to do?
+            interface UpdateKitsItem extends vscode.MessageItem {
+              action: 'remove'|'keep';
+            }
+            const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
+                `The kit "${kit.name}" references a non-existent compiler binary [${comp_path}]. ` +
+                    `What would you like to do?`,
+                {},
+                {
+                  action: 'remove',
+                  title: 'Remove it',
+                },
+                {
+                  action: 'keep',
+                  title: 'Keep it',
+                },
+            );
+            if (chosen === undefined) {
+              return;
+            }
+            switch (chosen.action) {
+            case 'keep':
+              return this._keepOutdatedKit(kit);
+            case 'remove':
+              return this._removeOutdatedKit(kit);
+            }
+          });
+          rollbar.takePromise(`Pruning kit`, {kit}, pr);
+        }
+      }
+    }
+  }
+
+  private async _writeUserKitsFile(kits: Kit[]) {
+    log.debug('Saving kits to', this._userKitsPath);
     await fs.mkdir_p(path.dirname(this._userKitsPath));
-    const stripped_kits = new_kits.filter(k => k.name !== '__unspec__');
+    const stripped_kits = kits.filter(k => k.name !== '__unspec__');
     const sorted_kits = stripped_kits.sort((a, b) => {
       if (a.name == b.name) {
         return 0;
@@ -893,11 +956,27 @@ export class KitManager implements vscode.Disposable {
         return 1;
       }
     });
-    await fs.writeFile(this._userKitsPath, JSON.stringify(sorted_kits, null, 2));
-    // Sometimes the kit watcher does fire?? May be an upstream bug, so we'll
-    // re-read now
-    await this._rereadKits();
-    log.debug(this._userKitsPath, 'saved');
+    try {
+      await fs.writeFile(this._userKitsPath, JSON.stringify(sorted_kits, null, 2));
+    } catch (e) { log.error('Failed to write kits to disk:', e); }
+  }
+
+  private async _keepOutdatedKit(kit: Kit) {
+    const new_kits = this._userKits.map(k => {
+      if (k.name === kit.name) {
+        return {...k, keep: true};
+      } else {
+        return k;
+      }
+    });
+    this._setKits({user: new_kits, project: this._projectKits});
+    return this._writeUserKitsFile(this.kits);
+  }
+
+  private async _removeOutdatedKit(kit: Kit) {
+    const new_kits = this.kits.filter(k => k.name !== kit.name);
+    this._setKits({user: new_kits, project: this._projectKits});
+    return this._writeUserKitsFile(this.kits);
   }
 
   /**
@@ -905,17 +984,20 @@ export class KitManager implements vscode.Disposable {
    * file in `rescanForKits`, or if the user otherwise edits the file manually.
    */
   private async _rereadKits() {
-    const kits_acc: Kit[] = [];
-    for (const kit_path of [this._userKitsPath, this._projectKitsPath]) {
-      const more_kits = await readKitsFile(kit_path);
-      kits_acc.push(...more_kits);
-    }
-    kits_acc.push({
+    const user = await readKitsFile(this._userKitsPath);
+    const project = await readKitsFile(this._projectKitsPath);
+    user.push({
       name: '__unspec__',
     });
+    this._setKits({user, project});
+    this._pruneOutdatedKitsAsync();
+  }
+
+  private _setKits(opts: {user: Kit[], project: Kit[]}) {
+    this._userKits = opts.user;
+    this._projectKits = opts.project;
+    const already_active_kit = this.kits.find(kit => kit.name === this.state.activeKitName);
     // Set the current kit to the one we have named
-    this._kits = kits_acc;
-    const already_active_kit = this._kits.find(kit => kit.name === this.state.activeKitName);
     this._setActiveKit(already_active_kit || null);
   }
 
@@ -969,7 +1051,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
     vs: k.visualStudio,
     vsArch: k.visualStudioArchitecture,
     tc: k.toolchainFile,
-    preferredGenerator: k.preferredGenerator? k.preferredGenerator.name : null
+    preferredGenerator: k.preferredGenerator ? k.preferredGenerator.name : null
   });
   const new_imp = important_params(newKit);
   const old_imp = important_params(oldKit);
