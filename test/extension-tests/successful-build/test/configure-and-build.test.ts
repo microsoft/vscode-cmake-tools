@@ -164,8 +164,8 @@ suite('Build', async () => {
          // Select compiler build node dependent
          const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
            linux: [
-             {kitLabel: /^Generator switch test GCC Make/, generator: 'Unix Makefiles'},
-             {kitLabel: /^Generator switch test GCC Ninja/, generator: 'Ninja'}
+             {kitLabel: /^Generator switch test GCC Make$/, generator: 'Unix Makefiles'},
+             {kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja'}
            ],
            win32: [
              {kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles'},
@@ -195,8 +195,8 @@ suite('Build', async () => {
     // Select compiler build node dependent
     const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
       linux: [
-        {kitLabel: /^Generator switch test GCC Make/, generator: 'Unix Makefiles'},
-        {kitLabel: /^Generator switch test GCC Ninja/, generator: 'Ninja'}
+        {kitLabel: /^Generator switch test GCC Make$/, generator: 'Unix Makefiles'},
+        {kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja'}
       ],
       win32: [
         {kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles'},
