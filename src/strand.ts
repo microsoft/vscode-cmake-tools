@@ -38,7 +38,7 @@ export class Strand {
     return new Promise<Ret>((resolve, reject) => {
       this._enqueue(async () => {
         try {
-          const result = await func();
+          const result = await Promise.resolve(func());
           resolve(result);
         } catch (e) { reject(e); }
       });
