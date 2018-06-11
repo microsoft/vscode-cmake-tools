@@ -194,7 +194,12 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       pr.report({message: `Getting Clang version for ${bin}`});
     const version = await getClangVersion(bin);
     if (version === null) {
-      return version;
+      return null;
+    }
+    if (version.target && version.target.includes('msvc')) {
+      // DO NOT include Clang's that target MSVC but don't present the MSVC
+      // command-line interface. CMake does not support them properly.
+      return null;
     }
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
