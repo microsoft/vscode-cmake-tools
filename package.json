@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -642,6 +642,12 @@
           "default": [],
           "description": "Directories where Emscripten may be installed",
           "scope": "window"
+        },
+        "cmake.copyCompileCommands": {
+          "type": "string",
+          "default": null,
+          "description": "Copy compile_commands.json to this location after a successful configure",
+          "scope": "resource"
         },
         "cmake.useCMakeServer": {
           "type": "boolean",

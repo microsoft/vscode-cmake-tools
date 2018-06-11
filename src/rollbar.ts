@@ -144,11 +144,11 @@ class RollbarController {
    * @param additional Additional data to log
    * @param func The block to call
    */
-  invokeAsync<T>(what: string, additional: object, func: () => Promise<T>): void;
-  invokeAsync<T>(what: string, func: () => Promise<T>): void;
-  invokeAsync<T>(what: string, additional: object, func?: () => Promise<T>): void {
+  invokeAsync<T>(what: string, additional: object, func: () => Thenable<T>): void;
+  invokeAsync<T>(what: string, func: () => Thenable<T>): void;
+  invokeAsync<T>(what: string, additional: object, func?: () => Thenable<T>): void {
     if (!func) {
-      func = additional as () => Promise<T>;
+      func = additional as () => Thenable<T>;
       additional = {};
     }
     log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
@@ -178,11 +178,11 @@ class RollbarController {
     }
   }
 
-  takePromise<T>(what: string, additional: object, pr: Promise<T>): void {
-    pr.catch(e => {
-      this.exception('Unhandled Promise rejection: ' + what, e, additional);
-      throw e;
-    });
+  takePromise<T>(what: string, additional: object, pr: Thenable<T>): void {
+    pr.then(
+        () => {},
+        e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); },
+    );
   }
 }
 

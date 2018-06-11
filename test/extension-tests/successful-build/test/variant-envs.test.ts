@@ -83,17 +83,22 @@ suite('[Environment Variables in Variants]', async () => {
       }
     });
 
-    // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[variantEnv] configure failed');
-    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-    const cache = await CMakeCache.fromPath(await cmt.cachePath);
+    try {
+      // Configure
+      expect(await cmt.configure()).to.be.eq(0, '[variantEnv] configure failed');
+      expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+      const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
-    const cacheEntry_ = cache.get('variantEnv');
-    expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
-    const cacheEntry = cacheEntry_!;
-    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
-    expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
-    expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
-    expect(cacheEntry.as<string>()).to.eq('0xCAFE', '[variantEnv] incorrect environment variable');
+      const cacheEntry_ = cache.get('variantEnv');
+      expect(cacheEntry_).to.not.be.eq(null, '[variantEnv] Cache entry was not present');
+      const cacheEntry = cacheEntry_!;
+      expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[variantEnv] unexpected cache entry type');
+      expect(cacheEntry.key).to.eq('variantEnv', '[variantEnv] unexpected cache entry key name');
+      expect(typeof cacheEntry.value).to.eq('string', '[variantEnv] unexpected cache entry value type');
+      expect(cacheEntry.as<string>()).to.eq('0xCAFE', '[variantEnv] incorrect environment variable');
+    } finally {
+      // Restore the vairants file to before the test
+      await fs.rename(variantFileBackup, variantFile);
+    }
   }).timeout(100000);
 });

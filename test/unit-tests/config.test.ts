@@ -37,6 +37,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     testEnvironment: {},
     mingwSearchDirs: [],
     emscriptenSearchDirs: [],
+    copyCompileCommands: null,
     useCMakeServer: true,
     enableTraceLogging: false,
     loggingLevel: 'info',

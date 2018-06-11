@@ -46,6 +46,7 @@ export interface ExtensionConfigurationSettings {
   testEnvironment: HardEnv;
   mingwSearchDirs: string[];
   emscriptenSearchDirs: string[];
+  copyCompileCommands: string|null;
   useCMakeServer: boolean;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
@@ -156,7 +157,7 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get buildToolArgs(): string[] { return this.configData.buildToolArgs; }
 
-  get parallelJobs(): number|null { return this.configData.parallelJobs; }
+  get parallelJobs(): number { return this.configData.parallelJobs; }
 
   get ctest_parallelJobs(): number|null { return this.configData.ctest.parallelJobs; }
 
@@ -204,6 +205,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
 
+  get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
+
   get loggingLevel(): LogLevelKey {
     if (process.env['CMT_LOGGING_LEVEL']) {
       return process.env['CMT_LOGGING_LEVEL']! as LogLevelKey;
@@ -244,6 +247,7 @@ export class ConfigurationReader implements vscode.Disposable {
     testEnvironment: new vscode.EventEmitter<HardEnv>(),
     mingwSearchDirs: new vscode.EventEmitter<string[]>(),
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
+    copyCompileCommands: new vscode.EventEmitter<string|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
