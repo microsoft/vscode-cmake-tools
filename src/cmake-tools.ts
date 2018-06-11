@@ -4,6 +4,7 @@
 import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import * as debugger_mod from '@cmt/debugger';
+import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
 import {versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
@@ -281,7 +282,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._nagManager.start();
   }
 
-  async setKit(kit: Kit | null) {
+  async setKit(kit: Kit|null) {
     this._activeKit = kit;
     if (kit) {
       log.debug('Injecting new Kit into CMake driver');
@@ -347,14 +348,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Create a new CMakeTools for the given directory.
+   * @param dirPath Path to the directory for which to create
+   * @param ext The extension context
+   */
+  static async createForDirectory(dirPath: string, ext: vscode.ExtensionContext): Promise<CMakeTools> {
+    // Create a context for the directory
+    const dir_ctx = DirectoryContext.createForDirectory(dirPath, new StateManager(ext));
+    return CMakeTools.create(ext, dir_ctx);
+  }
+
+  /**
    * Implementation of `cmake.viewLog`
    */
   async viewLog() { await logging.showLogFile(); }
 
-  private _activeKit: Kit | null = null;
-  get activeKit(): Kit | null {
-    return this._activeKit;
-  }
+  private _activeKit: Kit|null = null;
+  get activeKit(): Kit|null { return this._activeKit; }
 
   /**
    * The `DiagnosticCollection` for the CMake configure diagnostics.

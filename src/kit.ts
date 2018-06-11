@@ -695,6 +695,22 @@ function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
 }
 
 /**
+ * Get the path to a workspace-specific cmake-kits.json for a given worksapce directory
+ * @param dirPath The directory of a workspace
+ */
+export function kitsPathForWorkspaceDirectoryPath(dirPath: string): string {
+  return path.join(dirPath, '.vscode/cmake-kits.json');
+}
+
+/**
+ * Get the path to the workspace-specific cmake-kits.json for a given WorkspaceFolder object
+ * @param ws The workspace folder
+ */
+export function kitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder): string {
+  return kitsPathForWorkspaceDirectoryPath(ws.uri.fsPath);
+}
+
+/**
  * Get the kits declared for the given workspace directory. Looks in `.vscode/cmake-kits.json`.
  * @param dirPath The path to a VSCode workspace directory
  */
