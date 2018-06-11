@@ -428,13 +428,13 @@ class ExtensionManager implements vscode.Disposable {
         return k;
       }
     });
-    this._setKits({user: new_kits, workspace: this._wsKits});
+    await this._setKits({user: new_kits, workspace: this._wsKits});
     return this._writeUserKitsFile(new_kits);
   }
 
   private async _removeOutdatedKit(kit: Kit) {
     const new_kits = this._userKits.filter(k => k.name !== kit.name);
-    this._setKits({user: new_kits, workspace: this._wsKits});
+    await this._setKits({user: new_kits, workspace: this._wsKits});
     return this._writeUserKitsFile(new_kits);
   }
 
