@@ -6,7 +6,7 @@ interface Hideable {
   hide(): void;
 }
 
-function setVisible<T extends Hideable>(i: T, v: boolean) {
+function setVisible(i: Hideable, v: boolean) {
   if (v) {
     i.show();
   } else {

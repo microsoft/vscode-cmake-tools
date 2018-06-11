@@ -34,6 +34,10 @@ import {ConfigurationReader} from '@cmt/config';
 import paths from '@cmt/paths';
 import {Strand} from '@cmt/strand';
 
+class DummyDisposable {
+  dispose() {}
+}
+
 interface ProgressReport {
   message: string;
   increment?: number;
@@ -57,6 +61,8 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
  * necessitate user input, this class acts as intermediary and will send
  * important information down to the lower layers.
  */
+import {StatusBar} from './status';
+
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {}
 
@@ -98,6 +104,21 @@ class ExtensionManager implements vscode.Disposable {
    * for multiple is so that each workspace folder may have its own unique instance
    */
   private readonly _cmakeToolsInstances: Map<string, CMakeTools> = new Map();
+
+  /**
+   * The status bar controller
+   */
+  private readonly _statusBar = new StatusBar();
+  // Subscriptions for status bar items:
+  private _statusMessageSub: vscode.Disposable = new DummyDisposable();
+  private _targetNameSub: vscode.Disposable = new DummyDisposable();
+  private _projectNameSub: vscode.Disposable = new DummyDisposable();
+  private _buildTypeSub: vscode.Disposable = new DummyDisposable();
+  private _launchTargetSub: vscode.Disposable = new DummyDisposable();
+  private _ctestEnabledSub: vscode.Disposable = new DummyDisposable();
+  private _testResultsSub: vscode.Disposable = new DummyDisposable();
+  private _isBusySub: vscode.Disposable = new DummyDisposable();
+  private _progressSub: vscode.Disposable = new DummyDisposable();
 
   /**
    * The active workspace folder. This controls several aspects of the extension,
@@ -170,6 +191,7 @@ class ExtensionManager implements vscode.Disposable {
    * Asynchronously dispose of all the child objects.
    */
   async asyncDispose() {
+    this._disposeStatusSubs();
     this._workspaceFoldersChangedSub.dispose();
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
@@ -274,6 +296,55 @@ class ExtensionManager implements vscode.Disposable {
     this._resetKitsWatcher();
     // Re-read kits for the new workspace:
     await this._rereadKits(progress);
+    this._setupStatusBarSubs();
+  }
+
+  private _disposeStatusSubs() {
+    for (const sub of [this._statusMessageSub,
+                       this._targetNameSub,
+                       this._projectNameSub,
+                       this._buildTypeSub,
+                       this._launchTargetSub,
+                       this._ctestEnabledSub,
+                       this._testResultsSub,
+                       this._isBusySub,
+                       this._progressSub,
+    ]) {
+      sub.dispose();
+    }
+  }
+
+  private _setupStatusBarSubs() {
+    this._disposeStatusSubs();
+    const cmt = this._activeCMakeTools;
+    this._statusBar.setVisible(true);
+    if (!cmt) {
+      this._statusMessageSub = new DummyDisposable();
+      this._targetNameSub = new DummyDisposable();
+      this._projectNameSub = new DummyDisposable();
+      this._buildTypeSub = new DummyDisposable();
+      this._launchTargetSub = new DummyDisposable();
+      this._ctestEnabledSub = new DummyDisposable();
+      this._isBusySub = new DummyDisposable();
+      this._progressSub = new DummyDisposable();
+    } else {
+      this._statusMessageSub = cmt.onStatusMessageChanged(s => this._statusBar.setStatusMessage(s));
+      this._statusBar.setStatusMessage(cmt.statusMessage);
+      this._targetNameSub = cmt.onTargetNameChanged(t => this._statusBar.targetName = t);
+      this._statusBar.targetName = cmt.targetName;
+      this._projectNameSub = cmt.onProjectNameChanged(p => this._statusBar.setProjectName(p));
+      this._statusBar.setProjectName(cmt.projectName);
+      this._buildTypeSub = cmt.onBuildTypeChanged(bt => this._statusBar.setBuildTypeLabel(bt));
+      this._statusBar.setBuildTypeLabel(cmt.buildType);
+      this._launchTargetSub = cmt.onLaunchTargetNameChanged(t => this._statusBar.setLaunchTargetName(t || ''));
+      this._statusBar.setLaunchTargetName(cmt.launchTargetName || '');
+      this._ctestEnabledSub = cmt.onCTestEnabledChanged(e => this._statusBar.ctestEnabled = e);
+      this._statusBar.ctestEnabled = cmt.ctestEnabled;
+      this._isBusySub = cmt.onIsBusyChanged(b => this._statusBar.setIsBusy(b));
+      this._statusBar.setIsBusy(cmt.isBusy);
+      this._progressSub = cmt.onProgress(p => this._statusBar.setProgress(p));
+      // No default getter for progress on cmt
+    }
   }
 
   /**
