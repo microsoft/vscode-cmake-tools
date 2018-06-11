@@ -77,6 +77,11 @@ export interface Kit {
    * Path to a CMake toolchain file.
    */
   toolchainFile?: string;
+
+  /**
+   * If `true`, keep this kit around even if it seems out-of-date
+   */
+  keep?: boolean;
 }
 
 interface ClangVersion {
@@ -113,7 +118,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     threadModel = thread_model_mat[1];
   }
   const install_dir_mat = /InstalledDir:\s+(.*)/.exec(exec.stderr);
-  let installedDir: string | undefined;
+  let installedDir: string|undefined;
   if (install_dir_mat) {
     installedDir = install_dir_mat[1];
   }
@@ -721,7 +726,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
     vs: k.visualStudio,
     vsArch: k.visualStudioArchitecture,
     tc: k.toolchainFile,
-    preferredGenerator: k.preferredGenerator? k.preferredGenerator.name : null
+    preferredGenerator: k.preferredGenerator ? k.preferredGenerator.name : null
   });
   const new_imp = important_params(newKit);
   const old_imp = important_params(oldKit);

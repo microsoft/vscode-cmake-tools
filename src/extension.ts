@@ -26,6 +26,7 @@ import {Kit, readKitsFile, scanForKits, descriptionForKit, USER_KITS_FILEPATH} f
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
 import {ConfigurationReader} from '@cmt/config';
+import paths from '@cmt/paths';
 
 /**
  * A class to manage the extension.
@@ -240,27 +241,26 @@ class ExtensionManager implements vscode.Disposable {
    * update the kit loaded into the current backend if applicable.
    */
   private async _rereadKits() {
-    const user_kits: Kit[] = await readKitsFile(USER_KITS_FILEPATH);
-    let ws_kits: Kit[] = [];
+    const user = await readKitsFile(USER_KITS_FILEPATH);
+    let workspace: Kit[] = [];
     if (this._workspaceKitsPath) {
-      ws_kits = await readKitsFile(this._workspaceKitsPath);
+      workspace = await readKitsFile(this._workspaceKitsPath);
     }
-    ws_kits.push({name: '__unspec__'});
-    this._userKits = user_kits;
-    this._wsKits = ws_kits;
-    const inst = this._activeCMakeTools;
-    if (inst) {
-      const inst_kit = inst.activeKit;
-      if (inst_kit) {
-        const cur_name = inst_kit.name;
-        const new_with_cur_name = this._allKits.find(k => k.name == cur_name);
-        if (new_with_cur_name) {
-          // Set the newly loaded kit with the same name as the active kit
-          await this._setKit(new_with_cur_name);
-        } else {
-          // No kit is loaded anymore... Reset.
-          await this._setKit(null);
-        }
+    user.push({name: '__unspec__'});
+    await this._setKits({user, workspace});
+    this._startPruneOutdatedKitsAsync();
+  }
+
+  private async _setKits(opts: {user: Kit[], workspace: Kit[]}) {
+    this._userKits = opts.user;
+    this._wsKits = opts.workspace;
+    const cmt = this._activeCMakeTools;
+    if (cmt) {
+      const current = cmt.activeKit;
+      if (current) {
+        const already_active_kit = this._allKits.find(kit => kit.name === current.name);
+        // Set the current kit to the one we have named
+        await this._setKit(already_active_kit || null);
       }
     }
   }
@@ -284,7 +284,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Rescan the system for kits and save them to the user-local kits file
    */
-  async scanForKits(): Promise<boolean> {
+  async scanForKits() {
     log.debug('Rescanning for kits');
     // Convert the kits into a by-name mapping so that we can restore the ones
     // we know about after the fact.
@@ -315,7 +315,14 @@ class ExtensionManager implements vscode.Disposable {
     );
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-    const stripped_kits = new_kits.filter(k => k.name !== '__unspec__');
+    await this._setKits({user: new_kits, workspace: this._wsKits});
+    await this._writeUserKitsFile(new_kits);
+    this._startPruneOutdatedKitsAsync();
+  }
+
+  private async _writeUserKitsFile(kits: Kit[]) {
+    log.debug('Saving kits to', USER_KITS_FILEPATH);
+    const stripped_kits = kits.filter(k => k.name !== '__unspec__');
     const sorted_kits = stripped_kits.sort((a, b) => {
       if (a.name == b.name) {
         return 0;
@@ -334,36 +341,101 @@ class ExtensionManager implements vscode.Disposable {
         do: 'retry' | 'cancel';
       }
       const pr = vscode.window
-          .showErrorMessage<FailOptions>(
-              `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
-              {
-                title: 'Retry',
-                do: 'retry',
-              },
-              {
-                title: 'Cancel',
-                do: 'cancel',
-              },
-              )
-          .then(choice => {
-            if (!choice) {
-              return false;
-            }
-            switch (choice.do) {
-            case 'retry':
-              return this.scanForKits();
-            case 'cancel':
-              return false;
-            }
-        });
+                     .showErrorMessage<FailOptions>(
+                         `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
+                         {
+                           title: 'Retry',
+                           do: 'retry',
+                         },
+                         {
+                           title: 'Cancel',
+                           do: 'cancel',
+                         },
+                         )
+                     .then(choice => {
+                       if (!choice) {
+                         return false;
+                       }
+                       switch (choice.do) {
+                       case 'retry':
+                         return this.scanForKits();
+                       case 'cancel':
+                         return false;
+                       }
+                     });
       rollbar.takePromise('retry-kit-save-fail', {}, pr);
       return false;
     }
-    // Sometimes the kit watcher does not fire?? May be an upstream bug, so we'll
-    // re-read now
-    await this._rereadKits();
-    log.debug(USER_KITS_FILEPATH, 'saved');
-    return true;
+  }
+
+
+  private _startPruneOutdatedKitsAsync() {
+    for (const kit of this._userKits) {
+      if (kit.keep === true) {
+        continue;  // Kit is explicitly marked to be kept
+      }
+      if (kit.compilers) {
+        for (const lang in kit.compilers) {
+          const comp_path = kit.compilers[lang];
+          let exists_pr: Promise<boolean>;
+          if (path.isAbsolute(comp_path)) {
+            exists_pr = fs.exists(comp_path);
+          } else {
+            exists_pr = paths.which(comp_path).then(v => v !== null);
+          }
+          const pr = exists_pr.then(async exists => {
+            if (exists) {
+              return;
+            }
+            // This kit contains a compiler that does not exist. What to do?
+            interface UpdateKitsItem extends vscode.MessageItem {
+              action: 'remove'|'keep';
+            }
+            const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
+                `The kit "${kit.name}" references a non-existent compiler binary [${comp_path}]. ` +
+                    `What would you like to do?`,
+                {},
+                {
+                  action: 'remove',
+                  title: 'Remove it',
+                },
+                {
+                  action: 'keep',
+                  title: 'Keep it',
+                },
+            );
+            if (chosen === undefined) {
+              return;
+            }
+            switch (chosen.action) {
+            case 'keep':
+              return this._keepOutdatedKit(kit);
+            case 'remove':
+              return this._removeOutdatedKit(kit);
+            }
+          });
+          rollbar.takePromise(`Pruning kit`, {kit}, pr);
+        }
+      }
+    }
+  }
+
+  private async _keepOutdatedKit(kit: Kit) {
+    const new_kits = this._userKits.map(k => {
+      if (k.name === kit.name) {
+        return {...k, keep: true};
+      } else {
+        return k;
+      }
+    });
+    this._setKits({user: new_kits, workspace: this._wsKits});
+    return this._writeUserKitsFile(new_kits);
+  }
+
+  private async _removeOutdatedKit(kit: Kit) {
+    const new_kits = this._userKits.filter(k => k.name !== kit.name);
+    this._setKits({user: new_kits, workspace: this._wsKits});
+    return this._writeUserKitsFile(new_kits);
   }
 
   /**

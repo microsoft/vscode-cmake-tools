@@ -3,6 +3,21 @@
 Changelog and History
 #####################
 
+.. _changes-1.0.1:
+
+1.0.1
+*****
+
+Resolves a few issues/enhancements that didn't make it into 1.0.0.
+
+- Automatically detect when a kit specifies a path to a non-existent compiler
+  and ask what to do with that kit (remove or keep).
+- New option :ref:`conf-cmake.copyCompileCommands`: Set a path to which
+  ``compile_commands.json`` will be copied after a configure run.
+- Fix failing when CMake executable has a different name than ``cmake``.
+- Fixed edits to the kits file not applying immediately.
+- Fixed issue where CTest is not on the ``$PATH`` and it fails to detect tests.
+
 .. _changes-1.0.0:
 
 1.0.0
