@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 export class Property<T> {
   constructor(private _value: T) {}
 
-  private _emitter = new vscode.EventEmitter<T>();
+  private readonly _emitter = new vscode.EventEmitter<T>();
 
   get changeEvent() { return this._emitter.event; }
 

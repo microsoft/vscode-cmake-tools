@@ -117,62 +117,62 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   get statusMessage() { return this._statusMessage.value; }
   get onStatusMessageChanged() { return this._statusMessage.changeEvent; }
-  private _statusMessage = new Property<string>('Initializing');
+  private readonly _statusMessage = new Property<string>('Initializing');
 
   /**
    * The current target to build.
    */
   get targetName() { return this._targetName.value; }
   get onTargetNameChanged() { return this._targetName.changeEvent; }
-  private _targetName = new Property<string>('all');
+  private readonly _targetName = new Property<string>('all');
 
   /**
    * The current project name.
    */
   get projectName() { return this._projectName.value; }
   get onProjectNameChanged() { return this._projectName.changeEvent; }
-  private _projectName = new Property<string>('Unconfigured Project');
+  private readonly _projectName = new Property<string>('Unconfigured Project');
 
   /**
    * The current build type
    */
   get buildType() { return this._buildType.value; }
   get onBuildTypeChanged() { return this._buildType.changeEvent; }
-  private _buildType = new Property<string>('Unconfigured');
+  private readonly _buildType = new Property<string>('Unconfigured');
 
   /**
    * The "launch target" (the target that will be run by debugging)
    */
   get launchTargetName() { return this._launchTargetName.value; }
   get onLaunchTargetNameChanged() { return this._launchTargetName.changeEvent; }
-  private _launchTargetName = new Property<string|null>(null);
+  private readonly _launchTargetName = new Property<string|null>(null);
 
   /**
    * Whether CTest is enabled
    */
   get ctestEnabled() { return this._ctestEnabled.value; }
   get onCTestEnabledChanged() { return this._ctestEnabled.changeEvent; }
-  private _ctestEnabled = new Property<boolean>(false);
+  private readonly _ctestEnabled = new Property<boolean>(false);
 
   /**
    * The current CTest results
    */
   get testResults() { return this._testResults.value; }
   get onTestResultsChanged() { return this._testResults.changeEvent; }
-  private _testResults = new Property<BasicTestResults|null>(null);
+  private readonly _testResults = new Property<BasicTestResults|null>(null);
 
   /**
    * Whether the backend is busy running some task
    */
   get isBusy() { return this._isBusy.value; }
   get onIsBusyChanged() { return this._isBusy.changeEvent; }
-  private _isBusy = new Property<boolean>(false);
+  private readonly _isBusy = new Property<boolean>(false);
 
   /**
    * An event fired when the current progress value changes.
    */
   get onProgress() { return this._progressEmitter.event; }
-  private _progressEmitter = new vscode.EventEmitter<number>();
+  private readonly _progressEmitter = new vscode.EventEmitter<number>();
 
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
