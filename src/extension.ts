@@ -33,6 +33,8 @@ import {MultiWatcher} from '@cmt/watcher';
 import {ConfigurationReader} from '@cmt/config';
 import paths from '@cmt/paths';
 import {Strand} from '@cmt/strand';
+import {StatusBar} from './status';
+import {FireNow} from '@cmt/prop';
 
 class DummyDisposable {
   dispose() {}
@@ -61,7 +63,6 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
  * necessitate user input, this class acts as intermediary and will send
  * important information down to the lower layers.
  */
-import {StatusBar} from './status';
 
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {}
@@ -329,24 +330,15 @@ class ExtensionManager implements vscode.Disposable {
       this._isBusySub = new DummyDisposable();
       this._progressSub = new DummyDisposable();
     } else {
-      this._statusMessageSub = cmt.onStatusMessageChanged(s => this._statusBar.setStatusMessage(s));
-      this._statusBar.setStatusMessage(cmt.statusMessage);
-      this._targetNameSub = cmt.onTargetNameChanged(t => this._statusBar.targetName = t);
-      this._statusBar.targetName = cmt.targetName;
-      this._projectNameSub = cmt.onProjectNameChanged(p => this._statusBar.setProjectName(p));
-      this._statusBar.setProjectName(cmt.projectName);
-      this._buildTypeSub = cmt.onBuildTypeChanged(bt => this._statusBar.setBuildTypeLabel(bt));
-      this._statusBar.setBuildTypeLabel(cmt.buildType);
-      this._launchTargetSub = cmt.onLaunchTargetNameChanged(t => this._statusBar.setLaunchTargetName(t || ''));
-      this._statusBar.setLaunchTargetName(cmt.launchTargetName || '');
-      this._ctestEnabledSub = cmt.onCTestEnabledChanged(e => this._statusBar.ctestEnabled = e);
-      this._statusBar.ctestEnabled = cmt.ctestEnabled;
-      this._testResultsSub = cmt.onTestResultsChanged(r => this._statusBar.testResults = r);
-      this._statusBar.testResults = cmt.testResults;
-      this._isBusySub = cmt.onIsBusyChanged(b => this._statusBar.setIsBusy(b));
-      this._statusBar.setIsBusy(cmt.isBusy);
+      this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
+      this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => this._statusBar.targetName = t);
+      this._projectNameSub = cmt.onProjectNameChanged(FireNow, p => this._statusBar.setProjectName(p));
+      this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
+      this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => this._statusBar.setLaunchTargetName(t || ''));
+      this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
+      this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
+      this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._progressSub = cmt.onProgress(p => this._statusBar.setProgress(p));
-      // No default getter for progress on cmt
     }
   }
 
