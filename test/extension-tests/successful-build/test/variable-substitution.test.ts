@@ -2,7 +2,7 @@ import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
 import {normalizePath} from '@cmt/util';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 
 import * as path from 'path';
 
@@ -20,8 +20,7 @@ suite('[Variable Substitution]', async () => {
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
-    await cmt.scanForKits();
-    await cmt.selectKit();
+    await cmt.setKit(await getFirstSystemKit());
 
     testEnv.projectFolder.buildDirectory.clear();
   });

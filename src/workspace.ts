@@ -37,7 +37,7 @@ export class DirectoryContext {
    * be used over `ConfigurationReader.cmakePath` because it will do additional
    * path expansion and searching.
    */
-  get cmakePath(): Promise<string | null> { return paths.getCMakePath(this); }
+  get cmakePath(): Promise<string|null> { return paths.getCMakePath(this); }
   /**
    * The CTest executable for the directory. See `cmakePath` for more
    * information.

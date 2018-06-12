@@ -16,7 +16,8 @@
     "tools",
     "build",
     "c++",
-    "native"
+    "native",
+    "multi-root ready"
   ],
   "publisher": "vector-of-bool",
   "engines": {

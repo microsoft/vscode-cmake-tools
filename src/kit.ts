@@ -2,9 +2,6 @@
  * Module for controlling and working with Kits.
  */ /** */
 
-import {ConfigurationReader} from '@cmt/config';
-import rollbar from '@cmt/rollbar';
-import {StateManager} from '@cmt/state';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -15,11 +12,15 @@ import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from './schema';
 import {compare, dropNulls, Ordering, thisExtensionPath} from './util';
-import {MultiWatcher} from './watcher';
 
 const log = logging.createLogger('kit');
 
 type ProgressReporter = vscode.Progress<{message?: string}>;
+
+/**
+ * The path to the user-local kits file.
+ */
+export const USER_KITS_FILEPATH = path.join(paths.dataDir, 'cmake-tools.json');
 
 /**
  * Representation of a CMake generator, along with a toolset and platform
@@ -193,7 +194,12 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       pr.report({message: `Getting Clang version for ${bin}`});
     const version = await getClangVersion(bin);
     if (version === null) {
-      return version;
+      return null;
+    }
+    if (version.target && version.target.includes('msvc')) {
+      // DO NOT include Clang's that target MSVC but don't present the MSVC
+      // command-line interface. CMake does not support them properly.
+      return null;
     }
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
@@ -573,11 +579,36 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
   return varsForVSInstallation(requested, kit.visualStudioArchitecture!);
 }
 
+export interface KitScanOptions {
+  scanDirs?: string[];
+  minGWSearchDirs?: string[];
+}
+
 /**
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(scanPaths: string[] = []) {
+export async function scanForKits(opt?: KitScanOptions) {
+  if (opt === undefined) {
+    opt = {};
+  }
+  const in_scan_dirs = opt.scanDirs;
+  let scan_dirs: string[];
+  if (in_scan_dirs !== undefined) {
+    scan_dirs = in_scan_dirs;
+  } else {
+    const env_path = process.env['PATH'] || '';
+    const isWin32 = process.platform === 'win32';
+    const sep = isWin32 ? ';' : ':';
+    let env_elems = env_path.split(sep);
+    if (env_elems.length === 1 && env_elems[0] === '') {
+      env_elems = [];
+    }
+    scan_dirs = env_elems;
+  }
+  if (opt.minGWSearchDirs) {
+    scan_dirs = scan_dirs.concat(convertMingwDirsToSearchPaths(opt.minGWSearchDirs));
+  }
   log.debug('Scanning for Kits on system');
   const prog = {
     location: vscode.ProgressLocation.Notification,
@@ -586,6 +617,7 @@ export async function scanForKits(scanPaths: string[] = []) {
   return vscode.window.withProgress(prog, async pr => {
     const isWin32 = process.platform === 'win32';
     pr.report({message: 'Scanning for CMake kits...'});
+    let scanPaths: string[] = [];
     // Search directories on `PATH` for compiler binaries
     const pathvar = process.env['PATH']!;
     if (pathvar) {
@@ -620,7 +652,7 @@ export async function scanForKits(scanPaths: string[] = []) {
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
  */
-function descriptionForKit(kit: Kit) {
+export function descriptionForKit(kit: Kit) {
   if (kit.toolchainFile) {
     return `Kit for toolchain file ${kit.toolchainFile}`;
   }
@@ -668,377 +700,41 @@ function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
 }
 
 /**
- * Class that manages and tracks Kits
+ * Get the path to a workspace-specific cmake-kits.json for a given worksapce directory
+ * @param dirPath The directory of a workspace
  */
-export class KitManager implements vscode.Disposable {
-  /**
-   * The known kits
-   */
-  get kits(): Kit[] { return ([] as Kit[]).concat(this._userKits).concat(this._projectKits); }
-  private _userKits: Kit[] = [];
-  private _projectKits: Kit[] = [];
-
-  /**
-   * The path to the user-specific `cmake-kits.json` file
-   */
-  private readonly _userKitsPath: string;
-
-  /**
-   * The path to the project-specific `cmake-kits.json` file
-   */
-  private readonly _projectKitsPath: string;
-
-  /**
-   * Watches the file at `_kitsPath`.
-   */
-  private readonly _kitsWatcher: MultiWatcher;
-
-  /**
-   * Watches for text editor changes. If the edit was to a kits file, we reload
-   * kits. We do this in addition to the FS watcher because the FS watcher is
-   * not reliable on all platforms.
-   */
-  private readonly _editorWatcher = vscode.workspace.onDidSaveTextDocument(doc => {
-    if (doc.uri.fsPath === this._userKitsPath || doc.uri.fsPath === this._projectKitsPath) {
-      rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
-    }
-  });
-
-  /**
-   * The active build kit
-   */
-  get activeKit() { return this._activeKit; }
-  private _activeKit: Kit|null = null;
-
-  /**
-   * The kit manager has a selected kit.
-   */
-  get hasActiveKit() { return this._activeKit !== null; }
-
-  /**
-   * Event emitted when the Kit changes. This can be via user action, by the
-   * available kits changing, or on initial load when the prior workspace kit
-   * is reloaded.
-   */
-  get onActiveKitChanged() { return this._activeKitChangedEmitter.event; }
-  private readonly _activeKitChangedEmitter = new vscode.EventEmitter<Kit|null>();
-
-  /**
-   * Change the current kit. Commits the current kit name to workspace-local
-   * persistent state so that the same kit is reloaded when the user opens
-   * the workspace again.
-   * @param kit The new Kit
-   */
-  private _setActiveKit(kit: Kit|null) {
-    log.debug('Active kit set to', kit ? kit.name : 'null');
-    if (kit) {
-      this.state.activeKitName = kit.name;
-    } else {
-      this.state.activeKitName = null;
-    }
-    this._activeKit = kit;
-    this._activeKitChangedEmitter.fire(kit);
-  }
-
-  /**
-   * Create a new kit manager.
-   * @param stateManager The workspace state manager
-   */
-  constructor(readonly state: StateManager, readonly config: ConfigurationReader, kitPath: string|null = null) {
-    log.debug('Constructing KitManager');
-    if (kitPath !== null) {
-      this._userKitsPath = kitPath;
-    } else {
-      this._userKitsPath = path.join(paths.dataDir, 'cmake-kits.json');
-    }
-
-    // TODO: multi-root
-    this._projectKitsPath = path.join(vscode.workspace.rootPath || '/null', '.vscode/cmake-kits.json');
-
-    // Re-read the kits file when it is changed
-    this._kitsWatcher = new MultiWatcher(this._userKitsPath, this._projectKitsPath);
-    this._kitsWatcher.onAnyEvent(_e => this._rereadKits());
-  }
-
-  /**
-   * Dispose the kit manager
-   */
-  dispose() {
-    log.debug('Disposing KitManager');
-    this._kitsWatcher.dispose();
-    this._activeKitChangedEmitter.dispose();
-    this._editorWatcher.dispose();
-  }
-
-  /**
-   * Shows a QuickPick that lets the user select a new kit.
-   * @returns The selected Kit, or `null` if the user cancelled the selection
-   * @note The user cannot reset the active kit to `null`. If they make no
-   * selection, the current kit is kept. The only way it can reset to `null` is
-   * if the active kit becomes somehow unavailable.
-   */
-  async selectKit(): Promise<Kit|null> {
-    console.assert(this.kits.length > 0, 'No kit is present? Should at least have __unspec__ kit.');
-    log.debug(`Start selection of kits. Found ${this.kits.length} kits.`);
-
-    if (this.kits.length === 1 && this.kits[0].name === '__unspec__') {
-      interface FirstScanItem extends vscode.MessageItem {
-        action: 'scan'|'use-unspec'|'cancel';
-      }
-      const choices: FirstScanItem[] = [
-        {
-          title: 'Scan for kits',
-          action: 'scan',
-        },
-        {
-          title: 'Do not use a kit',
-          action: 'use-unspec',
-        },
-        {
-          title: 'Close',
-          isCloseAffordance: true,
-          action: 'cancel',
-        }
-      ];
-      const chosen = await vscode.window.showInformationMessage(
-          'No CMake kits are available. What would you like to do?',
-          {
-            modal: true,
-          },
-          ...choices,
-      );
-      if (!chosen) {
-        return null;
-      }
-      switch (chosen.action) {
-      case 'scan': {
-        await this.rescanForKits();
-        return this.selectKit();
-      }
-      case 'use-unspec': {
-        this._setActiveKit({name: '__unspec__'});
-        return this.activeKit;
-      }
-      case 'cancel': {
-        return null;
-      }
-      }
-    }
-
-    interface KitItem extends vscode.QuickPickItem {
-      kit: Kit;
-    }
-    log.debug('Opening kit selection QuickPick');
-    const items = this.kits.map((kit): KitItem => {
-      return {
-        label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
-        description: descriptionForKit(kit),
-        kit,
-      };
-    });
-    const chosen_kit = await vscode.window.showQuickPick(items, {
-      placeHolder: 'Select a Kit',
-    });
-    if (chosen_kit === undefined) {
-      log.debug('User cancelled Kit selection');
-      // No selection was made
-      return null;
-    } else {
-      log.debug('User selected kit ', JSON.stringify(chosen_kit));
-      this._setActiveKit(chosen_kit.kit);
-      return chosen_kit.kit;
-    }
-  }
-
-  async selectKitByName(kitName: string): Promise<Kit|null> {
-    log.debug('Setting active Kit by name', kitName);
-    const chosen = this.kits.find(k => k.name == kitName);
-    if (chosen === undefined) {
-      log.warning('Kit set by name to non-existent kit:', kitName);
-      return null;
-    } else {
-      this._setActiveKit(chosen);
-      return chosen;
-    }
-  }
-
-  /**
-   * Rescan the system for kits.
-   *
-   * This will update the `cmake-kits.json` file with any newly discovered kits,
-   * and rewrite any previously discovered kits with the new data.
-   */
-  async rescanForKits() {
-    log.debug('Rescanning for Kits');
-    // clang-format off
-    const old_kits_by_name = this._userKits.reduce(
-      (acc, kit) => ({...acc, [kit.name]: kit}),
-      {} as{[kit: string]: Kit}
-    );
-    const discovered_kits = await scanForKits(convertMingwDirsToSearchPaths(this.config.mingwSearchDirs));
-    const new_kits_by_name = discovered_kits.reduce(
-      (acc, new_kit) => {
-        acc[new_kit.name] = new_kit;
-        return acc;
-      },
-      old_kits_by_name
-    );
-    // clang-format on
-
-    const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-
-    this._setKits({user: new_kits, project: this._projectKits});
-    await this._writeUserKitsFile(new_kits);
-    this._pruneOutdatedKitsAsync();
-  }
-
-  private _pruneOutdatedKitsAsync() {
-    for (const kit of this._userKits) {
-      if (kit.keep === true) {
-        continue;  // Kit is explicitly marked to be kept
-      }
-      if (kit.compilers) {
-        for (const lang in kit.compilers) {
-          const comp_path = kit.compilers[lang];
-          let exists_pr: Promise<boolean>;
-          if (path.isAbsolute(comp_path)) {
-            exists_pr = fs.exists(comp_path);
-          } else {
-            exists_pr = paths.which(comp_path).then(v => v !== null);
-          }
-          const pr = exists_pr.then(async exists => {
-            if (exists) {
-              return;
-            }
-            // This kit contains a compiler that does not exist. What to do?
-            interface UpdateKitsItem extends vscode.MessageItem {
-              action: 'remove'|'keep';
-            }
-            const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
-                `The kit "${kit.name}" references a non-existent compiler binary [${comp_path}]. ` +
-                    `What would you like to do?`,
-                {},
-                {
-                  action: 'remove',
-                  title: 'Remove it',
-                },
-                {
-                  action: 'keep',
-                  title: 'Keep it',
-                },
-            );
-            if (chosen === undefined) {
-              return;
-            }
-            switch (chosen.action) {
-            case 'keep':
-              return this._keepOutdatedKit(kit);
-            case 'remove':
-              return this._removeOutdatedKit(kit);
-            }
-          });
-          rollbar.takePromise(`Pruning kit`, {kit}, pr);
-        }
-      }
-    }
-  }
-
-  private async _writeUserKitsFile(kits: Kit[]) {
-    log.debug('Saving kits to', this._userKitsPath);
-    await fs.mkdir_p(path.dirname(this._userKitsPath));
-    const stripped_kits = kits.filter(k => k.name !== '__unspec__');
-    const sorted_kits = stripped_kits.sort((a, b) => {
-      if (a.name == b.name) {
-        return 0;
-      } else if (a.name < b.name) {
-        return -1;
-      } else {
-        return 1;
-      }
-    });
-    try {
-      await fs.writeFile(this._userKitsPath, JSON.stringify(sorted_kits, null, 2));
-    } catch (e) { log.error('Failed to write kits to disk:', e); }
-  }
-
-  private async _keepOutdatedKit(kit: Kit) {
-    const new_kits = this._userKits.map(k => {
-      if (k.name === kit.name) {
-        return {...k, keep: true};
-      } else {
-        return k;
-      }
-    });
-    this._setKits({user: new_kits, project: this._projectKits});
-    return this._writeUserKitsFile(this.kits);
-  }
-
-  private async _removeOutdatedKit(kit: Kit) {
-    const new_kits = this.kits.filter(k => k.name !== kit.name);
-    this._setKits({user: new_kits, project: this._projectKits});
-    return this._writeUserKitsFile(this.kits);
-  }
-
-  /**
-   * Reread the `cmake-kits.json` file. This will be called if we write the
-   * file in `rescanForKits`, or if the user otherwise edits the file manually.
-   */
-  private async _rereadKits() {
-    const user = await readKitsFile(this._userKitsPath);
-    const project = await readKitsFile(this._projectKitsPath);
-    user.push({
-      name: '__unspec__',
-    });
-    this._setKits({user, project});
-    this._pruneOutdatedKitsAsync();
-  }
-
-  private _setKits(opts: {user: Kit[], project: Kit[]}) {
-    this._userKits = opts.user;
-    this._projectKits = opts.project;
-    const already_active_kit = this.kits.find(kit => kit.name === this.state.activeKitName);
-    // Set the current kit to the one we have named
-    this._setActiveKit(already_active_kit || null);
-  }
-
-  /**
-   * Initialize the kits manager. Must be called before using an instance.
-   */
-  async initialize() {
-    log.debug('Second phase init for KitManager');
-    if (await fs.exists(this._userKitsPath)) {
-      log.debug('Re-read kits file from prior session');
-      // Load up the list of kits that we've saved
-      await this._rereadKits();
-    } else {
-      await this.rescanForKits();
-      interface DoOpen extends vscode.MessageItem {
-        doOpen: boolean;
-      }
-      const item = await vscode.window.showInformationMessage<DoOpen>(
-          'CMake Tools has scanned for available kits and saved them to a file. Would you like to edit the Kits file?',
-          {},
-          {title: 'Yes', doOpen: true},
-          {title: 'No', isCloseAffordance: true, doOpen: false});
-      if (item === undefined) {
-        return;
-      }
-      if (item.doOpen) {
-        await this.openKitsEditor();
-      }
-    }
-  }
-
-  /**
-   * Opens a text editor with the user-local `cmake-kits.json` file.
-   */
-  async openKitsEditor() {
-    log.debug('Opening TextEditor for', this._userKitsPath);
-    const text = await vscode.workspace.openTextDocument(this._userKitsPath);
-    return vscode.window.showTextDocument(text);
-  }
+export function kitsPathForWorkspaceDirectoryPath(dirPath: string): string {
+  return path.join(dirPath, '.vscode/cmake-kits.json');
 }
 
+/**
+ * Get the path to the workspace-specific cmake-kits.json for a given WorkspaceFolder object
+ * @param ws The workspace folder
+ */
+export function kitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder): string {
+  return kitsPathForWorkspaceDirectoryPath(ws.uri.fsPath);
+}
+
+/**
+ * Get the kits declared for the given workspace directory. Looks in `.vscode/cmake-kits.json`.
+ * @param dirPath The path to a VSCode workspace directory
+ */
+export function kitsForWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
+  const ws_kits_file = path.join(dirPath, '.vscode/cmake-kits.json');
+  return readKitsFile(ws_kits_file);
+}
+
+/**
+ * Get the kits available for a given workspace directory. Differs from
+ * `kitsForWorkspaceDirectory` in that it also returns kits declared in the
+ * user-local kits file.
+ * @param dirPath The path to a VSCode workspace directory
+ */
+export async function kitsAvailableInWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
+  const user_kits_pr = readKitsFile(USER_KITS_FILEPATH);
+  const ws_kits_pr = kitsForWorkspaceDirectory(dirPath);
+  return Promise.all([user_kits_pr, ws_kits_pr]).then(([user_kits, ws_kits]) => user_kits.concat(ws_kits));
+}
 
 export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   if (!oldKit) {
