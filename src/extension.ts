@@ -325,6 +325,7 @@ class ExtensionManager implements vscode.Disposable {
       this._buildTypeSub = new DummyDisposable();
       this._launchTargetSub = new DummyDisposable();
       this._ctestEnabledSub = new DummyDisposable();
+      this._testResultsSub = new DummyDisposable();
       this._isBusySub = new DummyDisposable();
       this._progressSub = new DummyDisposable();
     } else {
@@ -340,6 +341,8 @@ class ExtensionManager implements vscode.Disposable {
       this._statusBar.setLaunchTargetName(cmt.launchTargetName || '');
       this._ctestEnabledSub = cmt.onCTestEnabledChanged(e => this._statusBar.ctestEnabled = e);
       this._statusBar.ctestEnabled = cmt.ctestEnabled;
+      this._testResultsSub = cmt.onTestResultsChanged(r => this._statusBar.testResults = r);
+      this._statusBar.testResults = cmt.testResults;
       this._isBusySub = cmt.onIsBusyChanged(b => this._statusBar.setIsBusy(b));
       this._statusBar.setIsBusy(cmt.isBusy);
       this._progressSub = cmt.onProgress(p => this._statusBar.setProgress(p));
