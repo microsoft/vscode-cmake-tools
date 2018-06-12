@@ -27,6 +27,7 @@ import {
   descriptionForKit,
   USER_KITS_FILEPATH,
   kitsPathForWorkspaceFolder,
+  kitsAvailableInWorkspaceDirectory,
 } from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
@@ -246,7 +247,15 @@ class ExtensionManager implements vscode.Disposable {
    * @param ws The workspace folder to create for
    */
   private async _createCMakeToolsForWorkspaceFolder(ws: vscode.WorkspaceFolder) {
-    return CMakeTools.createForDirectory(ws.uri.fsPath, this.extensionContext);
+    const ws_kits = await kitsAvailableInWorkspaceDirectory(ws.uri.fsPath);
+    const new_cmt = await CMakeTools.createForDirectory(ws.uri.fsPath, this.extensionContext);
+    const kit_name = new_cmt.workspaceContext.state.activeKitName;
+    if (!kit_name) {
+      return new_cmt;
+    }
+    const kit = ws_kits.find(k => k.name == kit_name) || null;
+    await new_cmt.setKit(kit);
+    return new_cmt;
   }
 
   /**

@@ -370,6 +370,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           await drv.setKit(kit);
         } finally { this._statusMessage.set('Ready'); }
       }
+      this.workspaceContext.state.activeKitName = kit.name;
     }
   }
 
