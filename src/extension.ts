@@ -247,14 +247,21 @@ class ExtensionManager implements vscode.Disposable {
    * @param ws The workspace folder to create for
    */
   private async _createCMakeToolsForWorkspaceFolder(ws: vscode.WorkspaceFolder) {
+    // Get the kits that will be available for the new workspace directory
     const ws_kits = await kitsAvailableInWorkspaceDirectory(ws.uri.fsPath);
+    // Create the backend:
     const new_cmt = await CMakeTools.createForDirectory(ws.uri.fsPath, this.extensionContext);
+    // Check if the CMakeTools remembers what kit it was last using in this dir:
     const kit_name = new_cmt.workspaceContext.state.activeKitName;
     if (!kit_name) {
+      // No prior kit. Done.
       return new_cmt;
     }
+    // It remembers a kit. Find it in the kits avail in this dir:
     const kit = ws_kits.find(k => k.name == kit_name) || null;
+    // Set the kit: (May do nothing if no kit was found)
     await new_cmt.setKit(kit);
+    // Done.
     return new_cmt;
   }
 
