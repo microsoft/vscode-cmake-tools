@@ -345,6 +345,7 @@ class ExtensionManager implements vscode.Disposable {
       this._testResultsSub = new DummyDisposable();
       this._isBusySub = new DummyDisposable();
       this._progressSub = new DummyDisposable();
+      this._statusBar.setActiveKitName('');
     } else {
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => this._statusBar.targetName = t);
@@ -355,6 +356,7 @@ class ExtensionManager implements vscode.Disposable {
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._progressSub = cmt.onProgress(p => this._statusBar.setProgress(p));
+      this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
     }
   }
 
@@ -467,9 +469,32 @@ class ExtensionManager implements vscode.Disposable {
    */
   async _setCurrentKit(k: Kit|null) {
     const inst = this._activeCMakeTools;
+    const raw_name = k ? k.name : '';
     if (inst) {
-      await inst.setKit(k);
+      // Generate a message that we will show in the progress notification
+      let message = '';
+      switch (raw_name) {
+      case '':
+      case '__unspec__':
+        // Empty string/unspec is un-setting the kit:
+        message = 'Unsetting kit';
+        break;
+      default:
+        // Everything else is just loading a kit:
+        message = `Loading kit ${raw_name}`;
+        break;
+      }
+      // Load the kit into the backend
+      await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: message,
+          },
+          () => inst.setKit(k),
+      );
     }
+    // Update the status bar
+    this._statusBar.setActiveKitName(raw_name);
   }
 
   /**
