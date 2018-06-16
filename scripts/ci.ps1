@@ -11,7 +11,13 @@ param(
     $DocDestination,
     # Skip running tests
     [switch]
-    $NoTest
+    $NoTest,
+    # Only run the smoke tests
+    [switch]
+    $OnlySmoke,
+    # Only run the unit tests
+    [switch]
+    $OnlyUnit
 )
 $ErrorActionPreference = "Stop"
 
@@ -36,6 +42,16 @@ if ($Test) {
         Invoke-SmokeTest $testname
     }
     return
+}
+
+if ($OnlySmoke) {
+    return Invoke-SmokeTests
+}
+
+if ($OnlyUnit) {
+    return Invoke-VSCodeTest "CMake Tools: Unit tests" `
+        -TestsPath "$REPO_DIR/out/test/unit-tests" `
+        -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
 }
 
 # Sanity check for yarn

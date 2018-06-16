@@ -87,6 +87,23 @@ export function copyFile(inpath: string, outpath: string): Promise<void> {
 }
 
 /**
+ * Create a hard link of an existing file
+ * @param inPath The existing file path
+ * @param outPath The new path to the hard link
+ */
+export function hardLinkFile(inPath: string, outPath: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    fs_.link(inPath, outPath, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
+/**
  * Remove a directory recursively. **DANGER DANGER!**
  * @param dirpath Directory to remove
  */
