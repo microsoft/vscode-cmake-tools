@@ -117,6 +117,8 @@ if (! $NoTest) {
         -TestsPath "$REPO_DIR/out/test/unit-tests" `
         -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
 
+    Invoke-SmokeTests
+
     foreach ($name in @("successful-build"; )) {
         Invoke-VSCodeTest "CMake Tools: $name" `
             -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
