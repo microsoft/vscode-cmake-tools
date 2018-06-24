@@ -55,7 +55,12 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
   }
 
+  private _codeModelChanged = new vscode.EventEmitter<null|cms.CodeModelContent>();
+  get onCodeModelChanged() { return this._codeModelChanged.event; }
+
   async asyncDispose() {
+    this._codeModelChanged.dispose();
+    this._progressEmitter.dispose();
     if (this._cmsClient) {
       await (await this._cmsClient).shutdown();
     }
@@ -142,6 +147,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       return acc;
     }, new Map<string, cache.Entry>());
     this.codeModel = await cl.sendRequest('codemodel');
+    this._codeModelChanged.fire(this.codeModel);
   }
 
   async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
@@ -235,8 +241,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
     for (const project of build_config.projects) {
       for (const target of project.targets) {
+        if (!target.fileGroups) {
+          continue;
+        }
         for (const group of target.fileGroups) {
           const found = group.sources.find(source => {
+            if (!target.sourceDirectory) {
+              return false;
+            }
             const abs_source = path.isAbsolute(filepath) ? source : path.join(target.sourceDirectory, source);
             const abs_filepath = path.isAbsolute(filepath) ? filepath : path.join(this.sourceDir, filepath);
             return util.normalizePath(abs_source) === util.normalizePath(abs_filepath);

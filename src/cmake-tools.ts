@@ -16,6 +16,7 @@ import * as ws from 'ws';
 import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
+import {CodeModelContent} from './cms-client';
 import {CMakeServerClientDriver} from './cms-driver';
 import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
@@ -29,6 +30,7 @@ import {NagManager} from './nag';
 import {fs} from './pr';
 import {Property} from './prop';
 import rollbar from './rollbar';
+import {setContextValue} from './util';
 import {VariantManager} from './variant';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
@@ -172,6 +174,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get isBusy() { return this._isBusy.value; }
   get onIsBusyChanged() { return this._isBusy.changeEvent; }
   private readonly _isBusy = new Property<boolean>(false);
+
+  /**
+   * Event fired when the code model from CMake is updated
+   */
+  get codeModel() { return this._codeModel.value; }
+  get onCodeModelChanged() { return this._codeModel.changeEvent; }
+  private _codeModel = new Property<CodeModelContent|null>(null);
+  private _codeModelDriverSub: vscode.Disposable|null = null;
 
   /**
    * An event fired when the current progress value changes.
@@ -413,6 +423,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._cmakeDriver = Promise.resolve(null);
           throw ex;
         }
+        if (this._codeModelDriverSub) {
+          this._codeModelDriverSub.dispose();
+        }
+        const drv = await this._cmakeDriver;
+        console.assert(drv !== null, 'Null driver immediately after creation?');
+        if (drv instanceof CMakeServerClientDriver) {
+          this._codeModelDriverSub = drv.onCodeModelChanged(cm => { this._codeModel.set(cm); });
+        }
       }
       return this._cmakeDriver;
     });
@@ -626,13 +644,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
     const consumer = new diags.CMakeBuildConsumer();
+    const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
       this._statusMessage.set('Building');
       this._isBusy.set(true);
       consumer.onProgress(pr => { this._progressEmitter.fire(pr.value); });
       log.showChannel();
       build_log.info('Starting build');
+      await setContextValue(IS_BUILDING_KEY, true);
       const rc = await drv.build(target, consumer);
+      await setContextValue(IS_BUILDING_KEY, false);
       if (rc === null) {
         build_log.info('Build was terminated');
       } else {
@@ -642,6 +663,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       populateCollection(this._buildDiagnostics, file_diags);
       return rc === null ? -1 : rc;
     } finally {
+      await setContextValue(IS_BUILDING_KEY, false);
       this._statusMessage.set('Ready');
       this._isBusy.set(false);
       consumer.dispose();
@@ -793,7 +815,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.selectLaunchTarget`
    */
-  async selectLaunchTarget(): Promise<string|null> { return this.setLaunchTargetByName(); }
+  async selectLaunchTarget(name?: string): Promise<string|null> { return this.setLaunchTargetByName(name); }
 
   /**
    * Used by vscode and as test interface
@@ -856,10 +878,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return executable.path;
   }
 
-  async prepareLaunchTargetExecutable(): Promise<api.ExecutableTarget|null> {
-    const chosen = await this.getCurrentLaunchTarget();
-    if (!chosen) {
-      return null;
+  async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {
+    let chosen: api.ExecutableTarget;
+    if (name) {
+      const found = (await this.executableTargets).find(e => e.name === name);
+      if (!found) {
+        return null;
+      }
+      chosen = found;
+    } else {
+      const current = await this.getOrSelectLaunchTarget();
+      if (!current) {
+        return null;
+      }
+      chosen = current;
     }
 
     // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
@@ -873,16 +905,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     }
 
-    const target = await this.getOrSelectLaunchTarget();
-    if (!target) {
-      // The user has nothing selected and cancelled the prompt to select a target.
-      log.debug('No target selected.');
-      return null;
-    }
-
     const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
     if (buildOnLaunch || isReconfigurationNeeded) {
-      const rc_build = await this.build();
+      const rc_build = await this.build(chosen.name);
       if (rc_build !== 0) {
         log.debug('Build failed');
         return null;
@@ -905,7 +930,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.debugTarget`
    */
-  async debugTarget(): Promise<vscode.DebugSession|null> {
+  async debugTarget(name?: string): Promise<vscode.DebugSession|null> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       vscode.window.showErrorMessage('Set up and build your CMake project before debugging.');
@@ -925,7 +950,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    const targetExecutable = await this.prepareLaunchTargetExecutable();
+    const targetExecutable = await this.prepareLaunchTargetExecutable(name);
     if (!targetExecutable) {
       return null;
     }
@@ -971,8 +996,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.launchTarget`
    */
-  async launchTarget() {
-    const executable = await this.prepareLaunchTargetExecutable();
+  async launchTarget(name?: string) {
+    const executable = await this.prepareLaunchTargetExecutable(name);
     if (!executable) {
       // The user has nothing selected and cancelled the prompt to select
       // a target.

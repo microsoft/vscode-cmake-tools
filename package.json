@@ -52,6 +52,8 @@
     "onCommand:cmake.selectLaunchTarget",
     "onCommand:cmake.setVariant",
     "onCommand:cmake.stop",
+    "onCommand:cmake.outline.configure",
+    "onCommand:cmake.outline.build",
     "workspaceContains:CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
@@ -89,9 +91,29 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.outline.configure",
+        "title": "Configure",
+        "icon": {
+          "dark": "res/configure-icon.svg",
+          "light": "res/configure-icon.svg"
+        }
+      },
+      {
         "command": "cmake.build",
         "title": "Build",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.buildNamedTarget",
+        "title": "(Internal) Build a target by name"
+      },
+      {
+        "command": "cmake.outline.build",
+        "title": "Build",
+        "icon": {
+          "dark": "res/build-icon.svg",
+          "light": "res/build-icon.svg"
+        }
       },
       {
         "command": "cmake.install",
@@ -114,14 +136,26 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.outline.cleanConfigure",
+        "title": "Clean reconfigure"
+      },
+      {
         "command": "cmake.clean",
         "title": "Clean",
         "category": "CMake"
       },
       {
+        "command": "cmake.outline.clean",
+        "title": "Clean"
+      },
+      {
         "command": "cmake.cleanRebuild",
         "title": "Clean rebuild",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.cleanRebuild" ,
+        "title": "Clean rebuild"
       },
       {
         "command": "cmake.ctest",
@@ -159,9 +193,45 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.outline.stop",
+        "title": "Stop current build",
+        "icon": {
+          "dark": "res/stop-icon.svg",
+          "light": "res/stop-icon.svg"
+        }
+      },
+      {
         "command": "cmake.resetState",
         "title": "Reset CMake Tools extension state (For troubleshooting)",
         "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.buildTarget",
+        "title": "Build",
+        "icon": {
+          "dark": "res/build-icon.svg",
+          "light": "res/build-icon.svg"
+        }
+      },
+      {
+        "command": "cmake.outline.runUtilityTarget",
+        "title": "Run utility"
+      },
+      {
+        "command": "cmake.outline.debugTarget",
+        "title": "Run with debugger"
+      },
+      {
+        "command": "cmake.outline.launchTarget",
+        "title": "Run in terminal"
+      },
+      {
+        "command": "cmake.outline.setDefaultTarget",
+        "title": "Set as default target"
+      },
+      {
+        "command": "cmake.outline.setLaunchTarget",
+        "title": "Set as launch/debug target"
       }
     ],
     "menus": {
@@ -213,6 +283,75 @@
         },
         {
           "command": "cmake.stop"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "cmake.outline.configure",
+          "when": "view == cmake.outline && !cmake:isBuilding",
+          "group": "navigation@1"
+        },
+        {
+          "command": "cmake.outline.build",
+          "when": "view == cmake.outline && !cmake:isBuilding",
+          "group": "navigation@2"
+        },
+        {
+          "command": "cmake.outline.stop",
+          "when": "view == cmake.outline && cmake:isBuilding",
+          "group": "navigation@3"
+        },
+        {
+          "command": "cmake.outline.clean",
+          "when": "view == cmake.outline",
+          "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.outline.cleanConfigure",
+          "when": "view == cmake.outline",
+          "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.outline.cleanRebuild",
+          "when": "view == cmake.outline",
+          "group": "1_cmakeOutline"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "view == cmake.outline && viewItem =~ /canBuild=true/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "view == cmake.outline && viewItem =~ /canBuild=true/",
+          "group": "1_targetActions@1"
+        },
+        {
+          "command": "cmake.outline.runUtilityTarget",
+          "when": "view == cmake.outline && viewItem =~ /canRun=true/",
+          "group": "1_targetActions@2"
+        },
+        {
+          "command": "cmake.outline.debugTarget",
+          "when": "view == cmake.outline && viewItem =~ /type=EXECUTABLE/",
+          "group": "1_targetActions@3"
+        },
+        {
+          "command": "cmake.outline.launchTarget",
+          "when": "view == cmake.outline && viewItem =~ /type=EXECUTABLE/",
+          "group": "1_targetActions@4"
+        },
+        {
+          "command": "cmake.outline.setDefaultTarget",
+          "when": "view == cmake.outline && viewItem =~ /canRun=true|canBuild=true/ && viewItem =~ /isDefault=false/",
+          "group": "2_targetState@1"
+        },
+        {
+          "command": "cmake.outline.setLaunchTarget",
+          "when": "view == cmake.outline && viewItem =~ /type=EXECUTABLE/ && viewItem =~ /isLaunch=false/",
+          "group": "2_targetState@2"
         }
       ]
     },
@@ -697,6 +836,28 @@
         "command": "cmake.launchTarget"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cmake__viewContainer",
+          "title": "CMake",
+          "icon": "res/cmake-view-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "cmake__viewContainer": [
+        {
+          "id": "cmake.folders",
+          "name": "Folders",
+          "when": "cmakeToolsMultiRootActive"
+        },
+        {
+          "id": "cmake.outline",
+          "name": "Project Outline"
+        }
+      ]
+    },
     "yamlValidation": [
       {
         "fileMatch": "cmake-variants.yaml",
