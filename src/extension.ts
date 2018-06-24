@@ -36,17 +36,7 @@ import paths from '@cmt/paths';
 import {Strand} from '@cmt/strand';
 import {StatusBar} from './status';
 import {FireNow} from '@cmt/prop';
-
-class DummyDisposable {
-  dispose() {}
-}
-
-interface ProgressReport {
-  message: string;
-  increment?: number;
-}
-
-type ProgressHandle = vscode.Progress<ProgressReport>;
+import {ProgressHandle, DummyDisposable} from './util';
 
 function reportProgress(progress: ProgressHandle|undefined, message: string) {
   if (progress) {
@@ -193,7 +183,7 @@ class ExtensionManager implements vscode.Disposable {
    * Asynchronously dispose of all the child objects.
    */
   async asyncDispose() {
-    this._disposeStatusSubs();
+    this._disposeSubs();
     this._workspaceFoldersChangedSub.dispose();
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
@@ -313,10 +303,10 @@ class ExtensionManager implements vscode.Disposable {
     this._resetKitsWatcher();
     // Re-read kits for the new workspace:
     await this._rereadKits(progress);
-    this._setupStatusBarSubs();
+    this._setupSubscriptions();
   }
 
-  private _disposeStatusSubs() {
+  private _disposeSubs() {
     for (const sub of [this._statusMessageSub,
                        this._targetNameSub,
                        this._projectNameSub,
@@ -331,8 +321,9 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  private _setupStatusBarSubs() {
-    this._disposeStatusSubs();
+
+  private _setupSubscriptions() {
+    this._disposeSubs();
     const cmt = this._activeCMakeTools;
     this._statusBar.setVisible(true);
     if (!cmt) {
@@ -905,7 +896,7 @@ class ExtensionManager implements vscode.Disposable {
  */
 let _EXT_MANAGER: ExtensionManager|null = null;
 
-async function setup(context: vscode.ExtensionContext, progress: vscode.Progress<ProgressReport>) {
+async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, 'Initial setup');
   // Load a new extension manager
   const ext = _EXT_MANAGER = new ExtensionManager(context);

@@ -32,6 +32,10 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _cacheEntries = new Map<string, cache.Entry>();
   private _cmakeInputFileSet = InputFileSet.createEmpty();
 
+  private readonly _progressEmitter = new vscode.EventEmitter<cms.ProgressMessage>();
+  get onProgress() {
+    return this._progressEmitter.event;
+  }
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -282,7 +286,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
         // on file changes?
       },
       onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
-      onProgress: async _prog => {},
+      onProgress: async prog => {
+        this._progressEmitter.fire(prog);
+      },
       pickGenerator: () => this.getBestGenerator(),
     });
   }

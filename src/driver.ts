@@ -3,6 +3,7 @@
  */ /** */
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import {ProgressMessage} from '@cmt/cms-client';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -114,6 +115,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
   private readonly _projectNameChangedEmitter = new vscode.EventEmitter<string>();
+
+  get onProgress(): vscode.Event<ProgressMessage> {
+    return (_cb: (ev: ProgressMessage) => any) => new util.DummyDisposable();
+  }
 
   public get projectName(): string { return this.ws.state.projectName || 'Unknown Project'; }
   protected doSetProjectName(v: string) {

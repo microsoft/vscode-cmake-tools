@@ -320,3 +320,18 @@ export function compare(a: any, b: any): Ordering {
     return Ordering.Equivalent;
   }
 }
+
+export function setContextValue(key: string, value: any): Thenable<void> {
+  return vscode.commands.executeCommand('setContext', key, value);
+}
+
+export interface ProgressReport {
+  message: string;
+  increment?: number;
+}
+
+export type ProgressHandle = vscode.Progress<ProgressReport>;
+
+export class DummyDisposable {
+  dispose() {}
+}

@@ -6,7 +6,7 @@ import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-e
 import * as debugger_mod from '@cmt/debugger';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {versionToString} from '@cmt/util';
+import {ProgressHandle, versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
 import * as path from 'path';
@@ -35,6 +35,11 @@ const open = require('open') as ((url: string, appName?: string, callback?: Func
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
+
+enum ConfigureType {
+  Normal,
+  Clean,
+}
 
 /**
  * Class implementing the extension. It's all here!
@@ -460,31 +465,52 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.configure`
    */
-  configure(extra_args: string[] = []) {
-    log.debug('Run configure ', extra_args);
-    return this._doConfigure(async consumer => {
-      const drv = await this.getCMakeDriverInstance();
-      if (drv) {
-        return drv.configure(extra_args, consumer);
-      } else {
-        return -1;
-      }
-    });
+  configure(extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
+    return vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Configuring project',
+        },
+        async progress => {
+          progress.report({message: 'Preparing to configure'});
+          log.debug('Run configure ', extra_args);
+          return this._doConfigure(progress, async consumer => {
+            const drv = await this.getCMakeDriverInstance();
+            if (drv) {
+              let progress_acc = 0;
+              const prog_sub = drv.onProgress(pr => {
+                const new_prog
+                    = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                const incr = new_prog - progress_acc;
+                progress.report({increment: incr});
+                progress_acc += incr;
+              });
+              try {
+                progress.report({message: 'Configuring project'});
+                switch (type) {
+                case ConfigureType.Normal:
+                  return await drv.configure(extra_args, consumer);
+                case ConfigureType.Clean:
+                  return await drv.cleanConfigure(consumer);
+                }
+                rollbar.error('Unexpected configure type', {type});
+                return await this.configure(extra_args, ConfigureType.Normal);
+              } finally {
+                progress.report({message: 'Finishing configure'});
+                prog_sub.dispose();
+              }
+            } else {
+              return -1;
+            }
+          });
+        },
+    );
   }
 
   /**
    * Implementation of `cmake.cleanConfigure()
    */
-  cleanConfigure() {
-    return this._doConfigure(async consumer => {
-      const drv = await this.getCMakeDriverInstance();
-      if (drv) {
-        return drv.cleanConfigure(consumer);
-      } else {
-        return -1;
-      }
-    });
-  }
+  cleanConfigure() { return this.configure([], ConfigureType.Clean); }
 
   /**
    * Save all open files. "maybe" because the user may have disabled auto-saving
@@ -517,7 +543,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
-  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
+  private async _doConfigure(progress: ProgressHandle,
+                             cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
+    progress.report({message: 'Saving open files'});
     if (!await this.maybeAutoSaveAll()) {
       return -1;
     }
@@ -525,6 +553,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error('Cannot configure: No kit is active for this CMake Tools');
     }
     if (!this._variantManager.haveVariant) {
+      progress.report({message: 'Waiting on variant selection'});
       await this._variantManager.selectVariant();
       if (!this._variantManager.haveVariant) {
         log.debug('No variant selected. Abort configure');
