@@ -93,19 +93,6 @@ function collapseTreeInplace<T>(tree: PathedTree<T>): void {
 }
 
 /**
- * Transform each leaf in the tree from onen value to another.
- * @param tree The tree to re-map
- * @param map The mapping function
- */
-function mapTreeItems<T, U>(tree: PathedTree<T>, map: (item: T) => U): PathedTree<U> {
-  return {
-    pathPart: tree.pathPart,
-    items: tree.items.map(map),
-    children: tree.children.map(c => mapTreeItems(c, map)),
-  };
-}
-
-/**
  * Get the path to an icon for the given type of CMake target.
  * @param type The type of target
  */
@@ -124,20 +111,20 @@ function iconForTargetType(type: cms.TargetTypeString): string {
   }
 }
 
-function sortIndexForType(type: cms.TargetTypeString): number {
+function sortStringForType(type: cms.TargetTypeString): string {
   switch (type) {
   case 'EXECUTABLE':
-    return 0;
+    return 'aaa';
   case 'MODULE_LIBRARY':
   case 'SHARED_LIBRARY':
   case 'STATIC_LIBRARY':
-    return 1;
+    return 'baa';
   case 'UTILITY':
-    return 2;
+    return 'caa';
   case 'OBJECT_LIBRARY':
-    return 3;
+    return 'daa';
   case 'INTERFACE_LIBRARY':
-    return 4;
+    return 'eaa';
   }
 }
 
@@ -258,7 +245,7 @@ export class TargetNode extends BaseNode {
   private _fsPath: string = '';
 
   getOrderTuple() {
-    return [this._type, this.name];
+    return [sortStringForType(this._type), this.name];
   }
 
   private readonly _rootDir: DirectoryNode<SourceFileNode>;
