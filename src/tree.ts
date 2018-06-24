@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import rollbar from './rollbar';
+import {splitPath} from './util';
 
 abstract class BaseNode {
   abstract getChildren(): BaseNode[];
@@ -11,6 +12,54 @@ abstract class BaseNode {
 }
 
 type UpdateList = (BaseNode|null)[];
+
+interface SimpleTree<T> {
+  pathPart: string;
+  items: T[];
+  children: SimpleTree<T>[];
+}
+
+function addToTree<T>(tree: SimpleTree<T>, itemPath: string, item: T) {
+  const elems = splitPath(itemPath);
+  for (const el of elems) {
+    let subtree = tree.children.find(n => n.pathPart === el);
+    if (!subtree) {
+      subtree = {
+        pathPart: el,
+        children: [],
+        items: [],
+      };
+      tree.children.push(subtree);
+    }
+    tree = subtree;
+  }
+  tree.items.push(item);
+}
+
+function collapseTreeInplace<T>(tree: SimpleTree<T>): void {
+  const new_children: SimpleTree<T>[] = [];
+  for (let child of tree.children) {
+    while (child.children.length === 1 && child.items.length === 0) {
+      const subchild = child.children[0];
+      child = {
+        pathPart: path.join(child.pathPart, subchild.pathPart),
+        items: subchild.items,
+        children: subchild.children,
+      };
+    }
+    collapseTreeInplace(child);
+    new_children.push(child);
+  }
+  tree.children = new_children;
+}
+
+function mapTreeItems<T, U>(tree: SimpleTree<T>, map: (item: T) => U): SimpleTree<U> {
+  return {
+    pathPart: tree.pathPart,
+    items: tree.items.map(map),
+    children: tree.children.map(c => mapTreeItems(c, map)),
+  };
+}
 
 function iconForTargetType(type: cms.TargetTypeString): string {
   switch (type) {
@@ -56,23 +105,63 @@ export class SourceFileNode extends BaseNode {
 
   getTreeItem() {
     const item = new vscode.TreeItem(path.basename(this._filepath));
-    item.id = this._filepath;
+    item.id = `${this._target.id}::${this._filepath}`;
     item.resourceUri = vscode.Uri.file(this._filepath);
+    item.command = {
+      title: 'Open file',
+      command: 'vscode.open',
+      arguments: [item.resourceUri],
+    };
     return item;
   }
 }
 
 export class TargetNode extends BaseNode {
-  constructor(private readonly _project: string, private _name: string) { super(); }
+  private constructor(readonly projectName: string, cm: cms.CodeModelTarget) {
+    super();
+    if (cm.artifacts && cm.artifacts.length > 0) {
+      this._fsPath = path.normalize(cm.artifacts[0]);
+    } else {
+      this._fsPath = cm.fullName || '';
+    }
+    this._name = cm.name;
+    this._fullName = cm.fullName || '';
+    this._type = cm.type;
+    this._sourceDir = cm.sourceDirectory || '';
 
-  private _fsPath: string = '';
-  private _fullName: string = '';
-  private _type: cms.TargetTypeString = 'UTILITY';
+    const tree: SimpleTree<SourceFileNode> = {
+      pathPart: this._sourceDir,
+      items: [],
+      children: [],
+    };
+
+    for (const grp of cm.fileGroups || []) {
+      for (let src of grp.sources) {
+        if (!path.isAbsolute(src)) {
+          src = path.join(this._sourceDir, src);
+        }
+        const src_dir = path.dirname(src);
+        const relpath = path.relative(this._sourceDir, src_dir);
+        addToTree(tree, relpath, new SourceFileNode(this, src));
+      }
+    }
+
+    collapseTreeInplace(tree);
+
+    this._children = ([] as BaseNode[])
+                         .concat(tree.children.map(c => DirectoryNode.fromSimpleTree(this.id, this._sourceDir, c)))
+                         .concat(tree.items);
+  }
+
+  private _name: string;
+  private _fsPath: string;
+  private _fullName: string;
+  private _type: cms.TargetTypeString;
+  private _sourceDir: string;
   private _isDefault: boolean = false;
   private _isLaunch: boolean = false;
-  private _sourceDir = '';
 
-  private _sources = new Set<SourceFileNode>();
+  private _children: BaseNode[] = [];
 
   /**
    * The name of the target
@@ -81,11 +170,14 @@ export class TargetNode extends BaseNode {
 
   get type() { return this._type; }
 
-  getChildren() { return [...this._sources]; }
+  getChildren() { return this._children; }
 
   getTreeItem() {
     try {
-      const item = new vscode.TreeItem(this.name, vscode.TreeItemCollapsibleState.Collapsed);
+      const item = new vscode.TreeItem(this.name);
+      if (this._children.length) {
+        item.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+      }
       if (this._isDefault) {
         item.label += ' 🔨';
       }
@@ -116,7 +208,7 @@ export class TargetNode extends BaseNode {
       const canBuild = this.type !== 'INTERFACE_LIBRARY' && this.type !== 'UTILITY' && this.type !== 'OBJECT_LIBRARY';
       const canRun = this.type === 'UTILITY';
       item.contextValue = [
-        `isTarget=true`,
+        `nodeType=target`,
         `isDefault=${this._isDefault}`,
         `isLaunch=${this._isLaunch}`,
         `type=${this.type}`,
@@ -130,7 +222,7 @@ export class TargetNode extends BaseNode {
     }
   }
 
-  get id() { return path.join(this._project, this._sourceDir, this._name); }
+  get id() { return `${this.projectName}::${path.join(this._sourceDir, this._name)}`; }
 
   update(target: cms.CodeModelTarget, ctx: ExternalContext, updates?: UpdateList) {
     let did_update = this._name != target.name;
@@ -155,7 +247,6 @@ export class TargetNode extends BaseNode {
     this._isLaunch = new_is_launch;
     this._isDefault = new_is_default;
 
-    this._sources.clear();
     const new_sources = new Set<string>();
     for (const grp of target.fileGroups || []) {
       for (const item of grp.sources) {
@@ -166,16 +257,47 @@ export class TargetNode extends BaseNode {
         }
       }
     }
-    for (const src of new_sources) {
-      this._sources.add(new SourceFileNode(this, src));
-    }
 
     did_update = did_update || old_fspath !== this._fsPath;
     if (did_update && updates) {
       updates.push(this);
     }
   }
+
+  static fromCodeModel(projectName: string, cm: cms.CodeModelTarget): TargetNode {
+    return new TargetNode(projectName, cm);
+  }
 }
+
+
+export class DirectoryNode extends BaseNode {
+  constructor(readonly prefix: string,
+              readonly parent: string,
+              readonly pathPart: string,
+              private _children: BaseNode[]) {
+    super();
+  }
+
+  get fsPath(): string { return path.join(this.parent, this.pathPart); }
+
+  getChildren() { return this._children; }
+
+  getTreeItem() {
+    const item = new vscode.TreeItem(this.pathPart, vscode.TreeItemCollapsibleState.Collapsed);
+    item.resourceUri = vscode.Uri.file(this.fsPath);
+    item.id = `${this.prefix}::${this.fsPath}`;
+    return item;
+  }
+
+  static fromSimpleTree<NodeType extends BaseNode>(prefix: string, parent: string, tree: SimpleTree<NodeType>):
+      DirectoryNode {
+    const abs_path = path.join(parent, tree.pathPart);
+    const child_dirs: BaseNode[] = tree.children.map(n => DirectoryNode.fromSimpleTree(prefix, abs_path, n));
+    return new DirectoryNode(prefix, parent, tree.pathPart, child_dirs.concat(tree.items));
+  }
+}
+
+type TargetTree = SimpleTree<cms.CodeModelTarget>;
 
 class ProjectNode extends BaseNode {
   constructor(private _name: string) { super(); }
@@ -185,49 +307,52 @@ class ProjectNode extends BaseNode {
    */
   get name(): string { return this._name; }
 
-  private _targets = new Map<string, TargetNode>();
+  private _rootDir: DirectoryNode = new DirectoryNode('', '', '', []);
 
   getChildren() {
-    const items = [...this._targets.values()];
-    return items.sort((a, b) => {
-      // The lexical order of the type strings is actually pretty useful as the
-      // primary sort.
-      const type_rel = sortIndexForType(a.type) - sortIndexForType(b.type);
-      if (type_rel != 0) {
-        return type_rel;
-      }
-      // Otherwise sort by name
-      return a.name.localeCompare(b.name);
-    });
+    return this._rootDir.getChildren();
+    // const items = this._children;
+    // return items.sort((a, b) => {
+    //   // The lexical order of the type strings is actually pretty useful as the
+    //   // primary sort.
+    //   const type_rel = sortIndexForType(a.type) - sortIndexForType(b.type);
+    //   if (type_rel != 0) {
+    //     return type_rel;
+    //   }
+    //   // Otherwise sort by name
+    //   return a.name.localeCompare(b.name);
+    // });
   }
 
   getTreeItem() {
     const item = new vscode.TreeItem(this.name, vscode.TreeItemCollapsibleState.Expanded);
-    if (this._targets.size === 0) {
+    if (this.getChildren().length === 0) {
       item.label += ' — (Empty project)';
     }
     return item;
   }
 
-  update(pr: cms.CodeModelProject, ctx: ExternalContext, updates?: UpdateList) {
+  update(pr: cms.CodeModelProject, ctx: ExternalContext) {
     if (pr.name !== this.name) {
       rollbar.error(`Update project with mismatching name property`, {newName: pr.name, oldName: this.name});
     }
 
-    let update_self = false;
+    const tree: TargetTree = {
+      pathPart: '',
+      children: [],
+      items: [],
+    };
+
     for (const target of pr.targets) {
-      let existing = this._targets.get(target.name);
-      if (!existing) {
-        existing = new TargetNode(pr.name, target.name);
-        update_self = true;
-      }
-      this._targets.set(target.name, existing);
-      existing.update(target, ctx, updates);
+      const srcdir = target.sourceDirectory || '';
+      const relpath = path.relative(pr.sourceDirectory, srcdir);
+      addToTree(tree, relpath, target);
     }
 
-    if (updates && update_self) {
-      updates.push(this);
-    }
+    collapseTreeInplace(tree);
+
+    const target_tree = mapTreeItems(tree, target => TargetNode.fromCodeModel(pr.name, target));
+    this._rootDir = DirectoryNode.fromSimpleTree(pr.name, pr.sourceDirectory, target_tree);
   }
 }
 
@@ -235,7 +360,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
   private readonly _changeEvent = new vscode.EventEmitter<BaseNode|null>();
   get onDidChangeTreeData() { return this._changeEvent.event; }
 
-  private _projects = new Map<string, ProjectNode>();
+  private _children: BaseNode[] = [];
 
   private _codeModel: cms.CodeModelContent = {configurations: []};
 
@@ -243,37 +368,26 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
 
   updateCodeModel(model: cms.CodeModelContent|null, ctx: ExternalContext) {
     if (!model || model.configurations.length < 1) {
-      this._projects.clear();
-      this._changeEvent.fire(null);
       return;
     }
     this._codeModel = model;
     const config = model.configurations[0];
-    let update_root = false;
-    const to_update: UpdateList = [];
+    const new_children: BaseNode[] = [];
     for (const pr of config.projects) {
-      let existing = this._projects.get(pr.name);
-      if (!existing) {
-        update_root = true;
-        existing = new ProjectNode(pr.name);
-      }
-      this._projects.set(pr.name, existing);
-      existing.update(pr, ctx, to_update);
+      const item = new ProjectNode(pr.name);
+      item.update(pr, ctx);
+      new_children.push(item);
     }
+    this._children = new_children;
 
-    if (update_root) {
-      to_update.push(null);
-    }
-    for (const node of to_update.reverse()) {
-      this._changeEvent.fire(node);
-    }
+    this._changeEvent.fire(null);
   }
 
   getChildren(node?: BaseNode): BaseNode[] {
     try {
       if (!node) {
         // Request for root node
-        return [...this._projects.values()];
+        return this._children;
       } else {
         return node.getChildren();
       }
