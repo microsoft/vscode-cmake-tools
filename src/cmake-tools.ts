@@ -495,13 +495,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           return this._doConfigure(progress, async consumer => {
             const drv = await this.getCMakeDriverInstance();
             if (drv) {
-              let progress_acc = 0;
+              let old_prog = 0;
               const prog_sub = drv.onProgress(pr => {
                 const new_prog
                     = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
-                const incr = new_prog - progress_acc;
-                progress.report({increment: incr});
-                progress_acc += incr;
+                const increment = new_prog - old_prog;
+                if (increment >= 10) {
+                  old_prog += increment;
+                  progress.report({increment});
+                }
               });
               try {
                 progress.report({message: 'Configuring project'});
@@ -661,9 +663,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               // progress level?
               this._progressEmitter.fire(pr.value);
               const increment = pr.value - old_progress;
-              progress.report({ increment });
-              old_progress += increment;
-              log.info('Progress should now be', old_progress);
+              if (increment >= 10) {
+                progress.report({increment});
+                old_progress += increment;
+              }
             });
             cancel.onCancellationRequested(() => { this.stop(); });
             log.showChannel();
