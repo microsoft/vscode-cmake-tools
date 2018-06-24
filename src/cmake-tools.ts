@@ -180,7 +180,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   get codeModel() { return this._codeModel.value; }
   get onCodeModelChanged() { return this._codeModel.changeEvent; }
-  private _codeModel = new Property<CodeModelContent|null>(null);
+  private readonly _codeModel = new Property<CodeModelContent|null>(null);
   private _codeModelDriverSub: vscode.Disposable|null = null;
 
   /**
@@ -668,7 +668,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 old_progress += increment;
               }
             });
-            cancel.onCancellationRequested(() => { this.stop(); });
+            cancel.onCancellationRequested(() => { rollbar.invokeAsync('Stop on cancellaction', () => this.stop()); });
             log.showChannel();
             build_log.info('Starting build');
             await setContextValue(IS_BUILDING_KEY, true);

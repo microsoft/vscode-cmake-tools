@@ -359,7 +359,7 @@ export class TargetNode extends BaseNode {
 class ProjectNode extends BaseNode {
   constructor(readonly name: string) { super(name); }
 
-  private _rootDir = new DirectoryNode<TargetNode>('', '', '');
+  private readonly _rootDir = new DirectoryNode<TargetNode>('', '', '');
 
   getOrderTuple() { return []; }
 

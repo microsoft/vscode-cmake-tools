@@ -55,7 +55,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
   }
 
-  private _codeModelChanged = new vscode.EventEmitter<null|cms.CodeModelContent>();
+  private readonly _codeModelChanged = new vscode.EventEmitter<null|cms.CodeModelContent>();
   get onCodeModelChanged() { return this._codeModelChanged.event; }
 
   async asyncDispose() {
