@@ -648,20 +648,39 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     try {
       this._statusMessage.set('Building');
       this._isBusy.set(true);
-      consumer.onProgress(pr => { this._progressEmitter.fire(pr.value); });
-      log.showChannel();
-      build_log.info('Starting build');
-      await setContextValue(IS_BUILDING_KEY, true);
-      const rc = await drv.build(target, consumer);
-      await setContextValue(IS_BUILDING_KEY, false);
-      if (rc === null) {
-        build_log.info('Build was terminated');
-      } else {
-        build_log.info('Build finished with exit code', rc);
-      }
-      const file_diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
-      populateCollection(this._buildDiagnostics, file_diags);
-      return rc === null ? -1 : rc;
+      return await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: `Building: ${target}`,
+            cancellable: true,
+          },
+          async (progress, cancel) => {
+            let old_progress = 0;
+            consumer.onProgress(pr => {
+              // FIXME: Progress notification doesn't seem to show the correct
+              // progress level?
+              this._progressEmitter.fire(pr.value);
+              const increment = pr.value - old_progress;
+              progress.report({ increment });
+              old_progress += increment;
+              log.info('Progress should now be', old_progress);
+            });
+            cancel.onCancellationRequested(() => { this.stop(); });
+            log.showChannel();
+            build_log.info('Starting build');
+            await setContextValue(IS_BUILDING_KEY, true);
+            const rc = await drv.build(target, consumer);
+            await setContextValue(IS_BUILDING_KEY, false);
+            if (rc === null) {
+              build_log.info('Build was terminated');
+            } else {
+              build_log.info('Build finished with exit code', rc);
+            }
+            const file_diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
+            populateCollection(this._buildDiagnostics, file_diags);
+            return rc === null ? -1 : rc;
+          },
+      );
     } finally {
       await setContextValue(IS_BUILDING_KEY, false);
       this._statusMessage.set('Ready');
