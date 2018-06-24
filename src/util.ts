@@ -355,7 +355,7 @@ export class DummyDisposable {
 
 export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>): number {
   const a_iter = a[Symbol.iterator]();
-  const b_iter = a[Symbol.iterator]();
+  const b_iter = b[Symbol.iterator]();
   while (1) {
     const a_res = a_iter.next();
     const b_res = b_iter.next();
