@@ -58,6 +58,23 @@ export function normalizePath(p: string, normalize_case = true): string {
 }
 
 /**
+ * Split a path into its elements.
+ * @param p The path to split
+ */
+export function splitPath(p: string): string[] {
+  if (p.length === 0 || p === '.') {
+    return [];
+  }
+  const pardir = path.dirname(p);
+  const arr: string[] = [];
+  if (p.startsWith(pardir)) {
+    arr.push(...splitPath(pardir));
+  }
+  arr.push(path.basename(p));
+  return arr;
+}
+
+/**
  * Check if a value is "truthy" according to CMake's own language rules
  * @param value The value to check
  */
