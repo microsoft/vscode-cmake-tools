@@ -211,9 +211,7 @@ class SourceFileNode extends BaseNode {
 
   getChildren() { return []; }
 
-  getOrderTuple() {
-    return [this.name];
-  }
+  getOrderTuple() { return [this.name]; }
 
   getTreeItem() {
     const item = new vscode.TreeItem(path.basename(this.filePath));
@@ -244,9 +242,7 @@ export class TargetNode extends BaseNode {
   private _isLaunch = false;
   private _fsPath: string = '';
 
-  getOrderTuple() {
-    return [sortStringForType(this._type), this.name];
-  }
+  getOrderTuple() { return [sortStringForType(this._type), this.name]; }
 
   private readonly _rootDir: DirectoryNode<SourceFileNode>;
 
@@ -345,6 +341,8 @@ export class TargetNode extends BaseNode {
       }
     }
 
+    addToTree(tree, '', new SourceFileNode(this.name, path.join(this.sourceDir, 'CMakeLists.txt')));
+
     collapseTreeInplace(tree);
 
     this._rootDir.update({
@@ -353,6 +351,20 @@ export class TargetNode extends BaseNode {
       update: (_src, _cm) => {},
       create: newNode => newNode,
     });
+  }
+
+  async openInCMakeLists() {
+    const cml_path = path.join(this.sourceDir, 'CMakeLists.txt');
+    const doc = await vscode.workspace.openTextDocument(cml_path);
+    const editor = await vscode.window.showTextDocument(doc);
+    const doc_text = doc.getText();
+    const regex = new RegExp(`(add_|ADD_)\\w+\\([\\s\\n]*?${this.name}[\\s\\n\\)]`, 'g');
+    const offset = doc_text.search(regex);
+    if (offset >= 0) {
+      const pos = doc.positionAt(offset);
+      editor.revealRange(new vscode.Range(pos, pos.translate(2)));
+      editor.selection = new vscode.Selection(pos, pos);
+    }
   }
 }
 

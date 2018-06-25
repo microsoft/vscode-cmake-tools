@@ -232,6 +232,10 @@
       {
         "command": "cmake.outline.setLaunchTarget",
         "title": "Set as launch/debug target"
+      },
+      {
+        "command": "cmake.outline.revealInCMakeLists",
+        "title": "Open CMakeLists.txt"
       }
     ],
     "menus": {
@@ -342,6 +346,11 @@
           "command": "cmake.outline.launchTarget",
           "when": "view == cmake.outline && viewItem =~ /type=EXECUTABLE/",
           "group": "1_targetActions@4"
+        },
+        {
+          "command": "cmake.outline.revealInCMakeLists",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=target/",
+          "group": "1_targetActions@5"
         },
         {
           "command": "cmake.outline.setDefaultTarget",

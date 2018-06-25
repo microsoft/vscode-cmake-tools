@@ -1007,6 +1007,8 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
                                       (what: TargetNode) => runCommand('setDefaultTarget', what.name)),
       vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
                                       (what: TargetNode) => runCommand('selectLaunchTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
+                                      (what: TargetNode) => what.openInCMakeLists()),
   ]);
 }
 
