@@ -1,10 +1,10 @@
-import {Kit} from '@cmt/kit';
+import {Kit, scanForVSKits} from '@cmt/kit';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import { CMakeTools } from '../../src/cmake-tools';
+import {CMakeTools} from '../../src/cmake-tools';
 
-type Result<T> = Thenable<T> | T;
+type Result<T> = Thenable<T>|T;
 
 class SmokeTestMemento implements vscode.Memento {
   private readonly _date = new Map<string, any>();
@@ -180,3 +180,24 @@ export function smokeSuite(name: string, cb: SmokeSuiteFunction): void { SUITE_R
  * The global definer.
  */
 export const SUITE_REGISTRY = new SmokeSuiteRegistry;
+
+let _VS_KITS_PROMISE: Promise<Kit[]> | null = null;
+
+function getVSKits() {
+  if (_VS_KITS_PROMISE === null) {
+    _VS_KITS_PROMISE = scanForVSKits();
+  }
+  return _VS_KITS_PROMISE;
+}
+
+export async function smokeTestDefaultKit(): Promise<Kit|'__unspec__'> {
+  if (process.platform !== 'win32') {
+    return '__unspec__';
+  } else {
+    const kits = await getVSKits();
+    if (kits.length === 0) {
+      throw new Error('Cannot smoke test on Windows: We did not find any VS kits');
+    }
+    return kits[0];
+  }
+}

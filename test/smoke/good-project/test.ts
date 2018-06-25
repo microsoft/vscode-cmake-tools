@@ -1,13 +1,17 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import {expect} from 'chai';
 
-import {smokeSuite} from '../smoke';
+import {smokeSuite, smokeTestDefaultKit} from '../smoke';
 
 // tslint:disable:no-unused-expression
 
 smokeSuite('good-project', suite => {
   let cmt: CMakeTools;
-  suite.setup('create cmake-tools', async test => { cmt = await test.createCMakeTools({kit: '__unspec__'}); });
+  suite.setup('create cmake-tools', async test => {
+    cmt = await test.createCMakeTools({
+      kit: await smokeTestDefaultKit(),
+    });
+  });
   suite.teardown('dispose cmake-tools', async () => {
     if (cmt) {
       await cmt.asyncDispose();
