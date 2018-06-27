@@ -110,7 +110,6 @@ class ExtensionManager implements vscode.Disposable {
   private _ctestEnabledSub: vscode.Disposable = new DummyDisposable();
   private _testResultsSub: vscode.Disposable = new DummyDisposable();
   private _isBusySub: vscode.Disposable = new DummyDisposable();
-  private _progressSub: vscode.Disposable = new DummyDisposable();
 
   // Watch the code model so that we may update teh tree view
   private _codeModelSub: vscode.Disposable = new DummyDisposable();
@@ -326,7 +325,6 @@ class ExtensionManager implements vscode.Disposable {
                        this._ctestEnabledSub,
                        this._testResultsSub,
                        this._isBusySub,
-                       this._progressSub,
                        this._codeModelSub,
     ]) {
       sub.dispose();
@@ -353,7 +351,6 @@ class ExtensionManager implements vscode.Disposable {
       this._ctestEnabledSub = new DummyDisposable();
       this._testResultsSub = new DummyDisposable();
       this._isBusySub = new DummyDisposable();
-      this._progressSub = new DummyDisposable();
       this._statusBar.setActiveKitName('');
       this._codeModelSub = new DummyDisposable();
     } else {
@@ -371,7 +368,6 @@ class ExtensionManager implements vscode.Disposable {
       this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
-      this._progressSub = cmt.onProgress(p => this._statusBar.setProgress(p));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
       this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateOutline(cmt));
     }

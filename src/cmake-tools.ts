@@ -184,12 +184,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _codeModelDriverSub: vscode.Disposable|null = null;
 
   /**
-   * An event fired when the current progress value changes.
-   */
-  get onProgress() { return this._progressEmitter.event; }
-  private readonly _progressEmitter = new vscode.EventEmitter<number>();
-
-  /**
    * The variant manager keeps track of build variants. Has two-phase init.
    */
   private readonly _variantManager = new VariantManager(this.workspaceContext.state, this.workspaceContext.config);
@@ -240,7 +234,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         this._ctestEnabled,
                         this._testResults,
                         this._isBusy,
-                        this._progressEmitter,
                         this._variantManager,
                         this._ctestController,
     ]) {
@@ -661,7 +654,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             consumer.onProgress(pr => {
               // FIXME: Progress notification doesn't seem to show the correct
               // progress level?
-              this._progressEmitter.fire(pr.value);
               const increment = pr.value - old_progress;
               if (increment >= 10) {
                 progress.report({increment});
