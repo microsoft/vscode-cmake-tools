@@ -154,7 +154,7 @@
         "category": "CMake"
       },
       {
-        "command": "cmake.outline.cleanRebuild" ,
+        "command": "cmake.outline.cleanRebuild",
         "title": "Clean rebuild"
       },
       {
@@ -938,6 +938,7 @@
     "open": "0.0.5",
     "rimraf": "^2.5.4",
     "rollbar": "~2.2.8",
+    "vscode-cpptools": "^1.2.2",
     "which": "~1.3.0",
     "ws": "^1.1.1",
     "xml2js": "^0.4.17"

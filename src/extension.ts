@@ -8,8 +8,11 @@ require('module-alias/register');
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as cpt from 'vscode-cpptools';
 import * as logging from './logging';
 import * as util from './util';
+import {CppConfigurationProvider} from '@cmt/cpptools';
+import {CMakeCache} from '@cmt/cache';
 
 const log = logging.createLogger('extension');
 
@@ -119,6 +122,9 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _projectOutlineProvider = new ProjectOutlineProvider();
   private readonly _projectOutlineDisposer
       = vscode.window.registerTreeDataProvider('cmake.outline', this._projectOutlineProvider);
+
+  private readonly _configProvider = new CppConfigurationProvider();
+  private _cppToolsAPI?: cpt.CppToolsApi;
 
   /**
    * The active workspace folder. This controls several aspects of the extension,
@@ -329,11 +335,26 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  private _updateOutline(cmt: CMakeTools) {
+  private _updateCodeModel(cmt: CMakeTools) {
     this._projectOutlineProvider.updateCodeModel(cmt.codeModel, {
       defaultTargetName: cmt.defaultBuildTarget || 'all',
       launchTargetName: cmt.launchTargetName,
     });
+    if (this._cppToolsAPI && cmt.codeModel) {
+      const cm = cmt.codeModel;
+      const cpptools = this._cppToolsAPI;
+      rollbar.invokeAsync('Update code model for cpptools', {}, async () => {
+        let cache: CMakeCache;
+        try {
+          cache = await CMakeCache.fromPath(await cmt.cachePath);
+        } catch (e) {
+          rollbar.exception('Failed to open CMake cache file on code model update', e);
+          return;
+        }
+        this._configProvider.pushCodeModel(cm, cache);
+        cpptools.didChangeCustomConfiguration(this._configProvider);
+      });
+    }
   }
 
   private _setupSubscriptions() {
@@ -354,18 +375,18 @@ class ExtensionManager implements vscode.Disposable {
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
         this._statusBar.targetName = t;
-        this._updateOutline(cmt);
+        this._updateCodeModel(cmt);
       });
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');
-        this._updateOutline(cmt);
+        this._updateCodeModel(cmt);
       });
       this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
-      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateOutline(cmt));
+      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateCodeModel(cmt));
     }
   }
 
@@ -867,6 +888,14 @@ class ExtensionManager implements vscode.Disposable {
     return Promise.resolve(fn(cmt));
   }
 
+  async registerCppTools() {
+    this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v1);
+    if (!this._cppToolsAPI) {
+      return;
+    }
+    this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
+  }
+
   // The below functions are all wrappers around the backend.
 
   cleanConfigure() { return this.withCMakeTools(-1, cmt => cmt.cleanConfigure()); }
@@ -1003,6 +1032,9 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
                                       (what: TargetNode) => what.openInCMakeLists()),
   ]);
+
+  // Now register external APIs
+  await ext.registerCppTools();
 }
 
 /**
