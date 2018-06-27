@@ -48,11 +48,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
   get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
   set codeModel(v: null|cms.CodeModelContent) {
     this._codeModel = v;
-    if (v && v.configurations.length && v.configurations[0].projects.length) {
-      this.doSetProjectName(v.configurations[0].projects[0].name);
-    } else {
-      this.doSetProjectName('No project');
-    }
   }
 
   private readonly _codeModelChanged = new vscode.EventEmitter<null|cms.CodeModelContent>();

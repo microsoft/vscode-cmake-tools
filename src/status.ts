@@ -84,7 +84,7 @@ export class StatusBar implements vscode.Disposable {
   private _visible: boolean = true;
 
   private _reloadStatusButton() {
-    this._cmakeToolsStatusItem.text = `CMake: ${this._projectName}: ${this._buildTypeLabel}: ${this._statusMessage}`;
+    this._cmakeToolsStatusItem.text = `CMake: ${this._buildTypeLabel}: ${this._statusMessage}`;
     this.reloadVisibility();
   }
 
@@ -99,15 +99,6 @@ export class StatusBar implements vscode.Disposable {
       }
     }
     this.reloadVisibility();
-  }
-
-  /**
-   * The name of the open project
-   */
-  private _projectName: string = 'Unconfigured Project';
-  setProjectName(v: string) {
-    this._projectName = v;
-    this._reloadStatusButton();
   }
 
   /**

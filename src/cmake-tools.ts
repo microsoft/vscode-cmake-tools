@@ -134,13 +134,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _targetName = new Property<string>('all');
 
   /**
-   * The current project name.
-   */
-  get projectName() { return this._projectName.value; }
-  get onProjectNameChanged() { return this._projectName.changeEvent; }
-  private readonly _projectName = new Property<string>('Unconfigured Project');
-
-  /**
    * The current build type
    */
   get buildType() { return this._buildType.value; }
@@ -229,7 +222,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     for (const disp of [this._statusMessage,
                         this._targetName,
-                        this._projectName,
                         this._buildType,
                         this._ctestEnabled,
                         this._testResults,
@@ -270,13 +262,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
-    const project = drv.projectName;
-    if (project) {
-      this._projectName.set(project);
-    }
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
-    drv.onProjectNameChanged(name => { this._projectName.set(name); });
     drv.onReconfigured(() => this._onReconfiguredEmitter.fire());
     // All set up. Fulfill the driver promise.
     return drv;

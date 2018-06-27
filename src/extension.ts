@@ -104,7 +104,6 @@ class ExtensionManager implements vscode.Disposable {
   // Subscriptions for status bar items:
   private _statusMessageSub: vscode.Disposable = new DummyDisposable();
   private _targetNameSub: vscode.Disposable = new DummyDisposable();
-  private _projectNameSub: vscode.Disposable = new DummyDisposable();
   private _buildTypeSub: vscode.Disposable = new DummyDisposable();
   private _launchTargetSub: vscode.Disposable = new DummyDisposable();
   private _ctestEnabledSub: vscode.Disposable = new DummyDisposable();
@@ -319,7 +318,6 @@ class ExtensionManager implements vscode.Disposable {
   private _disposeSubs() {
     for (const sub of [this._statusMessageSub,
                        this._targetNameSub,
-                       this._projectNameSub,
                        this._buildTypeSub,
                        this._launchTargetSub,
                        this._ctestEnabledSub,
@@ -345,7 +343,6 @@ class ExtensionManager implements vscode.Disposable {
     if (!cmt) {
       this._statusMessageSub = new DummyDisposable();
       this._targetNameSub = new DummyDisposable();
-      this._projectNameSub = new DummyDisposable();
       this._buildTypeSub = new DummyDisposable();
       this._launchTargetSub = new DummyDisposable();
       this._ctestEnabledSub = new DummyDisposable();
@@ -359,7 +356,6 @@ class ExtensionManager implements vscode.Disposable {
         this._statusBar.targetName = t;
         this._updateOutline(cmt);
       });
-      this._projectNameSub = cmt.onProjectNameChanged(FireNow, p => this._statusBar.setProjectName(p));
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');

@@ -116,22 +116,6 @@ suite('[Variable Substitution]', async () => {
     expect(typeof cacheEntry.value).to.eq('string', '[generator] unexpected cache entry value type');
   }).timeout(100000);
 
-  test('Check substitution for "projectName"', async () => {
-    // Set fake settings
-    testEnv.config.updatePartial({configureSettings: {projectName: '${projectName}'}});
-
-    // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[projectName] configure failed');
-    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-    const cache = await CMakeCache.fromPath(await cmt.cachePath);
-
-    const cacheEntry = cache.get('projectName') as api.CacheEntry;
-    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[projectName] unexpected cache entry type');
-    expect(cacheEntry.key).to.eq('projectName', '[projectName] unexpected cache entry key name');
-    expect(cacheEntry.as<string>()).to.eq('Unknown Project', '[projectName] substitution incorrect');
-    expect(typeof cacheEntry.value).to.eq('string', '[projectName] unexpected cache entry value type');
-  }).timeout(100000);
-
   test('Check substitution for "userHome"', async () => {
     // Set fake settings
     testEnv.config.updatePartial({configureSettings: {userHome: '${userHome}'}});

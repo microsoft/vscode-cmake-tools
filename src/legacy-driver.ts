@@ -121,10 +121,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
     // Force await here so that any errors are thrown into rollbar
     const new_cache = await CMakeCache.fromPath(this.cachePath);
     this._cmakeCache = new_cache;
-    const project = new_cache.get('CMAKE_PROJECT_NAME');
-    if (project) {
-      this.doSetProjectName(project.as<string>());
-    }
     this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
   }
 
@@ -143,12 +139,4 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const gen = this.cmakeCache.get('CMAKE_GENERATOR');
     return gen ? gen.as<string>() : null;
   }
-
-  // get projectName(): string | null {
-  //   if (!this.cmakeCache) {
-  //     return null;
-  //   }
-  //   const project = this.cmakeCache.get('CMAKE_PROJECT_NAME');
-  //   return project ? project.as<string>() : null;
-  // }
 }
