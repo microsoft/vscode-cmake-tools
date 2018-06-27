@@ -520,6 +520,7 @@ function Invoke-VSCodeTest {
     $repo_dir = Split-Path $PSScriptRoot -Parent
     $test_bin = Join-Path $repo_dir "/node_modules/vscode/bin/test"
     $env:CMT_TESTING = 1
+    $env:CMT_QUIET_CONSOLE = 1
     $env:CODE_TESTS_PATH = $TestsPath
     $env:CODE_TESTS_WORKSPACE = $Workspace
     $env:HasVs = if ($PSVersionTable.OS.StartsWith("Microsoft Windows")) { "true" } else { "false" }
@@ -535,6 +536,14 @@ function Invoke-SmokeTest($Name) {
     Invoke-VSCodeTest "CMake Tools: $Name" `
         -TestsPath "$repo_dir/out/test/extension-tests/$Name" `
         -Workspace "$repo_dir/test/extension-tests/$Name/project-folder"
+}
+
+function Invoke-SmokeTests {
+    $repo_dir = Split-Path $PSScriptRoot -Parent
+    $env:CMT_SMOKE_DIR = "$repo_dir/test/smoke"
+    Invoke-VSCodeTest "Smoke tests" `
+        -TestsPath "$repo_dir/out/test/smoke" `
+        -Workspace "$repo_dir/test/smoke/_project-dir"
 }
 
 function Invoke-MochaTest {

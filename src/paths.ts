@@ -71,7 +71,19 @@ class Paths {
       if (cmake === null) {
         return null;
       } else {
-        return path.join(path.dirname(cmake), 'ctest');
+        const ctest_sibling = path.join(path.dirname(cmake), 'ctest');
+        // Check if CTest is a sibling executable in the same directory
+        if (await fs.exists(ctest_sibling)) {
+          const stat = await fs.stat(ctest_sibling);
+          if (stat.isFile && stat.mode & 0b001001001) {
+            return ctest_sibling;
+          } else {
+            return 'ctest';
+          }
+        } else {
+          // The best we can do.
+          return 'ctest';
+        }
       }
     } else {
       return ctest_path;
