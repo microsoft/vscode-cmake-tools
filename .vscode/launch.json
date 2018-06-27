@@ -176,6 +176,30 @@
                 "${workspaceFolder}/test/backend-unit-tests/**/*.test.ts"
             ],
             "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Launch Smoke Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceRoot}/test/smoke/_project-dir",
+                "--extensionDevelopmentPath=${workspaceRoot}",
+                "--extensionTestsPath=${workspaceRoot}/out/test/smoke",
+                "--disable-extensions"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/out/*",
+                "${workspaceRoot}/out/test/**"
+            ],
+            "preLaunchTask": "npm",
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "CMT_SMOKE_DIR": "${workspaceRoot}/test/smoke"
+            }
         }
     ]
 }
