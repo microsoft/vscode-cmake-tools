@@ -920,6 +920,7 @@ let _EXT_MANAGER: ExtensionManager|null = null;
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, 'Initial setup');
+  await util.setContextValue('cmakeToolsActive', true);
   // Load a new extension manager
   const ext = _EXT_MANAGER = new ExtensionManager(context);
   // Add all open workspace folders to the manager.

@@ -850,7 +850,8 @@
         {
           "id": "cmake__viewContainer",
           "title": "CMake",
-          "icon": "res/cmake-view-icon.svg"
+          "icon": "res/cmake-view-icon.svg",
+          "when": "cmakeToolsActive"
         }
       ]
     },
@@ -863,7 +864,8 @@
         },
         {
           "id": "cmake.outline",
-          "name": "Project Outline"
+          "name": "Project Outline",
+          "when": "cmakeToolsActive"
         }
       ]
     },
