@@ -35,7 +35,7 @@ export class DefaultEnvironment {
   readonly vsContext: FakeContextDefinition = new FakeContextDefinition();
   private _config = ConfigurationReader.createForDirectory(vscode.workspace.rootPath!);
   public get config() { return this._config; }
-  private _wsContext = new DirectoryContext(this.config, new StateManager(this.vsContext));
+  private _wsContext = new DirectoryContext(vscode.workspace.rootPath!, this.config, new StateManager(this.vsContext));
   public get wsContext() { return this._wsContext; }
 
   readonly errorMessagesQueue: string[] = [];
@@ -57,6 +57,6 @@ export class DefaultEnvironment {
     this.errorMessagesQueue.length = 0;
     this.vsContext.clean();
     this._config = ConfigurationReader.createForDirectory(this.projectFolder.location);
-    this._wsContext = new DirectoryContext(this._config, new StateManager(this.vsContext));
+    this._wsContext = new DirectoryContext(vscode.workspace.rootPath!, this._config, new StateManager(this.vsContext));
   }
 }

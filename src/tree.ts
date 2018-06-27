@@ -431,6 +431,8 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
 
   updateCodeModel(model: cms.CodeModelContent|null, exCtx: {launchTargetName: string|null, defaultTargetName: string}) {
     if (!model || model.configurations.length < 1) {
+      this._children = [];
+      this._changeEvent.fire(null);
       return;
     }
     this._codeModel = model;

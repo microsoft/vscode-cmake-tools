@@ -45,6 +45,45 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
   }
 }
 
+class WorkspaceFolderTreeProvider implements vscode.TreeDataProvider<vscode.WorkspaceFolder> {
+  private _activeFolderName: string = '';
+  private _foldersChanged = new vscode.EventEmitter<null>();
+
+  dispose() { this._foldersChanged.dispose(); }
+
+  get onDidChangeTreeData() { return this._foldersChanged.event; }
+
+  getTreeItem(folder: vscode.WorkspaceFolder) {
+    const item = new vscode.TreeItem(folder.name);
+    item.command = {
+      command: 'cmake.folders.setActiveFolder',
+      arguments: [folder],
+      title: `Use "${folder.name}"`,
+    };
+    item.iconPath = vscode.ThemeIcon.Folder;
+    if (folder.name === this._activeFolderName) {
+      item.label = `• ${item.label}`;
+    }
+    return item;
+  }
+
+  update(activeFolderName: string) {
+    this._activeFolderName = activeFolderName;
+    this._foldersChanged.fire();
+  }
+
+  getChildren(n: undefined|vscode.WorkspaceFolder) {
+    if (n !== undefined) {
+      rollbar.error('Got non-undefined for getChildren in WorkspaceFolderTreeProvider');
+    }
+    if (vscode.workspace.workspaceFolders) {
+      return [...vscode.workspace.workspaceFolders];
+    } else {
+      return [];
+    }
+  }
+}
+
 /**
  * A class to manage the extension.
  *
@@ -55,6 +94,7 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
  * necessitate user input, this class acts as intermediary and will send
  * important information down to the lower layers.
  */
+
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {}
 
@@ -119,6 +159,10 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _projectOutlineProvider = new ProjectOutlineProvider();
   private readonly _projectOutlineDisposer
       = vscode.window.registerTreeDataProvider('cmake.outline', this._projectOutlineProvider);
+
+  private readonly _workspaceFolderProvider = new WorkspaceFolderTreeProvider();
+  private readonly _workspaceFolderProviderDisposer
+      = vscode.window.registerTreeDataProvider('cmake.workspaceFolders', this._workspaceFolderProvider);
 
   /**
    * The active workspace folder. This controls several aspects of the extension,
@@ -196,6 +240,8 @@ class ExtensionManager implements vscode.Disposable {
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
     this._projectOutlineDisposer.dispose();
+    this._workspaceFolderProviderDisposer.dispose();
+    this._workspaceFolderProvider.dispose();
     // Dispose of each CMake Tools we still have loaded
     for (const cmt of this._cmakeToolsInstances.values()) {
       await cmt.asyncDispose();
@@ -222,8 +268,10 @@ class ExtensionManager implements vscode.Disposable {
       const new_cmt = await this._loadCMakeToolsForWorkspaceFolder(ws);
       // If we didn't have anything active, mark the freshly loaded instance as active
       if (this._activeWorkspaceFolder === null) {
-        await this._setActiveWorkspaceFolder(ws, progress);
+        await this.setActiveWorkspaceFolder(ws, progress);
       }
+      util.setContextValue('cmakeToolsMultiRootActive', this._cmakeToolsInstances.size > 1);
+      this._workspaceFolderProvider.update(this._activeWorkspaceFolder ? this._activeWorkspaceFolder.name : '');
       // Return the newly created instance
       return new_cmt;
     });
@@ -283,12 +331,13 @@ class ExtensionManager implements vscode.Disposable {
       // If the removed workspace is the active one, reset the active instance.
       if (inst === this._activeCMakeTools) {
         // Forget about the workspace
-        await this._setActiveWorkspaceFolder(null);
+        await this.setActiveWorkspaceFolder(null);
       }
       // Drop the instance from our table. Forget about it.
       this._cmakeToolsInstances.delete(ws.name);
       // Finally, dispose of the CMake Tools now that the workspace is gone.
       await inst.asyncDispose();
+      this._workspaceFolderProvider.update(this._activeWorkspaceFolder ? this._activeWorkspaceFolder.name : '');
     });
   }
 
@@ -297,7 +346,7 @@ class ExtensionManager implements vscode.Disposable {
    * pieces to control which backend has control and receives user input.
    * @param ws The workspace to activate
    */
-  private async _setActiveWorkspaceFolder(ws: vscode.WorkspaceFolder|null, progress?: ProgressHandle) {
+  async setActiveWorkspaceFolder(ws: vscode.WorkspaceFolder|null, progress?: ProgressHandle) {
     reportProgress(progress, `Loading workspace folder ${ws ? ws.name : ''}`);
     // Keep it in the strand
     // We SHOULD have a CMakeTools instance loaded for this workspace.
@@ -313,6 +362,9 @@ class ExtensionManager implements vscode.Disposable {
     // Re-read kits for the new workspace:
     await this._rereadKits(progress);
     this._setupSubscriptions();
+    if (ws) {
+      this._workspaceFolderProvider.update(ws.name);
+    }
   }
 
   private _disposeSubs() {
@@ -1002,6 +1054,12 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
                                       (what: TargetNode) => runCommand('selectLaunchTarget', what.name)),
       vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
                                       (what: TargetNode) => what.openInCMakeLists()),
+      vscode.commands.registerCommand('cmake.folders.setActiveFolder',
+                                      (wsf: vscode.WorkspaceFolder) => {
+                                        rollbar.invokeAsync('Setting workspace folder from folder tree outline',
+                                                            {folder: wsf},
+                                                            () => ext.setActiveWorkspaceFolder(wsf));
+                                      }),
   ]);
 }
 

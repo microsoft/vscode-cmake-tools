@@ -236,6 +236,10 @@
       {
         "command": "cmake.outline.revealInCMakeLists",
         "title": "Open CMakeLists.txt"
+      },
+      {
+        "command": "cmake.folders.setActiveFolder",
+        "title": "Set active folder"
       }
     ],
     "menus": {
@@ -858,7 +862,7 @@
     "views": {
       "cmake__viewContainer": [
         {
-          "id": "cmake.folders",
+          "id": "cmake.workspaceFolders",
           "name": "Folders",
           "when": "cmakeToolsMultiRootActive"
         },
