@@ -10,8 +10,9 @@ import * as logging from './logging';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
+import * as util from '@cmt/util';
 import {loadSchema} from './schema';
-import {compare, dropNulls, Ordering, thisExtensionPath} from './util';
+import {compare, dropNulls, Ordering, thisExtensionPath, objectPairs} from './util';
 
 const log = logging.createLogger('kit');
 
@@ -577,6 +578,41 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
     return null;
   }
   return varsForVSInstallation(requested, kit.visualStudioArchitecture!);
+}
+
+export async function effectiveKitEnvironment(kit: Kit): Promise<Map<string, string>> {
+  if (kit.visualStudio && kit.visualStudioArchitecture) {
+    const vs_vars = await getVSKitEnvironment(kit);
+    if (vs_vars) {
+      return vs_vars;
+    }
+  }
+  const host_env = objectPairs(process.env) as [string, string][];
+  return new Map(host_env);
+}
+
+export async function findCLCompilerPath(env: Map<string, string>): Promise<string | null> {
+  const path_var = util.find(env.entries(), ([key, _val]) => key.toLocaleLowerCase() === 'path');
+  if (!path_var) {
+    return null;
+  }
+  const path_ext_var = util.find(env.entries(), ([key, _val]) => key.toLocaleLowerCase() === 'pathext');
+  if (!path_ext_var) {
+    return null;
+  }
+  const path_val = path_var[1];
+  const path_ext = path_ext_var[1];
+  for (const dir of path_val.split(';')) {
+    for (const ext of path_ext.split(';')) {
+      const fname = `cl${ext}`;
+      const testpath = path.join(dir, fname);
+      const stat = await fs.tryStat(testpath);
+      if (stat && !stat.isDirectory()) {
+        return testpath;
+      }
+    }
+  }
+  return null;
 }
 
 export interface KitScanOptions {

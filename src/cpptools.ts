@@ -4,12 +4,19 @@
 
 import {CMakeCache} from '@cmt/cache';
 import * as cms from '@cmt/cms-client';
+import {Kit} from '@cmt/kit';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
-
 import rollbar from './rollbar';
+
+export interface CodeModelParams {
+  codeModel: cms.CodeModelContent;
+  kit: Kit;
+  cache: CMakeCache;
+  clCompilerPath?: string|null;
+}
 
 export class CppConfigurationProvider implements cpt.CustomConfigurationProvider {
   readonly name = 'CMake Tools';
@@ -28,20 +35,29 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
   private _fileIndex = new Map<string, cpt.SourceFileConfigurationItem>();
 
-  private _buildConfigurationData(grp: cms.CodeModelFileGroup, cache: CMakeCache): cpt.SourceFileConfiguration {
-    const compiler = cache.get(`CMAKE_${grp.language}_COMPILER`);
-    const compilerPath = compiler ? compiler.value : undefined;
+  private _buildConfigurationData(grp: cms.CodeModelFileGroup, opts: CodeModelParams): cpt.SourceFileConfiguration {
+    const lang = grp.language || 'CXX';
+    // Try the group's language's compiler, then the C++ compiler, then the C compiler.
+    const compiler = opts.cache.get(`CMAKE_${lang}_COMPILER`) || opts.cache.get('CMAKE_CXX_COMPILER') || opts.cache.get('CMAKE_C_COMPILER');
+    const compilerPath = compiler ? compiler.as<string>() : opts.clCompilerPath;
+    let is_msvc = false;
+    if (compilerPath) {
+      is_msvc = path.basename(compilerPath).toLocaleLowerCase() === 'cl.exe';
+    }
+    if (!compilerPath) {
+      rollbar.error('Unable to automatically determine compiler', {lang, fileGroup: grp, kit: opts.kit});
+    }
     return {
       defines: grp.defines || [],
       includePath: (grp.includePath || []).map(p => p.path),
-      intelliSenseMode: 'clang-x64',  // TODO: Switch on correct mode
-      standard: 'c++17',              // TODO: Switch on correct standard
-      compilerPath,
+      intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
+      standard: 'c++17',  // TODO: Switch on correct standard
+      compilerPath: compilerPath || undefined,
     };
   }
 
-  private _updateFileGroup(sourceDir: string, grp: cms.CodeModelFileGroup, cache: CMakeCache) {
-    const config = this._buildConfigurationData(grp, cache);
+  private _updateFileGroup(sourceDir: string, grp: cms.CodeModelFileGroup, opts: CodeModelParams) {
+    const config = this._buildConfigurationData(grp, opts);
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
       this._fileIndex.set(abs, {
@@ -51,12 +67,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
   }
 
-  pushCodeModel(cm: cms.CodeModelContent, cache: CMakeCache) {
-    for (const config of cm.configurations) {
+  pushCodeModel(opts: CodeModelParams) {
+    for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
           for (const grp of target.fileGroups || []) {
-            this._updateFileGroup(target.sourceDirectory || '', grp, cache);
+            this._updateFileGroup(target.sourceDirectory || '', grp, opts);
           }
         }
       }

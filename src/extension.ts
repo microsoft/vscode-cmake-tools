@@ -13,14 +13,6 @@ import * as logging from './logging';
 import * as util from './util';
 import {CppConfigurationProvider} from '@cmt/cpptools';
 import {CMakeCache} from '@cmt/cache';
-
-const log = logging.createLogger('extension');
-
-// import * as api from './api';
-// import { CMakeToolsWrapper } from './wrapper';
-// import { log } from './logging';
-// import { outputChannels } from "./util";
-
 import CMakeTools from './cmake-tools';
 import rollbar from './rollbar';
 import {
@@ -31,6 +23,8 @@ import {
   USER_KITS_FILEPATH,
   kitsPathForWorkspaceFolder,
   kitsAvailableInWorkspaceDirectory,
+  findCLCompilerPath,
+  effectiveKitEnvironment,
 } from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
@@ -41,6 +35,8 @@ import {StatusBar} from './status';
 import {FireNow} from '@cmt/prop';
 import {ProjectOutlineProvider, TargetNode} from '@cmt/tree';
 import {ProgressHandle, DummyDisposable} from './util';
+
+const log = logging.createLogger('extension');
 
 function reportProgress(progress: ProgressHandle|undefined, message: string) {
   if (progress) {
@@ -340,8 +336,9 @@ class ExtensionManager implements vscode.Disposable {
       defaultTargetName: cmt.defaultBuildTarget || 'all',
       launchTargetName: cmt.launchTargetName,
     });
-    if (this._cppToolsAPI && cmt.codeModel) {
+    if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
       const cm = cmt.codeModel;
+      const kit = cmt.activeKit;
       const cpptools = this._cppToolsAPI;
       rollbar.invokeAsync('Update code model for cpptools', {}, async () => {
         let cache: CMakeCache;
@@ -351,7 +348,14 @@ class ExtensionManager implements vscode.Disposable {
           rollbar.exception('Failed to open CMake cache file on code model update', e);
           return;
         }
-        this._configProvider.pushCodeModel(cm, cache);
+        const env = await effectiveKitEnvironment(kit);
+        const clCompilerPath = await findCLCompilerPath(env);
+        this._configProvider.pushCodeModel({
+          cache,
+          kit,
+          codeModel: cm,
+          clCompilerPath,
+        });
         cpptools.didChangeCustomConfiguration(this._configProvider);
       });
     }
