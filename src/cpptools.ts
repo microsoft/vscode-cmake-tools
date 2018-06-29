@@ -4,6 +4,7 @@
 
 import {CMakeCache} from '@cmt/cache';
 import * as cms from '@cmt/cms-client';
+import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
@@ -14,28 +15,14 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   readonly name = 'CMake Tools';
   readonly extensionId = 'vector-of-bool.cmake-tools';
 
-  async canProvideConfiguration(uri: vscode.Uri) { return this._fileIndex.has(uri.fsPath); }
-
-  async provideConfigurations(uris: vscode.Uri[]) { return uris.map(u => this._provideOne(u)); }
-
-  private _provideOne(uri: vscode.Uri): cpt.SourceFileConfigurationItem {
-    const item = this._fileIndex.get(uri.fsPath);
-    if (!item) {
-      // DIRTY LIES
-      return undefined as any as cpt.SourceFileConfigurationItem;
-      rollbar.error('Tried to provide cpptools config for file that we do not have in the index');
-      return {
-        uri: uri.toString(),
-        configuration: {
-          defines: [],
-          standard: 'c++17',
-          includePath: [],
-          intelliSenseMode: 'clang-x64',
-        },
-      };
-    }
-    return item;
+  getConfiguration(uri: vscode.Uri): cpt.SourceFileConfigurationItem|undefined {
+    const norm_path = util.normalizePath(uri.fsPath);
+    return this._fileIndex.get(norm_path);
   }
+
+  async canProvideConfiguration(uri: vscode.Uri) { return !!this.getConfiguration(uri); }
+
+  async provideConfigurations(uris: vscode.Uri[]) { return util.dropNulls(uris.map(u => this.getConfiguration(u))); }
 
   dispose() {}
 
