@@ -60,7 +60,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const config = this._buildConfigurationData(grp, opts);
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
-      this._fileIndex.set(abs, {
+      const abs_norm = util.normalizePath(abs);
+      this._fileIndex.set(abs_norm, {
         uri: vscode.Uri.file(abs).toString(),
         configuration: config,
       });
