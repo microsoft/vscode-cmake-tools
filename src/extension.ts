@@ -36,17 +36,8 @@ import paths from '@cmt/paths';
 import {Strand} from '@cmt/strand';
 import {StatusBar} from './status';
 import {FireNow} from '@cmt/prop';
-
-class DummyDisposable {
-  dispose() {}
-}
-
-interface ProgressReport {
-  message: string;
-  increment?: number;
-}
-
-type ProgressHandle = vscode.Progress<ProgressReport>;
+import {ProjectOutlineProvider, TargetNode} from '@cmt/tree';
+import {ProgressHandle, DummyDisposable} from './util';
 
 function reportProgress(progress: ProgressHandle|undefined, message: string) {
   if (progress) {
@@ -64,7 +55,6 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
  * necessitate user input, this class acts as intermediary and will send
  * important information down to the lower layers.
  */
-
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {}
 
@@ -114,13 +104,21 @@ class ExtensionManager implements vscode.Disposable {
   // Subscriptions for status bar items:
   private _statusMessageSub: vscode.Disposable = new DummyDisposable();
   private _targetNameSub: vscode.Disposable = new DummyDisposable();
-  private _projectNameSub: vscode.Disposable = new DummyDisposable();
   private _buildTypeSub: vscode.Disposable = new DummyDisposable();
   private _launchTargetSub: vscode.Disposable = new DummyDisposable();
   private _ctestEnabledSub: vscode.Disposable = new DummyDisposable();
   private _testResultsSub: vscode.Disposable = new DummyDisposable();
   private _isBusySub: vscode.Disposable = new DummyDisposable();
-  private _progressSub: vscode.Disposable = new DummyDisposable();
+
+  // Watch the code model so that we may update teh tree view
+  private _codeModelSub: vscode.Disposable = new DummyDisposable();
+
+  /**
+   * The tree data provider
+   */
+  private readonly _projectOutlineProvider = new ProjectOutlineProvider();
+  private readonly _projectOutlineDisposer
+      = vscode.window.registerTreeDataProvider('cmake.outline', this._projectOutlineProvider);
 
   /**
    * The active workspace folder. This controls several aspects of the extension,
@@ -193,10 +191,11 @@ class ExtensionManager implements vscode.Disposable {
    * Asynchronously dispose of all the child objects.
    */
   async asyncDispose() {
-    this._disposeStatusSubs();
+    this._disposeSubs();
     this._workspaceFoldersChangedSub.dispose();
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
+    this._projectOutlineDisposer.dispose();
     // Dispose of each CMake Tools we still have loaded
     for (const cmt of this._cmakeToolsInstances.values()) {
       await cmt.asyncDispose();
@@ -313,50 +312,60 @@ class ExtensionManager implements vscode.Disposable {
     this._resetKitsWatcher();
     // Re-read kits for the new workspace:
     await this._rereadKits(progress);
-    this._setupStatusBarSubs();
+    this._setupSubscriptions();
   }
 
-  private _disposeStatusSubs() {
+  private _disposeSubs() {
     for (const sub of [this._statusMessageSub,
                        this._targetNameSub,
-                       this._projectNameSub,
                        this._buildTypeSub,
                        this._launchTargetSub,
                        this._ctestEnabledSub,
                        this._testResultsSub,
                        this._isBusySub,
-                       this._progressSub,
+                       this._codeModelSub,
     ]) {
       sub.dispose();
     }
   }
 
-  private _setupStatusBarSubs() {
-    this._disposeStatusSubs();
+  private _updateOutline(cmt: CMakeTools) {
+    this._projectOutlineProvider.updateCodeModel(cmt.codeModel, {
+      defaultTargetName: cmt.defaultBuildTarget || 'all',
+      launchTargetName: cmt.launchTargetName,
+    });
+  }
+
+  private _setupSubscriptions() {
+    this._disposeSubs();
     const cmt = this._activeCMakeTools;
     this._statusBar.setVisible(true);
     if (!cmt) {
       this._statusMessageSub = new DummyDisposable();
       this._targetNameSub = new DummyDisposable();
-      this._projectNameSub = new DummyDisposable();
       this._buildTypeSub = new DummyDisposable();
       this._launchTargetSub = new DummyDisposable();
       this._ctestEnabledSub = new DummyDisposable();
       this._testResultsSub = new DummyDisposable();
       this._isBusySub = new DummyDisposable();
-      this._progressSub = new DummyDisposable();
       this._statusBar.setActiveKitName('');
+      this._codeModelSub = new DummyDisposable();
     } else {
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
-      this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => this._statusBar.targetName = t);
-      this._projectNameSub = cmt.onProjectNameChanged(FireNow, p => this._statusBar.setProjectName(p));
+      this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
+        this._statusBar.targetName = t;
+        this._updateOutline(cmt);
+      });
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
-      this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => this._statusBar.setLaunchTargetName(t || ''));
+      this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
+        this._statusBar.setLaunchTargetName(t || '');
+        this._updateOutline(cmt);
+      });
       this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
-      this._progressSub = cmt.onProgress(p => this._statusBar.setProgress(p));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
+      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateOutline(cmt));
     }
   }
 
@@ -864,7 +873,7 @@ class ExtensionManager implements vscode.Disposable {
 
   configure() { return this.withCMakeTools(-1, cmt => cmt.configure()); }
 
-  build() { return this.withCMakeTools(-1, cmt => cmt.build()); }
+  build(name?: string) { return this.withCMakeTools(-1, cmt => cmt.build(name)); }
 
   setVariant() { return this.withCMakeTools(false, cmt => cmt.setVariant()); }
 
@@ -878,7 +887,7 @@ class ExtensionManager implements vscode.Disposable {
 
   buildWithTarget() { return this.withCMakeTools(-1, cmt => cmt.buildWithTarget()); }
 
-  setDefaultTarget() { return this.withCMakeTools(undefined, cmt => cmt.setDefaultTarget()); }
+  setDefaultTarget(name?: string) { return this.withCMakeTools(undefined, cmt => cmt.setDefaultTarget(name)); }
 
   ctest() { return this.withCMakeTools(-1, cmt => cmt.ctest()); }
 
@@ -888,11 +897,11 @@ class ExtensionManager implements vscode.Disposable {
 
   launchTargetPath() { return this.withCMakeTools(null, cmt => cmt.launchTargetPath()); }
 
-  debugTarget() { return this.withCMakeTools(null, cmt => cmt.debugTarget()); }
+  debugTarget(name?: string) { return this.withCMakeTools(null, cmt => cmt.debugTarget(name)); }
 
-  launchTarget() { return this.withCMakeTools(null, cmt => cmt.launchTarget()); }
+  launchTarget(name?: string) { return this.withCMakeTools(null, cmt => cmt.launchTarget(name)); }
 
-  selectLaunchTarget() { return this.withCMakeTools(null, cmt => cmt.selectLaunchTarget()); }
+  selectLaunchTarget(name?: string) { return this.withCMakeTools(null, cmt => cmt.selectLaunchTarget(name)); }
 
   resetState() { return this.withCMakeTools(null, cmt => cmt.resetState()); }
 
@@ -905,8 +914,9 @@ class ExtensionManager implements vscode.Disposable {
  */
 let _EXT_MANAGER: ExtensionManager|null = null;
 
-async function setup(context: vscode.ExtensionContext, progress: vscode.Progress<ProgressReport>) {
+async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, 'Initial setup');
+  await util.setContextValue('cmakeToolsActive', true);
   // Load a new extension manager
   const ext = _EXT_MANAGER = new ExtensionManager(context);
   // Add all open workspace folders to the manager.
@@ -917,7 +927,7 @@ async function setup(context: vscode.ExtensionContext, progress: vscode.Progress
 
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
-    return vscode.commands.registerCommand(`cmake.${name}`, () => {
+    return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {
       // Generate a unqiue ID that can be correlated in the log file.
       const id = util.randint(1000, 10000);
       // Create a promise that resolves with the command.
@@ -927,7 +937,7 @@ async function setup(context: vscode.ExtensionContext, progress: vscode.Progress
         // Bind the method
         const fn = (ext[name] as Function).bind(ext);
         // Call the method
-        const ret = await fn();
+        const ret = await fn(...args);
         try {
           // Log the result of the command.
           log.debug(`[${id}] cmake.${name} finished (returned ${JSON.stringify(ret)})`);
@@ -963,6 +973,36 @@ async function setup(context: vscode.ExtensionContext, progress: vscode.Progress
     log.trace(`Register CMakeTools extension command cmake.${key}`);
     context.subscriptions.push(register(key));
   }
+
+  // Util for the special commands to forward to real commands
+  function runCommand(key: keyof ExtensionManager, ...args: any[]) {
+    return vscode.commands.executeCommand(`cmake.${key}`, ...args);
+  }
+
+  context.subscriptions.push(...[
+      // Special commands that don't require logging or separate error handling
+      vscode.commands.registerCommand('cmake.outline.configure', () => runCommand('configure')),
+      vscode.commands.registerCommand('cmake.outline.build', () => runCommand('build')),
+      vscode.commands.registerCommand('cmake.outline.stop', () => runCommand('stop')),
+      vscode.commands.registerCommand('cmake.outline.clean', () => runCommand('clean')),
+      vscode.commands.registerCommand('cmake.outline.cleanConfigure', () => runCommand('cleanConfigure')),
+      vscode.commands.registerCommand('cmake.outline.cleanRebuild', () => runCommand('cleanRebuild')),
+      // Commands for outline items:
+      vscode.commands.registerCommand('cmake.outline.buildTarget',
+                                      (what: TargetNode) => runCommand('build', what.name)),
+      vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
+                                      (what: TargetNode) => runCommand('cleanRebuild', what.name)),
+      vscode.commands.registerCommand('cmake.outline.debugTarget',
+                                      (what: TargetNode) => runCommand('debugTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.launchTarget',
+                                      (what: TargetNode) => runCommand('launchTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
+                                      (what: TargetNode) => runCommand('setDefaultTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
+                                      (what: TargetNode) => runCommand('selectLaunchTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
+                                      (what: TargetNode) => what.openInCMakeLists()),
+  ]);
 }
 
 /**
@@ -971,7 +1011,7 @@ async function setup(context: vscode.ExtensionContext, progress: vscode.Progress
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
-  vscode.window.withProgress(
+  await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
         title: 'CMake Tools initializing...',

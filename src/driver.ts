@@ -3,6 +3,7 @@
  */ /** */
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import {ProgressMessage} from '@cmt/cms-client';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -84,7 +85,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
   dispose() {
     log.debug('Disposing base CMakeDriver');
     rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
-    this._projectNameChangedEmitter.dispose();
   }
 
   /**
@@ -109,16 +109,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
                                  this._variantEnv);
   }
 
-  /**
-   * Event fired when the name of the CMake project is discovered or changes
-   */
-  get onProjectNameChanged() { return this._projectNameChangedEmitter.event; }
-  private readonly _projectNameChangedEmitter = new vscode.EventEmitter<string>();
-
-  public get projectName(): string { return this.ws.state.projectName || 'Unknown Project'; }
-  protected doSetProjectName(v: string) {
-    this.ws.state.projectName = v;
-    this._projectNameChangedEmitter.fire(v);
+  get onProgress(): vscode.Event<ProgressMessage> {
+    return (_cb: (ev: ProgressMessage) => any) => new util.DummyDisposable();
   }
 
   /**
@@ -182,8 +174,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       buildType: this.currentBuildType,
       workspaceRootFolderName: path.basename(ws_root),
       generator: this.generatorName || 'null',
-      projectName: this.projectName,
       userHome: user_dir,
+      // DEPRECATED EXPANSION: Remove this in the future:
+      projectName: 'ProjectName',
     };
 
     // Update Variant replacements
@@ -675,7 +668,8 @@ Please install or configure a preferred generator, or update settings.json or yo
         return [];
     })();
 
-    const build_env = {} as {[key: string]: string};
+    const build_env = {} as { [key: string]: string };
+    build_env['NINJA_STATUS'] = '[%s/%t %p :: %e]';
     const opts = this.expansionOptions;
     await Promise.resolve(
         util.objectPairs(util.mergeEnvironment(this.ws.config.buildEnvironment, await this.getExpandedEnvironment()))

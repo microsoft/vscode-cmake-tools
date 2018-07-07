@@ -58,6 +58,23 @@ export function normalizePath(p: string, normalize_case = true): string {
 }
 
 /**
+ * Split a path into its elements.
+ * @param p The path to split
+ */
+export function splitPath(p: string): string[] {
+  if (p.length === 0 || p === '.') {
+    return [];
+  }
+  const pardir = path.dirname(p);
+  const arr: string[] = [];
+  if (p.startsWith(pardir)) {
+    arr.push(...splitPath(pardir));
+  }
+  arr.push(path.basename(p));
+  return arr;
+}
+
+/**
  * Check if a value is "truthy" according to CMake's own language rules
  * @param value The value to check
  */
@@ -319,4 +336,48 @@ export function compare(a: any, b: any): Ordering {
   } else {
     return Ordering.Equivalent;
   }
+}
+
+export function setContextValue(key: string, value: any): Thenable<void> {
+  return vscode.commands.executeCommand('setContext', key, value);
+}
+
+export interface ProgressReport {
+  message: string;
+  increment?: number;
+}
+
+export type ProgressHandle = vscode.Progress<ProgressReport>;
+
+export class DummyDisposable {
+  dispose() {}
+}
+
+export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>): number {
+  const a_iter = a[Symbol.iterator]();
+  const b_iter = b[Symbol.iterator]();
+  while (1) {
+    const a_res = a_iter.next();
+    const b_res = b_iter.next();
+    if (a_res.done) {
+      if (b_res.done) {
+        return 0; // Same elements
+      } else {
+        // a is "less" (shorter string)
+        return -1;
+      }
+    } else if (b_res.done) {
+      // b is "less" (shorter)
+      return 1;
+    } else {
+      const comp_res = a_res.value.localeCompare(b_res.value);
+      if (comp_res !== 0) {
+        return comp_res;
+      }
+    }
+  }
+  // Loop analysis can't help us. TS believes we run off the end of
+  // the function.
+  console.assert(false, 'Impossible code path');
+  return 0;
 }

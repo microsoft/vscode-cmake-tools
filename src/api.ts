@@ -173,32 +173,32 @@ export interface CMakeToolsAPI extends Disposable {
   /**
    * The source directory, containing the root of the project
    */
-  readonly sourceDir: Promise<string>;
+  readonly sourceDir: Thenable<string>;
   /**
    * The `CMakeLists.txt` at to the root of the project
    */
-  readonly mainListFile: Promise<string>;
+  readonly mainListFile: Thenable<string>;
   /**
    * The root build directory for the project. May change based on build
    * configuration.
    */
-  readonly binaryDir: Promise<string>;
+  readonly binaryDir: Thenable<string>;
   /**
    * The path to the `CMakeCache.txt for the project.
    */
-  readonly cachePath: Promise<string>;
+  readonly cachePath: Thenable<string>;
   /**
    * List of CMake targets created via `add_executable()`.
    */
-  readonly executableTargets: Promise<ExecutableTarget[]>;
+  readonly executableTargets: Thenable<ExecutableTarget[]>;
   /**
    * CMake code diagnostics. Includes warnings and errors, etc.
    */
-  readonly diagnostics: Promise<DiagnosticCollection>;
+  readonly diagnostics: Thenable<DiagnosticCollection>;
   /**
    * All targets available to be built
    */
-  readonly targets: Promise<Target[]>;
+  readonly targets: Thenable<Target[]>;
   /**
    * Event fired when the configure/generate stage completes
    */
@@ -215,7 +215,7 @@ export interface CMakeToolsAPI extends Disposable {
    * @param options Additional execution options
    * @returns The result of execution.
    */
-  executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult>;
+  executeCMakeCommand(args: string[], options?: ExecutionOptions): Thenable<ExecutionResult>;
   // Execute an arbitrary program in the active environments
   /**
    * Execute an arbitrary program.
@@ -232,7 +232,7 @@ export interface CMakeToolsAPI extends Disposable {
    * environment variables, this is the most reliable way to ensure that you
    * execute in the context that the user is expecting.
    */
-  execute(program: string, args: string[], options?: ExecutionOptions): Promise<ExecutionResult>;
+  execute(program: string, args: string[], options?: ExecutionOptions): Thenable<ExecutionResult>;
 
   /**
    * Get the compilation information for a file
@@ -241,16 +241,15 @@ export interface CMakeToolsAPI extends Disposable {
    * @returns New compilation info, or `null` if no compilation info was found
    * for the named file.
    */
-  compilationInfoForFile(filepath: string): Promise<CompilationInfo|null>;
+  compilationInfoForFile(filepath: string): Thenable<CompilationInfo|null>;
 
   /**
    * Configure the project.
    *
    * @param extraArgs Extra arguments to pass on the CMake command line
-   * @param runPreBuild Run any pre-build/configure tasks
    * @returns The exit code of CMake
    */
-  configure(extraArgs?: string[], runPreBuild?: boolean): Promise<number>;
+  configure(extraArgs?: string[]): Thenable<number>;
 
   /**
    * Build the project
@@ -259,20 +258,20 @@ export interface CMakeToolsAPI extends Disposable {
    * active build target.
    * @returns the exit code of the build command
    */
-  build(target?: string): Promise<number>;
+  build(target?: string): Thenable<number>;
 
   /**
    * Installs the project
    * @returns The exit code from CMake
    */
-  install(): Promise<number>;
+  install(): Thenable<number>;
 
   /**
    * Clean the build output. Runs the `clean` target.
    *
    * @returns The exit code from the build command
    */
-  clean(): Promise<number>;
+  clean(): Thenable<number>;
 
   /**
    * Clean up old configuration and reconfigure.
@@ -283,41 +282,41 @@ export interface CMakeToolsAPI extends Disposable {
    * Cleaning up configure includes removing the CMake cache file and any
    * intermediate configuration files.
    */
-  cleanConfigure(): Promise<number>;
+  cleanConfigure(): Thenable<number>;
 
   /**
    * Clean the build output and rebuild
    *
    * @returns The exit code from the build command.
    */
-  cleanRebuild(): Promise<number>;
+  cleanRebuild(): Thenable<number>;
 
   /**
    * Execute CTest
    *
    * @returns The exit code from CTest
    */
-  ctest(): Promise<number>;
+  ctest(): Thenable<number>;
 
   /**
    * Stop the currently running command.
    *
    * @returns `true` on success. `false` otherwise.
    */
-  stop(): Promise<boolean>;
+  stop(): Thenable<boolean>;
 
   /**
    * Start the active target without a debugger.
    */
-  launchTarget(): Promise<Terminal|null>;
+  launchTarget(): Thenable<Terminal|null>;
 
   /**
    * Start the active target with a debugger.
    */
-  debugTarget(): Promise<DebugSession|null>;
+  debugTarget(): Thenable<DebugSession|null>;
 
   /**
    * Get the path to the active launch target
    */
-  launchTargetPath(): Promise<string|null>;
+  launchTargetPath(): Thenable<string|null>;
 }

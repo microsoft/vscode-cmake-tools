@@ -6,7 +6,7 @@ import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-e
 import * as debugger_mod from '@cmt/debugger';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {versionToString} from '@cmt/util';
+import {ProgressHandle, versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
 import * as path from 'path';
@@ -16,6 +16,7 @@ import * as ws from 'ws';
 import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
+import {CodeModelContent} from './cms-client';
 import {CMakeServerClientDriver} from './cms-driver';
 import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
@@ -29,12 +30,18 @@ import {NagManager} from './nag';
 import {fs} from './pr';
 import {Property} from './prop';
 import rollbar from './rollbar';
+import {setContextValue} from './util';
 import {VariantManager} from './variant';
 
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
+
+enum ConfigureType {
+  Normal,
+  Clean,
+}
 
 /**
  * Class implementing the extension. It's all here!
@@ -127,13 +134,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _targetName = new Property<string>('all');
 
   /**
-   * The current project name.
-   */
-  get projectName() { return this._projectName.value; }
-  get onProjectNameChanged() { return this._projectName.changeEvent; }
-  private readonly _projectName = new Property<string>('Unconfigured Project');
-
-  /**
    * The current build type
    */
   get buildType() { return this._buildType.value; }
@@ -169,10 +169,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _isBusy = new Property<boolean>(false);
 
   /**
-   * An event fired when the current progress value changes.
+   * Event fired when the code model from CMake is updated
    */
-  get onProgress() { return this._progressEmitter.event; }
-  private readonly _progressEmitter = new vscode.EventEmitter<number>();
+  get codeModel() { return this._codeModel.value; }
+  get onCodeModelChanged() { return this._codeModel.changeEvent; }
+  private readonly _codeModel = new Property<CodeModelContent|null>(null);
+  private _codeModelDriverSub: vscode.Disposable|null = null;
 
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
@@ -220,12 +222,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     for (const disp of [this._statusMessage,
                         this._targetName,
-                        this._projectName,
                         this._buildType,
                         this._ctestEnabled,
                         this._testResults,
                         this._isBusy,
-                        this._progressEmitter,
                         this._variantManager,
                         this._ctestController,
     ]) {
@@ -262,13 +262,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
-    const project = drv.projectName;
-    if (project) {
-      this._projectName.set(project);
-    }
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
-    drv.onProjectNameChanged(name => { this._projectName.set(name); });
     drv.onReconfigured(() => this._onReconfiguredEmitter.fire());
     // All set up. Fulfill the driver promise.
     return drv;
@@ -408,6 +403,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._cmakeDriver = Promise.resolve(null);
           throw ex;
         }
+        if (this._codeModelDriverSub) {
+          this._codeModelDriverSub.dispose();
+        }
+        const drv = await this._cmakeDriver;
+        console.assert(drv !== null, 'Null driver immediately after creation?');
+        if (drv instanceof CMakeServerClientDriver) {
+          this._codeModelDriverSub = drv.onCodeModelChanged(cm => { this._codeModel.set(cm); });
+        }
       }
       return this._cmakeDriver;
     });
@@ -460,31 +463,54 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.configure`
    */
-  configure(extra_args: string[] = []) {
-    log.debug('Run configure ', extra_args);
-    return this._doConfigure(async consumer => {
-      const drv = await this.getCMakeDriverInstance();
-      if (drv) {
-        return drv.configure(extra_args, consumer);
-      } else {
-        return -1;
-      }
-    });
+  configure(extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
+    return vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Configuring project',
+        },
+        async progress => {
+          progress.report({message: 'Preparing to configure'});
+          log.debug('Run configure ', extra_args);
+          return this._doConfigure(progress, async consumer => {
+            const drv = await this.getCMakeDriverInstance();
+            if (drv) {
+              let old_prog = 0;
+              const prog_sub = drv.onProgress(pr => {
+                const new_prog
+                    = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                const increment = new_prog - old_prog;
+                if (increment >= 10) {
+                  old_prog += increment;
+                  progress.report({increment});
+                }
+              });
+              try {
+                progress.report({message: 'Configuring project'});
+                switch (type) {
+                case ConfigureType.Normal:
+                  return await drv.configure(extra_args, consumer);
+                case ConfigureType.Clean:
+                  return await drv.cleanConfigure(consumer);
+                }
+                rollbar.error('Unexpected configure type', {type});
+                return await this.configure(extra_args, ConfigureType.Normal);
+              } finally {
+                progress.report({message: 'Finishing configure'});
+                prog_sub.dispose();
+              }
+            } else {
+              return -1;
+            }
+          });
+        },
+    );
   }
 
   /**
    * Implementation of `cmake.cleanConfigure()
    */
-  cleanConfigure() {
-    return this._doConfigure(async consumer => {
-      const drv = await this.getCMakeDriverInstance();
-      if (drv) {
-        return drv.cleanConfigure(consumer);
-      } else {
-        return -1;
-      }
-    });
-  }
+  cleanConfigure() { return this.configure([], ConfigureType.Clean); }
 
   /**
    * Save all open files. "maybe" because the user may have disabled auto-saving
@@ -517,7 +543,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
-  private async _doConfigure(cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
+  private async _doConfigure(progress: ProgressHandle,
+                             cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
+    progress.report({message: 'Saving open files'});
     if (!await this.maybeAutoSaveAll()) {
       return -1;
     }
@@ -525,6 +553,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error('Cannot configure: No kit is active for this CMake Tools');
     }
     if (!this._variantManager.haveVariant) {
+      progress.report({message: 'Waiting on variant selection'});
       await this._variantManager.selectVariant();
       if (!this._variantManager.haveVariant) {
         log.debug('No variant selected. Abort configure');
@@ -597,22 +626,45 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
     const consumer = new diags.CMakeBuildConsumer();
+    const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
       this._statusMessage.set('Building');
       this._isBusy.set(true);
-      consumer.onProgress(pr => { this._progressEmitter.fire(pr.value); });
-      log.showChannel();
-      build_log.info('Starting build');
-      const rc = await drv.build(target, consumer);
-      if (rc === null) {
-        build_log.info('Build was terminated');
-      } else {
-        build_log.info('Build finished with exit code', rc);
-      }
-      const file_diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
-      populateCollection(this._buildDiagnostics, file_diags);
-      return rc === null ? -1 : rc;
+      return await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: `Building: ${target}`,
+            cancellable: true,
+          },
+          async (progress, cancel) => {
+            let old_progress = 0;
+            consumer.onProgress(pr => {
+              // FIXME: Progress notification doesn't seem to show the correct
+              // progress level?
+              const increment = pr.value - old_progress;
+              if (increment >= 10) {
+                progress.report({increment});
+                old_progress += increment;
+              }
+            });
+            cancel.onCancellationRequested(() => { rollbar.invokeAsync('Stop on cancellaction', () => this.stop()); });
+            log.showChannel();
+            build_log.info('Starting build');
+            await setContextValue(IS_BUILDING_KEY, true);
+            const rc = await drv.build(target, consumer);
+            await setContextValue(IS_BUILDING_KEY, false);
+            if (rc === null) {
+              build_log.info('Build was terminated');
+            } else {
+              build_log.info('Build finished with exit code', rc);
+            }
+            const file_diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
+            populateCollection(this._buildDiagnostics, file_diags);
+            return rc === null ? -1 : rc;
+          },
+      );
     } finally {
+      await setContextValue(IS_BUILDING_KEY, false);
       this._statusMessage.set('Ready');
       this._isBusy.set(false);
       consumer.dispose();
@@ -764,7 +816,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.selectLaunchTarget`
    */
-  async selectLaunchTarget(): Promise<string|null> { return this.setLaunchTargetByName(); }
+  async selectLaunchTarget(name?: string): Promise<string|null> { return this.setLaunchTargetByName(name); }
 
   /**
    * Used by vscode and as test interface
@@ -827,10 +879,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return executable.path;
   }
 
-  async prepareLaunchTargetExecutable(): Promise<api.ExecutableTarget|null> {
-    const chosen = await this.getCurrentLaunchTarget();
-    if (!chosen) {
-      return null;
+  async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {
+    let chosen: api.ExecutableTarget;
+    if (name) {
+      const found = (await this.executableTargets).find(e => e.name === name);
+      if (!found) {
+        return null;
+      }
+      chosen = found;
+    } else {
+      const current = await this.getOrSelectLaunchTarget();
+      if (!current) {
+        return null;
+      }
+      chosen = current;
     }
 
     // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
@@ -844,16 +906,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     }
 
-    const target = await this.getOrSelectLaunchTarget();
-    if (!target) {
-      // The user has nothing selected and cancelled the prompt to select a target.
-      log.debug('No target selected.');
-      return null;
-    }
-
     const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;
     if (buildOnLaunch || isReconfigurationNeeded) {
-      const rc_build = await this.build();
+      const rc_build = await this.build(chosen.name);
       if (rc_build !== 0) {
         log.debug('Build failed');
         return null;
@@ -876,7 +931,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.debugTarget`
    */
-  async debugTarget(): Promise<vscode.DebugSession|null> {
+  async debugTarget(name?: string): Promise<vscode.DebugSession|null> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       vscode.window.showErrorMessage('Set up and build your CMake project before debugging.');
@@ -896,7 +951,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    const targetExecutable = await this.prepareLaunchTargetExecutable();
+    const targetExecutable = await this.prepareLaunchTargetExecutable(name);
     if (!targetExecutable) {
       return null;
     }
@@ -942,8 +997,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.launchTarget`
    */
-  async launchTarget() {
-    const executable = await this.prepareLaunchTargetExecutable();
+  async launchTarget(name?: string) {
+    const executable = await this.prepareLaunchTargetExecutable(name);
     if (!executable) {
       // The user has nothing selected and cancelled the prompt to select
       // a target.

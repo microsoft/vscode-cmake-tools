@@ -58,15 +58,6 @@ export class StateManager {
   }
 
   /**
-   * The name of the CMake project for this workspace
-   */
-  get projectName(): string|null {
-    const name = this.extensionContext.workspaceState.get<string>('projectName');
-    return name || null;
-  }
-  set projectName(s: string|null) { this.extensionContext.workspaceState.update('projectName', s); }
-
-  /**
    * Rest all current workspace state. Mostly for troubleshooting
    */
   reset() {
