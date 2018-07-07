@@ -337,7 +337,7 @@ class ExtensionManager implements vscode.Disposable {
       launchTargetName: cmt.launchTargetName,
     });
     if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
-      const cm = cmt.codeModel;
+      const codeModel = cmt.codeModel;
       const kit = cmt.activeKit;
       const cpptools = this._cppToolsAPI;
       rollbar.invokeAsync('Update code model for cpptools', {}, async () => {
@@ -350,12 +350,7 @@ class ExtensionManager implements vscode.Disposable {
         }
         const env = await effectiveKitEnvironment(kit);
         const clCompilerPath = await findCLCompilerPath(env);
-        this._configProvider.pushCodeModel({
-          cache,
-          kit,
-          codeModel: cm,
-          clCompilerPath,
-        });
+        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
         cpptools.didChangeCustomConfiguration(this._configProvider);
       });
     }
