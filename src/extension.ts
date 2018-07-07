@@ -121,6 +121,7 @@ class ExtensionManager implements vscode.Disposable {
 
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
+  private _configProviderRegister?: Promise<void>;
 
   /**
    * The active workspace folder. This controls several aspects of the extension,
@@ -336,11 +337,14 @@ class ExtensionManager implements vscode.Disposable {
       defaultTargetName: cmt.defaultBuildTarget || 'all',
       launchTargetName: cmt.launchTargetName,
     });
-    if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
-      const codeModel = cmt.codeModel;
-      const kit = cmt.activeKit;
-      const cpptools = this._cppToolsAPI;
-      rollbar.invokeAsync('Update code model for cpptools', {}, async () => {
+    rollbar.invokeAsync('Update code model for cpptools', {}, async () => {
+      if (!this._cppToolsAPI) {
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v1);
+      }
+      if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
+        const codeModel = cmt.codeModel;
+        const kit = cmt.activeKit;
+        const cpptools = this._cppToolsAPI;
         let cache: CMakeCache;
         try {
           cache = await CMakeCache.fromPath(await cmt.cachePath);
@@ -351,9 +355,10 @@ class ExtensionManager implements vscode.Disposable {
         const env = await effectiveKitEnvironment(kit);
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
+        await this.ensureCppToolsProviderRegistered();
         cpptools.didChangeCustomConfiguration(this._configProvider);
-      });
-    }
+      }
+    });
   }
 
   private _setupSubscriptions() {
@@ -887,8 +892,14 @@ class ExtensionManager implements vscode.Disposable {
     return Promise.resolve(fn(cmt));
   }
 
-  async registerCppTools() {
-    this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v1);
+  async ensureCppToolsProviderRegistered() {
+    if (!this._configProviderRegister) {
+      this._configProviderRegister = this._doRegisterCppTools();
+    }
+    return this._configProviderRegister;
+  }
+
+  async _doRegisterCppTools() {
     if (!this._cppToolsAPI) {
       return;
     }
@@ -1031,9 +1042,6 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
                                       (what: TargetNode) => what.openInCMakeLists()),
   ]);
-
-  // Now register external APIs
-  await ext.registerCppTools();
 }
 
 /**
