@@ -59,29 +59,6 @@ export interface ExecutionOptions {
 }
 
 /**
- * Raw, unprocessed compilation information on a source file. This is what
- * would be found in a compilation database, `compile_commands.json`.
- */
-export interface RawCompilationInfo {
-  file: string;
-  directory: string;
-  command: string;
-}
-
-/**
- * Nicer, cleaner compilation information on a source file. This would be
- * provided by CMake Server.
- */
-export interface CompilationInfo {
-  file: string;
-  compile?: RawCompilationInfo;
-  includeDirectories: {path: string; isSystem: boolean;}[];
-  compileDefinitions: {[define: string]: string|null};
-  compileFlags: string[];
-  compiler?: string;
-}
-
-/**
  * The type of a CMake cache entry
  */
 export enum CacheEntryType {
@@ -233,15 +210,6 @@ export interface CMakeToolsAPI extends Disposable {
    * execute in the context that the user is expecting.
    */
   execute(program: string, args: string[], options?: ExecutionOptions): Thenable<ExecutionResult>;
-
-  /**
-   * Get the compilation information for a file
-   *
-   * @param filepath The source file in question
-   * @returns New compilation info, or `null` if no compilation info was found
-   * for the named file.
-   */
-  compilationInfoForFile(filepath: string): Thenable<CompilationInfo|null>;
 
   /**
    * Configure the project.

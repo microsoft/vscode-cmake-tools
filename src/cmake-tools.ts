@@ -3,6 +3,7 @@
  */
 import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import {CompilationDatabase} from '@cmt/compdb';
 import * as debugger_mod from '@cmt/debugger';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
@@ -264,7 +265,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
-    drv.onReconfigured(() => this._onReconfiguredEmitter.fire());
     // All set up. Fulfill the driver promise.
     return drv;
   }
@@ -295,15 +295,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return drv.executeCommand(program, args, undefined, options).result;
     } else {
       throw new Error('Unable to execute program, there is no valid cmake driver instance.');
-    }
-  }
-
-  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
-    const drv = await this.getCMakeDriverInstance();
-    if (drv) {
-      return drv.compilationInfoForFile(filepath);
-    } else {
-      throw new Error('Unable to get compilation information, there is no valid cmake driver instance.');
     }
   }
 
@@ -460,6 +451,43 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private readonly _buildDiagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
 
+
+  /**
+   * The compilation database for this driver.
+   */
+  get compilationDatabase() { return this._compDB.value; }
+  get compilationDatabaseChanged() { return this._compDB.changeEvent; }
+  private readonly _compDB = new Property<CompilationDatabase|null>(null);
+
+  private async _refreshCompileDatabase(): Promise<void> {
+    const compdb_path = path.join(await this.binaryDir, 'compile_commands.json');
+    if (await fs.exists(compdb_path)) {
+      // Read the compilation database, and update our db property
+      const new_db = await CompilationDatabase.fromFilePath(compdb_path);
+      this._compDB.set(new_db);
+      // Now try to copy the compdb to the user-requested path
+      const copy_dest = this.workspaceContext.config.copyCompileCommands;
+      if (!copy_dest) {
+        return;
+      }
+      const pardir = path.dirname(copy_dest);
+      try {
+        await fs.mkdir_p(pardir);
+      } catch (e) {
+        vscode.window.showErrorMessage(`Tried to copy "${compdb_path}" to "${copy_dest}", but failed to create ` +
+                                       `the parent directory "${pardir}": ${e}`);
+        return;
+      }
+      try {
+        await fs.copyFile(compdb_path, copy_dest);
+      } catch (e) {
+        // Just display the error. It's the best we can do.
+        vscode.window.showErrorMessage(`Failed to copy "${compdb_path}" to "${copy_dest}": ${e}`);
+        return;
+      }
+    }
+  }
+
   /**
    * Implementation of `cmake.configure`
    */
@@ -487,14 +515,24 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               });
               try {
                 progress.report({message: 'Configuring project'});
+                let retc: number;
                 switch (type) {
                 case ConfigureType.Normal:
-                  return await drv.configure(extra_args, consumer);
+                  retc = await drv.configure(extra_args, consumer);
+                  break;
                 case ConfigureType.Clean:
-                  return await drv.cleanConfigure(consumer);
+                  retc = await drv.cleanConfigure(consumer);
+                  break;
+                default:
+                  rollbar.error('Unexpected configure type', {type});
+                  retc = await this.configure(extra_args, ConfigureType.Normal);
+                  break;
                 }
-                rollbar.error('Unexpected configure type', {type});
-                return await this.configure(extra_args, ConfigureType.Normal);
+                if (retc === 0) {
+                  await this._refreshCompileDatabase();
+                }
+                this._onReconfiguredEmitter.fire();
+                return retc;
               } finally {
                 progress.report({message: 'Finishing configure'});
                 prog_sub.dispose();

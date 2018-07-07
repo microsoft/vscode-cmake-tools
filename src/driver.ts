@@ -235,8 +235,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
-  abstract compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null>;
-
   /**
    * The CMAKE_BUILD_TYPE to use
    */
@@ -484,9 +482,6 @@ Please install or configure a preferred generator, or update settings.json or yo
     return null;
   }
 
-  private readonly _onReconfiguredEmitter = new vscode.EventEmitter<void>();
-  get onReconfigured(): vscode.Event<void> { return this._onReconfiguredEmitter.event; }
-
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
     log.debug('Start configure ', extra_args);
     const pre_check_ok = await this._beforeConfigureOrBuild();
@@ -578,9 +573,6 @@ Please install or configure a preferred generator, or update settings.json or yo
 
     const retc = await this.doConfigure(expanded_flags, consumer);
 
-    await this._copyCompDB();
-
-    this._onReconfiguredEmitter.fire();
     return retc;
   }
 
@@ -599,7 +591,6 @@ Please install or configure a preferred generator, or update settings.json or yo
       return -1;
     }
     await this._refreshExpansions();
-    await this._copyCompDB();
     return (await child.result).retc;
   }
 
@@ -690,31 +681,6 @@ Please install or configure a preferred generator, or update settings.json or yo
     this._isBusy = false;
     this._currentProcess = null;
     return child;
-  }
-
-  private async _copyCompDB(): Promise<void> {
-    const copy_dest = this.ws.config.copyCompileCommands;
-    if (!copy_dest) {
-      return;
-    }
-    const compdb_path = path.join(this.binaryDir, 'compile_commands.json');
-    if (await fs.exists(compdb_path)) {
-      const pardir = path.dirname(copy_dest);
-      try {
-        await fs.mkdir_p(pardir);
-      } catch (e) {
-        vscode.window.showErrorMessage(`Tried to copy "${compdb_path}" to "${copy_dest}", but failed to create ` +
-                                       `the parent directory "${pardir}": ${e}`);
-        return;
-      }
-      try {
-        await fs.copyFile(compdb_path, copy_dest);
-      } catch (e) {
-        // Just display the error. It's the best we can do.
-        vscode.window.showErrorMessage(`Failed to copy "${compdb_path}" to "${copy_dest}": ${e}`);
-        return;
-      }
-    }
   }
 
   /**

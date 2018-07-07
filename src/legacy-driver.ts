@@ -10,7 +10,6 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import {CMakeCache} from './cache';
-import {CompilationDatabase} from './compdb';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 // import * as proc from './proc';
@@ -38,15 +37,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
       await fs.rmdir(this.binaryDir);
     }
     await cb();
-  }
-
-  private _compilationDatabase: Promise<CompilationDatabase|null> = Promise.resolve(null);
-  async compilationInfoForFile(filepath: string) {
-    const db = await this._compilationDatabase;
-    if (!db) {
-      return null;
-    }
-    return db.getCompilationInfoForUri(vscode.Uri.file(filepath));
   }
 
   // Legacy disposal does nothing
@@ -121,7 +111,6 @@ export class LegacyCMakeDriver extends CMakeDriver {
     // Force await here so that any errors are thrown into rollbar
     const new_cache = await CMakeCache.fromPath(this.cachePath);
     this._cmakeCache = new_cache;
-    this._compilationDatabase = CompilationDatabase.fromFilePath(path.join(this.binaryDir, 'compile_commands.json'));
   }
 
   get cmakeCacheEntries() {
