@@ -798,6 +798,12 @@
           "description": "Copy compile_commands.json to this location after a successful configure",
           "scope": "resource"
         },
+        "cmake.configureOnOpen": {
+          "type": "boolean",
+          "default": null,
+          "description": "Automatically configure CMake project directories when they are opened",
+          "scope": "resource"
+        },
         "cmake.useCMakeServer": {
           "type": "boolean",
           "default": true,

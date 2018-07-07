@@ -38,6 +38,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     mingwSearchDirs: [],
     emscriptenSearchDirs: [],
     copyCompileCommands: null,
+    configureOnOpen: null,
     useCMakeServer: true,
     enableTraceLogging: false,
     loggingLevel: 'info',

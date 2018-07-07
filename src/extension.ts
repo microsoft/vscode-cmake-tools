@@ -205,6 +205,63 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  async _postWorkspaceOpen(ws: vscode.WorkspaceFolder, cmt: CMakeTools) {
+    let should_configure = cmt.workspaceContext.config.configureOnOpen;
+    if (should_configure === null) {
+      interface Choice1 {
+        title: string;
+        doConfigure: boolean;
+      }
+      const chosen = await vscode.window.showInformationMessage<Choice1>(
+          'Would you like to configure this project?',
+          {},
+          {title: 'Yes', doConfigure: true},
+          {title: 'Not now', doConfigure: false},
+      );
+      if (!chosen) {
+        // Do nothing. User cancelled
+        return;
+      }
+      const perist_message
+          = chosen.doConfigure ? 'Always configure projects upon opening?' : 'Never configure projects on opening?';
+      interface Choice2 {
+        title: string;
+        persistMode: 'user'|'workspace';
+      }
+      const persist_pr
+          // Try to persist the user's selection to a `settings.json`
+          = vscode.window
+                .showInformationMessage<Choice2>(
+                    perist_message,
+                    {},
+                    {title: 'Yes', persistMode: 'user'},
+                    {title: 'For this Workspace', persistMode: 'workspace'},
+                    )
+                .then(async choice => {
+                  if (!choice) {
+                    // Use cancelled. Do nothing.
+                    return;
+                  }
+                  let config: vscode.WorkspaceConfiguration;
+                  if (choice.persistMode === 'workspace') {
+                    config = vscode.workspace.getConfiguration(undefined, ws.uri);
+                  } else {
+                    console.assert(choice.persistMode === 'user');
+                    config = vscode.workspace.getConfiguration();
+                  }
+                  await config.update('cmake.configureOnOpen', chosen.doConfigure);
+                });
+      rollbar.takePromise('Persist config-on-open setting', {}, persist_pr);
+      should_configure = chosen.doConfigure;
+    }
+    if (should_configure) {
+      // We've opened a new workspace folder, and the user wants us to
+      // configure it now.
+      log.debug('Configuring workspace on open ', ws.uri);
+      await cmt.configure();
+    }
+  }
+
   /**
    * Create a new instance of the backend to support the given workspace folder.
    * The given folder *must not* already be loaded.
@@ -227,6 +284,7 @@ class ExtensionManager implements vscode.Disposable {
       if (this._activeWorkspaceFolder === null) {
         await this._setActiveWorkspaceFolder(ws, progress);
       }
+      rollbar.takePromise('Post-folder-open', {folder: ws}, this._postWorkspaceOpen(ws, new_cmt));
       // Return the newly created instance
       return new_cmt;
     });
