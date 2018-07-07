@@ -33,7 +33,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
   dispose() {}
 
-  private _fileIndex = new Map<string, cpt.SourceFileConfigurationItem>();
+  private readonly _fileIndex = new Map<string, cpt.SourceFileConfigurationItem>();
 
   private _buildConfigurationData(grp: cms.CodeModelFileGroup, opts: CodeModelParams): cpt.SourceFileConfiguration {
     const lang = grp.language || 'CXX';
