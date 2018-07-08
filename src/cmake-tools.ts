@@ -455,16 +455,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * The compilation database for this driver.
    */
-  get compilationDatabase() { return this._compDB.value; }
-  get compilationDatabaseChanged() { return this._compDB.changeEvent; }
-  private readonly _compDB = new Property<CompilationDatabase|null>(null);
+  private _compilationDatabase: CompilationDatabase|null = null;
 
   private async _refreshCompileDatabase(): Promise<void> {
     const compdb_path = path.join(await this.binaryDir, 'compile_commands.json');
     if (await fs.exists(compdb_path)) {
       // Read the compilation database, and update our db property
       const new_db = await CompilationDatabase.fromFilePath(compdb_path);
-      this._compDB.set(new_db);
+      this._compilationDatabase = new_db;
       // Now try to copy the compdb to the user-requested path
       const copy_dest = this.workspaceContext.config.copyCompileCommands;
       if (!copy_dest) {
@@ -725,16 +723,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * which the compilation is running
    * @param filePath The path to a file to try and compile
    */
-  async tryCompileFile(filePath: string): Promise<vscode.Terminal | null> {
+  async tryCompileFile(filePath: string): Promise<vscode.Terminal|null> {
     const config_retc = await this.ensureConfigured();
     if (config_retc !== null && config_retc !== 0) {
       // Config failed?
       return null;
     }
-    if (!this.compilationDatabase) {
+    if (!this._compilationDatabase) {
       return null;
     }
-    const cmd = this.compilationDatabase.get(filePath);
+    const cmd = this._compilationDatabase.get(filePath);
     if (!cmd) {
       return null;
     }
