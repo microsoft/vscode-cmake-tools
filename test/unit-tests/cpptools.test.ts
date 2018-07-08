@@ -3,7 +3,7 @@ import {expect} from '@test/util';
 
 // tslint:disable:no-unused-expression
 
-suite.only('CppTools tests', () => {
+suite('CppTools tests', () => {
   test('Parse some compiler flags', () => {
     let info = parseCompileFlags(['-DFOO=BAR']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
