@@ -1127,7 +1127,6 @@ export async function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export async function deactivate() {
   log.debug('Deactivate CMakeTools');
-  //   outputChannels.dispose();
   if (_EXT_MANAGER) {
     await _EXT_MANAGER.asyncDispose();
   }
