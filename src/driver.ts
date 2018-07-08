@@ -4,7 +4,9 @@
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import {ProgressMessage} from '@cmt/cms-client';
+import {CompileCommand} from '@cmt/compdb';
 import * as path from 'path';
+import * as shlex from 'shlex';
 import * as vscode from 'vscode';
 
 import * as api from './api';
@@ -76,7 +78,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext) {}
+  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext) {
+    // We have a cache of file-compilation terminals. Wipe them out when the
+    // user closes those terminals.
+    vscode.window.onDidCloseTerminal(closed => {
+      for (const [key, term] of this._compileTerms) {
+        if (term === closed) {
+          log.debug('Use closed a file compilation terminal');
+          this._compileTerms.delete(key);
+          break;
+        }
+      }
+    });
+  }
 
   /**
    * Dispose the driver. This disposes some things synchronously, but also
@@ -84,6 +98,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   dispose() {
     log.debug('Disposing base CMakeDriver');
+    for (const term of this._compileTerms.values()) {
+      term.dispose();
+    }
     rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
   }
 
@@ -194,14 +211,57 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {vars};
   }
 
+  getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {
+    const cur_env = process.env as proc.EnvironmentVariables;
+    return util.mergeEnvironment(cur_env,
+                                 this.getKitEnvironmentVariablesObject(),
+                                 (opts && opts.environment) ? opts.environment : {});
+  }
+
   executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions):
       proc.Subprocess {
-    const cur_env = process.env as proc.EnvironmentVariables;
-    const env = util.mergeEnvironment(cur_env,
-                                      this.getKitEnvironmentVariablesObject(),
-                                      (options && options.environment) ? options.environment : {});
-    const exec_options = {...options, environment: env};
+    const environment = this.getEffectiveSubprocessEnvironment(options);
+    const exec_options = {...options, environment};
     return proc.execute(command, args, consumer, exec_options);
+  }
+
+  /**
+   * File compilation terminals. This is a map, rather than a single terminal
+   * instance for two reasons:
+   *
+   * 1. Different compile commands may require different environment variables.
+   * 2. Different compile commands may require different working directories.
+   *
+   * The key of each terminal is generated deterministically in `runCompileCommand()`
+   * based on the CWD and environment of the compile command.
+   */
+  private readonly _compileTerms = new Map<string, vscode.Terminal>();
+
+  /**
+   * Launch the given compilation command in an embedded terminal.
+   * @param cmd The compilation command from a compilation database to run
+   */
+  runCompileCommand(cmd: CompileCommand): vscode.Terminal {
+    if ('command' in cmd) {
+      const args = shlex.split(cmd.command);
+      return this.runCompileCommand({directory: cmd.directory, file: cmd.file, arguments: args});
+    } else {
+      const env = this.getEffectiveSubprocessEnvironment();
+      const key = `${cmd.directory}${JSON.stringify(env)}`;
+      let existing = this._compileTerms.get(key);
+      if (!existing) {
+        const term = vscode.window.createTerminal({
+          name: 'File Compilation',
+          cwd: cmd.directory,
+          env,
+        });
+        this._compileTerms.set(key, term);
+        existing = term;
+      }
+      existing.show();
+      existing.sendText(cmd.arguments.map(shlex.quote).join(' ') + '\r\n');
+      return existing;
+    }
   }
 
   /**
@@ -659,7 +719,7 @@ Please install or configure a preferred generator, or update settings.json or yo
         return [];
     })();
 
-    const build_env = {} as { [key: string]: string };
+    const build_env = {} as {[key: string]: string};
     build_env['NINJA_STATUS'] = '[%s/%t %p :: %e]';
     const opts = this.expansionOptions;
     await Promise.resolve(

@@ -639,24 +639,34 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+  async ensureConfigured(): Promise<number|null> {
+    const drv = await this.getCMakeDriverInstance();
+    if (!drv) {
+      return null;
+    }
+    // First, save open files
+    if (!await this.maybeAutoSaveAll()) {
+      return -1;
+    }
+    if (await drv.checkNeedsReconfigure()) {
+      log.clearOutputChannel();
+      return this.configure();
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
     log.debug('Run build', target_ ? target_ : '');
-    // First, save open files
-    if (!await this.maybeAutoSaveAll()) {
-      return -1;
-    }
-    // Then check that we might need to re-configure
-    const needs_conf = await this._needsReconfigure();
-    if (needs_conf) {
-      const retc = await this.configure();
-      if (retc) {
-        return retc;
-      }
-    } else if (this.workspaceContext.config.clearOutputBeforeBuild) {
+    const config_retc = await this.ensureConfigured();
+    if (config_retc === null) {
+      // Already configured. Clear console
       log.clearOutputChannel();
+    } else if (config_retc !== 0) {
+      return config_retc;
     }
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
@@ -707,6 +717,32 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._isBusy.set(false);
       consumer.dispose();
     }
+  }
+
+  /**
+   * Attempt to execute the compile command associated with the file. If it
+   * fails for _any reason_, returns `null`. Otherwise returns the terminal in
+   * which the compilation is running
+   * @param filePath The path to a file to try and compile
+   */
+  async tryCompileFile(filePath: string): Promise<vscode.Terminal | null> {
+    const config_retc = await this.ensureConfigured();
+    if (config_retc !== null && config_retc !== 0) {
+      // Config failed?
+      return null;
+    }
+    if (!this.compilationDatabase) {
+      return null;
+    }
+    const cmd = this.compilationDatabase.get(filePath);
+    if (!cmd) {
+      return null;
+    }
+    const drv = await this.getCMakeDriverInstance();
+    if (!drv) {
+      return null;
+    }
+    return drv.runCompileCommand(cmd);
   }
 
   async editCache(): Promise<void> {
