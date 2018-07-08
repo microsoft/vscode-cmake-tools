@@ -2,6 +2,7 @@
  * Module for controlling and working with Kits.
  */ /** */
 
+import rollbar from '@cmt/rollbar';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -275,16 +276,6 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
       return await kitIfCompiler(bin, pr);
     } catch (e) {
       log.warning('Failed to check binary', bin, 'by exception:', e);
-      const stat = await fs.stat(bin);
-      log.debug('File infos: ',
-                'Mode',
-                stat.mode,
-                'isFile',
-                stat.isFile(),
-                'isDirectory',
-                stat.isDirectory(),
-                'isSymbolicLink',
-                stat.isSymbolicLink());
       if (e.code == 'EACCES') {
         // The binary may not be executable by this user...
         return null;
@@ -295,7 +286,18 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
         // This is when file is not executable (in windows)
         return null;
       }
-      throw e;
+      const stat = await fs.stat(bin);
+      log.debug('File infos: ',
+                'Mode',
+                stat.mode,
+                'isFile',
+                stat.isFile(),
+                'isDirectory',
+                stat.isDirectory(),
+                'isSymbolicLink',
+                stat.isSymbolicLink());
+      rollbar.exception('Failed to scan a kit file', e, {bin, exception: e.code, stat});
+      return null;
     }
   });
   log.debug('Found', kits.length, 'kits in directory', dir);
