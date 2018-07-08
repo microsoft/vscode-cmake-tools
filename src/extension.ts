@@ -199,6 +199,9 @@ class ExtensionManager implements vscode.Disposable {
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
     this._projectOutlineDisposer.dispose();
+    if (this._cppToolsAPI) {
+      this._cppToolsAPI.dispose();
+    }
     // Dispose of each CMake Tools we still have loaded
     for (const cmt of this._cmakeToolsInstances.values()) {
       await cmt.asyncDispose();
