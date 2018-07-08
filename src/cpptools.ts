@@ -42,7 +42,7 @@ export interface CodeModelParams {
 export class CppConfigurationProvider implements cpt.CustomConfigurationProvider {
   /** Our name visible to cpptools */
   readonly name = 'CMake Tools';
-  /** Out extension ID, visible to cpptools */
+  /** Our extension ID, visible to cpptools */
   readonly extensionId = 'vector-of-bool.cmake-tools';
 
   /**
@@ -104,7 +104,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
   /**
    * Update the configuration index for the files in the given file group
-   * @param sourceDir The source directory where the file group was defined. Used to resvolve
+   * @param sourceDir The source directory where the file group was defined. Used to resolve
    * relative paths
    * @param grp The file group
    * @param opts Index update options
