@@ -49,7 +49,7 @@ export function parseCompileFlags(args: string[]): CompileFlagInformation {
       const std = value.substring(5);
       if (std.endsWith('++14') || std.endsWith('++1y')) {
         standard = 'c++14';
-      } else if (std.endsWith('++17') || std.endsWith('++1z')) {
+      } else if (std.endsWith('++17') || std.endsWith('++1z') || std.endsWith('++latest')) {
         standard = 'c++17';
       } else if (std.endsWith('++11') || std.endsWith('++0x')) {
         standard = 'c++11';
