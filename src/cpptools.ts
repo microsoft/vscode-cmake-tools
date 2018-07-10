@@ -162,7 +162,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       rollbar.error('Unable to automatically determine compiler', {lang, fileGroup});
     }
     const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
-    const flags = shlex.split(fileGroup.compileFlags);
+    const flags = shlex.split(fileGroup.compileFlags || '');
     const {standard, extraDefinitions} = parseCompileFlags(flags);
     const defines = (fileGroup.defines || []).concat(extraDefinitions);
     return {

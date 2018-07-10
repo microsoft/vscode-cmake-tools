@@ -218,7 +218,7 @@ export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type
 
 export interface CodeModelFileGroup {
   language?: string;
-  compileFlags: string;
+  compileFlags?: string;
   includePath?: {path: string; isSystem?: boolean;}[];
   defines?: string[];
   sources: string[];
