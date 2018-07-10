@@ -252,7 +252,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
             const defs = (group.defines || []).map(util.parseCompileDefinition);
             const defs_o = defs.reduce((acc, [key, value]) => ({...acc, [key]: value}), {});
             const includes = (group.includePath || []).map(p => ({path: p.path, isSystem: p.isSystem || false}));
-            const flags = util.splitCommandLine(group.compileFlags);
+            const flags = util.splitCommandLine(group.compileFlags || '');
             return {
               file: found,
               compileDefinitions: defs_o,
