@@ -1,6 +1,16 @@
 import * as vscode from 'vscode';
 
 /**
+ * Key strings for the various state objects we maintain
+ */
+enum StateKey {
+  ActiveKitName = 'activeKitName',
+  ActiveBuildTarget = 'activeBuildTarget',
+  LaunchTargetName = 'launchTargetName',
+  ActiveVariantSettings = 'activeVariantSettings',
+}
+
+/**
  * This class keeps track of all state that needs to persist between sessions
  * within a single workspace. Objects that wish to persist state should store
  * it here to ensure that we keep state consistent.
@@ -11,59 +21,74 @@ import * as vscode from 'vscode';
  * invalid states.
  */
 export class StateManager {
-  constructor(readonly extensionContext: vscode.ExtensionContext) {}
+  constructor(
+      /**
+       * The extension context
+       */
+      readonly extensionContext: vscode.ExtensionContext,
+      /**
+       * A qualifier string, to ensure that multiple StateManager instances in the
+       * same workspace can write and maintain different state keys.
+       */
+      readonly qualifierString: string = '__default__') {}
+
+  private _get<T>(key: string): T|undefined;
+  private _get<T, U>(key: string, default_: U): T|U;
+  private _get<T, U>(key: string, default_?: U): T|U|undefined {
+    const qual_key = `${this.qualifierString}/${key}`;
+    const value = this.extensionContext.workspaceState.get<T>(qual_key);
+    if (value === undefined) {
+      return default_;
+    }
+    return value;
+  }
 
   /**
    * The name of the workspace-local active kit.
    */
-  get activeKitName(): string|null {
-    const kit = this.extensionContext.workspaceState.get<string>('activeKitName');
-    return kit || null;
-  }
-  set activeKitName(v: string|null) { this.extensionContext.workspaceState.update('activeKitName', v); }
+  get activeKitName(): string|null { return this._get<string, null>(StateKey.ActiveKitName, null); }
+  setActiveKitName(v: string|null) { return this.extensionContext.workspaceState.update(StateKey.ActiveKitName, v); }
 
   /**
    * The currently select build target
    */
-  get defaultBuildTarget(): string|null {
-    const target = this.extensionContext.workspaceState.get<string>('activeBuildTarget');
-    return target || null;
+  get defaultBuildTarget(): string | null {
+    return this._get<string, null>(StateKey.ActiveBuildTarget, null);
   }
-  set defaultBuildTarget(s: string|null) { this.extensionContext.workspaceState.update('activeBuildTarget', s); }
+  setDefaultBuildTarget(s: string|null) { return this.extensionContext.workspaceState.update(StateKey.ActiveBuildTarget, s); }
 
-  get launchTargetName(): string|null {
-    const name = this.extensionContext.workspaceState.get<string>('launchTargetName');
-    return name || null;
+  get launchTargetName(): string | null {
+    return this._get<string, null>(StateKey.LaunchTargetName, null);
   }
-  set launchTargetName(t: string|null) { this.extensionContext.workspaceState.update('launchTargetName', t); }
+  setLaunchTargetName(t: string|null) { return this.extensionContext.workspaceState.update(StateKey.LaunchTargetName, t); }
 
   /**
    * The keyword settings for the build variant
    */
   get activeVariantSettings(): Map<string, string>|null {
-    const pairs = this.extensionContext.workspaceState.get<[string, string][]>('activeVariantSettings');
+    const pairs = this._get<[string, string][]>(StateKey.ActiveVariantSettings);
     if (pairs) {
       return new Map<string, string>(pairs);
     } else {
       return null;
     }
   }
-  set activeVariantSettings(settings: Map<string, string>|null) {
+  setActiveVariantSettings(settings: Map<string, string>|null) {
     if (settings) {
       const pairs: [string, string][] = Array.from(settings.entries());
-      this.extensionContext.workspaceState.update('activeVariantSettings', pairs);
+      return this.extensionContext.workspaceState.update(StateKey.ActiveVariantSettings, pairs);
     } else {
-      this.extensionContext.workspaceState.update('activeVariantSettings', null);
+      return this.extensionContext.workspaceState.update(StateKey.ActiveVariantSettings, null);
     }
   }
 
   /**
    * Rest all current workspace state. Mostly for troubleshooting
    */
-  reset() {
-    this.activeVariantSettings = null;
-    this.launchTargetName = null;
-    this.defaultBuildTarget = null;
-    this.activeKitName = null;
+  async reset() {
+    await this.setActiveVariantSettings(null);
+    await this.setLaunchTargetName(null);
+    await this.setDefaultBuildTarget(null);
+    await this.setActiveKitName(null);
   }
 }

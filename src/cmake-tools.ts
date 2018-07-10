@@ -365,7 +365,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           await drv.setKit(kit);
         } finally { this._statusMessage.set('Ready'); }
       }
-      this.workspaceContext.state.activeKitName = kit.name;
+      await this.workspaceContext.state.setActiveKitName(kit.name);
     }
   }
 
@@ -795,7 +795,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   public get defaultBuildTarget(): string|null { return this.workspaceContext.state.defaultBuildTarget; }
   private async _setDefaultBuildTarget(v: string) {
-    this.workspaceContext.state.defaultBuildTarget = v;
+    await this.workspaceContext.state.setDefaultBuildTarget(v);
     this._targetName.set(v);
   }
 
@@ -847,7 +847,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!chosen) {
       return null;
     }
-    this.workspaceContext.state.launchTargetName = chosen.label;
+    await this.workspaceContext.state.setLaunchTargetName(chosen.label);
     this._launchTargetName.set(chosen.label);
     return chosen.detail;
   }
@@ -1101,7 +1101,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.resetState`
    */
   async resetState() {
-    this.workspaceContext.state.reset();
+    await this.workspaceContext.state.reset();
     vscode.commands.executeCommand('workbench.action.reloadWindow');
   }
 

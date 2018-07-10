@@ -13,7 +13,7 @@ import {StateManager} from '@cmt/state';
 export class DirectoryContext {
   constructor(
       /**
-       * Path to the directory associated with this context
+       * Absolute path to the directory associated with this context
        */
       public readonly directoryPath: string,
       /**

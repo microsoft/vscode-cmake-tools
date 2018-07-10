@@ -373,12 +373,12 @@ export class VariantManager implements vscode.Disposable {
     if (!chosen) {
       return false;
     }
-    this.publishActiveKeywordSettings(chosen.keywordSettings);
+    await this.publishActiveKeywordSettings(chosen.keywordSettings);
     return true;
   }
 
-  publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
-    this.stateManager.activeVariantSettings = keywordSettings;
+  async publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
+    await this.stateManager.setActiveVariantSettings(keywordSettings);
     this._activeVariantChanged.fire();
   }
 
@@ -402,7 +402,7 @@ export class VariantManager implements vscode.Disposable {
 
     if (this.stateManager.activeVariantSettings === null) {
       const defaultChoices = this.findDefaultChoiceCombination();
-      this.publishActiveKeywordSettings(defaultChoices);
+      await this.publishActiveKeywordSettings(defaultChoices);
     }
   }
 }

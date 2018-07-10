@@ -46,7 +46,7 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
 
 class WorkspaceFolderTreeProvider implements vscode.TreeDataProvider<vscode.WorkspaceFolder> {
   private _activeFolderName: string = '';
-  private _foldersChanged = new vscode.EventEmitter<null>();
+  private readonly _foldersChanged = new vscode.EventEmitter<null>();
 
   dispose() { this._foldersChanged.dispose(); }
 
