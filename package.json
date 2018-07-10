@@ -21,7 +21,7 @@
   ],
   "publisher": "vector-of-bool",
   "engines": {
-    "vscode": "^1.22.0"
+    "vscode": "^1.25.0"
   },
   "categories": [
     "Other"
@@ -154,7 +154,7 @@
         "category": "CMake"
       },
       {
-        "command": "cmake.outline.cleanRebuild" ,
+        "command": "cmake.outline.cleanRebuild",
         "title": "Clean rebuild"
       },
       {
@@ -802,6 +802,12 @@
           "description": "Copy compile_commands.json to this location after a successful configure",
           "scope": "resource"
         },
+        "cmake.configureOnOpen": {
+          "type": "boolean",
+          "default": null,
+          "description": "Automatically configure CMake project directories when they are opened",
+          "scope": "resource"
+        },
         "cmake.useCMakeServer": {
           "type": "boolean",
           "default": true,
@@ -905,7 +911,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "lint:nofix": "node ./node_modules/tslint/bin/tslint -p .",
-    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
+    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/ typings/"
   },
   "devDependencies": {
     "@types/ajv": "^0.0.3",
@@ -930,7 +936,7 @@
     "tslint": "^5.9.1",
     "typedoc": "~0.11.1",
     "typescript": "~2.8.3",
-    "vscode": "1.1.17"
+    "vscode": "1.1.18"
   },
   "dependencies": {
     "Polymer": "1.6.1--",
@@ -942,6 +948,8 @@
     "open": "0.0.5",
     "rimraf": "^2.5.4",
     "rollbar": "~2.2.8",
+    "vscode-cpptools": "^1.3.1",
+    "shlex": "^1.0.2",
     "which": "~1.3.0",
     "ws": "^1.1.1",
     "xml2js": "^0.4.17"

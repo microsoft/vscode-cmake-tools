@@ -39,6 +39,20 @@ export const rename = promisify(fs_.rename);
 
 export const stat = promisify(fs_.stat);
 
+/**
+ * Try and stat() a file. If stat() fails for *any reason*, returns `null`.
+ * @param filePath The file to try and stat()
+ */
+export async function tryStat(filePath: fs_.PathLike): Promise<fs_.Stats|null> {
+  try {
+    return await stat(filePath);
+  } catch (_e) {
+    // Don't even bother with the error. Any number of things might have gone
+    // wrong. Probably one of: Non-existing file, bad permissions, bad path.
+    return null;
+  }
+}
+
 export const readlink = promisify(fs_.readlink);
 
 export const unlink = promisify(fs_.unlink);
