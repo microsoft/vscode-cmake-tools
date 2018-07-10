@@ -114,6 +114,16 @@ export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out
   return init;
 }
 
+export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T | undefined {
+  for (const value of iter) {
+    if (predicate(value)) {
+      return value;
+    }
+  }
+  // Nothing found
+  return undefined;
+}
+
 /**
  * Generate a random integral value.
  * @param min Minimum value
@@ -318,7 +328,9 @@ export function thisExtension() {
 
 export function thisExtensionPath(): string { return thisExtension().extensionPath; }
 
-export function dropNulls<T>(items: (T|null)[]): T[] { return items.filter(item => item !== null) as T[]; }
+export function dropNulls<T>(items: (T|null|undefined)[]): T[] {
+  return items.filter(item => (item !== null && item !== undefined)) as T[];
+}
 
 export enum Ordering {
   Greater,

@@ -47,6 +47,7 @@ export interface ExtensionConfigurationSettings {
   mingwSearchDirs: string[];
   emscriptenSearchDirs: string[];
   copyCompileCommands: string|null;
+  configureOnOpen: boolean|null;
   useCMakeServer: boolean;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
@@ -183,6 +184,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get ctestArgs(): string[] { return this.configData.ctestArgs; }
 
+  get configureOnOpen() { return this.configData.configureOnOpen; }
+
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
   get numJobs(): number {
@@ -248,6 +251,7 @@ export class ConfigurationReader implements vscode.Disposable {
     mingwSearchDirs: new vscode.EventEmitter<string[]>(),
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
+    configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),

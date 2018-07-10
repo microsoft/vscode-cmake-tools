@@ -8,16 +8,11 @@ require('module-alias/register');
 
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as cpt from 'vscode-cpptools';
 import * as logging from './logging';
 import * as util from './util';
-
-const log = logging.createLogger('extension');
-
-// import * as api from './api';
-// import { CMakeToolsWrapper } from './wrapper';
-// import { log } from './logging';
-// import { outputChannels } from "./util";
-
+import {CppConfigurationProvider} from '@cmt/cpptools';
+import {CMakeCache} from '@cmt/cache';
 import CMakeTools from './cmake-tools';
 import rollbar from './rollbar';
 import {
@@ -28,6 +23,8 @@ import {
   USER_KITS_FILEPATH,
   kitsPathForWorkspaceFolder,
   kitsAvailableInWorkspaceDirectory,
+  findCLCompilerPath,
+  effectiveKitEnvironment,
 } from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
@@ -38,6 +35,8 @@ import {StatusBar} from './status';
 import {FireNow} from '@cmt/prop';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import {ProgressHandle, DummyDisposable} from './util';
+
+const log = logging.createLogger('extension');
 
 function reportProgress(progress: ProgressHandle|undefined, message: string) {
   if (progress) {
@@ -120,6 +119,10 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _projectOutlineDisposer
       = vscode.window.registerTreeDataProvider('cmake.outline', this._projectOutlineProvider);
 
+  private readonly _configProvider = new CppConfigurationProvider();
+  private _cppToolsAPI?: cpt.CppToolsApi;
+  private _configProviderRegister?: Promise<void>;
+
   /**
    * The active workspace folder. This controls several aspects of the extension,
    * including:
@@ -196,9 +199,69 @@ class ExtensionManager implements vscode.Disposable {
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
     this._projectOutlineDisposer.dispose();
+    if (this._cppToolsAPI) {
+      this._cppToolsAPI.dispose();
+    }
     // Dispose of each CMake Tools we still have loaded
     for (const cmt of this._cmakeToolsInstances.values()) {
       await cmt.asyncDispose();
+    }
+  }
+
+  async _postWorkspaceOpen(ws: vscode.WorkspaceFolder, cmt: CMakeTools) {
+    let should_configure = cmt.workspaceContext.config.configureOnOpen;
+    if (should_configure === null) {
+      interface Choice1 {
+        title: string;
+        doConfigure: boolean;
+      }
+      const chosen = await vscode.window.showInformationMessage<Choice1>(
+          'Would you like to configure this project?',
+          {},
+          {title: 'Yes', doConfigure: true},
+          {title: 'Not now', doConfigure: false},
+      );
+      if (!chosen) {
+        // Do nothing. User cancelled
+        return;
+      }
+      const perist_message
+          = chosen.doConfigure ? 'Always configure projects upon opening?' : 'Never configure projects on opening?';
+      interface Choice2 {
+        title: string;
+        persistMode: 'user'|'workspace';
+      }
+      const persist_pr
+          // Try to persist the user's selection to a `settings.json`
+          = vscode.window
+                .showInformationMessage<Choice2>(
+                    perist_message,
+                    {},
+                    {title: 'Yes', persistMode: 'user'},
+                    {title: 'For this Workspace', persistMode: 'workspace'},
+                    )
+                .then(async choice => {
+                  if (!choice) {
+                    // Use cancelled. Do nothing.
+                    return;
+                  }
+                  let config: vscode.WorkspaceConfiguration;
+                  if (choice.persistMode === 'workspace') {
+                    config = vscode.workspace.getConfiguration(undefined, ws.uri);
+                  } else {
+                    console.assert(choice.persistMode === 'user');
+                    config = vscode.workspace.getConfiguration();
+                  }
+                  await config.update('cmake.configureOnOpen', chosen.doConfigure);
+                });
+      rollbar.takePromise('Persist config-on-open setting', {}, persist_pr);
+      should_configure = chosen.doConfigure;
+    }
+    if (should_configure) {
+      // We've opened a new workspace folder, and the user wants us to
+      // configure it now.
+      log.debug('Configuring workspace on open ', ws.uri);
+      await cmt.configure();
     }
   }
 
@@ -224,6 +287,7 @@ class ExtensionManager implements vscode.Disposable {
       if (this._activeWorkspaceFolder === null) {
         await this._setActiveWorkspaceFolder(ws, progress);
       }
+      rollbar.takePromise('Post-folder-open', {folder: ws}, this._postWorkspaceOpen(ws, new_cmt));
       // Return the newly created instance
       return new_cmt;
     });
@@ -329,10 +393,32 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  private _updateOutline(cmt: CMakeTools) {
+  private _updateCodeModel(cmt: CMakeTools) {
     this._projectOutlineProvider.updateCodeModel(cmt.codeModel, {
       defaultTargetName: cmt.defaultBuildTarget || 'all',
       launchTargetName: cmt.launchTargetName,
+    });
+    rollbar.invokeAsync('Update code model for cpptools', {}, async () => {
+      if (!this._cppToolsAPI) {
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v1);
+      }
+      if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
+        const codeModel = cmt.codeModel;
+        const kit = cmt.activeKit;
+        const cpptools = this._cppToolsAPI;
+        let cache: CMakeCache;
+        try {
+          cache = await CMakeCache.fromPath(await cmt.cachePath);
+        } catch (e) {
+          rollbar.exception('Failed to open CMake cache file on code model update', e);
+          return;
+        }
+        const env = await effectiveKitEnvironment(kit);
+        const clCompilerPath = await findCLCompilerPath(env);
+        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
+        await this.ensureCppToolsProviderRegistered();
+        cpptools.didChangeCustomConfiguration(this._configProvider);
+      }
     });
   }
 
@@ -354,18 +440,18 @@ class ExtensionManager implements vscode.Disposable {
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
         this._statusBar.targetName = t;
-        this._updateOutline(cmt);
+        this._updateCodeModel(cmt);
       });
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');
-        this._updateOutline(cmt);
+        this._updateCodeModel(cmt);
       });
       this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
-      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateOutline(cmt));
+      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateCodeModel(cmt));
     }
   }
 
@@ -867,6 +953,20 @@ class ExtensionManager implements vscode.Disposable {
     return Promise.resolve(fn(cmt));
   }
 
+  async ensureCppToolsProviderRegistered() {
+    if (!this._configProviderRegister) {
+      this._configProviderRegister = this._doRegisterCppTools();
+    }
+    return this._configProviderRegister;
+  }
+
+  async _doRegisterCppTools() {
+    if (!this._cppToolsAPI) {
+      return;
+    }
+    this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
+  }
+
   // The below functions are all wrappers around the backend.
 
   cleanConfigure() { return this.withCMakeTools(-1, cmt => cmt.cleanConfigure()); }
@@ -1054,7 +1154,6 @@ export async function activate(context: vscode.ExtensionContext) {
 // this method is called when your extension is deactivated
 export async function deactivate() {
   log.debug('Deactivate CMakeTools');
-  //   outputChannels.dispose();
   if (_EXT_MANAGER) {
     await _EXT_MANAGER.asyncDispose();
   }
