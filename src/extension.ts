@@ -163,8 +163,10 @@ class ExtensionManager implements vscode.Disposable {
    * @returns `false` if there is not active CMakeTools, or it has no active kit
    * and the user cancelled the kit selection dialog.
    */
-  private async _ensureActiveKit(): Promise<boolean> {
-    const cmt = this._activeCMakeTools;
+  private async _ensureActiveKit(cmt: CMakeTools|null = null): Promise<boolean> {
+    if (!cmt) {
+      cmt = this._activeCMakeTools;
+    }
     if (!cmt) {
       // No CMakeTools. Probably no workspace open.
       return false;
@@ -261,6 +263,10 @@ class ExtensionManager implements vscode.Disposable {
       // We've opened a new workspace folder, and the user wants us to
       // configure it now.
       log.debug('Configuring workspace on open ', ws.uri);
+      // Ensure that there is a kit. This is required for new instances.
+      if (!await this._ensureActiveKit(cmt)) {
+        return;
+      }
       await cmt.configure();
     }
   }
