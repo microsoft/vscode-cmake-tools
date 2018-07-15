@@ -116,6 +116,23 @@
         }
       },
       {
+        "command": "cmake.compileFile",
+        "title": "Compile File",
+        "category": "CMake",
+        "icon": {
+          "dark": "res/build-icon.svg",
+          "light": "res/build-icon.svg"
+        }
+      },
+      {
+        "command": "cmake.outline.compileFile",
+        "title": "Compile This File",
+        "icon": {
+          "dark": "res/build-icon.svg",
+          "light": "res/build-icon.svg"
+        }
+      },
+      {
         "command": "cmake.install",
         "title": "Install",
         "category": "CMake"
@@ -257,6 +274,9 @@
           "command": "cmake.buildWithTarget"
         },
         {
+          "command": "cmake.compileFile"
+        },
+        {
           "command": "cmake.setVariant"
         },
         {
@@ -365,6 +385,43 @@
           "command": "cmake.outline.setLaunchTarget",
           "when": "view == cmake.outline && viewItem =~ /type=EXECUTABLE/ && viewItem =~ /isLaunch=false/",
           "group": "2_targetState@2"
+        },
+        {
+          "command": "cmake.outline.compileFile",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/",
+          "group": "inline"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "cmake.compileFile",
+          "when": "resourceLangId == cpp"
+        },
+        {
+          "command": "cmake.compileFile",
+          "when": "resourceLangId == c"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "cmake.compileFile",
+          "when": "resourceLangId == cpp",
+          "group": "navigation"
+        },
+        {
+          "command": "cmake.compileFile",
+          "when": "resourceLangId == c",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "cmake.compileFile",
+          "when": "resourceLangId == cpp"
+        },
+        {
+          "command": "cmake.compileFile",
+          "when": "resourceLangId == c"
         }
       ]
     },

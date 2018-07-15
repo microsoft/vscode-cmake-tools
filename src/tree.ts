@@ -204,7 +204,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
   }
 }
 
-class SourceFileNode extends BaseNode {
+export class SourceFileNode extends BaseNode {
   constructor(readonly targetName: string, readonly filePath: string) { super(`${targetName}::${filePath}`); }
 
   get name() { return path.basename(this.filePath); }
@@ -217,6 +217,7 @@ class SourceFileNode extends BaseNode {
     const item = new vscode.TreeItem(path.basename(this.filePath));
     item.id = this.id;
     item.resourceUri = vscode.Uri.file(this.filePath);
+    item.contextValue = 'nodeType=file';
     item.command = {
       title: 'Open file',
       command: 'vscode.open',

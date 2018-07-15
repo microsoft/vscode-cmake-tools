@@ -33,7 +33,7 @@ import paths from '@cmt/paths';
 import {Strand} from '@cmt/strand';
 import {StatusBar} from './status';
 import {FireNow} from '@cmt/prop';
-import {ProjectOutlineProvider, TargetNode} from '@cmt/tree';
+import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import {ProgressHandle, DummyDisposable} from './util';
 
 const log = logging.createLogger('extension');
@@ -1052,6 +1052,31 @@ class ExtensionManager implements vscode.Disposable {
 
   buildWithTarget() { return this.withCMakeTools(-1, cmt => cmt.buildWithTarget()); }
 
+  /**
+   * Compile a single source file.
+   * @param file The file to compile. Either a file path or the URI to the file.
+   * If not provided, compiles the file in the active text editor.
+   */
+  async compileFile(file?: string|vscode.Uri) {
+    if (file instanceof vscode.Uri) {
+      file = file.fsPath;
+    }
+    if (!file) {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return null;
+      }
+      file = editor.document.uri.fsPath;
+    }
+    for (const cmt of this._cmakeToolsInstances.values()) {
+      const term = await cmt.tryCompileFile(file);
+      if (term) {
+        return term;
+      }
+    }
+    vscode.window.showErrorMessage('Unable to find compilation information for this file');
+  }
+
   setDefaultTarget(name?: string) { return this.withCMakeTools(undefined, cmt => cmt.setDefaultTarget(name)); }
 
   ctest() { return this.withCMakeTools(-1, cmt => cmt.ctest()); }
@@ -1126,7 +1151,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'build',        'setVariant',       'install',          'editCache',      'clean',
     'cleanRebuild', 'buildWithTarget',  'setDefaultTarget', 'ctest',          'stop',
     'quickStart',   'launchTargetPath', 'debugTarget',      'launchTarget',   'selectLaunchTarget',
-    'resetState',   'viewLog',
+    'resetState',   'viewLog',          'compileFile',
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 
@@ -1173,6 +1198,8 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
                                                             {folder: wsf},
                                                             () => ext.setActiveWorkspaceFolder(wsf));
                                       }),
+      vscode.commands.registerCommand('cmake.outline.compileFile',
+                                      (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
   ]);
 }
 

@@ -13,7 +13,6 @@ import {createLogger} from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import * as util from './util';
 import {DirectoryContext} from './workspace';
 
 const log = createLogger('cms-driver');
@@ -222,48 +221,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
     return this._clientChangeInProgress;
-  }
-
-  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
-    if (!this.codeModel) {
-      return null;
-    }
-    const build_config = this.codeModel.configurations.length === 1
-        ? this.codeModel.configurations[0]
-        : this.codeModel.configurations.find(c => c.name == this.currentBuildType);
-    if (!build_config) {
-      return null;
-    }
-    for (const project of build_config.projects) {
-      for (const target of project.targets) {
-        if (!target.fileGroups) {
-          continue;
-        }
-        for (const group of target.fileGroups) {
-          const found = group.sources.find(source => {
-            if (!target.sourceDirectory) {
-              return false;
-            }
-            const abs_source = path.isAbsolute(filepath) ? source : path.join(target.sourceDirectory, source);
-            const abs_filepath = path.isAbsolute(filepath) ? filepath : path.join(this.sourceDir, filepath);
-            return util.normalizePath(abs_source) === util.normalizePath(abs_filepath);
-          });
-          if (found) {
-            const defs = (group.defines || []).map(util.parseCompileDefinition);
-            const defs_o = defs.reduce((acc, [key, value]) => ({...acc, [key]: value}), {});
-            const includes = (group.includePath || []).map(p => ({path: p.path, isSystem: p.isSystem || false}));
-            const flags = util.splitCommandLine(group.compileFlags || '');
-            return {
-              file: found,
-              compileDefinitions: defs_o,
-              compileFlags: flags,
-              includeDirectories: includes,
-            };
-          }
-        }
-      }
-    }
-    return null;
   }
 
   private async _restartClient(): Promise<void> {
