@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 
 import rollbar from './rollbar';
 import {lexicographicalCompare, splitPath, thisExtension} from './util';
+import { TargetInformation } from '@cmt/target';
 
 interface NamedItem {
   name: string;
@@ -32,9 +33,10 @@ abstract class BaseNode {
  * Context to use while updating the tree
  */
 interface TreeUpdateContext {
-  defaultTargetName: string;
+  defaultTarget?: TargetInformation;
   launchTargetName: string|null;
   nodesToUpdate: BaseNode[];
+  folder: vscode.WorkspaceFolder;
 }
 
 /**
@@ -228,7 +230,7 @@ export class SourceFileNode extends BaseNode {
 }
 
 export class TargetNode extends BaseNode {
-  constructor(readonly projectName: string, cm: cms.CodeModelTarget) {
+  constructor(readonly projectName: string, cm: cms.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
     super(`${projectName}::${cm.name}`);
     this.name = cm.name;
     this.sourceDir = cm.sourceDirectory || '';
@@ -317,7 +319,7 @@ export class TargetNode extends BaseNode {
     did_update = did_update || (this._type !== cm.type);
     this._type = cm.type;
 
-    const new_is_default = this.name === ctx.defaultTargetName;
+    const new_is_default = !!ctx.defaultTarget && this.name === ctx.defaultTarget.target.name;
     did_update = did_update || new_is_default !== this._isDefault;
     this._isDefault = new_is_default;
 
@@ -370,7 +372,7 @@ export class TargetNode extends BaseNode {
 }
 
 class ProjectNode extends BaseNode {
-  constructor(readonly name: string) { super(name); }
+  constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder) { super(name); }
 
   private readonly _rootDir = new DirectoryNode<TargetNode>('', '', '');
 
@@ -409,7 +411,7 @@ class ProjectNode extends BaseNode {
       context: ctx,
       update: (tgt, cm) => tgt.update(cm, ctx),
       create: cm => {
-        const node = new TargetNode(this.name, cm);
+        const node = new TargetNode(this.name, cm, this.folder);
         node.update(cm, ctx);
         return node;
       },
@@ -420,32 +422,75 @@ class ProjectNode extends BaseNode {
   }
 }
 
-export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode> {
-  private readonly _changeEvent = new vscode.EventEmitter<BaseNode|null>();
-  get onDidChangeTreeData() { return this._changeEvent.event; }
+interface ExternalUpdateContext {
+  launchTargetName: string|null;
+  defaultTarget?: TargetInformation;
+}
 
+class WorkspaceFolderNode extends BaseNode {
+  constructor(readonly wsFolder: vscode.WorkspaceFolder) { super(`wsf/${wsFolder.name}`); }
   private _children: BaseNode[] = [];
 
+  getOrderTuple() { return [this.id]; }
+
+  getTreeItem() {
+    const item = new vscode.TreeItem(this.wsFolder.name, vscode.TreeItemCollapsibleState.Expanded);
+    item.iconPath = vscode.ThemeIcon.Folder;
+    item.label += ' — Workspace Folder';
+    return item;
+  }
+
   private _codeModel: cms.CodeModelContent = {configurations: []};
-
   get codeModel() { return this._codeModel; }
-
-  updateCodeModel(model: cms.CodeModelContent|null, exCtx: {launchTargetName: string|null, defaultTargetName: string}) {
+  updateCodeModel(model: cms.CodeModelContent|null, ctx: TreeUpdateContext) {
     if (!model || model.configurations.length < 1) {
       this._children = [];
-      this._changeEvent.fire(null);
+      ctx.nodesToUpdate.push(this);
       return;
     }
     this._codeModel = model;
     const config = model.configurations[0];
-    const updates: BaseNode[] = [];
     const new_children: BaseNode[] = [];
     for (const pr of config.projects) {
-      const item = new ProjectNode(pr.name);
-      item.update(pr, {...exCtx, nodesToUpdate: updates});
+      const item = new ProjectNode(pr.name, ctx.folder);
+      item.update(pr, ctx);
       new_children.push(item);
     }
     this._children = new_children;
+  }
+
+  getChildren() {
+    return this._children;
+  }
+}
+
+export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode> {
+  private readonly _changeEvent = new vscode.EventEmitter<BaseNode|null>();
+  get onDidChangeTreeData() { return this._changeEvent.event; }
+
+  private _folders = new Map<string, WorkspaceFolderNode>();
+
+  addFolder(folder: vscode.WorkspaceFolder) {
+    this._folders.set(folder.name, new WorkspaceFolderNode(folder));
+    this._changeEvent.fire(null);
+  }
+
+  removeFolder(folder: vscode.WorkspaceFolder) {
+    this._folders.delete(folder.name);
+    this._changeEvent.fire(null);
+  }
+
+  updateCodeModel(folder: vscode.WorkspaceFolder, model: cms.CodeModelContent|null, ctx: ExternalUpdateContext) {
+    let existing = this._folders.get(folder.name);
+    if (!existing) {
+      rollbar.error('Updating code model on folder that does not yet exist?');
+      // That's an error, but we can keep going otherwise.
+      existing = new WorkspaceFolderNode(folder);
+      this._folders.set(folder.name, existing);
+    }
+
+    const updates: BaseNode[] = [];
+    existing.updateCodeModel(model, {...ctx, nodesToUpdate: updates, folder});
 
     this._changeEvent.fire(null);
     for (const node of updates) {
@@ -455,12 +500,16 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
 
   getChildren(node?: BaseNode): BaseNode[] {
     try {
-      if (!node) {
-        // Request for root node
-        return this._children;
-      } else {
+      if (node) {
         return node.getChildren();
       }
+      // Request for root nodes
+      if (this._folders.size <= 1) {
+        for (const folder of this._folders.values()) {
+          return folder.getChildren();
+        }
+      }
+      return [...this._folders.values()];
     } catch (e) {
       rollbar.error('Error while rendering children nodes');
       return [];

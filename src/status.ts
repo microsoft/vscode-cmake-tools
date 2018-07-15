@@ -45,7 +45,7 @@ export class StatusBar implements vscode.Disposable {
     this._buildButton.command = 'cmake.build';
     this._kitSelectionButton.command = 'cmake.selectKit';
     this._kitSelectionButton.tooltip = 'Click to change the active kit';
-    this._targetButton.command = 'cmake.setDefaultTarget';
+    this._targetButton.command = 'cmake.changeDefaultTarget';
     this._targetButton.tooltip = 'Set the active target to build';
     this._testButton.command = 'cmake.ctest';
     this._testButton.tooltip = 'Run CTest tests';
@@ -84,7 +84,7 @@ export class StatusBar implements vscode.Disposable {
   private _visible: boolean = true;
 
   private _reloadStatusButton() {
-    this._cmakeToolsStatusItem.text = `CMake: ${this._buildTypeLabel}: ${this._statusMessage}`;
+    this._cmakeToolsStatusItem.text = `CMake: ${this._buildTypeLabel}`;
     this.reloadVisibility();
   }
 
@@ -107,16 +107,6 @@ export class StatusBar implements vscode.Disposable {
   private _buildTypeLabel: string = 'Unconfigured';
   setBuildTypeLabel(v: string) {
     this._buildTypeLabel = v;
-    this._reloadStatusButton();
-  }
-
-  /**
-   * The message shown in the primary status button. Tells the user what the
-   * extension is currently up to.
-   */
-  private _statusMessage: string = 'Loading...';
-  setStatusMessage(v: string) {
-    this._statusMessage = v;
     this._reloadStatusButton();
   }
 

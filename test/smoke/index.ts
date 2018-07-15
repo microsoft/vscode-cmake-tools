@@ -5,6 +5,7 @@
 require('module-alias/register');
 
 import * as path from 'path';
+import * as vscode from 'vscode';
 import {SmokeContext, SUITE_REGISTRY, SmokeSuite, SmokeTest} from './smoke';
 import {fs} from '@cmt/pr';
 
@@ -68,7 +69,7 @@ class CMakeToolsSmokeTestRunner implements TestRunner {
     const test_out = path.join(smokeOutDir, test_rel);
     const test_js = path.join(test_out, 'test.js');
     const ext_dir = path.normalize(path.join(smokeDir, '../..'));
-    const ctx = new SmokeContext(pr_root, ext_dir);
+    const ctx = new SmokeContext({name: '_project-dir', uri: vscode.Uri.file(pr_root), index: 0}, ext_dir);
     try {
       await this._runTestFile(ctx, test_js);
     } finally {

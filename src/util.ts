@@ -393,3 +393,9 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
   console.assert(false, 'Impossible code path');
   return 0;
 }
+
+export function disposeAll(disp: Iterable<vscode.Disposable>) {
+  for (const d of disp) {
+    d.dispose();
+  }
+}

@@ -143,7 +143,7 @@
         "category": "CMake"
       },
       {
-        "command": "cmake.setDefaultTarget",
+        "command": "cmake.changeDefaultTarget",
         "title": "Set the default build target",
         "category": "CMake"
       },
@@ -280,10 +280,7 @@
           "command": "cmake.setVariant"
         },
         {
-          "command": "cmake.setDefaultTarget"
-        },
-        {
-          "command": "cmake.setDefaultTarget"
+          "command": "cmake.changeDefaultTarget"
         },
         {
           "command": "cmake.cleanConfigure"
@@ -348,7 +345,7 @@
       "view/item/context": [
         {
           "command": "cmake.outline.buildTarget",
-          "when": "view == cmake.outline && viewItem =~ /canBuild=true/",
+          "when": "view == cmake.outline && viewItem =~ /canBuild=true|canRun=true/",
           "group": "inline"
         },
         {

@@ -35,7 +35,7 @@ suite('[Environment Variables in Variants]', async () => {
     }
 
     this.timeout(30000);
-    await cmt.asyncDispose();
+    await cmt.shutdownAndDispose();
     testEnv.teardown();
   });
 

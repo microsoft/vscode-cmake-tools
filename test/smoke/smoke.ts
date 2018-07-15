@@ -46,7 +46,7 @@ class SmokeTestExtensionContext implements vscode.ExtensionContext {
 type TestResult<T> = Thenable<T>|T;
 
 export class SmokeContext {
-  constructor(readonly projectDir: string, readonly extensionPath: string) {}
+  constructor(readonly projectDir: vscode.WorkspaceFolder, readonly extensionPath: string) {}
 
   private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
@@ -69,7 +69,7 @@ export class SmokeContext {
       return Promise.resolve(value);
     } finally {
       // Clean up. Even on error.
-      await cmt.asyncDispose();
+      await cmt.shutdownAndDispose();
     }
   }
 }

@@ -27,7 +27,7 @@ suite('[Variable Substitution]', async () => {
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(30000);
-    await cmt.asyncDispose();
+    await cmt.shutdownAndDispose();
     testEnv.teardown();
   });
 

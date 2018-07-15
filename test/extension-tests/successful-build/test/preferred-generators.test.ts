@@ -238,7 +238,7 @@ function makeExtensionTestSuite(name: string,
 
     teardown(async function(this: Mocha.IBeforeAndAfterContext) {
       this.timeout(100000);
-      await context.cmt.asyncDispose();
+      await context.cmt.shutdownAndDispose();
       context.testEnv.clean();
     });
 

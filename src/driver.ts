@@ -15,7 +15,6 @@ import {CMakeGenerator, getVSKitEnvironment, Kit, kitChangeNeedsClean} from './k
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
-import rollbar from './rollbar';
 import * as util from './util';
 import {ConfigureArguments, VariantOption} from './variant';
 import {DirectoryContext} from './workspace';
@@ -66,15 +65,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
   abstract get executableTargets(): api.ExecutableTarget[];
 
   /**
-   * Do any necessary disposal for the driver. For the CMake Server driver,
-   * this entails shutting down the server process and closing the open pipes.
-   *
-   * The reason this is separate from the regular `dispose()` is so that the
-   * driver shutdown may be `await`ed on to ensure full shutdown.
-   */
-  abstract asyncDispose(): Promise<void>;
-
-  /**
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
@@ -93,16 +83,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
-   * Dispose the driver. This disposes some things synchronously, but also
-   * calls the `asyncDispose()` method to start any asynchronous shutdown.
+   * Dispose the driver.
    */
-  dispose() {
-    log.debug('Disposing base CMakeDriver');
-    for (const term of this._compileTerms.values()) {
-      term.dispose();
-    }
-    rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
-  }
+  abstract dispose(): void;
 
   /**
    * The environment variables required by the current kit
@@ -171,7 +154,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * `file://` scheme.
    */
   private get _workspaceRootPath() {
-    return this.ws.directoryPath;
+    return this.ws.folder.uri.fsPath;
   }
 
   /**
@@ -629,9 +612,14 @@ Please install or configure a preferred generator, or update settings.json or yo
     await this._refreshExpansions();
 
     const retc = await this.doConfigure(expanded_flags, consumer);
-
+    this._onReconfiguredEmitter.fire();
     return retc;
   }
+
+  get onReconfigured() {
+    return this._onReconfiguredEmitter.event;
+  }
+  private _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
     log.debug('Start build', target);

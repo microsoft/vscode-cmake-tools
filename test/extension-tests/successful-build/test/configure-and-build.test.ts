@@ -43,7 +43,7 @@ suite('Build', async () => {
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
-    await cmt.asyncDispose();
+    await cmt.shutdownAndDispose();
   });
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -56,7 +56,7 @@ suite('Build', async () => {
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
-    await cmt.asyncDispose();
+    await cmt.shutdownAndDispose();
     testEnv.clean();
   });
 
@@ -98,8 +98,7 @@ suite('Build', async () => {
     const runTestTargetElement = targets.find(item => item.name === 'runTestTarget');
     expect(runTestTargetElement).to.be.not.an('undefined');
 
-    await cmt.setDefaultTarget('runTestTarget');
-    expect(await cmt.build()).to.be.eq(0);
+    expect(await cmt.build('runTestTarget')).to.be.eq(0);
 
     const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
     const result = await resultFile.getResultAsJson();
@@ -109,8 +108,7 @@ suite('Build', async () => {
   test('Configure with cache-initializer', async () => {
     testEnv.config.updatePartial({cacheInit: 'TestCacheInit.cmake'});
     expect(await cmt.configure()).to.be.eq(0);
-    await cmt.setDefaultTarget('runTestTarget');
-    expect(await cmt.build()).to.be.eq(0);
+    expect(await cmt.build('runTestTarget')).to.be.eq(0);
     const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
     const result = await resultFile.getResultAsJson();
     expect(result['cookie']).to.eq('cache-init-cookie');
@@ -240,7 +238,7 @@ suite('Build', async () => {
 
   test('Test build twice with clean', async function(this: ITestCallbackContext) {
         expect(await cmt.build()).eq(0);
-        await cmt.clean();
+        await cmt.build('clean');
         expect(await cmt.build()).eq(0);
         await testEnv.result.getResultAsJson();
       }).timeout(100000);
@@ -257,7 +255,8 @@ suite('Build', async () => {
         // Select compiler build node dependent
         await cmt.build();
         expect(await cmt.build()).eq(0);
-        await cmt.cleanRebuild();
+        await cmt.build('clean');
+        await cmt.build();
         expect(await cmt.build()).eq(0);
 
         await testEnv.result.getResultAsJson();

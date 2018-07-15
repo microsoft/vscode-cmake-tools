@@ -175,15 +175,11 @@ export interface CMakeToolsAPI extends Disposable {
   /**
    * All targets available to be built
    */
-  readonly targets: Thenable<Target[]>;
+  readonly targets: Target[];
   /**
    * Event fired when the configure/generate stage completes
    */
-  readonly reconfigured: Event<void>;
-  /**
-   * Event fired when the active target changes.
-   */
-  readonly targetChangedEvent: Event<void>;
+  readonly onReconfigured: Event<void>;
 
   /**
    * Execute a command using the CMake executable.
@@ -235,13 +231,6 @@ export interface CMakeToolsAPI extends Disposable {
   install(): Thenable<number>;
 
   /**
-   * Clean the build output. Runs the `clean` target.
-   *
-   * @returns The exit code from the build command
-   */
-  clean(): Thenable<number>;
-
-  /**
    * Clean up old configuration and reconfigure.
    *
    * @returns The exit code from CMake
@@ -251,13 +240,6 @@ export interface CMakeToolsAPI extends Disposable {
    * intermediate configuration files.
    */
   cleanConfigure(): Thenable<number>;
-
-  /**
-   * Clean the build output and rebuild
-   *
-   * @returns The exit code from the build command.
-   */
-  cleanRebuild(): Thenable<number>;
 
   /**
    * Execute CTest

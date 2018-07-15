@@ -39,8 +39,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     await cb();
   }
 
-  // Legacy disposal does nothing
-  async asyncDispose() { this._cacheWatcher.dispose(); }
+  dispose() { this._cacheWatcher.dispose(); }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     // Dup args so we can modify them

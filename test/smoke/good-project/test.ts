@@ -14,7 +14,7 @@ smokeSuite('good-project', suite => {
   });
   suite.teardown('dispose cmake-tools', async () => {
     if (cmt) {
-      await cmt.asyncDispose();
+      await cmt.shutdownAndDispose();
     }
   });
   suite.smokeTest('configure', async () => { expect(await cmt.configure()).to.eq(0); });

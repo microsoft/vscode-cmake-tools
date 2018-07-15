@@ -5,6 +5,7 @@
 import {ConfigurationReader} from '@cmt/config';
 import paths from '@cmt/paths';
 import {StateManager} from '@cmt/state';
+import * as vscode from 'vscode';
 
 /**
  * State attached to a directory in a workspace. Contains a config object and
@@ -15,7 +16,7 @@ export class DirectoryContext {
       /**
        * Absolute path to the directory associated with this context
        */
-      public readonly directoryPath: string,
+      public readonly folder: vscode.WorkspaceFolder,
       /**
        * The configuration for the associated directory.
        */
@@ -31,9 +32,9 @@ export class DirectoryContext {
    * @param dir The directory for which to create a context
    * @param state The state that will be associated with the returned context
    */
-  static createForDirectory(dir: string, state: StateManager): DirectoryContext {
-    const config = ConfigurationReader.createForDirectory(dir);
-    return new DirectoryContext(dir, config, state);
+  static createForDirectory(folder: vscode.WorkspaceFolder, state: StateManager): DirectoryContext {
+    const config = ConfigurationReader.createForDirectory(folder);
+    return new DirectoryContext(folder, config, state);
   }
 
   /**
