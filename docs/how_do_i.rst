@@ -49,11 +49,15 @@ See the :ref:`debugging.launch-json` documentation.
 Set Up Include Paths for C++ IntelliSense?
 ******************************************
 
-CMake Tool's won't do this on its own, but you can `use compile_commands.json
-in conjunction with Microsoft's cpptools extension
-<https://github.com/Microsoft/vscode-cpptools/blob/f5b2d3018253447b462aa5eb73c2099c68ebb24e/Documentation/Getting%20started%20with%20IntelliSense%20configuration.md>`_.
+CMake Tools currently supports Microsoft's cpptools extension.
+If the cpptools extension is installed and enabled, then configuring your
+project will attempt this integration automatically.
 
-Set the value of ``compileCommands`` to point to ``<build-dir>/compile_commands.json``,
-where ``<build-dir>`` is the build directory used by CMake Tools. The default
-build directory is ``${workspaceRoot}/build``, so the default value of
-``compileCommands`` would be ``${workspaceRoot}/build/compile_commands.json``.
+The first time this integration is attempted, cpptools will show a prompt
+confirming that you wish to use CMake Tools to provide the configuration
+information for your project. Accepting this prompt is all you need to do to
+activate the integration. From then on, CMake Tools will provide and
+automatically update cpptools' configuration information for each source file
+in your project.
+
+Happy IntelliSense-ing!
