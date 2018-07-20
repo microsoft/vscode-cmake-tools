@@ -139,7 +139,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * two-phase init and a private constructor. The driver may be replaced at
    * any time by the user making changes to the workspace configuration.
    */
-  private _cmakeDriver: Promise<CMakeDriver | null> = Promise.resolve(null);
+  private _cmakeDriver: Promise<CMakeDriver|null> = Promise.resolve(null);
   private _cmakeDriverSync?: CMakeDriver;
 
   /**
@@ -716,14 +716,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                          'cmake-cache://' + drv.cachePath,
                                          vscode.ViewColumn.Three,
                                          'CMake Cache');
-  }
-
-  async buildWithTarget(): Promise<number> {
-    // const target = await this.showTargetSelector();
-    // if (target === null)
-    //   return -1;
-    // return this.build(target); XXX
-    return -1;
   }
 
   private readonly _ctestController = new CTestDriver(this.workspaceContext);
