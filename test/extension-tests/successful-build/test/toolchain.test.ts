@@ -1,6 +1,7 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
+import {kitsAvailableInWorkspaceDirectory} from '@cmt/kit';
 import {normalizePath} from '@cmt/util';
 import {DefaultEnvironment, expect} from '@test/util';
 
@@ -13,15 +14,16 @@ suite('[Toolchain Substitution]', async () => {
     if (process.platform === 'win32')
       this.skip();
 
-    testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder',
-                                     'build',
-                                     'output.txt',
-                                     /Test Toolchain/);
+    testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+
+    const kits = await kitsAvailableInWorkspaceDirectory(testEnv.projectFolder.location);
+    const tc_kit = kits.find(k => k.name === 'Test Toolchain');
+    expect(tc_kit).to.not.eq(undefined);
 
     // Set preferred generators
     testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles']});
-    await cmt.selectKit();
+    await cmt.setKit(tc_kit!);
 
     testEnv.projectFolder.buildDirectory.clear();
   });

@@ -3,8 +3,14 @@
 [![Gitter chat](https://badges.gitter.im/vscode-cmake-tools/Lobby.png)](https://gitter.im/vscode-cmake-tools/Lobby)
 
 [CMake Tools](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools) provides the native developer a full-featured, convenient, and
-powerful configure+build workflow for CMake-based projects within the
-Visual Studio Code editor.
+powerful configure+build workflow for CMake-based projects in
+Visual Studio Code.
+
+## 1.1.0 Changes! Exciting!
+
+**1.1.0** includes a few big new changes and features.
+[Read about them here](https://vector-of-bool.github.io/2018/07/20/cmt-1.1.0.html), and be
+sure check the changelog!
 
 ## Find Out More:
 

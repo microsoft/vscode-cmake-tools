@@ -3,6 +3,47 @@
 Changelog and History
 #####################
 
+.. _changes-1.1.0:
+
+1.1.0
+*****
+
+1.1.0 is the most exciting release yet! It includes several long-awaited
+features, including but not limited to:
+
+- *A project outline view*. CMake Tools will now render a tree representation of
+  your CMake project, including all targets and source files.
+
+  - Individual targets can be built/run using the context menu in the outline.
+  - Individual source files can be compiled using the outline context menu.
+  - The debugger can be started by right-clicking on the desired executable.
+
+- Update progress and cancellation notifications. Now uses the official VSCode
+  progress APIs. A proper *Cancel* button is visible on the progress
+  notification for cancelling the build.
+- Progress for the *Configure/Generate* phase. It is up to CMake to generate
+  reliable progress values, though.
+- Automatically configure a project when it is opened. CMake Tools will ask you
+  the first time, and this preference can be persisted.
+- Will automatically ask you for a debug target if you try to debug but haven't
+  yet set one.
+
+``cpptools`` Integration!
+=========================
+
+The highest-demand feature of all has finally landed!
+
+Recent versions of Microsoft's C and C++ extension now export an extensibility
+API that gives external sources the opportunity to provide project configuration
+information on a file-by-file basis.
+
+CMake Tools 1.1.0+ will utilize this API to provide per-file compilation and
+configuration information to support the C++ extension. This means that a
+properly set up CMake project need not manually set configuration information
+to receive the benefits of cpptools' IntelliSense engine.
+
+Check :ref:`the updated How-Do-I page <hdi.intellisense>`.
+
 .. _changes-1.0.1:
 
 1.0.1

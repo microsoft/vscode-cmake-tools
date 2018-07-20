@@ -24,7 +24,6 @@ export interface RequiredExpansionContextVars {
   buildType: string;
   workspaceRootFolderName: string;
   generator: string;
-  projectName: string;
   userHome: string;
 }
 

@@ -13,7 +13,6 @@ import {createLogger} from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import * as util from './util';
 import {DirectoryContext} from './workspace';
 
 const log = createLogger('cms-driver');
@@ -32,6 +31,10 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private _cacheEntries = new Map<string, cache.Entry>();
   private _cmakeInputFileSet = InputFileSet.createEmpty();
 
+  private readonly _progressEmitter = new vscode.EventEmitter<cms.ProgressMessage>();
+  get onProgress() {
+    return this._progressEmitter.event;
+  }
 
   /**
    * The previous configuration environment. Used to detect when we need to
@@ -44,14 +47,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
   get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
   set codeModel(v: null|cms.CodeModelContent) {
     this._codeModel = v;
-    if (v && v.configurations.length && v.configurations[0].projects.length) {
-      this.doSetProjectName(v.configurations[0].projects[0].name);
-    } else {
-      this.doSetProjectName('No project');
-    }
   }
 
+  private readonly _codeModelChanged = new vscode.EventEmitter<null|cms.CodeModelContent>();
+  get onCodeModelChanged() { return this._codeModelChanged.event; }
+
   async asyncDispose() {
+    this._codeModelChanged.dispose();
+    this._progressEmitter.dispose();
     if (this._cmsClient) {
       await (await this._cmsClient).shutdown();
     }
@@ -138,6 +141,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       return acc;
     }, new Map<string, cache.Entry>());
     this.codeModel = await cl.sendRequest('codemodel');
+    this._codeModelChanged.fire(this.codeModel);
   }
 
   async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
@@ -219,42 +223,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return this._clientChangeInProgress;
   }
 
-  async compilationInfoForFile(filepath: string): Promise<api.CompilationInfo|null> {
-    if (!this.codeModel) {
-      return null;
-    }
-    const build_config = this.codeModel.configurations.length === 1
-        ? this.codeModel.configurations[0]
-        : this.codeModel.configurations.find(c => c.name == this.currentBuildType);
-    if (!build_config) {
-      return null;
-    }
-    for (const project of build_config.projects) {
-      for (const target of project.targets) {
-        for (const group of target.fileGroups) {
-          const found = group.sources.find(source => {
-            const abs_source = path.isAbsolute(filepath) ? source : path.join(target.sourceDirectory, source);
-            const abs_filepath = path.isAbsolute(filepath) ? filepath : path.join(this.sourceDir, filepath);
-            return util.normalizePath(abs_source) === util.normalizePath(abs_filepath);
-          });
-          if (found) {
-            const defs = (group.defines || []).map(util.parseCompileDefinition);
-            const defs_o = defs.reduce((acc, [key, value]) => ({...acc, [key]: value}), {});
-            const includes = (group.includePath || []).map(p => ({path: p.path, isSystem: p.isSystem || false}));
-            const flags = util.splitCommandLine(group.compileFlags);
-            return {
-              file: found,
-              compileDefinitions: defs_o,
-              compileFlags: flags,
-              includeDirectories: includes,
-            };
-          }
-        }
-      }
-    }
-    return null;
-  }
-
   private async _restartClient(): Promise<void> {
     this._cmsClient = this._doRestartClient();
     const client = await this._cmsClient;
@@ -282,7 +250,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
         // on file changes?
       },
       onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
-      onProgress: async _prog => {},
+      onProgress: async prog => {
+        this._progressEmitter.fire(prog);
+      },
       pickGenerator: () => this.getBestGenerator(),
     });
   }

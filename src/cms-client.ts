@@ -217,29 +217,30 @@ export interface CodeModelParams {}
 export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel'; }
 
 export interface CodeModelFileGroup {
-  language: string;
-  compileFlags: string;
+  language?: string;
+  compileFlags?: string;
   includePath?: {path: string; isSystem?: boolean;}[];
   defines?: string[];
   sources: string[];
 }
 
+export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
+
 export interface CodeModelTarget {
   name: string;
-  type:
-      ('STATIC_LIBRARY'|'MODULE_LIBRARY'|'SHARED_LIBRARY'|'OBJECT_LIBRARY'|'EXECUTABLE'|'UTILITY'|'INTERFACE_LIBRARY');
-  fullName: string;
-  sourceDirectory: string;
-  buildDirectory: string;
+  type: TargetTypeString;
+  fullName?: string;
+  sourceDirectory?: string;
+  buildDirectory?: string;
   artifacts?: string[];
-  linkerLanguage: string;
-  linkLibraries: string[];
-  linkFlags: string[];
-  linkLanguageFlags: string[];
-  frameworkPath: string;
-  linkPath: string;
-  sysroot: string;
-  fileGroups: CodeModelFileGroup[];
+  linkerLanguage?: string;
+  linkLibraries?: string[];
+  linkFlags?: string[];
+  linkLanguageFlags?: string[];
+  frameworkPath?: string;
+  linkPath?: string;
+  sysroot?: string;
+  fileGroups?: CodeModelFileGroup[];
 }
 
 export interface CodeModelProject {

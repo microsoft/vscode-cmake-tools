@@ -1,5 +1,5 @@
 import {CMakeTools} from '@cmt/cmake-tools';
-import {DefaultEnvironment, expect} from '@test/util';
+import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import sinon = require('sinon');
 import * as fs from 'fs';
 
@@ -14,10 +14,8 @@ suite('[Debug/Lauch interface]', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-    await cmt.scanForKits();
-
+    await cmt.setKit(await getFirstSystemKit());
     testEnv.projectFolder.buildDirectory.clear();
-    await cmt.selectKit();
     expect(await cmt.build()).to.be.eq(0);
   });
 

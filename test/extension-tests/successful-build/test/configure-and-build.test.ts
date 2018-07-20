@@ -1,7 +1,14 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import {fs} from '@cmt/pr';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {
+  clearExistingKitConfigurationFile,
+  DefaultEnvironment,
+  expect,
+  getFirstSystemKit,
+  getMatchingProjectKit,
+  getMatchingSystemKit
+} from '@test/util';
 import {ITestCallbackContext} from 'mocha';
 import * as path from 'path';
 
@@ -36,8 +43,6 @@ suite('Build', async () => {
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
-    await cmt.scanForKits();
-    await cmt.selectKit();
     await cmt.asyncDispose();
   });
 
@@ -45,7 +50,7 @@ suite('Build', async () => {
     this.timeout(100000);
 
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-    await cmt.selectKit();
+    await cmt.setKit(await getFirstSystemKit());
     testEnv.projectFolder.buildDirectory.clear();
   });
 
@@ -123,12 +128,12 @@ suite('Build', async () => {
 
     // Run test
     testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-    await cmt.selectKit();
+    await cmt.setKit(await getMatchingSystemKit(compiler[0].kitLabel));
 
     await cmt.build();
 
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-    await cmt.selectKit();
+    await cmt.setKit(await getMatchingSystemKit(compiler[1].kitLabel));
 
     await cmt.build();
     const result1 = await testEnv.result.getResultAsJson();
@@ -147,11 +152,11 @@ suite('Build', async () => {
          const compiler = os_compilers[workername];
 
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-         await cmt.selectKit();
+         await cmt.setKit(await getMatchingSystemKit(compiler[0].kitLabel));
          await cmt.build();
 
          testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-         await cmt.selectKit();
+         await cmt.setKit(await getMatchingSystemKit(compiler[1].kitLabel));
          await cmt.build();
 
          const result1 = await testEnv.result.getResultAsJson();
@@ -178,14 +183,16 @@ suite('Build', async () => {
 
          testEnv.config.updatePartial({preferredGenerators: []});
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-         await cmt.selectKit();
+         await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
 
-         await cmt.build();
+         let retc = await cmt.build();
+         expect(retc).eq(0);
 
          testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-         await cmt.selectKit();
+         await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
 
-         await cmt.build();
+         retc = await cmt.build();
+         expect(retc).eq(0);
          const result1 = await testEnv.result.getResultAsJson();
          expect(result1['cmake-generator']).to.eql(compiler[1].generator);
        })
@@ -207,17 +214,18 @@ suite('Build', async () => {
       this.skip();
     const compiler = os_compilers[workername];
 
-    testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-    await cmt.selectKit();
+         testEnv.config.updatePartial({preferredGenerators: []});
+         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+    await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
 
     await cmt.build();
 
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-    await cmt.selectKit();
+    await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
     await cmt.configure();
 
     testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-    await cmt.selectKit();
+    await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
 
     await cmt.build();
     const result1 = await testEnv.result.getResultAsJson();
@@ -225,53 +233,44 @@ suite('Build', async () => {
   }).timeout(200000);
 
   test('Test build twice', async function(this: ITestCallbackContext) {
-    await cmt.selectKit();
-
-    await cmt.build();
-    await cmt.build();
-    await testEnv.result.getResultAsJson();
-  }).timeout(100000);
+        expect(await cmt.build()).eq(0);
+        expect(await cmt.build()).eq(0);
+        await testEnv.result.getResultAsJson();
+      }).timeout(100000);
 
   test('Test build twice with clean', async function(this: ITestCallbackContext) {
-    await cmt.selectKit();
-
-    await cmt.build();
-    await cmt.clean();
-    await cmt.build();
-
-    await testEnv.result.getResultAsJson();
-  }).timeout(100000);
+        expect(await cmt.build()).eq(0);
+        await cmt.clean();
+        expect(await cmt.build()).eq(0);
+        await testEnv.result.getResultAsJson();
+      }).timeout(100000);
 
   test('Test build twice with clean configure', async function(this: ITestCallbackContext) {
-    await cmt.selectKit();
+        expect(await cmt.build()).eq(0);
+        await cmt.cleanConfigure();
+        expect(await cmt.build()).eq(0);
 
-    await cmt.build();
-    await cmt.cleanConfigure();
-    await cmt.build();
-
-    await testEnv.result.getResultAsJson();
-  }).timeout(100000);
+        await testEnv.result.getResultAsJson();
+      }).timeout(100000);
 
   test('Test build twice with rebuild configure', async function(this: ITestCallbackContext) {
-    // Select compiler build node dependent
-    await cmt.selectKit();
+        // Select compiler build node dependent
+        await cmt.build();
+        expect(await cmt.build()).eq(0);
+        await cmt.cleanRebuild();
+        expect(await cmt.build()).eq(0);
 
-    await cmt.build();
-    await cmt.cleanRebuild();
-    await cmt.build();
-
-    await testEnv.result.getResultAsJson();
-  }).timeout(100000);
+        await testEnv.result.getResultAsJson();
+      }).timeout(100000);
 
   test('Copy compile_commands.json to a pre-determined path', async () => {
-    await cmt.selectKit();
-    expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
-    let retc = await cmt.configure();
-    expect(retc).to.eq(0);
-    expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
-    testEnv.config.updatePartial({copyCompileCommands: compdb_cp_path});
-    retc = await cmt.configure();
-    expect(retc).to.eq(0);
-    expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
-  }).timeout(100000);
+        expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
+        let retc = await cmt.configure();
+        expect(retc).to.eq(0);
+        expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
+        testEnv.config.updatePartial({copyCompileCommands: compdb_cp_path});
+        retc = await cmt.configure();
+        expect(retc).to.eq(0);
+        expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
+      }).timeout(100000);
 });

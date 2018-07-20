@@ -2,7 +2,7 @@ import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
 import {normalizePath} from '@cmt/util';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 
 import * as path from 'path';
 
@@ -20,8 +20,7 @@ suite('[Variable Substitution]', async () => {
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
-    await cmt.scanForKits();
-    await cmt.selectKit();
+    await cmt.setKit(await getFirstSystemKit());
 
     testEnv.projectFolder.buildDirectory.clear();
   });
@@ -115,22 +114,6 @@ suite('[Variable Substitution]', async () => {
     const generator = cache.get('CMAKE_GENERATOR') as api.CacheEntry;
     expect(cacheEntry.as<string>()).to.eq(generator.as<string>(), '[generator] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[generator] unexpected cache entry value type');
-  }).timeout(100000);
-
-  test('Check substitution for "projectName"', async () => {
-    // Set fake settings
-    testEnv.config.updatePartial({configureSettings: {projectName: '${projectName}'}});
-
-    // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[projectName] configure failed');
-    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
-    const cache = await CMakeCache.fromPath(await cmt.cachePath);
-
-    const cacheEntry = cache.get('projectName') as api.CacheEntry;
-    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[projectName] unexpected cache entry type');
-    expect(cacheEntry.key).to.eq('projectName', '[projectName] unexpected cache entry key name');
-    expect(cacheEntry.as<string>()).to.eq('Unknown Project', '[projectName] substitution incorrect');
-    expect(typeof cacheEntry.value).to.eq('string', '[projectName] unexpected cache entry value type');
   }).timeout(100000);
 
   test('Check substitution for "userHome"', async () => {

@@ -6,7 +6,7 @@ interface Hideable {
   hide(): void;
 }
 
-function setVisible<T extends Hideable>(i: T, v: boolean) {
+function setVisible(i: Hideable, v: boolean) {
   if (v) {
     i.show();
   } else {
@@ -84,7 +84,7 @@ export class StatusBar implements vscode.Disposable {
   private _visible: boolean = true;
 
   private _reloadStatusButton() {
-    this._cmakeToolsStatusItem.text = `CMake: ${this._projectName}: ${this._buildTypeLabel}: ${this._statusMessage}`;
+    this._cmakeToolsStatusItem.text = `CMake: ${this._buildTypeLabel}: ${this._statusMessage}`;
     this.reloadVisibility();
   }
 
@@ -99,15 +99,6 @@ export class StatusBar implements vscode.Disposable {
       }
     }
     this.reloadVisibility();
-  }
-
-  /**
-   * The name of the open project
-   */
-  private _projectName: string = 'Unconfigured Project';
-  setProjectName(v: string) {
-    this._projectName = v;
-    this._reloadStatusButton();
   }
 
   /**
@@ -175,19 +166,10 @@ export class StatusBar implements vscode.Disposable {
   /** Reloads the content of the build button */
   private _reloadBuildButton() {
     this._buildButton.text = ``;
-    let progress_bar = '';
-    const prog = this._progress;
-    if (prog !== null) {
-      const bars = prog * 0.4 | 0;
-      progress_bar = ` [${Array(bars).join('█')}${Array(40 - bars).join('░')}] ${prog}%`;
-    }
-    this._buildButton.text = this._isBusy ? `$(x) Stop${progress_bar}` : `$(gear) Build:`;
+    this._buildButton.text = this._isBusy ? `$(x) Stop` : `$(gear) Build:`;
     this._buildButton.command = this._isBusy ? 'cmake.stop' : 'cmake.build';
     if (this._isBusy) {
       this._buildButton.show();
-    }
-    else{
-      this._progress = null;
     }
   }
 
@@ -198,16 +180,6 @@ export class StatusBar implements vscode.Disposable {
   private _isBusy: boolean = false;
   setIsBusy(v: boolean) {
     this._isBusy = v;
-    this._reloadBuildButton();
-  }
-
-  /**
-   * The progress of the currently executing task. Updates a primitive progress
-   * bar.
-   */
-  private _progress: number|null = null;
-  setProgress(v: number|null) {
-    this._progress = v;
     this._reloadBuildButton();
   }
 

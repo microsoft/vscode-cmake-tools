@@ -39,6 +39,20 @@ export const rename = promisify(fs_.rename);
 
 export const stat = promisify(fs_.stat);
 
+/**
+ * Try and stat() a file. If stat() fails for *any reason*, returns `null`.
+ * @param filePath The file to try and stat()
+ */
+export async function tryStat(filePath: fs_.PathLike): Promise<fs_.Stats|null> {
+  try {
+    return await stat(filePath);
+  } catch (_e) {
+    // Don't even bother with the error. Any number of things might have gone
+    // wrong. Probably one of: Non-existing file, bad permissions, bad path.
+    return null;
+  }
+}
+
 export const readlink = promisify(fs_.readlink);
 
 export const unlink = promisify(fs_.unlink);
@@ -82,6 +96,23 @@ export function copyFile(inpath: string, outpath: string): Promise<void> {
       writer.on('error', e => reject(e));
       writer.on('open', _fd2 => { reader.pipe(writer); });
       writer.on('close', () => resolve());
+    });
+  });
+}
+
+/**
+ * Create a hard link of an existing file
+ * @param inPath The existing file path
+ * @param outPath The new path to the hard link
+ */
+export function hardLinkFile(inPath: string, outPath: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    fs_.link(inPath, outPath, err => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
     });
   });
 }
