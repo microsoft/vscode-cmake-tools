@@ -720,7 +720,7 @@ Please install or configure a preferred generator, or update settings.json or yo
     })();
 
     const build_env = {} as {[key: string]: string};
-    build_env['NINJA_STATUS'] = '[%s/%t %p :: %e]';
+    build_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
     const opts = this.expansionOptions;
     await Promise.resolve(
         util.objectPairs(util.mergeEnvironment(this.ws.config.buildEnvironment, await this.getExpandedEnvironment()))
