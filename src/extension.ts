@@ -247,14 +247,12 @@ class ExtensionManager implements vscode.Disposable {
                     // Use cancelled. Do nothing.
                     return;
                   }
-                  let config: vscode.WorkspaceConfiguration;
+                  const config = vscode.workspace.getConfiguration(undefined, ws.uri);
+                  let config_target = vscode.ConfigurationTarget.Global;
                   if (choice.persistMode === 'workspace') {
-                    config = vscode.workspace.getConfiguration(undefined, ws.uri);
-                  } else {
-                    console.assert(choice.persistMode === 'user');
-                    config = vscode.workspace.getConfiguration();
+                    config_target = vscode.ConfigurationTarget.WorkspaceFolder;
                   }
-                  await config.update('cmake.configureOnOpen', chosen.doConfigure);
+                  await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
                 });
       rollbar.takePromise('Persist config-on-open setting', {}, persist_pr);
       should_configure = chosen.doConfigure;
