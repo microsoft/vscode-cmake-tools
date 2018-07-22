@@ -249,6 +249,9 @@ using ``${variable}`` syntax. The following built-in variables are expanded:
 ``${buildType}``
     The current CMake build type, eg. ``Debug``, ``Release``, ``MinSizeRel``
 
+``${buildKit}``
+    The current CMake kit name, eg. ``GCC 7.3.0``
+
 ``${generator}``
     The name of the CMake generator, eg. ``Ninja``
 
