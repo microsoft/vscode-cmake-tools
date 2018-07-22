@@ -249,6 +249,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
         // checking. Maybe in the future this can be useful for auto-configuring
         // on file changes?
       },
+      onOtherOutput: async msg => this._onMessageEmitter.fire(msg),
       onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
       onProgress: async prog => {
         this._progressEmitter.fire(prog);

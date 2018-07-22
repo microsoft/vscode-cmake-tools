@@ -314,6 +314,7 @@ export type SomeMessage
 export interface ClientInit {
   cmakePath: string;
   onMessage: (m: MessageMessage) => Promise<void>;
+  onOtherOutput(m: string): Promise<void>;
   onProgress: (m: ProgressMessage) => Promise<void>;
   onDirty: () => Promise<void>;
   environment: NodeJS.ProcessEnv;
@@ -498,10 +499,6 @@ export class CMakeServerClient {
 
   cmakeInputs(params?: CMakeInputsParams): Promise<CMakeInputsContent> { return this.sendRequest('cmakeInputs', params); }
 
-  private _onErrorData(data: Uint8Array) {
-    log.error(`Unexpected stderr/stdout data from CMake Server process: ${data.toString()}`);
-  }
-
   public async shutdown() {
     this._pipe.end();
     await this._endPromise;
@@ -523,8 +520,8 @@ export class CMakeServerClient {
             env: final_env, cwd: params.binaryDir
           });
     log.debug(`Started new CMake Server instance with PID ${child.pid}`);
-    child.stdout.on('data', this._onErrorData.bind(this));
-    child.stderr.on('data', this._onErrorData.bind(this));
+    child.stdout.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
+    child.stderr.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
     setTimeout(() => {
       const end_promise = new Promise<void>((resolve, reject) => {
         const pipe = this._pipe = net.createConnection(pipe_file);
@@ -564,6 +561,7 @@ export class CMakeServerClient {
         sourceDir: params.sourceDir,
         binaryDir: params.binaryDir,
         onMessage: params.onMessage,
+        onOtherOutput: other => params.onOtherOutput(other),
         cmakePath: params.cmakePath,
         environment: params.environment,
         onProgress: params.onProgress,
