@@ -657,26 +657,8 @@ export interface KitScanOptions {
  * @returns A list of Kits.
  */
 export async function scanForKits(opt?: KitScanOptions) {
-  if (opt === undefined) {
-    opt = {};
-  }
-  const in_scan_dirs = opt.scanDirs;
-  let scan_dirs: string[];
-  if (in_scan_dirs !== undefined) {
-    scan_dirs = in_scan_dirs;
-  } else {
-    const env_path = process.env['PATH'] || '';
-    const isWin32 = process.platform === 'win32';
-    const sep = isWin32 ? ';' : ':';
-    let env_elems = env_path.split(sep);
-    if (env_elems.length === 1 && env_elems[0] === '') {
-      env_elems = [];
-    }
-    scan_dirs = env_elems;
-  }
-  if (opt.minGWSearchDirs) {
-    scan_dirs = scan_dirs.concat(convertMingwDirsToSearchPaths(opt.minGWSearchDirs));
-  }
+  const kit_options = opt ? opt : {};
+
   log.debug('Scanning for Kits on system');
   const prog = {
     location: vscode.ProgressLocation.Notification,
@@ -693,13 +675,20 @@ export async function scanForKits(opt?: KitScanOptions) {
       scanPaths = scanPaths.concat(pathvar.split(sep));
     }
 
-    if (scanPaths) {
+    if (kit_options) {
       // Search them all in parallel
       let prs = [] as Promise<Kit[]>[];
       const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
       prs = prs.concat(compiler_kits);
       if (isWin32) {
         const vs_kits = scanForVSKits(pr);
+
+        if (kit_options.minGWSearchDirs) {
+          const mingw_path = scanPaths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
+          const mingw_kits_prs = mingw_path.map(path_el => scanDirForCompilerKits(path_el, pr));
+          prs = prs.concat(mingw_kits_prs);
+        }
+
         const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
         const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
         prs.push(vs_kits);
