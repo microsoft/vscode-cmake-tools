@@ -197,16 +197,19 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     if (isWin32 && bin.toLowerCase().includes('mingw')) {
       const binParentPath = path.dirname(bin);
       const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
-      if (await fs.exists(gxx_bin)) {
+      if (await fs.exists(mingwMakePath)) {
 
-        // Check make
+        // Check for working mingw32-make
         const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: binParentPath}}).result;
         if (execMake.retc != 0) {
-          log.debug('Bad mingw32-,ake binary ("-v" returns non-zero)', bin);
+          log.debug('Bad mingw32-make binary ("-v" returns non-zero)', bin);
         } else {
-          const make_version_output = execMake.stdout.trim().split('\n');
-          const isMake = make_version_output[0].includes('Make');
-          const isMingwTool = make_version_output[1].includes('mingw32');
+          let make_version_output = execMake.stdout;
+          if (make_version_output.length == 0)
+            make_version_output = execMake.stderr;
+          const output_line_sep = make_version_output.trim().split('\n');
+          const isMake = output_line_sep[0].includes('Make');
+          const isMingwTool = output_line_sep[1].includes('mingw32');
 
           if (isMake && isMingwTool) {
             gccKit.preferredGenerator = {name: 'MinGW Makefiles'};
