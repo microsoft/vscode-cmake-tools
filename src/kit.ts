@@ -651,7 +651,7 @@ export interface KitScanOptions {
  * @returns A list of Kits.
  */
 export async function scanForKits(opt?: KitScanOptions) {
-  const kit_options = opt ? opt : {};
+  const kit_options = opt || {};
 
   log.debug('Scanning for Kits on system');
   const prog = {
@@ -669,30 +669,25 @@ export async function scanForKits(opt?: KitScanOptions) {
       scanPaths = scanPaths.concat(pathvar.split(sep));
     }
 
-    if (kit_options) {
-      // Search them all in parallel
-      let prs = [] as Promise<Kit[]>[];
-      if (isWin32 && kit_options.minGWSearchDirs) {
-        scanPaths = scanPaths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
-      }
-      const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
-      prs = prs.concat(compiler_kits);
-      if (isWin32) {
-        const vs_kits = scanForVSKits(pr);
-
-        const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
-        const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
-        prs.push(vs_kits);
-        prs = prs.concat(clang_cl_kits);
-      }
-      const arrays = await Promise.all(prs);
-      const kits = ([] as Kit[]).concat(...arrays);
-      kits.map(k => log.info(`Found Kit: ${k.name}`));
-      return kits;
-    } else {
-      log.info(`Path variable empty`);
-      return [];
+    // Search them all in parallel
+    let prs = [] as Promise<Kit[]>[];
+    if (isWin32 && kit_options.minGWSearchDirs) {
+      scanPaths = scanPaths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
     }
+    const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
+    prs = prs.concat(compiler_kits);
+    if (isWin32) {
+      const vs_kits = scanForVSKits(pr);
+
+      const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
+      const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
+      prs.push(vs_kits);
+      prs = prs.concat(clang_cl_kits);
+    }
+    const arrays = await Promise.all(prs);
+    const kits = ([] as Kit[]).concat(...arrays);
+    kits.map(k => log.info(`Found Kit: ${k.name}`));
+    return kits;
   });
 }
 
