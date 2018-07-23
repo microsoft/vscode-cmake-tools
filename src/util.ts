@@ -326,6 +326,19 @@ export function thisExtension() {
   return ext;
 }
 
+export interface PackageJSON {
+  name: string;
+  version: string;
+}
+
+export function thisExtensionPackage(): PackageJSON {
+  const pkg = thisExtension().packageJSON as PackageJSON;
+  return {
+    name: pkg.name,
+    version: pkg.version,
+  }
+}
+
 export function thisExtensionPath(): string { return thisExtension().extensionPath; }
 
 export function dropNulls<T>(items: (T|null|undefined)[]): T[] {
