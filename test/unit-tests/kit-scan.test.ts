@@ -145,14 +145,14 @@ suite('Kits scan test', async () => {
       await fs.mkdir(path_with_compilername);
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(4);
+      expect(kits.length).to.eq(5);
     });
 
     test('Scan file with compiler name', async () => {
       await fs.writeFile(path_with_compilername, '');
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(4);
+      expect(kits.length).to.eq(5);
     });
   });
 
@@ -167,13 +167,14 @@ suite('Kits scan test', async () => {
     test('check fake compilers in kit file', async () => {
       const fakebin_dir = getTestRootFilePath('fakebin');
       const kits = await kit.scanDirForCompilerKits(fakebin_dir);
-      expect(kits.length).to.be.eq(4);
+      expect(kits.length).to.be.eq(5);
       const names = kits.map(k => k.name).sort();
       expect(names).to.deep.eq([
         'Clang 0.25',
         'Clang 8.1.0',
         'GCC 42.1',
         'GCC for cross-compile 0.2.1000',
+        'GCC for mingw32 6.3.0'
       ]);
     }).timeout(10000);
   });
