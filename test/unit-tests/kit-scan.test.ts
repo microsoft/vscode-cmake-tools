@@ -25,6 +25,17 @@ function getPathWithoutCompilers() {
 
 suite('Kits scan test', async () => {
   const fakebin = getTestRootFilePath('fakebin');
+  const mingwMakePath = path.join(fakebin, 'mingw32-make');
+  const mingwMakePathBackup = path.join(fakebin, 'mingw32-make.bak');
+
+  async function disableMingwMake() { await fs.rename(mingwMakePath, mingwMakePathBackup); }
+
+  teardown(async () => {
+    if (await fs.exists(mingwMakePathBackup)) {
+      await fs.rename(mingwMakePathBackup, mingwMakePath);
+    }
+  });
+
   test('Detect system kits never throws',
        async () => {
          // Don't care about the result, just check that we don't throw during the test
@@ -67,6 +78,42 @@ suite('Kits scan test', async () => {
     expect(compkit!.compilers).has.property('C').eq(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
     expect(compkit!.name).to.eq('Clang 8.1.0');
+  });
+
+
+  test('Detect an MinGW compiler file on linux', async () => {
+    if (process.platform === 'win32')
+      return;
+
+    await disableMingwMake();
+
+    const compiler = path.join(fakebin, 'mingw32-gcc');
+    const compkit = await kit.kitIfCompiler(compiler);
+
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').eq(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+
+    expect(compkit!.name).to.eq('GCC for mingw32 6.3.0');
+    expect(compkit!.preferredGenerator).to.be.undefined;
+    expect(compkit!.environmentVariables).to.be.undefined;
+  });
+
+  test('Detect an MinGW compiler file on windows', async () => {
+    if (process.platform !== 'win32')
+      return;
+
+    const compiler = path.join(fakebin, 'mingw32-gcc');
+    const compkit = await kit.kitIfCompiler(compiler);
+
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').eq(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+
+    expect(compkit!.name).to.eq('GCC for mingw32 6.3.0');
+    expect(compkit!.preferredGenerator!.name).to.eq('MinGW Makefiles');
+    expect(compkit!.environmentVariables!.PATH).include('fakebin');
+    expect(compkit!.environmentVariables!.PATH).include('${env.PATH}');
   });
 
   test('Detect non-compiler program', async () => {
