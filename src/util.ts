@@ -336,7 +336,7 @@ export function thisExtensionPackage(): PackageJSON {
   return {
     name: pkg.name,
     version: pkg.version,
-  }
+  };
 }
 
 export function thisExtensionPath(): string { return thisExtension().extensionPath; }
