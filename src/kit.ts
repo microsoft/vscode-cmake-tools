@@ -213,7 +213,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
           if (isMake && isMingwTool) {
             gccKit.preferredGenerator = {name: 'MinGW Makefiles'};
-            gccKit.environmentVariables = {PATH: '${env.PATH};' + binParentPath};
+            gccKit.environmentVariables = {PATH: binParentPath};
           }
         }
       }
