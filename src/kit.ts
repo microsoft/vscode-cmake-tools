@@ -97,8 +97,8 @@ interface ClangVersion {
 async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
   log.debug('Testing Clang-ish binary:', binPath);
   const exec = await proc.execute(binPath, ['-v']).result;
-  if (exec.retc != 0) {
-    log.debug('Bad Clang binary ("-v" returns non-zero)', binPath);
+  if (exec.retc !== 0) {
+    log.debug('Bad Clang binary ("-v" returns non-zero):', binPath);
     return null;
   }
   const first_line = exec.stderr.split('\n')[0];
@@ -152,8 +152,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     if (pr)
       pr.report({message: `Getting GCC version for ${bin}`});
     const exec = await proc.execute(bin, ['-v']).result;
-    if (exec.retc != 0) {
-      log.debug('Bad GCC binary ("-v" returns non-zero)', bin);
+    if (exec.retc !== 0) {
+      log.debug('Bad GCC binary ("-v" returns non-zero):', bin);
       return null;
     }
 
@@ -195,8 +195,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
         // Check for working mingw32-make
         const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: binParentPath}}).result;
-        if (execMake.retc != 0) {
-          log.debug('Bad mingw32-make binary ("-v" returns non-zero)', bin);
+        if (execMake.retc !== 0) {
+          log.debug('Bad mingw32-make binary ("-v" returns non-zero):', bin);
         } else {
           let make_version_output = execMake.stdout;
           if (make_version_output.length == 0)
