@@ -12,6 +12,7 @@ import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as shlex from 'shlex';
 import * as ws from 'ws';
 
 import * as api from './api';
@@ -1078,7 +1079,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal('CMake/Launch');
-    this._launchTerminal.sendText(executable.path);
+    const quoted = shlex.quote(executable.path);
+    this._launchTerminal.sendText(quoted);
     this._launchTerminal.show();
     return this._launchTerminal;
   }
