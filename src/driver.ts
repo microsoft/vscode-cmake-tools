@@ -200,11 +200,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const variantSettings = this.ws.state.activeVariantSettings;
     if (variantSettings) {
       variantSettings.forEach((value: string, key: string) => {
-        if (key != 'buildType') {
-          vars[key] = value;
-        } else {
+        // Determine the keys for the variant and short form replacement
+        const variant_key = `variant_${key}`;
+        const short_key = vars[key].length === 0 ? key : variant_key;
+
+        // Output warning message to console
+        if (short_key !== variant_key)
+          log.warning(
+              `Key for variant '${key}' is already taken. Only variant version will be available: ${variant_key}`);
+
+        // Write replacement value
+        vars[short_key] = value;
+        vars[variant_key] = value;
+
+        // DEPRECATED EXPANSION: Backward compatibility
+        if (variant_key === 'variant_buildType' && vars['buildLabel'].length === 0)
           vars['buildLabel'] = value;
-        }
       });
     }
 
