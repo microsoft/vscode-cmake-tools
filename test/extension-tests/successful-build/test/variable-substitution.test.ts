@@ -145,7 +145,7 @@ suite('[Variable Substitution]', async () => {
     };
 
     // Update configure settings
-    let configSettings: {[key: string]: string} = {};
+    const configSettings: {[key: string]: string} = {};
     Object.keys(keysToTest).forEach(key => configSettings[key] = `\${${key}}`);
     testEnv.config.updatePartial({configureSettings: configSettings});
 
