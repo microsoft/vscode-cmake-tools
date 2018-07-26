@@ -201,7 +201,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (variantSettings) {
       variantSettings.forEach((value: string, key: string) => {
         // Determine the keys for the variant and short form replacement
-        log.debug('Variant: ', key, ' : ', value)
         const variant_key = `variant_${key}`;
         const short_key = !vars[key] ? key : variant_key;
 
