@@ -265,8 +265,8 @@ using ``${variable}`` syntax. The following built-in variables are expanded:
     The full path to the current user's home directory
 
 ``${variant_identifier}``
-    *Replace ``variant_identifier`` with your variant identifier.*
-    The currently selected choice of the given variant identifier.
+    *Replace* ``variant_identifier`` *with your variant identifier.*
+    Expands to the currently active choice of the given variant identifier.
 
 Environment Variables
 *********************
