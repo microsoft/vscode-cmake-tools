@@ -1,7 +1,7 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
-import {normalizePath} from '@cmt/util';
+import {normalizePath, objectPairs} from '@cmt/util';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 
 import * as path from 'path';
@@ -134,25 +134,42 @@ suite('[Variable Substitution]', async () => {
   }).timeout(100000);
 
   test('Check substitution for variant names', async () => {
-    // Set fake settings
-    testEnv.config.updatePartial({configureSettings: {buildLabel: '${buildLabel}', otherVariant: '${otherVariant}'}});
+    // Define test keys and expected values
+    const expectedBuildType = 'debug-label';
+    const expectedOtherVariant = 'option1';
+    const keysToTest = {
+      variant_buildType: expectedBuildType,
+      buildLabel: expectedBuildType,
+      otherVariant: expectedOtherVariant,
+      variant_otherVariant: expectedOtherVariant
+    };
 
-    // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[variant names] configure failed');
-    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+    // Update configure settings
+    let configSettings: {[key: string]: string} = {};
+    Object.keys(keysToTest).forEach(key => configSettings[key] = `\${${key}}`);
+    testEnv.config.updatePartial({configureSettings: configSettings});
+
+    // Configure and retrieve generated cache
+    expect(await cmt.configure()).to.be.eq(0, '[variant] configure failed');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, '[variant] cache not found');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
-    const cacheEntry = cache.get('buildLabel') as api.CacheEntry;
-    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[buildLabel] unexpected cache entry type');
-    expect(cacheEntry.key).to.eq('buildLabel', '[buildLabel] unexpected cache entry key name');
-    expect(cacheEntry.as<string>()).to.eq('debug-label', '[buildLabel] substitution incorrect');
-    expect(typeof cacheEntry.value).to.eq('string', '[buildLabel] unexpected cache entry value type');
+    // Helper function for checking test keys in a cmake cache
+    const checkTestKey = async (testKey: [string, string], testCache: CMakeCache) => {
+      const [key, expected] = testKey;
 
-    const cacheEntry2 = cache.get('otherVariant') as api.CacheEntry;
-    expect(cacheEntry2.type).to.eq(api.CacheEntryType.String, '[otherVariant] unexpected cache entry type');
-    expect(cacheEntry2.key).to.eq('otherVariant', '[otherVariant] unexpected cache entry key name');
-    expect(cacheEntry2.as<string>()).to.eq('option1', '[otherVariant] substitution incorrect');
-    expect(typeof cacheEntry2.value).to.eq('string', '[otherVariant] unexpected cache entry value type');
+      // Get cache entry for given test key
+      const cacheEntry = testCache.get(key) as api.CacheEntry;
+
+      // Check type and value of the retrieved cache entry
+      expect(cacheEntry.type).to.eq(api.CacheEntryType.String, `[variant:${key}] unexpected cache entry type`);
+      expect(cacheEntry.key).to.eql(key, `[variant:${key}] unexpected cache entry key name`);
+      expect(cacheEntry.as<string>()).to.eql(expected, `[variant:${key}] incorrect substitution`);
+      expect(typeof cacheEntry.value).to.eq('string', `[variant:${key}] unexpected cache entry value type`);
+    };
+
+    // Check test keys
+    await Promise.all(objectPairs(keysToTest).map(async testKey => checkTestKey(testKey, cache)));
   }).timeout(100000);
 
   test('Check substitution within "cmake.installPrefix"', async () => {
