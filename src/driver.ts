@@ -206,7 +206,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
         // Output warning message to console
         if (short_key === variant_key)
-          log.warning(
+          log.debug(
               `Key for variant '${key}' is already taken. Only variant version will be available: ${variant_key}`);
 
         // Write replacement value
