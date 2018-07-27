@@ -6,12 +6,12 @@ import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import {ProgressMessage} from '@cmt/cms-client';
 import {CompileCommand} from '@cmt/compdb';
 import * as path from 'path';
-import * as shlex from 'shlex';
+import * as shlex from '@cmt/shlex';
 import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as expand from './expand';
-import {CMakeGenerator, Kit, kitChangeNeedsClean, effectiveKitEnvironment} from './kit';
+import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
@@ -243,23 +243,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   runCompileCommand(cmd: CompileCommand): vscode.Terminal {
     if ('command' in cmd) {
-      const args = shlex.split(cmd.command);
+      const args = [...shlex.split(cmd.command)];
       return this.runCompileCommand({directory: cmd.directory, file: cmd.file, arguments: args});
     } else {
       const env = this.getEffectiveSubprocessEnvironment();
       const key = `${cmd.directory}${JSON.stringify(env)}`;
       let existing = this._compileTerms.get(key);
+      const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
       if (!existing) {
         const term = vscode.window.createTerminal({
           name: 'File Compilation',
           cwd: cmd.directory,
           env,
+          shellPath,
         });
         this._compileTerms.set(key, term);
         existing = term;
       }
       existing.show();
-      existing.sendText(cmd.arguments.map(shlex.quote).join(' ') + '\r\n');
+      existing.sendText(cmd.arguments.map(s => shlex.quote(s)).join(' ') + '\r\n');
       return existing;
     }
   }
