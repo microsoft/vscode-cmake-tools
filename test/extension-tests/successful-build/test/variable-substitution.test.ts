@@ -135,18 +135,11 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution for variant names', async () => {
     // Define test keys and expected values
-    const expectedBuildType = 'debug-label';
-    const expectedOtherVariant = 'option1';
-    const keysToTest = {
-      variant_buildType: expectedBuildType,
-      buildLabel: expectedBuildType,
-      otherVariant: expectedOtherVariant,
-      variant_otherVariant: expectedOtherVariant
-    };
+    const testKeys = {buildType: 'debug-label', otherVariant: 'option1'};
 
     // Update configure settings
     const configSettings: {[key: string]: string} = {};
-    Object.keys(keysToTest).forEach(key => configSettings[key] = `\${${key}}`);
+    await Promise.all(Object.keys(testKeys).map(async key => configSettings[key] = `\${variant:${key}}`));
     testEnv.config.updatePartial({configureSettings: configSettings});
 
     // Configure and retrieve generated cache
@@ -169,7 +162,7 @@ suite('[Variable Substitution]', async () => {
     };
 
     // Check test keys
-    await Promise.all(objectPairs(keysToTest).map(async testKey => checkTestKey(testKey, cache)));
+    await Promise.all(objectPairs(testKeys).map(async testKey => checkTestKey(testKey, cache)));
   }).timeout(100000);
 
   test('Check substitution within "cmake.installPrefix"', async () => {

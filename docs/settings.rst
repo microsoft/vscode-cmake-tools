@@ -264,28 +264,23 @@ using ``${variable}`` syntax. The following built-in variables are expanded:
 ``${userHome}``
     The full path to the current user's home directory
 
-``${<variant_identifier>}``
-    *Replace* ``<variant_identifier>`` *with your variant identifier, eg. *``${mybuildtype}``.
-    Expands to the currently active choice of the given variant identifier.
-
-    .. note::
-        This is the *short* form for variant substitution.
-        It will only be available, if the replacement key is not already taken.
-        In that case, use the *variant* form below.
-
-``${variant_<variant_identifier>}``
-    *Replace* ``<variant_identifier>`` *with your variant identifier, eg. *``${variant_mybuildtype}``.
-    Expands to the currently active choice of the given variant identifier.
-
-    .. note::
-        This is the *variant* form for variant substitution.
-        *It will always be available!*
-        Behaviour is *undefined* if the user defines a variant with the ``variant_`` prefix.
-
 Environment Variables
 *********************
 
 Additionally, environment variables may be substituted with ``${env:VARNAME}``
+and ``${env.VARNAME}`` syntax, where the string for the ``VARNAME`` environment
+variable will be replaced. If the named environment variable is undefined, an empty
+string will be expanded instead.
+
+Variant Substitution
+*********************
+
+Variant options may also be substituted with the ``${variant:VARIANTNAME}`` syntax,
+where the name of the currently active choice of the provided ``VARIANTNAME`` variant
+option will be replaced. If the variant option is undefined, an empty string will be
+expanded instead.
+
+Variant variables may be substituted with ``${env:VARNAME}``
 and ``${env.VARNAME}`` syntax, where the string for the ``VARNAME`` environment
 variable will be replaced. If the named environment variable is undefined, an empty
 string will be expanded instead.
