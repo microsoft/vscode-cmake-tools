@@ -11,7 +11,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as expand from './expand';
-import {CMakeGenerator, getVSKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
+import {CMakeGenerator, Kit, kitChangeNeedsClean, effectiveKitEnvironment} from './kit';
 import * as logging from './logging';
 import {fs} from './pr';
 import * as proc from './proc';
@@ -277,20 +277,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _setKit(kit: Kit): Promise<void> {
     this._kit = Object.seal({...kit});
     log.debug('CMakeDriver Kit set to', kit.name);
-
-    this._kitEnvironmentVariables = new Map();
-    if (this._kit.environmentVariables) {
-      util.objectPairs(this._kit.environmentVariables).forEach(([k, v]) => this._kitEnvironmentVariables.set(k, v));
-    }
-    if (this._kit.visualStudio && this._kit.visualStudioArchitecture) {
-      const vars = await getVSKitEnvironment(this._kit);
-      if (!vars) {
-        log.error('Invalid VS environment:', this._kit.name);
-        log.error('We couldn\'t find the required environment variables');
-      } else {
-        vars.forEach((val, key) => this._kitEnvironmentVariables.set(key, val));
-      }
-    }
+    this._kitEnvironmentVariables = await effectiveKitEnvironment(kit);
   }
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;

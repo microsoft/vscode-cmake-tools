@@ -584,13 +584,14 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
 
 export async function effectiveKitEnvironment(kit: Kit): Promise<Map<string, string>> {
   const host_env = objectPairs(process.env) as [string, string][];
+  const kit_env = objectPairs(kit.environmentVariables || {}) as [string, string][];
   if (kit.visualStudio && kit.visualStudioArchitecture) {
     const vs_vars = await getVSKitEnvironment(kit);
     if (vs_vars) {
-      return new Map(util.map(util.chain(host_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
+      return new Map(util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
     }
   }
-  return new Map(host_env);
+  return new Map(util.chain(host_env, kit_env));
 }
 
 export async function findCLCompilerPath(env: Map<string, string>): Promise<string|null> {
