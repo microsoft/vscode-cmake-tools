@@ -280,11 +280,6 @@ where the name of the currently active choice of the provided ``VARIANTNAME`` va
 option will be replaced. If the variant option is undefined, an empty string will be
 expanded instead.
 
-Variant variables may be substituted with ``${env:VARNAME}``
-and ``${env.VARNAME}`` syntax, where the string for the ``VARNAME`` environment
-variable will be replaced. If the named environment variable is undefined, an empty
-string will be expanded instead.
-
 Command Substitution
 ********************
 
