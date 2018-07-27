@@ -3,6 +3,7 @@
  */ /** */
 
 import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -11,9 +12,8 @@ import * as logging from './logging';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
-import * as util from '@cmt/util';
 import {loadSchema} from './schema';
-import {compare, dropNulls, Ordering, thisExtensionPath, objectPairs} from './util';
+import {compare, dropNulls, objectPairs, Ordering, thisExtensionPath} from './util';
 
 const log = logging.createLogger('kit');
 
@@ -583,17 +583,18 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
 }
 
 export async function effectiveKitEnvironment(kit: Kit): Promise<Map<string, string>> {
+  const host_env = objectPairs(process.env) as [string, string][];
+  const kit_env = objectPairs(kit.environmentVariables || {}) as [string, string][];
   if (kit.visualStudio && kit.visualStudioArchitecture) {
     const vs_vars = await getVSKitEnvironment(kit);
     if (vs_vars) {
-      return vs_vars;
+      return new Map(util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
     }
   }
-  const host_env = objectPairs(process.env) as [string, string][];
-  return new Map(host_env);
+  return new Map(util.chain(host_env, kit_env));
 }
 
-export async function findCLCompilerPath(env: Map<string, string>): Promise<string | null> {
+export async function findCLCompilerPath(env: Map<string, string>): Promise<string|null> {
   const path_var = util.find(env.entries(), ([key, _val]) => key.toLocaleLowerCase() === 'path');
   if (!path_var) {
     return null;

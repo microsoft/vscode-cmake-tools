@@ -11,7 +11,7 @@ import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
-import * as shlex from 'shlex';
+import * as shlex from '@cmt/shlex';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 
@@ -22,6 +22,12 @@ type StandardVersion = 'c89'|'c99'|'c11'|'c++98'|'c++03'|'c++11'|'c++14'|'c++17'
 export interface CompileFlagInformation {
   extraDefinitions: string[];
   standard: StandardVersion;
+}
+
+interface TargetDefaults {
+  includePath: string[];
+  compileFlags: string[];
+  defines: string[];
 }
 
 export function parseCompileFlags(args: string[]): CompileFlagInformation {
@@ -150,7 +156,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param opts Index update options
    */
   private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup,
-                                  opts: CodeModelParams): cpt.SourceFileConfiguration {
+                                  opts: CodeModelParams,
+                                  target: TargetDefaults): cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language || 'CXX';
     // Try the group's language's compiler, then the C++ compiler, then the C compiler.
@@ -162,13 +169,14 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       rollbar.error('Unable to automatically determine compiler', {lang, fileGroup});
     }
     const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
-    const flags = shlex.split(fileGroup.compileFlags || '');
+    const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions} = parseCompileFlags(flags);
-    const defines = (fileGroup.defines || []).concat(extraDefinitions);
+    const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
+    const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
     return {
       defines,
       standard,
-      includePath: (fileGroup.includePath || []).map(p => p.path),
+      includePath,
       intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
       compilerPath: comp_path || undefined,
     };
@@ -181,8 +189,11 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param grp The file group
    * @param opts Index update options
    */
-  private _updateFileGroup(sourceDir: string, grp: cms.CodeModelFileGroup, opts: CodeModelParams) {
-    const configuration = this._buildConfigurationData(grp, opts);
+  private _updateFileGroup(sourceDir: string,
+                           grp: cms.CodeModelFileGroup,
+                           opts: CodeModelParams,
+                           target: TargetDefaults) {
+    const configuration = this._buildConfigurationData(grp, opts, target);
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
       const abs_norm = util.normalizePath(abs);
@@ -201,8 +212,25 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
+          /// Now some shenanigans since header files don't have config data:
+          /// 1. Accumulate some "defaults" based on the set of all options for each file group
+          /// 2. Pass these "defaults" down when rebuilding the config data
+          /// 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+          const grps = target.fileGroups || [];
+          const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
+          const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
+          const defines = [... new Set(util.flatMap(grps, grp => grp.defines || []))];
           for (const grp of target.fileGroups || []) {
-            this._updateFileGroup(target.sourceDirectory || '', grp, opts);
+            this._updateFileGroup(
+                target.sourceDirectory || '',
+                grp,
+                opts,
+                {
+                  compileFlags,
+                  includePath,
+                  defines,
+                },
+            );
           }
         }
       }

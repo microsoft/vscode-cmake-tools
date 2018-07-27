@@ -1,4 +1,4 @@
-import * as shlex from 'shlex';
+import * as shlex from '@cmt/shlex';
 
 import {createLogger} from './logging';
 import {fs} from './pr';
@@ -30,7 +30,7 @@ export class CompilationDatabase {
           directory: cur.directory,
           file: cur.file,
           output: cur.output,
-          arguments: 'arguments' in cur ? cur.arguments : shlex.split(cur.command),
+          arguments: 'arguments' in cur ? cur.arguments : [...shlex.split(cur.command)],
         }),
         new Map<string, ArgsCompileCommand>(),
     );

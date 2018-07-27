@@ -8,3 +8,4 @@ test/fakebin/
 .ci-build
 *.vsix
 npm-debug.log
+.DS_Store

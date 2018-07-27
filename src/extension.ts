@@ -212,7 +212,7 @@ class ExtensionManager implements vscode.Disposable {
 
   async _postWorkspaceOpen(ws: vscode.WorkspaceFolder, cmt: CMakeTools) {
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
-    if (should_configure === null) {
+    if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
       interface Choice1 {
         title: string;
         doConfigure: boolean;
@@ -247,14 +247,12 @@ class ExtensionManager implements vscode.Disposable {
                     // Use cancelled. Do nothing.
                     return;
                   }
-                  let config: vscode.WorkspaceConfiguration;
+                  const config = vscode.workspace.getConfiguration(undefined, ws.uri);
+                  let config_target = vscode.ConfigurationTarget.Global;
                   if (choice.persistMode === 'workspace') {
-                    config = vscode.workspace.getConfiguration(undefined, ws.uri);
-                  } else {
-                    console.assert(choice.persistMode === 'user');
-                    config = vscode.workspace.getConfiguration();
+                    config_target = vscode.ConfigurationTarget.WorkspaceFolder;
                   }
-                  await config.update('cmake.configureOnOpen', chosen.doConfigure);
+                  await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
                 });
       rollbar.takePromise('Persist config-on-open setting', {}, persist_pr);
       should_configure = chosen.doConfigure;
@@ -585,6 +583,7 @@ class ExtensionManager implements vscode.Disposable {
         message = `Loading kit ${raw_name}`;
         break;
       }
+      rollbar.updatePayload({kit: k});
       // Load the kit into the backend
       await vscode.window.withProgress(
           {
@@ -1144,6 +1143,15 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
+  const packageJSON = util.thisExtensionPackage();
+  rollbar.updatePayload({
+    environment: 'production',
+    packageJSON,
+    client: {
+      code_version: packageJSON.version,
+    },
+    platform: process.platform,
+  });
   await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
