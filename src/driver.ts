@@ -198,17 +198,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Update Variant replacements
     const variantSettings = this.ws.state.activeVariantSettings;
+    const variantVars: {[key: string]: string} = {};
     if (variantSettings) {
-      variantSettings.forEach((value: string, key: string) => {
-        if (key != 'buildType') {
-          vars[key] = value;
-        } else {
-          vars['buildLabel'] = value;
-        }
-      });
+      variantSettings.forEach((value: string, key: string) => variantVars[key] = value);
     }
 
-    return {vars};
+    return {vars, variantVars};
   }
 
   getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {

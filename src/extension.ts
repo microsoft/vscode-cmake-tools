@@ -212,7 +212,7 @@ class ExtensionManager implements vscode.Disposable {
 
   async _postWorkspaceOpen(ws: vscode.WorkspaceFolder, cmt: CMakeTools) {
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
-    if (should_configure === null) {
+    if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
       interface Choice1 {
         title: string;
         doConfigure: boolean;

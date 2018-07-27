@@ -122,7 +122,7 @@ export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out
   return init;
 }
 
-export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T | undefined {
+export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T|undefined {
   for (const value of iter) {
     if (predicate(value)) {
       return value;
@@ -394,7 +394,7 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
     const b_res = b_iter.next();
     if (a_res.done) {
       if (b_res.done) {
-        return 0; // Same elements
+        return 0;  // Same elements
       } else {
         // a is "less" (shorter string)
         return -1;
