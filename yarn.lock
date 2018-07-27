@@ -1694,10 +1694,6 @@ shelljs@^0.8.1:
     interpret "^1.0.0"
     rechoir "^0.6.2"
 
-shlex@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/shlex/-/shlex-1.0.2.tgz#c3b906f22fed7256633779c9abb13bf86bebeca2"
-
 sinon@~5.0.7:
   version "5.0.7"
   resolved "https://registry.yarnpkg.com/sinon/-/sinon-5.0.7.tgz#3bded6a73613ccc9e512e20246ced69a27c27dab"

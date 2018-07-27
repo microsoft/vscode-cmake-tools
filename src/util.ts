@@ -107,6 +107,14 @@ export function* map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Itera
   }
 }
 
+export function* chain<T>(...iter: Iterable<T>[]): Iterable<T> {
+  for (const sub of iter) {
+    for (const item of sub) {
+      yield item;
+    }
+  }
+}
+
 export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out, el: In) => Out): Out {
   for (const item of iter) {
     init = mapper(init, item);

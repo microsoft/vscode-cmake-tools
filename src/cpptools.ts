@@ -11,7 +11,7 @@ import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
-import * as shlex from 'shlex';
+import * as shlex from '@cmt/shlex';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 
@@ -169,7 +169,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       rollbar.error('Unable to automatically determine compiler', {lang, fileGroup});
     }
     const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
-    const flags = fileGroup.compileFlags ? shlex.split(fileGroup.compileFlags) : target.compileFlags;
+    const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions} = parseCompileFlags(flags);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
