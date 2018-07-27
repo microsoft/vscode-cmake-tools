@@ -272,8 +272,10 @@ and ``${env.VARNAME}`` syntax, where the string for the ``VARNAME`` environment
 variable will be replaced. If the named environment variable is undefined, an empty
 string will be expanded instead.
 
+.. _variant-sub:
+
 Variant Substitution
-*********************
+********************
 
 Variant options may also be substituted with the ``${variant:VARIANTNAME}`` syntax,
 where the name of the currently active choice of the provided ``VARIANTNAME`` variant
