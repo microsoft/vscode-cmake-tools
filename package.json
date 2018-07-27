@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -963,7 +963,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "lint:nofix": "node ./node_modules/tslint/bin/tslint -p .",
-    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/ typings/"
+    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
   },
   "devDependencies": {
     "@types/ajv": "^0.0.3",
