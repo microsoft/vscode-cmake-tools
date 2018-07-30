@@ -12,7 +12,7 @@ import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as shlex from 'shlex';
+import * as shlex from '@cmt/shlex';
 import * as ws from 'ws';
 
 import * as api from './api';

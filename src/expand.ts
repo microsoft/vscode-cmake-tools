@@ -30,7 +30,9 @@ export interface RequiredExpansionContextVars {
 /**
  * Key-value type for variable expansions
  */
-export interface ExpansionVars extends RequiredExpansionContextVars { [key: string]: string; }
+export interface ExpansionVars extends RequiredExpansionContextVars {
+  [key: string]: string;
+}
 
 /**
  * Options to control the behavior of `expandString`.
@@ -41,13 +43,17 @@ export interface ExpansionOptions {
    */
   vars: ExpansionVars;
   /**
-   * Override the values used in `${env:var}`-style expansions.
+   * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
    *
    * Note that setting this property will disable expansion of environment
    * variables for the running process. Only environment variables in this key
    * will be expanded.
    */
   envOverride?: EnvironmentVariables;
+  /**
+   * Variables for `${variant:var}`-style expansions.
+   */
+  variantVars?: {[key: string]: string};
 }
 
 /**
@@ -86,12 +92,23 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     subs.set(full, repl);
   }
 
-  const env2_re = /\$\{env\.(.+?)\}/g;
-  while ((mat = env2_re.exec(tmpl))) {
+  const env_re2 = /\$\{env\.(.+?)\}/g;
+  while ((mat = env_re2.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
     const repl = env[normalizeEnvironmentVarname(varname)] || '';
     subs.set(full, repl);
+  }
+
+  if (opts.variantVars) {
+    const variants = opts.variantVars;
+    const variant_regex = /\$\{variant:(.+?)\}/g;
+    while ((mat = variant_regex.exec(tmpl))) {
+      const full = mat[0];
+      const varname = mat[1];
+      const repl = variants[varname] || '';
+      subs.set(full, repl);
+    }
   }
 
   const command_re = /\$\{command:(.+?)\}/g;

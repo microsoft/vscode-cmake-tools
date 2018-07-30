@@ -256,17 +256,13 @@ using ``${variable}`` syntax. The following built-in variables are expanded:
     **DEPRECATED**. Expands to the constant string "``ProjectName``"
 
     .. note::
-        This was deprecated as CMake does not consider there two be *one*
+        This was deprecated as CMake does not consider there to be *one*
         project name to use. The concept of a single project does not work in
         CMake, and this made this feature problematic and buggy. Alternatives
         include ``${workspaceRootFolderName}``.
 
 ``${userHome}``
     The full path to the current user's home directory
-
-``${variant_identifier}``
-    *Replace ``variant_identifier`` with your variant identifier.*
-    The currently selected choice of the given variant identifier.
 
 Environment Variables
 *********************
@@ -275,6 +271,16 @@ Additionally, environment variables may be substituted with ``${env:VARNAME}``
 and ``${env.VARNAME}`` syntax, where the string for the ``VARNAME`` environment
 variable will be replaced. If the named environment variable is undefined, an empty
 string will be expanded instead.
+
+.. _variant-sub:
+
+Variant Substitution
+********************
+
+Variant options may also be substituted with the ``${variant:VARIANTNAME}`` syntax,
+where the name of the currently active choice of the provided ``VARIANTNAME`` variant
+option will be replaced. If the variant option is undefined, an empty string will be
+expanded instead.
 
 Command Substitution
 ********************

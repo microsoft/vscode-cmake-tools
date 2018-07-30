@@ -3,6 +3,24 @@
 Changelog and History
 #####################
 
+.. _changes-1.1.1:
+
+1.1.1
+*****
+
+Fixes and tweaks upon 1.1.0:
+
+- Fix "Unable to automatically determine compiler" when using VS generators.
+- Fix failure to provide IntelliSense information for header files even after
+  adding them to a target.
+- "Unexpected stderr/stdout..." no longer appears. This output is now logged as
+  regular CMake status messages.
+
+**BREAKING CHANGE**: Variant substitutions follow a new `${variant:var-key}`
+syntax to match the special namespacing of substitutions. See :ref:`variant-sub`.
+
+Full list of fixes are in [these issues](https://github.com/vector-of-bool/vscode-cmake-tools/milestone/12?closed=1).
+
 .. _changes-1.1.0:
 
 1.1.0
