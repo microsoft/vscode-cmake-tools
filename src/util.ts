@@ -107,6 +107,14 @@ export function* map<In, Out>(iter: Iterable<In>, proj: (arg: In) => Out): Itera
   }
 }
 
+export function* chain<T>(...iter: Iterable<T>[]): Iterable<T> {
+  for (const sub of iter) {
+    for (const item of sub) {
+      yield item;
+    }
+  }
+}
+
 export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out, el: In) => Out): Out {
   for (const item of iter) {
     init = mapper(init, item);
@@ -114,7 +122,7 @@ export function reduce<In, Out>(iter: Iterable<In>, init: Out, mapper: (acc: Out
   return init;
 }
 
-export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T | undefined {
+export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T|undefined {
   for (const value of iter) {
     if (predicate(value)) {
       return value;
@@ -326,6 +334,19 @@ export function thisExtension() {
   return ext;
 }
 
+export interface PackageJSON {
+  name: string;
+  version: string;
+}
+
+export function thisExtensionPackage(): PackageJSON {
+  const pkg = thisExtension().packageJSON as PackageJSON;
+  return {
+    name: pkg.name,
+    version: pkg.version,
+  };
+}
+
 export function thisExtensionPath(): string { return thisExtension().extensionPath; }
 
 export function dropNulls<T>(items: (T|null|undefined)[]): T[] {
@@ -373,7 +394,7 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
     const b_res = b_iter.next();
     if (a_res.done) {
       if (b_res.done) {
-        return 0; // Same elements
+        return 0;  // Same elements
       } else {
         // a is "less" (shorter string)
         return -1;
