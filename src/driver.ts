@@ -192,7 +192,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       workspaceRootFolderName: path.basename(ws_root),
       generator: this.generatorName || 'null',
       userHome: user_dir,
-      buildKit: this._kit!.name,
+      buildKit: this._kit ? this._kit.name : '__unknownkit__',
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',
     };
