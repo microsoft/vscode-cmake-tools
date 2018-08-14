@@ -192,6 +192,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       workspaceRootFolderName: path.basename(ws_root),
       generator: this.generatorName || 'null',
       userHome: user_dir,
+      buildKit: this._kit ? this._kit.name : '__unknownkit__',
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',
     };
@@ -267,7 +268,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async setKit(kit: Kit): Promise<void> {
     log.info(`Switching to kit: ${kit.name}`);
-    const needs_clean = kitChangeNeedsClean(kit, this._kit);
+
+    const opts = this.expansionOptions;
+    opts.vars.buildKit = kit.name;
+    const newBinaryDir = util.normalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
+
+    const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
     await this.doSetKit(needs_clean, async () => { await this._setKit(kit); });
   }
 
