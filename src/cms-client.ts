@@ -350,6 +350,11 @@ export class ServerError extends global.Error implements ErrorMessage {
   toString(): string { return `[cmake-server] ${this.errorMessage}`; }
 }
 
+
+export class BadHomeDirectoryError extends Error {
+  constructor(readonly cached: string, readonly expecting: string, readonly badCachePath: string) { super() }
+}
+
 interface MessageResolutionCallbacks {
   resolve: (a: SomeReplyMessage) => void;
   reject: (b: ServerError) => void;
@@ -602,10 +607,13 @@ export class CMakeServerClient {
               const tmpcache = await cache.CMakeCache.fromPath(cache_path);
               const src_dir = tmpcache.get('CMAKE_HOME_DIRECTORY');
 
-              // TODO: if src_dir is not available or is different
-              // clean configure is required as CMake won't accept it anyways.
               if (src_dir) {
-                hsparams.sourceDirectory = src_dir.as<string>();
+                const cachedDir = src_dir.as<string>();
+                if (util.platformNormalizePath(cachedDir) !== util.platformNormalizePath(params.sourceDir)) {
+                  // If src_dir is different, clean configure is required as CMake won't accept it anyways.
+                  throw new BadHomeDirectoryError(cachedDir, params.sourceDir, cache_path);
+                }
+                hsparams.sourceDirectory = cachedDir;
               }
             } else {
               // Do clean configure, all parameters are required.
