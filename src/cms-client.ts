@@ -339,7 +339,7 @@ export interface ErrorMessage extends CookiedMessage {
   inReplyTo: string;
 }
 
-export class ServerError extends global.Error implements ErrorMessage {
+export class ServerError extends Error implements ErrorMessage {
   type: 'error' = 'error';
   constructor(e: ErrorMessage,
               public errorMessage = e.errorMessage,
@@ -350,6 +350,8 @@ export class ServerError extends global.Error implements ErrorMessage {
   toString(): string { return `[cmake-server] ${this.errorMessage}`; }
 }
 
+export class NoGeneratorError extends Error {
+}
 
 export class BadHomeDirectoryError extends Error {
   constructor(readonly cached: string, readonly expecting: string, readonly badCachePath: string) { super() }
@@ -619,8 +621,7 @@ export class CMakeServerClient {
               // Do clean configure, all parameters are required.
               const generator = await params.pickGenerator();
               if (!generator) {
-                log.error('None of preferred generators available on the system.');
-                throw new global.Error('Unable to determine CMake Generator to use');
+                throw new NoGeneratorError();
               }
               hsparams.sourceDirectory = params.sourceDir;
               hsparams.generator = generator.name;
