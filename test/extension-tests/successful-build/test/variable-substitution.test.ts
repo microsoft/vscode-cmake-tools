@@ -193,7 +193,7 @@ suite('[Variable Substitution]', async () => {
     const cacheEntry = cache.get('CMAKE_INSTALL_PREFIX') as api.CacheEntry;
     expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[cmakeInstallPrefix] unexpected cache entry type');
     expect(cacheEntry.key).to.eq('CMAKE_INSTALL_PREFIX', '[cmakeInstallPrefix] unexpected cache entry key name');
-    expect(cacheEntry.as<string>())
+    expect(platformNormalizePath(cacheEntry.as<string>()))
         .to.eq(platformNormalizePath(testEnv.projectFolder.buildDirectory.location.concat('/dist')),
                '[cmakeInstallPrefix] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[cmakeInstallPrefix] unexpected cache entry value type');
