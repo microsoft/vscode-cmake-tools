@@ -23,6 +23,7 @@ sure check the changelog!
 - [Read the online documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/index.html)
 - [Contributing](https://vector-of-bool.github.io/docs/vscode-cmake-tools/development.html)
 - [Read the changelog](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html)
+- [Support me on Patreon](https://www.patreon.com/vector_of_bool)
 
 ## Issues? Questions? Feature requests?
 
@@ -31,3 +32,7 @@ for a new feature, create an issue on [the GitHub page](https://github.com/vecto
 
 This extension itself *does not* provide language support for the CMake
 scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+
+# Want to Support this Project? Support me on Patreon!
+
+[![Support me on Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/vector_of_bool)
