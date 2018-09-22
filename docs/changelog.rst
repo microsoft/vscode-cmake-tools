@@ -19,7 +19,7 @@ Fixes and tweaks upon 1.1.2:
 - Display a more helpful message when using a toolchain file and we fail to find
   the C and/or C++ compiler because it is not stored in the CMake cache.
 
-Full list of fixes are `these issues <https://github.com/vector-of-bool/vscode-cmake-tools/milestone/13?closed=1>`.
+`See the 1.1.2 milestone on GitHub <https://github.com/vector-of-bool/vscode-cmake-tools/milestone/13?closed=1>`_.
 
 .. _changes-1.1.1:
 
@@ -37,7 +37,7 @@ Fixes and tweaks upon 1.1.0:
 **BREAKING CHANGE**: Variant substitutions follow a new `${variant:var-key}`
 syntax to match the special namespacing of substitutions. See :ref:`variant-sub`.
 
-Full list of fixes are `these issues <https://github.com/vector-of-bool/vscode-cmake-tools/milestone/12?closed=1>`.
+`See the 1.1.1 milestone on GitHub <https://github.com/vector-of-bool/vscode-cmake-tools/milestone/12?closed=1>`_.
 
 .. _changes-1.1.0:
 
