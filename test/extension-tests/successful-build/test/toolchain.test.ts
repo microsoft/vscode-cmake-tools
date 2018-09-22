@@ -2,7 +2,7 @@ import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
 import {kitsAvailableInWorkspaceDirectory} from '@cmt/kit';
-import {normalizePath} from '@cmt/util';
+import {platformNormalizePath} from '@cmt/util';
 import {DefaultEnvironment, expect} from '@test/util';
 
 suite('[Toolchain Substitution]', async () => {
@@ -44,8 +44,8 @@ suite('[Toolchain Substitution]', async () => {
     // tslint:disable-next-line:no-unused-expression
     expect(cacheEntry).to.not.be.null;
     expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
-    expect(normalizePath(cacheEntry.as<string>()))
-        .to.eq(normalizePath(testEnv.projectFolder.location.concat('/test-toolchain.cmake')),
+    expect(platformNormalizePath(cacheEntry.as<string>()))
+        .to.eq(platformNormalizePath(testEnv.projectFolder.location.concat('/test-toolchain.cmake')),
                '[toolchain] substitution incorrect');
   }).timeout(100000);
 });

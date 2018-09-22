@@ -9,9 +9,9 @@ import {CMakeCache} from '@cmt/cache';
 import * as cms from '@cmt/cms-client';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
+import * as shlex from '@cmt/shlex';
 import * as util from '@cmt/util';
 import * as path from 'path';
-import * as shlex from '@cmt/shlex';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 
@@ -124,7 +124,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param uri The configuration to get from the index
    */
   private _getConfiguration(uri: vscode.Uri): cpt.SourceFileConfigurationItem|undefined {
-    const norm_path = util.normalizePath(uri.fsPath);
+    const norm_path = util.platformNormalizePath(uri.fsPath);
     return this._fileIndex.get(norm_path);
   }
 
@@ -155,9 +155,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup,
-                                  opts: CodeModelParams,
-                                  target: TargetDefaults): cpt.SourceFileConfiguration {
+  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults):
+      cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language || 'CXX';
     // Try the group's language's compiler, then the C++ compiler, then the C compiler.
@@ -196,7 +195,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const configuration = this._buildConfigurationData(grp, opts, target);
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
-      const abs_norm = util.normalizePath(abs);
+      const abs_norm = util.platformNormalizePath(abs);
       this._fileIndex.set(abs_norm, {
         uri: vscode.Uri.file(abs).toString(),
         configuration,
@@ -219,7 +218,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           const grps = target.fileGroups || [];
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
           const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
-          const defines = [... new Set(util.flatMap(grps, grp => grp.defines || []))];
+          const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
           for (const grp of target.fileGroups || []) {
             this._updateFileGroup(
                 target.sourceDirectory || '',

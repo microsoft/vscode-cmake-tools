@@ -354,7 +354,7 @@ export class NoGeneratorError extends Error {
 }
 
 export class BadHomeDirectoryError extends Error {
-  constructor(readonly cached: string, readonly expecting: string, readonly badCachePath: string) { super() }
+  constructor(readonly cached: string, readonly expecting: string, readonly badCachePath: string) { super(); }
 }
 
 interface MessageResolutionCallbacks {

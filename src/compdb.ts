@@ -26,7 +26,7 @@ export class CompilationDatabase {
   private readonly _infoByFilePath: Map<string, ArgsCompileCommand>;
   constructor(infos: CompileCommand[]) {
     this._infoByFilePath = infos.reduce(
-        (acc, cur) => acc.set(util.normalizePath(cur.file), {
+        (acc, cur) => acc.set(util.platformNormalizePath(cur.file), {
           directory: cur.directory,
           file: cur.file,
           output: cur.output,
@@ -36,7 +36,7 @@ export class CompilationDatabase {
     );
   }
 
-  get(fspath: string) { return this._infoByFilePath.get(util.normalizePath(fspath)); }
+  get(fspath: string) { return this._infoByFilePath.get(util.platformNormalizePath(fspath)); }
 
   public static async fromFilePath(dbpath: string): Promise<CompilationDatabase|null> {
     if (!await fs.exists(dbpath)) {

@@ -5,8 +5,8 @@
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import {ProgressMessage} from '@cmt/cms-client';
 import {CompileCommand} from '@cmt/compdb';
-import * as path from 'path';
 import * as shlex from '@cmt/shlex';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
@@ -174,7 +174,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders[0].uri.scheme !== 'file') {
       return null;
     }
-    return util.normalizePath(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    return util.lightNormalizePath(vscode.workspace.workspaceFolders[0].uri.fsPath);
   }
 
   /**
@@ -271,7 +271,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const opts = this.expansionOptions;
     opts.vars.buildKit = kit.name;
-    const newBinaryDir = util.normalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
+    const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
 
     const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
     await this.doSetKit(needs_clean, async () => { await this._setKit(kit); });
@@ -340,17 +340,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this.doRefreshExpansions(async () => {
       log.debug('Run _refreshExpansions cb');
       const opts = this.expansionOptions;
-      this._sourceDirectory = util.normalizePath(await expand.expandString(this.ws.config.sourceDirectory, opts));
-      this._binaryDir = util.normalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
+      this._sourceDirectory = util.lightNormalizePath(await expand.expandString(this.ws.config.sourceDirectory, opts));
+      this._binaryDir = util.lightNormalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
 
       const installPrefix = this.ws.config.installPrefix;
       if (installPrefix) {
-        this._installDir = util.normalizePath(await expand.expandString(installPrefix, opts));
+        this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
       }
 
       const copyCompileCommands = this.ws.config.copyCompileCommands;
       if (copyCompileCommands) {
-        this._copyCompileCommandsPath = util.normalizePath(await expand.expandString(copyCompileCommands, opts));
+        this._copyCompileCommandsPath = util.lightNormalizePath(await expand.expandString(copyCompileCommands, opts));
       }
     });
   }
@@ -360,7 +360,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get mainListFile(): string {
     const file = path.join(this.sourceDir, 'CMakeLists.txt');
-    return util.normalizePath(file);
+    return util.lightNormalizePath(file);
   }
 
   /**
@@ -387,7 +387,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   get cachePath(): string {
     // TODO: Cache path can change if build dir changes at runtime
     const file = path.join(this.binaryDir, 'CMakeCache.txt');
-    return util.normalizePath(file);
+    return util.lightNormalizePath(file);
   }
 
   /**
