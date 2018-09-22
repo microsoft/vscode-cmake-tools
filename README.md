@@ -12,7 +12,11 @@ Visual Studio Code.
 [Read about them here](https://vector-of-bool.github.io/2018/07/20/cmt-1.1.0.html), and be
 sure check the changelog!
 
-## Find Out More:
+# Want to Support this Project? Support me on Patreon!
+
+[![Support me on Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/vector_of_bool)
+
+# Important Links:
 
 - [Getting started](https://vector-of-bool.github.io/docs/vscode-cmake-tools/getting_started.html)
 - [Configuring a project](https://vector-of-bool.github.io/docs/vscode-cmake-tools/configuring.html)
@@ -23,6 +27,7 @@ sure check the changelog!
 - [Read the online documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/index.html)
 - [Contributing](https://vector-of-bool.github.io/docs/vscode-cmake-tools/development.html)
 - [Read the changelog](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html)
+- [Support me on Patreon](https://www.patreon.com/vector_of_bool)
 
 ## Issues? Questions? Feature requests?
 

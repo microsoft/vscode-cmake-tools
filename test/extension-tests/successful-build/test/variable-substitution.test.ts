@@ -1,9 +1,8 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
-import {normalizePath, objectPairs} from '@cmt/util';
+import {objectPairs, platformNormalizePath} from '@cmt/util';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
-
 import * as path from 'path';
 
 suite('[Variable Substitution]', async () => {
@@ -43,8 +42,8 @@ suite('[Variable Substitution]', async () => {
     const cacheEntry = cache.get('workspaceRoot') as api.CacheEntry;
     expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[workspaceRoot] unexpected cache entry type');
     expect(cacheEntry.key).to.eq('workspaceRoot', '[workspaceRoot] unexpected cache entry key name');
-    expect(normalizePath(cacheEntry.as<string>()))
-        .to.eq(normalizePath(testEnv.projectFolder.location), '[workspaceRoot] substitution incorrect');
+    expect(platformNormalizePath(cacheEntry.as<string>()))
+        .to.eq(platformNormalizePath(testEnv.projectFolder.location), '[workspaceRoot] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[workspaceRoot] unexpected cache entry value type');
   }).timeout(100000);
 
@@ -60,8 +59,8 @@ suite('[Variable Substitution]', async () => {
     const cacheEntry = cache.get('workspaceFolder') as api.CacheEntry;
     expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[workspaceFolder] unexpected cache entry type');
     expect(cacheEntry.key).to.eq('workspaceFolder', '[workspaceFolder] unexpected cache entry key name');
-    expect(normalizePath(cacheEntry.as<string>()))
-        .to.eq(normalizePath(testEnv.projectFolder.location), '[workspaceFolder] substitution incorrect');
+    expect(platformNormalizePath(cacheEntry.as<string>()))
+        .to.eq(platformNormalizePath(testEnv.projectFolder.location), '[workspaceFolder] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[workspaceFolder] unexpected cache entry value type');
   }).timeout(100000);
 
@@ -79,6 +78,23 @@ suite('[Variable Substitution]', async () => {
     expect(cacheEntry.key).to.eq('buildType', '[buildType] unexpected cache entry key name');
     expect(cacheEntry.as<string>()).to.eq('Debug', '[buildType] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[buildType] unexpected cache entry value type');
+  }).timeout(100000);
+
+  test('Check substitution for "buildKit"', async () => {
+    // Set fake settings
+    testEnv.config.updatePartial({configureSettings: {buildKit: '${buildKit}'}});
+
+    // Configure
+    expect(await cmt.configure()).to.be.eq(0, '[buildKit] configure failed');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+    const cache = await CMakeCache.fromPath(await cmt.cachePath);
+
+    const cacheEntry = cache.get('buildKit') as api.CacheEntry;
+    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[buildKit] unexpected cache entry type');
+    expect(cacheEntry.key).to.eq('buildKit', '[buildKit] unexpected cache entry key name');
+    const kit = cmt.activeKit;
+    expect(cacheEntry.as<string>()).to.eq(kit!.name, '[buildKit] substitution incorrect');
+    expect(typeof cacheEntry.value).to.eq('string', '[buildKit] unexpected cache entry value type');
   }).timeout(100000);
 
   test('Check substitution for "workspaceRootFolderName"', async () => {
@@ -177,8 +193,8 @@ suite('[Variable Substitution]', async () => {
     const cacheEntry = cache.get('CMAKE_INSTALL_PREFIX') as api.CacheEntry;
     expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[cmakeInstallPrefix] unexpected cache entry type');
     expect(cacheEntry.key).to.eq('CMAKE_INSTALL_PREFIX', '[cmakeInstallPrefix] unexpected cache entry key name');
-    expect(cacheEntry.as<string>())
-        .to.eq(normalizePath(testEnv.projectFolder.buildDirectory.location.concat('/dist')),
+    expect(platformNormalizePath(cacheEntry.as<string>()))
+        .to.eq(platformNormalizePath(testEnv.projectFolder.buildDirectory.location.concat('/dist')),
                '[cmakeInstallPrefix] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[cmakeInstallPrefix] unexpected cache entry value type');
   }).timeout(100000);

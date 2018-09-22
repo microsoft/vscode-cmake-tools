@@ -99,7 +99,16 @@ target:
                 "args": [],
                 "stopAtEntry": false,
                 "cwd": "${workspaceFolder}",
-                "environment": [],
+                "environment": [
+                    {
+                        "name": "PATH",
+                        "value": "$PATH:$HOME/some_path"
+                    },
+                    {
+                        "name": "OTHER_VALUE",
+                        "value": "Something something"
+                    }
+                ],
                 "externalConsole": true,
                 "MIMode": "gdb",
                 "setupCommands": [

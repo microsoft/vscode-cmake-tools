@@ -304,7 +304,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            context.testEnv.config.updatePartial({preferredGenerators: ['BlaBla']});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
-           expect(context.testEnv.errorMessagesQueue.length).to.be.eq(1);
+           expect(context.testEnv.errorMessagesQueue.length).to.be.gte(1);
            expect(context.testEnv.errorMessagesQueue[0])
                .to.be.contains('Unable to determine what CMake generator to use.');
          });
@@ -319,7 +319,7 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            context.testEnv.config.updatePartial({preferredGenerators: []});
            await expect(context.cmt.build()).to.eventually.be.rejected;
 
-           expect(context.testEnv.errorMessagesQueue.length).to.eql(1);
+           expect(context.testEnv.errorMessagesQueue.length).to.gte(1);
            expect(context.testEnv.errorMessagesQueue[0])
                .to.be.contains('Unable to determine what CMake generator to use.');
          });

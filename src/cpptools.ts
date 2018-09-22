@@ -9,9 +9,9 @@ import {CMakeCache} from '@cmt/cache';
 import * as cms from '@cmt/cms-client';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
+import * as shlex from '@cmt/shlex';
 import * as util from '@cmt/util';
 import * as path from 'path';
-import * as shlex from '@cmt/shlex';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 
@@ -23,6 +23,8 @@ export interface CompileFlagInformation {
   extraDefinitions: string[];
   standard: StandardVersion;
 }
+
+class MissingCompilerException extends Error {}
 
 interface TargetDefaults {
   includePath: string[];
@@ -118,13 +120,24 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   readonly name = 'CMake Tools';
   /** Our extension ID, visible to cpptools */
   readonly extensionId = 'vector-of-bool.cmake-tools';
+  /**
+   * This value determines if we need to show the user an error message about missing compilers. When an update succeeds
+   * without missing any compilers, we set this to `true`, otherwise `false`.
+   *
+   * If an update fails and the value is `true`, we display the message. If an
+   * update fails and the value is `false`, we do not display the message.
+   *
+   * This ensures that we only show the message the first time an update fails
+   * within a sequence of failing updates.
+   */
+  private _lastUpdateSucceeded = true;
 
   /**
    * Get the SourceFileConfigurationItem from the index for the given URI
    * @param uri The configuration to get from the index
    */
   private _getConfiguration(uri: vscode.Uri): cpt.SourceFileConfigurationItem|undefined {
-    const norm_path = util.normalizePath(uri.fsPath);
+    const norm_path = util.platformNormalizePath(uri.fsPath);
     return this._fileIndex.get(norm_path);
   }
 
@@ -155,9 +168,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup,
-                                  opts: CodeModelParams,
-                                  target: TargetDefaults): cpt.SourceFileConfiguration {
+  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults):
+      cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language || 'CXX';
     // Try the group's language's compiler, then the C++ compiler, then the C compiler.
@@ -166,7 +178,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     // Try to get the path to the compiler we want to use
     const comp_path = comp_cache ? comp_cache.as<string>() : opts.clCompilerPath;
     if (!comp_path) {
-      rollbar.error('Unable to automatically determine compiler', {lang, fileGroup});
+      throw new MissingCompilerException();
     }
     const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
@@ -196,7 +208,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const configuration = this._buildConfigurationData(grp, opts, target);
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
-      const abs_norm = util.normalizePath(abs);
+      const abs_norm = util.platformNormalizePath(abs);
       this._fileIndex.set(abs_norm, {
         uri: vscode.Uri.file(abs).toString(),
         configuration,
@@ -209,6 +221,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param opts Update parameters
    */
   updateConfigurationData(opts: CodeModelParams) {
+    let hadMissingCompilers = false;
     for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
@@ -219,21 +232,37 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           const grps = target.fileGroups || [];
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
           const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
-          const defines = [... new Set(util.flatMap(grps, grp => grp.defines || []))];
+          const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
           for (const grp of target.fileGroups || []) {
-            this._updateFileGroup(
-                target.sourceDirectory || '',
-                grp,
-                opts,
-                {
-                  compileFlags,
-                  includePath,
-                  defines,
-                },
-            );
+            try {
+
+              this._updateFileGroup(
+                  target.sourceDirectory || '',
+                  grp,
+                  opts,
+                  {
+                    compileFlags,
+                    includePath,
+                    defines,
+                  },
+              );
+            } catch (e) {
+              if (e instanceof MissingCompilerException) {
+                hadMissingCompilers = true;
+              } else {
+                throw e;
+              }
+            }
           }
         }
       }
     }
+    if (hadMissingCompilers && this._lastUpdateSucceeded) {
+      vscode.window.showErrorMessage('The path to the compiler for one or more source files was not found in ' +
+                                     'the CMake cache. If you are using a toolchain file, this probably means ' +
+                                     'that you need to specify the CACHE option when you set your C and/or C++ ' +
+                                     'compiler path');
+    }
+    this._lastUpdateSucceeded = !hadMissingCompilers;
   }
 }

@@ -66,7 +66,7 @@ suite('Dirty file checking', async () => {
 
   test('Input file set maps files correctly', async () => {
     const foo_subdir = path.join(here, 'foo');
-    const dummy_file = util.normalizePath(path.join(foo_subdir, 'dummy_file'));
+    const dummy_file = util.platformNormalizePath(path.join(foo_subdir, 'dummy_file'));
     const fileset = await InputFileSet.create({
       buildFiles: [{
         isCMake: false,

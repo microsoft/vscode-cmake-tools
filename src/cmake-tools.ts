@@ -5,6 +5,7 @@ import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {CompilationDatabase} from '@cmt/compdb';
 import * as debugger_mod from '@cmt/debugger';
+import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
 import {ProgressHandle, versionToString} from '@cmt/util';
@@ -12,13 +13,12 @@ import {DirectoryContext} from '@cmt/workspace';
 import * as http from 'http';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as shlex from '@cmt/shlex';
 import * as ws from 'ws';
 
 import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
 import {CacheEditorContentProvider} from './cache-editor';
-import {CodeModelContent} from './cms-client';
+import {BadHomeDirectoryError, CodeModelContent, NoGeneratorError} from './cms-client';
 import {CMakeServerClientDriver} from './cms-driver';
 import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
@@ -391,10 +391,45 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
         try {
           await this._cmakeDriver;
-        } catch (ex) {
+        } catch (e) {
           this._cmakeDriver = Promise.resolve(null);
-          throw ex;
+          if (e instanceof BadHomeDirectoryError) {
+            vscode.window
+                .showErrorMessage(
+                    `The source directory "${e.expecting}" does not match ` +
+                        `the source directory in the CMake cache: ${e.cached}. ` +
+                        `You will need to run a clean-configure to configure this project.`,
+                    {},
+                    {title: 'Clean Configure'},
+                    )
+                .then(chosen => {
+                  if (chosen) {
+                    // There was only one choice: to clean-configure
+                    rollbar.invokeAsync('Clean reconfigure after bad home dir', async () => {
+                      try {
+                        await fs.unlink(e.badCachePath);
+                      } catch (e2) {
+                        log.error('Failed to remove bad cache file: ', e.badCachePath, e2);
+                      }
+                      try {
+                        await fs.rmdir(path.join(path.dirname(e.badCachePath), 'CMakeFiles'));
+                      } catch (e2) {
+                        log.error('Failed to remove CMakeFiles for cache: ', e.badCachePath, e2);
+                      }
+                      await this.cleanConfigure();
+                    });
+                  }
+                });
+          } else if (e instanceof NoGeneratorError) {
+            vscode.window.showErrorMessage(
+              `Unable to determine what CMake generator to use. ` +
+                `Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
+          } else {
+            throw e;
+          }
+          return null;
         }
+
         if (this._codeModelDriverSub) {
           this._codeModelDriverSub.dispose();
         }

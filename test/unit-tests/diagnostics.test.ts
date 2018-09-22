@@ -8,6 +8,7 @@ chai.use(chaiAsPromised);
 import {expect} from 'chai';
 import * as diags from '../../src/diagnostics';
 import {OutputConsumer} from '../../src/proc';
+import {platformPathEquivalent} from '@cmt/util';
 
 // tslint:disable:no-unused-expression
 
@@ -151,7 +152,8 @@ suite('Diagnostics', async () => {
     expect(diag.location.start.line).to.eq(84);
     expect(diag.message).to.eq('comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
     expect(diag.location.start.character).to.eq(14);
-    expect(diag.file).to.eq('/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h');
+    const expected = '/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h';
+    expect(platformPathEquivalent(diag.file, expected), `${diag.file} != ${expected}`).to.be.true;
     expect(diag.severity).to.eq('warning');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
@@ -162,7 +164,8 @@ suite('Diagnostics', async () => {
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     const diag = build_consumer.gccDiagnostics[0];
-    expect(diag.file).to.eq('/Users/Tobias/Code/QUIT/Source/qidespot1.cpp');
+    const expected = '/Users/Tobias/Code/QUIT/Source/qidespot1.cpp';
+    expect(platformPathEquivalent(diag.file, expected), `${diag.file} != ${expected}`).to.be.true;
     expect(diag.location.start.line).to.eq(302);
     expect(diag.location.start.character).to.eq(48);
     expect(diag.message).to.eq(`expected ';' after expression`);
@@ -321,9 +324,7 @@ suite('Diagnostics', async () => {
   });
 
   test('Parse GCC error on line zero', () => {
-    const lines = [
-      '/foo.h:66:0: warning: ignoring #pragma comment [-Wunknown-pragmas]'
-    ];
+    const lines = ['/foo.h:66:0: warning: ignoring #pragma comment [-Wunknown-pragmas]'];
     feedLines(build_consumer, [], lines);
     expect(build_consumer.gccDiagnostics).to.have.length(1);
     expect(build_consumer.gccDiagnostics[0].file).to.eq('/foo.h');

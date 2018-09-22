@@ -32,6 +32,12 @@ export function removeAllPatterns(str: string, patterns: string[]): string {
   return patterns.reduce((acc, needle) => replaceAll(acc, needle, ''), str);
 }
 
+type NormalizationSetting = 'always'|'never'|'platform';
+interface PathNormalizationOptions {
+  normCase?: NormalizationSetting;
+  normUnicode?: NormalizationSetting;
+}
+
 /**
  * Completely normalize/canonicalize a path.
  * Using `path.normalize` isn't sufficient. We want convert all paths to use
@@ -39,23 +45,63 @@ export function removeAllPatterns(str: string, patterns: string[]): string {
  * case of the path.
  *
  * @param p The input path
- * @param normalize_case Whether we should normalize the case of the path
+ * @param opt Options to control the normalization
  * @returns The normalized path
  */
-export function normalizePath(p: string, normalize_case = true): string {
+export function normalizePath(p: string, opt: PathNormalizationOptions): string {
+  const normCase: NormalizationSetting = opt ? opt.normCase ? opt.normCase : 'never' : 'never';
+  const normUnicode: NormalizationSetting = opt ? opt.normUnicode ? opt.normUnicode : 'never' : 'never';
   let norm = path.normalize(p);
   while (path.sep !== path.posix.sep && norm.includes(path.sep)) {
     norm = norm.replace(path.sep, path.posix.sep);
   }
-  if (normalize_case && process.platform === 'win32') {
-    norm = norm.toLocaleLowerCase().normalize();
+  // Normalize for case an unicode
+  switch (normCase) {
+  case 'always':
+    norm = norm.toLocaleLowerCase();
+    break;
+  case 'platform':
+    if (process.platform === 'win32' || process.platform === 'darwin') {
+      norm = norm.toLocaleLowerCase();
+    }
+    break;
+  case 'never':
+    break;
   }
-  norm = norm.replace(/\/$/, '');
+  switch (normUnicode) {
+  case 'always':
+    norm = norm.normalize();
+    break;
+  case 'platform':
+    if (process.platform === 'darwin') {
+      norm = norm.normalize();
+    }
+    break;
+  case 'never':
+    break;
+  }
+  // Remove trailing slashes
+  norm = norm.replace(/\/$/g, '');
+  // Remove duplicate slashes
   while (norm.includes('//')) {
     norm = replaceAll(norm, '//', '/');
   }
   return norm;
 }
+
+export function lightNormalizePath(p: string): string {
+  return normalizePath(p, {normCase: 'never', normUnicode: 'never'});
+}
+
+export function platformNormalizePath(p: string): string {
+  return normalizePath(p, {normCase: 'platform', normUnicode: 'platform'});
+}
+
+export function heavyNormalizePath(p: string): string {
+  return normalizePath(p, {normCase: 'always', normUnicode: 'always'});
+}
+
+
 
 /**
  * Split a path into its elements.
@@ -66,6 +112,10 @@ export function splitPath(p: string): string[] {
     return [];
   }
   const pardir = path.dirname(p);
+  if (pardir === p) {
+    // We've reach a root path. (Might be a Windows drive dir)
+    return [p];
+  }
   const arr: string[] = [];
   if (p.startsWith(pardir)) {
     arr.push(...splitPath(pardir));
@@ -369,6 +419,14 @@ export function compare(a: any, b: any): Ordering {
   } else {
     return Ordering.Equivalent;
   }
+}
+
+export function platformPathCompare(a: string, b: string): Ordering {
+  return compare(platformNormalizePath(a), platformNormalizePath(b));
+}
+
+export function platformPathEquivalent(a: string, b: string): boolean {
+  return platformPathCompare(a, b) === Ordering.Equivalent;
 }
 
 export function setContextValue(key: string, value: any): Thenable<void> {

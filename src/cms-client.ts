@@ -339,7 +339,7 @@ export interface ErrorMessage extends CookiedMessage {
   inReplyTo: string;
 }
 
-export class ServerError extends global.Error implements ErrorMessage {
+export class ServerError extends Error implements ErrorMessage {
   type: 'error' = 'error';
   constructor(e: ErrorMessage,
               public errorMessage = e.errorMessage,
@@ -348,6 +348,13 @@ export class ServerError extends global.Error implements ErrorMessage {
     super(e.errorMessage);
   }
   toString(): string { return `[cmake-server] ${this.errorMessage}`; }
+}
+
+export class NoGeneratorError extends Error {
+}
+
+export class BadHomeDirectoryError extends Error {
+  constructor(readonly cached: string, readonly expecting: string, readonly badCachePath: string) { super(); }
 }
 
 interface MessageResolutionCallbacks {
@@ -602,17 +609,19 @@ export class CMakeServerClient {
               const tmpcache = await cache.CMakeCache.fromPath(cache_path);
               const src_dir = tmpcache.get('CMAKE_HOME_DIRECTORY');
 
-              // TODO: if src_dir is not available or is different
-              // clean configure is required as CMake won't accept it anyways.
               if (src_dir) {
-                hsparams.sourceDirectory = src_dir.as<string>();
+                const cachedDir = src_dir.as<string>();
+                if (!util.platformPathEquivalent(cachedDir, params.sourceDir)) {
+                  // If src_dir is different, clean configure is required as CMake won't accept it anyways.
+                  throw new BadHomeDirectoryError(cachedDir, params.sourceDir, cache_path);
+                }
+                hsparams.sourceDirectory = cachedDir;
               }
             } else {
               // Do clean configure, all parameters are required.
               const generator = await params.pickGenerator();
               if (!generator) {
-                log.error('None of preferred generators available on the system.');
-                throw new global.Error('Unable to determine CMake Generator to use');
+                throw new NoGeneratorError();
               }
               hsparams.sourceDirectory = params.sourceDir;
               hsparams.generator = generator.name;
