@@ -3,6 +3,24 @@
 Changelog and History
 #####################
 
+.. _changes-1.1.2:
+
+1.1.2
+*****
+
+Fixes and tweaks upon 1.1.2:
+
+- Fix silent failure when a build directory appears at a different path than is
+  encoded in its ``CMakeCache.txt``.
+- Improved logic in path normalization, but could be better.
+- Improve documentation on using ``launch.json``.
+- Fix shell splitting preventing certain command lines from being parsed
+  correctly.
+- Display a more helpful message when using a toolchain file and we fail to find
+  the C and/or C++ compiler because it is not stored in the CMake cache.
+
+Full list of fixes are `these issues <https://github.com/vector-of-bool/vscode-cmake-tools/milestone/13?closed=1>`.
+
 .. _changes-1.1.1:
 
 1.1.1
@@ -19,7 +37,7 @@ Fixes and tweaks upon 1.1.0:
 **BREAKING CHANGE**: Variant substitutions follow a new `${variant:var-key}`
 syntax to match the special namespacing of substitutions. See :ref:`variant-sub`.
 
-Full list of fixes are in [these issues](https://github.com/vector-of-bool/vscode-cmake-tools/milestone/12?closed=1).
+Full list of fixes are `these issues <https://github.com/vector-of-bool/vscode-cmake-tools/milestone/12?closed=1>`.
 
 .. _changes-1.1.0:
 
