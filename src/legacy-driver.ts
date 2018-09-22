@@ -45,8 +45,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     // Dup args so we can modify them
     const args = Array.from(args_);
-    args.push('-H' + util.normalizePath(this.sourceDir));
-    const bindir = util.normalizePath(this.binaryDir);
+    args.push('-H' + util.lightNormalizePath(this.sourceDir));
+    const bindir = util.lightNormalizePath(this.binaryDir);
     args.push('-B' + bindir);
     const cmake = this.cmake.path;
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));

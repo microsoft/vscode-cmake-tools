@@ -3,14 +3,14 @@ import {expect} from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {normalizePath} from '../../../src/util';
+import {platformNormalizePath} from '../../../src/util';
 
 export class TestProgramResult {
 
   private readonly _result_file_location: string;
 
   public constructor(location: string, filename: string = 'output.txt') {
-    this._result_file_location = normalizePath(path.join(location, filename));
+    this._result_file_location = platformNormalizePath(path.join(location, filename));
   }
 
   public get isPresent(): boolean { return fs.existsSync(this._result_file_location); }

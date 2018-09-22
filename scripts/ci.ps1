@@ -72,12 +72,24 @@ if (! $yarn) {
     }
 }
 
-if ($Docs) {
+function Invoke-DocsBuild {
+    Build-DevDocs
     Build-UserDocs `
         -RepoDir $REPO_DIR `
-        -Version $CMakeToolsVersion `
+        -Version $CMakeToolsVersion`
         -Out $DOC_BUILD_DIR
-    return Build-DevDocs
+
+    if ($DocDestination) {
+        Write-Host "Copying documentation tree to $DocDestination"
+        if (Test-Path $DocDestination) {
+            Remove-Item $DocDestination -Recurse -Force
+        }
+        Copy-Item $DOC_BUILD_DIR -Destination $DocDestination -Recurse
+    }
+}
+
+if ($Docs) {
+    return Invoke-DocsBuild
 }
 
 $out_dir = Join-Path $REPO_DIR out
@@ -126,17 +138,7 @@ if (! $NoTest) {
     }
 }
 
-Build-DevDocs
-Build-UserDocs `
-    -RepoDir $REPO_DIR `
-    -Version $CMakeToolsVersion`
-    -Out $DOC_BUILD_DIR
-
-if ($DocDestination) {
-    Write-Host "Copying documentation tree to $DocDestination"
-    Remove-Item $DocDestination -Recurse -Force
-    Copy-Item $DOC_BUILD_DIR -Destination $DocDestination -Recurse
-}
+Invoke-DocsBuild
 
 $vsce = Find-Program vsce
 if (! $vsce) {
