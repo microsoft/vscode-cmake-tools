@@ -611,7 +611,7 @@ export class CMakeServerClient {
 
               if (src_dir) {
                 const cachedDir = src_dir.as<string>();
-                if (util.platformNormalizePath(cachedDir) !== util.platformNormalizePath(params.sourceDir)) {
+                if (!util.platformPathEquivalent(cachedDir, params.sourceDir)) {
                   // If src_dir is different, clean configure is required as CMake won't accept it anyways.
                   throw new BadHomeDirectoryError(cachedDir, params.sourceDir, cache_path);
                 }
