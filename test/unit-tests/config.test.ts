@@ -40,6 +40,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     copyCompileCommands: null,
     configureOnOpen: null,
     useCMakeServer: true,
+    outputLogEncoding: 'utf8',
     enableTraceLogging: false,
     loggingLevel: 'info',
   });

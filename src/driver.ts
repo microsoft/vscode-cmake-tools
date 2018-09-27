@@ -721,7 +721,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
     const cmake = this.cmake.path;
-    const child = this.executeCommand(cmake, expanded_args, consumer, {environment: build_env});
+    const exeOpt: proc.ExecutionOptions = {environment: build_env, outputEncoding: this.ws.config.outputLogEncoding};
+    const child = this.executeCommand(cmake, expanded_args, consumer, exeOpt);
     this._currentProcess = child;
     this._isBusy = true;
     await child.result;
