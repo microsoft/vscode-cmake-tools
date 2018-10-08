@@ -10,6 +10,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
+import * as codepages from './code-pages';
 import * as expand from './expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
@@ -282,6 +283,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug('CMakeDriver Kit set to', kit.name);
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit);
   }
+
+  /**
+   * Get the default code page of Windows by chcp cmd
+   */
+  private async _windowsCodePage(): Promise<number> {
+    const chcp_res = await proc.execute('chcp', [], null, undefined).result;
+    if (chcp_res.retc !== 0) {
+      log.error('Failed to execute chcp', chcp_res.stderr);
+      return 65001;
+    }
+    const num = chcp_res.stdout.replace(/[^0-9]/ig, '');
+    return parseInt(num);
+  }
+
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
@@ -721,7 +736,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
     const cmake = this.cmake.path;
-    const exeOpt: proc.ExecutionOptions = {environment: build_env, outputEncoding: this.ws.config.outputLogEncoding};
+    let outputEnc = this.ws.config.outputLogEncoding;
+    if (outputEnc == 'auto') {
+      if (process.platform === 'win32') {
+        const num = await Promise.resolve(this._windowsCodePage());
+        const cpt = codepages.getCodePageTable();
+        outputEnc = cpt[num] || 'utf8';
+      } else {
+        outputEnc = 'utf8';
+      }
+    }
+    const exeOpt: proc.ExecutionOptions = {environment: build_env, outputEncoding: outputEnc};
     const child = this.executeCommand(cmake, expanded_args, consumer, exeOpt);
     this._currentProcess = child;
     this._isBusy = true;

@@ -868,7 +868,7 @@
         },
         "cmake.outputLogEncoding": {
           "type": "string",
-          "default": "utf8",
+          "default": "auto",
           "description": "Encoding of the output from external commonds(eg.cmake -- build)",
           "scope": "window"
         },
