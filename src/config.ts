@@ -49,6 +49,7 @@ export interface ExtensionConfigurationSettings {
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   useCMakeServer: boolean;
+  outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
 }
@@ -216,6 +217,7 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     return this.configData.loggingLevel;
   }
+  get outputLogEncoding(): string { return this.configData.outputLogEncoding; }
   get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
 
   private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
@@ -253,6 +255,7 @@ export class ConfigurationReader implements vscode.Disposable {
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
+    outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
   };

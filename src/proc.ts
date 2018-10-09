@@ -3,6 +3,7 @@
  */ /** */
 
 import * as proc from 'child_process';
+import * as iconv from 'iconv-lite';
 
 import {createLogger} from './logging';
 import rollbar from './rollbar';
@@ -72,6 +73,7 @@ export interface ExecutionOptions {
   silent?: boolean;
   cwd?: string;
   encoding?: BufferEncoding;
+  outputEncoding?: string;
 }
 
 /**
@@ -114,6 +116,8 @@ export function execute(command: string,
   if (options.encoding)
     child.stdout.setEncoding(options.encoding);
 
+  const encoding = options.outputEncoding ? options.outputEncoding:'utf8';
+
   const result = new Promise<ExecutionResult>((resolve, reject) => {
     child.on('error', err => { reject(err); });
     let stdout_acc = '';
@@ -122,7 +126,7 @@ export function execute(command: string,
     let stderr_line_acc = '';
     child.stdout.on('data', (data: Uint8Array) => {
       rollbar.invoke('Processing "data" event from proc stdout', {data, command, args}, () => {
-        const str = data.toString();
+        const str = iconv.decode(new Buffer(data), encoding);
         const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
         while (lines.length > 1) {
           line_acc += lines[0];
