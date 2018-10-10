@@ -23,7 +23,7 @@ class Paths {
    */
   get userLocalDir(): string {
     if (process.platform == 'win32') {
-      return process.env['AppData']!;
+      return process.env['LocalAppData']!;
     } else {
       const xdg_dir = process.env['XDG_DATA_HOME'];
       if (xdg_dir) {

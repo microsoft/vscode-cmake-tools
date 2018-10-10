@@ -22,7 +22,7 @@ type ProgressReporter = vscode.Progress<{message?: string}>;
 /**
  * The path to the user-local kits file.
  */
-export const USER_KITS_FILEPATH = path.join(paths.dataDir, 'cmake-tools.json');
+export const USER_KITS_FILEPATH = path.join(paths.dataDir, 'cmake-tools-kits.json');
 
 /**
  * Representation of a CMake generator, along with a toolset and platform
