@@ -284,20 +284,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit);
   }
 
-  /**
-   * Get the default code page of Windows by chcp cmd
-   */
-  private async _windowsCodePage(): Promise<number> {
-    const chcp_res = await proc.execute('chcp', [], null, undefined).result;
-    if (chcp_res.retc !== 0) {
-      log.error('Failed to execute chcp', chcp_res.stderr);
-      return 65001;
-    }
-    const num = chcp_res.stdout.replace(/[^0-9]/ig, '');
-    return parseInt(num);
-  }
-
-
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
   /**
@@ -739,9 +725,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     let outputEnc = this.ws.config.outputLogEncoding;
     if (outputEnc == 'auto') {
       if (process.platform === 'win32') {
-        const num = await Promise.resolve(this._windowsCodePage());
-        const cpt = codepages.getCodePageTable();
-        outputEnc = cpt[num] || 'utf8';
+        outputEnc = await codepages.getWindowsCodepage();
       } else {
         outputEnc = 'utf8';
       }

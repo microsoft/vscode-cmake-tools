@@ -1,5 +1,9 @@
+import {createLogger} from '@cmt/logging';
+
+const log = createLogger('code-pages');
+
 export interface CodePageTable {
-    [key: number]: undefined | string;
+  [key: number]: undefined|string;
 }
 
 export function getCodePageTable(): CodePageTable {
@@ -157,4 +161,37 @@ export function getCodePageTable(): CodePageTable {
     [65000]: 'utf-7',
     [65001]: 'utf-8',
   };
+}
+
+/**
+ * A promise for idempotent codepage aquisition. @see getWindowsCodepage
+ */
+let _CODEPAGE: Promise<string>|undefined = undefined;
+
+/**
+ * Return the currently active Windows codepage (done by calling chcp in a subprocess');
+ */
+export function getWindowsCodepage() {
+  // Check if we have been called before
+  if (_CODEPAGE === undefined) {
+    // If not, set the promise
+    _CODEPAGE = _getWindowsCodePage();
+  }
+  // Return that promise
+  return _CODEPAGE;
+}
+
+/**
+ * Do the actual call to `chcp` to get the currently active codepage
+ */
+async function _getWindowsCodePage(): Promise<string> {
+  const proc = await import('@cmt/proc');
+  const chcp_res = await proc.execute('chcp', []).result;
+  if (chcp_res.retc !== 0) {
+    log.error('Failed to execute chcp', chcp_res.stderr);
+    return 'utf-8';
+  }
+  const numStr = chcp_res.stdout.replace(/[^0-9]/ig, '');
+  const cpNum = parseInt(numStr);
+  return getCodePageTable()[cpNum] || 'utf-8';
 }
