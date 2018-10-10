@@ -34,11 +34,30 @@ class Paths {
     }
   }
 
+  get userRoamingDir(): string {
+    if (process.platform == 'win32') {
+      return process.env['AppData']!;
+    } else {
+      const xdg_dir = process.env['XDG_CONFIG_HOME'];
+      if (xdg_dir) {
+        return xdg_dir;
+      }
+      const home = this.userHome;
+      return path.join(home, '.config');
+    }
+  }
+
   /**
    * The directory where CMake Tools should store user-specific persistent
    * data.
    */
   get dataDir(): string { return path.join(this.userLocalDir, 'CMakeTools'); }
+
+  /**
+   * The "roaming" directory where CMake Tools stores roaming configuration
+   * data.
+   */
+  get roamingDataDir(): string { return path.join(this.userRoamingDir, 'CMakeTools'); }
 
   /**
    * Get the platform-specific temporary directory

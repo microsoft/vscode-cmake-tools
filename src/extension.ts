@@ -25,6 +25,7 @@ import {
   kitsAvailableInWorkspaceDirectory,
   findCLCompilerPath,
   effectiveKitEnvironment,
+  OLD_USER_KITS_FILEPATH,
 } from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
@@ -528,6 +529,16 @@ class ExtensionManager implements vscode.Disposable {
    * update the kit loaded into the current backend if applicable.
    */
   private async _rereadKits(progress?: ProgressHandle) {
+    // Migrate kits from old pre-1.1.3 location
+    try {
+      if (await fs.exists(OLD_USER_KITS_FILEPATH) && !await fs.exists(USER_KITS_FILEPATH)) {
+        rollbar.info('Migrating kits file', { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+        await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
+        await fs.rename(OLD_USER_KITS_FILEPATH, USER_KITS_FILEPATH);
+      }
+    } catch (e) {
+      rollbar.exception('Failed to migrate prior user-local kits file.', e, { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+    }
     // Load user-kits
     reportProgress(progress, 'Loading kits');
     const user = await readKitsFile(USER_KITS_FILEPATH);
