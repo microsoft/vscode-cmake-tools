@@ -395,36 +395,46 @@ const MSVC_ENVIRONMENT_VARIABLES = [
  * @param devbat Path to a VS environment batch file
  * @param args List of arguments to pass to the batch file
  */
-async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<string, string>|undefined> {
+async function collectDevBatVars(devbat: string, args: string[], major_version:number, common_dir:string): Promise<Map<string, string>|undefined> {
+  const fname = Math.random().toString() + '.bat';
+  const batfname = `vs-cmt-${fname}`;
+  const envfname = batfname + '.env';
   const bat = [
     `@echo off`,
+    `cd /d "%~dp0"`,
+    `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
     `call "${devbat}" ${args.join(' ')} || exit`,
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
-    bat.push(`echo ${envvar} := %${envvar}%`);
+    bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
   }
-  const fname = Math.random().toString() + '.bat';
-  const batpath = path.join(paths.tmpDir, `vs-cmt-${fname}`);
+  const batpath = path.join(paths.tmpDir, batfname);
+  const envpath = path.join(paths.tmpDir, envfname);
+  try {
+    await fs.unlink(envpath);
+  } catch (error) {
+  }
   await fs.writeFile(batpath, bat.join('\r\n'));
   const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
-  const output = (res.stdout) ? res.stdout : res.stderr;
+  const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
-  if (res.retc !== 0) {
-    if (output.includes('Invalid host architecture') || output.includes('Error in script usage'))
-      return;
-
-    console.log(`Error running ${devbat}`, output);
-    return;
+  let env = '';
+  try {
+    /* When the bat running failed, envpath would not exist */
+    env = await fs.readFile(envpath, {encoding: "utf8"});
+    await fs.unlink(envpath);
+  } catch (error) {
+    log.error(error);
   }
 
-  if (!output) {
-    console.log(`Environment detection for using ${devbat} failed`);
+  if (!env || env === '') {
+    console.log(`Error running ${devbat} ${args.join(' ')} with:`, output);
     return;
   }
 
   const vars
-      = output.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
+      = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
           const mat = /(\w+) := ?(.*)/.exec(line);
           if (mat) {
             acc.set(mat[1], mat[2]);
@@ -433,7 +443,11 @@ async function collectDevBatVars(devbat: string, args: string[]): Promise<Map<st
           }
           return acc;
         }, new Map());
-
+  if (vars.get('INCLUDE') === '') {
+    console.log(`Error running ${devbat} ${args.join(' ')}, can not found INCLUDE`);
+    return;
+  }
+  log.debug(`OK running ${devbat} ${args.join(' ')}, env vars:` + JSON.stringify([...vars]));
   return vars;
 }
 
@@ -459,9 +473,14 @@ const VsGenerators: {[key: string]: string} = {
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
+  console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} arch:${arch}`);
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
-  const devbat = path.join(common_dir, 'VsDevCmd.bat');
-  const variables = await collectDevBatVars(devbat, ['-no_logo', `-arch=${arch}`]);
+  let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', 'vcvarsall.bat');
+  const majorVersion = parseInt(inst.installationVersion);
+  if (majorVersion < 15) {
+      devbat = path.join(inst.installationPath, 'VC', 'vcvarsall.bat');
+  }
+  const variables = await collectDevBatVars(devbat, [`${arch}`], majorVersion, common_dir);
   if (!variables) {
     return null;
   } else {
