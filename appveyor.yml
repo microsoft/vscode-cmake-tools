@@ -1,7 +1,5 @@
 version: 1.0.{build}-{branch}
 image:
-  - Visual Studio 2017
-  - Visual Studio 2017 Preview
   - Visual Studio 2015
 
 install:

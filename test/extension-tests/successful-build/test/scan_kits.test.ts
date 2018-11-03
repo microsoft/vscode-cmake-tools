@@ -9,15 +9,6 @@ suite('[MinGW Tests]', async () => {
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
-
-    let is_mingw_present = true;
-    for (const dir of mingw_dirs) {
-      if (!await fs.exists(dir)) {
-        is_mingw_present = false;
-      }
-    }
-    if (!is_mingw_present)
-      this.skip();
   });
 
   test('Test scan of mingw', async () => {
@@ -27,7 +18,11 @@ suite('[MinGW Tests]', async () => {
     });
     const is_kit_MinGW_present = kits.find(kit => kit.name.search(/mingw32/g) != -1) ? true : false;
     const is_kit_MinGW_w64_present = kits.find(kit => kit.name.search(/x86_64-w64-mingw32/g) != -1) ? true : false;
-    expect(is_kit_MinGW_present).to.be.true;
-    expect(is_kit_MinGW_w64_present).to.be.true;
+    console.log(JSON.stringify(kits));
+    const mingw_dir_exist = await fs.exists(mingw_dirs[0]);
+    const mingw64_dir_exist = await fs.exists(mingw_dirs[1]);
+
+    expect(is_kit_MinGW_present).to.equal(mingw_dir_exist);
+    expect(is_kit_MinGW_w64_present).to.equal(mingw64_dir_exist);
   }).timeout(100000);
 });
