@@ -348,6 +348,10 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
 
   const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
   for (const inst of vs_installs) {
+    const majorVersion = parseInt(inst.installationVersion);
+      if (majorVersion >= 15) {
+      inst.instanceId = `VisualStudio.${majorVersion}.0`;
+    }
     if (inst_ids.indexOf(inst.instanceId) < 0) {
       installs.push(inst);
       inst_ids.push(inst.instanceId);
