@@ -19,6 +19,7 @@ export enum LogLevel {
 }
 
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
+type RevealLogKey = 'always'|'never'|'focus';
 
 /**
  * Get the name of a logging level
@@ -187,7 +188,7 @@ class SingletonLogger {
 
   clearOutputChannel(): void { this._channel.clear(); }
 
-  showChannel(): void { this._channel.show(); }
+  showChannel(preserveFocus?: boolean): void { this._channel.show(preserveFocus); }
 
   private static _inst: SingletonLogger|null = null;
 
@@ -212,7 +213,16 @@ class Logger {
 
   clearOutputChannel() { SingletonLogger.instance().clearOutputChannel(); }
 
-  showChannel() { SingletonLogger.instance().showChannel(); }
+  showChannel() {
+    const reveal_log = vscode.workspace.getConfiguration('cmake').get<RevealLogKey>('revealLog', 'always');
+
+    const should_show = (reveal_log !== 'never');
+    const should_focus = (reveal_log === 'focus');
+
+    if (should_show) {
+      SingletonLogger.instance().showChannel(!should_focus);
+    }
+  }
 }
 
 export function createLogger(tag: string) { return new Logger(tag); }

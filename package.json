@@ -891,6 +891,15 @@
             "fatal"
           ],
           "scope": "window"
+        },
+        "cmake.revealLog": {
+          "type": "string",
+          "default": "always",
+          "enum": [
+            "focus",
+            "always",
+            "never"
+          ]
         }
       }
     },
