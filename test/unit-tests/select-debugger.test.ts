@@ -25,7 +25,7 @@ suite('Select debugger', async () => {
 
   test('Create debug config from cache - clang with fallback to gdb', async () => {
     const stub = sandbox.stub(proc, 'execute');
-    stub.withArgs('lldb').returns(
+    stub.withArgs('lldb-mi').returns(
         {result: {retc: -1}});  // Linux needs a separate installation of lldb -> fallback test
     stub.returns({result: {retc: 0}});
 
@@ -42,7 +42,7 @@ suite('Select debugger', async () => {
     expect(config['miDebuggerPath']).to.be.eq('gdb');
     expect(stub.called).to.be.true;
 
-    expect(stub.calledWith('lldb')).to.be.true;
+    expect(stub.calledWith('lldb-mi')).to.be.true;
     expect(stub.calledWith('gdb')).to.be.true;
   });
 
