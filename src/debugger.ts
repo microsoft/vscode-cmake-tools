@@ -142,8 +142,8 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   }
 
   const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
-  let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-  if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
+  let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
+  if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1) && await checkDebugger(clang_debugger_path)) {
     return createLLDBDebugConfiguration(clang_debugger_path, target);
   } else {
     clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
