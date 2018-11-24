@@ -2033,9 +2033,10 @@ universalify@^0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/universalify/-/universalify-0.1.1.tgz#fa71badd4437af4c148841e3b3b165f9e9e590b7"
 
-url-parse@^1.1.9:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.4.0.tgz#6bfdaad60098c7fe06f623e42b22de62de0d3d75"
+url-parse@^1.4.3:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/url-parse/-/url-parse-1.4.4.tgz#cac1556e95faa0303691fec5cf9d5a1bc34648f8"
+  integrity sha512-/92DTTorg4JjktLNLe6GPS2/RvAd/RGr6LuktmWSMLEOa6rjnlrFXNgSbSmkNvCoL2T028A0a1JaJLzRMlFoHg==
   dependencies:
     querystringify "^2.0.0"
     requires-port "^1.0.0"
@@ -2123,9 +2124,10 @@ vscode-cpptools@^1.3.1:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/vscode-cpptools/-/vscode-cpptools-1.3.1.tgz#a032cdb3a92581f7e58f7fcbc775182e184851dc"
 
-vscode@1.1.18:
-  version "1.1.18"
-  resolved "https://registry.yarnpkg.com/vscode/-/vscode-1.1.18.tgz#e9227265dc72fc826bd6cd7bd21193f4e48fa671"
+vscode@1.1.21:
+  version "1.1.21"
+  resolved "https://registry.yarnpkg.com/vscode/-/vscode-1.1.21.tgz#1c8253d6238aefb4112d6e58cf975ad25313dafc"
+  integrity sha512-tJl9eL15ZMm6vzCYYeQ26sSYRuXGMGPsaeIAmG2rOOYRn01jdaDg6I4b9G5Ed6FISdmn6egpKThk4o4om8Ax/A==
   dependencies:
     glob "^7.1.2"
     gulp-chmod "^2.0.0"
@@ -2139,7 +2141,7 @@ vscode@1.1.18:
     request "^2.83.0"
     semver "^5.4.1"
     source-map-support "^0.5.0"
-    url-parse "^1.1.9"
+    url-parse "^1.4.3"
     vinyl-source-stream "^1.1.0"
 
 which@~1.3.0:
