@@ -2,6 +2,7 @@
  * Root of the extension
  */
 import {CMakeCache} from '@cmt/cache';
+import {maybeUpgradeCMake} from '@cmt/cm-upgrade';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {CompilationDatabase} from '@cmt/compdb';
 import * as debugger_mod from '@cmt/debugger';
@@ -66,6 +67,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _ws_server!: ws.Server;
 
   private readonly _nagManager = new NagManager(this.extensionContext);
+  private readonly _nagUpgradeSubscription = this._nagManager.onCMakeLatestVersion(info => {
+    this.getCMakeExecutable().then(
+        async cmake => {
+          if (!cmake.version) {
+            log.error('Failed to get version information for CMake during upgarde');
+            return;
+          }
+          await maybeUpgradeCMake(this.extensionContext, {currentVersion: cmake.version, available: info});
+        },
+        e => { rollbar.exception('Error during CMake upgrade', e, info); },
+    );
+  });
 
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
@@ -206,6 +219,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   dispose() {
     log.debug('Disposing CMakeTools extension');
+    this._nagUpgradeSubscription.dispose();
+    this._nagManager.dispose();
     if (this._launchTerminal)
       this._launchTerminal.dispose();
     rollbar.invokeAsync('Root dispose', () => this.asyncDispose());
@@ -361,6 +376,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+  async getCMakeExecutable() {
+    let cmakePath = await this.workspaceContext.cmakePath;
+    if (cmakePath === null)
+      cmakePath = '';
+    return getCMakeExecutableInformation(cmakePath);
+  }
+
   /**
    * Returns, if possible a cmake driver instance. To creation the driver instance,
    * there are preconditions that should be fulfilled, such as an active kit is selected.
@@ -375,10 +397,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         log.debug('Not starting CMake driver: no kits defined');
         return null;
       }
-      let cmakePath = await this.workspaceContext.cmakePath;
-      if (cmakePath === null)
-        cmakePath = '';
-      const cmake = await getCMakeExecutableInformation(cmakePath);
+
+      const cmake = await this.getCMakeExecutable();
       if (!cmake.isPresent) {
         vscode.window.showErrorMessage(`Bad CMake executable "${
             cmake.path}". Is it installed or settings contain the correct path (cmake.cmakePath)?`);
@@ -408,21 +428,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     rollbar.invokeAsync('Clean reconfigure after bad home dir', async () => {
                       try {
                         await fs.unlink(e.badCachePath);
-                      } catch (e2) {
-                        log.error('Failed to remove bad cache file: ', e.badCachePath, e2);
-                      }
+                      } catch (e2) { log.error('Failed to remove bad cache file: ', e.badCachePath, e2); }
                       try {
                         await fs.rmdir(path.join(path.dirname(e.badCachePath), 'CMakeFiles'));
-                      } catch (e2) {
-                        log.error('Failed to remove CMakeFiles for cache: ', e.badCachePath, e2);
-                      }
+                      } catch (e2) { log.error('Failed to remove CMakeFiles for cache: ', e.badCachePath, e2); }
                       await this.cleanConfigure();
                     });
                   }
                 });
           } else if (e instanceof NoGeneratorError) {
             vscode.window.showErrorMessage(
-              `Unable to determine what CMake generator to use. ` +
+                `Unable to determine what CMake generator to use. ` +
                 `Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
           } else {
             throw e;
