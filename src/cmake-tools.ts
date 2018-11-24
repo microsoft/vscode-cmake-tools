@@ -25,6 +25,7 @@ import {BasicTestResults} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
 import {CMakeDriver} from './driver';
+import {expandString, ExpansionOptions} from './expand';
 import {Kit} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
@@ -422,7 +423,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 });
           } else if (e instanceof NoGeneratorError) {
             vscode.window.showErrorMessage(
-              `Unable to determine what CMake generator to use. ` +
+                `Unable to determine what CMake generator to use. ` +
                 `Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
           } else {
             throw e;
@@ -493,7 +494,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private _compilationDatabase: CompilationDatabase|null = null;
 
-  private async _refreshCompileDatabase(): Promise<void> {
+  private async _refreshCompileDatabase(opts: ExpansionOptions): Promise<void> {
     const compdb_path = path.join(await this.binaryDir, 'compile_commands.json');
     if (await fs.exists(compdb_path)) {
       // Read the compilation database, and update our db property
@@ -504,19 +505,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!copy_dest) {
         return;
       }
-      const pardir = path.dirname(copy_dest);
+      const expanded_dest = await expandString(copy_dest, opts);
+      const pardir = path.dirname(expanded_dest);
       try {
         await fs.mkdir_p(pardir);
       } catch (e) {
-        vscode.window.showErrorMessage(`Tried to copy "${compdb_path}" to "${copy_dest}", but failed to create ` +
+        vscode.window.showErrorMessage(`Tried to copy "${compdb_path}" to "${expanded_dest}", but failed to create ` +
                                        `the parent directory "${pardir}": ${e}`);
         return;
       }
       try {
-        await fs.copyFile(compdb_path, copy_dest);
+        await fs.copyFile(compdb_path, expanded_dest);
       } catch (e) {
         // Just display the error. It's the best we can do.
-        vscode.window.showErrorMessage(`Failed to copy "${compdb_path}" to "${copy_dest}": ${e}`);
+        vscode.window.showErrorMessage(`Failed to copy "${compdb_path}" to "${expanded_dest}": ${e}`);
         return;
       }
     }
@@ -563,7 +565,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   break;
                 }
                 if (retc === 0) {
-                  await this._refreshCompileDatabase();
+                  await this._refreshCompileDatabase(drv.expansionOptions);
                 }
                 this._onReconfiguredEmitter.fire();
                 return retc;
