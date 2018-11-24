@@ -245,7 +245,7 @@ export class NagManager implements vscode.Disposable {
     } catch (e) { console.error('Error starting up initial event polling.', e); }
   }
 
-  private _cmakeLatestVersionEmitter = new vscode.EventEmitter<LatestCMakeInfo>();
+  private readonly _cmakeLatestVersionEmitter = new vscode.EventEmitter<LatestCMakeInfo>();
   get onCMakeLatestVersion() { return this._cmakeLatestVersionEmitter.event; }
 
   dispose() { this._cmakeLatestVersionEmitter.dispose(); }
