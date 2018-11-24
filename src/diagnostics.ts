@@ -2,7 +2,6 @@
  * Module for diagnostic handling
  */ /** */
 
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {RawDiagnostic} from './diagnostics';
@@ -152,8 +151,8 @@ export class CMakeOutputConsumer implements OutputConsumer {
         };
         const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), '', diagmap[level]);
         vsdiag.source = `CMake (${command})`;
-        const filepath
-            = path.isAbsolute(filename) ? filename : util.lightNormalizePath(path.join(this.sourceDir, filename));
+        vsdiag.relatedInformation = [];
+        const filepath = util.resolvePath(filename, this.sourceDir);
         this._errorState.diag = {
           filepath,
           diag: vsdiag,
@@ -196,7 +195,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
     case 'stack': {
       // Meh... vscode doesn't really let us provide call stacks to diagnostics.
       // We can't really do anything...
-      if (line == '') {
+      if (line.trim() == '') {
         if (this._errorState.blankLines == 1) {
           this._commitDiag();
         } else {
@@ -205,7 +204,19 @@ export class CMakeOutputConsumer implements OutputConsumer {
       } else if (dev_warning_re.test(line)) {
         this._commitDiag();
       } else {
-        this._errorState.blankLines++;
+        const stackElemRe = /^  (.*):(\d+) \((\w+)\)$/;
+        const mat = stackElemRe.exec(line);
+        if (mat) {
+          const [, filepath, lineNoStr, command] = mat;
+          const fileUri = vscode.Uri.file(util.resolvePath(filepath, this.sourceDir));
+          const lineNo = parseInt(lineNoStr) - 1;
+          const related = new vscode.DiagnosticRelatedInformation(
+              new vscode.Location(fileUri, new vscode.Range(lineNo, 0, lineNo, 999)),
+              `In call to '${command}' here`,
+          );
+          console.assert(this._errorState.diag);
+          this._errorState.diag!.diag.relatedInformation!.push(related);
+        }
       }
       break;
     }
@@ -366,7 +377,6 @@ export class CompileOutputConsumer implements OutputConsumer {
   createDiagnostics(build_dir: string): FileDiagnostic[] {
     const diags_by_file = new Map<string, vscode.Diagnostic[]>();
 
-    const make_abs = (p: string) => util.lightNormalizePath(path.isAbsolute(p) ? p : path.join(build_dir, p));
     const severity_of = (p: string) => {
       switch (p) {
       case 'warning':
@@ -390,7 +400,7 @@ export class CompileOutputConsumer implements OutputConsumer {
     };
     const arrs = util.objectPairs(by_source).map(([source, diags]) => {
       return diags.map(raw_diag => {
-        const filepath = make_abs(raw_diag.file);
+        const filepath = util.resolvePath(raw_diag.file, build_dir);
         const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity_of(raw_diag.severity));
         diag.source = source;
         if (raw_diag.code) {

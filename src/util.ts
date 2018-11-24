@@ -101,6 +101,9 @@ export function heavyNormalizePath(p: string): string {
   return normalizePath(p, {normCase: 'always', normUnicode: 'always'});
 }
 
+export function resolvePath(inpath: string, base: string) {
+  return path.isAbsolute(inpath) ? inpath : lightNormalizePath(path.join(base, inpath));
+}
 
 /**
  * Split a path into its elements.
