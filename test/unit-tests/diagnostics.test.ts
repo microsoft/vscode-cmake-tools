@@ -9,6 +9,7 @@ import {expect} from 'chai';
 import * as diags from '../../src/diagnostics';
 import {OutputConsumer} from '../../src/proc';
 import {platformPathEquivalent} from '@cmt/util';
+import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
 
 // tslint:disable:no-unused-expression
 
@@ -22,11 +23,11 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
 }
 
 suite('Diagnostics', async () => {
-  let consumer = new diags.CMakeOutputConsumer('dummyPath');
+  let consumer = new CMakeOutputConsumer('dummyPath');
   let build_consumer = new diags.CompileOutputConsumer();
   setup(() => {
     // FIXME: SETUP IS NOT BEING CALLED
-    consumer = new diags.CMakeOutputConsumer('dummyPath');
+    consumer = new CMakeOutputConsumer('dummyPath');
     build_consumer = new diags.CompileOutputConsumer();
   });
   test('Waring-free CMake output', async () => {
