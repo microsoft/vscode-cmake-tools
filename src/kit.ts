@@ -198,14 +198,14 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       const binParentPath = path.dirname(bin);
       const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
       if (await fs.exists(mingwMakePath)) {
-
+        const ENV_PATH = `${binParentPath};${process.env['PATH']}`;
         // Check for working mingw32-make
-        const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: binParentPath}}).result;
+        const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: ENV_PATH}}).result;
         if (execMake.retc !== 0) {
           log.debug('Bad mingw32-make binary ("-v" returns non-zero):', bin);
         } else {
           let make_version_output = execMake.stdout;
-          if (make_version_output.length == 0)
+          if (make_version_output.length === 0)
             make_version_output = execMake.stderr;
           const output_line_sep = make_version_output.trim().split('\n');
           const isMake = output_line_sep[0].includes('Make');
@@ -213,7 +213,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
           if (isMake && isMingwTool) {
             gccKit.preferredGenerator = {name: 'MinGW Makefiles'};
-            gccKit.environmentVariables = {PATH: binParentPath};
+            gccKit.environmentVariables = {PATH: ENV_PATH};
           }
         }
       }
