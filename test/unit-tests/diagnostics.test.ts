@@ -10,6 +10,7 @@ import * as diags from '../../src/diagnostics';
 import {OutputConsumer} from '../../src/proc';
 import {platformPathEquivalent} from '@cmt/util';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
+import {populateCollection} from '@cmt/diagnostics/util';
 
 // tslint:disable:no-unused-expression
 
@@ -137,7 +138,7 @@ suite('Diagnostics', async () => {
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(2);
     const coll = vscode.languages.createDiagnosticCollection('cmake-tools-test');
-    diags.populateCollection(coll, consumer.diagnostics);
+    populateCollection(coll, consumer.diagnostics);
     const fullpath = 'dummyPath/CMakeLists.txt';
     expect(coll.has(vscode.Uri.file(fullpath))).to.be.true;
     expect(coll.get(vscode.Uri.file(fullpath))!.length).to.eq(2);

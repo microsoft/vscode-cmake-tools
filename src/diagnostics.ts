@@ -4,7 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import {oneLess, FileDiagnostic} from './diagnostics/diagnostic';
+import {oneLess, FileDiagnostic} from './diagnostics/util';
 import * as logging from './logging';
 import * as proc from './proc';
 import {OutputConsumer} from './proc';
@@ -21,27 +21,6 @@ export interface RawDiagnostic {
   code?: string;
 }
 
-/**
- * Inserts a list of `FileDiagnostic` instances into a diagnostic collection.
- * @param coll The `vscode.DiagnosticCollecion` to populate.
- * @param fdiags The `FileDiagnostic` objects to insert into the collection
- *
- * @note The `coll` collection will be cleared of all previous contents
- */
-export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: FileDiagnostic[]) {
-  // Clear the collection
-  coll.clear();
-  // Collect the diagnostics and associate them with their respective files
-  const diags_by_file = fdiags.reduce((by_file, fdiag) => {
-    if (!by_file.has(fdiag.filepath)) {
-      by_file.set(fdiag.filepath, []);
-    }
-    by_file.get(fdiag.filepath)!.push(fdiag.diag);
-    return by_file;
-  }, new Map<string, vscode.Diagnostic[]>());
-  // Insert the diags into the collection
-  diags_by_file.forEach((diags, filepath) => { coll.set(vscode.Uri.file(filepath), diags); });
-}
 
 export class CompileOutputConsumer implements OutputConsumer {
   // Regular expressions for the diagnostic messages corresponding to each tool

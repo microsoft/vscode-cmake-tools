@@ -25,7 +25,7 @@ import {CMakeServerClientDriver} from './cms-driver';
 import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
 import * as diags from './diagnostics';
-import {populateCollection} from './diagnostics';
+import {populateCollection} from './diagnostics/util';
 import {CMakeOutputConsumer} from './diagnostics/cmake';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
@@ -646,7 +646,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.showChannel();
     const consumer = new CMakeOutputConsumer(await this.sourceDir, CMAKE_LOGGER);
     const retc = await cb(consumer);
-    diags.populateCollection(diagCollections.cmake, consumer.diagnostics);
+    populateCollection(diagCollections.cmake, consumer.diagnostics);
     return retc;
   }
 

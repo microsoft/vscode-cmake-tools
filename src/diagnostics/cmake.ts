@@ -7,7 +7,7 @@ import {OutputConsumer} from '@cmt/proc';
 import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
-import {FileDiagnostic, oneLess} from './diagnostic';
+import {FileDiagnostic, oneLess} from './util';
 
 /**
  * Class which consumes output from CMake.
