@@ -988,7 +988,7 @@
     "@types/js-yaml": "^3.5.28",
     "@types/json5": "~0.0.29",
     "@types/mocha": "~2.2.41",
-    "@types/node": "~8.0.0",
+    "@types/node": "~8.9.3",
     "@types/rimraf": "^0.0.28",
     "@types/sinon": "~4.3.3",
     "@types/tmp": "^0.0.33",
