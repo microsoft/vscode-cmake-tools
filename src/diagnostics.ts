@@ -459,3 +459,42 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
     }
   }
 }
+
+
+class Collections {
+  _CMAKE_DIAGS?: vscode.DiagnosticCollection;
+  _COMPILE_DIAGS?: vscode.DiagnosticCollection;
+
+  /**
+   * The `DiagnosticCollection` for the CMake configure diagnostics.
+   */
+  get cmake(): vscode.DiagnosticCollection {
+    if (this._CMAKE_DIAGS === undefined) {
+      this._CMAKE_DIAGS = vscode.languages.createDiagnosticCollection('cmake-configured-diags');
+    }
+    return this._CMAKE_DIAGS;
+  }
+
+  /**
+   * The `DiagnosticCollection` for build diagnostics
+   */
+  get build(): vscode.DiagnosticCollection {
+    if (this._COMPILE_DIAGS === undefined) {
+      this._COMPILE_DIAGS = vscode.languages.createDiagnosticCollection('cmake-build-diags');
+    }
+    return this._COMPILE_DIAGS;
+  }
+
+  reset() {
+    if (this._CMAKE_DIAGS) {
+      this._CMAKE_DIAGS.dispose();
+      this._CMAKE_DIAGS = undefined;
+    }
+    if (this._COMPILE_DIAGS) {
+      this._COMPILE_DIAGS.dispose();
+      this._COMPILE_DIAGS = undefined;
+    }
+  }
+}
+
+export const collections = new Collections();
