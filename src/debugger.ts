@@ -1,6 +1,9 @@
 import {ExecutableTarget} from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import * as proc from '@cmt/proc';
+import {createLogger} from './logging';
+
+const log = createLogger('debugger');
 
 
 export enum DebuggerType {
@@ -142,14 +145,21 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   }
 
   const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
+  // Look for lldb-mi
   let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
   if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1) && await checkDebugger(clang_debugger_path)) {
     return createLLDBDebugConfiguration(clang_debugger_path, target);
   } else {
+    // Look for gdb
     clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-
-    if ((clang_debugger_path.search(new RegExp('gdb')) != -1)) {
+    if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
       return createGDBDebugConfiguration(clang_debugger_path, target);
+    } else {
+      // Look for lldb
+      clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
+      if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
+        return createLLDBDebugConfiguration(clang_debugger_path, target);
+      }
     }
   }
 
@@ -166,6 +176,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     return createMSVCDebugConfiguration(target);
   }
 
+  log.warning(`Unable to automatically determine debugger corresponding to compiler: ${compiler_path}`);
   return null;
 }
 
