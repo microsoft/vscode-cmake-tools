@@ -22,6 +22,17 @@ export interface FileDiagnostic {
   diag: vscode.Diagnostic;
 }
 
+export enum FeedLineResult {
+  Ok,
+  NotMine,
+}
+
+export interface RawRelated {
+  file: string;
+  location: vscode.Range;
+  message: string;
+}
+
 export interface RawDiagnostic {
   full: string;
   file: string;
@@ -29,6 +40,7 @@ export interface RawDiagnostic {
   severity: string;
   message: string;
   code?: string;
+  related: RawRelated[];
 }
 
 /**
@@ -82,10 +94,15 @@ export abstract class RawDiagnosticParser {
    * Push another line into the parser
    * @param line Another line to parse
    */
-  handleLine(line: string) {
-    const diag = this.doHandleLine(line);
-    if (diag) {
-      this._diagnostics.push(diag);
+  handleLine(line: string): boolean {
+    const result = this.doHandleLine(line);
+    if (result === FeedLineResult.Ok) {
+      return true;
+    } else if (result === FeedLineResult.NotMine) {
+      return false;
+    } else {
+      this._diagnostics.push(result);
+      return true;
     }
   }
 
@@ -94,11 +111,5 @@ export abstract class RawDiagnosticParser {
    * `undefined` if the give line does not complete a diagnostic
    * @param line The line to process
    */
-  protected abstract doHandleLine(line: string): RawDiagnostic | undefined;
-
-  /**
-   * Called by derived classes to append related information to the most
-   * recently diagnostic object
-   */
-  protected appendRelatedInformation() { }
+  protected abstract doHandleLine(line: string): RawDiagnostic | FeedLineResult;
 }

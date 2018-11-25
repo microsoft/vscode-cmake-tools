@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 
-import {oneLess, RawDiagnosticParser} from './util';
+import {oneLess, RawDiagnosticParser, FeedLineResult} from './util';
 
 export const REGEX
     = /^\s*(?!\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
@@ -13,8 +13,9 @@ export const REGEX
 export class Parser extends RawDiagnosticParser {
   doHandleLine(line: string) {
     const res = REGEX.exec(line);
-    if (!res)
-      return;
+    if (!res) {
+      return FeedLineResult.NotMine;
+    }
     const [full, file, location, severity, code, message] = res;
     const range = (() => {
       const parts = location.split(',');
@@ -40,6 +41,7 @@ export class Parser extends RawDiagnosticParser {
       severity,
       message,
       code,
+      related: [],
     };
   }
 }

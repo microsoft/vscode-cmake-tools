@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 
-import {oneLess, RawDiagnosticParser} from './util';
+import {oneLess, RawDiagnosticParser, FeedLineResult} from './util';
 
 export const REGEX
     = /^\"(.*)\",\s+(?:(?:line\s+(\d+)\s+\(col\.\s+(\d+)\))|(?:At end of source)):\s+(?:fatal )?(remark|warning|error)\s+(.*)/;
@@ -16,7 +16,7 @@ export class Parser extends RawDiagnosticParser {
     const mat = REGEX.exec(line);
     if (!mat) {
       // Nothing to see on this line of output...
-      return;
+      return FeedLineResult.NotMine;
     }
 
     const [full, file, lineno = '1', column = '1', severity, message] = mat;
@@ -26,8 +26,10 @@ export class Parser extends RawDiagnosticParser {
         file,
         location: new vscode.Range(oneLess(lineno), oneLess(column), oneLess(lineno), 999),
         severity,
-        message
+        message,
+        related: [],
       };
     }
+    return FeedLineResult.NotMine;
   }
 }

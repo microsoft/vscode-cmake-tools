@@ -5,7 +5,7 @@
 
 import * as vscode from 'vscode';
 
-import {oneLess, RawDiagnosticParser} from './util';
+import {FeedLineResult, oneLess, RawDiagnosticParser} from './util';
 
 export const REGEX = /^(.*):(\d+)\s?:\s+(.*[^\]])$/;
 
@@ -14,14 +14,11 @@ export class Parser extends RawDiagnosticParser {
     // Try to parse for GNU ld
     if (line.startsWith('make')) {
       // This is a Make error. It may *look* like an LD error, so we abort early
-      return;
+      return FeedLineResult.NotMine;
     }
-    // Tricksy compiler error looks like a linker error:
-    if (line.endsWith('required from here'))
-      return;
     const res = REGEX.exec(line);
     if (!res) {
-      return;
+      return FeedLineResult.NotMine;
     }
     const [full, file, lineno_, message] = res;
     const lineno = oneLess(lineno_);
@@ -32,9 +29,9 @@ export class Parser extends RawDiagnosticParser {
         location: new vscode.Range(lineno, 0, lineno, 999),
         severity: 'error',
         message,
+        related: [],
       };
-    } else {
-      return;
     }
+    return FeedLineResult.NotMine;
   }
 }

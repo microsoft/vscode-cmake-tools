@@ -25,10 +25,11 @@ export class CompileOutputConsumer implements OutputConsumer {
   output(line: string) { this.error(line); }
 
   error(line: string) {
-    this.gcc.handleLine(line);
-    this.ghs.handleLine(line);
-    this.gnuLD.handleLine(line);
-    this.msvc.handleLine(line);
+    for (const cand of [this.gcc, this.ghs, this.msvc, this.gnuLD]) {
+      if (cand.handleLine(line)) {
+        break;
+      }
+    }
   }
 
   resolveDiagnostics(basePath: string): FileDiagnostic[] {
@@ -65,6 +66,12 @@ export class CompileOutputConsumer implements OutputConsumer {
         }
         if (!diags_by_file.has(filepath)) {
           diags_by_file.set(filepath, []);
+        }
+        diag.relatedInformation = [];
+        for (const rel of raw_diag.related) {
+          const relFilePath = vscode.Uri.file(util.resolvePath(rel.file, basePath));
+          const related = new vscode.DiagnosticRelatedInformation(new vscode.Location(relFilePath, rel.location), rel.message);
+          diag.relatedInformation.push(related);
         }
         diags_by_file.get(filepath)!.push(diag);
         return {
