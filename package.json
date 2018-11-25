@@ -20,7 +20,7 @@
   ],
   "publisher": "vector-of-bool",
   "engines": {
-    "vscode": "^1.25.0"
+    "vscode": "^1.29.1"
   },
   "categories": [
     "Other"
@@ -988,7 +988,7 @@
     "@types/js-yaml": "^3.5.28",
     "@types/json5": "~0.0.29",
     "@types/mocha": "~2.2.41",
-    "@types/node": "~8.0.0",
+    "@types/node": "~8.9.3",
     "@types/rimraf": "^0.0.28",
     "@types/sinon": "~4.3.3",
     "@types/tmp": "^0.0.33",
@@ -1004,7 +1004,7 @@
     "tslint": "^5.9.1",
     "typedoc": "~0.11.1",
     "typescript": "~2.8.3",
-    "vscode": "1.1.18"
+    "vscode": "1.1.21"
   },
   "dependencies": {
     "Polymer": "1.6.1--",

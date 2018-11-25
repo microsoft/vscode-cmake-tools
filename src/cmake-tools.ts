@@ -6,6 +6,7 @@ import {maybeUpgradeCMake} from '@cmt/cm-upgrade';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {CompilationDatabase} from '@cmt/compdb';
 import * as debugger_mod from '@cmt/debugger';
+import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
@@ -25,6 +26,7 @@ import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
 import * as diags from './diagnostics';
 import {populateCollection} from './diagnostics';
+import {CMakeOutputConsumer} from './diagnostics/cmake';
 import {CMakeDriver} from './driver';
 import {expandString, ExpansionOptions} from './expand';
 import {Kit} from './kit';
@@ -41,6 +43,7 @@ const open = require('open') as ((url: string, appName?: string, callback?: Func
 
 const log = logging.createLogger('main');
 const build_log = logging.createLogger('build');
+const CMAKE_LOGGER = logging.createLogger('cmake');
 
 enum ConfigureType {
   Normal,
@@ -231,7 +234,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Dispose of the extension asynchronously.
    */
   async asyncDispose() {
-    this._configureDiagnostics.dispose();
+    diagCollections.reset();
     if (this._cmakeDriver) {
       const drv = await this._cmakeDriver;
       if (drv) {
@@ -495,17 +498,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get activeKit(): Kit|null { return this._activeKit; }
 
   /**
-   * The `DiagnosticCollection` for the CMake configure diagnostics.
-   */
-  private readonly _configureDiagnostics = vscode.languages.createDiagnosticCollection('cmake-configure-diags');
-
-  /**
-   * The `DiagnosticCollection` for build diagnostics
-   */
-  private readonly _buildDiagnostics = vscode.languages.createDiagnosticCollection('cmake-build-diags');
-
-
-  /**
    * The compilation database for this driver.
    */
   private _compilationDatabase: CompilationDatabase|null = null;
@@ -634,7 +626,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * @param cb The actual configure callback. Called to do the configure
    */
   private async _doConfigure(progress: ProgressHandle,
-                             cb: (consumer: diags.CMakeOutputConsumer) => Promise<number>): Promise<number> {
+                             cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
     progress.report({message: 'Saving open files'});
     if (!await this.maybeAutoSaveAll()) {
       return -1;
@@ -654,9 +646,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.clearOutputChannel();
     }
     log.showChannel();
-    const consumer = new diags.CMakeOutputConsumer(await this.sourceDir);
+    const consumer = new CMakeOutputConsumer(await this.sourceDir, CMAKE_LOGGER);
     const retc = await cb(consumer);
-    diags.populateCollection(this._configureDiagnostics, consumer.diagnostics);
+    diags.populateCollection(diagCollections.cmake, consumer.diagnostics);
     return retc;
   }
 
@@ -759,7 +751,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               build_log.info('Build finished with exit code', rc);
             }
             const file_diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
-            populateCollection(this._buildDiagnostics, file_diags);
+            populateCollection(diagCollections.build, file_diags);
             return rc === null ? -1 : rc;
           },
       );
@@ -1079,6 +1071,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const targetExecutable = await this.prepareLaunchTargetExecutable(name);
     if (!targetExecutable) {
+      log.error(`Failed to prepare executable target with name '${name}'`);
       return null;
     }
 
@@ -1103,6 +1096,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     if (debug_config === null) {
+      log.error('Failed to generate debugger configuration');
       vscode.window.showErrorMessage('Unable to generate a debugging configuration.');
       return null;
     }
@@ -1316,8 +1310,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return d.executableTargets;
     });
   }
-
-  get diagnostics() { return Promise.resolve(this._configureDiagnostics); }
 
   async jumpToCacheFile() {
     // Do nothing.

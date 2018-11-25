@@ -200,7 +200,7 @@ class SingletonLogger {
   }
 }
 
-class Logger {
+export class Logger {
   constructor(readonly _tag: string) {}
   get tag() { return `[${this._tag}]`; }
   trace(...args: Stringable[]) { SingletonLogger.instance().trace(this.tag, ...args); }

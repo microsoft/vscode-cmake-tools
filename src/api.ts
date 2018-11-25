@@ -7,7 +7,7 @@
  * Copy the `api.ts` source file into your project to use it.
  */ /** */
 
-import {DebugSession, DiagnosticCollection, Disposable, Event, Terminal} from 'vscode';
+import {DebugSession, Disposable, Event, Terminal} from 'vscode';
 
 
 /**
@@ -168,10 +168,6 @@ export interface CMakeToolsAPI extends Disposable {
    * List of CMake targets created via `add_executable()`.
    */
   readonly executableTargets: Thenable<ExecutableTarget[]>;
-  /**
-   * CMake code diagnostics. Includes warnings and errors, etc.
-   */
-  readonly diagnostics: Thenable<DiagnosticCollection>;
   /**
    * All targets available to be built
    */
