@@ -22,6 +22,15 @@ export interface FileDiagnostic {
   diag: vscode.Diagnostic;
 }
 
+export interface RawDiagnostic {
+  full: string;
+  file: string;
+  location: vscode.Range;
+  severity: string;
+  message: string;
+  code?: string;
+}
+
 /**
  * Get one less than the given number of number-string.
  *
@@ -57,4 +66,39 @@ export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: It
   });
   // Insert the diags into the collection
   diags_by_file.forEach((diags, filepath) => { coll.set(vscode.Uri.file(filepath), diags); });
+}
+
+/**
+ * Base class for parsing raw diagnostic information on a line-by-line basis
+ */
+export abstract class RawDiagnosticParser {
+  /**
+   * Get the diagnostics which have been parsed by this object
+   */
+  get diagnostics(): ReadonlyArray<RawDiagnostic> { return this._diagnostics; }
+  private readonly _diagnostics: RawDiagnostic[] = [];
+
+  /**
+   * Push another line into the parser
+   * @param line Another line to parse
+   */
+  handleLine(line: string) {
+    const diag = this.doHandleLine(line);
+    if (diag) {
+      this._diagnostics.push(diag);
+    }
+  }
+
+  /**
+   * Implement in derived classes to parse a line. Returns a new diagnostic, or
+   * `undefined` if the give line does not complete a diagnostic
+   * @param line The line to process
+   */
+  protected abstract doHandleLine(line: string): RawDiagnostic | undefined;
+
+  /**
+   * Called by derived classes to append related information to the most
+   * recently diagnostic object
+   */
+  protected appendRelatedInformation() { }
 }

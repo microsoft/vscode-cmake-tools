@@ -24,9 +24,9 @@ import {BadHomeDirectoryError, CodeModelContent, NoGeneratorError} from './cms-c
 import {CMakeServerClientDriver} from './cms-driver';
 import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
-import * as diags from './diagnostics';
-import {populateCollection} from './diagnostics/util';
+import {CMakeBuildConsumer} from './diagnostics/build';
 import {CMakeOutputConsumer} from './diagnostics/cmake';
+import {populateCollection} from './diagnostics/util';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
@@ -41,7 +41,7 @@ import {VariantManager} from './variant';
 const open = require('open') as ((url: string, appName?: string, callback?: Function) => void);
 
 const log = logging.createLogger('main');
-const build_log = logging.createLogger('build');
+const BUILD_LOGGER = logging.createLogger('build');
 const CMAKE_LOGGER = logging.createLogger('cmake');
 
 enum ConfigureType {
@@ -715,7 +715,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error('Impossible: CMake driver died immediately after successful configure');
     }
     const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
-    const consumer = new diags.CMakeBuildConsumer();
+    const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
       this._statusMessage.set('Building');
@@ -739,16 +739,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             });
             cancel.onCancellationRequested(() => { rollbar.invokeAsync('Stop on cancellaction', () => this.stop()); });
             log.showChannel();
-            build_log.info('Starting build');
+            BUILD_LOGGER.info('Starting build');
             await setContextValue(IS_BUILDING_KEY, true);
             const rc = await drv.build(target, consumer);
             await setContextValue(IS_BUILDING_KEY, false);
             if (rc === null) {
-              build_log.info('Build was terminated');
+              BUILD_LOGGER.info('Build was terminated');
             } else {
-              build_log.info('Build finished with exit code', rc);
+              BUILD_LOGGER.info('Build finished with exit code', rc);
             }
-            const file_diags = consumer.compileConsumer.createDiagnostics(drv.binaryDir);
+            const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
             populateCollection(diagCollections.build, file_diags);
             return rc === null ? -1 : rc;
           },

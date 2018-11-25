@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 chai.use(chaiAsPromised);
 
 import {expect} from 'chai';
-import * as diags from '../../src/diagnostics';
+import * as diags from '@cmt/diagnostics/build';
 import {OutputConsumer} from '../../src/proc';
 import {platformPathEquivalent} from '@cmt/util';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
@@ -149,8 +149,8 @@ suite('Diagnostics', async () => {
       '/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h:85:15: warning: comparison of unsigned expression >= 0 is always true [-Wtautological-compare]'
     ];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    const diag = build_consumer.gccDiagnostics[0];
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    const diag = build_consumer.gcc.diagnostics[0];
     expect(diag.location.start.line).to.eq(84);
     expect(diag.message).to.eq('comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
     expect(diag.location.start.character).to.eq(14);
@@ -164,8 +164,8 @@ suite('Diagnostics', async () => {
   test('Parse more GCC diagnostics', () => {
     const lines = [`/Users/Tobias/Code/QUIT/Source/qidespot1.cpp:303:49: error: expected ';' after expression`];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    const diag = build_consumer.gccDiagnostics[0];
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    const diag = build_consumer.gcc.diagnostics[0];
     const expected = '/Users/Tobias/Code/QUIT/Source/qidespot1.cpp';
     expect(platformPathEquivalent(diag.file, expected), `${diag.file} != ${expected}`).to.be.true;
     expect(diag.location.start.line).to.eq(302);
@@ -177,8 +177,8 @@ suite('Diagnostics', async () => {
   test('Parsing fatal error diagnostics', () => {
     const lines = ['/some/path/here:4:26: fatal error: some_header.h: No such file or directory'];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    const diag = build_consumer.gccDiagnostics[0];
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    const diag = build_consumer.gcc.diagnostics[0];
     expect(diag.location.start.line).to.eq(3);
     expect(diag.message).to.eq('some_header.h: No such file or directory');
     expect(diag.location.start.line).to.eq(3);
@@ -192,8 +192,8 @@ suite('Diagnostics', async () => {
   test('Parsing fatal error diagnostics in french', () => {
     const lines = ['/home/romain/TL/test/base.c:2:21: erreur fatale : bonjour.h : Aucun fichier ou dossier de ce type'];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    const diag = build_consumer.gccDiagnostics[0];
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    const diag = build_consumer.gcc.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(1);
     expect(diag.message).to.eq('bonjour.h : Aucun fichier ou dossier de ce type');
@@ -206,8 +206,8 @@ suite('Diagnostics', async () => {
   test('Parsing warning diagnostics', () => {
     const lines = ['/some/path/here:4:26: warning: unused parameter \'data\''];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    const diag = build_consumer.gccDiagnostics[0];
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    const diag = build_consumer.gcc.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(3);
     expect(diag.message).to.eq('unused parameter \'data\'');
@@ -220,8 +220,8 @@ suite('Diagnostics', async () => {
   test('Parsing warning diagnostics 2', () => {
     const lines = [`/test/main.cpp:21:14: warning: unused parameter ‘v’ [-Wunused-parameter]`];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    const diag = build_consumer.gccDiagnostics[0];
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    const diag = build_consumer.gcc.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(20);
     expect(diag.location.start.character).to.eq(13);
@@ -232,8 +232,8 @@ suite('Diagnostics', async () => {
   test('Parsing warning diagnostics in french', () => {
     const lines = ['/home/romain/TL/test/base.c:155:2: attention : déclaration implicite de la fonction ‘create’'];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    const diag = build_consumer.gccDiagnostics[0];
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    const diag = build_consumer.gcc.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(154);
     expect(diag.message).to.eq('déclaration implicite de la fonction ‘create’');
@@ -246,8 +246,8 @@ suite('Diagnostics', async () => {
   test('Parsing linker error', () => {
     const lines = ['/some/path/here:101: undefined reference to `some_function\''];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
-    const diag = build_consumer.gnuLDDiagnostics[0];
+    expect(build_consumer.gnuLD.diagnostics).to.have.length(1);
+    const diag = build_consumer.gnuLD.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(100);
     expect(diag.message).to.eq('undefined reference to `some_function\'');
@@ -259,8 +259,8 @@ suite('Diagnostics', async () => {
   test('Parsing linker error in french', () => {
     const lines = ['/home/romain/TL/test/test_fa_tp4.c:9 : référence indéfinie vers « create_automaton_product56 »'];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gnuLDDiagnostics).to.have.length(1);
-    const diag = build_consumer.gnuLDDiagnostics[0];
+    expect(build_consumer.gnuLD.diagnostics).to.have.length(1);
+    const diag = build_consumer.gnuLD.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(8);
     expect(diag.message).to.eq('référence indéfinie vers « create_automaton_product56 »');
@@ -274,8 +274,8 @@ suite('Diagnostics', async () => {
       '"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): warning #68-D: integer conversion resulted in a change of sign'
     ];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.ghsDiagnostics).to.have.length(1);
-    const diag = build_consumer.ghsDiagnostics[0];
+    expect(build_consumer.ghs.diagnostics).to.have.length(1);
+    const diag = build_consumer.ghs.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(630);
     expect(diag.message).to.eq('#68-D: integer conversion resulted in a change of sign');
@@ -290,8 +290,8 @@ suite('Diagnostics', async () => {
       '"C:\\path\\source\\debug\\debug.c", At end of source: remark #96-D: a translation unit must contain at least one declaration'
     ];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.ghsDiagnostics).to.have.length(1);
-    const diag = build_consumer.ghsDiagnostics[0];
+    expect(build_consumer.ghs.diagnostics).to.have.length(1);
+    const diag = build_consumer.ghs.diagnostics[0];
 
     expect(diag.location.start.line).to.eq(0);
     expect(diag.message).to.eq('#96-D: a translation unit must contain at least one declaration');
@@ -304,8 +304,8 @@ suite('Diagnostics', async () => {
   test('Parsing GHS Diagnostics fatal error', () => {
     const lines = ['"C:\\path\\source\\debug\\debug.c", line 631 (col. 3): fatal error #68: some fatal error'];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.ghsDiagnostics).to.have.length(1);
-    const diag = build_consumer.ghsDiagnostics[0];
+    expect(build_consumer.ghs.diagnostics).to.have.length(1);
+    const diag = build_consumer.ghs.diagnostics[0];
     expect(diag.location.start.line).to.eq(630);
     expect(diag.message).to.eq('#68: some fatal error');
     expect(diag.location.start.character).to.eq(2);
@@ -322,15 +322,15 @@ suite('Diagnostics', async () => {
       `make: *** [Makefile:84 all] Error 2`
     ];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gnuLDDiagnostics).to.have.length(0);
+    expect(build_consumer.gnuLD.diagnostics).to.have.length(0);
   });
 
   test('Parse GCC error on line zero', () => {
     const lines = ['/foo.h:66:0: warning: ignoring #pragma comment [-Wunknown-pragmas]'];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.gccDiagnostics).to.have.length(1);
-    expect(build_consumer.gccDiagnostics[0].file).to.eq('/foo.h');
-    expect(build_consumer.gccDiagnostics[0].location.start.line).to.eq(65);
-    expect(build_consumer.gccDiagnostics[0].location.start.character).to.eq(0);
+    expect(build_consumer.gcc.diagnostics).to.have.length(1);
+    expect(build_consumer.gcc.diagnostics[0].file).to.eq('/foo.h');
+    expect(build_consumer.gcc.diagnostics[0].location.start.line).to.eq(65);
+    expect(build_consumer.gcc.diagnostics[0].location.start.character).to.eq(0);
   });
 });
