@@ -550,7 +550,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 const new_prog
                     = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
                 const increment = new_prog - old_prog;
-                if (increment >= 10) {
+                if (increment >= 1) {
                   old_prog += increment;
                   progress.report({increment});
                 }
@@ -729,10 +729,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           async (progress, cancel) => {
             let old_progress = 0;
             consumer.onProgress(pr => {
-              // FIXME: Progress notification doesn't seem to show the correct
-              // progress level?
               const increment = pr.value - old_progress;
-              if (increment >= 10) {
+              if (increment >= 1) {
                 progress.report({increment});
                 old_progress += increment;
               }
