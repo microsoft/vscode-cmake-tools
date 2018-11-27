@@ -103,8 +103,8 @@ interface ClangVersion {
 async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
   log.debug('Testing Clang-ish binary:', binPath);
   const exec = await proc.execute(binPath, ['-v']).result;
-  if (exec.retc != 0) {
-    log.debug('Bad Clang binary ("-v" returns non-zero)', binPath);
+  if (exec.retc !== 0) {
+    log.debug('Bad Clang binary ("-v" returns non-zero):', binPath);
     return null;
   }
   const first_line = exec.stderr.split('\n')[0];
@@ -158,11 +158,13 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     if (pr)
       pr.report({message: `Getting GCC version for ${bin}`});
     const exec = await proc.execute(bin, ['-v']).result;
-    if (exec.retc != 0) {
-      log.debug('Bad GCC binary ("-v" returns non-zero)', bin);
+    if (exec.retc !== 0) {
+      log.debug('Bad GCC binary ("-v" returns non-zero):', bin);
       return null;
     }
-    const last_line = exec.stderr.trim().split('\n').reverse()[0];
+
+    const compiler_version_output = exec.stderr.trim().split('\n');
+    const last_line = compiler_version_output.reverse()[0];
     const version_re = /^gcc version (.*?) .*/;
     const version_match = version_re.exec(last_line);
     if (version_match === null) {
@@ -180,22 +182,44 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     }
     const name = `GCC ${description}${version}`;
     log.debug('Detected GCC compiler:', bin);
+    let gccKit: Kit = {
+      name,
+      compilers: {
+        C: bin,
+      }
+    };
+
     if (await fs.exists(gxx_bin)) {
-      return {
-        name,
-        compilers: {
-          CXX: gxx_bin,
-          C: bin,
-        }
-      };
-    } else {
-      return {
-        name,
-        compilers: {
-          C: bin,
-        }
-      };
+      gccKit = {name, compilers: {C: bin, CXX: gxx_bin}};
     }
+
+    const isWin32 = process.platform === 'win32';
+    if (isWin32 && bin.toLowerCase().includes('mingw')) {
+      const binParentPath = path.dirname(bin);
+      const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
+      if (await fs.exists(mingwMakePath)) {
+        const ENV_PATH = `${binParentPath};${process.env['PATH']}`;
+        // Check for working mingw32-make
+        const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: ENV_PATH}}).result;
+        if (execMake.retc !== 0) {
+          log.debug('Bad mingw32-make binary ("-v" returns non-zero):', bin);
+        } else {
+          let make_version_output = execMake.stdout;
+          if (make_version_output.length === 0)
+            make_version_output = execMake.stderr;
+          const output_line_sep = make_version_output.trim().split('\n');
+          const isMake = output_line_sep[0].includes('Make');
+          const isMingwTool = output_line_sep[1].includes('mingw32');
+
+          if (isMake && isMingwTool) {
+            gccKit.preferredGenerator = {name: 'MinGW Makefiles'};
+            gccKit.environmentVariables = {PATH: ENV_PATH};
+          }
+        }
+      }
+    }
+    return gccKit;
+
   } else if (clang_res) {
     log.debug('Testing Clang-ish binary:', bin);
     if (pr)
@@ -657,26 +681,8 @@ export interface KitScanOptions {
  * @returns A list of Kits.
  */
 export async function scanForKits(opt?: KitScanOptions) {
-  if (opt === undefined) {
-    opt = {};
-  }
-  const in_scan_dirs = opt.scanDirs;
-  let scan_dirs: string[];
-  if (in_scan_dirs !== undefined) {
-    scan_dirs = in_scan_dirs;
-  } else {
-    const env_path = process.env['PATH'] || '';
-    const isWin32 = process.platform === 'win32';
-    const sep = isWin32 ? ';' : ':';
-    let env_elems = env_path.split(sep);
-    if (env_elems.length === 1 && env_elems[0] === '') {
-      env_elems = [];
-    }
-    scan_dirs = env_elems;
-  }
-  if (opt.minGWSearchDirs) {
-    scan_dirs = scan_dirs.concat(convertMingwDirsToSearchPaths(opt.minGWSearchDirs));
-  }
+  const kit_options = opt || {};
+
   log.debug('Scanning for Kits on system');
   const prog = {
     location: vscode.ProgressLocation.Notification,
@@ -693,26 +699,25 @@ export async function scanForKits(opt?: KitScanOptions) {
       scanPaths = scanPaths.concat(pathvar.split(sep));
     }
 
-    if (scanPaths) {
-      // Search them all in parallel
-      let prs = [] as Promise<Kit[]>[];
-      const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
-      prs = prs.concat(compiler_kits);
-      if (isWin32) {
-        const vs_kits = scanForVSKits(pr);
-        const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
-        const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
-        prs.push(vs_kits);
-        prs = prs.concat(clang_cl_kits);
-      }
-      const arrays = await Promise.all(prs);
-      const kits = ([] as Kit[]).concat(...arrays);
-      kits.map(k => log.info(`Found Kit: ${k.name}`));
-      return kits;
-    } else {
-      log.info(`Path variable empty`);
-      return [];
+    // Search them all in parallel
+    let prs = [] as Promise<Kit[]>[];
+    if (isWin32 && kit_options.minGWSearchDirs) {
+      scanPaths = scanPaths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
     }
+    const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
+    prs = prs.concat(compiler_kits);
+    if (isWin32) {
+      const vs_kits = scanForVSKits(pr);
+
+      const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
+      const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
+      prs.push(vs_kits);
+      prs = prs.concat(clang_cl_kits);
+    }
+    const arrays = await Promise.all(prs);
+    const kits = ([] as Kit[]).concat(...arrays);
+    kits.map(k => log.info(`Found Kit: ${k.name}`));
+    return kits;
   });
 }
 
