@@ -225,6 +225,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug('Disposing CMakeTools extension');
     this._nagUpgradeSubscription.dispose();
     this._nagManager.dispose();
+    this._termCloseSub.dispose();
     if (this._launchTerminal)
       this._launchTerminal.dispose();
     rollbar.invokeAsync('Root dispose', () => this.asyncDispose());
@@ -1110,7 +1111,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return vscode.debug.activeDebugSession!;
   }
 
-  private _launchTerminal: vscode.Terminal|null = null;
+  private _launchTerminal?: vscode.Terminal;
+  // Watch for the user closing our terminal
+  private readonly _termCloseSub = vscode.window.onDidCloseTerminal(term => {
+    if (term === this._launchTerminal) {
+      this._launchTerminal = undefined;
+    }
+  });
 
   /**
    * Implementation of `cmake.launchTarget`
