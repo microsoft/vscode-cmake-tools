@@ -2,11 +2,12 @@
  * This module defines important directories and paths to the extension
  */ /** */
 
+import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as which from 'which';
 
+import {expandString} from './expand';
 import {fs} from './pr';
-import { DirectoryContext } from '@cmt/workspace';
 
 /**
  * Directory class.
@@ -110,7 +111,17 @@ class Paths {
   }
 
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
-    const raw = wsc.config.raw_cmakePath;
+    const raw = await expandString(wsc.config.raw_cmakePath, {
+      vars: {
+        workspaceRoot: wsc.dirPath,
+        workspaceFolder: wsc.dirPath,
+        userHome: this.userHome,
+        buildKit: '',
+        buildType: '',
+        generator: '',
+        workspaceRootFolderName: path.basename(wsc.dirPath),
+      },
+    });
     if (raw == 'auto' || raw == 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');

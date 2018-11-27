@@ -14,6 +14,7 @@ import * as codepages from './code-pages';
 import * as expand from './expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
+import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -183,7 +184,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get expansionOptions(): expand.ExpansionOptions {
     const ws_root = this._workspaceRootPath || '.';
-    const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
@@ -192,7 +192,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       buildType: this.currentBuildType,
       workspaceRootFolderName: path.basename(ws_root),
       generator: this.generatorName || 'null',
-      userHome: user_dir,
+      userHome: paths.userHome,
       buildKit: this._kit ? this._kit.name : '__unknownkit__',
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',

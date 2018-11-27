@@ -13,6 +13,10 @@ import {StateManager} from '@cmt/state';
 export class DirectoryContext {
   constructor(
       /**
+       * The directory path that this context corresponds to
+       */
+      public readonly dirPath: string,
+      /**
        * The configuration for the associated directory.
        */
       public readonly config: ConfigurationReader,
@@ -29,7 +33,7 @@ export class DirectoryContext {
    */
   static createForDirectory(dir: string, state: StateManager): DirectoryContext {
     const config = ConfigurationReader.createForDirectory(dir);
-    return new DirectoryContext(config, state);
+    return new DirectoryContext(dir, config, state);
   }
 
   /**
