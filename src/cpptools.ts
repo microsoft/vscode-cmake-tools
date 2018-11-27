@@ -143,13 +143,31 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
   private _workspaceBrowseConfiguration: cpt.WorkspaceBrowseConfiguration = {browsePath: []};
 
+  /**  Used for cache the source file configuration */
+  private _cachedSourceFileConfiguration?: cpt.SourceFileConfigurationItem;
+
   /**
    * Get the SourceFileConfigurationItem from the index for the given URI
    * @param uri The configuration to get from the index
    */
   private _getConfiguration(uri: vscode.Uri): cpt.SourceFileConfigurationItem|undefined {
     const norm_path = util.platformNormalizePath(uri.fsPath);
-    return this._fileIndex.get(norm_path);
+    let currrentConfig = this._fileIndex.get(norm_path);
+    if (!currrentConfig) {
+      if (this._cachedSourceFileConfiguration) {
+        const savedUri = this._cachedSourceFileConfiguration.uri;
+        currrentConfig = {
+          uri,
+          configuration: this._cachedSourceFileConfiguration.configuration
+        };
+        vscode.window.showInformationMessage(`The current file is not attached to a CMake target,
+        so CMake Tools is using the configuration information for "${savedUri}".
+        Add this source file to a project target for more accurate configuration information.`);
+      }
+    } else {
+      this._cachedSourceFileConfiguration = currrentConfig;
+    }
+    return currrentConfig;
   }
 
   /**
