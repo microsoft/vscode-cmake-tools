@@ -2121,9 +2121,10 @@ vinyl@^2.0.1, vinyl@^2.0.2:
     remove-trailing-separator "^1.0.1"
     replace-ext "^1.0.0"
 
-vscode-cpptools@^1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/vscode-cpptools/-/vscode-cpptools-1.3.1.tgz#a032cdb3a92581f7e58f7fcbc775182e184851dc"
+vscode-cpptools@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/vscode-cpptools/-/vscode-cpptools-2.1.2.tgz#465d42c66850e877ee5a14574c9376ffca151968"
+  integrity sha512-oMx/wsLQM6NggnmWn4t8lIrt1K7Zpl5G34zxNu+J6KHGnCxBzc+NHnxXS1Vu1hLxGWwANAvdxr3mEcA2LMe7hQ==
 
 vscode@1.1.21:
   version "1.1.21"
