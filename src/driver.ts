@@ -103,6 +103,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     for (const term of this._compileTerms.values()) {
       term.dispose();
     }
+    for (const sub of [this._settingsSub, this._argsSub, this._envSub]) {
+      sub.dispose();
+    }
     rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
   }
 
@@ -679,6 +682,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     return true;
   }
+
+  protected abstract doConfigureSettingsChange(): void;
+
+  /**
+   * Subscribe to changes that affect the CMake configuration
+   */
+  private readonly _settingsSub = this.ws.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
+  private readonly _argsSub = this.ws.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
+  private readonly _envSub = this.ws.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
 
   /**
    * The currently running process. We keep a handle on it so we can stop it

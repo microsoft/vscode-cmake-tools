@@ -28,6 +28,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   private constructor(cmake: CMakeExecutable, readonly ws: DirectoryContext) { super(cmake, ws); }
 
   private _needsReconfigure = true;
+  doConfigureSettingsChange() { this._needsReconfigure = true; }
   async checkNeedsReconfigure(): Promise<boolean> { return this._needsReconfigure; }
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {

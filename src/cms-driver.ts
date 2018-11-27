@@ -93,6 +93,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     });
 
     try {
+      this._hadConfigurationChanged = false;
       await cl.configure({cacheArguments: args});
       await cl.compute();
     } catch (e) {
@@ -195,7 +196,18 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
 
+  /**
+   * Track if the user changes the settings of the configure via settings.json
+   */
+  private _hadConfigurationChanged = true;
+  protected doConfigureSettingsChange() {
+    this._hadConfigurationChanged = true;
+  }
+
   async checkNeedsReconfigure(): Promise<boolean> {
+    if (this._hadConfigurationChanged) {
+      return this._hadConfigurationChanged;
+    }
     // If we have no input files, we probably haven't configured yet
     if (this._cmakeInputFileSet.inputFiles.length === 0) {
       return true;
