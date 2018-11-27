@@ -5,7 +5,6 @@
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import {DirectoryContext} from '@cmt/workspace';
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
@@ -34,8 +33,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._needsReconfigure = true;
     if (need_clean) {
-      log.debug('Wiping build directory', this.binaryDir);
-      await fs.rmdir(this.binaryDir);
+      await this._cleanPriorConfiguration();
     }
     await cb();
   }
@@ -73,17 +71,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   }
 
   async cleanConfigure(consumer?: proc.OutputConsumer) {
-    const build_dir = this.binaryDir;
-    const cache = this.cachePath;
-    const cmake_files = path.join(build_dir, 'CMakeFiles');
-    if (await fs.exists(cache)) {
-      log.info('Removing ', cache);
-      await fs.unlink(cache);
-    }
-    if (await fs.exists(cmake_files)) {
-      log.info('Removing ', cmake_files);
-      await fs.rmdir(cmake_files);
-    }
+    await this._cleanPriorConfiguration();
     return this.configure([], consumer);
   }
 

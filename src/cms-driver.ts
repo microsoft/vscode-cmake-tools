@@ -10,7 +10,6 @@ import * as cms from './cms-client';
 import {CMakeDriver} from './driver';
 import {Kit} from './kit';
 import {createLogger} from './logging';
-import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
 import {DirectoryContext} from './workspace';
@@ -65,17 +64,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     this._cmsClient = (async () => {
       // Stop the server before we try to rip out any old files
       await old_cl.shutdown();
-      const build_dir = this.binaryDir;
-      const cache_path = this.cachePath;
-      const cmake_files = path.join(build_dir, 'CMakeFiles');
-      if (await fs.exists(cache_path)) {
-        log.info('Removing', cache_path);
-        await fs.unlink(cache_path);
-      }
-      if (await fs.exists(cmake_files)) {
-        log.info('Removing', cmake_files);
-        await fs.rmdir(cmake_files);
-      }
+      await this._cleanPriorConfiguration();
       return this._startNewClient();
     })();
     return this.configure([], consumer);
@@ -223,8 +212,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     const client = await this._cmsClient;
     await client.shutdown();
     if (need_clean) {
-      log.debug('Wiping build directory');
-      await fs.rmdir(this.binaryDir);
+      await this._cleanPriorConfiguration();
     }
     await cb();
     await this._restartClient();
