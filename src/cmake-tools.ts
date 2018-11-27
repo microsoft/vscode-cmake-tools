@@ -12,14 +12,11 @@ import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
 import {ProgressHandle, versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
-import * as http from 'http';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as ws from 'ws';
 
 import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
-import {CacheEditorContentProvider} from './cache-editor';
 import {BadHomeDirectoryError, CodeModelContent, NoGeneratorError} from './cms-client';
 import {CMakeServerClientDriver} from './cms-driver';
 import {CTestDriver} from './ctest';
@@ -66,9 +63,6 @@ enum ConfigureType {
  * class. See the `_init` private method for this initialization.
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
-  private readonly _http_server: http.Server;
-  // TODO: Refactor to make this assertion unecessary
-  private _ws_server!: ws.Server;
 
   private readonly _nagManager = new NagManager(this.extensionContext);
   private readonly _nagUpgradeSubscription = this._nagManager.onCMakeLatestVersion(info => {
@@ -93,48 +87,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private constructor(readonly extensionContext: vscode.ExtensionContext, readonly workspaceContext: DirectoryContext) {
     // Handle the active kit changing. We want to do some updates and teardown
     log.debug('Constructing new CMakeTools instance');
-
-    const editor_server = this._http_server = http.createServer();
-    const ready = new Promise((resolve, reject) => {
-      editor_server.listen(0, 'localhost', undefined, (err: any) => {
-        if (err)
-          reject(err);
-        else
-          resolve();
-      });
-    });
-
-    rollbar.takePromise('Setup cache editor server', {}, ready.then(() => {
-      const websock_server = this._ws_server = ws.createServer({server: editor_server});
-      websock_server.on('connection', client => {
-        const sub = this.onReconfigured(() => { client.send(JSON.stringify({method: 'refreshContent'})); });
-        client.onclose = () => { sub.dispose(); };
-        client.onmessage = msg => {
-          const data = JSON.parse(msg.data);
-          console.log('Got message from editor client', msg);
-          rollbar.invokeAsync('Handle message from cache editor', () => {
-            return this._handleCacheEditorMessage(data.method, data.params)
-                .then(ret => {
-                  client.send(JSON.stringify({
-                    id: data.id,
-                    result: ret,
-                  }));
-                })
-                .catch(e => {
-                  client.send(JSON.stringify({
-                    id: data.id,
-                    error: (e as Error).message,
-                  }));
-                });
-          });
-        };
-      });
-
-      vscode.workspace
-          .registerTextDocumentContentProvider('cmake-cache',
-                                               new CacheEditorContentProvider(this.extensionContext,
-                                                                              editor_server.address().port));
-    }));
   }
 
   // Events that effect the user-interface
@@ -1236,25 +1188,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async resetState() {
     this.workspaceContext.state.reset();
     vscode.commands.executeCommand('workbench.action.reloadWindow');
-  }
-
-  private async _handleCacheEditorMessage(method: string, params: {[key: string]: any}): Promise<any> {
-    switch (method) {
-    case 'getEntries': {
-      const drv = await this.getCMakeDriverInstance();
-      if (!drv) {
-        return null;
-      }
-      return drv.cmakeCacheEntries;
-    }
-    case 'configure': {
-      return this.configure(params['args']);
-    }
-    case 'build': {
-      return this.build();
-    }
-    }
-    throw new Error('Invalid method: ' + method);
   }
 
   get sourceDir() {

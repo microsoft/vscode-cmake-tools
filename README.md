@@ -12,6 +12,10 @@ Visual Studio Code.
 [Read about them here](https://vector-of-bool.github.io/2018/07/20/cmt-1.1.0.html), and be
 sure check the changelog!
 
+# Supporters
+
+- My first Patron, [Shalom Craimer](https://www.patreon.com/user?u=317930).
+
 # Want to Support this Project? Support me on Patreon!
 
 [![Support me on Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/vector_of_bool)

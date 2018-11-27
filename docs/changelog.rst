@@ -3,6 +3,47 @@
 Changelog and History
 #####################
 
+.. _changes-1.1.3:
+
+1.1.3
+*****
+
+Removal:
+
+- The visual CMake cache editor GUI is gone. The API with which it was drawn is
+  being removed from a future version of VS Code, and the feature had many
+  issues. A future CMake GUI will be introduced with more features and greater
+  stability.
+  (`#579 <https://github.com/vector-of-bool/vscode-cmake-tools/issues/579>`_)
+
+Features and Tweaks:
+
+- On Linux, will detect old CMake versions and offer to do an automatic
+  upgrade. Windows support is pending. If you have a macOS devices and would
+  like to contribute, please open a pull request!
+- Smarter parsing of GCC and Clang compile errors to fold ``note:`` and
+  ``required from:`` blocks into their main diagnostic. This permits the
+  folding and browsing of template and macro instantiation errors in a nicer
+  fashion. MSVC error parsing pending. (**NOTE**: There is an upstream issue
+  with the sort order of diagnostic information, so ``required from:``
+  tracebacks may appear out-of-order).
+
+Fixes:
+
+- On Windows, "Launch target in terminal" will use ``cmd.exe`` unconditionally.
+  This works around issues with command quoting in PowerShell.
+  (`#562 <https://github.com/vector-of-bool/vscode-cmake-tools/issues/562>`_)
+- "Debug target" will prefer ``lldb-mi`` to ``lldb``. Fixes issues where
+  ``cpptools`` is unable to launch the debugger.
+  (`#584 <https://github.com/vector-of-bool/vscode-cmake-tools/issues/584>`_)
+- Document the ``environmentVariables`` field on kits.
+  (`#586 <https://github.com/vector-of-bool/vscode-cmake-tools/issues/568>`_)
+- Fix legacy CMake mode not setting the CMake generator.
+  (`#567 <https://github.com/vector-of-bool/vscode-cmake-tools/issues/567>`_)
+- Permit limited variable expansion for ``cmake.cmakePath`` in ``settings.json``
+  (refer to documentation for more details).
+  (`#569 <https://github.com/vector-of-bool/vscode-cmake-tools/issues/569>`_)
+
 .. _changes-1.1.2:
 
 1.1.2
