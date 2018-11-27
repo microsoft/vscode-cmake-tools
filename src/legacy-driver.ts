@@ -48,6 +48,16 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push('-H' + util.lightNormalizePath(this.sourceDir));
     const bindir = util.lightNormalizePath(this.binaryDir);
     args.push('-B' + bindir);
+    const gen = await this.getBestGenerator();
+    if (gen) {
+      args.push(`-G${gen.name}`);
+      if (gen.toolset) {
+        args.push(`-T${gen.toolset}`);
+      }
+      if (gen.platform) {
+        args.push(`-A${gen.platform}`);
+      }
+    }
     const cmake = this.cmake.path;
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
