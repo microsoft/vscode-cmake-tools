@@ -267,6 +267,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * Remove the prior CMake configuration files.
+   */
+  protected async _cleanPriorConfiguration() {
+    const build_dir = this.binaryDir;
+    const cache = this.cachePath;
+    const cmake_files = path.join(build_dir, 'CMakeFiles');
+    if (await fs.exists(cache)) {
+      log.info('Removing ', cache);
+      await fs.unlink(cache);
+    }
+    if (await fs.exists(cmake_files)) {
+      log.info('Removing ', cmake_files);
+      await fs.rmdir(cmake_files);
+    }
+  }
+
+  /**
    * Change the current kit. This lets the driver reload, if necessary.
    * @param kit The new kit
    */

@@ -6,15 +6,16 @@
 powerful configure+build workflow for CMake-based projects in
 Visual Studio Code.
 
+# Supporters
+
+- My first Patron, Shalom Craimer
+- The Phantom Derpstorm (ThePhD) [thephd.github.io](https://thephd.github.io/)
+
 ## 1.1.0 Changes! Exciting!
 
 **1.1.0** includes a few big new changes and features.
 [Read about them here](https://vector-of-bool.github.io/2018/07/20/cmt-1.1.0.html), and be
 sure check the changelog!
-
-# Supporters
-
-- My first Patron, [Shalom Craimer](https://www.patreon.com/user?u=317930).
 
 # Want to Support this Project? Support me on Patreon!
 
