@@ -16,7 +16,13 @@ class Paths {
   /**
    * The current user's home directory
    */
-  get userHome(): string { return process.env['HOME'] || process.env['PROFILE']!; }
+  get userHome(): string {
+    if (process.platform === 'win32') {
+      return path.join(process.env['HOMEDRIVE'] || 'C:', process.env['HOMEPATH'] || 'Users\\Public');
+    } else {
+      return process.env['HOME'] || process.env['PROFILE']!;
+    }
+  }
 
   /**
    * The user-local data directory. This is where user-specific persistent
