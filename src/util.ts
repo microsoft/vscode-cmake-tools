@@ -101,7 +101,9 @@ export function heavyNormalizePath(p: string): string {
   return normalizePath(p, {normCase: 'always', normUnicode: 'always'});
 }
 
-
+export function resolvePath(inpath: string, base: string) {
+  return path.isAbsolute(inpath) ? inpath : lightNormalizePath(path.join(base, inpath));
+}
 
 /**
  * Split a path into its elements.
@@ -289,6 +291,7 @@ export function isMultiConfGenerator(gen: string): boolean {
   return gen.includes('Visual Studio') || gen.includes('Xcode');
 }
 
+export class InvalidVersionString extends Error {}
 
 export interface Version {
   major: number;
@@ -299,7 +302,7 @@ export function parseVersion(str: string): Version {
   const version_re = /(\d+)\.(\d+)\.(\d+)/;
   const mat = version_re.exec(str);
   if (!mat) {
-    throw new Error(`Invalid version string ${str}`);
+    throw new InvalidVersionString(`Invalid version string ${str}`);
   }
   const [, major, minor, patch] = mat;
   return {
@@ -307,22 +310,6 @@ export function parseVersion(str: string): Version {
     minor: parseInt(minor),
     patch: parseInt(patch),
   };
-}
-
-export function versionGreater(lhs: Version, rhs: Version|string): boolean {
-  if (typeof (rhs) === 'string') {
-    return versionGreater(lhs, parseVersion(rhs));
-  }
-  if (lhs.major > rhs.major) {
-    return true;
-  } else if (lhs.major === rhs.major) {
-    if (lhs.minor > rhs.minor) {
-      return true;
-    } else if (lhs.minor === rhs.minor) {
-      return lhs.patch > rhs.patch;
-    }
-  }
-  return false;
 }
 
 export function versionToString(ver: Version): string { return `${ver.major}.${ver.minor}.${ver.patch}`; }
@@ -334,17 +321,6 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
       yield other_elem;
     }
   }
-}
-
-export function versionEquals(lhs: Version, rhs: Version|string): boolean {
-  if (typeof (rhs) === 'string') {
-    return versionEquals(lhs, parseVersion(rhs));
-  }
-  return lhs.major === rhs.major && lhs.minor === rhs.minor && lhs.patch === rhs.patch;
-}
-
-export function versionLess(lhs: Version, rhs: Version|string): boolean {
-  return !versionGreater(lhs, rhs) && !versionEquals(lhs, rhs);
 }
 
 export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
@@ -407,6 +383,46 @@ export enum Ordering {
   Greater,
   Equivalent,
   Less,
+}
+
+export function compareVersions(a: Version|string, b: Version|string): Ordering {
+  if (typeof a === 'string') {
+    a = parseVersion(a);
+  }
+  if (typeof b === 'string') {
+    b = parseVersion(b);
+  }
+  // Compare major
+  if (a.major > b.major) {
+    return Ordering.Greater;
+  } else if (a.major < b.major) {
+    return Ordering.Less;
+    // Compare minor
+  } else if (a.minor > b.minor) {
+    return Ordering.Greater;
+  } else if (a.minor < b.minor) {
+    return Ordering.Less;
+    // Compare patch
+  } else if (a.patch > b.patch) {
+    return Ordering.Greater;
+  } else if (a.patch < b.patch) {
+    return Ordering.Less;
+    // No difference:
+  } else {
+    return Ordering.Equivalent;
+  }
+}
+
+export function versionGreater(lhs: Version|string, rhs: Version|string): boolean {
+  return compareVersions(lhs, rhs) === Ordering.Greater;
+}
+
+export function versionEquals(lhs: Version|string, rhs: Version|string): boolean {
+  return compareVersions(lhs, rhs) === Ordering.Equivalent;
+}
+
+export function versionLess(lhs: Version|string, rhs: Version|string): boolean {
+  return compareVersions(lhs, rhs) === Ordering.Less;
 }
 
 export function compare(a: any, b: any): Ordering {

@@ -10,6 +10,7 @@ export class FakeContextDefinition implements vscode.ExtensionContext {
 
   workspaceState: vscode.Memento = new TestMemento();
   globalState: vscode.Memento = new TestMemento();
+  logPath: string = '';
 
   asAbsolutePath(relativePath: string): string { return relativePath; }
 

@@ -1,11 +1,9 @@
 version: 1.0.{build}-{branch}
 image:
   - Visual Studio 2017
-  - Visual Studio 2017 Preview
-  - Visual Studio 2015
 
 install:
-  - ps: Install-Product node 8.9.1 x64
+  - ps: Install-Product node 8.9.3 x64
 build_script:
   - pwsh: ./scripts/ci.ps1
 

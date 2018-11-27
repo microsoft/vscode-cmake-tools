@@ -41,6 +41,8 @@ class SmokeTestExtensionContext implements vscode.ExtensionContext {
   asAbsolutePath(sub: string): string { return path.join(this.extensionPath, sub); }
 
   get storagePath() { return path.join(this.extensionPath, '.smoke-storage'); }
+
+  get logPath() { return path.join(this.extensionPath, '.smoke-logs'); }
 }
 
 type TestResult<T> = Thenable<T>|T;

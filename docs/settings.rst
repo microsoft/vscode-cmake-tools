@@ -42,6 +42,9 @@ Specify location of the cmake executable.
 
 - Default: ``cmake``, which causes CMake Tools to search the ``PATH`` environment
   variable, as well as some hard-coded guesses.
+- *Supports substitution* of ``workspaceRoot``, ``workspaceRootFolderName``,
+  ``userHome``, ``${command:...}`` and ``${env:...}``. Other substitutions will
+  result in empty string.
 
 .. _conf-cmake.installPrefix:
 

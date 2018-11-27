@@ -132,6 +132,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _lastUpdateSucceeded = true;
 
+  private _workspaceBrowseConfiguration:cpt.WorkspaceBrowseConfiguration = {browsePath:[]};
+
   /**
    * Get the SourceFileConfigurationItem from the index for the given URI
    * @param uri The configuration to get from the index
@@ -153,6 +155,24 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param uris The file URIs to look up
    */
   async provideConfigurations(uris: vscode.Uri[]) { return util.dropNulls(uris.map(u => this._getConfiguration(u))); }
+
+  /**
+   * A request to determine whether this provider can provide a code browsing configuration for the workspace folder.
+   * @param token (optional) The cancellation token.
+   * @returns 'true' if this provider can provider a code browsing configuration for the workspace folder.
+   */
+  async canProvideBrowseConfiguration() {
+    return true;
+  }
+
+  /**
+   * A request to get the code browsing configuration for the workspace folder.
+   * @returns A [WorkspaceBrowseConfiguration](#WorkspaceBrowseConfiguration) with the information required to
+   * construct the equivalent of `browse.path` from `c_cpp_properties.json`.
+   */
+  async provideBrowseConfiguration() {
+    return this._workspaceBrowseConfiguration;
+  }
 
   /** No-op */
   dispose() {}
@@ -185,6 +205,18 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const {standard, extraDefinitions} = parseCompileFlags(flags);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
+
+    const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
+    for (const includePathItem of includePath) {
+      if (newBrowsePath.indexOf(includePathItem) < 0) {
+        newBrowsePath.push(includePathItem);
+      }
+    }
+    this._workspaceBrowseConfiguration = {
+      browsePath: newBrowsePath,
+      standard,
+      compilerPath: comp_path || undefined,
+    };
     return {
       defines,
       standard,
@@ -222,6 +254,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   updateConfigurationData(opts: CodeModelParams) {
     let hadMissingCompilers = false;
+    this._workspaceBrowseConfiguration = {browsePath: []};
     for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {

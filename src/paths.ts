@@ -2,11 +2,12 @@
  * This module defines important directories and paths to the extension
  */ /** */
 
+import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as which from 'which';
 
+import {expandString} from './expand';
 import {fs} from './pr';
-import { DirectoryContext } from '@cmt/workspace';
 
 /**
  * Directory class.
@@ -15,7 +16,13 @@ class Paths {
   /**
    * The current user's home directory
    */
-  get userHome(): string { return process.env['HOME'] || process.env['PROFILE']!; }
+  get userHome(): string {
+    if (process.platform === 'win32') {
+      return path.join(process.env['HOMEDRIVE'] || 'C:', process.env['HOMEPATH'] || 'Users\\Public');
+    } else {
+      return process.env['HOME'] || process.env['PROFILE']!;
+    }
+  }
 
   /**
    * The user-local data directory. This is where user-specific persistent
@@ -23,7 +30,7 @@ class Paths {
    */
   get userLocalDir(): string {
     if (process.platform == 'win32') {
-      return process.env['AppData']!;
+      return process.env['LocalAppData']!;
     } else {
       const xdg_dir = process.env['XDG_DATA_HOME'];
       if (xdg_dir) {
@@ -34,11 +41,30 @@ class Paths {
     }
   }
 
+  get userRoamingDir(): string {
+    if (process.platform == 'win32') {
+      return process.env['AppData']!;
+    } else {
+      const xdg_dir = process.env['XDG_CONFIG_HOME'];
+      if (xdg_dir) {
+        return xdg_dir;
+      }
+      const home = this.userHome;
+      return path.join(home, '.config');
+    }
+  }
+
   /**
    * The directory where CMake Tools should store user-specific persistent
    * data.
    */
   get dataDir(): string { return path.join(this.userLocalDir, 'CMakeTools'); }
+
+  /**
+   * The "roaming" directory where CMake Tools stores roaming configuration
+   * data.
+   */
+  get roamingDataDir(): string { return path.join(this.userRoamingDir, 'CMakeTools'); }
 
   /**
    * Get the platform-specific temporary directory
@@ -91,7 +117,17 @@ class Paths {
   }
 
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
-    const raw = wsc.config.raw_cmakePath;
+    const raw = await expandString(wsc.config.raw_cmakePath, {
+      vars: {
+        workspaceRoot: wsc.dirPath,
+        workspaceFolder: wsc.dirPath,
+        userHome: this.userHome,
+        buildKit: '',
+        buildType: '',
+        generator: '',
+        workspaceRootFolderName: path.basename(wsc.dirPath),
+      },
+    });
     if (raw == 'auto' || raw == 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');

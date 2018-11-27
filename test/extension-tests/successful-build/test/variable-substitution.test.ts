@@ -1,6 +1,7 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
+import paths from '@cmt/paths';
 import {objectPairs, platformNormalizePath} from '@cmt/util';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import * as path from 'path';
@@ -144,8 +145,7 @@ suite('[Variable Substitution]', async () => {
     const cacheEntry = cache.get('userHome') as api.CacheEntry;
     expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[userHome] unexpected cache entry type');
     expect(cacheEntry.key).to.eq('userHome', '[userHome] unexpected cache entry key name');
-    const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
-    expect(cacheEntry.as<string>()).to.eq(user_dir, '[userHome] substitution incorrect');
+    expect(cacheEntry.as<string>()).to.eq(paths.userHome, '[userHome] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[userHome] unexpected cache entry value type');
   }).timeout(100000);
 

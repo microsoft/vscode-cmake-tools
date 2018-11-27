@@ -10,9 +10,11 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
+import * as codepages from './code-pages';
 import * as expand from './expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
+import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -101,6 +103,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     for (const term of this._compileTerms.values()) {
       term.dispose();
     }
+    for (const sub of [this._settingsSub, this._argsSub, this._envSub]) {
+      sub.dispose();
+    }
     rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
   }
 
@@ -182,7 +187,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get expansionOptions(): expand.ExpansionOptions {
     const ws_root = this._workspaceRootPath || '.';
-    const user_dir = process.platform === 'win32' ? process.env['HOMEPATH']! : process.env['HOME']!;
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
@@ -191,7 +195,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       buildType: this.currentBuildType,
       workspaceRootFolderName: path.basename(ws_root),
       generator: this.generatorName || 'null',
-      userHome: user_dir,
+      userHome: paths.userHome,
       buildKit: this._kit ? this._kit.name : '__unknownkit__',
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',
@@ -259,6 +263,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
       existing.show();
       existing.sendText(cmd.arguments.map(s => shlex.quote(s)).join(' ') + '\r\n');
       return existing;
+    }
+  }
+
+  /**
+   * Remove the prior CMake configuration files.
+   */
+  protected async _cleanPriorConfiguration() {
+    const build_dir = this.binaryDir;
+    const cache = this.cachePath;
+    const cmake_files = path.join(build_dir, 'CMakeFiles');
+    if (await fs.exists(cache)) {
+      log.info('Removing ', cache);
+      await fs.unlink(cache);
+    }
+    if (await fs.exists(cmake_files)) {
+      log.info('Removing ', cmake_files);
+      await fs.rmdir(cmake_files);
     }
   }
 
@@ -679,6 +700,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return true;
   }
 
+  protected abstract doConfigureSettingsChange(): void;
+
+  /**
+   * Subscribe to changes that affect the CMake configuration
+   */
+  private readonly _settingsSub = this.ws.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
+  private readonly _argsSub = this.ws.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
+  private readonly _envSub = this.ws.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
+
   /**
    * The currently running process. We keep a handle on it so we can stop it
    * upon user request
@@ -721,7 +751,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
     const cmake = this.cmake.path;
-    const child = this.executeCommand(cmake, expanded_args, consumer, {environment: build_env});
+    let outputEnc = this.ws.config.outputLogEncoding;
+    if (outputEnc == 'auto') {
+      if (process.platform === 'win32') {
+        outputEnc = await codepages.getWindowsCodepage();
+      } else {
+        outputEnc = 'utf8';
+      }
+    }
+    const exeOpt: proc.ExecutionOptions = {environment: build_env, outputEncoding: outputEnc};
+    const child = this.executeCommand(cmake, expanded_args, consumer, exeOpt);
     this._currentProcess = child;
     this._isBusy = true;
     await child.result;

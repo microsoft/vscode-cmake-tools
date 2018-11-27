@@ -25,6 +25,17 @@ function getPathWithoutCompilers() {
 
 suite('Kits scan test', async () => {
   const fakebin = getTestRootFilePath('fakebin');
+  const mingwMakePath = path.join(fakebin, 'mingw32-make');
+  const mingwMakePathBackup = path.join(fakebin, 'mingw32-make.bak');
+
+  async function disableMingwMake() { await fs.rename(mingwMakePath, mingwMakePathBackup); }
+
+  teardown(async () => {
+    if (await fs.exists(mingwMakePathBackup)) {
+      await fs.rename(mingwMakePathBackup, mingwMakePath);
+    }
+  });
+
   test('Detect system kits never throws',
        async () => {
          // Don't care about the result, just check that we don't throw during the test
@@ -69,6 +80,41 @@ suite('Kits scan test', async () => {
     expect(compkit!.name).to.eq('Clang 8.1.0');
   });
 
+
+  test('Detect an MinGW compiler file on linux', async () => {
+    if (process.platform === 'win32')
+      return;
+
+    await disableMingwMake();
+
+    const compiler = path.join(fakebin, 'mingw32-gcc');
+    const compkit = await kit.kitIfCompiler(compiler);
+
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').eq(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+
+    expect(compkit!.name).to.eq('GCC for mingw32 6.3.0');
+    expect(compkit!.preferredGenerator).to.be.undefined;
+    expect(compkit!.environmentVariables).to.be.undefined;
+  });
+
+  test('Detect an MinGW compiler file on windows', async () => {
+    if (process.platform !== 'win32')
+      return;
+
+    const compiler = path.join(fakebin, 'mingw32-gcc');
+    const compkit = await kit.kitIfCompiler(compiler);
+
+    expect(compkit).to.not.be.null;
+    expect(compkit!.compilers).has.property('C').eq(compiler);
+    expect(compkit!.compilers).to.not.have.property('CXX');
+
+    expect(compkit!.name).to.eq('GCC for mingw32 6.3.0');
+    expect(compkit!.preferredGenerator!.name).to.eq('MinGW Makefiles');
+    expect(compkit!.environmentVariables!.PATH).include('fakebin');
+  });
+
   test('Detect non-compiler program', async () => {
     const program = path.join(fakebin, 'gcc-666');
     const nil = await kit.kitIfCompiler(program);
@@ -98,14 +144,14 @@ suite('Kits scan test', async () => {
       await fs.mkdir(path_with_compilername);
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(4);
+      expect(kits.length).to.eq(5);
     });
 
     test('Scan file with compiler name', async () => {
       await fs.writeFile(path_with_compilername, '');
       // Scan the directory with fake compilers in it
       const kits = await kit.scanDirForCompilerKits(fakebin);
-      expect(kits.length).to.eq(4);
+      expect(kits.length).to.eq(5);
     });
   });
 
@@ -120,13 +166,14 @@ suite('Kits scan test', async () => {
     test('check fake compilers in kit file', async () => {
       const fakebin_dir = getTestRootFilePath('fakebin');
       const kits = await kit.scanDirForCompilerKits(fakebin_dir);
-      expect(kits.length).to.be.eq(4);
+      expect(kits.length).to.be.eq(5);
       const names = kits.map(k => k.name).sort();
       expect(names).to.deep.eq([
         'Clang 0.25',
         'Clang 8.1.0',
         'GCC 42.1',
         'GCC for cross-compile 0.2.1000',
+        'GCC for mingw32 6.3.0'
       ]);
     }).timeout(10000);
   });

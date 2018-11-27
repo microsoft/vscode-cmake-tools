@@ -6,6 +6,11 @@
 powerful configure+build workflow for CMake-based projects in
 Visual Studio Code.
 
+# Supporters
+
+- My first Patron, Shalom Craimer
+- The Phantom Derpstorm (ThePhD) [thephd.github.io](https://thephd.github.io/)
+
 ## 1.1.0 Changes! Exciting!
 
 **1.1.0** includes a few big new changes and features.

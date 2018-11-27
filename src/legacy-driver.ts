@@ -5,7 +5,6 @@
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import {DirectoryContext} from '@cmt/workspace';
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
@@ -28,13 +27,13 @@ export class LegacyCMakeDriver extends CMakeDriver {
   private constructor(cmake: CMakeExecutable, readonly ws: DirectoryContext) { super(cmake, ws); }
 
   private _needsReconfigure = true;
+  doConfigureSettingsChange() { this._needsReconfigure = true; }
   async checkNeedsReconfigure(): Promise<boolean> { return this._needsReconfigure; }
 
   async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._needsReconfigure = true;
     if (need_clean) {
-      log.debug('Wiping build directory', this.binaryDir);
-      await fs.rmdir(this.binaryDir);
+      await this._cleanPriorConfiguration();
     }
     await cb();
   }
@@ -48,6 +47,16 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push('-H' + util.lightNormalizePath(this.sourceDir));
     const bindir = util.lightNormalizePath(this.binaryDir);
     args.push('-B' + bindir);
+    const gen = await this.getBestGenerator();
+    if (gen) {
+      args.push(`-G${gen.name}`);
+      if (gen.toolset) {
+        args.push(`-T${gen.toolset}`);
+      }
+      if (gen.platform) {
+        args.push(`-A${gen.platform}`);
+      }
+    }
     const cmake = this.cmake.path;
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
@@ -62,17 +71,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   }
 
   async cleanConfigure(consumer?: proc.OutputConsumer) {
-    const build_dir = this.binaryDir;
-    const cache = this.cachePath;
-    const cmake_files = path.join(build_dir, 'CMakeFiles');
-    if (await fs.exists(cache)) {
-      log.info('Removing ', cache);
-      await fs.unlink(cache);
-    }
-    if (await fs.exists(cmake_files)) {
-      log.info('Removing ', cmake_files);
-      await fs.rmdir(cmake_files);
-    }
+    await this._cleanPriorConfiguration();
     return this.configure([], consumer);
   }
 

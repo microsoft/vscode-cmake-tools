@@ -25,6 +25,7 @@ import {
   kitsAvailableInWorkspaceDirectory,
   findCLCompilerPath,
   effectiveKitEnvironment,
+  OLD_USER_KITS_FILEPATH,
 } from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {MultiWatcher} from '@cmt/watcher';
@@ -404,7 +405,7 @@ class ExtensionManager implements vscode.Disposable {
     });
     rollbar.invokeAsync('Update code model for cpptools', {}, async () => {
       if (!this._cppToolsAPI) {
-        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v1);
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v2);
       }
       if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
         const codeModel = cmt.codeModel;
@@ -421,7 +422,11 @@ class ExtensionManager implements vscode.Disposable {
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
         await this.ensureCppToolsProviderRegistered();
-        cpptools.didChangeCustomConfiguration(this._configProvider);
+        if (cpptools.notifyReady) {
+          cpptools.notifyReady(this._configProvider);
+        } else {
+          cpptools.didChangeCustomConfiguration(this._configProvider);
+        }
       }
     });
   }
@@ -528,6 +533,16 @@ class ExtensionManager implements vscode.Disposable {
    * update the kit loaded into the current backend if applicable.
    */
   private async _rereadKits(progress?: ProgressHandle) {
+    // Migrate kits from old pre-1.1.3 location
+    try {
+      if (await fs.exists(OLD_USER_KITS_FILEPATH) && !await fs.exists(USER_KITS_FILEPATH)) {
+        rollbar.info('Migrating kits file', { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+        await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
+        await fs.rename(OLD_USER_KITS_FILEPATH, USER_KITS_FILEPATH);
+      }
+    } catch (e) {
+      rollbar.exception('Failed to migrate prior user-local kits file.', e, { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+    }
     // Load user-kits
     reportProgress(progress, 'Loading kits');
     const user = await readKitsFile(USER_KITS_FILEPATH);

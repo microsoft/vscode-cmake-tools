@@ -236,3 +236,7 @@ In addition to the above options, the following may be specified:
 
     This setting is most useful when the toolchain file respects additional
     options that can be passed as cache variables.
+
+``environmentVariables``
+    A JSON object of key-value pairs specifying additional environment
+    variables to be defined when using this kit.

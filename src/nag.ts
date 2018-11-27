@@ -28,7 +28,18 @@ export interface Nag {
   resetSeconds: number;
 }
 
-export function parseNagData(items: any): Nag[]|null {
+export interface LatestCMakeInfo {
+  version: string;
+  windowsURL: string;
+  linuxURL: string;
+}
+
+export interface NagData {
+  nags: Nag[];
+  latestCMake: LatestCMakeInfo;
+}
+
+export function parseNagData(data: any): NagData|null {
   const validator = new ajv({allErrors: true, format: 'full'}).compile({
     type: 'object',
     properties: {
@@ -66,13 +77,33 @@ export function parseNagData(items: any): Nag[]|null {
           ],
         },
       },
+      latestCMake: {
+        type: 'object',
+        proeprties: {
+          version: {
+            type: 'string',
+          },
+          windowsURL: {
+            type: 'string',
+          },
+          linuxURL: {
+            type: 'string',
+          },
+        },
+        required: [
+          'version',
+          'windowsURL',
+          'linuxURL',
+        ]
+      },
     },
     required: [
       'nags',
+      'latestCMake',
     ],
   });
 
-  const is_valid = validator(items);
+  const is_valid = validator(data);
   if (!is_valid) {
     const errors = validator.errors as ajv.ErrorObject[];
     for (const err of errors) {
@@ -80,11 +111,11 @@ export function parseNagData(items: any): Nag[]|null {
     }
     return null;
   }
-  return items['nags'];
+  return data;
 }
 
 
-export function parseNagYAML(str: string): Nag[]|null {
+export function parseNagYAML(str: string): NagData|null {
   try {
     const raw_data = yaml.load(str);
     return parseNagData(raw_data);
@@ -120,9 +151,7 @@ function getOrInitNagState(ext: vscode.ExtensionContext): NagState {
   return init_state;
 }
 
-export class NagManager {
-  get onNag() { return this._nagEmitter.event; }
-  private readonly _nagEmitter = new vscode.EventEmitter<Nag>();
+export class NagManager implements vscode.Disposable {
   private readonly _nagState = getOrInitNagState(this.extensionContext);
   private _writeNagState() { writeNagState(this.extensionContext, this._nagState); }
 
@@ -143,8 +172,8 @@ export class NagManager {
         this.pumpYAMLString(dataAcc)
             .then(ok => {
               if (ok) {
-                // Poll again after two hours
-                setTimeout(() => this._pollRemoteForNags(), 1000 * 60 * 60 * 2);
+                // Poll again after four hours
+                setTimeout(() => this._pollRemoteForNags(), 1000 * 60 * 60 * 4);
               }
             })
             .catch(e => {
@@ -163,13 +192,13 @@ export class NagManager {
   }
 
   async pumpYAMLString(str: string): Promise<boolean> {
-    const nags = parseNagYAML(str);
-    if (!nags) {
+    const nagData = parseNagYAML(str);
+    if (!nagData) {
       console.error('Invalid nag data. Not polling anymore');
       return false;
     }
     const state = this._nagState;
-    for (const nag of nags) {
+    for (const nag of nagData.nags) {
       const nag_state = state.nagsByID[nag.id];
       const current_time_ms = new Date().getTime();
       if (nag_state && nag_state.neverAgain) {
@@ -206,6 +235,7 @@ export class NagManager {
       }
     }
     this._writeNagState();
+    this._cmakeLatestVersionEmitter.fire(nagData.latestCMake);
     return true;
   }
 
@@ -214,4 +244,9 @@ export class NagManager {
       this._pollRemoteForNags();
     } catch (e) { console.error('Error starting up initial event polling.', e); }
   }
+
+  private readonly _cmakeLatestVersionEmitter = new vscode.EventEmitter<LatestCMakeInfo>();
+  get onCMakeLatestVersion() { return this._cmakeLatestVersionEmitter.event; }
+
+  dispose() { this._cmakeLatestVersionEmitter.dispose(); }
 }

@@ -127,6 +127,15 @@ class RollbarController {
     return null;
   }
 
+  info(what: string, additional: object = {}): Rollbar.LogResult | null {
+    log.info(what, JSON.stringify(additional));
+    if (this._enabled) {
+      const stack = new Error().stack;
+      return this._rollbar.info(what, additional, { stack });
+    }
+    return null;
+  }
+
   /**
    * Update the content of the Rollbar payload with additional context
    * information.

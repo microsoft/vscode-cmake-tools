@@ -10,7 +10,11 @@ export interface CMakeExecutable {
 }
 
 export async function getCMakeExecutableInformation(path: string): Promise<CMakeExecutable> {
-  const cmake = {path, isPresent: false, minimalServerModeVersion: util.parseVersion('3.7.1')} as CMakeExecutable;
+  const cmake: CMakeExecutable = {
+    path,
+    isPresent: false,
+    minimalServerModeVersion: util.parseVersion('3.7.1'),
+  };
 
   if (path.length != 0) {
     try {
