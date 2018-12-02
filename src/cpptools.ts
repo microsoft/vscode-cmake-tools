@@ -132,7 +132,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _lastUpdateSucceeded = true;
 
-  private _workspaceBrowseConfiguration:cpt.WorkspaceBrowseConfiguration = {browsePath:[]};
+  private _workspaceBrowseConfiguration: cpt.WorkspaceBrowseConfiguration = {browsePath: []};
 
   /**
    * Get the SourceFileConfigurationItem from the index for the given URI
@@ -161,18 +161,14 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param token (optional) The cancellation token.
    * @returns 'true' if this provider can provider a code browsing configuration for the workspace folder.
    */
-  async canProvideBrowseConfiguration() {
-    return true;
-  }
+  async canProvideBrowseConfiguration() { return true; }
 
   /**
    * A request to get the code browsing configuration for the workspace folder.
    * @returns A [WorkspaceBrowseConfiguration](#WorkspaceBrowseConfiguration) with the information required to
    * construct the equivalent of `browse.path` from `c_cpp_properties.json`.
    */
-  async provideBrowseConfiguration() {
-    return this._workspaceBrowseConfiguration;
-  }
+  async provideBrowseConfiguration() { return this._workspaceBrowseConfiguration; }
 
   /** No-op */
   dispose() {}
