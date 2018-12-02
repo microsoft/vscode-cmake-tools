@@ -1,5 +1,14 @@
 <!-- Thanks for your contribution! To make things easier, please fill out the template below. -->
 
+<!--
+If you are submitting a bug report, please check the "Common Issues" page in the
+documentation:
+
+    https://vector-of-bool.github.io/docs/vscode-cmake-tools/common_issues.html
+
+Your issue may have an existing solution
+-->
+
 <!-- If you have a question/suggestion/issue that doesn't fit this template,
 feel free to delete the template and write any free text. -->
 
