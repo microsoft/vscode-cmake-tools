@@ -107,7 +107,7 @@ suite('[Debug/Lauch interface]', async () => {
     expect(fs.existsSync(validPath)).to.be.false;
   }).timeout(60000);
 
-  test('Test lauch target', async () => {
+  test('Test launch target', async () => {
     testEnv.config.updatePartial({buildBeforeRun: false});
 
     const executablesTargets = await cmt.executableTargets;
@@ -128,7 +128,7 @@ suite('[Debug/Lauch interface]', async () => {
     expect(terminal!.name).of.be.eq('CMake/Launch');
 
     // Needed to get launch target result
-    await new Promise(res => setTimeout(res, 1000));
+    await new Promise(res => setTimeout(res, 3000));
 
     // Check that it is compiled as a new file
     expect(fs.existsSync(createdFileOnExecution)).to.be.true;
