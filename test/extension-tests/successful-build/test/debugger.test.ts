@@ -2,6 +2,7 @@ import {CMakeTools} from '@cmt/cmake-tools';
 import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import sinon = require('sinon');
 import * as fs from 'fs';
+import * as path from 'path';
 
 // tslint:disable:no-unused-expression
 
@@ -105,4 +106,32 @@ suite('[Debug/Lauch interface]', async () => {
     // Check that it is compiled as a new file
     expect(fs.existsSync(validPath)).to.be.false;
   }).timeout(60000);
+
+  test('Test lauch target', async () => {
+    testEnv.config.updatePartial({buildBeforeRun: false});
+
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    const launchProgrammPath = await cmt.launchTargetPath();
+    expect(launchProgrammPath).to.be.not.null;
+
+    // Remove file if not exists
+    const createdFileOnExecution = path.join(testEnv.projectFolder.location, 'test.txt');
+    if (fs.existsSync(createdFileOnExecution)) {
+      fs.unlinkSync(createdFileOnExecution);
+    }
+
+    const terminal = await cmt.launchTarget();
+    expect(terminal).of.be.not.null;
+    expect(terminal!.name).of.be.eq('CMake/Launch');
+
+    // Needed to get launch target result
+    await new Promise(res => setTimeout(res, 1000));
+
+    // Check that it is compiled as a new file
+    expect(fs.existsSync(createdFileOnExecution)).to.be.true;
+  }).timeout(60000);
 });
+
