@@ -1,0 +1,46 @@
+Microsoft (R)-Buildmodul, Version 15.6.82.30579 für .NET Framework
+Copyright (C) Microsoft Corporation. Alle Rechte vorbehalten.
+
+Der Buildvorgang wurde am 26.12.2018 10:39:38 gestartet.
+     1>Projekt "c:\Test\build\ALL_BUILD.vcxproj" auf Knoten "1" (Standardziele).
+     1>Das Projekt "c:\Test\build\ALL_BUILD.vcxproj" (1) erstellt "c:\Test\build\ZERO_CHECK.vcxproj" (2) auf Knoten "1" (Standardziele).
+     2>PrepareForBuild:
+         Das Verzeichnis "Win32\Release\ZERO_CHECK\" wird erstellt.
+         Das Verzeichnis "c:\Test\build\Release\" wird erstellt.
+         Das Verzeichnis "Win32\Release\ZERO_CHECK\ZERO_CHECK.tlog\" wird erstellt.
+       InitializeBuildStatus:
+         "Win32\Release\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+       CustomBuild:
+         Checking Build System
+         CMake does not need to re-run because c:/Test/build/CMakeFiles/generate.stamp is up-to-date.
+       FinalizeBuildStatus:
+         Die Datei "Win32\Release\ZERO_CHECK\ZERO_CHECK.tlog\unsuccessfulbuild" wird gelöscht.
+         Aktualisieren des Timestamps von "Win32\Release\ZERO_CHECK\ZERO_CHECK.tlog\ZERO_CHECK.lastbuildstate".
+     2>Die Erstellung von Projekt "c:\Test\build\ZERO_CHECK.vcxproj" ist abgeschlossen (Standardziele).
+     1>Das Projekt "c:\Test\build\ALL_BUILD.vcxproj" (1) erstellt "c:\Test\buildTest.vcxproj" (3) auf Knoten "2" (Standardziele).
+     3>PrepareForBuild:
+         Das Verzeichnis "TestWslGcc.dir\Release\" wird erstellt.
+         Das Verzeichnis "TestWslGcc.dir\ReleaseTest.tlog\" wird erstellt.
+       InitializeBuildStatus:
+         "TestWslGcc.dir\ReleaseTest.tlog\unsuccessfulbuild" wird erstellt, da "AlwaysCreate" angegeben wurde.
+       CustomBuild:
+         Building Custom Rule c:/Test/CMakeLists.txt
+         CMake does not need to re-run because c:/Test/build/CMakeFiles/generate.stamp is up-to-date.
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Tools\MSVC\14.13.26128\bin\HostX86\x86\CL.exe /c /nologo /W3 /WX- /diagnostics:classic /O2 /Ob2 /Oy- /D WIN32 /D _WINDOWS /D NDEBUG /D "CMAKE_INTDIR=\"Release\"" /D _MBCS /Gm- /EHsc /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /GR /Fo"TestWslGcc.dir\Release\\" /Fd"TestWslGcc.dir\Release\vc141.pdb" /Gd /TP /analyze- /errorReport:queue c:\Test\main.cpp
+         main.cpp
+     3>c:\Test\main.cpp(5): error C2143: Syntaxfehler: Es fehlt ";" vor "}" [c:\Test\buildTest.vcxproj]
+     3>Die Erstellung des Projekts "c:\Test\buildTest.vcxproj" ist abgeschlossen (Standardziele) -- FEHLER.
+     1>Die Erstellung des Projekts "c:\Test\build\ALL_BUILD.vcxproj" ist abgeschlossen (Standardziele) -- FEHLER.
+
+Fehler beim Buildvorgang.
+
+       "c:\Test\build\ALL_BUILD.vcxproj" (Standardziel) (1) ->
+       "c:\Test\buildTest.vcxproj" (Standardziel) (3) ->
+       (ClCompile Ziel) ->
+         c:\Test\main.cpp(5): error C2143: Syntaxfehler: Es fehlt ";" vor "}" [c:\Test\buildTest.vcxproj]
+
+    0 Warnung(en)
+    1 Fehler
+
+Verstrichene Zeit 00:00:01.73

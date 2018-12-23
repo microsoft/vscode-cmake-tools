@@ -11,8 +11,14 @@ import {OutputConsumer} from '../../src/proc';
 import {platformPathEquivalent} from '@cmt/util';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
 import {populateCollection} from '@cmt/diagnostics/util';
+import {fs} from '../../src/pr';
 
 // tslint:disable:no-unused-expression
+
+const here = __dirname;
+function getTestResourceFilePath(filename: string): string {
+  return path.normalize(path.join(here, '../../../test/unit-tests/diagnostics', filename));
+}
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
@@ -310,6 +316,21 @@ suite('Diagnostics', async () => {
     expect(diag.message).to.eq('#68: some fatal error');
     expect(diag.location.start.character).to.eq(2);
     expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
+    expect(diag.severity).to.eq('error');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.true;
+  });
+
+  test('Parsing MSVC Diagnostics fatal error', async () => {
+    const logfile = getTestResourceFilePath('msvc_de_one_fatal_with_summary.txt');
+    const content = (await fs.readFile(logfile)).toString().split('\r\n');
+
+    feedLines(build_consumer, [], content);
+    expect(build_consumer.msvc.diagnostics).to.have.length(1);
+    const diag = build_consumer.msvc.diagnostics[0];
+    expect(diag.location.start.line).to.eq(4);
+    expect(diag.message).to.eq('Syntaxfehler: Es fehlt ";" vor "}" [c:\\Test\\buildTest.vcxproj]');
+    expect(diag.file).to.eq('c:\\Test\\main.cpp');
     expect(diag.severity).to.eq('error');
     expect(path.win32.normalize(diag.file)).to.eq(diag.file);
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
