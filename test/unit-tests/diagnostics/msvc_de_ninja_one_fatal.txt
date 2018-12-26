@@ -1,0 +1,6 @@
+[1/2  50% :: 0.794] Building CXX object CMakeFiles\Test.dir\main.obj
+FAILED: CMakeFiles/Test.dir/main.obj
+C:\PROGRA~2\MICROS~2\2017\COMMUN~1\VC\Tools\MSVC\1413~1.261\bin\Hostx86\x86\cl.exe  /nologo /TP -DTESTVAR=\"testvar\"  /DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1 /showIncludes /FoCMakeFiles\Test.dir\main.obj /FdCMakeFiles\Test.dir\ /FS -c ..\main.cpp
+..\main.cpp(9): error C2143: Syntaxfehler: Es fehlt ";" vor "}"
+ninja: build stopped: subcommand failed.
+Build finished with exit code 1

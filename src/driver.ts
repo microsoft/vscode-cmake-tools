@@ -731,6 +731,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [
           '/m',
           '/property:GenerateFullPaths=true',
+          '/consoleloggerparameters:NoSummary'
         ];  // TODO: Older VS doesn't support these flags
       else
         return [];

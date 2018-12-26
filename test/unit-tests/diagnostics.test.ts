@@ -321,7 +321,7 @@ suite('Diagnostics', async () => {
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
   });
 
-  test('Parsing MSVC Diagnostics fatal error', async () => {
+  test.only('Parsing MSVC Diagnostics fatal error with msbuild build system', async () => {
     const logfile = getTestResourceFilePath('msvc_de_one_fatal_with_summary.txt');
     const content = (await fs.readFile(logfile)).toString().split(/\r?\n/);
 
@@ -335,6 +335,22 @@ suite('Diagnostics', async () => {
     expect(path.win32.normalize(diag.file)).to.eq(diag.file);
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
   });
+
+  test.only('Parsing MSVC Diagnostics fatal error with ninja build system', async () => {
+    const logfile = getTestResourceFilePath('msvc_de_ninja_one_fatal.txt');
+    const content = (await fs.readFile(logfile)).toString().split(/\r?\n/);
+
+    feedLines(build_consumer, [], content);
+    expect(build_consumer.msvc.diagnostics).to.have.length(1);
+    const diag = build_consumer.msvc.diagnostics[0];
+    expect(diag.location.start.line).to.eq(8);
+    expect(diag.message).to.eq('Syntaxfehler: Es fehlt ";" vor "}"');
+    expect(diag.file).to.eq('..\\main.cpp');
+    expect(diag.severity).to.eq('error');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.false;
+  });
+
 
   test('No parsing Make errors', () => {
     const lines = [

@@ -35,12 +35,4 @@ Der Buildvorgang wurde am 26.12.2018 10:39:38 gestartet.
 
 Fehler beim Buildvorgang.
 
-       "c:\Test\build\ALL_BUILD.vcxproj" (Standardziel) (1) ->
-       "c:\Test\buildTest.vcxproj" (Standardziel) (3) ->
-       (ClCompile Ziel) ->
-         c:\Test\main.cpp(5): error C2143: Syntaxfehler: Es fehlt ";" vor "}" [c:\Test\buildTest.vcxproj]
-
-    0 Warnung(en)
-    1 Fehler
-
 Verstrichene Zeit 00:00:01.73
