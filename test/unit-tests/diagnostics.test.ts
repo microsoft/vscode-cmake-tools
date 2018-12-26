@@ -323,7 +323,7 @@ suite('Diagnostics', async () => {
 
   test('Parsing MSVC Diagnostics fatal error', async () => {
     const logfile = getTestResourceFilePath('msvc_de_one_fatal_with_summary.txt');
-    const content = (await fs.readFile(logfile)).toString().split('\r\n');
+    const content = (await fs.readFile(logfile)).toString().split(/\r?\n/);
 
     feedLines(build_consumer, [], content);
     expect(build_consumer.msvc.diagnostics).to.have.length(1);
