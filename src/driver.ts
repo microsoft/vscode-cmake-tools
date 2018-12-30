@@ -473,13 +473,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
+  private nullableStringToString (arg: string | null | undefined) : any {
+    return arg ? arg : 'empty';
+  }
+
   private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
-    const child = this.executeCommand(program, args, undefined, {silent: true});
+    const child = this.executeCommand(program, args);
     try {
       const result = await child.result;
+      log.debug("Command version test return code ", (result.retc ? result.retc : 'empty'));
       return result.retc == 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
+      log.debug("Command version test return code ", this.nullableStringToString(e2.code), this.nullableStringToString(e2.code));
       if (e2.code == 'ENOENT') {
         return false;
       }
