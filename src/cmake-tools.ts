@@ -394,9 +394,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   }
                 });
           } else if (e instanceof NoGeneratorError) {
-            vscode.window.showErrorMessage(
-                `Unable to determine what CMake generator to use. ` +
-                `Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
+            const message = `Unable to determine what CMake generator to use. ` +
+            `Please install or configure a preferred generator, or update settings.json, your Kit configuration or PATH variable.`;
+            log.error(message, e);
+            vscode.window.showErrorMessage(message);
           } else {
             throw e;
           }

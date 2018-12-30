@@ -351,6 +351,7 @@ export class ServerError extends Error implements ErrorMessage {
 }
 
 export class NoGeneratorError extends Error {
+  message: string = 'No usable generator found.';
 }
 
 export class BadHomeDirectoryError extends Error {
