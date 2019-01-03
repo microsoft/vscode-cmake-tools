@@ -11,6 +11,7 @@ Visual Studio Code.
 - My first Patron, Shalom Craimer
 - The Phantom Derpstorm (ThePhD), [thephd.github.io](https://thephd.github.io/)
 - [Stephen Lane-Walsh](https://github.com/WhoBrokeTheBuild)
+- Alexander Susha
 
 ## 1.1.0 Changes! Exciting!
 
