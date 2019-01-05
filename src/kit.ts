@@ -741,7 +741,7 @@ export function descriptionForKit(kit: Kit) {
 
 /**
  * Process parameters of the kit and perform any desired transformations.
- * 
+ *
  * Right now, this resolves environment variables used in the tool chain file. This logic could be expanded elsewhere to enable environment variable resolution elsewhere.
  *
  * May no longer be necessary if we can leverage some part of https://github.com/Microsoft/vscode/issues/2809 should it be completed and shipped.
@@ -751,11 +751,9 @@ export function descriptionForKit(kit: Kit) {
 export function processKit(kit: Kit) {
 	if (kit.toolchainFile) {
 		// map ${foo} -> process.env[foo] to resolve corresponding environment variables
-		const re = /\$\{(\w+)\}/;
-		const resolvedToolchainFile = kit.toolchainFile.replace(re, function(str, p1, offset, s) {
-			return process.env[p1];
-		});
-		kit.toolchainFile = resolvedToolchainFile;
+		kit.toolchainFile = kit.toolchainFile.replace(/\$\{(\w+)\}/, (_str: string, p1: string, ..._args) => {
+      return process.env[p1] as string;
+    });
 	}
 
 	return kit;

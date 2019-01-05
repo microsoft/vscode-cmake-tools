@@ -26,7 +26,7 @@
     },
     {
         "name": "ToolchainKit 2",
-        "toolchainFile": "${SOMEENVVAR}/toolchain.cmake"
+        "toolchainFile": "${CMAKE_TOOLS_TEST_SOME_ENV_VAR}/toolchain.cmake"
     },
     {
         "name": "VSCode Kit 1",
