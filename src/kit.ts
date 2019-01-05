@@ -739,6 +739,28 @@ export function descriptionForKit(kit: Kit) {
   return 'Unspecified (Let CMake guess what compilers and environment to use)';
 }
 
+/**
+ * Process parameters of the kit and perform any desired transformations.
+ * 
+ * Right now, this resolves environment variables used in the tool chain file. This logic could be expanded elsewhere to enable environment variable resolution elsewhere.
+ *
+ * May no longer be necessary if we can leverage some part of https://github.com/Microsoft/vscode/issues/2809 should it be completed and shipped.
+ *
+ * @param kit A kit json structure
+ */
+export function processKit(kit: Kit) {
+	if (kit.toolchainFile) {
+		// map ${foo} -> process.env[foo] to resolve corresponding environment variables
+		const re = /\$\{(\w+)\}/;
+		const resolvedToolchainFile = kit.toolchainFile.replace(re, function(str, p1, offset, s) {
+			return process.env[p1];
+		});
+		kit.toolchainFile = resolvedToolchainFile;
+	}
+
+	return kit;
+}
+
 export async function readKitsFile(filepath: string): Promise<Kit[]> {
   if (!await fs.exists(filepath)) {
     log.debug(`Not reading non-existent kits file: ${filepath}`);
@@ -765,7 +787,7 @@ export async function readKitsFile(filepath: string): Promise<Kit[]> {
   }
   const kits = kits_raw as Kit[];
   log.info(`Successfully loaded ${kits.length} kits from ${filepath}`);
-  return dropNulls(kits);
+  return dropNulls(kits).map(processKit);
 }
 
 function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
