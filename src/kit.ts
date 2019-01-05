@@ -749,14 +749,14 @@ export function descriptionForKit(kit: Kit) {
  * @param kit A kit json structure
  */
 export function processKit(kit: Kit) {
-	if (kit.toolchainFile) {
-		// map ${foo} -> process.env[foo] to resolve corresponding environment variables
-		kit.toolchainFile = kit.toolchainFile.replace(/\$\{(\w+)\}/, (_str: string, p1: string, ..._args) => {
+  if (kit.toolchainFile) {
+    // map ${foo} -> process.env[foo] to resolve corresponding environment variables
+    kit.toolchainFile = kit.toolchainFile.replace(/\$\{(\w+)\}/, (_str: string, p1: string, ..._args) => {
       return process.env[p1] as string;
     });
-	}
+  }
 
-	return kit;
+  return kit;
 }
 
 export async function readKitsFile(filepath: string): Promise<Kit[]> {
