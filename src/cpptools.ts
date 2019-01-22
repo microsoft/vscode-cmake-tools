@@ -32,10 +32,10 @@ interface TargetDefaults {
   defines: string[];
 }
 
-export function parseCompileFlags(args: string[]): CompileFlagInformation {
+export function parseCompileFlags(args: string[], lang: string = 'CXX'): CompileFlagInformation {
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = 'c++17';
+  let standard: StandardVersion = lang === 'CXX' ? 'c++17' : 'c11';
   while (1) {
     const {done, value} = iter.next();
     if (done) {
@@ -55,19 +55,21 @@ export function parseCompileFlags(args: string[]): CompileFlagInformation {
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (std.endsWith('++14') || std.endsWith('++1y')) {
-        standard = 'c++14';
-      } else if (std.endsWith('++17') || std.endsWith('++1z') || std.endsWith('++latest')) {
-        standard = 'c++17';
-      } else if (std.endsWith('++11') || std.endsWith('++0x')) {
-        standard = 'c++11';
-      } else if (std.endsWith('++2a')) {
-        // Not yet supported...
-      } else if (std.endsWith('++98')) {
-        standard = 'c++98';
-      } else if (std.endsWith('++03')) {
-        standard = 'c++03';
-      } else {
+      if (lang === 'CXX') {
+        if (std.endsWith('++14') || std.endsWith('++1y')) {
+          standard = 'c++14';
+        } else if (std.endsWith('++17') || std.endsWith('++1z') || std.endsWith('++latest')) {
+          standard = 'c++17';
+        } else if (std.endsWith('++11') || std.endsWith('++0x')) {
+          standard = 'c++11';
+        } else if (std.endsWith('++2a')) {
+          // Not yet supported...
+        } else if (std.endsWith('++98')) {
+          standard = 'c++98';
+        } else if (std.endsWith('++03')) {
+          standard = 'c++03';
+        }
+      } else if (lang === 'C') {
         // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
         if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(value)) {
           standard = 'c89';
@@ -198,7 +200,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
     const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
-    const {standard, extraDefinitions} = parseCompileFlags(flags);
+    const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
 
