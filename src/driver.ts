@@ -729,8 +729,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return ['-j', this.ws.config.numJobs.toString()];
       else if (gen.includes('Visual Studio'))
         return [
-          '/m',
-          '/property:GenerateFullPaths=true',
+          '/m:' + this.ws.config.numJobs.toString(),
+          '/p:BuildInParallel=true',
+          '/p:GenerateFullPaths=true',
         ];  // TODO: Older VS doesn't support these flags
       else
         return [];
