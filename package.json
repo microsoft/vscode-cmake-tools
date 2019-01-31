@@ -2,15 +2,15 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
+    "url": "https://github.com/emanspeaks/vscode-cmake-tools"
   },
   "bugs": {
-    "url": "https://github.com/vector-of-bool/vscode-cmake-tools/issues"
+    "url": "https://github.com/emanspeaks/vscode-cmake-tools/issues"
   },
-  "homepage": "https://github.com/vector-of-bool/vscode-cmake-tools",
+  "homepage": "https://github.com/emanspeaks/vscode-cmake-tools",
   "keywords": [
     "cmake",
     "tools",
@@ -18,7 +18,7 @@
     "c++",
     "native"
   ],
-  "publisher": "vector-of-bool",
+  "publisher": "emanspeaks",
   "engines": {
     "vscode": "^1.29.1"
   },
