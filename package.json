@@ -866,6 +866,18 @@
           "description": "Enable CMake server",
           "scope": "resource"
         },
+        "cmake.ignoreVsEnv": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not use the Visual Studio environment variables when running CMake commands",
+          "scope": "resource"
+        },
+        "cmake.buildTerminal": {
+          "type": "boolean",
+          "default": false,
+          "description": "Perform CMake build in a terminal instead of contained spawned process",
+          "scope": "resource"
+        },
         "cmake.outputLogEncoding": {
           "type": "string",
           "default": "auto",

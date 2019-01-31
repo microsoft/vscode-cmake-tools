@@ -213,8 +213,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {
     const cur_env = process.env as proc.EnvironmentVariables;
+    const kit_env = (this.ws.config.ignoreVsEnv) ? {} : this.getKitEnvironmentVariablesObject();
     return util.mergeEnvironment(cur_env,
-                                 this.getKitEnvironmentVariablesObject(),
+                                 kit_env,
                                  (opts && opts.environment) ? opts.environment : {});
   }
 
@@ -658,7 +659,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!post_build_ok) {
       return -1;
     }
-    await this._refreshExpansions();
+    //await this._refreshExpansions();
     return (await child.result).retc;
   }
 
@@ -727,11 +728,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
         return ['-j', this.ws.config.numJobs.toString()];
-      else if (gen.includes('Visual Studio'))
-        return [
-          '/m',
-          '/property:GenerateFullPaths=true',
-        ];  // TODO: Older VS doesn't support these flags
+      // else if (gen.includes('Visual Studio'))
+      //   return [
+      //     '/m',
+      //     '/property:GenerateFullPaths=true',
+      //   ];  // TODO: Older VS doesn't support these flags
       else
         return [];
     })();
@@ -759,7 +760,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         outputEnc = 'utf8';
       }
     }
-    const exeOpt: proc.ExecutionOptions = {environment: build_env, outputEncoding: outputEnc};
+    const exeOpt: proc.ExecutionOptions = {environment: build_env, outputEncoding: outputEnc, useTerminal: this.ws.config.buildTerminal};
     const child = this.executeCommand(cmake, expanded_args, consumer, exeOpt);
     this._currentProcess = child;
     this._isBusy = true;
@@ -777,7 +778,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!cur) {
       return false;
     }
-    await util.termProc(cur.child);
+    if (cur.child) await util.termProc(cur.child);
     return true;
   }
 
