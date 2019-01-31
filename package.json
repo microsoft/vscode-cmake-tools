@@ -5,12 +5,12 @@
   "version": "1.1.4",
   "repository": {
     "type": "git",
-    "url": "https://github.com/emanspeaks/vscode-cmake-tools"
+    "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
   },
   "bugs": {
-    "url": "https://github.com/emanspeaks/vscode-cmake-tools/issues"
+    "url": "https://github.com/vector-of-bool/vscode-cmake-tools/issues"
   },
-  "homepage": "https://github.com/emanspeaks/vscode-cmake-tools",
+  "homepage": "https://github.com/vector-of-bool/vscode-cmake-tools",
   "keywords": [
     "cmake",
     "tools",
@@ -18,7 +18,7 @@
     "c++",
     "native"
   ],
-  "publisher": "emanspeaks",
+  "publisher": "vector-of-bool",
   "engines": {
     "vscode": "^1.29.1"
   },
