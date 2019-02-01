@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import {createLogger} from './logging';
 import {EnvironmentVariables} from './proc';
-import {normalizeEnvironmentVarname, replaceAll} from './util';
+import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll} from './util';
 
 const log = createLogger('expand');
 
@@ -65,7 +65,9 @@ export interface ExpansionOptions {
  * @returns A string with the variable references replaced
  */
 export async function expandString(tmpl: string, opts: ExpansionOptions) {
-  const env = opts.envOverride ? opts.envOverride : process.env;
+  const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
+  const env = mergeEnvironment(envPreNormalize);
+
   const repls = opts.vars;
 
   // We accumulate a list of substitutions that we need to make, preventing
@@ -89,7 +91,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   while ((mat = env_re.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = env[normalizeEnvironmentVarname(varname)] || '';
+    const repl = `"${env[normalizeEnvironmentVarname(varname)]}"` || '';
     subs.set(full, repl);
   }
 
@@ -97,7 +99,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   while ((mat = env_re2.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = env[normalizeEnvironmentVarname(varname)] || '';
+    const repl = `"${env[normalizeEnvironmentVarname(varname)]}"` || '';
     subs.set(full, repl);
   }
 
