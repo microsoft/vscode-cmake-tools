@@ -45,6 +45,7 @@
     "onCommand:cmake.install",
     "onCommand:cmake.launchTarget",
     "onCommand:cmake.launchTargetPath",
+    "onCommand:cmake.tasksBuildCommand",
     "onCommand:cmake.quickStart",
     "onCommand:cmake.resetState",
     "onCommand:cmake.scanForKits",
@@ -866,16 +867,16 @@
           "description": "Enable CMake server",
           "scope": "resource"
         },
-        "cmake.ignoreVsEnv": {
+        "cmake.ignoreKitEnv": {
           "type": "boolean",
           "default": false,
-          "description": "Do not use the Visual Studio environment variables when running CMake commands",
+          "description": "Do not use the kit environment variables when running CMake commands",
           "scope": "resource"
         },
-        "cmake.buildTerminal": {
+        "cmake.buildTask": {
           "type": "boolean",
           "default": false,
-          "description": "Perform CMake build in a terminal instead of contained spawned process",
+          "description": "Build using tasks.json instead of internal process",
           "scope": "resource"
         },
         "cmake.outputLogEncoding": {

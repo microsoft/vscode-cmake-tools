@@ -49,8 +49,8 @@ export interface ExtensionConfigurationSettings {
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   useCMakeServer: boolean;
-  ignoreVsEnv: boolean;
-  buildTerminal: boolean;
+  ignoreKitEnv: boolean;
+  buildTask: boolean;
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
@@ -219,8 +219,8 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     return this.configData.loggingLevel;
   }
-  get ignoreVsEnv(): boolean { return this.configData.ignoreVsEnv; }
-  get buildTerminal(): boolean { return this.configData.buildTerminal; }
+  get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
+  get buildTask(): boolean { return this.configData.buildTask; }
   get outputLogEncoding(): string { return this.configData.outputLogEncoding; }
   get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
 
@@ -259,8 +259,8 @@ export class ConfigurationReader implements vscode.Disposable {
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
-    ignoreVsEnv: new vscode.EventEmitter<boolean>(),
-    buildTerminal: new vscode.EventEmitter<boolean>(),
+    ignoreKitEnv: new vscode.EventEmitter<boolean>(),
+    buildTask: new vscode.EventEmitter<boolean>(),
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),

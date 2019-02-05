@@ -67,6 +67,12 @@ export interface Subprocess {
   child: proc.ChildProcess|undefined;
 }
 
+export interface BuildCommand {
+  command: string;
+  args?: string[];
+  build_env?: {[key: string]: string};
+}
+
 export interface EnvironmentVariables { [key: string]: string; }
 
 export interface ExecutionOptions {
@@ -76,7 +82,13 @@ export interface ExecutionOptions {
   cwd?: string;
   encoding?: BufferEncoding;
   outputEncoding?: string;
-  useTerminal?: boolean;
+  useTask?: boolean;
+}
+
+export function buildCmdStr(command: string, args?: string[]): string {
+  let cmdarr = [command];
+  if (args) cmdarr = cmdarr.concat(args);
+  return cmdarr.map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a).join(' ');
 }
 
 /**
@@ -90,19 +102,16 @@ export interface ExecutionOptions {
  * which produce a lot of output should be careful about memory constraints.
  */
 export function execute(command: string,
-                        args: string[],
+                        args?: string[],
                         outputConsumer?: OutputConsumer|null,
                         options?: ExecutionOptions): Subprocess {
+  const cmdstr = buildCmdStr(command, args);
   if (options && options.silent !== true) {
     log.info('Executing command: '
              // We do simple quoting of arguments with spaces.
              // This is only shown to the user,
              // and doesn't have to be 100% correct.
-             + [command]
-                   .concat(args)
-                   .map(a => a.replace('"', '\"'))
-                   .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
-                   .join(' '));
+             + cmdstr);
   }
   if (!options) {
     options = {};
@@ -117,15 +126,15 @@ export function execute(command: string,
   }
   let child: proc.ChildProcess|undefined;
   let result: Promise<ExecutionResult>;
-  const useTerminal = (options && options.useTerminal) ? options.useTerminal : false;
-  if (useTerminal)
+  const useTask = (options && options.useTask) ? options.useTask : false;
+  if (useTask)
   {
+    // child = undefined;
+    // const term = vscode.window.createTerminal("Cmake Build");
+    // term.show(true);
+    // term.sendText(cmdstr);
 
-    child = undefined;
-    const term = vscode.window.createTerminal("Cmake Build");
-    const cmd = [command].concat(args).map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a).join(' ');
-    term.show(true);
-    term.sendText(cmd);
+    vscode.commands.executeCommand("workbench.action.tasks.build");
 
     result = new Promise<ExecutionResult>((resolve, reject) => {
       resolve({retc: 0, stdout: '', stderr: ''});
