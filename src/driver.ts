@@ -659,7 +659,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!post_build_ok) {
       return -1;
     }
-    //await this._refreshExpansions();
+    await this._refreshExpansions();
     return (await child.result).retc;
   }
 
@@ -728,11 +728,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
         return ['-j', this.ws.config.numJobs.toString()];
-      // else if (gen.includes('Visual Studio'))
-      //   return [
-      //     '/m',
-      //     '/property:GenerateFullPaths=true',
-      //   ];  // TODO: Older VS doesn't support these flags
       else
         return [];
     })();

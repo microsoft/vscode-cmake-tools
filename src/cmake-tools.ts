@@ -758,13 +758,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     }
 
-    // await vscode.commands.executeCommand('vscode.previewHtml',
-    //                                      //'cmake-cache:///' +
-    //                                      'file:///' +
-    //                                      drv.cachePath,
-    //                                      vscode.ViewColumn.Three,
-    //                                      'CMake Cache'
-    //                                      );
     vscode.workspace.openTextDocument(vscode.Uri.file(drv.cachePath)).then(doc => {
       vscode.window.showTextDocument(doc);
     });
