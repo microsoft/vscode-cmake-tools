@@ -23,6 +23,23 @@ export function replaceAll(str: string, needle: string, what: string) {
 }
 
 /**
+ * Fix slashes in Windows paths for CMake
+ * @param str The input string
+ * @returns The modified string with fixed paths
+ */
+export function fixPaths(str: string) {
+  const fix_paths = /[A-Z]:(\\((?![<>:\"\/\\|\?\*]).)+)*\\?(?!\\)/gi;
+  let pathmatch: RegExpMatchArray|null = null;
+  let newstr = str;
+  while ((pathmatch = fix_paths.exec(str))) {
+    const pathfull = pathmatch[0];
+    const fixslash = pathfull.replace(/\\/g, '/');
+    newstr = newstr.replace(pathfull, fixslash);
+  }
+  return newstr;
+}
+
+/**
  * Remove all occurrences of a list of strings from a string.
  * @param str The input string
  * @param patterns Strings to remove from `str`

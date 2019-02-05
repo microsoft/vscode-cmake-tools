@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import {createLogger} from './logging';
 import {EnvironmentVariables} from './proc';
-import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll} from './util';
+import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths} from './util';
 
 const log = createLogger('expand');
 
@@ -91,7 +91,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   while ((mat = env_re.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = `"${env[normalizeEnvironmentVarname(varname)]}"` || '';
+    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
     subs.set(full, repl);
   }
 
@@ -99,7 +99,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   while ((mat = env_re2.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = `"${env[normalizeEnvironmentVarname(varname)]}"` || '';
+    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
     subs.set(full, repl);
   }
 
