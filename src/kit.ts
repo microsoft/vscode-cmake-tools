@@ -8,6 +8,7 @@ import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import * as expand from './expand';
 import * as logging from './logging';
 import paths from './paths';
 import {fs} from './pr';
@@ -373,7 +374,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
   for (const inst of vs_installs) {
     const majorVersion = parseInt(inst.installationVersion);
-      if (majorVersion >= 15) {
+    if (majorVersion >= 15) {
       inst.instanceId = `VisualStudio.${majorVersion}.0`;
     }
     if (inst_ids.indexOf(inst.instanceId) < 0) {
@@ -419,7 +420,8 @@ const MSVC_ENVIRONMENT_VARIABLES = [
  * @param devbat Path to a VS environment batch file
  * @param args List of arguments to pass to the batch file
  */
-async function collectDevBatVars(devbat: string, args: string[], major_version:number, common_dir:string): Promise<Map<string, string>|undefined> {
+async function collectDevBatVars(devbat: string, args: string[], major_version: number, common_dir: string):
+    Promise<Map<string, string>|undefined> {
   const fname = Math.random().toString() + '.bat';
   const batfname = `vs-cmt-${fname}`;
   const envfname = batfname + '.env';
@@ -436,8 +438,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version:n
   const envpath = path.join(paths.tmpDir, envfname);
   try {
     await fs.unlink(envpath);
-  } catch (error) {
-  }
+  } catch (error) {}
   await fs.writeFile(batpath, bat.join('\r\n'));
   const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
@@ -446,11 +447,9 @@ async function collectDevBatVars(devbat: string, args: string[], major_version:n
   let env = '';
   try {
     /* When the bat running failed, envpath would not exist */
-    env = await fs.readFile(envpath, {encoding: "utf8"});
+    env = await fs.readFile(envpath, {encoding: 'utf8'});
     await fs.unlink(envpath);
-  } catch (error) {
-    log.error(error);
-  }
+  } catch (error) { log.error(error); }
 
   if (!env || env === '') {
     console.log(`Error running ${devbat} ${args.join(' ')} with:`, output);
@@ -502,7 +501,7 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
   let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', 'vcvarsall.bat');
   const majorVersion = parseInt(inst.installationVersion);
   if (majorVersion < 15) {
-      devbat = path.join(inst.installationPath, 'VC', 'vcvarsall.bat');
+    devbat = path.join(inst.installationPath, 'VC', 'vcvarsall.bat');
   }
   const variables = await collectDevBatVars(devbat, [`${arch}`], majorVersion, common_dir);
   if (!variables) {
@@ -635,13 +634,19 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
   return varsForVSInstallation(requested, kit.visualStudioArchitecture!);
 }
 
-export async function effectiveKitEnvironment(kit: Kit): Promise<Map<string, string>> {
+export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {
   const host_env = objectPairs(process.env) as [string, string][];
-  const kit_env = objectPairs(kit.environmentVariables || {}) as [string, string][];
+  const kit_env = objectPairs(kit.environmentVariables || {});
+  if (opts) {
+    for (const env_var of kit_env) {
+      env_var[1] = await expand.expandString(env_var[1], opts);
+    }
+  }
   if (kit.visualStudio && kit.visualStudioArchitecture) {
     const vs_vars = await getVSKitEnvironment(kit);
     if (vs_vars) {
-      return new Map(util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
+      return new Map(
+          util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
     }
   }
   return new Map(util.chain(host_env, kit_env));

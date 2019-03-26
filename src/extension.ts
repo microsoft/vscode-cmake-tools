@@ -418,7 +418,9 @@ class ExtensionManager implements vscode.Disposable {
           rollbar.exception('Failed to open CMake cache file on code model update', e);
           return;
         }
-        const env = await effectiveKitEnvironment(kit);
+        const drv = await cmt.getCMakeDriverInstance();
+        const opts = drv ? drv.expansionOptions : undefined;
+        const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
         await this.ensureCppToolsProviderRegistered();
@@ -536,12 +538,14 @@ class ExtensionManager implements vscode.Disposable {
     // Migrate kits from old pre-1.1.3 location
     try {
       if (await fs.exists(OLD_USER_KITS_FILEPATH) && !await fs.exists(USER_KITS_FILEPATH)) {
-        rollbar.info('Migrating kits file', { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+        rollbar.info('Migrating kits file', {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
         await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
         await fs.rename(OLD_USER_KITS_FILEPATH, USER_KITS_FILEPATH);
       }
     } catch (e) {
-      rollbar.exception('Failed to migrate prior user-local kits file.', e, { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+      rollbar.exception('Failed to migrate prior user-local kits file.',
+                        e,
+                        {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
     }
     // Load user-kits
     reportProgress(progress, 'Loading kits');
