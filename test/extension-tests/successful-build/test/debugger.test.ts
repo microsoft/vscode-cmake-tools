@@ -2,6 +2,7 @@ import {CMakeTools} from '@cmt/cmake-tools';
 import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import sinon = require('sinon');
 import * as fs from 'fs';
+import * as path from 'path';
 
 // tslint:disable:no-unused-expression
 
@@ -41,6 +42,15 @@ suite('[Debug/Lauch interface]', async () => {
     await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
     expect(await cmt.launchTargetPath()).to.be.eq(executablesTargets[0].path);
+  });
+
+  test('Test launchTargetDirectory for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    expect(await cmt.launchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
   });
 
   test('Test build on launch (default)', async () => {
