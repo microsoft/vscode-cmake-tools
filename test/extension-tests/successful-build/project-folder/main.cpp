@@ -1,6 +1,7 @@
+#include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <string>
-#include <cstdlib>
 
 #ifndef _CMAKE_VERSION
     #define _CMAKE_VERSION "0.0"
@@ -29,4 +30,9 @@ int main(int, char**) {
     std::cout << "  \"build-env\": \"" << get_env_var("_BUILD_ENV") << "\",\n";
     std::cout << "  \"env\": \"" << get_env_var("_ENV") << "\"\n";
     std::cout << "}\n";
+
+    std::ofstream ofs ("test.txt", std::ofstream::out);
+    ofs << "{\n";
+    ofs << "  \"cookie\": \"" CMT_COOKIE "\",\n";
+    ofs << "}\n";
 }
