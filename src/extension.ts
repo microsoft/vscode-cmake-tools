@@ -1046,6 +1046,10 @@ class ExtensionManager implements vscode.Disposable {
 
   launchTargetPath() { return this.withCMakeTools(null, cmt => cmt.launchTargetPath()); }
 
+  launchTargetDirectory() { return this.withCMakeTools(null, cmt => cmt.launchTargetDirectory()); }
+
+  tasksBuildCommand() { return this.withCMakeTools(null, cmt => cmt.tasksBuildCommand()); }
+
   debugTarget(name?: string) { return this.withCMakeTools(null, cmt => cmt.debugTarget(name)); }
 
   launchTarget(name?: string) { return this.withCMakeTools(null, cmt => cmt.launchTarget(name)); }
@@ -1106,11 +1110,11 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
-    'editKits',     'scanForKits',      'selectKit',        'cleanConfigure', 'configure',
-    'build',        'setVariant',       'install',          'editCache',      'clean',
-    'cleanRebuild', 'buildWithTarget',  'setDefaultTarget', 'ctest',          'stop',
-    'quickStart',   'launchTargetPath', 'debugTarget',      'launchTarget',   'selectLaunchTarget',
-    'resetState',   'viewLog',          'compileFile',
+    'editKits',           'scanForKits',      'selectKit',              'cleanConfigure', 'configure',
+    'build',              'setVariant',       'install',                'editCache',      'clean',
+    'cleanRebuild',       'buildWithTarget',  'setDefaultTarget',       'ctest',          'stop',
+    'quickStart',         'launchTargetPath', 'launchTargetDirectory',  'debugTarget',    'launchTarget',
+    'selectLaunchTarget', 'resetState',       'viewLog',                'compileFile',    'tasksBuildCommand'
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 
