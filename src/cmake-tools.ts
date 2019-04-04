@@ -962,6 +962,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return executable.path;
   }
 
+  /**
+   * Implementation of `cmake.launchTargetDirectory`. It just calls launchTargetPath and
+   * extracts the directory form the result.
+   */
+  async launchTargetDirectory(): Promise<string|null> {
+    const targetPath = await this.launchTargetPath();
+    if (targetPath === null) {
+      return null;
+    }
+    return path.dirname(targetPath);
+  }
+
   async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {
     let chosen: api.ExecutableTarget;
     if (name) {
