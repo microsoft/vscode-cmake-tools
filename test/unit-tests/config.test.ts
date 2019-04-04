@@ -40,6 +40,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     copyCompileCommands: null,
     configureOnOpen: null,
     useCMakeServer: true,
+    ignoreKitEnv: false,
+    buildTask: false,
     outputLogEncoding: 'auto',
     enableTraceLogging: false,
     loggingLevel: 'info',

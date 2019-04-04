@@ -213,12 +213,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {
     const cur_env = process.env as proc.EnvironmentVariables;
+    const kit_env = (this.ws.config.ignoreKitEnv) ? {} : this.getKitEnvironmentVariablesObject();
     return util.mergeEnvironment(cur_env,
-                                 this.getKitEnvironmentVariablesObject(),
+                                 kit_env,
                                  (opts && opts.environment) ? opts.environment : {});
   }
 
-  executeCommand(command: string, args: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions):
+  executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions):
       proc.Subprocess {
     const environment = this.getEffectiveSubprocessEnvironment(options);
     const exec_options = {...options, environment};
@@ -715,7 +716,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private _currentProcess: proc.Subprocess|null = null;
 
-  private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
+  async getCMakeBuildCommand(target: string): Promise<proc.BuildCommand|null> {
     const ok = await this._beforeConfigureOrBuild();
     if (!ok) {
       return null;
@@ -727,11 +728,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
         return ['-j', this.ws.config.numJobs.toString()];
-      else if (gen.includes('Visual Studio'))
-        return [
-          '/m',
-          '/property:GenerateFullPaths=true',
-        ];  // TODO: Older VS doesn't support these flags
       else
         return [];
     })();
@@ -747,26 +743,33 @@ export abstract class CMakeDriver implements vscode.Disposable {
                      .concat(this.ws.config.buildArgs, ['--'], generator_args, this.ws.config.buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
-    const expanded_args = await Promise.all(expanded_args_promises);
+    const expanded_args = await Promise.all(expanded_args_promises) as string[];
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
-    const cmake = this.cmake.path;
-    let outputEnc = this.ws.config.outputLogEncoding;
-    if (outputEnc == 'auto') {
-      if (process.platform === 'win32') {
-        outputEnc = await codepages.getWindowsCodepage();
-      } else {
-        outputEnc = 'utf8';
+    return { command: this.cmake.path, args: expanded_args, build_env };
+  }
+
+  private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
+    const buildcmd = await this.getCMakeBuildCommand(target);
+    if (buildcmd) {
+      let outputEnc = this.ws.config.outputLogEncoding;
+      if (outputEnc == 'auto') {
+        if (process.platform === 'win32') {
+          outputEnc = await codepages.getWindowsCodepage();
+        } else {
+          outputEnc = 'utf8';
+        }
       }
+      const exeOpt: proc.ExecutionOptions = {environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.ws.config.buildTask};
+      const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
+      this._currentProcess = child;
+      this._isBusy = true;
+      await child.result;
+      this._isBusy = false;
+      this._currentProcess = null;
+      return child;
     }
-    const exeOpt: proc.ExecutionOptions = {environment: build_env, outputEncoding: outputEnc};
-    const child = this.executeCommand(cmake, expanded_args, consumer, exeOpt);
-    this._currentProcess = child;
-    this._isBusy = true;
-    await child.result;
-    this._isBusy = false;
-    this._currentProcess = null;
-    return child;
+    else return null;
   }
 
   /**
@@ -777,7 +780,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!cur) {
       return false;
     }
-    await util.termProc(cur.child);
+    if (cur.child) await util.termProc(cur.child);
     return true;
   }
 
