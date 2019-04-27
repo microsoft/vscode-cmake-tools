@@ -329,8 +329,8 @@ suite('Diagnostics', async () => {
     expect(build_consumer.msvc.diagnostics).to.have.length(1);
     const diag = build_consumer.msvc.diagnostics[0];
     expect(diag.location.start.line).to.eq(4);
-    expect(diag.message).to.eq('Syntaxfehler: Es fehlt ";" vor "}" [c:\\Test\\buildTest.vcxproj]');
-    expect(diag.file).to.eq('c:\\Test\\main.cpp');
+    expect(diag.message).to.eq('Syntaxfehler: Es fehlt ";" vor "}" [C:\\Test\\build\\Test.vcxproj]');
+    expect(diag.file).to.eq('C:\\Test\\main.cpp');
     expect(diag.severity).to.eq('error');
     expect(path.win32.normalize(diag.file)).to.eq(diag.file);
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
