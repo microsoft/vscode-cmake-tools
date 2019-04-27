@@ -321,7 +321,7 @@ suite('Diagnostics', async () => {
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
   });
 
-  test.only('Parsing MSVC Diagnostics fatal error with msbuild build system', async () => {
+  test('Parsing MSVC Diagnostics fatal error with msbuild build system', async () => {
     const logfile = getTestResourceFilePath('msvc_de_one_fatal_with_summary.txt');
     const content = (await fs.readFile(logfile)).toString().split(/\r?\n/);
 
@@ -336,7 +336,7 @@ suite('Diagnostics', async () => {
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
   });
 
-  test.only('Parsing MSVC Diagnostics fatal error with ninja build system', async () => {
+  test('Parsing MSVC Diagnostics fatal error with ninja build system', async () => {
     const logfile = getTestResourceFilePath('msvc_de_ninja_one_fatal.txt');
     const content = (await fs.readFile(logfile)).toString().split(/\r?\n/);
 
