@@ -31,6 +31,7 @@ import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
 import {fs} from './pr';
+import {buildCmdStr} from './proc';
 import {Property} from './prop';
 import rollbar from './rollbar';
 import {setContextValue} from './util';
@@ -655,6 +656,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Implementation of `cmake.tasksBuildCommand`
+   */
+  async tasksBuildCommand(): Promise<string|null> {
+    const drv = await this.getCMakeDriverInstance();
+    if (!drv) {
+      throw new Error('CMake driver died during tasksBuildCommand');
+    }
+
+    const target = this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
+    const buildargs = await drv.getCMakeBuildCommand(target);
+    return (buildargs)? buildCmdStr(buildargs.command, buildargs.args) : null;
+  }
+
+  /**
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
@@ -691,7 +706,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 old_progress += increment;
               }
             });
-            cancel.onCancellationRequested(() => { rollbar.invokeAsync('Stop on cancellaction', () => this.stop()); });
+            cancel.onCancellationRequested(() => { rollbar.invokeAsync('Stop on cancellation', () => this.stop()); });
             log.showChannel();
             BUILD_LOGGER.info('Starting build');
             await setContextValue(IS_BUILDING_KEY, true);
@@ -759,10 +774,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     }
 
-    await vscode.commands.executeCommand('vscode.previewHtml',
-                                         'cmake-cache://' + drv.cachePath,
-                                         vscode.ViewColumn.Three,
-                                         'CMake Cache');
+    vscode.workspace.openTextDocument(vscode.Uri.file(drv.cachePath)).then(doc => {
+      vscode.window.showTextDocument(doc);
+    });
   }
 
   async buildWithTarget(): Promise<number> {
@@ -949,6 +963,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return executable.path;
   }
 
+  /**
+   * Implementation of `cmake.launchTargetDirectory`. It just calls launchTargetPath and
+   * extracts the directory form the result.
+   */
+  async launchTargetDirectory(): Promise<string|null> {
+    const targetPath = await this.launchTargetPath();
+    if (targetPath === null) {
+      return null;
+    }
+    return path.dirname(targetPath);
+  }
+
   async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {
     let chosen: api.ExecutableTarget;
     if (name) {
@@ -1087,7 +1113,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     };
     if (process.platform == 'win32') {
       // Use cmd.exe on Windows
-      termOptions.shellPath = 'C:/Windows/System32/cmd.exe';
+      termOptions.shellPath = 'C:\\Windows\\System32\\cmd.exe';
     }
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal(termOptions);
