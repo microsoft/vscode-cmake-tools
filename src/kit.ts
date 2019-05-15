@@ -560,8 +560,11 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
   log.debug(` InstanceId: ${inst.instanceId}`);
   log.debug(` InstallVersion: ${inst.installationVersion}`);
   if (version) {
-    const generatorName: string|undefined = VsGenerators[version[1]];
+    let generatorName: string|undefined = VsGenerators[version[1]];
     if (generatorName) {
+      if (/64/.test(arch)) {
+        generatorName += " Win64";
+      }
       log.debug(` Generator Present: ${generatorName}`);
       kit.preferredGenerator = {
         name: generatorName,
