@@ -264,7 +264,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       onProgress: async prog => {
         this._progressEmitter.fire(prog);
       },
-      pickGenerator: () => this.getBestGenerator(),
+      generator: await this.getBestGenerator(),
     });
   }
 
