@@ -321,7 +321,7 @@ export interface ClientInit {
   sourceDir: string;
   binaryDir: string;
   tmpdir: string;
-  pickGenerator: () => Promise<CMakeGenerator|null>;
+  generator: CMakeGenerator | null;
 }
 
 interface ClientInitPrivate extends ClientInit {
@@ -571,7 +571,7 @@ export class CMakeServerClient {
         environment: params.environment,
         onProgress: params.onProgress,
         onDirty: params.onDirty,
-        pickGenerator: params.pickGenerator,
+        generator: params.generator,
         onCrash: async retc => {
           if (!resolved) {
             reject(new StartupError(retc));
@@ -617,7 +617,7 @@ export class CMakeServerClient {
               }
             } else {
               // Do clean configure, all parameters are required.
-              const generator = await params.pickGenerator();
+              const generator = params.generator;
               if (!generator) {
                 throw new NoGeneratorError();
               }
