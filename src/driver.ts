@@ -80,7 +80,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext) {
+  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext, readonly __workspaceRootPath: string | null) {
     // We have a cache of file-compilation terminals. Wipe them out when the
     // user closes those terminals.
     vscode.window.onDidCloseTerminal(closed => {
@@ -176,10 +176,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * `file://` scheme.
    */
   private get _workspaceRootPath() {
-    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders[0].uri.scheme !== 'file') {
-      return null;
-    }
-    return util.lightNormalizePath(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    return this.__workspaceRootPath;
   }
 
   /**

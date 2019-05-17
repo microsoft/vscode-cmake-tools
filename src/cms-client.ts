@@ -1,7 +1,6 @@
 import * as child_proc from 'child_process';
 import * as net from 'net';
 import * as path from 'path';
-import * as vscode from 'vscode';
 
 import * as cache from './cache';
 import {ConfigurationReader} from './config';
@@ -321,6 +320,7 @@ export interface ClientInit {
   environment: NodeJS.ProcessEnv;
   sourceDir: string;
   binaryDir: string;
+  tmpdir: string;
   pickGenerator: () => Promise<CMakeGenerator|null>;
 }
 
@@ -558,12 +558,11 @@ export class CMakeServerClient {
 
   public static async start(config: ConfigurationReader, params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
-    const tmpdir = path.join(vscode.workspace.rootPath!, '.vscode');
     // Ensure the binary directory exists
     await fs.mkdir_p(params.binaryDir);
     return new Promise<CMakeServerClient>((resolve, reject) => {
       const client = new CMakeServerClient({
-        tmpdir,
+        tmpdir: params.tmpdir,
         sourceDir: params.sourceDir,
         binaryDir: params.binaryDir,
         onMessage: params.onMessage,

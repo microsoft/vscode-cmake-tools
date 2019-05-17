@@ -10,7 +10,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {ProgressHandle, versionToString} from '@cmt/util';
+import {ProgressHandle, versionToString, lightNormalizePath} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -219,21 +219,26 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error(`Bad CMake executable "${cmake.path}".`);
     }
 
+    let workspace = null;
+    if (vscode.workspace.workspaceFolders) {
+      workspace = lightNormalizePath(vscode.workspace.workspaceFolders[0].uri.fsPath);
+    }
+
     let drv: CMakeDriver;
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit);
+        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit, workspace);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
       try {
         this._statusMessage.set('Starting CMake Server...');
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace);
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
