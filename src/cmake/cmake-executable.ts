@@ -1,5 +1,8 @@
+import * as logging from '../logging';
 import * as proc from '../proc';
 import * as util from '../util';
+
+const log = logging.createLogger('cmake-executable');
 
 export interface CMakeExecutable {
   path: string;
@@ -19,6 +22,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
   if (path.length != 0) {
     try {
       const version_ex = await proc.execute(path, ['--version']).result;
+      log.debug('CMake-Process Result: ', JSON.stringify(version_ex));
       if (version_ex.retc === 0 && version_ex.stdout) {
         cmake.isPresent = true;
 
