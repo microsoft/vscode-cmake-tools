@@ -250,7 +250,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   private async _startNewClient() {
     return cms.CMakeServerClient.start(this._ws.config, {
-      tmpdir: path.join(this.__workspaceRootPath!, '.vscode'),
+      tmpdir: path.join(this.workspaceRootPath!, '.vscode'),
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: this.cmake.path,
