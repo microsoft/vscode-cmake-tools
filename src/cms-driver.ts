@@ -7,7 +7,7 @@ import * as api from './api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
 import * as cms from './cms-client';
-import {CMakeDriver} from './driver';
+import {CMakeDriver, CMakePreconditionProblemSolver} from './driver';
 import {Kit} from './kit';
 import {createLogger} from './logging';
 import * as proc from './proc';
@@ -17,8 +17,8 @@ import {DirectoryContext} from './workspace';
 const log = createLogger('cms-driver');
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext, workspaceRootPath: string | null) {
-    super(cmake, _ws, workspaceRootPath);
+  private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, _ws, workspaceRootPath, preconditionHandler);
     this._ws.config.onChange('environment', () => this._restartClient());
     this._ws.config.onChange('configureEnvironment', () => this._restartClient());
   }
@@ -228,7 +228,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     await this._restartClient();
   }
 
-  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+  protected async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
     return this._clientChangeInProgress;
   }
@@ -272,9 +272,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private readonly _onMessageEmitter = new vscode.EventEmitter<string>();
   get onMessage() { return this._onMessageEmitter.event; }
 
-  async doInit(): Promise<void> { await this._restartClient(); }
+  protected async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, wsc, workspaceRootPath), kit);
+  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, wsc, workspaceRootPath, preconditionHandler), kit);
   }
 }

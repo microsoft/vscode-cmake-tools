@@ -24,7 +24,7 @@ import {BasicTestResults} from './ctest';
 import {CMakeBuildConsumer} from './diagnostics/build';
 import {CMakeOutputConsumer} from './diagnostics/cmake';
 import {populateCollection} from './diagnostics/util';
-import {CMakeDriver} from './driver';
+import {CMakeDriver, CMakePreconditionProblems} from './driver';
 import {expandString, ExpansionOptions} from './expand';
 import {Kit} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
@@ -208,6 +208,26 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+   /**
+   * Execute pre-configure/build tasks to check if we are ready to run a full
+   * configure. This should be called by a derived driver before any
+   * configuration tasks are run
+   */
+  private async configurePreConditionProblemHandler(e: CMakePreconditionProblems) : Promise<void> {
+    switch(e) {
+      case CMakePreconditionProblems.NoSourceDirectoryFound:
+        vscode.window.showErrorMessage('You do not have a source directory open');
+        break;
+      case CMakePreconditionProblems.MissingCMakeListsFile:
+        const do_quickstart
+            = await vscode.window.showErrorMessage('You do not have a CMakeLists.txt', 'Quickstart a new CMake project');
+        if (do_quickstart) {
+          vscode.commands.executeCommand('cmake.quickStart');
+        }
+        break;
+    }
+  }
+
   /**
    * Start up a new CMake driver and return it. This is so that the initialization
    * of the driver is atomic to those using it
@@ -225,20 +245,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver;
+    const preConditionHandler = async (e: CMakePreconditionProblems) => this.configurePreConditionProblemHandler(e);
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit, workspace);
+        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit, workspace, preConditionHandler);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace, preConditionHandler);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
       try {
         this._statusMessage.set('Starting CMake Server...');
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace, preConditionHandler);
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);

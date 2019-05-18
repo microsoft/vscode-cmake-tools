@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import {CMakeCache} from './cache';
-import {CMakeDriver} from './driver';
+import {CMakeDriver, CMakePreconditionProblemSolver} from './driver';
 import {Kit} from './kit';
 // import * as proc from './proc';
 import * as logging from './logging';
@@ -24,7 +24,9 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, readonly ws: DirectoryContext, workspaceRootPath: string | null) { super(cmake, ws, workspaceRootPath); }
+  private constructor(cmake: CMakeExecutable, readonly ws: DirectoryContext, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, ws, workspaceRootPath, preconditionHandler);
+  }
 
   private _needsReconfigure = true;
   doConfigureSettingsChange() { this._needsReconfigure = true; }
@@ -90,9 +92,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(cmake: CMakeExecutable, ws: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null): Promise<LegacyCMakeDriver> {
+  static async create(cmake: CMakeExecutable, ws: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver(cmake, ws, workspaceRootPath), kit);
+    return this.createDerived(new LegacyCMakeDriver(cmake, ws, workspaceRootPath, preconditionHandler), kit);
   }
 
   get targets() { return []; }

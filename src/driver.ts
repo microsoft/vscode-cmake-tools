@@ -24,6 +24,13 @@ import {DirectoryContext} from './workspace';
 
 const log = logging.createLogger('driver');
 
+export enum CMakePreconditionProblems {
+  NoSourceDirectoryFound,
+  MissingCMakeListsFile
+}
+
+export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems) => Promise<void>;
+
 /**
  * Base class for CMake drivers.
  *
@@ -80,7 +87,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext, readonly __workspaceRootPath: string | null) {
+  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext, readonly __workspaceRootPath: string | null, readonly preconditionHandler: CMakePreconditionProblemSolver) {
     // We have a cache of file-compilation terminals. Wipe them out when the
     // user closes those terminals.
     vscode.window.onDidCloseTerminal(closed => {
@@ -336,12 +343,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
     this._variantEnv = opts.env || {};
     await this._refreshExpansions();
   }
-
-  /**
-   * Is the driver busy? ie. running a configure/build/test
-   */
-  get isBusy() { return this._isBusy; }
-  protected _isBusy: boolean = false;
 
   /**
    * The source directory, where the root CMakeLists.txt lives.
@@ -667,31 +668,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private async _beforeConfigureOrBuild(): Promise<boolean> {
     log.debug('Runnnig pre-configure checks and steps');
-    if (this._isBusy) {
-      if (this.ws.config.autoRestartBuild) {
-        log.debug('Stopping current CMake task.');
-        vscode.window.showInformationMessage('Stopping current CMake task and starting new build.');
-        await this.stopCurrentProcess();
-      } else {
-        log.debug('No configuring: We\'re busy.');
-        vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to configure.');
-        return false;
-      }
-    }
 
     if (!this.sourceDir) {
-      log.debug('No configuring: There is no source directory.');
-      vscode.window.showErrorMessage('You do not have a source directory open');
+      log.debug('Source directory not set ', this.sourceDir);
+      await this.preconditionHandler(CMakePreconditionProblems.NoSourceDirectoryFound);
       return false;
     }
 
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
       log.debug('No configuring: There is no ', cmake_list);
-      const do_quickstart
-          = await vscode.window.showErrorMessage('You do not have a CMakeLists.txt', 'Quickstart a new CMake project');
-      if (do_quickstart)
-        vscode.commands.executeCommand('cmake.quickStart');
+      await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile);
       return false;
     }
 
@@ -760,9 +747,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const exeOpt: proc.ExecutionOptions = {environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.ws.config.buildTask};
       const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
       this._currentProcess = child;
-      this._isBusy = true;
       await child.result;
-      this._isBusy = false;
       this._currentProcess = null;
       return child;
     }
