@@ -215,6 +215,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async configurePreConditionProblemHandler(e: CMakePreconditionProblems) : Promise<void> {
     switch(e) {
+      case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
+        vscode.window.showErrorMessage('Configuration is already in progress.');
+        break;
       case CMakePreconditionProblems.NoSourceDirectoryFound:
         vscode.window.showErrorMessage('You do not have a source directory open');
         break;

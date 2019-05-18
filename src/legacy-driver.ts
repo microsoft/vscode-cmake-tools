@@ -72,9 +72,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return res.retc === null ? -1 : res.retc;
   }
 
-  async cleanConfigure(consumer?: proc.OutputConsumer) {
+  protected async doPreCleanConfigure(): Promise<void> {
     await this._cleanPriorConfiguration();
-    return this.configure([], consumer);
   }
 
   async doPostBuild(): Promise<boolean> {

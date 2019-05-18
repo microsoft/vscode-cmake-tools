@@ -25,6 +25,7 @@ import {DirectoryContext} from './workspace';
 const log = logging.createLogger('driver');
 
 export enum CMakePreconditionProblems {
+  ConfigureIsAlreadyRunning,
   NoSourceDirectoryFound,
   MissingCMakeListsFile
 }
@@ -49,11 +50,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
 
-  /**
-   * Perform a clean configure. Deletes cached files before running the config
-   * @param consumer The output consumer
-   */
-  abstract cleanConfigure(consumer?: proc.OutputConsumer): Promise<number>;
+  protected async doPreCleanConfigure(): Promise<void> { return Promise.resolve(); }
 
   protected doPreBuild(): Promise<boolean> { return Promise.resolve(true); }
 
@@ -549,98 +546,125 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
+  private configRunning: boolean = false;
+
+  /**
+   * Perform a clean configure. Deletes cached files before running the config
+   * @param consumer The output consumer
+   */
+  public async cleanConfigure(consumer?: proc.OutputConsumer): Promise<number> {
+    if (this.configRunning) {
+      await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+      return -99;
+    }
+    this.configRunning = true;
+    await this.doPreCleanConfigure();
+    this.configRunning = false;
+
+    return this.configure([], consumer);
+  }
+
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
-    log.debug('Start configure ', extra_args);
-    const pre_check_ok = await this._beforeConfigureOrBuild();
-    if (!pre_check_ok) {
-      return -1;
+    if (this.configRunning) {
+      await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+      return -99;
     }
-
-    const settings = {...this.ws.config.configureSettings};
-
-    const _makeFlag = (key: string, cmval: util.CMakeValue) => {
-      switch (cmval.type) {
-      case 'UNKNOWN':
-        return `-D${key}=${cmval.value}`;
-      default:
-        return `-D${key}:${cmval.type}=${cmval.value}`;
+    this.configRunning = true;
+    try {
+      log.debug('Start configure ', extra_args);
+      const pre_check_ok = await this._beforeConfigureOrBuild();
+      if (!pre_check_ok) {
+        return -1;
       }
-    };
 
-    util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settings[key] = value);
-    if (this._variantLinkage !== null) {
-      settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
-    }
+      const settings = {...this.ws.config.configureSettings};
 
-    // Always export so that we have compile_commands.json
-    settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
+      const _makeFlag = (key: string, cmval: util.CMakeValue) => {
+        switch (cmval.type) {
+        case 'UNKNOWN':
+          return `-D${key}=${cmval.value}`;
+        default:
+          return `-D${key}:${cmval.type}=${cmval.value}`;
+        }
+      };
 
-    if (!this.isMultiConf) {
-      // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
-      settings.CMAKE_BUILD_TYPE = this.currentBuildType;
-    }
+      util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settings[key] = value);
+      if (this._variantLinkage !== null) {
+        settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
+      }
 
-    // Only use the installPrefix config if the user didn't
-    // provide one via configureSettings
-    if (!settings.CMAKE_INSTALL_PREFIX && this.installDir) {
+      // Always export so that we have compile_commands.json
+      settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
+
+      if (!this.isMultiConf) {
+        // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
+        settings.CMAKE_BUILD_TYPE = this.currentBuildType;
+      }
+
+      // Only use the installPrefix config if the user didn't
+      // provide one via configureSettings
+      if (!settings.CMAKE_INSTALL_PREFIX && this.installDir) {
+        await this._refreshExpansions();
+        settings.CMAKE_INSTALL_PREFIX = this.installDir;
+      }
+
+      const settings_flags
+          = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
+      const flags = ['--no-warn-unused-cli'].concat(extra_args, this.ws.config.configureArgs);
+
+      console.assert(!!this._kit);
+      if (!this._kit) {
+        throw new Error('No kit is set!');
+      }
+      if (this._kit.compilers) {
+        log.debug('Using compilers in', this._kit.name, 'for configure');
+        flags.push(
+            ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
+      }
+      if (this._kit.toolchainFile) {
+        log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+        flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
+      }
+      if (this._kit.cmakeSettings) {
+        flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
+      }
+
+      const cache_init_conf = this.ws.config.cacheInit;
+      let cache_init: string[] = [];
+      if (cache_init_conf === null) {
+        // Do nothing
+      } else if (typeof cache_init_conf === 'string') {
+        cache_init = [cache_init_conf];
+      } else {
+        cache_init = cache_init_conf;
+      }
+      for (let init of cache_init) {
+        if (!path.isAbsolute(init)) {
+          init = path.join(this.sourceDir, init);
+        }
+        flags.push('-C', init);
+      }
+
+      // Get expanded configure environment
+      const expanded_configure_env = await this.getConfigureEnvironment();
+
+      // Expand all flags
+      const final_flags = flags.concat(settings_flags);
+      const opts = this.expansionOptions;
+      const expanded_flags_promises = final_flags.map(
+          async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
+      const expanded_flags = await Promise.all(expanded_flags_promises);
+      log.trace('CMake flags are', JSON.stringify(expanded_flags));
+
+      // Expand all important paths
       await this._refreshExpansions();
-      settings.CMAKE_INSTALL_PREFIX = this.installDir;
+
+      const retc = await this.doConfigure(expanded_flags, consumer);
+      return retc;
+    } finally {
+      this.configRunning = false;
     }
 
-    const settings_flags
-        = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
-    const flags = ['--no-warn-unused-cli'].concat(extra_args, this.ws.config.configureArgs);
-
-    console.assert(!!this._kit);
-    if (!this._kit) {
-      throw new Error('No kit is set!');
-    }
-    if (this._kit.compilers) {
-      log.debug('Using compilers in', this._kit.name, 'for configure');
-      flags.push(
-          ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
-    }
-    if (this._kit.toolchainFile) {
-      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
-      flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
-    }
-    if (this._kit.cmakeSettings) {
-      flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
-    }
-
-    const cache_init_conf = this.ws.config.cacheInit;
-    let cache_init: string[] = [];
-    if (cache_init_conf === null) {
-      // Do nothing
-    } else if (typeof cache_init_conf === 'string') {
-      cache_init = [cache_init_conf];
-    } else {
-      cache_init = cache_init_conf;
-    }
-    for (let init of cache_init) {
-      if (!path.isAbsolute(init)) {
-        init = path.join(this.sourceDir, init);
-      }
-      flags.push('-C', init);
-    }
-
-    // Get expanded configure environment
-    const expanded_configure_env = await this.getConfigureEnvironment();
-
-    // Expand all flags
-    const final_flags = flags.concat(settings_flags);
-    const opts = this.expansionOptions;
-    const expanded_flags_promises = final_flags.map(
-        async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
-    const expanded_flags = await Promise.all(expanded_flags_promises);
-    log.trace('CMake flags are', JSON.stringify(expanded_flags));
-
-    // Expand all important paths
-    await this._refreshExpansions();
-
-    const retc = await this.doConfigure(expanded_flags, consumer);
-
-    return retc;
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {

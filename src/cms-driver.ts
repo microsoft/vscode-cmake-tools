@@ -59,7 +59,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
   }
 
-  async cleanConfigure(consumer?: proc.OutputConsumer) {
+  protected async doPreCleanConfigure(): Promise<void> {
     const old_cl = await this._cmsClient;
     this._cmsClient = (async () => {
       // Stop the server before we try to rip out any old files
@@ -67,7 +67,6 @@ export class CMakeServerClientDriver extends CMakeDriver {
       await this._cleanPriorConfiguration();
       return this._startNewClient();
     })();
-    return this.configure([], consumer);
   }
 
   protected async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
