@@ -99,6 +99,27 @@ suite('CMake-Server-Driver tests', () => {
     d.dispose();
   }).timeout(60000);
 
+  test('Configure fails on invalid prefered generator', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const vsContext = new FakeContextDefinition();
+    const config = ConfigurationReader.createForDirectory(root);
+    const wsContext = new DirectoryContext(project_root, config, new StateManager(vsContext));
+    const executeable = await getCMakeExecutableInformation("cmake");
+
+    const kit = {
+      name: "GCC",
+      preferredGenerator: {
+        name: "BlaBla"
+      }
+    } as Kit;
+
+    // tslint:disable-next-line: no-floating-promises
+    expect(cms_driver.CMakeServerClientDriver.create(
+      executeable, wsContext, kit, project_root, async () => {}, [])
+      ).to.be.rejectedWith('No usable generator found.');
+  }).timeout(60000);
+
   test('Try build on empty dir', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/empty_project');

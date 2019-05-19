@@ -308,11 +308,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if(kit.preferredGenerator)
       preferredGenerators.push( kit.preferredGenerator);
 
-    if(preferredGenerators.length == 1) {
-      this._generator = preferredGenerators[0];
-    } else {
-      this._generator = await this.findBestGenerator(preferredGenerators);
-    }
+    this._generator = await this.findBestGenerator(preferredGenerators);
   }
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;

@@ -16,6 +16,10 @@ import {DirectoryContext} from './workspace';
 
 const log = createLogger('cms-driver');
 
+export class NoGeneratorError extends Error {
+  message: string = 'No usable generator found.';
+}
+
 export class CMakeServerClientDriver extends CMakeDriver {
   private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, _ws, workspaceRootPath, preconditionHandler);
@@ -248,6 +252,10 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   private async _startNewClient() {
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
+
     return cms.CMakeServerClient.start({
       tmpdir: path.join(this.workspaceRootPath!, '.vscode'),
       binaryDir: this.binaryDir,
