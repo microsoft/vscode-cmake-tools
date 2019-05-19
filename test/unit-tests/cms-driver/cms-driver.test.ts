@@ -23,7 +23,7 @@ function getTestRootFilePath(filename: string): string {
 
 // tslint:disable:no-unused-expression
 
-suite.only('CMake-Server-Driver tests', () => {
+suite('CMake-Server-Driver tests', () => {
   let k: Kit;
   if (process.platform === "win32") {
     k = {
@@ -31,7 +31,7 @@ suite.only('CMake-Server-Driver tests', () => {
       visualStudio: "VisualStudio.15.0",
       visualStudioArchitecture: "amd64",
       preferredGenerator: {
-        name: "Visual Studio 15 2017 Win64",
+        name: "Visual Studio 15 2017",
         platform: "x64"
       }
     } as Kit;
@@ -48,7 +48,7 @@ suite.only('CMake-Server-Driver tests', () => {
     const wsContext = new DirectoryContext(project_root, config, new StateManager(vsContext));
     const executeable = await getCMakeExecutableInformation("cmake");
 
-    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, async () => {});
+    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, async () => {}, []);
     const allTargetName = d.allTargetName;
     expect(allTargetName).to.eq('ALL_BUILD');
 
@@ -63,7 +63,7 @@ suite.only('CMake-Server-Driver tests', () => {
     const wsContext = new DirectoryContext(project_root, config, new StateManager(vsContext));
     const executeable = await getCMakeExecutableInformation("cmake");
 
-    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, async () => {});
+    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, async () => {}, []);
     expect(d.binaryDir).to.endsWith('test/unit-tests/cms-driver/workspace/test_project/build');
     d.dispose();
   }).timeout(60000);
@@ -76,7 +76,7 @@ suite.only('CMake-Server-Driver tests', () => {
     const wsContext = new DirectoryContext(project_root, config, new StateManager(vsContext));
     const executeable = await getCMakeExecutableInformation("cmake");
 
-    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, async () => {});
+    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, async () => {}, []);
     expect(await d.cleanConfigure()).to.be.eq(0);
     expect(await d.build(d.allTargetName)).to.be.eq(0);
 
@@ -99,7 +99,7 @@ suite.only('CMake-Server-Driver tests', () => {
       expect(e).to.be.eq(CMakePreconditionProblems.MissingCMakeListsFile);
       called = true;
     };
-    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, checkPreconditionHelper);
+    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, checkPreconditionHelper, []);
     expect(await d.cleanConfigure()).to.be.eq(-1);
     expect(called).to.be.true;
     d.dispose();
@@ -118,7 +118,7 @@ suite.only('CMake-Server-Driver tests', () => {
       expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       called = true;
     };
-    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, checkPreconditionHelper);
+    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, checkPreconditionHelper, []);
     const configure1 = d.configure([]);
     const configure2 = d.configure([]);
 
@@ -142,7 +142,7 @@ suite.only('CMake-Server-Driver tests', () => {
       expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       called = true;
     };
-    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, checkPreconditionHelper);
+    const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, checkPreconditionHelper, []);
     const configure1 = d.cleanConfigure();
     const configure2 = d.cleanConfigure();
 

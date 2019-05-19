@@ -10,7 +10,7 @@ import * as vscode from 'vscode';
 import * as api from './api';
 import {CMakeCache} from './cache';
 import {CMakeDriver, CMakePreconditionProblemSolver} from './driver';
-import {Kit} from './kit';
+import {Kit, CMakeGenerator} from './kit';
 // import * as proc from './proc';
 import * as logging from './logging';
 import {fs} from './pr';
@@ -49,7 +49,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     args.push('-H' + util.lightNormalizePath(this.sourceDir));
     const bindir = util.lightNormalizePath(this.binaryDir);
     args.push('-B' + bindir);
-    const gen = await this.getBestGenerator();
+    const gen = this.generator;
     if (gen) {
       args.push(`-G${gen.name}`);
       if (gen.toolset) {
@@ -91,9 +91,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(cmake: CMakeExecutable, ws: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver): Promise<LegacyCMakeDriver> {
+  static async create(cmake: CMakeExecutable, ws: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver(cmake, ws, workspaceRootPath, preconditionHandler), kit);
+    return this.createDerived(new LegacyCMakeDriver(cmake, ws, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
   }
 
   get targets() { return []; }

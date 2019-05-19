@@ -289,7 +289,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Change the current kit. This lets the driver reload, if necessary.
    * @param kit The new kit
    */
-  async setKit(kit: Kit): Promise<void> {
+  async setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
     log.info(`Switching to kit: ${kit.name}`);
 
     const opts = this.expansionOptions;
@@ -297,17 +297,30 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
 
     const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
-    await this.doSetKit(needs_clean, async () => { await this._setKit(kit); });
+    await this.doSetKit(needs_clean, async () => { await this._setKit(kit, preferredGenerators); });
   }
 
-  private async _setKit(kit: Kit): Promise<void> {
+  private async _setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
     this._kit = Object.seal({...kit});
     log.debug('CMakeDriver Kit set to', kit.name);
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit);
+
+    if(kit.preferredGenerator)
+      preferredGenerators.push( kit.preferredGenerator);
+
+    if(preferredGenerators.length == 1) {
+      this._generator = preferredGenerators[0];
+    } else {
+      this._generator = await this.findBestGenerator(preferredGenerators);
+    }
   }
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
+  protected get generator () : CMakeGenerator | null {
+    return this._generator;
+  }
+  protected _generator: CMakeGenerator | null = null;
   /**
    * The CMAKE_BUILD_TYPE to use
    */
@@ -483,33 +496,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  getPreferredGenerators(): CMakeGenerator[] {
-    const user_preferred = this.ws.config.preferredGenerators.map(g => ({name: g}));
-    if (this._kit && this._kit.preferredGenerator) {
-      // The kit has a preferred generator attached as well
-      user_preferred.push(this._kit.preferredGenerator);
-    }
-    return user_preferred;
-  }
-
   /**
    * Picks the best generator to use on the current system
    */
-  async getBestGenerator(): Promise<CMakeGenerator|null> {
-    // User can override generator with a setting
-    const user_generator = this.ws.config.generator;
-    if (user_generator) {
-      log.debug(`Using generator from user configuration: ${user_generator}`);
-      return {
-        name: user_generator,
-        platform: this.ws.config.platform || undefined,
-        toolset: this.ws.config.toolset || undefined,
-      };
-    }
+  async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator|null> {
     log.debug('Trying to detect generator supported by system');
     const platform = process.platform;
-    const candidates = this.getPreferredGenerators();
-    for (const gen of candidates) {
+    for (const gen of preferredGenerators) {
       const gen_name = gen.name;
       const generator_present = await (async(): Promise<boolean> => {
         if (gen_name == 'Ninja') {
@@ -797,10 +790,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract get cmakeCacheEntries(): Map<string, api.CacheEntryProperties>;
 
-  private async _baseInit(kit: Kit|null) {
+  private async _baseInit(kit: Kit|null, preferedGenerators: CMakeGenerator[]) {
     if (kit) {
       // Load up kit environment before starting any drivers.
-      await this._setKit(kit);
+      await this._setKit(kit, preferedGenerators);
     }
     await this._refreshExpansions();
     await this.doInit();
@@ -811,8 +804,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Asynchronous initialization. Should be called by base classes during
    * their initialization.
    */
-  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null): Promise<T> {
-    await inst._baseInit(kit);
+  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferedGenerators: CMakeGenerator[]): Promise<T> {
+    await inst._baseInit(kit, preferedGenerators);
     return inst;
   }
 }

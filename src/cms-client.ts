@@ -625,7 +625,9 @@ export class CMakeServerClient {
               hsparams.generator = generator.name;
               hsparams.platform = generator.platform;
               hsparams.toolset = generator.toolset || config.toolset || undefined;
-              log.info(`Configuring using the "${generator.name}" CMake generator`);
+              log.info(`Configuring using the "${hsparams.generator}" CMake generator with plattform ` +
+                      `"${hsparams.platform}" and toolset `,
+                      JSON.stringify(hsparams.toolset || {}));
             }
 
             await client.sendRequest('handshake', hsparams);
