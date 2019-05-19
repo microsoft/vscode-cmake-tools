@@ -8,7 +8,7 @@ import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
 import * as cache from './cache';
 import * as cms from './cms-client';
 import {CMakeDriver} from './driver';
-import {Kit} from './kit';
+import {Kit, CMakeGenerator} from './kit';
 import {createLogger} from './logging';
 import * as proc from './proc';
 import rollbar from './rollbar';
@@ -264,7 +264,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       onProgress: async prog => {
         this._progressEmitter.fire(prog);
       },
-      generator: await this.getBestGenerator(),
+      generator: this.generator,
     });
   }
 
@@ -273,7 +273,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, wsc), kit);
+  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null, preferedGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, wsc), kit, preferedGenerators);
   }
 }

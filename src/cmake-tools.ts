@@ -26,7 +26,7 @@ import {CMakeOutputConsumer} from './diagnostics/cmake';
 import {populateCollection} from './diagnostics/util';
 import {CMakeDriver} from './driver';
 import {expandString, ExpansionOptions} from './expand';
-import {Kit} from './kit';
+import {Kit, CMakeGenerator} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
@@ -208,6 +208,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+  private getPreferedGenerators() : CMakeGenerator[] {
+      // User can override generator with a setting
+      const user_generator = this.workspaceContext.config.generator;
+      if (user_generator) {
+        log.debug(`Using generator from user configuration: ${user_generator}`);
+        return [{
+          name: user_generator,
+          platform: this.workspaceContext.config.platform || undefined,
+          toolset: this.workspaceContext.config.toolset || undefined,
+        }];
+      }
+
+      const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
+      return user_preferred;
+  }
   /**
    * Start up a new CMake driver and return it. This is so that the initialization
    * of the driver is atomic to those using it
@@ -220,20 +235,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver;
+    const preferedGenerators = this.getPreferedGenerators();
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit);
+        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit, preferedGenerators);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, preferedGenerators);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
       try {
         this._statusMessage.set('Starting CMake Server...');
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, preferedGenerators);
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariantOptions(this._variantManager.activeVariantOptions);
@@ -327,7 +343,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (drv) {
         try {
           this._statusMessage.set('Reloading...');
-          await drv.setKit(kit);
+          await drv.setKit(kit, this.getPreferedGenerators());
         } finally { this._statusMessage.set('Ready'); }
       }
       this.workspaceContext.state.activeKitName = kit.name;
