@@ -17,8 +17,8 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
-import {BadHomeDirectoryError, CodeModelContent, NoGeneratorError} from './cms-client';
-import {CMakeServerClientDriver} from './cms-driver';
+import {BadHomeDirectoryError, CodeModelContent} from './cms-client';
+import {CMakeServerClientDriver, NoGeneratorError} from './cms-driver';
 import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
 import {CMakeBuildConsumer} from './diagnostics/build';

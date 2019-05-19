@@ -16,6 +16,10 @@ import {DirectoryContext} from './workspace';
 
 const log = createLogger('cms-driver');
 
+export class NoGeneratorError extends Error {
+  message: string = 'No usable generator found.';
+}
+
 export class CMakeServerClientDriver extends CMakeDriver {
   private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext) {
     super(cmake, _ws);
@@ -249,6 +253,10 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   private async _startNewClient() {
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
+
     return cms.CMakeServerClient.start(this._ws.config, {
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
