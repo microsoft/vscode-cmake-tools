@@ -36,11 +36,20 @@ suite('CMake-Server-Driver tests', () => {
       }
     } as Kit;
   } else {
-    return;
+    k = {
+      name: "GCC",
+      compilers: {
+        C: "gcc",
+        CXX: "g++"
+      },
+      preferredGenerator: {
+        name: "Unix Makefiles"
+      }
+    } as Kit;
   }
 
 
-  test('All target for visual studio', async () => {
+  test(`All target for ${k.name}`, async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const vsContext = new FakeContextDefinition();
@@ -50,7 +59,11 @@ suite('CMake-Server-Driver tests', () => {
 
     const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, k, project_root, async () => {}, []);
     const allTargetName = d.allTargetName;
-    expect(allTargetName).to.eq('ALL_BUILD');
+    if (process.platform === "win32") {
+      expect(allTargetName).to.eq('ALL_BUILD');
+    } else {
+      expect(allTargetName).to.eq('all');
+    }
 
     d.dispose();
   }).timeout(60000);
