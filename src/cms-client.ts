@@ -3,7 +3,6 @@ import * as net from 'net';
 import * as path from 'path';
 
 import * as cache from './cache';
-import {ConfigurationReader} from './config';
 import {CMakeGenerator} from './kit';
 import {createLogger} from './logging';
 import {fs} from './pr';
@@ -556,7 +555,7 @@ export class CMakeServerClient {
     }, 1000);
   }
 
-  public static async start(config: ConfigurationReader, params: ClientInit): Promise<CMakeServerClient> {
+  public static async start(params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
     // Ensure the binary directory exists
     await fs.mkdir_p(params.binaryDir);
@@ -624,7 +623,7 @@ export class CMakeServerClient {
               hsparams.sourceDirectory = params.sourceDir;
               hsparams.generator = generator.name;
               hsparams.platform = generator.platform;
-              hsparams.toolset = generator.toolset || config.toolset || undefined;
+              hsparams.toolset = generator.toolset;
               log.info(`Configuring using the "${hsparams.generator}" CMake generator with plattform ` +
                       `"${hsparams.platform}" and toolset `,
                       JSON.stringify(hsparams.toolset || {}));
