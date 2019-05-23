@@ -165,7 +165,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       filepath: 'A special target to build all available targets',
       targetType: 'META',
     }];
-    if(build_config.projects.some(project => project.hasInstallRule))
+    if(build_config.projects.some(project => (project.hasInstallRule)? project.hasInstallRule: false))
     {
       metaTargets.push({
         type: 'rich' as 'rich',

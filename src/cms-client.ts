@@ -248,7 +248,7 @@ export interface CodeModelProject {
   sourceDirectory: string;
   buildDirectory: string;
   targets: CodeModelTarget[];
-  hasInstallRule: boolean;
+  hasInstallRule?: boolean;
 }
 
 export interface CodeModelConfiguration {
