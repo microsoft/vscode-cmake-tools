@@ -268,21 +268,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.configurePreConditionProblemHandler(e);
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit, workspace, preConditionHandler, preferedGenerators);
+        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace, preConditionHandler, preferedGenerators);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
       try {
         this._statusMessage.set('Starting CMake Server...');
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext, kit, workspace, preConditionHandler, preferedGenerators);
+        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
       } finally { this._statusMessage.set('Ready'); }
     }
-    await drv.setVariantOptions(this._variantManager.activeVariantOptions);
+    await drv.setVariantOptions(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
     // All set up. Fulfill the driver promise.
@@ -350,7 +350,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       rollbar.invokeAsync('Changing build variant', async () => {
         const drv = await this.getCMakeDriverInstance();
         if (drv) {
-          await drv.setVariantOptions(this._variantManager.activeVariantOptions);
+          await drv.setVariantOptions(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
           this._buildType.set(this._variantManager.activeVariantOptions.short);
           // We don't configure yet, since someone else might be in the middle of a configure
         }

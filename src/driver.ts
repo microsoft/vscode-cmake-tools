@@ -20,7 +20,7 @@ import * as proc from './proc';
 import rollbar from './rollbar';
 import * as util from './util';
 import {ConfigureArguments, VariantOption} from './variant';
-import {DirectoryContext} from './workspace';
+import { ConfigurationReader } from './config';
 
 const log = logging.createLogger('driver');
 
@@ -84,7 +84,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(public readonly cmake: CMakeExecutable, readonly ws: DirectoryContext, private readonly __workspaceRootPath: string | null, readonly preconditionHandler: CMakePreconditionProblemSolver) {
+  protected constructor(public readonly cmake: CMakeExecutable, readonly config: ConfigurationReader, private readonly __workspaceRootPath: string | null, readonly preconditionHandler: CMakePreconditionProblemSolver) {
     // We have a cache of file-compilation terminals. Wipe them out when the
     // user closes those terminals.
     vscode.window.onDidCloseTerminal(closed => {
@@ -155,7 +155,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   async getExpandedEnvironment(): Promise<{[key: string]: string}> {
     const env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
-    await Promise.resolve(util.objectPairs(this.ws.config.environment)
+    await Promise.resolve(util.objectPairs(this.config.environment)
                               .forEach(async ([key, value]) => env[key] = await expand.expandString(value, opts)));
     return env;
   }
@@ -168,7 +168,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const config_env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
     await Promise.resolve(
-        util.objectPairs(this.ws.config.configureEnvironment)
+        util.objectPairs(this.config.configureEnvironment)
             .forEach(async ([key, value]) => config_env[key] = await expand.expandString(value, opts)));
     return config_env;
   }
@@ -181,6 +181,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   protected get workspaceRootPath() {
     return this.__workspaceRootPath;
+  }
+
+  public _variantSettings: Map<string, string> | null = null;
+  public set variantSettings(value: Map<string, string> | null) {
+    this._variantSettings = value;
+  }
+  public get variantSettings(): Map<string, string> | null {
+    return this._variantSettings;
   }
 
   /**
@@ -203,10 +211,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     };
 
     // Update Variant replacements
-    const variantSettings = this.ws.state.activeVariantSettings;
     const variantVars: {[key: string]: string} = {};
-    if (variantSettings) {
-      variantSettings.forEach((value: string, key: string) => variantVars[key] = value);
+    if (this.variantSettings) {
+      this.variantSettings.forEach((value: string, key: string) => variantVars[key] = value);
     }
 
     return {vars, variantVars};
@@ -214,7 +221,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {
     const cur_env = process.env as proc.EnvironmentVariables;
-    const kit_env = (this.ws.config.ignoreKitEnv) ? {} : this.getKitEnvironmentVariablesObject();
+    const kit_env = (this.config.ignoreKitEnv) ? {} : this.getKitEnvironmentVariablesObject();
     return util.mergeEnvironment(cur_env,
                                  kit_env,
                                  (opts && opts.environment) ? opts.environment : {});
@@ -294,7 +301,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const opts = this.expansionOptions;
     opts.vars.buildKit = kit.name;
-    const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
+    const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
     const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
     await this.doSetKit(needs_clean, async () => { await this._setKit(kit, preferredGenerators); });
@@ -341,12 +348,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Change the current options from the variant.
    * @param opts The new options
    */
-  async setVariantOptions(opts: VariantOption) {
+  async setVariantOptions(opts: VariantOption, setting: Map<string, string>|null) {
     log.debug('Setting new variant', opts.long || '(Unnamed)');
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
     this._variantLinkage = opts.linkage || null;
     this._variantEnv = opts.env || {};
+    this._variantSettings = setting || null;
     await this._refreshExpansions();
   }
 
@@ -366,15 +374,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this.doRefreshExpansions(async () => {
       log.debug('Run _refreshExpansions cb');
       const opts = this.expansionOptions;
-      this._sourceDirectory = util.lightNormalizePath(await expand.expandString(this.ws.config.sourceDirectory, opts));
-      this._binaryDir = util.lightNormalizePath(await expand.expandString(this.ws.config.buildDirectory, opts));
+      this._sourceDirectory = util.lightNormalizePath(await expand.expandString(this.config.sourceDirectory, opts));
+      this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
-      const installPrefix = this.ws.config.installPrefix;
+      const installPrefix = this.config.installPrefix;
       if (installPrefix) {
         this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
       }
 
-      const copyCompileCommands = this.ws.config.copyCompileCommands;
+      const copyCompileCommands = this.config.copyCompileCommands;
       if (copyCompileCommands) {
         this._copyCompileCommandsPath = util.lightNormalizePath(await expand.expandString(copyCompileCommands, opts));
       }
@@ -566,7 +574,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return -1;
       }
 
-      const settings = {...this.ws.config.configureSettings};
+      const settings = {...this.config.configureSettings};
 
       const _makeFlag = (key: string, cmval: util.CMakeValue) => {
         switch (cmval.type) {
@@ -599,7 +607,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       const settings_flags
           = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
-      const flags = ['--no-warn-unused-cli'].concat(extra_args, this.ws.config.configureArgs);
+      const flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
 
       console.assert(!!this._kit);
       if (!this._kit) {
@@ -618,7 +626,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
       }
 
-      const cache_init_conf = this.ws.config.cacheInit;
+      const cache_init_conf = this.config.cacheInit;
       let cache_init: string[] = [];
       if (cache_init_conf === null) {
         // Do nothing
@@ -703,9 +711,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Subscribe to changes that affect the CMake configuration
    */
-  private readonly _settingsSub = this.ws.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
-  private readonly _argsSub = this.ws.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
-  private readonly _envSub = this.ws.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
+  private readonly _settingsSub = this.config.onChange('configureSettings', () => this.doConfigureSettingsChange());
+  private readonly _argsSub = this.config.onChange('configureArgs', () => this.doConfigureSettingsChange());
+  private readonly _envSub = this.config.onChange('configureEnvironment', () => this.doConfigureSettingsChange());
 
   /**
    * The currently running process. We keep a handle on it so we can stop it
@@ -724,7 +732,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (!gen)
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return ['-j', this.ws.config.numJobs.toString()];
+        return ['-j', this.config.numJobs.toString()];
       else
         return [];
     })();
@@ -733,11 +741,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     build_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
     const opts = this.expansionOptions;
     await Promise.resolve(
-        util.objectPairs(util.mergeEnvironment(this.ws.config.buildEnvironment, await this.getExpandedEnvironment()))
+        util.objectPairs(util.mergeEnvironment(this.config.buildEnvironment, await this.getExpandedEnvironment()))
             .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
     const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
-                     .concat(this.ws.config.buildArgs, ['--'], generator_args, this.ws.config.buildToolArgs);
+                     .concat(this.config.buildArgs, ['--'], generator_args, this.config.buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises) as string[];
@@ -749,7 +757,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
     const buildcmd = await this.getCMakeBuildCommand(target);
     if (buildcmd) {
-      let outputEnc = this.ws.config.outputLogEncoding;
+      let outputEnc = this.config.outputLogEncoding;
       if (outputEnc == 'auto') {
         if (process.platform === 'win32') {
           outputEnc = await codepages.getWindowsCodepage();
@@ -757,7 +765,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
           outputEnc = 'utf8';
         }
       }
-      const exeOpt: proc.ExecutionOptions = {environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.ws.config.buildTask};
+      const exeOpt: proc.ExecutionOptions = {environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask};
       const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
       this._currentProcess = child;
       await child.result;

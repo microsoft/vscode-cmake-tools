@@ -4,7 +4,6 @@
  */ /** */
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
-import {DirectoryContext} from '@cmt/workspace';
 import * as vscode from 'vscode';
 
 import * as api from './api';
@@ -17,6 +16,7 @@ import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
 import * as util from './util';
+import { ConfigurationReader } from './config';
 
 const log = logging.createLogger('legacy-driver');
 
@@ -24,8 +24,8 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, readonly ws: DirectoryContext, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-    super(cmake, ws, workspaceRootPath, preconditionHandler);
+  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, config, workspaceRootPath, preconditionHandler);
   }
 
   private _needsReconfigure = true;
@@ -91,9 +91,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(cmake: CMakeExecutable, ws: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver(cmake, ws, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
+    return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
   }
 
   get targets() { return []; }

@@ -12,7 +12,7 @@ import {Kit, CMakeGenerator} from './kit';
 import {createLogger} from './logging';
 import * as proc from './proc';
 import rollbar from './rollbar';
-import {DirectoryContext} from './workspace';
+import { ConfigurationReader } from './config';
 
 const log = createLogger('cms-driver');
 
@@ -21,10 +21,10 @@ export class NoGeneratorError extends Error {
 }
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-    super(cmake, _ws, workspaceRootPath, preconditionHandler);
-    this._ws.config.onChange('environment', () => this._restartClient());
-    this._ws.config.onChange('configureEnvironment', () => this._restartClient());
+  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, config, workspaceRootPath, preconditionHandler);
+    this.config.onChange('environment', () => this._restartClient());
+    this.config.onChange('configureEnvironment', () => this._restartClient());
   }
 
   // TODO: Refactor to make this assertion unecessary
@@ -281,7 +281,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   protected async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, wsc, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
   }
 }
