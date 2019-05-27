@@ -77,6 +77,7 @@ suite('CMake-Server-Driver tests', () => {
     if(fs.existsSync(build_dir)) {
       rimraf.sync(build_dir);
     }
+    expect(fs.existsSync(build_dir)).to.be.false;
   });
 
   test(`All target for ${kitDefault.name}`, async () => {
@@ -95,7 +96,7 @@ suite('CMake-Server-Driver tests', () => {
       expect(allTargetName).to.eq('all');
     }
 
-    d.dispose();
+    await d.asyncDispose();
   }).timeout(60000);
 
   test('Check binary dir', async () => {
@@ -108,7 +109,7 @@ suite('CMake-Server-Driver tests', () => {
 
     const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, async () => {}, []);
     expect(d.binaryDir).to.endsWith('test/unit-tests/cms-driver/workspace/test_project/build');
-    d.dispose();
+    await d.asyncDispose();
   }).timeout(60000);
 
   test('Build', async () => {
@@ -120,13 +121,13 @@ suite('CMake-Server-Driver tests', () => {
     const executeable = await getCMakeExecutableInformation("cmake");
 
     const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, async () => {}, []);
-    expect(await d.cleanConfigure()).to.be.eq(0);
+    expect(await d.cleanConfigure([])).to.be.eq(0);
     expect(await d.build(d.allTargetName)).to.be.eq(0);
 
     expect(d.executableTargets.length).to.be.eq(1);
     expect(d.executableTargets[0].name).to.be.equal("TestBuildProcess");
     expect(fs.existsSync(d.executableTargets[0].path)).to.be.true;
-    d.dispose();
+    await d.asyncDispose();
   }).timeout(60000);
 
   test('Reuse workspace', async () => {
@@ -138,13 +139,13 @@ suite('CMake-Server-Driver tests', () => {
     const executeable = await getCMakeExecutableInformation("cmake");
 
     const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, async () => {}, []);
-    expect(await d.cleanConfigure()).to.be.eq(0);
+    expect(await d.cleanConfigure([])).to.be.eq(0);
     expect(await d.build(d.allTargetName)).to.be.eq(0);
 
     expect(d.executableTargets.length).to.be.eq(1);
     expect(d.executableTargets[0].name).to.be.equal("TestBuildProcess");
     expect(fs.existsSync(d.executableTargets[0].path)).to.be.true;
-    d.dispose();
+    await d.asyncDispose();
   }).timeout(60000);
 
   test('Configure fails on invalid prefered generator', async () => {
@@ -182,9 +183,9 @@ suite('CMake-Server-Driver tests', () => {
       called = true;
     };
     const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, checkPreconditionHelper, []);
-    expect(await d.cleanConfigure()).to.be.eq(-1);
+    expect(await d.cleanConfigure([])).to.be.eq(-1);
     expect(called).to.be.true;
-    d.dispose();
+    await d.asyncDispose();
   }).timeout(60000);
 
   test('No parallel configuration', async () => {
@@ -208,7 +209,7 @@ suite('CMake-Server-Driver tests', () => {
     expect(await configure2).to.be.equal(-99);
     expect(called).to.be.true;
 
-    d.dispose();
+    await d.asyncDispose();
   }).timeout(60000);
 
   test('No parallel clean configuration', async () => {
@@ -225,14 +226,14 @@ suite('CMake-Server-Driver tests', () => {
       called = true;
     };
     const d = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, checkPreconditionHelper, []);
-    const configure1 = d.cleanConfigure();
-    const configure2 = d.cleanConfigure();
+    const configure1 = d.cleanConfigure([]);
+    const configure2 = d.cleanConfigure([]);
 
     expect(await configure1).to.be.equal(0);
     expect(await configure2).to.be.equal(-99);
     expect(called).to.be.true;
 
-    d.dispose();
+    await d.asyncDispose();
   }).timeout(60000);
 
 
@@ -245,15 +246,15 @@ suite('CMake-Server-Driver tests', () => {
     const executeable = await getCMakeExecutableInformation("cmake");
 
     const drvSetupBuildDir = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitNinja, project_root, async () => {}, []);
-    await drvSetupBuildDir.cleanConfigure();
-    drvSetupBuildDir.dispose();
+    await drvSetupBuildDir.cleanConfigure([]);
+    await drvSetupBuildDir.asyncDispose();
 
     const drvTest = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, async () => {}, []);
     try {
       expect(await drvTest.configure([])).to.be.eq(0);
       expect(drvTest.cmakeCacheEntries.get("CMAKE_GENERATOR")!.value).to.be.eq("Ninja");
     } finally {
-      drvTest.dispose();
+      await drvTest.asyncDispose();
     }
   }).timeout(60000);
 
@@ -266,19 +267,53 @@ suite('CMake-Server-Driver tests', () => {
     const executeable = await getCMakeExecutableInformation("cmake");
 
     const drvSetupBuildDir = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, async () => {}, []);
-    await drvSetupBuildDir.cleanConfigure();
+    await drvSetupBuildDir.cleanConfigure([]);
     try {
       expect(drvSetupBuildDir.cmakeCacheEntries.get("CMAKE_GENERATOR")!.value).to.be.not.eq("Ninja");
     } finally {
-      drvSetupBuildDir.dispose();
+      await drvSetupBuildDir.asyncDispose();
     }
 
     const drvTest = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitNinja, project_root, async () => {}, []);
     try {
-      expect(await drvTest.cleanConfigure()).to.be.eq(0);
+      expect(await drvTest.cleanConfigure([])).to.be.eq(0);
       expect(drvTest.cmakeCacheEntries.get("CMAKE_GENERATOR")!.value).to.be.eq("Ninja");
     } finally {
-      drvTest.dispose();
+      await drvTest.asyncDispose();
+    }
+  }).timeout(60000);
+
+  test('Test extra arguments on configure', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const vsContext = new FakeContextDefinition();
+    const config = ConfigurationReader.createForDirectory(root);
+    const wsContext = new DirectoryContext(project_root, config, new StateManager(vsContext));
+    const executeable = await getCMakeExecutableInformation("cmake");
+
+    const drvSetupBuildDir = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, async () => {}, []);
+    await drvSetupBuildDir.configure([ "-DEXTRA_ARGS_TEST=Hallo"]);
+    try {
+      expect(drvSetupBuildDir.cmakeCacheEntries.get("extraArgsEnvironment")!.value).to.be.eq("Hallo");
+    } finally {
+      await drvSetupBuildDir.asyncDispose();
+    }
+  }).timeout(60000);
+
+  test('Test extra arguments on clean and configure', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const vsContext = new FakeContextDefinition();
+    const config = ConfigurationReader.createForDirectory(root);
+    const wsContext = new DirectoryContext(project_root, config, new StateManager(vsContext));
+    const executeable = await getCMakeExecutableInformation("cmake");
+
+    const drvSetupBuildDir = await cms_driver.CMakeServerClientDriver.create(executeable, wsContext, kitDefault, project_root, async () => {}, []);
+    await drvSetupBuildDir.cleanConfigure([ "-DEXTRA_ARGS_TEST=Hallo"]);
+    try {
+      expect(drvSetupBuildDir.cmakeCacheEntries.get("extraArgsEnvironment")!.value).to.be.eq("Hallo");
+    } finally {
+      await drvSetupBuildDir.asyncDispose();
     }
   }).timeout(60000);
 });

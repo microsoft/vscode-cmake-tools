@@ -14,6 +14,7 @@ add_custom_command(
     COMMENT "Running in ${CMAKE_CURRENT_BINARY_DIR}"
 )
 
+set(extraArgsEnvironment "${EXTRA_ARGS_TEST}" CACHE STRING "environment")
 set(configureEnvironment "$ENV{_CONFIGURE_ENV}" CACHE STRING "configureEnvironment")
 set(buildEnvironment "$ENV{_BUILD_ENV}" CACHE STRING "buildEnvironment")
 set(environment "$ENV{_ENV}" CACHE STRING "environment")

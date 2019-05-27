@@ -541,7 +541,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
    */
-  public async cleanConfigure(consumer?: proc.OutputConsumer): Promise<number> {
+  public async cleanConfigure(extra_args: string[],consumer?: proc.OutputConsumer): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -99;
@@ -550,7 +550,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     await this.doPreCleanConfigure();
     this.configRunning = false;
 
-    return this.configure([], consumer);
+    return this.configure(extra_args, consumer);
   }
 
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {

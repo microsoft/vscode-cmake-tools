@@ -565,7 +565,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   retc = await drv.configure(extra_args, consumer);
                   break;
                 case ConfigureType.Clean:
-                  retc = await drv.cleanConfigure(consumer);
+                  retc = await drv.cleanConfigure(extra_args, consumer);
                   break;
                 default:
                   rollbar.error('Unexpected configure type', {type});
