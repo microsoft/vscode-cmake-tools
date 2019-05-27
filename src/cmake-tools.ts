@@ -282,7 +282,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
       } finally { this._statusMessage.set('Ready'); }
     }
-    await drv.setVariantOptions(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
+    await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
     // All set up. Fulfill the driver promise.
@@ -350,7 +350,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       rollbar.invokeAsync('Changing build variant', async () => {
         const drv = await this.getCMakeDriverInstance();
         if (drv) {
-          await drv.setVariantOptions(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
+          await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
           this._buildType.set(this._variantManager.activeVariantOptions.short);
           // We don't configure yet, since someone else might be in the middle of a configure
         }

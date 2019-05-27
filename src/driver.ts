@@ -183,13 +183,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this.__workspaceRootPath;
   }
 
-  public _variantSettings: Map<string, string> | null = null;
-  public set variantSettings(value: Map<string, string> | null) {
-    this._variantSettings = value;
-  }
-  public get variantSettings(): Map<string, string> | null {
-    return this._variantSettings;
-  }
+  protected variantKeywordSettings: Map<string, string> | null = null;
 
   /**
    * The options that will be passed to `expand.expandString` for this driver.
@@ -212,8 +206,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Update Variant replacements
     const variantVars: {[key: string]: string} = {};
-    if (this.variantSettings) {
-      this.variantSettings.forEach((value: string, key: string) => variantVars[key] = value);
+    if (this.variantKeywordSettings) {
+      // allows to expansion of variant option keyword and replace it by the variant option short name
+      this.variantKeywordSettings.forEach((value: string, key: string) => variantVars[key] = value);
     }
 
     return {vars, variantVars};
@@ -347,14 +342,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Change the current options from the variant.
    * @param opts The new options
+   * @param keywordSetting Variant Keywords for identification of a variant option
    */
-  async setVariantOptions(opts: VariantOption, setting: Map<string, string>|null) {
+  async setVariant(opts: VariantOption, keywordSetting: Map<string, string>|null) {
     log.debug('Setting new variant', opts.long || '(Unnamed)');
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
     this._variantLinkage = opts.linkage || null;
     this._variantEnv = opts.env || {};
-    this._variantSettings = setting || null;
+    this.variantKeywordSettings = keywordSetting || null;
     await this._refreshExpansions();
   }
 
