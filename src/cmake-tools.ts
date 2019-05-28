@@ -10,7 +10,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {ProgressHandle, versionToString, lightNormalizePath} from '@cmt/util';
+import {lightNormalizePath, ProgressHandle, versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -26,7 +26,7 @@ import {CMakeOutputConsumer} from './diagnostics/cmake';
 import {populateCollection} from './diagnostics/util';
 import {CMakeDriver, CMakePreconditionProblems} from './driver';
 import {expandString, ExpansionOptions} from './expand';
-import {Kit, CMakeGenerator} from './kit';
+import {CMakeGenerator, Kit} from './kit';
 import {LegacyCMakeDriver} from './legacy-driver';
 import * as logging from './logging';
 import {NagManager} from './nag';
@@ -208,43 +208,43 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
-   /**
+  /**
    * Execute pre-configure/build tasks to check if we are ready to run a full
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async configurePreConditionProblemHandler(e: CMakePreconditionProblems) : Promise<void> {
-    switch(e) {
-      case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
-        vscode.window.showErrorMessage('Configuration is already in progress.');
-        break;
-      case CMakePreconditionProblems.NoSourceDirectoryFound:
-        vscode.window.showErrorMessage('You do not have a source directory open');
-        break;
-      case CMakePreconditionProblems.MissingCMakeListsFile:
-        const do_quickstart
-            = await vscode.window.showErrorMessage('You do not have a CMakeLists.txt', 'Quickstart a new CMake project');
-        if (do_quickstart) {
-          vscode.commands.executeCommand('cmake.quickStart');
-        }
-        break;
+  private async configurePreConditionProblemHandler(e: CMakePreconditionProblems): Promise<void> {
+    switch (e) {
+    case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
+      vscode.window.showErrorMessage('Configuration is already in progress.');
+      break;
+    case CMakePreconditionProblems.NoSourceDirectoryFound:
+      vscode.window.showErrorMessage('You do not have a source directory open');
+      break;
+    case CMakePreconditionProblems.MissingCMakeListsFile:
+      const do_quickstart
+          = await vscode.window.showErrorMessage('You do not have a CMakeLists.txt', 'Quickstart a new CMake project');
+      if (do_quickstart) {
+        vscode.commands.executeCommand('cmake.quickStart');
+      }
+      break;
     }
   }
 
-  private getPreferedGenerators() : CMakeGenerator[] {
-      // User can override generator with a setting
-      const user_generator = this.workspaceContext.config.generator;
-      if (user_generator) {
-        log.debug(`Using generator from user configuration: ${user_generator}`);
-        return [{
-          name: user_generator,
-          platform: this.workspaceContext.config.platform || undefined,
-          toolset: this.workspaceContext.config.toolset || undefined,
-        }];
-      }
+  private getPreferedGenerators(): CMakeGenerator[] {
+    // User can override generator with a setting
+    const user_generator = this.workspaceContext.config.generator;
+    if (user_generator) {
+      log.debug(`Using generator from user configuration: ${user_generator}`);
+      return [{
+        name: user_generator,
+        platform: this.workspaceContext.config.platform || undefined,
+        toolset: this.workspaceContext.config.toolset || undefined,
+      }];
+    }
 
-      const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
-      return user_preferred;
+    const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
+    return user_preferred;
   }
 
   /**
@@ -268,18 +268,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.configurePreConditionProblemHandler(e);
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+        drv = await CMakeServerClientDriver
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+        drv = await LegacyCMakeDriver
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
       try {
         this._statusMessage.set('Starting CMake Server...');
-        drv = await LegacyCMakeDriver.create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+        drv = await LegacyCMakeDriver
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
@@ -441,9 +444,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   }
                 });
           } else if (e instanceof NoGeneratorError) {
-            vscode.window.showErrorMessage(
-                `Unable to determine what CMake generator to use. ` +
-                `Please install or configure a preferred generator, or update settings.json or your Kit configuration.`);
+            const message = `Unable to determine what CMake generator to use. ` +
+                `Please install or configure a preferred generator, or update settings.json, your Kit configuration or PATH variable.`;
+            log.error(message, e);
+            vscode.window.showErrorMessage(message);
           } else {
             throw e;
           }
@@ -711,7 +715,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const target = this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
     const buildargs = await drv.getCMakeBuildCommand(target);
-    return (buildargs)? buildCmdStr(buildargs.command, buildargs.args) : null;
+    return (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
   }
 
   /**
@@ -819,9 +823,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     }
 
-    vscode.workspace.openTextDocument(vscode.Uri.file(drv.cachePath)).then(doc => {
-      vscode.window.showTextDocument(doc);
-    });
+    vscode.workspace.openTextDocument(vscode.Uri.file(drv.cachePath))
+        .then(doc => { vscode.window.showTextDocument(doc); });
   }
 
   async buildWithTarget(): Promise<number> {
