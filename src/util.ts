@@ -230,7 +230,7 @@ export function product<T>(arrays: T[][]): T[][] {
 }
 
 export interface CMakeValue {
-  type: ('UNKNOWN'|'BOOL'|'STRING');  // There are more types, but we don't care ATM
+  type: ('UNKNOWN'|'BOOL'|'STRING'|'FILEPATH');  // There are more types, but we don't care ATM
   value: string;
 }
 

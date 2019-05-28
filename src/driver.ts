@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import * as codepages from './code-pages';
+import {ConfigurationReader} from './config';
 import * as expand from './expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
@@ -20,7 +21,6 @@ import * as proc from './proc';
 import rollbar from './rollbar';
 import * as util from './util';
 import {ConfigureArguments, VariantOption} from './variant';
-import { ConfigurationReader } from './config';
 
 const log = logging.createLogger('driver');
 
@@ -84,7 +84,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Construct the driver. Concrete instances should provide their own creation
    * routines.
    */
-  protected constructor(public readonly cmake: CMakeExecutable, readonly config: ConfigurationReader, private readonly __workspaceRootPath: string | null, readonly preconditionHandler: CMakePreconditionProblemSolver) {
+  protected constructor(public readonly cmake: CMakeExecutable,
+                        readonly config: ConfigurationReader,
+                        private readonly __workspaceRootPath: string|null,
+                        readonly preconditionHandler: CMakePreconditionProblemSolver) {
     // We have a cache of file-compilation terminals. Wipe them out when the
     // user closes those terminals.
     vscode.window.onDidCloseTerminal(closed => {
@@ -179,11 +182,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
    * `file://` scheme.
    */
-  protected get workspaceRootPath() {
-    return this.__workspaceRootPath;
-  }
+  protected get workspaceRootPath() { return this.__workspaceRootPath; }
 
-  protected variantKeywordSettings: Map<string, string> | null = null;
+  protected variantKeywordSettings: Map<string, string>|null = null;
 
   /**
    * The options that will be passed to `expand.expandString` for this driver.
@@ -217,9 +218,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {
     const cur_env = process.env as proc.EnvironmentVariables;
     const kit_env = (this.config.ignoreKitEnv) ? {} : this.getKitEnvironmentVariablesObject();
-    return util.mergeEnvironment(cur_env,
-                                 kit_env,
-                                 (opts && opts.environment) ? opts.environment : {});
+    return util.mergeEnvironment(cur_env, kit_env, (opts && opts.environment) ? opts.environment : {});
   }
 
   executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions):
@@ -307,18 +306,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug('CMakeDriver Kit set to', kit.name);
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit);
 
-    if(kit.preferredGenerator)
-      preferredGenerators.push( kit.preferredGenerator);
+    if (kit.preferredGenerator)
+      preferredGenerators.push(kit.preferredGenerator);
 
     this._generator = await this.findBestGenerator(preferredGenerators);
   }
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
-  protected get generator () : CMakeGenerator | null {
-    return this._generator;
-  }
-  protected _generator: CMakeGenerator | null = null;
+  protected get generator(): CMakeGenerator|null { return this._generator; }
+  protected _generator: CMakeGenerator|null = null;
   /**
    * The CMAKE_BUILD_TYPE to use
    */
@@ -482,13 +479,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
+  private nullableStringToString(arg: string|null|undefined): any { return arg === null ? 'empty' : arg; }
+
   private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent: true});
     try {
       const result = await child.result;
+      log.debug('Command version test return code', (result.retc === null ? 'empty' : result.retc));
       return result.retc == 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
+      log.debug('Command version test return code',
+                this.nullableStringToString(e2.code),
+                this.nullableStringToString(e2.code));
       if (e2.code == 'ENOENT') {
         return false;
       }
@@ -545,7 +548,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
    */
-  public async cleanConfigure(extra_args: string[],consumer?: proc.OutputConsumer): Promise<number> {
+  public async cleanConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -99;
@@ -570,79 +573,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return -1;
       }
 
-      const settings = {...this.config.configureSettings};
-
-      const _makeFlag = (key: string, cmval: util.CMakeValue) => {
-        switch (cmval.type) {
-        case 'UNKNOWN':
-          return `-D${key}=${cmval.value}`;
-        default:
-          return `-D${key}:${cmval.type}=${cmval.value}`;
-        }
-      };
-
-      util.objectPairs(this._variantConfigureSettings).forEach(([key, value]) => settings[key] = value);
-      if (this._variantLinkage !== null) {
-        settings.BUILD_SHARED_LIBS = this._variantLinkage === 'shared';
-      }
-
-      // Always export so that we have compile_commands.json
-      settings.CMAKE_EXPORT_COMPILE_COMMANDS = true;
-
-      if (!this.isMultiConf) {
-        // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
-        settings.CMAKE_BUILD_TYPE = this.currentBuildType;
-      }
-
-      // Only use the installPrefix config if the user didn't
-      // provide one via configureSettings
-      if (!settings.CMAKE_INSTALL_PREFIX && this.installDir) {
-        await this._refreshExpansions();
-        settings.CMAKE_INSTALL_PREFIX = this.installDir;
-      }
-
-      const settings_flags
-          = util.objectPairs(settings).map(([key, value]) => _makeFlag(key, util.cmakeify(value as string)));
-      const flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
-
-      console.assert(!!this._kit);
-      if (!this._kit) {
-        throw new Error('No kit is set!');
-      }
-      if (this._kit.compilers) {
-        log.debug('Using compilers in', this._kit.name, 'for configure');
-        flags.push(
-            ...util.objectPairs(this._kit.compilers).map(([lang, comp]) => `-DCMAKE_${lang}_COMPILER:FILEPATH=${comp}`));
-      }
-      if (this._kit.toolchainFile) {
-        log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
-        flags.push(`-DCMAKE_TOOLCHAIN_FILE=${this._kit.toolchainFile}`);
-      }
-      if (this._kit.cmakeSettings) {
-        flags.push(...util.objectPairs(this._kit.cmakeSettings).map(([key, val]) => _makeFlag(key, util.cmakeify(val))));
-      }
-
-      const cache_init_conf = this.config.cacheInit;
-      let cache_init: string[] = [];
-      if (cache_init_conf === null) {
-        // Do nothing
-      } else if (typeof cache_init_conf === 'string') {
-        cache_init = [cache_init_conf];
-      } else {
-        cache_init = cache_init_conf;
-      }
-      for (let init of cache_init) {
-        if (!path.isAbsolute(init)) {
-          init = path.join(this.sourceDir, init);
-        }
-        flags.push('-C', init);
-      }
+      const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
+      const define_flags = this.generateCMakeSettingsFlags();
+      const init_cache_flags = this.generateInitCacheFlags();
 
       // Get expanded configure environment
       const expanded_configure_env = await this.getConfigureEnvironment();
 
       // Expand all flags
-      const final_flags = flags.concat(settings_flags);
+      const final_flags = common_flags.concat(define_flags, init_cache_flags);
       const opts = this.expansionOptions;
       const expanded_flags_promises = final_flags.map(
           async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
@@ -654,10 +593,83 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       const retc = await this.doConfigure(expanded_flags, consumer);
       return retc;
-    } finally {
-      this.configRunning = false;
+    } finally { this.configRunning = false; }
+  }
+
+  private generateInitCacheFlags(): string[] {
+    const cache_init_conf = this.config.cacheInit;
+    let cache_init: string[] = [];
+    if (cache_init_conf === null) {
+      // Do nothing
+    } else if (typeof cache_init_conf === 'string') {
+      cache_init = [cache_init_conf];
+    } else {
+      cache_init = cache_init_conf;
     }
 
+    const flags: string[] = [];
+    for (let init of cache_init) {
+      if (!path.isAbsolute(init)) {
+        init = path.join(this.sourceDir, init);
+      }
+      flags.push('-C', init);
+    }
+    return flags;
+  }
+
+  private generateCMakeSettingsFlags(): string[] {
+    const settingMap: {[key: string]: util.CMakeValue} = {};
+
+    util.objectPairs(this.config.configureSettings)
+        .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+    util.objectPairs(this._variantConfigureSettings)
+        .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+    if (this._variantLinkage !== null) {
+      settingMap.BUILD_SHARED_LIBS = util.cmakeify(this._variantLinkage === 'shared');
+    }
+
+    // Always export so that we have compile_commands.json
+    settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(true);
+
+    if (!this.isMultiConf) {
+      // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
+      settingMap.CMAKE_BUILD_TYPE = util.cmakeify(this.currentBuildType);
+    }
+
+    // Only use the installPrefix config if the user didn't
+    // provide one via configureSettings
+    if (!settingMap.CMAKE_INSTALL_PREFIX && this.installDir) {
+      settingMap.CMAKE_INSTALL_PREFIX = {type: 'FILEPATH', value: this.installDir} as util.CMakeValue;
+    }
+
+    console.assert(!!this._kit);
+    if (!this._kit) {
+      throw new Error('No kit is set!');
+    }
+    if (this._kit.compilers) {
+      log.debug('Using compilers in', this._kit.name, 'for configure');
+      for (const lang in this._kit.compilers) {
+        const compiler = this._kit.compilers[lang];
+        settingMap[`CMAKE_${lang}_COMPILER`] = {type: 'FILEPATH', value: compiler} as util.CMakeValue;
+      }
+    }
+    if (this._kit.toolchainFile) {
+      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+      settingMap.CMAKE_TOOLCHAIN_FILE = {type: 'FILEPATH', value: this._kit.toolchainFile} as util.CMakeValue;
+    }
+    if (this._kit.cmakeSettings) {
+      util.objectPairs(this._kit.cmakeSettings)
+          .forEach(([key, value]) => settingMap[key] = util.cmakeify(value as string));
+    }
+
+    return util.objectPairs(settingMap).map(([key, value]) => {
+      switch (value.type) {
+      case 'UNKNOWN':
+        return `-D${key}=${value.value}`;
+      default:
+        return `-D${key}:${value.type}=${value.value}`;
+      }
+    });
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
@@ -747,7 +759,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const expanded_args = await Promise.all(expanded_args_promises) as string[];
     log.trace('CMake build args are: ', JSON.stringify(expanded_args));
 
-    return { command: this.cmake.path, args: expanded_args, build_env };
+    return {command: this.cmake.path, args: expanded_args, build_env};
   }
 
   private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
@@ -761,14 +773,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
           outputEnc = 'utf8';
         }
       }
-      const exeOpt: proc.ExecutionOptions = {environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask};
+      const exeOpt: proc.ExecutionOptions
+          = {environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask};
       const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
       this._currentProcess = child;
       await child.result;
       this._currentProcess = null;
       return child;
-    }
-    else return null;
+    } else
+      return null;
   }
 
   /**
@@ -779,7 +792,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!cur) {
       return false;
     }
-    if (cur.child) await util.termProc(cur.child);
+    if (cur.child)
+      await util.termProc(cur.child);
     return true;
   }
 
@@ -804,7 +818,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Asynchronous initialization. Should be called by base classes during
    * their initialization.
    */
-  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferedGenerators: CMakeGenerator[]): Promise<T> {
+  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferedGenerators: CMakeGenerator[]):
+      Promise<T> {
     await inst._baseInit(kit, preferedGenerators);
     return inst;
   }
