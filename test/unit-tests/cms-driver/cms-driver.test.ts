@@ -54,7 +54,8 @@ suite('CMake-Server-Driver tests', () => {
     expect(fs.existsSync(build_dir)).to.be.false;
   });
 
-  teardown(async () => {
+  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+    this.timeout(20000);
     if (driver) {
       await driver.asyncDispose();
       driver = null;
