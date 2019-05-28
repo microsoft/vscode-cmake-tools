@@ -47,6 +47,7 @@ suite('CMake-Server-Driver tests', () => {
   }
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
+    driver = null;
     const build_dir = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project/build');
     if (fs.existsSync(build_dir)) {
       rimraf.sync(build_dir);
@@ -58,7 +59,6 @@ suite('CMake-Server-Driver tests', () => {
     this.timeout(20000);
     if (driver) {
       await driver.asyncDispose();
-      driver = null;
     }
   });
 
@@ -104,22 +104,6 @@ suite('CMake-Server-Driver tests', () => {
     expect(driver.executableTargets[0].name).to.be.equal('TestBuildProcess');
     expect(fs.existsSync(driver.executableTargets[0].path)).to.be.true;
   }).timeout(90000);
-
-  test('Reuse workspace', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
-    const config = ConfigurationReader.createForDirectory(root);
-    const executeable = await getCMakeExecutableInformation('cmake');
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executeable, config, kitDefault, project_root, async () => {}, []);
-    expect(await driver.cleanConfigure([])).to.be.eq(0);
-    expect(await driver.build(driver.allTargetName)).to.be.eq(0);
-
-    expect(driver.executableTargets.length).to.be.eq(1);
-    expect(driver.executableTargets[0].name).to.be.equal('TestBuildProcess');
-    expect(fs.existsSync(driver.executableTargets[0].path)).to.be.true;
-  }).timeout(60000);
 
   test('Configure fails on invalid prefered generator', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
@@ -170,7 +154,7 @@ suite('CMake-Server-Driver tests', () => {
     expect(await configure1).to.be.equal(0);
     expect(await configure2).to.be.equal(-99);
     expect(called).to.be.true;
-  }).timeout(60000);
+  }).timeout(90000);
 
   test('No parallel clean configuration', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
@@ -191,7 +175,7 @@ suite('CMake-Server-Driver tests', () => {
     expect(await configure1).to.be.equal(0);
     expect(await configure2).to.be.equal(-99);
     expect(called).to.be.true;
-  }).timeout(60000);
+  }).timeout(90000);
 
 
   test('Test preconfigured workspace', async () => {
@@ -241,7 +225,7 @@ suite('CMake-Server-Driver tests', () => {
                  .create(executeable, config, kitDefault, project_root, async () => {}, []);
     await driver.configure(['-DEXTRA_ARGS_TEST=Hallo']);
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
-  }).timeout(60000);
+  }).timeout(90000);
 
   test('Test extra arguments on clean and configure', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
@@ -253,5 +237,5 @@ suite('CMake-Server-Driver tests', () => {
                        .create(executeable, config, kitDefault, project_root, async () => {}, []);
     await driver.cleanConfigure(['-DEXTRA_ARGS_TEST=Hallo']);
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
-  }).timeout(60000);
+  }).timeout(90000);
 });

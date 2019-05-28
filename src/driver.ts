@@ -639,7 +639,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Only use the installPrefix config if the user didn't
     // provide one via configureSettings
     if (!settingMap.CMAKE_INSTALL_PREFIX && this.installDir) {
-      settingMap.CMAKE_INSTALL_PREFIX = {type: 'FILEPATH', value: this.installDir} as util.CMakeValue;
+      settingMap.CMAKE_INSTALL_PREFIX = util.cmakeify(this.installDir);
     }
 
     console.assert(!!this._kit);
