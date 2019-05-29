@@ -159,6 +159,21 @@ export class CMakeServerClientDriver extends CMakeDriver {
       log.error('Found no matching code model for the current build type. This shouldn\'t be possible');
       return [];
     }
+    const metaTargets = [{
+      type: 'rich' as 'rich',
+      name: this.allTargetName,
+      filepath: 'A special target to build all available targets',
+      targetType: 'META',
+    }];
+    if(build_config.projects.some(project => (project.hasInstallRule)? project.hasInstallRule: false))
+    {
+      metaTargets.push({
+        type: 'rich' as 'rich',
+        name: 'install',
+        filepath: 'A special target to install all available targets',
+        targetType: 'META',
+      });
+    }
     return build_config.projects.reduce<RichTarget[]>((acc, project) => acc.concat(project.targets.map(
                                                           t => ({
                                                             type: 'rich' as 'rich',
@@ -168,12 +183,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
                                                                 : 'Utility target',
                                                             targetType: t.type,
                                                           }))),
-                                                      [{
-                                                        type: 'rich' as 'rich',
-                                                        name: this.allTargetName,
-                                                        filepath: 'A special target to build all available targets',
-                                                        targetType: 'META',
-                                                      }]);
+                                                      metaTargets);
   }
 
   get executableTargets(): ExecutableTarget[] {
