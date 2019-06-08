@@ -8,11 +8,13 @@ import paths from '@cmt/paths';
 import {execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import {InvalidVersionString, ProgressHandle, Version, versionLess, versionToString} from '@cmt/util';
+import {https} from 'follow-redirects';
 import * as fs from 'fs';
-import * as https from 'https';
+import * as url_mod from 'url';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
+import { ClientRequestArgs } from 'http';
 
 const log = createLogger('cm-upgrade');
 
@@ -40,8 +42,10 @@ async function downloadFile(url: string, opt: {prefix: string, postfix: string},
             return;
           }
           try {
-            const ostream = fs.createWriteStream(fpath, {fd});
-            const req = https.get(url, res => {
+            const ostream = fs.createWriteStream(fpath, { fd });
+            const reqOptions: ClientRequestArgs = url_mod.parse(url);
+            (reqOptions as any).maxBodyLength = 1024 * 1024 * 60;
+            const req = https.get(reqOptions, res => {
               if (res.statusCode !== 200) {
                 reject(new Error('Non-200 response when downloading new CMake installer'));
                 return;

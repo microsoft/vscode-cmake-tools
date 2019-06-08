@@ -45,6 +45,8 @@
     "onCommand:cmake.install",
     "onCommand:cmake.launchTarget",
     "onCommand:cmake.launchTargetPath",
+    "onCommand:cmake.launchTargetDirectory",
+    "onCommand:cmake.tasksBuildCommand",
     "onCommand:cmake.quickStart",
     "onCommand:cmake.resetState",
     "onCommand:cmake.scanForKits",
@@ -866,6 +868,18 @@
           "description": "Enable CMake server",
           "scope": "resource"
         },
+        "cmake.ignoreKitEnv": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not use the kit environment variables when running CMake commands",
+          "scope": "resource"
+        },
+        "cmake.buildTask": {
+          "type": "boolean",
+          "default": false,
+          "description": "Build using tasks.json instead of internal process",
+          "scope": "resource"
+        },
         "cmake.outputLogEncoding": {
           "type": "string",
           "default": "auto",
@@ -978,7 +992,7 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "lint:nofix": "node ./node_modules/tslint/bin/tslint -p .",
-    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/"
+    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
   "devDependencies": {
     "@types/ajv": "^0.0.3",
@@ -1001,13 +1015,14 @@
     "sinon": "~5.0.7",
     "ts-node": "^6.0.0",
     "tslint": "^5.9.1",
-    "typedoc": "~0.11.1",
-    "typescript": "~2.8.3",
+    "typedoc": "~0.13.0",
+    "typescript": "~3.2.2",
     "vscode": "1.1.21"
   },
   "dependencies": {
     "ajv": "^4.7.5",
     "es6-promisify": "~5.0.0",
+    "follow-redirects": "^1.5.10",
     "iconv-lite": "^0.4.21",
     "js-yaml": "^3.6.1",
     "json5": "^0.5.1",

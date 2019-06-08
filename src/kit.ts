@@ -488,6 +488,7 @@ const VsArchitectures: {[key: string]: string} = {
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: {[key: string]: string} = {
+  10: 'Visual Studio 10 2010',
   11: 'Visual Studio 11 2012',
   VS120COMNTOOLS: 'Visual Studio 12 2013',
   12: 'Visual Studio 12 2013',

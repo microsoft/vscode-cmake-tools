@@ -248,6 +248,7 @@ export interface CodeModelProject {
   sourceDirectory: string;
   buildDirectory: string;
   targets: CodeModelTarget[];
+  hasInstallRule?: boolean;
 }
 
 export interface CodeModelConfiguration {
@@ -364,7 +365,6 @@ interface MessageResolutionCallbacks {
 
 
 export class CMakeServerClient {
-  private _proc: child_proc.ChildProcess;
   private _accInput: string = '';
   private readonly _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
   private readonly _params: ClientInitPrivate;
@@ -521,11 +521,11 @@ export class CMakeServerClient {
     }
     this._pipeFilePath = pipe_file;
     const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables,
-                                            params.environment as proc.EnvironmentVariables);
-    const child = this._proc
-        = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
-            env: final_env, cwd: params.binaryDir
-          });
+      params.environment as proc.EnvironmentVariables);
+    const child
+      = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
+        env: final_env, cwd: params.binaryDir
+      });
     log.debug(`Started new CMake Server instance with PID ${child.pid}`);
     child.stdout.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
     child.stderr.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
@@ -546,7 +546,6 @@ export class CMakeServerClient {
       });
       const exit_promise = new Promise<void>(resolve => { child.on('exit', () => { resolve(); }); });
       this._endPromise = Promise.all([end_promise, exit_promise]).then(() => {});
-      this._proc = child;
       child.on('close', (retc: number, signal: string) => {
         if (retc !== 0) {
           log.error('The connection to cmake-server was terminated unexpectedly');

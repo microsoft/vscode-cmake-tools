@@ -23,6 +23,23 @@ export function replaceAll(str: string, needle: string, what: string) {
 }
 
 /**
+ * Fix slashes in Windows paths for CMake
+ * @param str The input string
+ * @returns The modified string with fixed paths
+ */
+export function fixPaths(str: string) {
+  const fix_paths = /[A-Z]:(\\((?![<>:\"\/\\|\?\*]).)+)*\\?(?!\\)/gi;
+  let pathmatch: RegExpMatchArray|null = null;
+  let newstr = str;
+  while ((pathmatch = fix_paths.exec(str))) {
+    const pathfull = pathmatch[0];
+    const fixslash = pathfull.replace(/\\/g, '/');
+    newstr = newstr.replace(pathfull, fixslash);
+  }
+  return newstr;
+}
+
+/**
  * Remove all occurrences of a list of strings from a string.
  * @param str The input string
  * @param patterns Strings to remove from `str`
@@ -329,7 +346,7 @@ export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVar
       // Env vars on windows are case insensitive, so we take the ones from
       // active env and overwrite the ones in our current process env
       const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>((acc2, key: string) => {
-        acc2[key.toUpperCase()] = vars[key];
+        acc2[normalizeEnvironmentVarname(key)] = vars[key];
         return acc2;
       }, {});
       return {...acc, ...norm_vars};
@@ -340,7 +357,7 @@ export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVar
 }
 
 export function normalizeEnvironmentVarname(varname: string) {
-  return process.platform == 'win32' ? varname.toLocaleLowerCase() : varname;
+  return process.platform == 'win32' ? varname.toUpperCase() : varname;
 }
 
 export function parseCompileDefinition(str: string): [string, string|null] {
