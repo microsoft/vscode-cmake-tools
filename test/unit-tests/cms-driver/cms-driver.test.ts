@@ -1,5 +1,5 @@
 import {getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
-import * as cms_driver from '@cmt/cms-driver';
+import * as cms_driver from '@cmt/drivers/cms-driver';
 import {ConfigurationReader} from '@cmt/config';
 import * as chai from 'chai';
 import {expect} from 'chai';
@@ -11,7 +11,7 @@ import * as rimraf from 'rimraf';
 chai.use(chaiString);
 
 import {Kit} from '@cmt/kit';
-import {CMakePreconditionProblems, CMakeDriver} from '@cmt/driver';
+import {CMakePreconditionProblems, CMakeDriver} from '@cmt/drivers/driver';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {

@@ -9,18 +9,18 @@ import * as shlex from '@cmt/shlex';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import * as api from './api';
-import * as codepages from './code-pages';
-import {ConfigurationReader} from './config';
-import * as expand from './expand';
-import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
-import * as logging from './logging';
-import paths from './paths';
-import {fs} from './pr';
-import * as proc from './proc';
-import rollbar from './rollbar';
-import * as util from './util';
-import {ConfigureArguments, VariantOption} from './variant';
+import * as api from '@cmt/api';
+import * as codepages from '@cmt/code-pages';
+import {ConfigurationReader} from '@cmt/config';
+import * as expand from '@cmt/expand';
+import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from '@cmt/kit';
+import * as logging from '@cmt/logging';
+import paths from '@cmt/paths';
+import {fs} from '@cmt/pr';
+import * as proc from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
+import {ConfigureArguments, VariantOption} from '@cmt/variant';
 
 const log = logging.createLogger('driver');
 

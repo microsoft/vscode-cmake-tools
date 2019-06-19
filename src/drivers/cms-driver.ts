@@ -3,16 +3,16 @@ import {InputFileSet} from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import * as api from './api';
-import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
-import * as cache from './cache';
-import * as cms from './cms-client';
-import {CMakeDriver, CMakePreconditionProblemSolver} from './driver';
-import {Kit, CMakeGenerator} from './kit';
-import {createLogger} from './logging';
-import * as proc from './proc';
-import rollbar from './rollbar';
-import { ConfigurationReader } from './config';
+import * as api from '@cmt/api';
+import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
+import * as cache from '@cmt/cache';
+import * as cms from '@cmt/cms-client';
+import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {Kit, CMakeGenerator} from '@cmt/kit';
+import {createLogger} from '@cmt/logging';
+import * as proc from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
+import { ConfigurationReader } from '@cmt/config';
 
 const log = createLogger('cms-driver');
 

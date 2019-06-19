@@ -6,17 +6,16 @@
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as vscode from 'vscode';
 
-import * as api from './api';
-import {CMakeCache} from './cache';
-import {CMakeDriver, CMakePreconditionProblemSolver} from './driver';
-import {Kit, CMakeGenerator} from './kit';
-// import * as proc from './proc';
-import * as logging from './logging';
-import {fs} from './pr';
-import * as proc from './proc';
-import rollbar from './rollbar';
-import * as util from './util';
-import { ConfigurationReader } from './config';
+import * as api from '@cmt/api';
+import {CMakeCache} from '@cmt/cache';
+import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {Kit, CMakeGenerator} from '@cmt/kit';
+import * as logging from '@cmt/logging';
+import {fs} from '@cmt/pr';
+import * as proc from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
+import { ConfigurationReader } from '@cmt/config';
 
 const log = logging.createLogger('legacy-driver');
 
