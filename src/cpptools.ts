@@ -6,7 +6,7 @@
  */ /** */
 
 import {CMakeCache} from '@cmt/cache';
-import * as cms from '@cmt/cms-client';
+import * as cms from '@cmt/drivers/cms-client';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';

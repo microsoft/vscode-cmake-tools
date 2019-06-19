@@ -3,7 +3,7 @@
  */ /** */
 
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
-import {ProgressMessage} from '@cmt/cms-client';
+import {ProgressMessage} from '@cmt/drivers/cms-client';
 import {CompileCommand} from '@cmt/compdb';
 import * as shlex from '@cmt/shlex';
 import * as path from 'path';

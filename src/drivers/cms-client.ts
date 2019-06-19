@@ -2,13 +2,13 @@ import * as child_proc from 'child_process';
 import * as net from 'net';
 import * as path from 'path';
 
-import * as cache from './cache';
-import {CMakeGenerator} from './kit';
-import {createLogger} from './logging';
-import {fs} from './pr';
-import * as proc from './proc';
-import rollbar from './rollbar';
-import * as util from './util';
+import * as cache from '@cmt/cache';
+import {CMakeGenerator} from '@cmt/kit';
+import {createLogger} from '@cmt/logging';
+import {fs} from '@cmt/pr';
+import * as proc from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
 
 const log = createLogger('cms-client');
 

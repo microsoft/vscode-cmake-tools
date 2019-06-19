@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as api from '@cmt/api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
 import * as cache from '@cmt/cache';
-import * as cms from '@cmt/cms-client';
+import * as cms from '@cmt/drivers/cms-client';
 import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
