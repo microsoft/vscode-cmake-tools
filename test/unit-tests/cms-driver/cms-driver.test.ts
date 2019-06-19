@@ -193,6 +193,7 @@ suite('CMake-Server-Driver tests', () => {
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executeable, config, kitDefault, project_root, async () => {}, []);
     expect(await driver.configure([])).to.be.eq(0);
+    expect(driver.generatorName).to.be.eq(kitNinja.preferredGenerator!.name);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(60000);
 

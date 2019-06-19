@@ -21,7 +21,7 @@ function getTestRootFilePath(filename: string): string {
 let driver: CMakeDriver|null = null;
 // tslint:disable:no-unused-expression
 
-suite.only('CMake-Server-Driver tests', () => {
+suite('CMake-FileApi-Driver tests', () => {
   let kitDefault: Kit;
   if (process.platform === 'win32') {
     kitDefault = {
@@ -180,7 +180,7 @@ suite.only('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
 
-  test.only('Test preconfigured workspace', async () => {
+  test('Test preconfigured workspace', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
@@ -195,6 +195,7 @@ suite.only('CMake-Server-Driver tests', () => {
     driver = await cmfile_driver.CMakeFileApiDriver
                  .create(executeable, config, kitDefault, project_root, async () => {}, []);
     expect(await driver.configure([])).to.be.eq(0);
+    expect(driver.generatorName).to.be.eq(kitNinja.preferredGenerator!.name);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(60000);
 
