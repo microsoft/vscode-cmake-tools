@@ -1,6 +1,6 @@
 import {getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
-import * as cmfile_driver from '@cmt/drivers/cmfileapi-driver';
 import {ConfigurationReader} from '@cmt/config';
+import * as cmfile_driver from '@cmt/drivers/cmfileapi-driver';
 import * as chai from 'chai';
 import {expect} from 'chai';
 import * as chaiString from 'chai-string';
@@ -28,7 +28,7 @@ suite('CMake-FileApi-Driver tests', () => {
       name: 'Visual Studio Community 2017 - amd64',
       visualStudio: 'VisualStudio.15.0',
       visualStudioArchitecture: 'amd64',
-      preferredGenerator: {name: 'Visual Studio 15 2017', platform: 'x64'}
+      preferredGenerator: {name: 'Visual Studio 15 2017'}
     } as Kit;
   } else {
     kitDefault = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Unix Makefiles'}} as Kit;
@@ -47,12 +47,12 @@ suite('CMake-FileApi-Driver tests', () => {
   }
 
   setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
-    const build_dir = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project/build');
+    const build_dir = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project/build');
     if (fs.existsSync(build_dir)) {
       rimraf.sync(build_dir);
     }
-    if(fs.existsSync(build_dir)) {
-      done("Build folder still exists");
+    if (fs.existsSync(build_dir)) {
+      done('Build folder still exists');
     }
     done();
   });
@@ -65,8 +65,8 @@ suite('CMake-FileApi-Driver tests', () => {
   });
 
   test(`All target for ${kitDefault.name}`, async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -81,19 +81,19 @@ suite('CMake-FileApi-Driver tests', () => {
   }).timeout(60000);
 
   test('Check binary dir', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
     driver = await cmfile_driver.CMakeFileApiDriver
                  .create(executeable, config, kitDefault, project_root, async () => {}, []);
-    expect(driver.binaryDir).to.endsWith('test/unit-tests/cms-driver/workspace/test_project/build');
+    expect(driver.binaryDir).to.endsWith('test/unit-tests/cmfileapi-driver/workspace/test_project/build');
   }).timeout(60000);
 
   test('Build', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -108,8 +108,8 @@ suite('CMake-FileApi-Driver tests', () => {
   }).timeout(90000);
 
   test('Configure fails on invalid prefered generator', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -121,8 +121,8 @@ suite('CMake-FileApi-Driver tests', () => {
   }).timeout(60000);
 
   test('Try build on empty dir', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/empty_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/empty_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -138,8 +138,8 @@ suite('CMake-FileApi-Driver tests', () => {
   }).timeout(60000);
 
   test('No parallel configuration', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -159,8 +159,8 @@ suite('CMake-FileApi-Driver tests', () => {
   }).timeout(90000);
 
   test('No parallel clean configuration', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -181,8 +181,8 @@ suite('CMake-FileApi-Driver tests', () => {
 
 
   test('Test preconfigured workspace', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -199,9 +199,9 @@ suite('CMake-FileApi-Driver tests', () => {
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(60000);
 
-  test('Test generator switch', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+  test('Test kit switch', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -209,18 +209,15 @@ suite('CMake-FileApi-Driver tests', () => {
                  .create(executeable, config, kitDefault, project_root, async () => {}, []);
     await driver.cleanConfigure([]);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.not.eq('Ninja');
-    await driver.asyncDispose();
-    driver = null;
 
-    driver = await cmfile_driver.CMakeFileApiDriver
-                 .create(executeable, config, kitNinja, project_root, async () => {}, []);
-    expect(await driver.cleanConfigure([])).to.be.eq(0);
+    await driver.setKit(kitNinja, [kitNinja.preferredGenerator!]);
+    expect(await driver.configure([])).to.be.eq(0);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(90000);
 
   test('Test extra arguments on configure', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
@@ -231,13 +228,13 @@ suite('CMake-FileApi-Driver tests', () => {
   }).timeout(90000);
 
   test('Test extra arguments on clean and configure', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const project_root = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executeable = await getCMakeExecutableInformation('cmake');
 
     driver = await cmfile_driver.CMakeFileApiDriver
-                       .create(executeable, config, kitDefault, project_root, async () => {}, []);
+                 .create(executeable, config, kitDefault, project_root, async () => {}, []);
     await driver.cleanConfigure(['-DEXTRA_ARGS_TEST=Hallo']);
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
   }).timeout(90000);

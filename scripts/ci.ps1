@@ -108,7 +108,7 @@ Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-once
 Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
 
 # Get the CMake binary that we will use to run our tests
-$cmake_binary = Install-TestCMake -Version "3.10.0"
+$cmake_binary = Install-TestCMake -Version "3.15.0-rc1"
 
 # Get the Ninja binary that we will use to run our tests
 $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"

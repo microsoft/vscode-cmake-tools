@@ -8,6 +8,18 @@ import * as path from 'path';
 
 const log = logging.createLogger('cmakefileapi-helper');
 
+export async function createQueryFileForApi(api_path: string): Promise<string> {
+  const query_path = path.join(api_path, 'query', 'client-vscode');
+  const query_file_path = path.join(query_path, 'query.json');
+  await fs.mkdir_p(query_path);
+
+  const requests
+      = {requests: [{kind: 'cache', version: 2}, {kind: 'codemodel', version: 2}, {kind: 'cmakeFiles', version: 1}]};
+
+  await fs.writeFile(query_file_path, JSON.stringify(requests));
+  return query_file_path;
+}
+
 export async function loadIndexFile(reply_path: string): Promise<index_api.Index.IndexFile> {
   log.debug(`Read reply folder: ${reply_path}`);
   const files = await fs.readdir(path.join(reply_path));
@@ -35,7 +47,8 @@ function findPropertyValue(cacheElement: index_api.Cache.CMakeCacheEntry, name: 
   return property_element ? property_element.value : '';
 }
 
-function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.CacheContent) {
+function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.CacheContent):
+    Map<string, api.CacheEntry> {
   return cache_from_cmake.entries.reduce((acc, el) => {
     const entry_type_translation_map: {[key: string]: api.CacheEntryType|undefined;} = {
       BOOL: api.CacheEntryType.Bool,
@@ -56,4 +69,54 @@ function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.C
     acc.set(el.name, new cache.Entry(el.name, el.value, type, helpstring, advanced === '1'));
     return acc;
   }, new Map<string, api.CacheEntry>());
+}
+
+export async function loadCodeModelContent(filename: string): Promise<index_api.CodeModelKind.Content> {
+  const file_content = await fs.readFile(filename);
+  return JSON.parse(file_content.toString()) as index_api.CodeModelKind.Content;
+}
+
+export async function loadTargetObject(filename: string): Promise<index_api.CodeModelKind.TargetObject> {
+  const file_content = await fs.readFile(filename);
+  return JSON.parse(file_content.toString()) as index_api.CodeModelKind.TargetObject;
+}
+
+async function ConvertTargetObjectFileToExtensionTarget(build_dir: string, file_path: string): Promise<api.Target> {
+  const targetObject = await loadTargetObject(file_path);
+
+  let executable_path = undefined;
+  if (targetObject.artifacts) {
+    executable_path = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
+    if (executable_path) {
+      executable_path = path.normalize(path.join(build_dir, executable_path.path));
+    }
+  }
+
+  return {
+    name: targetObject.name,
+    filepath: executable_path ? executable_path : 'Utility target',
+    targetType: targetObject.type,
+    type: 'rich' as 'rich'
+  } as api.RichTarget;
+}
+
+export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string,
+                                                              builddir: string,
+                                                              configuration: index_api.CodeModelKind.Configuration):
+    Promise<{name: string, targets: api.Target[]}> {
+  const targetsList = Promise.all(configuration.targets.map(
+      t => ConvertTargetObjectFileToExtensionTarget(builddir, path.join(reply_path, t.jsonFile))));
+
+  return {name: configuration.name, targets: await targetsList};
+}
+
+export async function loadConfigurationTargetMap(reply_path: string, codeModel_filename: string) {
+  const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
+  const build_dir = codeModelContent.paths.build;
+  const targets = await Promise.all(codeModelContent.configurations.map(
+      config_element => loadAllTargetsForBuildTypeConfiguration(reply_path, build_dir, config_element)));
+  return targets.reduce((acc, el) => {
+    acc.set(el.name, el.targets);
+    return acc;
+  }, new Map<string, api.Target[]>());
 }
