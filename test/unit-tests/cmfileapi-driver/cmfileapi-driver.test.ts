@@ -91,6 +91,17 @@ suite('CMake-FileApi-Driver tests', () => {
     expect(driver.binaryDir).to.endsWith('test/unit-tests/cmfileapi-driver/workspace/test_project/build');
   }).timeout(60000);
 
+  test('Configure fails', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/bad_command');
+    const config = ConfigurationReader.createForDirectory(root);
+    const executeable = await getCMakeExecutableInformation('cmake');
+
+    driver = await cmfile_driver.CMakeFileApiDriver
+                 .create(executeable, config, kitDefault, project_root, async () => {}, []);
+    expect(await driver.cleanConfigure([])).to.be.eq(1);
+  }).timeout(90000);
+
   test('Build', async () => {
     const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
     const project_root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');

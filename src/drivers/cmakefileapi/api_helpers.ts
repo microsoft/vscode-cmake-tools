@@ -20,9 +20,13 @@ export async function createQueryFileForApi(api_path: string): Promise<string> {
   return query_file_path;
 }
 
-export async function loadIndexFile(reply_path: string): Promise<index_api.Index.IndexFile> {
+export async function loadIndexFile(reply_path: string): Promise<index_api.Index.IndexFile|null> {
   log.debug(`Read reply folder: ${reply_path}`);
-  const files = await fs.readdir(path.join(reply_path));
+  if (!await fs.exists(reply_path)) {
+    return null;
+  }
+
+  const files = await fs.readdir(reply_path);
   log.debug(`Found index files: ${JSON.stringify(files)}`);
 
   const index_file = files.find(filename => filename.startsWith('index-'));

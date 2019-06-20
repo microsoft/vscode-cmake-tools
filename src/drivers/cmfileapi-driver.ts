@@ -22,9 +22,9 @@ import {fs} from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
-import {Exception} from 'handlebars';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import {NoGeneratorError} from './cms-driver';
 
 const log = logging.createLogger('cmakefileapi-driver');
 /**
@@ -91,6 +91,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
     } else {
       this._generatorInformation = this.generator;
     }
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
+
     this._cacheWatcher.onDidChange(() => {
       log.debug(`Reload CMake cache: ${this.cachePath} changed`);
       rollbar.invokeAsync('Reloading CMake Cache', () => this._reloadPostConfigure());
@@ -160,22 +164,24 @@ export class CMakeFileApiDriver extends CMakeDriver {
   private async _reloadPostConfigure() {
     const reply_path = this.getCMakeReplyPath();
     const indexFile = await loadIndexFile(reply_path);
-    this._generatorInformation = indexFile.cmake.generator;
+    if (indexFile) {
+      this._generatorInformation = indexFile.cmake.generator;
 
-    // load cache
-    const cache_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'cache');
-    if (!cache_obj) {
-      throw Exception('No cache object found');
+      // load cache
+      const cache_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'cache');
+      if (!cache_obj) {
+        throw Error('No cache object found');
+      }
+
+      this._cache = await loadCacheContent(path.join(reply_path, cache_obj.jsonFile));
+
+      // load targets
+      const codemodel_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'codemodel');
+      if (!codemodel_obj) {
+        throw Error('No code model object found');
+      }
+      this._target_map = await loadConfigurationTargetMap(reply_path, codemodel_obj.jsonFile);
     }
-
-    this._cache = await loadCacheContent(path.join(reply_path, cache_obj.jsonFile));
-
-    // load targets
-    const codemodel_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'codemodel');
-    if (!codemodel_obj) {
-      throw Exception('No code model object found');
-    }
-    this._target_map = await loadConfigurationTargetMap(reply_path, codemodel_obj.jsonFile);
   }
 
   get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
