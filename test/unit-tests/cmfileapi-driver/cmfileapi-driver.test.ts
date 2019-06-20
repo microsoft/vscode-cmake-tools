@@ -28,7 +28,7 @@ suite('CMake-FileApi-Driver tests', () => {
       name: 'Visual Studio Community 2017 - amd64',
       visualStudio: 'VisualStudio.15.0',
       visualStudioArchitecture: 'amd64',
-      preferredGenerator: {name: 'Visual Studio 15 2017'}
+      preferredGenerator: {name: 'Visual Studio 15 2017', platform: 'x64'}
     } as Kit;
   } else {
     kitDefault = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Unix Makefiles'}} as Kit;
