@@ -112,7 +112,23 @@ $cmake_binary = Install-TestCMake -Version "3.15.0-rc2"
 $Env:CMAKE_EXECUTABLE = $cmake_binary
 
 # Add cmake to search path environment variable
-$Env:PATH = (get-item $cmake_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH
+if ($PSVersionTable.Platform -eq "Unix") {
+    function set_cmake_in_path( $file, $cmake_path ) {
+        $start = "export CMAKE_BIN_DIR="
+        $content = Get-Content $file
+        if ( $content -match "^$start" ) {
+            $content -replace "^$start.*", "$start$cmake_path" |
+            Set-Content $file
+        } else {
+            Add-Content $file "$start$cmake_path"
+            Add-Content $file 'export PATH=$CMAKE_BIN_DIR:$PATH'
+        }
+    }
+
+    set_cmake_in_path "~/.bashrc" (get-item $cmake_binary).Directory.FullName
+} else {
+    $Env:PATH = (get-item $cmake_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH
+}
 
 # Get the Ninja binary that we will use to run our tests
 $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"
