@@ -7,6 +7,7 @@ smokeSuite('bad-project', suite => {
     return test.withCMakeTools({
       kit: await smokeTestDefaultKit(),
       async run(cmt) {
+        expect( (await cmt.getCMakeExecutable()).isFileApiModSupported).to.be.equal(true);
         const retc = await cmt.configure();
         // Test will fail because of a bad command:
         expect(retc, 'Configure should have failed').to.eq(1);

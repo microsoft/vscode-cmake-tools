@@ -109,6 +109,7 @@ Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
 
 # Get the CMake binary that we will use to run our tests
 $cmake_binary = Install-TestCMake -Version "3.15.0-rc2"
+$Env:CMAKE_EXECUTABLE = $cmake_binary
 
 # Add cmake to search path environment variable
 $Env:PATH = (get-item $cmake_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH

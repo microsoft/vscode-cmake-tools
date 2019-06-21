@@ -24,6 +24,9 @@ export class DefaultEnvironment {
       return Promise.resolve(undefined);
     });
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+    if (process.env.CMAKE_EXECUTABLE) {
+      this.config.updatePartial( {cmakePath: process.env.CMAKE_EXECUTABLE});
+    }
   }
 
   readonly sandbox = sinon.createSandbox();
