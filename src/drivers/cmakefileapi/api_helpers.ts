@@ -86,7 +86,7 @@ export async function loadTargetObject(filename: string): Promise<index_api.Code
   return JSON.parse(file_content.toString()) as index_api.CodeModelKind.TargetObject;
 }
 
-async function ConvertTargetObjectFileToExtensionTarget(build_dir: string, file_path: string): Promise<api.Target> {
+async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_path: string): Promise<api.Target> {
   const targetObject = await loadTargetObject(file_path);
 
   let executable_path = undefined;
@@ -110,7 +110,7 @@ export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string
                                                               configuration: index_api.CodeModelKind.Configuration):
     Promise<{name: string, targets: api.Target[]}> {
   const targetsList = Promise.all(configuration.targets.map(
-      t => ConvertTargetObjectFileToExtensionTarget(builddir, path.join(reply_path, t.jsonFile))));
+      t => convertTargetObjectFileToExtensionTarget(builddir, path.join(reply_path, t.jsonFile))));
 
   return {name: configuration.name, targets: await targetsList};
 }
@@ -130,8 +130,28 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
   return path.normalize(input_path.startsWith('.')? path.join(base_path, input_path): input_path);
 }
 
+function convertToExtCodeModelFileGroup(paths: index_api.CodeModelKind.PathInfo,
+  targetObject: index_api.CodeModelKind.TargetObject,
+  group : index_api.CodeModelKind.CompileGroup) : driver_api.ExtCodeModelFileGroup {
+
+  const compileFlags = group.compileCommandFragments.map(frag => frag.fragment).join(' ');
+
+  return {
+      sources: group.sourceIndexes.map(idx => convertToAbsolutePath(path.join(targetObject.paths.build, targetObject.sources[idx].path), paths.source)),
+      language: group.language,
+      includePath: group.includes,
+      compileFlags,
+      defines: group.defines.map(define => define.define)
+    };
+}
+
 async function loadCodeModelTarget(paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
   const targetObject = await loadTargetObject(jsonfile);
+
+  const fileGroups = targetObject.compileGroups?
+      targetObject.compileGroups.map( group => convertToExtCodeModelFileGroup(paths, targetObject, group)) :
+      undefined;
+
   return {
     name: targetObject.name,
     type: targetObject.type,
@@ -140,9 +160,7 @@ async function loadCodeModelTarget(paths: index_api.CodeModelKind.PathInfo, json
     artifacts: targetObject.artifacts
         ? targetObject.artifacts.map(a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), paths.build))
         : [],
-    fileGroups: [{
-      sources: targetObject.sources.map(a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), paths.source))
-    }]
+    fileGroups
   };
 }
 

@@ -37,21 +37,25 @@ export interface ExtCodeModelTarget {
   /** List of compilation information for artifacts of this target.
    * It contains groups of source files which there compilation information.
    */
-  fileGroups?: {
-    /** List of source files with the same compilation information */
-    sources: string[];
-    /** Include paths for compilation of a source file */
-    includePath?: {
-      /** include path */
-      path: string;
-    }[];
+  fileGroups?: ExtCodeModelFileGroup[];
+}
 
-    /** Compiler flags */
-    compileFlags?: string;
+export interface ExtCodeModelFileGroup {
+  /** List of source files with the same compilation information */
+  sources: string[];
 
-    /** Defines */
-    defines?: string[];
+  language?: string;
+  /** Include paths for compilation of a source file */
+  includePath?: {
+    /** include path */
+    path: string;
   }[];
+
+  /** Compiler flags */
+  compileFlags?: string;
+
+  /** Defines */
+  defines?: string[];
 }
 
 /**

@@ -6,7 +6,6 @@
  */ /** */
 
 import {CMakeCache} from '@cmt/cache';
-import * as cms from '@cmt/drivers/cms-client';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -14,7 +13,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
-import { ExtCodeModelContent } from './drivers/driver_api';
+import * as driver_api from './drivers/driver_api';
 
 const log = createLogger('cpptools');
 
@@ -97,7 +96,7 @@ export interface CodeModelParams {
   /**
    * The CMake Server codemodel message content. This is the important one.
    */
-  codeModel: ExtCodeModelContent;
+  codeModel: driver_api.ExtCodeModelContent;
   /**
    * The contents of the CMakeCache.txt, which also provides supplementary
    * configuration information.
@@ -185,7 +184,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults):
+  private _buildConfigurationData(fileGroup: driver_api.ExtCodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language || 'CXX';
@@ -231,7 +230,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param opts Index update options
    */
   private _updateFileGroup(sourceDir: string,
-                           grp: cms.CodeModelFileGroup,
+                           grp: driver_api.ExtCodeModelFileGroup,
                            opts: CodeModelParams,
                            target: TargetDefaults) {
     const configuration = this._buildConfigurationData(grp, opts, target);

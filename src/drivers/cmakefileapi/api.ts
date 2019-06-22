@@ -77,6 +77,20 @@ export interface Target {
   jsonFile: string;
 }
 
+export interface CompileGroup {
+  language: string;
+  includes:  {
+    path: string;
+  }[];
+  defines: {
+    define: string;
+  }[];
+  compileCommandFragments: {
+    fragment: string;
+  }[];
+  sourceIndexes: number[];
+}
+
 export interface TargetObject {
   name: string;
   type: string;
@@ -86,5 +100,6 @@ export interface TargetObject {
   sources: {
     path: string;
   }[];
+  compileGroups: CompileGroup[];
 }
 }
