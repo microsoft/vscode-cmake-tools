@@ -2,6 +2,7 @@ import {CMakeTools} from '@cmt/cmake-tools';
 import {Kit, scanForKits} from '@cmt/kit';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 import {ITestCallbackContext} from 'mocha';
+import * as path from 'path';
 
 interface KitEnvironment {
   defaultKit: RegExp;
@@ -74,10 +75,8 @@ const DEFAULT_VS_KITS: KitEnvironment[] = [
   },
 ];
 
-const DEFAULT_CYGWIN_KITS: KitEnvironment[] = [
-  {defaultKit: /^GCC/, expectedDefaultGenerator: /^Unix Makefiles/, path: ['c:\\cygwin64\\bin']},
-  {defaultKit: /^Clang/, expectedDefaultGenerator: /^Unix Makefiles/, path: ['c:\\cygwin64\\bin']}
-];
+const DEFAULT_CYGWIN_KITS: KitEnvironment[] =
+    [{defaultKit: /^GCC/, expectedDefaultGenerator: /^Unix Makefiles/, path: ['c:\\cygwin64\\bin']}];
 
 const DEFAULT_MINGW_KITS: KitEnvironment[] = [
   {
@@ -107,7 +106,8 @@ const DEFAULT_MINGW_KITS: KitEnvironment[] = [
   {defaultKit: /^GCC 5.3.0/, expectedDefaultGenerator: /^MinGW Makefiles/, path: ['C:\\MinGW\\bin']}
 ];
 
-const DEFAULT_WINDOWS_KITS: KitEnvironment[] = DEFAULT_VS_KITS.concat(DEFAULT_CYGWIN_KITS, DEFAULT_MINGW_KITS);
+const DEFAULT_WINDOWS_KITS: KitEnvironment[]
+    = DEFAULT_VS_KITS.concat(DEFAULT_CYGWIN_KITS, DEFAULT_MINGW_KITS);
 
 const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
   ['win32']: DEFAULT_WINDOWS_KITS.concat([{
@@ -133,7 +133,8 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
     path: [
       '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin',
       '/Applications/Xcode.app/Contents/Developer/usr/bin',
-      '/Users/travis/.local/share/CMakeTools/test-cmake-root/3.10.0/bin'
+      process.env.CMAKE_EXECUTABLE ? path.dirname(process.env.CMAKE_EXECUTABLE)
+                                   : '/Users/travis/.local/share/CMakeTools/test-cmake-root/3.10.0/bin'
     ]
   }]
 };
