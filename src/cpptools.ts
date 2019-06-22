@@ -14,6 +14,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
+import { ExtCodeModelContent } from './drivers/driver_api';
 
 const log = createLogger('cpptools');
 
@@ -96,7 +97,7 @@ export interface CodeModelParams {
   /**
    * The CMake Server codemodel message content. This is the important one.
    */
-  codeModel: cms.CodeModelContent;
+  codeModel: ExtCodeModelContent;
   /**
    * The contents of the CMakeCache.txt, which also provides supplementary
    * configuration information.

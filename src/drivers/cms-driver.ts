@@ -7,12 +7,13 @@ import * as api from '@cmt/api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cms-client';
-import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
+import { CMakeCodeModelDriver, ExtCodeModelContent } from './driver_api';
 
 const log = createLogger('cms-driver');
 
@@ -20,7 +21,7 @@ export class NoGeneratorError extends Error {
   message: string = 'No usable generator found.';
 }
 
-export class CMakeServerClientDriver extends CMakeDriver {
+export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceRootPath, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());
@@ -52,7 +53,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     this._codeModel = v;
   }
 
-  private readonly _codeModelChanged = new vscode.EventEmitter<null|cms.CodeModelContent>();
+  private readonly _codeModelChanged = new vscode.EventEmitter<null|ExtCodeModelContent>();
   get onCodeModelChanged() { return this._codeModelChanged.event; }
 
   async asyncDispose() {
