@@ -1,6 +1,7 @@
 import * as api from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as index_api from '@cmt/drivers/cmakefileapi/api';
+import * as driver_api from '@cmt/drivers/driver_api';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
@@ -123,4 +124,52 @@ export async function loadConfigurationTargetMap(reply_path: string, codeModel_f
     acc.set(el.name, el.targets);
     return acc;
   }, new Map<string, api.Target[]>());
+}
+
+function convertToAbsolutePath(input_path: string, base_path: string) {
+  return path.normalize(input_path.startsWith('.')? path.join(base_path, input_path): input_path);
+}
+
+async function loadCodeModelTarget(paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
+  const targetObject = await loadTargetObject(jsonfile);
+  return {
+    name: targetObject.name,
+    type: targetObject.type,
+    sourceDirectory: convertToAbsolutePath(targetObject.paths.source, paths.source),
+    fullName: targetObject.nameOnDisk,
+    artifacts: targetObject.artifacts
+        ? targetObject.artifacts.map(a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), paths.build))
+        : [],
+    fileGroups: [{
+      sources: targetObject.sources.map(a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), paths.source))
+    }]
+  };
+}
+
+export async function loadProject(paths: index_api.CodeModelKind.PathInfo,
+                                  reply_path: string,
+                                  projectIndex: number,
+                                  configuration: index_api.CodeModelKind.Configuration) {
+  const project = configuration.projects[projectIndex];
+  const targets = await Promise.all(project.targetIndexes.map(targetIndex => {
+    return loadCodeModelTarget(paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile));
+  }));
+
+  return {name: project.name, targets, sourceDirectory: ''} as driver_api.ExtCodeModelProject;
+}
+
+export async function loadConfig(paths: index_api.CodeModelKind.PathInfo,
+                                 reply_path: string,
+                                 configuration: index_api.CodeModelKind.Configuration) {
+  const projects = await Promise.all(
+      configuration.projects.map((_, index) => loadProject(paths, reply_path, index, configuration)));
+  return {projects} as driver_api.ExtCodeModelConfiguration;
+}
+export async function loadExtCodeModelContent(reply_path: string, codeModel_filename: string) {
+  const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
+
+  const configurations = await Promise.all(codeModelContent.configurations.map(
+      config_element => loadConfig(codeModelContent.paths, reply_path, config_element)));
+
+  return {configurations} as driver_api.ExtCodeModelContent;
 }

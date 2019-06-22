@@ -52,18 +52,22 @@ export interface CMakeCacheEntry {
 }
 
 export namespace CodeModelKind {
-export interface Target {
-  name: string;
-  jsonFile: string;
-}
 
+export interface PathInfo {
+  'build': string;
+  'source': string;
+}
 export interface Configuration {
   name: string;
   targets: Target[];
+  projects: {
+    name: string;
+    targetIndexes: number[]
+  }[];
 }
 export interface Content {
   version: ApiVersion;
-  paths: {'build': string, 'source': string};
+  paths: PathInfo;
   configurations: Configuration[];
 }
 
@@ -78,5 +82,9 @@ export interface TargetObject {
   type: string;
   artifacts: [{path: string}];
   nameOnDisk: string;
+  paths: PathInfo;
+  sources: {
+    path: string;
+  }[];
 }
 }

@@ -13,9 +13,10 @@ import {
   createQueryFileForApi,
   loadCacheContent,
   loadConfigurationTargetMap,
-  loadIndexFile
+  loadIndexFile,
+  loadExtCodeModelContent
 } from '@cmt/drivers/cmakefileapi/api_helpers';
-import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {CMakeGenerator, Kit} from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
@@ -25,12 +26,13 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import {NoGeneratorError} from './cms-driver';
+import { ExtCodeModelContent, CMakeCodeModelDriver } from './driver_api';
 
 const log = logging.createLogger('cmakefileapi-driver');
 /**
  * The cmake driver with FileApi of CMake >3.15.0
  */
-export class CMakeFileApiDriver extends CMakeDriver {
+export class CMakeFileApiDriver extends CMakeCodeModelDriver {
   private constructor(cmake: CMakeExecutable,
                       readonly config: ConfigurationReader,
                       workspaceRootPath: string|null,
@@ -109,7 +111,10 @@ export class CMakeFileApiDriver extends CMakeDriver {
     await cb();
   }
 
-  async asyncDispose() { this._cacheWatcher.dispose(); }
+  async asyncDispose() {
+    this._codeModelChanged.dispose();
+    this._cacheWatcher.dispose();
+  }
 
   protected async doPreCleanConfigure(): Promise<void> {
     await this._cleanPriorConfiguration();
@@ -178,8 +183,12 @@ export class CMakeFileApiDriver extends CMakeDriver {
         throw Error('No code model object found');
       }
       this._target_map = await loadConfigurationTargetMap(reply_path, codemodel_obj.jsonFile);
+      this._codeModel = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
+      this._codeModelChanged.fire(this._codeModel);
     }
   }
+
+  private _codeModel: ExtCodeModelContent | null = null;
 
   get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
   get generatorName(): string|null { return this._generatorInformation ? this._generatorInformation.name : null; }
@@ -195,4 +204,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                path: (t as api.RichTarget).filepath,
              }));
   }
+
+  private readonly _codeModelChanged = new vscode.EventEmitter<null|ExtCodeModelContent>();
+  get onCodeModelChanged() { return this._codeModelChanged.event; }
 }
