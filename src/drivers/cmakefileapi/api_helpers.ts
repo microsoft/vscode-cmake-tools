@@ -127,30 +127,33 @@ export async function loadConfigurationTargetMap(reply_path: string, codeModel_f
 }
 
 function convertToAbsolutePath(input_path: string, base_path: string) {
-  return path.normalize(input_path.startsWith('.')? path.join(base_path, input_path): input_path);
+  return path.normalize(input_path.startsWith('.') ? path.join(base_path, input_path) : input_path);
 }
 
 function convertToExtCodeModelFileGroup(paths: index_api.CodeModelKind.PathInfo,
-  targetObject: index_api.CodeModelKind.TargetObject,
-  group : index_api.CodeModelKind.CompileGroup) : driver_api.ExtCodeModelFileGroup {
+                                        targetObject: index_api.CodeModelKind.TargetObject,
+                                        group: index_api.CodeModelKind.CompileGroup): driver_api.ExtCodeModelFileGroup {
 
-  const compileFlags = group.compileCommandFragments.map(frag => frag.fragment).join(' ');
+  const compileFlags
+      = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
 
   return {
-      sources: group.sourceIndexes.map(idx => convertToAbsolutePath(path.join(targetObject.paths.build, targetObject.sources[idx].path), paths.source)),
-      language: group.language,
-      includePath: group.includes,
-      compileFlags,
-      defines: group.defines.map(define => define.define)
-    };
+    sources: group.sourceIndexes.map(
+        idx => convertToAbsolutePath(path.join(targetObject.paths.build, targetObject.sources[idx].path),
+                                     paths.source)),
+    language: group.language,
+    includePath: group.defines ? group.includes : [],
+    compileFlags,
+    defines: group.defines ? group.defines.map(define => define.define) : []
+  };
 }
 
 async function loadCodeModelTarget(paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
   const targetObject = await loadTargetObject(jsonfile);
 
-  const fileGroups = targetObject.compileGroups?
-      targetObject.compileGroups.map( group => convertToExtCodeModelFileGroup(paths, targetObject, group)) :
-      undefined;
+  const fileGroups = targetObject.compileGroups
+      ? targetObject.compileGroups.map(group => convertToExtCodeModelFileGroup(paths, targetObject, group))
+      : undefined;
 
   return {
     name: targetObject.name,
@@ -158,7 +161,8 @@ async function loadCodeModelTarget(paths: index_api.CodeModelKind.PathInfo, json
     sourceDirectory: convertToAbsolutePath(targetObject.paths.source, paths.source),
     fullName: targetObject.nameOnDisk,
     artifacts: targetObject.artifacts
-        ? targetObject.artifacts.map(a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), paths.build))
+        ? targetObject.artifacts.map(
+              a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), paths.build))
         : [],
     fileGroups
   };
