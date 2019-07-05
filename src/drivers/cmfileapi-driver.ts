@@ -13,8 +13,8 @@ import {
   createQueryFileForApi,
   loadCacheContent,
   loadConfigurationTargetMap,
-  loadIndexFile,
-  loadExtCodeModelContent
+  loadExtCodeModelContent,
+  loadIndexFile
 } from '@cmt/drivers/cmakefileapi/api_helpers';
 import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {CMakeGenerator, Kit} from '@cmt/kit';
@@ -25,8 +25,9 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
+
 import {NoGeneratorError} from './cms-driver';
-import { ExtCodeModelContent, CMakeCodeModelDriver } from './driver_api';
+import {CMakeCodeModelDriver, ExtCodeModelContent} from './driver_api';
 
 const log = logging.createLogger('cmakefileapi-driver');
 /**
@@ -116,9 +117,7 @@ export class CMakeFileApiDriver extends CMakeCodeModelDriver {
     this._cacheWatcher.dispose();
   }
 
-  protected async doPreCleanConfigure(): Promise<void> {
-    await this._cleanPriorConfiguration();
-  }
+  protected async doPreCleanConfigure(): Promise<void> { await this._cleanPriorConfiguration(); }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     const api_path = this.getCMakeFileApiPath();
@@ -188,13 +187,24 @@ export class CMakeFileApiDriver extends CMakeCodeModelDriver {
     }
   }
 
-  private _codeModel: ExtCodeModelContent | null = null;
+  private _codeModel: ExtCodeModelContent|null = null;
 
   get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
   get generatorName(): string|null { return this._generatorInformation ? this._generatorInformation.name : null; }
   get targets(): api.Target[] {
     const targets = this._target_map.get(this.currentBuildType);
-    return targets ? targets : [];
+    if (targets) {
+      const metaTargets = [{
+        type: 'rich' as 'rich',
+        name: this.allTargetName,
+        filepath: 'A special target to build all available targets',
+        targetType: 'META'
+      }];
+      return [...metaTargets, ...targets].filter((value, idx, self) => self.findIndex(e => value.name === e.name)
+                                                     === idx);
+    } else {
+      return [];
+    }
   }
 
   get executableTargets(): ExecutableTarget[] {

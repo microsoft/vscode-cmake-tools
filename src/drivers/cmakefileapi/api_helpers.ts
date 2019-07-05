@@ -109,10 +109,19 @@ export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string
                                                               builddir: string,
                                                               configuration: index_api.CodeModelKind.Configuration):
     Promise<{name: string, targets: api.Target[]}> {
+  const metaTargets = [];
+  if (configuration.directories[0].hasInstallRule ? configuration.directories[0].hasInstallRule : false) {
+    metaTargets.push({
+      type: 'rich' as 'rich',
+      name: 'install',
+      filepath: 'A special target to install all available targets',
+      targetType: 'META'
+    });
+  }
   const targetsList = Promise.all(configuration.targets.map(
       t => convertTargetObjectFileToExtensionTarget(builddir, path.join(reply_path, t.jsonFile))));
 
-  return {name: configuration.name, targets: await targetsList};
+  return {name: configuration.name, targets: [...metaTargets, ...await targetsList]};
 }
 
 export async function loadConfigurationTargetMap(reply_path: string, codeModel_filename: string) {

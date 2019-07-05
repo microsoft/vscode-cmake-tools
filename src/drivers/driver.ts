@@ -2,16 +2,12 @@
  * Defines base class for CMake drivers
  */ /** */
 
-import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
-import {ProgressMessage} from '@cmt/drivers/cms-client';
-import {CompileCommand} from '@cmt/compdb';
-import * as shlex from '@cmt/shlex';
-import * as path from 'path';
-import * as vscode from 'vscode';
-
 import * as api from '@cmt/api';
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/code-pages';
+import {CompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
+import {ProgressMessage} from '@cmt/drivers/cms-client';
 import * as expand from '@cmt/expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -19,8 +15,11 @@ import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
+import * as shlex from '@cmt/shlex';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
+import * as path from 'path';
+import * as vscode from 'vscode';
 
 const log = logging.createLogger('driver');
 
@@ -729,6 +728,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private _currentProcess: proc.Subprocess|null = null;
 
+  private correctAllTargetName(targetname: string) {
+    if (targetname === 'all' || targetname == 'ALL_BUILD') {
+      return this.allTargetName;
+    } else {
+      return targetname;
+    }
+  }
+
   async getCMakeBuildCommand(target: string): Promise<proc.BuildCommand|null> {
     const ok = await this._beforeConfigureOrBuild();
     if (!ok) {
@@ -736,6 +743,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     const gen = this.generatorName;
+    target = this.correctAllTargetName(target);
+
     const generator_args = (() => {
       if (!gen)
         return [];
