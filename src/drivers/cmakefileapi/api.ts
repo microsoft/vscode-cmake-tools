@@ -61,7 +61,7 @@ export interface Configuration {
   name: string;
   targets: Target[];
   directories: {hasInstallRule: boolean;}[];
-  projects: {name: string; targetIndexes: number[]}[];
+  projects: {name: string; targetIndexes?: number[]}[];
 }
 export interface Content {
   version: ApiVersion;
