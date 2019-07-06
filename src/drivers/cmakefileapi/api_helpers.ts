@@ -139,52 +139,73 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
   return path.normalize(path.join(base_path, input_path));
 }
 
-function convertToExtCodeModelFileGroup(paths: index_api.CodeModelKind.PathInfo,
-                                        targetObject: index_api.CodeModelKind.TargetObject,
-                                        group: index_api.CodeModelKind.CompileGroup): driver_api.ExtCodeModelFileGroup {
+function convertToExtCodeModelFileGroup(root_paths: index_api.CodeModelKind.PathInfo,
+                                        targetObject: index_api.CodeModelKind.TargetObject):
+    driver_api.ExtCodeModelFileGroup[] {
+  const fileGroup: driver_api.ExtCodeModelFileGroup[]
+      = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
+          const compileFlags
+              = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
 
-  const compileFlags
-      = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
+          return {
+            sources: [],
+            language: group.language,
+            includePath: group.defines ? group.includes : [],
+            compileFlags,
+            defines: group.defines ? group.defines.map(define => define.define) : []
+          };
+        });
+  // Collection all without compilegroup like headers
+  const defaultIndex = fileGroup.push({sources: []} as driver_api.ExtCodeModelFileGroup) - 1;
 
-  return {
-    sources: group.sourceIndexes.map(idx => convertToAbsolutePath(targetObject.sources[idx].path, paths.source)),
-    language: group.language,
-    includePath: group.defines ? group.includes : [],
-    compileFlags,
-    defines: group.defines ? group.defines.map(define => define.define) : []
-  };
+
+  targetObject.sources.forEach(sourcefile => {
+    const filepath = convertToAbsolutePath(sourcefile.path, root_paths.source);
+    if (sourcefile.compileGroupIndex !== undefined) {
+      fileGroup[sourcefile.compileGroupIndex].sources.push(filepath);
+    } else {
+      fileGroup[defaultIndex].sources.push(filepath);
+    }
+  });
+  return fileGroup;
 }
 
-async function loadCodeModelTarget(paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
+async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
   const targetObject = await loadTargetObject(jsonfile);
 
-  const fileGroups = targetObject.compileGroups
-      ? targetObject.compileGroups.map(group => convertToExtCodeModelFileGroup(paths, targetObject, group))
-      : undefined;
+  const fileGroups = convertToExtCodeModelFileGroup(root_paths, targetObject);
 
   return {
     name: targetObject.name,
     type: targetObject.type,
-    sourceDirectory: convertToAbsolutePath(targetObject.paths.source, paths.source),
+    sourceDirectory: convertToAbsolutePath(targetObject.paths.source, root_paths.source),
     fullName: targetObject.nameOnDisk,
     artifacts: targetObject.artifacts
         ? targetObject.artifacts.map(
-              a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), paths.build))
+              a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), root_paths.build))
         : [],
     fileGroups
   };
 }
 
-export async function loadProject(paths: index_api.CodeModelKind.PathInfo,
+export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,
                                   reply_path: string,
                                   projectIndex: number,
                                   configuration: index_api.CodeModelKind.Configuration) {
   const project = configuration.projects[projectIndex];
+  const project_paths = {
+    build: project.directoryIndexes
+        ? path.join(root_paths.build, configuration.directories[project.directoryIndexes[0]].build)
+        : root_paths.build,
+    source: project.directoryIndexes
+        ? path.join(root_paths.source, configuration.directories[project.directoryIndexes[0]].source)
+        : root_paths.source,
+  };
   const targets = await Promise.all((project.targetIndexes || []).map(targetIndex => {
-    return loadCodeModelTarget(paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile));
+    return loadCodeModelTarget(root_paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile));
   }));
 
-  return {name: project.name, targets, sourceDirectory: paths.source} as driver_api.ExtCodeModelProject;
+  return {name: project.name, targets, sourceDirectory: project_paths.source} as driver_api.ExtCodeModelProject;
 }
 
 export async function loadConfig(paths: index_api.CodeModelKind.PathInfo,

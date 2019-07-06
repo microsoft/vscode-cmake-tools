@@ -60,8 +60,8 @@ export interface PathInfo {
 export interface Configuration {
   name: string;
   targets: Target[];
-  directories: {hasInstallRule: boolean;}[];
-  projects: {name: string; targetIndexes?: number[]}[];
+  directories: {source: string, build: string, hasInstallRule: boolean;}[];
+  projects: {name: string; targetIndexes?: number[], directoryIndexes: number[]}[];
 }
 export interface Content {
   version: ApiVersion;
@@ -89,7 +89,7 @@ export interface TargetObject {
   artifacts: [{path: string}];
   nameOnDisk: string;
   paths: PathInfo;
-  sources: {path: string;}[];
+  sources: {path: string; compileGroupIndex?: number}[];
   compileGroups: CompileGroup[];
 }
 }
