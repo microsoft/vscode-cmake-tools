@@ -1,7 +1,5 @@
 # CMake Tools
 
-[![Gitter chat](https://badges.gitter.im/vscode-cmake-tools/Lobby.png)](https://gitter.im/vscode-cmake-tools/Lobby)
-
 [CMake Tools](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools) provides the native developer a full-featured, convenient, and
 powerful configure+build workflow for CMake-based projects in
 Visual Studio Code.
@@ -19,10 +17,6 @@ Visual Studio Code.
 [Read about them here](https://vector-of-bool.github.io/2018/07/20/cmt-1.1.0.html), and be
 sure check the changelog!
 
-# Want to Support this Project? Support me on Patreon!
-
-[![Support me on Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/vector_of_bool)
-
 # Important Links:
 
 - [Getting started](https://vector-of-bool.github.io/docs/vscode-cmake-tools/getting_started.html)
@@ -34,7 +28,6 @@ sure check the changelog!
 - [Read the online documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/index.html)
 - [Contributing](https://vector-of-bool.github.io/docs/vscode-cmake-tools/development.html)
 - [Read the changelog](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html)
-- [Support me on Patreon](https://www.patreon.com/vector_of_bool)
 
 ## Issues? Questions? Feature requests?
 
