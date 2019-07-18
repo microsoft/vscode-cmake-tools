@@ -184,7 +184,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults):
+  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language || 'CXX';
@@ -208,17 +208,28 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         newBrowsePath.push(includePathItem);
       }
     }
+
+    let cpptoolsCompilerPath = (flags.length === 0) ? comp_path : `${comp_path} ${flags.join(' ')}`;
+    if (sysroot && cpptoolsCompilerPath.indexOf("--sysroot") < 0) {
+      if (sysroot.match(/\s/)) {
+        cpptoolsCompilerPath += ` "--sysroot=${sysroot}"`;
+      }
+      else {
+        cpptoolsCompilerPath += ` --sysroot=${sysroot}`;
+      }
+    }
+
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
       standard,
-      compilerPath: comp_path || undefined,
+      compilerPath: cpptoolsCompilerPath || undefined,
     };
     return {
       defines,
       standard,
       includePath,
       intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
-      compilerPath: comp_path || undefined,
+      compilerPath: cpptoolsCompilerPath || undefined,
     };
   }
 
@@ -232,8 +243,9 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   private _updateFileGroup(sourceDir: string,
                            grp: cms.CodeModelFileGroup,
                            opts: CodeModelParams,
-                           target: TargetDefaults) {
-    const configuration = this._buildConfigurationData(grp, opts, target);
+                           target: TargetDefaults,
+                           sysroot: string) {
+    const configuration = this._buildConfigurationData(grp, opts, target, sysroot);
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
       const abs_norm = util.platformNormalizePath(abs);
@@ -262,6 +274,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
           const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
           const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
+          const sysroot = target.sysroot || '';
           for (const grp of target.fileGroups || []) {
             try {
 
@@ -274,6 +287,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
                     includePath,
                     defines,
                   },
+                  sysroot
               );
             } catch (e) {
               if (e instanceof MissingCompilerException) {
