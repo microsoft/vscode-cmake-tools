@@ -927,6 +927,11 @@ class ExtensionManager implements vscode.Disposable {
       break;
     }
 
+    if (process.env['CMT_TESTING'] === '1') {
+      log.trace('Running CMakeTools in test mode. selectKit is disabled.');
+      return false;
+    }
+
     interface KitItem extends vscode.QuickPickItem {
       kit: Kit;
     }
@@ -949,6 +954,22 @@ class ExtensionManager implements vscode.Disposable {
       await this._setCurrentKit(chosen_kit.kit);
       return true;
     }
+  }
+
+  /**
+   * Set the current kit in the current CMake Tools instance by name of the kit
+   */
+  async setKitByName(kitName: string) {
+    let newKit: Kit | undefined;
+    switch (kitName) {
+    case '':
+    case '__unspec__':
+      break;
+    default:
+      newKit = this._allKits.find(kit => kit.name === kitName);
+      break;
+    }
+    await this._setCurrentKit(newKit || null);
   }
 
   /**
@@ -1106,11 +1127,12 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
-    'editKits',           'scanForKits',      'selectKit',              'cleanConfigure', 'configure',
-    'build',              'setVariant',       'install',                'editCache',      'clean',
-    'cleanRebuild',       'buildWithTarget',  'setDefaultTarget',       'ctest',          'stop',
-    'quickStart',         'launchTargetPath', 'launchTargetDirectory',  'debugTarget',    'launchTarget',
-    'selectLaunchTarget', 'resetState',       'viewLog',                'compileFile',    'tasksBuildCommand'
+    'editKits',          'scanForKits',        'selectKit',        'setKitByName',          'cleanConfigure',
+    'configure',         'build',              'setVariant',       'install',               'editCache',
+    'clean',             'cleanRebuild',       'buildWithTarget',  'setDefaultTarget',      'ctest',
+    'stop',              'quickStart',         'launchTargetPath', 'launchTargetDirectory', 'debugTarget',
+    'launchTarget',      'selectLaunchTarget', 'resetState',       'viewLog',               'compileFile',
+    'tasksBuildCommand'
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 
