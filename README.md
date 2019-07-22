@@ -1,15 +1,12 @@
 # CMake Tools
 
 [CMake Tools](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools) provides the native developer a full-featured, convenient, and
-powerful configure+build workflow for CMake-based projects in
-Visual Studio Code.
+powerful workflow for CMake-based projects in Visual Studio Code.
 
-# Supporters
+## Maintainer Changes (7/12/19)
 
-- My first Patron, Shalom Craimer
-- The Phantom Derpstorm (ThePhD), [thephd.github.io](https://thephd.github.io/)
-- [Stephen Lane-Walsh](https://github.com/WhoBrokeTheBuild)
-- Alexander Susha
+**vector-of-bool** has moved on to other things and Microsoft is now maintaining this extension. Thank you **vector-of-bool** for all of your hard work getting
+this extension to where it is today!
 
 ## 1.1.0 Changes! Exciting!
 
@@ -35,4 +32,19 @@ sure check the changelog!
 for a new feature, create an issue on [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools)!
 
 This extension itself *does not* provide language support for the CMake
-scripting language. For that I recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+scripting language. For that we recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+
+### Microsoft Open Source Code of Conduct
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact opencode@microsoft.com with any additional questions or comments.
+
+### Data/Telemetry
+
+This extension collects usage data and sends it to Microsoft to help improve our products and services. Collection of telemetry is controlled via the same setting provided by Visual Studio Code: `"telemetry.enableTelemetry"`. Read our [privacy statement](https://privacy.microsoft.com/en-us/privacystatement) to learn more.
+
+### Previous Supporters
+
+- Shalom Craimer
+- The Phantom Derpstorm (ThePhD), [thephd.github.io](https://thephd.github.io/)
+- [Stephen Lane-Walsh](https://github.com/WhoBrokeTheBuild)
+- Alexander Susha
