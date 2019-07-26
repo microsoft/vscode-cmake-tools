@@ -70,9 +70,8 @@ export interface Kit {
   compilers?: {[lang: string]: string};
 
   /**
-   * The visual studio name. This corresponds to a name returned by `vswhere`,
-   * and is used to look up the path to the VS installation when the user
-   * selects this kit
+   * The visual studio name. This corresponds to the major.minor version of
+   * the installation returned by `vswhere`.
    */
   visualStudio?: string;
 
@@ -350,6 +349,37 @@ export interface VSInstallation {
 }
 
 /**
+ * Construct the Kit.visualStudio property.
+ *
+ * @param inst The VSInstallation to use
+ */
+function kitVSName(inst: VSInstallation): string {
+  return `VisualStudio.${parseFloat(inst.installationVersion)}`;
+}
+
+/**
+ * Construct the display name (this will be paired with an
+ * arch later to construct the Kit.name property).
+ *
+ * @param inst The VSInstallation to use
+ */
+function vsDisplayName(inst: VSInstallation): string {
+  const realDisplayName: string|undefined
+    = inst.displayName ? inst.isPrerelease ? `${inst.displayName} Preview` : inst.displayName : undefined;
+  return realDisplayName || inst.instanceId;
+}
+
+/**
+ * Construct the Kit.name property.
+ *
+ * @param inst The VSInstallation to use
+ * @param arch The desired architecture (e.g. x86, amd64)
+ */
+function kitName(inst: VSInstallation, arch: string): string {
+  return `${vsDisplayName(inst)} - ${arch}`;
+}
+
+/**
  * Get a list of all Visual Studio installations available from vswhere.exe
  *
  * Will not include older versions. vswhere doesn't seem to list them?
@@ -373,10 +403,6 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
 
   const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
   for (const inst of vs_installs) {
-    const majorVersion = parseInt(inst.installationVersion);
-    if (majorVersion >= 15) {
-      inst.instanceId = `VisualStudio.${majorVersion}.0`;
-    }
     if (inst_ids.indexOf(inst.instanceId) < 0) {
       installs.push(inst);
       inst_ids.push(inst.instanceId);
@@ -535,13 +561,10 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
  * @param arch The architecture to try
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter): Promise<Kit|null> {
-  const realDisplayName: string|undefined
-      = inst.displayName ? inst.isPrerelease ? `${inst.displayName} Preview` : inst.displayName : undefined;
-  const installName = realDisplayName || inst.instanceId;
-  const name = `${installName} - ${arch}`;
+  const name = kitName(inst, arch);
   log.debug('Checking for kit: ' + name);
   if (pr) {
-    pr.report({message: `Checking ${installName} with ${arch}`});
+    pr.report({message: `Checking ${name}`});
   }
   const variables = await varsForVSInstallation(inst, arch);
   if (!variables)
@@ -549,13 +572,13 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
 
   const kit: Kit = {
     name,
-    visualStudio: inst.instanceId,
+    visualStudio: kitVSName(inst),
     visualStudioArchitecture: arch,
   };
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
   log.debug('Detected VsKit for version');
-  log.debug(` DisplayName: ${realDisplayName}`);
+  log.debug(` DisplayName: ${name}`);
   log.debug(` InstanceId: ${inst.instanceId}`);
   log.debug(` InstallVersion: ${inst.installationVersion}`);
   if (version) {
@@ -600,13 +623,11 @@ async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[]):
       return null;
     }
     return vsInstalls.map((vs): Kit => {
-      const realDisplayName: string|undefined
-          = vs.displayName ? vs.isPrerelease ? `${vs.displayName} Preview` : vs.displayName : undefined;
-      const installName = realDisplayName || vs.instanceId;
+      const installName = vsDisplayName(vs);
       const vs_arch = (version.target && version.target.includes('i686-pc')) ? 'x86' : 'amd64';
       return {
         name: `Clang ${version.version} for MSVC with ${installName} (${vs_arch})`,
-        visualStudio: vs.instanceId,
+        visualStudio: kitVSName(vs),
         visualStudioArchitecture: vs_arch,
         compilers: {
           C: binPath,
@@ -628,7 +649,15 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
   console.assert(kit.visualStudio);
   console.assert(kit.visualStudioArchitecture);
   const installs = await vsInstallations();
-  const requested = installs.find(inst => inst.instanceId == kit.visualStudio);
+  const match = (inst: VSInstallation) =>
+      // old Kit format
+      (inst.instanceId == kit.visualStudio) ||
+      // new Kit format
+      (kitName(inst, kit.visualStudioArchitecture!) === kit.name && kitVSName(inst) === kit.visualStudio) ||
+      // Clang for VS kit format
+      (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+
+  const requested = installs.find(inst => match(inst));
   if (!requested) {
     return null;
   }
