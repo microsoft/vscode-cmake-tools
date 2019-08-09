@@ -1162,6 +1162,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'resetState',
     'viewLog',
     'compileFile',
+    'tasksBuildCommand'
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 
