@@ -21,6 +21,16 @@ const log = logging.createLogger('kit');
 type ProgressReporter = vscode.Progress<{message?: string}>;
 
 /**
+ * Cache the results of invoking 'vswhere'
+ */
+interface VSInstallationCache {
+  installations: VSInstallation[];
+  queryTime: number;
+}
+
+let cachedVSInstallations: VSInstallationCache|null = null;
+
+/**
  * The path to the user-local kits file.
  */
 export const USER_KITS_FILEPATH = path.join(paths.dataDir, 'cmake-tools-kits.json');
@@ -334,12 +344,18 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
   return kits;
 }
 
+export interface VSCatalog {
+  productDisplayVersion: string;
+}
+
 /**
  * Description of a Visual Studio installation returned by vswhere.exe
  *
  * This isn't _all_ the properties, just the ones we need so far.
  */
 export interface VSInstallation {
+  catalog?: VSCatalog;
+  channelId?: string;
   instanceId: string;
   displayName?: string;
   installationPath: string;
@@ -349,12 +365,21 @@ export interface VSInstallation {
 }
 
 /**
+ * Construct the Kit.visualStudio property (legacy)
+ *
+ * @param inst The VSInstallation to use
+ */
+function legacyKitVSName(inst: VSInstallation): string {
+  return `VisualStudio.${parseInt(inst.installationVersion)}.0`;
+}
+
+/**
  * Construct the Kit.visualStudio property.
  *
  * @param inst The VSInstallation to use
  */
 function kitVSName(inst: VSInstallation): string {
-  return `VisualStudio.${parseFloat(inst.installationVersion)}`;
+  return `${inst.instanceId}`;
 }
 
 /**
@@ -364,9 +389,24 @@ function kitVSName(inst: VSInstallation): string {
  * @param inst The VSInstallation to use
  */
 function vsDisplayName(inst: VSInstallation): string {
-  const realDisplayName: string|undefined
-    = inst.displayName ? inst.isPrerelease ? `${inst.displayName} Preview` : inst.displayName : undefined;
-  return realDisplayName || inst.instanceId;
+  if (inst.displayName) {
+    if (inst.channelId) {
+      const index = inst.channelId.lastIndexOf('.');
+      if (index > 0) {
+        return `${inst.displayName} ${inst.channelId.substr(index + 1)}`;
+      }
+    }
+    return inst.displayName;
+  }
+  return inst.instanceId;
+}
+
+function vsVersionName(inst: VSInstallation): string {
+  if (!inst.catalog) {
+    return inst.instanceId;
+  }
+  const end = inst.catalog.productDisplayVersion.indexOf('[');
+  return end < 0 ? inst.catalog.productDisplayVersion : inst.catalog.productDisplayVersion.substring(0, end - 1);
 }
 
 /**
@@ -385,6 +425,12 @@ function kitName(inst: VSInstallation, arch: string): string {
  * Will not include older versions. vswhere doesn't seem to list them?
  */
 export async function vsInstallations(): Promise<VSInstallation[]> {
+  const now = Date.now();
+  if (cachedVSInstallations && cachedVSInstallations.queryTime && (now - cachedVSInstallations.queryTime) < 900000) {
+    // If less than 15 minutes old, cache is considered ok.
+    return cachedVSInstallations.installations;
+  }
+
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res', 'vswhere.exe');
@@ -408,6 +454,10 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
       inst_ids.push(inst.instanceId);
     }
   }
+  cachedVSInstallations = {
+    installations: installs,
+    queryTime: now
+  };
   return installs;
 }
 
@@ -645,19 +695,23 @@ export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise
   return results;
 }
 
-export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
+async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
   console.assert(kit.visualStudio);
   console.assert(kit.visualStudioArchitecture);
   const installs = await vsInstallations();
   const match = (inst: VSInstallation) =>
       // old Kit format
-      (inst.instanceId == kit.visualStudio) ||
+      (legacyKitVSName(inst) == kit.visualStudio) ||
       // new Kit format
-      (kitName(inst, kit.visualStudioArchitecture!) === kit.name && kitVSName(inst) === kit.visualStudio) ||
+      (kitVSName(inst) === kit.visualStudio) ||
       // Clang for VS kit format
       (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
 
-  const requested = installs.find(inst => match(inst));
+  return installs.find(inst => match(inst));
+}
+
+export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
+  const requested = await getVSInstallForKit(kit);
   if (!requested) {
     return null;
   }
@@ -760,12 +814,16 @@ export async function scanForKits(opt?: KitScanOptions) {
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
  */
-export function descriptionForKit(kit: Kit) {
+export async function descriptionForKit(kit: Kit): Promise<string> {
   if (kit.toolchainFile) {
     return `Kit for toolchain file ${kit.toolchainFile}`;
   }
   if (kit.visualStudio) {
-    return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
+    const inst = await getVSInstallForKit(kit);
+    if (inst) {
+      return `Using compilers for ${vsVersionName(inst)} (${kit.visualStudioArchitecture} architecture)`;
+    }
+    return '';
   }
   if (kit.compilers) {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
