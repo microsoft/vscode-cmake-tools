@@ -975,6 +975,28 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return path.dirname(targetPath);
   }
 
+  /**
+   * Implementation of `cmake.buildType`
+   */
+  async currentBuildType(): Promise<string|null> {
+    if (this.buildType == 'Unconfigured') {
+      return null;
+    }
+    return this.buildType;
+  }
+
+  /**
+   * Implementation of `cmake.buildDirectory`
+   */
+  async buildDirectory(): Promise<string|null> {
+    const binaryDir = await this.binaryDir;
+    if (binaryDir) {
+      return binaryDir;
+    } else {
+      return null;
+    }
+  }
+
   async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {
     let chosen: api.ExecutableTarget;
     if (name) {
