@@ -529,6 +529,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 if (retc === 0) {
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
+                await this._ctestController.reloadTests(drv);
                 this._onReconfiguredEmitter.fire();
                 return retc;
               } finally {
