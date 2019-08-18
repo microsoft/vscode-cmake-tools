@@ -141,32 +141,41 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Test kit switch after missing preferred generator #512', async function(this: ITestCallbackContext) {
-    // Select compiler build node dependent
-    const os_compilers: {[osName: string]: {[compilerName: string]: {kitLabel: RegExp, compiler: string}}}
-    = {win32: {GCC: {kitLabel: /^GCC/, compiler: 'GNU'}, VS: {kitLabel: /^VisualStudio/, compiler: 'MSVC'}}};
-    if (!(workername in os_compilers))
-      this.skip();
-    const compiler = os_compilers[workername];
     // Remove all preferred generator (Remove config dependenies, auto detection)
     testEnv.config.updatePartial({preferredGenerators: []});
 
+    // Select compiler build node dependent
+    const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
+      linux: [
+        {kitLabel: /^Generator switch test GCC Make$/, generator: 'Unix Makefiles'},
+        {kitLabel: /^Generator switch test GCC no generator$/, generator: ''}
+      ],
+      win32: [
+        {kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles'},
+        {kitLabel: /^Generator switch test GCC no generator - Win/, generator: ''}
+      ]
+    };
+    if (!(workername in os_compilers))
+      this.skip();
+    const compiler = os_compilers[workername];
+
     // Run configure kit
-    testEnv.kitSelection.defaultKitLabel = compiler['VS'].kitLabel;
-    await cmt.setKit(await getMatchingSystemKit(compiler['VS'].kitLabel));
+    testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+    await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
     await cmt.build();
 
     // Run Configure kit without prefered generator
-    testEnv.kitSelection.defaultKitLabel = compiler['GCC'].kitLabel;
-    await cmt.setKit(await getMatchingSystemKit(compiler['GCC'].kitLabel));
-
+    testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+    await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
+    expect(cmt.activeKit).to.be.null;
 
     // Test return to workin kit
-    testEnv.kitSelection.defaultKitLabel = compiler['VS'].kitLabel;
-    await cmt.setKit(await getMatchingSystemKit(compiler['VS'].kitLabel));
+    testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+    await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
     await cmt.build();
 
     const result1 = await testEnv.result.getResultAsJson();
-    expect(result1['compiler']).to.eql(compiler['VS'].compiler);
+    expect(result1['cmake-generator']).to.eql(compiler[0].generator);
   }).timeout(100000);
 
   test('Test kit switch between different preferred generators and compilers',

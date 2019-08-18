@@ -208,7 +208,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
-  private getPreferedGenerators(): CMakeGenerator[] {
+  private getPreferredGenerators(): CMakeGenerator[] {
     // User can override generator with a setting
     const user_generator = this.workspaceContext.config.generator;
     if (user_generator) {
@@ -235,7 +235,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver;
-    const preferedGenerators = this.getPreferedGenerators();
+    const preferedGenerators = this.getPreferredGenerators();
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
         drv = await CMakeServerClientDriver.create(cmake, this.workspaceContext, kit, preferedGenerators);
@@ -339,17 +339,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._activeKit = kit;
     if (kit) {
       log.debug('Injecting new Kit into CMake driver');
-      const drv = await this.getCMakeDriverInstance();
+      const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
       if (drv) {
         try {
           this._statusMessage.set('Reloading...');
-          await drv.setKit(kit, this.getPreferedGenerators());
+          await drv.setKit(kit, this.getPreferredGenerators());
+          this._statusMessage.set('Ready');
         } catch (error) {
           vscode.window.showErrorMessage(`Unable to set kit "${error}".`);
           this._statusMessage.set(`Error on switch of kit (${error.message})`);
           this._cmakeDriver = Promise.resolve(null);
+          this._activeKit = null;
         }
-        this._statusMessage.set('Ready');
       }
       this.workspaceContext.state.activeKitName = kit.name;
     }
