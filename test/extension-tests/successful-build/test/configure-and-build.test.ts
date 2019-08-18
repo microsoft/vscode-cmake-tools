@@ -140,6 +140,35 @@ suite('Build', async () => {
     expect(result1['compiler']).to.eql(compiler[1].compiler);
   }).timeout(100000);
 
+  test('Test kit switch after missing preferred generator #512', async function(this: ITestCallbackContext) {
+    // Select compiler build node dependent
+    const os_compilers: {[osName: string]: {[compilerName: string]: {kitLabel: RegExp, compiler: string}}}
+    = {win32: {GCC: {kitLabel: /^GCC/, compiler: 'GNU'}, VS: {kitLabel: /^VisualStudio/, compiler: 'MSVC'}}};
+    if (!(workername in os_compilers))
+      this.skip();
+    const compiler = os_compilers[workername];
+    // Remove all preferred generator (Remove config dependenies, auto detection)
+    testEnv.config.updatePartial({preferredGenerators: []});
+
+    // Run configure kit
+    testEnv.kitSelection.defaultKitLabel = compiler['VS'].kitLabel;
+    await cmt.setKit(await getMatchingSystemKit(compiler['VS'].kitLabel));
+    await cmt.build();
+
+    // Run Configure kit without prefered generator
+    testEnv.kitSelection.defaultKitLabel = compiler['GCC'].kitLabel;
+    await cmt.setKit(await getMatchingSystemKit(compiler['GCC'].kitLabel));
+
+
+    // Test return to workin kit
+    testEnv.kitSelection.defaultKitLabel = compiler['VS'].kitLabel;
+    await cmt.setKit(await getMatchingSystemKit(compiler['VS'].kitLabel));
+    await cmt.build();
+
+    const result1 = await testEnv.result.getResultAsJson();
+    expect(result1['compiler']).to.eql(compiler['VS'].compiler);
+  }).timeout(100000);
+
   test('Test kit switch between different preferred generators and compilers',
        async function(this: ITestCallbackContext) {
          // Select compiler build node dependent
@@ -214,8 +243,8 @@ suite('Build', async () => {
       this.skip();
     const compiler = os_compilers[workername];
 
-         testEnv.config.updatePartial({preferredGenerators: []});
-         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+    testEnv.config.updatePartial({preferredGenerators: []});
+    testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
     await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
 
     await cmt.build();
@@ -233,44 +262,44 @@ suite('Build', async () => {
   }).timeout(200000);
 
   test('Test build twice', async function(this: ITestCallbackContext) {
-        expect(await cmt.build()).eq(0);
-        expect(await cmt.build()).eq(0);
-        await testEnv.result.getResultAsJson();
-      }).timeout(100000);
+    expect(await cmt.build()).eq(0);
+    expect(await cmt.build()).eq(0);
+    await testEnv.result.getResultAsJson();
+  }).timeout(100000);
 
   test('Test build twice with clean', async function(this: ITestCallbackContext) {
-        expect(await cmt.build()).eq(0);
-        await cmt.clean();
-        expect(await cmt.build()).eq(0);
-        await testEnv.result.getResultAsJson();
-      }).timeout(100000);
+    expect(await cmt.build()).eq(0);
+    await cmt.clean();
+    expect(await cmt.build()).eq(0);
+    await testEnv.result.getResultAsJson();
+  }).timeout(100000);
 
   test('Test build twice with clean configure', async function(this: ITestCallbackContext) {
-        expect(await cmt.build()).eq(0);
-        await cmt.cleanConfigure();
-        expect(await cmt.build()).eq(0);
+    expect(await cmt.build()).eq(0);
+    await cmt.cleanConfigure();
+    expect(await cmt.build()).eq(0);
 
-        await testEnv.result.getResultAsJson();
-      }).timeout(100000);
+    await testEnv.result.getResultAsJson();
+  }).timeout(100000);
 
   test('Test build twice with rebuild configure', async function(this: ITestCallbackContext) {
-        // Select compiler build node dependent
-        await cmt.build();
-        expect(await cmt.build()).eq(0);
-        await cmt.cleanRebuild();
-        expect(await cmt.build()).eq(0);
+    // Select compiler build node dependent
+    await cmt.build();
+    expect(await cmt.build()).eq(0);
+    await cmt.cleanRebuild();
+    expect(await cmt.build()).eq(0);
 
-        await testEnv.result.getResultAsJson();
-      }).timeout(100000);
+    await testEnv.result.getResultAsJson();
+  }).timeout(100000);
 
   test('Copy compile_commands.json to a pre-determined path', async () => {
-        expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
-        let retc = await cmt.configure();
-        expect(retc).to.eq(0);
-        expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
-        testEnv.config.updatePartial({copyCompileCommands: compdb_cp_path});
-        retc = await cmt.configure();
-        expect(retc).to.eq(0);
-        expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
-      }).timeout(100000);
+    expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
+    let retc = await cmt.configure();
+    expect(retc).to.eq(0);
+    expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
+    testEnv.config.updatePartial({copyCompileCommands: compdb_cp_path});
+    retc = await cmt.configure();
+    expect(retc).to.eq(0);
+    expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
+  }).timeout(100000);
 });
