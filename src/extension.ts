@@ -470,7 +470,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Drop the current kits watcher and create a new one.
    */
-  private async _resetKitsWatcher() {
+  private _resetKitsWatcher() {
     // Throw the old one away
     this._kitsWatcher.dispose();
 
