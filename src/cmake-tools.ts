@@ -344,6 +344,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         try {
           this._statusMessage.set('Reloading...');
           await drv.setKit(kit, this.getPreferredGenerators());
+          this.workspaceContext.state.activeKitName = kit.name;
           this._statusMessage.set('Ready');
         } catch (error) {
           vscode.window.showErrorMessage(`Unable to set kit "${error}".`);
@@ -352,7 +353,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._activeKit = null;
         }
       }
-      this.workspaceContext.state.activeKitName = kit.name;
     }
   }
 
