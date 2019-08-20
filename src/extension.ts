@@ -11,8 +11,8 @@ import * as path from 'path';
 import * as cpt from 'vscode-cpptools';
 import * as logging from './logging';
 import * as util from './util';
-import {CppConfigurationProvider} from '@cmt/cpptools';
-import {CMakeCache} from '@cmt/cache';
+import { CppConfigurationProvider } from '@cmt/cpptools';
+import { CMakeCache } from '@cmt/cache';
 import CMakeTools from './cmake-tools';
 import rollbar from './rollbar';
 import {
@@ -26,22 +26,23 @@ import {
   findCLCompilerPath,
   effectiveKitEnvironment,
   OLD_USER_KITS_FILEPATH,
+  configKitsPathForWorkspaceFolder
 } from '@cmt/kit';
-import {fs} from '@cmt/pr';
-import {MultiWatcher} from '@cmt/watcher';
-import {ConfigurationReader} from '@cmt/config';
+import { fs } from '@cmt/pr';
+import { MultiWatcher } from '@cmt/watcher';
+import { ConfigurationReader } from '@cmt/config';
 import paths from '@cmt/paths';
-import {Strand} from '@cmt/strand';
-import {StatusBar} from './status';
-import {FireNow} from '@cmt/prop';
-import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
-import {ProgressHandle, DummyDisposable} from './util';
+import { Strand } from '@cmt/strand';
+import { StatusBar } from './status';
+import { FireNow } from '@cmt/prop';
+import { ProjectOutlineProvider, TargetNode, SourceFileNode } from '@cmt/tree';
+import { ProgressHandle, DummyDisposable } from './util';
 
 const log = logging.createLogger('extension');
 
-function reportProgress(progress: ProgressHandle|undefined, message: string) {
+function reportProgress(progress: ProgressHandle | undefined, message: string) {
   if (progress) {
-    progress.report({message});
+    progress.report({ message });
   }
 }
 
@@ -56,7 +57,7 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
  * important information down to the lower layers.
  */
 class ExtensionManager implements vscode.Disposable {
-  constructor(public readonly extensionContext: vscode.ExtensionContext) {}
+  constructor(public readonly extensionContext: vscode.ExtensionContext) { }
 
   /**
    * Subscription to workspace changes.
@@ -69,7 +70,7 @@ class ExtensionManager implements vscode.Disposable {
    * keep its own separately.
    */
   private readonly _workspaceFoldersChangedSub = vscode.workspace.onDidChangeWorkspaceFolders(
-      e => rollbar.invokeAsync('Update workspace folders', () => this._onWorkspaceFoldersChanged(e)));
+    e => rollbar.invokeAsync('Update workspace folders', () => this._onWorkspaceFoldersChanged(e)));
 
   /**
    * Adding/removing workspaces should be serialized. Keep that work in a strand.
@@ -118,7 +119,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private readonly _projectOutlineProvider = new ProjectOutlineProvider();
   private readonly _projectOutlineDisposer
-      = vscode.window.registerTreeDataProvider('cmake.outline', this._projectOutlineProvider);
+    = vscode.window.registerTreeDataProvider('cmake.outline', this._projectOutlineProvider);
 
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
@@ -132,13 +133,13 @@ class ExtensionManager implements vscode.Disposable {
    * - Where we search for variants
    * - Where we search for workspace-local kits
    */
-  private _activeWorkspaceFolder: vscode.WorkspaceFolder|null = null;
+  private _activeWorkspaceFolder: vscode.WorkspaceFolder | null = null;
 
   /**
    * The CMake Tools instance associated with the current workspace folder, or
    * `null` if no folder is open.
    */
-  private get _activeCMakeTools(): CMakeTools|null {
+  private get _activeCMakeTools(): CMakeTools | null {
     if (this._activeWorkspaceFolder) {
       const ret = this._cmakeToolsForWorkspaceFolder(this._activeWorkspaceFolder);
       if (!ret) {
@@ -154,7 +155,7 @@ class ExtensionManager implements vscode.Disposable {
    * Get the CMakeTools instance associated with the given workspace folder, or `null`
    * @param ws The workspace folder to search
    */
-  private _cmakeToolsForWorkspaceFolder(ws: vscode.WorkspaceFolder): CMakeTools|null {
+  private _cmakeToolsForWorkspaceFolder(ws: vscode.WorkspaceFolder): CMakeTools | null {
     return this._cmakeToolsInstances.get(ws.name) || null;
   }
 
@@ -164,7 +165,7 @@ class ExtensionManager implements vscode.Disposable {
    * @returns `false` if there is not active CMakeTools, or it has no active kit
    * and the user cancelled the kit selection dialog.
    */
-  private async _ensureActiveKit(cmt: CMakeTools|null = null): Promise<boolean> {
+  private async _ensureActiveKit(cmt: CMakeTools | null = null): Promise<boolean> {
     if (!cmt) {
       cmt = this._activeCMakeTools;
     }
@@ -219,42 +220,42 @@ class ExtensionManager implements vscode.Disposable {
         doConfigure: boolean;
       }
       const chosen = await vscode.window.showInformationMessage<Choice1>(
-          'Would you like to configure this project?',
-          {},
-          {title: 'Yes', doConfigure: true},
-          {title: 'Not now', doConfigure: false},
+        'Would you like to configure this project?',
+        {},
+        { title: 'Yes', doConfigure: true },
+        { title: 'Not now', doConfigure: false },
       );
       if (!chosen) {
         // Do nothing. User cancelled
         return;
       }
       const perist_message
-          = chosen.doConfigure ? 'Always configure projects upon opening?' : 'Never configure projects on opening?';
+        = chosen.doConfigure ? 'Always configure projects upon opening?' : 'Never configure projects on opening?';
       interface Choice2 {
         title: string;
-        persistMode: 'user'|'workspace';
+        persistMode: 'user' | 'workspace';
       }
       const persist_pr
-          // Try to persist the user's selection to a `settings.json`
-          = vscode.window
-                .showInformationMessage<Choice2>(
-                    perist_message,
-                    {},
-                    {title: 'Yes', persistMode: 'user'},
-                    {title: 'For this Workspace', persistMode: 'workspace'},
-                    )
-                .then(async choice => {
-                  if (!choice) {
-                    // Use cancelled. Do nothing.
-                    return;
-                  }
-                  const config = vscode.workspace.getConfiguration(undefined, ws.uri);
-                  let config_target = vscode.ConfigurationTarget.Global;
-                  if (choice.persistMode === 'workspace') {
-                    config_target = vscode.ConfigurationTarget.WorkspaceFolder;
-                  }
-                  await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
-                });
+        // Try to persist the user's selection to a `settings.json`
+        = vscode.window
+          .showInformationMessage<Choice2>(
+            perist_message,
+            {},
+            { title: 'Yes', persistMode: 'user' },
+            { title: 'For this Workspace', persistMode: 'workspace' },
+          )
+          .then(async choice => {
+            if (!choice) {
+              // Use cancelled. Do nothing.
+              return;
+            }
+            const config = vscode.workspace.getConfiguration(undefined, ws.uri);
+            let config_target = vscode.ConfigurationTarget.Global;
+            if (choice.persistMode === 'workspace') {
+              config_target = vscode.ConfigurationTarget.WorkspaceFolder;
+            }
+            await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
+          });
       rollbar.takePromise('Persist config-on-open setting', {}, persist_pr);
       should_configure = chosen.doConfigure;
     }
@@ -281,7 +282,7 @@ class ExtensionManager implements vscode.Disposable {
       // Check that we aren't double-loading for this workspace. That would be bad...
       const current_cmt = this._cmakeToolsForWorkspaceFolder(ws)!;
       if (current_cmt) {
-        rollbar.error('Double-loaded CMake Tools instance for workspace folder', {wsUri: ws.uri.toString()});
+        rollbar.error('Double-loaded CMake Tools instance for workspace folder', { wsUri: ws.uri.toString() });
         // Not even sure how to best handle this...
         return current_cmt;
       }
@@ -292,7 +293,7 @@ class ExtensionManager implements vscode.Disposable {
       if (this._activeWorkspaceFolder === null) {
         await this._setActiveWorkspaceFolder(ws, progress);
       }
-      rollbar.takePromise('Post-folder-open', {folder: ws}, this._postWorkspaceOpen(ws, new_cmt));
+      rollbar.takePromise('Post-folder-open', { folder: ws }, this._postWorkspaceOpen(ws, new_cmt));
       // Return the newly created instance
       return new_cmt;
     });
@@ -315,10 +316,10 @@ class ExtensionManager implements vscode.Disposable {
    * @param ws The workspace folder to create for
    */
   private async _createCMakeToolsForWorkspaceFolder(ws: vscode.WorkspaceFolder) {
-    // Get the kits that will be available for the new workspace directory
-    const ws_kits = await kitsAvailableInWorkspaceDirectory(ws.uri.fsPath);
     // Create the backend:
     const new_cmt = await CMakeTools.createForDirectory(ws.uri.fsPath, this.extensionContext);
+    // Get the kits that will be available for the new workspace directory
+    const ws_kits = await kitsAvailableInWorkspaceDirectory(ws.uri.fsPath, new_cmt.workspaceContext.config.kitFile);
     // Check if the CMakeTools remembers what kit it was last using in this dir:
     const kit_name = new_cmt.workspaceContext.state.activeKitName;
     if (!kit_name) {
@@ -345,7 +346,7 @@ class ExtensionManager implements vscode.Disposable {
       if (!inst) {
         // CMake Tools should always be aware of all workspace folders. If we
         // somehow missed one, that's a bug
-        rollbar.error('Workspace folder removed, but not associated with an extension instance', {wsName: ws.name});
+        rollbar.error('Workspace folder removed, but not associated with an extension instance', { wsName: ws.name });
         // Keep the UI running, just don't remove this instance.
         return;
       }
@@ -366,13 +367,13 @@ class ExtensionManager implements vscode.Disposable {
    * pieces to control which backend has control and receives user input.
    * @param ws The workspace to activate
    */
-  private async _setActiveWorkspaceFolder(ws: vscode.WorkspaceFolder|null, progress?: ProgressHandle) {
+  private async _setActiveWorkspaceFolder(ws: vscode.WorkspaceFolder | null, progress?: ProgressHandle) {
     reportProgress(progress, `Loading workspace folder ${ws ? ws.name : ''}`);
     // Keep it in the strand
     // We SHOULD have a CMakeTools instance loaded for this workspace.
     // It should have been added by `addWorkspaceFolder`
     if (ws && !this._cmakeToolsInstances.has(ws.name)) {
-      rollbar.error('No CMake Tools instance ready for the active workspace. Impossible!', {wsUri: ws.uri.toString()});
+      rollbar.error('No CMake Tools instance ready for the active workspace. Impossible!', { wsUri: ws.uri.toString() });
       return;
     }
     // Set the new workspace
@@ -386,13 +387,13 @@ class ExtensionManager implements vscode.Disposable {
 
   private _disposeSubs() {
     for (const sub of [this._statusMessageSub,
-                       this._targetNameSub,
-                       this._buildTypeSub,
-                       this._launchTargetSub,
-                       this._ctestEnabledSub,
-                       this._testResultsSub,
-                       this._isBusySub,
-                       this._codeModelSub,
+    this._targetNameSub,
+    this._buildTypeSub,
+    this._launchTargetSub,
+    this._ctestEnabledSub,
+    this._testResultsSub,
+    this._isBusySub,
+    this._codeModelSub,
     ]) {
       sub.dispose();
     }
@@ -422,7 +423,7 @@ class ExtensionManager implements vscode.Disposable {
         const opts = drv ? drv.expansionOptions : undefined;
         const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
-        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
+        this._configProvider.updateConfigurationData({ cache, codeModel, clCompilerPath });
         await this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady) {
           cpptools.notifyReady(this._configProvider);
@@ -469,30 +470,55 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Drop the current kits watcher and create a new one.
    */
-  private _resetKitsWatcher() {
+  private async _resetKitsWatcher() {
     // Throw the old one away
     this._kitsWatcher.dispose();
+
+    let kitsWatcher: string[]
+    kitsWatcher = [USER_KITS_FILEPATH]
+
     // Determine whether we need to watch the workspace kits file:
     const ws_kits_path = this._workspaceKitsPath;
-    this._kitsWatcher = ws_kits_path
-        // We have workspace kits:
-        ? new MultiWatcher(USER_KITS_FILEPATH, ws_kits_path)
-        // No workspace:
-        : new MultiWatcher(USER_KITS_FILEPATH);
+    if (ws_kits_path) {
+      kitsWatcher.push(ws_kits_path)
+    }
+
+    // Determine wether we need to watch the config kits file:
+    const kit_file_path = this._configKitsPath;
+    if (kit_file_path) {
+      kitsWatcher.push(kit_file_path)
+    }
+
+    this._kitsWatcher = new MultiWatcher(...kitsWatcher)
     // Subscribe to its events:
     this._kitsWatcher.onAnyEvent(_ => rollbar.invokeAsync('Re-reading kits', () => this._rereadKits()));
+  }
+
+  /**
+   * The path to the workspace-local configured kits file, dependent on the path to the
+   * active workspace folder and the setting in the active cmake tools.
+   */
+  private get _configKitsPath(): string | null {
+    if (!this._activeCMakeTools) {
+      return null;
+    }
+    if (this._activeWorkspaceFolder && this._activeCMakeTools.workspaceContext.config.kitFile) {
+      return configKitsPathForWorkspaceFolder(this._activeWorkspaceFolder, this._activeCMakeTools.workspaceContext.config.kitFile);
+    } else {
+      return null;
+    }
   }
 
   /**
    * The path to the workspace-local kits file, dependent on the path to the
    * active workspace folder.
    */
-  private get _workspaceKitsPath(): string|null {
+  private get _workspaceKitsPath(): string | null {
     return this._activeWorkspaceFolder
-        // Path present:
-        ? kitsPathForWorkspaceFolder(this._activeWorkspaceFolder)
-        // No open folder:
-        : null;
+      // Path present:
+      ? kitsPathForWorkspaceFolder(this._activeWorkspaceFolder)
+      // No open folder:
+      : null;
   }
 
   /**
@@ -505,6 +531,10 @@ class ExtensionManager implements vscode.Disposable {
    */
   private _wsKits: Kit[] = [];
 
+  /**
+   * The kits available from the configuration kits file
+   */
+  private _configKits: Kit[] = [];
   /**
    * Watches for changes to the kits file
    */
@@ -520,6 +550,8 @@ class ExtensionManager implements vscode.Disposable {
       rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
     } else if (this._workspaceKitsPath && doc.uri.fsPath === this._workspaceKitsPath) {
       rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
+    } else if (this._configKitsPath && doc.uri.fsPath === this._configKitsPath) {
+      rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
     } else {
       // Ignore
     }
@@ -528,7 +560,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Get both workspace-local kits and user-local kits
    */
-  private get _allKits(): Kit[] { return this._userKits.concat(this._wsKits); }
+  private get _allKits(): Kit[] { return this._userKits.concat(this._wsKits).concat(this._configKits); }
 
   /**
    * Reload the list of available kits from the filesystem. This will also
@@ -538,14 +570,14 @@ class ExtensionManager implements vscode.Disposable {
     // Migrate kits from old pre-1.1.3 location
     try {
       if (await fs.exists(OLD_USER_KITS_FILEPATH) && !await fs.exists(USER_KITS_FILEPATH)) {
-        rollbar.info('Migrating kits file', {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
+        rollbar.info('Migrating kits file', { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
         await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
         await fs.rename(OLD_USER_KITS_FILEPATH, USER_KITS_FILEPATH);
       }
     } catch (e) {
       rollbar.exception('Failed to migrate prior user-local kits file.',
-                        e,
-                        {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
+        e,
+        { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
     }
     // Load user-kits
     reportProgress(progress, 'Loading kits');
@@ -555,10 +587,16 @@ class ExtensionManager implements vscode.Disposable {
     if (this._workspaceKitsPath) {
       workspace = await readKitsFile(this._workspaceKitsPath);
     }
+    // Load config-kits
+    let config: Kit[] = []
+    if (this._configKitsPath != null) {
+      config = await readKitsFile(this._configKitsPath)
+    }
+
     // Add the special __unspec__ kit for opting-out of kits
-    user.push({name: '__unspec__'});
+    user.push({ name: '__unspec__' });
     // Set them as known. May reload the current kit.s
-    await this._setKnownKits({user, workspace});
+    await this._setKnownKits({ user, workspace, config });
     // Pruning requires user interaction, so it happens fully async
     this._startPruneOutdatedKitsAsync();
   }
@@ -567,9 +605,10 @@ class ExtensionManager implements vscode.Disposable {
    * Set the kits that are available to the user. May change the active kit.
    * @param opts `user` for user local kits, `workspace` for workspace-local kits
    */
-  private async _setKnownKits(opts: {user: Kit[], workspace: Kit[]}) {
+  private async _setKnownKits(opts: { user: Kit[], workspace: Kit[], config: Kit[] }) {
     this._userKits = opts.user;
     this._wsKits = opts.workspace;
+    this._configKits = opts.config;
     const cmt = this._activeCMakeTools;
     if (cmt) {
       const current = cmt.activeKit;
@@ -585,31 +624,31 @@ class ExtensionManager implements vscode.Disposable {
    * Set the current kit in the current CMake Tools instance
    * @param k The kit
    */
-  async _setCurrentKit(k: Kit|null) {
+  async _setCurrentKit(k: Kit | null) {
     const inst = this._activeCMakeTools;
     const raw_name = k ? k.name : '';
     if (inst) {
       // Generate a message that we will show in the progress notification
       let message = '';
       switch (raw_name) {
-      case '':
-      case '__unspec__':
-        // Empty string/unspec is un-setting the kit:
-        message = 'Unsetting kit';
-        break;
-      default:
-        // Everything else is just loading a kit:
-        message = `Loading kit ${raw_name}`;
-        break;
+        case '':
+        case '__unspec__':
+          // Empty string/unspec is un-setting the kit:
+          message = 'Unsetting kit';
+          break;
+        default:
+          // Everything else is just loading a kit:
+          message = `Loading kit ${raw_name}`;
+          break;
       }
-      rollbar.updatePayload({kit: k});
+      rollbar.updatePayload({ kit: k });
       // Load the kit into the backend
       await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: message,
-          },
-          () => inst.setKit(k),
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: message,
+        },
+        () => inst.setKit(k),
       );
     }
     // Update the status bar
@@ -619,24 +658,24 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Opens a text editor with the user-local `cmake-kits.json` file.
    */
-  async editKits(): Promise<vscode.TextEditor|null> {
+  async editKits(): Promise<vscode.TextEditor | null> {
     log.debug('Opening TextEditor for', USER_KITS_FILEPATH);
     if (!await fs.exists(USER_KITS_FILEPATH)) {
       interface Item extends vscode.MessageItem {
-        action: 'scan'|'cancel';
+        action: 'scan' | 'cancel';
       }
       const chosen = await vscode.window.showInformationMessage<Item>(
-          'No kits file is present. What would you like to do?',
-          {modal: true},
-          {
-            title: 'Scan for kits',
-            action: 'scan',
-          },
-          {
-            title: 'Cancel',
-            isCloseAffordance: true,
-            action: 'cancel',
-          },
+        'No kits file is present. What would you like to do?',
+        { modal: true },
+        {
+          title: 'Scan for kits',
+          action: 'scan',
+        },
+        {
+          title: 'Cancel',
+          isCloseAffordance: true,
+          action: 'cancel',
+        },
       );
       if (!chosen || chosen.action === 'cancel') {
         return null;
@@ -659,19 +698,19 @@ class ExtensionManager implements vscode.Disposable {
     // We only save the user-local kits: We don't want to save workspace kits
     // in the user kits file.
     const old_kits_by_name = this._userKits.reduce(
-        (acc, kit) => ({...acc, [kit.name]: kit}),
-        {} as {[kit: string]: Kit},
+      (acc, kit) => ({ ...acc, [kit.name]: kit }),
+      {} as { [kit: string]: Kit },
     );
     // Do the scan:
-    const discovered_kits = await scanForKits({minGWSearchDirs: this._getMinGWDirs()});
+    const discovered_kits = await scanForKits({ minGWSearchDirs: this._getMinGWDirs() });
     // Update the new kits we know about.
     const new_kits_by_name = discovered_kits.reduce(
-        (acc, kit) => ({...acc, [kit.name]: kit}),
-        old_kits_by_name,
+      (acc, kit) => ({ ...acc, [kit.name]: kit }),
+      old_kits_by_name,
     );
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-    await this._setKnownKits({user: new_kits, workspace: this._wsKits});
+    await this._setKnownKits({ user: new_kits, workspace: this._wsKits, config: this._configKits });
     await this._writeUserKitsFile(new_kits);
     this._startPruneOutdatedKitsAsync();
   }
@@ -721,28 +760,28 @@ class ExtensionManager implements vscode.Disposable {
         do: 'retry' | 'cancel';
       }
       const pr = vscode.window
-                     .showErrorMessage<FailOptions>(
-                         `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
-                         {
-                           title: 'Retry',
-                           do: 'retry',
-                         },
-                         {
-                           title: 'Cancel',
-                           do: 'cancel',
-                         },
-                         )
-                     .then(choice => {
-                       if (!choice) {
-                         return false;
-                       }
-                       switch (choice.do) {
-                       case 'retry':
-                         return this.scanForKits();
-                       case 'cancel':
-                         return false;
-                       }
-                     });
+        .showErrorMessage<FailOptions>(
+          `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
+          {
+            title: 'Retry',
+            do: 'retry',
+          },
+          {
+            title: 'Cancel',
+            do: 'cancel',
+          },
+        )
+        .then(choice => {
+          if (!choice) {
+            return false;
+          }
+          switch (choice.do) {
+            case 'retry':
+              return this.scanForKits();
+            case 'cancel':
+              return false;
+          }
+        });
       // Don't block on writing re-trying the write
       rollbar.takePromise('retry-kit-save-fail', {}, pr);
       return false;
@@ -787,12 +826,12 @@ class ExtensionManager implements vscode.Disposable {
         const comp_path = kit.compilers[lang];
         // Get a promise that resolve to whether the given path/name exists
         const exists_pr = path.isAbsolute(comp_path)
-            // Absolute path, just check if it exists
-            ? fs.exists(comp_path)
-            // Non-absolute. Check on $PATH
-            : paths.which(comp_path).then(v => v !== null);
+          // Absolute path, just check if it exists
+          ? fs.exists(comp_path)
+          // Non-absolute. Check on $PATH
+          : paths.which(comp_path).then(v => v !== null);
         // Add it to the list
-        missing_paths_prs.push(exists_pr.then(exists => ({exists, path: comp_path})));
+        missing_paths_prs.push(exists_pr.then(exists => ({ exists, path: comp_path })));
       }
       const pr = Promise.all(missing_paths_prs).then(async infos => {
         const missing = infos.find(i => !i.exists);
@@ -801,32 +840,32 @@ class ExtensionManager implements vscode.Disposable {
         }
         // This kit contains a compiler that does not exist. What to do?
         interface UpdateKitsItem extends vscode.MessageItem {
-          action: 'remove'|'keep';
+          action: 'remove' | 'keep';
         }
         const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
-            `The kit "${kit.name}" references a non-existent compiler binary [${missing.path}]. ` +
-                `What would you like to do?`,
-            {},
-            {
-              action: 'remove',
-              title: 'Remove it',
-            },
-            {
-              action: 'keep',
-              title: 'Keep it',
-            },
+          `The kit "${kit.name}" references a non-existent compiler binary [${missing.path}]. ` +
+          `What would you like to do?`,
+          {},
+          {
+            action: 'remove',
+            title: 'Remove it',
+          },
+          {
+            action: 'keep',
+            title: 'Keep it',
+          },
         );
         if (chosen === undefined) {
           return;
         }
         switch (chosen.action) {
-        case 'keep':
-          return this._keepKit(kit);
-        case 'remove':
-          return this._removeKit(kit);
+          case 'keep':
+            return this._keepKit(kit);
+          case 'remove':
+            return this._removeKit(kit);
         }
       });
-      rollbar.takePromise(`Pruning kit`, {kit}, pr);
+      rollbar.takePromise(`Pruning kit`, { kit }, pr);
     }
   }
 
@@ -838,12 +877,12 @@ class ExtensionManager implements vscode.Disposable {
   private async _keepKit(kit: Kit) {
     const new_kits = this._userKits.map(k => {
       if (k.name === kit.name) {
-        return {...k, keep: true};
+        return { ...k, keep: true };
       } else {
         return k;
       }
     });
-    await this._setKnownKits({user: new_kits, workspace: this._wsKits});
+    await this._setKnownKits({ user: new_kits, workspace: this._wsKits, config: this._configKits });
     return this._writeUserKitsFile(new_kits);
   }
 
@@ -853,11 +892,11 @@ class ExtensionManager implements vscode.Disposable {
    */
   private async _removeKit(kit: Kit) {
     const new_kits = this._userKits.filter(k => k.name !== kit.name);
-    await this._setKnownKits({user: new_kits, workspace: this._wsKits});
+    await this._setKnownKits({ user: new_kits, workspace: this._wsKits, config: this._configKits });
     return this._writeUserKitsFile(new_kits);
   }
 
-  private async _checkHaveKits(): Promise<'use-unspec'|'ok'|'cancel'> {
+  private async _checkHaveKits(): Promise<'use-unspec' | 'ok' | 'cancel'> {
     if (this._allKits.length > 1) {
       // We have kits. Okay.
       return 'ok';
@@ -870,7 +909,7 @@ class ExtensionManager implements vscode.Disposable {
     // We don't have any kits defined. Ask the user what to do. This is safe to block
     // because it is a modal dialog
     interface FirstScanItem extends vscode.MessageItem {
-      action: 'scan'|'use-unspec'|'cancel';
+      action: 'scan' | 'use-unspec' | 'cancel';
     }
     const choices: FirstScanItem[] = [
       {
@@ -888,26 +927,26 @@ class ExtensionManager implements vscode.Disposable {
       }
     ];
     const chosen = await vscode.window.showInformationMessage(
-        'No CMake kits are available. What would you like to do?',
-        {modal: true},
-        ...choices,
+      'No CMake kits are available. What would you like to do?',
+      { modal: true },
+      ...choices,
     );
     if (!chosen) {
       // User closed the dialog
       return 'cancel';
     }
     switch (chosen.action) {
-    case 'scan': {
-      await this.scanForKits();
-      return 'ok';
-    }
-    case 'use-unspec': {
-      await this._setCurrentKit({name: '__unspec__'});
-      return 'use-unspec';
-    }
-    case 'cancel': {
-      return 'cancel';
-    }
+      case 'scan': {
+        await this.scanForKits();
+        return 'ok';
+      }
+      case 'use-unspec': {
+        await this._setCurrentKit({ name: '__unspec__' });
+        return 'use-unspec';
+      }
+      case 'cancel': {
+        return 'cancel';
+      }
     }
   }
 
@@ -920,15 +959,15 @@ class ExtensionManager implements vscode.Disposable {
     // Check that we have kits, or if the user doesn't want to use a kit.
     const state = await this._checkHaveKits();
     switch (state) {
-    case 'cancel':
-      // The user doesn't want to perform any special action
-      return false;
-    case 'use-unspec':
-      // The user chose to use the __unspec__ kit
-      return true;
-    case 'ok':
-      // 'ok' means we have kits defined and should do regular kit selection
-      break;
+      case 'cancel':
+        // The user doesn't want to perform any special action
+        return false;
+      case 'use-unspec':
+        // The user chose to use the __unspec__ kit
+        return true;
+      case 'ok':
+        // 'ok' means we have kits defined and should do regular kit selection
+        break;
     }
 
     if (process.env['CMT_TESTING'] === '1') {
@@ -942,13 +981,13 @@ class ExtensionManager implements vscode.Disposable {
     log.debug('Opening kit selection QuickPick');
     // Generate the quickpick items from our known kits
     const items = this._allKits.map(
-        (kit): KitItem => ({
-          label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
-          description: descriptionForKit(kit),
-          kit,
-        }),
+      (kit): KitItem => ({
+        label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
+        description: descriptionForKit(kit),
+        kit,
+      }),
     );
-    const chosen_kit = await vscode.window.showQuickPick(items, {placeHolder: 'Select a Kit'});
+    const chosen_kit = await vscode.window.showQuickPick(items, { placeHolder: 'Select a Kit' });
     if (chosen_kit === undefined) {
       log.debug('User cancelled Kit selection');
       // No selection was made
@@ -966,12 +1005,12 @@ class ExtensionManager implements vscode.Disposable {
   async setKitByName(kitName: string) {
     let newKit: Kit | undefined;
     switch (kitName) {
-    case '':
-    case '__unspec__':
-      break;
-    default:
-      newKit = this._allKits.find(kit => kit.name === kitName);
-      break;
+      case '':
+      case '__unspec__':
+        break;
+      default:
+        newKit = this._allKits.find(kit => kit.name === kitName);
+        break;
     }
     await this._setCurrentKit(newKit || null);
   }
@@ -1037,7 +1076,7 @@ class ExtensionManager implements vscode.Disposable {
    * @param file The file to compile. Either a file path or the URI to the file.
    * If not provided, compiles the file in the active text editor.
    */
-  async compileFile(file?: string|vscode.Uri) {
+  async compileFile(file?: string | vscode.Uri) {
     if (file instanceof vscode.Uri) {
       file = file.fsPath;
     }
@@ -1090,7 +1129,7 @@ class ExtensionManager implements vscode.Disposable {
  * The global extension manager. There is only one of these, even if multiple
  * backends.
  */
-let _EXT_MANAGER: ExtensionManager|null = null;
+let _EXT_MANAGER: ExtensionManager | null = null;
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, 'Initial setup');
@@ -1181,30 +1220,30 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
   }
 
   context.subscriptions.push(...[
-      // Special commands that don't require logging or separate error handling
-      vscode.commands.registerCommand('cmake.outline.configure', () => runCommand('configure')),
-      vscode.commands.registerCommand('cmake.outline.build', () => runCommand('build')),
-      vscode.commands.registerCommand('cmake.outline.stop', () => runCommand('stop')),
-      vscode.commands.registerCommand('cmake.outline.clean', () => runCommand('clean')),
-      vscode.commands.registerCommand('cmake.outline.cleanConfigure', () => runCommand('cleanConfigure')),
-      vscode.commands.registerCommand('cmake.outline.cleanRebuild', () => runCommand('cleanRebuild')),
-      // Commands for outline items:
-      vscode.commands.registerCommand('cmake.outline.buildTarget',
-                                      (what: TargetNode) => runCommand('build', what.name)),
-      vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
-                                      (what: TargetNode) => runCommand('cleanRebuild', what.name)),
-      vscode.commands.registerCommand('cmake.outline.debugTarget',
-                                      (what: TargetNode) => runCommand('debugTarget', what.name)),
-      vscode.commands.registerCommand('cmake.outline.launchTarget',
-                                      (what: TargetNode) => runCommand('launchTarget', what.name)),
-      vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
-                                      (what: TargetNode) => runCommand('setDefaultTarget', what.name)),
-      vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
-                                      (what: TargetNode) => runCommand('selectLaunchTarget', what.name)),
-      vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
-                                      (what: TargetNode) => what.openInCMakeLists()),
-      vscode.commands.registerCommand('cmake.outline.compileFile',
-                                      (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
+    // Special commands that don't require logging or separate error handling
+    vscode.commands.registerCommand('cmake.outline.configure', () => runCommand('configure')),
+    vscode.commands.registerCommand('cmake.outline.build', () => runCommand('build')),
+    vscode.commands.registerCommand('cmake.outline.stop', () => runCommand('stop')),
+    vscode.commands.registerCommand('cmake.outline.clean', () => runCommand('clean')),
+    vscode.commands.registerCommand('cmake.outline.cleanConfigure', () => runCommand('cleanConfigure')),
+    vscode.commands.registerCommand('cmake.outline.cleanRebuild', () => runCommand('cleanRebuild')),
+    // Commands for outline items:
+    vscode.commands.registerCommand('cmake.outline.buildTarget',
+      (what: TargetNode) => runCommand('build', what.name)),
+    vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
+      (what: TargetNode) => runCommand('cleanRebuild', what.name)),
+    vscode.commands.registerCommand('cmake.outline.debugTarget',
+      (what: TargetNode) => runCommand('debugTarget', what.name)),
+    vscode.commands.registerCommand('cmake.outline.launchTarget',
+      (what: TargetNode) => runCommand('launchTarget', what.name)),
+    vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
+      (what: TargetNode) => runCommand('setDefaultTarget', what.name)),
+    vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
+      (what: TargetNode) => runCommand('selectLaunchTarget', what.name)),
+    vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
+      (what: TargetNode) => what.openInCMakeLists()),
+    vscode.commands.registerCommand('cmake.outline.compileFile',
+      (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
   ]);
 }
 
@@ -1224,12 +1263,12 @@ export async function activate(context: vscode.ExtensionContext) {
     platform: process.platform,
   });
   await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: 'CMake Tools initializing...',
-        cancellable: false,
-      },
-      progress => setup(context, progress),
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'CMake Tools initializing...',
+      cancellable: false,
+    },
+    progress => setup(context, progress),
   );
 
   // TODO: Return the extension API

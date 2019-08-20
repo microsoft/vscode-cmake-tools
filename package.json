@@ -908,6 +908,12 @@
           ],
           "scope": "window"
         },
+        "cmake.kitFile": {
+          "type": "string",
+          "default": null,
+          "description": "Path to a custom kit file relative to the workspace folder",
+          "scope": "resource"
+        },
         "cmake.revealLog": {
           "type": "string",
           "default": "always",

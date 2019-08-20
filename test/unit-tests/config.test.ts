@@ -1,5 +1,5 @@
-import {ConfigurationReader, ExtensionConfigurationSettings} from '@cmt/config';
-import {expect} from '@test/util';
+import { ConfigurationReader, ExtensionConfigurationSettings } from '@cmt/config';
+import { expect } from '@test/util';
 
 
 function createConfig(conf: Partial<ExtensionConfigurationSettings>): ConfigurationReader {
@@ -45,6 +45,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     outputLogEncoding: 'auto',
     enableTraceLogging: false,
     loggingLevel: 'info',
+    kitFile: null,
   });
   ret.updatePartial(conf);
   return ret;
@@ -52,39 +53,39 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
 
 suite('[Configuration]', () => {
   test('Create a read from a configuration', () => {
-    const conf = createConfig({parallelJobs: 13});
+    const conf = createConfig({ parallelJobs: 13 });
     expect(conf.parallelJobs).to.eq(13);
   });
 
   test('Update a configuration', () => {
-    const conf = createConfig({parallelJobs: 22});
+    const conf = createConfig({ parallelJobs: 22 });
     expect(conf.parallelJobs).to.eq(22);
-    conf.updatePartial({parallelJobs: 4});
+    conf.updatePartial({ parallelJobs: 4 });
     expect(conf.parallelJobs).to.eq(4);
   });
 
   test('Listen for config changes', () => {
-    const conf = createConfig({parallelJobs: 22});
+    const conf = createConfig({ parallelJobs: 22 });
     let jobs = conf.parallelJobs;
     expect(jobs).to.eq(22);
     conf.onChange('parallelJobs', j => jobs = j);
-    conf.updatePartial({parallelJobs: 3});
+    conf.updatePartial({ parallelJobs: 3 });
     expect(jobs).to.eq(3);
   });
 
   test('Listen only fires for changing properties', () => {
-    const conf = createConfig({parallelJobs: 3});
+    const conf = createConfig({ parallelJobs: 3 });
     let fired = false;
     conf.onChange('parallelJobs', _ => fired = true);
-    conf.updatePartial({buildDirectory: 'foo'});
+    conf.updatePartial({ buildDirectory: 'foo' });
     expect(!fired, 'Event fired when it should not have');
-    conf.updatePartial({parallelJobs: 4});
+    conf.updatePartial({ parallelJobs: 4 });
     expect(fired, 'Update event did not fire');
   });
 
   test('Unchanged values in partial update are unaffected', () => {
-    const conf = createConfig({parallelJobs: 5});
-    conf.updatePartial({buildDirectory: 'Foo'});
+    const conf = createConfig({ parallelJobs: 5 });
+    conf.updatePartial({ buildDirectory: 'Foo' });
     expect(conf.parallelJobs).to.eq(5);
   });
 });
