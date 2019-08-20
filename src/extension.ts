@@ -474,22 +474,22 @@ class ExtensionManager implements vscode.Disposable {
     // Throw the old one away
     this._kitsWatcher.dispose();
 
-    let kitsWatcher: string[]
-    kitsWatcher = [USER_KITS_FILEPATH]
+    let kitsWatcher: string[];
+    kitsWatcher = [USER_KITS_FILEPATH];
 
     // Determine whether we need to watch the workspace kits file:
     const ws_kits_path = this._workspaceKitsPath;
     if (ws_kits_path) {
-      kitsWatcher.push(ws_kits_path)
+      kitsWatcher.push(ws_kits_path);
     }
 
     // Determine wether we need to watch the config kits file:
     const kit_file_path = this._configKitsPath;
     if (kit_file_path) {
-      kitsWatcher.push(kit_file_path)
+      kitsWatcher.push(kit_file_path);
     }
 
-    this._kitsWatcher = new MultiWatcher(...kitsWatcher)
+    this._kitsWatcher = new MultiWatcher(...kitsWatcher);
     // Subscribe to its events:
     this._kitsWatcher.onAnyEvent(_ => rollbar.invokeAsync('Re-reading kits', () => this._rereadKits()));
   }
@@ -588,9 +588,9 @@ class ExtensionManager implements vscode.Disposable {
       workspace = await readKitsFile(this._workspaceKitsPath);
     }
     // Load config-kits
-    let config: Kit[] = []
-    if (this._configKitsPath != null) {
-      config = await readKitsFile(this._configKitsPath)
+    let config: Kit[] = [];
+    if (this._configKitsPath !== null) {
+      config = await readKitsFile(this._configKitsPath);
     }
 
     // Add the special __unspec__ kit for opting-out of kits

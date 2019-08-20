@@ -779,7 +779,7 @@ function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
 }
 
 export function configKitsPathForWorkspaceDirectoryPath(wsPath: string, kitFile: string): string {
-  return path.join(wsPath, kitFile)
+  return path.join(wsPath, kitFile);
 }
 
 export function configKitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder, kitFile: string): string {
@@ -826,8 +826,8 @@ export async function kitsAvailableInWorkspaceDirectory(dirPath: string, configK
   const user_kits_pr = readKitsFile(USER_KITS_FILEPATH);
   const ws_kits_pr = kitsForWorkspaceDirectory(dirPath);
   if (configKitFile) {
-    const config_kits_pr = configKitsForWorkspaceDirectory(dirPath, configKitFile)
-    return Promise.all([user_kits_pr, ws_kits_pr, config_kits_pr]).then(([user_kits, ws_kits, config_kits_pr]) => user_kits.concat(ws_kits).concat(config_kits_pr));
+    const config_kits_pr = configKitsForWorkspaceDirectory(dirPath, configKitFile);
+    return Promise.all([user_kits_pr, ws_kits_pr, config_kits_pr]).then(([user_kits, ws_kits, config_kits]) => user_kits.concat(ws_kits).concat(config_kits));
   } else {
     return Promise.all([user_kits_pr, ws_kits_pr]).then(([user_kits, ws_kits]) => user_kits.concat(ws_kits));
   }
