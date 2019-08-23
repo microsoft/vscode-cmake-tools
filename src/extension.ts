@@ -1263,12 +1263,12 @@ export async function activate(context: vscode.ExtensionContext) {
     platform: process.platform,
   });
   await vscode.window.withProgress(
-    {
-      location: vscode.ProgressLocation.Notification,
-      title: 'CMake Tools initializing...',
-      cancellable: false,
-    },
-    progress => setup(context, progress),
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'CMake Tools initializing...',
+        cancellable: false,
+      },
+      progress => setup(context, progress),
   );
 
   // TODO: Return the extension API
