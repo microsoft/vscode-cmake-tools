@@ -213,7 +213,7 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
 
-  get copyCompileCommands(): string | null { return this.configData.copyCompileCommands; }
+  get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
 
   get loggingLevel(): LogLevelKey {
     if (process.env['CMT_LOGGING_LEVEL']) {
@@ -258,8 +258,8 @@ export class ConfigurationReader implements vscode.Disposable {
     testEnvironment: new vscode.EventEmitter<HardEnv>(),
     mingwSearchDirs: new vscode.EventEmitter<string[]>(),
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
-    copyCompileCommands: new vscode.EventEmitter<string | null>(),
-    configureOnOpen: new vscode.EventEmitter<boolean | null>(),
+    copyCompileCommands: new vscode.EventEmitter<string|null>(),
+    configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
     ignoreKitEnv: new vscode.EventEmitter<boolean>(),
     buildTask: new vscode.EventEmitter<boolean>(),
