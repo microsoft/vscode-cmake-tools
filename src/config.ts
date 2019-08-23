@@ -8,7 +8,7 @@ import * as util from '@cmt/util';
 import * as os from 'os';
 import * as vscode from 'vscode';
 
-export type LogLevelKey = 'trace' | 'debug' | 'info' | 'note' | 'warning' | 'error' | 'fatal';
+export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
 interface HardEnv {
   [key: string]: string;
@@ -17,23 +17,23 @@ interface HardEnv {
 export interface ExtensionConfigurationSettings {
   cmakePath: string;
   buildDirectory: string;
-  installPrefix: string | null;
+  installPrefix: string|null;
   sourceDirectory: string;
   saveBeforeBuild: boolean;
   buildBeforeRun: boolean;
   clearOutputBeforeBuild: boolean;
-  configureSettings: { [key: string]: any };
-  cacheInit: string | string[] | null;
+  configureSettings: {[key: string]: any};
+  cacheInit: string|string[]|null;
   preferredGenerators: string[];
-  generator: string | null;
-  toolset: string | null;
-  platform: string | null;
+  generator: string|null;
+  toolset: string|null;
+  platform: string|null;
   configureArgs: string[];
   buildArgs: string[];
   buildToolArgs: string[];
   parallelJobs: number;
   ctestPath: string;
-  ctest: { parallelJobs: number; };
+  ctest: {parallelJobs: number;};
   autoRestartBuild: boolean;
   parseBuildDiagnostics: boolean;
   enabledOutputParsers: string[];
