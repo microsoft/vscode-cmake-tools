@@ -885,7 +885,7 @@
         "cmake.outputLogEncoding": {
           "type": "string",
           "default": "auto",
-          "description": "Encoding of the output from external commonds(eg.cmake -- build)",
+          "description": "Encoding of the output from external commands (eg.cmake -- build)",
           "scope": "window"
         },
         "cmake.enableTraceLogging": {
