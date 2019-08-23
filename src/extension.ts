@@ -760,28 +760,28 @@ class ExtensionManager implements vscode.Disposable {
         do: 'retry' | 'cancel';
       }
       const pr = vscode.window
-        .showErrorMessage<FailOptions>(
-          `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
-          {
-            title: 'Retry',
-            do: 'retry',
-          },
-          {
-            title: 'Cancel',
-            do: 'cancel',
-          },
-        )
-        .then(choice => {
-          if (!choice) {
-            return false;
-          }
-          switch (choice.do) {
-            case 'retry':
-              return this.scanForKits();
-            case 'cancel':
-              return false;
-          }
-        });
+                     .showErrorMessage<FailOptions>(
+                         `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
+                         {
+                           title: 'Retry',
+                           do: 'retry',
+                         },
+                         {
+                           title: 'Cancel',
+                           do: 'cancel',
+                         },
+                         )
+                     .then(choice => {
+                       if (!choice) {
+                         return false;
+                       }
+                       switch (choice.do) {
+                       case 'retry':
+                         return this.scanForKits();
+                       case 'cancel':
+                         return false;
+                       }
+                     });
       // Don't block on writing re-trying the write
       rollbar.takePromise('retry-kit-save-fail', {}, pr);
       return false;
@@ -826,12 +826,12 @@ class ExtensionManager implements vscode.Disposable {
         const comp_path = kit.compilers[lang];
         // Get a promise that resolve to whether the given path/name exists
         const exists_pr = path.isAbsolute(comp_path)
-          // Absolute path, just check if it exists
-          ? fs.exists(comp_path)
-          // Non-absolute. Check on $PATH
-          : paths.which(comp_path).then(v => v !== null);
+            // Absolute path, just check if it exists
+            ? fs.exists(comp_path)
+            // Non-absolute. Check on $PATH
+            : paths.which(comp_path).then(v => v !== null);
         // Add it to the list
-        missing_paths_prs.push(exists_pr.then(exists => ({ exists, path: comp_path })));
+        missing_paths_prs.push(exists_pr.then(exists => ({exists, path: comp_path})));
       }
       const pr = Promise.all(missing_paths_prs).then(async infos => {
         const missing = infos.find(i => !i.exists);
@@ -840,32 +840,32 @@ class ExtensionManager implements vscode.Disposable {
         }
         // This kit contains a compiler that does not exist. What to do?
         interface UpdateKitsItem extends vscode.MessageItem {
-          action: 'remove' | 'keep';
+          action: 'remove'|'keep';
         }
         const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
-          `The kit "${kit.name}" references a non-existent compiler binary [${missing.path}]. ` +
-          `What would you like to do?`,
-          {},
-          {
-            action: 'remove',
-            title: 'Remove it',
-          },
-          {
-            action: 'keep',
-            title: 'Keep it',
-          },
+            `The kit "${kit.name}" references a non-existent compiler binary [${missing.path}]. ` +
+                `What would you like to do?`,
+            {},
+            {
+              action: 'remove',
+              title: 'Remove it',
+            },
+            {
+              action: 'keep',
+              title: 'Keep it',
+            },
         );
         if (chosen === undefined) {
           return;
         }
         switch (chosen.action) {
-          case 'keep':
-            return this._keepKit(kit);
-          case 'remove':
-            return this._removeKit(kit);
+        case 'keep':
+          return this._keepKit(kit);
+        case 'remove':
+          return this._removeKit(kit);
         }
       });
-      rollbar.takePromise(`Pruning kit`, { kit }, pr);
+      rollbar.takePromise(`Pruning kit`, {kit}, pr);
     }
   }
 
@@ -877,7 +877,7 @@ class ExtensionManager implements vscode.Disposable {
   private async _keepKit(kit: Kit) {
     const new_kits = this._userKits.map(k => {
       if (k.name === kit.name) {
-        return { ...k, keep: true };
+        return {...k, keep: true};
       } else {
         return k;
       }
@@ -896,7 +896,7 @@ class ExtensionManager implements vscode.Disposable {
     return this._writeUserKitsFile(new_kits);
   }
 
-  private async _checkHaveKits(): Promise<'use-unspec' | 'ok' | 'cancel'> {
+  private async _checkHaveKits(): Promise<'use-unspec'|'ok'|'cancel'> {
     if (this._allKits.length > 1) {
       // We have kits. Okay.
       return 'ok';
@@ -909,7 +909,7 @@ class ExtensionManager implements vscode.Disposable {
     // We don't have any kits defined. Ask the user what to do. This is safe to block
     // because it is a modal dialog
     interface FirstScanItem extends vscode.MessageItem {
-      action: 'scan' | 'use-unspec' | 'cancel';
+      action: 'scan'|'use-unspec'|'cancel';
     }
     const choices: FirstScanItem[] = [
       {
@@ -927,26 +927,26 @@ class ExtensionManager implements vscode.Disposable {
       }
     ];
     const chosen = await vscode.window.showInformationMessage(
-      'No CMake kits are available. What would you like to do?',
-      { modal: true },
-      ...choices,
+        'No CMake kits are available. What would you like to do?',
+        {modal: true},
+        ...choices,
     );
     if (!chosen) {
       // User closed the dialog
       return 'cancel';
     }
     switch (chosen.action) {
-      case 'scan': {
-        await this.scanForKits();
-        return 'ok';
-      }
-      case 'use-unspec': {
-        await this._setCurrentKit({ name: '__unspec__' });
-        return 'use-unspec';
-      }
-      case 'cancel': {
-        return 'cancel';
-      }
+    case 'scan': {
+      await this.scanForKits();
+      return 'ok';
+    }
+    case 'use-unspec': {
+      await this._setCurrentKit({name: '__unspec__'});
+      return 'use-unspec';
+    }
+    case 'cancel': {
+      return 'cancel';
+    }
     }
   }
 
@@ -959,15 +959,15 @@ class ExtensionManager implements vscode.Disposable {
     // Check that we have kits, or if the user doesn't want to use a kit.
     const state = await this._checkHaveKits();
     switch (state) {
-      case 'cancel':
-        // The user doesn't want to perform any special action
-        return false;
-      case 'use-unspec':
-        // The user chose to use the __unspec__ kit
-        return true;
-      case 'ok':
-        // 'ok' means we have kits defined and should do regular kit selection
-        break;
+    case 'cancel':
+      // The user doesn't want to perform any special action
+      return false;
+    case 'use-unspec':
+      // The user chose to use the __unspec__ kit
+      return true;
+    case 'ok':
+      // 'ok' means we have kits defined and should do regular kit selection
+      break;
     }
 
     if (process.env['CMT_TESTING'] === '1') {
@@ -981,13 +981,13 @@ class ExtensionManager implements vscode.Disposable {
     log.debug('Opening kit selection QuickPick');
     // Generate the quickpick items from our known kits
     const items = this._allKits.map(
-      (kit): KitItem => ({
-        label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
-        description: descriptionForKit(kit),
-        kit,
-      }),
+        (kit): KitItem => ({
+          label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
+          description: descriptionForKit(kit),
+          kit,
+        }),
     );
-    const chosen_kit = await vscode.window.showQuickPick(items, { placeHolder: 'Select a Kit' });
+    const chosen_kit = await vscode.window.showQuickPick(items, {placeHolder: 'Select a Kit'});
     if (chosen_kit === undefined) {
       log.debug('User cancelled Kit selection');
       // No selection was made
@@ -1005,12 +1005,12 @@ class ExtensionManager implements vscode.Disposable {
   async setKitByName(kitName: string) {
     let newKit: Kit | undefined;
     switch (kitName) {
-      case '':
-      case '__unspec__':
-        break;
-      default:
-        newKit = this._allKits.find(kit => kit.name === kitName);
-        break;
+    case '':
+    case '__unspec__':
+      break;
+    default:
+      newKit = this._allKits.find(kit => kit.name === kitName);
+      break;
     }
     await this._setCurrentKit(newKit || null);
   }
@@ -1076,7 +1076,7 @@ class ExtensionManager implements vscode.Disposable {
    * @param file The file to compile. Either a file path or the URI to the file.
    * If not provided, compiles the file in the active text editor.
    */
-  async compileFile(file?: string | vscode.Uri) {
+  async compileFile(file?: string|vscode.Uri) {
     if (file instanceof vscode.Uri) {
       file = file.fsPath;
     }
@@ -1129,7 +1129,7 @@ class ExtensionManager implements vscode.Disposable {
  * The global extension manager. There is only one of these, even if multiple
  * backends.
  */
-let _EXT_MANAGER: ExtensionManager | null = null;
+let _EXT_MANAGER: ExtensionManager|null = null;
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, 'Initial setup');
@@ -1220,30 +1220,30 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
   }
 
   context.subscriptions.push(...[
-    // Special commands that don't require logging or separate error handling
-    vscode.commands.registerCommand('cmake.outline.configure', () => runCommand('configure')),
-    vscode.commands.registerCommand('cmake.outline.build', () => runCommand('build')),
-    vscode.commands.registerCommand('cmake.outline.stop', () => runCommand('stop')),
-    vscode.commands.registerCommand('cmake.outline.clean', () => runCommand('clean')),
-    vscode.commands.registerCommand('cmake.outline.cleanConfigure', () => runCommand('cleanConfigure')),
-    vscode.commands.registerCommand('cmake.outline.cleanRebuild', () => runCommand('cleanRebuild')),
-    // Commands for outline items:
-    vscode.commands.registerCommand('cmake.outline.buildTarget',
-      (what: TargetNode) => runCommand('build', what.name)),
-    vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
-      (what: TargetNode) => runCommand('cleanRebuild', what.name)),
-    vscode.commands.registerCommand('cmake.outline.debugTarget',
-      (what: TargetNode) => runCommand('debugTarget', what.name)),
-    vscode.commands.registerCommand('cmake.outline.launchTarget',
-      (what: TargetNode) => runCommand('launchTarget', what.name)),
-    vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
-      (what: TargetNode) => runCommand('setDefaultTarget', what.name)),
-    vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
-      (what: TargetNode) => runCommand('selectLaunchTarget', what.name)),
-    vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
-      (what: TargetNode) => what.openInCMakeLists()),
-    vscode.commands.registerCommand('cmake.outline.compileFile',
-      (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
+      // Special commands that don't require logging or separate error handling
+      vscode.commands.registerCommand('cmake.outline.configure', () => runCommand('configure')),
+      vscode.commands.registerCommand('cmake.outline.build', () => runCommand('build')),
+      vscode.commands.registerCommand('cmake.outline.stop', () => runCommand('stop')),
+      vscode.commands.registerCommand('cmake.outline.clean', () => runCommand('clean')),
+      vscode.commands.registerCommand('cmake.outline.cleanConfigure', () => runCommand('cleanConfigure')),
+      vscode.commands.registerCommand('cmake.outline.cleanRebuild', () => runCommand('cleanRebuild')),
+      // Commands for outline items:
+      vscode.commands.registerCommand('cmake.outline.buildTarget',
+                                      (what: TargetNode) => runCommand('build', what.name)),
+      vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
+                                      (what: TargetNode) => runCommand('cleanRebuild', what.name)),
+      vscode.commands.registerCommand('cmake.outline.debugTarget',
+                                      (what: TargetNode) => runCommand('debugTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.launchTarget',
+                                      (what: TargetNode) => runCommand('launchTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
+                                      (what: TargetNode) => runCommand('setDefaultTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
+                                      (what: TargetNode) => runCommand('selectLaunchTarget', what.name)),
+      vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
+                                      (what: TargetNode) => what.openInCMakeLists()),
+      vscode.commands.registerCommand('cmake.outline.compileFile',
+                                      (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
   ]);
 }
 
