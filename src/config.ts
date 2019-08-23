@@ -70,7 +70,7 @@ type EmittersOf<T> = {
 export class ConfigurationReader implements vscode.Disposable {
   private _updateSubscription?: vscode.Disposable;
 
-  constructor(private readonly _configData: ExtensionConfigurationSettings) { }
+  constructor(private readonly _configData: ExtensionConfigurationSettings) {}
 
   get configData() { return this._configData; }
 
@@ -100,20 +100,20 @@ export class ConfigurationReader implements vscode.Disposable {
 
   static loadForPath(filePath: string): ExtensionConfigurationSettings {
     const data = vscode.workspace.getConfiguration('cmake', vscode.Uri.file(filePath)) as any as
-      ExtensionConfigurationSettings;
+        ExtensionConfigurationSettings;
     const platmap = {
       win32: 'windows',
       darwin: 'osx',
       linux: 'linux',
-    } as { [k: string]: string };
+    } as {[k: string]: string};
     const platform = platmap[process.platform];
     const for_platform = (data as any)[platform] as ExtensionConfigurationSettings | undefined;
-    return { ...data, ...(for_platform || {}) };
+    return {...data, ...(for_platform || {})};
   }
 
   update(newData: ExtensionConfigurationSettings) { this.updatePartial(newData); }
   updatePartial(newData: Partial<ExtensionConfigurationSettings>) {
-    const old_values = { ...this.configData };
+    const old_values = {...this.configData};
     Object.assign(this.configData, newData);
     for (const key_ of Object.getOwnPropertyNames(newData)) {
       const key = key_ as keyof ExtensionConfigurationSettings;
@@ -131,7 +131,7 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get buildDirectory(): string { return this.configData.buildDirectory; }
 
-  get installPrefix(): string | null { return this.configData.installPrefix; }
+  get installPrefix(): string|null { return this.configData.installPrefix; }
 
   get sourceDirectory(): string { return this.configData.sourceDirectory as string; }
 
@@ -149,11 +149,11 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get preferredGenerators(): string[] { return this.configData.preferredGenerators; }
 
-  get generator(): string | null { return this.configData.generator; }
+  get generator(): string|null { return this.configData.generator; }
 
-  get toolset(): string | null { return this.configData.toolset; }
+  get toolset(): string|null { return this.configData.toolset; }
 
-  get platform(): string | null { return this.configData.platform; }
+  get platform(): string|null { return this.configData.platform; }
 
   get configureArgs(): string[] { return this.configData.configureArgs; }
 
@@ -163,11 +163,11 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get parallelJobs(): number { return this.configData.parallelJobs; }
 
-  get ctest_parallelJobs(): number | null { return this.configData.ctest.parallelJobs; }
+  get ctest_parallelJobs(): number|null { return this.configData.ctest.parallelJobs; }
 
   get parseBuildDiagnostics(): boolean { return !!this.configData.parseBuildDiagnostics; }
 
-  get enableOutputParsers(): string[] | null { return this.configData.enabledOutputParsers; }
+  get enableOutputParsers(): string[]|null { return this.configData.enabledOutputParsers; }
 
   get raw_cmakePath(): string { return this.configData.cmakePath; }
 
@@ -229,23 +229,23 @@ export class ConfigurationReader implements vscode.Disposable {
   private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
     cmakePath: new vscode.EventEmitter<string>(),
     buildDirectory: new vscode.EventEmitter<string>(),
-    installPrefix: new vscode.EventEmitter<string | null>(),
+    installPrefix: new vscode.EventEmitter<string|null>(),
     sourceDirectory: new vscode.EventEmitter<string>(),
     saveBeforeBuild: new vscode.EventEmitter<boolean>(),
     buildBeforeRun: new vscode.EventEmitter<boolean>(),
     clearOutputBeforeBuild: new vscode.EventEmitter<boolean>(),
-    configureSettings: new vscode.EventEmitter<{ [key: string]: any }>(),
-    cacheInit: new vscode.EventEmitter<string | string[] | null>(),
+    configureSettings: new vscode.EventEmitter<{[key: string]: any}>(),
+    cacheInit: new vscode.EventEmitter<string|string[]|null>(),
     preferredGenerators: new vscode.EventEmitter<string[]>(),
-    generator: new vscode.EventEmitter<string | null>(),
-    toolset: new vscode.EventEmitter<string | null>(),
-    platform: new vscode.EventEmitter<string | null>(),
+    generator: new vscode.EventEmitter<string|null>(),
+    toolset: new vscode.EventEmitter<string|null>(),
+    platform: new vscode.EventEmitter<string|null>(),
     configureArgs: new vscode.EventEmitter<string[]>(),
     buildArgs: new vscode.EventEmitter<string[]>(),
     buildToolArgs: new vscode.EventEmitter<string[]>(),
     parallelJobs: new vscode.EventEmitter<number>(),
     ctestPath: new vscode.EventEmitter<string>(),
-    ctest: new vscode.EventEmitter<{ parallelJobs: number; }>(),
+    ctest: new vscode.EventEmitter<{parallelJobs: number;}>(),
     autoRestartBuild: new vscode.EventEmitter<boolean>(),
     parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
     enabledOutputParsers: new vscode.EventEmitter<string[]>(),
@@ -275,8 +275,8 @@ export class ConfigurationReader implements vscode.Disposable {
    * @param cb A callback when the setting changes
    */
   onChange<K extends keyof ExtensionConfigurationSettings>(setting: K,
-    cb: (value: ExtensionConfigurationSettings[K]) => void):
-    vscode.Disposable {
+                                                           cb: (value: ExtensionConfigurationSettings[K]) => void):
+      vscode.Disposable {
     const emitter: vscode.EventEmitter<ExtensionConfigurationSettings[K]> = this._emitters[setting];
     return emitter.event(cb);
   }
