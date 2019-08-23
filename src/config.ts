@@ -46,19 +46,18 @@ export interface ExtensionConfigurationSettings {
   testEnvironment: HardEnv;
   mingwSearchDirs: string[];
   emscriptenSearchDirs: string[];
-  copyCompileCommands: string | null;
-  configureOnOpen: boolean | null;
+  copyCompileCommands: string|null;
+  configureOnOpen: boolean|null;
   useCMakeServer: boolean;
   ignoreKitEnv: boolean;
   buildTask: boolean;
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
-  kitFile: string | null;
 }
 
 type EmittersOf<T> = {
-  readonly [Key in keyof T]: vscode.EventEmitter<T[Key]>;
+  readonly[Key in keyof T]: vscode.EventEmitter<T[Key]>;
 };
 
 /**
