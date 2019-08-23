@@ -54,6 +54,7 @@ export interface ExtensionConfigurationSettings {
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
+  kitFile: string | null;
 }
 
 type EmittersOf<T> = {
