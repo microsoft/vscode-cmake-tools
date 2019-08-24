@@ -114,7 +114,7 @@ export interface Stringable {
 
 let _LOGGER: Promise<NodeJS.WritableStream>;
 
-function logFilePath(): string { return path.join(paths.dataDir, 'log.txt'); }
+export function logFilePath(): string { return path.join(paths.dataDir, 'log.txt'); }
 
 async function _openLogFile() {
   if (!_LOGGER) {
