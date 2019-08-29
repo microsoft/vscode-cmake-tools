@@ -1,7 +1,6 @@
 import * as child_proc from 'child_process';
 import * as net from 'net';
 import * as path from 'path';
-import * as vscode from 'vscode';
 
 import * as cache from './cache';
 import {ConfigurationReader} from './config';
@@ -560,7 +559,7 @@ export class CMakeServerClient {
     let resolved = false;
     const rootPath = util.getPrimaryWorkspaceFolder();
     if (!rootPath) {
-      return Promise.reject(new Error("open a folder"));
+      throw new Error("CMake Tools is not available without an open workspace");
     }
     const tmpdir = path.join(rootPath.fsPath, '.vscode');
     // Ensure the binary directory exists
