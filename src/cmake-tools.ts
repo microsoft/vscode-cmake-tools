@@ -213,11 +213,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async configurePreConditionProblemHandler(e: CMakePreconditionProblems): Promise<void> {
+  private async cmakePreConditionProblemHandler(e: CMakePreconditionProblems): Promise<void> {
     switch (e) {
     case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
       vscode.window.showErrorMessage('Configuration is already in progress.');
       break;
+    case CMakePreconditionProblems.BuildIsAlreadyRunning:
+      vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to run a new CMake task.');
     case CMakePreconditionProblems.NoSourceDirectoryFound:
       vscode.window.showErrorMessage('You do not have a source directory open');
       break;
@@ -265,7 +267,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     let drv: CMakeDriver;
     const preferedGenerators = this.getPreferedGenerators();
-    const preConditionHandler = async (e: CMakePreconditionProblems) => this.configurePreConditionProblemHandler(e);
+    const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
         drv = await CMakeServerClientDriver
