@@ -220,6 +220,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       break;
     case CMakePreconditionProblems.BuildIsAlreadyRunning:
       vscode.window.showErrorMessage('A CMake task is already running. Stop it before trying to run a new CMake task.');
+      break;
     case CMakePreconditionProblems.NoSourceDirectoryFound:
       vscode.window.showErrorMessage('You do not have a source directory open');
       break;
@@ -233,7 +234,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
-  private getPreferedGenerators(): CMakeGenerator[] {
+  private getPreferredGenerators(): CMakeGenerator[] {
     // User can override generator with a setting
     const user_generator = this.workspaceContext.config.generator;
     if (user_generator) {
@@ -266,25 +267,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver;
-    const preferedGenerators = this.getPreferedGenerators();
+    const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
         drv = await CMakeServerClientDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
         drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
       try {
         this._statusMessage.set('Starting CMake Server...');
         drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
@@ -378,8 +379,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (drv) {
         try {
           this._statusMessage.set('Reloading...');
-          await drv.setKit(kit, this.getPreferedGenerators());
-        } finally { this._statusMessage.set('Ready'); }
+          await drv.setKit(kit, this.getPreferredGenerators());
+          this.workspaceContext.state.activeKitName = kit.name;
+          this._statusMessage.set('Ready');
+        } catch (error) {
+          vscode.window.showErrorMessage(`Unable to set kit "${error}".`);
+          this._statusMessage.set(`Error on switch of kit (${error.message})`);
+          this._cmakeDriver = Promise.resolve(null);
+          this._activeKit = null;
+        }
       }
       this.workspaceContext.state.activeKitName = kit.name;
     }
