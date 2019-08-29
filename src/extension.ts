@@ -418,7 +418,9 @@ class ExtensionManager implements vscode.Disposable {
           rollbar.exception('Failed to open CMake cache file on code model update', e);
           return;
         }
-        const env = await effectiveKitEnvironment(kit);
+        const drv = await cmt.getCMakeDriverInstance();
+        const opts = drv ? drv.expansionOptions : undefined;
+        const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
         await this.ensureCppToolsProviderRegistered();
@@ -536,12 +538,14 @@ class ExtensionManager implements vscode.Disposable {
     // Migrate kits from old pre-1.1.3 location
     try {
       if (await fs.exists(OLD_USER_KITS_FILEPATH) && !await fs.exists(USER_KITS_FILEPATH)) {
-        rollbar.info('Migrating kits file', { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+        rollbar.info('Migrating kits file', {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
         await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
         await fs.rename(OLD_USER_KITS_FILEPATH, USER_KITS_FILEPATH);
       }
     } catch (e) {
-      rollbar.exception('Failed to migrate prior user-local kits file.', e, { from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH });
+      rollbar.exception('Failed to migrate prior user-local kits file.',
+                        e,
+                        {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
     }
     // Load user-kits
     reportProgress(progress, 'Loading kits');
@@ -927,6 +931,11 @@ class ExtensionManager implements vscode.Disposable {
       break;
     }
 
+    if (process.env['CMT_TESTING'] === '1') {
+      log.trace('Running CMakeTools in test mode. selectKit is disabled.');
+      return false;
+    }
+
     interface KitItem extends vscode.QuickPickItem {
       kit: Kit;
     }
@@ -949,6 +958,22 @@ class ExtensionManager implements vscode.Disposable {
       await this._setCurrentKit(chosen_kit.kit);
       return true;
     }
+  }
+
+  /**
+   * Set the current kit in the current CMake Tools instance by name of the kit
+   */
+  async setKitByName(kitName: string) {
+    let newKit: Kit | undefined;
+    switch (kitName) {
+    case '':
+    case '__unspec__':
+      break;
+    default:
+      newKit = this._allKits.find(kit => kit.name === kitName);
+      break;
+    }
+    await this._setCurrentKit(newKit || null);
   }
 
   /**
@@ -1044,6 +1069,10 @@ class ExtensionManager implements vscode.Disposable {
 
   launchTargetDirectory() { return this.withCMakeTools(null, cmt => cmt.launchTargetDirectory()); }
 
+  buildType() { return this.withCMakeTools(null, cmt => cmt.currentBuildType()); }
+
+  buildDirectory() { return this.withCMakeTools(null, cmt => cmt.buildDirectory()); }
+
   tasksBuildCommand() { return this.withCMakeTools(null, cmt => cmt.tasksBuildCommand()); }
 
   debugTarget(name?: string) { return this.withCMakeTools(null, cmt => cmt.debugTarget(name)); }
@@ -1106,11 +1135,34 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
-    'editKits',           'scanForKits',      'selectKit',              'cleanConfigure', 'configure',
-    'build',              'setVariant',       'install',                'editCache',      'clean',
-    'cleanRebuild',       'buildWithTarget',  'setDefaultTarget',       'ctest',          'stop',
-    'quickStart',         'launchTargetPath', 'launchTargetDirectory',  'debugTarget',    'launchTarget',
-    'selectLaunchTarget', 'resetState',       'viewLog',                'compileFile',    'tasksBuildCommand'
+    'editKits',
+    'scanForKits',
+    'selectKit',
+    'setKitByName',
+    'cleanConfigure',
+    'configure',
+    'build',
+    'setVariant',
+    'install',
+    'editCache',
+    'clean',
+    'cleanRebuild',
+    'buildWithTarget',
+    'setDefaultTarget',
+    'ctest',
+    'stop',
+    'quickStart',
+    'launchTargetPath',
+    'launchTargetDirectory',
+    'buildType',
+    'buildDirectory',
+    'debugTarget',
+    'launchTarget',
+    'selectLaunchTarget',
+    'resetState',
+    'viewLog',
+    'compileFile',
+    'tasksBuildCommand'
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 

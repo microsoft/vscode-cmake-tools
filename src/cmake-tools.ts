@@ -581,6 +581,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 if (retc === 0) {
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
+                await this._ctestController.reloadTests(drv);
                 this._onReconfiguredEmitter.fire();
                 return retc;
               } finally {
@@ -1023,6 +1024,28 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
     return path.dirname(targetPath);
+  }
+
+  /**
+   * Implementation of `cmake.buildType`
+   */
+  async currentBuildType(): Promise<string|null> {
+    if (this.buildType == 'Unconfigured') {
+      return null;
+    }
+    return this.buildType;
+  }
+
+  /**
+   * Implementation of `cmake.buildDirectory`
+   */
+  async buildDirectory(): Promise<string|null> {
+    const binaryDir = await this.binaryDir;
+    if (binaryDir) {
+      return binaryDir;
+    } else {
+      return null;
+    }
   }
 
   async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {

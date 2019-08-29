@@ -307,7 +307,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
     this._kit = Object.seal({...kit});
     log.debug('CMakeDriver Kit set to', kit.name);
-    this._kitEnvironmentVariables = await effectiveKitEnvironment(kit);
+    this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
     if (kit.preferredGenerator)
       preferredGenerators.push(kit.preferredGenerator);

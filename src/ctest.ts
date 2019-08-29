@@ -329,7 +329,7 @@ export class CTestDriver implements vscode.Disposable {
   set testResults(v: CTestResults|null) {
     this._testResults = v;
     if (v) {
-      const total = this.tests.length;
+      const total = v.Site.Testing.Test.length;
       const passing = v.Site.Testing.Test.reduce((acc, test) => acc + (test.Status === 'passed' ? 1 : 0), 0);
       this._resultsChangedEmitter.fire({passing, total});
     } else {
