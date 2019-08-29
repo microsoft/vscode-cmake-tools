@@ -230,7 +230,7 @@ export class VariantManager implements vscode.Disposable {
   private async _reloadVariantsFile(filepath?: string) {
     const validate = await loadSchema('schemas/variants-schema.json');
 
-    const workdir = vscode.workspace.rootPath;
+    const workdir = util.getPrimaryWorkspaceFolder();
     if (!workdir) {
       // Can't read, we don't have a dir open
       return;
@@ -238,10 +238,10 @@ export class VariantManager implements vscode.Disposable {
 
     if (!filepath || !await fs.exists(filepath)) {
       const candidates = [
-        path.join(workdir, 'cmake-variants.json'),
-        path.join(workdir, 'cmake-variants.yaml'),
-        path.join(workdir, '.vscode/cmake-variants.json'),
-        path.join(workdir, '.vscode/cmake-variants.yaml'),
+        path.join(workdir.fsPath, 'cmake-variants.json'),
+        path.join(workdir.fsPath, 'cmake-variants.yaml'),
+        path.join(workdir.fsPath, '.vscode/cmake-variants.json'),
+        path.join(workdir.fsPath, '.vscode/cmake-variants.yaml'),
       ];
       for (const testpath of candidates) {
         if (await fs.exists(testpath)) {

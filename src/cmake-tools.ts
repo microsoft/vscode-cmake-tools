@@ -70,7 +70,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this.getCMakeExecutable().then(
         async cmake => {
           if (!cmake.version) {
-            log.error('Failed to get version information for CMake during upgarde');
+            log.error('Failed to get version information for CMake during upgrade');
             return;
           }
           await maybeUpgradeCMake(this.extensionContext, {currentVersion: cmake.version, available: info});
