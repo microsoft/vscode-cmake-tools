@@ -57,7 +57,7 @@
     "onCommand:cmake.stop",
     "onCommand:cmake.outline.configure",
     "onCommand:cmake.outline.build",
-    "workspaceContains:CMakeLists.txt",
+    "workspaceContains:**/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
   "main": "./out/src/extension",
@@ -885,7 +885,7 @@
         "cmake.outputLogEncoding": {
           "type": "string",
           "default": "auto",
-          "description": "Encoding of the output from external commonds(eg.cmake -- build)",
+          "description": "Encoding of the output from external commands (eg.cmake -- build)",
           "scope": "window"
         },
         "cmake.enableTraceLogging": {
