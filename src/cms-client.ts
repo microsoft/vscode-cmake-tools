@@ -558,7 +558,11 @@ export class CMakeServerClient {
 
   public static async start(config: ConfigurationReader, params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
-    const tmpdir = path.join(vscode.workspace.rootPath!, '.vscode');
+    const rootPath = util.getPrimaryWorkspaceFolder();
+    if (!rootPath) {
+      return Promise.reject(new Error("open a folder"));
+    }
+    const tmpdir = path.join(rootPath.fsPath, '.vscode');
     // Ensure the binary directory exists
     await fs.mkdir_p(params.binaryDir);
     return new Promise<CMakeServerClient>((resolve, reject) => {
