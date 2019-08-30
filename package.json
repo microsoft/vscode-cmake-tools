@@ -57,7 +57,7 @@
     "onCommand:cmake.stop",
     "onCommand:cmake.outline.configure",
     "onCommand:cmake.outline.build",
-    "workspaceContains:CMakeLists.txt",
+    "workspaceContains:**/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
   "main": "./out/src/extension",
@@ -566,12 +566,6 @@
           "description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs",
           "scope": "resource"
         },
-        "cmake.autoRestartBuild": {
-          "type": "boolean",
-          "default": false,
-          "description": "If 'true', requesting a build while a build is already running will stop and restart the build",
-          "scope": "resource"
-        },
         "cmake.parseBuildDiagnostics": {
           "type": "boolean",
           "default": true,
@@ -885,7 +879,7 @@
         "cmake.outputLogEncoding": {
           "type": "string",
           "default": "auto",
-          "description": "Encoding of the output from external commonds(eg.cmake -- build)",
+          "description": "Encoding of the output from external commands (eg.cmake -- build)",
           "scope": "window"
         },
         "cmake.enableTraceLogging": {
@@ -1000,6 +994,7 @@
     "@types/ajv": "^0.0.3",
     "@types/chai": "^4.0.4",
     "@types/chai-as-promised": "^7.1.0",
+    "@types/chai-string": "^1.4.1",
     "@types/es6-promisify": "~5.0.0",
     "@types/js-yaml": "^3.5.28",
     "@types/json5": "~0.0.29",
@@ -1012,6 +1007,7 @@
     "@types/xml2js": "^0.0.28",
     "chai": "^4.1.2",
     "chai-as-promised": "^7.1.1",
+    "chai-string": "^1.5.0",
     "clang-format": "^1.2.2",
     "mocha": "^4.1.0",
     "sinon": "~5.0.7",
