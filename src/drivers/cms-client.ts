@@ -2,14 +2,13 @@ import * as child_proc from 'child_process';
 import * as net from 'net';
 import * as path from 'path';
 
-import * as cache from './cache';
-import {ConfigurationReader} from './config';
-import {CMakeGenerator} from './kit';
-import {createLogger} from './logging';
-import {fs} from './pr';
-import * as proc from './proc';
-import rollbar from './rollbar';
-import * as util from './util';
+import * as cache from '@cmt/cache';
+import {CMakeGenerator} from '@cmt/kit';
+import {createLogger} from '@cmt/logging';
+import {fs} from '@cmt/pr';
+import * as proc from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
 
 const log = createLogger('cms-client');
 
@@ -320,7 +319,8 @@ export interface ClientInit {
   environment: NodeJS.ProcessEnv;
   sourceDir: string;
   binaryDir: string;
-  pickGenerator: () => Promise<CMakeGenerator|null>;
+  tmpdir: string;
+  generator: CMakeGenerator;
 }
 
 interface ClientInitPrivate extends ClientInit {
@@ -348,9 +348,6 @@ export class ServerError extends Error implements ErrorMessage {
     super(e.errorMessage);
   }
   toString(): string { return `[cmake-server] ${this.errorMessage}`; }
-}
-
-export class NoGeneratorError extends Error {
 }
 
 export class BadHomeDirectoryError extends Error {
@@ -555,18 +552,13 @@ export class CMakeServerClient {
     }, 1000);
   }
 
-  public static async start(config: ConfigurationReader, params: ClientInit): Promise<CMakeServerClient> {
+  public static async start(params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
-    const rootPath = util.getPrimaryWorkspaceFolder();
-    if (!rootPath) {
-      throw new Error("CMake Tools is not available without an open workspace");
-    }
-    const tmpdir = path.join(rootPath.fsPath, '.vscode');
     // Ensure the binary directory exists
     await fs.mkdir_p(params.binaryDir);
     return new Promise<CMakeServerClient>((resolve, reject) => {
       const client = new CMakeServerClient({
-        tmpdir,
+        tmpdir: params.tmpdir,
         sourceDir: params.sourceDir,
         binaryDir: params.binaryDir,
         onMessage: params.onMessage,
@@ -575,7 +567,7 @@ export class CMakeServerClient {
         environment: params.environment,
         onProgress: params.onProgress,
         onDirty: params.onDirty,
-        pickGenerator: params.pickGenerator,
+        generator: params.generator,
         onCrash: async retc => {
           if (!resolved) {
             reject(new StartupError(retc));
@@ -621,15 +613,14 @@ export class CMakeServerClient {
               }
             } else {
               // Do clean configure, all parameters are required.
-              const generator = await params.pickGenerator();
-              if (!generator) {
-                throw new NoGeneratorError();
-              }
+              const generator = params.generator;
               hsparams.sourceDirectory = params.sourceDir;
               hsparams.generator = generator.name;
               hsparams.platform = generator.platform;
-              hsparams.toolset = generator.toolset || config.toolset || undefined;
-              log.info(`Configuring using the "${generator.name}" CMake generator`);
+              hsparams.toolset = generator.toolset;
+              log.info(`Configuring using the "${hsparams.generator}" CMake generator with plattform ` +
+                      `"${hsparams.platform}" and toolset `,
+                      JSON.stringify(hsparams.toolset || {}));
             }
 
             await client.sendRequest('handshake', hsparams);
