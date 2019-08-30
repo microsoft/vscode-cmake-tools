@@ -89,7 +89,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   protected constructor(public readonly cmake: CMakeExecutable,
                         readonly config: ConfigurationReader,
-                        private readonly __workspaceRootPath: string|null,
+                        private readonly __workspaceFolder: string|null,
                         readonly preconditionHandler: CMakePreconditionProblemSolver) {
     // We have a cache of file-compilation terminals. Wipe them out when the
     // user closes those terminals.
@@ -185,7 +185,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
    * `file://` scheme.
    */
-  protected get workspaceRootPath() { return this.__workspaceRootPath; }
+  protected get workspaceFolder() { return this.__workspaceFolder; }
 
   protected variantKeywordSettings: Map<string, string>|null = null;
 
@@ -193,7 +193,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * The options that will be passed to `expand.expandString` for this driver.
    */
   get expansionOptions(): expand.ExpansionOptions {
-    const ws_root = this.workspaceRootPath || '.';
+    const ws_root = this.workspaceFolder || '.';
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {

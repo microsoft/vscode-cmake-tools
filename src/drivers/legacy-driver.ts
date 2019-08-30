@@ -23,8 +23,8 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-    super(cmake, config, workspaceRootPath, preconditionHandler);
+  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, config, workspaceFolder, preconditionHandler);
   }
 
   private _needsReconfigure = true;
@@ -90,9 +90,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
     log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
+    return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferedGenerators);
   }
 
   get targets() { return []; }

@@ -10,7 +10,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {lightNormalizePath, ProgressHandle, versionToString} from '@cmt/util';
+import {lightNormalizePath, ProgressHandle, versionToString, getPrimaryWorkspaceFolder} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -70,7 +70,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this.getCMakeExecutable().then(
         async cmake => {
           if (!cmake.version) {
-            log.error('Failed to get version information for CMake during upgarde');
+            log.error('Failed to get version information for CMake during upgrade');
             return;
           }
           await maybeUpgradeCMake(this.extensionContext, {currentVersion: cmake.version, available: info});
@@ -262,8 +262,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let workspace = null;
+    const rootPath = getPrimaryWorkspaceFolder();
+    if (!rootPath) {
+      throw new Error("CMake Tools is not available without an open workspace");
+    }
     if (vscode.workspace.workspaceFolders) {
-      workspace = lightNormalizePath(vscode.workspace.workspaceFolders[0].uri.fsPath);
+      workspace = lightNormalizePath(rootPath.fsPath);
     }
 
     let drv: CMakeDriver;

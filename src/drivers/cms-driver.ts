@@ -21,8 +21,8 @@ export class NoGeneratorError extends Error {
 }
 
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-    super(cmake, config, workspaceRootPath, preconditionHandler);
+  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, config, workspaceFolder, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());
     this.config.onChange('configureEnvironment', () => this._restartClient());
   }
@@ -257,7 +257,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
 
     return cms.CMakeServerClient.start({
-      tmpdir: path.join(this.workspaceRootPath!, '.vscode'),
+      tmpdir: path.join(this.workspaceFolder!, '.vscode'),
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: this.cmake.path,
@@ -281,7 +281,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   protected async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferedGenerators);
   }
 }
