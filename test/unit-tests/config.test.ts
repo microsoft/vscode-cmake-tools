@@ -25,7 +25,6 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     ctest: {
       parallelJobs: 0,
     },
-    autoRestartBuild: true,
     parseBuildDiagnostics: true,
     enabledOutputParsers: [],
     debugConfig: {},

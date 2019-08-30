@@ -382,6 +382,10 @@ export class VariantManager implements vscode.Disposable {
     this._activeVariantChanged.fire();
   }
 
+  public get activeKeywordSetting(): Map<string, string> | null {
+    return this.stateManager.activeVariantSettings;
+  }
+
   transformChoiceCombinationToKeywordSettings(choiceCombination: {settingKey: string, settingValue: string}[]):
       Map<string, string> {
     const keywords = new Map<string, string>();

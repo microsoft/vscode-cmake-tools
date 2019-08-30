@@ -34,7 +34,6 @@ export interface ExtensionConfigurationSettings {
   parallelJobs: number;
   ctestPath: string;
   ctest: {parallelJobs: number;};
-  autoRestartBuild: boolean;
   parseBuildDiagnostics: boolean;
   enabledOutputParsers: string[];
   debugConfig: object;
@@ -142,8 +141,6 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get clearOutputBeforeBuild(): boolean { return !!this.configData.clearOutputBeforeBuild; }
 
-  get autoRestartBuild(): boolean { return !!this.configData.autoRestartBuild; }
-
   get configureSettings(): any { return this.configData.configureSettings; }
 
   get cacheInit() { return this.configData.cacheInit; }
@@ -247,7 +244,6 @@ export class ConfigurationReader implements vscode.Disposable {
     parallelJobs: new vscode.EventEmitter<number>(),
     ctestPath: new vscode.EventEmitter<string>(),
     ctest: new vscode.EventEmitter<{parallelJobs: number;}>(),
-    autoRestartBuild: new vscode.EventEmitter<boolean>(),
     parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
     enabledOutputParsers: new vscode.EventEmitter<string[]>(),
     debugConfig: new vscode.EventEmitter<object>(),
