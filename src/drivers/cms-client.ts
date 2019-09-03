@@ -1,16 +1,14 @@
 import * as child_proc from 'child_process';
 import * as net from 'net';
 import * as path from 'path';
-import * as vscode from 'vscode';
 
-import * as cache from './cache';
-import {ConfigurationReader} from './config';
-import {CMakeGenerator} from './kit';
-import {createLogger} from './logging';
-import {fs} from './pr';
-import * as proc from './proc';
-import rollbar from './rollbar';
-import * as util from './util';
+import * as cache from '@cmt/cache';
+import {CMakeGenerator} from '@cmt/kit';
+import {createLogger} from '@cmt/logging';
+import {fs} from '@cmt/pr';
+import * as proc from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
+import * as util from '@cmt/util';
 
 const log = createLogger('cms-client');
 
@@ -321,6 +319,7 @@ export interface ClientInit {
   environment: NodeJS.ProcessEnv;
   sourceDir: string;
   binaryDir: string;
+  tmpdir: string;
   generator: CMakeGenerator;
 }
 
@@ -328,7 +327,6 @@ interface ClientInitPrivate extends ClientInit {
   onHello: (m: HelloMessage) => Promise<void>;
   onCrash: (retc: number, signal: string) => Promise<void>;
   onPipeError(e: Error): Promise<void>;
-  tmpdir: string;
 }
 
 /**
@@ -553,14 +551,13 @@ export class CMakeServerClient {
     }, 1000);
   }
 
-  public static async start(config: ConfigurationReader, params: ClientInit): Promise<CMakeServerClient> {
+  public static async start(params: ClientInit): Promise<CMakeServerClient> {
     let resolved = false;
-    const tmpdir = path.join(vscode.workspace.rootPath!, '.vscode');
     // Ensure the binary directory exists
     await fs.mkdir_p(params.binaryDir);
     return new Promise<CMakeServerClient>((resolve, reject) => {
       const client = new CMakeServerClient({
-        tmpdir,
+        tmpdir: params.tmpdir,
         sourceDir: params.sourceDir,
         binaryDir: params.binaryDir,
         onMessage: params.onMessage,
@@ -619,7 +616,7 @@ export class CMakeServerClient {
               hsparams.sourceDirectory = params.sourceDir;
               hsparams.generator = generator.name;
               hsparams.platform = generator.platform;
-              hsparams.toolset = generator.toolset || config.toolset || undefined;
+              hsparams.toolset = generator.toolset;
               log.info(`Configuring using the "${hsparams.generator}" CMake generator with plattform ` +
                       `"${hsparams.platform}" and toolset `,
                       JSON.stringify(hsparams.toolset || {}));
