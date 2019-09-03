@@ -980,13 +980,14 @@ class ExtensionManager implements vscode.Disposable {
     }
     log.debug('Opening kit selection QuickPick');
     // Generate the quickpick items from our known kits
-    const items = this._allKits.map(
-        (kit): KitItem => ({
+    const itemPromises = this._allKits.map(
+        async (kit): Promise<KitItem> => ({
           label: kit.name !== '__unspec__' ? kit.name : '[Unspecified]',
-          description: descriptionForKit(kit),
+          description: await descriptionForKit(kit),
           kit,
         }),
     );
+    const items = await Promise.all(itemPromises);
     const chosen_kit = await vscode.window.showQuickPick(items, {placeHolder: 'Select a Kit'});
     if (chosen_kit === undefined) {
       log.debug('User cancelled Kit selection');

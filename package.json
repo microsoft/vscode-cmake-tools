@@ -1035,7 +1035,7 @@
     "rimraf": "^2.5.4",
     "rollbar": "~2.2.8",
     "tmp": "^0.0.33",
-    "vscode-cpptools": "^2.1.2",
+    "vscode-cpptools": "^3.0.1",
     "which": "~1.3.0",
     "xml2js": "^0.4.17"
   },
