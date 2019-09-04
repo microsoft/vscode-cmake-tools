@@ -436,7 +436,7 @@
         },
         "cmake.buildDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}/build",
+          "default": "${workspaceFolder}/build",
           "description": "The directory where CMake build files will go",
           "scope": "resource"
         },
@@ -448,7 +448,7 @@
         },
         "cmake.sourceDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}",
+          "default": "${workspaceFolder}",
           "description": "The directory of the root CMakeLists.txt file",
           "scope": "resource"
         },

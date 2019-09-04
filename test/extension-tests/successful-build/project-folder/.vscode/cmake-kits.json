@@ -1,7 +1,7 @@
 [
     {
         "name": "Test Toolchain",
-        "toolchainFile": "${workspaceRoot}\\test-toolchain.cmake"
+        "toolchainFile": "${workspaceFolder}\\test-toolchain.cmake"
     },
     {
     "name": "Generator switch test GCC Mingw - Win",
