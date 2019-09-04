@@ -515,3 +515,13 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
   console.assert(false, 'Impossible code path');
   return 0;
 }
+
+export function getLocaleId(): string {
+  if (typeof(process.env.VSCODE_NLS_CONFIG) == "string") {
+      const vscodeNlsConfigJson: any = JSON.parse(process.env.VSCODE_NLS_CONFIG);
+      if (typeof(vscodeNlsConfigJson.locale) == "string") {
+          return vscodeNlsConfigJson.locale;
+      }
+  }
+  return "en";
+}

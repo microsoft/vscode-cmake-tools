@@ -1209,12 +1209,28 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
   ]);
 }
 
+class SchemaProvider implements vscode.TextDocumentContentProvider {
+  public async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
+    const fileName: string = uri.authority;
+    const locale: string = util.getLocaleId();
+    let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, fileName);
+    const stat = await fs.stat(localizedFilePath);
+    if (!stat || !stat.isFile) {
+      localizedFilePath = path.join(util.thisExtensionPath(), fileName);
+    }
+    return fs.readFile(localizedFilePath, "utf8");
+  }
+}
+
 /**
  * Starts up the extension.
  * @param context The extension context
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
+  // Register a protocol handler to serve localized schemas
+  vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
+
   const packageJSON = util.thisExtensionPackage();
   rollbar.updatePayload({
     environment: 'production',

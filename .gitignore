@@ -9,3 +9,8 @@ test/fakebin/
 *.vsix
 npm-debug.log
 .DS_Store
+**/nls.*.json
+**/*.nls.json
+**/*.nls.*.json
+dist/**
+vscode-extensions-localization-export/**
