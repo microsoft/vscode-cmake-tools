@@ -8,6 +8,10 @@ import * as vscode from 'vscode';
 import Rollbar = require('rollbar');
 
 import * as logging from './logging';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('rollbar');
 
@@ -52,13 +56,13 @@ class RollbarController {
    * remember our permission
    */
   async requestPermissions(extensionContext: vscode.ExtensionContext): Promise<void> {
-    log.debug('Checking Rollbar permissions');
+    log.debug(localize('checking.rollbar.permissions', 'Checking Rollbar permissions'));
     if (process.env['CMT_TESTING'] === '1') {
-      log.trace('Running CMakeTools in test mode. Rollbar is disabled.');
+      log.trace(localize('running.in.test.mode', 'Running CMakeTools in test mode. Rollbar is disabled.'));
       return;
     }
     if (process.env['CMT_DEVRUN'] === '1') {
-      log.trace('Running CMakeTools in developer mode. Rollbar reporting is disabled.');
+      log.trace(localize('running.in.developer.mode', 'Running CMakeTools in developer mode. Rollbar reporting is disabled.'));
       return;
     }
     // The memento key where we store permission. Update this to ask again.
@@ -69,28 +73,28 @@ class RollbarController {
     } else if (optin == false) {
       this._enabled = false;
     } else if (optin === undefined) {
-      log.debug('Asking user for permission to user Rollbar...');
+      log.debug(localize('asking.for.permission.rollbar', 'Asking user for permission to use Rollbar...'));
       // We haven't asked yet. Ask them now:
       const item = await vscode.window.showInformationMessage(
-          'Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?',
+          localize('opt.in', 'Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?'),
           {
-            title: 'Yes!',
+            title: localize('yes.exclamationmark.button', 'Yes!'),
             isCloseAffordance: false,
           } as vscode.MessageItem,
           {
-            title: 'No Thanks',
+            title: localize('no.thanks.button', 'No Thanks'),
             isCloseAffordance: true,
           } as vscode.MessageItem);
 
       if (item === undefined) {
         // We didn't get an answer
-        log.trace('User did not answer. Rollbar is not enabled.');
+        log.trace(localize('user.did.not.answer', 'User did not answer. Rollbar is not enabled.'));
         return;
       }
       extensionContext.globalState.update(key, !item.isCloseAffordance);
       this._enabled = !item.isCloseAffordance;
     }
-    log.debug('Rollbar enabled? ', this._enabled);
+    log.debug(localize('rollbar.enabled.question', 'Rollbar enabled? {0}', this._enabled));
   }
 
   /**
@@ -101,7 +105,7 @@ class RollbarController {
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
   exception(what: string, exception: Error, additional: object = {}): Rollbar.LogResult|null {
-    log.fatal('Unhandled exception:', what, exception, JSON.stringify(additional));
+    log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional));
     // tslint:disable-next-line
     console.error(exception);
     debugger;
@@ -144,7 +148,7 @@ class RollbarController {
   updatePayload(data: object) {
     Object.assign(this._payload, data);
     this._rollbar.configure({payload: this._payload});
-    log.debug('Updated Rollbar payload', JSON.stringify(data));
+    log.debug(localize('updated.rollbar.payload', 'Updated Rollbar payload'), JSON.stringify(data));
   }
 
   /**
@@ -160,7 +164,7 @@ class RollbarController {
       func = additional as () => Thenable<T>;
       additional = {};
     }
-    log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
+    log.trace(localize('invoking.async.function.rollbar', 'Invoking async function [{0}] with Rollbar wrapping [{1}]', func.name, what));
     const pr = func();
     this.takePromise(what, additional, pr);
   }
@@ -179,10 +183,10 @@ class RollbarController {
       additional = {};
     }
     try {
-      log.trace(`Invoking function [${func.name}] with Rollbar wrapping`, `[${what}]`);
+      log.trace(localize('invoking.function.rollbar', 'Invoking function [${0}] with Rollbar wrapping [${1}]', func.name, what));
       return func();
     } catch (e) {
-      this.exception('Unhandled exception: ' + what, e, additional);
+      this.exception(localize('unhandled.exception', 'Unhandled exception: {0}', what), e, additional);
       throw e;
     }
   }
@@ -190,7 +194,7 @@ class RollbarController {
   takePromise<T>(what: string, additional: object, pr: Thenable<T>): void {
     pr.then(
         () => {},
-        e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); },
+        e => { this.exception(localize('unhandled.promise.rejection', 'Unhandled Promise rejection: {0}', what), e, additional); },
     );
   }
 }

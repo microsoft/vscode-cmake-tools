@@ -22,7 +22,7 @@ const jsonc = require('jsonc-parser');
 
 // Patterns to find schema files
 const jsonSchemaFilesPatterns = [
-    "**/*-schema.json"
+    "*/*-schema.json"
 ];
 
 const languages = [
@@ -215,6 +215,7 @@ const generatedSrcLocBundle = () => {
 
 const generateLocalizedJsonSchemaFiles = () => {
     return es.through(function (file) {
+        console.log(file.path);
         let jsonTree = JSON.parse(file.contents.toString());
         languages.map((language) => {
             let stringTable = {};

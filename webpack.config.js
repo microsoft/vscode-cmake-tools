@@ -55,8 +55,7 @@ const config = {
     },
     stats: {
         warnings: false
-    },
-    watch: true
+    }
 }
 
 if (process.argv.includes('--vscode-nls')) {

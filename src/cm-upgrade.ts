@@ -15,6 +15,10 @@ import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ClientRequestArgs } from 'http';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cm-upgrade');
 
@@ -47,7 +51,7 @@ async function downloadFile(url: string, opt: {prefix: string, postfix: string},
             (reqOptions as any).maxBodyLength = 1024 * 1024 * 60;
             const req = https.get(reqOptions, res => {
               if (res.statusCode !== 200) {
-                reject(new Error('Non-200 response when downloading new CMake installer'));
+                reject(new Error(localize('non.200.response.when.downloading', 'Non-200 response when downloading new CMake installer')));
                 return;
               }
 
@@ -76,7 +80,7 @@ async function downloadFile(url: string, opt: {prefix: string, postfix: string},
               });
               res.pipe(ostream);
               res.on('end', () => {
-                log.info(`Downloaded ${url} to ${fpath}`);
+                log.info(localize('downloaded.to.path', 'Downloaded {0} to {1}', url, fpath));
                 resolve(fpath);
               });
             });
@@ -90,21 +94,21 @@ async function downloadFile(url: string, opt: {prefix: string, postfix: string},
 async function installLinux(url: string) {
   const pkexec = await paths.which('pkexec');
   if (!pkexec) {
-    vscode.window.showErrorMessage('CMake Tools needs `pkexec` program to run the CMake installer');
+    vscode.window.showErrorMessage(localize('program.need.for.installer', 'CMake Tools needs `{0}` program to run the CMake installer', 'pkexec'));
     return;
   }
   const filename = path.basename(url, '.sh');
   const installerPath = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: `Downloading ${filename}`,
+        title: localize('downloading.filename', 'Downloading {0}', filename),
       },
       pr => downloadFile(url, {prefix: filename, postfix: '.sh'}, pr),
   );
   const res = await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
-        title: 'Running CMake Installer',
+        title: localize('running.cmake.installer', 'Running CMake Installer'),
       },
       () => {
         const proc = execute(pkexec, [installerPath, '--exclude-subdir', '--prefix=/usr/local']);
@@ -112,17 +116,17 @@ async function installLinux(url: string) {
       },
   );
   if (res.retc === 127) {
-    vscode.window.showErrorMessage('Failed to authorize for running the CMake installation.');
+    vscode.window.showErrorMessage(localize('failed.to.authorize', 'Failed to authorize for running the CMake installation.'));
   } else if (res.retc === 126) {
-    vscode.window.showErrorMessage('You dismissed the request for permission to perform the CMake installation.');
+    vscode.window.showErrorMessage(localize('permission.request.dismissed', 'You dismissed the request for permission to perform the CMake installation.'));
   } else if (res.retc !== 0) {
-    log.error(`The CMake installer returned non-zero [${res.retc}]: `, res.stderr);
+    log.error(localize('installer.failed', 'The CMake installer returned non-zero [{0}]: {1}', res.retc, res.stderr));
     vscode.window.showErrorMessage(
-        'The CMake installer exited with non-zero. Check the output panel for more information');
+        localize('installer.failed.check.output', 'The CMake installer exited with non-zero. Check the output panel for more information'));
   } else {
-    const restartNow = 'Restart Now';
+    const restartNow = localize('restart.now.button', 'Restart Now');
     const chosen = await vscode.window.showInformationMessage(
-        'The new CMake is successfull installed to /usr/local/bin/cmake. Reload VSCode to complete changes.',
+        localize('installed.reload.to.complete', 'The new CMake is successfull installed to /usr/local/bin/cmake. Reload VSCode to complete changes.'),
         restartNow,
     );
     if (chosen === restartNow) {
@@ -155,7 +159,7 @@ export async function maybeUpgradeCMake(ext: vscode.ExtensionContext,
     upgradeAvailable = versionLess(opt.currentVersion, opt.available.version);
   } catch (e) {
     if (!(e instanceof InvalidVersionString)) {
-      rollbar.exception('Error comparing CMake versions for potential upgrade', e, opt);
+      rollbar.exception(localize('error.comparing.versions', 'Error comparing CMake versions for potential upgrade'), e, opt);
     }
     return null;
   }
@@ -164,14 +168,15 @@ export async function maybeUpgradeCMake(ext: vscode.ExtensionContext,
     return;
   }
 
-  const doTheUpgrade = 'Yes';
-  const askMeLater = 'Ask me Later';
-  const dontAskAgain = 'Don\'t Ask Me Again';
+  const doTheUpgrade = localize('yes.button', 'Yes');
+  const askMeLater = localize('ask.me.later.button', 'Ask me Later');
+  const dontAskAgain = localize('dont.ask.me.again.button', 'Don\'t Ask Me Again');
 
   const chosen = await vscode.window.showInformationMessage(
-      `There is a new version of CMake available. You are running ${versionToString(opt.currentVersion)}, ` +
-          `and ${opt.available.version} is available. ` +
-          'Would you like CMake Tools to download and install this update automatically?',
+      localize('new.version.available',
+        'There is a new version of CMake available. You are running {0} and {1} is available. Would you like CMake Tools to download and install this update automatically?',
+        versionToString(opt.currentVersion),
+        opt.available.version),
       doTheUpgrade,
       askMeLater,
       dontAskAgain,
