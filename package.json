@@ -60,7 +60,7 @@
     "workspaceContains:**/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
-  "main": "./out/src/extension",
+  "main": "./dist/main",
   "contributes": {
     "commands": [
       {
