@@ -983,7 +983,6 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile-production",
-    "compile-old": "./node_modules/.bin/tsc -watch -p ./",
     "compile": "yarn install && webpack --mode development --watch --info-verbosity verbose",
     "compile-once": "yarn install && webpack --mode development",
     "compile-production": "yarn install && yarn run translations-generate && webpack --mode production --vscode-nls",
@@ -1024,6 +1023,7 @@
     "jsonc-parser": "^2.1.1",
     "minimist": "^1.2.0",
     "mocha": "^4.1.0",
+    "module-alias": "^2.2.1",
     "sinon": "~5.0.7",
     "ts-loader": "^6.0.4",
     "ts-node": "^6.0.0",
@@ -1042,7 +1042,6 @@
     "iconv-lite": "^0.4.21",
     "js-yaml": "^3.6.1",
     "json5": "^0.5.1",
-    "module-alias": "^2.0.6",
     "open": "^6.4.0",
     "rimraf": "^2.5.4",
     "rollbar": "~2.2.8",

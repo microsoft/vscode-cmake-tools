@@ -21,7 +21,7 @@ const config = {
         devtoolModuleFilenameTemplate: "../[resource-path]",
     },
     node: {
-        __dirname: false, // leave the __dirname behavior intact
+        __dirname: false,
     },
     devtool: 'source-map',
     externals: {

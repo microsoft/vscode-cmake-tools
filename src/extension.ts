@@ -4,8 +4,6 @@
 
 'use strict';
 
-require('module-alias/register');
-
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as cpt from 'vscode-cpptools';
