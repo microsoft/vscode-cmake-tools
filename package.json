@@ -984,7 +984,6 @@
   "scripts": {
     "vscode:prepublish": "yarn run compile-production",
     "compile": "yarn install && webpack --mode development --watch --info-verbosity verbose",
-    "compile-once": "yarn install && webpack --mode development",
     "compile-production": "yarn install && yarn run translations-generate && webpack --mode production --vscode-nls",
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",

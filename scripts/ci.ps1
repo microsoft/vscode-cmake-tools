@@ -102,7 +102,10 @@ if (Test-Path $out_dir) {
 Invoke-ChronicCommand "yarn install" $yarn install
 
 # Now do the real compile
-Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-once
+Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-production
+
+# Now compile test code
+Invoke-ChronicCommand "Compiling Tests" $yarn run pretest
 
 # Run TSLint to check for silly mistakes
 Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
