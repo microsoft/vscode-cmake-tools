@@ -757,7 +757,7 @@
                 },
                 "release": {
                   "short": "Release",
-                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.reelase.long%",
+                  "long": "%cmake-tools.configuration.cmake.defaultVariants.buildType.release.long%",
                   "buildType": "Release"
                 },
                 "minsize": {
