@@ -208,7 +208,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       const binParentPath = path.dirname(bin);
       const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
       if (await fs.exists(mingwMakePath)) {
-        const ENV_PATH = `${binParentPath};${process.env['PATH']}`;
+        const ENV_PATH = `${binParentPath}`;//;${process.env['PATH']}`;
         // Check for working mingw32-make
         const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: ENV_PATH}}).result;
         if (execMake.retc !== 0) {
@@ -223,7 +223,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
           if (isMake && isMingwTool) {
             gccKit.preferredGenerator = {name: 'MinGW Makefiles'};
-            gccKit.environmentVariables = {PATH: ENV_PATH};
+            gccKit.environmentVariables = {CMT_MINGW_PATH: ENV_PATH};
           }
         }
       }
