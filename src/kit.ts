@@ -208,7 +208,17 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       const binParentPath = path.dirname(bin);
       const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
       if (await fs.exists(mingwMakePath)) {
-        const ENV_PATH = `${binParentPath}`;//;${process.env['PATH']}`;
+        // During a scan, binParentPath must be a directory already in the PATH.
+        // Therefore, we will assume that MinGW will remain in the user's PATH
+        // and do not need to record the current state of PATH (leave it to the
+        // user to rescan later or specify an explicit path to MinGW if this
+        // changes).  Additionally, caching the current state of PATH can cause
+        // complications on later invocation when using the kit environment
+        // because its PATH will take precedence.  If a user makes changes to
+        // their PATH later without rescanning for kits, then the kit's cached
+        // PATH will clobber the actual current PATH.  We will, however, record
+        // the MinGW path in case we want to use it later.
+        const ENV_PATH = `${binParentPath}`;
         // Check for working mingw32-make
         const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: ENV_PATH}}).result;
         if (execMake.retc !== 0) {
@@ -223,6 +233,8 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
           if (isMake && isMingwTool) {
             gccKit.preferredGenerator = {name: 'MinGW Makefiles'};
+            // save the ENV_PATH as a benign name unlikely to already exist in
+            // the user's environment, like CMT_MINGW_PATH
             gccKit.environmentVariables = {CMT_MINGW_PATH: ENV_PATH};
           }
         }
