@@ -105,7 +105,7 @@ suite('CMake-Server-Driver tests', () => {
     expect(fs.existsSync(driver.executableTargets[0].path)).to.be.true;
   }).timeout(90000);
 
-  test('Configure fails on invalid prefered generator', async () => {
+  test('Configure fails on invalid preferred generator', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
