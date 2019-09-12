@@ -176,7 +176,7 @@ suite('Build', async () => {
     await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
     await cmt.build();
 
-    // Run Configure kit without prefered generator
+    // Run Configure kit without preferred generator
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
     await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
     expect(cmt.activeKit).to.be.null;

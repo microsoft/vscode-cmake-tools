@@ -271,25 +271,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver;
-    const preferedGenerators = this.getPreferredGenerators();
+    const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
     if (this.workspaceContext.config.useCMakeServer) {
       if (cmake.isServerModeSupported) {
         drv = await CMakeServerClientDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
       } else {
         log.warning(
             `CMake Server is not available with the current CMake executable. Please upgrade to CMake
             ${versionToString(cmake.minimalServerModeVersion)} or newer.`);
         drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
       }
     } else {
       // We didn't start the server backend, so we'll use the legacy one
       try {
         this._statusMessage.set('Starting CMake Server...');
         drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferedGenerators);
+                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
       } finally { this._statusMessage.set('Ready'); }
     }
     await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);

@@ -833,10 +833,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract get cmakeCacheEntries(): Map<string, api.CacheEntryProperties>;
 
-  private async _baseInit(kit: Kit|null, preferedGenerators: CMakeGenerator[]) {
+  private async _baseInit(kit: Kit|null, preferredGenerators: CMakeGenerator[]) {
     if (kit) {
       // Load up kit environment before starting any drivers.
-      await this._setKit(kit, preferedGenerators);
+      await this._setKit(kit, preferredGenerators);
     }
     await this._refreshExpansions();
     await this.doInit();
@@ -847,9 +847,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Asynchronous initialization. Should be called by base classes during
    * their initialization.
    */
-  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferedGenerators: CMakeGenerator[]):
+  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferredGenerators: CMakeGenerator[]):
       Promise<T> {
-    await inst._baseInit(kit, preferedGenerators);
+    await inst._baseInit(kit, preferredGenerators);
     return inst;
   }
 }
