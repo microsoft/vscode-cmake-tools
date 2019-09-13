@@ -174,7 +174,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
   const targetObject = await loadTargetObject(jsonfile);
 
   const fileGroups = convertToExtCodeModelFileGroup(root_paths, targetObject);
-
+  // \todo extend with sysroot
   return {
     name: targetObject.name,
     type: targetObject.type,
@@ -185,7 +185,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
               a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), root_paths.build))
         : [],
     fileGroups
-  };
+  } as driver_api.ExtCodeModelTarget;
 }
 
 export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,

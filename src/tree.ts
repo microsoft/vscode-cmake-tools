@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 
 import rollbar from './rollbar';
 import {lexicographicalCompare, splitPath, thisExtension} from './util';
-import * as driver_api from './drivers/driver_api';
+import * as driver_api from '@cmt/drivers/driver_api';
 
 interface NamedItem {
   name: string;

@@ -46,6 +46,8 @@
     "onCommand:cmake.launchTarget",
     "onCommand:cmake.launchTargetPath",
     "onCommand:cmake.launchTargetDirectory",
+    "onCommand:cmake.buildType",
+    "onCommand:cmake.buildDirectory",
     "onCommand:cmake.tasksBuildCommand",
     "onCommand:cmake.quickStart",
     "onCommand:cmake.resetState",
@@ -55,7 +57,7 @@
     "onCommand:cmake.stop",
     "onCommand:cmake.outline.configure",
     "onCommand:cmake.outline.build",
-    "workspaceContains:CMakeLists.txt",
+    "workspaceContains:**/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
   "main": "./out/src/extension",
@@ -877,7 +879,7 @@
         "cmake.outputLogEncoding": {
           "type": "string",
           "default": "auto",
-          "description": "Encoding of the output from external commonds(eg.cmake -- build)",
+          "description": "Encoding of the output from external commands (eg.cmake -- build)",
           "scope": "window"
         },
         "cmake.enableTraceLogging": {
@@ -1007,13 +1009,13 @@
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
     "clang-format": "^1.2.2",
-    "mocha": "~3.4.2",
+    "mocha": "^4.1.0",
     "sinon": "~5.0.7",
     "ts-node": "^6.0.0",
     "tslint": "^5.9.1",
-    "typedoc": "~0.13.0",
+    "typedoc": "^0.14.2",
     "typescript": "~3.2.2",
-    "vscode": "1.1.21"
+    "vscode": "^1.1.35"
   },
   "dependencies": {
     "ajv": "^4.7.5",
@@ -1023,12 +1025,15 @@
     "js-yaml": "^3.6.1",
     "json5": "^0.5.1",
     "module-alias": "^2.0.6",
-    "open": "0.0.5",
+    "open": "^6.4.0",
     "rimraf": "^2.5.4",
     "rollbar": "~2.2.8",
     "tmp": "^0.0.33",
-    "vscode-cpptools": "^2.1.2",
+    "vscode-cpptools": "^3.0.1",
     "which": "~1.3.0",
     "xml2js": "^0.4.17"
+  },
+  "resolutions": {
+    "marked": "^0.6.2"
   }
 }

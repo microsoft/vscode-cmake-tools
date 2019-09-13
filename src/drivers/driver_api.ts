@@ -38,6 +38,11 @@ export interface ExtCodeModelTarget {
    * It contains groups of source files which there compilation information.
    */
   fileGroups?: ExtCodeModelFileGroup[];
+
+  /** Represents the CMAKE_SYSROOT
+   * \todo Implementation may depend on CMAKE_SYSROOT_LINK or CMAKE_SYSROOT_COMPILE
+   */
+  sysroot?: string;
 }
 
 export interface ExtCodeModelFileGroup {

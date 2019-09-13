@@ -13,11 +13,11 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
-import * as driver_api from './drivers/driver_api';
+import * as driver_api from '@cmt/drivers/driver_api';
 
 const log = createLogger('cpptools');
 
-type StandardVersion = 'c89'|'c99'|'c11'|'c++98'|'c++03'|'c++11'|'c++14'|'c++17';
+type StandardVersion = 'c89'|'c99'|'c11'|'c++98'|'c++03'|'c++11'|'c++14'|'c++17'|'c++20';
 
 export interface CompileFlagInformation {
   extraDefinitions: string[];
@@ -32,10 +32,10 @@ interface TargetDefaults {
   defines: string[];
 }
 
-export function parseCompileFlags(args: string[]): CompileFlagInformation {
+export function parseCompileFlags(args: string[], lang: string = 'CXX'): CompileFlagInformation {
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = 'c++17';
+  let standard: StandardVersion = (lang === 'C') ? 'c11' : 'c++17';
   while (1) {
     const {done, value} = iter.next();
     if (done) {
@@ -55,19 +55,23 @@ export function parseCompileFlags(args: string[]): CompileFlagInformation {
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (std.endsWith('++14') || std.endsWith('++1y')) {
-        standard = 'c++14';
-      } else if (std.endsWith('++17') || std.endsWith('++1z') || std.endsWith('++latest')) {
-        standard = 'c++17';
-      } else if (std.endsWith('++11') || std.endsWith('++0x')) {
-        standard = 'c++11';
-      } else if (std.endsWith('++2a')) {
-        // Not yet supported...
-      } else if (std.endsWith('++98')) {
-        standard = 'c++98';
-      } else if (std.endsWith('++03')) {
-        standard = 'c++03';
-      } else {
+      if (lang === 'CXX') {
+        if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
+          standard = 'c++20';
+        } else if (std.endsWith('++17') || std.endsWith('++1z')) {
+          standard = 'c++17';
+        } else if (std.endsWith('++14') || std.endsWith('++1y')) {
+          standard = 'c++14';
+        } else if (std.endsWith('++11') || std.endsWith('++0x')) {
+          standard = 'c++11';
+        } else if (std.endsWith('++03')) {
+          standard = 'c++03';
+        } else if (std.endsWith('++98')) {
+          standard = 'c++98';
+        } else {
+          log.warning('Unknown standard control flag: ', value);
+        }
+      } else if (lang === 'C') {
         // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
         if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(value)) {
           standard = 'c89';
@@ -81,8 +85,9 @@ export function parseCompileFlags(args: string[]): CompileFlagInformation {
           standard = 'c11';
         } else {
           log.warning('Unknown standard control flag: ', value);
-          standard = 'c++17';
         }
+      } else {
+        log.warning('Unknown language: ', value);
       }
     }
   }
@@ -170,6 +175,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   async provideBrowseConfiguration() { return this._workspaceBrowseConfiguration; }
 
+  async canProvideBrowseConfigurationsPerFolder() { return false; }
+
+  async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
+    throw new Error("Method not implemented.");
+  }
+
   /** No-op */
   dispose() {}
 
@@ -184,7 +195,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: driver_api.ExtCodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults):
+  private _buildConfigurationData(fileGroup: driver_api.ExtCodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language || 'CXX';
@@ -198,7 +209,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
     const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
-    const {standard, extraDefinitions} = parseCompileFlags(flags);
+    const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
 
@@ -208,17 +219,28 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         newBrowsePath.push(includePathItem);
       }
     }
+
+    let cpptoolsCompilerPath = (flags.length === 0) ? comp_path : `${comp_path} ${flags.join(' ')}`;
+    if (sysroot && cpptoolsCompilerPath.indexOf("--sysroot") < 0) {
+      if (sysroot.match(/\s/)) {
+        cpptoolsCompilerPath += ` "--sysroot=${sysroot}"`;
+      }
+      else {
+        cpptoolsCompilerPath += ` --sysroot=${sysroot}`;
+      }
+    }
+
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
       standard,
-      compilerPath: comp_path || undefined,
+      compilerPath: cpptoolsCompilerPath || undefined,
     };
     return {
       defines,
       standard,
       includePath,
       intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
-      compilerPath: comp_path || undefined,
+      compilerPath: cpptoolsCompilerPath || undefined,
     };
   }
 
@@ -232,8 +254,9 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   private _updateFileGroup(sourceDir: string,
                            grp: driver_api.ExtCodeModelFileGroup,
                            opts: CodeModelParams,
-                           target: TargetDefaults) {
-    const configuration = this._buildConfigurationData(grp, opts, target);
+                           target: TargetDefaults,
+                           sysroot: string) {
+    const configuration = this._buildConfigurationData(grp, opts, target, sysroot);
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
       const abs_norm = util.platformNormalizePath(abs);
@@ -262,6 +285,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
           const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
           const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
+          const sysroot = target.sysroot || '';
           for (const grp of target.fileGroups || []) {
             try {
 
@@ -274,6 +298,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
                     includePath,
                     defines,
                   },
+                  sysroot
               );
             } catch (e) {
               if (e instanceof MissingCompilerException) {

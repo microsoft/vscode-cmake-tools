@@ -25,11 +25,14 @@ const log = logging.createLogger('driver');
 
 export enum CMakePreconditionProblems {
   ConfigureIsAlreadyRunning,
+  BuildIsAlreadyRunning,
   NoSourceDirectoryFound,
   MissingCMakeListsFile
 }
 
 export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems) => Promise<void>;
+
+function nullableValueToString(arg: any|null|undefined): string { return arg === null ? 'empty' : arg; }
 
 /**
  * Base class for CMake drivers.
@@ -85,7 +88,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   protected constructor(public readonly cmake: CMakeExecutable,
                         readonly config: ConfigurationReader,
-                        private readonly __workspaceRootPath: string|null,
+                        private readonly __workspaceFolder: string|null,
                         readonly preconditionHandler: CMakePreconditionProblemSolver) {
     // We have a cache of file-compilation terminals. Wipe them out when the
     // user closes those terminals.
@@ -181,7 +184,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
    * `file://` scheme.
    */
-  protected get workspaceRootPath() { return this.__workspaceRootPath; }
+  protected get workspaceFolder() { return this.__workspaceFolder; }
 
   protected variantKeywordSettings: Map<string, string>|null = null;
 
@@ -189,7 +192,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * The options that will be passed to `expand.expandString` for this driver.
    */
   get expansionOptions(): expand.ExpansionOptions {
-    const ws_root = this.workspaceRootPath || '.';
+    const ws_root = this.workspaceFolder || '.';
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
@@ -303,7 +306,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
     this._kit = Object.seal({...kit});
     log.debug('CMakeDriver Kit set to', kit.name);
-    this._kitEnvironmentVariables = await effectiveKitEnvironment(kit);
+    this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
     if (kit.preferredGenerator)
       preferredGenerators.push(kit.preferredGenerator);
@@ -478,19 +481,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
-  private nullableStringToString(arg: string|null|undefined): any { return arg === null ? 'empty' : arg; }
 
   private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent: true});
     try {
       const result = await child.result;
-      log.debug('Command version test return code', (result.retc === null ? 'empty' : result.retc));
+      log.debug('Command version test return code', nullableValueToString(result.retc));
       return result.retc == 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
       log.debug('Command version test return code',
-                this.nullableStringToString(e2.code),
-                this.nullableStringToString(e2.code));
+                nullableValueToString(e2.code),
+                nullableValueToString(e2.code));
       if (e2.code == 'ENOENT') {
         return false;
       }
@@ -543,6 +545,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private configRunning: boolean = false;
 
+  private buildRunning: boolean = false;
+
   /**
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
@@ -550,7 +554,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
   public async cleanConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-      return -99;
+      return -1;
+    }
+    if(this.buildRunning) {
+      await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+      return -1;
     }
     this.configRunning = true;
     await this.doPreCleanConfigure();
@@ -562,7 +570,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
   async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
-      return -99;
+      return -1;
+    }
+    if(this.buildRunning) {
+      await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+      return -1;
     }
     this.configRunning = true;
     try {
@@ -673,19 +685,33 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
     log.debug('Start build', target);
+    if(this.configRunning) {
+      await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
+      return -1;
+    }
+    if (this.buildRunning) {
+      await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
+      return -1;
+    }
+    this.buildRunning = true;
+
     const pre_build_ok = await this.doPreBuild();
     if (!pre_build_ok) {
+      this.buildRunning = false;
       return -1;
     }
     const child = await this._doCMakeBuild(target, consumer);
     if (!child) {
+      this.buildRunning = false;
       return -1;
     }
     const post_build_ok = await this.doPostBuild();
     if (!post_build_ok) {
+      this.buildRunning = false;
       return -1;
     }
     await this._refreshExpansions();
+    this.buildRunning = false;
     return (await child.result).retc;
   }
 
@@ -726,7 +752,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * The currently running process. We keep a handle on it so we can stop it
    * upon user request
    */
-  private _currentProcess: proc.Subprocess|null = null;
+  private _currentBuildProcess: proc.Subprocess|null = null;
 
   private correctAllTargetName(targetname: string) {
     if (targetname === 'all' || targetname == 'ALL_BUILD') {
@@ -785,9 +811,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const exeOpt: proc.ExecutionOptions
           = {environment: buildcmd.build_env, outputEncoding: outputEnc, useTask: this.config.buildTask};
       const child = this.executeCommand(buildcmd.command, buildcmd.args, consumer, exeOpt);
-      this._currentProcess = child;
+      this._currentBuildProcess = child;
       await child.result;
-      this._currentProcess = null;
+      this._currentBuildProcess = null;
       return child;
     } else
       return null;
@@ -797,12 +823,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Stops the currently running process at user request
    */
   async stopCurrentProcess(): Promise<boolean> {
-    const cur = this._currentProcess;
+    const cur = this._currentBuildProcess;
     if (!cur) {
       return false;
     }
     if (cur.child)
       await util.termProc(cur.child);
+
+    this._currentBuildProcess = null;
+    this.buildRunning = false;
     return true;
   }
 
@@ -813,10 +842,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract get cmakeCacheEntries(): Map<string, api.CacheEntryProperties>;
 
-  private async _baseInit(kit: Kit|null, preferedGenerators: CMakeGenerator[]) {
+  private async _baseInit(kit: Kit|null, preferredGenerators: CMakeGenerator[]) {
     if (kit) {
       // Load up kit environment before starting any drivers.
-      await this._setKit(kit, preferedGenerators);
+      await this._setKit(kit, preferredGenerators);
     }
     await this._refreshExpansions();
     await this.doInit();
@@ -827,9 +856,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Asynchronous initialization. Should be called by base classes during
    * their initialization.
    */
-  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferedGenerators: CMakeGenerator[]):
+  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferredGenerators: CMakeGenerator[]):
       Promise<T> {
-    await inst._baseInit(kit, preferedGenerators);
+    await inst._baseInit(kit, preferredGenerators);
     return inst;
   }
 }

@@ -13,7 +13,7 @@ import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
-import { CMakeCodeModelDriver, ExtCodeModelContent } from './driver_api';
+import { CMakeCodeModelDriver, ExtCodeModelContent } from '@cmt/drivers/driver_api';
 
 const log = createLogger('cms-driver');
 
@@ -22,8 +22,8 @@ export class NoGeneratorError extends Error {
 }
 
 export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
-  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
-    super(cmake, config, workspaceRootPath, preconditionHandler);
+  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, config, workspaceFolder, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());
     this.config.onChange('configureEnvironment', () => this._restartClient());
   }
@@ -258,7 +258,7 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
     }
 
     return cms.CMakeServerClient.start({
-      tmpdir: path.join(this.workspaceRootPath!, '.vscode'),
+      tmpdir: path.join(this.workspaceFolder!, '.vscode'),
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: this.cmake.path,
@@ -282,7 +282,7 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
 
   protected async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceRootPath: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceRootPath, preconditionHandler), kit, preferedGenerators);
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferredGenerators);
   }
 }
