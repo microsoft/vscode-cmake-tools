@@ -14,7 +14,7 @@
         }
     },
     {
-        "name": "CompilerKit 3 with PreferedGenerator",
+        "name": "CompilerKit 3 with PreferredGenerator",
         "compilers": {
             "CC": "fakeCC",
             "CXX": "fakeCXX"

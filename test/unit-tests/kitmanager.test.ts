@@ -17,7 +17,7 @@ suite('Kits test', async () => {
     expect(names).to.deep.eq([
       'CompilerKit 1',
       'CompilerKit 2',
-      'CompilerKit 3 with PreferedGenerator',
+      'CompilerKit 3 with PreferredGenerator',
       'ToolchainKit 1',
       'VSCode Kit 1',
       'VSCode Kit 2',
