@@ -64,6 +64,13 @@
   dependencies:
     "@types/chai" "*"
 
+"@types/chai-string@^1.4.1":
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@types/chai-string/-/chai-string-1.4.2.tgz#0f116504a666b6c6a3c42becf86634316c9a19ac"
+  integrity sha512-ld/1hV5qcPRGuwlPdvRfvM3Ka/iofOk2pH4VkasK4b1JJP1LjNmWWn0LsISf6RRzyhVOvs93rb9tM09e+UuF8Q==
+  dependencies:
+    "@types/chai" "*"
+
 "@types/chai@*", "@types/chai@^4.0.4":
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.1.3.tgz#b8a74352977a23b604c01aa784f5b793443fb7dc"
@@ -328,6 +335,11 @@ chai-as-promised@^7.1.1:
   resolved "https://registry.yarnpkg.com/chai-as-promised/-/chai-as-promised-7.1.1.tgz#08645d825deb8696ee61725dbf590c012eb00ca0"
   dependencies:
     check-error "^1.0.2"
+
+chai-string@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/chai-string/-/chai-string-1.5.0.tgz#0bdb2d8a5f1dbe90bc78ec493c1c1c180dd4d3d2"
+  integrity sha512-sydDC3S3pNAQMYwJrs6dQX0oBQ6KfIPuOZ78n7rocW0eJJlsHPh2t3kwW7xfwYA/1Bf6/arGtSUo16rxR2JFlw==
 
 chai@^4.1.2:
   version "4.1.2"
@@ -1357,10 +1369,10 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-vscode-cpptools@^2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/vscode-cpptools/-/vscode-cpptools-2.1.2.tgz#465d42c66850e877ee5a14574c9376ffca151968"
-  integrity sha512-oMx/wsLQM6NggnmWn4t8lIrt1K7Zpl5G34zxNu+J6KHGnCxBzc+NHnxXS1Vu1hLxGWwANAvdxr3mEcA2LMe7hQ==
+vscode-cpptools@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/vscode-cpptools/-/vscode-cpptools-3.0.1.tgz#35ea986a48ac14eda85f3989ba5eedc64886c0c2"
+  integrity sha512-KAbwWhG36Ahnug9frcCOvWI3dUb3mzWeTqB6NQjIkzAazRTJWT/PiZ7gxpY/+jQIUylbbiU9ezWmzIIm8nP+TQ==
 
 vscode-extension-telemetry@^0.1.2:
   version "0.1.2"

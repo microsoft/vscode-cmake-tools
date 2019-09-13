@@ -144,6 +144,16 @@ export function splitPath(p: string): string[] {
 }
 
 /**
+ * Retrieve the primary workspace folder, or 'null' if no folder is open.
+ */
+export function getPrimaryWorkspaceFolder(): vscode.Uri|null {
+  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    return vscode.workspace.workspaceFolders[0].uri;
+  }
+  return null;
+}
+
+/**
  * Check if a value is "truthy" according to CMake's own language rules
  * @param value The value to check
  */
@@ -230,7 +240,7 @@ export function product<T>(arrays: T[][]): T[][] {
 }
 
 export interface CMakeValue {
-  type: ('UNKNOWN'|'BOOL'|'STRING');  // There are more types, but we don't care ATM
+  type: ('UNKNOWN'|'BOOL'|'STRING'|'FILEPATH');  // There are more types, but we don't care ATM
   value: string;
 }
 

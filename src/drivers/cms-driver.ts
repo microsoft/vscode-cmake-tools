@@ -3,24 +3,28 @@ import {InputFileSet} from '@cmt/dirty';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import * as api from './api';
-import {CacheEntryProperties, ExecutableTarget, RichTarget} from './api';
-import * as cache from './cache';
-import * as cms from './cms-client';
-import {CMakeDriver} from './driver';
-import {Kit} from './kit';
-import {createLogger} from './logging';
-import * as proc from './proc';
-import rollbar from './rollbar';
-import {DirectoryContext} from './workspace';
+import * as api from '@cmt/api';
+import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
+import * as cache from '@cmt/cache';
+import * as cms from '@cmt/drivers/cms-client';
+import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {Kit, CMakeGenerator} from '@cmt/kit';
+import {createLogger} from '@cmt/logging';
+import * as proc from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
+import { ConfigurationReader } from '@cmt/config';
 
 const log = createLogger('cms-driver');
 
+export class NoGeneratorError extends Error {
+  message: string = 'No usable generator found.';
+}
+
 export class CMakeServerClientDriver extends CMakeDriver {
-  private constructor(cmake: CMakeExecutable, private readonly _ws: DirectoryContext) {
-    super(cmake, _ws);
-    this._ws.config.onChange('environment', () => this._restartClient());
-    this._ws.config.onChange('configureEnvironment', () => this._restartClient());
+  private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
+    super(cmake, config, workspaceFolder, preconditionHandler);
+    this.config.onChange('environment', () => this._restartClient());
+    this.config.onChange('configureEnvironment', () => this._restartClient());
   }
 
   // TODO: Refactor to make this assertion unecessary
@@ -59,7 +63,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     }
   }
 
-  async cleanConfigure(consumer?: proc.OutputConsumer) {
+  protected async doPreCleanConfigure(): Promise<void> {
     const old_cl = await this._cmsClient;
     this._cmsClient = (async () => {
       // Stop the server before we try to rip out any old files
@@ -67,10 +71,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
       await this._cleanPriorConfiguration();
       return this._startNewClient();
     })();
-    return this.configure([], consumer);
   }
 
-  async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
+  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
     await this._clientChangeInProgress;
     const cl = await this._cmsClient;
     const sub = this.onMessage(msg => {
@@ -97,9 +100,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
     return 0;
   }
 
-  async doPreBuild(): Promise<boolean> { return true; }
+  protected async doPreBuild(): Promise<boolean> { return true; }
 
-  async doPostBuild(): Promise<boolean> {
+  protected async doPostBuild(): Promise<boolean> {
     await this._refreshPostConfigure();
     return true;
   }
@@ -228,7 +231,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     await this._restartClient();
   }
 
-  async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+  protected async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
     return this._clientChangeInProgress;
   }
@@ -249,7 +252,12 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   private async _startNewClient() {
-    return cms.CMakeServerClient.start(this._ws.config, {
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
+
+    return cms.CMakeServerClient.start({
+      tmpdir: path.join(this.workspaceFolder!, '.vscode'),
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: this.cmake.path,
@@ -264,16 +272,16 @@ export class CMakeServerClientDriver extends CMakeDriver {
       onProgress: async prog => {
         this._progressEmitter.fire(prog);
       },
-      pickGenerator: () => this.getBestGenerator(),
+      generator: this.generator,
     });
   }
 
   private readonly _onMessageEmitter = new vscode.EventEmitter<string>();
   get onMessage() { return this._onMessageEmitter.event; }
 
-  async doInit(): Promise<void> { await this._restartClient(); }
+  protected async doInit(): Promise<void> { await this._restartClient(); }
 
-  static async create(cmake: CMakeExecutable, wsc: DirectoryContext, kit: Kit|null): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, wsc), kit);
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferredGenerators);
   }
 }

@@ -1,4 +1,4 @@
-import * as cms from '@cmt/cms-client';
+import * as cms from '@cmt/drivers/cms-client';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
