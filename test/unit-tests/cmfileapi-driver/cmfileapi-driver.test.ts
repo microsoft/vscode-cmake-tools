@@ -121,7 +121,7 @@ suite('CMake-FileApi-Driver tests', () => {
     expect(fs.existsSync(driver.executableTargets[0].path)).to.be.true;
   }).timeout(90000);
 
-  test('Configure fails on invalid prefered generator', async () => {
+  test('Configure fails on invalid preferred generator', async () => {
     const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
@@ -133,6 +133,18 @@ suite('CMake-FileApi-Driver tests', () => {
     expect(cmfile_driver.CMakeFileApiDriver.create(executable, config, kit, projectRoot, async () => {}, []))
         .to.be.rejectedWith('No usable generator found.');
   }).timeout(60000);
+
+  test('Throw exception on set kit without preferred generator found', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
+    const projectRoot = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cmfile_driver.CMakeFileApiDriver
+                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+
+    await expect(driver.setKit({name: 'GCC'}, [])).to.be.rejectedWith('No usable generator found.');
+  }).timeout(90000);
 
   test('Try build on empty dir', async () => {
     const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');

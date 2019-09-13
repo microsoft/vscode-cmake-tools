@@ -229,6 +229,10 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
       await this._cleanPriorConfiguration();
     }
     await cb();
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
+
     await this._restartClient();
   }
 

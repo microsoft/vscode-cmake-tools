@@ -46,11 +46,11 @@ export class CMakeFileApiDriver extends CMakeCodeModelDriver {
                       kit: Kit|null,
                       workspaceRootPath: string|null,
                       preconditionHandler: CMakePreconditionProblemSolver,
-                      preferedGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
+                      preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
     log.debug('Creating instance of CMakeFileApiDriver');
     return this.createDerived(new CMakeFileApiDriver(cmake, config, workspaceRootPath, preconditionHandler),
                               kit,
-                              preferedGenerators);
+                              preferredGenerators);
   }
 
   private _needsReconfigure = true;
@@ -110,6 +110,9 @@ export class CMakeFileApiDriver extends CMakeCodeModelDriver {
       await this._cleanPriorConfiguration();
     }
     await cb();
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
   }
 
   async asyncDispose() {

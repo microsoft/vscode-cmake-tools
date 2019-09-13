@@ -109,7 +109,6 @@ suite('CMake-Server-Driver tests', () => {
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
     const executable = await getCMakeExecutableInformation(cmakePath);
-    expect(executable.isFileApiModSupported).to.be.true;
 
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
@@ -133,6 +132,18 @@ suite('CMake-Server-Driver tests', () => {
     expect(cms_driver.CMakeServerClientDriver.create(executable, config, kit, projectRoot, async () => {}, []))
         .to.be.rejectedWith('No usable generator found.');
   }).timeout(60000);
+
+  test('Throw exception on set kit without preferred generator found', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
+    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+
+    await expect(driver.setKit({name: 'GCC'}, [])).to.be.rejectedWith('No usable generator found.');
+  }).timeout(90000);
 
   test('Try build on empty dir', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
