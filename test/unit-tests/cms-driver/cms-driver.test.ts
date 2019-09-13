@@ -93,6 +93,17 @@ suite('CMake-Server-Driver tests', () => {
     expect(driver.binaryDir).to.endsWith('test/unit-tests/cms-driver/workspace/test_project/build');
   }).timeout(60000);
 
+  test('Configure fails', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
+    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/bad_command');
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+    expect(await driver.cleanConfigure([])).to.be.eq(1);
+  }).timeout(90000);
+
   test('Build', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
@@ -298,7 +309,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
 
-  test('Test preconfigured workspace', async () => {
+  test('Test pre-configured workspace', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
@@ -327,12 +338,9 @@ suite('CMake-Server-Driver tests', () => {
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
     await driver.cleanConfigure([]);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.not.eq('Ninja');
-    await driver.asyncDispose();
-    driver = null;
 
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitNinja, projectRoot, async () => {}, []);
-    expect(await driver.cleanConfigure([])).to.be.eq(0);
+    await driver.setKit(kitNinja, [{name:'Ninja'}]);
+    expect(await driver.configure([])).to.be.eq(0);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(90000);
 

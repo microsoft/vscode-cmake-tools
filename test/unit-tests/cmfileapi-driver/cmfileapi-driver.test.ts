@@ -307,7 +307,7 @@ suite('CMake-FileApi-Driver tests', () => {
     expect(called).to.be.true;
   }).timeout(90000);
 
-  test('Test preconfigured workspace', async () => {
+  test('Test pre-configured workspace', async () => {
     const root = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cmfileapi-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
@@ -336,12 +336,9 @@ suite('CMake-FileApi-Driver tests', () => {
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
     await driver.cleanConfigure([]);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.not.eq('Ninja');
-    await driver.asyncDispose();
-    driver = null;
 
-    driver = await cmfile_driver.CMakeFileApiDriver
-                 .create(executable, config, kitNinja, projectRoot, async () => {}, []);
-    expect(await driver.cleanConfigure([])).to.be.eq(0);
+    await driver.setKit(kitNinja, [{name:'Ninja'}]);
+    expect(await driver.configure([])).to.be.eq(0);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(90000);
 
