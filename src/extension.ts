@@ -602,7 +602,6 @@ class ExtensionManager implements vscode.Disposable {
         message = `Loading kit ${raw_name}`;
         break;
       }
-      rollbar.updatePayload({kit: k});
       // Load the kit into the backend
       await vscode.window.withProgress(
           {
@@ -1214,15 +1213,6 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
-  const packageJSON = util.thisExtensionPackage();
-  rollbar.updatePayload({
-    environment: 'production',
-    packageJSON,
-    client: {
-      code_version: packageJSON.version,
-    },
-    platform: process.platform,
-  });
   await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,

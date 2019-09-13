@@ -10,7 +10,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from './api';
+import { CMakeBuildConsumer, CompileOutputConsumer } from './diagnostics/build';
 import * as codepages from './code-pages';
+import { CMakeOutputConsumer } from './diagnostics/cmake';
+import { RawDiagnosticParser } from './diagnostics/util';
 import * as expand from './expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from './kit';
 import * as logging from './logging';
@@ -18,6 +21,7 @@ import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import rollbar from './rollbar';
+import * as telemetry from './telemetry';
 import * as util from './util';
 import {ConfigureArguments, VariantOption} from './variant';
 import {DirectoryContext} from './workspace';
@@ -640,7 +644,41 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Expand all important paths
     await this._refreshExpansions();
 
+    const timeStart: number = new Date().getTime();
     const retc = await this.doConfigure(expanded_flags, consumer);
+    const timeEnd: number = new Date().getTime();
+
+    const cmakeVersion = this.cmake.version;
+    const telemetryProperties: {[key: string]: string} = {
+      CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+      CMakeGenerator: this.generatorName || '',
+      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+    };
+    const azureSphereTargetApiSet = this.cmakeCacheEntries.get('AZURE_SPHERE_TARGET_API_SET');
+    if (azureSphereTargetApiSet) {
+      telemetryProperties['AzureSphereTargetApiSet'] = azureSphereTargetApiSet.value;
+    }
+    const telemetryMeasures: {[key: string]: number} = {
+      Duration: timeEnd - timeStart,
+    };
+    if (consumer instanceof CMakeOutputConsumer) {
+      let errorCount: number = 0;
+      let warningCount: number = 0;
+      consumer.diagnostics.forEach(v => {
+        if (v.diag.severity === 0) {
+          errorCount++;
+        } else if (v.diag.severity === 1) {
+          warningCount++;
+        }
+      });
+      telemetryMeasures['ErrorCount'] = errorCount;
+      telemetryMeasures['WarningCount'] = warningCount;
+    } else {
+      // Wrong type: shouldn't get here, just in case
+      rollbar.error('Wrong build result type.');
+      telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
+    }
+    telemetry.logEvent('parse', telemetryProperties, telemetryMeasures);
 
     return retc;
   }
@@ -651,8 +689,42 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!pre_build_ok) {
       return -1;
     }
+    const timeStart: number = new Date().getTime();
     const child = await this._doCMakeBuild(target, consumer);
-    if (!child) {
+    const timeEnd: number = new Date().getTime();
+    const telemetryProperties: {[key: string]: string} = {
+      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+    };
+    const telemetryMeasures: {[key: string]: number} = {
+      Duration: timeEnd - timeStart,
+    };
+    if (child) {
+      if (consumer instanceof CMakeBuildConsumer &&
+          consumer.compileConsumer instanceof CompileOutputConsumer) {
+        let errorCount: number = 0;
+        let warningCount: number = 0;
+        for (const compiler in consumer.compileConsumer.compilers) {
+          const parser: RawDiagnosticParser = consumer.compileConsumer.compilers[compiler];
+          parser.diagnostics.forEach(v => {
+            if (v.severity === 'error' || v.severity === 'fatal error') {
+              errorCount++;
+            } else if (v.severity === 'warning') {
+              warningCount++;
+            }
+          });
+        }
+        telemetryMeasures['ErrorCount'] = errorCount;
+        telemetryMeasures['WarningCount'] = warningCount;
+      } else {
+        // Wrong type: shouldn't get here, just in case
+        rollbar.error('Wrong build result type.');
+        telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;
+      }
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
+    } else {
+      // Not sure what happened but there's an error...
+      telemetryMeasures['ErrorCount'] = 1;
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
       return -1;
     }
     const post_build_ok = await this.doPostBuild();
