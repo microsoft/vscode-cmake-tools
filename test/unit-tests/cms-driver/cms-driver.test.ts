@@ -47,19 +47,22 @@ suite('CMake-Server-Driver tests', () => {
     kitNinja = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Ninja'}} as Kit;
   }
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
     driver = null;
     const build_dir = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project/build');
     if (fs.existsSync(build_dir)) {
       rimraf.sync(build_dir);
     }
-    expect(fs.existsSync(build_dir)).to.be.false;
+    if (fs.existsSync(build_dir)) {
+      done('Build folder still exists');
+    }
+    done();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(20000);
     if (driver) {
-      await driver.asyncDispose();
+      return driver.asyncDispose();
     }
   });
 
@@ -90,6 +93,17 @@ suite('CMake-Server-Driver tests', () => {
     expect(driver.binaryDir).to.endsWith('test/unit-tests/cms-driver/workspace/test_project/build');
   }).timeout(60000);
 
+  test('Configure fails', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
+    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/bad_command');
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+    expect(await driver.cleanConfigure([])).to.be.eq(1);
+  }).timeout(90000);
+
   test('Build', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
@@ -118,6 +132,18 @@ suite('CMake-Server-Driver tests', () => {
     expect(cms_driver.CMakeServerClientDriver.create(executable, config, kit, projectRoot, async () => {}, []))
         .to.be.rejectedWith('No usable generator found.');
   }).timeout(60000);
+
+  test('Throw exception on set kit without preferred generator found', async () => {
+    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
+    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+
+    await expect(driver.setKit({name: 'GCC'}, [])).to.be.rejectedWith('No usable generator found.');
+  }).timeout(90000);
 
   test('Try build on empty dir', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
@@ -294,7 +320,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
 
-  test('Test preconfigured workspace', async () => {
+  test('Test pre-configured workspace', async () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
@@ -322,12 +348,9 @@ suite('CMake-Server-Driver tests', () => {
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
     await driver.cleanConfigure([]);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.not.eq('Ninja');
-    await driver.asyncDispose();
-    driver = null;
 
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitNinja, projectRoot, async () => {}, []);
-    expect(await driver.cleanConfigure([])).to.be.eq(0);
+    await driver.setKit(kitNinja, [{name:'Ninja'}]);
+    expect(await driver.configure([])).to.be.eq(0);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(90000);
 
