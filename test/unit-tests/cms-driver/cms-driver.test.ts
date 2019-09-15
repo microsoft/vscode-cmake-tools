@@ -22,6 +22,7 @@ let driver: CMakeDriver|null = null;
 // tslint:disable:no-unused-expression
 
 suite('CMake-Server-Driver tests', () => {
+  const cmakePath: string = process.env.CMAKE_EXECUTABLE? process.env.CMAKE_EXECUTABLE: 'cmake';
   let kitDefault: Kit;
   if (process.platform === 'win32') {
     kitDefault = {
@@ -66,7 +67,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
@@ -82,7 +83,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
@@ -93,7 +94,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
@@ -109,7 +110,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     const kit = {name: 'GCC', preferredGenerator: {name: 'BlaBla'}} as Kit;
 
@@ -122,7 +123,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/empty_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -139,7 +140,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -160,7 +161,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -181,7 +182,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -204,7 +205,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -227,7 +228,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -250,7 +251,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -273,7 +274,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -297,7 +298,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executable, config, kitNinja, projectRoot, async () => {}, []);
@@ -315,7 +316,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
@@ -334,7 +335,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
                  .create(executable, config, kitDefault, projectRoot, async () => {}, []);
@@ -346,7 +347,7 @@ suite('CMake-Server-Driver tests', () => {
     const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
     const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
                        .create(executable, config, kitDefault, projectRoot, async () => {}, []);
