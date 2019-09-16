@@ -486,7 +486,7 @@ class ExtensionManager implements vscode.Disposable {
     // Determine wether we need to watch the config kits file:
     const kit_file_path = this._configKitsPath;
     if (kit_file_path) {
-      kitsWatcher.push(kit_file_path);
+      kit_file_path.then(function(kit_file_path){kitsWatcher.push(kit_file_path)});
     }
 
     this._kitsWatcher = new MultiWatcher(...kitsWatcher);
@@ -498,7 +498,7 @@ class ExtensionManager implements vscode.Disposable {
    * The path to the workspace-local configured kits file, dependent on the path to the
    * active workspace folder and the setting in the active cmake tools.
    */
-  private get _configKitsPath(): string | null {
+  private get _configKitsPath(): Promise<string> | null {
     if (!this._activeCMakeTools) {
       return null;
     }
@@ -545,12 +545,12 @@ class ExtensionManager implements vscode.Disposable {
    * kits files, since the filesystem watcher in the `_kitsWatcher` is sometimes
    * unreliable.
    */
-  private readonly _editorWatcher = vscode.workspace.onDidSaveTextDocument(doc => {
+  private readonly _editorWatcher = vscode.workspace.onDidSaveTextDocument(async doc => {
     if (doc.uri.fsPath === USER_KITS_FILEPATH) {
       rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
     } else if (this._workspaceKitsPath && doc.uri.fsPath === this._workspaceKitsPath) {
       rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
-    } else if (this._configKitsPath && doc.uri.fsPath === this._configKitsPath) {
+    } else if (this._configKitsPath && doc.uri.fsPath === await this._configKitsPath) {
       rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
     } else {
       // Ignore
@@ -590,7 +590,7 @@ class ExtensionManager implements vscode.Disposable {
     // Load config-kits
     let config: Kit[] = [];
     if (this._configKitsPath !== null) {
-      config = await readKitsFile(this._configKitsPath);
+      config = await readKitsFile(await this._configKitsPath);
     }
 
     // Add the special __unspec__ kit for opting-out of kits
