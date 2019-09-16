@@ -208,6 +208,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+  private getPreferredGenerators(): CMakeGenerator[] {
+    // User can override generator with a setting
+    const user_generator = this.workspaceContext.config.generator;
+    if (user_generator) {
+      log.debug(`Using generator from user configuration: ${user_generator}`);
+      return [{
+        name: user_generator,
+        platform: this.workspaceContext.config.platform || undefined,
+        toolset: this.workspaceContext.config.toolset || undefined,
+      }];
+    }
+
+    const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
+    return user_preferred;
+  }
+
   /**
    * Execute pre-configure/build tasks to check if we are ready to run a full
    * configure. This should be called by a derived driver before any
@@ -232,22 +248,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
       break;
     }
-  }
-
-  private getPreferredGenerators(): CMakeGenerator[] {
-    // User can override generator with a setting
-    const user_generator = this.workspaceContext.config.generator;
-    if (user_generator) {
-      log.debug(`Using generator from user configuration: ${user_generator}`);
-      return [{
-        name: user_generator,
-        platform: this.workspaceContext.config.platform || undefined,
-        toolset: this.workspaceContext.config.toolset || undefined,
-      }];
-    }
-
-    const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
-    return user_preferred;
   }
 
   /**
@@ -379,7 +379,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._activeKit = kit;
     if (kit) {
       log.debug('Injecting new Kit into CMake driver');
-      const drv = await this._cmakeDriver;
+      const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
       if (drv) {
         try {
           this._statusMessage.set('Reloading...');
@@ -393,7 +393,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._activeKit = null;
         }
       }
-      this.workspaceContext.state.activeKitName = kit.name;
     }
   }
 
