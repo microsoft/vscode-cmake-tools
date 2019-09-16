@@ -894,7 +894,7 @@ function expandKitFile(wsPath: string, kitFile: string): Promise<string> {
     buildKit: "${buildKit}" // invalid substitution
   };
   const options: expand.ExpansionOptions = {
-    vars: vars
+    vars
   };
   return expand.expandString(kitFile, options);
 }
