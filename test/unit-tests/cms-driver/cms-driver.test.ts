@@ -18,10 +18,24 @@ function getTestRootFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../..', filename));
 }
 
+function cleanupBuildDir(build_dir: string): boolean {
+  if (fs.existsSync(build_dir)) {
+    rimraf.sync(build_dir);
+  }
+  return !fs.existsSync(build_dir);
+}
+
 let driver: CMakeDriver|null = null;
 // tslint:disable:no-unused-expression
 
 suite('CMake-Server-Driver tests', () => {
+  const cmakePath: string = process.env.CMAKE_EXECUTABLE? process.env.CMAKE_EXECUTABLE: 'cmake';
+  const workspacePath: string = 'test/unit-tests/cms-driver/workspace';
+  const root = getTestRootFilePath(workspacePath);
+  const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+  const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/empty_project');
+  const badCommandWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/bad_command');
+
   let kitDefault: Kit;
   if (process.platform === 'win32') {
     kitDefault = {
@@ -46,30 +60,36 @@ suite('CMake-Server-Driver tests', () => {
     kitNinja = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Ninja'}} as Kit;
   }
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
     driver = null;
-    const build_dir = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project/build');
-    if (fs.existsSync(build_dir)) {
-      rimraf.sync(build_dir);
+
+    if (!cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
+      done('Default build folder still exists');
     }
-    expect(fs.existsSync(build_dir)).to.be.false;
+
+    if (!cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
+      done('Empty project build folder still exists');
+    }
+
+    if (!cleanupBuildDir(path.join(badCommandWorkspaceFolder, 'build'))) {
+      done('Bad command build folder still exists');
+    }
+    done();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(20000);
     if (driver) {
-      await driver.asyncDispose();
+      return driver.asyncDispose();
     }
   });
 
   test(`All target for ${kitDefault.name}`, async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     const allTargetName = driver.allTargetName;
     if (process.platform === 'win32') {
       expect(allTargetName).to.eq('ALL_BUILD');
@@ -79,24 +99,29 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(60000);
 
   test('Check binary dir', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     expect(driver.binaryDir).to.endsWith('test/unit-tests/cms-driver/workspace/test_project/build');
   }).timeout(60000);
 
-  test('Build', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+  test('Configure fails', async () => {
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+                 .create(executable, config, kitDefault, badCommandWorkspaceFolder, async () => {}, []);
+    expect(await driver.cleanConfigure([])).to.be.eq(1);
+  }).timeout(90000);
+
+  test('Build', async () => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     expect(await driver.cleanConfigure([])).to.be.eq(0);
     expect(await driver.build(driver.allTargetName)).to.be.eq(0);
 
@@ -106,23 +131,29 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Configure fails on invalid preferred generator', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     const kit = {name: 'GCC', preferredGenerator: {name: 'BlaBla'}} as Kit;
 
     // tslint:disable-next-line: no-floating-promises
-    expect(cms_driver.CMakeServerClientDriver.create(executable, config, kit, projectRoot, async () => {}, []))
+    expect(cms_driver.CMakeServerClientDriver.create(executable, config, kit, defaultWorkspaceFolder, async () => {}, []))
         .to.be.rejectedWith('No usable generator found.');
   }).timeout(60000);
 
-  test('Try build on empty dir', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/empty_project');
+  test('Throw exception on set kit without preferred generator found', async () => {
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+
+    await expect(driver.setKit({name: 'GCC'}, [])).to.be.rejectedWith('No usable generator found.');
+  }).timeout(90000);
+
+  test('Try build on empty dir', async () => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -130,16 +161,14 @@ suite('CMake-Server-Driver tests', () => {
       called = true;
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, emptyWorkspaceFolder, checkPreconditionHelper, []);
     expect(await driver.cleanConfigure([])).to.be.eq(-1);
     expect(called).to.be.true;
   }).timeout(60000);
 
   test('No parallel configuration', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -147,7 +176,7 @@ suite('CMake-Server-Driver tests', () => {
       called = true;
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
     const configure1 = driver.configure([]);
     const configure2 = driver.configure([]);
 
@@ -157,10 +186,8 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No parallel clean configuration', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -168,7 +195,7 @@ suite('CMake-Server-Driver tests', () => {
       called = true;
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
     const configure1 = driver.cleanConfigure([]);
     const configure2 = driver.cleanConfigure([]);
 
@@ -178,10 +205,8 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No parallel builds', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -190,7 +215,7 @@ suite('CMake-Server-Driver tests', () => {
       }
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
     expect(await driver.configure([])).to.be.equal(0);
     const build1 = driver.build(driver.allTargetName);
     const build2 = driver.build(driver.allTargetName);
@@ -201,10 +226,8 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No build parallel to configure', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -213,7 +236,7 @@ suite('CMake-Server-Driver tests', () => {
       }
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
     expect(await driver.configure([])).to.be.equal(0);
     const configure = driver.configure([]);
     const build = driver.build(driver.allTargetName);
@@ -224,10 +247,8 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No configure parallel to build', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -236,7 +257,7 @@ suite('CMake-Server-Driver tests', () => {
       }
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
     expect(await driver.configure([])).to.be.equal(0);
     const build = driver.build(driver.allTargetName);
     const configure = driver.configure([]);
@@ -247,10 +268,8 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No build parallel to clean configuration', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -259,7 +278,7 @@ suite('CMake-Server-Driver tests', () => {
       }
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
     const configure = driver.cleanConfigure([]);
     const build = driver.build(driver.allTargetName);
 
@@ -270,10 +289,8 @@ suite('CMake-Server-Driver tests', () => {
 
 
   test('No clean configuration parallel to build', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
     const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
@@ -282,7 +299,7 @@ suite('CMake-Server-Driver tests', () => {
       }
     };
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, checkPreconditionHelper, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
     expect(await driver.configure([])).to.be.equal(0);
     const build = driver.build(driver.allTargetName);
     const configure = driver.cleanConfigure([]);
@@ -293,63 +310,52 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
 
-  test('Test preconfigured workspace', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
+  test('Test pre-configured workspace', async () => {
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitNinja, projectRoot, async () => {}, []);
+                 .create(executable, config, kitNinja, defaultWorkspaceFolder, async () => {}, []);
     await driver.cleanConfigure([]);
     await driver.asyncDispose();
 
     driver = null;
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     expect(await driver.configure([])).to.be.eq(0);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(60000);
 
   test('Test generator switch', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     await driver.cleanConfigure([]);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.not.eq('Ninja');
-    await driver.asyncDispose();
-    driver = null;
 
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitNinja, projectRoot, async () => {}, []);
-    expect(await driver.cleanConfigure([])).to.be.eq(0);
+    await driver.setKit(kitNinja, [{name:'Ninja'}]);
+    expect(await driver.configure([])).to.be.eq(0);
     expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
   }).timeout(90000);
 
   test('Test extra arguments on configure', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     await driver.configure(['-DEXTRA_ARGS_TEST=Hallo']);
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
   }).timeout(90000);
 
   test('Test extra arguments on clean and configure', async () => {
-    const root = getTestRootFilePath('test/unit-tests/cms-driver/workspace');
-    const projectRoot = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
     const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation('cmake');
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                       .create(executable, config, kitDefault, projectRoot, async () => {}, []);
+                       .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     await driver.cleanConfigure(['-DEXTRA_ARGS_TEST=Hallo']);
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
   }).timeout(90000);
