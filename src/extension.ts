@@ -381,7 +381,7 @@ class ExtensionManager implements vscode.Disposable {
     // Set the new workspace
     this._activeWorkspaceFolder = ws;
     // Drop the old kit watcher on the floor
-    this._resetKitsWatcher();
+    await this._resetKitsWatcher();
     // Re-read kits for the new workspace:
     await this._rereadKits(progress);
     this._setupSubscriptions();
@@ -472,7 +472,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Drop the current kits watcher and create a new one.
    */
-  private _resetKitsWatcher() {
+  private async _resetKitsWatcher() {
     // Throw the old one away
     this._kitsWatcher.dispose();
 
@@ -486,9 +486,9 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     // Determine wether we need to watch the config kits file:
-    const kit_file_path = this._configKitsPath;
+    const kit_file_path = await this._configKitsPath;
     if (kit_file_path) {
-      kit_file_path.then(function(kit_file_path){kitsWatcher.push(kit_file_path)});
+      kitsWatcher.push(kit_file_path);
     }
 
     this._kitsWatcher = new MultiWatcher(...kitsWatcher);
