@@ -905,7 +905,7 @@
         "cmake.kitFile": {
           "type": "string",
           "default": null,
-          "description": "Path to a custom kit file relative to the workspace folder",
+          "description": "Path to a custom kit file with ${workspaceRoot}, ${workspaceFolder}, ${workspaceRootFolderName}, ${userHome}, and/or environment variables",
           "scope": "resource"
         },
         "cmake.revealLog": {

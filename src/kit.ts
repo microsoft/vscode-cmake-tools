@@ -865,16 +865,53 @@ function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
   return mingwDirs.map(mingwDir => path.join(mingwDir, 'bin'));
 }
 
-export function configKitsPathForWorkspaceDirectoryPath(wsPath: string, kitFile: string): string {
-  return path.join(wsPath, kitFile);
+
+/**
+ * Expands any possible variables in the kitfile
+ * @param wsPath Path to the workspace
+ * @param kitFile Path to the kitfile that needs to be expanded
+ */
+function expandKitFile(wsPath: string, kitFile: string): Promise<string> {
+  const vars: expand.ExpansionVars = {
+    workspaceRoot: wsPath,
+    workspaceFolder: wsPath,
+    buildType: "${buildType}",  // invalid substitution, just replace with itself
+    workspaceRootFolderName: path.basename(wsPath),
+    generator: "${generator}", // invalid substitution
+    userHome: paths.userHome,
+    buildKit: "${buildKit}" // invalid substitution
+  };
+  const options: expand.ExpansionOptions = {
+    vars: vars
+  };
+  return expand.expandString(kitFile, options);
 }
 
-export function configKitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder, kitFile: string): string {
+/**
+ * Generates a path to a kitfile
+ * @param wsPath Path to the workspace
+ * @param kitFile Path to the kitfile that needs to be expanded
+ */
+export function configKitsPathForWorkspaceDirectoryPath(wsPath: string, kitFile: string): Promise<string> {
+  return expandKitFile(wsPath, kitFile);
+}
+
+/**
+ * Generates a path to a kitfile
+ * @param ws Workspace to be used
+ * @param kitFile Path to the kitfile that needs to be expanded
+ */
+export function configKitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder, kitFile: string): Promise<string> {
   return configKitsPathForWorkspaceDirectoryPath(ws.uri.fsPath, kitFile);
 }
 
-export function configKitsForWorkspaceDirectory(dirPath: string, kitFile: string): Promise<Kit[]> {
-  const config_kits_file = configKitsPathForWorkspaceDirectoryPath(dirPath, kitFile);
+/**
+ * Genarates a kit from a kit file
+ * @param dirPath Workspace to be used
+ * @param kitFile Path to the kitfile that needs to be expanded
+ */
+export async function configKitsForWorkspaceDirectory(dirPath: string, kitFile: string): Promise<Kit[]> {
+  const config_kits_file = await configKitsPathForWorkspaceDirectoryPath(dirPath, kitFile);
   return readKitsFile(config_kits_file);
 }
 
