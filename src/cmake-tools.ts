@@ -2,7 +2,6 @@
  * Root of the extension
  */
 import {CMakeCache} from '@cmt/cache';
-import {maybeUpgradeCMake} from '@cmt/cm-upgrade';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {CompilationDatabase} from '@cmt/compdb';
 import * as debugger_mod from '@cmt/debugger';
@@ -29,7 +28,6 @@ import {expandString, ExpansionOptions} from './expand';
 import {CMakeGenerator, Kit} from './kit';
 import {LegacyCMakeDriver} from '@cmt/drivers/legacy-driver';
 import * as logging from './logging';
-import {NagManager} from './nag';
 import {fs} from './pr';
 import {buildCmdStr} from './proc';
 import {Property} from './prop';
@@ -64,21 +62,6 @@ enum ConfigureType {
  * class. See the `_init` private method for this initialization.
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
-
-  private readonly _nagManager = new NagManager(this.extensionContext);
-  private readonly _nagUpgradeSubscription = this._nagManager.onCMakeLatestVersion(info => {
-    this.getCMakeExecutable().then(
-        async cmake => {
-          if (!cmake.version) {
-            log.error('Failed to get version information for CMake during upgrade');
-            return;
-          }
-          await maybeUpgradeCMake(this.extensionContext, {currentVersion: cmake.version, available: info});
-        },
-        e => { rollbar.exception('Error during CMake upgrade', e, info); },
-    );
-  });
-
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
    * @param extensionContext The extension context
@@ -176,8 +159,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   dispose() {
     log.debug('Disposing CMakeTools extension');
-    this._nagUpgradeSubscription.dispose();
-    this._nagManager.dispose();
     this._termCloseSub.dispose();
     if (this._launchTerminal)
       this._launchTerminal.dispose();
@@ -370,9 +351,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._ctestController.onResultsChanged(res => { this._testResults.set(res); });
 
     this._statusMessage.set('Ready');
-
-    // Additional, non-extension: Start up nagging.
-    this._nagManager.start();
   }
 
   async setKit(kit: Kit|null) {
