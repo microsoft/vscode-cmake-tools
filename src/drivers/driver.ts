@@ -612,16 +612,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const timeEnd: number = new Date().getTime();
 
       const cmakeVersion = this.cmake.version;
-      const telemetryProperties: {[key: string]: string} = {
+      const telemetryProperties: telemetry.Properties = {
         CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
         CMakeGenerator: this.generatorName || '',
         ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
       };
-      const azureSphereTargetApiSet = this.cmakeCacheEntries.get('AZURE_SPHERE_TARGET_API_SET');
-      if (azureSphereTargetApiSet) {
-        telemetryProperties['AzureSphereTargetApiSet'] = azureSphereTargetApiSet.value;
-      }
-      const telemetryMeasures: {[key: string]: number} = {
+      const telemetryMeasures: telemetry.Measures = {
         Duration: timeEnd - timeStart,
       };
       if (consumer instanceof CMakeOutputConsumer) {
@@ -641,7 +637,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         rollbar.error('Wrong build result type.');
         telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
       }
-      telemetry.logEvent('parse', telemetryProperties, telemetryMeasures);
+      telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
       return retc;
     } finally { this.configRunning = false; }
@@ -743,10 +739,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const timeStart: number = new Date().getTime();
     const child = await this._doCMakeBuild(target, consumer);
     const timeEnd: number = new Date().getTime();
-    const telemetryProperties: {[key: string]: string} = {
+    const telemetryProperties: telemetry.Properties = {
       ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
     };
-    const telemetryMeasures: {[key: string]: number} = {
+    const telemetryMeasures: telemetry.Measures = {
       Duration: timeEnd - timeStart,
     };
     if (child) {

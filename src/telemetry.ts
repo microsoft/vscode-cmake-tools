@@ -4,9 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as vscode from 'vscode';
 import * as util from './util';
 import TelemetryReporter from 'vscode-extension-telemetry';
+
+export type Properties = { [key: string]: string };
+export type Measures = { [key: string]: number };
 
 interface IPackageInfo {
     name: string;
@@ -16,12 +18,9 @@ interface IPackageInfo {
 
 let telemetryReporter: TelemetryReporter | null;
 
-export function activate(context: vscode.ExtensionContext): void {
+export function activate(): void {
     try {
         telemetryReporter = createReporter();
-        if (telemetryReporter) {
-            context.subscriptions.push(telemetryReporter);
-        }
     } catch (e) {
         // can't really do much about this
     }
@@ -33,7 +32,7 @@ export function deactivate(): void {
     }
 }
 
-export function logEvent(eventName: string, properties?: { [key: string]: string }, measures?: { [key: string]: number }): void {
+export function logEvent(eventName: string, properties?: Properties, measures?: Measures): void {
     if (telemetryReporter) {
         telemetryReporter.sendTelemetryEvent(eventName, properties, measures);
     }

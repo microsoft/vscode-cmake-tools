@@ -177,6 +177,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   dispose() {
     log.debug('Disposing CMakeTools extension');
+    telemetry.deactivate();
     this._nagUpgradeSubscription.dispose();
     this._nagManager.dispose();
     this._termCloseSub.dispose();
@@ -491,7 +492,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug('Safe constructing new CMakeTools instance');
     const inst = new CMakeTools(ctx, wsc);
     await inst._init();
-    telemetry.activate(ctx);
+    telemetry.activate();
     log.debug('CMakeTools instance initialization complete.');
     return inst;
   }
