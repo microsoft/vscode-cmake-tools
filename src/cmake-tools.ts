@@ -34,6 +34,7 @@ import {fs} from './pr';
 import {buildCmdStr} from './proc';
 import {Property} from './prop';
 import rollbar from './rollbar';
+import * as telemetry from './telemetry';
 import {setContextValue} from './util';
 import {VariantManager} from './variant';
 
@@ -176,6 +177,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   dispose() {
     log.debug('Disposing CMakeTools extension');
+    telemetry.deactivate();
     this._nagUpgradeSubscription.dispose();
     this._nagManager.dispose();
     this._termCloseSub.dispose();
@@ -344,8 +346,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async _init() {
     log.debug('Starting CMakeTools second-phase init');
-    // First, start up Rollbar
-    await rollbar.requestPermissions(this.extensionContext);
     // Start up the variant manager
     await this._variantManager.initialize();
     // Set the status bar message
@@ -422,6 +422,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!cmake.isPresent) {
         vscode.window.showErrorMessage(`Bad CMake executable "${
             cmake.path}". Is it installed or settings contain the correct path (cmake.cmakePath)?`);
+        telemetry.logEvent('CMakeExecutableNotFound');
         return null;
       }
 
@@ -491,6 +492,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug('Safe constructing new CMakeTools instance');
     const inst = new CMakeTools(ctx, wsc);
     await inst._init();
+    telemetry.activate();
     log.debug('CMakeTools instance initialization complete.');
     return inst;
   }

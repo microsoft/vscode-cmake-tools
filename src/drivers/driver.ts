@@ -2,16 +2,18 @@
  * Defines base class for CMake drivers
  */ /** */
 
-import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
-import {ProgressMessage} from '@cmt/drivers/cms-client';
-import {CompileCommand} from '@cmt/compdb';
-import * as shlex from '@cmt/shlex';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
 import * as api from '@cmt/api';
+import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/code-pages';
+import {CompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
+import {CMakeBuildConsumer, CompileOutputConsumer} from '@cmt/diagnostics/build';
+import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
+import {RawDiagnosticParser} from '@cmt/diagnostics/util';
+import {ProgressMessage} from '@cmt/drivers/cms-client';
 import * as expand from '@cmt/expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -19,6 +21,8 @@ import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
+import * as shlex from '@cmt/shlex';
+import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
 
@@ -603,7 +607,38 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // Expand all important paths
       await this._refreshExpansions();
 
+      const timeStart: number = new Date().getTime();
       const retc = await this.doConfigure(expanded_flags, consumer);
+      const timeEnd: number = new Date().getTime();
+
+      const cmakeVersion = this.cmake.version;
+      const telemetryProperties: telemetry.Properties = {
+        CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+        CMakeGenerator: this.generatorName || '',
+        ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+      };
+      const telemetryMeasures: telemetry.Measures = {
+        Duration: timeEnd - timeStart,
+      };
+      if (consumer instanceof CMakeOutputConsumer) {
+        let errorCount: number = 0;
+        let warningCount: number = 0;
+        consumer.diagnostics.forEach(v => {
+          if (v.diag.severity === 0) {
+            errorCount++;
+          } else if (v.diag.severity === 1) {
+            warningCount++;
+          }
+        });
+        telemetryMeasures['ErrorCount'] = errorCount;
+        telemetryMeasures['WarningCount'] = warningCount;
+      } else {
+        // Wrong type: shouldn't get here, just in case
+        rollbar.error('Wrong build result type.');
+        telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
+      }
+      telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
+
       return retc;
     } finally { this.configRunning = false; }
   }
@@ -701,8 +736,42 @@ export abstract class CMakeDriver implements vscode.Disposable {
       this.buildRunning = false;
       return -1;
     }
+    const timeStart: number = new Date().getTime();
     const child = await this._doCMakeBuild(target, consumer);
-    if (!child) {
+    const timeEnd: number = new Date().getTime();
+    const telemetryProperties: telemetry.Properties = {
+      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+    };
+    const telemetryMeasures: telemetry.Measures = {
+      Duration: timeEnd - timeStart,
+    };
+    if (child) {
+      if (consumer instanceof CMakeBuildConsumer &&
+          consumer.compileConsumer instanceof CompileOutputConsumer) {
+        let errorCount: number = 0;
+        let warningCount: number = 0;
+        for (const compiler in consumer.compileConsumer.compilers) {
+          const parser: RawDiagnosticParser = consumer.compileConsumer.compilers[compiler];
+          parser.diagnostics.forEach(v => {
+            if (v.severity === 'error' || v.severity === 'fatal error') {
+              errorCount++;
+            } else if (v.severity === 'warning') {
+              warningCount++;
+            }
+          });
+        }
+        telemetryMeasures['ErrorCount'] = errorCount;
+        telemetryMeasures['WarningCount'] = warningCount;
+      } else {
+        // Wrong type: shouldn't get here, just in case
+        rollbar.error('Wrong build result type.');
+        telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;
+      }
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
+    } else {
+      // Not sure what happened but there's an error...
+      telemetryMeasures['ErrorCount'] = 1;
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
       this.buildRunning = false;
       return -1;
     }
