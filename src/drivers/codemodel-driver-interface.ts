@@ -2,13 +2,13 @@ import {CMakeDriver} from '@cmt/drivers/driver';
 import * as vscode from 'vscode';
 
 /**
- * This file contains the API describtion between IDE parts and the cmake model driver.
- * This API CodeModel contains only corrent required cmake code model parts.
- * There are many information provided by CMake as mapped.
+ * This file contains the API description between IDE parts and the cmake model driver.
+ * This API CodeModel contains only current required cmake code model parts.
+ * There are more information provided by CMake as mapped.
  */
 
 /**
- * Decribes all required methods for access to the build code model of the driver
+ * Describes all required methods for access to the build code model of the driver
  */
 export abstract class CodeModelDriver extends CMakeDriver {
   /**
@@ -27,7 +27,7 @@ export interface CodeModelTarget {
   /**
    * A string specifying the logical name of the target.
    *
-   * (Source CMake Documentationcmake-file-api(7))
+   * (Source CMake Documentation cmake-file-api(7))
    */
   readonly name: string;
 
@@ -35,9 +35,9 @@ export interface CodeModelTarget {
    * A string specifying the type of the target.
    * The value is one of EXECUTABLE, STATIC_LIBRARY, SHARED_LIBRARY, MODULE_LIBRARY, OBJECT_LIBRARY, or UTILITY.
    *
-   * (Source CMake Documentationcmake-file-api(7))
+   * (Source CMake Documentation cmake-file-api(7))
    *
-   * \todo clearify need of INTERFACE_LIBRARY type
+   * \todo clarify need of INTERFACE_LIBRARY type
    */
   type: TargetTypeString;
 
@@ -70,7 +70,7 @@ export interface CodeModelFileGroup {
   /** List of source files with the same compilation information */
   sources: string[];
 
-  /** Specifices the language (C, C++, ...) for the toolchain */
+  /** Specific's the language (C, C++, ...) for the toolchain */
   language?: string;
 
   /** Include paths for compilation of a source file */

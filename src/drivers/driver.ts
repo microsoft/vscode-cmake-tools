@@ -632,10 +632,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
         });
         telemetryMeasures['ErrorCount'] = errorCount;
         telemetryMeasures['WarningCount'] = warningCount;
-      } else {
+      } else if (consumer) {
         // Wrong type: shouldn't get here, just in case
         rollbar.error('Wrong build result type.');
         telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
+      } else {
+        // Driver tests do not provide a CMakeOutputConsumer.
       }
       telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
