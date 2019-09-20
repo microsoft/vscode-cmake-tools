@@ -1,4 +1,4 @@
-import * as cms from '@cmt/drivers/cms-client';
+import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -96,7 +96,7 @@ function collapseTreeInplace<T>(tree: PathedTree<T>): void {
  * Get the path to an icon for the given type of CMake target.
  * @param type The type of target
  */
-function iconForTargetType(type: cms.TargetTypeString): string {
+function iconForTargetType(type: codemodel_api.TargetTypeString): string {
   switch (type) {
   case 'EXECUTABLE':
     return 'res/exe.svg';
@@ -111,7 +111,7 @@ function iconForTargetType(type: cms.TargetTypeString): string {
   }
 }
 
-function sortStringForType(type: cms.TargetTypeString): string {
+function sortStringForType(type: codemodel_api.TargetTypeString): string {
   switch (type) {
   case 'EXECUTABLE':
     return 'aaa';
@@ -228,7 +228,7 @@ export class SourceFileNode extends BaseNode {
 }
 
 export class TargetNode extends BaseNode {
-  constructor(readonly projectName: string, cm: cms.CodeModelTarget) {
+  constructor(readonly projectName: string, cm: codemodel_api.CodeModelTarget) {
     super(`${projectName}::${cm.name}`);
     this.name = cm.name;
     this.sourceDir = cm.sourceDirectory || '';
@@ -238,7 +238,7 @@ export class TargetNode extends BaseNode {
   readonly name: string;
   readonly sourceDir: string;
   private _fullName = '';
-  private _type: cms.TargetTypeString = 'UTILITY';
+  private _type: codemodel_api.TargetTypeString = 'UTILITY';
   private _isDefault = false;
   private _isLaunch = false;
   private _fsPath: string = '';
@@ -299,7 +299,7 @@ export class TargetNode extends BaseNode {
     }
   }
 
-  update(cm: cms.CodeModelTarget, ctx: TreeUpdateContext) {
+  update(cm: codemodel_api.CodeModelTarget, ctx: TreeUpdateContext) {
     console.assert(this.name == cm.name);
     console.assert(this.sourceDir == (cm.sourceDirectory || ''));
 
@@ -386,12 +386,12 @@ class ProjectNode extends BaseNode {
     return item;
   }
 
-  update(pr: cms.CodeModelProject, ctx: TreeUpdateContext) {
+  update(pr: codemodel_api.CodeModelProject, ctx: TreeUpdateContext) {
     if (pr.name !== this.name) {
       rollbar.error(`Update project with mismatching name property`, {newName: pr.name, oldName: this.name});
     }
 
-    const tree: PathedTree<cms.CodeModelTarget> = {
+    const tree: PathedTree<codemodel_api.CodeModelTarget> = {
       pathPart: '',
       children: [],
       items: [],
@@ -426,11 +426,12 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
 
   private _children: BaseNode[] = [];
 
-  private _codeModel: cms.CodeModelContent = {configurations: []};
+  private _codeModel: codemodel_api.CodeModelContent = {configurations: []};
 
   get codeModel() { return this._codeModel; }
 
-  updateCodeModel(model: cms.CodeModelContent|null, exCtx: {launchTargetName: string|null, defaultTargetName: string}) {
+  updateCodeModel(model: codemodel_api.CodeModelContent|null,
+                  exCtx: {launchTargetName: string|null, defaultTargetName: string}) {
     if (!model || model.configurations.length < 1) {
       return;
     }
