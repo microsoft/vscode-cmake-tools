@@ -68,7 +68,9 @@ suite('CMake-Server-Driver tests', () => {
     }
   });
 
-  test('Test generation of code model', async () => {
+  test('Test generation of code model with multi configuration like VS', async () => {
+    if (process.platform !== 'win32') return;
+
     const config = ConfigurationReader.createForDirectory(root);
     const executable = await getCMakeExecutableInformation(cmakePath);
 
@@ -81,5 +83,22 @@ suite('CMake-Server-Driver tests', () => {
     await driver.configure([]);
     expect(codemodel_data).to.be.not.null;
     expect(codemodel_data!.configurations.length).to.be.eql(4);
+  }).timeout(90000);
+
+  test('Test generation of code model with one configuration like make on linux', async () => {
+    if (process.platform === 'win32') return;
+
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    let codemodel_data: null | codemodel_api.CodeModelContent = null;
+    if (driver instanceof codemodel_api.CodeModelDriver) {
+      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
+    }
+    await driver.configure([]);
+    expect(codemodel_data).to.be.not.null;
+    expect(codemodel_data!.configurations.length).to.be.eql(1);
   }).timeout(90000);
 });
