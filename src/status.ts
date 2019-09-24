@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
 import {BasicTestResults} from './ctest';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 interface Hideable {
   show(): void;
@@ -41,18 +45,18 @@ export class StatusBar implements vscode.Disposable {
 
   constructor() {
     this._cmakeToolsStatusItem.command = 'cmake.setVariant';
-    this._cmakeToolsStatusItem.tooltip = 'Click to select the current build variant';
+    this._cmakeToolsStatusItem.tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');
     this._buildButton.command = 'cmake.build';
     this._kitSelectionButton.command = 'cmake.selectKit';
-    this._kitSelectionButton.tooltip = 'Click to change the active kit';
+    this._kitSelectionButton.tooltip = localize('click.to.change.kit.tooltip', 'Click to change the active kit');
     this._targetButton.command = 'cmake.setDefaultTarget';
-    this._targetButton.tooltip = 'Set the active target to build';
+    this._targetButton.tooltip = localize('set.active.target.tooltip', 'Set the active target to build');
     this._testButton.command = 'cmake.ctest';
-    this._testButton.tooltip = 'Run CTest tests';
-    this._debugButton.tooltip = 'Launch the debugger for the selected target';
+    this._testButton.tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
+    this._debugButton.tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
     this._debugButton.command = 'cmake.debugTarget';
     this._launchTargetNameButton.command = 'cmake.selectLaunchTarget';
-    this._launchTargetNameButton.tooltip = 'Select the target to launch';
+    this._launchTargetNameButton.tooltip = localize('select.target.tooltip', 'Select the target to launch');
     this._reloadBuildButton();
     this.reloadVisibility();
   }
@@ -114,7 +118,7 @@ export class StatusBar implements vscode.Disposable {
    * The message shown in the primary status button. Tells the user what the
    * extension is currently up to.
    */
-  private _statusMessage: string = 'Loading...';
+  private _statusMessage: string = localize('loading.status', 'Loading...');
   setStatusMessage(v: string) {
     this._statusMessage = v;
     this._reloadStatusButton();
@@ -150,7 +154,7 @@ export class StatusBar implements vscode.Disposable {
     this._testResults = v;
 
     if (!v) {
-      this._testButton.text = 'Run CTest';
+      this._testButton.text = localize('run.ctest', 'Run CTest');
       this._testButton.color = '';
       return;
     }
@@ -159,14 +163,20 @@ export class StatusBar implements vscode.Disposable {
     const total = v.total;
     const good = passing == total;
     const icon = good ? 'check' : 'x';
-    this._testButton.text = `$(${icon}) ${passing}/${total} ${total == 1 ? 'test' : 'tests'} passing`;
+    let testPassingTest: string;
+    if (total == 1) {
+      testPassingTest = localize('test.passing', '{0}/{1} test passing', passing, total);
+    } else {
+      testPassingTest = localize('tests.passing', '{0}/{1} tests passing', passing, total);
+    }
+    this._testButton.text = `$(${icon}) ${testPassingTest}', passing, total)}`;
     this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 
   /** Reloads the content of the build button */
   private _reloadBuildButton() {
     this._buildButton.text = ``;
-    this._buildButton.text = this._isBusy ? `$(x) Stop` : `$(gear) Build:`;
+    this._buildButton.text = this._isBusy ? `$(x) ${localize('stop', 'Stop')}` : `$(gear) ${localize('build', 'Build')}:`;
     this._buildButton.command = this._isBusy ? 'cmake.stop' : 'cmake.build';
     if (this._isBusy) {
       this._buildButton.show();
@@ -188,7 +198,7 @@ export class StatusBar implements vscode.Disposable {
       if (this._activeKitName.length) {
         this._kitSelectionButton.text = this._activeKitName;
       } else {
-        this._kitSelectionButton.text = 'No Kit Selected';
+        this._kitSelectionButton.text = localize('no.kit.selected', 'No Kit Selected');
       }
       this.reloadVisibility();
     } else {
@@ -198,7 +208,7 @@ export class StatusBar implements vscode.Disposable {
 
   setActiveKitName(v: string) {
     if (v === '__unspec__') {
-      this._activeKitName = '[No active kit]';
+      this._activeKitName = `[${localize('no.active.kit', 'No active kit')}]`;
     } else {
       this._activeKitName = v;
     }

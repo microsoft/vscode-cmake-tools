@@ -1,10 +1,17 @@
 .vscode-test/
 build/
+dist/
 node_modules/
 out/
 test/fakebin/
+vscode-extensions-localization-export/
+vscode-translations-import/
 .ci-build
 .DS_Store
 npm-debug.log
+package-lock.json
 *.db*
 *.vsix
+**/nls.*.json
+**/*.nls.json
+**/*.nls.*.json

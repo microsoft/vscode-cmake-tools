@@ -7,6 +7,9 @@ CMake Tools supports a variety of settings that can be set at the user or
 workspace level via VSCode's ``settings.json`` file. This page talks about
 the available options and how they are used.
 
+.. seealso::
+    - :ref:`getting-started`
+
 Options marked with *Supports substitution* allow variable references to appear
 in their strings. See the :ref:`var-subs` section
 

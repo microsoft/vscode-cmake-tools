@@ -16,6 +16,10 @@ import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('legacy-driver');
 
@@ -59,7 +63,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
       }
     }
     const cmake = this.cmake.path;
-    log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
+    log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
     const env = await this.getConfigureEnvironment();
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
     log.trace(res.stderr);
@@ -85,14 +89,14 @@ export class LegacyCMakeDriver extends CMakeDriver {
       await this._reloadPostConfigure();
     }
     this._cacheWatcher.onDidChange(() => {
-      log.debug(`Reload CMake cache: ${this.cachePath} changed`);
-      rollbar.invokeAsync('Reloading CMake Cache', () => this._reloadPostConfigure());
+      log.debug(localize('reload.cmake.cache', 'Reload CMake cache: {0} changed', this.cachePath));
+      rollbar.invokeAsync(localize('reloading.cmake.cache', 'Reloading CMake Cache'), () => this._reloadPostConfigure());
     });
   }
 
-  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
-    log.debug('Creating instance of LegacyCMakeDriver');
-    return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferedGenerators);
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
+    log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
+    return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferredGenerators);
   }
 
   get targets() { return []; }
