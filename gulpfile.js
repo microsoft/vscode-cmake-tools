@@ -170,7 +170,7 @@ gulp.task("translations-import", (done) => {
     let options = minimist(process.argv.slice(2), {
         string: "location",
         default: {
-            location: "../vscode-translations-import"
+            location: "./vscode-translations-import"
         }
     });
     es.merge(languages.map((language) => {

@@ -1236,6 +1236,9 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
+  // Register a protocol handler to serve localized schemas
+  vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
+
   await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Notification,
