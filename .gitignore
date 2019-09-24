@@ -10,3 +10,9 @@ test/fakebin/
 npm-debug.log
 .DS_Store
 package-lock.json
+**/nls.*.json
+**/*.nls.json
+**/*.nls.*.json
+dist
+vscode-extensions-localization-export
+vscode-translations-import

@@ -20,7 +20,7 @@
             "env": {
                 "CMT_DEVRUN": "1"
             },
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-with-webpack-watch",
             "smartStep": false
         },
         {
@@ -46,7 +46,7 @@
                 "CMT_QUIET_CONSOLE": "1",
                 "HasVs": "true"
             },
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build-tests-with-tsc-watch"
             // "smartStep": true
         },
         {
@@ -68,7 +68,7 @@
                 "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/*",
                 "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/test/*"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -104,7 +104,7 @@
                 "${workspaceRoot}/out/test/extension-tests/successful-build/*",
                 "${workspaceRoot}/out/test/extension-tests/successful-build/test/*"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -147,7 +147,7 @@
                 "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/*",
                 "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/test/*"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -198,7 +198,7 @@
                 "${workspaceRoot}/out/*",
                 "${workspaceRoot}/out/test/**"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",

@@ -3,6 +3,10 @@
  */
 
 import * as logging from './logging';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('rollbar');
 
@@ -18,7 +22,7 @@ class RollbarController {
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
   exception(what: string, exception: Error, additional: object = {}): void {
-    log.fatal('Unhandled exception:', what, exception, JSON.stringify(additional));
+    log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional));
     // tslint:disable-next-line
     console.error(exception);
     debugger;
@@ -52,7 +56,7 @@ class RollbarController {
       func = additional as () => Thenable<T>;
       additional = {};
     }
-    log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
+    log.trace(localize('invoking.async.function.rollbar', 'Invoking async function [{0}] with Rollbar wrapping [{1}]', func.name, what));
     const pr = func();
     this.takePromise(what, additional, pr);
   }
@@ -71,10 +75,10 @@ class RollbarController {
       additional = {};
     }
     try {
-      log.trace(`Invoking function [${func.name}] with Rollbar wrapping`, `[${what}]`);
+      log.trace(localize('invoking.function.rollbar', 'Invoking function [${0}] with Rollbar wrapping [${1}]', func.name, what));
       return func();
     } catch (e) {
-      this.exception('Unhandled exception: ' + what, e, additional);
+      this.exception(localize('unhandled.exception', 'Unhandled exception: {0}', what), e, additional);
       throw e;
     }
   }
@@ -82,7 +86,7 @@ class RollbarController {
   takePromise<T>(what: string, additional: object, pr: Thenable<T>): void {
     pr.then(
         () => {},
-        e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); },
+        e => { this.exception(localize('unhandled.promise.rejection', 'Unhandled Promise rejection: {0}', what), e, additional); },
     );
   }
 }

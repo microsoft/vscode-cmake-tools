@@ -1,5 +1,5 @@
 .vscode/**
-out/test/**
+out/**
 test/**
 src/**
 **/*.map
@@ -14,3 +14,5 @@ cSpell.json
 CMakeLists.txt
 tslint.json
 .gitattributes
+gulpfile.js
+webpack.config.js
