@@ -331,7 +331,6 @@ interface ClientInitPrivate extends ClientInit {
   onHello: (m: HelloMessage) => Promise<void>;
   onCrash: (retc: number, signal: string) => Promise<void>;
   onPipeError(e: Error): Promise<void>;
-  tmpdir: string;
 }
 
 /**

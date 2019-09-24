@@ -224,27 +224,24 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
 
-    let cpptoolsCompilerPath = (flags.length === 0) ? comp_path : `${comp_path} ${flags.join(' ')}`;
-    if (sysroot && cpptoolsCompilerPath.indexOf("--sysroot") < 0) {
-      if (sysroot.match(/\s/)) {
-        cpptoolsCompilerPath += ` "--sysroot=${sysroot}"`;
-      }
-      else {
-        cpptoolsCompilerPath += ` --sysroot=${sysroot}`;
-      }
+    if (sysroot) {
+      flags.push(`--sysroot=${sysroot}`);
     }
 
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
       standard,
-      compilerPath: cpptoolsCompilerPath || undefined,
+      compilerPath: comp_path || undefined,
+      compilerArgs: flags || undefined
     };
+
     return {
       defines,
       standard,
       includePath,
       intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
-      compilerPath: cpptoolsCompilerPath || undefined,
+      compilerPath: comp_path || undefined,
+      compilerArgs: flags || undefined
     };
   }
 

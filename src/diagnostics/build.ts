@@ -13,20 +13,26 @@ import * as gcc from './gcc';
 import * as ghs from './ghs';
 import * as gnu_ld from './gnu-ld';
 import * as mvsc from './msvc';
-import {FileDiagnostic} from './util';
+import {FileDiagnostic, RawDiagnosticParser} from './util';
 
-export class CompileOutputConsumer implements OutputConsumer {
+export class Compilers {
+  [compiler: string]: RawDiagnosticParser;
+
   gcc = new gcc.Parser();
   ghs = new ghs.Parser();
   gnuLD = new gnu_ld.Parser();
   msvc = new mvsc.Parser();
+}
+
+export class CompileOutputConsumer implements OutputConsumer {
+  compilers = new Compilers();
 
   // Defer all output to the `error` method
   output(line: string) { this.error(line); }
 
   error(line: string) {
-    for (const cand of [this.gcc, this.ghs, this.msvc, this.gnuLD]) {
-      if (cand.handleLine(line)) {
+    for (const cand in this.compilers) {
+      if (this.compilers[cand].handleLine(line)) {
         break;
       }
     }
@@ -51,10 +57,10 @@ export class CompileOutputConsumer implements OutputConsumer {
     };
 
     const by_source = {
-      GCC: this.gcc.diagnostics,
-      MSVC: this.msvc.diagnostics,
-      GHS: this.ghs.diagnostics,
-      link: this.gnuLD.diagnostics,
+      GCC: this.compilers.gcc.diagnostics,
+      MSVC: this.compilers.msvc.diagnostics,
+      GHS: this.compilers.ghs.diagnostics,
+      link: this.compilers.gnuLD.diagnostics,
     };
     const arrs = util.objectPairs(by_source).map(([source, diags]) => {
       return diags.map(raw_diag => {

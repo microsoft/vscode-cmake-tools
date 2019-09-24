@@ -34,6 +34,7 @@ import {fs} from './pr';
 import {buildCmdStr} from './proc';
 import {Property} from './prop';
 import rollbar from './rollbar';
+import * as telemetry from './telemetry';
 import {setContextValue} from './util';
 import {VariantManager} from './variant';
 import * as nls from 'vscode-nls';
@@ -180,6 +181,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   dispose() {
     log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
+    telemetry.deactivate();
     this._nagUpgradeSubscription.dispose();
     this._nagManager.dispose();
     this._termCloseSub.dispose();
@@ -212,6 +214,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+  private getPreferredGenerators(): CMakeGenerator[] {
+    // User can override generator with a setting
+    const user_generator = this.workspaceContext.config.generator;
+    if (user_generator) {
+      log.debug(`Using generator from user configuration: ${user_generator}`);
+      return [{
+        name: user_generator,
+        platform: this.workspaceContext.config.platform || undefined,
+        toolset: this.workspaceContext.config.toolset || undefined,
+      }];
+    }
+
+    const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
+    return user_preferred;
+  }
+
   /**
    * Execute pre-configure/build tasks to check if we are ready to run a full
    * configure. This should be called by a derived driver before any
@@ -236,22 +254,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
       break;
     }
-  }
-
-  private getPreferredGenerators(): CMakeGenerator[] {
-    // User can override generator with a setting
-    const user_generator = this.workspaceContext.config.generator;
-    if (user_generator) {
-      log.debug(localize('using.generator.for.user.configuration', 'Using generator from user configuration: {0}', user_generator));
-      return [{
-        name: user_generator,
-        platform: this.workspaceContext.config.platform || undefined,
-        toolset: this.workspaceContext.config.toolset || undefined,
-      }];
-    }
-
-    const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
-    return user_preferred;
   }
 
   /**
@@ -349,8 +351,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async _init() {
     log.debug(localize('second.phase.init', 'Starting CMakeTools second-phase init'));
-    // First, start up Rollbar
-    await rollbar.requestPermissions(this.extensionContext);
     // Start up the variant manager
     await this._variantManager.initialize();
     // Set the status bar message
@@ -384,7 +384,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._activeKit = kit;
     if (kit) {
       log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
-      const drv = await this._cmakeDriver;
+      const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
@@ -398,7 +398,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._activeKit = null;
         }
       }
-      this.workspaceContext.state.activeKitName = kit.name;
     }
   }
 
@@ -427,6 +426,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const cmake = await this.getCMakeExecutable();
       if (!cmake.isPresent) {
         vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable "{0}". Is it installed or settings contain the correct path (cmake.cmakePath)?', cmake.path));
+        telemetry.logEvent('CMakeExecutableNotFound');
         return null;
       }
 
@@ -493,6 +493,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug(localize('safely.constructing.cmaketools', 'Safe constructing new CMakeTools instance'));
     const inst = new CMakeTools(ctx, wsc);
     await inst._init();
+    telemetry.activate();
     log.debug(localize('initialization.complete', 'CMakeTools instance initialization complete.'));
     return inst;
   }

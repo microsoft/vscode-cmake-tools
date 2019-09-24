@@ -393,6 +393,7 @@ export function thisExtension() {
 
 export interface PackageJSON {
   name: string;
+  publisher: string;
   version: string;
 }
 
@@ -400,6 +401,7 @@ export function thisExtensionPackage(): PackageJSON {
   const pkg = thisExtension().packageJSON as PackageJSON;
   return {
     name: pkg.name,
+    publisher: pkg.publisher,
     version: pkg.version,
   };
 }

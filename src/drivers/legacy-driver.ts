@@ -94,9 +94,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     });
   }
 
-  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferedGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
+  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
     log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
-    return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferedGenerators);
+    return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferredGenerators);
   }
 
   get targets() { return []; }

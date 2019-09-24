@@ -1043,14 +1043,15 @@
     "json5": "^0.5.1",
     "open": "^6.4.0",
     "rimraf": "^2.5.4",
-    "rollbar": "~2.2.8",
     "tmp": "^0.0.33",
     "vscode-cpptools": "^3.0.1",
     "vscode-nls": "^4.1.1",
+    "vscode-extension-telemetry": "^0.1.2",
     "which": "~1.3.0",
     "xml2js": "^0.4.17"
   },
   "resolutions": {
-    "marked": "^0.6.2"
+    "marked": "^0.7.0",
+    "diff": "^3.5.0"
   }
 }
