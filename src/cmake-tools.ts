@@ -441,7 +441,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           if (e instanceof BadHomeDirectoryError) {
             vscode.window
                 .showErrorMessage(localize('source.directory.does.not.match',
-                    'The source directory "{0}" does not match  the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.', e.expecting, e.cached),
+                    'The source directory "{0}" does not match the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.', e.expecting, e.cached),
                     {},
                     {title: localize('clean.configure.title', 'Clean Configure')},
                     )
@@ -833,7 +833,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     if (!await fs.exists(drv.cachePath)) {
       const do_conf = !!(await vscode.window.showErrorMessage(
-        localize('projhect.not.yet.configured', 'This project has not yet been configured'),
+        localize('project.not.yet.configured', 'This project has not yet been configured'),
         localize('configure.now.button', 'Configure Now')));
       if (do_conf) {
         if (await this.configure() !== 0)

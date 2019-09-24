@@ -214,7 +214,7 @@
       },
       {
         "command": "cmake.outline.stop",
-        "title": "%cmake-tools.command.cmake.outline.stop.title%",
+        "title": "%cmake-tools.command.cmake.stop.title%",
         "icon": {
           "dark": "res/stop-icon.svg",
           "light": "res/stop-icon.svg"
