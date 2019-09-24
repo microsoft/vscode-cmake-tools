@@ -67,7 +67,7 @@
 	"build.was.terminated": "Sestavení bylo ukončeno.",
 	"build.finished.with.code": "Sestavení se dokončilo s ukončovacím kódem {0}.",
 	"set.up.before.edit.cache": "Před pokusem o úpravu mezipaměti nastavte svůj projekt CMake.",
-	"projhect.not.yet.configured": "Tento projekt ještě není nakonfigurovaný.",
+	"project.not.yet.configured": "Tento projekt ještě není nakonfigurovaný.",
 	"configure.now.button": "Nakonfigurovat",
 	"set.up.before.selecting.target": "Před výběrem cíle nastavte projekt CMake.",
 	"enter.target.name": "Zadejte název cíle.",

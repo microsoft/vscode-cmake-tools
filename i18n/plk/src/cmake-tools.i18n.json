@@ -67,7 +67,7 @@
 	"build.was.terminated": "Kompilacja została przerwana",
 	"build.finished.with.code": "Kompilację zakończono z kodem zakończenia {0}",
 	"set.up.before.edit.cache": "Skonfiguruj projekt narzędzia CMake przed próbą edytowania pamięci podręcznej.",
-	"projhect.not.yet.configured": "Ten projekt nie został jeszcze skonfigurowany",
+	"project.not.yet.configured": "Ten projekt nie został jeszcze skonfigurowany",
 	"configure.now.button": "Skonfiguruj teraz",
 	"set.up.before.selecting.target": "Skonfiguruj projekt narzędzia CMake przed wybraniem elementu docelowego.",
 	"enter.target.name": "Podaj nazwę elementu docelowego",

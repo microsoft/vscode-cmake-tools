@@ -67,7 +67,7 @@
 	"build.was.terminated": "已終止建置",
 	"build.finished.with.code": "建置已完成。結束代碼: {0}",
 	"set.up.before.edit.cache": "先設定 CMake 專案，再嘗試編輯快取。",
-	"projhect.not.yet.configured": "尚未設定此專案",
+	"project.not.yet.configured": "尚未設定此專案",
 	"configure.now.button": "立即設定",
 	"set.up.before.selecting.target": "先設定 CMake 專案，再選取目標。",
 	"enter.target.name": "輸入目標名稱",

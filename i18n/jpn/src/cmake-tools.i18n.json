@@ -67,7 +67,7 @@
 	"build.was.terminated": "ビルドが終了しました",
 	"build.finished.with.code": "ビルドが終了コード {0} で終了しました",
 	"set.up.before.edit.cache": "キャッシュを編集しようとする前に、CMake プロジェクトを設定してください。",
-	"projhect.not.yet.configured": "このプロジェクトはまだ構成されていません",
+	"project.not.yet.configured": "このプロジェクトはまだ構成されていません",
 	"configure.now.button": "今すぐ構成",
 	"set.up.before.selecting.target": "ターゲットを選択する前に、CMake プロジェクトを設定してください。",
 	"enter.target.name": "ターゲット名を入力してください",

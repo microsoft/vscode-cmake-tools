@@ -67,7 +67,7 @@
 	"build.was.terminated": "Derleme sonlandırıldı",
 	"build.finished.with.code": "Derleme {0} çıkış kodu ile tamamlandı",
 	"set.up.before.edit.cache": "Önbelleği düzenlemeyi denemeden önce CMake projenizi ayarlayın.",
-	"projhect.not.yet.configured": "Bu proje henüz yapılandırılmadı",
+	"project.not.yet.configured": "Bu proje henüz yapılandırılmadı",
 	"configure.now.button": "Şimdi Yapılandır",
 	"set.up.before.selecting.target": "Bir hedef seçmeden önce CMake projenizi ayarlayın.",
 	"enter.target.name": "Hedef adı girin",

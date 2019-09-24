@@ -67,7 +67,7 @@
 	"build.was.terminated": "Der Build wurde beendet.",
 	"build.finished.with.code": "Der Build wurde mit dem Exitcode {0} abgeschlossen.",
 	"set.up.before.edit.cache": "Richten Sie Ihr CMake-Projekt ein, bevor Sie versuchen, den Cache zu bearbeiten.",
-	"projhect.not.yet.configured": "Dieses Projekt wurde noch nicht konfiguriert.",
+	"project.not.yet.configured": "Dieses Projekt wurde noch nicht konfiguriert.",
 	"configure.now.button": "Jetzt konfigurieren",
 	"set.up.before.selecting.target": "Richten Sie Ihr CMake-Projekt ein, bevor Sie ein Ziel auswählen.",
 	"enter.target.name": "Zielname eingeben",

@@ -67,7 +67,7 @@
 	"build.was.terminated": "Сборка была прекращена.",
 	"build.finished.with.code": "Сборка выполнена с кодом выхода {0}.",
 	"set.up.before.edit.cache": "Настройте проект CMake перед изменением кэша.",
-	"projhect.not.yet.configured": "Этот проект еще не настроен.",
+	"project.not.yet.configured": "Этот проект еще не настроен.",
 	"configure.now.button": "Настроить сейчас",
 	"set.up.before.selecting.target": "Настройте проект CMake перед выбором целевого объекта.",
 	"enter.target.name": "Введите имя целевого объекта.",

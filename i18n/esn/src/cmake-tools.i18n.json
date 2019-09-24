@@ -67,7 +67,7 @@
 	"build.was.terminated": "Compilación finalizada",
 	"build.finished.with.code": "Compilación finalizada con el código de salida {0}",
 	"set.up.before.edit.cache": "Configure el proyecto de CMake antes de intentar editar la memoria caché.",
-	"projhect.not.yet.configured": "Aún no se ha configurado este proyecto.",
+	"project.not.yet.configured": "Aún no se ha configurado este proyecto.",
 	"configure.now.button": "Configurar ahora",
 	"set.up.before.selecting.target": "Configure el proyecto de CMake antes de seleccionar un destino.",
 	"enter.target.name": "Escribir un nombre de destino",

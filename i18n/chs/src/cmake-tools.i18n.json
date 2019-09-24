@@ -67,7 +67,7 @@
 	"build.was.terminated": "生成已终止",
 	"build.finished.with.code": "生成已完成，退出代码为 {0}",
 	"set.up.before.edit.cache": "请先设置 CMake 项目，然后再尝试编辑缓存。",
-	"projhect.not.yet.configured": "尚未配置此项目",
+	"project.not.yet.configured": "尚未配置此项目",
 	"configure.now.button": "立即配置",
 	"set.up.before.selecting.target": "请先设置 CMake 项目，然后再选择目标。",
 	"enter.target.name": "输入目标名称",

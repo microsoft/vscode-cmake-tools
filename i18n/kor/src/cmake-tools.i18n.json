@@ -67,7 +67,7 @@
 	"build.was.terminated": "빌드가 종료됨",
 	"build.finished.with.code": "빌드가 완료됨(종료 코드: {0})",
 	"set.up.before.edit.cache": "캐시 편집을 시도하기 전에 CMake 프로젝트를 설정합니다.",
-	"projhect.not.yet.configured": "이 프로젝트는 아직 구성되지 않았습니다.",
+	"project.not.yet.configured": "이 프로젝트는 아직 구성되지 않았습니다.",
 	"configure.now.button": "지금 구성",
 	"set.up.before.selecting.target": "대상을 선택하기 전에 CMake 프로젝트를 설정합니다.",
 	"enter.target.name": "대상 이름 입력",
