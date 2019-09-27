@@ -1,4 +1,8 @@
 import {createLogger} from '@cmt/logging';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('code-pages');
 
@@ -188,7 +192,7 @@ async function _getWindowsCodePage(): Promise<string> {
   const proc = await import('@cmt/proc');
   const chcp_res = await proc.execute('chcp', []).result;
   if (chcp_res.retc !== 0) {
-    log.error('Failed to execute chcp', chcp_res.stderr);
+    log.error(localize('failed.to.execute', 'Failed to execute {0}', "chcp"), chcp_res.stderr);
     return 'utf-8';
   }
   const numStr = chcp_res.stdout.replace(/[^0-9]/ig, '');

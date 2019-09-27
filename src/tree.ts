@@ -4,6 +4,10 @@ import * as vscode from 'vscode';
 
 import rollbar from './rollbar';
 import {lexicographicalCompare, splitPath, thisExtension} from './util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 interface NamedItem {
   name: string;
@@ -219,7 +223,7 @@ export class SourceFileNode extends BaseNode {
     item.resourceUri = vscode.Uri.file(this.filePath);
     item.contextValue = 'nodeType=file';
     item.command = {
-      title: 'Open file',
+      title: localize('open.file', 'Open file'),
       command: 'vscode.open',
       arguments: [item.resourceUri],
     };
@@ -264,19 +268,19 @@ export class TargetNode extends BaseNode {
         item.label += ` [${this._fullName}]`;
       }
       if (this._type === 'INTERFACE_LIBRARY') {
-        item.label += ' — Interface library';
+        item.label += ` — ${localize('interface.library', 'Interface library')}`;
       } else if (this._type === 'UTILITY') {
-        item.label += ' — Utility';
+        item.label += ` — ${localize('utility', 'Utility')}`;
       } else if (this._type === 'OBJECT_LIBRARY') {
-        item.label += ' — Object library';
+        item.label += ` — ${localize('object.library', 'Object library')}`;
       }
       item.resourceUri = vscode.Uri.file(this._fsPath);
-      item.tooltip = `Target ${this.name}`;
+      item.tooltip = localize('target.tooltip', 'Target {0}', this.name);
       if (this._isLaunch) {
-        item.tooltip += ' [launch]';
+        item.tooltip += ` [${localize('launch.tooltip', 'launch')}]`;
       }
       if (this._isDefault) {
-        item.tooltip += ' [default]';
+        item.tooltip += ` [${localize('default.tooltip', 'default')}]`;
       }
       const icon = iconForTargetType(this._type);
       item.iconPath = path.join(thisExtension().extensionPath, icon);
@@ -295,7 +299,7 @@ export class TargetNode extends BaseNode {
       return item;
     } catch (e) {
       debugger;
-      return new vscode.TreeItem(`${this.name} (there was an issue rendering this item. This is a bug)`);
+      return new vscode.TreeItem(`${this.name} (${localize('item.render.issue', 'There was an issue rendering this item. This is a bug')})`);
     }
   }
 
@@ -381,14 +385,14 @@ class ProjectNode extends BaseNode {
   getTreeItem() {
     const item = new vscode.TreeItem(this.name, vscode.TreeItemCollapsibleState.Expanded);
     if (this.getChildren().length === 0) {
-      item.label += ' — (Empty project)';
+      item.label += ` — (${localize('empty.project', 'Empty project')})`;
     }
     return item;
   }
 
   update(pr: codemodel_api.CodeModelProject, ctx: TreeUpdateContext) {
     if (pr.name !== this.name) {
-      rollbar.error(`Update project with mismatching name property`, {newName: pr.name, oldName: this.name});
+      rollbar.error(localize('update.project.with.mismatch', 'Update project with mismatching name property'), {newName: pr.name, oldName: this.name});
     }
 
     const tree: PathedTree<codemodel_api.CodeModelTarget> = {
@@ -461,7 +465,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         return node.getChildren();
       }
     } catch (e) {
-      rollbar.error('Error while rendering children nodes');
+      rollbar.error(localize('error.rendering.children.nodes', 'Error while rendering children nodes'));
       return [];
     }
   }
