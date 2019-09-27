@@ -3,6 +3,10 @@ import * as shlex from '@cmt/shlex';
 import {createLogger} from './logging';
 import {fs} from './pr';
 import * as util from './util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('compdb');
 
@@ -47,7 +51,7 @@ export class CompilationDatabase {
       const content = JSON.parse(data.toString()) as CompileCommand[];
       return new CompilationDatabase(content);
     } catch (e) {
-      log.warning(`Error parsing compilation database "${dbpath}": ${e}`);
+      log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database "{0}": {1}', dbpath, e));
       return null;
     }
   }
