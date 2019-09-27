@@ -8,12 +8,6 @@ powerful workflow for CMake-based projects in Visual Studio Code.
 **vector-of-bool** has moved on to other things and Microsoft is now maintaining this extension. Thank you **vector-of-bool** for all of your hard work getting
 this extension to where it is today!
 
-## 1.1.0 Changes! Exciting!
-
-**1.1.0** includes a few big new changes and features.
-[Read about them here](https://vector-of-bool.github.io/2018/07/20/cmt-1.1.0.html), and be
-sure check the changelog!
-
 # Important Links:
 
 - [Getting started](https://vector-of-bool.github.io/docs/vscode-cmake-tools/getting_started.html)
@@ -29,7 +23,7 @@ sure check the changelog!
 ## Issues? Questions? Feature requests?
 
 **PLEASE**, if you experience any problems, have any questions, or have an idea
-for a new feature, create an issue on [the GitHub page](https://github.com/vector-of-bool/vscode-cmake-tools)!
+for a new feature, create an issue on [the GitHub page](https://github.com/microsoft/vscode-cmake-tools)!
 
 This extension itself *does not* provide language support for the CMake
 scripting language. For that we recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
@@ -41,10 +35,3 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ### Data/Telemetry
 
 This extension collects usage data and sends it to Microsoft to help improve our products and services. Collection of telemetry is controlled via the same setting provided by Visual Studio Code: `"telemetry.enableTelemetry"`. Read our [privacy statement](https://privacy.microsoft.com/en-us/privacystatement) to learn more.
-
-### Previous Supporters
-
-- Shalom Craimer
-- The Phantom Derpstorm (ThePhD), [thephd.github.io](https://thephd.github.io/)
-- [Stephen Lane-Walsh](https://github.com/WhoBrokeTheBuild)
-- Alexander Susha
