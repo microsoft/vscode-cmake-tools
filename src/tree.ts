@@ -103,15 +103,15 @@ function collapseTreeInplace<T>(tree: PathedTree<T>): void {
 function iconForTargetType(type: cms.TargetTypeString): string {
   switch (type) {
   case 'EXECUTABLE':
-    return 'res/exe.svg';
+    return 'binary-icon.svg';
   case 'MODULE_LIBRARY':
   case 'SHARED_LIBRARY':
   case 'OBJECT_LIBRARY':
   case 'INTERFACE_LIBRARY':
   case 'STATIC_LIBRARY':
-    return 'res/lib.svg';
+    return 'library-icon.svg';
   case 'UTILITY':
-    return 'res/build-icon.svg';
+    return 'utility-icon.svg';
   }
 }
 
@@ -283,7 +283,10 @@ export class TargetNode extends BaseNode {
         item.tooltip += ` [${localize('default.tooltip', 'default')}]`;
       }
       const icon = iconForTargetType(this._type);
-      item.iconPath = path.join(thisExtension().extensionPath, icon);
+      item.iconPath = {
+        light: path.join(thisExtension().extensionPath, "res/light", icon),
+        dark: path.join(thisExtension().extensionPath, "res/dark", icon)
+      };
       item.id = this.id;
       const canBuild
           = this._type !== 'INTERFACE_LIBRARY' && this._type !== 'UTILITY' && this._type !== 'OBJECT_LIBRARY';

@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
@@ -29,7 +29,7 @@
     "color": "#13578c",
     "theme": "dark"
   },
-  "icon": "res/icon_128.png",
+  "icon": "res/logo.png",
   "activationEvents": [
     "onCommand:cmake.build",
     "onCommand:cmake.buildWithTarget",
@@ -97,8 +97,8 @@
         "command": "cmake.outline.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
         "icon": {
-          "dark": "res/configure-icon.svg",
-          "light": "res/configure-icon.svg"
+          "dark": "res/dark/configure-icon.svg",
+          "light": "res/light/configure-icon.svg"
         }
       },
       {
@@ -114,8 +114,8 @@
         "command": "cmake.outline.build",
         "title": "%cmake-tools.command.cmake.build.title%",
         "icon": {
-          "dark": "res/build-icon.svg",
-          "light": "res/build-icon.svg"
+          "dark": "res/dark/build-icon.svg",
+          "light": "res/light/build-icon.svg"
         }
       },
       {
@@ -123,16 +123,16 @@
         "title": "%cmake-tools.command.cmake.compileFile.title%",
         "category": "CMake",
         "icon": {
-          "dark": "res/build-icon.svg",
-          "light": "res/build-icon.svg"
+          "dark": "res/dark/build-icon.svg",
+          "light": "res/light/build-icon.svg"
         }
       },
       {
         "command": "cmake.outline.compileFile",
         "title": "%cmake-tools.command.cmake.outline.compileFile.title%",
         "icon": {
-          "dark": "res/build-icon.svg",
-          "light": "res/build-icon.svg"
+          "dark": "res/dark/build-icon.svg",
+          "light": "res/light/build-icon.svg"
         }
       },
       {
@@ -216,8 +216,8 @@
         "command": "cmake.outline.stop",
         "title": "%cmake-tools.command.cmake.stop.title%",
         "icon": {
-          "dark": "res/stop-icon.svg",
-          "light": "res/stop-icon.svg"
+          "dark": "res/dark/stop-icon.svg",
+          "light": "res/light/stop-icon.svg"
         }
       },
       {
@@ -229,8 +229,8 @@
         "command": "cmake.outline.buildTarget",
         "title": "%cmake-tools.command.cmake.build.title%",
         "icon": {
-          "dark": "res/build-icon.svg",
-          "light": "res/build-icon.svg"
+          "dark": "res/dark/build-icon.svg",
+          "light": "res/light/build-icon.svg"
         }
       },
       {
