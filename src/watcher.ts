@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 
 class ExternalFileWatcher implements vscode.FileSystemWatcher {
-  constructor(path: string, ignoreCreateEvents ?: boolean, ignoreChangeEvents ?: boolean, ignoreDeleteEvents ?: boolean){
-      this._watcher = fs.watch(path, this._eventHandler);
-      if(ignoreCreateEvents) { this.ignoreCreateEvents = true;}
-      if(ignoreDeleteEvents) { this.ignoreDeleteEvents = true;}
-      if(ignoreChangeEvents) { this.ignoreChangeEvents = true;}
+  constructor(path: string, ignoreCreateEvents?: boolean, ignoreChangeEvents?: boolean, ignoreDeleteEvents?: boolean) {
+    this._watcher = fs.watch(path, this._eventHandler);
+    if (ignoreCreateEvents) { this.ignoreCreateEvents = true; }
+    if (ignoreDeleteEvents) { this.ignoreDeleteEvents = true; }
+    if (ignoreChangeEvents) { this.ignoreChangeEvents = true; }
   }
 
   private readonly _watcher: fs.FSWatcher;
@@ -19,34 +19,33 @@ class ExternalFileWatcher implements vscode.FileSystemWatcher {
   private readonly _deleteEvent = new vscode.EventEmitter<vscode.Uri>();
   private readonly _changeEvent = new vscode.EventEmitter<vscode.Uri>();
 
-  private readonly _eventHandler = (event: string, filename: string) =>
-  {
-      if(!this.ignoreCreateEvents && event === "rename" && fs.existsSync(filename))
-      {
-          this._createEvent.fire(vscode.Uri.parse(filename));
-      }
-      else if(!this.ignoreDeleteEvents && event === "rename" && !fs.existsSync(filename))
-      {
-          this._deleteEvent.fire(vscode.Uri.parse(filename));
-      }
-      else if(this.ignoreChangeEvents && event === 'change')
-      {
-          this._changeEvent.fire(vscode.Uri.parse(filename));
-      }
+  private readonly _eventHandler = (event: string, filename: string) => {
+    if (event === 'change') {
+      if (!this.ignoreChangeEvents) { this._changeEvent.fire(vscode.Uri.parse(filename)); }
+    }
+    else {
+      fs.access(filename, fs.constants.F_OK, error => {
+        if (!error) {
+          if (!this.ignoreCreateEvents) { this._changeEvent.fire(vscode.Uri.parse(filename)); }
+        }
+        else {
+          if (!this.ignoreDeleteEvents) { this._deleteEvent.fire(vscode.Uri.parse(filename)); }
+        }
+      });
+    }
   }
 
-  onDidChange: vscode.Event<vscode.Uri> = this._changeEvent.event;
-  onDidDelete: vscode.Event<vscode.Uri> = this._deleteEvent.event;
-  onDidCreate: vscode.Event<vscode.Uri> = this._createEvent.event;
+    onDidChange: vscode.Event < vscode.Uri > = this._changeEvent.event;
+    onDidDelete: vscode.Event < vscode.Uri > = this._deleteEvent.event;
+    onDidCreate: vscode.Event < vscode.Uri > = this._createEvent.event;
 
-  dispose()
-  {
+    dispose() {
       this._watcher.close();
       this._changeEvent.dispose();
       this._deleteEvent.dispose();
       this._createEvent.dispose();
+    }
   }
-}
 
 class EventDispatcher implements vscode.Disposable {
   changeEvent = new vscode.EventEmitter<vscode.Uri>();
@@ -69,19 +68,15 @@ export class IndividualWatcher implements vscode.Disposable {
   private readonly _createSub = this._watcher.onDidCreate(e => this._disp.createEvent.fire(e));
   private readonly _inWorkSpace = true;
 
-  constructor(private readonly _disp: EventDispatcher, private readonly _pattern: string, inWorkSpace?: boolean)
-  {
-    if (inWorkSpace)
-    {
+  constructor(private readonly _disp: EventDispatcher, private readonly _pattern: string, inWorkSpace?: boolean) {
+    if (inWorkSpace) {
       this._inWorkSpace = true;
     }
 
-    if (this._inWorkSpace)
-    {
+    if (this._inWorkSpace) {
       this._watcher = vscode.workspace.createFileSystemWatcher(this._pattern);
     }
-    else
-    {
+    else {
       this._watcher = new ExternalFileWatcher(this._pattern);
     }
   }
@@ -101,7 +96,7 @@ export class MultiWatcher implements vscode.Disposable {
   private readonly _anyEventEmitter = new vscode.EventEmitter<vscode.Uri>();
 
   private readonly _unregisterSub
-      = this._dispatcher.disposeIndividualWatcherEvent.event(indiv => { this._watchers.delete(indiv); });
+    = this._dispatcher.disposeIndividualWatcherEvent.event(indiv => { this._watchers.delete(indiv); });
 
   private readonly _createSub = this.onCreate(e => this._anyEventEmitter.fire(e));
   private readonly _delSub = this.onDelete(e => this._anyEventEmitter.fire(e));
