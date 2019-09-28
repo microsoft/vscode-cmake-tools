@@ -561,7 +561,7 @@ class ExtensionManager implements vscode.Disposable {
     } else if (this._workspaceKitsPath && doc.uri.fsPath === this._workspaceKitsPath) {
       rollbar.takePromise(localize('rereading.kits.on.edit', 'Re-reading kits on text edit'), {}, this._rereadKits());
     } else if (this._configKitsPath && doc.uri.fsPath === await this._configKitsPath) {
-      rollbar.takePromise(localize('rereading.kits.on.edit'), 'Re-reading kits on text edit', {}, this._rereadKits());
+      rollbar.takePromise(localize('rereading.kits.on.edit', 'Re-reading kits on text edit'), {}, this._rereadKits());
     } else {
       // Ignore
     }
