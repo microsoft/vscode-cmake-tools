@@ -3,6 +3,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {EnvironmentVariables, execute} from './proc';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -329,7 +333,7 @@ export function parseVersion(str: string): Version {
   const version_re = /(\d+)\.(\d+)\.(\d+)/;
   const mat = version_re.exec(str);
   if (!mat) {
-    throw new InvalidVersionString(`Invalid version string ${str}`);
+    throw new InvalidVersionString(localize('invalid.version.string', 'Invalid version string {0}', str));
   }
   const [, major, minor, patch] = mat;
   return {
@@ -382,13 +386,14 @@ export function parseCompileDefinition(str: string): [string, string|null] {
 export function thisExtension() {
   const ext = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
   if (!ext) {
-    throw new Error('Out own extension is null! What gives?');
+    throw new Error(localize('extension.is.null', 'Our own extension is null! What gives?'));
   }
   return ext;
 }
 
 export interface PackageJSON {
   name: string;
+  publisher: string;
   version: string;
 }
 
@@ -396,6 +401,7 @@ export function thisExtensionPackage(): PackageJSON {
   const pkg = thisExtension().packageJSON as PackageJSON;
   return {
     name: pkg.name,
+    publisher: pkg.publisher,
     version: pkg.version,
   };
 }
@@ -514,4 +520,14 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
   // the function.
   console.assert(false, 'Impossible code path');
   return 0;
+}
+
+export function getLocaleId(): string {
+  if (typeof(process.env.VSCODE_NLS_CONFIG) == "string") {
+      const vscodeNlsConfigJson: any = JSON.parse(process.env.VSCODE_NLS_CONFIG);
+      if (typeof(vscodeNlsConfigJson.locale) == "string") {
+          return vscodeNlsConfigJson.locale;
+      }
+  }
+  return "en";
 }

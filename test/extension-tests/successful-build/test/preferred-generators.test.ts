@@ -2,6 +2,7 @@ import {CMakeTools} from '@cmt/cmake-tools';
 import {Kit, scanForKits} from '@cmt/kit';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
 import {ITestCallbackContext} from 'mocha';
+import * as path from 'path';
 
 interface KitEnvironment {
   defaultKit: RegExp;
@@ -133,7 +134,8 @@ const KITS_BY_PLATFORM: {[osName: string]: KitEnvironment[]} = {
     path: [
       '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin',
       '/Applications/Xcode.app/Contents/Developer/usr/bin',
-      '/Users/travis/.local/share/CMakeTools/test-cmake-root/3.10.0/bin'
+      process.env.CMAKE_EXECUTABLE ? path.dirname(process.env.CMAKE_EXECUTABLE)
+                                   : '/Users/travis/.local/share/CMakeTools/test-cmake-root/3.10.0/bin'
     ]
   }]
 };
