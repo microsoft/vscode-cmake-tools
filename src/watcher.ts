@@ -1,4 +1,52 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+
+class ExternalFileWatcher implements vscode.FileSystemWatcher {
+  constructor(path: string, ignoreCreateEvents ?: boolean, ignoreChangeEvents ?: boolean, ignoreDeleteEvents ?: boolean){
+      this._watcher = fs.watch(path, this._eventHandler);
+      if(ignoreCreateEvents) { this.ignoreCreateEvents = true;}
+      if(ignoreDeleteEvents) { this.ignoreDeleteEvents = true;}
+      if(ignoreChangeEvents) { this.ignoreChangeEvents = true;}
+  }
+
+  private readonly _watcher: fs.FSWatcher;
+
+  ignoreCreateEvents: boolean = false;
+  ignoreDeleteEvents: boolean = false;
+  ignoreChangeEvents: boolean = false;
+
+  private readonly _createEvent = new vscode.EventEmitter<vscode.Uri>();
+  private readonly _deleteEvent = new vscode.EventEmitter<vscode.Uri>();
+  private readonly _changeEvent = new vscode.EventEmitter<vscode.Uri>();
+
+  private readonly _eventHandler = (event: string, filename: string) =>
+  {
+      if(!this.ignoreCreateEvents && event === "rename" && fs.existsSync(filename))
+      {
+          this._createEvent.fire(vscode.Uri.parse(filename));
+      }
+      else if(!this.ignoreDeleteEvents && event === "rename" && !fs.existsSync(filename))
+      {
+          this._deleteEvent.fire(vscode.Uri.parse(filename));
+      }
+      else if(this.ignoreChangeEvents && event === 'change')
+      {
+          this._changeEvent.fire(vscode.Uri.parse(filename));
+      }
+  }
+
+  onDidChange: vscode.Event<vscode.Uri> = this._changeEvent.event;
+  onDidDelete: vscode.Event<vscode.Uri> = this._deleteEvent.event;
+  onDidCreate: vscode.Event<vscode.Uri> = this._createEvent.event;
+
+  dispose()
+  {
+      this._watcher.close();
+      this._changeEvent.dispose();
+      this._deleteEvent.dispose();
+      this._createEvent.dispose();
+  }
+}
 
 class EventDispatcher implements vscode.Disposable {
   changeEvent = new vscode.EventEmitter<vscode.Uri>();
@@ -15,12 +63,28 @@ class EventDispatcher implements vscode.Disposable {
 }
 
 export class IndividualWatcher implements vscode.Disposable {
-  private readonly _watcher = vscode.workspace.createFileSystemWatcher(this._pattern);
+  private readonly _watcher: vscode.FileSystemWatcher;
   private readonly _changeSub = this._watcher.onDidChange(e => this._disp.changeEvent.fire(e));
   private readonly _delSub = this._watcher.onDidDelete(e => this._disp.deleteEvent.fire(e));
   private readonly _createSub = this._watcher.onDidCreate(e => this._disp.createEvent.fire(e));
+  private readonly _inWorkSpace = true;
 
-  constructor(private readonly _disp: EventDispatcher, private readonly _pattern: string) {}
+  constructor(private readonly _disp: EventDispatcher, private readonly _pattern: string, inWorkSpace?: boolean)
+  {
+    if (inWorkSpace)
+    {
+      this._inWorkSpace = true;
+    }
+
+    if (this._inWorkSpace)
+    {
+      this._watcher = vscode.workspace.createFileSystemWatcher(this._pattern);
+    }
+    else
+    {
+      this._watcher = new ExternalFileWatcher(this._pattern);
+    }
+  }
 
   dispose() {
     this._changeSub.dispose();
