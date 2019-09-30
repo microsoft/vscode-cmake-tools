@@ -1029,7 +1029,7 @@
     "ts-loader": "^6.0.4",
     "ts-node": "^6.0.0",
     "tslint": "^5.9.1",
-    "typedoc": "^0.14.2",
+    "typedoc": "^0.15.0",
     "typescript": "~3.2.2",
     "vscode": "^1.1.35",
     "vscode-nls-dev": "^3.2.6",
