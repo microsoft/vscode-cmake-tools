@@ -19,5 +19,5 @@
 	"yes.button": "はい",
 	"ask.me.later.button": "後で尋ねる",
 	"dont.ask.me.again.button": "次回から表示しない",
-	"new.version.available": "CMake の新しいバージョンが使用可能です。現在は {0} を実行していますが、{1} が使用可能です。CMake Tools でこの更新を自動的にダウンロードしてインストールしますか?"
+	"new.version.available": "CMake の新しいバージョンが使用可能です。現在は {0} を実行していますが、{1} が使用可能です。CMake Tools でこの更新プログラムを自動的にダウンロードしてインストールしますか?"
 }
