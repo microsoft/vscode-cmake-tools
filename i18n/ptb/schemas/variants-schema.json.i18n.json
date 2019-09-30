@@ -9,7 +9,7 @@
 	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.description": "Uma descrição desta opção",
 	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.default": "A configuração padrão para esta opção",
 	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.choices": "Um valor de opção possível",
-	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.choices.patternProperties.^\\w+$.properties.short": "Uma descrição simples de uma palavra deste valor",
+	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.choices.patternProperties.^\\w+$.properties.short": "Uma palavra descrevendo o valor",
 	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.choices.patternProperties.^\\w+$.properties.long": "Uma descrição mais longa do que este valor faz",
 	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.choices.patternProperties.^\\w+$.properties.buildType": "O valor de CMAKE_BUILD_TYPE para esta variante",
 	"schemas/variants-schema.json.patternProperties.^\\w+$.properties.choices.patternProperties.^\\w+$.properties.linkage": "Define o valor de BUILD_SHARED na linha de comando do CMake",
