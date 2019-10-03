@@ -30,6 +30,7 @@
     "cmake-tools.command.cmake.outline.setDefaultTarget.title": "Set as Build Target",
     "cmake-tools.command.cmake.outline.setLaunchTarget.title": "Set as Launch/Debug Target",
     "cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Open CMakeLists.txt",
+    "cmake-tools.command.cmake.folders.setActiveFolder.title": "Set active folder",
     "cmake-tools.configuration.title": "CMake Tools configuration",
     "cmake-tools.configuration.cmake.cmakePath.description": "Name/path of the CMake executable to use.",
     "cmake-tools.configuration.cmake.buildDirectory.description": "The directory where CMake build files will go.",

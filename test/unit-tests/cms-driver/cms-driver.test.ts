@@ -7,6 +7,7 @@ import * as chaiString from 'chai-string';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import * as vscode from 'vscode';
 
 chai.use(chaiString);
 
@@ -30,11 +31,14 @@ let driver: CMakeDriver|null = null;
 
 suite('CMake-Server-Driver tests', () => {
   const cmakePath: string = process.env.CMAKE_EXECUTABLE? process.env.CMAKE_EXECUTABLE: 'cmake';
-  const workspacePath: string = 'test/unit-tests/cms-driver/workspace';
-  const root = getTestRootFilePath(workspacePath);
   const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
   const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/empty_project');
   const badCommandWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/bad_command');
+  const workspacePath: string = 'test/unit-tests/cms-driver/workspace';
+  const root = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(getTestRootFilePath(workspacePath)));
+  if (!root){
+    throw Error(`Path ${workspacePath} not found`);
+  }
 
   let kitDefault: Kit;
   if (process.platform === 'win32') {

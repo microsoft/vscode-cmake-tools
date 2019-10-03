@@ -2,6 +2,8 @@
  * Module for dealing with multiple workspace directories
  */ /** */
 
+import * as vscode from 'vscode';
+
 import {ConfigurationReader} from '@cmt/config';
 import paths from '@cmt/paths';
 import {StateManager} from '@cmt/state';
@@ -13,9 +15,9 @@ import {StateManager} from '@cmt/state';
 export class DirectoryContext {
   constructor(
       /**
-       * The directory path that this context corresponds to
+       * Absolute path to the directory associated with this context
        */
-      public readonly dirPath: string,
+      public readonly folder: vscode.WorkspaceFolder,
       /**
        * The configuration for the associated directory.
        */
@@ -31,9 +33,9 @@ export class DirectoryContext {
    * @param dir The directory for which to create a context
    * @param state The state that will be associated with the returned context
    */
-  static createForDirectory(dir: string, state: StateManager): DirectoryContext {
-    const config = ConfigurationReader.createForDirectory(dir);
-    return new DirectoryContext(dir, config, state);
+  static createForDirectory(folder: vscode.WorkspaceFolder, state: StateManager): DirectoryContext {
+    const config = ConfigurationReader.createForDirectory(folder);
+    return new DirectoryContext(folder, config, state);
   }
 
   /**

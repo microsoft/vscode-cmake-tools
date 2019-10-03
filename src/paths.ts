@@ -117,15 +117,16 @@ class Paths {
   }
 
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
+    // TODO?
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
-        workspaceRoot: wsc.dirPath,
-        workspaceFolder: wsc.dirPath,
+        workspaceRoot: wsc.folder.uri.fsPath,
+        workspaceFolder: wsc.folder.uri.fsPath,
         userHome: this.userHome,
         buildKit: '',
         buildType: '',
         generator: '',
-        workspaceRootFolderName: path.basename(wsc.dirPath),
+        workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
       },
     });
     if (raw == 'auto' || raw == 'cmake') {

@@ -531,3 +531,9 @@ export function getLocaleId(): string {
   }
   return "en";
 }
+
+export function disposeAll(disp: Iterable<vscode.Disposable>) {
+  for (const d of disp) {
+    d.dispose();
+  }
+}

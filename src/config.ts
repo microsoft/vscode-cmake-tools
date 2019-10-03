@@ -85,12 +85,12 @@ export class ConfigurationReader implements vscode.Disposable {
    *
    * @param workspacePath A directory to use for the config
    */
-  static createForDirectory(dirPath: string): ConfigurationReader {
-    const data = ConfigurationReader.loadForPath(dirPath);
+  static createForDirectory(folder: vscode.WorkspaceFolder): ConfigurationReader {
+    const data = ConfigurationReader.loadForPath(folder.uri.fsPath);
     const reader = new ConfigurationReader(data);
     reader._updateSubscription = vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration('cmake', vscode.Uri.file(dirPath))) {
-        const new_data = ConfigurationReader.loadForPath(dirPath);
+      if (e.affectsConfiguration('cmake', folder.uri)) {
+        const new_data = ConfigurationReader.loadForPath(folder.uri.fsPath);
         reader.update(new_data);
       }
     });

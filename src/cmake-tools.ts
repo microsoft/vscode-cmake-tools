@@ -95,6 +95,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug(localize('constructing.cmaketools', 'Constructing new CMakeTools instance'));
   }
 
+  /**
+   * The workspace folder associated with this CMakeTools instance
+   */
+  get folder(): vscode.WorkspaceFolder { return this.workspaceContext.folder; }
+
+  /**
+   * The name of the workspace folder for this CMakeTools instance
+   */
+  get folderName(): string { return this.folder.name; }
+
   // Events that effect the user-interface
   /**
    * The status of this backend
@@ -172,21 +182,24 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _cmakeDriver: Promise<CMakeDriver|null> = Promise.resolve(null);
 
   /**
-   * The status bar manager. Has two-phase init.
+   * Event fired just as CMakeTools is about to be disposed
    */
-  // private readonly _statusBar_1: StatusBar = new StatusBar();
+  get onDispose() { return this._disposeEmitter.event; }
+  private _disposeEmitter = new vscode.EventEmitter<void>();
 
   /**
-   * Dispose the extension
+   * Dispose the instance
    */
   dispose() {
+    this._disposeEmitter.fire();
     log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
     telemetry.deactivate();
     this._nagUpgradeSubscription.dispose();
     this._nagManager.dispose();
     this._termCloseSub.dispose();
-    if (this._launchTerminal)
+    if (this._launchTerminal) {
       this._launchTerminal.dispose();
+    }
     rollbar.invokeAsync(localize('extension.dispose', 'Extension dispose'), () => this.asyncDispose());
   }
 
@@ -312,10 +325,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get onReconfigured() { return this._onReconfiguredEmitter.event; }
   private readonly _onReconfiguredEmitter = new vscode.EventEmitter<void>();
 
-  get reconfigured() { return this.onReconfigured; }
-
   private readonly _onTargetChangedEmitter = new vscode.EventEmitter<void>();
-  get targetChangedEvent() { return this._onTargetChangedEmitter.event; }
+  get onTargetChanged() { return this._onTargetChangedEmitter.event; }
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
@@ -500,12 +511,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   /**
    * Create a new CMakeTools for the given directory.
-   * @param dirPath Path to the directory for which to create
+   * @param folder Path to the directory for which to create
    * @param ext The extension context
    */
-  static async createForDirectory(dirPath: string, ext: vscode.ExtensionContext): Promise<CMakeTools> {
+  static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeTools> {
     // Create a context for the directory
-    const dir_ctx = DirectoryContext.createForDirectory(dirPath, new StateManager(ext));
+    const dir_ctx = DirectoryContext.createForDirectory(folder, new StateManager(ext));
     return CMakeTools.create(ext, dir_ctx);
   }
 

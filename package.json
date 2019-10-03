@@ -256,6 +256,10 @@
       {
         "command": "cmake.outline.revealInCMakeLists",
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
+      },
+      {
+        "command": "cmake.folders.setActiveFolder",
+        "title": "%cmake-tools.command.cmake.folders.setActiveFolder.title%"
       }
     ],
     "menus": {
@@ -277,9 +281,6 @@
         },
         {
           "command": "cmake.setVariant"
-        },
-        {
-          "command": "cmake.setDefaultTarget"
         },
         {
           "command": "cmake.setDefaultTarget"
@@ -347,7 +348,7 @@
       "view/item/context": [
         {
           "command": "cmake.outline.buildTarget",
-          "when": "view == cmake.outline && viewItem =~ /canBuild=true/",
+          "when": "view == cmake.outline && viewItem =~ /canBuild=true|canRun=true/",
           "group": "inline"
         },
         {
