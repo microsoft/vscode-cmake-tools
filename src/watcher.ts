@@ -66,10 +66,13 @@ export class IndividualWatcher implements vscode.Disposable {
   private readonly _changeSub = this._watcher.onDidChange(e => this._disp.changeEvent.fire(e));
   private readonly _delSub = this._watcher.onDidDelete(e => this._disp.deleteEvent.fire(e));
   private readonly _createSub = this._watcher.onDidCreate(e => this._disp.createEvent.fire(e));
-  private readonly _inWorkSpace = true;
+  private readonly _inWorkSpace: boolean;
 
-  constructor(private readonly _disp: EventDispatcher, private readonly _pattern: string, inWorkSpace?: boolean) {
-    if (inWorkSpace) {
+  constructor(private readonly _disp: EventDispatcher, private readonly _pattern: string, notInWorkSpace?: boolean) {
+    if (notInWorkSpace) {
+      this._inWorkSpace = false;
+    }
+    else {
       this._inWorkSpace = true;
     }
 
