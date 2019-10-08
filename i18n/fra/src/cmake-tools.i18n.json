@@ -14,7 +14,6 @@
 	"task.already.running": "Une tâche CMake est déjà en cours d'exécution. Arrêtez-la avant d'essayer d'exécuter une nouvelle tâche CMake.",
 	"no.source.directory.found": "Vous n'avez pas de répertoire source ouvert",
 	"missing.cmakelists": "Vous n'avez pas de fichier CMakeLists.txt",
-	"using.generator.for.user.configuration": "Utilisation du générateur à partir de la configuration utilisateur : {0}",
 	"starting.cmake.driver": "Démarrage du pilote CMake",
 	"bad.cmake.executable": "Exécutable CMake incorrect \"{0}\".",
 	"no.workspace.error": "CMake Tools n'est pas disponible sans espace de travail ouvert",
