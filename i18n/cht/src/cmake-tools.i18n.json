@@ -32,7 +32,7 @@
 	"not.starting.no.kits": "未啟動 CMake 驅動程式: 未定義套件",
 	"bad.executable": "錯誤的 CMake 可執行檔 \"{0}\"。其是否已安裝，或設定包含正確的路徑 (cmake cmakePath)?",
 	"starting.new.cmake.driver": "正在啟動新的 CMake 驅動程式",
-	"source.directory.does.not.match": "The source directory \"{0}\" does not match the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.",
+	"source.directory.does.not.match": "來源目錄 \"{0}\" 與 CMake 快取中的來源目錄不符: {1}。您必須執行清除組態才可設定此專案。",
 	"clean.configure.title": "清除設定",
 	"clean.reconfigure.after.bad.home.dir": "在錯誤的主目錄之後清除重新設定",
 	"failed.to.remove.bad.cache.file": "無法移除錯誤的快取檔案: {0} {1}",
