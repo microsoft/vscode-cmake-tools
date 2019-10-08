@@ -12,7 +12,7 @@
 	"failed.to.authorize": "Falha ao autorizar a execução da instalação do CMake.",
 	"permission.request.dismissed": "Você descartou a solicitação de permissão para executar a instalação do CMake.",
 	"installer.failed": "O instalador do CMake retornou um valor diferente de zero [{0}]: {1}",
-	"installer.failed.check.output": "O instalador do CMake saiu com um valor diferente de zero. Verifique o painel de saída para obter mais informações",
+	"installer.failed.check.output": "O instalador do CMake retornou um valor diferente de zero. Verifique o painel de saída para obter mais informações",
 	"restart.now.button": "Reiniciar Agora",
 	"installed.reload.to.complete": "O novo CMake foi instalado com êxito em /usr/local/bin/cmake. Recarregue o VSCode para concluir as alterações.",
 	"error.comparing.versions": "Erro ao comparar versões de CMake para a potencial atualização",
