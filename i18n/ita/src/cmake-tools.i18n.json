@@ -14,7 +14,6 @@
 	"task.already.running": "Un'attività CMake è già in esecuzione. Arrestarla prima di provare a eseguire una nuova attività di CMake.",
 	"no.source.directory.found": "Non è presente alcuna directory di origine aperta",
 	"missing.cmakelists": "Non è disponibile alcun file CMakeLists.txt",
-	"using.generator.for.user.configuration": "Verrà usato il generatore della configurazione utente: {0}",
 	"starting.cmake.driver": "Avvio del driver di CMake",
 	"bad.cmake.executable": "L'eseguibile di CMake \"{0}\" non è valido.",
 	"no.workspace.error": "CMake Tools non è disponibile senza un'area di lavoro aperta",
