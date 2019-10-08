@@ -125,7 +125,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
   const version_re = /^(?:Apple LLVM|Apple clang|clang) version ([^\s-]+)[\s-]/;
   let version: string = "";
   let fullVersion: string = "";
-  for (const line in lines) {
+  for (const line of lines) {
     const version_match = version_re.exec(line);
     if (version_match !== null) {
       version = version_match[1];
@@ -188,7 +188,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     const compiler_version_output = exec.stderr.trim().split('\n');
     const version_re = /^gcc version (.*?) .*/;
     let version: string = "";
-    for (const line in compiler_version_output.reverse()) {
+    for (const line of compiler_version_output) {
       const version_match = version_re.exec(line);
       if (version_match !== null) {
         version = version_match[1];
