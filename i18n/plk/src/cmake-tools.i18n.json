@@ -14,7 +14,6 @@
 	"task.already.running": "Zadanie narzędzia CMake jest już uruchomione. Zatrzymaj je przed próbą uruchomienia nowego zadania narzędzia CMake.",
 	"no.source.directory.found": "Nie masz otwartego katalogu źródłowego",
 	"missing.cmakelists": "Nie masz pliku CMakeLists.txt",
-	"using.generator.for.user.configuration": "Użycie generatora z konfiguracji użytkownika: {0}",
 	"starting.cmake.driver": "Uruchamianie sterownika narzędzia CMake",
 	"bad.cmake.executable": "Nieprawidłowy plik wykonywalny narzędzia CMake „{0}”.",
 	"no.workspace.error": "Narzędzia CMake Tools nie są dostępne bez otwartego obszaru roboczego",

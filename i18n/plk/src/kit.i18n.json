@@ -43,7 +43,7 @@
 	"reading.kits.file": "Odczytywanie pliku zestawów {0}",
 	"failed.to.parse": "Nie można przeanalizować elementu {0}: {1}",
 	"invalid.file.error": "Nieprawidłowy element {0} ({1}):",
-	"successfully.loaded.kits": "Pomyślnie załadowano zestawy w liczbie {0} z lokalizacji {1}",
+	"successfully.loaded.kits": "Pomyślnie załadowano zestawy ({0}) z lokalizacji {1}",
 	"clean.not.needed": "Nie wymaga czyszczenia: nie wybrano poprzedniego zestawu",
 	"clean.needed": "Wymaga czyszczenia: zmieniono zestaw"
 }
