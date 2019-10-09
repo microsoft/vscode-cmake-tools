@@ -32,7 +32,7 @@
 	"not.starting.no.kits": "无法启动 CMake 驱动程序: 未定义工具包",
 	"bad.executable": "CMake 可执行文件“{0}”不正确。是否已安装该可执行文件或设置是否包含正确的路径(cmake.cmakePath)?",
 	"starting.new.cmake.driver": "正在启动新的 CMake 驱动程序",
-	"source.directory.does.not.match": "The source directory \"{0}\" does not match the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.",
+	"source.directory.does.not.match": "源目录 \"{0}\" 与 CMake 缓存中的源目录 \"{1}\" 不匹配。将需要运行 clean-configure 来配置此项目。",
 	"clean.configure.title": "清除配置",
 	"clean.reconfigure.after.bad.home.dir": "清除错误的主目录后的重新配置",
 	"failed.to.remove.bad.cache.file": "无法删除错误的缓存文件: {0} {1}",
