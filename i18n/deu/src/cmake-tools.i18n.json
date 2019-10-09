@@ -14,7 +14,6 @@
 	"task.already.running": "Ein CMake-Task wird bereits ausgeführt. Beenden Sie den Vorgang, bevor Sie einen neuen CMake-Task ausführen.",
 	"no.source.directory.found": "Es ist kein Quellverzeichnis geöffnet.",
 	"missing.cmakelists": "Sie verfügen über keine Datei \"CMakeLists.txt\".",
-	"using.generator.for.user.configuration": "Es wird ein Generator aus der Benutzerkonfiguration verwendet: {0}",
 	"starting.cmake.driver": "CMake-Treiber wird gestartet.",
 	"bad.cmake.executable": "Ungültige ausführbare CMake-Datei \"{0}\".",
 	"no.workspace.error": "CMake Tools ist ohne geöffneten Arbeitsbereich nicht verfügbar.",

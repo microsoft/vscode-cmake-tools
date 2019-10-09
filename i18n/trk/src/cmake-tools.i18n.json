@@ -14,7 +14,6 @@
 	"task.already.running": "Bir CMake görevi zaten çalışıyor. Yeni bir CMake görevi çalıştırmayı denemeden önce bunu durdurun.",
 	"no.source.directory.found": "Açık bir kaynak dizininiz yok",
 	"missing.cmakelists": "CMakeLists.txt dosyanız yok",
-	"using.generator.for.user.configuration": "Kullanıcı yapılandırmasındaki oluşturucu kullanılıyor: {0}",
 	"starting.cmake.driver": "CMake sürücüsü başlatılıyor",
 	"bad.cmake.executable": "Hatalı \"{0}\" CMake yürütülebilir dosyası.",
 	"no.workspace.error": "CMake Araçları açık bir çalışma alanı olmadan kullanılamıyor",

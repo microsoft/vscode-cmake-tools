@@ -181,8 +181,8 @@ class ExtensionManager implements vscode.Disposable {
     }
     // No kit? Ask the user what they want.
     const did_choose_kit = await this.selectKit();
-    if (!did_choose_kit) {
-      // The user did not choose a kit
+    if (!did_choose_kit && !cmt.activeKit) {
+      // The user did not choose a kit and kit isn't set in other way such as setKitByName
       return false;
     }
     // Return whether we have an active kit defined.
@@ -202,6 +202,9 @@ class ExtensionManager implements vscode.Disposable {
   async asyncDispose() {
     this._disposeSubs();
     this._workspaceFoldersChangedSub.dispose();
+    if (this._pickKitCancellationTokenSource) {
+      this._pickKitCancellationTokenSource.dispose();
+    }
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
     this._projectOutlineDisposer.dispose();
@@ -960,6 +963,7 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  private _pickKitCancellationTokenSource: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
   /**
    * Show UI to allow the user to select an active kit
    */
@@ -998,7 +1002,11 @@ class ExtensionManager implements vscode.Disposable {
         }),
     );
     const items = await Promise.all(itemPromises);
-    const chosen_kit = await vscode.window.showQuickPick(items, {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit')});
+    const chosen_kit = await vscode.window.showQuickPick(items,
+                                                         {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit')},
+                                                         this._pickKitCancellationTokenSource.token);
+    this._pickKitCancellationTokenSource.dispose();
+    this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();
     if (chosen_kit === undefined) {
       log.debug(localize('user.cancelled.kit.selection', 'User cancelled Kit selection'));
       // No selection was made
@@ -1015,15 +1023,13 @@ class ExtensionManager implements vscode.Disposable {
    */
   async setKitByName(kitName: string) {
     let newKit: Kit | undefined;
-    switch (kitName) {
-    case '':
-    case '__unspec__':
-      break;
-    default:
-      newKit = this._allKits.find(kit => kit.name === kitName);
-      break;
+    if (!kitName) {
+        kitName = '__unspec__';
     }
+    newKit = this._allKits.find(kit => kit.name === kitName);
     await this._setCurrentKit(newKit || null);
+    // if we are showing a quickpick menu...
+    this._pickKitCancellationTokenSource.cancel();
   }
 
   /**

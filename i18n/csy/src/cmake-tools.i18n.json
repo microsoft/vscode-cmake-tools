@@ -14,7 +14,6 @@
 	"task.already.running": "Úloha CMake je už spuštěná. Před pokusem o spuštění nové úlohy CMake ji zastavte.",
 	"no.source.directory.found": "Nemáte otevřený zdrojový adresář.",
 	"missing.cmakelists": "Nemáte soubor CMakeLists.txt.",
-	"using.generator.for.user.configuration": "Používá se generátor z konfigurace uživatele: {0}.",
 	"starting.cmake.driver": "Spouští se ovladač CMake.",
 	"bad.cmake.executable": "Nesprávný spustitelný soubor nástrojů CMake {0}",
 	"no.workspace.error": "Nástroje CMake Tools nejsou k dispozici bez otevřeného pracovního prostoru.",
