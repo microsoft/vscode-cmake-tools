@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
 import {oneLess, RawDiagnosticParser, FeedLineResult} from './util';
 
 export const REGEX
-    = /^\s*(?!\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
+    = /^\s*(\d+>)?\s*([^\s>].*)\((\d+|\d+,\d+|\d+,\d+,\d+,\d+)\):\s+((?:fatal )?error|warning|info)\s+(\w{1,2}\d+)\s*:\s*(.*)$/;
 
 export class Parser extends RawDiagnosticParser {
   doHandleLine(line: string) {
@@ -16,7 +16,7 @@ export class Parser extends RawDiagnosticParser {
     if (!res) {
       return FeedLineResult.NotMine;
     }
-    const [full, file, location, severity, code, message] = res;
+    const [full, /*proc*/, file, location, severity, code, message] = res;
     const range = (() => {
       const parts = location.split(',');
       const n0 = oneLess(parts[0]);
