@@ -310,6 +310,66 @@
         },
         {
           "command": "cmake.stop"
+        },
+        {
+          "command": "cmake.outline.configure",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.build",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.compileFile",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigure",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.clean",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanRebuild",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.stop",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.runUtilityTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.debugTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.launchTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.setDefaultTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.setLaunchTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.revealInCMakeLists",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "never"
         }
       ],
       "view/title": [
