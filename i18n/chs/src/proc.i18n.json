@@ -6,6 +6,6 @@
 {
 	"executing.command": "执行命令: {0}",
 	"processing.data.event.stdout": "正在处理进程 stdout 的“数据”事件",
-	"processing.data.event.stderr": "正在处理进程 stderr 的“数据”事件",
+	"processing.data.event.stderr": "正在处理 proc stderr 中的“数据”事件",
 	"resolving.close.event": "正在解决“关闭”事件的进程"
 }
