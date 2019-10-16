@@ -687,7 +687,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async ensureConfigured(): Promise<number|null> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
-      return null;
+      return -2;
     }
     // First, save open files
     if (!await this.maybeAutoSaveAll()) {

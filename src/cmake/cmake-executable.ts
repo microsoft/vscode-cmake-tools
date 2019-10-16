@@ -30,10 +30,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         // server bugs
         cmake.isServerModeSupported = util.versionGreater(cmake.version, cmake.minimalServerModeVersion);
       }
-    } catch (ex) {
-      if (ex.code != 'ENOENT') {
-        throw ex;
-      }
+    } catch {
     }
   }
   return cmake;
