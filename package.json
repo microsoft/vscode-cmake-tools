@@ -985,7 +985,7 @@
       {
         "key": "ctrl+f5",
         "command": "cmake.debugTarget",
-        "when": "!inDebugMode"
+        "when": "!inDebugMode && inCMakeProject"
       },
       {
         "key": "shift+f5",
