@@ -58,7 +58,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Ścieżka do pliku wykonywalnego narzędzia CTest. Jeśli wartość jest równa null, zostanie określona na podstawie parametru cmake.cmakePath (zaleca się pozostawienie wartości null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Liczba równoległych zadań testowych. Użyj wartości zero, aby użyć wartości parametru cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analizuj dane wyjściowe kompilatora pod kątem ostrzeżeń i błędów.",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Analizatory danych wyjściowych do użycia. Obsługiwane analizatory to „cmake”, „gcc”, „gnuld” dla danych wyjściowych konsolidatora w stylu GNULD, „msvc” dla programu Microsoft Visual C++ oraz „ghs” dla kompilatora Green Hills z parametrami --no_wrap_diagnostics --brief_diagnostics.",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Analizatory danych wyjściowych do użycia. Obsługiwane analizatory to „cmake”, „gcc”, „gnuld” dla danych wyjściowych konsolidatora typu GNULD, „msvc” dla programu Microsoft Visual C++ oraz „ghs” dla kompilatora Green Hills z parametrami --no_wrap_diagnostics --brief_diagnostics.",
 	"cmake-tools.configuration.cmake.debugConfig.description": "Konfiguracja debugowania do użycia podczas debugowania elementu docelowego.",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Ścieżki wyszukiwania symboli debugera programu Visual Studio.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Ścieżki dla programu GDB lub LLDB na potrzeby wyszukiwania plików so.",
@@ -93,7 +93,7 @@
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "Włącz serwer narzędzia CMake.",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Nie używaj zmiennych środowiskowych zestawu podczas uruchamiania poleceń narzędzia CMake.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Kompiluj przy użyciu pliku tasks.json zamiast procesu wewnętrznego.",
-	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Kodowanie danych wyjściowych poleceń zewnętrznych (np. cmake --build).",
+	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Kodowanie danych wyjściowych z poleceń zewnętrznych (np. cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Włącz rejestrowanie śledzenia w pliku i na konsoli (bardzo dużo danych).",
 	"cmake-tools.configuration.views.cmake.folders.description": "Foldery",
 	"cmake-tools.configuration.views.cmake.outline.description": "Konspekt projektu"
