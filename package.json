@@ -52,6 +52,7 @@
     "onCommand:cmake.quickStart",
     "onCommand:cmake.resetState",
     "onCommand:cmake.scanForKits",
+    "onCommand:cmake.selectActiveFolder",
     "onCommand:cmake.selectLaunchTarget",
     "onCommand:cmake.setVariant",
     "onCommand:cmake.stop",
@@ -66,6 +67,11 @@
       {
         "command": "cmake.viewLog",
         "title": "%cmake-tools.command.cmake.viewLog.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.selectActiveFolder",
+        "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
         "category": "CMake"
       },
       {
@@ -258,8 +264,8 @@
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
       },
       {
-        "command": "cmake.folders.setActiveFolder",
-        "title": "%cmake-tools.command.cmake.folders.setActiveFolder.title%"
+        "command": "cmake.folders.selectActiveFolder",
+        "title": "%cmake-tools.command.cmake.folders.selectActiveFolder.title%"
       }
     ],
     "menus": {

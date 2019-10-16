@@ -43,6 +43,20 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   get onBeforeRemoveFolder() { return this._beforeRemoveFolderEmitter.event; }
   get onAfterRemoveFolder() { return this._afterRemoveFolderEmitter.event; }
 
+  /**
+   * The active workspace folder. This controls several aspects of the extension,
+   * including:
+   *
+   * - Which CMakeTools backend receives commands from the user
+   * - Where we search for variants
+   * - Where we search for workspace-local kits
+   */
+  private _activeFolder: CMakeToolsFolder | null = null;
+  get activeFolder(): CMakeToolsFolder | null { return this._activeFolder; }
+  setActiveFolder(ws: vscode.WorkspaceFolder) {
+    this._activeFolder = this.get(ws) || null;
+  }
+
   constructor(readonly extensionContext: vscode.ExtensionContext) {
     this._subscriptions = [
       vscode.workspace.onDidChangeWorkspaceFolders(
@@ -62,8 +76,11 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * Load all the folders currently open in VSCode
    */
   async loadAllCurrent() {
-    for (const wsf of vscode.workspace.workspaceFolders || []) {
-      await this.addFolder(wsf);
+    if (vscode.workspace.workspaceFolders) {
+      for (const wsf of vscode.workspace.workspaceFolders) {
+        await this.addFolder(wsf);
+      }
+      this.setActiveFolder(vscode.workspace.workspaceFolders[0]);
     }
   }
 

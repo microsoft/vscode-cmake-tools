@@ -477,6 +477,12 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
 
   private _folders = new Map<string, WorkspaceFolderNode>();
 
+  addAllCurrentFolders() {
+    for (const wsf of vscode.workspace.workspaceFolders || []) {
+      this._folders.set(wsf.name, new WorkspaceFolderNode(wsf));
+    }
+  }
+
   addFolder(folder: vscode.WorkspaceFolder) {
     this._folders.set(folder.name, new WorkspaceFolderNode(folder));
     this._changeEvent.fire(null);
