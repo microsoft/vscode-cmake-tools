@@ -15,10 +15,24 @@ import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from './schema';
 import {compare, dropNulls, objectPairs, Ordering, thisExtensionPath} from './util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('kit');
 
 type ProgressReporter = vscode.Progress<{message?: string}>;
+
+/**
+ * Cache the results of invoking 'vswhere'
+ */
+interface VSInstallationCache {
+  installations: VSInstallation[];
+  queryTime: number;
+}
+
+let cachedVSInstallations: VSInstallationCache|null = null;
 
 /**
  * The path to the user-local kits file.
@@ -70,9 +84,8 @@ export interface Kit {
   compilers?: {[lang: string]: string};
 
   /**
-   * The visual studio name. This corresponds to a name returned by `vswhere`,
-   * and is used to look up the path to the VS installation when the user
-   * selects this kit
+   * The visual studio name. This corresponds to the major.minor version of
+   * the installation returned by `vswhere`.
    */
   visualStudio?: string;
 
@@ -102,20 +115,28 @@ interface ClangVersion {
 }
 
 async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
-  log.debug('Testing Clang-ish binary:', binPath);
+  log.debug(localize('testing.clang.binary', 'Testing Clang binary: {0}', binPath));
   const exec = await proc.execute(binPath, ['-v']).result;
   if (exec.retc !== 0) {
-    log.debug('Bad Clang binary ("-v" returns non-zero):', binPath);
+    log.debug(localize('bad.clang.binary', 'Bad Clang binary ("-v" returns non-zero): {0}', binPath));
     return null;
   }
-  const first_line = exec.stderr.split('\n')[0];
-  const version_re = /^(?:Apple LLVM|clang) version (.*?)[ -]/;
-  const version_match = version_re.exec(first_line);
-  if (version_match === null) {
-    log.debug('Bad Clang binary', binPath, '-v output:', exec.stderr);
+  const lines = exec.stderr.split('\n');
+  const version_re = /^(?:Apple LLVM|Apple clang|clang) version ([^\s-]+)[\s-]/;
+  let version: string = "";
+  let fullVersion: string = "";
+  for (const line of lines) {
+    const version_match = version_re.exec(line);
+    if (version_match !== null) {
+      version = version_match[1];
+      fullVersion = line;
+      break;
+    }
+  }
+  if (!version) {
+    log.debug(localize('bad.clang.binary.output', 'Bad Clang binary {0} -v output: {1}', binPath, exec.stderr));
     return null;
   }
-  const version = version_match[1];
   const target_mat = /Target:\s+(.*)/.exec(exec.stderr);
   let target: string|undefined;
   if (target_mat) {
@@ -132,7 +153,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     installedDir = install_dir_mat[1];
   }
   return {
-    fullVersion: first_line,
+    fullVersion,
     version,
     target,
     threadModel,
@@ -155,24 +176,29 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
   const gcc_res = gcc_regex.exec(fname);
   const clang_res = clang_regex.exec(fname);
   if (gcc_res) {
-    log.debug('Testing GCC-ish binary:', bin);
+    log.debug(localize('testing.gcc.binary', 'Testing GCC binary: {0}', bin));
     if (pr)
-      pr.report({message: `Getting GCC version for ${bin}`});
+      pr.report({message: localize('getting.gcc.version', 'Getting GCC version for {0}', bin)});
     const exec = await proc.execute(bin, ['-v']).result;
     if (exec.retc !== 0) {
-      log.debug('Bad GCC binary ("-v" returns non-zero):', bin);
+      log.debug(localize('bad.gcc.binary', 'Bad GCC binary ("-v" returns non-zero): {0}', bin));
       return null;
     }
 
     const compiler_version_output = exec.stderr.trim().split('\n');
-    const last_line = compiler_version_output.reverse()[0];
     const version_re = /^gcc version (.*?) .*/;
-    const version_match = version_re.exec(last_line);
-    if (version_match === null) {
-      log.debug('Bad GCC binary', bin, '-v output:', exec.stderr);
+    let version: string = "";
+    for (const line of compiler_version_output) {
+      const version_match = version_re.exec(line);
+      if (version_match !== null) {
+        version = version_match[1];
+        break;
+      }
+    }
+    if (!version) {
+      log.debug(localize('bad.gcc.binary.output', 'Bad GCC binary {0} -v output: {1}', bin, exec.stderr));
       return null;
     }
-    const version = version_match[1];
     const gxx_fname = fname.replace(/gcc/, 'g++');
     const gxx_bin = path.join(path.dirname(bin), gxx_fname);
     const target_triple_re = /((\w+-)+)gcc.*/;
@@ -182,7 +208,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       description += `for ${target_triple_match[1].slice(0, -1)} `;
     }
     const name = `GCC ${description}${version}`;
-    log.debug('Detected GCC compiler:', bin);
+    log.debug(localize('detected.gcc.compiler', 'Detected GCC compiler: {0}', bin));
     let gccKit: Kit = {
       name,
       compilers: {
@@ -199,11 +225,21 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       const binParentPath = path.dirname(bin);
       const mingwMakePath = path.join(binParentPath, 'mingw32-make.exe');
       if (await fs.exists(mingwMakePath)) {
-        const ENV_PATH = `${binParentPath};${process.env['PATH']}`;
+        // During a scan, binParentPath must be a directory already in the PATH.
+        // Therefore, we will assume that MinGW will remain in the user's PATH
+        // and do not need to record the current state of PATH (leave it to the
+        // user to rescan later or specify an explicit path to MinGW if this
+        // changes).  Additionally, caching the current state of PATH can cause
+        // complications on later invocation when using the kit environment
+        // because its PATH will take precedence.  If a user makes changes to
+        // their PATH later without rescanning for kits, then the kit's cached
+        // PATH will clobber the actual current PATH.  We will, however, record
+        // the MinGW path in case we want to use it later.
+        const ENV_PATH = `${binParentPath}`;
         // Check for working mingw32-make
         const execMake = await proc.execute(mingwMakePath, ['-v'], null, {environment: {PATH: ENV_PATH}}).result;
         if (execMake.retc !== 0) {
-          log.debug('Bad mingw32-make binary ("-v" returns non-zero):', bin);
+          log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ("-v" returns non-zero): {0}', bin));
         } else {
           let make_version_output = execMake.stdout;
           if (make_version_output.length === 0)
@@ -214,7 +250,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
           if (isMake && isMingwTool) {
             gccKit.preferredGenerator = {name: 'MinGW Makefiles'};
-            gccKit.environmentVariables = {PATH: ENV_PATH};
+            // save the ENV_PATH as a benign name unlikely to already exist in
+            // the user's environment, like CMT_MINGW_PATH
+            gccKit.environmentVariables = {CMT_MINGW_PATH: ENV_PATH};
           }
         }
       }
@@ -222,9 +260,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     return gccKit;
 
   } else if (clang_res) {
-    log.debug('Testing Clang-ish binary:', bin);
+    log.debug(localize('testing.clang.binary', 'Testing Clang binary: {0}', bin));
     if (pr)
-      pr.report({message: `Getting Clang version for ${bin}`});
+      pr.report({message: localize('getting.clang.version', 'Getting Clang version for {0}', bin)});
     const version = await getClangVersion(bin);
     if (version === null) {
       return null;
@@ -237,7 +275,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
     const name = `Clang ${version.version}`;
-    log.debug('Detected Clang compiler:', bin);
+    log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
     if (await fs.exists(clangxx_bin)) {
       return {
         name,
@@ -261,11 +299,11 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
 async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Promise<Ret|null>): Promise<Ret[]> {
   if (!await fs.exists(dir)) {
-    log.debug('Skipping scan of not existing path', dir);
+    log.debug(localize('skipping.scan.of.not.existing.path', 'Skipping scan of not existing path {0}', dir));
     return [];
   }
 
-  log.debug('Scanning directory', dir, 'for compilers');
+  log.debug(localize('scanning.directory.for.compilers', 'Scanning directory {0} for compilers', dir));
   try {
     const stat = await fs.stat(dir);
     if (!stat.isDirectory()) {
@@ -273,7 +311,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
       return [];
     }
   } catch (e) {
-    log.warning('Failed to scan', dir, 'by exception:', e);
+    log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, e));
     if (e.code == 'ENOENT') {
       return [];
     }
@@ -302,11 +340,11 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
  */
 export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter): Promise<Kit[]> {
   const kits = await scanDirectory(dir, async bin => {
-    log.trace('Checking file for compiler-ness:', bin);
+    log.trace(localize('checking.file.for.compiler.features', 'Checking file for compiler features: {0}', bin));
     try {
       return await kitIfCompiler(bin, pr);
     } catch (e) {
-      log.warning('Failed to check binary', bin, 'by exception:', e);
+      log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, e));
       if (e.code == 'EACCES') {
         // The binary may not be executable by this user...
         return null;
@@ -327,12 +365,16 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
                 stat.isDirectory(),
                 'isSymbolicLink',
                 stat.isSymbolicLink());
-      rollbar.exception('Failed to scan a kit file', e, {bin, exception: e.code, stat});
+      rollbar.exception(localize('failed.to.scan.kit', 'Failed to scan a kit file'), e, {bin, exception: e.code, stat});
       return null;
     }
   });
-  log.debug('Found', kits.length, 'kits in directory', dir);
+  log.debug(localize('founds.kits.in.directory', 'Found {0} kits in directory {1}', kits.length, dir));
   return kits;
+}
+
+export interface VSCatalog {
+  productDisplayVersion: string;
 }
 
 /**
@@ -341,6 +383,8 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
  * This isn't _all_ the properties, just the ones we need so far.
  */
 export interface VSInstallation {
+  catalog?: VSCatalog;
+  channelId?: string;
   instanceId: string;
   displayName?: string;
   installationPath: string;
@@ -350,11 +394,72 @@ export interface VSInstallation {
 }
 
 /**
+ * Construct the Kit.visualStudio property (legacy)
+ *
+ * @param inst The VSInstallation to use
+ */
+function legacyKitVSName(inst: VSInstallation): string {
+  return `VisualStudio.${parseInt(inst.installationVersion)}.0`;
+}
+
+/**
+ * Construct the Kit.visualStudio property.
+ *
+ * @param inst The VSInstallation to use
+ */
+function kitVSName(inst: VSInstallation): string {
+  return `${inst.instanceId}`;
+}
+
+/**
+ * Construct the display name (this will be paired with an
+ * arch later to construct the Kit.name property).
+ *
+ * @param inst The VSInstallation to use
+ */
+function vsDisplayName(inst: VSInstallation): string {
+  if (inst.displayName) {
+    if (inst.channelId) {
+      const index = inst.channelId.lastIndexOf('.');
+      if (index > 0) {
+        return `${inst.displayName} ${inst.channelId.substr(index + 1)}`;
+      }
+    }
+    return inst.displayName;
+  }
+  return inst.instanceId;
+}
+
+function vsVersionName(inst: VSInstallation): string {
+  if (!inst.catalog) {
+    return inst.instanceId;
+  }
+  const end = inst.catalog.productDisplayVersion.indexOf('[');
+  return end < 0 ? inst.catalog.productDisplayVersion : inst.catalog.productDisplayVersion.substring(0, end - 1);
+}
+
+/**
+ * Construct the Kit.name property.
+ *
+ * @param inst The VSInstallation to use
+ * @param arch The desired architecture (e.g. x86, amd64)
+ */
+function kitName(inst: VSInstallation, arch: string): string {
+  return `${vsDisplayName(inst)} - ${arch}`;
+}
+
+/**
  * Get a list of all Visual Studio installations available from vswhere.exe
  *
  * Will not include older versions. vswhere doesn't seem to list them?
  */
 export async function vsInstallations(): Promise<VSInstallation[]> {
+  const now = Date.now();
+  if (cachedVSInstallations && cachedVSInstallations.queryTime && (now - cachedVSInstallations.queryTime) < 900000) {
+    // If less than 15 minutes old, cache is considered ok.
+    return cachedVSInstallations.installations;
+  }
+
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res', 'vswhere.exe');
@@ -367,21 +472,21 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
             .result;
 
   if (vswhere_res.retc !== 0) {
-    log.error('Failed to execute vswhere.exe:', vswhere_res.stderr);
+    log.error(localize('failed.to.execute', 'Failed to execute {0}: {1}', "vswhere.exe", vswhere_res.stderr));
     return [];
   }
 
   const vs_installs = JSON.parse(vswhere_res.stdout) as VSInstallation[];
   for (const inst of vs_installs) {
-    const majorVersion = parseInt(inst.installationVersion);
-    if (majorVersion >= 15) {
-      inst.instanceId = `VisualStudio.${majorVersion}.0`;
-    }
     if (inst_ids.indexOf(inst.instanceId) < 0) {
       installs.push(inst);
       inst_ids.push(inst.instanceId);
     }
   }
+  cachedVSInstallations = {
+    installations: installs,
+    queryTime: now
+  };
   return installs;
 }
 
@@ -462,7 +567,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           if (mat) {
             acc.set(mat[1], mat[2]);
           } else {
-            log.error(`Error parsing environment variable: ${line}`);
+            log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
           }
           return acc;
         }, new Map());
@@ -470,7 +575,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     console.log(`Error running ${devbat} ${args.join(' ')}, can not found INCLUDE`);
     return;
   }
-  log.debug(`OK running ${devbat} ${args.join(' ')}, env vars:` + JSON.stringify([...vars]));
+  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {3}', devbat, args.join(' '), JSON.stringify([...vars])));
   return vars;
 }
 
@@ -535,13 +640,10 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
  * @param arch The architecture to try
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter): Promise<Kit|null> {
-  const realDisplayName: string|undefined
-      = inst.displayName ? inst.isPrerelease ? `${inst.displayName} Preview` : inst.displayName : undefined;
-  const installName = realDisplayName || inst.instanceId;
-  const name = `${installName} - ${arch}`;
-  log.debug('Checking for kit: ' + name);
+  const name = kitName(inst, arch);
+  log.debug(localize('checking.for.kit', 'Checking for kit: {0}', name));
   if (pr) {
-    pr.report({message: `Checking ${installName} with ${arch}`});
+    pr.report({message: localize('checking', 'Checking {0}', name)});
   }
   const variables = await varsForVSInstallation(inst, arch);
   if (!variables)
@@ -549,25 +651,25 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
 
   const kit: Kit = {
     name,
-    visualStudio: inst.instanceId,
+    visualStudio: kitVSName(inst),
     visualStudioArchitecture: arch,
   };
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
-  log.debug('Detected VsKit for version');
-  log.debug(` DisplayName: ${realDisplayName}`);
+  log.debug(localize('detected.kit.for.version', 'Detected VsKit for version'));
+  log.debug(` DisplayName: ${name}`);
   log.debug(` InstanceId: ${inst.instanceId}`);
   log.debug(` InstallVersion: ${inst.installationVersion}`);
   if (version) {
     const generatorName: string|undefined = VsGenerators[version[1]];
     if (generatorName) {
-      log.debug(` Generator Present: ${generatorName}`);
+      log.debug(` ${localize('generator.present', 'Generator Present: {0}', generatorName)}`);
       kit.preferredGenerator = {
         name: generatorName,
         platform: VsArchitectures[arch] as string || undefined,
       };
     }
-    log.debug(` Selected Preferred Generator Name: ${generatorName}`);
+    log.debug(` ${localize('selected.preferred.generator.name', 'Selected Preferred Generator Name: {0} {1}', generatorName, JSON.stringify(kit.preferredGenerator))}`);
   }
 
   return kit;
@@ -600,13 +702,11 @@ async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[]):
       return null;
     }
     return vsInstalls.map((vs): Kit => {
-      const realDisplayName: string|undefined
-          = vs.displayName ? vs.isPrerelease ? `${vs.displayName} Preview` : vs.displayName : undefined;
-      const installName = realDisplayName || vs.instanceId;
+      const installName = vsDisplayName(vs);
       const vs_arch = (version.target && version.target.includes('i686-pc')) ? 'x86' : 'amd64';
       return {
-        name: `Clang ${version.version} for MSVC with ${installName} (${vs_arch})`,
-        visualStudio: vs.instanceId,
+        name: localize('clang.for.msvc', 'Clang {0} for MSVC with {1} ({2})', version.version, installName, vs_arch),
+        visualStudio: kitVSName(vs),
         visualStudioArchitecture: vs_arch,
         compilers: {
           C: binPath,
@@ -624,11 +724,23 @@ export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise
   return results;
 }
 
-export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
+async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
   console.assert(kit.visualStudio);
   console.assert(kit.visualStudioArchitecture);
   const installs = await vsInstallations();
-  const requested = installs.find(inst => inst.instanceId == kit.visualStudio);
+  const match = (inst: VSInstallation) =>
+      // old Kit format
+      (legacyKitVSName(inst) == kit.visualStudio) ||
+      // new Kit format
+      (kitVSName(inst) === kit.visualStudio) ||
+      // Clang for VS kit format
+      (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+
+  return installs.find(inst => match(inst));
+}
+
+export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
+  const requested = await getVSInstallForKit(kit);
   if (!requested) {
     return null;
   }
@@ -689,14 +801,14 @@ export interface KitScanOptions {
 export async function scanForKits(opt?: KitScanOptions) {
   const kit_options = opt || {};
 
-  log.debug('Scanning for Kits on system');
+  log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
   const prog = {
     location: vscode.ProgressLocation.Notification,
-    title: 'Scanning for kits',
+    title: localize('scanning.for.kits', 'Scanning for kits'),
   };
   return vscode.window.withProgress(prog, async pr => {
     const isWin32 = process.platform === 'win32';
-    pr.report({message: 'Scanning for CMake kits...'});
+    pr.report({message: localize('scanning.for.cmake.kits', 'Scanning for CMake kits...')});
     let scanPaths: string[] = [];
     // Search directories on `PATH` for compiler binaries
     const pathvar = process.env['PATH']!;
@@ -722,7 +834,7 @@ export async function scanForKits(opt?: KitScanOptions) {
     }
     const arrays = await Promise.all(prs);
     const kits = ([] as Kit[]).concat(...arrays);
-    kits.map(k => log.info(`Found Kit: ${k.name}`));
+    kits.map(k => log.info(localize('found.kit', 'Found Kit: {0}', k.name)));
     return kits;
   });
 }
@@ -731,46 +843,50 @@ export async function scanForKits(opt?: KitScanOptions) {
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
  */
-export function descriptionForKit(kit: Kit) {
+export async function descriptionForKit(kit: Kit): Promise<string> {
   if (kit.toolchainFile) {
-    return `Kit for toolchain file ${kit.toolchainFile}`;
+    return localize('kit.for.toolchain.fiile', 'Kit for toolchain file {0}', kit.toolchainFile);
   }
   if (kit.visualStudio) {
-    return `Using compilers for ${kit.visualStudio} (${kit.visualStudioArchitecture} architecture)`;
+    const inst = await getVSInstallForKit(kit);
+    if (inst) {
+      return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(inst), kit.visualStudioArchitecture);
+    }
+    return '';
   }
   if (kit.compilers) {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
-    return `Using compilers: ${compilers.join(', ')}`;
+    return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
   }
-  return 'Unspecified (Let CMake guess what compilers and environment to use)';
+  return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
 
 export async function readKitsFile(filepath: string): Promise<Kit[]> {
   if (!await fs.exists(filepath)) {
-    log.debug(`Not reading non-existent kits file: ${filepath}`);
+    log.debug(localize('not.reading.nonexistent.kit', 'Not reading non-existent kits file: {0}', filepath));
     return [];
   }
-  log.debug('Reading kits file', filepath);
+  log.debug(localize('reading.kits.file', 'Reading kits file {0}', filepath));
   const content_str = await fs.readFile(filepath);
   let kits_raw: object[] = [];
   try {
     kits_raw = json5.parse(content_str.toLocaleString());
   } catch (e) {
-    log.error('Failed to parse cmake-kits.json:', e);
+    log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', "cmake-kits.json", e));
     return [];
   }
   const validator = await loadSchema('schemas/kits-schema.json');
   const is_valid = validator(kits_raw);
   if (!is_valid) {
     const errors = validator.errors!;
-    log.error(`Invalid cmake-kits.json (${filepath}):`);
+    log.error(localize('invalid.file.error', 'Invalid {0} ({1}):', "cmake-kits.json", filepath));
     for (const err of errors) {
       log.error(` >> ${err.dataPath}: ${err.message}`);
     }
     return [];
   }
   const kits = kits_raw as Kit[];
-  log.info(`Successfully loaded ${kits.length} kits from ${filepath}`);
+  log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, filepath));
   return dropNulls(kits);
 }
 
@@ -818,7 +934,7 @@ export async function kitsAvailableInWorkspaceDirectory(dirPath: string): Promis
 export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   if (!oldKit) {
     // First kit? We never clean
-    log.debug('Clean not needed: No prior Kit selected');
+    log.debug(localize('clean.not.needed', 'Clean not needed: No prior Kit selected'));
     return false;
   }
   const important_params = (k: Kit) => ({
@@ -831,7 +947,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   const new_imp = important_params(newKit);
   const old_imp = important_params(oldKit);
   if (compare(new_imp, old_imp) != Ordering.Equivalent) {
-    log.debug('Need clean: Kit changed');
+    log.debug(localize('clean.needed', 'Need clean: Kit changed'));
     return true;
   } else {
     return false;

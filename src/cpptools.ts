@@ -6,7 +6,7 @@
  */ /** */
 
 import {CMakeCache} from '@cmt/cache';
-import * as cms from '@cmt/cms-client';
+import * as cms from '@cmt/drivers/cms-client';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -14,10 +14,14 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cpptools');
 
-type StandardVersion = 'c89'|'c99'|'c11'|'c++98'|'c++03'|'c++11'|'c++14'|'c++17';
+type StandardVersion = 'c89'|'c99'|'c11'|'c++98'|'c++03'|'c++11'|'c++14'|'c++17'|'c++20';
 
 export interface CompileFlagInformation {
   extraDefinitions: string[];
@@ -32,10 +36,10 @@ interface TargetDefaults {
   defines: string[];
 }
 
-export function parseCompileFlags(args: string[]): CompileFlagInformation {
+export function parseCompileFlags(args: string[], lang: string = 'CXX'): CompileFlagInformation {
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = 'c++17';
+  let standard: StandardVersion = (lang === 'C') ? 'c11' : 'c++17';
   while (1) {
     const {done, value} = iter.next();
     if (done) {
@@ -46,7 +50,7 @@ export function parseCompileFlags(args: string[]): CompileFlagInformation {
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        rollbar.error('Unexpected end of parsing command line arguments');
+        rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));
         continue;
       }
       extraDefinitions.push(value);
@@ -55,19 +59,23 @@ export function parseCompileFlags(args: string[]): CompileFlagInformation {
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (std.endsWith('++14') || std.endsWith('++1y')) {
-        standard = 'c++14';
-      } else if (std.endsWith('++17') || std.endsWith('++1z') || std.endsWith('++latest')) {
-        standard = 'c++17';
-      } else if (std.endsWith('++11') || std.endsWith('++0x')) {
-        standard = 'c++11';
-      } else if (std.endsWith('++2a')) {
-        // Not yet supported...
-      } else if (std.endsWith('++98')) {
-        standard = 'c++98';
-      } else if (std.endsWith('++03')) {
-        standard = 'c++03';
-      } else {
+      if (lang === 'CXX') {
+        if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
+          standard = 'c++20';
+        } else if (std.endsWith('++17') || std.endsWith('++1z')) {
+          standard = 'c++17';
+        } else if (std.endsWith('++14') || std.endsWith('++1y')) {
+          standard = 'c++14';
+        } else if (std.endsWith('++11') || std.endsWith('++0x')) {
+          standard = 'c++11';
+        } else if (std.endsWith('++03')) {
+          standard = 'c++03';
+        } else if (std.endsWith('++98')) {
+          standard = 'c++98';
+        } else {
+          log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
+        }
+      } else if (lang === 'C') {
         // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
         if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(value)) {
           standard = 'c89';
@@ -80,9 +88,10 @@ export function parseCompileFlags(args: string[]): CompileFlagInformation {
           // standardVersion = 'c17';
           standard = 'c11';
         } else {
-          log.warning('Unknown standard control flag: ', value);
-          standard = 'c++17';
+          log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
         }
+      } else {
+        log.warning(localize('unknown language', 'Unknown language: {0}', value));
       }
     }
   }
@@ -170,6 +179,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   async provideBrowseConfiguration() { return this._workspaceBrowseConfiguration; }
 
+  async canProvideBrowseConfigurationsPerFolder() { return false; }
+
+  async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
+    throw new Error(localize('method.not.implemented', "Method not implemented."));
+  }
+
   /** No-op */
   dispose() {}
 
@@ -198,7 +213,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
     const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
-    const {standard, extraDefinitions} = parseCompileFlags(flags);
+    const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
 
@@ -209,27 +224,24 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
 
-    let cpptoolsCompilerPath = (flags.length === 0) ? comp_path : `${comp_path} ${flags.join(' ')}`;
-    if (sysroot && cpptoolsCompilerPath.indexOf("--sysroot") < 0) {
-      if (sysroot.match(/\s/)) {
-        cpptoolsCompilerPath += ` "--sysroot=${sysroot}"`;
-      }
-      else {
-        cpptoolsCompilerPath += ` --sysroot=${sysroot}`;
-      }
+    if (sysroot) {
+      flags.push(`--sysroot=${sysroot}`);
     }
 
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
       standard,
-      compilerPath: cpptoolsCompilerPath || undefined,
+      compilerPath: comp_path || undefined,
+      compilerArgs: flags || undefined
     };
+
     return {
       defines,
       standard,
       includePath,
       intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
-      compilerPath: cpptoolsCompilerPath || undefined,
+      compilerPath: comp_path || undefined,
+      compilerArgs: flags || undefined
     };
   }
 
@@ -301,10 +313,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
-      vscode.window.showErrorMessage('The path to the compiler for one or more source files was not found in ' +
-                                     'the CMake cache. If you are using a toolchain file, this probably means ' +
-                                     'that you need to specify the CACHE option when you set your C and/or C++ ' +
-                                     'compiler path');
+      vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
+        'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
   }

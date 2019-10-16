@@ -8,6 +8,10 @@ import * as vscode from 'vscode';
 import {createLogger} from './logging';
 import {EnvironmentVariables} from './proc';
 import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths} from './util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('expand');
 
@@ -81,7 +85,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     const key = mat[1];
     const repl = repls[key];
     if (!repl) {
-      log.warning(`Invalid variable reference ${full} in string: ${tmpl}`);
+      log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, tmpl));
     } else {
       subs.set(full, repl);
     }
@@ -124,7 +128,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     try {
       const command_ret = await vscode.commands.executeCommand(command);
       subs.set(full, `${command_ret}`);
-    } catch (e) { log.warning(`Exception while executing command ${command} for string: ${tmpl} (${e})`); }
+    } catch (e) { log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} ({2})', command, tmpl, e)); }
   }
 
   let final_str = tmpl;
