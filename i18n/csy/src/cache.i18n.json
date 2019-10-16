@@ -7,7 +7,7 @@
 	"reading.cmake.cache.file": "Čte se soubor mezipaměti CMake {0}.",
 	"file.exists": "Soubor existuje.",
 	"file.contents.read.successfully": "Obsah souboru byl úspěšně přečten.",
-	"parsed.entries.from": "Parsovaly se položky mezipaměti ({0} z {1}).",
+	"parsed.entries.from": "Parsovaly se položky mezipaměti ({0}) z místa {1}.",
 	"cache.file.does.not.exist": "Soubor mezipaměti neexistuje: Systém vrací prázdná data mezipaměti.",
 	"reloading.cache.file": "Znovu se načítá soubor mezipaměti {0}.",
 	"parsing.cmake.cache.string": "Parsuje se řetězec mezipaměti CMake.",
