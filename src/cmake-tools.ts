@@ -10,7 +10,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {lightNormalizePath, ProgressHandle, versionToString, getPrimaryWorkspaceFolder} from '@cmt/util';
+import {lightNormalizePath, ProgressHandle, versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -166,7 +166,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
    */
-  private readonly _variantManager = new VariantManager(this.workspaceContext.state, this.workspaceContext.config);
+  private readonly _variantManager = new VariantManager(this.folder, this.workspaceContext.state, this.workspaceContext.config);
 
   /**
    * A strand to serialize operations with the CMake driver
@@ -280,15 +280,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error(localize('bad.cmake.executable', 'Bad CMake executable "{0}".', cmake.path));
     }
 
-    let workspace = null;
-    const rootPath = getPrimaryWorkspaceFolder();
-    if (!rootPath) {
-      throw new Error(localize('no.workspace.error', 'CMake Tools is not available without an open workspace'));
-    }
-    if (vscode.workspace.workspaceFolders) {
-      workspace = lightNormalizePath(rootPath.fsPath);
-    }
-
+    let workspace = this.folder.uri.fsPath;
     let drv: CMakeDriver;
     const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);

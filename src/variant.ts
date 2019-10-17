@@ -198,14 +198,10 @@ export class VariantManager implements vscode.Disposable {
    * Create a new VariantManager
    * @param stateManager The state manager for this instance
    */
-  constructor(readonly stateManager: StateManager, readonly config: ConfigurationReader) {
+  constructor(readonly folder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader) {
     log.debug(localize('constructing', 'Constructing {0}', 'VariantManager'));
     if (!vscode.workspace.workspaceFolders) {
       return;  // Nothing we can do. We have no directory open
-    }
-    const folder = vscode.workspace.workspaceFolders[0];  // TODO: Multi-root!
-    if (!folder) {
-      return;  // No root folder open
     }
     const base_path = folder.uri.path;
     for (const filename of ['cmake-variants.yaml',
@@ -234,18 +230,14 @@ export class VariantManager implements vscode.Disposable {
   private async _reloadVariantsFile(filepath?: string) {
     const validate = await loadSchema('schemas/variants-schema.json');
 
-    const workdir = util.getPrimaryWorkspaceFolder();
-    if (!workdir) {
-      // Can't read, we don't have a dir open
-      return;
-    }
+    const workdir = this.folder.uri.fsPath;
 
     if (!filepath || !await fs.exists(filepath)) {
       const candidates = [
-        path.join(workdir.fsPath, 'cmake-variants.json'),
-        path.join(workdir.fsPath, 'cmake-variants.yaml'),
-        path.join(workdir.fsPath, '.vscode/cmake-variants.json'),
-        path.join(workdir.fsPath, '.vscode/cmake-variants.yaml'),
+        path.join(workdir, 'cmake-variants.json'),
+        path.join(workdir, 'cmake-variants.yaml'),
+        path.join(workdir, '.vscode/cmake-variants.json'),
+        path.join(workdir, '.vscode/cmake-variants.yaml'),
       ];
       for (const testpath of candidates) {
         if (await fs.exists(testpath)) {

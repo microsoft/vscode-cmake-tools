@@ -76,6 +76,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * Load all the folders currently open in VSCode
    */
   async loadAllCurrent() {
+    this._instances.clear();
     if (vscode.workspace.workspaceFolders) {
       for (const wsf of vscode.workspace.workspaceFolders) {
         await this.addFolder(wsf);

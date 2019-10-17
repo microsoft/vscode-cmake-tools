@@ -389,7 +389,6 @@ class ExtensionManager implements vscode.Disposable {
     // // Drop the old kit watcher on the floor
     // this._resetKitsWatcher();
     // Re-read kits for the new workspace:
-    debugger;
     await this._rereadKits(progress);
     this._statusBar.setActiveFolderName(ws.name);
     this._setupSubscriptions();
@@ -857,7 +856,6 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   private async _checkHaveKits(folder: vscode.WorkspaceFolder): Promise<'use-unspec'|'ok'|'cancel'> {
-    debugger;
     const avail = this._kitsForFolder(folder);
     if (avail.length > 1) {
       // We have kits. Okay.
@@ -1057,20 +1055,23 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   // The below functions are all wrappers around the backend.
-  async mapCMakeTools(fn: CMakeToolsMapFn): Promise<void>;
-  async mapCMakeTools(cmt: CMakeTools|undefined, fn: CMakeToolsMapFn): Promise<void>;
-  async mapCMakeTools(cmt: CMakeTools|undefined|CMakeToolsMapFn, fn?: CMakeToolsMapFn): Promise<void> {
+  async mapCMakeTools(fn: CMakeToolsMapFn): Promise<any>;
+  async mapCMakeTools(cmt: CMakeTools|undefined, fn: CMakeToolsMapFn): Promise<any>;
+  async mapCMakeTools(cmt: CMakeTools|undefined|CMakeToolsMapFn, fn?: CMakeToolsMapFn): Promise<any> {
     if (cmt === undefined) {
-      for (const folder of this._folders) {
-        await fn!(folder.cmakeTools);
-      }
+      return await fn!(this._folders.activeFolder!.cmakeTools);
     } else if (cmt instanceof CMakeTools) {
-      await fn!(cmt);
+      return await fn!(cmt);
     } else {
       fn = cmt;
       for (const folder of this._folders) {
-        await fn(folder.cmakeTools);
+        const retc = await fn(folder.cmakeTools);
+        if (retc) {
+          return retc;
+        }
       }
+      // Succeeded
+      return 0;
     }
   }
 
@@ -1078,27 +1079,26 @@ class ExtensionManager implements vscode.Disposable {
 
   configure(cmt?: CMakeTools) { return this.mapCMakeTools(cmt, c => c.configure()); }
 
-  async build(name?: string, folder?: vscode.WorkspaceFolder) {
-    if (name && folder) {
-      const cmt = this._cmakeToolsForWorkspaceFolder(folder);
-      if (!cmt) {
-        rollbar.error('Tried to build target in a non-existing folder?');
-        return -1;
+  async build(name?: string, folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) {
+    if (folders.length >= 1) {
+      // do build for folders
+      for (const folder of folders) {
+        if (folder) {
+          const retc: number = await folder.cmakeTools.build(name);
+          if (retc) {
+            return retc
+          }
+        }
       }
-      if (!await this._ensureActiveKit(cmt)) {
-        return -1;
-      }
-      return cmt.build(name);
-    } else if (name) {
-      // We have a name, at least.
-      await this.mapCMakeTools(c => c.build(name));
+      // Succeeded
+      return 0;
     } else {
-      if (this._defaultBuildTarget) {
-        return this._defaultBuildTarget.cmakeTools.build(this._defaultBuildTarget.target.name);
-      } else {
-        // Build the default target on each instance
-        await this.mapCMakeTools(c => c.build());
-      }
+      // TODO?
+      // if (this._defaultBuildTarget) {
+      //   return this._defaultBuildTarget.cmakeTools.build(this._defaultBuildTarget.target.name);
+      // } else {
+      // build all
+      return await this.mapCMakeTools(c => c.build(name));
     }
   }
 
