@@ -1,9 +1,9 @@
 [
-  {
-      "name": "Test Toolchain",
-      "toolchainFile": "${workspaceRoot}\\test-toolchain.cmake"
-  },
-  {
+{
+  "name": "Test Toolchain",
+  "toolchainFile": "${workspaceFolder}\\test-toolchain.cmake"
+},
+{
   "name": "Generator switch test GCC Mingw - Win",
   "compilers": {
     "CXX": "C:\\MinGW\\bin\\g++.exe",
