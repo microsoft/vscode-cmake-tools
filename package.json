@@ -496,7 +496,7 @@
         },
         "cmake.buildDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}/build",
+          "default": "${workspaceFolder}/build",
           "description": "%cmake-tools.configuration.cmake.buildDirectory.description%",
           "scope": "resource"
         },
@@ -508,7 +508,7 @@
         },
         "cmake.sourceDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}",
+          "default": "${workspaceFolder}",
           "description": "%cmake-tools.configuration.cmake.sourceDirectory.description%",
           "scope": "resource"
         },
@@ -985,7 +985,7 @@
       {
         "key": "ctrl+f5",
         "command": "cmake.debugTarget",
-        "when": "!inDebugMode"
+        "when": "!inDebugMode && inCMakeProject"
       },
       {
         "key": "shift+f5",

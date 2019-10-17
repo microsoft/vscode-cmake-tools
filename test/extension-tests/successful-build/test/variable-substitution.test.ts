@@ -183,7 +183,7 @@ suite('[Variable Substitution]', async () => {
 
   test('Check substitution within "cmake.installPrefix"', async () => {
     // Set fake settings
-    testEnv.config.updatePartial({installPrefix: '${workspaceRoot}/build/dist'});
+    testEnv.config.updatePartial({installPrefix: '${workspaceFolder}/build/dist'});
 
     // Configure
     expect(await cmt.configure()).to.be.eq(0, '[cmakeInstallPrefix] configure failed');
