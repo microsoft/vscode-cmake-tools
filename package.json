@@ -496,7 +496,7 @@
         },
         "cmake.buildDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}/build",
+          "default": "${workspaceFolder}/build",
           "description": "%cmake-tools.configuration.cmake.buildDirectory.description%",
           "scope": "resource"
         },
@@ -508,7 +508,7 @@
         },
         "cmake.sourceDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}",
+          "default": "${workspaceFolder}",
           "description": "%cmake-tools.configuration.cmake.sourceDirectory.description%",
           "scope": "resource"
         },

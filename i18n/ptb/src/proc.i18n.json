@@ -6,6 +6,6 @@
 {
 	"executing.command": "Executando o comando: {0}",
 	"processing.data.event.stdout": "Processando o evento de \"dados\" por meio de proc stdout",
-	"processing.data.event.stderr": "Processando o evento de \"dados\" por meio de proc stderr",
+	"processing.data.event.stderr": "Processando o evento de \"data\" por meio de proc stderr",
 	"resolving.close.event": "Resolvendo o processo no evento \"fechar\""
 }

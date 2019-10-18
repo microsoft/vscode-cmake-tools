@@ -93,7 +93,7 @@
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "啟用 CMake 伺服器。",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "執行 CMake 命令時，不使用套件環境變數。",
 	"cmake-tools.configuration.cmake.buildTask.description": "使用 tasks.json 而非內部處理序的組建。",
-	"cmake-tools.configuration.cmake.outputLogEncoding.description": "編碼外部命令輸出 (例如 cmake -- build)。",
+	"cmake-tools.configuration.cmake.outputLogEncoding.description": "外部命令輸出的編譯 (例如 cmake -- build)。",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "為檔案及主控台啟用追蹤記錄 (雜訊非常多)。",
 	"cmake-tools.configuration.views.cmake.folders.description": "資料夾",
 	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱"

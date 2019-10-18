@@ -6,7 +6,7 @@
 {
 	"unexpected.end.of.arguments": "Final inesperado al analizar los argumentos de la línea de comandos",
 	"unknown.control.gflag": "Marca de control estándar desconocida: {0}",
-	"unknown language": "Idioma desconocido: {0}",
+	"unknown language": "Lenguaje desconocido: {0}",
 	"method.not.implemented": "El método no está implementado.",
 	"path.not.found.in.cmake.cache": "No se encontró la ruta de acceso al compilador de uno o más archivos de código fuente en la memoria caché de CMake. Si usa un archivo de cadena de herramientas, probablemente deba especificar la opción CACHE al establecer la ruta de acceso del compilador de C o C++."
 }
