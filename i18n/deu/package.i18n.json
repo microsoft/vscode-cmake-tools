@@ -58,7 +58,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Pfad zur ausführbaren CTest-Datei. Bei NULL erfolgt ein Rückschluss von \"cmake.cmakePath\". (Die Beibehaltung von NULL wird empfohlen.)",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Die Anzahl paralleler Testaufträge. Verwenden Sie 0, um den Wert von \"cmake.parallelJobs\" zu verwenden.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Hiermit wird Compilerausgabe auf Warnungen und Fehler analysiert.",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Zu verwendende Ausgabeparser. Unterstützte Parser: \"cmake\", \"gcc\", \"gnuld\" für die GNULD-Inker-Ausgabe, \"msvc\" für Microsoft Visual C++ und \"ghs\" für den Green Hills-Compiler mit \"--no_wrap_diagnostics --brief_diagnostics\".",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Zu verwendende Ausgabeparser. Unterstützte Parser: \"cmake\", \"gcc\", \"gnuld\" für die Linker-Ausgabe im GNULD-Format, \"msvc\" für Microsoft Visual C++ und \"ghs\" für den Green Hills-Compiler mit \"--no_wrap_diagnostics --brief_diagnostics\".",
 	"cmake-tools.configuration.cmake.debugConfig.description": "Die Debugkonfiguration, die beim Debuggen eines Ziels verwendet werden soll.",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Symbolsuchpfade für Visual Studio-Debugger.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Pfade für GDB oder LLDB für die Suche nach SO-Dateien.",
@@ -93,7 +93,7 @@
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "Hiermit wird CMake-Server aktiviert.",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Hiermit werden die Umgebungsvariablen des Kits beim Ausführen von CMake-Befehlen nicht verwendet.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Über \"tasks.json\" statt über internen Prozess erstellen",
-	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Codierung der Ausgabe von externen Befehlen (z. B. cmake --build).",
+	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Codierung der Ausgabe von externen Befehlen (z. B.: cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Hiermit wird die Ablaufverfolgungsprotokollierung in Datei und Konsole aktiviert (große Datenmenge).",
 	"cmake-tools.configuration.views.cmake.folders.description": "Ordner",
 	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung"

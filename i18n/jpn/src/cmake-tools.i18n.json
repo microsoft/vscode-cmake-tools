@@ -81,7 +81,7 @@
 	"learn.more.button": "詳細情報",
 	"failed.to.prepare.target": "'{0}' という名前の実行可能ファイルのターゲットを準備できませんでした",
 	"debug.configuration.from.cache": "キャッシュから構成をデバッグする: {0}",
-	"debugging.documentation.button": "ドキュメントのデバッグ",
+	"debugging.documentation.button": "デバッグ ドキュメント",
 	"problem.getting.debug": "キャッシュからのデバッグ構成の取得で問題が発生しました。",
 	"failed.to.generate.debugger.configuration": "デバッガーの構成を生成できませんでした",
 	"unable.to.generate.debugging.configuration": "デバッグ構成を生成できません。",

@@ -47,7 +47,7 @@
 	"do.not.use.kit.button": "키트 사용 안 함",
 	"close.button": "닫기",
 	"no.kits.available": "CMake 키트를 사용할 수 없습니다. 원하는 작업을 선택하세요.",
-	"start.selection.of.kits": "키트 선택을 시작합니다. {0} 키트를 찾았습니다.",
+	"start.selection.of.kits": "키트 선택을 시작합니다. {0}개 키트를 찾았습니다.",
 	"running.in.test.mode": "테스트 모드에서 CMakeTools를 실행하고 있습니다. selectKit가 사용하지 않도록 설정되었습니다.",
 	"opening.kit.selection": "키트 선택 QuickPick을 여는 중",
 	"unspecified.kit.name": "지정되지 않음",

@@ -7,7 +7,7 @@
 	"reading.cmake.cache.file": "Die CMake-Cachedatei \"{0}\" wird gelesen.",
 	"file.exists": "Datei ist vorhanden.",
 	"file.contents.read.successfully": "Dateiinhalte erfolgreich gelesen",
-	"parsed.entries.from": "{0} Einträge aus {1} analysiert",
+	"parsed.entries.from": "{0} Einträge aus \"{1}\" analysiert",
 	"cache.file.does.not.exist": "Die Cachedatei ist nicht vorhanden: Es werden leere Cachedaten zurückgegeben.",
 	"reloading.cache.file": "Die Cachedatei \"{0}\" wird erneut geladen.",
 	"parsing.cmake.cache.string": "CMake-Cachezeichenfolge wird analysiert.",
