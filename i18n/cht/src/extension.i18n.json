@@ -47,7 +47,7 @@
 	"do.not.use.kit.button": "不要使用套件",
 	"close.button": "關閉",
 	"no.kits.available": "沒有可用的 CMake 套件。要執行什麼作業?",
-	"start.selection.of.kits": "啟動套件的選取。找到 {0} 個套件。",
+	"start.selection.of.kits": "開始選取套件。找到 {0} 個套件。",
 	"running.in.test.mode": "正在於測試模式中執行 CMakeTools。已停用 selectKit。",
 	"opening.kit.selection": "正在開啟套件選取 QuickPick",
 	"unspecified.kit.name": "未指定",

@@ -93,7 +93,7 @@
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "CMake サーバーを有効にします。",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "CMake コマンドの実行時には、キットの環境変数を使用しないでください。",
 	"cmake-tools.configuration.cmake.buildTask.description": "内部プロセスではなく tasks.json を使用してビルドします。",
-	"cmake-tools.configuration.cmake.outputLogEncoding.description": "外部コマンドからの出力のエンコード (例: cmake -- build)。",
+	"cmake-tools.configuration.cmake.outputLogEncoding.description": "外部コマンドからの出力をエンコードしています (例: cmake -- build)。",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "ファイルおよびコンソールへのトレース ログを有効にします (非常に煩雑になります)。",
 	"cmake-tools.configuration.views.cmake.folders.description": "フォルダー",
 	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要"

@@ -8,7 +8,7 @@
 	"interface.library": "Schnittstellenbibliothek",
 	"utility": "Utility",
 	"object.library": "Objektbibliothek",
-	"target.tooltip": "\"{0}\" als Ziel verwenden",
+	"target.tooltip": "Ziel: {0}",
 	"launch.tooltip": "Starten",
 	"default.tooltip": "Standard",
 	"item.render.issue": "Problem beim Rendern dieses Elements. Dies ist ein Fehler.",

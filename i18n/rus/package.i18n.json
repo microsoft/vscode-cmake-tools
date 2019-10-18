@@ -93,7 +93,7 @@
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "Включение сервера CMake.",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Отключение использования переменных среды при выполнении команд CMake.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Сборка с помощью tasks.json вместо внутреннего процесса.",
-	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Кодирование вывода из внешних команд (например, cmake --build).",
+	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Кодирование выходных данных из внешних команд (например, cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Включение ведения журнала трассировки в файле и в консоли (большое число сообщений).",
 	"cmake-tools.configuration.views.cmake.folders.description": "Папки",
 	"cmake-tools.configuration.views.cmake.outline.description": "Структура проекта"

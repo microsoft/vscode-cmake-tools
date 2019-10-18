@@ -21,7 +21,7 @@
 	"checking.file.for.compiler.features": "Verificando o arquivo em relação a recursos do compilador: {0}",
 	"filed.to.check.binary": "Falha ao verificar o binário {0} por exceção: {1}",
 	"failed.to.scan.kit": "Falha ao examinar um arquivo de kit",
-	"founds.kits.in.directory": "{0} kits localizados no diretório {1}",
+	"founds.kits.in.directory": "Foram localizados {0} kits no diretório {1}",
 	"failed.to.execute": "Falha ao executar {0}: {1}",
 	"error.parsing.environment": "Erro ao analisar a variável de ambiente: {0}",
 	"ok.running": "OK executando {0} {1}, env vars: {3}",
@@ -43,7 +43,7 @@
 	"reading.kits.file": "Lendo o arquivo de kits {0}",
 	"failed.to.parse": "Falha ao analisar {0}: {1}",
 	"invalid.file.error": "{0} inválido ({1}):",
-	"successfully.loaded.kits": "{0} kits de {1} carregados com êxito",
+	"successfully.loaded.kits": "Êxito ao carregar {0} kits de {1}",
 	"clean.not.needed": "Limpeza não necessária: nenhum Kit anterior selecionado",
 	"clean.needed": "É necessário limpar: kit alterado"
 }
