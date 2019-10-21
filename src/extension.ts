@@ -74,6 +74,7 @@ class ExtensionManager implements vscode.Disposable {
         // }
         this._updateCodeModel(new_cmt);
         this._targetProvider.registerCMakeTools(new_cmt);
+        // TODO
         this._projectOutlineProvider.addFolder(info.folder);
         rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
       });
@@ -311,10 +312,15 @@ class ExtensionManager implements vscode.Disposable {
    */
   async selectActiveFolder() {
     if (vscode.workspace.workspaceFolders) {
+      const lastActiveFolderPath = this._folders.activeFolder!.folder.uri.fsPath;
       const selection = await vscode.window.showWorkspaceFolderPick();;
       if (selection) {
         // Ingore if user cancelled
-        this._setActiveFolder(selection);
+        await this._setActiveFolder(selection);
+        // _folders.activeFolder must be there at this time
+        if (lastActiveFolderPath !== this._folders.activeFolder!.folder.uri.fsPath) {
+          rollbar.takePromise('Post-folder-open', {folder: selection}, this._postWorkspaceOpen(this._folders.activeFolder!));
+        }
       }
     }
   }
@@ -571,7 +577,7 @@ class ExtensionManager implements vscode.Disposable {
       if (current) {
         const already_active_kit = avail.find(kit => kit.name === current.name);
         // Set the current kit to the one we have named
-        await this._setCurrentKit(already_active_kit || null);
+        await this._setFolderKit(folder_info.folder, already_active_kit || null);
       }
     }
     this._userKits = user;
@@ -580,37 +586,41 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-   * Set the current kit in the current CMake Tools instance
+   * Set the current kit for the specified workspace folder
    * @param k The kit
    */
-  async _setCurrentKit(k: Kit|null) {
-    const inst = this._folders.activeFolder!.cmakeTools;
-    const raw_name = k ? k.name : '';
-    if (inst) {
-      // Generate a message that we will show in the progress notification
-      let message = '';
-      switch (raw_name) {
-      case '':
-      case '__unspec__':
-        // Empty string/unspec is un-setting the kit:
-        message = localize('unsetting.kit', 'Unsetting kit');
-        break;
-      default:
-        // Everything else is just loading a kit:
-        message = localize('loading.kit', 'Loading kit {0}', raw_name);
-        break;
+  async _setFolderKit(wsf: vscode.WorkspaceFolder, k: Kit|null) {
+    const folder = this._folders.get(wsf);
+    // Ignore if folder doesn't exist
+    if (folder) {
+      const inst = folder.cmakeTools;
+      const raw_name = k ? k.name : '';
+      if (inst) {
+        // Generate a message that we will show in the progress notification
+        let message = '';
+        switch (raw_name) {
+        case '':
+        case '__unspec__':
+          // Empty string/unspec is un-setting the kit:
+          message = localize('unsetting.kit', 'Unsetting kit');
+          break;
+        default:
+          // Everything else is just loading a kit:
+          message = localize('loading.kit', 'Loading kit {0}', raw_name);
+          break;
+        }
+        // Load the kit into the backend
+        await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: message,
+            },
+            () => inst.setKit(k),
+        );
       }
-      // Load the kit into the backend
-      await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: message,
-          },
-          () => inst.setKit(k),
-      );
+      // Update the status bar
+      this._statusBar.setActiveKitName(raw_name);
     }
-    // Update the status bar
-    this._statusBar.setActiveKitName(raw_name);
   }
 
   /**
@@ -901,7 +911,7 @@ class ExtensionManager implements vscode.Disposable {
       return 'ok';
     }
     case 'use-unspec': {
-      await this._setCurrentKit({name: '__unspec__'});
+      await this._setFolderKit(folder, {name: '__unspec__'});
       return 'use-unspec';
     }
     case 'cancel': {
@@ -963,7 +973,7 @@ class ExtensionManager implements vscode.Disposable {
       return false;
     } else {
       log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
-      await this._setCurrentKit(chosen_kit.kit);
+      await this._setFolderKit(folder, chosen_kit.kit);
       return true;
     }
   }
@@ -983,28 +993,6 @@ class ExtensionManager implements vscode.Disposable {
     //   break;
     // }
     // await this._setCurrentKit(newKit || null);
-  }
-
-  /**
-   * Wraps an operation that requires an open workspace and kit selection. If
-   * there is no active CMakeTools (no open workspace) or if the user cancels
-   * kit selection, we return the given default value.
-   * @param default_ The default return value
-   * @param fn The callback
-   */
-  async withCMakeTools<Ret>(default_: Ret, fn: (cmt: CMakeTools) => Ret | Thenable<Ret>): Promise<Ret> {
-    // Check that we have an active CMakeTools instance.
-    const cmt = this._folders.activeFolder!.cmakeTools;
-    if (!cmt) {
-      vscode.window.showErrorMessage(localize('requires.open.workspace', 'CMake Tools is not available without an open workspace'));
-      return Promise.resolve(default_);
-    }
-    // Ensure that we have a kit available.
-    if (!await this._ensureActiveKit()) {
-      return Promise.resolve(default_);
-    }
-    // We have a kit, and we have a CMakeTools. Call the function
-    return Promise.resolve(fn(cmt));
   }
 
   async ensureCppToolsProviderRegistered() {

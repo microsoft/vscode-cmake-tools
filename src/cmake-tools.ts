@@ -10,7 +10,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {lightNormalizePath, ProgressHandle, versionToString} from '@cmt/util';
+import {ProgressHandle, versionToString} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -508,7 +508,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   static async createForDirectory(folder: vscode.WorkspaceFolder, ext: vscode.ExtensionContext): Promise<CMakeTools> {
     // Create a context for the directory
-    const dir_ctx = DirectoryContext.createForDirectory(folder, new StateManager(ext));
+    const dir_ctx = DirectoryContext.createForDirectory(folder, new StateManager(ext, folder));
     return CMakeTools.create(ext, dir_ctx);
   }
 

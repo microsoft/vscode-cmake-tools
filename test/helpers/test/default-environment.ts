@@ -38,7 +38,7 @@ export class DefaultEnvironment {
   readonly vsContext: FakeContextDefinition = new FakeContextDefinition();
   private _config = ConfigurationReader.createForDirectory(vscode.workspace.workspaceFolders![0]);
   public get config() { return this._config; }
-  private _wsContext = new DirectoryContext(vscode.workspace.workspaceFolders![0], this.config, new StateManager(this.vsContext));
+  private _wsContext = new DirectoryContext(vscode.workspace.workspaceFolders![0], this.config, new StateManager(this.vsContext, vscode.workspace.workspaceFolders![0]));
   public get wsContext() { return this._wsContext; }
 
   readonly errorMessagesQueue: string[] = [];
@@ -60,6 +60,6 @@ export class DefaultEnvironment {
     this.errorMessagesQueue.length = 0;
     this.vsContext.clean();
     this._config = ConfigurationReader.createForDirectory(vscode.workspace.workspaceFolders![0]);
-    this._wsContext = new DirectoryContext(vscode.workspace.workspaceFolders![0], this._config, new StateManager(this.vsContext));
+    this._wsContext = new DirectoryContext(vscode.workspace.workspaceFolders![0], this._config, new StateManager(this.vsContext, vscode.workspace.workspaceFolders![0]));
   }
 }
