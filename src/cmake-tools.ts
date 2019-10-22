@@ -697,7 +697,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.clearOutputChannel();
       return this.configure();
     } else {
-      return null;
+      return 0;
     }
   }
 
@@ -722,11 +722,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug(localize('run.build', 'Run build'), target_ ? target_ : '');
     const config_retc = await this.ensureConfigured();
     if (config_retc === null) {
-      // Already configured. Clear console
-      log.clearOutputChannel();
+      throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
     } else if (config_retc !== 0) {
       return config_retc;
     }
+    log.clearOutputChannel();
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
@@ -784,7 +784,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async tryCompileFile(filePath: string): Promise<vscode.Terminal|null> {
     const config_retc = await this.ensureConfigured();
-    if (config_retc !== null && config_retc !== 0) {
+    if (config_retc === null || config_retc !== 0) {
       // Config failed?
       return null;
     }
