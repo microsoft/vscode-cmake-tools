@@ -384,7 +384,7 @@ export function parseCompileDefinition(str: string): [string, string|null] {
 }
 
 export function thisExtension() {
-  const ext = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+  const ext = vscode.extensions.getExtension('ms-vscode.cmake-tools');
   if (!ext) {
     throw new Error(localize('extension.is.null', 'Our own extension is null! What gives?'));
   }
