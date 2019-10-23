@@ -56,6 +56,7 @@
 	"no.variant.abort": "未选择任何变量。中止配置",
 	"cmake.drive.died.during.tasksbuildcommend": "CMake 驱动程序在 tasksBuildCommand 期间终止",
 	"run.build": "运行生成",
+	"unable.to.configure": "Build failed: Unable to configure the project",
 	"driver.died.after.successful.configure": "CMake 驱动程序在成功配置后立即终止",
 	"building.status": "生成",
 	"building.target": "正在生成: {0}",

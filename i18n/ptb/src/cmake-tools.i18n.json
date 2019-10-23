@@ -56,6 +56,7 @@
 	"no.variant.abort": "Nenhuma variante selecionada. Anular configuração",
 	"cmake.drive.died.during.tasksbuildcommend": "O driver do CMake foi encerrado durante tasksBuildCommand",
 	"run.build": "Executar o build",
+	"unable.to.configure": "Build failed: Unable to configure the project",
 	"driver.died.after.successful.configure": "O driver do CMake foi encerrado imediatamente após o êxito da configuração",
 	"building.status": "Construção",
 	"building.target": "Compilando: {0}",
