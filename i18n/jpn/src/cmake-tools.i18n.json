@@ -56,6 +56,7 @@
 	"no.variant.abort": "バリアントが選択されていません。構成を中止します",
 	"cmake.drive.died.during.tasksbuildcommend": "tasksBuildCommand の実行中に CMake ドライバーが停止しました",
 	"run.build": "ビルドの実行",
+	"unable.to.configure": "Build failed: Unable to configure the project",
 	"driver.died.after.successful.configure": "CMake ドライバーは、構成が成功した直後に停止しました",
 	"building.status": "ビルド",
 	"building.target": "{0} をビルドしています",

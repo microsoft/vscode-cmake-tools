@@ -56,6 +56,7 @@
 	"no.variant.abort": "선택한 variant가 없으므로 구성을 중단합니다.",
 	"cmake.drive.died.during.tasksbuildcommend": "tasksBuildCommand 중에 CMake 드라이버가 종료됨",
 	"run.build": "빌드 실행",
+	"unable.to.configure": "Build failed: Unable to configure the project",
 	"driver.died.after.successful.configure": "구성에 성공한 후 바로 CMake 드라이버가 종료됨",
 	"building.status": "빌드하고 있습니다.",
 	"building.target": "빌드하는 중: {0}",
