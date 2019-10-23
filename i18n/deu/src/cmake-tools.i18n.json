@@ -56,6 +56,7 @@
 	"no.variant.abort": "Keine Variante ausgewählt. Konfiguration abbrechen",
 	"cmake.drive.died.during.tasksbuildcommend": "Der CMake-Treiber wurde während tasksBuildCommand beendet.",
 	"run.build": "Build ausführen",
+	"unable.to.configure": "Build failed: Unable to configure the project",
 	"driver.died.after.successful.configure": "Der CMake-Treiber wurde unmittelbar nach der erfolgreichen Konfiguration beendet.",
 	"building.status": "Erstellen",
 	"building.target": "\"{0}\" wird erstellt.",

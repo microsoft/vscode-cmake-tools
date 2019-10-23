@@ -56,6 +56,7 @@
 	"no.variant.abort": "Nie wybrano wariantu. Przerwij konfigurowanie.",
 	"cmake.drive.died.during.tasksbuildcommend": "Sterownik narzędzia CMake zakończył pracę podczas operacji tasksBuildCommand",
 	"run.build": "Uruchom kompilację",
+	"unable.to.configure": "Build failed: Unable to configure the project",
 	"driver.died.after.successful.configure": "Sterownik narzędzia CMake zakończył pracę natychmiast po pomyślnym skonfigurowaniu",
 	"building.status": "Kompilowanie",
 	"building.target": "Kompilowanie: {0}",
