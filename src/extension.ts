@@ -1021,10 +1021,10 @@ class ExtensionManager implements vscode.Disposable {
       break;
     }
 
-    if (process.env['CMT_TESTING'] === '1') {
-      log.trace(localize('running.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
-      return false;
-    }
+    // if (process.env['CMT_TESTING'] === '1') {
+    //   log.trace(localize('running.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
+    //   return false;
+    // }
 
     interface KitItem extends vscode.QuickPickItem {
       kit: Kit;
