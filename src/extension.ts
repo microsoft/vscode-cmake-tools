@@ -660,10 +660,76 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-   * Rescan the system for kits and save them to the user-local kits file
+   * Rescan the system for kits and save them to the user-local kits file.
+   * If cmake-tools-kits.json still has kits saved with the old format kit definition
+   *     (visualStudio field as "VisualStudio.$(installation version)", as opposed to "$(unique installation id)"),
+   * then ask if the user allows them to be deleted from the user-local kits file.
+   *
+   * If the user answers 'NO' or doesn't answer, nothing needs to be done, even if there is an active kit set,
+   * because the extension is able to work with both definitions of a VS kit.
+   * In this case, the new cmake-tools-kits.json may have some duplicate kits pointing to the same toolset.
+   *
+   * If the answer is 'YES' and if there is an active kit selected that is among the ones to be deleted,
+   * then the user must also pick a new kit.
    */
   async scanForKits() {
     log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
+
+    // Do the scan:
+    const discovered_kits = await scanForKits({minGWSearchDirs: this._getMinGWDirs()});
+
+    // The list with the new definition user kits starts with the non VS ones,
+    // which do not have any variations in the way they can be defined.
+    const new_definition_user_kits = this._userKits.filter(kit => !!!kit.visualStudio);
+
+    // The VS kits saved so far in cmake-tools-kits.json
+    const user_vs_kits = this._userKits.filter(kit => !!kit.visualStudio);
+
+    // Separate the VS kits based on old/new definition.
+    const old_definition_vs_kits = [];
+    user_vs_kits.forEach(kit => {
+        if (kit.visualStudio && kit.visualStudio.startsWith("VisualStudio")) {
+            old_definition_vs_kits.push(kit);
+        } else {
+            // The new definition VS kits can complete the final user kits list
+            new_definition_user_kits.push(kit);
+        }
+    });
+
+    let chooseNewKit : boolean = false;
+    if (old_definition_vs_kits.length > 1) {
+        log.info(localize('found.old.defintion.kits', 'Found old definition VS kits saved in the cmake-tools-kits.json.'));
+        const yesButtonTitle: string = localize('yes.button', 'Yes');
+        const chosen = await vscode.window.showInformationMessage<
+            vscode.MessageItem>(localize('delete.old.definition.kits', 'Would you like to delete the old definition VS kits from cmake-tools-kits.json?'),
+                                {
+                                  title: yesButtonTitle,
+                                  isCloseAffordance: true,
+                },
+                {
+                    title: localize('no.button', 'No'),
+                    isCloseAffordance: true,
+                });
+
+          if (chosen !== undefined && (chosen.title === yesButtonTitle)) {
+              //await this._setKnownKits({ user: new_definition_user_kits, workspace: this._wsKits });
+              this._userKits = new_definition_user_kits;
+
+              // If there is an active kit set and if it is of the old definition,
+              // trigger a new kit selection later.
+              const activeCMakeTools = this._activeCMakeTools;
+              if (activeCMakeTools) {
+                  const activeKit = activeCMakeTools.activeKit;
+                  if (activeKit) {
+                      const definition = activeKit.visualStudio;
+                      if (definition && definition.startsWith("VisualStudio")) {
+                          chooseNewKit = true;
+                      }
+                  }
+              }
+          }
+      }
+
     // Convert the kits into a by-name mapping so that we can restore the ones
     // we know about after the fact.
     // We only save the user-local kits: We don't want to save workspace kits
@@ -672,18 +738,30 @@ class ExtensionManager implements vscode.Disposable {
         (acc, kit) => ({...acc, [kit.name]: kit}),
         {} as {[kit: string]: Kit},
     );
-    // Do the scan:
-    const discovered_kits = await scanForKits({minGWSearchDirs: this._getMinGWDirs()});
-    // Update the new kits we know about.
-    const new_kits_by_name = discovered_kits.reduce(
-        (acc, kit) => ({...acc, [kit.name]: kit}),
-        old_kits_by_name,
-    );
 
-    const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-    await this._setKnownKits({user: new_kits, workspace: this._wsKits});
-    await this._writeUserKitsFile(new_kits);
-    this._startPruneOutdatedKitsAsync();
+      // Update the new kits we know about.
+      const new_kits_by_name = discovered_kits.reduce(
+          (acc, kit) => ({...acc, [kit.name]: kit}),
+          old_kits_by_name,
+      );
+
+      const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
+      await this._setKnownKits({user: new_kits, workspace: this._wsKits});
+      await this._writeUserKitsFile(new_kits);
+
+      // If we concluded earlier that we need to show the kits quick pick,
+      // then remind the user to select another kit from the new definition list.
+      if (chooseNewKit) {
+          const did_choose_kit = await this.selectKit();
+
+          // Make sure that, even if the user is not selecting any option from the quick pick,
+          // we don't leave any old definition kit set anywhere.
+          if (!did_choose_kit) {
+              await this._setCurrentKit(null);
+          }
+      }
+
+      this._startPruneOutdatedKitsAsync();
   }
 
   /**
