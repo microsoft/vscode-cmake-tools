@@ -362,7 +362,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._activeKit = kit;
     if (kit) {
       log.debug(localize('injecting.new.kit', 'Injecting new Kit into CMake driver'));
-      const drv = await this.getCMakeDriverInstance();
+      const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
