@@ -688,80 +688,80 @@ class ExtensionManager implements vscode.Disposable {
     // Separate the VS kits based on old/new definition.
     const old_definition_vs_kits = [];
     user_vs_kits.forEach(kit => {
-        if (kit.visualStudio && kit.visualStudio.startsWith("VisualStudio")) {
-            old_definition_vs_kits.push(kit);
-        } else {
-            // The new definition VS kits can complete the final user kits list
-            new_definition_user_kits.push(kit);
-        }
+      if (kit.visualStudio && (kit.visualStudio.startsWith("VisualStudio.15") || kit.visualStudio.startsWith("VisualStudio.16"))) {
+        old_definition_vs_kits.push(kit);
+      } else {
+        // The new definition VS kits can complete the final user kits list
+        new_definition_user_kits.push(kit);
+      }
     });
 
-    let chooseNewKit : boolean = false;
+    let chooseNewKit: boolean = false;
     if (old_definition_vs_kits.length > 1) {
-        log.info(localize('found.old.defintion.kits', 'Found old definition VS kits saved in the cmake-tools-kits.json.'));
-        const yesButtonTitle: string = localize('yes.button', 'Yes');
-        const chosen = await vscode.window.showInformationMessage<
-            vscode.MessageItem>(localize('delete.old.definition.kits', 'Would you like to delete the old definition VS kits from cmake-tools-kits.json?'),
-                                {
-                                  title: yesButtonTitle,
-                                  isCloseAffordance: true,
-                },
-                {
-                    title: localize('no.button', 'No'),
-                    isCloseAffordance: true,
-                });
+      log.info(localize('found.duplicate.kits', 'Found Visual Studio kits with the old ids saved in the cmake-tools-kits.json.'));
+      const yesButtonTitle: string = localize('yes.button', 'Yes');
+      const chosen = await vscode.window.showInformationMessage<vscode.MessageItem>(
+        localize('delete.duplicate.kits', 'Would you like to delete the duplicate Visual Studio kits from cmake-tools-kits.json?'),
+        {
+          title: yesButtonTitle,
+          isCloseAffordance: true,
+        },
+        {
+          title: localize('no.button', 'No'),
+          isCloseAffordance: true,
+        });
 
-          if (chosen !== undefined && (chosen.title === yesButtonTitle)) {
-              //await this._setKnownKits({ user: new_definition_user_kits, workspace: this._wsKits });
-              this._userKits = new_definition_user_kits;
+      if (chosen !== undefined && (chosen.title === yesButtonTitle)) {
+        //await this._setKnownKits({ user: new_definition_user_kits, workspace: this._wsKits });
+        this._userKits = new_definition_user_kits;
 
-              // If there is an active kit set and if it is of the old definition,
-              // trigger a new kit selection later.
-              const activeCMakeTools = this._activeCMakeTools;
-              if (activeCMakeTools) {
-                  const activeKit = activeCMakeTools.activeKit;
-                  if (activeKit) {
-                      const definition = activeKit.visualStudio;
-                      if (definition && definition.startsWith("VisualStudio")) {
-                          chooseNewKit = true;
-                      }
-                  }
-              }
+        // If there is an active kit set and if it is of the old definition,
+        // trigger a new kit selection later.
+        const activeCMakeTools = this._activeCMakeTools;
+        if (activeCMakeTools) {
+          const activeKit = activeCMakeTools.activeKit;
+          if (activeKit) {
+            const definition = activeKit.visualStudio;
+            if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
+              chooseNewKit = true;
+            }
           }
+        }
       }
+    }
 
     // Convert the kits into a by-name mapping so that we can restore the ones
     // we know about after the fact.
     // We only save the user-local kits: We don't want to save workspace kits
     // in the user kits file.
     const old_kits_by_name = this._userKits.reduce(
-        (acc, kit) => ({...acc, [kit.name]: kit}),
-        {} as {[kit: string]: Kit},
+      (acc, kit) => ({...acc, [kit.name]: kit}),
+      {} as {[kit: string]: Kit},
     );
 
-      // Update the new kits we know about.
-      const new_kits_by_name = discovered_kits.reduce(
-          (acc, kit) => ({...acc, [kit.name]: kit}),
-          old_kits_by_name,
-      );
+    // Update the new kits we know about.
+    const new_kits_by_name = discovered_kits.reduce(
+      (acc, kit) => ({...acc, [kit.name]: kit}),
+      old_kits_by_name,
+    );
 
-      const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-      await this._setKnownKits({user: new_kits, workspace: this._wsKits});
-      await this._writeUserKitsFile(new_kits);
+    const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
+    await this._setKnownKits({user: new_kits, workspace: this._wsKits});
+    await this._writeUserKitsFile(new_kits);
 
-      // If we concluded earlier that we need to show the kits quick pick,
-      // then remind the user to select another kit from the new definition list.
-      if (chooseNewKit) {
-          const did_choose_kit = await this.selectKit();
+    // If we concluded earlier that we need to show the kits quick pick,
+    // then remind the user to select another kit from the new definition list.
+    if (chooseNewKit) {
+      const did_choose_kit = await this.selectKit();
 
-          // Make sure that, even if the user is not selecting any option from the quick pick,
-          // we don't leave any old definition kit set anywhere.
-          if (!did_choose_kit) {
-              await this._setCurrentKit(null);
-          }
+      // Make sure that, even if the user is not selecting any option from the quick pick,
+      // we don't leave any old definition kit set anywhere.
+      if (!did_choose_kit) {
+        await this._setCurrentKit(null);
       }
+    }
 
-      this._startPruneOutdatedKitsAsync();
+    this._startPruneOutdatedKitsAsync();
   }
 
   /**
