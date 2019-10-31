@@ -13,9 +13,7 @@
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
-                "${workspaceFolder}/out/test/*"
+                "${workspaceFolder}/dist/**/*.js"
             ],
             "env": {
                 "CMT_DEVRUN": "1"

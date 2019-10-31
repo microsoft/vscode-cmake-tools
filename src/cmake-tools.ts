@@ -375,6 +375,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._cmakeDriver = Promise.resolve(null);
           this._activeKit = null;
         }
+      } else {
+        // Remember the selected kit for the next session.
+        this.workspaceContext.state.activeKitName = kit.name;
       }
     }
   }
