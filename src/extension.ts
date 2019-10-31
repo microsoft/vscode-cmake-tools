@@ -1320,9 +1320,12 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
+    // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
+    // because the publisher changed (from vector-of-bool into ms-vscode),
+    // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
     const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
     if (oldCMakeToolsExtension) {
-        await vscode.window.showInformationMessage(localize('uninstall.old.cmaketools', 'CMakeTools changed publisher from "vector-of-bool" to "ms-vscode" starting wtih version #1.2. It is recommended to uninstall any older versions of CMakeTools.'));
+        await vscode.window.showInformationMessage(localize('uninstall.old.cmaketools', 'CMakeTools changed publisher from "vector-of-bool" to "ms-vscode" starting with version #1.2. It is recommended to uninstall any older versions of CMakeTools.'));
     }
 
   // Register a protocol handler to serve localized schemas
