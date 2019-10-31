@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "Setler için yeniden taranıyor",
 	"found.duplicate.kits": "Cmake-tools-kits.json dosyasına kaydedilen eski kimlikleri olan Visual Studio kitleri bulundu.",
 	"delete.duplicate.kits": "Yinelenen Visual Studio kitlerini cmake-tools-kits.json'dan silmek ister misiniz?",
-	"uninstall.old.cmaketools": "CMakeTools, # 1.2 sürümünden başlayarak yayıncısını 'bool vector' den 'ms-vscode' a değiştirdi. Herhangi bir CMakeTools sürümünün kaldırılması önerilir.",
+	"uninstall.old.cmaketools": "CMake Tools, Microsoft tarafından 1.2.0 sürümünden başlayarak yayınlanmaktadır. Lütfen daha eski CMake Tools sürümlerini kaldırın.",
 	"saving.kits.to": "Setler {0} konumuna kaydediliyor",
 	"saving.new.kits.to": "Yeni setler {0} konumuna kaydediliyor",
 	"retry.button": "Yeniden Dene",

@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "Повторное сканирование наборов.",
 	"found.duplicate.kits": "Найдены наборы Visual Studio со старыми идентификаторами, сохраненными в cmake-tools-kits.json.",
 	"delete.duplicate.kits": "Вы хотите удалить дубликаты Visual Studio из cmake-tools-kits.json?",
-	"uninstall.old.cmaketools": "CMakeTools изменил издателя с 'vector-of-bool' на 'ms-vscode', начиная с версии # 1.2. Рекомендуется удалить все старые версии CMakeTools.",
+	"uninstall.old.cmaketools": "CMake Tools теперь публикуется Microsoft, начиная с версии 1.2.0. Пожалуйста, удалите все старые версии CMake Tools.",
 	"saving.kits.to": "Сохранение наборов в {0}.",
 	"saving.new.kits.to": "Сохранение новых наборов в {0}.",
 	"retry.button": "Повтор",

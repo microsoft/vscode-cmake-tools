@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "Rianalisi dei kit",
 	"found.duplicate.kits": "Nahita kitapo Visual Studio miaraka amin'ireo ids taloha voatahiry ao amin'ny cmake-fitaovana-kits.json.",
 	"delete.duplicate.kits": "Te-hanaisotra ireo kitapo Visual Studio ve ianao amin'ny kitapo-fitaovana-kits.json?",
-	"uninstall.old.cmaketools": "CMakeTools dia nanova ny mpamoaka boky avy amin'ny 'vector-of-bool' ho 'ms-vscode' manomboka amin'ny version # 1.2. Arahina ny manaisotra ireo dikan-tsarimihetsika CMakeTools taloha.",
+	"uninstall.old.cmaketools": "CMakeTools dia nanoratra boky avy amin'ny 'vector-of-bool' ho 'ms-vscode' tamin'ny version # 1.2. Arahina ny mana-tory miaraka amin'ny hetsika tsarimihetsika CMakeTools taloha.",
 	"saving.kits.to": "Salvataggio dei kit in {0}",
 	"saving.new.kits.to": "Salvataggio dei nuovi kit in {0}",
 	"retry.button": "Riprova",

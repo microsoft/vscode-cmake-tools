@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "キットを再スキャンしています",
 	"found.duplicate.kits": "cmake-tools-kits.jsonに保存された古いIDを持つVisual Studioキットを見つけました。",
 	"delete.duplicate.kits": "重複したVisual Studioキットをcmake-tools-kits.jsonから削除しますか？",
-	"uninstall.old.cmaketools": "CMakeToolsは、バージョン＃1.2からパブリッシャーを「vector-of-bool」から「ms-vscode」に変更しました。 CMakeToolsの古いバージョンをアンインストールすることをお勧めします。",
+	"uninstall.old.cmaketools": "CMake Toolsは、バージョン1.2.0からMicrosoftによって公開されています。 CMake Toolsの古いバージョンをアンインストールしてください。",
 	"saving.kits.to": "キットを {0} に保存しています",
 	"saving.new.kits.to": "新しいキットを {0} に保存しています",
 	"retry.button": "再試行",
