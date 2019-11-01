@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "Es wird erneut nach Kits gesucht.",
 	"found.duplicate.kits": "Es wurden Visual Studio-Kits mit den alten IDs gefunden, die in der Datei cmake-tools-kits.json gespeichert sind.",
 	"delete.duplicate.kits": "Möchten Sie die duplizierten Visual Studio-Kits aus cmake-tools-kits.json löschen?",
-	"no.button": "No",
+	"no.button": "Nein",
 	"saving.kits.to": "Kits werden in \"{0}\" gespeichert.",
 	"saving.new.kits.to": "Neue Kits werden in \"{0}\" gespeichert.",
 	"retry.button": "Wiederholen",

@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "Probíhá opětovné hledání sad.",
 	"found.duplicate.kits": "Nalezené sady Visual Studio se starými idy uloženými v souboru cmake-tools-kits.json.",
 	"delete.duplicate.kits": "Chcete odstranit duplicitní sady Visual Studio z cmake-tools-kits.json?",
-	"no.button": "No",
+	"no.button": "Ne",
 	"saving.kits.to": "Ukládají se sady do {0}.",
 	"saving.new.kits.to": "Ukládají se nové sady do {0}.",
 	"retry.button": "Opakovat",

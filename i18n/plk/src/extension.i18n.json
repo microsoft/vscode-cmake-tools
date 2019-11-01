@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "Ponowne skanowanie pod kątem zestawów",
 	"found.duplicate.kits": "Znaleziono zestawy Visual Studio ze starymi identyfikatorami zapisanymi w cmake-tools-kits.json.",
 	"delete.duplicate.kits": "Czy chcesz usunąć zduplikowane zestawy Visual Studio z cmake-tools-kits.json?",
-	"no.button": "No",
+	"no.button": "Nie",
 	"saving.kits.to": "Zapisywanie zestawów do lokalizacji {0}",
 	"saving.new.kits.to": "Zapisywanie nowych zestawów do lokalizacji {0}",
 	"retry.button": "Ponów próbę",

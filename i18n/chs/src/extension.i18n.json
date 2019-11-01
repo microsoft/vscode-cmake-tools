@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "重新扫描工具包",
 	"found.duplicate.kits": "找到了带有旧ID的Visual Studio套件，并将其保存在cmake-tools-kits.json中。",
 	"delete.duplicate.kits": "您是否要从cmake-tools-kits.json中删除重复的Visual Studio套件？",
-	"no.button": "No",
+	"no.button": "否",
 	"saving.kits.to": "正在将工具包保存到 {0}",
 	"saving.new.kits.to": "正在将新工具包保存到 {0}",
 	"retry.button": "重试",

@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "키트를 다시 검색하는 중",
 	"found.duplicate.kits": "cmake-tools-kits.json에 이전 ID가 저장된 Visual Studio 키트를 찾았습니다.",
 	"delete.duplicate.kits": "cmake-tools-kits.json에서 중복 된 Visual Studio 키트를 삭제 하시겠습니까?",
-	"no.button": "No",
+	"no.button": "아니요",
 	"saving.kits.to": "{0}에 키트를 저장하는 중",
 	"saving.new.kits.to": "{0}에 새 키트를 저장하는 중",
 	"retry.button": "다시 시도",
