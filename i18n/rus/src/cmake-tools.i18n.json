@@ -56,7 +56,7 @@
 	"no.variant.abort": "Вариант не выбран. Прервите настройку.",
 	"cmake.drive.died.during.tasksbuildcommend": "Драйвер CMake завершил работу во время tasksBuildCommand",
 	"run.build": "Запустить сборку",
-	"unable.to.configure": "Build failed: Unable to configure the project",
+	"unable.to.configure": "Сборка не выполнена: невозможно настроить проект.",
 	"driver.died.after.successful.configure": "Драйвер CMake завершил работу сразу же после успешной настройки.",
 	"building.status": "Сборка",
 	"building.target": "Сборка: {0}",

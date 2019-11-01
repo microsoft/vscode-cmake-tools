@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "Повторное сканирование наборов.",
 	"found.duplicate.kits": "Найдены наборы Visual Studio со старыми идентификаторами, сохраненными в cmake-tools-kits.json.",
 	"delete.duplicate.kits": "Вы хотите удалить дубликаты Visual Studio из cmake-tools-kits.json?",
-	"uninstall.old.cmaketools": "CMake Tools теперь публикуется Microsoft, начиная с версии 1.2.0. Пожалуйста, удалите все старые версии CMake Tools.",
+	"no.button": "Нет",
 	"saving.kits.to": "Сохранение наборов в {0}.",
 	"saving.new.kits.to": "Сохранение новых наборов в {0}.",
 	"retry.button": "Повтор",
@@ -65,6 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} завершено (возвращено несериализуемое значение).",
 	"loading.extension.commands": "Загрузка команд расширения.",
 	"register.command": "Регистрация команды расширения CMakeTools {0}",
+	"uninstall.old.cmaketools": "CMake Tools теперь публикуется Microsoft, начиная с версии 1.2.0. Пожалуйста, удалите все старые версии CMake Tools.",
 	"cmake.tools.initializing": "Инициализация Средств CMake…",
 	"deactivate.cmaketools": "Деактивировать CMakeTools"
 }
