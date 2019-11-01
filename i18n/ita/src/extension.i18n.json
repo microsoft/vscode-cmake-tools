@@ -36,9 +36,9 @@
 	"scan.for.kits.button": "Cerca kit",
 	"cancel.button": "Annulla",
 	"rescanning.for.kits": "Rianalisi dei kit",
-	"found.duplicate.kits": "Nahita kitapo Visual Studio miaraka amin'ireo ids taloha voatahiry ao amin'ny cmake-fitaovana-kits.json.",
-	"delete.duplicate.kits": "Te-hanaisotra ireo kitapo Visual Studio ve ianao amin'ny kitapo-fitaovana-kits.json?",
-	"uninstall.old.cmaketools": "CMakeTools dia nanoratra boky avy amin'ny 'vector-of-bool' ho 'ms-vscode' tamin'ny version # 1.2. Arahina ny mana-tory miaraka amin'ny hetsika tsarimihetsika CMakeTools taloha.",
+	"found.duplicate.kits": "Found Visual Studio kits with the old ids saved in the cmake-tools-kits.json.",
+	"delete.duplicate.kits": "Would you like to delete the duplicate Visual Studio kits from cmake-tools-kits.json?",
+	"no.button": "No",
 	"saving.kits.to": "Salvataggio dei kit in {0}",
 	"saving.new.kits.to": "Salvataggio dei nuovi kit in {0}",
 	"retry.button": "Riprova",
@@ -65,6 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} terminato (ha restituito un valore non serializzabile)",
 	"loading.extension.commands": "Caricamento dei comandi dell'estensione",
 	"register.command": "Registra il comando {0} dell'estensione CMakeTools",
+	"uninstall.old.cmaketools": "CMake Tools is now published by Microsoft starting with version 1.2.0. Please uninstall any older versions of CMake Tools.",
 	"cmake.tools.initializing": "Inizializzazione di CMake Tools...",
 	"deactivate.cmaketools": "Disattiva CMakeTools"
 }

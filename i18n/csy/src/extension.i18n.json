@@ -36,9 +36,9 @@
 	"scan.for.kits.button": "Vyhledat sady",
 	"cancel.button": "Storno",
 	"rescanning.for.kits": "Probíhá opětovné hledání sad.",
-	"found.duplicate.kits": "Nalezené sady Visual Studio se starými idy uloženými v souboru cmake-tools-kits.json.",
-	"delete.duplicate.kits": "Chcete odstranit duplicitní sady Visual Studio z cmake-tools-kits.json?",
-	"uninstall.old.cmaketools": "Aplikace CMake Tools je nyní publikována společností Microsoft počínaje verzí 1.2.0. Odinstalujte prosím všechny starší verze CMake Tools.",
+	"found.duplicate.kits": "Found Visual Studio kits with the old ids saved in the cmake-tools-kits.json.",
+	"delete.duplicate.kits": "Would you like to delete the duplicate Visual Studio kits from cmake-tools-kits.json?",
+	"no.button": "No",
 	"saving.kits.to": "Ukládají se sady do {0}.",
 	"saving.new.kits.to": "Ukládají se nové sady do {0}.",
 	"retry.button": "Opakovat",
@@ -65,6 +65,7 @@
 	"cmake.finished.returned.unserializable": "Dokončeno: {0} (vrácena neserializovatelná hodnota)",
 	"loading.extension.commands": "Načítání příkazů rozšíření",
 	"register.command": "Zaregistrujte příkaz rozšíření CMakeTools {0}.",
+	"uninstall.old.cmaketools": "CMake Tools is now published by Microsoft starting with version 1.2.0. Please uninstall any older versions of CMake Tools.",
 	"cmake.tools.initializing": "Inicializují se nástroje CMake Tools...",
 	"deactivate.cmaketools": "Deaktivovat CMakeTools"
 }
