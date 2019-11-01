@@ -1320,6 +1320,14 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
+    // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
+    // because the publisher changed (from vector-of-bool into ms-vscode),
+    // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
+    const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+    if (oldCMakeToolsExtension) {
+        await vscode.window.showInformationMessage(localize('uninstall.old.cmaketools', 'CMake Tools is now published by Microsoft starting with version 1.2.0. Please uninstall any older versions of CMake Tools.'));
+    }
+
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
