@@ -56,7 +56,7 @@
 	"no.variant.abort": "Není vybraná žádná varianta. Přerušte příkaz configure.",
 	"cmake.drive.died.during.tasksbuildcommend": "Během operace tasksBuildCommand se ukončil ovladač CMake.",
 	"run.build": "Spustit sestavení",
-	"unable.to.configure": "Build failed: Unable to configure the project",
+	"unable.to.configure": "Sestavení se nepovedlo: projekt nejde nakonfigurovat",
 	"driver.died.after.successful.configure": "Ovladač CMake se ukončil hned po úspěšné konfiguraci.",
 	"building.status": "Sestavování",
 	"building.target": "Sestavuje se: {0}",

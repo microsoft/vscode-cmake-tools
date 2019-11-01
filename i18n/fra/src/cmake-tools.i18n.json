@@ -56,7 +56,7 @@
 	"no.variant.abort": "Aucune variante sélectionnée. Abandon de la configuration",
 	"cmake.drive.died.during.tasksbuildcommend": "Le pilote CMake a cessé de fonctionner durant tasksBuildCommand",
 	"run.build": "Exécuter la build",
-	"unable.to.configure": "Build failed: Unable to configure the project",
+	"unable.to.configure": "Échec de la build : impossible de configurer le projet",
 	"driver.died.after.successful.configure": "Le pilote CMake a cessé de fonctionner juste après la réussite de la configuration",
 	"building.status": "Génération",
 	"building.target": "Génération en cours : {0}",

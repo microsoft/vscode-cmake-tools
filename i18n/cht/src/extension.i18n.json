@@ -38,7 +38,7 @@
 	"rescanning.for.kits": "正在重新掃描套件",
 	"found.duplicate.kits": "找到了帶有舊ID的Visual Studio套件，並將其保存在cmake-tools-kits.json中。",
 	"delete.duplicate.kits": "您是否要從cmake-tools-kits.json中刪除重複的Visual Studio套件？",
-	"uninstall.old.cmaketools": "CMake Tools現在由Microsoft發布，版本為1.2.0。請卸載任何較舊版本的CMake工具。",
+    "no.button": "否",
 	"saving.kits.to": "正在將套件儲存至 {0}",
 	"saving.new.kits.to": "正在將新套件儲存至 {0}",
 	"retry.button": "重試",
@@ -65,6 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} 已完成 (傳回無法序列化的值)",
 	"loading.extension.commands": "正在載入延伸模組命令",
 	"register.command": "註冊 CMakeTools 延伸模組命令 {0}",
+    "uninstall.old.cmaketools": "CMake Tools現在由Microsoft發布，版本為1.2.0。請卸載任何較舊版本的CMake工具。",
 	"cmake.tools.initializing": "CMake 工具正在初始化...",
 	"deactivate.cmaketools": "停用 CMakeTools"
 }
