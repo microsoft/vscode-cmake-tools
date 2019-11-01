@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} concluído (retornou um valor não serializável)",
 	"loading.extension.commands": "Carregando comandos de extensão",
 	"register.command": "Registrar o comando de extensão de CMakeTools {0}",
-	"uninstall.old.cmaketools": "Desinstale todas as versões anteriores do CMake Tools. O CMake Tools agora é publicado pela Microsoft, começando com a versão 1.2.0.",
+	"uninstall.old.cmaketools": "Desinstale todas as versões anteriores da extensão CMake Tools. Agora é publicado pela Microsoft, começando com a versão 1.2.0.",
 	"cmake.tools.initializing": "Ferramentas CMake inicializando...",
 	"deactivate.cmaketools": "Desativar CMakeTools"
 }
