@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} завершено (возвращено несериализуемое значение).",
 	"loading.extension.commands": "Загрузка команд расширения.",
 	"register.command": "Регистрация команды расширения CMakeTools {0}",
-	"uninstall.old.cmaketools": "CMake Tools теперь публикуется Microsoft, начиная с версии 1.2.0. Пожалуйста, удалите все старые версии CMake Tools.",
+	"uninstall.old.cmaketools": "Пожалуйста, удалите все старые версии CMake Tools. CMake Tools теперь публикуется Microsoft, начиная с версии 1.2.0.",
 	"cmake.tools.initializing": "Инициализация Средств CMake…",
 	"deactivate.cmaketools": "Деактивировать CMakeTools"
 }
