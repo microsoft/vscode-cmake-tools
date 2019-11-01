@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} tamamlandı (seri hale getirilemeyen bir değer döndürüldü)",
 	"loading.extension.commands": "Uzantı komutları yükleniyor",
 	"register.command": "{0} CMake Araçları uzantısını komutunu kaydet",
-	"uninstall.old.cmaketools": "CMake Tools is now published by Microsoft starting with version 1.2.0. Please uninstall any older versions of CMake Tools.",
+	"uninstall.old.cmaketools": "CMake Tools, Microsoft tarafından 1.2.0 sürümünden başlayarak yayınlanmaktadır. Lütfen daha eski CMake Tools sürümlerini kaldırın.",
 	"cmake.tools.initializing": "CMake Araçları başlatılıyor...",
 	"deactivate.cmaketools": "CMake Araçları'nı devre dışı bırak"
 }
