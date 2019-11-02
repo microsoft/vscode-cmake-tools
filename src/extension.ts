@@ -1325,7 +1325,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
     const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
     if (oldCMakeToolsExtension) {
-        await vscode.window.showInformationMessage(localize('uninstall.old.cmaketools', 'CMake Tools is now published by Microsoft starting with version 1.2.0. Please uninstall any older versions of CMake Tools.'));
+        await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
 
   // Register a protocol handler to serve localized schemas
