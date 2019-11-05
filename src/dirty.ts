@@ -2,7 +2,7 @@
  * A module for doing very primitive dirty-checking
  */ /** */
 
-import {CMakeInputsContent} from '@cmt/cms-client';
+import {CMakeInputsContent} from '@cmt/drivers/cms-client';
 import {fs} from '@cmt/pr';
 import * as util from '@cmt/util';
 import {Stats} from 'fs';

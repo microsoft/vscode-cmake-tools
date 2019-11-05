@@ -24,6 +24,9 @@ export class DefaultEnvironment {
       return Promise.resolve(undefined);
     });
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+    if (process.env.CMAKE_EXECUTABLE) {
+      this.config.updatePartial( {cmakePath: process.env.CMAKE_EXECUTABLE});
+    }
   }
 
   readonly sandbox = sinon.createSandbox();
@@ -33,7 +36,7 @@ export class DefaultEnvironment {
   readonly defaultKitLabel
       = this._defaultKitLabelIn ? this._defaultKitLabelIn : (process.platform === 'win32' ? /^Visual/ : /\s\S/);
   readonly vsContext: FakeContextDefinition = new FakeContextDefinition();
-  private _config = ConfigurationReader.createForDirectory(vscode.workspace.rootPath!);
+  private _config = ConfigurationReader.createForDirectory(vscode.workspace.workspaceFolders![0].uri.fsPath);
   public get config() { return this._config; }
   private _wsContext = new DirectoryContext(this.projectRoot, this.config, new StateManager(this.vsContext));
   public get wsContext() { return this._wsContext; }

@@ -7,6 +7,9 @@ CMake Tools supports a variety of settings that can be set at the user or
 workspace level via VSCode's ``settings.json`` file. This page talks about
 the available options and how they are used.
 
+.. seealso::
+    - :ref:`getting-started`
+
 Options marked with *Supports substitution* allow variable references to appear
 in their strings. See the :ref:`var-subs` section
 
@@ -21,7 +24,7 @@ Available Settings
 Specify the build directory (The root directory where ``CMakeCache.txt`` will
 be generated).
 
-- Default: ``${workspaceRoot}/build``.
+- Default: ``${workspaceFolder}/build``.
 - *Supports substitution*
 
 .. _conf-cmake.buildBeforeRun:
@@ -42,7 +45,7 @@ Specify location of the cmake executable.
 
 - Default: ``cmake``, which causes CMake Tools to search the ``PATH`` environment
   variable, as well as some hard-coded guesses.
-- *Supports substitution* of ``workspaceRoot``, ``workspaceRootFolderName``,
+- *Supports substitution* of ``workspaceRoot``, ``workspaceFolder``, ``workspaceRootFolderName``,
   ``userHome``, ``${command:...}`` and ``${env:...}``. Other substitutions will
   result in empty string.
 
@@ -66,7 +69,7 @@ configure. If not, no value will be passed.
 
 Directory where the root ``CMakeLists.txt`` will be found.
 
-- Default: ``${workspaceRoot}``
+- Default: ``${workspaceFolder}``
 - *Supports substitution*
 
 ``cmake.saveBeforeBuild``
@@ -244,6 +247,9 @@ Some options support the replacement of special values in their string value
 using ``${variable}`` syntax. The following built-in variables are expanded:
 
 ``${workspaceRoot}``
+    **DEPRECATED**. The full path to the workspace root directory
+
+``${workspaceFolder}``
     The full path to the workspace root directory
 
 ``${workspaceRootFolderName}``

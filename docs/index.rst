@@ -23,6 +23,7 @@ Contents:
     debugging
 
     settings
+    common_issues
     troubleshooting
 
     faq

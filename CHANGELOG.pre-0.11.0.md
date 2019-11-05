@@ -123,7 +123,7 @@
     `ctrl+f5` keybinding**
   - Fix issue with being able to switch back to the `all` target
   - Fix issue with CTest output being garbled without line breaks
-  - Fix hang when build tools generate large amounts of output.*
+  - Fix extension not responding when build tools generate large amounts of output.*
   - **New** make-shift progress bar for build progress (supports Make and Ninja).*
   - Options to control what output parsers are enabled*
   \* Special thanks goes to [bbosnjak](https://github.com/bbosnjak) for these ones!

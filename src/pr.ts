@@ -13,6 +13,10 @@ import * as fs_ from 'fs';
 import * as path from 'path';
 
 import * as rimraf from 'rimraf';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 /**
  * Wrappers for the `fs` module.
@@ -70,14 +74,14 @@ export async function mkdir_p(fspath: string): Promise<void> {
     await mkdir_p(parent);
   } else {
     if (!(await stat(parent)).isDirectory()) {
-      throw new Error('Cannot create ${fspath}: ${parent} is a non-directory');
+      throw new Error(localize('cannot.create.path', 'Cannot create {0}: {1} is a non-directory', fspath, parent));
     }
   }
   if (!await exists(fspath)) {
     await mkdir(fspath);
   } else {
     if (!(await stat(fspath)).isDirectory()) {
-      throw new Error('Cannot mkdir_p on ${fspath}. It exists, and is not a directory!');
+      throw new Error(localize('cannot.create.directory', 'Cannot create directory {0}. It exists, and is not a directory!', fspath));
     }
   }
 }

@@ -283,4 +283,24 @@ export interface CMakeToolsAPI extends Disposable {
    * Get the path to the active launch target
    */
   launchTargetPath(): Thenable<string|null>;
+
+  /**
+   * Get the directory to the active launch target
+   */
+  launchTargetDirectory(): Thenable<string|null>;
+
+  /**
+   * Get the selected build type
+   */
+  currentBuildType(): Thenable<string|null>;
+
+  /**
+   * Get the build directory.
+   */
+  buildDirectory(): Thenable<string|null>;
+
+  /**
+   * Get the build command string for the active target
+   */
+  tasksBuildCommand(): Thenable<string|null>;
 }

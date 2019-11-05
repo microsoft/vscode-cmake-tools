@@ -5,11 +5,15 @@ import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
 import * as api from './api';
-import {CMakeDriver} from './driver';
+import {CMakeDriver} from '@cmt/drivers/driver';
 import * as logging from './logging';
 import {fs} from './pr';
 import {OutputConsumer} from './proc';
 import * as util from './util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('ctest');
 
@@ -329,7 +333,7 @@ export class CTestDriver implements vscode.Disposable {
   set testResults(v: CTestResults|null) {
     this._testResults = v;
     if (v) {
-      const total = this.tests.length;
+      const total = v.Site.Testing.Test.length;
       const passing = v.Site.Testing.Test.reduce((acc, test) => acc + (test.Status === 'passed' ? 1 : 0), 0);
       this._resultsChangedEmitter.fire({passing, total});
     } else {
@@ -346,7 +350,7 @@ export class CTestDriver implements vscode.Disposable {
 
     const ctestpath = await this.ws.ctestPath;
     if (ctestpath === null) {
-      log.info('CTest path is not set');
+      log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return -2;
     }
 
@@ -361,10 +365,10 @@ export class CTestDriver implements vscode.Disposable {
     const res = await child.result;
     await this.reloadTests(driver);
     if (res.retc === null) {
-      log.info('CTest run was terminated');
+      log.info(localize('ctest.run.terminated', 'CTest run was terminated'));
       return -1;
     } else {
-      log.info('CTest finished with return code', res.retc);
+      log.info(localize('ctest.finished.with.code', 'CTest finished with return code {0}', res.retc));
     }
     return res.retc;
   }
@@ -383,7 +387,7 @@ export class CTestDriver implements vscode.Disposable {
 
     const ctestpath = await this.ws.ctestPath;
     if (ctestpath === null) {
-      log.info('CTest path is not set');
+      log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return this.tests = [];
     }
 
@@ -394,7 +398,7 @@ export class CTestDriver implements vscode.Disposable {
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
-      log.error('There was an error running ctest to determine available test executables');
+      log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
       return this.tests = [];
     }
     const tests = result.stdout.split('\n')

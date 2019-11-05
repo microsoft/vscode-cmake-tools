@@ -7,6 +7,10 @@ import * as logging from './logging';
 import {fs} from './pr';
 import rollbar from './rollbar';
 import * as util from './util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cache');
 
@@ -70,17 +74,17 @@ export class CMakeCache {
    * `path` has no effect on existing instance of this class.
    */
   static async fromPath(path: string): Promise<CMakeCache> {
-    log.debug('Reading CMake cache file', path);
+    log.debug(localize('reading.cmake.cache.file', 'Reading CMake cache file {0}', path));
     const exists = await fs.exists(path);
     if (exists) {
-      log.trace('File exists');
+      log.trace(localize('file.exists', 'File exists'));
       const content = await fs.readFile(path);
-      log.trace('File contents read successfully');
+      log.trace(localize('file.contents.read.successfully', 'File contents read successfully'));
       const entries = CMakeCache.parseCache(content.toString());
-      log.trace('Parsed', entries.size, 'entries from', path);
+      log.trace(localize('parsed.entries.from', 'Parsed {0} entries from {1}', entries.size, path));
       return new CMakeCache(path, exists, entries);
     } else {
-      log.debug('Cache file does not exist: Returning empty cache data');
+      log.debug(localize('cache.file.does.not.exist', 'Cache file does not exist: Returning empty cache data'));
       return new CMakeCache(path, exists, new Map());
     }
   }
@@ -116,7 +120,7 @@ export class CMakeCache {
    * @returns A **new instance**.
    */
   getReloaded(): Promise<CMakeCache> {
-    log.debug('Reloading Cache file', this.path);
+    log.debug(localize('reloading.cache.file', 'Reloading Cache file {0}', this.path));
     return CMakeCache.fromPath(this.path);
   }
 
@@ -126,7 +130,7 @@ export class CMakeCache {
    * @returns A map from the cache keys to the entries in the cache.
    */
   static parseCache(content: string): Map<string, Entry> {
-    log.debug('Parsing CMake cache string');
+    log.debug(localize('parsing.cmake.cache.string', 'Parsing CMake cache string'));
     const lines = content.split(/\r\n|\n|\r/).filter(line => !!line.length).filter(line => !/^\s*#/.test(line));
 
     const entries = new Map<string, Entry>();
@@ -137,15 +141,15 @@ export class CMakeCache {
       } else {
         const match = /^(.*?):(.*?)=(.*)/.exec(line);
         if (!match) {
-          rollbar.error('Failed to read a line from a CMake cache file', {line});
+          rollbar.error(localize('failed.to.read.line.from.cmake.cache.file', 'Failed to read a line from a CMake cache file {0}', line));
           continue;
         }
         const [, name, typename, valuestr] = match;
         if (!name || !typename)
           continue;
-        log.trace(`Read line in cache with name=${name}, typename=${typename}, valuestr=${valuestr}`);
+        log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typename, 'valuestr', valuestr));
         if (name.endsWith('-ADVANCED') && valuestr === '1') {
-          log.trace('Skipping *-ADVANCED variable');
+          log.trace(localize('skipping.variable', 'Skipping {0} variable', '*-ADVANCED'));
           // We skip the ADVANCED property variables. They're a little odd.
         } else {
           const key = name;
@@ -162,16 +166,16 @@ export class CMakeCache {
           const docs = docs_acc.trim();
           docs_acc = '';
           if (type === undefined) {
-            rollbar.error(`Cache entry '${name}' has unknown type: '${typename}'`);
+            rollbar.error(localize('cache.entry.unknown', 'Cache entry \'{0}\' has unknown type: \'{1}\'', name, typename));
           } else {
-            log.trace('Constructing a new cache entry from the given line');
+            log.trace(localize('constructing.new.cache.entry', 'Constructing a new cache entry from the given line'));
             entries.set(name, new Entry(key, valuestr, type, docs, false));
           }
         }
       }
     }
 
-    log.trace('Parsed', entries.size, 'cache entries');
+    log.trace(localize('parsed.cache.entries', 'Parsed {0} cache entries', entries.size));
     return entries;
   }
 
@@ -182,7 +186,11 @@ export class CMakeCache {
    */
   get(key: string): Entry|null {
     const ret = this._entries.get(key) || null;
-    log.trace(`Get cache key ${key}=${ret ? ret.value : '[[Misisng]]'}`);
+    if (ret) {
+      log.trace(localize('get.cache.key', 'Get cache key {0}={1}', key, ret.value));
+    } else {
+      log.trace(localize('get.cache.key.missing', 'Get cache key {0}=[[Missing]]', key));
+    }
     return ret;
   }
 }

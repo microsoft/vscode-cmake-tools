@@ -9,6 +9,12 @@ import {createLogger} from './logging';
 import rollbar from './rollbar';
 import * as util from './util';
 
+import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
 const log = createLogger('proc');
 
 export interface ExecutionResult {
@@ -62,7 +68,13 @@ export interface OutputConsumer {
  */
 export interface Subprocess {
   result: Promise<ExecutionResult>;
-  child: proc.ChildProcess;
+  child: proc.ChildProcess|undefined;
+}
+
+export interface BuildCommand {
+  command: string;
+  args?: string[];
+  build_env?: {[key: string]: string};
 }
 
 export interface EnvironmentVariables { [key: string]: string; }
@@ -74,6 +86,13 @@ export interface ExecutionOptions {
   cwd?: string;
   encoding?: BufferEncoding;
   outputEncoding?: string;
+  useTask?: boolean;
+}
+
+export function buildCmdStr(command: string, args?: string[]): string {
+  let cmdarr = [command];
+  if (args) cmdarr = cmdarr.concat(args);
+  return cmdarr.map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a).join(' ');
 }
 
 /**
@@ -87,19 +106,15 @@ export interface ExecutionOptions {
  * which produce a lot of output should be careful about memory constraints.
  */
 export function execute(command: string,
-                        args: string[],
+                        args?: string[],
                         outputConsumer?: OutputConsumer|null,
                         options?: ExecutionOptions): Subprocess {
+  const cmdstr = buildCmdStr(command, args);
   if (options && options.silent !== true) {
-    log.info('Executing command: '
-             // We do simple quoting of arguments with spaces.
+    log.info(// We do simple quoting of arguments with spaces.
              // This is only shown to the user,
              // and doesn't have to be 100% correct.
-             + [command]
-                   .concat(args)
-                   .map(a => a.replace('"', '\"'))
-                   .map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a)
-                   .join(' '));
+             localize('executing.command', 'Executing command: {0}', cmdstr));
   }
   if (!options) {
     options = {};
@@ -112,72 +127,94 @@ export function execute(command: string,
   if (options && options.cwd) {
     spawn_opts.cwd = options.cwd;
   }
-  const child: proc.ChildProcess = proc.spawn(command, args, spawn_opts);
-  if (options.encoding)
-    child.stdout.setEncoding(options.encoding);
+  let child: proc.ChildProcess|undefined;
+  let result: Promise<ExecutionResult>;
+  const useTask = (options && options.useTask) ? options.useTask : false;
+  if (useTask)
+  {
+    // child = undefined;
+    // const term = vscode.window.createTerminal("Cmake Build");
+    // term.show(true);
+    // term.sendText(cmdstr);
 
-  const encoding = options.outputEncoding ? options.outputEncoding:'utf8';
+    vscode.commands.executeCommand("workbench.action.tasks.build");
 
-  const result = new Promise<ExecutionResult>((resolve, reject) => {
-    child.on('error', err => { reject(err); });
-    let stdout_acc = '';
-    let line_acc = '';
-    let stderr_acc = '';
-    let stderr_line_acc = '';
-    child.stdout.on('data', (data: Uint8Array) => {
-      rollbar.invoke('Processing "data" event from proc stdout', {data, command, args}, () => {
-        const str = iconv.decode(new Buffer(data), encoding);
-        const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-        while (lines.length > 1) {
-          line_acc += lines[0];
-          if (outputConsumer) {
-            outputConsumer.output(line_acc);
-          }
-          line_acc = '';
-          // Erase the first line from the list
-          lines.splice(0, 1);
-        }
-        console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-        line_acc += lines[0];
-        stdout_acc += str;
-      });
+    result = new Promise<ExecutionResult>((resolve, reject) => {
+      resolve({retc: 0, stdout: '', stderr: ''});
+      if (false) reject();
     });
-    child.stderr.on('data', (data: Uint8Array) => {
-      rollbar.invoke('Processing "data" event from proc stderr', {data, command, args}, () => {
-        const str = data.toString();
-        const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
-        while (lines.length > 1) {
-          stderr_line_acc += lines[0];
-          if (outputConsumer) {
-            outputConsumer.error(stderr_line_acc);
-          }
-          stderr_line_acc = '';
-          // Erase the first line from the list
-          lines.splice(0, 1);
-        }
-        console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
-        stderr_line_acc += lines[0];
-        stderr_acc += str;
-      });
-    });
-    // Don't stop until the child stream is closed, otherwise we might not read
-    // the whole output of the command.
-    child.on('close', retc => {
-      try {
-        rollbar.invoke('Resolving process on "close" event', {line_acc, stderr_line_acc, command, retc}, () => {
-          if (line_acc && outputConsumer) {
-            outputConsumer.output(line_acc);
-          }
-          if (stderr_line_acc && outputConsumer) {
-            outputConsumer.error(stderr_line_acc);
-          }
-          resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
+  }
+  else
+  {
+    child = proc.spawn(command, args, spawn_opts);
+    if (options.encoding)
+      child.stdout.setEncoding(options.encoding);
+
+    const encoding = options.outputEncoding ? options.outputEncoding:'utf8';
+
+    result = new Promise<ExecutionResult>((resolve, reject) => {
+      if (child) {
+        child.on('error', err => { reject(err); });
+        let stdout_acc = '';
+        let line_acc = '';
+        let stderr_acc = '';
+        let stderr_line_acc = '';
+        child.stdout.on('data', (data: Uint8Array) => {
+          rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), {data, command, args}, () => {
+            const str = iconv.decode(new Buffer(data), encoding);
+            const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
+            while (lines.length > 1) {
+              line_acc += lines[0];
+              if (outputConsumer) {
+                outputConsumer.output(line_acc);
+              }
+              line_acc = '';
+              // Erase the first line from the list
+              lines.splice(0, 1);
+            }
+            console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
+            line_acc += lines[0];
+            stdout_acc += str;
+          });
         });
-      } catch (_) {
-        // No error handling since Rollbar has taken the error.
-        resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
+        child.stderr.on('data', (data: Uint8Array) => {
+          rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), {data, command, args}, () => {
+            const str = data.toString();
+            const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
+            while (lines.length > 1) {
+              stderr_line_acc += lines[0];
+              if (outputConsumer) {
+                outputConsumer.error(stderr_line_acc);
+              }
+              stderr_line_acc = '';
+              // Erase the first line from the list
+              lines.splice(0, 1);
+            }
+            console.assert(lines.length, 'Invalid lines', JSON.stringify(lines));
+            stderr_line_acc += lines[0];
+            stderr_acc += str;
+          });
+        });
+        // Don't stop until the child stream is closed, otherwise we might not read
+        // the whole output of the command.
+        child.on('close', retc => {
+          try {
+            rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), {line_acc, stderr_line_acc, command, retc}, () => {
+              if (line_acc && outputConsumer) {
+                outputConsumer.output(line_acc);
+              }
+              if (stderr_line_acc && outputConsumer) {
+                outputConsumer.error(stderr_line_acc);
+              }
+              resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
+            });
+          } catch (_) {
+            // No error handling since Rollbar has taken the error.
+            resolve({retc, stdout: stdout_acc, stderr: stderr_acc});
+          }
+        });
       }
     });
-  });
+  }
   return {child, result};
 }

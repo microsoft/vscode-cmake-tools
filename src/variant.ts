@@ -13,6 +13,10 @@ import {loadSchema} from './schema';
 import {StateManager} from './state';
 import * as util from './util';
 import {MultiWatcher} from './watcher';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('variant');
 
@@ -144,26 +148,26 @@ export function processVariantFileData(root: VarFileRoot): VariantCollection {
 export const DEFAULT_VARIANTS: VarFileRoot = {
   buildType: {
     default: 'debug',
-    description: 'The build type',
+    description: localize('build.type.description', 'The build type'),
     choices: {
       debug: {
         short: 'Debug',
-        long: 'Emit debug information without performing optimizations',
+        long: localize('emit.debug.without.optimizations', 'Emit debug information without performing optimizations'),
         buildType: 'Debug',
       },
       release: {
         short: 'Release',
-        long: 'Enable optimizations, omit debug info',
+        long: localize('enable.optimizations.omit.debug', 'Enable optimizations, omit debug info'),
         buildType: 'Release',
       },
       minsize: {
         short: 'MinSizeRel',
-        long: 'Optimize for smallest binary size',
+        long: localize('optimize.for.smallest', 'Optimize for smallest binary size'),
         buildType: 'MinSizeRel',
       },
       reldeb: {
         short: 'RelWithDebInfo',
-        long: 'Perform optimizations AND include debugging information',
+        long: localize('optimize.and.debug', 'Perform optimizations AND include debugging information'),
         buildType: 'RelWithDebInfo',
       }
     }
@@ -195,7 +199,7 @@ export class VariantManager implements vscode.Disposable {
    * @param stateManager The state manager for this instance
    */
   constructor(readonly stateManager: StateManager, readonly config: ConfigurationReader) {
-    log.debug('Constructing VariantManager');
+    log.debug(localize('constructing', 'Constructing {0}', 'VariantManager'));
     if (!vscode.workspace.workspaceFolders) {
       return;  // Nothing we can do. We have no directory open
     }
@@ -211,10 +215,10 @@ export class VariantManager implements vscode.Disposable {
       this._variantFileWatcher.createWatcher(path.join(base_path, filename));
     }
     this._variantFileWatcher.onAnyEvent(
-        e => { rollbar.invokeAsync(`Reloading variants file ${e.fsPath}`, () => this._reloadVariantsFile(e.fsPath)); });
+        e => { rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', e.fsPath), () => this._reloadVariantsFile(e.fsPath)); });
 
     config.onChange('defaultVariants', () => {
-      rollbar.invokeAsync(`Reloading variants from settings`, () => this._reloadVariantsFile());
+      rollbar.invokeAsync(localize('reloading.variants.from.settings', 'Reloading variants from settings'), () => this._reloadVariantsFile());
     });
   }
 
@@ -230,7 +234,7 @@ export class VariantManager implements vscode.Disposable {
   private async _reloadVariantsFile(filepath?: string) {
     const validate = await loadSchema('schemas/variants-schema.json');
 
-    const workdir = vscode.workspace.rootPath;
+    const workdir = util.getPrimaryWorkspaceFolder();
     if (!workdir) {
       // Can't read, we don't have a dir open
       return;
@@ -238,10 +242,10 @@ export class VariantManager implements vscode.Disposable {
 
     if (!filepath || !await fs.exists(filepath)) {
       const candidates = [
-        path.join(workdir, 'cmake-variants.json'),
-        path.join(workdir, 'cmake-variants.yaml'),
-        path.join(workdir, '.vscode/cmake-variants.json'),
-        path.join(workdir, '.vscode/cmake-variants.yaml'),
+        path.join(workdir.fsPath, 'cmake-variants.json'),
+        path.join(workdir.fsPath, 'cmake-variants.yaml'),
+        path.join(workdir.fsPath, '.vscode/cmake-variants.json'),
+        path.join(workdir.fsPath, '.vscode/cmake-variants.yaml'),
       ];
       for (const testpath of candidates) {
         if (await fs.exists(testpath)) {
@@ -261,20 +265,20 @@ export class VariantManager implements vscode.Disposable {
         } else {
           new_variants = yaml.load(content) as VarFileRoot;
         }
-      } catch (e) { log.error(`Error parsing ${filepath}: ${e}`); }
+      } catch (e) { log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, e)); }
     }
 
     const is_valid = validate(new_variants);
     if (!is_valid) {
       const errors = validate.errors as ajv.ErrorObject[];
-      log.error('Invalid variants specified:');
+      log.error(localize('invalid.variants', 'Invalid variants specified:'));
       for (const err of errors) {
         log.error(` >> ${err.dataPath}: ${err.message}`);
       }
       new_variants = DEFAULT_VARIANTS;
-      log.info('Loaded default variants');
+      log.info(localize('loaded.default.variants', 'Loaded default variants'));
     } else {
-      log.info('Loaded new set of variants');
+      log.info(localize('loaded.new.variants.set', 'Loaded new set of variants'));
     }
 
     this._variants = processVariantFileData(new_variants);
@@ -289,12 +293,12 @@ export class VariantManager implements vscode.Disposable {
       const unknown_choice: VariantOption = {short: 'Unknown', key: '__unknown__'};
       const found_setting = vars.settings.find(s => s.name == setting_key);
       if (!found_setting) {
-        error = `Missing setting "${setting_key}" in variant definition.`;
+        error = localize('missing.setting.in.variant', 'Missing setting "{0}" in variant definition.', setting_key);
         return unknown_choice;
       }
       const found_choice = found_setting.choices.find(o => o.key == opt_key);
       if (!found_choice) {
-        error = `Missing variant choice "${opt_key}" on "${setting_key}" in variant definition.`;
+        error = localize('missing.variant.choice', 'Missing variant choice "{0}" on "{1}" in variant definition.', opt_key, setting_key);
         return unknown_choice;
       }
       return found_choice;
@@ -340,10 +344,10 @@ export class VariantManager implements vscode.Disposable {
 
     let options_or_error = this.variantConfigurationOptionsForKWs(kws);
     if (typeof options_or_error === 'string') {
-      log.warning('Last variant selection is incompatible with present variant definition.');
+      log.warning(localize('incompatible.variant', 'Last variant selection is incompatible with present variant definition.'));
       log.warning('>> ' + options_or_error);
 
-      log.warning('Using default variant choices from variant definition.');
+      log.warning(localize('using.default.variant.choices', 'Using default variant choices from variant definition.'));
       const defaultKws = this.findDefaultChoiceCombination();
       options_or_error = this.variantConfigurationOptionsForKWs(defaultKws);
     }
@@ -380,6 +384,10 @@ export class VariantManager implements vscode.Disposable {
   publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
     this.stateManager.activeVariantSettings = keywordSettings;
     this._activeVariantChanged.fire();
+  }
+
+  public get activeKeywordSetting(): Map<string, string> | null {
+    return this.stateManager.activeVariantSettings;
   }
 
   transformChoiceCombinationToKeywordSettings(choiceCombination: {settingKey: string, settingValue: string}[]):

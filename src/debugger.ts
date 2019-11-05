@@ -2,6 +2,10 @@ import {ExecutableTarget} from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import * as proc from '@cmt/proc';
 import {createLogger} from './logging';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('debugger');
 
@@ -45,7 +49,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
   if (!await checkDebugger(debuggerPath)) {
     debuggerPath = 'gdb';
     if (!await checkDebugger(debuggerPath)) {
-      throw new Error(`Unable to find GDB in default search path and ${debuggerPath}.`);
+      throw new Error(localize('gdb.not.found', 'Unable to find GDB in default search path and {0}.', debuggerPath));
     }
   }
 
@@ -53,13 +57,13 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceRoot}',
+    cwd: '${workspaceFolder}',
     args: [],
     MIMode: 'gdb',
     miDebuggerPath: debuggerPath,
     setupCommands: [
       {
-        description: 'Enable pretty-printing for gdb',
+        description: localize('enable.pretty.printing', 'Enable pretty-printing for gdb'),
         text: '-enable-pretty-printing',
         ignoreFailures: true,
       },
@@ -70,14 +74,14 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
 
 async function createLLDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<Configuration> {
   if (!await checkDebugger(debuggerPath)) {
-    throw new Error(`Unable to find GDB in default search path and ${debuggerPath}.`);
+    throw new Error(localize('gdb.not.found', 'Unable to find GDB in default search path and {0}.', debuggerPath));
   }
 
   return {
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceRoot}',
+    cwd: '${workspaceFolder}',
     args: [],
     MIMode: 'lldb',
     miDebuggerPath: debuggerPath,
@@ -90,7 +94,7 @@ function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
     type: 'cppvsdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceRoot}',
+    cwd: '${workspaceFolder}',
     args: [],
     program: target.path
   };
@@ -141,7 +145,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 
   const compiler_path = searchForCompilerPathInCache(cache);
   if (compiler_path === null) {
-    throw Error('No compiler found in cache file.');  // MSVC should be already found by CMAKE_LINKER
+    throw Error(localize('no.compiler.found.in.cache', 'No compiler found in cache file.'));  // MSVC should be already found by CMAKE_LINKER
   }
 
   const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
@@ -165,7 +169,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
   const description = DEBUG_GEN[debugger_name];
-  const gcc_compiler_regex = /([cg]\+\+|g?cc)+/gi;
+  const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=\.exe$|$)/gi;
   const gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.miMode);
   if (gdb_debugger_path.search(new RegExp(description.miMode)) != -1) {
     return description.createConfig(gdb_debugger_path, target);
@@ -176,7 +180,8 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     return createMSVCDebugConfiguration(target);
   }
 
-  log.warning(`Unable to automatically determine debugger corresponding to compiler: ${compiler_path}`);
+  log.warning(localize('unable.to.determine.debugger.for.compiler',
+    'Unable to automatically determine debugger corresponding to compiler: {}', compiler_path));
   return null;
 }
 

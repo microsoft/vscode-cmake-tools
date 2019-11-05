@@ -7,7 +7,11 @@ import * as vscode from 'vscode';
 
 import {createLogger} from './logging';
 import {EnvironmentVariables} from './proc';
-import {normalizeEnvironmentVarname, replaceAll} from './util';
+import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths} from './util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('expand');
 
@@ -65,7 +69,9 @@ export interface ExpansionOptions {
  * @returns A string with the variable references replaced
  */
 export async function expandString(tmpl: string, opts: ExpansionOptions) {
-  const env = opts.envOverride ? opts.envOverride : process.env;
+  const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
+  const env = mergeEnvironment(envPreNormalize);
+
   const repls = opts.vars;
 
   // We accumulate a list of substitutions that we need to make, preventing
@@ -79,7 +85,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     const key = mat[1];
     const repl = repls[key];
     if (!repl) {
-      log.warning(`Invalid variable reference ${full} in string: ${tmpl}`);
+      log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, tmpl));
     } else {
       subs.set(full, repl);
     }
@@ -89,7 +95,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   while ((mat = env_re.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = env[normalizeEnvironmentVarname(varname)] || '';
+    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
     subs.set(full, repl);
   }
 
@@ -97,7 +103,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   while ((mat = env_re2.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = env[normalizeEnvironmentVarname(varname)] || '';
+    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
     subs.set(full, repl);
   }
 
@@ -122,7 +128,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     try {
       const command_ret = await vscode.commands.executeCommand(command);
       subs.set(full, `${command_ret}`);
-    } catch (e) { log.warning(`Exception while executing command ${command} for string: ${tmpl} (${e})`); }
+    } catch (e) { log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} ({2})', command, tmpl, e)); }
   }
 
   let final_str = tmpl;

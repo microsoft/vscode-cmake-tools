@@ -82,8 +82,8 @@ specifying a a command-based substitution in the appropriate field of
 ``launch.json``.
 
 Here is a minimal example of a ``launch.json`` that uses the
-``cmake.launchTargetPath`` to start a debugger on the active selected launch
-target:
+``cmake.launchTargetPath`` and ``cmake.launchTargetDirectory`` to start a debugger
+on the active selected launch target:
 
 .. code:: javascript
 
@@ -101,8 +101,10 @@ target:
                 "cwd": "${workspaceFolder}",
                 "environment": [
                     {
+                        // add the directory where our target was built to the PATHs
+                        // it gets resolved by CMake Tools:
                         "name": "PATH",
-                        "value": "$PATH:$HOME/some_path"
+                        "value": "$PATH:${command:cmake.launchTargetDirectory}"
                     },
                     {
                         "name": "OTHER_VALUE",
@@ -127,7 +129,7 @@ absolute path to the program to run.
 
 .. note::
     A successful :ref:`configure <configuring>` must be executed before
-    ``cmake.launchTargetPath`` will resolve correctly.
+    ``cmake.launchTargetPath`` and ``cmake.launchTargetDirectory`` will resolve correctly.
 
 Running Targets Without a Debugger
 **********************************

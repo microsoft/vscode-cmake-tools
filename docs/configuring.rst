@@ -6,6 +6,9 @@ CMake Configuring
 CMake Tools wraps the CMake *configure* process separately from the *build*
 process.
 
+.. seealso::
+    - :ref:`getting-started`
+
 A Crash-Course on CMake's Configuration Process
 ***********************************************
 

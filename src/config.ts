@@ -34,7 +34,6 @@ export interface ExtensionConfigurationSettings {
   parallelJobs: number;
   ctestPath: string;
   ctest: {parallelJobs: number;};
-  autoRestartBuild: boolean;
   parseBuildDiagnostics: boolean;
   enabledOutputParsers: string[];
   debugConfig: object;
@@ -49,6 +48,8 @@ export interface ExtensionConfigurationSettings {
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   useCMakeServer: boolean;
+  ignoreKitEnv: boolean;
+  buildTask: boolean;
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
@@ -139,8 +140,6 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get clearOutputBeforeBuild(): boolean { return !!this.configData.clearOutputBeforeBuild; }
 
-  get autoRestartBuild(): boolean { return !!this.configData.autoRestartBuild; }
-
   get configureSettings(): any { return this.configData.configureSettings; }
 
   get cacheInit() { return this.configData.cacheInit; }
@@ -217,6 +216,8 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     return this.configData.loggingLevel;
   }
+  get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
+  get buildTask(): boolean { return this.configData.buildTask; }
   get outputLogEncoding(): string { return this.configData.outputLogEncoding; }
   get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
 
@@ -240,7 +241,6 @@ export class ConfigurationReader implements vscode.Disposable {
     parallelJobs: new vscode.EventEmitter<number>(),
     ctestPath: new vscode.EventEmitter<string>(),
     ctest: new vscode.EventEmitter<{parallelJobs: number;}>(),
-    autoRestartBuild: new vscode.EventEmitter<boolean>(),
     parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
     enabledOutputParsers: new vscode.EventEmitter<string[]>(),
     debugConfig: new vscode.EventEmitter<object>(),
@@ -255,6 +255,8 @@ export class ConfigurationReader implements vscode.Disposable {
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
+    ignoreKitEnv: new vscode.EventEmitter<boolean>(),
+    buildTask: new vscode.EventEmitter<boolean>(),
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
