@@ -36,8 +36,8 @@
 	"scan.for.kits.button": "Examinar em busca de kits",
 	"cancel.button": "Cancelar",
 	"rescanning.for.kits": "Examinando novamente para kits",
-	"found.duplicate.kits": "Encontrados kits do Visual Studio com os IDs antigos salvos no cmake-tools-kits.json.",
-	"delete.duplicate.kits": "Deseja excluir os kits duplicados do Visual Studio do cmake-tools-kits.json?",
+	"found.duplicate.kits": "Foram encontrados kits do Visual Studio com as IDs antigas salvos no cmake-tools-kits.json.",
+	"delete.duplicate.kits": "Deseja excluir os kits do Visual Studio duplicados do cmake-tools-kits.json?",
 	"no.button": "Não",
 	"saving.kits.to": "Salvando kits em {0}",
 	"saving.new.kits.to": "Salvando novos kits em {0}",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} concluído (retornou um valor não serializável)",
 	"loading.extension.commands": "Carregando comandos de extensão",
 	"register.command": "Registrar o comando de extensão de CMakeTools {0}",
-	"uninstall.old.cmaketools": "Desinstale todas as versões anteriores da extensão CMake Tools. Agora é publicado pela Microsoft, começando com a versão 1.2.0.",
+	"uninstall.old.cmaketools": "Desinstale as versões mais antigas da extensão de Ferramentas CMake. Iniciando com a versão 1.2.0, a extensão passou a ser publicada pela Microsoft.",
 	"cmake.tools.initializing": "Ferramentas CMake inicializando...",
 	"deactivate.cmaketools": "Desativar CMakeTools"
 }

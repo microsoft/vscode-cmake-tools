@@ -7,5 +7,5 @@
 	"gdb.not.found": "在默认搜索路径和 {0} 中找不到 GDB。",
 	"enable.pretty.printing": "为 gdb 启用整齐打印",
 	"no.compiler.found.in.cache": "在缓存文件中找不到编译器。",
-	"unable.to.determine.debugger.for.compiler": "无法自动确定对应于编译器的调试程序: {}"
+	"unable.to.determine.debugger.for.compiler": "Unable to automatically determine debugger corresponding to compiler: {0}"
 }

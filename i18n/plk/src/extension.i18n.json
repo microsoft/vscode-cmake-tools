@@ -36,8 +36,8 @@
 	"scan.for.kits.button": "Skanuj w poszukiwaniu zestawów",
 	"cancel.button": "Anuluj",
 	"rescanning.for.kits": "Ponowne skanowanie pod kątem zestawów",
-	"found.duplicate.kits": "Znaleziono zestawy Visual Studio ze starymi identyfikatorami zapisanymi w cmake-tools-kits.json.",
-	"delete.duplicate.kits": "Czy chcesz usunąć zduplikowane zestawy Visual Studio z cmake-tools-kits.json?",
+	"found.duplicate.kits": "Znaleziono zestawy programu Visual Studio ze starymi identyfikatorami zapisane w pliku cmake-tools-kits.json.",
+	"delete.duplicate.kits": "Czy chcesz usunąć zduplikowane zestawy programu Visual Studio z pliku cmake-tools-kits.json?",
 	"no.button": "Nie",
 	"saving.kits.to": "Zapisywanie zestawów do lokalizacji {0}",
 	"saving.new.kits.to": "Zapisywanie nowych zestawów do lokalizacji {0}",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "Zakończono {0} (zwrócono wartość, której nie można serializować)",
 	"loading.extension.commands": "Ładowanie poleceń rozszerzenia",
 	"register.command": "Zarejestruj polecenie rozszerzenia CMakeTools {0}",
-	"uninstall.old.cmaketools": "Odinstaluj wszystkie starsze wersje rozszerzenia CMake Tools. Jest teraz publikowany przez Microsoft począwszy od wersji 1.2.0.",
+	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
 	"cmake.tools.initializing": "Trwa inicjowanie narzędzi CMake Tools...",
 	"deactivate.cmaketools": "Dezaktywuj rozszerzenie CMakeTools"
 }

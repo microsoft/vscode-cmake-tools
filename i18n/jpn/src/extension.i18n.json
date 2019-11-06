@@ -36,8 +36,8 @@
 	"scan.for.kits.button": "キットのスキャン",
 	"cancel.button": "キャンセル",
 	"rescanning.for.kits": "キットを再スキャンしています",
-	"found.duplicate.kits": "cmake-tools-kits.jsonに保存された古いIDを持つVisual Studioキットを見つけました。",
-	"delete.duplicate.kits": "重複したVisual Studioキットをcmake-tools-kits.jsonから削除しますか？",
+	"found.duplicate.kits": "cmake-tools-kits.json に保存されている古い ID の Visual Studio キットが見つかりました。",
+	"delete.duplicate.kits": "cmake-tools-kits.json から重複する Visual Studio キットを削除しますか?",
 	"no.button": "いいえ",
 	"saving.kits.to": "キットを {0} に保存しています",
 	"saving.new.kits.to": "新しいキットを {0} に保存しています",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} が完了しました (シリアル化可能でない値が返されました)",
 	"loading.extension.commands": "拡張コマンドを読み込んでいます",
 	"register.command": "CMakeTools 拡張コマンド {0} の登録",
-	"uninstall.old.cmaketools": "CMakeツール拡張機能の古いバージョンをアンインストールしてください。現在、バージョン1.2.0からMicrosoftによって公開されています。",
+	"uninstall.old.cmaketools": "以前のバージョンの CMake Tools 拡張機能をすべてアンインストールしてください。バージョン1.2.0 以降、Microsoft によって公開されるようになりました。",
 	"cmake.tools.initializing": "CMake Tools を初期化しています...",
 	"deactivate.cmaketools": "CMakeTools の非アクティブ化"
 }

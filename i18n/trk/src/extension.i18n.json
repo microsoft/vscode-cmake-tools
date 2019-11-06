@@ -36,8 +36,8 @@
 	"scan.for.kits.button": "Setler için tara",
 	"cancel.button": "İptal",
 	"rescanning.for.kits": "Setler için yeniden taranıyor",
-	"found.duplicate.kits": "Cmake-tools-kits.json dosyasına kaydedilen eski kimlikleri olan Visual Studio kitleri bulundu.",
-	"delete.duplicate.kits": "Yinelenen Visual Studio kitlerini cmake-tools-kits.json'dan silmek ister misiniz?",
+	"found.duplicate.kits": "cmake-tools-kits.json içinde eski kimlikleri kaydedilmiş Visual Studio setleri bulundu.",
+	"delete.duplicate.kits": "cmake-tools-kits.json dosyasındaki yinelenen Visual Studio setlerini silmek istiyor musunuz?",
 	"no.button": "Hayır",
 	"saving.kits.to": "Setler {0} konumuna kaydediliyor",
 	"saving.new.kits.to": "Yeni setler {0} konumuna kaydediliyor",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} tamamlandı (seri hale getirilemeyen bir değer döndürüldü)",
 	"loading.extension.commands": "Uzantı komutları yükleniyor",
 	"register.command": "{0} CMake Araçları uzantısını komutunu kaydet",
-	"uninstall.old.cmaketools": "Lütfen CMake Tools eklentisinin daha eski sürümlerini kaldırın. Şimdi 1.2.0 ile başlayan Microsoft tarafından yayımlandı.",
+	"uninstall.old.cmaketools": "Lütfen CMake Araçları uzantısının eski sürümlerini kaldırın. Uzantı, 1.2.0 sürümünden itibaren Microsoft tarafından yayımlanmaktadır.",
 	"cmake.tools.initializing": "CMake Araçları başlatılıyor...",
 	"deactivate.cmaketools": "CMake Araçları'nı devre dışı bırak"
 }
