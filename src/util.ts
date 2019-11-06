@@ -1,6 +1,7 @@
 import * as child_process from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 
 import {EnvironmentVariables, execute} from './proc';
 import * as nls from 'vscode-nls';
@@ -530,4 +531,16 @@ export function getLocaleId(): string {
       }
   }
   return "en";
+}
+
+export function checkFileExists(filePath: string): Promise<boolean> {
+  return new Promise((resolve, _reject) => {
+      fs.stat(filePath, (_err, stats) => {
+          if (stats && stats.isFile()) {
+              resolve(true);
+          } else {
+              resolve(false);
+          }
+      });
+  });
 }
