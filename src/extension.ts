@@ -1303,7 +1303,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
   public async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
-    const fileName: string = uri.authority + uri.fsPath;
+    const fileName: string = uri.fsPath;
     const locale: string = util.getLocaleId();
     let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, fileName);
     return util.checkFileExists(localizedFilePath).then(fileExists => {
