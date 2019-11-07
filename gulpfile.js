@@ -215,7 +215,6 @@ const generatedSrcLocBundle = () => {
 
 const generateLocalizedJsonSchemaFiles = () => {
     return es.through(function (file) {
-        console.log(file.path);
         let jsonTree = JSON.parse(file.contents.toString());
         languages.map((language) => {
             let stringTable = {};
@@ -228,6 +227,7 @@ const generateLocalizedJsonSchemaFiles = () => {
             // Entire file is scanned and modified, then serialized for that language.
             // Even if no translations are available, we still write new files to dist/schema/...
             let keyPrefix = relativePath + ".";
+            keyPrefix = keyPrefix.replace(/\\/g, "/");
             let descriptionCallback = (path, value, parent) => {
                 if (stringTable[keyPrefix + path]) {
                     parent.description = stringTable[keyPrefix + path];
