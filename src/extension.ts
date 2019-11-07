@@ -1303,11 +1303,11 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
   public async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
-    const fileName: string = uri.authority;
+    const fileName: string = uri.fsPath;
     const locale: string = util.getLocaleId();
     let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, fileName);
-    const stat = await fs.stat(localizedFilePath);
-    if (!stat || !stat.isFile) {
+    const fileExists: boolean = await util.checkFileExists(localizedFilePath);
+    if (!fileExists) {
       localizedFilePath = path.join(util.thisExtensionPath(), fileName);
     }
     return fs.readFile(localizedFilePath, "utf8");
