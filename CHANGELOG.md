@@ -1,6 +1,6 @@
 # What's New?
 
-## 1.2.0
+## 1.2.1
 Thank you to the following CMake Tools contributors: koemai, bjosa, emanspeaks, som1lse,
 dcourtois, tsing80, andy-held, notskm, thezogoth, yokuyuki, dbird137, fabianogk, randshot.
 

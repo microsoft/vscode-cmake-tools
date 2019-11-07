@@ -1306,12 +1306,11 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
     const fileName: string = uri.fsPath;
     const locale: string = util.getLocaleId();
     let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, fileName);
-    return util.checkFileExists(localizedFilePath).then(fileExists => {
-        if (!fileExists) {
-          localizedFilePath = path.join(util.thisExtensionPath(), fileName);
-        }
-        return fs.readFile(localizedFilePath, "utf8");
-    });
+    const fileExists: boolean = await util.checkFileExists(localizedFilePath);
+    if (!fileExists) {
+      localizedFilePath = path.join(util.thisExtensionPath(), fileName);
+    }
+    return fs.readFile(localizedFilePath, "utf8");
   }
 }
 
