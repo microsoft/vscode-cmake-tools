@@ -1019,21 +1019,21 @@
     "yamlValidation": [
       {
         "fileMatch": "cmake-variants.yaml",
-        "url": "cmake-tools-schema://schemas/variants-schema.json"
+        "url": "cmake-tools-schema:///schemas/variants-schema.json"
       }
     ],
     "jsonValidation": [
       {
         "fileMatch": "cmake-variants.json",
-        "url": "cmake-tools-schema://schemas/variants-schema.json"
+        "url": "cmake-tools-schema:///schemas/variants-schema.json"
       },
       {
         "fileMatch": "cmake-variants.yaml",
-        "url": "cmake-tools-schema://schemas/variants-schema.json"
+        "url": "cmake-tools-schema:///schemas/variants-schema.json"
       },
       {
         "fileMatch": "cmake-kits.json",
-        "url": "cmake-tools-schema://schemas/kits-schema.json"
+        "url": "cmake-tools-schema:///schemas/kits-schema.json"
       }
     ]
   },
