@@ -642,6 +642,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
       telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
       return retc;
+    } catch {
+      return -1;
     } finally { this.configRunning = false; }
   }
 
