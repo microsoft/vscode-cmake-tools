@@ -8,19 +8,17 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "--extensionDevelopmentPath=${workspaceRoot}"
+                "--extensionDevelopmentPath=${workspaceFolder}"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceRoot}/out/*",
-                "${workspaceRoot}/out/src/*",
-                "${workspaceRoot}/out/test/*"
+                "${workspaceFolder}/dist/**/*.js"
             ],
             "env": {
                 "CMT_DEVRUN": "1"
             },
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-with-webpack-watch",
             "smartStep": false
         },
         {
@@ -29,24 +27,24 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/unit-tests/test-project-without-cmakelists",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/unit-tests"
+                "${workspaceFolder}/test/unit-tests/test-project-without-cmakelists",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/unit-tests"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceRoot}/out/*",
-                "${workspaceRoot}/out/src/*",
-                "${workspaceRoot}/out/test/*",
-                "${workspaceRoot}/out/test/unit-tests/*"
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/unit-tests/*"
             ],
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",
                 "HasVs": "true"
             },
-            "preLaunchTask": "npm"
+            "preLaunchTask": "build-tests-with-tsc-watch"
             // "smartStep": true
         },
         {
@@ -55,20 +53,20 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/extension-tests/without-cmakelist-file/project-folder",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/without-cmakelist-file"
+                "${workspaceFolder}/test/extension-tests/without-cmakelist-file/project-folder",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/without-cmakelist-file"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceRoot}/out/*",
-                "${workspaceRoot}/out/src/*",
-                "${workspaceRoot}/out/test/*",
-                "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/*",
-                "${workspaceRoot}/out/test/extension-tests/without-cmakelist-file/test/*"
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/*",
+                "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/test/*"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -91,20 +89,20 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/extension-tests/successful-build/project-folder",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/successful-build"
+                "${workspaceFolder}/test/extension-tests/successful-build/project-folder",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/successful-build"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceRoot}/out/*",
-                "${workspaceRoot}/out/src/*",
-                "${workspaceRoot}/out/test/*",
-                "${workspaceRoot}/out/test/extension-tests/successful-build/*",
-                "${workspaceRoot}/out/test/extension-tests/successful-build/test/*"
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/extension-tests/successful-build/*",
+                "${workspaceFolder}/out/test/extension-tests/successful-build/test/*"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -134,20 +132,20 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/extension-tests/vs-preferred-gen/project-folder",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/extension-tests/vs-preferred-gen"
+                "${workspaceFolder}/test/extension-tests/vs-preferred-gen/project-folder",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/vs-preferred-gen"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceRoot}/out/*",
-                "${workspaceRoot}/out/src/*",
-                "${workspaceRoot}/out/test/*",
-                "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/*",
-                "${workspaceRoot}/out/test/extension-tests/vs-preferred-gen/test/*"
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/extension-tests/vs-preferred-gen/*",
+                "${workspaceFolder}/out/test/extension-tests/vs-preferred-gen/test/*"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -187,22 +185,22 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceRoot}/test/smoke/_project-dir",
-                "--extensionDevelopmentPath=${workspaceRoot}",
-                "--extensionTestsPath=${workspaceRoot}/out/test/smoke",
+                "${workspaceFolder}/test/smoke/_project-dir",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/smoke",
                 "--disable-extensions"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
             "outFiles": [
-                "${workspaceRoot}/out/*",
-                "${workspaceRoot}/out/test/**"
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/test/**"
             ],
-            "preLaunchTask": "npm",
+            "preLaunchTask": "build-tests-with-tsc-watch",
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",
-                "CMT_SMOKE_DIR": "${workspaceRoot}/test/smoke"
+                "CMT_SMOKE_DIR": "${workspaceFolder}/test/smoke"
             }
         }
     ]

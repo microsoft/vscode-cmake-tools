@@ -14,6 +14,10 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cpptools');
 
@@ -46,7 +50,7 @@ export function parseCompileFlags(args: string[], lang: string = 'CXX'): Compile
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        rollbar.error('Unexpected end of parsing command line arguments');
+        rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));
         continue;
       }
       extraDefinitions.push(value);
@@ -69,7 +73,7 @@ export function parseCompileFlags(args: string[], lang: string = 'CXX'): Compile
         } else if (std.endsWith('++98')) {
           standard = 'c++98';
         } else {
-          log.warning('Unknown standard control flag: ', value);
+          log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
         }
       } else if (lang === 'C') {
         // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
@@ -84,10 +88,10 @@ export function parseCompileFlags(args: string[], lang: string = 'CXX'): Compile
           // standardVersion = 'c17';
           standard = 'c11';
         } else {
-          log.warning('Unknown standard control flag: ', value);
+          log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
         }
       } else {
-        log.warning('Unknown language: ', value);
+        log.warning(localize('unknown language', 'Unknown language: {0}', value));
       }
     }
   }
@@ -178,7 +182,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   async canProvideBrowseConfigurationsPerFolder() { return false; }
 
   async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
-    throw new Error("Method not implemented.");
+    throw new Error(localize('method.not.implemented', "Method not implemented."));
   }
 
   /** No-op */
@@ -309,10 +313,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
-      vscode.window.showErrorMessage('The path to the compiler for one or more source files was not found in ' +
-                                     'the CMake cache. If you are using a toolchain file, this probably means ' +
-                                     'that you need to specify the CACHE option when you set your C and/or C++ ' +
-                                     'compiler path');
+      vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
+        'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
   }

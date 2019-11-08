@@ -1,6 +1,45 @@
 # What's New?
 
-[See the full changelog in the end-user documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html).
+## 1.2.1
+Thank you to the following CMake Tools contributors: koemai, bjosa, emanspeaks, som1lse,
+dcourtois, tsing80, andy-held, notskm, thezogoth, yokuyuki, dbird137, fabianogk, randshot.
+
+**vector-of-bool** has moved on to other things and Microsoft is now maintaining this extension. Thank you **vector-of-bool**
+for all of your hard work getting this extension to where it is today!
+
+Breaking changes:
+- The publisher id changes to ms-vscode.cmake-tools.
+- Scanning for kits is able to detect more accurately multiple VS installations.
+  To achieve this, a Visual Studio kit is defined differently now in cmake-tools-kits.json:
+  the "visualStudio" field represents an ID unique to the installation
+  as opposed to "VisualStudio.${VS Version}" (which may be the same for multiple same year VS installations).
+  The CMake Tools Extension is still able to work with the old definition VS kits,
+  but for simplicity and to avoid duplicates in the json file it will prompt for permission to delete them
+  each time a "Scan for kits" is performed.
+
+Features:
+- Support for localized messages.
+- Cross compile support for CppTools integration.
+- Adapt CppTools integration to API version 3. [#637](https://github.com/Microsoft/vscode-cmake-tools/issues/637)
+- Expand kit environment variables. [#460](https://github.com/Microsoft/vscode-cmake-tools/issues/460)
+- Add new commands: launchTargetDirectory, buildType, buildDirectory. [#334](https://github.com/Microsoft/vscode-cmake-tools/issues/334), [#654](https://github.com/Microsoft/vscode-cmake-tools/issues/654), [#564](https://github.com/Microsoft/vscode-cmake-tools/issues/564), [#559](https://github.com/Microsoft/vscode-cmake-tools/issues/559), [#695](https://github.com/Microsoft/vscode-cmake-tools/issues/695)
+- Add support for VS2010.
+
+Improvements:
+- Restructuring of the CMake Driver.
+- Improve stability of CMake Generator Selection. [#512](https://github.com/Microsoft/vscode-cmake-tools/issues/512)
+- Refactor and extend CMS-server driver test.
+- Rework the CMake Build from a terminal to a task.
+- Add Launch target test.
+- Increase wait time in test to open terminal.
+
+Bug fixes:
+- Cannot execute current target without a debugger. [#601](https://github.com/Microsoft/vscode-cmake-tools/issues/601)
+- Path clobbering by bad kit file env. [#701](https://github.com/Microsoft/vscode-cmake-tools/issues/701), [#713](https://github.com/Microsoft/vscode-cmake-tools/issues/713)
+- Target install missing. [#504](https://github.com/Microsoft/vscode-cmake-tools/issues/504)
+- CTest controller updated on reconfig. [#212](https://github.com/Microsoft/vscode-cmake-tools/issues/212)
+- Recalculate total for every run of CTest.
+- Debug target does not find GDB. [#375](https://github.com/Microsoft/vscode-cmake-tools/issues/375)
 
 ## 1.1.3
 

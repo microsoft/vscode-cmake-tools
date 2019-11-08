@@ -20,8 +20,6 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     try {
       const version_ex = await proc.execute(path, ['--version']).result;
       if (version_ex.retc === 0 && version_ex.stdout) {
-        cmake.isPresent = true;
-
         console.assert(version_ex.stdout);
         const version_re = /cmake.* version (.*?)\r?\n/;
         cmake.version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
@@ -29,11 +27,9 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         // We purposefully exclude versions <3.7.1, which have some major CMake
         // server bugs
         cmake.isServerModeSupported = util.versionGreater(cmake.version, cmake.minimalServerModeVersion);
+        cmake.isPresent = true;
       }
-    } catch (ex) {
-      if (ex.code != 'ENOENT') {
-        throw ex;
-      }
+    } catch {
     }
   }
   return cmake;
