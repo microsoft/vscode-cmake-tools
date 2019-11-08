@@ -7,7 +7,7 @@
 	"reading.cmake.cache.file": "Чтение файла кэша CMake {0}.",
 	"file.exists": "Файл существует.",
 	"file.contents.read.successfully": "Содержимое файла прочитано.",
-	"parsed.entries.from": "Проанализированные записи: {0} из {1}.",
+	"parsed.entries.from": "Проанализированные записи: {0} из {1}",
 	"cache.file.does.not.exist": "Файл кэша не существует: возвращение пустых данных кэша.",
 	"reloading.cache.file": "Повторная загрузка файла кэша {0}.",
 	"parsing.cmake.cache.string": "Синтаксический анализ строки кэша CMake.",
@@ -16,7 +16,7 @@
 	"skipping.variable": "Пропуск переменной {0}.",
 	"cache.entry.unknown": "Запись кэша \"{0}\" имеет неизвестный тип: \"{1}\"",
 	"constructing.new.cache.entry": "Создание новой записи кэша на основе заданной строки.",
-	"parsed.cache.entries": "Проанализированные записи кэша: {0}.",
+	"parsed.cache.entries": "Проанализированные записи кэша: {0}",
 	"get.cache.key": "Получить ключ кэша {0}={1}",
-	"get.cache.key.missing": "Получить ключ кэша {0}= [[Missing]]"
+	"get.cache.key.missing": "Получить ключ кэша {0}=[[Отсутствует]]"
 }

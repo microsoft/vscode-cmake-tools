@@ -18,5 +18,5 @@
 	"constructing.new.cache.entry": "指定された行から新しいキャッシュ エントリを構築しています",
 	"parsed.cache.entries": "{0} 個のキャッシュ エントリを解析しました",
 	"get.cache.key": "キャッシュ キーの取得 {0}={1}",
-	"get.cache.key.missing": "キャッシュ キーの取得 {0}=[[存在しません]]"
+	"get.cache.key.missing": "キャッシュ キー {0} の取得 =[[見つかりません]]"
 }

@@ -1,6 +1,7 @@
 import * as child_process from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 
 import {EnvironmentVariables, execute} from './proc';
 import * as nls from 'vscode-nls';
@@ -384,7 +385,7 @@ export function parseCompileDefinition(str: string): [string, string|null] {
 }
 
 export function thisExtension() {
-  const ext = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+  const ext = vscode.extensions.getExtension('ms-vscode.cmake-tools');
   if (!ext) {
     throw new Error(localize('extension.is.null', 'Our own extension is null! What gives?'));
   }
@@ -530,4 +531,16 @@ export function getLocaleId(): string {
       }
   }
   return "en";
+}
+
+export function checkFileExists(filePath: string): Promise<boolean> {
+  return new Promise((resolve, _reject) => {
+      fs.stat(filePath, (_err, stats) => {
+          if (stats && stats.isFile()) {
+              resolve(true);
+          } else {
+              resolve(false);
+          }
+      });
+  });
 }

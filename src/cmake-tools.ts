@@ -2,7 +2,6 @@
  * Root of the extension
  */
 import {CMakeCache} from '@cmt/cache';
-import {maybeUpgradeCMake} from '@cmt/cm-upgrade';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {CompilationDatabase} from '@cmt/compdb';
 import * as debugger_mod from '@cmt/debugger';
@@ -30,7 +29,6 @@ import {expandString, ExpansionOptions} from './expand';
 import {CMakeGenerator, Kit} from './kit';
 import {LegacyCMakeDriver} from '@cmt/drivers/legacy-driver';
 import * as logging from './logging';
-import {NagManager} from './nag';
 import {fs} from './pr';
 import {buildCmdStr} from './proc';
 import {Property} from './prop';
@@ -70,21 +68,6 @@ enum ConfigureType {
  * class. See the `_init` private method for this initialization.
  */
 export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
-
-  private readonly _nagManager = new NagManager(this.extensionContext);
-  private readonly _nagUpgradeSubscription = this._nagManager.onCMakeLatestVersion(info => {
-    this.getCMakeExecutable().then(
-        async cmake => {
-          if (!cmake.version) {
-            log.error(localize('filed.to.get.version.during.upgrade', 'Failed to get version information for CMake during upgrade'));
-            return;
-          }
-          await maybeUpgradeCMake(this.extensionContext, {currentVersion: cmake.version, available: info});
-        },
-        e => { rollbar.exception(localize('error.during.cmake.upgrade', 'Error during CMake upgrade'), e, info); },
-    );
-  });
-
   /**
    * Construct a new instance. The instance isn't ready, and must be initalized.
    * @param extensionContext The extension context
@@ -183,8 +166,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   dispose() {
     log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
     telemetry.deactivate();
-    this._nagUpgradeSubscription.dispose();
-    this._nagManager.dispose();
     this._termCloseSub.dispose();
     if (this._launchTerminal)
       this._launchTerminal.dispose();
@@ -376,9 +357,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._ctestController.onResultsChanged(res => { this._testResults.set(res); });
 
     this._statusMessage.set(localize('ready.status', 'Ready'));
-
-    // Additional, non-extension: Start up nagging.
-    this._nagManager.start();
   }
 
   async setKit(kit: Kit|null) {
@@ -398,6 +376,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._cmakeDriver = Promise.resolve(null);
           this._activeKit = null;
         }
+      } else {
+        // Remember the selected kit for the next session.
+        this.workspaceContext.state.activeKitName = kit.name;
       }
     }
   }
@@ -720,7 +701,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       log.clearOutputChannel();
       return this.configure();
     } else {
-      return null;
+      return 0;
     }
   }
 
@@ -745,11 +726,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.debug(localize('run.build', 'Run build'), target_ ? target_ : '');
     const config_retc = await this.ensureConfigured();
     if (config_retc === null) {
-      // Already configured. Clear console
-      log.clearOutputChannel();
+      throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
     } else if (config_retc !== 0) {
       return config_retc;
     }
+    log.clearOutputChannel();
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
@@ -807,7 +788,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async tryCompileFile(filePath: string): Promise<vscode.Terminal|null> {
     const config_retc = await this.ensureConfigured();
-    if (config_retc !== null && config_retc !== 0) {
+    if (config_retc === null || config_retc !== 0) {
       // Config failed?
       return null;
     }

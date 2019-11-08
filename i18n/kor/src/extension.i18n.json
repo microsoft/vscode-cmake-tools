@@ -36,6 +36,9 @@
 	"scan.for.kits.button": "키트 검색",
 	"cancel.button": "취소",
 	"rescanning.for.kits": "키트를 다시 검색하는 중",
+	"found.duplicate.kits": "cmake-tools-kits.json에 저장된 이전 ID가 있는 Visual Studio 키트를 찾았습니다.",
+	"delete.duplicate.kits": "cmake-tools-kits.json에서 중복된 Visual Studio 키트를 삭제하시겠습니까?",
+	"no.button": "아니요",
 	"saving.kits.to": "{0}에 키트를 저장하는 중",
 	"saving.new.kits.to": "{0}에 새 키트를 저장하는 중",
 	"retry.button": "다시 시도",
@@ -47,7 +50,7 @@
 	"do.not.use.kit.button": "키트 사용 안 함",
 	"close.button": "닫기",
 	"no.kits.available": "CMake 키트를 사용할 수 없습니다. 원하는 작업을 선택하세요.",
-	"start.selection.of.kits": "키트 선택을 시작합니다. {0} 키트를 찾았습니다.",
+	"start.selection.of.kits": "키트 선택을 시작합니다. {0}개 키트를 찾았습니다.",
 	"running.in.test.mode": "테스트 모드에서 CMakeTools를 실행하고 있습니다. selectKit가 사용하지 않도록 설정되었습니다.",
 	"opening.kit.selection": "키트 선택 QuickPick을 여는 중",
 	"unspecified.kit.name": "지정되지 않음",
@@ -62,6 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} 완료(직렬화할 수 없는 값이 반환됨)",
 	"loading.extension.commands": "확장 명령을 로드하는 중",
 	"register.command": "CMakeTools 확장 명령 {0} 등록",
+	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
 	"cmake.tools.initializing": "CMake 도구를 초기화하는 중...",
 	"deactivate.cmaketools": "CMakeTools 비활성화"
 }

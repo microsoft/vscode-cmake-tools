@@ -21,7 +21,7 @@
 	"checking.file.for.compiler.features": "컴파일러 기능 파일을 확인하는 중: {0}",
 	"filed.to.check.binary": "예외로 인해 이진 파일 {0}을(를) 확인하지 못함: {1}",
 	"failed.to.scan.kit": "키트 파일을 검색하지 못함",
-	"founds.kits.in.directory": "디렉터리 {1}에서 {0} 키트를 찾음",
+	"founds.kits.in.directory": "디렉터리 {1}에서 {0}개 키트를 찾음",
 	"failed.to.execute": "{0}을(를) 실행하지 못함: {1}",
 	"error.parsing.environment": "환경 변수를 구문 분석하는 동안 오류 발생: {0}",
 	"ok.running": "{0} {1}이(가) 정상 실행 중, 환경 변수: {3}",
@@ -43,7 +43,7 @@
 	"reading.kits.file": "키트 파일 {0}을(를) 읽는 중",
 	"failed.to.parse": "{0}을(를) 구문 분석하지 못함: {1}",
 	"invalid.file.error": "잘못된 {0}({1}):",
-	"successfully.loaded.kits": "{1}에서 {0} 키트를 로드함",
+	"successfully.loaded.kits": "{1}에서 {0}개 키트를 로드함",
 	"clean.not.needed": "정리 필요 없음: 이전 키트를 선택하지 않음",
 	"clean.needed": "정리 필요: 키트가 변경됨"
 }

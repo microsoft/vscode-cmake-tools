@@ -16,7 +16,7 @@
 	"for.this.workspace.button": "このワークスペース用",
 	"persist.config.on.open.setting": "開いたときに構成する設定を保持する",
 	"configuring.workspace.on.open": "開いている {0} 上でワークスペースを構成しています",
-	"double.loaded.instance": "ワークスペース フォルダーの CMake Tools インスタンスがダブル ロードされました",
+	"double.loaded.instance": "ワークスペース フォルダーの CMake Tools インスタンスがダブルロードされました",
 	"creating.backend": "バックエンドを作成しています",
 	"post.folder.open": "フォルダーを開いた後",
 	"workspace.folder.removed": "ワークスペース フォルダーが削除されましたが、拡張機能のインスタンスに関連付けられていません",
@@ -36,6 +36,9 @@
 	"scan.for.kits.button": "キットのスキャン",
 	"cancel.button": "キャンセル",
 	"rescanning.for.kits": "キットを再スキャンしています",
+	"found.duplicate.kits": "cmake-tools-kits.json に保存されている古い ID の Visual Studio キットが見つかりました。",
+	"delete.duplicate.kits": "cmake-tools-kits.json から重複する Visual Studio キットを削除しますか?",
+	"no.button": "いいえ",
 	"saving.kits.to": "キットを {0} に保存しています",
 	"saving.new.kits.to": "新しいキットを {0} に保存しています",
 	"retry.button": "再試行",
@@ -62,6 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} が完了しました (シリアル化可能でない値が返されました)",
 	"loading.extension.commands": "拡張コマンドを読み込んでいます",
 	"register.command": "CMakeTools 拡張コマンド {0} の登録",
+	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
 	"cmake.tools.initializing": "CMake Tools を初期化しています...",
 	"deactivate.cmaketools": "CMakeTools の非アクティブ化"
 }
