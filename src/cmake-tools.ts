@@ -231,7 +231,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const quickStart = localize('quickstart.cmake.project', 'Quickstart a new CMake project');
       const changeSetting = localize('edit setting', 'Update cmake.sourceDirectory setting');
       const result = await vscode.window.showErrorMessage(
-            localize('missing.cmakelists', 'CMakeLists.txt not found in workspace root folder'), quickStart, changeSetting);
+            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the workspace folder'), quickStart, changeSetting);
       if (result === quickStart) {
         vscode.commands.executeCommand('cmake.quickStart');
       } else if (result === changeSetting) {
