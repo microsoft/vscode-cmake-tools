@@ -85,6 +85,93 @@ suite('CMake-Server-Driver tests', () => {
     expect(codemodel_data!.configurations.length).to.be.eql(4);
   }).timeout(90000);
 
+  test('Test project information', async() => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    let codemodel_data: null | codemodel_api.CodeModelContent = null;
+    if (driver instanceof codemodel_api.CodeModelDriver) {
+      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
+    }
+    await driver.configure([]);
+    expect(codemodel_data).to.be.not.null;
+
+    const project = codemodel_data!.configurations[0].projects[0];
+
+    // Test project name
+    expect(project.name).to.be.eq( "TestBuildProcess");
+
+    // Test location of project source directory
+    // Used by tree view to make paths relative
+    expect(path.normalize(project.sourceDirectory).toLowerCase()).to.eq(path.normalize(path.join(root, "test_project")).toLowerCase());
+  }).timeout(90000);
+
+
+  test('Test first executable target directory', async() => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    let codemodel_data: null | codemodel_api.CodeModelContent = null;
+    if (driver instanceof codemodel_api.CodeModelDriver) {
+      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
+    }
+    await driver.configure([]);
+    expect(codemodel_data).to.be.not.null;
+
+    const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type=="EXECUTABLE");
+    expect(target).to.be.not.undefined;
+
+    // Test target name used for node label
+    expect(target!.name).to.be.eq( "TestBuildProcess");
+    const executableName = process.platform === 'win32' ? "TestBuildProcess.exe" : "TestBuildProcess";
+    expect(target!.fullName).to.be.eq(executableName);
+    expect(target!.type).to.be.eq( "EXECUTABLE");
+
+    // Test location of project source directory
+    // used by tree view to make paths relative
+    expect(path.normalize(target!.sourceDirectory!).toLowerCase()).to.eq(path.normalize(path.join(root, "test_project")).toLowerCase());
+
+    // Test main source file used in by tree view
+    expect(target!.fileGroups).to.be.not.undefined;
+    expect(target!.fileGroups![0].sources[0]).to.eq("main.cpp");
+  }).timeout(90000);
+
+  test('Test first static library target directory', async() => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    let codemodel_data: null | codemodel_api.CodeModelContent = null;
+    if (driver instanceof codemodel_api.CodeModelDriver) {
+      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
+    }
+    await driver.configure([]);
+    expect(codemodel_data).to.be.not.null;
+
+    const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type=="STATIC_LIBRARY");
+    expect(target).to.be.not.undefined;
+
+    // Test target name used for node label
+    expect(target!.name).to.be.eq( "Test");
+    const executableName = process.platform === 'win32' ? "Test.lib" : "Test.a";
+    expect(target!.fullName).to.be.eq(executableName);
+    expect(target!.type).to.be.eq( "STATIC_LIBRARY");
+
+    // Test location of project source directory
+    // Used by tree view to make paths relative
+    expect(path.normalize(target!.sourceDirectory!).toLowerCase()).to.eq(path.normalize(path.join(root, "test_project", "dir1")).toLowerCase());
+
+    // Test main source file
+    expect(target!.fileGroups).to.be.not.undefined;
+    expect(target!.fileGroups![0].sources[0]).to.eq("info.cpp");
+    expect(target!.fileGroups![0].sources[1]).to.eq("test2.cpp");
+  }).timeout(90000);
+
   test('Test generation of code model with one configuration like make on linux', async () => {
     if (process.platform === 'win32') return;
 

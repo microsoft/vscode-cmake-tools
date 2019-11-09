@@ -3,6 +3,8 @@ project(TestBuildProcess VERSION 0.1.0)
 
 set(CMT_COOKIE passed-cookie CACHE STRING "Cookie to be written by the main executable")
 
+add_subdirectory(dir1)
+
 add_executable(TestBuildProcess main.cpp)
 set_property(TARGET TestBuildProcess PROPERTY CXX_STANDARD 98)
 
