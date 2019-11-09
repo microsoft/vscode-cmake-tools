@@ -826,8 +826,16 @@ export async function scanForKits(opt?: KitScanOptions) {
     prs = prs.concat(compiler_kits);
     if (isWin32) {
       const vs_kits = scanForVSKits(pr);
-
-      const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
+      const clang_cl_path: string[] = [];
+      const defaultPaths = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
+      if (typeof(process.env.LLVM_ROOT) !== 'undefined') {
+        const llvmRoot = path.normalize(process.env.LLVM_ROOT + "\\bin");
+        const llvmPath = defaultPaths.find(p => p === llvmRoot );
+        if (!llvmPath) {
+          clang_cl_path.push(llvmRoot);
+        }
+      }
+      clang_cl_path.push(...defaultPaths);
       const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
       prs.push(vs_kits);
       prs = prs.concat(clang_cl_kits);
