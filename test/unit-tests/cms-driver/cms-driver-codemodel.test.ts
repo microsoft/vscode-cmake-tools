@@ -29,7 +29,7 @@ function cleanupBuildDir(build_dir: string): boolean {
 let driver: CMakeDriver|null = null;
 // tslint:disable:no-unused-expression
 
-suite.only('CMake-Server-Driver tests', () => {
+suite('CMake-Server-Driver tests', () => {
   const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
   const workspacePath: string = 'test/unit-tests/cms-driver/workspace';
   const root = getTestRootFilePath(workspacePath);
