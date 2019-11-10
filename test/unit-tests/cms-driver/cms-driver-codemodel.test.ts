@@ -202,7 +202,7 @@ suite('CMake-Server-Driver tests', () => {
 
     // Test target name used for node label
     expect(target!.name).to.be.eq('SharedLibDummy');
-    const executableNameRegex = process.platform === 'win32' ? /^SharedLibDummy.dll/ : /^(libSharedLibDummy.(so|dylib)/;
+    const executableNameRegex = process.platform === 'win32' ? /^SharedLibDummy.dll/ : /^libSharedLibDummy.(so|dylib)/;
     expect(target!.fullName).to.match(executableNameRegex);
     expect(target!.type).to.be.eq('SHARED_LIBRARY');
 
