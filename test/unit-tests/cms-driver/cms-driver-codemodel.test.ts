@@ -29,7 +29,7 @@ function cleanupBuildDir(build_dir: string): boolean {
 let driver: CMakeDriver|null = null;
 // tslint:disable:no-unused-expression
 
-suite('CMake-Server-Driver tests', () => {
+suite.only('CMake-Server-Driver tests', () => {
   const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
   const workspacePath: string = 'test/unit-tests/cms-driver/workspace';
   const root = getTestRootFilePath(workspacePath);
@@ -160,21 +160,95 @@ suite('CMake-Server-Driver tests', () => {
     expect(target).to.be.not.undefined;
 
     // Test target name used for node label
-    expect(target!.name).to.be.eq('Test');
-    const executableName = process.platform === 'win32' ? 'Test.lib' : 'libTest.a';
+    expect(target!.name).to.be.eq('StaticLibDummy');
+    const executableName = process.platform === 'win32' ? 'StaticLibDummy.lib' : 'libStaticLibDummy.a';
     expect(target!.fullName).to.be.eq(executableName);
     expect(target!.type).to.be.eq('STATIC_LIBRARY');
 
     // Test location of project source directory
     // Used by tree view to make paths relative
     expect(path.normalize(target!.sourceDirectory!).toLowerCase())
-        .to.eq(path.normalize(path.join(root, 'test_project', 'dir1')).toLowerCase());
+        .to.eq(path.normalize(path.join(root, 'test_project', 'static_lib_dummy')).toLowerCase());
 
     // Test main source file
     expect(target!.fileGroups).to.be.not.undefined;
     expect(target!.fileGroups![0].sources[0]).to.eq('info.cpp');
     expect(target!.fileGroups![0].sources[1]).to.eq('test2.cpp');
+
+    // Language
+    expect(target!.fileGroups![0].language).to.eq('CXX');
+
+    // compile flags for file groups
+    if (process.platform === 'win32') {
+      expect(target!.fileGroups![0].compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1  ');
+    }
   }).timeout(90000);
+
+  test('Test first shared library target directory', async () => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    let codemodel_data: null|codemodel_api.CodeModelContent = null;
+    if (driver instanceof codemodel_api.CodeModelDriver) {
+      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
+    }
+    await driver.configure([]);
+    expect(codemodel_data).to.be.not.null;
+
+    const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'SHARED_LIBRARY');
+    expect(target).to.be.not.undefined;
+
+    // Test target name used for node label
+    expect(target!.name).to.be.eq('SharedLibDummy');
+    const executableName = process.platform === 'win32' ? 'SharedLibDummy.dll' : 'SharedLibDummy.so';
+    expect(target!.fullName).to.be.eq(executableName);
+    expect(target!.type).to.be.eq('SHARED_LIBRARY');
+
+    // Test location of project source directory
+    // Used by tree view to make paths relative
+    expect(path.normalize(target!.sourceDirectory!).toLowerCase())
+        .to.eq(path.normalize(path.join(root, 'test_project', 'shared_lib_dummy')).toLowerCase());
+
+    // Test main source file
+    expect(target!.fileGroups).to.be.not.undefined;
+    expect(target!.fileGroups![0].sources[0]).to.eq('src/info.c');
+    expect(target!.fileGroups![0].defines).contains('TEST_CMAKE_DEFINE');
+    expect(target!.fileGroups![0].isGenerated).to.be.false;
+    expect(path.normalize(target!.fileGroups![0].includePath![0].path).toLowerCase())
+        .to.eq(path.normalize(path.join(root, 'test_project', 'shared_lib_dummy', 'inc')).toLowerCase());
+
+    // Language
+    expect(target!.fileGroups![0].language).to.eq('C');
+
+    // compile flags for file groups
+    if (process.platform === 'win32') {
+      expect(target!.fileGroups![0].compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /MDd /Zi /Ob0 /Od /RTC1  ');
+    }
+  }).timeout(90000);
+
+  test('Test cache access', async () => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    let codemodel_data: null|codemodel_api.CodeModelContent = null;
+    if (driver instanceof codemodel_api.CodeModelDriver) {
+      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
+    }
+    await driver.configure([]);
+    expect(codemodel_data).to.be.not.null;
+
+    const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'UTILITY'
+                                                                                  && t.name == 'runTestTarget');
+    expect(target).to.be.not.undefined;
+
+    // may could be used to exclude file list from utility targets
+    expect(target!.fileGroups![0].isGenerated).to.be.true;
+  }).timeout(90000);
+  // sysroot for file groups
 
   test('Test generation of code model with one configuration like make on linux', async () => {
     if (process.platform === 'win32')

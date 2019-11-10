@@ -84,6 +84,9 @@ export interface CodeModelFileGroup {
 
   /** Defines */
   defines?: string[];
+
+  /** CMake generated file group */
+  isGenerated: boolean;
 }
 
 /**

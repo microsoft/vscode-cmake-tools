@@ -1,1 +1,0 @@
-add_library(Test "info.cpp" "test2.cpp")
