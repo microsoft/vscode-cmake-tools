@@ -116,7 +116,13 @@ interface ClangVersion {
 
 async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
   log.debug(localize('testing.clang.binary', 'Testing Clang binary: {0}', binPath));
-  const exec = await proc.execute(binPath, ['-v']).result;
+  let exec : proc.ExecutionResult;
+  try {
+    exec = await proc.execute(binPath, ['-v']).result;
+  } catch (e) {
+    log.debug(localize('bad.clang.binary', 'Bad Clang binary: {0}, error code: \'{1}\'', binPath, e.code));
+    return null;
+  }
   if (exec.retc !== 0) {
     log.debug(localize('bad.clang.binary', 'Bad Clang binary ("-v" returns non-zero): {0}', binPath));
     return null;
