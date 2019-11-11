@@ -265,6 +265,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         uri: vscode.Uri.file(abs).toString(),
         configuration,
       });
+      const dir = path.dirname(abs_norm);
+      if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
+        this._workspaceBrowseConfiguration.browsePath.push(dir);
+      }
     }
   }
 
