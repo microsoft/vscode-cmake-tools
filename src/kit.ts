@@ -725,18 +725,23 @@ export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise
 }
 
 async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
-  console.assert(kit.visualStudio);
-  console.assert(kit.visualStudioArchitecture);
-  const installs = await vsInstallations();
-  const match = (inst: VSInstallation) =>
-      // old Kit format
-      (legacyKitVSName(inst) == kit.visualStudio) ||
-      // new Kit format
-      (kitVSName(inst) === kit.visualStudio) ||
-      // Clang for VS kit format
-      (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+    if (process.platform !== "win32") {
+        return undefined;
+    }
 
-  return installs.find(inst => match(inst));
+    console.assert(kit.visualStudio);
+    console.assert(kit.visualStudioArchitecture);
+
+    const installs = await vsInstallations();
+    const match = (inst: VSInstallation) =>
+        // old Kit format
+        (legacyKitVSName(inst) == kit.visualStudio) ||
+        // new Kit format
+        (kitVSName(inst) === kit.visualStudio) ||
+        // Clang for VS kit format
+        (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+
+    return installs.find(inst => match(inst));
 }
 
 export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
