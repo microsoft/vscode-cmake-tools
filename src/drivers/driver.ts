@@ -528,6 +528,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (gen_name == 'Unix Makefiles') {
           return this.testHaveCommand('make');
         }
+        if (gen_name == 'MSYS Makefiles') {
+            return platform === 'win32' && this.testHaveCommand('make');
+        }
         return false;
       })();
       if (!generator_present) {
