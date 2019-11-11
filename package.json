@@ -1115,7 +1115,7 @@
   "resolutions": {
     "marked": "^0.7.0",
     "diff": "^3.5.0",
-    "handlebars": "^4.3.0",
+    "handlebars": "^4.4.5",
     "https-proxy-agent": "^2.2.4"
   }
 }
