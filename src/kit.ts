@@ -598,7 +598,8 @@ const VsGenerators: {[key: string]: string} = {
   12: 'Visual Studio 12 2013',
   VS140COMNTOOLS: 'Visual Studio 14 2015',
   14: 'Visual Studio 14 2015',
-  15: 'Visual Studio 15 2017'
+  15: 'Visual Studio 15 2017',
+  16: 'Visual Studio 16 2019'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
