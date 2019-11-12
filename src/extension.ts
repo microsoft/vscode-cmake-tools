@@ -66,6 +66,7 @@ class ExtensionManager implements vscode.Disposable {
     this._statusBar.targetName = 'all';
     this._folders.onAfterAddFolder(info => {
       const new_cmt = info.cmakeTools;
+      this._projectOutlineProvider.addFolder(info.folder);
       new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(new_cmt));
       new_cmt.onLaunchTargetNameChanged(FireLate, t=> {
         // TODO? Move launch target logic out of CMakeTools
@@ -74,10 +75,12 @@ class ExtensionManager implements vscode.Disposable {
         // }
         this._updateCodeModel(new_cmt);
         this._targetProvider.registerCMakeTools(new_cmt);
-        // TODO
-        this._projectOutlineProvider.addFolder(info.folder);
         rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
       });
+    });
+    // TODO
+    this._folders.onAfterRemoveFolder (info => {
+      this._projectOutlineProvider.removeFolder(info);
     });
   }
 
