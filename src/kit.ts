@@ -121,14 +121,22 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     log.debug(localize('bad.clang.binary', 'Bad Clang binary ("-v" returns non-zero): {0}', binPath));
     return null;
   }
-  const first_line = exec.stderr.split('\n')[0];
-  const version_re = /^(?:Apple LLVM|clang) version (.*?)[ -]/;
-  const version_match = version_re.exec(first_line);
-  if (version_match === null) {
+  const lines = exec.stderr.split('\n');
+  const version_re = /^(?:Apple LLVM|Apple clang|clang) version ([^\s-]+)[\s-]/;
+  let version: string = "";
+  let fullVersion: string = "";
+  for (const line of lines) {
+    const version_match = version_re.exec(line);
+    if (version_match !== null) {
+      version = version_match[1];
+      fullVersion = line;
+      break;
+    }
+  }
+  if (!version) {
     log.debug(localize('bad.clang.binary.output', 'Bad Clang binary {0} -v output: {1}', binPath, exec.stderr));
     return null;
   }
-  const version = version_match[1];
   const target_mat = /Target:\s+(.*)/.exec(exec.stderr);
   let target: string|undefined;
   if (target_mat) {
@@ -145,7 +153,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     installedDir = install_dir_mat[1];
   }
   return {
-    fullVersion: first_line,
+    fullVersion,
     version,
     target,
     threadModel,
@@ -178,14 +186,19 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     }
 
     const compiler_version_output = exec.stderr.trim().split('\n');
-    const last_line = compiler_version_output.reverse()[0];
     const version_re = /^gcc version (.*?) .*/;
-    const version_match = version_re.exec(last_line);
-    if (version_match === null) {
+    let version: string = "";
+    for (const line of compiler_version_output) {
+      const version_match = version_re.exec(line);
+      if (version_match !== null) {
+        version = version_match[1];
+        break;
+      }
+    }
+    if (!version) {
       log.debug(localize('bad.gcc.binary.output', 'Bad GCC binary {0} -v output: {1}', bin, exec.stderr));
       return null;
     }
-    const version = version_match[1];
     const gxx_fname = fname.replace(/gcc/, 'g++');
     const gxx_bin = path.join(path.dirname(bin), gxx_fname);
     const target_triple_re = /((\w+-)+)gcc.*/;
@@ -585,7 +598,8 @@ const VsGenerators: {[key: string]: string} = {
   12: 'Visual Studio 12 2013',
   VS140COMNTOOLS: 'Visual Studio 14 2015',
   14: 'Visual Studio 14 2015',
-  15: 'Visual Studio 15 2017'
+  15: 'Visual Studio 15 2017',
+  16: 'Visual Studio 16 2019'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
@@ -712,18 +726,23 @@ export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise
 }
 
 async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
-  console.assert(kit.visualStudio);
-  console.assert(kit.visualStudioArchitecture);
-  const installs = await vsInstallations();
-  const match = (inst: VSInstallation) =>
-      // old Kit format
-      (legacyKitVSName(inst) == kit.visualStudio) ||
-      // new Kit format
-      (kitVSName(inst) === kit.visualStudio) ||
-      // Clang for VS kit format
-      (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+    if (process.platform !== "win32") {
+        return undefined;
+    }
 
-  return installs.find(inst => match(inst));
+    console.assert(kit.visualStudio);
+    console.assert(kit.visualStudioArchitecture);
+
+    const installs = await vsInstallations();
+    const match = (inst: VSInstallation) =>
+        // old Kit format
+        (legacyKitVSName(inst) == kit.visualStudio) ||
+        // new Kit format
+        (kitVSName(inst) === kit.visualStudio) ||
+        // Clang for VS kit format
+        (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+
+    return installs.find(inst => match(inst));
 }
 
 export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {

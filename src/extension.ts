@@ -212,8 +212,8 @@ class ExtensionManager implements vscode.Disposable {
     }
     // No kit? Ask the user what they want.
     const did_choose_kit = await this.selectKit();
-    if (!did_choose_kit) {
-      // The user did not choose a kit
+    if (!did_choose_kit && !cmt.activeKit) {
+      // The user did not choose a kit and kit isn't set in other way such as setKitByName
       return false;
     }
     // Return whether we have an active kit defined.
@@ -234,6 +234,9 @@ class ExtensionManager implements vscode.Disposable {
     this._disposeSubs();
     // TODO?
     // this._workspaceFoldersChangedSub.dispose();
+    if (this._pickKitCancellationTokenSource) {
+      this._pickKitCancellationTokenSource.dispose();
+    }
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
     this._projectOutlineDisposer.dispose();
@@ -660,29 +663,109 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-   * Rescan the system for kits and save them to the user-local kits file
+   * Rescan the system for kits and save them to the user-local kits file.
+   * If cmake-tools-kits.json still has kits saved with the old format kit definition
+   *     (visualStudio field as "VisualStudio.$(installation version)", as opposed to "$(unique installation id)"),
+   * then ask if the user allows them to be deleted from the user-local kits file.
+   *
+   * If the user answers 'NO' or doesn't answer, nothing needs to be done, even if there is an active kit set,
+   * because the extension is able to work with both definitions of a VS kit.
+   * In this case, the new cmake-tools-kits.json may have some duplicate kits pointing to the same toolset.
+   *
+   * If the answer is 'YES' and if there is an active kit selected that is among the ones to be deleted,
+   * then the user must also pick a new kit.
    */
   async scanForKits() {
     log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
+
+    // Do the scan:
+    const discovered_kits = await scanForKits({minGWSearchDirs: this._getMinGWDirs()});
+
+    // The list with the new definition user kits starts with the non VS ones,
+    // which do not have any variations in the way they can be defined.
+    const new_definition_user_kits = this._userKits.filter(kit => !!!kit.visualStudio);
+
+    // The VS kits saved so far in cmake-tools-kits.json
+    const user_vs_kits = this._userKits.filter(kit => !!kit.visualStudio);
+
+    // Separate the VS kits based on old/new definition.
+    const old_definition_vs_kits = [];
+    user_vs_kits.forEach(kit => {
+      if (kit.visualStudio && (kit.visualStudio.startsWith("VisualStudio.15") || kit.visualStudio.startsWith("VisualStudio.16"))) {
+        old_definition_vs_kits.push(kit);
+      } else {
+        // The new definition VS kits can complete the final user kits list
+        new_definition_user_kits.push(kit);
+      }
+    });
+
+    let chooseNewKit: boolean = false;
+    if (old_definition_vs_kits.length > 1) {
+      log.info(localize('found.duplicate.kits', 'Found Visual Studio kits with the old ids saved in the cmake-tools-kits.json.'));
+      const yesButtonTitle: string = localize('yes.button', 'Yes');
+      const chosen = await vscode.window.showInformationMessage<vscode.MessageItem>(
+        localize('delete.duplicate.kits', 'Would you like to delete the duplicate Visual Studio kits from cmake-tools-kits.json?'),
+        {
+          title: yesButtonTitle,
+          isCloseAffordance: true,
+        },
+        {
+          title: localize('no.button', 'No'),
+          isCloseAffordance: true,
+        });
+
+      if (chosen !== undefined && (chosen.title === yesButtonTitle)) {
+        //await this._setKnownKits({ user: new_definition_user_kits, workspace: this._wsKits });
+        this._userKits = new_definition_user_kits;
+
+        // TODO?
+        // If there is an active kit set and if it is of the old definition,
+        // trigger a new kit selection later.
+        // const activeCMakeTools = this._activeCMakeTools;
+        // if (activeCMakeTools) {
+        //   const activeKit = activeCMakeTools.activeKit;
+        //   if (activeKit) {
+        //     const definition = activeKit.visualStudio;
+        //     if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
+        //       chooseNewKit = true;
+        //     }
+        //   }
+        // }
+      }
+    }
+
     // Convert the kits into a by-name mapping so that we can restore the ones
     // we know about after the fact.
     // We only save the user-local kits: We don't want to save workspace kits
     // in the user kits file.
     const old_kits_by_name = this._userKits.reduce(
-        (acc, kit) => ({...acc, [kit.name]: kit}),
-        {} as {[kit: string]: Kit},
+      (acc, kit) => ({...acc, [kit.name]: kit}),
+      {} as {[kit: string]: Kit},
     );
-    // Do the scan:
-    const discovered_kits = await scanForKits({minGWSearchDirs: this._getMinGWDirs()});
+
     // Update the new kits we know about.
     const new_kits_by_name = discovered_kits.reduce(
-        (acc, kit) => ({...acc, [kit.name]: kit}),
-        old_kits_by_name,
+      (acc, kit) => ({...acc, [kit.name]: kit}),
+      old_kits_by_name,
     );
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
     this._userKits = new_kits;
     await this._writeUserKitsFile(new_kits);
+
+    // TODO?
+    // If we concluded earlier that we need to show the kits quick pick,
+    // then remind the user to select another kit from the new definition list.
+    // if (chooseNewKit) {
+    //   const did_choose_kit = await this.selectKit();
+
+    //   // Make sure that, even if the user is not selecting any option from the quick pick,
+    //   // we don't leave any old definition kit set anywhere.
+    //   if (!did_choose_kit) {
+    //     await this._setCurrentKit(null);
+    //   }
+    // }
+
     this._startPruneOutdatedKitsAsync();
   }
 
@@ -923,6 +1006,7 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  private _pickKitCancellationTokenSource: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
   /**
    * Show UI to allow the user to select an active kit
    */
@@ -969,7 +1053,11 @@ class ExtensionManager implements vscode.Disposable {
         }),
     );
     const items = await Promise.all(itemPromises);
-    const chosen_kit = await vscode.window.showQuickPick(items, {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit')});
+    const chosen_kit = await vscode.window.showQuickPick(items,
+                                                         {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit')},
+                                                         this._pickKitCancellationTokenSource.token);
+    this._pickKitCancellationTokenSource.dispose();
+    this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();
     if (chosen_kit === undefined) {
       log.debug(localize('user.cancelled.kit.selection', 'User cancelled Kit selection'));
       // No selection was made
@@ -987,15 +1075,13 @@ class ExtensionManager implements vscode.Disposable {
   async setKitByName(kitName: string) {
     // TODO
     // let newKit: Kit | undefined;
-    // switch (kitName) {
-    // case '':
-    // case '__unspec__':
-    //   break;
-    // default:
-    //   newKit = this._allKits.find(kit => kit.name === kitName);
-    //   break;
+    // if (!kitName) {
+    //     kitName = '__unspec__';
     // }
+    // newKit = this._allKits.find(kit => kit.name === kitName);
     // await this._setCurrentKit(newKit || null);
+    // // if we are showing a quickpick menu...
+    // this._pickKitCancellationTokenSource.cancel();
   }
 
   async ensureCppToolsProviderRegistered() {
@@ -1376,11 +1462,12 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
   public async provideTextDocumentContent(uri: vscode.Uri): Promise<string> {
-    const fileName: string = uri.authority;
+    console.assert(uri.path[0] === '/', "A preceeding slash is expected on schema uri path");
+    const fileName: string = uri.path.substr(1);
     const locale: string = util.getLocaleId();
     let localizedFilePath: string = path.join(util.thisExtensionPath(), "dist/schema/", locale, fileName);
-    const stat = await fs.stat(localizedFilePath);
-    if (!stat || !stat.isFile) {
+    const fileExists: boolean = await util.checkFileExists(localizedFilePath);
+    if (!fileExists) {
       localizedFilePath = path.join(util.thisExtensionPath(), fileName);
     }
     return fs.readFile(localizedFilePath, "utf8");
@@ -1393,8 +1480,17 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
+    // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
+    // because the publisher changed (from vector-of-bool into ms-vscode),
+    // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
+    const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+    if (oldCMakeToolsExtension) {
+        await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
+    }
+
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
+  vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
   await vscode.window.withProgress(
       {

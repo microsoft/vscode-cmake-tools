@@ -57,7 +57,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceRoot}',
+    cwd: '${workspaceFolder}',
     args: [],
     MIMode: 'gdb',
     miDebuggerPath: debuggerPath,
@@ -81,7 +81,7 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceRoot}',
+    cwd: '${workspaceFolder}',
     args: [],
     MIMode: 'lldb',
     miDebuggerPath: debuggerPath,
@@ -94,7 +94,7 @@ function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
     type: 'cppvsdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceRoot}',
+    cwd: '${workspaceFolder}',
     args: [],
     program: target.path
   };
@@ -169,7 +169,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
   const description = DEBUG_GEN[debugger_name];
-  const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=\.exe$|$)/gi;
+  const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
   const gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.miMode);
   if (gdb_debugger_path.search(new RegExp(description.miMode)) != -1) {
     return description.createConfig(gdb_debugger_path, target);
@@ -181,7 +181,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   }
 
   log.warning(localize('unable.to.determine.debugger.for.compiler',
-    'Unable to automatically determine debugger corresponding to compiler: {}', compiler_path));
+    'Unable to automatically determine debugger corresponding to compiler: {0}', compiler_path));
   return null;
 }
 

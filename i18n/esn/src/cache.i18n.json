@@ -18,5 +18,5 @@
 	"constructing.new.cache.entry": "Creando una entrada de caché a partir de la línea especificada",
 	"parsed.cache.entries": "Se analizaron {0} entradas de caché.",
 	"get.cache.key": "Obtener la clave de caché {0} = {1}",
-	"get.cache.key.missing": "Obtener la clave de caché {0} = [[Missing]]"
+	"get.cache.key.missing": "Obtener la clave de caché {0} = [[Falta]]"
 }

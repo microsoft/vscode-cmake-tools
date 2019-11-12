@@ -2,15 +2,16 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.2.0",
+  "version": "1.2.2",
+  "publisher": "ms-vscode",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vector-of-bool/vscode-cmake-tools"
+    "url": "https://github.com/microsoft/vscode-cmake-tools"
   },
   "bugs": {
-    "url": "https://github.com/vector-of-bool/vscode-cmake-tools/issues"
+    "url": "https://github.com/microsoft/vscode-cmake-tools/issues"
   },
-  "homepage": "https://github.com/vector-of-bool/vscode-cmake-tools",
+  "homepage": "https://github.com/microsoft/vscode-cmake-tools",
   "keywords": [
     "cmake",
     "tools",
@@ -18,7 +19,6 @@
     "c++",
     "native"
   ],
-  "publisher": "vector-of-bool",
   "engines": {
     "vscode": "^1.29.1"
   },
@@ -317,6 +317,66 @@
         },
         {
           "command": "cmake.stop"
+        },
+        {
+          "command": "cmake.outline.configure",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.build",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.compileFile",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanConfigure",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.clean",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanRebuild",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.stop",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.runUtilityTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.debugTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.launchTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.setDefaultTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.setLaunchTarget",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.revealInCMakeLists",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.buildTarget",
+          "when": "never"
         }
       ],
       "view/title": [
@@ -443,7 +503,7 @@
         },
         "cmake.buildDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}/build",
+          "default": "${workspaceFolder}/build",
           "description": "%cmake-tools.configuration.cmake.buildDirectory.description%",
           "scope": "resource"
         },
@@ -455,7 +515,7 @@
         },
         "cmake.sourceDirectory": {
           "type": "string",
-          "default": "${workspaceRoot}",
+          "default": "${workspaceFolder}",
           "description": "%cmake-tools.configuration.cmake.sourceDirectory.description%",
           "scope": "resource"
         },
@@ -932,7 +992,7 @@
       {
         "key": "ctrl+f5",
         "command": "cmake.debugTarget",
-        "when": "!inDebugMode"
+        "when": "!inDebugMode && inCMakeProject"
       },
       {
         "key": "shift+f5",
@@ -966,21 +1026,21 @@
     "yamlValidation": [
       {
         "fileMatch": "cmake-variants.yaml",
-        "url": "cmake-tools-schema://schemas/variants-schema.json"
+        "url": "cmake-tools-schema:///schemas/variants-schema.json"
       }
     ],
     "jsonValidation": [
       {
         "fileMatch": "cmake-variants.json",
-        "url": "cmake-tools-schema://schemas/variants-schema.json"
+        "url": "cmake-tools-schema:///schemas/variants-schema.json"
       },
       {
         "fileMatch": "cmake-variants.yaml",
-        "url": "cmake-tools-schema://schemas/variants-schema.json"
+        "url": "cmake-tools-schema:///schemas/variants-schema.json"
       },
       {
         "fileMatch": "cmake-kits.json",
-        "url": "cmake-tools-schema://schemas/kits-schema.json"
+        "url": "cmake-tools-schema:///schemas/kits-schema.json"
       }
     ]
   },
@@ -1062,6 +1122,7 @@
   "resolutions": {
     "marked": "^0.7.0",
     "diff": "^3.5.0",
-    "handlebars": "^4.3.0"
+    "handlebars": "^4.4.5",
+    "https-proxy-agent": "^2.2.4"
   }
 }

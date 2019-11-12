@@ -7,7 +7,7 @@
 	"reading.cmake.cache.file": "Odczytywanie pliku pamięci podręcznej narzędzia CMake {0}",
 	"file.exists": "Plik istnieje",
 	"file.contents.read.successfully": "Pomyślnie odczytano zawartość pliku",
-	"parsed.entries.from": "Przeanalizowano {0} z {1} pozycji",
+	"parsed.entries.from": "Przeanalizowano pozycje w liczbie {0} ze ścieżki {1}",
 	"cache.file.does.not.exist": "Plik pamięci podręcznej nie istnieje: zostaną zwrócone puste dane pamięci podręcznej",
 	"reloading.cache.file": "Ponowne ładowanie pliku pamięci podręcznej {0}",
 	"parsing.cmake.cache.string": "Analizowanie ciągu pamięci podręcznej narzędzia CMake",

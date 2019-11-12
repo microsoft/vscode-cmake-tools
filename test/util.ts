@@ -20,7 +20,7 @@ export async function clearExistingKitConfigurationFile() {
 }
 
 export async function getExtension() {
-  const cmt = vscode.extensions.getExtension<CMakeTools>('vector-of-bool.cmake-tools');
+  const cmt = vscode.extensions.getExtension<CMakeTools>('ms-vscode.cmake-tools');
   if (!cmt) {
     throw new Error('Extension doesn\'t exist');
   }

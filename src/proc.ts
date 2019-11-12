@@ -146,7 +146,18 @@ export function execute(command: string,
   }
   else
   {
-    child = proc.spawn(command, args, spawn_opts);
+    try {
+      child = proc.spawn(command, args, spawn_opts);
+    } catch {
+      return {
+        child: undefined,
+        result: Promise.resolve({
+          retc: -1,
+          stdout: "",
+          stderr: ""
+        })
+      };
+    }
     if (options.encoding)
       child.stdout.setEncoding(options.encoding);
 

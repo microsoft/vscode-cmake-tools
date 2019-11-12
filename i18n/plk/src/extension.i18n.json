@@ -16,7 +16,7 @@
 	"for.this.workspace.button": "Dla tego obszaru roboczego",
 	"persist.config.on.open.setting": "Utrwal ustawienie konfiguracji przy otwieraniu",
 	"configuring.workspace.on.open": "Konfigurowanie obszaru roboczego przy otwieraniu elementu {0}",
-	"double.loaded.instance": "Dwukrotnie załadowano wystąpienie narzędzi CMake Tools dla folderu obszaru roboczego",
+	"double.loaded.instance": "Dwukrotnie załadowano wystąpienie rozszerzenia CMake Tools dla folderu obszaru roboczego",
 	"creating.backend": "Tworzenie zaplecza",
 	"post.folder.open": "Po otwarciu folderu",
 	"workspace.folder.removed": "Usunięto folder obszaru roboczego, ale nie jest on skojarzony z wystąpieniem rozszerzenia",
@@ -36,6 +36,9 @@
 	"scan.for.kits.button": "Skanuj w poszukiwaniu zestawów",
 	"cancel.button": "Anuluj",
 	"rescanning.for.kits": "Ponowne skanowanie pod kątem zestawów",
+	"found.duplicate.kits": "Znaleziono zestawy programu Visual Studio ze starymi identyfikatorami zapisane w pliku cmake-tools-kits.json.",
+	"delete.duplicate.kits": "Czy chcesz usunąć zduplikowane zestawy programu Visual Studio z pliku cmake-tools-kits.json?",
+	"no.button": "Nie",
 	"saving.kits.to": "Zapisywanie zestawów do lokalizacji {0}",
 	"saving.new.kits.to": "Zapisywanie nowych zestawów do lokalizacji {0}",
 	"retry.button": "Ponów próbę",
@@ -62,6 +65,7 @@
 	"cmake.finished.returned.unserializable": "Zakończono {0} (zwrócono wartość, której nie można serializować)",
 	"loading.extension.commands": "Ładowanie poleceń rozszerzenia",
 	"register.command": "Zarejestruj polecenie rozszerzenia CMakeTools {0}",
+	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
 	"cmake.tools.initializing": "Trwa inicjowanie narzędzi CMake Tools...",
 	"deactivate.cmaketools": "Dezaktywuj rozszerzenie CMakeTools"
 }
