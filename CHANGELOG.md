@@ -1,5 +1,18 @@
 # What's New?
 
+## 1.2.2
+Bug fixes:
+- Fix broken SchemaProvider. [#874] (https://github.com/microsoft/vscode-cmake-tools/issues/874)
+- Fix the RegExp for finding a debugger. [#884] (https://github.com/microsoft/vscode-cmake-tools/issues/884)
+- Update flow for missing CMakeLists.txt. [#533] (https://github.com/microsoft/vscode-cmake-tools/issues/533)
+- getVSInstallForKit should be a no-op on systems other than windows. [#886] (https://github.com/microsoft/vscode-cmake-tools/issues/886)
+- Include missing source directories in the custom browse path [#882]. (https://github.com/microsoft/vscode-cmake-tools/issues/882)
+- Handle exceptions thrown by spawn. [#895] (https://github.com/microsoft/vscode-cmake-tools/issues/895)
+- Various generators fixes:
+    - [#900] (https://github.com/microsoft/vscode-cmake-tools/issues/900)
+    - [#880] (https://github.com/microsoft/vscode-cmake-tools/issues/880)
+    - [#885] (https://github.com/microsoft/vscode-cmake-tools/issues/885)
+
 ## 1.2.1
 Thank you to the following CMake Tools contributors: koemai, bjosa, emanspeaks, som1lse,
 dcourtois, tsing80, andy-held, notskm, thezogoth, yokuyuki, dbird137, fabianogk, randshot.
@@ -8,7 +21,7 @@ dcourtois, tsing80, andy-held, notskm, thezogoth, yokuyuki, dbird137, fabianogk,
 for all of your hard work getting this extension to where it is today!
 
 Breaking changes:
-- The publisher id changes to ms-vscode.cmake-tools.
+- The publisher id changes to ms-vscode.cmake-tools. This requires that you uninstall earlier versions of the extension.
 - Scanning for kits is able to detect more accurately multiple VS installations.
   To achieve this, a Visual Studio kit is defined differently now in cmake-tools-kits.json:
   the "visualStudio" field represents an ID unique to the installation
