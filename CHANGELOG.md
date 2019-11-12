@@ -1,7 +1,17 @@
 # What's New?
 
 ## 1.2.2
-
+Bug fixes:
+- Fix broken SchemaProvider [#874] (https://github.com/microsoft/vscode-cmake-tools/issues/874)
+- Fix the RegExp for finding a debugger [884] (https://github.com/microsoft/vscode-cmake-tools/issues/884)
+- Update flow for missing CMakeLists.txt [533] (https://github.com/microsoft/vscode-cmake-tools/issues/533)
+- getVSInstallForKit should be a no-op on other systems than windows [886] (https://github.com/microsoft/vscode-cmake-tools/issues/886)
+- Include missing source directories in the custom browse path [882] (https://github.com/microsoft/vscode-cmake-tools/issues/882)
+- Handle exceptions thrown by spawn [895] (https://github.com/microsoft/vscode-cmake-tools/issues/895)
+- Various generators fixes:
+    - [900] (https://github.com/microsoft/vscode-cmake-tools/issues/900)
+    - [880] (https://github.com/microsoft/vscode-cmake-tools/issues/880)
+    - [885] (https://github.com/microsoft/vscode-cmake-tools/issues/885)
 
 ## 1.2.1
 Thank you to the following CMake Tools contributors: koemai, bjosa, emanspeaks, som1lse,
