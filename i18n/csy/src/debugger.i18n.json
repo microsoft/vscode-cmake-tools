@@ -7,5 +7,5 @@
 	"gdb.not.found": "Nepovedlo se najít GDB ve výchozí cestě pro vyhledávání a místě {0}.",
 	"enable.pretty.printing": "Povolit přehledný výpis pro gdb",
 	"no.compiler.found.in.cache": "V souboru mezipaměti nebyl nalezen žádný kompilátor.",
-	"unable.to.determine.debugger.for.compiler": "Ladicí program, který odpovídá kompilátoru, se nedá automaticky určit: {}"
+	"unable.to.determine.debugger.for.compiler": "Ladicí program, který odpovídá kompilátoru, se nedá automaticky určit: {0}"
 }
