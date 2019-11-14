@@ -622,9 +622,9 @@ export class CMakeServerClient {
               hsparams.platform = generator.platform;
               hsparams.toolset = generator.toolset;
 
-              const configureMessage = localize('configuring.using.generator',
+              const configureMessage: string = localize('configuring.using.generator',
                                                 'Configuring using the "{0}" CMake generator', hsparams.generator);
-              const extraMessage = hsparams.platform || hsparams.toolset ?
+              const extraMessage: string = hsparams.platform || hsparams.toolset ?
                 localize('with.platform.and.toolset', ' with platform "{0}" and toolset {1}', hsparams.platform, JSON.stringify(hsparams.toolset || {})) :
                 "";
               log.info(configureMessage + extraMessage);
