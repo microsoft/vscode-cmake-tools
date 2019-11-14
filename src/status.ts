@@ -163,13 +163,13 @@ export class StatusBar implements vscode.Disposable {
     const total = v.total;
     const good = passing == total;
     const icon = good ? 'check' : 'x';
-    let testPassingTest: string;
+    let testPassingText: string;
     if (total == 1) {
-      testPassingTest = localize('test.passing', '{0}/{1} test passing', passing, total);
+      testPassingText = localize('test.passing', '{0}/{1} test passing', passing, total);
     } else {
-      testPassingTest = localize('tests.passing', '{0}/{1} tests passing', passing, total);
+      testPassingText = localize('tests.passing', '{0}/{1} tests passing', passing, total);
     }
-    this._testButton.text = `$(${icon}) ${testPassingTest}', passing, total)}`;
+    this._testButton.text = `$(${icon}) ${testPassingText}`;
     this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 
