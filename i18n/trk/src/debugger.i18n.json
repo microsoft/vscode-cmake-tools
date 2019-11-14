@@ -7,5 +7,5 @@
 	"gdb.not.found": "Varsayılan arama yolunda ve {0} konumunda GDB bulunamıyor.",
 	"enable.pretty.printing": "GDB için düzgün yazdırmayı etkinleştir",
 	"no.compiler.found.in.cache": "Önbellek dosyasında derleyici bulunamadı.",
-	"unable.to.determine.debugger.for.compiler": "Unable to automatically determine debugger corresponding to compiler: {0}"
+	"unable.to.determine.debugger.for.compiler": "{0} derleyicisine karşılık gelen hata ayıklayıcısı otomatik olarak belirlenemiyor"
 }

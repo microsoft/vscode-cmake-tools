@@ -7,5 +7,5 @@
 	"gdb.not.found": "Non è possibile trovare GDB nel percorso di ricerca predefinito e in {0}.",
 	"enable.pretty.printing": "Abilita la riformattazione per GDB",
 	"no.compiler.found.in.cache": "Non è stato trovato alcun compilatore nel file di cache.",
-	"unable.to.determine.debugger.for.compiler": "Unable to automatically determine debugger corresponding to compiler: {0}"
+	"unable.to.determine.debugger.for.compiler": "Non è possibile determinare automaticamente il debugger corrispondente al compilatore: {0}"
 }
