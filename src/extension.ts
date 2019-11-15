@@ -1152,16 +1152,12 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  cleanConfigure(cmt?: CMakeTools) { return this.mapCMakeTools(cmt, cmt_ => cmt_.cleanConfigure()); }
-
-  configure(cmt?: CMakeTools) { return this.mapCMakeTools(cmt, c => c.configure()); }
-
-  async build(name?: string, folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) {
-    if (folders.length >= 1) {
-      // do build for folders
+  // Have to have another function for folders due to the limit of js type system...
+  async mapCMakeToolsForFolders(folders: (CMakeToolsFolder | null)[], fn: CMakeToolsMapFn): Promise<any> {
+    if (folders) {
       for (const folder of folders) {
         if (folder) {
-          const retc: number = await folder.cmakeTools.build(name);
+          const retc: number = await this.mapCMakeTools(folder.cmakeTools, fn);
           if (retc) {
             return retc
           }
@@ -1170,13 +1166,16 @@ class ExtensionManager implements vscode.Disposable {
       // Succeeded
       return 0;
     } else {
-      // TODO?
-      // if (this._defaultBuildTarget) {
-      //   return this._defaultBuildTarget.cmakeTools.build(this._defaultBuildTarget.target.name);
-      // } else {
-      // build all
-      return await this.mapCMakeTools(c => c.build(name));
+      return await this.mapCMakeTools(fn);
     }
+  }
+
+  cleanConfigure(cmt?: CMakeTools) { return this.mapCMakeTools(cmt, cmt_ => cmt_.cleanConfigure()); }
+
+  configure(cmt?: CMakeTools) { return this.mapCMakeTools(cmt, c => c.configure()); }
+
+  async build(name?: string, folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) {
+    return await this.mapCMakeToolsForFolders(folders, c => c.build(name));
   }
 
   private readonly _targetProvider = new TargetProvider();
@@ -1230,9 +1229,8 @@ class ExtensionManager implements vscode.Disposable {
     this._setDefaultTarget(target);
   }
 
-  // TODO:
-  setVariant() {
-    // return this.withCMakeTools(false, cmt => cmt.setVariant());
+  async setVariant(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) {
+    return await this.mapCMakeToolsForFolders(folders, c => c.setVariant());
   }
 
   install() { return this.mapCMakeTools(c => c.install()); }
