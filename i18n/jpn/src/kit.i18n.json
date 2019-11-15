@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "ディレクトリ {1} に {0} 個のキットが見つかりました",
 	"failed.to.execute": "{0} を実行できませんでした: {1}",
 	"error.parsing.environment": "環境変数の解析でエラーが発生しました: {0}",
-	"ok.running": "{0} {1} は正常に実行されました。環境変数: {3} ",
+	"ok.running": "OK running {0} {1}, env vars: {2}",
 	"checking.for.kit": "キットを確認しています: {0}",
 	"checking": "{0} を確認しています",
 	"detected.kit.for.version": "バージョンの VsKit が検出されました",

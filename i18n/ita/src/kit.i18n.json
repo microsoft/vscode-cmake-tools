@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "Sono stati trovati {0} kit nella directory {1}",
 	"failed.to.execute": "Non è stato possibile eseguire {0}: {1}",
 	"error.parsing.environment": "Si è verificato un errore durante l'analisi della variabile di ambiente: {0}",
-	"ok.running": "Esecuzione di {0} {1} corretta. Variabili di ambiente: {3}",
+	"ok.running": "OK running {0} {1}, env vars: {2}",
 	"checking.for.kit": "Ricerca del kit: {0}",
 	"checking": "Controllo di {0}",
 	"detected.kit.for.version": "Rilevato kit di Visual Studio per la versione",
