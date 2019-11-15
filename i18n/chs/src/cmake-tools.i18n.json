@@ -8,6 +8,7 @@
 	"constructing.cmaketools": "正在构造新的 CMakeTools 实例",
 	"disposing.extension": "正在释放 CMakeTools 扩展",
 	"extension.dispose": "扩展释放",
+	"using.user.generator": "Using generator from user configuration: {0}",
 	"configuration.already.in.progress": "配置已在进行中。",
 	"task.already.running": "CMake 任务已在运行。请先停止该任务然后再尝试运行新的 CMake 任务。",
 	"no.source.directory.found": "没有打开的源目录",

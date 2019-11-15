@@ -8,6 +8,7 @@
 	"constructing.cmaketools": "새 CMakeTools 인스턴스를 생성하는 중",
 	"disposing.extension": "CMakeTools 확장을 삭제하는 중",
 	"extension.dispose": "확장 삭제",
+	"using.user.generator": "Using generator from user configuration: {0}",
 	"configuration.already.in.progress": "구성이 이미 진행 중입니다.",
 	"task.already.running": "CMake 작업이 이미 실행 중입니다. 새 CMake 작업을 실행하려면 먼저 이전 작업을 중지합니다.",
 	"no.source.directory.found": "열려 있는 소스 디렉터리가 없습니다.",

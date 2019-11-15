@@ -16,5 +16,6 @@
 	"cookie.not.known.message": "CMake 서버 쿠키 \"{0}\"이(가) 알려진 메시지와 일치하지 않음",
 	"cant.yet.handle.message": "아직 {0} 메시지를 처리할 수 없음",
 	"sending.message.to.cmake-server": "cmake-server에 메시지를 보내는 중: {0}",
-	"configuring.using.generator.with.platform.and.toolset": "플랫폼 \"{1}\" 및 도구 집합 {2}과(와) 함께 \"{0}\" CMake 생성기를 사용하여 구성하는 중"
+	"configuring.using.generator": "Configuring using the \"{0}\" CMake generator",
+	"with.platform.and.toolset": " with platform \"{0}\" and toolset {1}"
 }

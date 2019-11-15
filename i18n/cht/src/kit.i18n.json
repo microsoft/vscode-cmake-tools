@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "在目錄 {1} 中找到 {0} 個套件",
 	"failed.to.execute": "無法執行 {0}: {1}",
 	"error.parsing.environment": "剖析環境變數時發生錯誤: {0}",
-	"ok.running": "確定要執行 {0} {1}，環境變數: {3}",
+	"ok.running": "OK running {0} {1}, env vars: {2}",
 	"checking.for.kit": "正在檢查套件: {0}",
 	"checking": "正在檢查 {0}",
 	"detected.kit.for.version": "已偵測到 VsKit 的版本",

@@ -8,6 +8,7 @@
 	"constructing.cmaketools": "Vytváří se nová instance CMakeTools.",
 	"disposing.extension": "Uvolňuje se rozšíření CMakeTools.",
 	"extension.dispose": "Uvolnění rozšíření",
+	"using.user.generator": "Using generator from user configuration: {0}",
 	"configuration.already.in.progress": "Konfigurace už probíhá.",
 	"task.already.running": "Úloha CMake je už spuštěná. Před pokusem o spuštění nové úlohy CMake ji zastavte.",
 	"no.source.directory.found": "Nemáte otevřený zdrojový adresář.",

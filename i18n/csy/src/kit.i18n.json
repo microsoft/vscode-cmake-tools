@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "Našly se sady ({0}) v adresáři {1}.",
 	"failed.to.execute": "Nepovedlo se provést {0}: {1}",
 	"error.parsing.environment": "Chyba při parsování proměnné prostředí: {0}",
-	"ok.running": "V pořádku běží {0} {1}, proměnné prostředí: {3}",
+	"ok.running": "OK running {0} {1}, env vars: {2}",
 	"checking.for.kit": "Hledá se sada: {0}.",
 	"checking": "Kontroluje se {0}.",
 	"detected.kit.for.version": "Zjištěna sada VsKit pro verzi",
