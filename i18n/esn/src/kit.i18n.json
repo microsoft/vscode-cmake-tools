@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "Se encontraron {0} kits en el directorio {1}",
 	"failed.to.execute": "No se pudo ejecutar {0}: {1}",
 	"error.parsing.environment": "Error al analizar la variable de entorno: {0}",
-	"ok.running": "OK running {0} {1}, env vars: {2}",
+	"ok.running": "Se acepta la ejecución de {1} en {0}, variables de entorno: {2}",
 	"checking.for.kit": "Comprobando si existe el kit: {0}",
 	"checking": "Comprobando {0}",
 	"detected.kit.for.version": "VsKit detectado para la versión",

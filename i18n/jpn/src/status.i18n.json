@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "CTest テストを実行します",
 	"launch.debugger.tooltip": "選択したターゲットのデバッガーを起動します",
 	"select.target.tooltip": "起動するターゲットを選択します",
-	"debug": "Debug",
+	"debug": "デバッグ",
 	"run.ctest": "CTest の実行",
 	"test.passing": "{0}/{1} 件のテストが成功",
 	"tests.passing": "{0}/{1} 件のテストが成功",

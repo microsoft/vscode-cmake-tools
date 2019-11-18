@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "CTest 테스트 실행",
 	"launch.debugger.tooltip": "선택된 대상의 디버거 시작",
 	"select.target.tooltip": "시작할 대상 선택",
-	"debug": "Debug",
+	"debug": "디버그",
 	"run.ctest": "CTest 실행",
 	"test.passing": "{0}/{1}개 테스트 통과",
 	"tests.passing": "{0}/{1}개 테스트 통과",
