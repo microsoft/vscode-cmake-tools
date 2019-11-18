@@ -8,7 +8,7 @@
 	"constructing.cmaketools": "正在建構新的 CMakeTools 執行個體",
 	"disposing.extension": "正在處置 CMakeTools 延伸模組",
 	"extension.dispose": "延伸模組處置",
-	"using.user.generator": "Using generator from user configuration: {0}",
+	"using.user.generator": "正在使用來自使用者組態的產生器: {0}",
 	"configuration.already.in.progress": "已在設定。",
 	"task.already.running": "CMake 工作已在執行。請先停止，再嘗試執行新的 CMake 工作。",
 	"no.source.directory.found": "您未開啟任何來源目錄",

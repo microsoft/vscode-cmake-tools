@@ -8,7 +8,7 @@
 	"constructing.cmaketools": "Создание нового экземпляра CMakeTools.",
 	"disposing.extension": "Удаление расширения CMakeTools.",
 	"extension.dispose": "Удаление расширения",
-	"using.user.generator": "Using generator from user configuration: {0}",
+	"using.user.generator": "Использование генератора из конфигурации пользователя: {0}",
 	"configuration.already.in.progress": "Настройка уже выполняется.",
 	"task.already.running": "Задача CMake уже выполняется. Остановите ее перед запуском новой задачи CMake.",
 	"no.source.directory.found": "У вас нет открытого каталога источника.",

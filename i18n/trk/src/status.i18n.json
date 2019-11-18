@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "CTest testlerini çalıştır",
 	"launch.debugger.tooltip": "Seçili hedef için hata ayıklayıcısını başlat",
 	"select.target.tooltip": "Başlatılacak hedefi seçin",
-	"debug": "Debug",
+	"debug": "Hata Ayıkla",
 	"run.ctest": "CTest'i çalıştır",
 	"test.passing": "{0}/{1} test geçiriliyor",
 	"tests.passing": "{0}/{1} test geçiriliyor",

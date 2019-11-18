@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "已在目录 {1} 中找到 {0} 工具包",
 	"failed.to.execute": "无法执行 {0}: {1}",
 	"error.parsing.environment": "分析环境变量时出错: {0}",
-	"ok.running": "OK running {0} {1}, env vars: {2}",
+	"ok.running": "正常运行 {0} {1}，环境变量: {2}",
 	"checking.for.kit": "检查工具包: {0}",
 	"checking": "正在检查 {0}",
 	"detected.kit.for.version": "已检测到适用于版本的 VsKit",

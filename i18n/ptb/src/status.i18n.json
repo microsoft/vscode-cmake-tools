@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "Executar testes do CTest",
 	"launch.debugger.tooltip": "Iniciar o depurador para o destino selecionado",
 	"select.target.tooltip": "Selecionar o destino a ser iniciado",
-	"debug": "Debug",
+	"debug": "Depurar",
 	"run.ctest": "Executar CTest",
 	"test.passing": "{0}/{1} aprovação no teste",
 	"tests.passing": "{0}/{1} aprovações no teste",

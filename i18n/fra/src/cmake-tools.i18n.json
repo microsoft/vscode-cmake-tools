@@ -8,7 +8,7 @@
 	"constructing.cmaketools": "Construction d'une instance de CMakeTools",
 	"disposing.extension": "Suppression de l'extension CMakeTools",
 	"extension.dispose": "Suppression de l'extension",
-	"using.user.generator": "Using generator from user configuration: {0}",
+	"using.user.generator": "Utilisation du générateur à partir de la configuration utilisateur : {0}",
 	"configuration.already.in.progress": "La configuration est déjà en cours d'exécution.",
 	"task.already.running": "Une tâche CMake est déjà en cours d'exécution. Arrêtez-la avant d'essayer d'exécuter une nouvelle tâche CMake.",
 	"no.source.directory.found": "Vous n'avez pas de répertoire source ouvert",

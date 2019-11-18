@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "Uruchom testy narzędzia CTest",
 	"launch.debugger.tooltip": "Uruchom debuger dla wybranego elementu docelowego",
 	"select.target.tooltip": "Wybierz element docelowy do uruchomienia",
-	"debug": "Debug",
+	"debug": "Debuguj",
 	"run.ctest": "Uruchom narzędzie CTest",
 	"test.passing": "{0}/{1} testu zakończono powodzeniem",
 	"tests.passing": "{0}/{1} testów zakończono powodzeniem",

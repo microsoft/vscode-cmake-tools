@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "{1} dizininde {0} set bulundu",
 	"failed.to.execute": "{0} yürütülemedi: {1}",
 	"error.parsing.environment": "{0} ortam değişkeni ayrıştırılırken hata oluştu",
-	"ok.running": "OK running {0} {1}, env vars: {2}",
+	"ok.running": "{0} {1} çalışıyor, ortam değişkenleri: {2}",
 	"checking.for.kit": "{0} seti denetleniyor",
 	"checking": "{0} denetleniyor",
 	"detected.kit.for.version": "Sürüm için VsKit algılandı",
