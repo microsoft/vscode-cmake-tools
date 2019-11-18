@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "執行 CTest 測試",
 	"launch.debugger.tooltip": "為選取的目標啟動偵錯工具",
 	"select.target.tooltip": "選取要啟動的目標",
-	"debug": "Debug",
+	"debug": "偵錯",
 	"run.ctest": "執行 CTest",
 	"test.passing": "{0}/{1} 個測試通過",
 	"tests.passing": "{0}/{1} 個測試通過",

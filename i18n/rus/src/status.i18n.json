@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "Запуск тестов CTest",
 	"launch.debugger.tooltip": "Запуск отладчика для выбранного целевого объекта",
 	"select.target.tooltip": "Выбор целевого объекта для запуска.",
-	"debug": "Debug",
+	"debug": "Отладка",
 	"run.ctest": "Запустить CTest",
 	"test.passing": "{0}/{1} тест пройден.",
 	"tests.passing": "Тестов пройдено: {0}/{1}.",

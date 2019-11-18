@@ -8,7 +8,7 @@
 	"constructing.cmaketools": "Eine neue CMakeTools-Instanz wird erstellt.",
 	"disposing.extension": "CMakeTools-Erweiterung wird verworfen.",
 	"extension.dispose": "Verwerfen der Erweiterung",
-	"using.user.generator": "Using generator from user configuration: {0}",
+	"using.user.generator": "Es wird ein Generator aus der Benutzerkonfiguration verwendet: {0}",
 	"configuration.already.in.progress": "Die Konfiguration wird bereits ausgeführt.",
 	"task.already.running": "Ein CMake-Task wird bereits ausgeführt. Beenden Sie den Vorgang, bevor Sie einen neuen CMake-Task ausführen.",
 	"no.source.directory.found": "Es ist kein Quellverzeichnis geöffnet.",

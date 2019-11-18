@@ -12,7 +12,7 @@
 	"run.ctest.tests.tooltip": "Exécuter les tests CTest",
 	"launch.debugger.tooltip": "Lancer le débogueur pour la cible sélectionnée",
 	"select.target.tooltip": "Sélectionner la cible à lancer",
-	"debug": "Debug",
+	"debug": "Déboguer",
 	"run.ctest": "Exécuter CTest",
 	"test.passing": "Réussite du test : {0}/{1}",
 	"tests.passing": "Réussite des tests : {0}/{1}",

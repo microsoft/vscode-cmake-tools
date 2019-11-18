@@ -8,7 +8,7 @@
 	"constructing.cmaketools": "Yeni CMake Araçları örneği oluşturuluyor",
 	"disposing.extension": "CMake Araçları uzantısı atılıyor",
 	"extension.dispose": "Uzantı atma",
-	"using.user.generator": "Using generator from user configuration: {0}",
+	"using.user.generator": "Kullanıcı yapılandırmasındaki oluşturucu kullanılıyor: {0}",
 	"configuration.already.in.progress": "Yapılandırma zaten devam ediyor.",
 	"task.already.running": "Bir CMake görevi zaten çalışıyor. Yeni bir CMake görevi çalıştırmayı denemeden önce bunu durdurun.",
 	"no.source.directory.found": "Açık bir kaynak dizininiz yok",
