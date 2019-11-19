@@ -1193,12 +1193,20 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  cleanConfigure(cmt?: CMakeTools) { return this.mapCMakeTools(cmt, cmt_ => cmt_.cleanConfigure()); }
+  cleanConfigure(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.cleanConfigure()); }
 
-  configure(cmt?: CMakeTools) { return this.mapCMakeTools(cmt, c => c.configure()); }
+  cleanConfigureAll() { return this.mapCMakeTools(c => c.cleanConfigure()); }
 
-  async build(name?: string, folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) {
+  configure(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.configure()); }
+
+  configureAll() { return this.mapCMakeTools(c => c.configure()); }
+
+  async build(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder], name?: string) {
     return await this.mapCMakeToolsForFolders(folders, c => c.build(name));
+  }
+
+  async buildAll(name?: string) {
+    return await this.mapCMakeTools(c => c.build(name));
   }
 
   private readonly _targetProvider = new TargetProvider();
@@ -1256,21 +1264,37 @@ class ExtensionManager implements vscode.Disposable {
     return await this.mapCMakeToolsForFolders(folders, c => c.setVariant());
   }
 
-  install() { return this.mapCMakeTools(c => c.install()); }
+  async setVariantAll() {
+    return await this.mapCMakeTools(c => c.setVariant());
+  }
+
+  install(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.install()); }
+
+  installAll() { return this.mapCMakeTools(c => c.install()); }
 
   // TODO:
   editCache() {
     // return this.withCMakeTools(undefined, cmt => cmt.editCache());
   }
 
-  clean() { return this.build('clean'); }
+  clean(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) { return this.build(folders, 'clean'); }
 
-  async cleanRebuild() {
-    const retc = await this.build('clean');
+  cleanAll() { return this.buildAll('clean'); }
+
+  async cleanRebuild(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) {
+    const retc = await this.build(folders, 'clean');
     if (retc) {
       return retc;
     }
-    return this.build();
+    return this.build(folders);
+  }
+
+  async cleanRebuildAll() {
+    const retc = await this.buildAll('clean');
+    if (retc) {
+      return retc;
+    }
+    return this.buildAll();
   }
 
   async buildWithTarget() {
@@ -1306,9 +1330,14 @@ class ExtensionManager implements vscode.Disposable {
     vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
   }
 
-  ctest() { return this.mapCMakeTools(c => c.ctest()); }
+  ctest(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.ctest()); }
 
-  stop() { return this.mapCMakeTools(c => c.stop()); }
+  ctestAll() { return this.mapCMakeTools(c => c.ctest()); }
+
+  stop(folders: (CMakeToolsFolder | null)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.stop()); }
+
+  // TODO!!
+  stopAll() { return this.mapCMakeTools(c => c.stop()); }
 
   // TODO!!
   quickStart() {
@@ -1334,7 +1363,33 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   // TODO!!
+  async debugTargetAll(name?: string, folder?: vscode.WorkspaceFolder) {
+  //   if (name && folder) {
+  //     const info = await this.getTargetInformationFull(name, folder);
+  //     if (!info) {
+  //       return null;
+  //     }
+  //     return info.cmakeTools.debugTarget(info.target.name);
+  //   } else {
+  //     return this.withCMakeTools(null, cmt => cmt.debugTarget(name));
+  //   }
+  }
+
+  // TODO!!
   async launchTarget(name?: string, folder?: vscode.WorkspaceFolder) {
+  //   if (name && folder) {
+  //     const info = await this.getTargetInformationFull(name, folder);
+  //     if (!info) {
+  //       return null;
+  //     }
+  //     return info.cmakeTools.launchTarget(info.target.name);
+  //   } else {
+  //     return this.withCMakeTools(null, cmt => cmt.launchTarget(name));
+  //   }
+  }
+
+  // TODO!!
+  async launchTargetAll(name?: string, folder?: vscode.WorkspaceFolder) {
   //   if (name && folder) {
   //     const info = await this.getTargetInformationFull(name, folder);
   //     if (!info) {
@@ -1412,26 +1467,37 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'scanForKits',
     'selectKit',
     'setKitByName',
-    'cleanConfigure',
-    'configure',
     'build',
+    'buildAll',
+    'buildWithTarget',
     'setVariant',
+    'setVariantAll',
     'install',
+    'installAll',
     'editCache',
     'clean',
+    'cleanAll',
+    'cleanConfigure',
+    'cleanConfigureAll',
     'cleanRebuild',
-    'buildWithTarget',
-    'setDefaultTarget',
+    'cleanRebuildAll',
+    'configure',
+    'configureAll',
     'ctest',
+    'ctestAll',
     'stop',
+    'stopAll',
     'quickStart',
     'launchTargetPath',
     // 'launchTargetDirectory',
     // 'buildType',
     // 'buildDirectory',
     'debugTarget',
+    'debugTargetAll',
     'launchTarget',
+    'launchTargetAll',
     'selectLaunchTarget',
+    'setDefaultTarget',
     'resetState',
     'viewLog',
     'compileFile',
