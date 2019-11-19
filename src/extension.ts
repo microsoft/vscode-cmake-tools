@@ -84,6 +84,8 @@ class ExtensionManager implements vscode.Disposable {
     });
   }
 
+  private _onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
+
   /**
    * Second-phase async init
    */
@@ -91,11 +93,11 @@ class ExtensionManager implements vscode.Disposable {
     if (vscode.workspace.workspaceFolders) {
       await this._folders.loadAllCurrent();
       this._projectOutlineProvider.addAllCurrentFolders();
-      // Default active folder
-      const activeFolder = vscode.workspace.workspaceFolders[0];
-      await this._setActiveFolder(activeFolder);
+      this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(this._onDidChangeActiveTextEditor, this);
+      this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
       // _folders.activeFolder must be there at this time
-      rollbar.takePromise('Post-folder-open', {folder: activeFolder}, this._postWorkspaceOpen(this._folders.activeFolder!));
+      const activeCmtFoler: CMakeToolsFolder = this._folders.activeFolder!;
+      rollbar.takePromise('Post-folder-open', {folder: activeCmtFoler.folder}, this._postWorkspaceOpen(activeCmtFoler));
     }
   }
 
@@ -165,6 +167,7 @@ class ExtensionManager implements vscode.Disposable {
   // Watch the code model so that we may update teh tree view
   private _codeModelSub: vscode.Disposable = new DummyDisposable();
 
+  // TODO: outline?
   /**
    * The project outline tree data provider
    */
@@ -179,6 +182,12 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
   private _configProviderRegister?: Promise<void>;
+
+  // TODO
+  /**
+   * Auto select active folder on focus change
+   */
+  private _autoSelectActiveFolder = true;
 
   /**
    * Get the CMakeTools instance associated with the given workspace folder, or `null`
@@ -237,6 +246,7 @@ class ExtensionManager implements vscode.Disposable {
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
+    this._onDidChangeActiveTextEditorSub.dispose()
     this._kitsWatcher.dispose();
     this._editorWatcher.dispose();
     this._projectOutlineDisposer.dispose();
@@ -313,6 +323,16 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  private async _onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
+    if (vscode.workspace.workspaceFolders) {
+      let ws: vscode.WorkspaceFolder | undefined;
+      if (editor) {
+        ws = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+      }
+      await this._setActiveFolder(ws || vscode.workspace.workspaceFolders[0]);
+    }
+  }
+
   /**
    * Show UI to allow the user to select an active kit
    */
@@ -324,7 +344,7 @@ class ExtensionManager implements vscode.Disposable {
         // Ingore if user cancelled
         await this._setActiveFolder(selection);
         // _folders.activeFolder must be there at this time
-        if (lastActiveFolderPath !== this._folders.activeFolder!.folder.uri.fsPath) {
+        if (lastActiveFolderPath !== this._folders.activeFolder!.folder.uri.fsPath && !this._autoSelectActiveFolder) {
           rollbar.takePromise('Post-folder-open', {folder: selection}, this._postWorkspaceOpen(this._folders.activeFolder!));
         }
       }
@@ -397,12 +417,14 @@ class ExtensionManager implements vscode.Disposable {
   private async _setActiveFolder(ws: vscode.WorkspaceFolder, progress?: ProgressHandle) {
     // Set the new workspace
     this._folders.setActiveFolder(ws);
+    this._statusBar.setActiveFolderName(ws.name);
     // TODO
     // // Drop the old kit watcher on the floor
     // this._resetKitsWatcher();
-    // Re-read kits for the new workspace:
-    await this._rereadKits(progress);
-    this._statusBar.setActiveFolderName(ws.name);
+    const currentKit = this._folders.activeFolder!.cmakeTools.activeKit;
+    if (currentKit) {
+      this._statusBar.setActiveKitName(currentKit.name);
+    }
     this._setupSubscriptions();
   }
 
@@ -553,6 +575,7 @@ class ExtensionManager implements vscode.Disposable {
     }
   });
 
+  // TODO?: for folder
   /**
    * Reload the list of available kits from the filesystem. This will also
    * update the kit loaded into the current backend if applicable.

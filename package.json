@@ -95,8 +95,18 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.setVariantAll",
+        "title": "%cmake-tools.command.cmake.setVariantAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.configureAll",
+        "title": "%cmake-tools.command.cmake.configureAll.title%",
         "category": "CMake"
       },
       {
@@ -110,6 +120,11 @@
       {
         "command": "cmake.build",
         "title": "%cmake-tools.command.cmake.build.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.buildAll",
+        "title": "%cmake-tools.command.cmake.buildAll.title%",
         "category": "CMake"
       },
       {
@@ -147,6 +162,11 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.installAll",
+        "title": "%cmake-tools.command.cmake.installAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.buildWithTarget",
         "title": "%cmake-tools.command.cmake.buildWithTarget.title%",
         "category": "CMake"
@@ -162,12 +182,22 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.cleanConfigureAll",
+        "title": "%cmake-tools.command.cmake.cleanConfigureAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.outline.cleanConfigure",
         "title": "%cmake-tools.command.cmake.outline.cleanConfigure.title%"
       },
       {
         "command": "cmake.clean",
         "title": "%cmake-tools.command.cmake.clean.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.cleanAll",
+        "title": "%cmake-tools.command.cmake.cleanAll.title%",
         "category": "CMake"
       },
       {
@@ -180,12 +210,22 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.cleanRebuildAll",
+        "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.outline.cleanRebuild",
         "title": "%cmake-tools.command.cmake.cleanRebuild.title%"
       },
       {
         "command": "cmake.ctest",
         "title": "%cmake-tools.command.cmake.ctest.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.ctestAll",
+        "title": "%cmake-tools.command.cmake.ctestAll.title%",
         "category": "CMake"
       },
       {
@@ -204,8 +244,18 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.debugTargetAll",
+        "title": "%cmake-tools.command.cmake.debugTargetAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.launchTarget",
         "title": "%cmake-tools.command.cmake.launchTarget.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.launchTargetAll",
+        "title": "%cmake-tools.command.cmake.launchTargetAll.title%",
         "category": "CMake"
       },
       {
@@ -216,6 +266,11 @@
       {
         "command": "cmake.stop",
         "title": "%cmake-tools.command.cmake.stop.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.stopAll",
+        "title": "%cmake-tools.command.cmake.stopAll.title%",
         "category": "CMake"
       },
       {
