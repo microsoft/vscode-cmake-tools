@@ -16,6 +16,6 @@
 	"cookie.not.known.message": "CMake 服务器 cookie \"{0}\" 未与已知消息对应",
 	"cant.yet.handle.message": "尚无法处理 {0} 条消息",
 	"sending.message.to.cmake-server": "将消息发送到 cmake-server: {0}",
-	"configuring.using.generator": "Configuring using the \"{0}\" CMake generator",
-	"with.platform.and.toolset": " with platform \"{0}\" and toolset {1}"
+	"configuring.using.generator": "正在使用“{0}”CMake 生成器进行配置",
+	"with.platform.and.toolset": " 平台: \"{0}\"，工具集: {1}"
 }
