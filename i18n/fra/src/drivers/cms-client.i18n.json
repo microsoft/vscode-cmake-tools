@@ -14,8 +14,8 @@
 	"received.message.from.make-server": "Message reçu de cmake-server : {0}",
 	"invalid.cookie": "Cookie non valide : {0}",
 	"cookie.not.known.message": "Le cookie de serveur CMake \"{0}\" ne correspond pas à un message connu",
-	"cant.yet.handle.message": "Impossible de prendre en charge les messages {0} pour le moment",
+	"cant.yet.handle.message": "Impossible de gérer les messages {0} pour le moment",
 	"sending.message.to.cmake-server": "Envoi d'un message à cmake-server : {0}",
-	"configuring.using.generator": "Configuring using the \"{0}\" CMake generator",
-	"with.platform.and.toolset": " with platform \"{0}\" and toolset {1}"
+	"configuring.using.generator": "Configuration à l'aide du générateur CMake \"{0}\"",
+	"with.platform.and.toolset": " avec la plateforme \"{0}\" et l'ensemble d'outils {1}"
 }
