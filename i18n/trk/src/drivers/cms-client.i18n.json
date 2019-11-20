@@ -16,6 +16,6 @@
 	"cookie.not.known.message": "CMake sunucusu \"{0}\" tanımlama bilgisi, bilinen bir iletiye karşılık gelmiyor",
 	"cant.yet.handle.message": "{0} iletileri henüz işlenemiyor",
 	"sending.message.to.cmake-server": "cmake-server'a ileti gönderiliyor: {0}",
-	"configuring.using.generator": "Configuring using the \"{0}\" CMake generator",
-	"with.platform.and.toolset": " with platform \"{0}\" and toolset {1}"
+	"configuring.using.generator": "\"{0}\" CMake oluşturucusu kullanılarak yapılandırılıyor",
+	"with.platform.and.toolset": " (\"{0}\" platformu ve {1} araç takımı ile)"
 }
