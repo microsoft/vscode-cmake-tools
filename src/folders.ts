@@ -5,21 +5,43 @@
 import CMakeTools from '@cmt/cmake-tools';
 import { Kit, kitsAvailableInWorkspaceDirectory } from '@cmt/kit';
 import rollbar from '@cmt/rollbar';
+import {TargetProvider, TargetInformation} from '@cmt/target';
 import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
 
 export class CMakeToolsFolder {
-  constructor(readonly cmakeTools: CMakeTools) { }
+  private _defaultBuildTarget?: TargetInformation;
+
+  private constructor(readonly cmakeTools: CMakeTools, private readonly _targetProvider: TargetProvider) { }
+
+  static async create(cmakeTools: CMakeTools): Promise<CMakeToolsFolder> {
+    const cmakeToolsFolder: CMakeToolsFolder = new CMakeToolsFolder(cmakeTools, await TargetProvider.create(cmakeTools));
+    cmakeToolsFolder._subscriptions.push(cmakeToolsFolder._targetProvider);
+    return cmakeToolsFolder;
+  }
 
   get folder() {
     return this.cmakeTools.folder;
   }
 
   folderKits: Kit[] = [];
-  readonly subscriptions: vscode.Disposable[] = [];
+
+  get buildTargets() {
+    return this._targetProvider.provideTargets();
+  }
+
+  get defaultBuildTarget() {
+    return this._defaultBuildTarget;
+  }
+
+  set defaultBuildTarget(buildTarget: TargetInformation | undefined) {
+    this._defaultBuildTarget = buildTarget;
+  }
+
+  private readonly _subscriptions: vscode.Disposable[] = [];
 
   dispose() {
-    disposeAll(this.subscriptions);
+    disposeAll(this._subscriptions);
     this.cmakeTools.dispose();
   }
 }
@@ -51,10 +73,10 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * - Where we search for variants
    * - Where we search for workspace-local kits
    */
-  private _activeFolder: CMakeToolsFolder | null = null;
-  get activeFolder(): CMakeToolsFolder | null { return this._activeFolder; }
+  private _activeFolder?: CMakeToolsFolder;
+  get activeFolder() { return this._activeFolder; }
   setActiveFolder(ws: vscode.WorkspaceFolder) {
-    this._activeFolder = this.get(ws) || null;
+    this._activeFolder = this.get(ws);
   }
 
   constructor(readonly extensionContext: vscode.ExtensionContext) {
@@ -154,7 +176,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     // Load for the workspace.
     const new_cmt = await this._loadCMakeToolsForWorkspaceFolder(folder);
     // Remember it
-    const inst = new CMakeToolsFolder(new_cmt);
+    const inst = await CMakeToolsFolder.create(new_cmt);
     this._instances.set(folder.name, inst);
     // Return the newly created instance
     return inst;

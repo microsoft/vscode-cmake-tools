@@ -4,8 +4,7 @@
 
 import { CMakeTools } from '@cmt/cmake-tools';
 import * as api from '@cmt/api';
-import rollbar from '@cmt/rollbar';
-import { disposeAll, flatMap } from '@cmt/util';
+import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
 
 /**
@@ -35,51 +34,34 @@ interface CMakeToolsSubscription {
 }
 
 /**
- * Target information provider. Register CMakeTools instances with it and then
- * ask it about the targets available.
+ * Target information provider. Ask it about the targets available.
  */
 export class TargetProvider implements vscode.Disposable {
-  private _subs = new Map<string, CMakeToolsSubscription>();
+  private constructor(private readonly _sub: CMakeToolsSubscription) {}
 
-  async registerCMakeTools(cmt: CMakeTools) {
-    const folder_name = cmt.folderName;
-    const disp1 = cmt.onReconfigured(() => this._reload(cmt));
-    const disp2 = cmt.onDispose(() => {
-      const existing = this._subs.get(folder_name);
-      if (!existing) {
-        rollbar.error('Dispose for unregistered CMake Tools');
-        return;
-      }
-      existing.dispose();
-      this._subs.delete(folder_name);
-    });
-    // Register the subscrition
-    this._subs.set(cmt.folderName, {
+  static async create(cmt: CMakeTools): Promise<TargetProvider> {
+    const targetProvider = new TargetProvider({
       cmakeTools: cmt,
       targets: [],
-      subscriptions: [disp1, disp2],
+      subscriptions: [],
       dispose() { disposeAll(this.subscriptions); }
     });
+    targetProvider._sub.subscriptions.push(cmt.onReconfigured(() => targetProvider._reload(cmt)));
     // Load the targets already present
-    await this._reload(cmt);
+    await targetProvider._reload(cmt);
+    return targetProvider;
   }
 
   private async _reload(cmt: CMakeTools) {
-    const existing = this._subs.get(cmt.folderName);
-    if (!existing) {
-      rollbar.error('Update on non-registered CMake Tools instance?');
-      return;
-    }
-    existing.targets = await getTargets(cmt);
+    this._sub.targets = await getTargets(cmt);
   }
 
   /**
    * Get all the targets available for all workspaces
    */
-  provideTargets(): TargetInformation[] { return [...flatMap(this._subs.values(), sub => sub.targets)]; }
+  provideTargets(): TargetInformation[] { return this._sub.targets; }
 
   dispose() {
-    disposeAll(this._subs.values());
-    this._subs.clear();
+    this._sub.dispose();
   }
 }
