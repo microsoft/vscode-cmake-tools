@@ -94,9 +94,10 @@ class ExtensionManager implements vscode.Disposable {
       this._projectOutlineProvider.addAllCurrentFolders();
       this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(this._onDidChangeActiveTextEditor, this);
       this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
-      // _folders.activeFolder must be there at this time
-      const activeCmtFoler: CMakeToolsFolder = this._folders.activeFolder!;
-      rollbar.takePromise('Post-folder-open', {folder: activeCmtFoler.folder}, this._postWorkspaceOpen(activeCmtFoler));
+      await this._rereadKits();
+      for (const cmtFolder of this._folders) {
+        rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
+      }
     }
   }
 
