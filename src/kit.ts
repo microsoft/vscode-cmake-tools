@@ -8,13 +8,14 @@ import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import CMakeTools from './cmake-tools';
 import * as expand from './expand';
 import * as logging from './logging';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from './schema';
-import {compare, dropNulls, objectPairs, Ordering, thisExtensionPath} from './util';
+import {compare, dropNulls, objectPairs, Ordering, thisExtensionPath, versionLess} from './util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -268,8 +269,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       return null;
     }
     if (version.target && version.target.includes('msvc')) {
-      // DO NOT include Clang's that target MSVC but don't present the MSVC
-      // command-line interface. CMake does not support them properly.
+      // Skip MSVC ABI compatible Clang installations, which will be handled in 'scanForClangForMSVCKits()' later
       return null;
     }
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
@@ -692,20 +692,45 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[]): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools: CMakeTools | null): Promise<Kit[]> {
   const kits = await scanDirectory(dir, async(binPath): Promise<Kit[]|null> => {
-    if (!path.basename(binPath).startsWith('clang-cl')) {
+    const isClangGNUCLI = (path.basename(binPath, '.exe') === 'clang');
+    const isClangCL = (path.basename(binPath, '.exe') === 'clang-cl');
+    if (!isClangGNUCLI && !isClangCL) {
       return null;
     }
+
     const version = await getClangVersion(binPath);
     if (version === null) {
       return null;
     }
+
+    // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
+    let gnu_cli = '';
+
+    if (isClangGNUCLI) {
+      if (cmakeTools === null) {
+        return null;
+      } else {
+        const cmake_executable = await cmakeTools.getCMakeExecutable();
+        if (cmake_executable.version === undefined) {
+          return null;
+        } else {
+          if (versionLess(cmake_executable.version, '3.15.0')) {
+            // Could not find a supported CMake version
+            return null;
+          }
+        }
+      }
+      // Found a supported CMake version
+      gnu_cli = ' (GNU CLI)';
+    }
+
     return vsInstalls.map((vs): Kit => {
-      const installName = vsDisplayName(vs);
+      const install_name = vsDisplayName(vs);
       const vs_arch = (version.target && version.target.includes('i686-pc')) ? 'x86' : 'amd64';
       return {
-        name: localize('clang.for.msvc', 'Clang {0} for MSVC with {1} ({2})', version.version, installName, vs_arch),
+        name: localize('clang.for.msvc', 'Clang {0}{1} for MSVC with {2} ({3})', version.version, gnu_cli, install_name, vs_arch),
         visualStudio: kitVSName(vs),
         visualStudioArchitecture: vs_arch,
         compilers: {
@@ -718,9 +743,9 @@ async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[]):
   return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools: CMakeTools | null): Promise<Promise<Kit[]>[]> {
   const vs_installs = await vsInstallations();
-  const results = searchPaths.map(p => scanDirForClangCLKits(p, vs_installs));
+  const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeTools));
   return results;
 }
 
@@ -798,7 +823,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(opt?: KitScanOptions) {
+export async function scanForKits(cmakeTools: CMakeTools | null, opt?: KitScanOptions) {
   const kit_options = opt || {};
 
   log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
@@ -830,31 +855,30 @@ export async function scanForKits(opt?: KitScanOptions) {
 
     if (isWin32) {
       // Prepare clang-cl search paths
-      const clang_cl_paths = new Set<string>();
+      const clang_paths = new Set<string>();
 
       // LLVM_ROOT environment variable location
       if (process.env.hasOwnProperty('LLVM_ROOT')) {
         const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
-        clang_cl_paths.add(llvm_root);
+        clang_paths.add(llvm_root);
       }
       // Default installation locations
-      clang_cl_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
-      clang_cl_paths.add('C:\\Program Files\\LLVM\\bin');
+      clang_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
+      clang_paths.add('C:\\Program Files\\LLVM\\bin');
       // PATH environment variable locations
-      scan_paths.forEach(path_el => clang_cl_paths.add(path_el));
+      scan_paths.forEach(path_el => clang_paths.add(path_el));
       // LLVM bundled in VS locations
       const vs_installs = await vsInstallations();
-      const bundled_clang_cl_paths = vs_installs.map(vs_install => {
+      const bundled_clang_paths = vs_installs.map(vs_install => {
         return vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin";
       });
-      bundled_clang_cl_paths.forEach(path_ => {clang_cl_paths.add(path_);});
+      bundled_clang_paths.forEach(path_el => {clang_paths.add(path_el);});
 
       // Scan for kits
       const vs_kits = scanForVSKits(pr);
       kit_promises.push(vs_kits);
-      const cl_paths = Array.from(clang_cl_paths);
-      const clang_cl_kits = await scanForClangCLKits(cl_paths);
-      kit_promises = kit_promises.concat(clang_cl_kits);
+      const clang_kits = await scanForClangForMSVCKits(Array.from(clang_paths), cmakeTools);
+      kit_promises = kit_promises.concat(clang_kits);
     }
 
     const arrays = await Promise.all(kit_promises);
@@ -874,9 +898,16 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
     return localize('kit.for.toolchain.fiile', 'Kit for toolchain file {0}', kit.toolchainFile);
   }
   if (kit.visualStudio) {
-    const inst = await getVSInstallForKit(kit);
-    if (inst) {
-      return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(inst), kit.visualStudioArchitecture);
+    const vs_install = await getVSInstallForKit(kit);
+    if (vs_install) {
+      if (kit.compilers) {
+        // Clang for MSVC
+        const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
+        return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
+      } else {
+        // MSVC
+        return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), kit.visualStudioArchitecture);
+      }
     }
     return '';
   }

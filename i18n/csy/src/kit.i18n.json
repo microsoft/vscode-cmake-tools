@@ -30,7 +30,7 @@
 	"detected.kit.for.version": "Zjištěna sada VsKit pro verzi",
 	"generator.present": "Generátor je přítomen: {0}",
 	"selected.preferred.generator.name": "Název vybraného upřednostňovaného generátoru: {0} {1}",
-	"clang.for.msvc": "Clang {0} pro MSVC s {1} ({2})",
+	"clang.for.msvc": "Clang {0}{1} pro MSVC s {2} ({3})",
 	"scanning.for.kits.on.system": "Hledají se sady v systému.",
 	"scanning.for.kits": "Hledají se sady.",
 	"scanning.for.cmake.kits": "Hledají se sady CMake...",

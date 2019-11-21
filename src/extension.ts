@@ -676,7 +676,7 @@ class ExtensionManager implements vscode.Disposable {
     log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
 
     // Do the scan:
-    const discovered_kits = await scanForKits({minGWSearchDirs: this._getMinGWDirs()});
+    const discovered_kits = await scanForKits(this._activeCMakeTools, {minGWSearchDirs: this._getMinGWDirs()});
 
     // The list with the new definition user kits starts with the non VS ones,
     // which do not have any variations in the way they can be defined.

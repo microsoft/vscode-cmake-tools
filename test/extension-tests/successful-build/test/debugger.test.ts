@@ -15,7 +15,7 @@ suite('[Debug/Lauch interface]', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-    await cmt.setKit(await getFirstSystemKit());
+    await cmt.setKit(await getFirstSystemKit(cmt));
     testEnv.projectFolder.buildDirectory.clear();
     expect(await cmt.build()).to.be.eq(0);
   });

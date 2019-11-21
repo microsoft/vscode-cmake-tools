@@ -12,7 +12,7 @@ suite('[MinGW Tests]', async () => {
   });
 
   test('Test scan of mingw', async () => {
-    const kits = await scanForKits({
+    const kits = await scanForKits(null,{
       scanDirs: [],
       minGWSearchDirs: mingw_dirs,
     });

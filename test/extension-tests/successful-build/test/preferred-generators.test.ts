@@ -224,7 +224,7 @@ function makeExtensionTestSuite(name: string,
       // No rescan of the tools is needed
       // No new kit selection is needed
       await clearExistingKitConfigurationFile();
-      context.kits = await scanForKits();
+      context.kits = await scanForKits(context.cmt);
       skipTestIf({kitIsNotAvailable: true}, this, context);
     });
 
