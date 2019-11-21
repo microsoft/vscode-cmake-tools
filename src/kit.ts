@@ -851,7 +851,7 @@ export async function scanForKits(opt?: KitScanOptions) {
  */
 export async function descriptionForKit(kit: Kit): Promise<string> {
   if (kit.toolchainFile) {
-    return localize('kit.for.toolchain.fiile', 'Kit for toolchain file {0}', kit.toolchainFile);
+    return localize('kit.for.toolchain.file', 'Kit for toolchain file {0}', kit.toolchainFile);
   }
   if (kit.visualStudio) {
     const inst = await getVSInstallForKit(kit);
