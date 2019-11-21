@@ -560,16 +560,22 @@ class ExtensionManager implements vscode.Disposable {
     }
     // Load user-kits
     reportProgress(progress, localize('loading.kits', 'Loading kits'));
-    const user = await readKitsFile(USER_KITS_FILEPATH);
+    // Special kits
+    const special_kits: ReadonlyArray<Kit> = [
+      // Spcial __scanforkits__ kit used for invoking the "Scan for kits"
+      {name: '__scanforkits__'},
+      // Special __unspec__ kit for opting-out of kits
+      {name: '__unspec__'}
+    ];
+    // Append user kits
+    const user_kits: Kit[] = [...special_kits, ...await readKitsFile(USER_KITS_FILEPATH)];
     // Conditionally load workspace kits
-    let workspace: Kit[] = [];
+    let workspace_kits: Kit[] = [];
     if (this._workspaceKitsPath) {
-      workspace = await readKitsFile(this._workspaceKitsPath);
+      workspace_kits = await readKitsFile(this._workspaceKitsPath);
     }
-    // Add the special __unspec__ kit for opting-out of kits
-    user.push({name: '__unspec__'});
     // Set them as known. May reload the current kit.s
-    await this._setKnownKits({user, workspace});
+    await this._setKnownKits({user : user_kits, workspace: workspace_kits});
     // Pruning requires user interaction, so it happens fully async
     this._startPruneOutdatedKitsAsync();
   }
@@ -785,7 +791,7 @@ class ExtensionManager implements vscode.Disposable {
   private async _writeUserKitsFile(kits: Kit[]) {
     log.debug(localize('saving.kits.to', 'Saving kits to {0}', USER_KITS_FILEPATH));
     // Remove the special __unspec__ kit
-    const stripped_kits = kits.filter(k => k.name !== '__unspec__');
+    const stripped_kits = kits.filter(k => ((k.name !== '__unspec__') && (k.name !== '__scanforkits__')));
     // Sort the kits by name so they always appear in order in the file.
     const sorted_kits = stripped_kits.sort((a, b) => {
       if (a.name == b.name) {
@@ -1031,9 +1037,19 @@ class ExtensionManager implements vscode.Disposable {
     }
     log.debug(localize('opening.kit.selection', 'Opening kit selection QuickPick'));
     // Generate the quickpick items from our known kits
+    const getKitName = (kit: Kit) => {
+      switch (kit.name) {
+      case '__unspec__':
+        return `[${localize('unspecified.kit.name', 'Unspecified')}]`;
+      case '__scanforkits__':
+        return `[${localize('scan.for.kits.button', 'Scan for kits')}]`;
+      default:
+        return kit.name;
+      }
+    };
     const itemPromises = this._allKits.map(
         async (kit): Promise<KitItem> => ({
-          label: kit.name !== '__unspec__' ? kit.name : `[${localize('unspecified.kit.name', 'Unspecified')}]`,
+          label: getKitName(kit),
           description: await descriptionForKit(kit),
           kit,
         }),
@@ -1049,9 +1065,20 @@ class ExtensionManager implements vscode.Disposable {
       // No selection was made
       return false;
     } else {
-      log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
-      await this._setCurrentKit(chosen_kit.kit);
-      return true;
+      if (chosen_kit.kit.name == '__scanforkits__') {
+        const activeCMakeTools = this._activeCMakeTools;
+        if (activeCMakeTools) {
+          await activeCMakeTools.setKit(null);
+        }
+        await this._setCurrentKit(null);
+        await this.scanForKits();
+        return false;
+      }
+      else {
+        log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
+        await this._setCurrentKit(chosen_kit.kit);
+        return true;
+      }
     }
   }
 

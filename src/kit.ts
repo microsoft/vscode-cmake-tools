@@ -864,6 +864,9 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
     return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
   }
+  if (kit.name === '__scanforkits__') {
+    return localize('rescanning.for.kits', 'Rescanning for kits');
+  }
   return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
 
