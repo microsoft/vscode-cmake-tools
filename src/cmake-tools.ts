@@ -36,6 +36,7 @@ import * as telemetry from './telemetry';
 import {setContextValue} from './util';
 import {VariantManager} from './variant';
 import * as nls from 'vscode-nls';
+import { CMakeToolsFolder } from './folders';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1205,13 +1206,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.quickStart`
    */
-  public async quickStart(): Promise<Number> {
-    if (vscode.workspace.workspaceFolders === undefined) {
+  public async quickStart(cmtFolder?: CMakeToolsFolder): Promise<Number> {
+    if (!cmtFolder) {
       vscode.window.showErrorMessage(localize('no.folder.open', 'No folder is open.'));
       return -2;
     }
 
-    const sourceDir = vscode.workspace.workspaceFolders![0].uri.fsPath;
+    const sourceDir = cmtFolder.folder.uri.fsPath;
     const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
 
     if (await fs.exists(mainListFile)) {
