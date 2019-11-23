@@ -6,8 +6,10 @@ import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as which from 'which';
 
+import {vsInstallations} from './installs/visual-studio';
 import {expandString} from './expand';
 import {fs} from './pr';
+
 
 /**
  * Directory class.
@@ -128,19 +130,51 @@ class Paths {
         workspaceRootFolderName: path.basename(wsc.dirPath),
       },
     });
+
     if (raw == 'auto' || raw == 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');
-      if (!on_path) {
+      const isWin32 = (process.platform === 'win32');
+      if (!on_path && isWin32) {
         if (raw == 'auto' || raw == 'cmake') {
           // We didn't find it on the $PATH. Try some good guesses
-          const candidates = [
+          const default_cmake_paths = [
             `C:\\Program Files\\CMake\\bin\\cmake.exe`,
             `C:\\Program Files (x86)\\CMake\\bin\\cmake.exe`,
           ];
-          for (const cand of candidates) {
-            if (await fs.exists(cand)) {
-              return cand;
+          for (const cmake_path of default_cmake_paths) {
+            if (await fs.exists(cmake_path)) {
+              return cmake_path;
+            }
+          }
+
+          // Look for bundled CMake executables in Visual Studio install paths
+          const vs_installations = await vsInstallations();
+          if (vs_installations.length > 0) {
+            const bundled_tool_paths = [] as {cmake: string, ninja: string}[];
+            for (const install of vs_installations) {
+              const bundled_tool_path = {
+                cmake: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe',
+                ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe'
+              };
+              bundled_tool_paths.push(bundled_tool_path);
+            }
+            for (const tool_path of bundled_tool_paths) {
+              if (await fs.exists(tool_path.cmake)) {
+                // Append the bundled Ninja build system path to the VSCode's process' environment variable 'PATH'
+                if (await fs.exists(tool_path.ninja)) {
+                  if (process.env.hasOwnProperty('PATH')) {
+                    const env_paths = (process.env.PATH as string).split(';');
+                    const ninja_path = path.dirname(tool_path.ninja);
+                    const ninja_base_path = env_paths.find(path_el => path_el === ninja_path);
+                    if (ninja_base_path === undefined) {
+                      (process.env.PATH as string) = (process.env.PATH as string).concat(';' + ninja_path);
+                    }
+                  }
+                }
+                // CMake can be still used without Ninja
+                return tool_path.cmake;
+              }
             }
           }
         }
