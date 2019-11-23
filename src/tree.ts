@@ -2,7 +2,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import * as api from '@cmt/api';
 import * as cms from '@cmt/drivers/cms-client';
 import rollbar from '@cmt/rollbar';
 import {lexicographicalCompare, splitPath, thisExtension} from '@cmt/util';

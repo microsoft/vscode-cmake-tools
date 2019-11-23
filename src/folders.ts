@@ -5,28 +5,17 @@
 import CMakeTools from '@cmt/cmake-tools';
 import { Kit, kitsAvailableInWorkspaceDirectory } from '@cmt/kit';
 import rollbar from '@cmt/rollbar';
-import {TargetProvider} from '@cmt/target';
 import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
 
 export class CMakeToolsFolder {
-  private constructor(readonly cmakeTools: CMakeTools, private readonly _targetProvider: TargetProvider) { }
-
-  static async create(cmakeTools: CMakeTools): Promise<CMakeToolsFolder> {
-    const cmakeToolsFolder: CMakeToolsFolder = new CMakeToolsFolder(cmakeTools, await TargetProvider.create(cmakeTools));
-    cmakeToolsFolder._subscriptions.push(cmakeToolsFolder._targetProvider);
-    return cmakeToolsFolder;
-  }
+  constructor(readonly cmakeTools: CMakeTools) { }
 
   get folder() {
     return this.cmakeTools.folder;
   }
 
   folderKits: Kit[] = [];
-
-  get buildTargets() {
-    return this._targetProvider.provideTargets();
-  }
 
   private readonly _subscriptions: vscode.Disposable[] = [];
 
@@ -166,7 +155,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     // Load for the workspace.
     const new_cmt = await this._loadCMakeToolsForWorkspaceFolder(folder);
     // Remember it
-    const inst = await CMakeToolsFolder.create(new_cmt);
+    const inst = new CMakeToolsFolder(new_cmt);
     this._instances.set(folder.name, inst);
     // Return the newly created instance
     return inst;
