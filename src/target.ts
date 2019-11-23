@@ -8,19 +8,11 @@ import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
 
 /**
- * Basic information about a target
- */
-export interface TargetInformation {
-  target: api.Target;
-  cmakeTools: CMakeTools;
-}
-
-/**
  * Get TargetInformation for the given CMakeTools instance
  * @param cmakeTools The CMakeTools instance to ask about
  */
-export async function getTargets(cmakeTools: CMakeTools): Promise<TargetInformation[]> {
-  return (await cmakeTools.targets).map(target => ({ cmakeTools, target }));
+export async function getTargets(cmakeTools: CMakeTools): Promise<api.Target[]> {
+  return await cmakeTools.targets;
 }
 
 /**
@@ -28,7 +20,7 @@ export async function getTargets(cmakeTools: CMakeTools): Promise<TargetInformat
  */
 interface CMakeToolsSubscription {
   cmakeTools: CMakeTools;
-  targets: TargetInformation[];
+  targets: api.Target[];
   subscriptions: vscode.Disposable[];
   dispose(): void;
 }
@@ -59,7 +51,7 @@ export class TargetProvider implements vscode.Disposable {
   /**
    * Get all the targets available for all workspaces
    */
-  provideTargets(): TargetInformation[] { return this._sub.targets; }
+  provideTargets(): api.Target[] { return this._sub.targets; }
 
   dispose() {
     this._sub.dispose();

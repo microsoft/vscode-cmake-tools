@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 
+import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import CMakeTools from '@cmt/cmake-tools';
 import {ConfigurationReader} from '@cmt/config';
@@ -31,8 +32,7 @@ import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StatusBar} from './status';
-import {Strand} from '@cmt/strand';
-import {TargetInformation, getTargets} from '@cmt/target';
+import {getTargets} from '@cmt/target';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable} from '@cmt/util';
@@ -363,7 +363,7 @@ class ExtensionManager implements vscode.Disposable {
       cmt.workspaceContext.folder,
       cmt.codeModel,
       {
-        defaultTarget: folder.defaultBuildTarget,
+        defaultTarget: cmt.defaultBuildTarget || undefined,
         launchTargetName: cmt.launchTargetName,
       }
     );
@@ -1038,13 +1038,13 @@ class ExtensionManager implements vscode.Disposable {
     this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
   }
 
-  private async _getTargetInformationFull(name: string, folder: CMakeToolsFolder): Promise<TargetInformation|null> {
+  private async _getTargetInformationFull(name: string, folder: CMakeToolsFolder): Promise<api.Target|null> {
     const cmt = folder.cmakeTools;
     if (!await this._ensureActiveKit(cmt)) {
       return null;
     }
     const avail = await getTargets(cmt);
-    const found = avail.find(info => info.target.name === name);
+    const found = avail.find(info => info.name === name);
     if (!found) {
       rollbar.error('Setting default target to non-existent for folder');
       return null;
@@ -1052,9 +1052,9 @@ class ExtensionManager implements vscode.Disposable {
     return found;
   }
 
-  private async _getTargetInformationFast(name: string, folder: CMakeToolsFolder): Promise<TargetInformation|null> {
+  private async _getTargetInformationFast(name: string, folder: CMakeToolsFolder): Promise<api.Target|null> {
     const avail = await getTargets(folder.cmakeTools);
-    const found = avail.find(info => info.target.name === name);
+    const found = avail.find(info => info.name === name);
     if (!found) {
       rollbar.error('Setting default target to non-existent for folder');
       return null;
@@ -1117,25 +1117,25 @@ class ExtensionManager implements vscode.Disposable {
     return await this.mapCMakeTools(c => c.build(name));
   }
 
-  async uiSelectTarget(folder: CMakeToolsFolder): Promise<TargetInformation|null> {
+  async uiSelectTarget(folder: CMakeToolsFolder): Promise<api.Target|null> {
     const avail = folder.buildTargets;
     interface TargetChoice extends vscode.QuickPickItem {
-      target: TargetInformation;
+      target: api.Target;
     }
     const choices = avail.map((t): TargetChoice => {
-      switch (t.target.type) {
+      switch (t.type) {
       case 'named':
         return {
           target: t,
-          label: t.target.name,
-          description: t.cmakeTools.folderName,
+          label: t.name,
+          description: folder.folder.name,
         };
       case 'rich':
         return {
           target: t,
-          label: t.target.name,
-          description: `${t.cmakeTools.folderName} :: ${t.target.targetType}`,
-          detail: t.target.filepath,
+          label: t.name,
+          description: `${folder.folder.name} :: ${t.targetType}`,
+          detail: t.filepath,
         };
       }
     });
@@ -1148,7 +1148,7 @@ class ExtensionManager implements vscode.Disposable {
     if (!cmtFolder) {
       return;
     }
-    let targetInfo: TargetInformation | null = null;
+    let targetInfo: api.Target | null = null;
     if (name) {
       targetInfo = await this._getTargetInformationFast(name, cmtFolder);
     } else {
@@ -1158,9 +1158,7 @@ class ExtensionManager implements vscode.Disposable {
       return;
     }
 
-    cmtFolder.defaultBuildTarget = targetInfo;
-    this._statusBar.targetName = targetInfo.target.name;
-    this._updateCodeModel(cmtFolder);
+    cmtFolder.cmakeTools.setDefaultTarget(targetInfo.name);
   }
 
   async setVariant(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) {
@@ -1218,7 +1216,7 @@ class ExtensionManager implements vscode.Disposable {
     if (!chosen) {
       return;
     }
-    chosen.cmakeTools.build(chosen.target.name);
+    cmtFolder.cmakeTools.build(chosen.name);
   }
 
   /**
@@ -1276,7 +1274,7 @@ class ExtensionManager implements vscode.Disposable {
       if (!info) {
         return null;
       }
-      return info.cmakeTools.debugTarget(info.target.name);
+      return cmtFolder.cmakeTools.debugTarget(info.name);
     }
     return this.mapCMakeTools(cmt => cmt.debugTarget(name));
   }
@@ -1289,7 +1287,7 @@ class ExtensionManager implements vscode.Disposable {
         if (!info) {
           debugSessions.push(Promise.resolve(null));
         } else {
-          debugSessions.push(info.cmakeTools.debugTarget(info.target.name));
+          debugSessions.push(cmtFolder.cmakeTools.debugTarget(info.name));
         }
       } else {
         debugSessions.push(cmtFolder.cmakeTools.debugTarget(name));
@@ -1305,7 +1303,7 @@ class ExtensionManager implements vscode.Disposable {
       if (!info) {
         return null;
       }
-      return info.cmakeTools.launchTarget(info.target.name);
+      return cmtFolder.cmakeTools.launchTarget(info.name);
     }
     return this.mapCMakeTools(cmt => cmt.launchTarget(name));
   }
@@ -1318,7 +1316,7 @@ class ExtensionManager implements vscode.Disposable {
         if (!info) {
           debugSessions.push(Promise.resolve(null));
         } else {
-          debugSessions.push(info.cmakeTools.launchTarget(info.target.name));
+          debugSessions.push(cmtFolder.cmakeTools.launchTarget(info.name));
         }
       } else {
         debugSessions.push(cmtFolder.cmakeTools.launchTarget(name));

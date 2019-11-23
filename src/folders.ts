@@ -5,13 +5,11 @@
 import CMakeTools from '@cmt/cmake-tools';
 import { Kit, kitsAvailableInWorkspaceDirectory } from '@cmt/kit';
 import rollbar from '@cmt/rollbar';
-import {TargetProvider, TargetInformation} from '@cmt/target';
+import {TargetProvider} from '@cmt/target';
 import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
 
 export class CMakeToolsFolder {
-  private _defaultBuildTarget?: TargetInformation;
-
   private constructor(readonly cmakeTools: CMakeTools, private readonly _targetProvider: TargetProvider) { }
 
   static async create(cmakeTools: CMakeTools): Promise<CMakeToolsFolder> {
@@ -28,14 +26,6 @@ export class CMakeToolsFolder {
 
   get buildTargets() {
     return this._targetProvider.provideTargets();
-  }
-
-  get defaultBuildTarget() {
-    return this._defaultBuildTarget;
-  }
-
-  set defaultBuildTarget(buildTarget: TargetInformation | undefined) {
-    this._defaultBuildTarget = buildTarget;
   }
 
   private readonly _subscriptions: vscode.Disposable[] = [];

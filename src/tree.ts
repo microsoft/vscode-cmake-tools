@@ -2,10 +2,10 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
+import * as api from '@cmt/api';
 import * as cms from '@cmt/drivers/cms-client';
 import rollbar from '@cmt/rollbar';
 import {lexicographicalCompare, splitPath, thisExtension} from '@cmt/util';
-import { TargetInformation } from '@cmt/target';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -37,7 +37,7 @@ abstract class BaseNode {
  * Context to use while updating the tree
  */
 interface TreeUpdateContext {
-  defaultTarget?: TargetInformation;
+  defaultTarget?: string;
   launchTargetName: string|null;
   nodesToUpdate: BaseNode[];
   folder: vscode.WorkspaceFolder;
@@ -326,7 +326,7 @@ export class TargetNode extends BaseNode {
     did_update = did_update || (this._type !== cm.type);
     this._type = cm.type;
 
-    const new_is_default = !!ctx.defaultTarget && this.name === ctx.defaultTarget.target.name;
+    const new_is_default = !!ctx.defaultTarget && this.name === ctx.defaultTarget;
     did_update = did_update || new_is_default !== this._isDefault;
     this._isDefault = new_is_default;
 
@@ -431,7 +431,7 @@ class ProjectNode extends BaseNode {
 
 interface ExternalUpdateContext {
   launchTargetName: string|null;
-  defaultTarget?: TargetInformation;
+  defaultTarget?: string;
 }
 
 class WorkspaceFolderNode extends BaseNode {
