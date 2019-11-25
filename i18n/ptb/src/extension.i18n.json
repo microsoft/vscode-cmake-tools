@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Configurando o workspace no {0} aberto",
 	"double.loaded.instance": "Instância de Ferramentas CMake com carregamento duplo para a pasta do workspace",
 	"creating.backend": "Criando o back-end",
-	"post.folder.open": "Postar a pasta aberta",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Pasta do workspace removida, mas não associada a uma instância de extensão",
 	"loading.workspace.folder.name": "Carregando a pasta do workspace {0}",
 	"loading.workspace.folder": "Carregando a pasta do workspace",

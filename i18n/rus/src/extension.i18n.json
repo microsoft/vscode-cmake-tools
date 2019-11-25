@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Настройка рабочей области в открытом {0}.",
 	"double.loaded.instance": "Экземпляр Средств CMake с двойной загрузкой для папки рабочей области",
 	"creating.backend": "Создание сервера.",
-	"post.folder.open": "После открытия папки",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Папка рабочей области удалена, но не связана с экземпляром расширения.",
 	"loading.workspace.folder.name": "Загрузка папки рабочей области {0}.",
 	"loading.workspace.folder": "Загрузка папки рабочей области.",
