@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Configuración del área de trabajo al abrir {0}",
 	"double.loaded.instance": "Instancia de Herramientas de CMake cargada dos veces para la carpeta del área de trabajo",
 	"creating.backend": "Creando el back-end",
-	"post.folder.open": "Apertura de carpeta posterior",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Se quitó la carpeta del área de trabajo, pero no se asoció a una instancia de extensión",
 	"loading.workspace.folder.name": "Cargando la carpeta del área de trabajo {0}",
 	"loading.workspace.folder": "Cargando la carpeta del área de trabajo",
