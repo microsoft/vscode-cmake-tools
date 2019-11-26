@@ -7,7 +7,7 @@ Bug fixes:
 - Fix incorrect file associations when language is unset. [#926] (https://github.com/microsoft/vscode-cmake-tools/issues/911)
 
 Improvements:
-- Add telemetry for crashes
+- Add telemetry for crashes.
 
 ## 1.2.2
 Bug fixes:
