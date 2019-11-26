@@ -815,20 +815,24 @@ export async function scanForKits(opt?: KitScanOptions) {
   return vscode.window.withProgress(prog, async pr => {
     const isWin32 = process.platform === 'win32';
     pr.report({message: localize('scanning.for.cmake.kits', 'Scanning for CMake kits...')});
-    let scanPaths: string[] = [];
+    const scanPaths = new Set<string>();
     // Search directories on `PATH` for compiler binaries
     const pathvar = process.env['PATH']!;
     if (pathvar) {
       const sep = isWin32 ? ';' : ':';
-      scanPaths = scanPaths.concat(pathvar.split(sep));
+      for (const dir of pathvar.split(sep)) {
+        scanPaths.add(dir);
+      }
     }
 
     // Search them all in parallel
     let prs = [] as Promise<Kit[]>[];
     if (isWin32 && kit_options.minGWSearchDirs) {
-      scanPaths = scanPaths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
+      for (const dir of convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs)) {
+        scanPaths.add(dir);
+      }
     }
-    const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
+    const compiler_kits = Array.from(scanPaths).map(path_el => scanDirForCompilerKits(path_el, pr));
     prs = prs.concat(compiler_kits);
     if (isWin32) {
       const vs_kits = scanForVSKits(pr);
@@ -923,18 +927,6 @@ export function kitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder): string {
 export function kitsForWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
   const ws_kits_file = path.join(dirPath, '.vscode/cmake-kits.json');
   return readKitsFile(ws_kits_file);
-}
-
-/**
- * Get the kits available for a given workspace directory. Differs from
- * `kitsForWorkspaceDirectory` in that it also returns kits declared in the
- * user-local kits file.
- * @param dirPath The path to a VSCode workspace directory
- */
-export async function kitsAvailableInWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
-  const user_kits_pr = readKitsFile(USER_KITS_FILEPATH);
-  const ws_kits_pr = kitsForWorkspaceDirectory(dirPath);
-  return Promise.all([user_kits_pr, ws_kits_pr]).then(([user_kits, ws_kits]) => user_kits.concat(ws_kits));
 }
 
 export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {

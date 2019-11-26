@@ -26,15 +26,15 @@ import {
   effectiveKitEnvironment,
   OLD_USER_KITS_FILEPATH,
 } from '@cmt/kit';
+import {KitsController, KitsReadMode} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
-import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StatusBar} from './status';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import * as util from '@cmt/util';
-import {ProgressHandle, DummyDisposable} from '@cmt/util';
+import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {MultiWatcher} from '@cmt/watcher';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -43,12 +43,6 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('extension');
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
-
-function reportProgress(progress: ProgressHandle|undefined, message: string) {
-  if (progress) {
-    progress.report({message});
-  }
-}
 
 /**
  * A class to manage the extension.
@@ -67,11 +61,7 @@ class ExtensionManager implements vscode.Disposable {
       const new_cmt = info.cmakeTools;
       this._projectOutlineProvider.addFolder(info.folder);
       new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(info));
-      new_cmt.onLaunchTargetNameChanged(FireLate, t=> {
-        // TODO? Move launch target logic out of CMakeTools
-        // if (this._activeCMakeTools === new_cmt) {
-        //   this._statusBar.setLaunchTargetName(t || '');
-        // }
+      new_cmt.onLaunchTargetNameChanged(FireLate, () => {
         this._updateCodeModel(info);
         rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
       });
@@ -93,7 +83,6 @@ class ExtensionManager implements vscode.Disposable {
       this._projectOutlineProvider.addAllCurrentFolders();
       this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(this._onDidChangeActiveTextEditor, this);
       this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
-      await this._rereadKits();
       for (const cmtFolder of this._folders) {
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
@@ -443,25 +432,14 @@ class ExtensionManager implements vscode.Disposable {
   //   this._kitsWatcher.onAnyEvent(_ => rollbar.invokeAsync(localize('rereading.kits', 'Re-reading kits'), () => this._rereadKits()));
   // }
 
-  /**
-   * The path to the workspace-local kits file, dependent on the path to the
-   * active workspace folder.
-   */
-  private _workspaceKitsPath(folder: vscode.WorkspaceFolder): string { return kitsPathForWorkspaceFolder(folder); }
-
   private _kitsForFolder(folder: vscode.WorkspaceFolder) {
     const info = this._folders.get(folder);
     if (info) {
-      return this._userKits.concat(info.folderKits);
+      return info.kitsController.availableKits;
     } else {
-      return this._userKits;
+      return KitsController.userKits;
     }
   }
-
-  /**
-   * The kits available from the user-local kits file
-   */
-  private _userKits: Kit[] = [];
 
   /**
    * Watches for changes to the kits file
@@ -475,91 +453,26 @@ class ExtensionManager implements vscode.Disposable {
    */
   private readonly _editorWatcher = vscode.workspace.onDidSaveTextDocument(doc => {
     if (doc.uri.fsPath === USER_KITS_FILEPATH) {
-      rollbar.takePromise(localize('rereading.kits.on.edit', 'Re-reading kits on text edit'), {}, this._rereadKits());
+      rollbar.takePromise(localize('rereading.kits.on.edit', 'Re-reading kits on text edit'), {}, KitsController.readUserKits());
     } else {
       for (const folder_info of this._folders) {
-        const kits_path = this._workspaceKitsPath(folder_info.folder);
+        const kits_path = kitsPathForWorkspaceFolder(folder_info.folder);
         if (kits_path === doc.uri.fsPath) {
-          rollbar.takePromise('Re-reading kits on text edit', {}, this._rereadKits());
+          rollbar.takePromise('Re-reading kits on text edit', {}, folder_info.kitsController.readKits(KitsReadMode.folderKits));
         }
       }
     }
   });
-
-  // TODO?: for folder
-  /**
-   * Reload the list of available kits from the filesystem. This will also
-   * update the kit loaded into the current backend if applicable.
-   */
-  private async _rereadKits(progress?: ProgressHandle) {
-    // Migrate kits from old pre-1.1.3 location
-    try {
-      if (await fs.exists(OLD_USER_KITS_FILEPATH) && !await fs.exists(USER_KITS_FILEPATH)) {
-        rollbar.info(localize('migrating.kits.file', 'Migrating kits file'), {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
-        await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
-        await fs.rename(OLD_USER_KITS_FILEPATH, USER_KITS_FILEPATH);
-      }
-    } catch (e) {
-      rollbar.exception(localize('failed.to.migrate.kits.file', 'Failed to migrate prior user-local kits file.'),
-                        e,
-                        {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
-    }
-    // Load user-kits
-    reportProgress(progress, localize('loading.kits', 'Loading kits'));
-    const user = await readKitsFile(USER_KITS_FILEPATH);
-    // Add the special __unspec__ kit for opting-out of kits
-    user.push({name: '__unspec__'});
-    // Load kits for each folder
-    for (const folder_info of this._folders) {
-      folder_info.folderKits = await readKitsFile(this._workspaceKitsPath(folder_info.folder));
-      const current = folder_info.cmakeTools.activeKit;
-      const avail = user.concat(folder_info.folderKits);
-      if (current) {
-        const already_active_kit = avail.find(kit => kit.name === current.name);
-        // Set the current kit to the one we have named
-        await this._setFolderKit(folder_info.folder, already_active_kit || null);
-      }
-    }
-    this._userKits = user;
-    // Pruning requires user interaction, so it happens fully async
-    this._startPruneOutdatedKitsAsync();
-  }
 
   /**
    * Set the current kit for the specified workspace folder
    * @param k The kit
    */
   async _setFolderKit(wsf: vscode.WorkspaceFolder, k: Kit|null) {
-    const folder = this._folders.get(wsf);
+    const cmtFolder = this._folders.get(wsf);
     // Ignore if folder doesn't exist
-    if (folder) {
-      const inst = folder.cmakeTools;
-      const raw_name = k ? k.name : '';
-      if (inst) {
-        // Generate a message that we will show in the progress notification
-        let message = '';
-        switch (raw_name) {
-        case '':
-        case '__unspec__':
-          // Empty string/unspec is un-setting the kit:
-          message = localize('unsetting.kit', 'Unsetting kit');
-          break;
-        default:
-          // Everything else is just loading a kit:
-          message = localize('loading.kit', 'Loading kit {0}', raw_name);
-          break;
-        }
-        // Load the kit into the backend
-        await vscode.window.withProgress(
-            {
-              location: vscode.ProgressLocation.Notification,
-              title: message,
-            },
-            () => inst.setKit(k),
-        );
-      }
-      // Update the status bar
-      this._statusBar.setActiveKitName(raw_name);
+    if (cmtFolder) {
+      this._statusBar.setActiveKitName(await cmtFolder.kitsController.setFolderActiveKit(k));
     }
   }
 
@@ -596,293 +509,37 @@ class ExtensionManager implements vscode.Disposable {
     return vscode.window.showTextDocument(doc);
   }
 
-  /**
-   * Rescan the system for kits and save them to the user-local kits file.
-   * If cmake-tools-kits.json still has kits saved with the old format kit definition
-   *     (visualStudio field as "VisualStudio.$(installation version)", as opposed to "$(unique installation id)"),
-   * then ask if the user allows them to be deleted from the user-local kits file.
-   *
-   * If the user answers 'NO' or doesn't answer, nothing needs to be done, even if there is an active kit set,
-   * because the extension is able to work with both definitions of a VS kit.
-   * In this case, the new cmake-tools-kits.json may have some duplicate kits pointing to the same toolset.
-   *
-   * If the answer is 'YES' and if there is an active kit selected that is among the ones to be deleted,
-   * then the user must also pick a new kit.
-   */
   async scanForKits() {
-    log.debug(localize('rescanning.for.kits', 'Rescanning for kits'));
-
-    // Do the scan:
-    const discovered_kits = await scanForKits({minGWSearchDirs: this._getMinGWDirs()});
-
-    // The list with the new definition user kits starts with the non VS ones,
-    // which do not have any variations in the way they can be defined.
-    const new_definition_user_kits = this._userKits.filter(kit => !!!kit.visualStudio);
-
-    // The VS kits saved so far in cmake-tools-kits.json
-    const user_vs_kits = this._userKits.filter(kit => !!kit.visualStudio);
-
-    // Separate the VS kits based on old/new definition.
-    const old_definition_vs_kits = [];
-    user_vs_kits.forEach(kit => {
-      if (kit.visualStudio && (kit.visualStudio.startsWith("VisualStudio.15") || kit.visualStudio.startsWith("VisualStudio.16"))) {
-        old_definition_vs_kits.push(kit);
-      } else {
-        // The new definition VS kits can complete the final user kits list
-        new_definition_user_kits.push(kit);
-      }
-    });
-
-    let chooseNewKit: boolean = false;
-    if (old_definition_vs_kits.length > 1) {
-      log.info(localize('found.duplicate.kits', 'Found Visual Studio kits with the old ids saved in the cmake-tools-kits.json.'));
-      const yesButtonTitle: string = localize('yes.button', 'Yes');
-      const chosen = await vscode.window.showInformationMessage<vscode.MessageItem>(
-        localize('delete.duplicate.kits', 'Would you like to delete the duplicate Visual Studio kits from cmake-tools-kits.json?'),
-        {
-          title: yesButtonTitle,
-          isCloseAffordance: true,
-        },
-        {
-          title: localize('no.button', 'No'),
-          isCloseAffordance: true,
-        });
-
-      if (chosen !== undefined && (chosen.title === yesButtonTitle)) {
-        //await this._setKnownKits({ user: new_definition_user_kits, workspace: this._wsKits });
-        this._userKits = new_definition_user_kits;
-
-        // TODO?
-        // If there is an active kit set and if it is of the old definition,
-        // trigger a new kit selection later.
-        // const activeCMakeTools = this._activeCMakeTools;
-        // if (activeCMakeTools) {
-        //   const activeKit = activeCMakeTools.activeKit;
-        //   if (activeKit) {
-        //     const definition = activeKit.visualStudio;
-        //     if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
-        //       chooseNewKit = true;
-        //     }
-        //   }
-        // }
+    KitsController.minGWSearchDirs = this._getMinGWDirs();
+    const duplicateRemoved = await KitsController.scanForKits();
+    if (duplicateRemoved) {
+      // Check each folder. If there is an active kit set and if it is of the old definition,
+      // unset the kit
+      for (const cmtFolder of this._folders) {
+        const activeKit = cmtFolder.cmakeTools.activeKit;
+        if (activeKit) {
+          const definition = activeKit.visualStudio;
+          if (definition && (definition.startsWith("VisualStudio.15") || definition.startsWith("VisualStudio.16"))) {
+            await cmtFolder.kitsController.setFolderActiveKit(null);
+          }
+        }
       }
     }
-
-    // Convert the kits into a by-name mapping so that we can restore the ones
-    // we know about after the fact.
-    // We only save the user-local kits: We don't want to save workspace kits
-    // in the user kits file.
-    const old_kits_by_name = this._userKits.reduce(
-      (acc, kit) => ({...acc, [kit.name]: kit}),
-      {} as {[kit: string]: Kit},
-    );
-
-    // Update the new kits we know about.
-    const new_kits_by_name = discovered_kits.reduce(
-      (acc, kit) => ({...acc, [kit.name]: kit}),
-      old_kits_by_name,
-    );
-
-    const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);
-    this._userKits = new_kits;
-    await this._writeUserKitsFile(new_kits);
-
-    // TODO?
-    // If we concluded earlier that we need to show the kits quick pick,
-    // then remind the user to select another kit from the new definition list.
-    // if (chooseNewKit) {
-    //   const did_choose_kit = await this.selectKit();
-
-    //   // Make sure that, even if the user is not selecting any option from the quick pick,
-    //   // we don't leave any old definition kit set anywhere.
-    //   if (!did_choose_kit) {
-    //     await this._setCurrentKit(null);
-    //   }
-    // }
-
-    this._startPruneOutdatedKitsAsync();
   }
 
   /**
    * Get the current MinGW search directories
    */
   private _getMinGWDirs(): string[] {
-    const cmt = this._folders.activeFolder!.cmakeTools;
-    if (!cmt) {
-      // No CMake Tools, but can guess what settings we want.
+    let result: string[] = [];
+    for (const cmtFolder of this._folders) {
+      result = result.concat(cmtFolder.cmakeTools.workspaceContext.config.mingwSearchDirs);
+    }
+    if (result.length === 0) {
       const config = ConfigurationReader.loadForPath(process.cwd());
       return config.mingwSearchDirs;
-    } else {
-      return cmt.workspaceContext.config.mingwSearchDirs;
     }
-  }
-
-  /**
-   * Write the given kits the the user-local cmake-kits.json file.
-   * @param kits The kits to write to the file.
-   */
-  private async _writeUserKitsFile(kits: Kit[]) {
-    log.debug(localize('saving.kits.to', 'Saving kits to {0}', USER_KITS_FILEPATH));
-    // Remove the special __unspec__ kit
-    const stripped_kits = kits.filter(k => k.name !== '__unspec__');
-    // Sort the kits by name so they always appear in order in the file.
-    const sorted_kits = stripped_kits.sort((a, b) => {
-      if (a.name == b.name) {
-        return 0;
-      } else if (a.name < b.name) {
-        return -1;
-      } else {
-        return 1;
-      }
-    });
-    // Do the save.
-    try {
-      log.debug(localize('saving.new.kits.to', 'Saving new kits to {0}', USER_KITS_FILEPATH));
-      // Create the directory where the kits will go
-      await fs.mkdir_p(path.dirname(USER_KITS_FILEPATH));
-      // Write the file
-      await fs.writeFile(USER_KITS_FILEPATH, JSON.stringify(sorted_kits, null, 2));
-    } catch (e) {
-      // Failed to write the file. What to do...
-      interface FailOptions extends vscode.MessageItem {
-        do: 'retry' | 'cancel';
-      }
-      const pr = vscode.window
-                     .showErrorMessage<FailOptions>(
-                         `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
-                         {
-                           title: localize('retry.button', 'Retry'),
-                           do: 'retry',
-                         },
-                         {
-                           title: localize('cancel.button', 'Cancel'),
-                           do: 'cancel',
-                         },
-                         )
-                     .then(choice => {
-                       if (!choice) {
-                         return false;
-                       }
-                       switch (choice.do) {
-                       case 'retry':
-                         return this.scanForKits();
-                       case 'cancel':
-                         return false;
-                       }
-                     });
-      // Don't block on writing re-trying the write
-      rollbar.takePromise('retry-kit-save-fail', {}, pr);
-      return false;
-    }
-  }
-
-  /**
-   * User-interactive kit pruning:
-   *
-   * This function will find all user-local kits that identify files that are
-   * no longer present (such as compiler binaries), and will show a popup
-   * notification to the user requesting an action.
-   *
-   * This function will not prune kits that have the `keep` field marked `true`
-   *
-   * If the user chooses to remove the kit, we call `_removeKit()` and erase it
-   * from the user-local file.
-   *
-   * If the user chooses to keep teh kit, we call `_keepKit()` and set the
-   * `keep` field on the kit to `true`.
-   *
-   * Always returns immediately.
-   */
-  private _startPruneOutdatedKitsAsync() {
-    // Iterate over _user_ kits. We don't care about workspace-local kits
-    for (const kit of this._userKits) {
-      if (kit.keep === true) {
-        // Kit is explicitly marked to be kept
-        continue;
-      }
-      if (!kit.compilers) {
-        // We only prune kits with a `compilers` field.
-        continue;
-      }
-      // Accrue a list of promises that resolve to whether a give file exists
-      interface FileInfo {
-        path: string;
-        exists: boolean;
-      }
-      const missing_paths_prs: Promise<FileInfo>[] = [];
-      for (const lang in kit.compilers) {
-        const comp_path = kit.compilers[lang];
-        // Get a promise that resolve to whether the given path/name exists
-        const exists_pr = path.isAbsolute(comp_path)
-            // Absolute path, just check if it exists
-            ? fs.exists(comp_path)
-            // Non-absolute. Check on $PATH
-            : paths.which(comp_path).then(v => v !== null);
-        // Add it to the list
-        missing_paths_prs.push(exists_pr.then(exists => ({exists, path: comp_path})));
-      }
-      const pr = Promise.all(missing_paths_prs).then(async infos => {
-        const missing = infos.find(i => !i.exists);
-        if (!missing) {
-          return;
-        }
-        // This kit contains a compiler that does not exist. What to do?
-        interface UpdateKitsItem extends vscode.MessageItem {
-          action: 'remove'|'keep';
-        }
-        const chosen = await vscode.window.showInformationMessage<UpdateKitsItem>(
-            localize('kit.references.non-existent',
-              'The kit "{0}" references a non-existent compiler binary [{1}]. What would you like to do?',
-              kit.name, missing.path),
-            {},
-            {
-              action: 'remove',
-              title: localize('remove.it.button', 'Remove it'),
-            },
-            {
-              action: 'keep',
-              title: localize('keep.it.button', 'Keep it'),
-            },
-        );
-        if (chosen === undefined) {
-          return;
-        }
-        switch (chosen.action) {
-        case 'keep':
-          return this._keepKit(kit);
-        case 'remove':
-          return this._removeKit(kit);
-        }
-      });
-      rollbar.takePromise(localize('pruning.kit', "Pruning kit"), {kit}, pr);
-    }
-  }
-
-  /**
-   * Mark a kit to be "kept". This set the `keep` value to `true` and writes
-   * re-writes the user kits file.
-   * @param kit The kit to mark
-   */
-  private async _keepKit(kit: Kit) {
-    const new_kits = this._userKits.map(k => {
-      if (k.name === kit.name) {
-        return {...k, keep: true};
-      } else {
-        return k;
-      }
-    });
-    this._userKits = new_kits;
-    return this._writeUserKitsFile(new_kits);
-  }
-
-  /**
-   * Remove a kit from the user-local kits.
-   * @param kit The kit to remove
-   */
-  private async _removeKit(kit: Kit) {
-    const new_kits = this._userKits.filter(k => k.name !== kit.name);
-    this._userKits = new_kits;
-    return this._writeUserKitsFile(new_kits);
+    return result;
   }
 
   private async _checkHaveKits(folder: vscode.WorkspaceFolder): Promise<'use-unspec'|'ok'|'cancel'> {

@@ -540,3 +540,9 @@ export function disposeAll(disp: Iterable<vscode.Disposable>) {
     d.dispose();
   }
 }
+
+export function reportProgress(progress: ProgressHandle|undefined, message: string) {
+  if (progress) {
+    progress.report({message});
+  }
+}

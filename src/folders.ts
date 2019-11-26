@@ -3,19 +3,19 @@
  */ /** */
 
 import CMakeTools from '@cmt/cmake-tools';
-import { Kit, kitsAvailableInWorkspaceDirectory } from '@cmt/kit';
+import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
 
 export class CMakeToolsFolder {
-  constructor(readonly cmakeTools: CMakeTools) { }
+  private constructor(readonly cmakeTools: CMakeTools, readonly kitsController: KitsController) { }
 
-  get folder() {
-    return this.cmakeTools.folder;
+  static async init(cmakeTools: CMakeTools) {
+    return new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools));
   }
 
-  folderKits: Kit[] = [];
+  get folder() { return this.cmakeTools.folder; }
 
   private readonly _subscriptions: vscode.Disposable[] = [];
 
@@ -121,22 +121,8 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * @param folder The workspace folder to load for
    */
   private async _loadCMakeToolsForWorkspaceFolder(folder: vscode.WorkspaceFolder) {
-    // Get the kits that will be available for the new workspace directory
-    const ws_kits = await kitsAvailableInWorkspaceDirectory(folder.uri.fsPath);
     // Create the backend:
-    const new_cmt = await CMakeTools.createForDirectory(folder, this.extensionContext);
-    // Check if the CMakeTools remembers what kit it was last using in this dir:
-    const kit_name = new_cmt.workspaceContext.state.activeKitName;
-    if (!kit_name) {
-      // No prior kit. Done.
-      return new_cmt;
-    }
-    // It remembers a kit. Find it in the kits avail in this dir:
-    const kit = ws_kits.find(k => k.name == kit_name) || null;
-    // Set the kit: (May do nothing if no kit was found)
-    await new_cmt.setKit(kit);
-    // Done.
-    return new_cmt;
+    return await CMakeTools.createForDirectory(folder, this.extensionContext);
   }
 
   /**
@@ -155,7 +141,20 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     // Load for the workspace.
     const new_cmt = await this._loadCMakeToolsForWorkspaceFolder(folder);
     // Remember it
-    const inst = new CMakeToolsFolder(new_cmt);
+    const inst = await CMakeToolsFolder.init(new_cmt);
+
+    // initialize kits for the cmake tools
+    // Check if the CMakeTools remembers what kit it was last using in this dir:
+    const kit_name = new_cmt.workspaceContext.state.activeKitName;
+    if (!kit_name) {
+      // No prior kit. Done.
+      return inst;
+    }
+    // It remembers a kit. Find it in the kits avail in this dir:
+    const kit = inst.kitsController.availableKits.find(k => k.name == kit_name) || null;
+    // Set the kit: (May do nothing if no kit was found)
+    await new_cmt.setKit(kit);
+
     this._instances.set(folder.name, inst);
     // Return the newly created instance
     return inst;
