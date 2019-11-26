@@ -1,14 +1,5 @@
 # What's New?
 
-## 1.2.3
-Bug fixes:
-- CTest status bar button text appears malformed. [#911] (https://github.com/microsoft/vscode-cmake-tools/issues/911)
-- Cleanup fix for message "Platform undefined / toolset {}". [#913] (https://github.com/microsoft/vscode-cmake-tools/issues/913)
-- Fix incorrect file associations when language is unset. [#926] (https://github.com/microsoft/vscode-cmake-tools/issues/911)
-
-Improvements:
-- Add telemetry for crashes
-
 ## 1.2.2
 Bug fixes:
 - Fix broken SchemaProvider. [#874] (https://github.com/microsoft/vscode-cmake-tools/issues/874)
