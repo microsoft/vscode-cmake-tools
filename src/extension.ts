@@ -59,8 +59,8 @@ class ExtensionManager implements vscode.Disposable {
       new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(info));
       new_cmt.onLaunchTargetNameChanged(FireLate, () => {
         this._updateCodeModel(info);
-        rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
       });
+      rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
     });
     this._folders.onAfterRemoveFolder (info => {
       this._projectOutlineProvider.removeFolder(info);
@@ -279,7 +279,13 @@ class ExtensionManager implements vscode.Disposable {
       if (editor) {
         ws = vscode.workspace.getWorkspaceFolder(editor.document.uri);
       }
-      await this._setActiveFolder(ws || vscode.workspace.workspaceFolders[0]);
+      if (!ws) {
+        ws = vscode.workspace.workspaceFolders[0];
+      }
+      if (!this._folders.activeFolder || ws.uri.fsPath !== this._folders.activeFolder.folder.uri.fsPath) {
+        // active folder changed.
+        await this._setActiveFolder(ws);
+      }
     }
   }
 
@@ -937,7 +943,6 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     });
   }
 
-  // TODO
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
     'selectActiveFolder',

@@ -67,7 +67,6 @@ export class KitsController {
   get folder() { return this.cmakeTools.folder; }
 
   static async readUserKits(progress?: ProgressHandle) {
-    debugger;
     // Read user kits if we are under userKits/allAvailable read mode, or if userKits is empty (which means userKits are never loaded)
     // Migrate kits from old pre-1.1.3 location
     try {
@@ -95,7 +94,6 @@ export class KitsController {
    * Load the list of available kits from the filesystem. This will also update the kit loaded into the current backend if applicable.
    */
   async readKits(kitsReadMode = KitsReadMode.allAvailable, progress?: ProgressHandle) {
-    debugger;
     if (kitsReadMode !== KitsReadMode.folderKits) {
       KitsController.readUserKits(progress);
     }
