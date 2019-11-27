@@ -553,3 +553,7 @@ export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path
                 .on('change', listener)
                 .on('unlink', listener);
 }
+
+export function isString(x: any) {
+  return Object.prototype.toString.call(x) === "[object String]"
+}

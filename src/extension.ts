@@ -39,6 +39,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('extension');
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
+type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | null>;
 
 /**
  * A class to manage the extension.
@@ -143,6 +144,13 @@ class ExtensionManager implements vscode.Disposable {
       cmtFolder = this._folders.activeFolder;
     }
     return cmtFolder;
+  }
+
+  private _checkStringFolderArgs(folder: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
+    if (util.isString(folder)) {
+      return vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(<string>folder));
+    }
+    return <vscode.WorkspaceFolder>folder;
   }
 
   private async _pickFolder() {
@@ -691,6 +699,19 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  mapQueryCMakeTools(folder: vscode.WorkspaceFolder | string, fn: CMakeToolsQueryMapFn) {
+    const workspaceFolder = this._checkStringFolderArgs(folder);
+    if (workspaceFolder) {
+      const cmtFolder = this._folders.get(workspaceFolder);
+      if (cmtFolder) {
+        return fn(cmtFolder.cmakeTools);
+      }
+    } else {
+      rollbar.error(localize('invalid.folder', 'Invalid folder.'));
+    }
+    return Promise.resolve(null);
+  }
+
   cleanConfigure(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.cleanConfigure()); }
 
   cleanConfigureAll() { return this.mapCMakeTools(c => c.cleanConfigure()); }
@@ -799,45 +820,15 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeTools(cmt => cmt.quickStart(cmtFolder));
   }
 
-  launchTargetPath(folder: vscode.WorkspaceFolder) {
-    const cmtFolder = this._folders.get(folder);
-    if (cmtFolder) {
-      return cmtFolder.cmakeTools.launchTargetPath();
-    }
-    return null;
-  }
+  launchTargetPath(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.launchTargetPath()); }
 
-  launchTargetDirectory(folder: vscode.WorkspaceFolder) {
-    const cmtFolder = this._folders.get(folder);
-    if (cmtFolder) {
-      return cmtFolder.cmakeTools.launchTargetDirectory();
-    }
-    return null;
-  }
+  launchTargetDirectory(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder,cmt => cmt.launchTargetDirectory()); }
 
-  buildType(folder: vscode.WorkspaceFolder) {
-    const cmtFolder = this._folders.get(folder);
-    if (cmtFolder) {
-      return cmtFolder.cmakeTools.currentBuildType();
-    }
-    return null;
-  }
+  buildType(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.currentBuildType()); }
 
-  buildDirectory(folder: vscode.WorkspaceFolder) {
-    const cmtFolder = this._folders.get(folder);
-    if (cmtFolder) {
-      return cmtFolder.cmakeTools.buildDirectory();
-    }
-    return null;
-  }
+  buildDirectory(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.buildDirectory()); }
 
-  tasksBuildCommand(folder: vscode.WorkspaceFolder) {
-    const cmtFolder = this._folders.get(folder);
-    if (cmtFolder) {
-      return cmtFolder.cmakeTools.tasksBuildCommand();
-    }
-    return null;
-  }
+  tasksBuildCommand(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.tasksBuildCommand()); }
 
   async debugTarget(name?: string, folder?: vscode.WorkspaceFolder): Promise<vscode.DebugSession | null> {
     const cmtFolder = this._checkFolderArgs(folder);
