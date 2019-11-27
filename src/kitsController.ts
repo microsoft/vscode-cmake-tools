@@ -10,17 +10,15 @@ import {
   Kit,
   readKitsFile,
   scanForKits,
-  descriptionForKit,
   USER_KITS_FILEPATH,
   kitsPathForWorkspaceFolder,
-  findCLCompilerPath,
-  effectiveKitEnvironment,
   OLD_USER_KITS_FILEPATH,
 } from '@cmt/kit';
 import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
 import { ProgressHandle, reportProgress } from '@cmt/util';
+import { MultiWatcher } from '@cmt/watcher';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -43,16 +41,22 @@ export class KitsController {
 
   folderKits: Kit[] = [];
 
-  private constructor(readonly cmakeTools: CMakeTools) { }
+  private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: MultiWatcher) { }
 
   static async init(cmakeTools: CMakeTools) {
     if (KitsController.userKits.length === 0) {
       // never initialized before
       await KitsController.readUserKits();
     }
-    const kitsController = new KitsController(cmakeTools);
+    const kitsWatcher = new MultiWatcher(KitsController._workspaceKitsPath(cmakeTools.folder));
+    kitsWatcher.onAnyEvent(_ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
+    const kitsController = new KitsController(cmakeTools, kitsWatcher);
     await kitsController.readKits(KitsReadMode.folderKits);
     return kitsController;
+  }
+
+  dispose() {
+    this._kitsWatcher.dispose();
   }
 
   get availableKits() {
@@ -63,6 +67,7 @@ export class KitsController {
   get folder() { return this.cmakeTools.folder; }
 
   static async readUserKits(progress?: ProgressHandle) {
+    debugger;
     // Read user kits if we are under userKits/allAvailable read mode, or if userKits is empty (which means userKits are never loaded)
     // Migrate kits from old pre-1.1.3 location
     try {
@@ -90,12 +95,13 @@ export class KitsController {
    * Load the list of available kits from the filesystem. This will also update the kit loaded into the current backend if applicable.
    */
   async readKits(kitsReadMode = KitsReadMode.allAvailable, progress?: ProgressHandle) {
+    debugger;
     if (kitsReadMode !== KitsReadMode.folderKits) {
       KitsController.readUserKits(progress);
     }
     if (kitsReadMode !== KitsReadMode.userKits) {
       // Read folder kits
-      this.folderKits = await readKitsFile(this._workspaceKitsPath(this.folder));
+      this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder));
       const current = this.cmakeTools.activeKit;
       if (current) {
         const already_active_kit = this.availableKits.find(kit => kit.name === current.name);
@@ -109,7 +115,7 @@ export class KitsController {
    * The path to the workspace-local kits file, dependent on the path to the
    * active workspace folder.
    */
-  private _workspaceKitsPath(folder: vscode.WorkspaceFolder): string { return kitsPathForWorkspaceFolder(folder); }
+  private static _workspaceKitsPath(folder: vscode.WorkspaceFolder): string { return kitsPathForWorkspaceFolder(folder); }
 
   /**
    * Set the current kit for the specified workspace folder

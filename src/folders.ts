@@ -22,6 +22,7 @@ export class CMakeToolsFolder {
   dispose() {
     disposeAll(this._subscriptions);
     this.cmakeTools.dispose();
+    this.kitsController.dispose();
   }
 }
 
