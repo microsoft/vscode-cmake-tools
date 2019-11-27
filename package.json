@@ -1160,6 +1160,7 @@
   },
   "dependencies": {
     "ajv": "^4.7.5",
+    "chokidar": "^3.3.0",
     "es6-promisify": "~5.0.0",
     "follow-redirects": "^1.5.10",
     "iconv-lite": "^0.4.21",

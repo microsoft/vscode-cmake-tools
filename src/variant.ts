@@ -1,10 +1,11 @@
-import {ConfigurationReader} from '@cmt/config';
 import * as ajv from 'ajv';
+import * as chokidar from 'chokidar';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import {ConfigurationReader} from '@cmt/config';
 import * as logging from './logging';
 import {fs} from './pr';
 import {EnvironmentVariables} from './proc';
@@ -12,7 +13,6 @@ import rollbar from './rollbar';
 import {loadSchema} from './schema';
 import {StateManager} from './state';
 import * as util from './util';
-import {MultiWatcher} from './watcher';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -186,11 +186,11 @@ export class VariantManager implements vscode.Disposable {
   /**
    * Watches for changes to the variants file on the filesystem
    */
-  private readonly _variantFileWatcher = new MultiWatcher();
+  private readonly _variantFileWatcher = chokidar.watch([], {ignoreInitial: true});
 
 
   dispose() {
-    this._variantFileWatcher.dispose();
+    this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
 
@@ -208,10 +208,11 @@ export class VariantManager implements vscode.Disposable {
                             'cmake-variants.json',
                             '.vscode/cmake-variants.yaml',
                             '.vscode/cmake-variants.json']) {
-      this._variantFileWatcher.createWatcher(path.join(base_path, filename));
+      this._variantFileWatcher.add(path.join(base_path, filename));
     }
-    this._variantFileWatcher.onAnyEvent(
-        e => { rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', e.fsPath), () => this._reloadVariantsFile(e.fsPath)); });
+    util.chokidarOnAnyChange(
+            this._variantFileWatcher,
+            path => { rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', path), () => this._reloadVariantsFile(path)); });
 
     config.onChange('defaultVariants', () => {
       rollbar.invokeAsync(localize('reloading.variants.from.settings', 'Reloading variants from settings'), () => this._reloadVariantsFile());

@@ -4,6 +4,7 @@
 
 'use strict';
 
+import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
@@ -19,11 +20,10 @@ import {
   Kit,
   descriptionForKit,
   USER_KITS_FILEPATH,
-  kitsPathForWorkspaceFolder,
   findCLCompilerPath,
   effectiveKitEnvironment,
 } from '@cmt/kit';
-import {KitsController, KitsReadMode} from '@cmt/kitsController';
+import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
@@ -32,7 +32,6 @@ import {StatusBar} from './status';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
-import {MultiWatcher} from '@cmt/watcher';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -66,7 +65,6 @@ class ExtensionManager implements vscode.Disposable {
     this._folders.onAfterRemoveFolder (info => {
       this._projectOutlineProvider.removeFolder(info);
     });
-    this._kitsWatcher.onAnyEvent(_ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
   }
 
   private _onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
@@ -200,7 +198,7 @@ class ExtensionManager implements vscode.Disposable {
       this._pickKitCancellationTokenSource.dispose();
     }
     this._onDidChangeActiveTextEditorSub.dispose();
-    this._kitsWatcher.dispose();
+    this._kitsWatcher.close();
     this._projectOutlineDisposer.dispose();
     if (this._cppToolsAPI) {
       this._cppToolsAPI.dispose();
@@ -419,7 +417,9 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Watches for changes to the kits file
    */
-  private readonly _kitsWatcher: MultiWatcher = new MultiWatcher(USER_KITS_FILEPATH);
+  private readonly _kitsWatcher =
+      util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH, {ignoreInitial: true}),
+                               _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
 
   /**
    * Set the current kit for the specified workspace folder

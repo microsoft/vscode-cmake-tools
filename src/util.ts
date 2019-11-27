@@ -1,4 +1,5 @@
 import * as child_process from 'child_process';
+import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -545,4 +546,10 @@ export function reportProgress(progress: ProgressHandle|undefined, message: stri
   if (progress) {
     progress.report({message});
   }
+}
+
+export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
+  return watcher.on('add', listener)
+                .on('change', listener)
+                .on('unlink', listener);
 }

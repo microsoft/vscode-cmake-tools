@@ -1,6 +1,6 @@
 'use strict';
 
-import * as logging from '@cmt/logging';
+import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -14,11 +14,11 @@ import {
   kitsPathForWorkspaceFolder,
   OLD_USER_KITS_FILEPATH,
 } from '@cmt/kit';
+import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
-import { ProgressHandle, reportProgress } from '@cmt/util';
-import { MultiWatcher } from '@cmt/watcher';
+import { chokidarOnAnyChange, ProgressHandle, reportProgress } from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -41,22 +41,22 @@ export class KitsController {
 
   folderKits: Kit[] = [];
 
-  private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: MultiWatcher) { }
+  private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: chokidar.FSWatcher) { }
 
   static async init(cmakeTools: CMakeTools) {
     if (KitsController.userKits.length === 0) {
       // never initialized before
       await KitsController.readUserKits();
     }
-    const kitsWatcher = new MultiWatcher(KitsController._workspaceKitsPath(cmakeTools.folder));
-    kitsWatcher.onAnyEvent(_ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
+    const kitsWatcher = chokidar.watch(KitsController._workspaceKitsPath(cmakeTools.folder), {ignoreInitial: true});
     const kitsController = new KitsController(cmakeTools, kitsWatcher);
+    chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, kitsController.readKits(KitsReadMode.folderKits)));
     await kitsController.readKits(KitsReadMode.folderKits);
     return kitsController;
   }
 
   dispose() {
-    this._kitsWatcher.dispose();
+    this._kitsWatcher.close();
   }
 
   get availableKits() {
