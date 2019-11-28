@@ -78,7 +78,7 @@ class ExtensionManager implements vscode.Disposable {
       await this._folders.loadAllCurrent();
       this._projectOutlineProvider.addAllCurrentFolders();
       this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(this._onDidChangeActiveTextEditor, this);
-      this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
+      this._initActiveFolder();
       for (const cmtFolder of this._folders) {
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
@@ -313,6 +313,21 @@ class ExtensionManager implements vscode.Disposable {
         }
       }
     }
+  }
+
+  private async _initActiveFolder() {
+    if (vscode.window.activeTextEditor && this._autoSelectActiveFolder) {
+       return await this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
+    }
+    const path = this.extensionContext.workspaceState.get<string>('activeFolder');
+    let folder: vscode.WorkspaceFolder | undefined;
+    if (path) {
+      folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(path));
+    }
+    if (!folder) {
+      folder = vscode.workspace.workspaceFolders![0];
+    }
+    await this._setActiveFolder(folder);
   }
 
   /**
