@@ -55,8 +55,12 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    */
   private _activeFolder?: CMakeToolsFolder;
   get activeFolder() { return this._activeFolder; }
-  setActiveFolder(ws: vscode.WorkspaceFolder) {
-    this._activeFolder = this.get(ws);
+  setActiveFolder(ws: vscode.WorkspaceFolder | undefined) {
+    if (ws) {
+      this._activeFolder = this.get(ws);
+    } else {
+      this._activeFolder = undefined;
+    }
   }
 
   constructor(readonly extensionContext: vscode.ExtensionContext) {
@@ -83,7 +87,6 @@ export class CMakeToolsFolderController implements vscode.Disposable {
       for (const wsf of vscode.workspace.workspaceFolders) {
         await this.addFolder(wsf);
       }
-      this.setActiveFolder(vscode.workspace.workspaceFolders[0]);
     }
   }
 

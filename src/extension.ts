@@ -55,6 +55,10 @@ class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
     this._statusBar.targetName = 'all';
     this._folders.onAfterAddFolder(info => {
+      if (vscode.workspace.workspaceFolders?.length === 1) {
+        // First folder added
+        this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
+      }
       const new_cmt = info.cmakeTools;
       this._projectOutlineProvider.addFolder(info.folder);
       new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(info));
@@ -64,6 +68,11 @@ class ExtensionManager implements vscode.Disposable {
       rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
     });
     this._folders.onAfterRemoveFolder (info => {
+      if (!vscode.workspace.workspaceFolders?.length) {
+        this._setActiveFolder(undefined);
+      } else if (this._folders.activeFolder?.folder.uri.fsPath === info.uri.fsPath) {
+        this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
+      }
       this._projectOutlineProvider.removeFolder(info);
     });
   }
@@ -168,9 +177,9 @@ class ExtensionManager implements vscode.Disposable {
    * @returns `false` if there is not active CMakeTools, or it has no active kit
    * and the user cancelled the kit selection dialog.
    */
-  private async _ensureActiveKit(cmt: CMakeTools|null = null): Promise<boolean> {
+  private async _ensureActiveKit(cmt?: CMakeTools): Promise<boolean> {
     if (!cmt) {
-      cmt = this._folders.activeFolder!.cmakeTools;
+      cmt = this._folders.activeFolder?.cmakeTools;
     }
     if (!cmt) {
       // No CMakeTools. Probably no workspace open.
@@ -287,10 +296,7 @@ class ExtensionManager implements vscode.Disposable {
       if (editor) {
         ws = vscode.workspace.getWorkspaceFolder(editor.document.uri);
       }
-      if (!ws) {
-        ws = vscode.workspace.workspaceFolders[0];
-      }
-      if (!this._folders.activeFolder || ws.uri.fsPath !== this._folders.activeFolder.folder.uri.fsPath) {
+      if (ws && (!this._folders.activeFolder || ws.uri.fsPath !== this._folders.activeFolder.folder.uri.fsPath)) {
         // active folder changed.
         await this._setActiveFolder(ws);
       }
@@ -302,7 +308,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   async selectActiveFolder() {
     if (vscode.workspace.workspaceFolders) {
-      const lastActiveFolderPath = this._folders.activeFolder!.folder.uri.fsPath;
+      const lastActiveFolderPath = this._folders.activeFolder?.folder.uri.fsPath;
       const selection = await vscode.window.showWorkspaceFolderPick();
       if (selection) {
         // Ingore if user cancelled
@@ -335,14 +341,11 @@ class ExtensionManager implements vscode.Disposable {
    * pieces to control which backend has control and receives user input.
    * @param ws The workspace to activate
    */
-  private async _setActiveFolder(ws: vscode.WorkspaceFolder, progress?: ProgressHandle) {
+  private async _setActiveFolder(ws: vscode.WorkspaceFolder | undefined, progress?: ProgressHandle) {
     // Set the new workspace
     this._folders.setActiveFolder(ws);
-    this._statusBar.setActiveFolderName(ws.name);
-    const currentKit = this._folders.activeFolder!.cmakeTools.activeKit;
-    if (currentKit) {
-      this._statusBar.setActiveKitName(currentKit.name);
-    }
+    this._statusBar.setActiveFolderName(ws?.name || '');
+    this._statusBar.setActiveKitName(this._folders.activeFolder?.cmakeTools.activeKit?.name || '');
     this._setupSubscriptions();
   }
 
@@ -402,10 +405,10 @@ class ExtensionManager implements vscode.Disposable {
 
   private _setupSubscriptions() {
     this._disposeSubs();
-    const folder = this._folders.activeFolder!;
-    const cmt = folder.cmakeTools;
-    this._statusBar.setVisible(true);
+    const folder = this._folders.activeFolder;
+    const cmt = folder?.cmakeTools;
     if (!cmt) {
+      this._statusBar.setVisible(false);
       this._statusMessageSub = new DummyDisposable();
       this._targetNameSub = new DummyDisposable();
       this._buildTypeSub = new DummyDisposable();
@@ -416,21 +419,22 @@ class ExtensionManager implements vscode.Disposable {
       this._statusBar.setActiveKitName('');
       this._codeModelSub = new DummyDisposable();
     } else {
+      this._statusBar.setVisible(true);
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
         this._statusBar.targetName = t;
-        this._updateCodeModel(folder);
+        this._updateCodeModel(folder!);
       });
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');
-        this._updateCodeModel(folder);
+        this._updateCodeModel(folder!);
       });
       this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
-      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateCodeModel(folder));
+      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateCodeModel(folder!));
     }
   }
 
@@ -680,7 +684,11 @@ class ExtensionManager implements vscode.Disposable {
   async mapCMakeTools(cmt: CMakeTools|undefined, fn: CMakeToolsMapFn): Promise<any>;
   async mapCMakeTools(cmt: CMakeTools|undefined|CMakeToolsMapFn, fn?: CMakeToolsMapFn): Promise<any> {
     if (cmt === undefined) {
-      return await fn!(this._folders.activeFolder!.cmakeTools);
+      if (this._folders.activeFolder) {
+        return await fn!(this._folders.activeFolder!.cmakeTools);
+      }
+      rollbar.error(localize('no.active.folder', 'No active foler.'));
+      return 0;
     } else if (cmt instanceof CMakeTools) {
       return await fn!(cmt);
     } else {
