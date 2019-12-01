@@ -99,7 +99,7 @@ suite('Kits scan test', async () => {
     expect(compkit!.environmentVariables).to.be.undefined;
   });
 
-  test('Detect an MinGW compiler file on windows', async () => {
+  test.skip('Detect an MinGW compiler file on windows', async () => {
     if (process.platform !== 'win32')
       return;
 
