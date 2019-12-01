@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "開いている {0} 上でワークスペースを構成しています",
 	"double.loaded.instance": "ワークスペース フォルダーの CMake Tools インスタンスがダブルロードされました",
 	"creating.backend": "バックエンドを作成しています",
-	"post.folder.open": "フォルダーを開いた後",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "ワークスペース フォルダーが削除されましたが、拡張機能のインスタンスに関連付けられていません",
 	"loading.workspace.folder.name": "ワークスペース フォルダー {0} を読み込んでいます",
 	"loading.workspace.folder": "ワークスペース フォルダーを読み込んでいます",

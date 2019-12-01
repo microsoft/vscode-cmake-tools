@@ -24,7 +24,7 @@
 	"founds.kits.in.directory": "디렉터리 {1}에서 {0}개 키트를 찾음",
 	"failed.to.execute": "{0}을(를) 실행하지 못함: {1}",
 	"error.parsing.environment": "환경 변수를 구문 분석하는 동안 오류 발생: {0}",
-	"ok.running": "OK running {0} {1}, env vars: {2}",
+	"ok.running": "{0} {1}이(가) 정상 실행 중, 환경 변수: {2}",
 	"checking.for.kit": "키트를 확인하는 중: {0}",
 	"checking": "{0} 확인 중",
 	"detected.kit.for.version": "버전에 대한 검색된 VsKit",
