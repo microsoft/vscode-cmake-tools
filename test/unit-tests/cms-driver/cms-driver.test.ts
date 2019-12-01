@@ -62,19 +62,24 @@ suite('CMake-Server-Driver tests', () => {
 
   setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
     driver = null;
-
-    if (!cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
+    let isDone = false;
+    if (!isDone && !cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
       done('Default build folder still exists');
+      isDone = true;
     }
 
-    if (!cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
+    if (!isDone && !cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
       done('Empty project build folder still exists');
+      isDone = true;
     }
 
-    if (!cleanupBuildDir(path.join(badCommandWorkspaceFolder, 'build'))) {
+    if (!isDone && !cleanupBuildDir(path.join(badCommandWorkspaceFolder, 'build'))) {
       done('Bad command build folder still exists');
+      isDone = true;
     }
-    done();
+
+    if(!isDone)
+      done();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -360,7 +365,7 @@ suite('CMake-Server-Driver tests', () => {
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
   }).timeout(90000);
 
-  test('Cancel build', async () => {
+  test.only('Cancel build', async () => {
     const config = ConfigurationReader.createForDirectory(root);
     const executable = await getCMakeExecutableInformation(cmakePath);
 

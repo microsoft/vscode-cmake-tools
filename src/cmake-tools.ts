@@ -724,68 +724,72 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   private m_promise_build: Promise<number> = Promise.resolve(0);
+
+  private async RunBuild(target_?: string) {
+    log.debug(localize('run.build', 'Run build'), target_ ? target_ : '');
+    const config_retc = await this.ensureConfigured();
+    if (config_retc === null) {
+      throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
+    } else if (config_retc !== 0) {
+      return config_retc;
+    }
+    log.clearOutputChannel();
+    const drv = await this.getCMakeDriverInstance();
+    if (!drv) {
+      throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
+    }
+    const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
+    const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
+    const IS_BUILDING_KEY = 'cmake:isBuilding';
+    try {
+      this._statusMessage.set(localize('building.status', 'Building'));
+      this._isBusy.set(true);
+      return await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: localize('building.target', 'Building: {0}', target),
+            cancellable: true,
+          },
+          async (progress, cancel) => {
+            let old_progress = 0;
+            consumer.onProgress(pr => {
+              const increment = pr.value - old_progress;
+              if (increment >= 1) {
+                progress.report({increment});
+                old_progress += increment;
+              }
+            });
+          cancel.onCancellationRequested(() => { rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()); });
+          log.showChannel();
+          BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
+          await setContextValue(IS_BUILDING_KEY, true);
+          const rc = await drv.build(target, consumer);
+          await setContextValue(IS_BUILDING_KEY, false);
+          if (rc === null) {
+            BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
+          } else {
+            BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
+          }
+          const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
+          populateCollection(diagCollections.build, file_diags);
+          return rc === null ? -1 : rc;
+        },
+      );
+    } finally {
+      await setContextValue(IS_BUILDING_KEY, false);
+      this._statusMessage.set(localize('ready.status', 'Ready'));
+      this._isBusy.set(false);
+      consumer.dispose();
+    }
+  }
   /**
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
-    this.m_promise_build = new Promise(async () => {
-      log.debug(localize('run.build', 'Run build'), target_ ? target_ : '');
-      const config_retc = await this.ensureConfigured();
-      if (config_retc === null) {
-        throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
-      } else if (config_retc !== 0) {
-        return config_retc;
-      }
-      log.clearOutputChannel();
-      const drv = await this.getCMakeDriverInstance();
-      if (!drv) {
-        throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
-      }
-      const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
-      const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
-      const IS_BUILDING_KEY = 'cmake:isBuilding';
-      try {
-        this._statusMessage.set(localize('building.status', 'Building'));
-        this._isBusy.set(true);
-        return await vscode.window.withProgress(
-            {
-              location: vscode.ProgressLocation.Notification,
-              title: localize('building.target', 'Building: {0}', target),
-              cancellable: true,
-            },
-            async (progress, cancel) => {
-              let old_progress = 0;
-              consumer.onProgress(pr => {
-                const increment = pr.value - old_progress;
-                if (increment >= 1) {
-                  progress.report({increment});
-                  old_progress += increment;
-                }
-              });
-            cancel.onCancellationRequested(() => { rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()); });
-              log.showChannel();
-              BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
-              await setContextValue(IS_BUILDING_KEY, true);
-              const rc = await drv.build(target, consumer);
-              await setContextValue(IS_BUILDING_KEY, false);
-              if (rc === null) {
-                BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
-              } else {
-                BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
-              }
-              const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
-              populateCollection(diagCollections.build, file_diags);
-              return rc === null ? -1 : rc;
-            },
-        );
-      } finally {
-        await setContextValue(IS_BUILDING_KEY, false);
-        this._statusMessage.set(localize('ready.status', 'Ready'));
-        this._isBusy.set(false);
-        consumer.dispose();
-      }
-    });
-    return this.m_promise_build;
+    this.m_promise_build = this.RunBuild(target_);
+    const run_build = this.m_promise_build;
+    const result = await run_build;
+    return result;
   }
 
   /**
