@@ -37,3 +37,23 @@ add_custom_target(runTestTarget DEPENDS TestBuildProcess
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Run test target"
 )
+
+# Test stop of process
+# Therefor we delay the build process
+if(DEFINED DELAY_BUILD)
+if(WIN32)
+add_custom_command(
+    TARGET TestBuildProcess
+    POST_BUILD
+    COMMAND ping -n 30 127.0.0.1
+)
+endif (WIN32)
+
+if(UNIX)
+add_custom_command(
+    TARGET TestBuildProcess
+    POST_BUILD
+    COMMAND ping -c 30 127.0.0.1
+)
+endif(UNIX)
+endif (DEFINED DELAY_BUILD)

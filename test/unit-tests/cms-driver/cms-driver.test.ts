@@ -74,7 +74,7 @@ suite('CMake-Server-Driver tests', () => {
     if (!cleanupBuildDir(path.join(badCommandWorkspaceFolder, 'build'))) {
       done('Bad command build folder still exists');
     }
-    done();
+      done();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -355,8 +355,64 @@ suite('CMake-Server-Driver tests', () => {
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
-                       .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
     await driver.cleanConfigure(['-DEXTRA_ARGS_TEST=Hallo']);
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
+  }).timeout(90000);
+
+  test('Avoid reconfigure', async () => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    await driver.cleanConfigure(['-Dholla=Hallo']);
+    expect(driver.cmakeCacheEntries.get('holla')!.value).to.be.eq('Hallo');
+    driver.dispose();
+    driver = null;
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    await driver.build(driver.allTargetName);
+    expect(driver.cmakeCacheEntries.get('holla')!.value).to.be.eq('Hallo');
+  }).timeout(90000);
+
+  test('Cancel build', async () => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    expect(await driver.cleanConfigure(['-DDELAY_BUILD=1'])).to.be.equal(0);
+
+    // Start build
+    const build_prom = driver.build(driver.allTargetName);
+
+    // Prepare delayed build cancel
+    let cancel_prom: any;
+    const d = driver;
+    setTimeout(() => { cancel_prom = d.stopCurrentProcess(); }, 3000);
+
+    // Wait for build
+    const ret = await build_prom;
+
+    // Check results
+    await cancel_prom;
+    expect(ret).to.be.eq(1);
+
+    // Test driver is still working
+    expect(await driver.configure([])).to.be.equal(0);
+  }).timeout(90000);
+
+
+  test('Stop and start cmake-server client', async () => {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
+
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    expect(await driver.configure([])).to.be.equal(0);
+    await driver.stopCurrentProcess();
+    expect(await driver.configure([])).to.be.equal(0);
   }).timeout(90000);
 });

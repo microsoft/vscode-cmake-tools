@@ -22,7 +22,7 @@ const MESSAGE_WRAPPER_RE = /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" =
 
 export class StartupError extends global.Error {
   constructor(public readonly retc: number) { super(localize('error.starting.cmake-server', 'Error starting up cmake-server')); }
-}
+  }
 
 export interface ProtocolVersion {
   isExperimental: boolean;
@@ -505,7 +505,9 @@ export class CMakeServerClient {
 
   cmakeInputs(params?: CMakeInputsParams): Promise<CMakeInputsContent> { return this.sendRequest('cmakeInputs', params); }
 
+  protected _shutdown = false;
   public async shutdown() {
+    this._shutdown = true;
     this._pipe.end();
     await this._endPromise;
   }
@@ -520,7 +522,7 @@ export class CMakeServerClient {
     }
     this._pipeFilePath = pipe_file;
     const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables,
-      params.environment as proc.EnvironmentVariables);
+                                            params.environment as proc.EnvironmentVariables);
     const child
       = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
         env: final_env, cwd: params.binaryDir
@@ -533,10 +535,16 @@ export class CMakeServerClient {
         const pipe = this._pipe = net.createConnection(pipe_file);
         pipe.on('data', this._onMoreData.bind(this));
         pipe.on('error', e => {
-          debugger;
           pipe.end();
-          rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'), {pipe: pipe_file}, params.onPipeError(e));
-          reject(e);
+          if (!this._shutdown) {
+            debugger;
+            rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'),
+                                {pipe: pipe_file},
+                                params.onPipeError(e));
+            reject(e);
+          } else {
+            resolve();
+          }
         });
         pipe.on('end', () => {
           pipe.end();

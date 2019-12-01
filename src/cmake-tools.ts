@@ -434,14 +434,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   if (chosen) {
                     // There was only one choice: to clean-configure
                     rollbar.invokeAsync(localize('clean.reconfigure.after.bad.home.dir', 'Clean reconfigure after bad home dir'), async () => {
-                      try {
-                        await fs.unlink(e.badCachePath);
+                                          try {
+                                            await fs.unlink(e.badCachePath);
                       } catch (e2) { log.error(localize('failed.to.remove.bad.cache.file', 'Failed to remove bad cache file: {0} {1}', e.badCachePath, e2)); }
-                      try {
-                        await fs.rmdir(path.join(path.dirname(e.badCachePath), 'CMakeFiles'));
+                                          try {
+                                            await fs.rmdir(path.join(path.dirname(e.badCachePath), 'CMakeFiles'));
                       } catch (e2) { log.error(localize('failed.to.remove.cmakefiles.for.cache', 'Failed to remove CMakeFiles for cache: {0} {1}', e.badCachePath, e2)); }
-                      await this.cleanConfigure();
-                    });
+                                          await this.cleanConfigure();
+                                        });
                   }
                 });
           } else if (e instanceof NoGeneratorError) {
@@ -524,7 +524,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await fs.mkdir_p(pardir);
       } catch (e) {
         vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
-          'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
+                     'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
           compdb_path, expanded_dest, pardir, e));
         return;
       }
@@ -723,65 +723,69 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
   }
 
+  private m_promise_build: Promise<number> = Promise.resolve(0);
   /**
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
-    log.debug(localize('run.build', 'Run build'), target_ ? target_ : '');
-    const config_retc = await this.ensureConfigured();
-    if (config_retc === null) {
-      throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
-    } else if (config_retc !== 0) {
-      return config_retc;
-    }
-    log.clearOutputChannel();
-    const drv = await this.getCMakeDriverInstance();
-    if (!drv) {
+    this.m_promise_build = new Promise(async () => {
+      log.debug(localize('run.build', 'Run build'), target_ ? target_ : '');
+      const config_retc = await this.ensureConfigured();
+      if (config_retc === null) {
+        throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
+      } else if (config_retc !== 0) {
+        return config_retc;
+      }
+      log.clearOutputChannel();
+      const drv = await this.getCMakeDriverInstance();
+      if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
-    }
-    const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
-    const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
-    const IS_BUILDING_KEY = 'cmake:isBuilding';
-    try {
-      this._statusMessage.set(localize('building.status', 'Building'));
-      this._isBusy.set(true);
-      return await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: localize('building.target', 'Building: {0}', target),
-            cancellable: true,
-          },
-          async (progress, cancel) => {
-            let old_progress = 0;
-            consumer.onProgress(pr => {
-              const increment = pr.value - old_progress;
-              if (increment >= 1) {
-                progress.report({increment});
-                old_progress += increment;
-              }
-            });
+      }
+      const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
+      const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
+      const IS_BUILDING_KEY = 'cmake:isBuilding';
+      try {
+        this._statusMessage.set(localize('building.status', 'Building'));
+        this._isBusy.set(true);
+        return await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: localize('building.target', 'Building: {0}', target),
+              cancellable: true,
+            },
+            async (progress, cancel) => {
+              let old_progress = 0;
+              consumer.onProgress(pr => {
+                const increment = pr.value - old_progress;
+                if (increment >= 1) {
+                  progress.report({increment});
+                  old_progress += increment;
+                }
+              });
             cancel.onCancellationRequested(() => { rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()); });
-            log.showChannel();
-            BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
-            await setContextValue(IS_BUILDING_KEY, true);
-            const rc = await drv.build(target, consumer);
-            await setContextValue(IS_BUILDING_KEY, false);
-            if (rc === null) {
-              BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
-            } else {
-              BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
-            }
-            const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
-            populateCollection(diagCollections.build, file_diags);
-            return rc === null ? -1 : rc;
-          },
-      );
-    } finally {
-      await setContextValue(IS_BUILDING_KEY, false);
-      this._statusMessage.set(localize('ready.status', 'Ready'));
-      this._isBusy.set(false);
-      consumer.dispose();
-    }
+              log.showChannel();
+              BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
+              await setContextValue(IS_BUILDING_KEY, true);
+              const rc = await drv.build(target, consumer);
+              await setContextValue(IS_BUILDING_KEY, false);
+              if (rc === null) {
+                BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
+              } else {
+                BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
+              }
+              const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
+              populateCollection(diagCollections.build, file_diags);
+              return rc === null ? -1 : rc;
+            },
+        );
+      } finally {
+        await setContextValue(IS_BUILDING_KEY, false);
+        this._statusMessage.set(localize('ready.status', 'Ready'));
+        this._isBusy.set(false);
+        consumer.dispose();
+      }
+    });
+    return this.m_promise_build;
   }
 
   /**
@@ -820,7 +824,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!await fs.exists(drv.cachePath)) {
       const do_conf = !!(await vscode.window.showErrorMessage(
         localize('project.not.yet.configured', 'This project has not yet been configured'),
-        localize('configure.now.button', 'Configure Now')));
+                                                              localize('configure.now.button', 'Configure Now')));
       if (do_conf) {
         if (await this.configure() !== 0)
           return;
@@ -911,8 +915,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return false;
     }
 
-    return drv.stopCurrentProcess().then(() => {
+    return drv.stopCurrentProcess().then(async () => {
+      await this.m_promise_build;
       this._cmakeDriver = Promise.resolve(null);
+      this._isBusy.set(false);
       return true;
     }, () => false);
   }
@@ -1112,9 +1118,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv instanceof LegacyCMakeDriver) {
       vscode.window
           .showWarningMessage(localize('target.debugging.unsupported', 'Target debugging is no longer supported with the legacy driver'), {
-            title: localize('learn.more.button', 'Learn more'),
-            isLearnMore: true,
-          })
+                                title: localize('learn.more.button', 'Learn more'),
+                                isLearnMore: true,
+                              })
           .then(item => {
             if (item && item.isLearnMore) {
               open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
