@@ -22,7 +22,7 @@ const MESSAGE_WRAPPER_RE = /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" =
 
 export class StartupError extends global.Error {
   constructor(public readonly retc: number) { super(localize('error.starting.cmake-server', 'Error starting up cmake-server')); }
-  }
+}
 
 export interface ProtocolVersion {
   isExperimental: boolean;
@@ -522,7 +522,7 @@ export class CMakeServerClient {
     }
     this._pipeFilePath = pipe_file;
     const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables,
-                                            params.environment as proc.EnvironmentVariables);
+      params.environment as proc.EnvironmentVariables);
     const child
       = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
         env: final_env, cwd: params.binaryDir

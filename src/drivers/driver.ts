@@ -660,7 +660,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     } catch {
       return -1;
     } finally { this.configRunning = false; }
-    }
+  }
 
   private generateInitCacheFlags(): string[] {
     const cache_init_conf = this.config.cacheInit;

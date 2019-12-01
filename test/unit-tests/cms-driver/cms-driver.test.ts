@@ -74,7 +74,7 @@ suite('CMake-Server-Driver tests', () => {
     if (!cleanupBuildDir(path.join(badCommandWorkspaceFolder, 'build'))) {
       done('Bad command build folder still exists');
     }
-      done();
+    done();
   });
 
   teardown(async function(this: Mocha.IBeforeAndAfterContext) {
@@ -360,23 +360,6 @@ suite('CMake-Server-Driver tests', () => {
     expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
   }).timeout(90000);
 
-  test('Avoid reconfigure', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    await driver.cleanConfigure(['-Dholla=Hallo']);
-    expect(driver.cmakeCacheEntries.get('holla')!.value).to.be.eq('Hallo');
-    driver.dispose();
-    driver = null;
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    await driver.build(driver.allTargetName);
-    expect(driver.cmakeCacheEntries.get('holla')!.value).to.be.eq('Hallo');
-  }).timeout(90000);
-
   test('Cancel build', async () => {
     const config = ConfigurationReader.createForDirectory(root);
     const executable = await getCMakeExecutableInformation(cmakePath);
@@ -398,7 +381,7 @@ suite('CMake-Server-Driver tests', () => {
 
     // Check results
     await cancel_prom;
-    expect(ret).to.be.eq(1);
+    expect(ret).to.be.not.eq(0);
 
     // Test driver is still working
     expect(await driver.configure([])).to.be.equal(0);
