@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Açık {0} konumunda çalışma alanı yapılandırılıyor",
 	"double.loaded.instance": "Çalışma alanı klasörü için CMake Araçları örneği çift yüklendi",
 	"creating.backend": "Arka uç oluşturuluyor",
-	"post.folder.open": "Klasör açıldıktan sonra",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Çalışma alanı klasörü kaldırıldı, ancak bir uzantı örneğiyle ilişkilendirilmedi",
 	"loading.workspace.folder.name": "{0} çalışma alanı klasörü yükleniyor",
 	"loading.workspace.folder": "Çalışma alanı klasörü yükleniyor",

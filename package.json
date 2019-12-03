@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -1115,7 +1115,7 @@
   "resolutions": {
     "marked": "^0.7.0",
     "diff": "^3.5.0",
-    "handlebars": "^4.4.5",
+    "handlebars": "^4.5.3",
     "https-proxy-agent": "^2.2.4"
   }
 }

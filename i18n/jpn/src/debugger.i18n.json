@@ -7,5 +7,5 @@
 	"gdb.not.found": "既定の検索パスと {0} に GDB が見つかりません。",
 	"enable.pretty.printing": "gdb の再フォーマットを有効にする",
 	"no.compiler.found.in.cache": "キャッシュ ファイルにコンパイラが見つかりません。",
-	"unable.to.determine.debugger.for.compiler": "コンパイラに対応するデバッガーを自動的に判別できません: {}"
+	"unable.to.determine.debugger.for.compiler": "コンパイラに対応するデバッガーを自動的に決定できません: {0}"
 }

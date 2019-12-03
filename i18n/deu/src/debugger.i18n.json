@@ -7,5 +7,5 @@
 	"gdb.not.found": "GDB wurde im Standardsuchpfad und in \"{0}\" nicht gefunden.",
 	"enable.pretty.printing": "Automatische Strukturierung und Einrückung für GDB aktivieren",
 	"no.compiler.found.in.cache": "In der Cachedatei wurde kein Compiler gefunden.",
-	"unable.to.determine.debugger.for.compiler": "Der dem Compiler entsprechende Debugger kann nicht automatisch ermittelt werden: {}"
+	"unable.to.determine.debugger.for.compiler": "Der dem Compiler entsprechende Debugger kann nicht automatisch ermittelt werden: {0}"
 }

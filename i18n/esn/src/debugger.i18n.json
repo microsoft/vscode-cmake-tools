@@ -7,5 +7,5 @@
 	"gdb.not.found": "No se encuentra GDB en la ruta de acceso de búsqueda predeterminada y {0}.",
 	"enable.pretty.printing": "Habilitar la impresión con sangría para gdb",
 	"no.compiler.found.in.cache": "No se encontró ningún compilador en el archivo caché.",
-	"unable.to.determine.debugger.for.compiler": "No se puede determinar el depurador correspondiente al compilador de forma automática: {}"
+	"unable.to.determine.debugger.for.compiler": "No se puede determinar el depurador correspondiente al compilador de forma automática: {0}"
 }

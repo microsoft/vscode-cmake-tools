@@ -16,5 +16,6 @@
 	"cookie.not.known.message": "Файл cookie сервера CMake \"{0}\" не соответствует известному сообщению.",
 	"cant.yet.handle.message": "Еще не удалось обработать следующее число сообщений: {0}.",
 	"sending.message.to.cmake-server": "Отправка сообщения команде cmake-server: {0}",
-	"configuring.using.generator.with.platform.and.toolset": "Настройка с использованием генератора CMake \"{0}\" с платформой \"{1}\" и набором инструментов {2}."
+	"configuring.using.generator": "Настройка с использованием генератора CMake \"{0}\"",
+	"with.platform.and.toolset": " с платформой \"{0}\" и набором инструментов {1}"
 }

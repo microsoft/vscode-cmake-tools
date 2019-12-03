@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Configuración del área de trabajo al abrir {0}",
 	"double.loaded.instance": "Instancia de Herramientas de CMake cargada dos veces para la carpeta del área de trabajo",
 	"creating.backend": "Creando el back-end",
-	"post.folder.open": "Apertura de carpeta posterior",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Se quitó la carpeta del área de trabajo, pero no se asoció a una instancia de extensión",
 	"loading.workspace.folder.name": "Cargando la carpeta del área de trabajo {0}",
 	"loading.workspace.folder": "Cargando la carpeta del área de trabajo",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "Finalizó {0} (se devolvió un valor no serializable)",
 	"loading.extension.commands": "Cargando los comandos de la extensión",
 	"register.command": "Registrar el comando de la extensión CMakeTools {0}",
-	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
+	"uninstall.old.cmaketools": "Desinstale cualquier versión anterior de la extensión Herramientas de CMake, que ahora publica Microsoft a partir de la versión 1.2.0.",
 	"cmake.tools.initializing": "Inicializando las Herramientas de CMake...",
 	"deactivate.cmaketools": "Desactivar CMakeTools"
 }

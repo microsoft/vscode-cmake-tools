@@ -199,7 +199,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // User can override generator with a setting
     const user_generator = this.workspaceContext.config.generator;
     if (user_generator) {
-      log.debug(`Using generator from user configuration: ${user_generator}`);
+      log.debug(localize('using.user.generator', 'Using generator from user configuration: {0}', user_generator));
       return [{
         name: user_generator,
         platform: this.workspaceContext.config.platform || undefined,

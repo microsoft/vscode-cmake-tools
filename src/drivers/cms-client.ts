@@ -622,9 +622,12 @@ export class CMakeServerClient {
               hsparams.platform = generator.platform;
               hsparams.toolset = generator.toolset;
 
-              log.info(localize('configuring.using.generator.with.platform.and.toolset',
-                'Configuring using the "{0}" CMake generator with plattform "{1}" and toolset {2}',
-                hsparams.generator, hsparams.platform, JSON.stringify(hsparams.toolset || {})));
+              const configureMessage: string = localize('configuring.using.generator',
+                                                'Configuring using the "{0}" CMake generator', hsparams.generator);
+              const extraMessage: string = hsparams.platform || hsparams.toolset ?
+                localize('with.platform.and.toolset', ' with platform "{0}" and toolset {1}', hsparams.platform, JSON.stringify(hsparams.toolset || {})) :
+                "";
+              log.info(configureMessage + extraMessage);
             }
 
             await client.sendRequest('handshake', hsparams);
