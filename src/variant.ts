@@ -353,7 +353,7 @@ export class VariantManager implements vscode.Disposable {
     return this.mergeVariantConfigurations(options_or_error);
   }
 
-  async selectVariant() {
+  async selectVariant(name?: string) {
     const variants = this._variants.settings.map(setting => setting.choices.map(opt => ({
                                                                                   settingKey: setting.name,
                                                                                   settingValue: opt.key,
@@ -366,12 +366,22 @@ export class VariantManager implements vscode.Disposable {
                         keywordSettings: this.transformChoiceCombinationToKeywordSettings(optionset),
                         description: optionset.map(o => o.settings.long).join(' + '),
                       }));
-    const chosen = await vscode.window.showQuickPick(items);
-    if (!chosen) {
+    if (name) {
+      for (const item of items) {
+        if (name === item.label) {
+          this.publishActiveKeywordSettings(item.keywordSettings);
+          return true;
+        }
+      }
       return false;
+    } else {
+      const chosen = await vscode.window.showQuickPick(items);
+      if (!chosen) {
+        return false;
+      }
+      this.publishActiveKeywordSettings(chosen.keywordSettings);
+      return true;
     }
-    this.publishActiveKeywordSettings(chosen.keywordSettings);
-    return true;
   }
 
   publishActiveKeywordSettings(keywordSettings: Map<string, string>) {

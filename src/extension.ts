@@ -27,10 +27,11 @@ import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
-import {StatusBar} from './status';
+import {StatusBar} from '@cmt/status';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
+import {DEFAULT_VARIANTS} from '@cmt/variant';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -647,9 +648,24 @@ class ExtensionManager implements vscode.Disposable {
 
   async setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return await this.mapCMakeToolsFolder(folder, cmt => cmt.setDefaultTarget(name)); }
 
-  async setVariant(folder?: vscode.WorkspaceFolder) { return await this.mapCMakeToolsFolder(folder, cmt => cmt.setVariant()); }
+  async setVariant(folder?: vscode.WorkspaceFolder, name?: string) { return await this.mapCMakeToolsFolder(folder, cmt => cmt.setVariant(name)); }
 
-  async setVariantAll() { return await this.mapCMakeTools(cmt => cmt.setVariant()); }
+  async setVariantAll() {
+    // Only supports default variants for now
+    let variantItems: vscode.QuickPickItem[] = [];
+    const choices = DEFAULT_VARIANTS.buildType!.choices;
+    for (const key in choices) {
+      variantItems.push({
+        label: choices[key]!.short,
+        description: choices[key]!.long
+      });
+    }
+    const choice = await vscode.window.showQuickPick(variantItems);
+    if (choice) {
+      return await this.mapCMakeTools(cmt => cmt.setVariant(choice.label));
+    }
+    return false;
+  }
 
   install(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(folder, cmt => cmt.install()); }
 

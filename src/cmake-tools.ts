@@ -924,8 +924,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.setVariant`
    */
-  async setVariant() {
-    const ret = await this._variantManager.selectVariant();
+  async setVariant(name?: string) {
+    // ! for compatibility with return code style...
+    const ret = ! await this._variantManager.selectVariant(name);
     if (ret) {
       await this.configure();
     }
