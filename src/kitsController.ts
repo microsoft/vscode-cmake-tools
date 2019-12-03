@@ -6,8 +6,10 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
 import CMakeTools from '@cmt/cmake-tools';
+import { ConfigurationReader } from '@cmt/config';
 import {
   Kit,
+  descriptionForKit,
   readKitsFile,
   scanForKits,
   USER_KITS_FILEPATH,
@@ -16,7 +18,7 @@ import {
 } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
-import {fs} from '@cmt/pr';
+import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
 import { chokidarOnAnyChange, ProgressHandle, reportProgress } from '@cmt/util';
 
@@ -56,6 +58,9 @@ export class KitsController {
   }
 
   dispose() {
+    if (this._pickKitCancellationTokenSource) {
+      this._pickKitCancellationTokenSource.dispose();
+    }
     this._kitsWatcher.close();
   }
 
@@ -119,14 +124,13 @@ export class KitsController {
    * Set the current kit for the specified workspace folder
    * @param k The kit
    */
-  async setFolderActiveKit(k: Kit|null) {
+  async setFolderActiveKit(k: Kit|null): Promise<string> {
     const inst = this.cmakeTools;
-    const raw_name = k ? k.name : '';
+    const raw_name = k ? k.name : '__unspec__';
     if (inst) {
       // Generate a message that we will show in the progress notification
       let message = '';
       switch (raw_name) {
-      case '':
       case '__unspec__':
         // Empty string/unspec is un-setting the kit:
         message = localize('unsetting.kit', 'Unsetting kit');
@@ -146,6 +150,131 @@ export class KitsController {
       );
     }
     return raw_name;
+  }
+
+  private async _checkHaveKits(): Promise<'__unspec__'|'ok'|'cancel'> {
+    const avail = this.availableKits;
+    if (avail.length > 1) {
+      // We have kits. Okay.
+      return 'ok';
+    }
+    if (avail[0].name !== '__unspec__') {
+      // We should _always_ have an __unspec__ kit.
+      rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', "__unspec__"));
+      return 'ok';
+    }
+    // We don't have any kits defined. Ask the user what to do. This is safe to block
+    // because it is a modal dialog
+    interface FirstScanItem extends vscode.MessageItem {
+      action: 'scan'|'__unspec__'|'cancel';
+    }
+    const choices: FirstScanItem[] = [
+      {
+        title: localize('scan.for.kits.button', 'Scan for kits'),
+        action: 'scan',
+      },
+      {
+        title: localize('do.not.use.kit.button', 'Do not use a kit'),
+        action: '__unspec__',
+      },
+      {
+        title: localize('close.button', 'Close'),
+        isCloseAffordance: true,
+        action: 'cancel',
+      }
+    ];
+    const chosen = await vscode.window.showInformationMessage(
+        localize('no.kits.available', 'No CMake kits are available. What would you like to do?'),
+        {modal: true},
+        ...choices,
+    );
+    if (!chosen) {
+      // User closed the dialog
+      return 'cancel';
+    }
+    switch (chosen.action) {
+    case 'scan': {
+      if (KitsController.minGWSearchDirs.length !== 0) {
+        await KitsController.scanForKits();
+      } else {
+        await vscode.commands.executeCommand('cmake.scanForKits');
+      }
+      return 'ok';
+    }
+    case '__unspec__': {
+      await this.setFolderActiveKit({name: '__unspec__'});
+      return '__unspec__';
+    }
+    case 'cancel': {
+      return 'cancel';
+    }
+    }
+  }
+
+  private _pickKitCancellationTokenSource: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
+
+  /**
+   * Show UI to allow the user to select an active kit
+   */
+  async selectKit(): Promise<boolean> {
+    // Check that we have kits, or if the user doesn't want to use a kit.
+    const state = await this._checkHaveKits();
+    switch (state) {
+    case 'cancel':
+      // The user doesn't want to perform any special action
+      return false;
+    case '__unspec__':
+      // The user chose to use the __unspec__ kit
+      return true;
+    case 'ok':
+      // 'ok' means we have kits defined and should do regular kit selection
+      break;
+    }
+
+    const avail = this.availableKits;
+    log.debug('Start selection of kits. Found', avail.length, 'kits.');
+
+    interface KitItem extends vscode.QuickPickItem {
+      kit: Kit;
+    }
+    log.debug(localize('opening.kit.selection', 'Opening kit selection QuickPick'));
+    // Generate the quickpick items from our known kits
+    const itemPromises = avail.map(
+        async (kit): Promise<KitItem> => ({
+          label: kit.name !== '__unspec__' ? kit.name : `[${localize('unspecified.kit.name', 'Unspecified')}]`,
+          description: await descriptionForKit(kit),
+          kit,
+        }),
+    );
+    const items = await Promise.all(itemPromises);
+    const chosen_kit = await vscode.window.showQuickPick(items,
+                                                         {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit')},
+                                                         this._pickKitCancellationTokenSource.token);
+    this._pickKitCancellationTokenSource.dispose();
+    this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();
+    if (chosen_kit === undefined) {
+      log.debug(localize('user.cancelled.kit.selection', 'User cancelled Kit selection'));
+      // No selection was made
+      return false;
+    } else {
+      log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
+      await this.setFolderActiveKit(chosen_kit.kit);
+      return true;
+    }
+  }
+
+  /**
+   * Set the current kit by name of the kit
+   */
+  async setKitByName(kitName: string) {
+    let newKit: Kit | undefined;
+    if (!kitName) {
+        kitName = '__unspec__';
+    }
+    newKit = this.availableKits.find(kit => kit.name === kitName);
+    await this.setFolderActiveKit(newKit || null);
+    // if we are showing a quickpick menu...
+    this._pickKitCancellationTokenSource.cancel();
   }
 
   /**

@@ -18,7 +18,6 @@ import {CppConfigurationProvider} from '@cmt/cpptools';
 import {CMakeToolsFolderController, CMakeToolsFolder} from '@cmt/folders';
 import {
   Kit,
-  descriptionForKit,
   USER_KITS_FILEPATH,
   findCLCompilerPath,
   effectiveKitEnvironment,
@@ -230,9 +229,6 @@ class ExtensionManager implements vscode.Disposable {
         }
       }
     );
-    if (this._pickKitCancellationTokenSource) {
-      this._pickKitCancellationTokenSource.dispose();
-    }
     this._onDidChangeActiveTextEditorSub.dispose();
     this._kitsWatcher.close();
     this._projectOutlineDisposer.dispose();
@@ -453,15 +449,6 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  private _kitsForFolder(folder: vscode.WorkspaceFolder) {
-    const info = this._folders.get(folder);
-    if (info) {
-      return info.kitsController.availableKits;
-    } else {
-      return KitsController.userKits;
-    }
-  }
-
   /**
    * Watches for changes to the kits file
    */
@@ -547,62 +534,6 @@ class ExtensionManager implements vscode.Disposable {
     return result;
   }
 
-  private async _checkHaveKits(folder: vscode.WorkspaceFolder): Promise<'use-unspec'|'ok'|'cancel'> {
-    const avail = this._kitsForFolder(folder);
-    if (avail.length > 1) {
-      // We have kits. Okay.
-      return 'ok';
-    }
-    if (avail[0].name !== '__unspec__') {
-      // We should _always_ have an __unspec__ kit.
-      rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', "__unspec__"));
-      return 'ok';
-    }
-    // We don't have any kits defined. Ask the user what to do. This is safe to block
-    // because it is a modal dialog
-    interface FirstScanItem extends vscode.MessageItem {
-      action: 'scan'|'use-unspec'|'cancel';
-    }
-    const choices: FirstScanItem[] = [
-      {
-        title: localize('scan.for.kits.button', 'Scan for kits'),
-        action: 'scan',
-      },
-      {
-        title: localize('do.not.use.kit.button', 'Do not use a kit'),
-        action: 'use-unspec',
-      },
-      {
-        title: localize('close.button', 'Close'),
-        isCloseAffordance: true,
-        action: 'cancel',
-      }
-    ];
-    const chosen = await vscode.window.showInformationMessage(
-        localize('no.kits.available', 'No CMake kits are available. What would you like to do?'),
-        {modal: true},
-        ...choices,
-    );
-    if (!chosen) {
-      // User closed the dialog
-      return 'cancel';
-    }
-    switch (chosen.action) {
-    case 'scan': {
-      await this.scanForKits();
-      return 'ok';
-    }
-    case 'use-unspec': {
-      await this._setFolderKit(folder, {name: '__unspec__'});
-      return 'use-unspec';
-    }
-    case 'cancel': {
-      return 'cancel';
-    }
-    }
-  }
-
-  private _pickKitCancellationTokenSource: vscode.CancellationTokenSource = new vscode.CancellationTokenSource();
   /**
    * Show UI to allow the user to select an active kit
    */
@@ -612,72 +543,38 @@ class ExtensionManager implements vscode.Disposable {
       return false;
     }
 
-    if (!folder && this._folders.activeFolder) {
-      folder = this._folders.activeFolder.folder;
-    }
-    if (!folder) {
+    const cmtFolder = this._checkFolderArgs(folder);
+    if (!cmtFolder) {
       return false;
     }
 
-    // Check that we have kits, or if the user doesn't want to use a kit.
-    const state = await this._checkHaveKits(folder);
-    switch (state) {
-    case 'cancel':
-      // The user doesn't want to perform any special action
-      return false;
-    case 'use-unspec':
-      // The user chose to use the __unspec__ kit
-      return true;
-    case 'ok':
-      // 'ok' means we have kits defined and should do regular kit selection
-      break;
+    const kitName = await cmtFolder.kitsController.selectKit();
+
+    if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.activeKit) {
+      this._statusBar.setActiveKitName(this._folders.activeFolder.cmakeTools.activeKit.name);
     }
 
-    const avail = this._kitsForFolder(folder);
-    log.debug('Start selection of kits. Found', avail.length, 'kits.');
-
-    interface KitItem extends vscode.QuickPickItem {
-      kit: Kit;
-    }
-    log.debug(localize('opening.kit.selection', 'Opening kit selection QuickPick'));
-    // Generate the quickpick items from our known kits
-    const itemPromises = avail.map(
-        async (kit): Promise<KitItem> => ({
-          label: kit.name !== '__unspec__' ? kit.name : `[${localize('unspecified.kit.name', 'Unspecified')}]`,
-          description: await descriptionForKit(kit),
-          kit,
-        }),
-    );
-    const items = await Promise.all(itemPromises);
-    const chosen_kit = await vscode.window.showQuickPick(items,
-                                                         {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit')},
-                                                         this._pickKitCancellationTokenSource.token);
-    this._pickKitCancellationTokenSource.dispose();
-    this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();
-    if (chosen_kit === undefined) {
-      log.debug(localize('user.cancelled.kit.selection', 'User cancelled Kit selection'));
-      // No selection was made
-      return false;
-    } else {
-      log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
-      await this._setFolderKit(folder, chosen_kit.kit);
+    if (kitName) {
       return true;
     }
+    return false;
   }
 
   /**
-   * Set the current kit in the current CMake Tools instance by name of the kit
+   * Set the current kit used in the specified folder by name of the kit
+   * For backward compatibility, apply kitName to all folders if folder is undefined
    */
-  async setKitByName(kitName: string) {
-    // TODO
-    // let newKit: Kit | undefined;
-    // if (!kitName) {
-    //     kitName = '__unspec__';
-    // }
-    // newKit = this._allKits.find(kit => kit.name === kitName);
-    // await this._setCurrentKit(newKit || null);
-    // // if we are showing a quickpick menu...
-    // this._pickKitCancellationTokenSource.cancel();
+  async setKitByName(kitName: string, folder?: vscode.WorkspaceFolder) {
+    if (folder) {
+      await this._folders.get(folder)?.kitsController.setKitByName(kitName);
+    } else {
+      for (const cmtFolder of this._folders) {
+        await cmtFolder.kitsController.setKitByName(kitName);
+      }
+    }
+    if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.activeKit) {
+      this._statusBar.setActiveKitName(this._folders.activeFolder.cmakeTools.activeKit.name);
+    }
   }
 
   async ensureCppToolsProviderRegistered() {
