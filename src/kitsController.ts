@@ -35,7 +35,7 @@ export enum KitsReadMode {
 
 // TODO: migrate all kit related things in extension.ts to this class.
 export class KitsController {
-  static minGWSearchDirs: string[] = [];
+  static minGWSearchDirs: string[] | undefined;
   /**
    * The kits available from the user-local kits file
    */
@@ -194,7 +194,7 @@ export class KitsController {
     }
     switch (chosen.action) {
     case 'scan': {
-      if (KitsController.minGWSearchDirs.length !== 0) {
+      if (!KitsController.minGWSearchDirs) {
         await KitsController.scanForKits();
       } else {
         await vscode.commands.executeCommand('cmake.scanForKits');

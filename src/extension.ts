@@ -85,6 +85,8 @@ class ExtensionManager implements vscode.Disposable {
 
   private _onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
 
+  private _workspaceConfig: ConfigurationReader = ConfigurationReader.create();
+
   /**
    * Second-phase async init
    */
@@ -151,11 +153,6 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
   private _configProviderRegister?: Promise<void>;
-
-  /**
-   * Auto select active folder on focus change
-   */
-  private _autoSelectActiveFolder = true;
 
   private _checkFolderArgs(folder?: vscode.WorkspaceFolder): CMakeToolsFolder | undefined {
     let cmtFolder: CMakeToolsFolder | undefined;
@@ -324,14 +321,14 @@ class ExtensionManager implements vscode.Disposable {
    * Show UI to allow the user to select an active kit
    */
   async selectActiveFolder() {
-    if (vscode.workspace.workspaceFolders) {
+    if (vscode.workspace.workspaceFolders?.length && !this._workspaceConfig.autoSelectActiveFolder) {
       const lastActiveFolderPath = this._folders.activeFolder?.folder.uri.fsPath;
       const selection = await vscode.window.showWorkspaceFolderPick();
       if (selection) {
         // Ingore if user cancelled
         await this._setActiveFolder(selection);
         // _folders.activeFolder must be there at this time
-        if (lastActiveFolderPath !== this._folders.activeFolder!.folder.uri.fsPath && !this._autoSelectActiveFolder) {
+        if (lastActiveFolderPath !== this._folders.activeFolder!.folder.uri.fsPath) {
           rollbar.takePromise('Post-folder-open', {folder: selection}, this._postWorkspaceOpen(this._folders.activeFolder!));
         }
       }
@@ -339,7 +336,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   private async _initActiveFolder() {
-    if (vscode.window.activeTextEditor && this._autoSelectActiveFolder) {
+    if (vscode.window.activeTextEditor && this._workspaceConfig.autoSelectActiveFolder) {
        return await this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
     }
     const path = this.extensionContext.workspaceState.get<string>('activeFolder');
@@ -524,15 +521,16 @@ class ExtensionManager implements vscode.Disposable {
    * Get the current MinGW search directories
    */
   private _getMinGWDirs(): string[] {
-    let result: string[] = [];
+    let result = new Set<string>();
+    for (const dir of this._workspaceConfig.mingwSearchDirs) {
+      result.add(dir);
+    }
     for (const cmtFolder of this._folders) {
-      result = result.concat(cmtFolder.cmakeTools.workspaceContext.config.mingwSearchDirs);
+      for (const dir of cmtFolder.cmakeTools.workspaceContext.config.mingwSearchDirs) {
+        result.add(dir);
+      }
     }
-    if (result.length === 0) {
-      const config = ConfigurationReader.loadForPath(process.cwd());
-      return config.mingwSearchDirs;
-    }
-    return result;
+    return Array.from(result);
   }
 
   /**

@@ -47,7 +47,7 @@ export class StatusBar implements vscode.Disposable {
 
   constructor() {
     this._activeFolderButton.command = 'cmake.selectActiveFolder';
-    this._activeFolderButton.tooltip = localize('set.active.folder.tooltip', 'Click to set the active folder');
+    this._activeFolderButton.tooltip = localize('active.folder.tooltip', 'Active folder');
     this._activeFolderButton.text = this._activeFolder;
     this._cmakeToolsStatusItem.command = 'cmake.setVariant';
     this._cmakeToolsStatusItem.tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');

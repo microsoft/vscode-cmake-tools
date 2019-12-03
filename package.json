@@ -650,6 +650,12 @@
       "type": "object",
       "title": "CMake Tools configuration",
       "properties": {
+        "cmake.autoSelectActiveFolder": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.autoSelectActiveFolder.description%",
+          "scope": "window"
+        },
         "cmake.cmakePath": {
           "type": "string",
           "default": "cmake",

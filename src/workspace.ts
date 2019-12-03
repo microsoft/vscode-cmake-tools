@@ -34,7 +34,7 @@ export class DirectoryContext {
    * @param state The state that will be associated with the returned context
    */
   static createForDirectory(folder: vscode.WorkspaceFolder, state: StateManager): DirectoryContext {
-    const config = ConfigurationReader.createForDirectory(folder);
+    const config = ConfigurationReader.create(folder);
     return new DirectoryContext(folder, config, state);
   }
 
