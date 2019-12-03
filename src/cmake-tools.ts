@@ -1163,10 +1163,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
     log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
-      workspace: vscode.workspace.workspaceFolders![0].uri.toString(),
+      workspace: this.folder.uri.toString(),
       config: debug_config,
     }));
-    await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], debug_config);
+    await vscode.debug.startDebugging(this.folder, debug_config);
     return vscode.debug.activeDebugSession!;
   }
 

@@ -76,7 +76,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * Get the CMakeTools instance associated with the given workspace folder, or undefined
    * @param ws The workspace folder to search
    */
-  get(ws: vscode.WorkspaceFolder): CMakeToolsFolder | undefined { return this._instances.get(ws.name); }
+  get(ws: vscode.WorkspaceFolder | undefined): CMakeToolsFolder | undefined { return ws ? this._instances.get(ws.name) : ws; }
 
   /**
    * Load all the folders currently open in VSCode
@@ -139,7 +139,6 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     const existing = this.get(folder);
     if (existing) {
       rollbar.error('Double-loaded CMake Tools instance for workspace folder', { wsUri: folder.uri.toString() });
-      // Not even sure how to best handle this...
       return existing;
     }
     // Load for the workspace.

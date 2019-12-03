@@ -19,6 +19,7 @@
     "cmake-tools.command.cmake.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.cleanConfigureAll.title": "Delete Cache and Reconfigure for All Projects",
     "cmake-tools.command.cmake.outline.cleanConfigure.title": "Clean Reconfigure",
+    "cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Clean Reconfigure for All Projects",
     "cmake-tools.command.cmake.clean.title": "Clean",
     "cmake-tools.command.cmake.cleanAll.title": "Clean All",
     "cmake-tools.command.cmake.cleanRebuild.title": "Clean Rebuild",

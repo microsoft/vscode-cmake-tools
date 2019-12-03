@@ -61,13 +61,19 @@ class ExtensionManager implements vscode.Disposable {
       }
       const new_cmt = info.cmakeTools;
       this._projectOutlineProvider.addFolder(info.folder);
-      new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(info));
-      new_cmt.onLaunchTargetNameChanged(FireLate, () => {
-        this._updateCodeModel(info);
-      });
+      if (this._codeModelUpdateSubs.get(new_cmt.folder.uri.fsPath)) {
+        // We already have this folder, do nothing
+      } else {
+        let subs: vscode.Disposable[] = [];
+        subs.push(new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(info)));
+        subs.push(new_cmt.onTargetNameChanged(FireLate, () => this._updateCodeModel(info)));
+        subs.push(new_cmt.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(info)));
+        this._codeModelUpdateSubs.set(new_cmt.folder.uri.fsPath, subs);
+      }
       rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
     });
     this._folders.onAfterRemoveFolder (info => {
+      this._codeModelUpdateSubs.delete(info.uri.fsPath);
       if (!vscode.workspace.workspaceFolders?.length) {
         this._setActiveFolder(undefined);
       } else if (this._folders.activeFolder?.folder.uri.fsPath === info.uri.fsPath) {
@@ -89,6 +95,11 @@ class ExtensionManager implements vscode.Disposable {
       this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(this._onDidChangeActiveTextEditor, this);
       this._initActiveFolder();
       for (const cmtFolder of this._folders) {
+        this._codeModelUpdateSubs.set(cmtFolder.folder.uri.fsPath, [
+          cmtFolder.cmakeTools.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
+          cmtFolder.cmakeTools.onTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
+          cmtFolder.cmakeTools.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder))
+        ]);
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
     }
@@ -123,7 +134,8 @@ class ExtensionManager implements vscode.Disposable {
   private _isBusySub: vscode.Disposable = new DummyDisposable();
 
   // Watch the code model so that we may update teh tree view
-  private _codeModelSub: vscode.Disposable = new DummyDisposable();
+  // <fspath, sub>
+  private _codeModelUpdateSubs = new Map<string, vscode.Disposable[]>();
 
   /**
    * The project outline tree data provider
@@ -211,6 +223,13 @@ class ExtensionManager implements vscode.Disposable {
    */
   async asyncDispose() {
     this._disposeSubs();
+    this._codeModelUpdateSubs.forEach(
+      (subs) => {
+        for (const sub of subs) {
+          sub.dispose();
+        }
+      }
+    );
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
@@ -288,6 +307,7 @@ class ExtensionManager implements vscode.Disposable {
       }
       await cmt.configure();
     }
+    this._updateCodeModel(info);
   }
 
   private async _onDidChangeActiveTextEditor(editor: vscode.TextEditor | undefined): Promise<void> {
@@ -357,7 +377,6 @@ class ExtensionManager implements vscode.Disposable {
                        this._ctestEnabledSub,
                        this._testResultsSub,
                        this._isBusySub,
-                       this._codeModelSub,
     ]) {
       sub.dispose();
     }
@@ -417,24 +436,20 @@ class ExtensionManager implements vscode.Disposable {
       this._testResultsSub = new DummyDisposable();
       this._isBusySub = new DummyDisposable();
       this._statusBar.setActiveKitName('');
-      this._codeModelSub = new DummyDisposable();
     } else {
       this._statusBar.setVisible(true);
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
         this._statusBar.targetName = t;
-        this._updateCodeModel(folder!);
       });
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');
-        this._updateCodeModel(folder!);
       });
       this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
-      this._codeModelSub = cmt.onCodeModelChanged(FireNow, () => this._updateCodeModel(folder!));
     }
   }
 
@@ -704,24 +719,6 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  // Have to have another function for folders due to the limit of js type system...
-  async mapCMakeToolsForFolders(folders: (CMakeToolsFolder | undefined)[], fn: CMakeToolsMapFn): Promise<any> {
-    if (folders) {
-      for (const folder of folders) {
-        if (folder) {
-          const retc: number = await this.mapCMakeTools(folder.cmakeTools, fn);
-          if (retc) {
-            return retc
-          }
-        }
-      }
-      // Succeeded
-      return 0;
-    } else {
-      return await this.mapCMakeTools(fn);
-    }
-  }
-
   mapQueryCMakeTools(folder: vscode.WorkspaceFolder | string, fn: CMakeToolsQueryMapFn) {
     const workspaceFolder = this._checkStringFolderArgs(folder);
     if (workspaceFolder) {
@@ -735,55 +732,49 @@ class ExtensionManager implements vscode.Disposable {
     return Promise.resolve(null);
   }
 
-  cleanConfigure(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.cleanConfigure()); }
+  cleanConfigure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.cleanConfigure()); }
 
-  cleanConfigureAll() { return this.mapCMakeTools(c => c.cleanConfigure()); }
+  cleanConfigureAll() { return this.mapCMakeTools(cmt => cmt.cleanConfigure()); }
 
-  configure(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.configure()); }
+  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.configure()); }
 
-  configureAll() { return this.mapCMakeTools(c => c.configure()); }
+  configureAll() { return this.mapCMakeTools(cmt => cmt.configure()); }
 
-  async build(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder], name?: string) {
-    return await this.mapCMakeToolsForFolders(folders, c => c.build(name));
-  }
+  async build(folder?: vscode.WorkspaceFolder, name?: string) { return await this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.build(name)); }
 
-  async buildAll(name?: string) {
-    return await this.mapCMakeTools(c => c.build(name));
-  }
+  async buildAll(name?: string) { return await this.mapCMakeTools(cmt => cmt.build(name)); }
 
-  async setDefaultTarget(name?: string, folder?: vscode.WorkspaceFolder) {
+  async setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) {
     const cmtFolder = this._checkFolderArgs(folder);
     if (cmtFolder) {
       cmtFolder.cmakeTools.setDefaultTarget(name);
     }
   }
 
-  async setVariant(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) {
-    return await this.mapCMakeToolsForFolders(folders, c => c.setVariant());
+  async setVariant(folder?: vscode.WorkspaceFolder) {
+    return await this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.setVariant());
   }
 
   async setVariantAll() {
-    return await this.mapCMakeTools(c => c.setVariant());
+    return await this.mapCMakeTools(cmt => cmt.setVariant());
   }
 
-  install(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.install()); }
+  install(folder?: vscode.WorkspaceFolder) { return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.install()); }
 
-  installAll() { return this.mapCMakeTools(c => c.install()); }
+  installAll() { return this.mapCMakeTools(cmt => cmt.install()); }
 
-  editCache(folder: vscode.WorkspaceFolder) {
-    return this.mapCMakeToolsForFolders([this._folders.get(folder)], cmt => cmt.editCache());
-  }
+  editCache(folder: vscode.WorkspaceFolder) { return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.editCache()); }
 
-  clean(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) { return this.build(folders, 'clean'); }
+  clean(folder?: vscode.WorkspaceFolder) { return this.build(folder, 'clean'); }
 
   cleanAll() { return this.buildAll('clean'); }
 
-  async cleanRebuild(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) {
-    const retc = await this.build(folders, 'clean');
+  async cleanRebuild(folder?: vscode.WorkspaceFolder) {
+    const retc = await this.build(folder, 'clean');
     if (retc) {
       return retc;
     }
-    return this.build(folders);
+    return this.build(folder);
   }
 
   async cleanRebuildAll() {
@@ -830,13 +821,13 @@ class ExtensionManager implements vscode.Disposable {
     vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
   }
 
-  ctest(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.ctest()); }
+  ctest(folder?: vscode.WorkspaceFolder) { return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.ctest()); }
 
-  ctestAll() { return this.mapCMakeTools(c => c.ctest()); }
+  ctestAll() { return this.mapCMakeTools(cmt => cmt.ctest()); }
 
-  stop(folders: (CMakeToolsFolder | undefined)[] = [this._folders.activeFolder]) { return this.mapCMakeToolsForFolders(folders, c => c.stop()); }
+  stop(folder?: vscode.WorkspaceFolder) { return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, cmt => cmt.stop()); }
 
-  stopAll() { return this.mapCMakeTools(c => c.stop()); }
+  stopAll() { return this.mapCMakeTools(cmt => cmt.stop()); }
 
   quickStart(folder?: vscode.WorkspaceFolder) {
     const cmtFolder = this._checkFolderArgs(folder);
@@ -853,7 +844,7 @@ class ExtensionManager implements vscode.Disposable {
 
   tasksBuildCommand(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.tasksBuildCommand()); }
 
-  async debugTarget(name?: string, folder?: vscode.WorkspaceFolder): Promise<vscode.DebugSession | null> {
+  async debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> {
     const cmtFolder = this._checkFolderArgs(folder);
     if (cmtFolder) {
       return this.mapCMakeTools(cmtFolder.cmakeTools, cmt => cmt.debugTarget(name));
@@ -872,7 +863,7 @@ class ExtensionManager implements vscode.Disposable {
     return Promise.all(debugSessions);
   }
 
-  async launchTarget(name?: string, folder?: vscode.WorkspaceFolder): Promise<vscode.Terminal | null> {
+  async launchTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.Terminal | null> {
     const cmtFolder = this._checkFolderArgs(folder);
     if (cmtFolder) {
       return this.mapCMakeTools(cmtFolder.cmakeTools, cmt => cmt.launchTarget(name));
@@ -891,7 +882,7 @@ class ExtensionManager implements vscode.Disposable {
     return Promise.all(terminals);
   }
 
-  selectLaunchTarget(name?: string, folder?: vscode.WorkspaceFolder) {
+  selectLaunchTarget(folder?: vscode.WorkspaceFolder, name?: string) {
     const cmtFolder = this._checkFolderArgs(folder);
     if (cmtFolder) {
       cmtFolder.cmakeTools.selectLaunchTarget(name);
@@ -1018,25 +1009,25 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
   context.subscriptions.push(...[
       // Special commands that don't require logging or separate error handling
-      vscode.commands.registerCommand('cmake.outline.configure', () => runCommand('configure')),
-      vscode.commands.registerCommand('cmake.outline.build', () => runCommand('build')),
-      vscode.commands.registerCommand('cmake.outline.stop', () => runCommand('stop')),
-      vscode.commands.registerCommand('cmake.outline.clean', () => runCommand('clean')),
-      vscode.commands.registerCommand('cmake.outline.cleanConfigure', () => runCommand('cleanConfigure')),
-      vscode.commands.registerCommand('cmake.outline.cleanRebuild', () => runCommand('cleanRebuild')),
+      vscode.commands.registerCommand('cmake.outline.configureAll', () => runCommand('configureAll')),
+      vscode.commands.registerCommand('cmake.outline.buildAll', () => runCommand('buildAll')),
+      vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
+      vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
+      vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
+      vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
       // Commands for outline items:
       vscode.commands.registerCommand('cmake.outline.buildTarget',
-                                      (what: TargetNode) => runCommand('build', what.name, what.folder)),
+                                      (what: TargetNode) => runCommand('build', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
-                                      (what: TargetNode) => runCommand('cleanRebuild', what.name, what.folder)),
+                                      (what: TargetNode) => runCommand('cleanRebuild', what.folder)),
       vscode.commands.registerCommand('cmake.outline.debugTarget',
-                                      (what: TargetNode) => runCommand('debugTarget', what.name, what.folder)),
+                                      (what: TargetNode) => runCommand('debugTarget', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.launchTarget',
-                                      (what: TargetNode) => runCommand('launchTarget', what.name, what.folder)),
+                                      (what: TargetNode) => runCommand('launchTarget', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.setDefaultTarget',
-                                      (what: TargetNode) => runCommand('setDefaultTarget', what.name, what.folder)),
+                                      (what: TargetNode) => runCommand('setDefaultTarget', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.setLaunchTarget',
-                                      (what: TargetNode) => runCommand('selectLaunchTarget', what.name, what.folder)),
+                                      (what: TargetNode) => runCommand('selectLaunchTarget', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.revealInCMakeLists',
                                       (what: TargetNode) => what.openInCMakeLists()),
       vscode.commands.registerCommand('cmake.outline.compileFile',
