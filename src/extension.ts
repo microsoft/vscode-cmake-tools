@@ -328,7 +328,9 @@ class ExtensionManager implements vscode.Disposable {
         // Ingore if user cancelled
         await this._setActiveFolder(selection);
         // _folders.activeFolder must be there at this time
-        if (lastActiveFolderPath !== this._folders.activeFolder!.folder.uri.fsPath) {
+        const currentActiveFolderPath = this._folders.activeFolder!.folder.uri.fsPath;
+        this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
+        if (lastActiveFolderPath !== currentActiveFolderPath) {
           rollbar.takePromise('Post-folder-open', {folder: selection}, this._postWorkspaceOpen(this._folders.activeFolder!));
         }
       }
