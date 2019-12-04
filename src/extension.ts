@@ -782,13 +782,7 @@ class ExtensionManager implements vscode.Disposable {
 
   resetState(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(folder, cmt => cmt.resetState()); }
 
-  viewLog(folder?: vscode.WorkspaceFolder) {
-    const cmtFolder = this._checkFolderArgs(folder);
-    if (cmtFolder) {
-      return cmtFolder.cmakeTools.viewLog();
-    }
-    // Ignore nothing opened case.
-  }
+  async viewLog() { await logging.showLogFile(); }
 }
 
 /**

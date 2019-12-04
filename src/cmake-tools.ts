@@ -498,11 +498,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return CMakeTools.create(ext, dir_ctx);
   }
 
-  /**
-   * Implementation of `cmake.viewLog`
-   */
-  async viewLog() { await logging.showLogFile(); }
-
   private _activeKit: Kit|null = null;
   get activeKit(): Kit|null { return this._activeKit; }
 
