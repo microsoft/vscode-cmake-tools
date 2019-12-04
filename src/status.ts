@@ -189,7 +189,7 @@ export class StatusBar implements vscode.Disposable {
     } else {
       testPassingTest = localize('tests.passing', '{0}/{1} tests passing', passing, total);
     }
-    this._testButton.text = `$(${icon}) ${testPassingTest}', passing, total)}`;
+    this._testButton.text = `$(${icon}) ${testPassingTest}`;
     this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 
