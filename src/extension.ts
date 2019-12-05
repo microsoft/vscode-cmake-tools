@@ -628,8 +628,8 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  async mapCMakeToolsFolder(folder: vscode.WorkspaceFolder|undefined, fn: CMakeToolsMapFn): Promise<any> {
-    await this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, fn);
+  mapCMakeToolsFolder(folder: vscode.WorkspaceFolder|undefined, fn: CMakeToolsMapFn): Promise<any> {
+    return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, fn);
   }
 
   mapQueryCMakeTools(folder: vscode.WorkspaceFolder | string, fn: CMakeToolsQueryMapFn) {
