@@ -6,7 +6,6 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
 import CMakeTools from '@cmt/cmake-tools';
-import { ConfigurationReader } from '@cmt/config';
 import {
   Kit,
   descriptionForKit,

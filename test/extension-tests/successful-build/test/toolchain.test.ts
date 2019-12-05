@@ -1,8 +1,8 @@
-import * as api from '@cmt/api';
-import {CMakeCache} from '@cmt/cache';
-import {CMakeTools} from '@cmt/cmake-tools';
-import {platformNormalizePath} from '@cmt/util';
-import {DefaultEnvironment, expect} from '@test/util';
+// import * as api from '@cmt/api';
+// import {CMakeCache} from '@cmt/cache';
+// import {CMakeTools} from '@cmt/cmake-tools';
+// import {platformNormalizePath} from '@cmt/util';
+// import {DefaultEnvironment, expect} from '@test/util';
 
 // TODO
 // suite('[Toolchain Substitution]', async () => {

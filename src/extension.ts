@@ -10,7 +10,6 @@ import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 
-import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import CMakeTools from '@cmt/cmake-tools';
 import {ConfigurationReader} from '@cmt/config';
@@ -362,7 +361,7 @@ class ExtensionManager implements vscode.Disposable {
    * pieces to control which backend has control and receives user input.
    * @param ws The workspace to activate
    */
-  private async _setActiveFolder(ws: vscode.WorkspaceFolder | undefined, progress?: ProgressHandle) {
+  private async _setActiveFolder(ws: vscode.WorkspaceFolder | undefined) {
     // Set the new workspace
     this._folders.setActiveFolder(ws);
     this._statusBar.setActiveFolderName(ws?.name || '');

@@ -36,7 +36,7 @@ export class DefaultEnvironment {
   readonly defaultKitLabel
       = this._defaultKitLabelIn ? this._defaultKitLabelIn : (process.platform === 'win32' ? /^Visual/ : /\s\S/);
   readonly vsContext: FakeContextDefinition = new FakeContextDefinition();
-  private _config = ConfigurationReader.createForDirectory(vscode.workspace.workspaceFolders![0]);
+  private _config = ConfigurationReader.create(vscode.workspace.workspaceFolders![0]);
   public get config() { return this._config; }
   private _wsContext = new DirectoryContext(vscode.workspace.workspaceFolders![0], this.config, new StateManager(this.vsContext, vscode.workspace.workspaceFolders![0]));
   public get wsContext() { return this._wsContext; }
@@ -59,7 +59,7 @@ export class DefaultEnvironment {
   public clean(): void {
     this.errorMessagesQueue.length = 0;
     this.vsContext.clean();
-    this._config = ConfigurationReader.createForDirectory(vscode.workspace.workspaceFolders![0]);
+    this._config = ConfigurationReader.create(vscode.workspace.workspaceFolders![0]);
     this._wsContext = new DirectoryContext(vscode.workspace.workspaceFolders![0], this._config, new StateManager(this.vsContext, vscode.workspace.workspaceFolders![0]));
   }
 }
