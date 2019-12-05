@@ -67,7 +67,7 @@ export class StatusBar implements vscode.Disposable {
   }
 
   reloadVisibility() {
-    setVisible(this._activeFolderButton, this._visible && !!this._activeFolderButton.text);
+    setVisible(this._activeFolderButton, Boolean(this._visible && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1 && !!this._activeFolderButton.text));
     const autovis_items = [
       this._cmakeToolsStatusItem,
       this._buildButton,

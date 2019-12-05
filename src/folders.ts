@@ -146,6 +146,8 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     // Remember it
     const inst = await CMakeToolsFolder.init(new_cmt);
 
+    this._instances.set(folder.name, inst);
+
     // initialize kits for the cmake tools
     // Check if the CMakeTools remembers what kit it was last using in this dir:
     const kit_name = new_cmt.workspaceContext.state.activeKitName;
@@ -158,7 +160,6 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     // Set the kit: (May do nothing if no kit was found)
     await new_cmt.setKit(kit);
 
-    this._instances.set(folder.name, inst);
     // Return the newly created instance
     return inst;
   }

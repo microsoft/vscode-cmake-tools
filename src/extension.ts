@@ -95,7 +95,7 @@ class ExtensionManager implements vscode.Disposable {
       await this._folders.loadAllCurrent();
       this._projectOutlineProvider.addAllCurrentFolders();
       this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(this._onDidChangeActiveTextEditor, this);
-      this._initActiveFolder();
+      await this._initActiveFolder();
       for (const cmtFolder of this._folders) {
         this._codeModelUpdateSubs.set(cmtFolder.folder.uri.fsPath, [
           cmtFolder.cmakeTools.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
@@ -597,19 +597,30 @@ class ExtensionManager implements vscode.Disposable {
   async mapCMakeTools(cmt: CMakeTools|undefined, fn: CMakeToolsMapFn): Promise<any>;
   async mapCMakeTools(cmt: CMakeTools|undefined|CMakeToolsMapFn, fn?: CMakeToolsMapFn): Promise<any> {
     if (cmt === undefined) {
-      if (this._folders.activeFolder) {
-        return await fn!(this._folders.activeFolder!.cmakeTools);
+      const activeFolder = this._folders.activeFolder;
+      if (activeFolder) {
+        if (await this._ensureActiveKit(activeFolder.cmakeTools)) {
+          return await fn!(activeFolder.cmakeTools);
+        }
+        return Promise.resolve(-1);
       }
       rollbar.error(localize('no.active.folder', 'No active foler.'));
       return 0;
     } else if (cmt instanceof CMakeTools) {
-      return await fn!(cmt);
+      if (await this._ensureActiveKit(cmt)) {
+        return await fn!(cmt);
+      }
+      return Promise.resolve(-1);
     } else {
       fn = cmt;
       for (const folder of this._folders) {
-        const retc = await fn(folder.cmakeTools);
-        if (retc) {
-          return retc;
+        if (await this._ensureActiveKit(folder.cmakeTools)) {
+          const retc = await fn(folder.cmakeTools);
+          if (retc) {
+            return retc;
+          }
+        } else {
+          return Promise.resolve(-1);
         }
       }
       // Succeeded

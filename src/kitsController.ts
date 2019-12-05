@@ -248,7 +248,7 @@ export class KitsController {
     );
     const items = await Promise.all(itemPromises);
     const chosen_kit = await vscode.window.showQuickPick(items,
-                                                         {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit')},
+                                                         {placeHolder: localize('select.a.kit.placeholder', 'Select a Kit for {0}', this.folder.name)},
                                                          this._pickKitCancellationTokenSource.token);
     this._pickKitCancellationTokenSource.dispose();
     this._pickKitCancellationTokenSource = new vscode.CancellationTokenSource();
