@@ -274,7 +274,9 @@ export class ConfigurationReader implements vscode.Disposable {
   onChange<K extends keyof ExtensionConfigurationSettings>(setting: K,
                                                            cb: (value: ExtensionConfigurationSettings[K]) => void):
       vscode.Disposable {
-    const emitter: vscode.EventEmitter<ExtensionConfigurationSettings[K]> = this._emitters[setting];
+    // Can't use vscode.EventEmitter<ExtensionConfigurationSettings[K]> here, potentially because K and keyof ExtensionConfigurationSettings
+    // may not be the same...
+    const emitter: vscode.EventEmitter<any> = this._emitters[setting];
     return emitter.event(cb);
   }
 }
