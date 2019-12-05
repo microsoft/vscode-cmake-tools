@@ -1053,6 +1053,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {
     let chosen: api.ExecutableTarget;
+    if (await this._needsReconfigure()) {
+      const rc = await this.configure();
+      if (rc !== 0) {
+        return null;
+      }
+    }
     if (name) {
       const found = (await this.executableTargets).find(e => e.name === name);
       if (!found) {
