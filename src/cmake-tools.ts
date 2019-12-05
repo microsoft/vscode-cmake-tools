@@ -548,7 +548,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         },
         async progress => {
           progress.report({message: localize('preparing.to.configure', 'Preparing to configure')});
-          log.debug(localize('run.configure', 'Run configure'), extra_args);
+          log.info(localize('run.configure', 'Run configure for folder {0}:', this.folderName), extra_args);
           return this._doConfigure(progress, async consumer => {
             const drv = await this.getCMakeDriverInstance();
             if (drv) {
@@ -650,9 +650,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return -1;
       }
     }
-    if (this.workspaceContext.config.clearOutputBeforeBuild) {
-      log.clearOutputChannel();
-    }
     log.showChannel();
     const consumer = new CMakeOutputConsumer(await this.sourceDir, CMAKE_LOGGER);
     const retc = await cb(consumer);
@@ -701,7 +698,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -1;
     }
     if (await drv.checkNeedsReconfigure()) {
-      log.clearOutputChannel();
       return this.configure();
     } else {
       return 0;
@@ -726,14 +722,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
-    log.debug(localize('run.build', 'Run build'), target_ ? target_ : '');
+    log.info(localize('run.build', 'Run build for folder {0}:', this.folderName), target_ ? target_ : '');
     const config_retc = await this.ensureConfigured();
     if (config_retc === null) {
       throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
     } else if (config_retc !== 0) {
       return config_retc;
     }
-    log.clearOutputChannel();
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));

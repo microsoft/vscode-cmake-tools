@@ -597,6 +597,12 @@ class ExtensionManager implements vscode.Disposable {
     this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
   }
 
+  private _cleanOutputChannel(cmt: CMakeTools) {
+    if (cmt.workspaceContext.config.clearOutputBeforeBuild) {
+      log.clearOutputChannel();
+    }
+  }
+
   // The below functions are all wrappers around the backend.
   async mapCMakeTools(fn: CMakeToolsMapFn): Promise<any>;
   async mapCMakeTools(cmt: CMakeTools|undefined, fn: CMakeToolsMapFn): Promise<any>;
@@ -604,6 +610,7 @@ class ExtensionManager implements vscode.Disposable {
     if (cmt === undefined) {
       const activeFolder = this._folders.activeFolder;
       if (activeFolder) {
+        this._cleanOutputChannel(activeFolder.cmakeTools);
         if (await this._ensureActiveKit(activeFolder.cmakeTools)) {
           return await fn!(activeFolder.cmakeTools);
         }
@@ -612,12 +619,14 @@ class ExtensionManager implements vscode.Disposable {
       rollbar.error(localize('no.active.folder', 'No active foler.'));
       return 0;
     } else if (cmt instanceof CMakeTools) {
+      this._cleanOutputChannel(cmt);
       if (await this._ensureActiveKit(cmt)) {
         return await fn!(cmt);
       }
       return -1;
     } else {
       fn = cmt;
+      log.clearOutputChannel();
       for (const folder of this._folders) {
         if (await this._ensureActiveKit(folder.cmakeTools)) {
           const retc = await fn(folder.cmakeTools);
@@ -637,7 +646,7 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, fn);
   }
 
-  mapQueryCMakeTools(folder?: vscode.WorkspaceFolder | string, fn: CMakeToolsQueryMapFn) {
+  mapQueryCMakeTools(folder: vscode.WorkspaceFolder | string | undefined, fn: CMakeToolsQueryMapFn) {
     const workspaceFolder = this._checkStringFolderArgs(folder);
     if (workspaceFolder) {
       const cmtFolder = this._folders.get(workspaceFolder);
