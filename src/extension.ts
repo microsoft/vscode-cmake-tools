@@ -164,9 +164,13 @@ class ExtensionManager implements vscode.Disposable {
     return cmtFolder;
   }
 
-  private _checkStringFolderArgs(folder: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
+  private _checkStringFolderArgs(folder?: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
+    if (folder === undefined && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
+      // We don't want to break existing setup for single root projects.
+      return vscode.workspace.workspaceFolders[0];
+    }
     if (util.isString(folder)) {
-      return vscode.workspace.getWorkspaceFolder(vscode.Uri.parse(<string>folder));
+      return vscode.workspace.getWorkspaceFolder(vscode.Uri.file(<string>folder));
     }
     return <vscode.WorkspaceFolder>folder;
   }
@@ -632,7 +636,7 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, fn);
   }
 
-  mapQueryCMakeTools(folder: vscode.WorkspaceFolder | string, fn: CMakeToolsQueryMapFn) {
+  mapQueryCMakeTools(folder?: vscode.WorkspaceFolder | string, fn: CMakeToolsQueryMapFn) {
     const workspaceFolder = this._checkStringFolderArgs(folder);
     if (workspaceFolder) {
       const cmtFolder = this._folders.get(workspaceFolder);
@@ -741,15 +745,15 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeTools(cmt => cmt.quickStart(cmtFolder));
   }
 
-  launchTargetPath(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.launchTargetPath()); }
+  launchTargetPath(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.launchTargetPath()); }
 
-  launchTargetDirectory(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder,cmt => cmt.launchTargetDirectory()); }
+  launchTargetDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder,cmt => cmt.launchTargetDirectory()); }
 
-  buildType(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.currentBuildType()); }
+  buildType(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.currentBuildType()); }
 
-  buildDirectory(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.buildDirectory()); }
+  buildDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.buildDirectory()); }
 
-  tasksBuildCommand(folder: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.tasksBuildCommand()); }
+  tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.tasksBuildCommand()); }
 
   async debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> { return this.mapCMakeToolsFolder(folder, cmt => cmt.debugTarget(name)); }
 
