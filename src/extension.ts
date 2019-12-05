@@ -170,6 +170,7 @@ class ExtensionManager implements vscode.Disposable {
       return vscode.workspace.workspaceFolders[0];
     }
     if (util.isString(folder)) {
+      // Expected schema is file...
       return vscode.workspace.getWorkspaceFolder(vscode.Uri.file(<string>folder));
     }
     return <vscode.WorkspaceFolder>folder;
