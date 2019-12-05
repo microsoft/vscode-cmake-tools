@@ -602,7 +602,7 @@ class ExtensionManager implements vscode.Disposable {
         if (await this._ensureActiveKit(activeFolder.cmakeTools)) {
           return await fn!(activeFolder.cmakeTools);
         }
-        return Promise.resolve(-1);
+        return -1;
       }
       rollbar.error(localize('no.active.folder', 'No active foler.'));
       return 0;
@@ -610,7 +610,7 @@ class ExtensionManager implements vscode.Disposable {
       if (await this._ensureActiveKit(cmt)) {
         return await fn!(cmt);
       }
-      return Promise.resolve(-1);
+      return -1;
     } else {
       fn = cmt;
       for (const folder of this._folders) {
@@ -620,7 +620,7 @@ class ExtensionManager implements vscode.Disposable {
             return retc;
           }
         } else {
-          return Promise.resolve(-1);
+          return -1;
         }
       }
       // Succeeded
@@ -629,7 +629,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async mapCMakeToolsFolder(folder: vscode.WorkspaceFolder|undefined, fn: CMakeToolsMapFn): Promise<any> {
-    this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, fn);
+    await this.mapCMakeTools(this._folders.get(folder)?.cmakeTools, fn);
   }
 
   mapQueryCMakeTools(folder: vscode.WorkspaceFolder | string, fn: CMakeToolsQueryMapFn) {
@@ -653,13 +653,13 @@ class ExtensionManager implements vscode.Disposable {
 
   configureAll() { return this.mapCMakeTools(cmt => cmt.configure()); }
 
-  async build(folder?: vscode.WorkspaceFolder, name?: string) { return await this.mapCMakeToolsFolder(folder, cmt => cmt.build(name)); }
+  build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(folder, cmt => cmt.build(name)); }
 
-  async buildAll(name?: string) { return await this.mapCMakeTools(cmt => cmt.build(name)); }
+  buildAll(name?: string) { return this.mapCMakeTools(cmt => cmt.build(name)); }
 
-  async setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return await this.mapCMakeToolsFolder(folder, cmt => cmt.setDefaultTarget(name)); }
+  setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(folder, cmt => cmt.setDefaultTarget(name)); }
 
-  async setVariant(folder?: vscode.WorkspaceFolder, name?: string) { return await this.mapCMakeToolsFolder(folder, cmt => cmt.setVariant(name)); }
+  setVariant(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(folder, cmt => cmt.setVariant(name)); }
 
   async setVariantAll() {
     // Only supports default variants for now
@@ -688,21 +688,9 @@ class ExtensionManager implements vscode.Disposable {
 
   cleanAll() { return this.buildAll('clean'); }
 
-  async cleanRebuild(folder?: vscode.WorkspaceFolder) {
-    const retc = await this.build(folder, 'clean');
-    if (retc) {
-      return retc;
-    }
-    return this.build(folder);
-  }
+  cleanRebuild(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(folder, cmt => cmt.cleanRebuild()); }
 
-  async cleanRebuildAll() {
-    const retc = await this.buildAll('clean');
-    if (retc) {
-      return retc;
-    }
-    return this.buildAll();
-  }
+  cleanRebuildAll() { return this.mapCMakeTools(cmt => cmt.cleanRebuild()); }
 
   async buildWithTarget() {
     let cmtFolder: CMakeToolsFolder | undefined = this._folders.activeFolder;
