@@ -474,7 +474,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
   private readonly _changeEvent = new vscode.EventEmitter<BaseNode|null>();
   get onDidChangeTreeData() { return this._changeEvent.event; }
 
-  private _folders = new Map<string, WorkspaceFolderNode>();
+  private readonly _folders = new Map<string, WorkspaceFolderNode>();
 
   addAllCurrentFolders() {
     for (const wsf of vscode.workspace.workspaceFolders || []) {

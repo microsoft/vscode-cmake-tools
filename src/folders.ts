@@ -124,9 +124,9 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * Load a new CMakeTools for the given workspace folder and remember it.
    * @param folder The workspace folder to load for
    */
-  private async _loadCMakeToolsForWorkspaceFolder(folder: vscode.WorkspaceFolder) {
+  private _loadCMakeToolsForWorkspaceFolder(folder: vscode.WorkspaceFolder) {
     // Create the backend:
-    return await CMakeTools.createForDirectory(folder, this.extensionContext);
+    return CMakeTools.createForDirectory(folder, this.extensionContext);
   }
 
   /**

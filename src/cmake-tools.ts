@@ -169,7 +169,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Event fired just as CMakeTools is about to be disposed
    */
   get onDispose() { return this._disposeEmitter.event; }
-  private _disposeEmitter = new vscode.EventEmitter<void>();
+  private readonly _disposeEmitter = new vscode.EventEmitter<void>();
 
   /**
    * Dispose the instance
@@ -266,7 +266,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error(localize('bad.cmake.executable', 'Bad CMake executable "{0}".', cmake.path));
     }
 
-    let workspace = this.folder.uri.fsPath;
+    const workspace = this.folder.uri.fsPath;
     let drv: CMakeDriver;
     const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);

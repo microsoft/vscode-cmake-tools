@@ -99,7 +99,7 @@ export class KitsController {
    */
   async readKits(kitsReadMode = KitsReadMode.allAvailable, progress?: ProgressHandle) {
     if (kitsReadMode !== KitsReadMode.folderKits) {
-      KitsController.readUserKits(progress);
+      await KitsController.readUserKits(progress);
     }
     if (kitsReadMode !== KitsReadMode.userKits) {
       // Read folder kits

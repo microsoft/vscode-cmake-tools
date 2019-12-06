@@ -555,5 +555,5 @@ export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path
 }
 
 export function isString(x: any) {
-  return Object.prototype.toString.call(x) === "[object String]"
+  return Object.prototype.toString.call(x) === "[object String]";
 }
