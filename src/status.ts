@@ -103,7 +103,7 @@ export class StatusBar implements vscode.Disposable {
       this._debugButton.text = '$(bug)';
       this._launchTargetNameButton.hide();
     } else {
-      this._debugButton.text = '$(bug) Debug';
+      this._debugButton.text = `$(bug) ${localize('debug', 'Debug')}`;
       if (this._visible) {
         this._launchTargetNameButton.show();
       }
@@ -128,7 +128,7 @@ export class StatusBar implements vscode.Disposable {
   /**
    * The build type label. Determined by the active build variant
    */
-  private _buildTypeLabel: string = 'Unconfigured';
+  private _buildTypeLabel: string = localize('unconfigured', 'Unconfigured');
   setBuildTypeLabel(v: string) {
     this._buildTypeLabel = v;
     this._reloadStatusButton();
@@ -183,13 +183,13 @@ export class StatusBar implements vscode.Disposable {
     const total = v.total;
     const good = passing == total;
     const icon = good ? 'check' : 'x';
-    let testPassingTest: string;
+    let testPassingText: string;
     if (total == 1) {
-      testPassingTest = localize('test.passing', '{0}/{1} test passing', passing, total);
+      testPassingText = localize('test.passing', '{0}/{1} test passing', passing, total);
     } else {
-      testPassingTest = localize('tests.passing', '{0}/{1} tests passing', passing, total);
+      testPassingText = localize('tests.passing', '{0}/{1} tests passing', passing, total);
     }
-    this._testButton.text = `$(${icon}) ${testPassingTest}`;
+    this._testButton.text = `$(${icon}) ${testPassingText}`;
     this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 
