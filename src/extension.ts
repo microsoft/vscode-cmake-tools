@@ -38,7 +38,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('extension');
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
-type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | null>;
+type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
 
 /**
  * A class to manage the extension.
@@ -317,6 +317,8 @@ class ExtensionManager implements vscode.Disposable {
       if (ws && (!this._folders.activeFolder || ws.uri.fsPath !== this._folders.activeFolder.folder.uri.fsPath)) {
         // active folder changed.
         await this._setActiveFolder(ws);
+      } else if (!ws && !this._folders.activeFolder && vscode.workspace.workspaceFolders.length >= 1) {
+        await this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
       }
     }
   }
@@ -762,6 +764,8 @@ class ExtensionManager implements vscode.Disposable {
 
   buildDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.buildDirectory()); }
 
+  executableTargets(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, async cmt => (await cmt.executableTargets).map(target => target.name)); }
+
   tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.tasksBuildCommand()); }
 
   async debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> { return this.mapCMakeToolsFolder(folder, cmt => cmt.debugTarget(name)); }
@@ -871,6 +875,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'launchTargetDirectory',
     'buildType',
     'buildDirectory',
+    'executableTargets',
     'debugTarget',
     'debugTargetAll',
     'launchTarget',
