@@ -17,7 +17,7 @@ suite('[Environment Variables in Variants]', async () => {
     const build_loc = 'build';
     const exe_res = 'output.txt';
 
-    testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
+    testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -45,7 +45,7 @@ suite('[Environment Variables in Variants]', async () => {
   test('Check for environment variables being passed to configure', async () => {
     // Set fake settings
     // Configure
-    expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0, '[variantEnv] configure failed');
+    expect(await vscode.commands.executeCommand('cmake.configureAll')).to.be.eq(0, '[variantEnv] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(testEnv.projectFolder.buildDirectory.cmakeCachePath);
 

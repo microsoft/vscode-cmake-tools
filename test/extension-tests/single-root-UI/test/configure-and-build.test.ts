@@ -40,7 +40,7 @@ suite('Build', async () => {
     // This test will use all on the same kit.
     // No rescan of the tools is needed
     // No new kit selection is needed
-    await vscode.commands.executeCommand('cmake.scanForKits')
+    await vscode.commands.executeCommand('cmake.scanForKits');
     await clearExistingKitConfigurationFile();
   });
 
@@ -89,7 +89,6 @@ suite('Build', async () => {
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(100000);
-
 
   test('Configure and Build', async () => {
     expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
