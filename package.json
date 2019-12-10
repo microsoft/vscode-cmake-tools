@@ -377,19 +377,22 @@
           "command": "cmake.configure"
         },
         {
-          "command": "cmake.configureAll"
+          "command": "cmake.configureAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.build"
         },
         {
-          "command": "cmake.buildAll"
+          "command": "cmake.buildAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.install"
         },
         {
-          "command": "cmake.installAll"
+          "command": "cmake.installAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.buildWithTarget"
@@ -401,7 +404,8 @@
           "command": "cmake.setVariant"
         },
         {
-          "command": "cmake.setVariantAll"
+          "command": "cmake.setVariantAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.setDefaultTarget"
@@ -410,25 +414,29 @@
           "command": "cmake.cleanConfigure"
         },
         {
-          "command": "cmake.cleanConfigureAll"
+          "command": "cmake.cleanConfigureAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.clean"
         },
         {
-          "command": "cmake.cleanAll"
+          "command": "cmake.cleanAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.cleanRebuild"
         },
         {
-          "command": "cmake.cleanRebuildAll"
+          "command": "cmake.cleanRebuildAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.ctest"
         },
         {
-          "command": "cmake.ctestAll"
+          "command": "cmake.ctestAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.editCache"
@@ -437,13 +445,15 @@
           "command": "cmake.debugTarget"
         },
         {
-          "command": "cmake.debugTargetAll"
+          "command": "cmake.debugTargetAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.launchTarget"
         },
         {
-          "command": "cmake.launchTargetAll"
+          "command": "cmake.launchTargetAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.selectLaunchTarget"
@@ -452,7 +462,8 @@
           "command": "cmake.stop"
         },
         {
-          "command": "cmake.stopAll"
+          "command": "cmake.stopAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.outline.configure",

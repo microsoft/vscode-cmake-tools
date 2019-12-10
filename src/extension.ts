@@ -37,6 +37,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('extension');
 
+const MULTI_ROOT_MODE_KEY = 'cmake:multiRoot';
+
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
 
@@ -54,9 +56,12 @@ class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
     this._statusBar.targetName = 'all';
     this._folders.onAfterAddFolder(async info => {
-      if (vscode.workspace.workspaceFolders?.length === 1) {
+      console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
+      if (this._folders.size === 1) {
         // First folder added
-        await this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
+        await this._setActiveFolder(vscode.workspace.workspaceFolders![0]);
+      } else if (this._folders.size > 1) {
+        await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
       }
       const new_cmt = info.cmakeTools;
       this._projectOutlineProvider.addFolder(info.folder);
@@ -72,11 +77,19 @@ class ExtensionManager implements vscode.Disposable {
       rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
     });
     this._folders.onAfterRemoveFolder (async info => {
+      console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
       this._codeModelUpdateSubs.delete(info.uri.fsPath);
       if (!vscode.workspace.workspaceFolders?.length) {
         await this._setActiveFolder(undefined);
-      } else if (this._folders.activeFolder?.folder.uri.fsPath === info.uri.fsPath) {
-        await this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
+      } else {
+        if (this._folders.activeFolder?.folder.uri.fsPath === info.uri.fsPath) {
+          await this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
+        }
+        if (this._folders.size > 1) {
+          await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
+        } else {
+          await util.setContextValue(MULTI_ROOT_MODE_KEY, false);
+        }
       }
       this._projectOutlineProvider.removeFolder(info);
     });
@@ -92,6 +105,9 @@ class ExtensionManager implements vscode.Disposable {
   private async _init() {
     if (vscode.workspace.workspaceFolders) {
       await this._folders.loadAllCurrent();
+      if (this._folders.size > 1) {
+        await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
+      }
       this._projectOutlineProvider.addAllCurrentFolders();
       this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
       await this._initActiveFolder();
