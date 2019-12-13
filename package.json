@@ -365,10 +365,6 @@
       {
         "command": "cmake.outline.revealInCMakeLists",
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
-      },
-      {
-        "command": "cmake.folders.selectActiveFolder",
-        "title": "%cmake-tools.command.cmake.folders.selectActiveFolder.title%"
       }
     ],
     "menus": {
@@ -1184,11 +1180,6 @@
     },
     "views": {
       "cmake__viewContainer": [
-        {
-          "id": "cmake.folders",
-          "name": "%cmake-tools.configuration.views.cmake.folders.description%",
-          "when": "cmakeToolsMultiRootActive"
-        },
         {
           "id": "cmake.outline",
           "name": "%cmake-tools.configuration.views.cmake.outline.description%",

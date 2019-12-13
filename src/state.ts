@@ -14,11 +14,11 @@ export class StateManager {
   constructor(readonly extensionContext: vscode.ExtensionContext, readonly folder: vscode.WorkspaceFolder) {}
 
   private _get<T>(key: string): T | undefined {
-    return this.extensionContext.workspaceState.get<T>(this.folder.uri.fsPath + key);
+    return this.extensionContext.globalState.get<T>(this.folder.uri.fsPath + key);
   }
 
   private _update(key: string, value: any): Thenable<void> {
-    return this.extensionContext.workspaceState.update(this.folder.uri.fsPath + key, value);
+    return this.extensionContext.globalState.update(this.folder.uri.fsPath + key, value);
   }
 
   /**

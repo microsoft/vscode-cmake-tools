@@ -61,6 +61,7 @@ class ExtensionManager implements vscode.Disposable {
         // First folder added
         await this._setActiveFolder(vscode.workspace.workspaceFolders![0]);
       } else if (this._folders.size > 1) {
+        this._setupSubscriptions();
         await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
       }
       const new_cmt = info.cmakeTools;
@@ -84,6 +85,8 @@ class ExtensionManager implements vscode.Disposable {
       } else {
         if (this._folders.activeFolder?.folder.uri.fsPath === info.uri.fsPath) {
           await this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
+        } else {
+          this._setupSubscriptions();
         }
         if (this._folders.size > 1) {
           await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
