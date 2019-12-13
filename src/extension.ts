@@ -62,7 +62,9 @@ class ExtensionManager implements vscode.Disposable {
         // First folder added
         await this._setActiveFolder(vscode.workspace.workspaceFolders![0]);
       } else if (this._folders.size > 1) {
-        this._setupSubscriptions();
+        // Call initActiveFolder instead of just setupSubscriptions, since the active editor/file may not
+        // be in currently opened workspaces, and may be in the newly opened workspace.
+        await this._initActiveFolder();
         await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
       }
       const new_cmt = info.cmakeTools;
@@ -97,6 +99,14 @@ class ExtensionManager implements vscode.Disposable {
       }
       this._projectOutlineProvider.removeFolder(info);
     });
+    this._workspaceConfig.onChange('autoSelectActiveFolder', v => {
+      this._onDidChangeActiveTextEditorSub.dispose();
+      if (v) {
+        this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
+      } else {
+        this._onDidChangeActiveTextEditorSub = new DummyDisposable();
+      }
+    });
   }
 
   private _onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
@@ -116,7 +126,10 @@ class ExtensionManager implements vscode.Disposable {
         await util.setContextValue(MULTI_ROOT_MODE_KEY, isMultiRoot);
       }
       this._projectOutlineProvider.addAllCurrentFolders();
-      this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
+      if (this._workspaceConfig.autoSelectActiveFolder) {
+        this._onDidChangeActiveTextEditorSub.dispose();
+        this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
+      }
       await this._initActiveFolder();
       for (const cmtFolder of this._folders) {
         this._codeModelUpdateSubs.set(cmtFolder.folder.uri.fsPath, [
