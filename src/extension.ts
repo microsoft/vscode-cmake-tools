@@ -27,6 +27,7 @@ import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StatusBar} from '@cmt/status';
+import * as telemetry from '@cmt/telemetry';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
@@ -106,10 +107,13 @@ class ExtensionManager implements vscode.Disposable {
    * Second-phase async init
    */
   private async _init() {
+    telemetry.activate();
+    let isMultiRoot = false;
     if (vscode.workspace.workspaceFolders) {
       await this._folders.loadAllCurrent();
       if (this._folders.size > 1) {
-        await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
+        isMultiRoot = true;
+        await util.setContextValue(MULTI_ROOT_MODE_KEY, isMultiRoot);
       }
       this._projectOutlineProvider.addAllCurrentFolders();
       this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
@@ -123,6 +127,10 @@ class ExtensionManager implements vscode.Disposable {
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
     }
+    telemetry.logEvent('open', {
+      autoSelectActiveFolder: `${this._workspaceConfig.autoSelectActiveFolder}`,
+      multiRoot: `${isMultiRoot}`
+    });
   }
 
   /**
@@ -261,6 +269,7 @@ class ExtensionManager implements vscode.Disposable {
       await cmtf.cmakeTools.asyncDispose();
     }
     this._folders.dispose();
+    telemetry.deactivate();
   }
 
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
@@ -388,6 +397,7 @@ class ExtensionManager implements vscode.Disposable {
     this._statusBar.setActiveFolderName(ws?.name || '');
     this._statusBar.setActiveKitName(this._folders.activeFolder?.cmakeTools.activeKit?.name || '');
     this._setupSubscriptions();
+    telemetry.logEvent('setActiveFolder');
   }
 
   private _disposeSubs() {
