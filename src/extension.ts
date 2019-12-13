@@ -140,10 +140,13 @@ class ExtensionManager implements vscode.Disposable {
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
     }
-    telemetry.logEvent('open', {
-      autoSelectActiveFolder: `${this._workspaceConfig.autoSelectActiveFolder}`,
-      multiRoot: `${isMultiRoot}`
-    });
+    const telemetryProperties: telemetry.Properties = {
+      isMultiRoot: `${isMultiRoot}`
+    };
+    if (isMultiRoot) {
+      telemetryProperties['autoSelectActiveFolder'] = `${this._workspaceConfig.autoSelectActiveFolder}`;
+    }
+    telemetry.logEvent('open', telemetryProperties);
   }
 
   /**
