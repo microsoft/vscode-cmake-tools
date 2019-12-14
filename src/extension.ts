@@ -246,7 +246,7 @@ class ExtensionManager implements vscode.Disposable {
       return true;
     }
     // No kit? Ask the user what they want.
-    const did_choose_kit = await this.selectKit();
+    const did_choose_kit = await this.selectKit(cmt.folder);
     if (!did_choose_kit && !cmt.activeKit) {
       // The user did not choose a kit and kit isn't set in other way such as setKitByName
       return false;
