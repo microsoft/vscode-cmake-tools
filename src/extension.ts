@@ -816,27 +816,25 @@ class ExtensionManager implements vscode.Disposable {
   async debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> { return this.mapCMakeToolsFolder(folder, cmt => cmt.debugTarget(name)); }
 
   async debugTargetAll(name?: string): Promise<(vscode.DebugSession | null)[]> {
-    const debugSessions: Promise<vscode.DebugSession | null>[] = [];
+    const debugSessions: (vscode.DebugSession | null)[] = [];
     for (const cmtFolder of this._folders) {
       if (cmtFolder) {
-        debugSessions.push(this.mapCMakeTools(cmtFolder.cmakeTools, cmt => cmt.debugTarget(name)));
+        debugSessions.push(await this.mapCMakeTools(cmtFolder.cmakeTools, cmt => cmt.debugTarget(name)));
       }
-      debugSessions.push(Promise.resolve(null));
     }
-    return Promise.all(debugSessions);
+    return debugSessions;
   }
 
   async launchTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.Terminal | null> { return this.mapCMakeToolsFolder(folder, cmt => cmt.launchTarget(name)); }
 
   async launchTargetAll(name?: string): Promise<(vscode.Terminal | null)[]> {
-    const terminals: Promise<vscode.Terminal | null>[] = [];
+    const terminals: (vscode.Terminal | null)[] = [];
     for (const cmtFolder of this._folders) {
       if (cmtFolder) {
-        terminals.push(this.mapCMakeTools(cmtFolder.cmakeTools, cmt => cmt.launchTarget(name)));
+        terminals.push(await this.mapCMakeTools(cmtFolder.cmakeTools, cmt => cmt.launchTarget(name)));
       }
-      terminals.push(Promise.resolve(null));
     }
-    return Promise.all(terminals);
+    return terminals;
   }
 
   selectLaunchTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(folder, cmt => cmt.selectLaunchTarget(name)); }

@@ -976,7 +976,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                           }));
     let chosen: {label: string, detail: string}|undefined = undefined;
     if (!name) {
-      chosen = await vscode.window.showQuickPick(choices);
+      chosen = await vscode.window.showQuickPick(choices, {placeHolder: localize('select.a.launch.target', 'Select a launch target for {0}', this.folder.name)});
     } else {
       chosen = choices.find(choice => choice.label == name);
     }
