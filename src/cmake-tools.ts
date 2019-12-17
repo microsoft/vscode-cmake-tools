@@ -294,13 +294,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Event fired after CMake configure runs
    */
-  get onReconfigured() { return this._onReconfiguredEmitter.event; }
   private readonly _onReconfiguredEmitter = new vscode.EventEmitter<void>();
-
+  get onReconfigured() { return this._onReconfiguredEmitter.event; }
   get reconfigured() { return this.onReconfigured; }
 
   private readonly _onTargetChangedEmitter = new vscode.EventEmitter<void>();
   get targetChangedEvent() { return this._onTargetChangedEmitter.event; }
+
+  private readonly _onKitChangedEmmiter = new vscode.EventEmitter<void>();
+  get kitChangedEvent() { return this._onKitChangedEmmiter.event; }
 
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
@@ -362,6 +364,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._statusMessage.set(localize('ready.status', 'Ready'));
   }
 
+  public get currentKit() : Kit|null{
+    return this._activeKit;
+  }
+
   async setKit(kit: Kit|null) {
     this._activeKit = kit;
     if (kit) {
@@ -383,6 +389,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // Remember the selected kit for the next session.
         this.workspaceContext.state.activeKitName = kit.name;
       }
+
+      this._onKitChangedEmmiter.fire();
     }
   }
 
@@ -935,6 +943,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private async _setDefaultBuildTarget(v: string) {
     this.workspaceContext.state.defaultBuildTarget = v;
     this._targetName.set(v);
+    this._onTargetChangedEmitter.fire();
   }
 
   /**

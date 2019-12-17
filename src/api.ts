@@ -8,6 +8,7 @@
  */ /** */
 
 import {DebugSession, Disposable, Event, Terminal} from 'vscode';
+import { Kit } from './kit';
 
 
 /**
@@ -143,7 +144,8 @@ export interface RichTarget {
 export type Target = NamedTarget|RichTarget;
 
 /**
- * The CMake Tools extension API obtained via `getExtension().exports`
+ * The CMake Tools extension API obtained via
+ * `getExtension("ms-vscode.cmake-tools").exports`
  */
 export interface CMakeToolsAPI extends Disposable {
 
@@ -303,4 +305,13 @@ export interface CMakeToolsAPI extends Disposable {
    * Get the build command string for the active target
    */
   tasksBuildCommand(): Thenable<string|null>;
+
+
+  readonly kitChangedEvent: Event<void>;
+  readonly currentKit: Kit|null;
+}
+
+export interface ExtAPI extends Disposable {
+  active(): CMakeToolsAPI|null;
+  readonly acitveChangedEvent: Event<void>;
 }

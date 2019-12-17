@@ -35,6 +35,7 @@ import {FireNow} from '@cmt/prop';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
 import {ProgressHandle, DummyDisposable} from './util';
 import * as nls from 'vscode-nls';
+import { CMakeToolsAPI, ExtAPI } from './api';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -57,7 +58,7 @@ function reportProgress(progress: ProgressHandle|undefined, message: string) {
  * necessitate user input, this class acts as intermediary and will send
  * important information down to the lower layers.
  */
-class ExtensionManager implements vscode.Disposable {
+class ExtensionManager implements vscode.Disposable, ExtAPI {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {}
 
   /**
@@ -150,6 +151,15 @@ class ExtensionManager implements vscode.Disposable {
       return ret;
     }
     return null;
+  }
+
+  public active(): CMakeToolsAPI|null {
+    return this._activeCMakeTools;
+  }
+
+  private readonly _onActiveChangedEmmiter = new vscode.EventEmitter<void>();
+  public get acitveChangedEvent() {
+    return this._onActiveChangedEmmiter.event;
   }
 
   /**
@@ -1342,8 +1352,7 @@ export async function activate(context: vscode.ExtensionContext) {
       progress => setup(context, progress),
   );
 
-  // TODO: Return the extension API
-  // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
+  return _EXT_MANAGER;
 }
 
 // this method is called when your extension is deactivated
