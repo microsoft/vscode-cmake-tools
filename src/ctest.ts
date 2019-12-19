@@ -217,8 +217,7 @@ export function parseUnityFixtureOutput(output: string): FailingTestDecoration[]
   const decorations: FailingTestDecoration[] = [];
   const failedTestRegex = /^([\.!]*)(\.\..*):(\d+):(.*):FAIL: (.*)/;
 
-  for (let cursor = 0; cursor < lines.length; ++cursor) {
-    const line = lines[cursor];
+  for (const line of lines) {
     const parseRes = failedTestRegex.exec(line);
     if (parseRes) {
       const [_all, testsRanStr, file, lineNumberStr, testName, message] = parseRes;
@@ -235,7 +234,7 @@ export function parseUnityFixtureOutput(output: string): FailingTestDecoration[]
         fileName: file,
         lineNumber: lineNumber - 1,
         hoverMessage: `${message}\n`,
-      })
+      });
     }
   }
 
