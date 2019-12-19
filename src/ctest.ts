@@ -1,18 +1,18 @@
+import {CMakeDriver} from '@cmt/drivers/driver';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 import * as xml2js from 'xml2js';
 import * as zlib from 'zlib';
 
 import * as api from './api';
-import {CMakeDriver} from '@cmt/drivers/driver';
 import * as logging from './logging';
 import {fs} from './pr';
 import {OutputConsumer} from './proc';
 import * as util from './util';
-import * as nls from 'vscode-nls';
 
-nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('ctest');
@@ -59,7 +59,9 @@ export interface SiteData {
   Testing: TestingData;
 }
 
-export interface CTestResults { Site: SiteData; }
+export interface CTestResults {
+  Site: SiteData;
+}
 
 interface EncodedMeasurementValue {
   $: {encoding?: string; compression?: string;};
@@ -188,9 +190,63 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
   return decorations;
 }
 
+/**
+ * [Unity framework](https://github.com/ThrowTheSwitch/Unity) output parsing
+ *
+ * @param output   Unity output
+ *
+ * @returns        Decorations for failing tests that were discovered during parsing
+ *
+ * Sample output:
+ * "..!.../../test.c:23:FAIL: Expected 1 was 0"
+ * * `..!.`: each dot marks a test that was previously ran, each exclamation mark marks an ignored test
+ * * `../../test.c`: test suite file name. I expect it to always be relative to build directory so it starts with
+ *                   `../`. Otherwise it will be very hard to parse the output because of the dots.
+ *                   It's possible to disable the number of ran tests indication using `-s` flag but
+ *                   that's again another limitation. In most of the cases tests will be ran without
+ *                   additional arguments and build directory won't be mixed with sources.
+ * * `23`: line number.
+ * * `FAIL`: failure indication. It could also be `PASS` or `IGNORE`.
+ * * `Expected 1 was 0`: assertion message. Should always be on one line expect the cases when user
+ *                       explicitly puts the `\n` in the message. That shouldn't typically happen
+ *                       and looks like a known limitation to me.
+ */
+export function parseUnityFixtureOutput(output: string): FailingTestDecoration[] {
+  const lines_with_ws = output.split('\n');
+  const lines = lines_with_ws.map(l => l.trim());
+  const decorations: FailingTestDecoration[] = [];
+  const failedTestRegex = /^([\.!]*)(\.\..*):(\d+):(.*):FAIL: (.*)/;
+
+  for (let cursor = 0; cursor < lines.length; ++cursor) {
+    const line = lines[cursor];
+    const parseRes = failedTestRegex.exec(line);
+    if (parseRes) {
+      const [_all, testsRanStr, file, lineNumberStr, testName, message] = parseRes;
+      // tslint:disable-next-line
+      void _all;  // unused
+      // tslint:disable-next-line
+      void testName;  // unused
+      // tslint:disable-next-line
+      void testsRanStr;  // unused
+
+      const lineNumber = parseInt(lineNumberStr);
+
+      decorations.push({
+        fileName: file,
+        lineNumber: lineNumber - 1,
+        hoverMessage: `${message}\n`,
+      })
+    }
+  }
+
+  return decorations;
+}
+
 export async function parseTestOutput(output: string): Promise<FailingTestDecoration[]> {
   if (/is a Catch .* host application\./.test(output)) {
     return parseCatchTestOutput(output);
+  } else if (/Unity test run \d* of \d*./.test(output)) {
+    return parseUnityFixtureOutput(output);
   } else {
     return [];
   }
