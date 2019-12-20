@@ -1055,9 +1055,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.buildKit`
    */
   async buildKit(): Promise<string|null> {
-    const activeKit = await this.activeKit;
-    if (activeKit) {
-      return activeKit.name;
+    if (this.activeKit) {
+      return this.activeKit.name;
     } else {
       return null;
     }
