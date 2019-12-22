@@ -885,8 +885,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   private readonly _ctestController = new CTestDriver(this.workspaceContext);
   async ctest(): Promise<number> {
+
     const build_retc = await this.build();
     if (build_retc !== 0) {
+      this._ctestController.markAllCurrentTestsAsNotRun();
       return build_retc;
     }
 
