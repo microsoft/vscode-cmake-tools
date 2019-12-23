@@ -535,6 +535,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `cd /d "%~dp0"`,
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
     `call "${devbat}" ${args.join(' ')} || exit`,
+    `cd /d "%~dp0"`, /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
