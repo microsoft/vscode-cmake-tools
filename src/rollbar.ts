@@ -70,7 +70,7 @@ class RollbarController {
     log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional));
     const callstack = cleanStack(exception.stack);
     const message = cleanString(exception.message);
-    logEvent('exception', {message, callstack});
+    logEvent('exception2', {message, callstack});
     // tslint:disable-next-line
     console.error(exception);
     debugger;
