@@ -220,14 +220,7 @@ export function parseUnityFixtureOutput(output: string): FailingTestDecoration[]
   for (const line of lines) {
     const parseRes = failedTestRegex.exec(line);
     if (parseRes) {
-      const [_all, testsRanStr, file, lineNumberStr, testName, message] = parseRes;
-      // tslint:disable-next-line
-      void _all;  // unused
-      // tslint:disable-next-line
-      void testName;  // unused
-      // tslint:disable-next-line
-      void testsRanStr;  // unused
-
+      const [, /*testsRanStr*/, file, lineNumberStr, /*testName*/, message] = parseRes;
       const lineNumber = parseInt(lineNumberStr);
 
       decorations.push({
