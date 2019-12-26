@@ -48,6 +48,7 @@
     "onCommand:cmake.launchTargetDirectory",
     "onCommand:cmake.buildType",
     "onCommand:cmake.buildDirectory",
+    "onCommand:cmake.buildKit",
     "onCommand:cmake.tasksBuildCommand",
     "onCommand:cmake.quickStart",
     "onCommand:cmake.resetState",
