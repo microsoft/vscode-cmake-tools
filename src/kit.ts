@@ -769,7 +769,15 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
           util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
     }
   }
-  return new Map(util.chain(host_env, kit_env));
+  const env = new Map(util.chain(host_env, kit_env));
+  if (env.has("CMT_MINGW_PATH")) {
+    if (env.has("PATH")) {
+      env.set("PATH", env.get("PATH")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    } else if (env.has("Path")) {
+      env.set("Path", env.get("Path")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    }
+  }
+  return env;
 }
 
 export async function findCLCompilerPath(env: Map<string, string>): Promise<string|null> {
