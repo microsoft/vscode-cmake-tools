@@ -1288,7 +1288,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.buildTarget',
                                       (what: TargetNode) => runCommand('build', what.name)),
       vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
-                                      (what: TargetNode) => runCommand('cleanRebuild', what.name)),
+                                      (what: TargetNode) => runCommand('build', what.name)),
       vscode.commands.registerCommand('cmake.outline.debugTarget',
                                       (what: TargetNode) => runCommand('debugTarget', what.name)),
       vscode.commands.registerCommand('cmake.outline.launchTarget',
