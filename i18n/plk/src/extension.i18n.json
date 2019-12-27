@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Konfigurowanie obszaru roboczego przy otwieraniu elementu {0}",
 	"double.loaded.instance": "Dwukrotnie załadowano wystąpienie rozszerzenia CMake Tools dla folderu obszaru roboczego",
 	"creating.backend": "Tworzenie zaplecza",
-	"post.folder.open": "Po otwarciu folderu",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Usunięto folder obszaru roboczego, ale nie jest on skojarzony z wystąpieniem rozszerzenia",
 	"loading.workspace.folder.name": "Ładowanie folderu obszaru roboczego {0}",
 	"loading.workspace.folder": "Ładowanie folderu obszaru roboczego",

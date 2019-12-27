@@ -1166,6 +1166,8 @@ class ExtensionManager implements vscode.Disposable {
 
   buildDirectory() { return this.withCMakeTools(null, cmt => cmt.buildDirectory()); }
 
+  buildKit() {return this.withCMakeTools(null, cmt => cmt.buildKit()); }
+
   tasksBuildCommand() { return this.withCMakeTools(null, cmt => cmt.tasksBuildCommand()); }
 
   debugTarget(name?: string) { return this.withCMakeTools(null, cmt => cmt.debugTarget(name)); }
@@ -1249,6 +1251,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'launchTargetDirectory',
     'buildType',
     'buildDirectory',
+    'buildKit',
     'debugTarget',
     'launchTarget',
     'selectLaunchTarget',
