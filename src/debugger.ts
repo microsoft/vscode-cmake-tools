@@ -161,6 +161,10 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     } else {
       // Look for lldb
       clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
+      if(clang_debugger_path == '/usr/bin/lldb' && platform == 'darwin') {
+        // Default Apple lldb in /usr/bin will definitely not work, try lldb-mi instead
+        clang_debugger_path = '/Applications/Xcode.app/Contents/Developer/usr/bin/lldb-mi';
+      }
       if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
         return createLLDBDebugConfiguration(clang_debugger_path, target);
       }
