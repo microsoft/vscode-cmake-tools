@@ -769,7 +769,15 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
           util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
     }
   }
-  return new Map(util.chain(host_env, kit_env));
+  const env = new Map(util.chain(host_env, kit_env));
+  if (env.has("CMT_MINGW_PATH")) {
+    if (env.has("PATH")) {
+      env.set("PATH", env.get("PATH")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    } else if (env.has("Path")) {
+      env.set("Path", env.get("Path")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    }
+  }
+  return env;
 }
 
 export async function findCLCompilerPath(env: Map<string, string>): Promise<string|null> {
@@ -813,35 +821,61 @@ export async function scanForKits(opt?: KitScanOptions) {
     location: vscode.ProgressLocation.Notification,
     title: localize('scanning.for.kits', 'Scanning for kits'),
   };
+
   return vscode.window.withProgress(prog, async pr => {
     const isWin32 = process.platform === 'win32';
+
     pr.report({message: localize('scanning.for.cmake.kits', 'Scanning for CMake kits...')});
-    let scanPaths: string[] = [];
+    let scan_paths = [] as string[];
+
     // Search directories on `PATH` for compiler binaries
-    const pathvar = process.env['PATH']!;
-    if (pathvar) {
+    if (process.env.hasOwnProperty('PATH')) {
       const sep = isWin32 ? ';' : ':';
-      scanPaths = scanPaths.concat(pathvar.split(sep));
+      scan_paths = scan_paths.concat((process.env.PATH as string).split(sep));
     }
 
     // Search them all in parallel
-    let prs = [] as Promise<Kit[]>[];
+    let kit_promises = [] as Promise<Kit[]>[];
     if (isWin32 && kit_options.minGWSearchDirs) {
-      scanPaths = scanPaths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
+      scan_paths = scan_paths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
     }
-    const compiler_kits = scanPaths.map(path_el => scanDirForCompilerKits(path_el, pr));
-    prs = prs.concat(compiler_kits);
-    if (isWin32) {
-      const vs_kits = scanForVSKits(pr);
 
-      const clang_cl_path = ['C:\\Program Files (x86)\\LLVM\\bin', 'C:\\Program Files\\LLVM\\bin', ...scanPaths];
-      const clang_cl_kits = await scanForClangCLKits(clang_cl_path);
-      prs.push(vs_kits);
-      prs = prs.concat(clang_cl_kits);
+    const compiler_kits = scan_paths.map(path_el => scanDirForCompilerKits(path_el, pr));
+    kit_promises = kit_promises.concat(compiler_kits);
+
+    if (isWin32) {
+      // Prepare clang-cl search paths
+      const clang_cl_paths = new Set<string>();
+
+      // LLVM_ROOT environment variable location
+      if (process.env.hasOwnProperty('LLVM_ROOT')) {
+        const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
+        clang_cl_paths.add(llvm_root);
+      }
+      // Default installation locations
+      clang_cl_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
+      clang_cl_paths.add('C:\\Program Files\\LLVM\\bin');
+      // PATH environment variable locations
+      scan_paths.forEach(path_el => clang_cl_paths.add(path_el));
+      // LLVM bundled in VS locations
+      const vs_installs = await vsInstallations();
+      const bundled_clang_cl_paths = vs_installs.map(vs_install => {
+        return vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin";
+      });
+      bundled_clang_cl_paths.forEach(path_ => {clang_cl_paths.add(path_);});
+
+      // Scan for kits
+      const vs_kits = scanForVSKits(pr);
+      kit_promises.push(vs_kits);
+      const cl_paths = Array.from(clang_cl_paths);
+      const clang_cl_kits = await scanForClangCLKits(cl_paths);
+      kit_promises = kit_promises.concat(clang_cl_kits);
     }
-    const arrays = await Promise.all(prs);
+
+    const arrays = await Promise.all(kit_promises);
     const kits = ([] as Kit[]).concat(...arrays);
     kits.map(k => log.info(localize('found.kit', 'Found Kit: {0}', k.name)));
+
     return kits;
   });
 }
