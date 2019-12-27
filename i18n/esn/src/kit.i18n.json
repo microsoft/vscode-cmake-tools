@@ -35,7 +35,7 @@
 	"scanning.for.kits": "Buscando kits",
 	"scanning.for.cmake.kits": "Examinando los kits de CMake...",
 	"found.kit": "Kit encontrado: {0}",
-	"kit.for.toolchain.fiile": "Kit para el archivo de la cadena de herramientas {0}",
+	"kit.for.toolchain.file": "Kit para el archivo de la cadena de herramientas {0}",
 	"using.compilers.for": "Usando los compiladores para {0} (arquitectura {1})",
 	"using.compilers": "Usando los compiladores: {0}",
 	"unspecified.let.cmake.guess": "Sin especificar (dejar que CMake adivine qué compiladores y entorno se va a usar)",
