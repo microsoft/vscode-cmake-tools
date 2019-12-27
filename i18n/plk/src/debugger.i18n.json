@@ -7,5 +7,5 @@
 	"gdb.not.found": "Nie można znaleźć programu GDB w domyślnej ścieżce wyszukiwania i lokalizacji {0}.",
 	"enable.pretty.printing": "Włącz formatowanie kodu dla programu gdb",
 	"no.compiler.found.in.cache": "Nie znaleziono kompilatora w pliku pamięci podręcznej.",
-	"unable.to.determine.debugger.for.compiler": "Nie można automatycznie określić debugera odpowiadającego kompilatorowi: {}"
+	"unable.to.determine.debugger.for.compiler": "Nie można automatycznie określić debugera odpowiadającego kompilatorowi: {0}"
 }

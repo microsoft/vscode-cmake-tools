@@ -4,11 +4,56 @@
 
 import * as logging from './logging';
 import * as nls from 'vscode-nls';
+import * as path from 'path';
+import { logEvent } from './telemetry';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('rollbar');
+
+/**
+ * Remove filesystem information from stack traces before logging telemetry
+ * @param stack The call stack string
+ * @returns A cleaned stack trace with only file names (no full paths)
+ */
+export function cleanStack(stack?: string): string {
+  if (!stack) {
+    return "(no callstack)";
+  }
+  // Most source references are within parenthesis
+  stack = stack.replace(/\(([^\n]+)\)/g, (match: string, fileInfo: string) => {
+    const fileName = fileInfo.replace(/:\d+(:\d+)?$/, "");
+    const name: string = path.basename(fileName);
+    return match.replace(fileName, name);
+  });
+  // Some are direct references to main.js without parenthesis
+  stack = stack.replace(/at( async | )([^\n]+main.js(:\d+(:\d+)?)?)$/gm, (match: string, _unused: string, fileInfo: string, lineColumn: string) => {
+    return match.replace(fileInfo, `main.js${lineColumn}`);
+  });
+  // As a last resort, remove anything that looks like it could be a path.
+  const strings: string[] = stack.split('\n');
+  strings.forEach((value, index, array) => {
+    array[index] = cleanString(value);
+  });
+  return strings.join('\n');
+}
+
+/**
+ * Find the beginning of a potential absolute path and cut off everything after it
+ * @param message The (single-line) string to clean
+ * @returns A string with no potential absolute file paths in it
+ */
+export function cleanString(message: string): string {
+  const backSlash = message.indexOf('\\');
+  const slash = message.indexOf('/');
+  let first = backSlash === -1 ? slash : slash === -1 ? backSlash : backSlash < slash ? backSlash : slash;
+  if (first > 0) {
+    first = message.lastIndexOf(' ', first);
+    return message.substr(0, first) + " <path removed>";
+  }
+  return message;
+}
 
 /**
  * The wrapper around Rollbar. Presents a nice functional API.
@@ -23,6 +68,9 @@ class RollbarController {
    */
   exception(what: string, exception: Error, additional: object = {}): void {
     log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional));
+    const callstack = cleanStack(exception.stack);
+    const message = cleanString(exception.message);
+    logEvent('exception2', {message, callstack});
     // tslint:disable-next-line
     console.error(exception);
     debugger;

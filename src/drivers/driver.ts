@@ -320,7 +320,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (kit.preferredGenerator)
       preferredGenerators.push(kit.preferredGenerator);
 
-    this._generator = await this.findBestGenerator(preferredGenerators);
+    // Use the "best generator" selection logic only if the user did not define already
+    // in settings (via "cmake.generator") a particular generator to be used.
+    if (this.config.generator) {
+      this._generator = {
+        name: this.config.generator,
+        platform: this.config.platform || undefined,
+        toolset: this.config.toolset || undefined,
+      };
+    } else {
+      this._generator = await this.findBestGenerator(preferredGenerators);
+    }
   }
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -528,6 +538,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (gen_name == 'Unix Makefiles') {
           return this.testHaveCommand('make');
         }
+        if (gen_name == 'MSYS Makefiles') {
+            return platform === 'win32' && this.testHaveCommand('make');
+        }
         return false;
       })();
       if (!generator_present) {
@@ -642,6 +655,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
       telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
       return retc;
+    } catch {
+      return -1;
     } finally { this.configRunning = false; }
   }
 

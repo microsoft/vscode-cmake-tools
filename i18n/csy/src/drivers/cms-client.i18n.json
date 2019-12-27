@@ -16,5 +16,6 @@
 	"cookie.not.known.message": "Soubor cookie serveru CMake {0} neodpovídá známé zprávě.",
 	"cant.yet.handle.message": "Zprávy {0} se zatím nedají zpracovat.",
 	"sending.message.to.cmake-server": "Posílá se zpráva do programu cmake-server: {0}",
-	"configuring.using.generator.with.platform.and.toolset": "Konfiguruje se pomocí generátoru CMake {0} s platformou {1} a sadou nástrojů {2}."
+	"configuring.using.generator": "Probíhá konfigurace pomocí generátoru CMake {0}.",
+	"with.platform.and.toolset": " s platformou {0} a sadou nástrojů {1}"
 }

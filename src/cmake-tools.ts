@@ -199,7 +199,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // User can override generator with a setting
     const user_generator = this.workspaceContext.config.generator;
     if (user_generator) {
-      log.debug(`Using generator from user configuration: ${user_generator}`);
+      log.debug(localize('using.user.generator', 'Using generator from user configuration: {0}', user_generator));
       return [{
         name: user_generator,
         platform: this.workspaceContext.config.platform || undefined,
@@ -228,10 +228,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       vscode.window.showErrorMessage(localize('no.source.directory.found', 'You do not have a source directory open'));
       break;
     case CMakePreconditionProblems.MissingCMakeListsFile:
-      const do_quickstart
-          = await vscode.window.showErrorMessage(localize('missing.cmakelists', 'You do not have a CMakeLists.txt', 'Quickstart a new CMake project'));
-      if (do_quickstart) {
+      const quickStart = localize('quickstart.cmake.project', 'Quickstart a new CMake project');
+      const changeSetting = localize('edit.setting', 'Edit the \'cmake.sourceDirectory\' setting');
+      const result = await vscode.window.showErrorMessage(
+            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the workspace folder'), quickStart, changeSetting);
+      if (result === quickStart) {
         vscode.commands.executeCommand('cmake.quickStart');
+      } else if (result === changeSetting) {
+        vscode.commands.executeCommand('workbench.action.openSettings');
       }
       break;
     }
@@ -585,6 +589,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 prog_sub.dispose();
               }
             } else {
+              progress.report({message: localize('configure.failed', 'Failed to configure project')});
               return -1;
             }
           });
@@ -1041,6 +1046,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const binaryDir = await this.binaryDir;
     if (binaryDir) {
       return binaryDir;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Implementation of `cmake.buildKit`
+   */
+  async buildKit(): Promise<string|null> {
+    if (this.activeKit) {
+      return this.activeKit.name;
     } else {
       return null;
     }

@@ -535,6 +535,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `cd /d "%~dp0"`,
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
     `call "${devbat}" ${args.join(' ')} || exit`,
+    `cd /d "%~dp0"`, /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
@@ -575,7 +576,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     console.log(`Error running ${devbat} ${args.join(' ')}, can not found INCLUDE`);
     return;
   }
-  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {3}', devbat, args.join(' '), JSON.stringify([...vars])));
+  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
   return vars;
 }
 
@@ -598,7 +599,8 @@ const VsGenerators: {[key: string]: string} = {
   12: 'Visual Studio 12 2013',
   VS140COMNTOOLS: 'Visual Studio 14 2015',
   14: 'Visual Studio 14 2015',
-  15: 'Visual Studio 15 2017'
+  15: 'Visual Studio 15 2017',
+  16: 'Visual Studio 16 2019'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
@@ -725,18 +727,23 @@ export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise
 }
 
 async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
-  console.assert(kit.visualStudio);
-  console.assert(kit.visualStudioArchitecture);
-  const installs = await vsInstallations();
-  const match = (inst: VSInstallation) =>
-      // old Kit format
-      (legacyKitVSName(inst) == kit.visualStudio) ||
-      // new Kit format
-      (kitVSName(inst) === kit.visualStudio) ||
-      // Clang for VS kit format
-      (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+    if (process.platform !== "win32") {
+        return undefined;
+    }
 
-  return installs.find(inst => match(inst));
+    console.assert(kit.visualStudio);
+    console.assert(kit.visualStudioArchitecture);
+
+    const installs = await vsInstallations();
+    const match = (inst: VSInstallation) =>
+        // old Kit format
+        (legacyKitVSName(inst) == kit.visualStudio) ||
+        // new Kit format
+        (kitVSName(inst) === kit.visualStudio) ||
+        // Clang for VS kit format
+        (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+
+    return installs.find(inst => match(inst));
 }
 
 export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
@@ -762,7 +769,15 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
           util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
     }
   }
-  return new Map(util.chain(host_env, kit_env));
+  const env = new Map(util.chain(host_env, kit_env));
+  if (env.has("CMT_MINGW_PATH")) {
+    if (env.has("PATH")) {
+      env.set("PATH", env.get("PATH")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    } else if (env.has("Path")) {
+      env.set("Path", env.get("Path")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    }
+  }
+  return env;
 }
 
 export async function findCLCompilerPath(env: Map<string, string>): Promise<string|null> {

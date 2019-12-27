@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "開いている {0} 上でワークスペースを構成しています",
 	"double.loaded.instance": "ワークスペース フォルダーの CMake Tools インスタンスがダブルロードされました",
 	"creating.backend": "バックエンドを作成しています",
-	"post.folder.open": "フォルダーを開いた後",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "ワークスペース フォルダーが削除されましたが、拡張機能のインスタンスに関連付けられていません",
 	"loading.workspace.folder.name": "ワークスペース フォルダー {0} を読み込んでいます",
 	"loading.workspace.folder": "ワークスペース フォルダーを読み込んでいます",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} が完了しました (シリアル化可能でない値が返されました)",
 	"loading.extension.commands": "拡張コマンドを読み込んでいます",
 	"register.command": "CMakeTools 拡張コマンド {0} の登録",
-	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
+	"uninstall.old.cmaketools": "以前のバージョンの CMake Tools 拡張機能をすべてアンインストールしてください。バージョン1.2.0 以降、Microsoft によって公開されるようになりました。",
 	"cmake.tools.initializing": "CMake Tools を初期化しています...",
 	"deactivate.cmaketools": "CMakeTools の非アクティブ化"
 }
