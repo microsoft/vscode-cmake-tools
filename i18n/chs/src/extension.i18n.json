@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "正在打开的 {0} 上配置工作区",
 	"double.loaded.instance": "用于工作区文件夹的双加载 CMake 工具实例",
 	"creating.backend": "正在创建后端",
-	"post.folder.open": "文件夹打开后",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "工作区文件夹已删除，但未与扩展实例关联",
 	"loading.workspace.folder.name": "正在加载工作区文件夹 {0}",
 	"loading.workspace.folder": "正在加载工作区文件夹",
