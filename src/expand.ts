@@ -44,9 +44,10 @@ export interface ExpansionVars extends RequiredExpansionContextVars {
  */
 export interface ExpansionOptions {
   /**
-   * Plain `${variable}` style expansions.
+   * Plain `${variable}` style expansions. If not specified, variables like ${workspaceRoot}
+   * cannot be resolved.
    */
-  vars: ExpansionVars;
+  vars?: ExpansionVars;
   /**
    * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
    *

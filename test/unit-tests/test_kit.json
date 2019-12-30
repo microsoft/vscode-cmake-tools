@@ -25,6 +25,10 @@
         "toolchainFile": "toolchain.cmake"
     },
     {
+        "name": "ToolchainKit 2",
+        "toolchainFile": "${env:CMAKE_TOOLS_TEST_SOME_ENV_VAR}/toolchain.cmake"
+    },
+    {
         "name": "VSCode Kit 1",
         "visualStudio": "Visual Studio 2015",
         "visualStudioArchitecture": "x86"
