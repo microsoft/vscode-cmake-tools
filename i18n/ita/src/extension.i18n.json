@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Configurazione dell'area di lavoro all'apertura di {0}",
 	"double.loaded.instance": "Istanza di CMake Tools con doppio caricamento per la cartella dell'area di lavoro",
 	"creating.backend": "Creazione del back-end",
-	"post.folder.open": "Apertura della cartella di pubblicazione",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "La cartella dell'area di lavoro è stata rimossa, ma non associata a un'istanza dell'estensione",
 	"loading.workspace.folder.name": "Caricamento della cartella dell'area di lavoro {0}",
 	"loading.workspace.folder": "Caricamento della cartella dell'area di lavoro",

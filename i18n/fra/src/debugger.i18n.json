@@ -7,5 +7,5 @@
 	"gdb.not.found": "GDB est introuvable dans le chemin de recherche par défaut et {0}.",
 	"enable.pretty.printing": "Activer l'impression en mode Pretty pour gdb",
 	"no.compiler.found.in.cache": "Compilateur introuvable dans le fichier cache.",
-	"unable.to.determine.debugger.for.compiler": "Impossible de déterminer automatiquement le débogueur correspondant au compilateur : {}"
+	"unable.to.determine.debugger.for.compiler": "Impossible de déterminer automatiquement le débogueur correspondant au compilateur : {0}"
 }
