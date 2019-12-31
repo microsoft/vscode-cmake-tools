@@ -850,7 +850,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!drv.targets.length) {
       return (await vscode.window.showInputBox({prompt: localize('enter.target.name', 'Enter a target name')})) || null;
     } else {
-      const choices = drv.targets.map((t): vscode.QuickPickItem => {
+      const choices = drv.uniqueTargets.map((t): vscode.QuickPickItem => {
         switch (t.type) {
         case 'named': {
           return {

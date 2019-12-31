@@ -200,6 +200,15 @@ export class CMakeServerClientDriver extends CMakeDriver {
                                                                        }));
   }
 
+  get uniqueTargets(): api.Target[] {
+    return this.targets.reduce((set: RichTarget[], t: RichTarget) => {
+      if (!set.find(t2 => t.name === t2.name && t.filepath === t2.filepath && t.targetType === t2.targetType)) {
+        set.push(t);
+      }
+      return set;
+    }, []);
+  }
+
   get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
 
   /**
