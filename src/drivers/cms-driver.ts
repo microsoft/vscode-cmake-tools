@@ -194,19 +194,13 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   get executableTargets(): ExecutableTarget[] {
-    return this.targets.filter(t => t.targetType === 'EXECUTABLE').map(t => ({
-                                                                         name: t.name,
-                                                                         path: t.filepath,
-                                                                       }));
+    return this.targets.filter(t => t.targetType === 'EXECUTABLE')
+      .reduce(targetReducer, [])
+      .map(t => ({name: t.name, path: t.filepath}));
   }
 
   get uniqueTargets(): api.Target[] {
-    return this.targets.reduce((set: RichTarget[], t: RichTarget) => {
-      if (!set.find(t2 => t.name === t2.name && t.filepath === t2.filepath && t.targetType === t2.targetType)) {
-        set.push(t);
-      }
-      return set;
-    }, []);
+    return this.targets.reduce(targetReducer, []);
   }
 
   get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
@@ -301,4 +295,17 @@ export class CMakeServerClientDriver extends CMakeDriver {
   static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
     return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferredGenerators);
   }
+}
+
+/**
+ * Helper function for Array.reduce
+ *
+ * @param set the accumulator
+ * @t the RichTarget currently being examined.
+ */
+function targetReducer(set: RichTarget[], t: RichTarget): RichTarget[] {
+  if (!set.find(t2 => t.name === t2.name && t.filepath === t2.filepath && t.targetType === t2.targetType)) {
+    set.push(t);
+  }
+  return set;
 }
