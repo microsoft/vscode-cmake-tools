@@ -2,9 +2,9 @@ import {CMakeDriver} from '@cmt/drivers/driver';
 import * as vscode from 'vscode';
 
 /**
- * This file contains the API description between IDE parts and the cmake model driver.
- * This API CodeModel contains only current required cmake code model parts.
- * There are more information provided by CMake as mapped.
+ * This file contains the API description between IDE parts and the CMake model driver.
+ * This API CodeModel contains only the current required CMake code model parts.
+ * There is more information provided by CMake than is mapped.
  */
 
 /**
@@ -44,21 +44,21 @@ export interface CodeModelTarget {
   /** A string specifying the absolute path to the target’s source directory. */
   sourceDirectory?: string;
 
-  /** Name of the target artefact on disk (library or executable file name). */
+  /** Name of the target artifact on disk (library or executable file name). */
   fullName?: string;
 
-  /** List of absolute path of a target build artifact. */
+  /** List of absolute paths to a target´s build artifacts. */
   artifacts?: string[];
 
   /**
-   * List of compilation information for artifacts of this target.
-   * It contains groups of source files which there compilation information.
+   * The file groups describe a list of compilation information for artifacts of this target.
+   * The file groups contains source code files that use the same compilation information
+   * and are known by CMake.
    */
   fileGroups?: CodeModelFileGroup[];
 
   /**
-   * Represents the CMAKE_SYSROOT
-   * \todo Implementation may depend on CMAKE_SYSROOT_LINK or CMAKE_SYSROOT_COMPILE, I think CMAKE_SYSROOT_COMPILE
+   * Represents the CMAKE_SYSROOT variable
    */
   sysroot?: string;
 }
@@ -70,7 +70,7 @@ export interface CodeModelFileGroup {
   /** List of source files with the same compilation information */
   sources: string[];
 
-  /** Specific's the language (C, C++, ...) for the toolchain */
+  /** Specifies the language (C, C++, ...) for the toolchain */
   language?: string;
 
   /** Include paths for compilation of a source file */
@@ -90,7 +90,7 @@ export interface CodeModelFileGroup {
 }
 
 /**
- * Describes cmake project and all it related targets
+ * Describes cmake project and all its related targets
  */
 export interface CodeModelProject {
   /** Name of the project */
