@@ -17,10 +17,7 @@ export class CMakeToolsFolder {
 
   get folder() { return this.cmakeTools.folder; }
 
-  private readonly _subscriptions: vscode.Disposable[] = [];
-
   dispose() {
-    disposeAll(this._subscriptions);
     this.cmakeTools.dispose();
     this.kitsController.dispose();
   }
@@ -78,16 +75,19 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * Get the CMakeTools instance associated with the given workspace folder, or undefined
    * @param ws The workspace folder to search
    */
-  get(ws: vscode.WorkspaceFolder | undefined): CMakeToolsFolder | undefined { return ws ? this._instances.get(ws.name) : ws; }
+  get(ws: vscode.WorkspaceFolder | undefined): CMakeToolsFolder | undefined {
+    return ws ? this._instances.get(ws.name) : ws;
+  }
 
   /**
    * Load all the folders currently open in VSCode
    */
   async loadAllCurrent() {
+    this._instances.forEach(folder => folder.dispose());
     this._instances.clear();
     if (vscode.workspace.workspaceFolders) {
-      for (const wsf of vscode.workspace.workspaceFolders) {
-        await this.addFolder(wsf);
+      for (const folder of vscode.workspace.workspaceFolders) {
+        await this.addFolder(folder);
       }
     }
   }

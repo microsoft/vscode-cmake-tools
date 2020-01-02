@@ -15,7 +15,7 @@ import {StateManager} from '@cmt/state';
 export class DirectoryContext {
   constructor(
       /**
-       * Absolute path to the directory associated with this context
+       * Workspace folder associated with this context
        */
       public readonly folder: vscode.WorkspaceFolder,
       /**
@@ -29,8 +29,8 @@ export class DirectoryContext {
   ) {}
 
   /**
-   * Create a context object for the given path to a directory.
-   * @param dir The directory for which to create a context
+   * Create a context object for the given a workspace folder.
+   * @param folder The workspace folder for which to create a context
    * @param state The state that will be associated with the returned context
    */
   static createForDirectory(folder: vscode.WorkspaceFolder, state: StateManager): DirectoryContext {

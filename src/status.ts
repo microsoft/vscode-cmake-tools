@@ -116,9 +116,6 @@ export class StatusBar implements vscode.Disposable {
     this.reloadVisibility();
   }
 
-  /**
-   * The active folder relative to the root folder
-   */
   private _activeFolder: string = '';
   setActiveFolderName(v: string) {
     this._activeFolder = v;

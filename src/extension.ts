@@ -662,7 +662,7 @@ class ExtensionManager implements vscode.Disposable {
         }
         return -1;
       }
-      rollbar.error(localize('no.active.folder', 'No active foler.'));
+      rollbar.error(localize('no.active.folder', 'No active folder.'));
       return 0;
     } else if (cmt instanceof CMakeTools) {
       this._cleanOutputChannel(cmt);

@@ -231,7 +231,7 @@ export class KitsController {
     }
 
     const avail = this.availableKits;
-    log.debug('Start selection of kits. Found', avail.length, 'kits.');
+    log.debug(localize('start.selection.of.kits', 'Start selection of kits. Found {0} kits.', avail.length));
 
     interface KitItem extends vscode.QuickPickItem {
       kit: Kit;

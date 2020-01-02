@@ -495,7 +495,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
   updateCodeModel(folder: vscode.WorkspaceFolder, model: cms.CodeModelContent|null, ctx: ExternalUpdateContext) {
     let existing = this._folders.get(folder.name);
     if (!existing) {
-      rollbar.error('Updating code model on folder that does not yet exist?');
+      rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that does not yet exist?'));
       // That's an error, but we can keep going otherwise.
       existing = new WorkspaceFolderNode(folder);
       this._folders.set(folder.name, existing);
@@ -523,7 +523,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
       }
       return [...this._folders.values()];
     } catch (e) {
-      rollbar.error('Error while rendering children nodes');
+      rollbar.error(localize('error.rendering.children.nodes', 'Error while rendering children nodes'));
       return [];
     }
   }

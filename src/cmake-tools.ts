@@ -175,8 +175,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Dispose the instance
    */
   dispose() {
-    this._disposeEmitter.fire();
     log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
+    this._disposeEmitter.fire();
     this._termCloseSub.dispose();
     if (this._launchTerminal) {
       this._launchTerminal.dispose();
@@ -546,7 +546,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         },
         async progress => {
           progress.report({message: localize('preparing.to.configure', 'Preparing to configure')});
-          log.info(localize('run.configure', 'Run configure for folder {0}:', this.folderName), extra_args);
+          log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
           return this._doConfigure(progress, async consumer => {
             const drv = await this.getCMakeDriverInstance();
             if (drv) {
@@ -720,7 +720,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
-    log.info(localize('run.build', 'Run build for folder {0}:', this.folderName), target_ ? target_ : '');
+    log.info(localize('run.build', 'Building folder: {0}', this.folderName), target_ ? target_ : '');
     const config_retc = await this.ensureConfigured();
     if (config_retc === null) {
       throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
