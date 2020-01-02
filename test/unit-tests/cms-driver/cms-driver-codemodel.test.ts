@@ -68,35 +68,41 @@ suite('CMake-Server-Driver tests', () => {
     }
   });
 
+
+async function generateCodeModelForConfiguredDriver(args: string[]=[]) : Promise<null|codemodel_api.CodeModelContent> {
+  const config = ConfigurationReader.createForDirectory(root);
+  const executable = await getCMakeExecutableInformation(cmakePath);
+
+  driver = await cms_driver.CMakeServerClientDriver
+               .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+  let code_model: null|codemodel_api.CodeModelContent = null;
+  if (driver instanceof codemodel_api.CodeModelDriver) {
+    driver.onCodeModelChanged(cm => { code_model = cm; });
+  }
+  await driver.configure(args);
+  return code_model;
+}
+
   test('Test generation of code model with multi configuration like VS', async () => {
     if (process.platform !== 'win32')
       return;
 
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    let codemodel_data: null|codemodel_api.CodeModelContent = null;
-    if (driver instanceof codemodel_api.CodeModelDriver) {
-      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
-    }
-    await driver.configure([]);
+    const codemodel_data = await generateCodeModelForConfiguredDriver();
     expect(codemodel_data).to.be.not.null;
     expect(codemodel_data!.configurations.length).to.be.eql(4);
   }).timeout(90000);
 
-  test('Test project information', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
+  test('Test generation of code model with one configuration like make on linux', async () => {
+    if (process.platform === 'win32')
+      return;
 
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    let codemodel_data: null|codemodel_api.CodeModelContent = null;
-    if (driver instanceof codemodel_api.CodeModelDriver) {
-      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
-    }
-    await driver.configure([]);
+    const codemodel_data = await generateCodeModelForConfiguredDriver();
+    expect(codemodel_data).to.be.not.null;
+    expect(codemodel_data!.configurations.length).to.be.eql(1);
+  }).timeout(90000);
+
+  test('Test project information', async () => {
+    const codemodel_data = await generateCodeModelForConfiguredDriver();
     expect(codemodel_data).to.be.not.null;
 
     const project = codemodel_data!.configurations[0].projects[0];
@@ -112,16 +118,7 @@ suite('CMake-Server-Driver tests', () => {
 
 
   test('Test first executable target directory', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    let codemodel_data: null|codemodel_api.CodeModelContent = null;
-    if (driver instanceof codemodel_api.CodeModelDriver) {
-      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
-    }
-    await driver.configure([]);
+    const codemodel_data = await generateCodeModelForConfiguredDriver();
     expect(codemodel_data).to.be.not.null;
 
     const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
@@ -144,16 +141,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Test first static library target directory', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    let codemodel_data: null|codemodel_api.CodeModelContent = null;
-    if (driver instanceof codemodel_api.CodeModelDriver) {
-      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
-    }
-    await driver.configure([]);
+    const codemodel_data = await generateCodeModelForConfiguredDriver();
     expect(codemodel_data).to.be.not.null;
 
     const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
@@ -185,16 +173,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Test first shared library target directory', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    let codemodel_data: null|codemodel_api.CodeModelContent = null;
-    if (driver instanceof codemodel_api.CodeModelDriver) {
-      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
-    }
-    await driver.configure([]);
+    const codemodel_data = await generateCodeModelForConfiguredDriver();
     expect(codemodel_data).to.be.not.null;
 
     const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'SHARED_LIBRARY');
@@ -229,42 +208,27 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Test cache access', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    let codemodel_data: null|codemodel_api.CodeModelContent = null;
-    if (driver instanceof codemodel_api.CodeModelDriver) {
-      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
-    }
-    await driver.configure([]);
+    const codemodel_data = await generateCodeModelForConfiguredDriver();
     expect(codemodel_data).to.be.not.null;
 
     const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'UTILITY'
                                                                                   && t.name == 'runTestTarget');
     expect(target).to.be.not.undefined;
 
-    // may could be used to exclude file list from utility targets
+    // maybe could be used to exclude file list from utility targets
     expect(target!.fileGroups![0].isGenerated).to.be.true;
   }).timeout(90000);
-  // sysroot for file groups
 
-  test('Test generation of code model with one configuration like make on linux', async () => {
-    if (process.platform === 'win32')
-      return;
+  test('Test sysroot access', async () => {
+    // Test is only valid for make or ninja based tests
+    // Windows only executes Visual studio tests
+    if(process.platform === 'win32') return;
 
-    const config = ConfigurationReader.createForDirectory(root);
-    const executable = await getCMakeExecutableInformation(cmakePath);
-
-    driver = await cms_driver.CMakeServerClientDriver
-                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-    let codemodel_data: null|codemodel_api.CodeModelContent = null;
-    if (driver instanceof codemodel_api.CodeModelDriver) {
-      driver.onCodeModelChanged(cm => { codemodel_data = cm; });
-    }
-    await driver.configure([]);
+    const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
     expect(codemodel_data).to.be.not.null;
-    expect(codemodel_data!.configurations.length).to.be.eql(1);
+
+    const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
+    expect(target).to.be.not.undefined;
+    expect(target!.sysroot).to.be.eq("/tmp");
   }).timeout(90000);
 });
