@@ -35,6 +35,22 @@
                 "type": "string",
                 "description": "Architecture to target"
             },
+            "environmentVariablesShellScript": {
+                "type": "string",
+                "description": "Filename of a shell script which sets environment variables for the kit"
+            },
+            "environmentVariablesShellScriptDirectory": {
+                "type": "string",
+                "description": "Directory in which to change before running the shell script"
+            },
+            "environmentVariablesShellScriptArgs": {
+                "type": "array",
+                "description": "Arguments to pass to the shell script",
+                "items": {
+                    "type": "string",
+                    "description": "Argument to pass to the shell script"
+                }
+            },
             "environmentVariables": {
                 "type": "object",
                 "patternProperties": {

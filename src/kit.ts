@@ -96,6 +96,21 @@ export interface Kit {
   visualStudioArchitecture?: string;
 
   /**
+   * Filename of a shell script which sets environment variables for the kit
+   */
+  environmentVariablesShellScript?: string;
+
+  /**
+   * List of arguments to pass to the shell script
+   */
+  environmentVariablesShellScriptArgs?: string[];
+
+  /**
+   * Directory to switch to before running the shell script
+   */
+  environmentVariablesShellScriptDirectory?: string;
+
+  /**
    * Path to a CMake toolchain file.
    */
   toolchainFile?: string;
@@ -581,6 +596,60 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
 }
 
 /**
+ * Gets the environment variables set by a shell script.
+ * @param kit The kit to get the environment variables for
+ */
+export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, string>|undefined> {
+  console.assert(kit.environmentVariablesShellScript);
+  const fname = Math.random().toString() + '.bat';
+  const batfname = `vs-cmt-${fname}`;
+  const envfname = batfname + '.env';
+  const batpath = path.join(paths.tmpDir, batfname); // path of batch file
+  const envpath = path.join(paths.tmpDir, envfname); // path of temp file in which the batch file writes the env vars to
+  const args = kit.environmentVariablesShellScriptArgs ? kit.environmentVariablesShellScriptArgs.map(arg => `"${arg}"`).join(" ") : "";
+
+  const bat = [`@echo off`];
+  if (kit.environmentVariablesShellScriptDirectory)
+    bat.push(`cd /d "${kit.environmentVariablesShellScriptDirectory}"`); // switch to directory if set
+
+  bat.push(`call "${kit.environmentVariablesShellScript}" ${args} || exit`); // call the shell script
+  bat.push(`set >> ${envpath}`); // write env vars to temp file
+
+  try {
+    await fs.unlink(envpath); // delete the temp file if it exists
+  } catch (error) {}
+  await fs.writeFile(batpath, bat.join('\r\n')); // write batch file
+  const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result; // run batch file
+  await fs.unlink(batpath); // delete batch file
+  const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
+
+  let env = '';
+  try {
+    /* When the bat running failed, envpath would not exist */
+    env = await fs.readFile(envpath, {encoding: 'utf8'});
+    await fs.unlink(envpath);
+  } catch (error) { log.error(error); }
+  if (!env || env === '') {
+    console.error(`Error running ${kit.environmentVariablesShellScript} with:`, output);
+    return;
+  }
+
+  // split and trim env vars
+  const vars
+      = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
+          const mat = /(\w+)=?(.*)/.exec(line);
+          if (mat) {
+            acc.set(mat[1], mat[2]);
+          } else {
+            log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
+          }
+          return acc;
+        }, new Map());
+  log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', kit.environmentVariablesShellScript, JSON.stringify([...vars])));
+  return vars;
+}
+
+/**
  * Platform arguments for VS Generators
  */
 const VsArchitectures: {[key: string]: string} = {
@@ -755,7 +824,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
 }
 
 export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {
-  const host_env = objectPairs(process.env) as [string, string][];
+  var host_env = objectPairs(process.env) as [string, string][];
   const kit_env = objectPairs(kit.environmentVariables || {});
   if (opts) {
     for (const env_var of kit_env) {
@@ -767,6 +836,13 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     if (vs_vars) {
       return new Map(
           util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
+    }
+  }
+  if (kit.environmentVariablesShellScript) {
+    const shell_vars = await getShellScriptEnvironment(kit);
+    if (shell_vars) {
+      // replace hostvars with variables set by shell script
+      host_env = util.map(shell_vars, ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]) as [string, string][];
     }
   }
   const env = new Map(util.chain(host_env, kit_env));
