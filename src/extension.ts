@@ -809,6 +809,8 @@ class ExtensionManager implements vscode.Disposable {
 
   buildDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.buildDirectory()); }
 
+  buildKit(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.buildKit()); }
+
   executableTargets(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, async cmt => (await cmt.executableTargets).map(target => target.name)); }
 
   tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(folder, cmt => cmt.tasksBuildCommand()); }
@@ -916,6 +918,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'quickStart',
     'launchTargetPath',
     'launchTargetDirectory',
+    'buildKit',
     'buildType',
     'buildDirectory',
     'executableTargets',
@@ -958,7 +961,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.buildTarget',
                                       (what: TargetNode) => runCommand('build', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.runUtilityTarget',
-                                      (what: TargetNode) => runCommand('cleanRebuild', what.folder)),
+                                      (what: TargetNode) => runCommand('build', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.debugTarget',
                                       (what: TargetNode) => runCommand('debugTarget', what.folder, what.name)),
       vscode.commands.registerCommand('cmake.outline.launchTarget',

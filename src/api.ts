@@ -303,4 +303,9 @@ export interface CMakeToolsAPI extends Disposable {
    * Get the build command string for the active target
    */
   tasksBuildCommand(): Thenable<string|null>;
+
+  /**
+   * Get the build kit
+   */
+  buildKit(): Thenable<string|null>;
 }
