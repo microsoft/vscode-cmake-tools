@@ -630,7 +630,7 @@ export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, s
     await fs.unlink(envpath);
   } catch (error) { log.error(error); }
   if (!env || env === '') {
-    console.error(`Error running ${kit.environmentVariablesShellScript} with:`, output);
+    console.log(`Error running ${kit.environmentVariablesShellScript} with:`, output);
     return;
   }
 
@@ -824,7 +824,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
 }
 
 export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {
-  var host_env = objectPairs(process.env) as [string, string][];
+  let host_env = objectPairs(process.env) as [string, string][];
   const kit_env = objectPairs(kit.environmentVariables || {});
   if (opts) {
     for (const env_var of kit_env) {
