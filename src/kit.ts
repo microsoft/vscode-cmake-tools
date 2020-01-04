@@ -608,11 +608,11 @@ export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, s
   const envpath = path.join(paths.tmpDir, envfname); // path of temp file in which the batch file writes the env vars to
   const args = kit.environmentVariablesShellScriptArgs ? kit.environmentVariablesShellScriptArgs.map(arg => `"${arg}"`).join(" ") : "";
 
-  const bat = [`@echo off`];
+  const bat = []; //`@echo off` windows
   if (kit.environmentVariablesShellScriptDirectory)
     bat.push(`cd /d "${kit.environmentVariablesShellScriptDirectory}"`); // switch to directory if set
 
-  bat.push(`call "${kit.environmentVariablesShellScript}" ${args} || exit`); // call the shell script
+  bat.push(`source "${kit.environmentVariablesShellScript}" ${args}`); // call the shell script
   bat.push(`set >> ${envpath}`); // write env vars to temp file
 
   try {

@@ -42,7 +42,7 @@ suite('Kits test', async () => {
       // must contain all env vars, not only the ones we defined!
       expect(envVarsArr.length).to.be.greaterThan(2);
       expect(envVarsArr).to.deep.include(['TESTVAR12', 'abc']);
-      expect(envVarsArr).to.deep.include(['TESTVAR12', 'cde']);
+      expect(envVarsArr).to.deep.include(['TESTVAR13', 'cde']);
     }
   });
 });
