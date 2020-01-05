@@ -601,33 +601,43 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
  */
 export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, string>|undefined> {
   console.assert(kit.environmentVariablesShellScript);
-  const fname = Math.random().toString() + '.bat';
-  const batfname = `vs-cmt-${fname}`;
-  const envfname = batfname + '.env';
-  const batpath = path.join(paths.tmpDir, batfname); // path of batch file
-  const envpath = path.join(paths.tmpDir, envfname); // path of temp file in which the batch file writes the env vars to
+  const fname = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
+  const script_fname = `vs-cmt-${fname}`;
+  const envfname = script_fname + '.env';
+  const script_path = path.join(paths.tmpDir, script_fname);
+  const env_path = path.join(paths.tmpDir, envfname); // path of temp file in which the script writes the env vars to
   const args = kit.environmentVariablesShellScriptArgs ? kit.environmentVariablesShellScriptArgs.map(arg => `"${arg}"`).join(" ") : "";
 
-  const bat = []; //`@echo off` windows
-  if (kit.environmentVariablesShellScriptDirectory)
-    bat.push(`cd /d "${kit.environmentVariablesShellScriptDirectory}"`); // switch to directory if set
-
-  bat.push(`source "${kit.environmentVariablesShellScript}" ${args}`); // call the shell script
-  bat.push(`set >> ${envpath}`); // write env vars to temp file
-
+  const script = [];
+  if (process.platform == 'win32') { // windows
+    if (kit.environmentVariablesShellScriptDirectory) {
+      script.push(`cd /d "${kit.environmentVariablesShellScriptDirectory}"`); // switch to directory if set
+    }
+    script.push(`call "${kit.environmentVariablesShellScript}" ${args}`); // call the user batch script
+    script.push(`set >> ${env_path}`); // write env vars to temp file
+    }
+  else { // linux based
+    if (kit.environmentVariablesShellScriptDirectory) {
+      script.push(`cd "${kit.environmentVariablesShellScriptDirectory}"`); // switch to directory if set
+    }
+    script.push(`. "${kit.environmentVariablesShellScript}" ${args}`); // run the user shell script
+    script.push(`printenv >> ${env_path}`); // write env vars to temp file
+  }
   try {
-    await fs.unlink(envpath); // delete the temp file if it exists
+    await fs.unlink(env_path); // delete the temp file if it exists
   } catch (error) {}
-  await fs.writeFile(batpath, bat.join('\r\n')); // write batch file
-  const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result; // run batch file
-  await fs.unlink(batpath); // delete batch file
+  await fs.writeFile(script_path, script.join('\r\n')); // write batch file
+
+  const run_command = (process.platform == 'win32' ? 'call ' : '. ') + script_path;
+  const res = await proc.execute(run_command, [], null, {shell: true, silent: true}).result; // run script
+  await fs.unlink(script_path); // delete script file
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
   let env = '';
   try {
-    /* When the bat running failed, envpath would not exist */
-    env = await fs.readFile(envpath, {encoding: 'utf8'});
-    await fs.unlink(envpath);
+    /* When the script failed, envpath would not exist */
+    env = await fs.readFile(env_path, {encoding: 'utf8'});
+    await fs.unlink(env_path);
   } catch (error) { log.error(error); }
   if (!env || env === '') {
     console.log(`Error running ${kit.environmentVariablesShellScript} with:`, output);

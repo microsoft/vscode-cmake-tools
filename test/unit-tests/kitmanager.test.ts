@@ -27,22 +27,26 @@ suite('Kits test', async () => {
   });
 
   test('Test load env vars from shell script', async() => {
-    // write test batch file that sets TESTVAR12 and TESTVAR13
-    const fname = `cmake-kit-test_${Math.random().toString()}.bat`;
-    const batpath = path.join(paths.tmpDir, fname);
-    await fs.writeFile(batpath, `set "TESTVAR12=abc"\r\nset "TESTVAR13=cde"`);
+    const fname_extension = process.platform == 'win32' ? 'bat' : 'sh';
+    const fname = `cmake-kit-test-${Math.random().toString()}.${fname_extension}`;
+    const script_path = path.join(paths.tmpDir, fname);
+    // generate a file with test batch / shell script that sets two env vars
+    if (process.platform == 'win32')
+      await fs.writeFile(script_path, `set "TESTVAR12=abc"\r\nset "TESTVAR13=cde"`);
+    else
+      await fs.writeFile(script_path, `export "TESTVAR12=abc"\r\nexport "TESTVAR13=cde"`);
 
-    const kit = { name: "Test Kit 1", environmentVariablesShellScript: batpath };
-    const envVars = await getShellScriptEnvironment(kit);
-    await fs.unlink(batpath);
-    expect(envVars).to.not.be.undefined;
+    const kit = { name: "Test Kit 1", environmentVariablesShellScript: script_path };
+    const env_vars = await getShellScriptEnvironment(kit);
+    await fs.unlink(script_path);
+    expect(env_vars).to.not.be.undefined;
 
-    if (envVars) {
-      const envVarsArr = Array.from(envVars);
+    if (env_vars) {
+      const env_vars_arr = Array.from(env_vars);
       // must contain all env vars, not only the ones we defined!
-      expect(envVarsArr.length).to.be.greaterThan(2);
-      expect(envVarsArr).to.deep.include(['TESTVAR12', 'abc']);
-      expect(envVarsArr).to.deep.include(['TESTVAR13', 'cde']);
+      expect(env_vars_arr.length).to.be.greaterThan(2);
+      expect(env_vars_arr).to.deep.include(['TESTVAR12', 'abc']);
+      expect(env_vars_arr).to.deep.include(['TESTVAR13', 'cde']);
     }
   });
 });
