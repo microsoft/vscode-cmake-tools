@@ -69,19 +69,20 @@ suite('CMake-Server-Driver tests', () => {
   });
 
 
-async function generateCodeModelForConfiguredDriver(args: string[]=[]) : Promise<null|codemodel_api.CodeModelContent> {
-  const config = ConfigurationReader.createForDirectory(root);
-  const executable = await getCMakeExecutableInformation(cmakePath);
+  async function generateCodeModelForConfiguredDriver(args: string[] =
+                                                          []): Promise<null|codemodel_api.CodeModelContent> {
+    const config = ConfigurationReader.createForDirectory(root);
+    const executable = await getCMakeExecutableInformation(cmakePath);
 
-  driver = await cms_driver.CMakeServerClientDriver
-               .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-  let code_model: null|codemodel_api.CodeModelContent = null;
-  if (driver instanceof codemodel_api.CodeModelDriver) {
-    driver.onCodeModelChanged(cm => { code_model = cm; });
+    driver = await cms_driver.CMakeServerClientDriver
+                 .create(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+    let code_model: null|codemodel_api.CodeModelContent = null;
+    if (driver instanceof codemodel_api.CodeModelDriver) {
+      driver.onCodeModelChanged(cm => { code_model = cm; });
+    }
+    await driver.configure(args);
+    return code_model;
   }
-  await driver.configure(args);
-  return code_model;
-}
 
   test('Test generation of code model with multi configuration like VS', async () => {
     if (process.platform !== 'win32')
@@ -137,40 +138,44 @@ async function generateCodeModelForConfiguredDriver(args: string[]=[]) : Promise
 
     // Test main source file used in by tree view
     expect(target!.fileGroups).to.be.not.undefined;
-    expect(target!.fileGroups![0].sources[0]).to.eq('main.cpp');
+    const compile_information = target!.fileGroups!.find(t => !!t.language);
+
+    expect(compile_information).to.be.not.undefined;
+    expect(compile_information!.sources).to.include('main.cpp');
   }).timeout(90000);
 
-  test('Test first static library target directory', async () => {
-    const codemodel_data = await generateCodeModelForConfiguredDriver();
-    expect(codemodel_data).to.be.not.null;
+  test.only('Test first static library target directory', async () => {
+        const codemodel_data = await generateCodeModelForConfiguredDriver();
+        expect(codemodel_data).to.be.not.null;
 
-    const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
-    expect(target).to.be.not.undefined;
+        const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
+        expect(target).to.be.not.undefined;
 
-    // Test target name used for node label
-    expect(target!.name).to.be.eq('StaticLibDummy');
-    const executableName = process.platform === 'win32' ? 'StaticLibDummy.lib' : 'libStaticLibDummy.a';
-    expect(target!.fullName).to.be.eq(executableName);
-    expect(target!.type).to.be.eq('STATIC_LIBRARY');
+        // Test target name used for node label
+        expect(target!.name).to.be.eq('StaticLibDummy');
+        const executableName = process.platform === 'win32' ? 'StaticLibDummy.lib' : 'libStaticLibDummy.a';
+        expect(target!.fullName).to.be.eq(executableName);
+        expect(target!.type).to.be.eq('STATIC_LIBRARY');
 
-    // Test location of project source directory
-    // Used by tree view to make paths relative
-    expect(path.normalize(target!.sourceDirectory!).toLowerCase())
-        .to.eq(path.normalize(path.join(root, 'test_project', 'static_lib_dummy')).toLowerCase());
+        // Test location of project source directory
+        // Used by tree view to make paths relative
+        expect(path.normalize(target!.sourceDirectory!).toLowerCase())
+            .to.eq(path.normalize(path.join(root, 'test_project', 'static_lib_dummy')).toLowerCase());
 
-    // Test main source file
-    expect(target!.fileGroups).to.be.not.undefined;
-    expect(target!.fileGroups![0].sources[0]).to.eq('info.cpp');
-    expect(target!.fileGroups![0].sources[1]).to.eq('test2.cpp');
+        // Language
+        const compile_information = target!.fileGroups!.find(t => !!t.language);
+        expect(compile_information).to.be.not.undefined;
+        expect(compile_information!.language).to.eq('CXX');
 
-    // Language
-    expect(target!.fileGroups![0].language).to.eq('CXX');
+        // Test main source file
+        expect(compile_information!.sources).to.include('info.cpp');
+        expect(compile_information!.sources).to.include('test2.cpp');
 
-    // compile flags for file groups
-    if (process.platform === 'win32') {
-      expect(target!.fileGroups![0].compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1  ');
-    }
-  }).timeout(90000);
+        // compile flags for file groups
+        if (process.platform === 'win32') {
+          expect(compile_information!.compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1  ');
+        }
+      }).timeout(90000);
 
   test('Test first shared library target directory', async () => {
     const codemodel_data = await generateCodeModelForConfiguredDriver();
@@ -220,15 +225,17 @@ async function generateCodeModelForConfiguredDriver(args: string[]=[]) : Promise
   }).timeout(90000);
 
   test('Test sysroot access', async () => {
-    // Test is only valid for make or ninja based tests
-    // Windows only executes Visual studio tests
-    if(process.platform === 'win32') return;
+    // This test does not work with VisualStudio.
+    // VisualStudio generator does not provide the sysroot in the code model.
+    // macOS has separate sysroot variable (see CMAKE_OSX_SYSROOT); this build fails.
+    if (process.platform === 'win32' || process.platform === 'darwin')
+      return;
 
     const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
     expect(codemodel_data).to.be.not.null;
 
     const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
     expect(target).to.be.not.undefined;
-    expect(target!.sysroot).to.be.eq("/tmp");
+    expect(target!.sysroot).to.be.eq('/tmp');
   }).timeout(90000);
 });
