@@ -144,7 +144,7 @@ suite('CMake-Server-Driver tests', () => {
     expect(compile_information!.sources).to.include('main.cpp');
   }).timeout(90000);
 
-  test.only('Test first static library target directory', async () => {
+  test('Test first static library target directory', async () => {
         const codemodel_data = await generateCodeModelForConfiguredDriver();
         expect(codemodel_data).to.be.not.null;
 
