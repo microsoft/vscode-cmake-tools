@@ -1,11 +1,11 @@
 import * as api from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as index_api from '@cmt/drivers/cmakefileapi/api';
-import * as driver_api from '@cmt/drivers/driver_api';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
 import * as path from 'path';
+import { CodeModelContent, CodeModelFileGroup, CodeModelConfiguration, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codemodel-driver-interface';
 
 const log = logging.createLogger('cmakefileapi-helper');
 
@@ -139,15 +139,15 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
   return path.normalize(path.join(base_path, input_path));
 }
 
-function convertToExtCodeModelFileGroup(root_paths: index_api.CodeModelKind.PathInfo,
-                                        targetObject: index_api.CodeModelKind.TargetObject):
-    driver_api.ExtCodeModelFileGroup[] {
-  const fileGroup: driver_api.ExtCodeModelFileGroup[]
+function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject):
+    CodeModelFileGroup[] {
+  const fileGroup: CodeModelFileGroup[]
       = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
           const compileFlags
               = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
 
           return {
+            isGenerated: false,
             sources: [],
             language: group.language,
             includePath: group.defines ? group.includes : [],
@@ -156,15 +156,18 @@ function convertToExtCodeModelFileGroup(root_paths: index_api.CodeModelKind.Path
           };
         });
   // Collection all without compilegroup like headers
-  const defaultIndex = fileGroup.push({sources: []} as driver_api.ExtCodeModelFileGroup) - 1;
+  const defaultIndex = fileGroup.push({sources: [], isGenerated: false} as CodeModelFileGroup) - 1;
 
 
   targetObject.sources.forEach(sourcefile => {
-    const filepath = convertToAbsolutePath(sourcefile.path, root_paths.source);
+    const file_path = path.relative(targetObject.paths.source, sourcefile.path).replace("\\","/");
     if (sourcefile.compileGroupIndex !== undefined) {
-      fileGroup[sourcefile.compileGroupIndex].sources.push(filepath);
+      fileGroup[sourcefile.compileGroupIndex].sources.push(file_path);
     } else {
-      fileGroup[defaultIndex].sources.push(filepath);
+      fileGroup[defaultIndex].sources.push(file_path);
+      if (!!sourcefile.isGenerated) {
+        fileGroup[defaultIndex].isGenerated = sourcefile.isGenerated;
+      }
     }
   });
   return fileGroup;
@@ -173,7 +176,7 @@ function convertToExtCodeModelFileGroup(root_paths: index_api.CodeModelKind.Path
 async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
   const targetObject = await loadTargetObject(jsonfile);
 
-  const fileGroups = convertToExtCodeModelFileGroup(root_paths, targetObject);
+  const fileGroups = convertToExtCodeModelFileGroup(targetObject);
   // \todo extend with sysroot
   return {
     name: targetObject.name,
@@ -185,7 +188,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
               a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), root_paths.build))
         : [],
     fileGroups
-  } as driver_api.ExtCodeModelTarget;
+  } as CodeModelTarget;
 }
 
 export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,
@@ -205,7 +208,7 @@ export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,
     return loadCodeModelTarget(root_paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile));
   }));
 
-  return {name: project.name, targets, sourceDirectory: project_paths.source} as driver_api.ExtCodeModelProject;
+  return {name: project.name, targets, sourceDirectory: project_paths.source} as CodeModelProject;
 }
 
 export async function loadConfig(paths: index_api.CodeModelKind.PathInfo,
@@ -213,7 +216,7 @@ export async function loadConfig(paths: index_api.CodeModelKind.PathInfo,
                                  configuration: index_api.CodeModelKind.Configuration) {
   const projects = await Promise.all(
       (configuration.projects).map((_, index) => loadProject(paths, reply_path, index, configuration)));
-  return {projects} as driver_api.ExtCodeModelConfiguration;
+  return {projects} as CodeModelConfiguration;
 }
 export async function loadExtCodeModelContent(reply_path: string, codeModel_filename: string) {
   const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
@@ -222,5 +225,5 @@ export async function loadExtCodeModelContent(reply_path: string, codeModel_file
       = await Promise.all((codeModelContent.configurations)
                               .map(config_element => loadConfig(codeModelContent.paths, reply_path, config_element)));
 
-  return {configurations} as driver_api.ExtCodeModelContent;
+  return {configurations} as CodeModelContent;
 }

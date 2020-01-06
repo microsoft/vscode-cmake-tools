@@ -89,7 +89,7 @@ export interface TargetObject {
   artifacts: [{path: string}];
   nameOnDisk: string;
   paths: PathInfo;
-  sources: {path: string; compileGroupIndex?: number}[];
+  sources: {path: string; compileGroupIndex?: number, isGenerated?: boolean}[];
   compileGroups: CompileGroup[];
 }
 }

@@ -32,7 +32,7 @@ export function makeCodeModelDriverTestsuite(driver_generator: (cmake: CMakeExec
   kit: Kit|null, workspaceFolder: string | null,
   preconditionHandler: CMakePreconditionProblemSolver,
   preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
-  suite('CMake-Server-Driver tests', () => {
+  suite('CMake-CodeModel-Driver tests', () => {
     const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
     const workspacePath: string = 'test/unit-tests/driver/workspace';
     const root = getTestRootFilePath(workspacePath);

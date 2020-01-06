@@ -27,13 +27,14 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 import {NoGeneratorError} from './cms-driver';
-import {CMakeCodeModelDriver, ExtCodeModelContent} from './driver_api';
+
+import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
 
 const log = logging.createLogger('cmakefileapi-driver');
 /**
  * The cmake driver with FileApi of CMake >3.15.0
  */
-export class CMakeFileApiDriver extends CMakeCodeModelDriver {
+export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
   private constructor(cmake: CMakeExecutable,
                       readonly config: ConfigurationReader,
                       workspaceRootPath: string|null,
@@ -190,7 +191,7 @@ export class CMakeFileApiDriver extends CMakeCodeModelDriver {
     }
   }
 
-  private _codeModel: ExtCodeModelContent|null = null;
+  private _codeModel: codemodel.CodeModelContent|null = null;
 
   get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
   get generatorName(): string|null { return this._generatorInformation ? this._generatorInformation.name : null; }
@@ -218,6 +219,6 @@ export class CMakeFileApiDriver extends CMakeCodeModelDriver {
              }));
   }
 
-  private readonly _codeModelChanged = new vscode.EventEmitter<null|ExtCodeModelContent>();
+  private readonly _codeModelChanged = new vscode.EventEmitter<null|codemodel.CodeModelContent>();
   get onCodeModelChanged() { return this._codeModelChanged.event; }
 }

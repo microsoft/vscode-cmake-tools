@@ -33,7 +33,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
   let driver: CMakeDriver|null = null;
   // tslint:disable:no-unused-expression
 
-  suite('CMake-Server-Driver tests', () => {
+  suite('CMake-Driver tests', () => {
     const cmakePath: string = process.env.CMAKE_EXECUTABLE? process.env.CMAKE_EXECUTABLE: 'cmake';
     const workspacePath: string = 'test/unit-tests/driver/workspace';
     const root = getTestRootFilePath(workspacePath);
@@ -328,6 +328,27 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
       await driver.setKit(kitNinja, [{name:'Ninja'}]);
       expect(await driver.configure([])).to.be.eq(0);
       expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
+    }).timeout(90000);
+
+    test('Test Visual Studio kit with wrong all target name', async () => {
+      if (process.platform !== 'win32') return;
+
+      const config = ConfigurationReader.createForDirectory(root);
+      const executable = await getCMakeExecutableInformation(cmakePath);
+
+      driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+      await driver.cleanConfigure([]);
+      expect(await driver.build('all')).to.be.eq(0, 'Automatic correction of all target failed');
+    }).timeout(90000);
+
+    test('Test Ninja kit with wrong all target name', async () => {
+      if (process.platform !== 'win32') return;
+      const config = ConfigurationReader.createForDirectory(root);
+      const executable = await getCMakeExecutableInformation(cmakePath);
+
+      driver = await driver_generator(executable, config, kitNinja, defaultWorkspaceFolder, async () => {}, []);
+      await driver.cleanConfigure([]);
+      expect(await driver.build('ALL_BUILD')).to.be.eq(0, 'Automatic correction of ALL_BUILD target failed');
     }).timeout(90000);
 
     test('Test extra arguments on configure', async () => {
