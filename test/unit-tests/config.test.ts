@@ -39,6 +39,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     copyCompileCommands: null,
     configureOnOpen: null,
     useCMakeServer: true,
+    cmakeCommunicationMode: 'automatic',
     ignoreKitEnv: false,
     buildTask: false,
     outputLogEncoding: 'auto',

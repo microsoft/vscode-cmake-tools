@@ -266,29 +266,49 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let drv: CMakeDriver;
     const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
+    let communicationMode = this.workspaceContext.config.cmakeCommunicationMode;
+
     if (this.workspaceContext.config.useCMakeServer) {
+      log.warning(
+        localize('please.upgrade.configuration',
+          'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
+      communicationMode = 'serverAPI';
+    }
+
+    if (communicationMode == 'automatic') {
       if (cmake.isFileApiModSupported) {
-        drv = await CMakeFileApiDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
-      } else if(cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+        communicationMode = 'fileAPI';
+      } else if (cmake.isServerModeSupported) {
+        communicationMode = 'serverAPI';
       } else {
+        communicationMode = 'legacy';
+      }
+
+      if (communicationMode != 'fileAPI') {
         log.warning(
           localize('please.upgrade.cmake',
-            'CMake Server is not available with the current CMake executable. Please upgrade to CMake {0} or newer.',
-            versionToString(cmake.minimalServerModeVersion)));
-        drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+            'CMake FileApi is not available with the current CMake executable. Please upgrade to CMake {0} or newer.',
+            versionToString(cmake.minimalFileApiModeVersion)));
       }
-    } else {
-      // We didn't start the server backend, so we'll use the legacy one
-      try {
-        this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
-        drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
-      } finally { this._statusMessage.set(localize('ready.status', 'Ready')); }
     }
+
+    try {
+      this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
+      switch (communicationMode) {
+        case 'fileAPI':
+          drv = await CMakeFileApiDriver
+              .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+          break;
+        case 'serverAPI':
+          drv = await CMakeServerClientDriver
+              .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+          break;
+        default:
+          drv = await LegacyCMakeDriver
+            .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+        }
+    } finally { this._statusMessage.set(localize('ready.status', 'Ready')); }
+
     await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);

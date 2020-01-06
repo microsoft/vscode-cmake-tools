@@ -10,6 +10,8 @@ import * as vscode from 'vscode';
 
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
+export type CMakeCommunicationMode = 'legacy'|'serverAPI'|'fileAPI'|'automatic';
+
 interface HardEnv {
   [key: string]: string;
 }
@@ -48,6 +50,7 @@ export interface ExtensionConfigurationSettings {
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   useCMakeServer: boolean;
+  cmakeCommunicationMode: CMakeCommunicationMode;
   ignoreKitEnv: boolean;
   buildTask: boolean;
   outputLogEncoding: string;
@@ -188,6 +191,10 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
+  get cmakeCommunicationMode(): CMakeCommunicationMode {
+    return this.configData.cmakeCommunicationMode;
+  }
+
   get numJobs(): number {
     const jobs = this.parallelJobs;
     if (!!jobs) {
@@ -255,6 +262,7 @@ export class ConfigurationReader implements vscode.Disposable {
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
+    cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
     ignoreKitEnv: new vscode.EventEmitter<boolean>(),
     buildTask: new vscode.EventEmitter<boolean>(),
     outputLogEncoding: new vscode.EventEmitter<string>(),

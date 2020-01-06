@@ -921,8 +921,20 @@
         },
         "cmake.useCMakeServer": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "%cmake-tools.configuration.cmake.useCMakeServer.description%",
+          "scope": "resource"
+        },
+        "cmake.cmakeCommunicationMode": {
+          "type": "string",
+          "default": "automatic",
+          "enum": [
+            "legacy",
+            "serverAPI",
+            "fileAPI",
+            "automatic"
+          ],
+          "description": "Allow selecting the communication protocol between the extension and CMake.",
           "scope": "resource"
         },
         "cmake.ignoreKitEnv": {
