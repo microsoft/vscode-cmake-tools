@@ -1,11 +1,17 @@
 import * as api from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as index_api from '@cmt/drivers/cmakefileapi/api';
+import {
+  CodeModelConfiguration,
+  CodeModelContent,
+  CodeModelFileGroup,
+  CodeModelProject,
+  CodeModelTarget
+} from '@cmt/drivers/codemodel-driver-interface';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
 import * as path from 'path';
-import { CodeModelContent, CodeModelFileGroup, CodeModelConfiguration, CodeModelProject, CodeModelTarget } from '@cmt/drivers/codemodel-driver-interface';
 
 const log = logging.createLogger('cmakefileapi-helper');
 
@@ -139,28 +145,26 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
   return path.normalize(path.join(base_path, input_path));
 }
 
-function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject):
-    CodeModelFileGroup[] {
-  const fileGroup: CodeModelFileGroup[]
-      = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
-          const compileFlags
-              = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
+function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject): CodeModelFileGroup[] {
+  const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
+    const compileFlags
+        = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
 
-          return {
-            isGenerated: false,
-            sources: [],
-            language: group.language,
-            includePath: group.defines ? group.includes : [],
-            compileFlags,
-            defines: group.defines ? group.defines.map(define => define.define) : []
-          };
-        });
+    return {
+      isGenerated: false,
+      sources: [],
+      language: group.language,
+      includePath: group.defines ? group.includes : [],
+      compileFlags,
+      defines: group.defines ? group.defines.map(define => define.define) : []
+    };
+  });
   // Collection all without compilegroup like headers
   const defaultIndex = fileGroup.push({sources: [], isGenerated: false} as CodeModelFileGroup) - 1;
 
 
   targetObject.sources.forEach(sourcefile => {
-    const file_path = path.relative(targetObject.paths.source, sourcefile.path).replace("\\","/");
+    const file_path = path.relative(targetObject.paths.source, sourcefile.path).replace('\\', '/');
     if (sourcefile.compileGroupIndex !== undefined) {
       fileGroup[sourcefile.compileGroupIndex].sources.push(file_path);
     } else {

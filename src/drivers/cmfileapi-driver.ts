@@ -1,8 +1,3 @@
-/**
- * Module for the legacy driver. Talks to pre-CMake Server versions of CMake.
- * Can also talk to newer versions of CMake via the command line.
- */ /** */
-
 import * as api from '@cmt/api';
 import {ExecutableTarget} from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
@@ -16,6 +11,7 @@ import {
   loadExtCodeModelContent,
   loadIndexFile
 } from '@cmt/drivers/cmakefileapi/api_helpers';
+import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
 import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {CMakeGenerator, Kit} from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -28,11 +24,9 @@ import * as vscode from 'vscode';
 
 import {NoGeneratorError} from './cms-driver';
 
-import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
-
 const log = logging.createLogger('cmakefileapi-driver');
 /**
- * The cmake driver with FileApi of CMake >3.15.0
+ * The CMake driver with FileApi of CMake >= 3.15.0
  */
 export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
   private constructor(cmake: CMakeExecutable,
