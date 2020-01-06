@@ -82,7 +82,7 @@ export function makeCodeModelDriverTestsuite(driver_generator: (cmake: CMakeExec
       if (driver instanceof codemodel_api.CodeModelDriver) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
       }
-      await driver.configure(args);
+      expect(await driver.configure(args)).to.be.eq(0);
       return code_model;
     }
 

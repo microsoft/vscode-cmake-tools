@@ -81,6 +81,7 @@ export interface CompileGroup {
   defines: {define: string;}[];
   compileCommandFragments: {fragment: string;}[];
   sourceIndexes: number[];
+  sysroot: {path:string;};
 }
 
 export interface TargetObject {
@@ -90,6 +91,6 @@ export interface TargetObject {
   nameOnDisk: string;
   paths: PathInfo;
   sources: {path: string; compileGroupIndex?: number, isGenerated?: boolean}[];
-  compileGroups: CompileGroup[];
+  compileGroups?: CompileGroup[];
 }
 }

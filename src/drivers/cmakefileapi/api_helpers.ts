@@ -181,7 +181,16 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
   const targetObject = await loadTargetObject(jsonfile);
 
   const fileGroups = convertToExtCodeModelFileGroup(targetObject);
-  // \todo extend with sysroot
+
+  // This implementation expects the there is only on sysroot in a target.
+  // The ServerAPI only has provided one sysroot. In the FileAPI,
+  // each compileGroup has its separate sysroot.
+  let sysroot;
+  if (targetObject.compileGroups) {
+    const all_sysroots = targetObject.compileGroups.map(x => !!x.sysroot? x.sysroot.path : undefined).filter(x => x != undefined);
+     sysroot = all_sysroots.length != 0?  all_sysroots[0]: undefined;
+  }
+
   return {
     name: targetObject.name,
     type: targetObject.type,
@@ -191,7 +200,8 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
         ? targetObject.artifacts.map(
               a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), root_paths.build))
         : [],
-    fileGroups
+    fileGroups,
+    sysroot: sysroot
   } as CodeModelTarget;
 }
 
