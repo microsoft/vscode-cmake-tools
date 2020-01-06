@@ -187,8 +187,9 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
   // each compileGroup has its separate sysroot.
   let sysroot;
   if (targetObject.compileGroups) {
-    const all_sysroots = targetObject.compileGroups.map(x => !!x.sysroot? x.sysroot.path : undefined).filter(x => x != undefined);
-     sysroot = all_sysroots.length != 0?  all_sysroots[0]: undefined;
+    const all_sysroots
+        = targetObject.compileGroups.map(x => !!x.sysroot ? x.sysroot.path : undefined).filter(x => x !== undefined);
+    sysroot = all_sysroots.length != 0 ? all_sysroots[0] : undefined;
   }
 
   return {
@@ -201,7 +202,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
               a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), root_paths.build))
         : [],
     fileGroups,
-    sysroot: sysroot
+    sysroot
   } as CodeModelTarget;
 }
 

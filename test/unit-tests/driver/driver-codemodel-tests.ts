@@ -1,4 +1,4 @@
-import {getCMakeExecutableInformation, CMakeExecutable} from '@cmt/cmake/cmake-executable';
+import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {ConfigurationReader} from '@cmt/config';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import * as chai from 'chai';
@@ -28,10 +28,13 @@ function cleanupBuildDir(build_dir: string): boolean {
 let driver: CMakeDriver|null = null;
 // tslint:disable:no-unused-expression
 
-export function makeCodeModelDriverTestsuite(driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader,
-  kit: Kit|null, workspaceFolder: string | null,
-  preconditionHandler: CMakePreconditionProblemSolver,
-  preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+export function makeCodeModelDriverTestsuite(
+    driver_generator: (cmake: CMakeExecutable,
+                       config: ConfigurationReader,
+                       kit: Kit|null,
+                       workspaceFolder: string|null,
+                       preconditionHandler: CMakePreconditionProblemSolver,
+                       preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
   suite('CMake-CodeModel-Driver tests', () => {
     const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
     const workspacePath: string = 'test/unit-tests/driver/workspace';
@@ -48,7 +51,8 @@ export function makeCodeModelDriverTestsuite(driver_generator: (cmake: CMakeExec
         preferredGenerator: {name: 'Visual Studio 15 2017', platform: 'x64'}
       } as Kit;
     } else {
-      kitDefault = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Unix Makefiles'}} as Kit;
+      kitDefault
+          = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Unix Makefiles'}} as Kit;
     }
 
     setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
@@ -147,37 +151,37 @@ export function makeCodeModelDriverTestsuite(driver_generator: (cmake: CMakeExec
     }).timeout(90000);
 
     test('Test first static library target directory', async () => {
-          const codemodel_data = await generateCodeModelForConfiguredDriver();
-          expect(codemodel_data).to.be.not.null;
+      const codemodel_data = await generateCodeModelForConfiguredDriver();
+      expect(codemodel_data).to.be.not.null;
 
-          const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
-          expect(target).to.be.not.undefined;
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
+      expect(target).to.be.not.undefined;
 
-          // Test target name used for node label
-          expect(target!.name).to.be.eq('StaticLibDummy');
-          const executableName = process.platform === 'win32' ? 'StaticLibDummy.lib' : 'libStaticLibDummy.a';
-          expect(target!.fullName).to.be.eq(executableName);
-          expect(target!.type).to.be.eq('STATIC_LIBRARY');
+      // Test target name used for node label
+      expect(target!.name).to.be.eq('StaticLibDummy');
+      const executableName = process.platform === 'win32' ? 'StaticLibDummy.lib' : 'libStaticLibDummy.a';
+      expect(target!.fullName).to.be.eq(executableName);
+      expect(target!.type).to.be.eq('STATIC_LIBRARY');
 
-          // Test location of project source directory
-          // Used by tree view to make paths relative
-          expect(path.normalize(target!.sourceDirectory!).toLowerCase())
-              .to.eq(path.normalize(path.join(root, 'test_project', 'static_lib_dummy')).toLowerCase());
+      // Test location of project source directory
+      // Used by tree view to make paths relative
+      expect(path.normalize(target!.sourceDirectory!).toLowerCase())
+          .to.eq(path.normalize(path.join(root, 'test_project', 'static_lib_dummy')).toLowerCase());
 
-          // Language
-          const compile_information = target!.fileGroups!.find(t => !!t.language);
-          expect(compile_information).to.be.not.undefined;
-          expect(compile_information!.language).to.eq('CXX');
+      // Language
+      const compile_information = target!.fileGroups!.find(t => !!t.language);
+      expect(compile_information).to.be.not.undefined;
+      expect(compile_information!.language).to.eq('CXX');
 
-          // Test main source file
-          expect(compile_information!.sources).to.include('info.cpp');
-          expect(compile_information!.sources).to.include('test2.cpp');
+      // Test main source file
+      expect(compile_information!.sources).to.include('info.cpp');
+      expect(compile_information!.sources).to.include('test2.cpp');
 
-          // compile flags for file groups
-          if (process.platform === 'win32') {
-            expect(compile_information!.compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1  ');
-          }
-        }).timeout(90000);
+      // compile flags for file groups
+      if (process.platform === 'win32') {
+        expect(compile_information!.compileFlags).to.eq('/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MDd /Zi /Ob0 /Od /RTC1  ');
+      }
+    }).timeout(90000);
 
     test('Test first shared library target directory', async () => {
       const codemodel_data = await generateCodeModelForConfiguredDriver();
@@ -188,7 +192,8 @@ export function makeCodeModelDriverTestsuite(driver_generator: (cmake: CMakeExec
 
       // Test target name used for node label
       expect(target!.name).to.be.eq('SharedLibDummy');
-      const executableNameRegex = process.platform === 'win32' ? /^SharedLibDummy.dll/ : /^libSharedLibDummy.(so|dylib)/;
+      const executableNameRegex
+          = process.platform === 'win32' ? /^SharedLibDummy.dll/ : /^libSharedLibDummy.(so|dylib)/;
       expect(target!.fullName).to.match(executableNameRegex);
       expect(target!.type).to.be.eq('SHARED_LIBRARY');
 

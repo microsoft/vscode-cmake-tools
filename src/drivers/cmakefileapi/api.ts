@@ -81,7 +81,7 @@ export interface CompileGroup {
   defines: {define: string;}[];
   compileCommandFragments: {fragment: string;}[];
   sourceIndexes: number[];
-  sysroot: {path:string;};
+  sysroot: {path: string;};
 }
 
 export interface TargetObject {
