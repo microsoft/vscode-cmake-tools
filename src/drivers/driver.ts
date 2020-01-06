@@ -2,11 +2,17 @@
  * Defines base class for CMake drivers
  */ /** */
 
+import * as path from 'path';
+import * as vscode from 'vscode';
+
 import * as api from '@cmt/api';
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/code-pages';
 import {CompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
+import {CMakeBuildConsumer, CompileOutputConsumer} from '@cmt/diagnostics/build';
+import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
+import {RawDiagnosticParser} from '@cmt/diagnostics/util';
 import {ProgressMessage} from '@cmt/drivers/cms-client';
 import * as expand from '@cmt/expand';
 import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from '@cmt/kit';
@@ -16,10 +22,13 @@ import {fs} from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
+import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
-import * as path from 'path';
-import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('driver');
 
@@ -95,7 +104,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     vscode.window.onDidCloseTerminal(closed => {
       for (const [key, term] of this._compileTerms) {
         if (term === closed) {
-          log.debug('Use closed a file compilation terminal');
+          log.debug(localize('user.closed.file.compilation.terminal', 'User closed a file compilation terminal'));
           this._compileTerms.delete(key);
           break;
         }
@@ -108,14 +117,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * calls the `asyncDispose()` method to start any asynchronous shutdown.
    */
   dispose() {
-    log.debug('Disposing base CMakeDriver');
+    log.debug(localize('disposing.base.cmakedriver', 'Disposing base CMakeDriver'));
     for (const term of this._compileTerms.values()) {
       term.dispose();
     }
     for (const sub of [this._settingsSub, this._argsSub, this._envSub]) {
       sub.dispose();
     }
-    rollbar.invokeAsync('Async disposing CMake driver', () => this.asyncDispose());
+    rollbar.invokeAsync(localize('async.disposing.cmake.driver', 'Async disposing CMake driver'), () => this.asyncDispose());
   }
 
   /**
@@ -257,7 +266,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
       if (!existing) {
         const term = vscode.window.createTerminal({
-          name: 'File Compilation',
+          name: localize('file.compilation', 'File Compilation'),
           cwd: cmd.directory,
           env,
           shellPath,
@@ -279,11 +288,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const cache = this.cachePath;
     const cmake_files = path.join(build_dir, 'CMakeFiles');
     if (await fs.exists(cache)) {
-      log.info('Removing ', cache);
+      log.info(localize('removing', 'Removing {0}', cache));
       await fs.unlink(cache);
     }
     if (await fs.exists(cmake_files)) {
-      log.info('Removing ', cmake_files);
+      log.info(localize('removing', 'Removing {0}', cmake_files));
       await fs.rmdir(cmake_files);
     }
   }
@@ -293,7 +302,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param kit The new kit
    */
   async setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
-    log.info(`Switching to kit: ${kit.name}`);
+    log.info(localize('switching.to.kit', 'Switching to kit: {0}', kit.name));
 
     const opts = this.expansionOptions;
     opts.vars.buildKit = kit.name;
@@ -305,13 +314,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private async _setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
     this._kit = Object.seal({...kit});
-    log.debug('CMakeDriver Kit set to', kit.name);
+    log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
     if (kit.preferredGenerator)
       preferredGenerators.push(kit.preferredGenerator);
 
-    this._generator = await this.findBestGenerator(preferredGenerators);
+    // Use the "best generator" selection logic only if the user did not define already
+    // in settings (via "cmake.generator") a particular generator to be used.
+    if (this.config.generator) {
+      this._generator = {
+        name: this.config.generator,
+        platform: this.config.platform || undefined,
+        toolset: this.config.toolset || undefined,
+      };
+    } else {
+      this._generator = await this.findBestGenerator(preferredGenerators);
+    }
   }
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -344,7 +363,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param keywordSetting Variant Keywords for identification of a variant option
    */
   async setVariant(opts: VariantOption, keywordSetting: Map<string, string>|null) {
-    log.debug('Setting new variant', opts.long || '(Unnamed)');
+    log.debug(localize('setting.new.variant', 'Setting new variant {0}', opts.long || '(Unnamed)'));
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
     this._variantLinkage = opts.linkage || null;
@@ -486,13 +505,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const child = this.executeCommand(program, args, undefined, {silent: true});
     try {
       const result = await child.result;
-      log.debug('Command version test return code', nullableValueToString(result.retc));
+      log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
       return result.retc == 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
-      log.debug('Command version test return code',
-                nullableValueToString(e2.code),
-                nullableValueToString(e2.code));
+      log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
       if (e2.code == 'ENOENT') {
         return false;
       }
@@ -504,7 +521,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Picks the best generator to use on the current system
    */
   async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator|null> {
-    log.debug('Trying to detect generator supported by system');
+    log.debug(localize('trying.to.detect.generator', 'Trying to detect generator supported by system'));
     const platform = process.platform;
     for (const gen of preferredGenerators) {
       const gen_name = gen.name;
@@ -520,6 +537,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
         if (gen_name == 'Unix Makefiles') {
           return this.testHaveCommand('make');
+        }
+        if (gen_name == 'MSYS Makefiles') {
+            return platform === 'win32' && this.testHaveCommand('make');
         }
         return false;
       })();
@@ -578,7 +598,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
     this.configRunning = true;
     try {
-      log.debug('Start configure ', extra_args);
+      log.debug(localize('start.configure', 'Start configure'), extra_args);
       const pre_check_ok = await this._beforeConfigureOrBuild();
       if (!pre_check_ok) {
         return -1;
@@ -597,13 +617,46 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const expanded_flags_promises = final_flags.map(
           async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
       const expanded_flags = await Promise.all(expanded_flags_promises);
-      log.trace('CMake flags are', JSON.stringify(expanded_flags));
+      log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
 
       // Expand all important paths
       await this._refreshExpansions();
 
+      const timeStart: number = new Date().getTime();
       const retc = await this.doConfigure(expanded_flags, consumer);
+      const timeEnd: number = new Date().getTime();
+
+      const cmakeVersion = this.cmake.version;
+      const telemetryProperties: telemetry.Properties = {
+        CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+        CMakeGenerator: this.generatorName || '',
+        ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+      };
+      const telemetryMeasures: telemetry.Measures = {
+        Duration: timeEnd - timeStart,
+      };
+      if (consumer instanceof CMakeOutputConsumer) {
+        let errorCount: number = 0;
+        let warningCount: number = 0;
+        consumer.diagnostics.forEach(v => {
+          if (v.diag.severity === 0) {
+            errorCount++;
+          } else if (v.diag.severity === 1) {
+            warningCount++;
+          }
+        });
+        telemetryMeasures['ErrorCount'] = errorCount;
+        telemetryMeasures['WarningCount'] = warningCount;
+      } else {
+        // Wrong type: shouldn't get here, just in case
+        rollbar.error('Wrong build result type.');
+        telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
+      }
+      telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
+
       return retc;
+    } catch {
+      return -1;
     } finally { this.configRunning = false; }
   }
 
@@ -655,17 +708,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     console.assert(!!this._kit);
     if (!this._kit) {
-      throw new Error('No kit is set!');
+      throw new Error(localize('no.kit.is.set', 'No kit is set!'));
     }
     if (this._kit.compilers) {
-      log.debug('Using compilers in', this._kit.name, 'for configure');
+      log.debug(localize('using.compilers.in.for.configure', 'Using compilers in {0} for configure', this._kit.name));
       for (const lang in this._kit.compilers) {
         const compiler = this._kit.compilers[lang];
         settingMap[`CMAKE_${lang}_COMPILER`] = {type: 'FILEPATH', value: compiler} as util.CMakeValue;
       }
     }
     if (this._kit.toolchainFile) {
-      log.debug('Using CMake toolchain', this._kit.name, 'for configuring');
+      log.debug(localize('using.cmake.toolchain.for.configure', 'Using CMake toolchain {0} for configuring', this._kit.name));
       settingMap.CMAKE_TOOLCHAIN_FILE = {type: 'FILEPATH', value: this._kit.toolchainFile} as util.CMakeValue;
     }
     if (this._kit.cmakeSettings) {
@@ -684,7 +737,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
-    log.debug('Start build', target);
+    log.debug(localize('start.build', 'Start build'), target);
     if(this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -700,8 +753,42 @@ export abstract class CMakeDriver implements vscode.Disposable {
       this.buildRunning = false;
       return -1;
     }
+    const timeStart: number = new Date().getTime();
     const child = await this._doCMakeBuild(target, consumer);
-    if (!child) {
+    const timeEnd: number = new Date().getTime();
+    const telemetryProperties: telemetry.Properties = {
+      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+    };
+    const telemetryMeasures: telemetry.Measures = {
+      Duration: timeEnd - timeStart,
+    };
+    if (child) {
+      if (consumer instanceof CMakeBuildConsumer &&
+          consumer.compileConsumer instanceof CompileOutputConsumer) {
+        let errorCount: number = 0;
+        let warningCount: number = 0;
+        for (const compiler in consumer.compileConsumer.compilers) {
+          const parser: RawDiagnosticParser = consumer.compileConsumer.compilers[compiler];
+          parser.diagnostics.forEach(v => {
+            if (v.severity === 'error' || v.severity === 'fatal error') {
+              errorCount++;
+            } else if (v.severity === 'warning') {
+              warningCount++;
+            }
+          });
+        }
+        telemetryMeasures['ErrorCount'] = errorCount;
+        telemetryMeasures['WarningCount'] = warningCount;
+      } else {
+        // Wrong type: shouldn't get here, just in case
+        rollbar.error('Wrong build result type.');
+        telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;
+      }
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
+    } else {
+      // Not sure what happened but there's an error...
+      telemetryMeasures['ErrorCount'] = 1;
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
       this.buildRunning = false;
       return -1;
     }
@@ -721,17 +808,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * configuration tasks are run
    */
   private async _beforeConfigureOrBuild(): Promise<boolean> {
-    log.debug('Runnnig pre-configure checks and steps');
+    log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
 
     if (!this.sourceDir) {
-      log.debug('Source directory not set ', this.sourceDir);
+      log.debug(localize('source.directory.not.set', 'Source directory not set'), this.sourceDir);
       await this.preconditionHandler(CMakePreconditionProblems.NoSourceDirectoryFound);
       return false;
     }
 
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
-      log.debug('No configuring: There is no ', cmake_list);
+      log.debug(localize('no.configurating', 'No configuring: There is no {0}', cmake_list));
       await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile);
       return false;
     }
@@ -776,6 +863,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
         return ['-j', this.config.numJobs.toString()];
+      else if (/Visual Studio/.test(gen) && target !== 'clean')
+        return ['/maxcpucount:' + this.config.numJobs.toString()];
       else
         return [];
     })();
@@ -792,7 +881,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises) as string[];
-    log.trace('CMake build args are: ', JSON.stringify(expanded_args));
+
+    log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(expanded_args)));
 
     return {command: this.cmake.path, args: expanded_args, build_env};
   }

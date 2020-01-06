@@ -9,6 +9,10 @@ import {fs} from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cms-client');
 
@@ -17,7 +21,7 @@ const ENABLE_CMSERVER_PROTO_DEBUG = false;
 const MESSAGE_WRAPPER_RE = /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" ==\]\s*([^]*)/;
 
 export class StartupError extends global.Error {
-  constructor(public readonly retc: number) { super('Error starting up cmake-server'); }
+  constructor(public readonly retc: number) { super(localize('error.starting.cmake-server', 'Error starting up cmake-server')); }
 }
 
 export interface ProtocolVersion {
@@ -220,6 +224,7 @@ export interface CodeModelFileGroup {
   includePath?: {path: string; isSystem?: boolean;}[];
   defines?: string[];
   sources: string[];
+  isGenerated: boolean;
 }
 
 export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
@@ -379,11 +384,11 @@ export class CMakeServerClient {
       }
       if (mat.length !== 3) {
         debugger;
-        throw new global.Error('Protocol error talking to CMake! Got this input: ' + input);
+        throw new global.Error(localize('protocol.error.cmake', 'Protocol error talking to CMake! Got this input: {0}', input));
       }
       this._accInput = mat[2];
       if (ENABLE_CMSERVER_PROTO_DEBUG) {
-        log.debug(`Received message from cmake-server: ${mat[1]}`);
+        log.debug(localize('received.message.from.make-server', 'Received message from cmake-server: {0}', mat[1]));
       }
       const message: SomeMessage = JSON.parse(mat[1]);
       this._onMessage(message);
@@ -393,7 +398,7 @@ export class CMakeServerClient {
   private _takePromiseForCookie(cookie: string): MessageResolutionCallbacks|undefined {
     const item = this._promisesResolvers.get(cookie);
     if (!item) {
-      throw new global.Error('Invalid cookie: ' + cookie);
+      throw new global.Error(localize('invalid.cookie', 'Invalid cookie: {0}', cookie));
     }
     this._promisesResolvers.delete(cookie);
     return item;
@@ -409,7 +414,7 @@ export class CMakeServerClient {
         if (pr) {
           pr.resolve(reply);
         } else {
-          log.error(`CMake server cookie "${cookied.cookie}" does not correspond to a known message`);
+          log.error(localize('cookie.not.known.message', 'CMake server cookie "{0}" does not correspond to a known message', cookied.cookie));
         }
         return;
       }
@@ -419,13 +424,13 @@ export class CMakeServerClient {
         if (pr) {
           pr.reject(err);
         } else {
-          log.error(`CMake server cookie "${cookied.cookie}" does not correspond to a known message`);
+          log.error(localize('cookie.not.known.message', 'CMake server cookie "{0}" does not correspond to a known message', cookied.cookie));
         }
         return;
       }
       case 'progress': {
         const prog = cookied as any as ProgressMessage;
-        this._params.onProgress(prog).catch(e => { log.error('Unandled error in onProgress', e); });
+        this._params.onProgress(prog).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onProgress'), e); });
         return;
       }
       }
@@ -439,18 +444,18 @@ export class CMakeServerClient {
         }
       });
       rollbar.takePromise('Unlink pipe', {pipe: this._pipeFilePath}, unlink_pr);
-      this._params.onHello(some as HelloMessage).catch(e => { log.error('Unhandled error in onHello', e); });
+      this._params.onHello(some as HelloMessage).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onHello'), e); });
       return;
     }
     case 'message': {
-      this._params.onMessage(some as MessageMessage).catch(e => { log.error('Unhandled error in onMessage', e); });
+      this._params.onMessage(some as MessageMessage).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onMessage'), e); });
       return;
     }
     case 'signal': {
       const sig = some as SomeSignalMessage;
       switch (sig.name) {
       case 'dirty': {
-        this._params.onDirty().catch(e => { log.error('Unhandled error in onDirty', e); });
+        this._params.onDirty().catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onDirty'), e); });
         return;
       }
       case 'fileChange': {
@@ -460,7 +465,7 @@ export class CMakeServerClient {
     }
     }
     debugger;
-    log.warning(`Can't yet handle the ${some.type} messages`);
+    log.warning(localize('cant.yet.handle.message', 'Can\'t yet handle the {0} messages', some.type));
   }
 
   sendRequest(t: 'handshake', p: HandshakeParams): Promise<HandshakeContent>;
@@ -477,7 +482,7 @@ export class CMakeServerClient {
     const pr = new Promise((resolve, reject) => { this._promisesResolvers.set(cookie, {resolve, reject}); });
     const msg = JSON.stringify(cp);
     if (ENABLE_CMSERVER_PROTO_DEBUG) {
-      log.debug(`Sending message to cmake-server: ${msg}`);
+      log.debug(localize('sending.message.to.cmake-server', 'Sending message to cmake-server: {0}', msg));
     }
     this._pipe.write('\n[== "CMake Server" ==[\n');
     this._pipe.write(msg);
@@ -521,7 +526,7 @@ export class CMakeServerClient {
       = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
         env: final_env, cwd: params.binaryDir
       });
-    log.debug(`Started new CMake Server instance with PID ${child.pid}`);
+    log.debug(localize('started.new.cmake.server.instance', 'Started new CMake Server instance with PID {0}', child.pid));
     child.stdout.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
     child.stderr.on('data', data => this._params.onOtherOutput(data.toLocaleString()));
     setTimeout(() => {
@@ -531,7 +536,7 @@ export class CMakeServerClient {
         pipe.on('error', e => {
           debugger;
           pipe.end();
-          rollbar.takePromise('Pipe error from cmake-server', {pipe: pipe_file}, params.onPipeError(e));
+          rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'), {pipe: pipe_file}, params.onPipeError(e));
           reject(e);
         });
         pipe.on('end', () => {
@@ -543,9 +548,9 @@ export class CMakeServerClient {
       this._endPromise = Promise.all([end_promise, exit_promise]).then(() => {});
       child.on('close', (retc: number, signal: string) => {
         if (retc !== 0) {
-          log.error('The connection to cmake-server was terminated unexpectedly');
-          log.error(`cmake-server exited with status ${retc} (${signal})`);
-          params.onCrash(retc, signal).catch(e => { log.error(`Unhandled error in onCrash ${e}`); });
+          log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));
+          log.error(localize('cmake-server.exited.with.status', 'cmake-server exited with status {0} ({1})', retc, signal));
+          params.onCrash(retc, signal).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onCrash'), e); });
         }
       });
     }, 1000);
@@ -617,9 +622,13 @@ export class CMakeServerClient {
               hsparams.generator = generator.name;
               hsparams.platform = generator.platform;
               hsparams.toolset = generator.toolset;
-              log.info(`Configuring using the "${hsparams.generator}" CMake generator with plattform ` +
-                      `"${hsparams.platform}" and toolset `,
-                      JSON.stringify(hsparams.toolset || {}));
+
+              const configureMessage: string = localize('configuring.using.generator',
+                                                'Configuring using the "{0}" CMake generator', hsparams.generator);
+              const extraMessage: string = hsparams.platform || hsparams.toolset ?
+                localize('with.platform.and.toolset', ' with platform "{0}" and toolset {1}', hsparams.platform, JSON.stringify(hsparams.toolset || {})) :
+                "";
+              log.info(configureMessage + extraMessage);
             }
 
             await client.sendRequest('handshake', hsparams);

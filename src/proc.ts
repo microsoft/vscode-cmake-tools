@@ -10,6 +10,10 @@ import rollbar from './rollbar';
 import * as util from './util';
 
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('proc');
 
@@ -107,11 +111,10 @@ export function execute(command: string,
                         options?: ExecutionOptions): Subprocess {
   const cmdstr = buildCmdStr(command, args);
   if (options && options.silent !== true) {
-    log.info('Executing command: '
-             // We do simple quoting of arguments with spaces.
+    log.info(// We do simple quoting of arguments with spaces.
              // This is only shown to the user,
              // and doesn't have to be 100% correct.
-             + cmdstr);
+             localize('executing.command', 'Executing command: {0}', cmdstr));
   }
   if (!options) {
     options = {};
@@ -143,7 +146,18 @@ export function execute(command: string,
   }
   else
   {
-    child = proc.spawn(command, args, spawn_opts);
+    try {
+      child = proc.spawn(command, args, spawn_opts);
+    } catch {
+      return {
+        child: undefined,
+        result: Promise.resolve({
+          retc: -1,
+          stdout: "",
+          stderr: ""
+        })
+      };
+    }
     if (options.encoding)
       child.stdout.setEncoding(options.encoding);
 
@@ -157,7 +171,7 @@ export function execute(command: string,
         let stderr_acc = '';
         let stderr_line_acc = '';
         child.stdout.on('data', (data: Uint8Array) => {
-          rollbar.invoke('Processing "data" event from proc stdout', {data, command, args}, () => {
+          rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), {data, command, args}, () => {
             const str = iconv.decode(new Buffer(data), encoding);
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
             while (lines.length > 1) {
@@ -175,7 +189,7 @@ export function execute(command: string,
           });
         });
         child.stderr.on('data', (data: Uint8Array) => {
-          rollbar.invoke('Processing "data" event from proc stderr', {data, command, args}, () => {
+          rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), {data, command, args}, () => {
             const str = data.toString();
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
             while (lines.length > 1) {
@@ -196,7 +210,7 @@ export function execute(command: string,
         // the whole output of the command.
         child.on('close', retc => {
           try {
-            rollbar.invoke('Resolving process on "close" event', {line_acc, stderr_line_acc, command, retc}, () => {
+            rollbar.invoke(localize('resolving.close.event', 'Resolving process on "close" event'), {line_acc, stderr_line_acc, command, retc}, () => {
               if (line_acc && outputConsumer) {
                 outputConsumer.output(line_acc);
               }

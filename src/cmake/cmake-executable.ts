@@ -23,8 +23,6 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     try {
       const version_ex = await proc.execute(path, ['--version']).result;
       if (version_ex.retc === 0 && version_ex.stdout) {
-        cmake.isPresent = true;
-
         console.assert(version_ex.stdout);
         const version_re = /cmake.* version (.*?)\r?\n/;
         cmake.version = util.parseVersion(version_re.exec(version_ex.stdout)![1]);
@@ -36,11 +34,9 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         // Support for new file based API, it replace the server mode
         cmake.isFileApiModSupported = util.versionGreater(cmake.version, cmake.minimalFileApiModeVersion) ||
             util.versionEquals(cmake.version, cmake.minimalFileApiModeVersion);
+        cmake.isPresent = true;
       }
-    } catch (ex) {
-      if (ex.code != 'ENOENT') {
-        throw ex;
-      }
+    } catch {
     }
   }
   return cmake;

@@ -102,7 +102,10 @@ if (Test-Path $out_dir) {
 Invoke-ChronicCommand "yarn install" $yarn install
 
 # Now do the real compile
-Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-once
+Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-production
+
+# Now compile test code
+Invoke-ChronicCommand "Compiling Tests" $yarn run pretest
 
 # Run TSLint to check for silly mistakes
 Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
@@ -124,7 +127,6 @@ if ($PSVersionTable.Platform -eq "Unix") {
             Add-Content $file 'export PATH=$CMAKE_BIN_DIR:$PATH'
         }
     }
-
     set_cmake_in_path "~/.bashrc" (get-item $cmake_binary).Directory.FullName
 } else {
     $Env:PATH = (get-item $cmake_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH

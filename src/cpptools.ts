@@ -6,6 +6,7 @@
  */ /** */
 
 import {CMakeCache} from '@cmt/cache';
+import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -13,7 +14,10 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
-import * as driver_api from '@cmt/drivers/driver_api';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cpptools');
 
@@ -32,7 +36,42 @@ interface TargetDefaults {
   defines: string[];
 }
 
-export function parseCompileFlags(args: string[], lang: string = 'CXX'): CompileFlagInformation {
+function parseCppStandard(std: string): StandardVersion|null {
+  if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
+    return 'c++20';
+  } else if (std.endsWith('++17') || std.endsWith('++1z')) {
+    return 'c++17';
+  } else if (std.endsWith('++14') || std.endsWith('++1y')) {
+    return 'c++14';
+  } else if (std.endsWith('++11') || std.endsWith('++0x')) {
+    return 'c++11';
+  } else if (std.endsWith('++03')) {
+    return 'c++03';
+  } else if (std.endsWith('++98')) {
+    return 'c++98';
+  } else {
+    return null;
+  }
+}
+
+function parseCStandard(std: string): StandardVersion|null {
+  // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
+  if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(std)) {
+    return 'c89';
+  } else if (/(c|gnu)(99|9x|iso9899:(1999|199x))/.test(std)) {
+    return 'c99';
+  } else if (/(c|gnu)(11|1x|iso9899:2011)/.test(std)) {
+    return 'c11';
+  } else if (/(c|gnu)(17|18|iso9899:(2017|2018))/.test(std)) {
+    // Not supported by cpptools
+    // standardVersion = 'c17';
+    return 'c11';
+  } else {
+    return null;
+  }
+}
+
+export function parseCompileFlags(args: string[], lang?: string): CompileFlagInformation {
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
   let standard: StandardVersion = (lang === 'C') ? 'c11' : 'c++17';
@@ -46,7 +85,7 @@ export function parseCompileFlags(args: string[], lang: string = 'CXX'): Compile
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        rollbar.error('Unexpected end of parsing command line arguments');
+        rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));
         continue;
       }
       extraDefinitions.push(value);
@@ -56,38 +95,31 @@ export function parseCompileFlags(args: string[], lang: string = 'CXX'): Compile
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
       if (lang === 'CXX') {
-        if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
-          standard = 'c++20';
-        } else if (std.endsWith('++17') || std.endsWith('++1z')) {
-          standard = 'c++17';
-        } else if (std.endsWith('++14') || std.endsWith('++1y')) {
-          standard = 'c++14';
-        } else if (std.endsWith('++11') || std.endsWith('++0x')) {
-          standard = 'c++11';
-        } else if (std.endsWith('++03')) {
-          standard = 'c++03';
-        } else if (std.endsWith('++98')) {
-          standard = 'c++98';
+        const s = parseCppStandard(std);
+        if (s === null) {
+          log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
-          log.warning('Unknown standard control flag: ', value);
+          standard = s;
         }
       } else if (lang === 'C') {
-        // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-        if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(value)) {
-          standard = 'c89';
-        } else if (/(c|gnu)(99|9x|iso9899:(1999|199x))/.test(value)) {
-          standard = 'c99';
-        } else if (/(c|gnu)(11|1x|iso9899:2011)/.test(value)) {
-          standard = 'c11';
-        } else if (/(c|gnu)(17|18|iso9899:(2017|2018))/.test(value)) {
-          // Not supported by cpptools
-          // standardVersion = 'c17';
-          standard = 'c11';
+        const s = parseCStandard(std);
+        if (s === null) {
+          log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
         } else {
-          log.warning('Unknown standard control flag: ', value);
+          standard = s;
+        }
+      } else if (lang === undefined) {
+        let s = parseCppStandard(std);
+        if (s === null) {
+          s = parseCStandard(std);
+        }
+        if (s === null) {
+          log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
+        } else {
+          standard = s;
         }
       } else {
-        log.warning('Unknown language: ', value);
+        log.warning(localize('unknown language', 'Unknown language: {0}', value));
       }
     }
   }
@@ -99,9 +131,9 @@ export function parseCompileFlags(args: string[], lang: string = 'CXX'): Compile
  */
 export interface CodeModelParams {
   /**
-   * The CMake Server codemodel message content. This is the important one.
+   * The CMake codemodel content. This is the important one.
    */
-  codeModel: driver_api.ExtCodeModelContent;
+  codeModel: codemodel_api.CodeModelContent;
   /**
    * The contents of the CMakeCache.txt, which also provides supplementary
    * configuration information.
@@ -178,7 +210,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   async canProvideBrowseConfigurationsPerFolder() { return false; }
 
   async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
-    throw new Error("Method not implemented.");
+    throw new Error(localize('method.not.implemented', "Method not implemented."));
   }
 
   /** No-op */
@@ -195,10 +227,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: driver_api.ExtCodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
+  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
-    const lang = fileGroup.language || 'CXX';
+    const lang = fileGroup.language;
     // Try the group's language's compiler, then the C++ compiler, then the C compiler.
     const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`) || opts.cache.get('CMAKE_CXX_COMPILER')
         || opts.cache.get('CMAKE_C_COMPILER');
@@ -220,27 +252,24 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
 
-    let cpptoolsCompilerPath = (flags.length === 0) ? comp_path : `${comp_path} ${flags.join(' ')}`;
-    if (sysroot && cpptoolsCompilerPath.indexOf("--sysroot") < 0) {
-      if (sysroot.match(/\s/)) {
-        cpptoolsCompilerPath += ` "--sysroot=${sysroot}"`;
-      }
-      else {
-        cpptoolsCompilerPath += ` --sysroot=${sysroot}`;
-      }
+    if (sysroot) {
+      flags.push(`--sysroot=${sysroot}`);
     }
 
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
       standard,
-      compilerPath: cpptoolsCompilerPath || undefined,
+      compilerPath: comp_path || undefined,
+      compilerArgs: flags || undefined
     };
+
     return {
       defines,
       standard,
       includePath,
       intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
-      compilerPath: cpptoolsCompilerPath || undefined,
+      compilerPath: comp_path || undefined,
+      compilerArgs: flags || undefined
     };
   }
 
@@ -252,7 +281,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param opts Index update options
    */
   private _updateFileGroup(sourceDir: string,
-                           grp: driver_api.ExtCodeModelFileGroup,
+                           grp: codemodel_api.CodeModelFileGroup,
                            opts: CodeModelParams,
                            target: TargetDefaults,
                            sysroot: string) {
@@ -264,6 +293,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         uri: vscode.Uri.file(abs).toString(),
         configuration,
       });
+      const dir = path.dirname(abs_norm);
+      if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
+        this._workspaceBrowseConfiguration.browsePath.push(dir);
+      }
     }
   }
 
@@ -312,10 +345,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
-      vscode.window.showErrorMessage('The path to the compiler for one or more source files was not found in ' +
-                                     'the CMake cache. If you are using a toolchain file, this probably means ' +
-                                     'that you need to specify the CACHE option when you set your C and/or C++ ' +
-                                     'compiler path');
+      vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
+        'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
   }

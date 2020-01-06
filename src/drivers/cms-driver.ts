@@ -7,21 +7,25 @@ import * as api from '@cmt/api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cms-client';
+import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
 import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 import { ConfigurationReader } from '@cmt/config';
-import { CMakeCodeModelDriver, ExtCodeModelContent } from '@cmt/drivers/driver_api';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('cms-driver');
 
 export class NoGeneratorError extends Error {
-  message: string = 'No usable generator found.';
+  message: string = localize('no.usable.generator.found', 'No usable generator found.');
 }
 
-export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
+export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceFolder, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());
@@ -53,7 +57,7 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
     this._codeModel = v;
   }
 
-  private readonly _codeModelChanged = new vscode.EventEmitter<null|ExtCodeModelContent>();
+  private readonly _codeModelChanged = new vscode.EventEmitter<null|codemodel.CodeModelContent>();
   get onCodeModelChanged() { return this._codeModelChanged.event; }
 
   async asyncDispose() {
@@ -91,7 +95,7 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
       await cl.compute();
     } catch (e) {
       if (e instanceof cms.ServerError) {
-        log.error(`Error during CMake configure: ${e}`);
+        log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', e.toString()));
         return 1;
       } else {
         throw e;
@@ -127,7 +131,7 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
       };
       const type = entry_map[el.type];
       if (type === undefined) {
-        rollbar.error(`Unknown cache entry type ${el.type}`);
+        rollbar.error(localize('unknown.cache.entry.type', 'Unknown cache entry type {0}', el.type));
         return acc;
       }
       acc.set(el.key,
@@ -160,13 +164,13 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
     }
     const build_config = this._codeModel.configurations.find(conf => conf.name == this.currentBuildType);
     if (!build_config) {
-      log.error('Found no matching code model for the current build type. This shouldn\'t be possible');
+      log.error(localize('found.no.matching.code.model', 'Found no matching code model for the current build type. This shouldn\'t be possible'));
       return [];
     }
     const metaTargets = [{
       type: 'rich' as 'rich',
       name: this.allTargetName,
-      filepath: 'A special target to build all available targets',
+      filepath: localize('build.all.target', 'A special target to build all available targets'),
       targetType: 'META',
     }];
     if(build_config.projects.some(project => (project.hasInstallRule)? project.hasInstallRule: false))
@@ -174,7 +178,7 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
       metaTargets.push({
         type: 'rich' as 'rich',
         name: 'install',
-        filepath: 'A special target to install all available targets',
+        filepath: localize('install.all.target', 'A special target to install all available targets'),
         targetType: 'META',
       });
     }
@@ -184,7 +188,7 @@ export class CMakeServerClientDriver extends CMakeCodeModelDriver  {
                                                             name: t.name,
                                                             filepath: t.artifacts && t.artifacts.length
                                                                 ? path.normalize(t.artifacts[0])
-                                                                : 'Utility target',
+                                                                : localize('utility.target', 'Utility target'),
                                                             targetType: t.type,
                                                           }))),
                                                       metaTargets);

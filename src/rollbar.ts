@@ -1,98 +1,64 @@
 /**
  * Wrapper around Rollbar, for error reporting.
- */ /** */
-
-import * as path from 'path';
-import * as vscode from 'vscode';
-
-import Rollbar = require('rollbar');
+ */
 
 import * as logging from './logging';
+import * as nls from 'vscode-nls';
+import * as path from 'path';
+import { logEvent } from './telemetry';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('rollbar');
 
-const SRC_ROOT = path.dirname(__dirname);
+/**
+ * Remove filesystem information from stack traces before logging telemetry
+ * @param stack The call stack string
+ * @returns A cleaned stack trace with only file names (no full paths)
+ */
+export function cleanStack(stack?: string): string {
+  if (!stack) {
+    return "(no callstack)";
+  }
+  // Most source references are within parenthesis
+  stack = stack.replace(/\(([^\n]+)\)/g, (match: string, fileInfo: string) => {
+    const fileName = fileInfo.replace(/:\d+(:\d+)?$/, "");
+    const name: string = path.basename(fileName);
+    return match.replace(fileName, name);
+  });
+  // Some are direct references to main.js without parenthesis
+  stack = stack.replace(/at( async | )([^\n]+main.js(:\d+(:\d+)?)?)$/gm, (match: string, _unused: string, fileInfo: string, lineColumn: string) => {
+    return match.replace(fileInfo, `main.js${lineColumn}`);
+  });
+  // As a last resort, remove anything that looks like it could be a path.
+  const strings: string[] = stack.split('\n');
+  strings.forEach((value, index, array) => {
+    array[index] = cleanString(value);
+  });
+  return strings.join('\n');
+}
+
+/**
+ * Find the beginning of a potential absolute path and cut off everything after it
+ * @param message The (single-line) string to clean
+ * @returns A string with no potential absolute file paths in it
+ */
+export function cleanString(message: string): string {
+  const backSlash = message.indexOf('\\');
+  const slash = message.indexOf('/');
+  let first = backSlash === -1 ? slash : slash === -1 ? backSlash : backSlash < slash ? backSlash : slash;
+  if (first > 0) {
+    first = message.lastIndexOf(' ', first);
+    return message.substr(0, first) + " <path removed>";
+  }
+  return message;
+}
 
 /**
  * The wrapper around Rollbar. Presents a nice functional API.
  */
 class RollbarController {
-  /**
-   * The payload to send with any messages. Can be updated via `updatePayload`.
-   */
-  private readonly _payload: object = {
-    platform: 'client',
-    server: {
-      // Because extensions are installed in a user-local directory, the
-      // absolute path to the source files will be different on each machine.
-      // If we set the root directory of the source tree then Rollbar will be
-      // able to better merge identical issues.
-      root: SRC_ROOT,
-    },
-  };
-
-  /**
-   * The Rollbar client instance we use to communicate.
-   */
-  private readonly _rollbar = new Rollbar({
-    accessToken: '14d411d713be4a5a9f9d57660534cac7',
-    reportLevel: 'error',
-    payload: this._payload,
-  });
-
-  /**
-   * If `true`, we will send messages. We must get the user's permission first!
-   */
-  private _enabled = false;
-
-  /**
-   * Request permission to use Rollbar from the user. This will show a message
-   * box at the top of the window on first permission request.
-   * @param extensionContext Extension context, where we use a memento to
-   * remember our permission
-   */
-  async requestPermissions(extensionContext: vscode.ExtensionContext): Promise<void> {
-    log.debug('Checking Rollbar permissions');
-    if (process.env['CMT_TESTING'] === '1') {
-      log.trace('Running CMakeTools in test mode. Rollbar is disabled.');
-      return;
-    }
-    if (process.env['CMT_DEVRUN'] === '1') {
-      log.trace('Running CMakeTools in developer mode. Rollbar reporting is disabled.');
-      return;
-    }
-    // The memento key where we store permission. Update this to ask again.
-    const key = 'rollbar-optin3';
-    const optin = extensionContext.globalState.get(key);
-    if (optin === true) {
-      this._enabled = true;
-    } else if (optin == false) {
-      this._enabled = false;
-    } else if (optin === undefined) {
-      log.debug('Asking user for permission to user Rollbar...');
-      // We haven't asked yet. Ask them now:
-      const item = await vscode.window.showInformationMessage(
-          'Would you like to opt-in to send anonymous error and exception data to help improve CMake Tools?',
-          {
-            title: 'Yes!',
-            isCloseAffordance: false,
-          } as vscode.MessageItem,
-          {
-            title: 'No Thanks',
-            isCloseAffordance: true,
-          } as vscode.MessageItem);
-
-      if (item === undefined) {
-        // We didn't get an answer
-        log.trace('User did not answer. Rollbar is not enabled.');
-        return;
-      }
-      extensionContext.globalState.update(key, !item.isCloseAffordance);
-      this._enabled = !item.isCloseAffordance;
-    }
-    log.debug('Rollbar enabled? ', this._enabled);
-  }
-
   /**
    * Log an exception with Rollbar.
    * @param what A message about what we were doing when the exception happened
@@ -100,15 +66,14 @@ class RollbarController {
    * @param additional Additional items in the payload
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
-  exception(what: string, exception: Error, additional: object = {}): Rollbar.LogResult|null {
-    log.fatal('Unhandled exception:', what, exception, JSON.stringify(additional));
+  exception(what: string, exception: Error, additional: object = {}): void {
+    log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional));
+    const callstack = cleanStack(exception.stack);
+    const message = cleanString(exception.message);
+    logEvent('exception2', {message, callstack});
     // tslint:disable-next-line
     console.error(exception);
     debugger;
-    if (this._enabled) {
-      return this._rollbar.error(what, exception, additional);
-    }
-    return null;
   }
 
   /**
@@ -117,34 +82,13 @@ class RollbarController {
    * @param additional Additional items in the payload
    * @returns The LogResult if we are enabled. `null` otherwise.
    */
-  error(what: string, additional: object = {}): Rollbar.LogResult|null {
+  error(what: string, additional: object = {}): void {
     log.error(what, JSON.stringify(additional));
     debugger;
-    if (this._enabled) {
-      const stack = new Error().stack;
-      return this._rollbar.error(what, additional, {stack});
-    }
-    return null;
   }
 
-  info(what: string, additional: object = {}): Rollbar.LogResult | null {
+  info(what: string, additional: object = {}): void {
     log.info(what, JSON.stringify(additional));
-    if (this._enabled) {
-      const stack = new Error().stack;
-      return this._rollbar.info(what, additional, { stack });
-    }
-    return null;
-  }
-
-  /**
-   * Update the content of the Rollbar payload with additional context
-   * information.
-   * @param data Daya to merge into the payload
-   */
-  updatePayload(data: object) {
-    Object.assign(this._payload, data);
-    this._rollbar.configure({payload: this._payload});
-    log.debug('Updated Rollbar payload', JSON.stringify(data));
   }
 
   /**
@@ -160,7 +104,7 @@ class RollbarController {
       func = additional as () => Thenable<T>;
       additional = {};
     }
-    log.trace(`Invoking async function [${func.name}] with Rollbar wrapping`, `[${what}]`);
+    log.trace(localize('invoking.async.function.rollbar', 'Invoking async function [{0}] with Rollbar wrapping [{1}]', func.name, what));
     const pr = func();
     this.takePromise(what, additional, pr);
   }
@@ -179,10 +123,10 @@ class RollbarController {
       additional = {};
     }
     try {
-      log.trace(`Invoking function [${func.name}] with Rollbar wrapping`, `[${what}]`);
+      log.trace(localize('invoking.function.rollbar', 'Invoking function [${0}] with Rollbar wrapping [${1}]', func.name, what));
       return func();
     } catch (e) {
-      this.exception('Unhandled exception: ' + what, e, additional);
+      this.exception(localize('unhandled.exception', 'Unhandled exception: {0}', what), e, additional);
       throw e;
     }
   }
@@ -190,7 +134,7 @@ class RollbarController {
   takePromise<T>(what: string, additional: object, pr: Thenable<T>): void {
     pr.then(
         () => {},
-        e => { this.exception('Unhandled Promise rejection: ' + what, e, additional); },
+        e => { this.exception(localize('unhandled.promise.rejection', 'Unhandled Promise rejection: {0}', what), e, additional); },
     );
   }
 }
