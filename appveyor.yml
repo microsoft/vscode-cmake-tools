@@ -3,7 +3,7 @@ image:
   - Visual Studio 2017
 
 install:
-  - ps: Install-Product node 8.9.3 x64
+  - ps: Install-Product node 8 x64
 build_script:
   - pwsh: ./scripts/ci.ps1
 
