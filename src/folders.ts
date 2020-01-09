@@ -7,6 +7,10 @@ import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export class CMakeToolsFolder {
   private constructor(readonly cmakeTools: CMakeTools, readonly kitsController: KitsController) { }
@@ -65,7 +69,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   constructor(readonly extensionContext: vscode.ExtensionContext) {
     this._subscriptions = [
       vscode.workspace.onDidChangeWorkspaceFolders(
-        e => rollbar.invokeAsync('Update workspace folders', () => this._onChange(e))),
+        e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this._onChange(e))),
     ];
   }
 
@@ -76,7 +80,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * @param ws The workspace folder to search
    */
   get(ws: vscode.WorkspaceFolder | undefined): CMakeToolsFolder | undefined {
-    return ws ? this._instances.get(ws.name) : ws;
+    return ws ? this._instances.get(ws.uri.fsPath) : ws;
   }
 
   /**
@@ -87,17 +91,9 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     this._instances.clear();
     if (vscode.workspace.workspaceFolders) {
       for (const folder of vscode.workspace.workspaceFolders) {
-        await this.addFolder(folder);
+        await this._addFolder(folder);
       }
     }
-  }
-
-  /**
-   * Activate the given workspace folder
-   * @param wsf The folder to add
-   */
-  addFolder(wsf: vscode.WorkspaceFolder) {
-    return this._addFolder(wsf);
   }
 
   /**
@@ -140,7 +136,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   private async _addFolder(folder: vscode.WorkspaceFolder) {
     const existing = this.get(folder);
     if (existing) {
-      rollbar.error('Double-loaded CMake Tools instance for workspace folder', { wsUri: folder.uri.toString() });
+      rollbar.error(localize('double.loaded.folder','Double-loaded workspace folder'), { wsUri: folder.uri.toString() });
       return existing;
     }
     // Load for the workspace.
@@ -148,7 +144,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     // Remember it
     const inst = await CMakeToolsFolder.init(new_cmt);
 
-    this._instances.set(folder.name, inst);
+    this._instances.set(folder.uri.fsPath, inst);
 
     // initialize kits for the cmake tools
     // Check if the CMakeTools remembers what kit it was last using in this dir:
@@ -176,12 +172,12 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     if (!inst) {
       // CMake Tools should always be aware of all workspace folders. If we
       // somehow missed one, that's a bug
-      rollbar.error('Workspace folder removed, but not associated with an extension instance', { wsName: folder.name });
+      rollbar.error(localize('removed.folder.not.on.record', 'Workspace folder removed, but not associated with an extension instance'), { wsUri: folder.uri.toString() });
       // Keep the UI running, just don't remove this instance.
       return;
     }
     // Drop the instance from our table. Forget about it.
-    this._instances.delete(folder.name);
+    this._instances.delete(folder.uri.fsPath);
     // Finally, dispose of the CMake Tools now that the workspace is gone.
     inst.dispose();
   }

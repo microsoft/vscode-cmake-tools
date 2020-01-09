@@ -434,13 +434,13 @@ interface ExternalUpdateContext {
 }
 
 class WorkspaceFolderNode extends BaseNode {
-  constructor(readonly wsFolder: vscode.WorkspaceFolder) { super(`wsf/${wsFolder.name}`); }
+  constructor(readonly wsFolder: vscode.WorkspaceFolder) { super(`wsf/${wsFolder.uri.fsPath}`); }
   private _children: BaseNode[] = [];
 
   getOrderTuple() { return [this.id]; }
 
   getTreeItem() {
-    const item = new vscode.TreeItem(this.wsFolder.name, vscode.TreeItemCollapsibleState.Expanded);
+    const item = new vscode.TreeItem(this.wsFolder.uri.fsPath, vscode.TreeItemCollapsibleState.Expanded);
     item.iconPath = vscode.ThemeIcon.Folder;
     item.label += ' — Workspace Folder';
     return item;
@@ -478,27 +478,27 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
 
   addAllCurrentFolders() {
     for (const wsf of vscode.workspace.workspaceFolders || []) {
-      this._folders.set(wsf.name, new WorkspaceFolderNode(wsf));
+      this._folders.set(wsf.uri.fsPath, new WorkspaceFolderNode(wsf));
     }
   }
 
   addFolder(folder: vscode.WorkspaceFolder) {
-    this._folders.set(folder.name, new WorkspaceFolderNode(folder));
+    this._folders.set(folder.uri.fsPath, new WorkspaceFolderNode(folder));
     this._changeEvent.fire(null);
   }
 
   removeFolder(folder: vscode.WorkspaceFolder) {
-    this._folders.delete(folder.name);
+    this._folders.delete(folder.uri.fsPath);
     this._changeEvent.fire(null);
   }
 
   updateCodeModel(folder: vscode.WorkspaceFolder, model: cms.CodeModelContent|null, ctx: ExternalUpdateContext) {
-    let existing = this._folders.get(folder.name);
+    let existing = this._folders.get(folder.uri.fsPath);
     if (!existing) {
       rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that does not yet exist?'));
       // That's an error, but we can keep going otherwise.
       existing = new WorkspaceFolderNode(folder);
-      this._folders.set(folder.name, existing);
+      this._folders.set(folder.uri.fsPath, existing);
     }
 
     const updates: BaseNode[] = [];

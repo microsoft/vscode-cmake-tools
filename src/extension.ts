@@ -56,7 +56,7 @@ type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | nu
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
     this._statusBar.targetName = 'all';
-    this._folders.onAfterAddFolder(async info => {
+    this._folders.onAfterAddFolder(async cmtFolder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
       if (this._folders.size === 1) {
         // First folder added
@@ -67,37 +67,33 @@ class ExtensionManager implements vscode.Disposable {
         await this._initActiveFolder();
         await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
       }
-      const new_cmt = info.cmakeTools;
-      this._projectOutlineProvider.addFolder(info.folder);
+      const new_cmt = cmtFolder.cmakeTools;
+      this._projectOutlineProvider.addFolder(cmtFolder.folder);
       if (this._codeModelUpdateSubs.get(new_cmt.folder.uri.fsPath)) {
         // We already have this folder, do nothing
       } else {
         const subs: vscode.Disposable[] = [];
-        subs.push(new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(info)));
-        subs.push(new_cmt.onTargetNameChanged(FireLate, () => this._updateCodeModel(info)));
-        subs.push(new_cmt.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(info)));
+        subs.push(new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
+        subs.push(new_cmt.onTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
+        subs.push(new_cmt.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
         this._codeModelUpdateSubs.set(new_cmt.folder.uri.fsPath, subs);
       }
-      rollbar.takePromise('Post-folder-open', {folder: info.folder}, this._postWorkspaceOpen(info));
+      rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
     });
-    this._folders.onAfterRemoveFolder (async info => {
+    this._folders.onAfterRemoveFolder (async folder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
-      this._codeModelUpdateSubs.delete(info.uri.fsPath);
+      this._codeModelUpdateSubs.delete(folder.uri.fsPath);
       if (!vscode.workspace.workspaceFolders?.length) {
         await this._setActiveFolder(undefined);
       } else {
-        if (this._folders.activeFolder?.folder.uri.fsPath === info.uri.fsPath) {
+        if (this._folders.activeFolder?.folder.uri.fsPath === folder.uri.fsPath) {
           await this._setActiveFolder(vscode.workspace.workspaceFolders[0]);
         } else {
           this._setupSubscriptions();
         }
-        if (this._folders.size > 1) {
-          await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
-        } else {
-          await util.setContextValue(MULTI_ROOT_MODE_KEY, false);
-        }
+        await util.setContextValue(MULTI_ROOT_MODE_KEY, this._folders.size > 1);
       }
-      this._projectOutlineProvider.removeFolder(info);
+      this._projectOutlineProvider.removeFolder(folder);
     });
     this._workspaceConfig.onChange('autoSelectActiveFolder', v => {
       this._onDidChangeActiveTextEditorSub.dispose();
@@ -268,11 +264,9 @@ class ExtensionManager implements vscode.Disposable {
   async asyncDispose() {
     this._disposeSubs();
     this._codeModelUpdateSubs.forEach(
-      subs => {
-        for (const sub of subs) {
-          sub.dispose();
-        }
-      }
+      subs => subs.forEach(
+        sub => sub.dispose()
+      )
     );
     this._onDidChangeActiveTextEditorSub.dispose();
     this._kitsWatcher.close();
