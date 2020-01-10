@@ -876,6 +876,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async clean(): Promise<number> { return this.build('clean'); }
 
   /**
+   * Implementation of `cmake.openConfiguration`
+   */
+  async openConfiguration(): Promise<number> {
+    console.log('HAHEFAEHFJAHEFéOAHEéFJAHE*R()A*Z)A**AR');
+    return new Promise((resolve) => resolve(0));
+  }
+
+  /**
    * Implementation of `cmake.cleanRebuild`
    */
   async cleanRebuild(): Promise<number> {
