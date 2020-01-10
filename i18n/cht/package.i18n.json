@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "清除重新設定",
 	"cmake-tools.command.cmake.clean.title": "清除",
 	"cmake-tools.command.cmake.cleanRebuild.title": "清除重建",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "執行測試",
 	"cmake-tools.command.cmake.editCache.title": "編輯 CMake 快取",
 	"cmake-tools.command.cmake.quickStart.title": "快速入門",

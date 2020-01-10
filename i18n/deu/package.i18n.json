@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Neukonfiguration bereinigen",
 	"cmake-tools.command.cmake.clean.title": "Bereinigen",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Neuerstellung bereinigen",
+	"cmake-tools.command.cmake.openConfiguration.title": "Konfiguration öffnen",
 	"cmake-tools.command.cmake.ctest.title": "Tests durchführen",
 	"cmake-tools.command.cmake.editCache.title": "CMake-Cache bearbeiten",
 	"cmake-tools.command.cmake.quickStart.title": "Schnellstart",

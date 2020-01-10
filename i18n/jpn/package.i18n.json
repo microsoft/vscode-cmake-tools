@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "クリーン再構成",
 	"cmake-tools.command.cmake.clean.title": "クリーン",
 	"cmake-tools.command.cmake.cleanRebuild.title": "クリーン リビルド",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "テストの実行",
 	"cmake-tools.command.cmake.editCache.title": "CMake キャッシュの編集",
 	"cmake-tools.command.cmake.quickStart.title": "クイック スタート",

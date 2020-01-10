@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "清除重新配置",
 	"cmake-tools.command.cmake.clean.title": "清理",
 	"cmake-tools.command.cmake.cleanRebuild.title": "清除重新生成",
+	"cmake-tools.command.cmake.openConfiguration.title": "清除重新生成",
 	"cmake-tools.command.cmake.ctest.title": "运行测试",
 	"cmake-tools.command.cmake.editCache.title": "编辑 CMake 缓存",
 	"cmake-tools.command.cmake.quickStart.title": "快速入门",

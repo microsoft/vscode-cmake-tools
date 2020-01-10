@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Nouvelle reconfiguration",
 	"cmake-tools.command.cmake.clean.title": "Nettoyer",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Nouvelle regénération",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "Exécuter les tests",
 	"cmake-tools.command.cmake.editCache.title": "Modifier le cache CMake",
 	"cmake-tools.command.cmake.quickStart.title": "Démarrage rapide",

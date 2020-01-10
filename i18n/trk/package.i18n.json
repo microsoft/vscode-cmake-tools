@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Yeniden Yapılandırmayı Temizle",
 	"cmake-tools.command.cmake.clean.title": "Temizle",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Yeniden Derlemeyi Temizle",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "Testleri Çalıştır",
 	"cmake-tools.command.cmake.editCache.title": "CMake Önbelleğini Düzenle",
 	"cmake-tools.command.cmake.quickStart.title": "Hızlı Başlangıç",

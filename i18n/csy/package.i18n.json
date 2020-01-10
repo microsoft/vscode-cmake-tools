@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Vyčistit a znovu nakonfigurovat",
 	"cmake-tools.command.cmake.clean.title": "Vyčistit",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Vyčistit a znovu sestavit",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "Spustit testy",
 	"cmake-tools.command.cmake.editCache.title": "Upravit mezipaměť CMake",
 	"cmake-tools.command.cmake.quickStart.title": "Rychlý Start",

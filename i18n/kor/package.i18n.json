@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "클린 다시 구성",
 	"cmake-tools.command.cmake.clean.title": "정리",
 	"cmake-tools.command.cmake.cleanRebuild.title": "클린 다시 빌드",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "테스트 실행",
 	"cmake-tools.command.cmake.editCache.title": "CMake 캐시 편집",
 	"cmake-tools.command.cmake.quickStart.title": "빠른 시작",

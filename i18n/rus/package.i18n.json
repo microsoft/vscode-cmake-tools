@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Перенастройка с очисткой",
 	"cmake-tools.command.cmake.clean.title": "Очистить",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Повторная сборка с очисткой",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "Запустить тесты",
 	"cmake-tools.command.cmake.editCache.title": "Изменение кэша CMake",
 	"cmake-tools.command.cmake.quickStart.title": "Краткое руководство",

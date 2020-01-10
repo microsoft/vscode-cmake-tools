@@ -21,6 +21,7 @@
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Limpiar reconfiguración",
 	"cmake-tools.command.cmake.clean.title": "Limpiar",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Limpiar recompilación",
+	"cmake-tools.command.cmake.openConfiguration.title": "Open Configuration",
 	"cmake-tools.command.cmake.ctest.title": "Ejecutar pruebas",
 	"cmake-tools.command.cmake.editCache.title": "Editar la memoria caché de CMake",
 	"cmake-tools.command.cmake.quickStart.title": "Inicio rápido",

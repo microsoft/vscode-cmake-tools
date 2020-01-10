@@ -260,6 +260,15 @@
         "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
       },
       {
+        "command": "cmake.openConfiguration",
+        "title": "%cmake-tools.command.cmake.openConfiguration.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.openConfiguration",
+        "title": "%cmake-tools.command.cmake.openConfiguration.title%"
+      },
+      {
         "command": "cmake.ctest",
         "title": "%cmake-tools.command.cmake.ctest.title%",
         "category": "CMake"
@@ -429,6 +438,9 @@
           "when": "cmake:multiRoot"
         },
         {
+          "command": "cmake.openConfiguration"
+        },
+        {
           "command": "cmake.ctest"
         },
         {
@@ -507,6 +519,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.openConfiguration",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.stop",
           "when": "never"
         },
@@ -571,6 +587,11 @@
         },
         {
           "command": "cmake.outline.cleanRebuildAll",
+          "when": "view == cmake.outline",
+          "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.outline.openConfiguration",
           "when": "view == cmake.outline",
           "group": "1_cmakeOutline"
         }
