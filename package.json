@@ -1062,7 +1062,6 @@
     "@types/chai-as-promised": "^7.1.0",
     "@types/chai-string": "^1.4.1",
     "@types/es6-promisify": "~5.0.0",
-    "@types/follow-redirects": "^1.8.0",
     "@types/js-yaml": "^3.5.28",
     "@types/json5": "~0.0.29",
     "@types/mocha": "~2.2.41",
@@ -1100,7 +1099,6 @@
   "dependencies": {
     "ajv": "^4.7.5",
     "es6-promisify": "~5.0.0",
-    "follow-redirects": "^1.5.10",
     "handlebars": "^4.5.3",
     "iconv-lite": "^0.4.21",
     "js-yaml": "^3.6.1",
