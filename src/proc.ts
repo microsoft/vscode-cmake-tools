@@ -165,7 +165,7 @@ export function execute(command: string,
 
     result = new Promise<ExecutionResult>(resolve => {
       if (child) {
-        child.on('error', err => { resolve({ retc: -1, stdout: "", stderr: err.message }) });
+        child.on('error', err => { resolve({ retc: -1, stdout: "", stderr: err.message }); });
         let stdout_acc = '';
         let line_acc = '';
         let stderr_acc = '';
