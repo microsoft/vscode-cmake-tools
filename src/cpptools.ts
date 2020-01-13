@@ -6,7 +6,7 @@
  */ /** */
 
 import {CMakeCache} from '@cmt/cache';
-import * as cms from '@cmt/drivers/cms-client';
+import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -131,9 +131,9 @@ export function parseCompileFlags(args: string[], lang?: string): CompileFlagInf
  */
 export interface CodeModelParams {
   /**
-   * The CMake Server codemodel message content. This is the important one.
+   * The CMake codemodel content. This is the important one.
    */
-  codeModel: cms.CodeModelContent;
+  codeModel: codemodel_api.CodeModelContent;
   /**
    * The contents of the CMakeCache.txt, which also provides supplementary
    * configuration information.
@@ -227,7 +227,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: cms.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
+  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language;
@@ -281,7 +281,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param opts Index update options
    */
   private _updateFileGroup(sourceDir: string,
-                           grp: cms.CodeModelFileGroup,
+                           grp: codemodel_api.CodeModelFileGroup,
                            opts: CodeModelParams,
                            target: TargetDefaults,
                            sysroot: string) {

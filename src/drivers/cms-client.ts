@@ -224,6 +224,7 @@ export interface CodeModelFileGroup {
   includePath?: {path: string; isSystem?: boolean;}[];
   defines?: string[];
   sources: string[];
+  isGenerated: boolean;
 }
 
 export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
