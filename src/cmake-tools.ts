@@ -53,6 +53,11 @@ enum ConfigureType {
   Clean,
 }
 
+interface IOption {
+  key: string;
+  value: boolean;
+}
+
 /**
  * Class implementing the extension. It's all here!
  *
@@ -879,8 +884,98 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.openConfiguration`
    */
   async openConfiguration(): Promise<number> {
-    console.log('HAHEFAEHFJAHEFéOAHEéFJAHE*R()A*Z)A**AR');
+    const panel = vscode.window.createWebviewPanel(
+      'cmakeConfiguration', // Identifies the type of the webview. Used internally
+      'CMake Configuration', // Title of the panel displayed to the user
+      vscode.ViewColumn.One, // Editor column to show the new webview panel in.
+      {
+        enableScripts: true
+      } // Webview options. More on these later.
+    );
+
+    const options: IOption[] = [
+      {
+        key: 'SYSTEMX_MODBUS',
+        value: false
+      },
+      {
+        key: 'SYSTEMX_BACNET',
+        value: true
+      },
+      {
+        key: 'SYSTEMX_TESTS',
+        value: true
+      },
+      {
+        key: 'SYSTEMX_KNX',
+        value: false
+      }
+    ]
+
+    panel.webview.html = this.getWebviewContent(options);
+
     return new Promise((resolve) => resolve(0));
+  }
+
+  getWebviewContent(options: IOption[]) {
+    const key = '%TABLE_ROWS%';
+    let html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CMake Configuration</title>
+        <style>
+          table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+          }
+        </style>
+    </head>
+    <body>
+      <h1>CMake Configuration</h1>
+      <small>Here you can configure your cmake options by the touch of a button.</small>
+      <hr>
+      <table style="width:50%">
+        <tr>
+          <th style="width: 30px">#</th>
+          <th>Key</th>
+          <th>Value</th>
+        </tr>
+        ${key}
+      </table>
+
+      <script>
+        function toggleKey(id) {
+          const label = document.getElementById('LABEL_' + id);
+
+          if (label.textContent == 'ON') {
+            label.textContent = 'OFF';
+          } else {
+            label.textContent = 'ON';
+          }
+        }
+      </script>
+    </body>
+    </html>`;
+
+    // compile a list of table rows that contain the key and value pairs
+    const tableRows = options.map(option => {
+      return `<tr>
+        <td></td>
+        <td>${option.key}</td>
+        <td>
+          <input id="${option.key}" onclick="toggleKey('${option.key}')"
+                 type="checkbox" ${option.value ? 'checked' : ''}>
+          <label id="LABEL_${option.key}" for="${option.key}">${option.value ? 'ON': 'OFF'}</label>
+        </td>
+      </tr>`;
+    });
+
+    html = html.replace(key, tableRows.join(""));
+
+    return html;
   }
 
   /**
