@@ -9,7 +9,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {ProgressHandle, versionToString} from '@cmt/util';
+import {ProgressHandle, versionToString, thisExtensionPath} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -910,9 +910,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         key: 'SYSTEMX_KNX',
         value: false
       }
-    ]
+    ];
+
+    // get path to cmakecache
+    const cmakeCachePath = vscode.Uri.file(
+      path.join(thisExtensionPath(), 'build')
+    );
+    // extract content
+    // search for systemx
+    // put it into array
 
     panel.webview.html = this.getWebviewContent(options);
+
+    // handle checkbox value change event
+    panel.webview.onDidReceiveMessage((option: IOption) => {
+      vscode.window.showInformationMessage(option.key + " " + option.value);
+    });
 
     return new Promise((resolve) => resolve(0));
   }
@@ -947,13 +960,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       </table>
 
       <script>
+        const vscode = acquireVsCodeApi();
         function toggleKey(id) {
           const label = document.getElementById('LABEL_' + id);
 
           if (label.textContent == 'ON') {
             label.textContent = 'OFF';
+            vscode.postMessage({
+              key: id,
+              value: false
+            });
           } else {
             label.textContent = 'ON';
+            vscode.postMessage({
+              key: id,
+              value: true
+            });
           }
         }
       </script>
