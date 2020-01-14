@@ -10,6 +10,9 @@ import * as nls from 'vscode-nls';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
+export type unspecifiedKitType = '__unspec__';
+export const unspecifiedKitName: unspecifiedKitType = '__unspec__';
+
 /**
  * Escape a string so it can be used as a regular expression
  */

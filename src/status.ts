@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import {BasicTestResults} from './ctest';
+import {BasicTestResults} from '@cmt/ctest';
 import * as nls from 'vscode-nls';
+import {unspecifiedKitName} from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -224,7 +225,7 @@ export class StatusBar implements vscode.Disposable {
   }
 
   setActiveKitName(v: string) {
-    if (v === '__unspec__') {
+    if (v === unspecifiedKitName) {
       this._activeKitName = `[${localize('no.active.kit', 'No active kit')}]`;
     } else {
       this._activeKitName = v;

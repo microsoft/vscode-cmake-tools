@@ -19,7 +19,7 @@ import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
-import { chokidarOnAnyChange, ProgressHandle, reportProgress } from '@cmt/util';
+import { chokidarOnAnyChange, ProgressHandle, reportProgress, unspecifiedKitName, unspecifiedKitType } from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -87,8 +87,8 @@ export class KitsController {
     // Load user-kits
     reportProgress(progress, localize('loading.kits', 'Loading kits'));
     const user = await readKitsFile(USER_KITS_FILEPATH);
-    // Add the special __unspec__ kit for opting-out of kits
-    user.push({name: '__unspec__'});
+    // Add the special unspecifiedKit for opting-out of kits
+    user.push({name: unspecifiedKitName});
     KitsController.userKits = user;
     // Pruning requires user interaction, so it happens fully async
     KitsController._startPruneOutdatedKitsAsync();
@@ -98,10 +98,10 @@ export class KitsController {
    * Load the list of available kits from the filesystem. This will also update the kit loaded into the current backend if applicable.
    */
   async readKits(kitsReadMode = KitsReadMode.allAvailable, progress?: ProgressHandle) {
-    if (kitsReadMode !== KitsReadMode.folderKits) {
+    if (kitsReadMode === KitsReadMode.userKits || kitsReadMode === KitsReadMode.allAvailable) {
       await KitsController.readUserKits(progress);
     }
-    if (kitsReadMode !== KitsReadMode.userKits) {
+    if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
       // Read folder kits
       this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder));
       const current = this.cmakeTools.activeKit;
@@ -125,12 +125,12 @@ export class KitsController {
    */
   async setFolderActiveKit(k: Kit|null): Promise<string> {
     const inst = this.cmakeTools;
-    const raw_name = k ? k.name : '__unspec__';
+    const raw_name = k ? k.name : unspecifiedKitName;
     if (inst) {
       // Generate a message that we will show in the progress notification
       let message = '';
       switch (raw_name) {
-      case '__unspec__':
+      case unspecifiedKitName:
         // Empty string/unspec is un-setting the kit:
         message = localize('unsetting.kit', 'Unsetting kit');
         break;
@@ -151,21 +151,21 @@ export class KitsController {
     return raw_name;
   }
 
-  private async _checkHaveKits(): Promise<'__unspec__'|'ok'|'cancel'> {
+  private async _checkHaveKits(): Promise<unspecifiedKitType|'ok'|'cancel'> {
     const avail = this.availableKits;
     if (avail.length > 1) {
       // We have kits. Okay.
       return 'ok';
     }
-    if (avail[0].name !== '__unspec__') {
-      // We should _always_ have an __unspec__ kit.
-      rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', "__unspec__"));
+    if (avail[0].name !== unspecifiedKitName) {
+      // We should _always_ have an unspecifiedKit.
+      rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', unspecifiedKitName));
       return 'ok';
     }
     // We don't have any kits defined. Ask the user what to do. This is safe to block
     // because it is a modal dialog
     interface FirstScanItem extends vscode.MessageItem {
-      action: 'scan'|'__unspec__'|'cancel';
+      action: 'scan'|unspecifiedKitType|'cancel';
     }
     const choices: FirstScanItem[] = [
       {
@@ -174,7 +174,7 @@ export class KitsController {
       },
       {
         title: localize('do.not.use.kit.button', 'Do not use a kit'),
-        action: '__unspec__',
+        action: unspecifiedKitName,
       },
       {
         title: localize('close.button', 'Close'),
@@ -200,9 +200,9 @@ export class KitsController {
       }
       return 'ok';
     }
-    case '__unspec__': {
-      await this.setFolderActiveKit({name: '__unspec__'});
-      return '__unspec__';
+    case unspecifiedKitName: {
+      await this.setFolderActiveKit({name: unspecifiedKitName});
+      return unspecifiedKitName;
     }
     case 'cancel': {
       return 'cancel';
@@ -222,8 +222,8 @@ export class KitsController {
     case 'cancel':
       // The user doesn't want to perform any special action
       return false;
-    case '__unspec__':
-      // The user chose to use the __unspec__ kit
+    case unspecifiedKitName:
+      // The user chose to use the unspecifiedKit
       return true;
     case 'ok':
       // 'ok' means we have kits defined and should do regular kit selection
@@ -240,7 +240,7 @@ export class KitsController {
     // Generate the quickpick items from our known kits
     const itemPromises = avail.map(
         async (kit): Promise<KitItem> => ({
-          label: kit.name !== '__unspec__' ? kit.name : `[${localize('unspecified.kit.name', 'Unspecified')}]`,
+          label: kit.name !== unspecifiedKitName ? kit.name : `[${localize('unspecified.kit.name', 'Unspecified')}]`,
           description: await descriptionForKit(kit),
           kit,
         }),
@@ -268,7 +268,7 @@ export class KitsController {
   async setKitByName(kitName: string) {
     let newKit: Kit | undefined;
     if (!kitName) {
-        kitName = '__unspec__';
+        kitName = unspecifiedKitName;
     }
     newKit = this.availableKits.find(kit => kit.name === kitName);
     await this.setFolderActiveKit(newKit || null);
@@ -391,8 +391,8 @@ export class KitsController {
    */
   private static async _writeUserKitsFile(kits: Kit[]) {
     log.debug(localize('saving.kits.to', 'Saving kits to {0}', USER_KITS_FILEPATH));
-    // Remove the special __unspec__ kit
-    const stripped_kits = kits.filter(k => k.name !== '__unspec__');
+    // Remove the special unspecifiedKit
+    const stripped_kits = kits.filter(k => k.name !== unspecifiedKitName);
     // Sort the kits by name so they always appear in order in the file.
     const sorted_kits = stripped_kits.sort((a, b) => {
       if (a.name == b.name) {
