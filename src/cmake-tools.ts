@@ -16,7 +16,8 @@ import * as vscode from 'vscode';
 
 import * as api from './api';
 import {ExecutionOptions, ExecutionResult} from './api';
-import {BadHomeDirectoryError, CodeModelContent} from '@cmt/drivers/cms-client';
+import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import {BadHomeDirectoryError} from '@cmt/drivers/cms-client';
 import {CMakeServerClientDriver, NoGeneratorError} from '@cmt/drivers/cms-driver';
 import {CTestDriver} from './ctest';
 import {BasicTestResults} from './ctest';
@@ -144,7 +145,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   get codeModel() { return this._codeModel.value; }
   get onCodeModelChanged() { return this._codeModel.changeEvent; }
-  private readonly _codeModel = new Property<CodeModelContent|null>(null);
+  private readonly _codeModel = new Property<codemodel_api.CodeModelContent|null>(null);
   private _codeModelDriverSub: vscode.Disposable|null = null;
 
   /**
@@ -462,7 +463,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
         const drv = await this._cmakeDriver;
         console.assert(drv !== null, 'Null driver immediately after creation?');
-        if (drv instanceof CMakeServerClientDriver) {
+        if (drv instanceof codemodel_api.CodeModelDriver) {
           this._codeModelDriverSub = drv.onCodeModelChanged(cm => { this._codeModel.set(cm); });
         }
       }
