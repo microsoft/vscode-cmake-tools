@@ -179,6 +179,22 @@ export class CMakeCache {
     return entries;
   }
 
+  async save(key: string, value: boolean) {
+    const exists = await fs.exists(this.path);
+    if (exists) {
+      const content = (await fs.readFile(this.path)).toString();
+      const re = key + ':.+=(.+)';
+      const found = content.match(re);
+
+      if (found && found.length >= 2) {
+        const line = found[0];
+        const currentVal = found[1];
+        const newValueLine = line.replace(currentVal, value ? 'TRUE' : 'FALSE');
+        await fs.writeFile(this.path, content.replace(line, newValueLine));
+      }
+    }
+  }
+
   /**
    * Get an entry from the cache
    * @param key The name of a cache entry

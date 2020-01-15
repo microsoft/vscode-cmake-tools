@@ -890,42 +890,29 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       vscode.ViewColumn.One, // Editor column to show the new webview panel in.
       {
         enableScripts: true
-      } // Webview options. More on these later.
-    );
-
-    const options: IOption[] = [
-      {
-        key: 'SYSTEMX_MODBUS',
-        value: false
-      },
-      {
-        key: 'SYSTEMX_BACNET',
-        value: true
-      },
-      {
-        key: 'SYSTEMX_TESTS',
-        value: true
-      },
-      {
-        key: 'SYSTEMX_KNX',
-        value: false
       }
-    ];
-
-    // get path to cmakecache
-    const cmakeCachePath = vscode.Uri.file(
-      path.join(thisExtensionPath(), 'build')
     );
-    // extract content
-    // search for systemx
-    // put it into array
+
+    let options: IOption[] = [];
+
+    const drv = await this.getCMakeDriverInstance();
+    if (drv) {
+      // get cmake cache
+      const cmakeCache = await CMakeCache.fromPath(drv.cachePath);
+      for (const entry of cmakeCache.allEntries) {
+        if (entry.type === api.CacheEntryType.Bool && entry.key.startsWith("SYSTEMX")) {
+          options.push({ key: entry.key, value: entry.value });
+        }
+      }
+
+      // handle checkbox value change event
+      panel.webview.onDidReceiveMessage((option: IOption) => {
+        cmakeCache.save(option.key, option.value);
+        vscode.window.showInformationMessage(option.key + " " + option.value);
+      });
+    }
 
     panel.webview.html = this.getWebviewContent(options);
-
-    // handle checkbox value change event
-    panel.webview.onDidReceiveMessage((option: IOption) => {
-      vscode.window.showInformationMessage(option.key + " " + option.value);
-    });
 
     return new Promise((resolve) => resolve(0));
   }
@@ -940,24 +927,42 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>CMake Configuration</title>
         <style>
-          table, th, td {
+          table {
             border: 1px solid black;
             border-collapse: collapse;
+          }
+
+          .container {
+            padding-right: 15px;
+            padding-left: 15px;
+            width: 760px;
+            margin: 30px auto;
+          }
+
+          tr {
+            height: 30px;
+            background: rgba(255,255,255,.1);
+            border-bottom: 1px solid rgba(255,255,255,0.045);
           }
         </style>
     </head>
     <body>
-      <h1>CMake Configuration</h1>
-      <small>Here you can configure your cmake options by the touch of a button.</small>
-      <hr>
-      <table style="width:50%">
-        <tr>
-          <th style="width: 30px">#</th>
-          <th>Key</th>
-          <th>Value</th>
-        </tr>
-        ${key}
-      </table>
+      <div class="container">
+        <h1>CMake Configuration</h1>
+        <small>Here you can configure your cmake options by the touch of a button.</small>
+        <hr>
+        <table style="width:100%">
+          <tr style="
+            height: 35px;
+            background: linear-gradient(90deg, rgba(145,145,173,1) 0%, rgba(163,163,194,1) 36%, rgba(130,130,171,1) 61%, rgba(141,137,163,1) 100%);
+          ">
+            <th style="width: 30px">#</th>
+            <th>Key</th>
+            <th>Value</th>
+          </tr>
+          ${key}
+        </table>
+      </div>
 
       <script>
         const vscode = acquireVsCodeApi();
