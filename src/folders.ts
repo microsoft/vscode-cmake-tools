@@ -66,6 +66,8 @@ export class CMakeToolsFolderController implements vscode.Disposable {
 
   get size() { return this._instances.size; }
 
+  get isMultiRoot() { return this.size > 1; }
+
   constructor(readonly extensionContext: vscode.ExtensionContext) {
     this._subscriptions = [
       vscode.workspace.onDidChangeWorkspaceFolders(

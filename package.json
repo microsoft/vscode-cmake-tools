@@ -705,7 +705,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.clearOutputBeforeBuild.description%",
-          "scope": "resource"
+          "scope": "window"
         },
         "cmake.configureSettings": {
           "type": "object",

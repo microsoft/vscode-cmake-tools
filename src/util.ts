@@ -557,6 +557,6 @@ export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path
                 .on('unlink', listener);
 }
 
-export function isString(x: any) {
+export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
 }
