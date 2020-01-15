@@ -593,11 +593,6 @@ class ExtensionManager implements vscode.Disposable {
     for (const dir of this._workspaceConfig.mingwSearchDirs) {
       result.add(dir);
     }
-    for (const cmtFolder of this._folders) {
-      for (const dir of cmtFolder.cmakeTools.workspaceContext.config.mingwSearchDirs) {
-        result.add(dir);
-      }
-    }
     return Array.from(result);
   }
 
