@@ -893,28 +893,36 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     );
 
-    let options: IOption[] = [];
+    const options: IOption[] = [];
 
     const drv = await this.getCMakeDriverInstance();
     if (drv) {
       // get cmake cache
       const cmakeCache = await CMakeCache.fromPath(drv.cachePath);
       for (const entry of cmakeCache.allEntries) {
-        if (entry.type === api.CacheEntryType.Bool && entry.key.startsWith("SYSTEMX")) {
+        if (entry.type === api.CacheEntryType.Bool) {
           options.push({ key: entry.key, value: entry.value });
         }
       }
 
       // handle checkbox value change event
       panel.webview.onDidReceiveMessage((option: IOption) => {
-        cmakeCache.save(option.key, option.value);
-        vscode.window.showInformationMessage(option.key + " " + option.value);
+        try {
+          cmakeCache.save(option.key, option.value).then(()=>{
+          }).catch(error=>{
+            vscode.window.showInformationMessage(error);
+          });
+          const message = `${option.key} ${String(option.value)}`;
+          vscode.window.showInformationMessage(message);
+        } catch (error) {
+          vscode.window.showInformationMessage(error);
+        }
       });
     }
 
     panel.webview.html = this.getWebviewContent(options);
 
-    return new Promise((resolve) => resolve(0));
+    return new Promise(resolve => resolve(0));
   }
 
   getWebviewContent(options: IOption[]) {
