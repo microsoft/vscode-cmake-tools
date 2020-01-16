@@ -63,19 +63,23 @@ suite('CMake-Server-Driver tests', () => {
   setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
     driver = null;
     let isDone = false;
-    if (!isDone && !cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
+    if (!cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
       done('Default build folder still exists');
       isDone = true;
     }
 
-    if (!isDone && !cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
-      done('Empty project build folder still exists');
-      isDone = true;
+    if (!cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
+      if (!isDone) {
+        done('Empty project build folder still exists');
+        isDone = true;
+      }
     }
 
-    if (!isDone && !cleanupBuildDir(path.join(badCommandWorkspaceFolder, 'build'))) {
-      done('Bad command build folder still exists');
-      isDone = true;
+    if (!cleanupBuildDir(path.join(badCommandWorkspaceFolder, 'build'))) {
+      if (!isDone) {
+        done('Bad command build folder still exists');
+        isDone = true;
+      }
     }
 
     if(!isDone)
