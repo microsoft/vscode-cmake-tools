@@ -880,6 +880,39 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async clean(): Promise<number> { return this.build('clean'); }
 
+  async getConfigurationOptions(): Promise<IOption[]> {
+    return new Promise(async (resolve: (value: IOption[]) => void) => {
+      const options: IOption[] = [];
+
+      const drv = await this.getCMakeDriverInstance();
+      if (drv) {
+        // get cmake cache
+        const cmakeCache = await CMakeCache.fromPath(drv.cachePath);
+        for (const entry of cmakeCache.allEntries) {
+          if (entry.type === api.CacheEntryType.Bool) {
+            options.push({ key: entry.key, value: entry.value });
+          }
+        }
+      }
+
+      resolve(options);
+    });
+  }
+
+  async saveCmakeCache(option: IOption) {
+    const drv = await this.getCMakeDriverInstance();
+    if (drv) {
+      // get cmake cache
+      const cmakeCache = await CMakeCache.fromPath(drv.cachePath);
+      await cmakeCache.save(option.key, option.value);
+    }
+  }
+
+  async updateWebview(panel: vscode.WebviewPanel) {
+    const options: IOption[] = await this.getConfigurationOptions();
+    panel.webview.html = this.getWebviewContent(options);
+  }
+
   /**
    * Implementation of `cmake.openConfiguration`
    */
@@ -893,34 +926,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
     );
 
-    const options: IOption[] = [];
+    await this.updateWebview(panel);
 
-    const drv = await this.getCMakeDriverInstance();
-    if (drv) {
-      // get cmake cache
-      const cmakeCache = await CMakeCache.fromPath(drv.cachePath);
-      for (const entry of cmakeCache.allEntries) {
-        if (entry.type === api.CacheEntryType.Bool) {
-          options.push({ key: entry.key, value: entry.value });
-        }
+    panel.onDidChangeViewState(async event => {
+      // reset options when user clicks on panel
+      if (event.webviewPanel.visible) {
+        await this.updateWebview(event.webviewPanel);
       }
+    });
 
-      // handle checkbox value change event
-      panel.webview.onDidReceiveMessage((option: IOption) => {
-        try {
-          cmakeCache.save(option.key, option.value).then(()=>{
-          }).catch(error=>{
-            vscode.window.showInformationMessage(error);
-          });
-          const message = `${option.key} ${String(option.value)}`;
-          vscode.window.showInformationMessage(message);
-        } catch (error) {
-          vscode.window.showInformationMessage(error);
-        }
-      });
-    }
-
-    panel.webview.html = this.getWebviewContent(options);
+    // handle checkbox value change event
+    panel.webview.onDidReceiveMessage(async (option: IOption) => {
+      try {
+        await this.saveCmakeCache(option);
+        const message = `${option.key} ${String(option.value)}`;
+        vscode.window.showInformationMessage(message);
+      } catch (error) {
+        vscode.window.showErrorMessage(error);
+      }
+    });
 
     return new Promise(resolve => resolve(0));
   }
