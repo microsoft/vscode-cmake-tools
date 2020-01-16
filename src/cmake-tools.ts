@@ -976,13 +976,56 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             background: rgba(255,255,255,.1);
             border-bottom: 1px solid rgba(255,255,255,0.045);
           }
+
+          input#search {
+            width: 98%;
+            padding: 11px 0px 11px 11px;
+            margin: 10px 0;
+          }
+
+          .invisible {
+            display: none;
+          }
         </style>
+
+        <script>
+          const vscode = acquireVsCodeApi();
+          function toggleKey(id) {
+            const label = document.getElementById('LABEL_' + id);
+
+            if (label.textContent == 'ON') {
+              label.textContent = 'OFF';
+              vscode.postMessage({
+                key: id,
+                value: false
+              });
+            } else {
+              label.textContent = 'ON';
+              vscode.postMessage({
+                key: id,
+                value: true
+              });
+            }
+          }
+
+          function search() {
+            const filter = document.getElementById('search').value.toLowerCase();
+              for (const tr of document.querySelectorAll('.content-tr')) {
+              if (!tr.innerHTML.toLowerCase().includes(filter)) {
+                tr.classList.add('invisible');
+              } else {
+                tr.classList.remove('invisible');
+              }
+            }
+          }
+      </script>
     </head>
     <body>
       <div class="container">
         <h1>CMake Configuration</h1>
         <small>Here you can configure your cmake options by the touch of a button.</small>
         <hr>
+        <input class="search" type="text" id="search" oninput="search()" placeholder="Search">
         <table style="width:100%">
           <tr style="
             height: 35px;
@@ -995,33 +1038,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           ${key}
         </table>
       </div>
-
-      <script>
-        const vscode = acquireVsCodeApi();
-        function toggleKey(id) {
-          const label = document.getElementById('LABEL_' + id);
-
-          if (label.textContent == 'ON') {
-            label.textContent = 'OFF';
-            vscode.postMessage({
-              key: id,
-              value: false
-            });
-          } else {
-            label.textContent = 'ON';
-            vscode.postMessage({
-              key: id,
-              value: true
-            });
-          }
-        }
-      </script>
     </body>
     </html>`;
 
     // compile a list of table rows that contain the key and value pairs
     const tableRows = options.map(option => {
-      return `<tr>
+      return `<tr class="content-tr">
         <td></td>
         <td>${option.key}</td>
         <td>
