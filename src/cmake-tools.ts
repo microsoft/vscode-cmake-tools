@@ -788,9 +788,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async build(target_?: string): Promise<number> {
     this.m_promise_build = this.RunBuild(target_);
-    const run_build = this.m_promise_build;
-    const result = await run_build;
-    return result;
+    return this.m_promise_build;
   }
 
   /**
