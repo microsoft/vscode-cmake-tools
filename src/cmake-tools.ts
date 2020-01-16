@@ -444,8 +444,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                       try {
                         await fs.rmdir(path.join(path.dirname(e.badCachePath), 'CMakeFiles'));
                       } catch (e2) { log.error(localize('failed.to.remove.cmakefiles.for.cache', 'Failed to remove CMakeFiles for cache: {0} {1}', e.badCachePath, e2)); }
-                      await this.cleanConfigure();
-                    });
+                        await this.cleanConfigure();
+                      });
                   }
                 });
           } else if (e instanceof NoGeneratorError) {
@@ -717,10 +717,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
   }
 
+  private m_promise_build: Promise<number> = Promise.resolve(0);
+
   /**
    * Implementation of `cmake.build`
    */
-  async build(target_?: string): Promise<number> {
+  async runBuild(target_?: string): Promise<number> {
     log.info(localize('run.build', 'Building folder: {0}', this.folderName), target_ ? target_ : '');
     const config_retc = await this.ensureConfigured();
     if (config_retc === null) {
@@ -753,21 +755,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 old_progress += increment;
               }
             });
-            cancel.onCancellationRequested(() => { rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()); });
-            log.showChannel();
-            BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
-            await setContextValue(IS_BUILDING_KEY, true);
-            const rc = await drv.build(target, consumer);
-            await setContextValue(IS_BUILDING_KEY, false);
-            if (rc === null) {
-              BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
-            } else {
-              BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
-            }
-            const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
-            populateCollection(diagCollections.build, file_diags);
-            return rc === null ? -1 : rc;
-          },
+          cancel.onCancellationRequested(() => { rollbar.invokeAsync(localize('stop.on.cancellation', 'Stop on cancellation'), () => this.stop()); });
+          log.showChannel();
+          BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
+          await setContextValue(IS_BUILDING_KEY, true);
+          const rc = await drv.build(target, consumer);
+          await setContextValue(IS_BUILDING_KEY, false);
+          if (rc === null) {
+            BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
+          } else {
+            BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
+          }
+          const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
+          populateCollection(diagCollections.build, file_diags);
+          return rc === null ? -1 : rc;
+        },
       );
     } finally {
       await setContextValue(IS_BUILDING_KEY, false);
@@ -775,6 +777,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._isBusy.set(false);
       consumer.dispose();
     }
+  }
+  /**
+   * Implementation of `cmake.build`
+   */
+  async build(target_?: string): Promise<number> {
+    this.m_promise_build = this.runBuild(target_);
+    return this.m_promise_build;
   }
 
   /**
@@ -904,8 +913,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return false;
     }
 
-    return drv.stopCurrentProcess().then(() => {
+    return drv.stopCurrentProcess().then(async () => {
+      await this.m_promise_build;
       this._cmakeDriver = Promise.resolve(null);
+      this._isBusy.set(false);
       return true;
     }, () => false);
   }
