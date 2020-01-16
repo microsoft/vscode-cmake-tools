@@ -15,6 +15,9 @@ chai.use(chaiAsPromised);
 
 export {expect};
 
+export type unspecifiedKitType = '__unspec__';
+export const unspecifiedKitName: unspecifiedKitType = '__unspec__';
+
 export async function clearExistingKitConfigurationFile() {
   await fs.writeFile(path.join(paths.dataDir, 'cmake-kits.json'), '[]');
 }
@@ -32,10 +35,8 @@ let AVAIL_KITS: Promise<Kit[]> | null = null;
 export async function getSystemKits(): Promise<Kit[]> {
   if (AVAIL_KITS === null) {
     AVAIL_KITS = scanForKits();
-    return getSystemKits();
-  } else {
-    return AVAIL_KITS!;
   }
+  return AVAIL_KITS;
 }
 
 export async function getFirstSystemKit(): Promise<Kit> {
