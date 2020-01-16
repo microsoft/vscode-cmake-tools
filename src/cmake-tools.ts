@@ -722,7 +722,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async build(target_?: string): Promise<number> {
+  async runBuild(target_?: string): Promise<number> {
     log.info(localize('run.build', 'Building folder: {0}', this.folderName), target_ ? target_ : '');
     const config_retc = await this.ensureConfigured();
     if (config_retc === null) {
@@ -782,7 +782,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async build(target_?: string): Promise<number> {
-    this.m_promise_build = this.RunBuild(target_);
+    this.m_promise_build = this.runBuild(target_);
     return this.m_promise_build;
   }
 

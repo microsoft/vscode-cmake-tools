@@ -368,7 +368,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Cancel build', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -396,7 +396,7 @@ suite('CMake-Server-Driver tests', () => {
 
 
   test('Stop and start cmake-server client', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
