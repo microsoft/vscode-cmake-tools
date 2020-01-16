@@ -1,10 +1,11 @@
-import {ConfigurationReader} from '@cmt/config';
 import * as ajv from 'ajv';
+import * as chokidar from 'chokidar';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
+import {ConfigurationReader} from '@cmt/config';
 import * as logging from './logging';
 import {fs} from './pr';
 import {EnvironmentVariables} from './proc';
@@ -12,7 +13,6 @@ import rollbar from './rollbar';
 import {loadSchema} from './schema';
 import {StateManager} from './state';
 import * as util from './util';
-import {MultiWatcher} from './watcher';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -186,11 +186,11 @@ export class VariantManager implements vscode.Disposable {
   /**
    * Watches for changes to the variants file on the filesystem
    */
-  private readonly _variantFileWatcher = new MultiWatcher();
+  private readonly _variantFileWatcher = chokidar.watch([], {ignoreInitial: true});
 
 
   dispose() {
-    this._variantFileWatcher.dispose();
+    this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
 
@@ -198,24 +198,21 @@ export class VariantManager implements vscode.Disposable {
    * Create a new VariantManager
    * @param stateManager The state manager for this instance
    */
-  constructor(readonly stateManager: StateManager, readonly config: ConfigurationReader) {
+  constructor(readonly folder: vscode.WorkspaceFolder, readonly stateManager: StateManager, readonly config: ConfigurationReader) {
     log.debug(localize('constructing', 'Constructing {0}', 'VariantManager'));
     if (!vscode.workspace.workspaceFolders) {
       return;  // Nothing we can do. We have no directory open
-    }
-    const folder = vscode.workspace.workspaceFolders[0];  // TODO: Multi-root!
-    if (!folder) {
-      return;  // No root folder open
     }
     const base_path = folder.uri.path;
     for (const filename of ['cmake-variants.yaml',
                             'cmake-variants.json',
                             '.vscode/cmake-variants.yaml',
                             '.vscode/cmake-variants.json']) {
-      this._variantFileWatcher.createWatcher(path.join(base_path, filename));
+      this._variantFileWatcher.add(path.join(base_path, filename));
     }
-    this._variantFileWatcher.onAnyEvent(
-        e => { rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', e.fsPath), () => this._reloadVariantsFile(e.fsPath)); });
+    util.chokidarOnAnyChange(
+            this._variantFileWatcher,
+            filePath => { rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', filePath), () => this._reloadVariantsFile(filePath)); });
 
     config.onChange('defaultVariants', () => {
       rollbar.invokeAsync(localize('reloading.variants.from.settings', 'Reloading variants from settings'), () => this._reloadVariantsFile());
@@ -234,18 +231,14 @@ export class VariantManager implements vscode.Disposable {
   private async _reloadVariantsFile(filepath?: string) {
     const validate = await loadSchema('schemas/variants-schema.json');
 
-    const workdir = util.getPrimaryWorkspaceFolder();
-    if (!workdir) {
-      // Can't read, we don't have a dir open
-      return;
-    }
+    const workdir = this.folder.uri.fsPath;
 
     if (!filepath || !await fs.exists(filepath)) {
       const candidates = [
-        path.join(workdir.fsPath, 'cmake-variants.json'),
-        path.join(workdir.fsPath, 'cmake-variants.yaml'),
-        path.join(workdir.fsPath, '.vscode/cmake-variants.json'),
-        path.join(workdir.fsPath, '.vscode/cmake-variants.yaml'),
+        path.join(workdir, 'cmake-variants.json'),
+        path.join(workdir, 'cmake-variants.yaml'),
+        path.join(workdir, '.vscode/cmake-variants.json'),
+        path.join(workdir, '.vscode/cmake-variants.yaml'),
       ];
       for (const testpath of candidates) {
         if (await fs.exists(testpath)) {
@@ -360,7 +353,7 @@ export class VariantManager implements vscode.Disposable {
     return this.mergeVariantConfigurations(options_or_error);
   }
 
-  async selectVariant() {
+  async selectVariant(name?: string) {
     const variants = this._variants.settings.map(setting => setting.choices.map(opt => ({
                                                                                   settingKey: setting.name,
                                                                                   settingValue: opt.key,
@@ -373,12 +366,22 @@ export class VariantManager implements vscode.Disposable {
                         keywordSettings: this.transformChoiceCombinationToKeywordSettings(optionset),
                         description: optionset.map(o => o.settings.long).join(' + '),
                       }));
-    const chosen = await vscode.window.showQuickPick(items);
-    if (!chosen) {
+    if (name) {
+      for (const item of items) {
+        if (name === item.label) {
+          this.publishActiveKeywordSettings(item.keywordSettings);
+          return true;
+        }
+      }
       return false;
+    } else {
+      const chosen = await vscode.window.showQuickPick(items);
+      if (!chosen) {
+        return false;
+      }
+      this.publishActiveKeywordSettings(chosen.keywordSettings);
+      return true;
     }
-    this.publishActiveKeywordSettings(chosen.keywordSettings);
-    return true;
   }
 
   publishActiveKeywordSettings(keywordSettings: Map<string, string>) {

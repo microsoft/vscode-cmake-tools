@@ -18,7 +18,6 @@ export enum LogLevel {
   Fatal,
 }
 
-export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 type RevealLogKey = 'always'|'never'|'focus';
 
 /**

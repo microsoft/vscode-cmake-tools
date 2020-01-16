@@ -30,8 +30,6 @@ let driver: CMakeDriver|null = null;
 
 suite('CMake-Server-Driver tests', () => {
   const cmakePath: string = process.env.CMAKE_EXECUTABLE? process.env.CMAKE_EXECUTABLE: 'cmake';
-  const workspacePath: string = 'test/unit-tests/cms-driver/workspace';
-  const root = getTestRootFilePath(workspacePath);
   const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/test_project');
   const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/empty_project');
   const badCommandWorkspaceFolder = getTestRootFilePath('test/unit-tests/cms-driver/workspace/bad_command');
@@ -85,7 +83,7 @@ suite('CMake-Server-Driver tests', () => {
   });
 
   test(`All target for ${kitDefault.name}`, async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -99,7 +97,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(60000);
 
   test('Check binary dir', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -108,7 +106,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(60000);
 
   test('Configure fails', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -117,7 +115,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Build', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -131,7 +129,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Configure fails on invalid preferred generator', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     const kit = {name: 'GCC', preferredGenerator: {name: 'BlaBla'}} as Kit;
@@ -142,7 +140,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(60000);
 
   test('Throw exception on set kit without preferred generator found', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -152,7 +150,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Try build on empty dir', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -167,7 +165,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(60000);
 
   test('No parallel configuration', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -186,7 +184,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No parallel clean configuration', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -205,7 +203,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No parallel builds', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -226,7 +224,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No build parallel to configure', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -247,7 +245,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No configure parallel to build', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -268,7 +266,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('No build parallel to clean configuration', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -289,7 +287,7 @@ suite('CMake-Server-Driver tests', () => {
 
 
   test('No clean configuration parallel to build', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     let called = false;
@@ -311,7 +309,7 @@ suite('CMake-Server-Driver tests', () => {
 
 
   test('Test pre-configured workspace', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -327,7 +325,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(60000);
 
   test('Test generator switch', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -341,7 +339,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Test extra arguments on configure', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
@@ -351,7 +349,7 @@ suite('CMake-Server-Driver tests', () => {
   }).timeout(90000);
 
   test('Test extra arguments on clean and configure', async () => {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
