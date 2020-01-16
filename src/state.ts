@@ -11,25 +11,14 @@ import * as vscode from 'vscode';
  * invalid states.
  */
 export class StateManager {
-  private readonly latestPrefix: string = 'latest.';
-
   constructor(readonly extensionContext: vscode.ExtensionContext, readonly folder: vscode.WorkspaceFolder) {}
 
   private _get<T>(key: string): T | undefined {
-    const actualKey = this.folder.uri.fsPath + key;
-    let value = this.extensionContext.workspaceState.get<T>(actualKey);
-    if (value) {
-      this.extensionContext.globalState.update(this.latestPrefix + actualKey, value);
-    } else {
-      value = this.extensionContext.globalState.get<T>(this.latestPrefix + actualKey);
-    }
-    return value;
+    return this.extensionContext.globalState.get<T>(this.folder.uri.fsPath + key);
   }
 
   private _update(key: string, value: any): Thenable<void> {
-    const actualKey = this.folder.uri.fsPath + key;
-    this.extensionContext.globalState.update(this.latestPrefix + actualKey, value);
-    return this.extensionContext.workspaceState.update(actualKey, value);
+    return this.extensionContext.globalState.update(this.folder.uri.fsPath + key, value);
   }
 
   /**

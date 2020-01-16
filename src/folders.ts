@@ -138,7 +138,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   private async _addFolder(folder: vscode.WorkspaceFolder) {
     const existing = this.get(folder);
     if (existing) {
-      rollbar.error(localize('double.loaded.folder','Double-loaded workspace folder'), { wsUri: folder.uri.toString() });
+      rollbar.error(localize('same.folder.loaded.twice','The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
       return existing;
     }
     // Load for the workspace.

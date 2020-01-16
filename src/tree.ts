@@ -516,7 +516,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         return node.getChildren();
       }
       // Request for root nodes
-      if (this._folders.size <= 1) {
+      if (this._folders.size === 1) {
         for (const folder of this._folders.values()) {
           return folder.getChildren();
         }

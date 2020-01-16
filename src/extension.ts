@@ -667,7 +667,7 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     if (await this._ensureActiveKit(cmt)) {
-      return fn!(cmt);
+      return fn(cmt);
     }
     return -1;
   }

@@ -45,7 +45,6 @@
                 "HasVs": "true"
             },
             "preLaunchTask": "build-tests-with-tsc-watch"
-            // "smartStep": true
         },
         {
             "name": "Launch Extension Tests (without-cmakelist-file)",
@@ -81,7 +80,6 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
         },
         {
             "name": "Launch Extension Tests (successful-build)",
@@ -124,7 +122,6 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
         },
         {
             "name": "Launch Extension Tests (single-root-UI)",
@@ -167,7 +164,6 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
         },
         {
             "name": "Launch Extension Tests (multi-root-UI)",
@@ -210,7 +206,6 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
         },
         {
             "name": "Launch Extension Tests (vs-preferred-gen)",
@@ -246,7 +241,6 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
         },
         {
             "type": "node",
