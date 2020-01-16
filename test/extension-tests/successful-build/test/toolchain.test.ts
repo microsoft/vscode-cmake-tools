@@ -1,7 +1,7 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools} from '@cmt/cmake-tools';
-import {kitsAvailableInWorkspaceDirectory} from '@cmt/kit';
+import {readKitsFile, kitsForWorkspaceDirectory, USER_KITS_FILEPATH} from '@cmt/kit';
 import {platformNormalizePath} from '@cmt/util';
 import {DefaultEnvironment, expect} from '@test/util';
 
@@ -17,7 +17,9 @@ suite('[Toolchain Substitution]', async () => {
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
-    const kits = await kitsAvailableInWorkspaceDirectory(testEnv.projectFolder.location);
+    const user_kits = await readKitsFile(USER_KITS_FILEPATH);
+    const ws_kits= await kitsForWorkspaceDirectory(testEnv.projectFolder.location);
+    const kits = user_kits.concat(ws_kits);
     const tc_kit = kits.find(k => k.name === 'Test Toolchain');
     expect(tc_kit).to.not.eq(undefined);
 

@@ -32,32 +32,45 @@
   "icon": "res/logo.png",
   "activationEvents": [
     "onCommand:cmake.build",
+    "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
     "onCommand:cmake.clean",
+    "onCommand:cmake.cleanAll",
     "onCommand:cmake.cleanConfigure",
+    "onCommand:cmake.cleanConfigureAll",
     "onCommand:cmake.cleanRebuild",
+    "onCommand:cmake.cleanRebuildAll",
     "onCommand:cmake.configure",
+    "onCommand:cmake.configureAll",
     "onCommand:cmake.ctest",
+    "onCommand:cmake.ctestAll",
     "onCommand:cmake.debugTarget",
+    "onCommand:cmake.debugTargetAll",
     "onCommand:cmake.editCache",
     "onCommand:cmake.editKits",
     "onCommand:cmake.viewLog",
     "onCommand:cmake.install",
+    "onCommand:cmake.installAll",
     "onCommand:cmake.launchTarget",
+    "onCommand:cmake.launchTargetAll",
     "onCommand:cmake.launchTargetPath",
     "onCommand:cmake.launchTargetDirectory",
     "onCommand:cmake.buildType",
     "onCommand:cmake.buildDirectory",
+    "onCommand:cmake.executableTargets",
     "onCommand:cmake.buildKit",
     "onCommand:cmake.tasksBuildCommand",
     "onCommand:cmake.quickStart",
     "onCommand:cmake.resetState",
     "onCommand:cmake.scanForKits",
+    "onCommand:cmake.selectActiveFolder",
     "onCommand:cmake.selectLaunchTarget",
     "onCommand:cmake.setVariant",
+    "onCommand:cmake.setVariantAll",
     "onCommand:cmake.stop",
-    "onCommand:cmake.outline.configure",
-    "onCommand:cmake.outline.build",
+    "onCommand:cmake.stopAll",
+    "onCommand:cmake.outline.configureAll",
+    "onCommand:cmake.outline.buildAll",
     "workspaceContains:**/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
@@ -67,6 +80,11 @@
       {
         "command": "cmake.viewLog",
         "title": "%cmake-tools.command.cmake.viewLog.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.selectActiveFolder",
+        "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
         "category": "CMake"
       },
       {
@@ -90,8 +108,18 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.setVariantAll",
+        "title": "%cmake-tools.command.cmake.setVariantAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.configure",
         "title": "%cmake-tools.command.cmake.configure.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.configureAll",
+        "title": "%cmake-tools.command.cmake.configureAll.title%",
         "category": "CMake"
       },
       {
@@ -103,8 +131,21 @@
         }
       },
       {
+        "command": "cmake.outline.configureAll",
+        "title": "%cmake-tools.command.cmake.configureAll.title%",
+        "icon": {
+          "dark": "res/dark/configure-icon.svg",
+          "light": "res/light/configure-icon.svg"
+        }
+      },
+      {
         "command": "cmake.build",
         "title": "%cmake-tools.command.cmake.build.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.buildAll",
+        "title": "%cmake-tools.command.cmake.buildAll.title%",
         "category": "CMake"
       },
       {
@@ -114,6 +155,14 @@
       {
         "command": "cmake.outline.build",
         "title": "%cmake-tools.command.cmake.build.title%",
+        "icon": {
+          "dark": "res/dark/build-icon.svg",
+          "light": "res/light/build-icon.svg"
+        }
+      },
+      {
+        "command": "cmake.outline.buildAll",
+        "title": "%cmake-tools.command.cmake.buildAll.title%",
         "icon": {
           "dark": "res/dark/build-icon.svg",
           "light": "res/light/build-icon.svg"
@@ -142,6 +191,11 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.installAll",
+        "title": "%cmake-tools.command.cmake.installAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.buildWithTarget",
         "title": "%cmake-tools.command.cmake.buildWithTarget.title%",
         "category": "CMake"
@@ -157,8 +211,17 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.cleanConfigureAll",
+        "title": "%cmake-tools.command.cmake.cleanConfigureAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.outline.cleanConfigure",
         "title": "%cmake-tools.command.cmake.outline.cleanConfigure.title%"
+      },
+      {
+        "command": "cmake.outline.cleanConfigureAll",
+        "title": "%cmake-tools.command.cmake.outline.cleanConfigureAll.title%"
       },
       {
         "command": "cmake.clean",
@@ -166,8 +229,17 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.cleanAll",
+        "title": "%cmake-tools.command.cmake.cleanAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.outline.clean",
         "title": "%cmake-tools.command.cmake.clean.title%"
+      },
+      {
+        "command": "cmake.outline.cleanAll",
+        "title": "%cmake-tools.command.cmake.cleanAll.title%"
       },
       {
         "command": "cmake.cleanRebuild",
@@ -175,12 +247,26 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.cleanRebuildAll",
+        "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.outline.cleanRebuild",
         "title": "%cmake-tools.command.cmake.cleanRebuild.title%"
       },
       {
+        "command": "cmake.outline.cleanRebuildAll",
+        "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
+      },
+      {
         "command": "cmake.ctest",
         "title": "%cmake-tools.command.cmake.ctest.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.ctestAll",
+        "title": "%cmake-tools.command.cmake.ctestAll.title%",
         "category": "CMake"
       },
       {
@@ -199,8 +285,18 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.debugTargetAll",
+        "title": "%cmake-tools.command.cmake.debugTargetAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.launchTarget",
         "title": "%cmake-tools.command.cmake.launchTarget.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.launchTargetAll",
+        "title": "%cmake-tools.command.cmake.launchTargetAll.title%",
         "category": "CMake"
       },
       {
@@ -214,8 +310,21 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.stopAll",
+        "title": "%cmake-tools.command.cmake.stopAll.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.outline.stop",
         "title": "%cmake-tools.command.cmake.stop.title%",
+        "icon": {
+          "dark": "res/dark/stop-icon.svg",
+          "light": "res/light/stop-icon.svg"
+        }
+      },
+      {
+        "command": "cmake.outline.stopAll",
+        "title": "%cmake-tools.command.cmake.stopAll.title%",
         "icon": {
           "dark": "res/dark/stop-icon.svg",
           "light": "res/light/stop-icon.svg"
@@ -265,10 +374,22 @@
           "command": "cmake.configure"
         },
         {
+          "command": "cmake.configureAll",
+          "when": "cmake:multiRoot"
+        },
+        {
           "command": "cmake.build"
         },
         {
+          "command": "cmake.buildAll",
+          "when": "cmake:multiRoot"
+        },
+        {
           "command": "cmake.install"
+        },
+        {
+          "command": "cmake.installAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.buildWithTarget"
@@ -280,7 +401,8 @@
           "command": "cmake.setVariant"
         },
         {
-          "command": "cmake.setDefaultTarget"
+          "command": "cmake.setVariantAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.setDefaultTarget"
@@ -289,13 +411,29 @@
           "command": "cmake.cleanConfigure"
         },
         {
+          "command": "cmake.cleanConfigureAll",
+          "when": "cmake:multiRoot"
+        },
+        {
           "command": "cmake.clean"
+        },
+        {
+          "command": "cmake.cleanAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.cleanRebuild"
         },
         {
+          "command": "cmake.cleanRebuildAll",
+          "when": "cmake:multiRoot"
+        },
+        {
           "command": "cmake.ctest"
+        },
+        {
+          "command": "cmake.ctestAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.editCache"
@@ -304,7 +442,15 @@
           "command": "cmake.debugTarget"
         },
         {
+          "command": "cmake.debugTargetAll",
+          "when": "cmake:multiRoot"
+        },
+        {
           "command": "cmake.launchTarget"
+        },
+        {
+          "command": "cmake.launchTargetAll",
+          "when": "cmake:multiRoot"
         },
         {
           "command": "cmake.selectLaunchTarget"
@@ -313,11 +459,23 @@
           "command": "cmake.stop"
         },
         {
+          "command": "cmake.stopAll",
+          "when": "cmake:multiRoot"
+        },
+        {
           "command": "cmake.outline.configure",
           "when": "never"
         },
         {
+          "command": "cmake.outline.configureAll",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.build",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.buildAll",
           "when": "never"
         },
         {
@@ -329,7 +487,15 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.cleanConfigureAll",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.clean",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.cleanAll",
           "when": "never"
         },
         {
@@ -337,7 +503,15 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.cleanRebuildAll",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.stop",
+          "when": "never"
+        },
+        {
+          "command": "cmake.outline.stopAll",
           "when": "never"
         },
         {
@@ -367,40 +541,36 @@
         {
           "command": "cmake.outline.revealInCMakeLists",
           "when": "never"
-        },
-        {
-          "command": "cmake.outline.buildTarget",
-          "when": "never"
         }
       ],
       "view/title": [
         {
-          "command": "cmake.outline.configure",
+          "command": "cmake.outline.configureAll",
           "when": "view == cmake.outline && !cmake:isBuilding",
           "group": "navigation@1"
         },
         {
-          "command": "cmake.outline.build",
+          "command": "cmake.outline.buildAll",
           "when": "view == cmake.outline && !cmake:isBuilding",
           "group": "navigation@2"
         },
         {
-          "command": "cmake.outline.stop",
+          "command": "cmake.outline.stopAll",
           "when": "view == cmake.outline && cmake:isBuilding",
           "group": "navigation@3"
         },
         {
-          "command": "cmake.outline.clean",
+          "command": "cmake.outline.cleanAll",
           "when": "view == cmake.outline",
           "group": "1_cmakeOutline"
         },
         {
-          "command": "cmake.outline.cleanConfigure",
+          "command": "cmake.outline.cleanConfigureAll",
           "when": "view == cmake.outline",
           "group": "1_cmakeOutline"
         },
         {
-          "command": "cmake.outline.cleanRebuild",
+          "command": "cmake.outline.cleanRebuildAll",
           "when": "view == cmake.outline",
           "group": "1_cmakeOutline"
         }
@@ -408,7 +578,7 @@
       "view/item/context": [
         {
           "command": "cmake.outline.buildTarget",
-          "when": "view == cmake.outline && viewItem =~ /canBuild=true/",
+          "when": "view == cmake.outline && viewItem =~ /canBuild=true|canRun=true/",
           "group": "inline"
         },
         {
@@ -489,6 +659,12 @@
       "type": "object",
       "title": "CMake Tools configuration",
       "properties": {
+        "cmake.autoSelectActiveFolder": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.autoSelectActiveFolder.description%",
+          "scope": "window"
+        },
         "cmake.cmakePath": {
           "type": "string",
           "default": "cmake",
@@ -529,7 +705,7 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.clearOutputBeforeBuild.description%",
-          "scope": "resource"
+          "scope": "window"
         },
         "cmake.configureSettings": {
           "type": "object",
@@ -1006,11 +1182,6 @@
     "views": {
       "cmake__viewContainer": [
         {
-          "id": "cmake.folders",
-          "name": "%cmake-tools.configuration.views.cmake.folders.description%",
-          "when": "cmakeToolsMultiRootActive"
-        },
-        {
           "id": "cmake.outline",
           "name": "%cmake-tools.configuration.views.cmake.outline.description%",
           "when": "cmakeToolsActive"
@@ -1089,8 +1260,8 @@
     "ts-loader": "^6.0.4",
     "ts-node": "^6.0.0",
     "tslint": "^5.9.1",
-    "typedoc": "^0.14.2",
-    "typescript": "~3.2.2",
+    "typedoc": "^0.15.3",
+    "typescript": "^3.7.2",
     "vscode": "^1.1.35",
     "vscode-nls-dev": "^3.2.6",
     "webpack": "^4.39.2",
@@ -1098,6 +1269,7 @@
   },
   "dependencies": {
     "ajv": "^4.7.5",
+    "chokidar": "^3.3.0",
     "es6-promisify": "~5.0.0",
     "handlebars": "^4.5.3",
     "iconv-lite": "^0.4.21",
