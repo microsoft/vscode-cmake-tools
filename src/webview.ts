@@ -41,8 +41,13 @@ export class ConfigurationWebview {
     // handle checkbox value change event
     this._panel.webview.onDidReceiveMessage(async (options: IOption[]) => {
       try {
-        await this.saveCmakeCache(options);
-        vscode.window.showInformationMessage('CMake options have been saved.');
+        if (options) {
+          await this.saveCmakeCache(options);
+          vscode.window.showInformationMessage('CMake options have been saved.');
+          this._panel.title = 'CMake Configuration';
+        } else {
+          this._panel.title = 'CMake Configuration *';
+        }
       } catch (error) {
         vscode.window.showErrorMessage(error);
       }
@@ -146,12 +151,16 @@ export class ConfigurationWebview {
             const label = document.getElementById('LABEL_' + id);
 
             label.textContent = label.textContent == 'ON' ? 'OFF' : 'ON';
+            vscode.postMessage(false);
+
+            document.getElementById('not-saved').classList.remove('invisible');
           }
 
           function save() {
             const inputs = [...document.querySelectorAll('.cmake-input')];
             const values = inputs.map(x => { return { key: x.id, value: x.checked } });
 
+            document.getElementById('not-saved').classList.add('invisible');
             vscode.postMessage(values);
           }
 
@@ -170,7 +179,7 @@ export class ConfigurationWebview {
     <body>
       <div class="container">
         <button id="save" onclick="save()">Save</button>
-        <h1>CMake Configuration</h1>
+        <h1>CMake Configuration<span class="invisible" id="not-saved">*</span></h1>
         <small>Here you can configure your cmake options by the touch of a button.</small>
         <hr>
         <input class="search" type="text" id="search" oninput="search()" placeholder="Search">
