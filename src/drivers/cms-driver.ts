@@ -7,7 +7,8 @@ import * as api from '@cmt/api';
 import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cms-client';
-import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
@@ -24,15 +25,14 @@ export class NoGeneratorError extends Error {
   message: string = localize('no.usable.generator.found', 'No usable generator found.');
 }
 
-export class CMakeServerClientDriver extends CMakeDriver {
+export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceFolder, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());
     this.config.onChange('configureEnvironment', () => this._restartClient());
   }
 
-  // TODO: Refactor to make this assertion unecessary
-  private _cmsClient!: Promise<cms.CMakeServerClient>;
+  private _cmsClient: Promise<cms.CMakeServerClient|null> = Promise.resolve(null);
   private _clientChangeInProgress: Promise<void> = Promise.resolve();
   private _globalSettings!: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
@@ -56,14 +56,33 @@ export class CMakeServerClientDriver extends CMakeDriver {
     this._codeModel = v;
   }
 
-  private readonly _codeModelChanged = new vscode.EventEmitter<null|cms.CodeModelContent>();
+  private readonly _codeModelChanged = new vscode.EventEmitter<null|codemodel.CodeModelContent>();
   get onCodeModelChanged() { return this._codeModelChanged.event; }
 
   async asyncDispose() {
     this._codeModelChanged.dispose();
     this._progressEmitter.dispose();
-    if (this._cmsClient) {
-      await (await this._cmsClient).shutdown();
+
+    await this.shutdownClient();
+  }
+
+  private async shutdownClient() {
+    const cl = await this._cmsClient;
+    if (cl) {
+      await cl.shutdown();
+    }
+  }
+
+  private async getClient(): Promise<cms.CMakeServerClient> {
+    if (!(await this._cmsClient)) {
+      this._cmsClient = this._startNewClient();
+    }
+
+    const client_started = await this._cmsClient;
+    if (!(client_started)) {
+      throw Error('Unable to start cms client');
+    } else {
+      return client_started;
     }
   }
 
@@ -71,7 +90,9 @@ export class CMakeServerClientDriver extends CMakeDriver {
     const old_cl = await this._cmsClient;
     this._cmsClient = (async () => {
       // Stop the server before we try to rip out any old files
-      await old_cl.shutdown();
+      if (old_cl) {
+        await old_cl.shutdown();
+      }
       await this._cleanPriorConfiguration();
       return this._startNewClient();
     })();
@@ -79,7 +100,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   protected async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
     await this._clientChangeInProgress;
-    const cl = await this._cmsClient;
+    const cl = await this.getClient();
     const sub = this.onMessage(msg => {
       if (consumer) {
         for (const line of msg.split('\n')) {
@@ -112,7 +133,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
   }
 
   async _refreshPostConfigure(): Promise<void> {
-    const client = await this._cmsClient;
+    const client = await this.getClient();
     const cmake_inputs = await client.cmakeInputs();  // <-- 1. This line generates the error
     // Scan all the CMake inputs and capture their mtime so we can check for
     // out-of-dateness later
@@ -227,7 +248,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
   private async _setKitAndRestart(need_clean: boolean, cb: () => Promise<void>) {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
     const client = await this._cmsClient;
-    await client.shutdown();
+    if (client)
+      await client.shutdown();
     if (need_clean) {
       await this._cleanPriorConfiguration();
     }
@@ -246,15 +268,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   private async _restartClient(): Promise<void> {
     this._cmsClient = this._doRestartClient();
-    const client = await this._cmsClient;
+    const client = await this.getClient();
     this._globalSettings = await client.getGlobalSettings();
   }
 
   private async _doRestartClient(): Promise<cms.CMakeServerClient> {
-    const old_client = this._cmsClient;
+    const old_client = await this._cmsClient;
     if (old_client) {
-      const cl = await old_client;
-      await cl.shutdown();
+      await old_client.shutdown();
     }
     return this._startNewClient();
   }
@@ -286,6 +307,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
 
   private readonly _onMessageEmitter = new vscode.EventEmitter<string>();
   get onMessage() { return this._onMessageEmitter.event; }
+
+  async onStop(): Promise<void> {
+    const client = await this._cmsClient;
+    if (client) {
+      await client.shutdown();
+      this._cmsClient = Promise.resolve(null);
+    }
+  }
 
   protected async doInit(): Promise<void> { await this._restartClient(); }
 

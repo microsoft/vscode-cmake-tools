@@ -224,6 +224,7 @@ export interface CodeModelFileGroup {
   includePath?: {path: string; isSystem?: boolean;}[];
   defines?: string[];
   sources: string[];
+  isGenerated: boolean;
 }
 
 export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
@@ -525,7 +526,9 @@ export class CMakeServerClient {
     return this._sendRequest('cmakeInputs', params);
   }
 
+  protected _shutdown = false;
   public async shutdown() {
+    this._shutdown = true;
     this._pipe.end();
     await this._endPromise;
   }
@@ -553,10 +556,16 @@ export class CMakeServerClient {
         const pipe = this._pipe = net.createConnection(pipe_file);
         pipe.on('data', this._onMoreData.bind(this));
         pipe.on('error', e => {
-          debugger;
           pipe.end();
-          rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'), {pipe: pipe_file}, params.onPipeError(e));
-          reject(e);
+          if (!this._shutdown) {
+            debugger;
+            rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'),
+                                {pipe: pipe_file},
+                                params.onPipeError(e));
+            reject(e);
+          } else {
+            resolve();
+          }
         });
         pipe.on('end', () => {
           pipe.end();

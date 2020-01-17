@@ -35,7 +35,7 @@
 	"scanning.for.kits": "Skanowanie w poszukiwaniu zestawów",
 	"scanning.for.cmake.kits": "Trwa skanowanie w poszukiwaniu zestawów narzędzia CMake...",
 	"found.kit": "Znaleziono zestaw: {0}",
-	"kit.for.toolchain.fiile": "Zestaw dla pliku łańcucha narzędzi {0}",
+	"kit.for.toolchain.file": "Zestaw dla pliku łańcucha narzędzi {0}",
 	"using.compilers.for": "Użycie kompilatorów dla elementu {0} (architektura {1})",
 	"using.compilers": "Użycie kompilatorów: {0}",
 	"unspecified.let.cmake.guess": "Nieokreślone (narzędzie CMake ma zgadnąć kompilatory i środowisko do użycia)",
