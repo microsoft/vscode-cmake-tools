@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Konfiguruje se pracovní prostor při otvírání elementu {0}.",
 	"double.loaded.instance": "Dvakrát se načetla instance nástrojů CMake Tools pro složku pracovního prostoru.",
 	"creating.backend": "Vytváří se back-end.",
-	"post.folder.open": "Po otevření složky",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Složka pracovního prostoru byla odebrána, ale není přidružená k instanci rozšíření.",
 	"loading.workspace.folder.name": "Načítá se složka pracovního prostoru {0}.",
 	"loading.workspace.folder": "Načítá se složka pracovního prostoru.",
