@@ -225,14 +225,18 @@ export class CMakeCache {
   async save(key: string, value: boolean) {
     const content = await this.replaceOption(key, value);
     if (await fs.exists(this.path)) {
-      await fs.writeFile(this.path, content);
+      if (content) {
+        await fs.writeFile(this.path, content);
+      }
     }
   }
 
   async saveAll(options: Array<{key: string, value: boolean}>) {
     const content = await this.replaceOptions(options);
     if (await fs.exists(this.path)) {
-      await fs.writeFile(this.path, content);
+      if (content) {
+        await fs.writeFile(this.path, content);
+      }
     }
   }
 
