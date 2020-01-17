@@ -43,8 +43,8 @@ export class ConfigurationWebview {
       try {
         if (options) {
           await this.saveCmakeCache(options);
-          vscode.window.showInformationMessage('CMake options have been saved.');
           this._panel.title = 'CMake Configuration';
+          vscode.window.showInformationMessage('CMake options have been saved.');
         } else {
           this._panel.title = 'CMake Configuration *';
         }
