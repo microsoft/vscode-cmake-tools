@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Configuration de l'espace de travail à l'ouverture {0}",
 	"double.loaded.instance": "Instance CMake Tools à chargement double pour le dossier d'espace de travail",
 	"creating.backend": "Création du back-end",
-	"post.folder.open": "Après ouverture du dossier",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Dossier d'espace de travail supprimé, mais non associé à une instance d'extension",
 	"loading.workspace.folder.name": "Chargement du dossier d'espace de travail {0}",
 	"loading.workspace.folder": "Chargement du dossier d'espace de travail",
