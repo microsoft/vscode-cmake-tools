@@ -179,10 +179,8 @@ export class CMakeCache {
     return entries;
   }
 
-  async save(key: string, value: boolean) {
-    const exists = await fs.exists(this.path);
-    if (exists) {
-      const content = (await fs.readFile(this.path)).toString();
+  async replace(content: string, key: string, value: boolean): Promise<string> {
+    return new Promise(resolve => {
       const re = key + ':.+=(.+)';
       const found = content.match(re);
 
@@ -190,8 +188,51 @@ export class CMakeCache {
         const line = found[0];
         const currentVal = found[1];
         const newValueLine = line.replace(currentVal, value ? 'TRUE' : 'FALSE');
-        await fs.writeFile(this.path, content.replace(line, newValueLine));
+        resolve(content.replace(line, newValueLine));
+      } else {
+        resolve('');
       }
+    });
+  }
+
+  async replaceOption(key: string, value: boolean) {
+    return new Promise(async resolve => {
+      const exists = await fs.exists(this.path);
+      if (exists) {
+        const content = (await fs.readFile(this.path)).toString();
+        resolve(await this.replace(content, key, value));
+      } else {
+        resolve('');
+      }
+    });
+  }
+
+  async replaceOptions(options: Array<{key: string, value: boolean}>) {
+    return new Promise(async resolve => {
+      const exists = await fs.exists(this.path);
+      if (exists) {
+        let content = (await fs.readFile(this.path)).toString();
+        for (const option of options) {
+          content = await this.replace(content, option.key, option.value);
+        }
+        resolve(content);
+      } else {
+        resolve('');
+      }
+    });
+  }
+
+  async save(key: string, value: boolean) {
+    const content = await this.replaceOption(key, value);
+    if (await fs.exists(this.path)) {
+      await fs.writeFile(this.path, content);
+    }
+  }
+
+  async saveAll(options: Array<{key: string, value: boolean}>) {
+    const content = await this.replaceOptions(options);
+    if (await fs.exists(this.path)) {
+      await fs.writeFile(this.path, content);
     }
   }
 

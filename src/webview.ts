@@ -39,20 +39,19 @@ export class ConfigurationWebview {
     });
 
     // handle checkbox value change event
-    this._panel.webview.onDidReceiveMessage(async (option: IOption) => {
+    this._panel.webview.onDidReceiveMessage(async (options: IOption[]) => {
       try {
-        await this.saveCmakeCache(option);
-        const message = `${option.key} ${String(option.value)}`;
-        vscode.window.showInformationMessage(message);
+        await this.saveCmakeCache(options);
+        vscode.window.showInformationMessage('CMake options have been saved.');
       } catch (error) {
         vscode.window.showErrorMessage(error);
       }
     });
   }
 
-  async saveCmakeCache(option: IOption) {
+  async saveCmakeCache(options: IOption[]) {
     const cmakeCache = await CMakeCache.fromPath(this.cachePath);
-    await cmakeCache.save(option.key, option.value);
+    await cmakeCache.saveAll(options);
   }
 
   /**
@@ -120,6 +119,25 @@ export class ConfigurationWebview {
           .invisible {
             display: none;
           }
+
+          button#save {
+            float: right;
+            padding: 10px 25px;
+            margin-top: 15px;
+            background: none;
+            color: white;
+            text-transform: uppercase;
+            font-weight: bold;
+            border: 1px solid transparent;
+            border-image: linear-gradient(to bottom right, #b827fc 0%, #2c90fc 25%, #b8fd33 50%, #fec837 75%, #fd1892 100%);
+            border-image-slice: 1;
+            transition: 100ms ease-in-out;
+          }
+
+          button#save:hover {
+            cursor: pointer;
+            background: #333;
+          }
         </style>
 
         <script>
@@ -127,24 +145,19 @@ export class ConfigurationWebview {
           function toggleKey(id) {
             const label = document.getElementById('LABEL_' + id);
 
-            if (label.textContent == 'ON') {
-              label.textContent = 'OFF';
-              vscode.postMessage({
-                key: id,
-                value: false
-              });
-            } else {
-              label.textContent = 'ON';
-              vscode.postMessage({
-                key: id,
-                value: true
-              });
-            }
+            label.textContent = label.textContent == 'ON' ? 'OFF' : 'ON';
+          }
+
+          function save() {
+            const inputs = [...document.querySelectorAll('.cmake-input')];
+            const values = inputs.map(x => { return { key: x.id, value: x.checked } });
+
+            vscode.postMessage(values);
           }
 
           function search() {
             const filter = document.getElementById('search').value.toLowerCase();
-              for (const tr of document.querySelectorAll('.content-tr')) {
+            for (const tr of document.querySelectorAll('.content-tr')) {
               if (!tr.innerHTML.toLowerCase().includes(filter)) {
                 tr.classList.add('invisible');
               } else {
@@ -152,10 +165,11 @@ export class ConfigurationWebview {
               }
             }
           }
-      </script>
+        </script>
     </head>
     <body>
       <div class="container">
+        <button id="save" onclick="save()">Save</button>
         <h1>CMake Configuration</h1>
         <small>Here you can configure your cmake options by the touch of a button.</small>
         <hr>
@@ -181,7 +195,7 @@ export class ConfigurationWebview {
         <td></td>
         <td>${option.key}</td>
         <td>
-          <input id="${option.key}" onclick="toggleKey('${option.key}')"
+          <input class="cmake-input" id="${option.key}" onclick="toggleKey('${option.key}')"
                  type="checkbox" ${option.value ? 'checked' : ''}>
           <label id="LABEL_${option.key}" for="${option.key}">${option.value ? 'ON': 'OFF'}</label>
         </td>
