@@ -19,7 +19,7 @@ interface VSCMakePaths {
  * Directory class.
  */
 class Paths {
-  ninjaPath : string | null = null;
+  private _ninjaPath : string | null = null;
 
   /**
    * The current user's home directory
@@ -85,6 +85,10 @@ class Paths {
     }
   }
 
+  get ninjaPath() {
+    return this._ninjaPath;
+  }
+
   async which(name: string): Promise<string|null> {
     return new Promise<string|null>(resolve => {
       which(name, (err, resolved) => {
@@ -125,7 +129,7 @@ class Paths {
   }
 
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
-    this.ninjaPath = null;
+    this._ninjaPath = null;
 
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
@@ -158,7 +162,7 @@ class Paths {
           // Look for bundled CMake executables in Visual Studio install paths
           const bundled_tools_paths = await this.vsCMakePaths();
           if (null !== bundled_tools_paths.cmake) {
-            this.ninjaPath = bundled_tools_paths.ninja;
+            this._ninjaPath = bundled_tools_paths.ninja;
 
             return bundled_tools_paths.cmake;
           }

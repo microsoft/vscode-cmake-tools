@@ -8,7 +8,7 @@ import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-import {VSInstallation, vsDisplayName, vsInstallations, vsVersionName} from './installs/visual-studio';
+import {VSInstallation, vsInstallations} from './installs/visual-studio';
 import * as expand from './expand';
 import * as logging from './logging';
 import paths from './paths';
@@ -380,6 +380,38 @@ function legacyKitVSName(inst: VSInstallation): string {
  */
 function kitVSName(inst: VSInstallation): string {
   return `${inst.instanceId}`;
+}
+
+/**
+ * Construct the Visual Studio version string.
+ *
+ * @param inst The VSInstallation to use
+ */
+export function vsVersionName(inst: VSInstallation): string {
+  if (!inst.catalog) {
+    return inst.instanceId;
+  }
+  const end = inst.catalog.productDisplayVersion.indexOf('[');
+  return end < 0 ? inst.catalog.productDisplayVersion : inst.catalog.productDisplayVersion.substring(0, end - 1);
+}
+
+/**
+ * Construct the display name (this will be paired with an
+ * arch later to construct the Kit.name property).
+ *
+ * @param inst The VSInstallation to use
+ */
+export function vsDisplayName(inst: VSInstallation): string {
+  if (inst.displayName) {
+    if (inst.channelId) {
+      const index = inst.channelId.lastIndexOf('.');
+      if (index > 0) {
+        return `${inst.displayName} ${inst.channelId.substr(index + 1)}`;
+      }
+    }
+    return inst.displayName;
+  }
+  return inst.instanceId;
 }
 
 /**
