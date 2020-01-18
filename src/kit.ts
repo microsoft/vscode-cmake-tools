@@ -534,6 +534,20 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
     // configure.
     variables.set('CC', 'cl.exe');
     variables.set('CXX', 'cl.exe');
+
+    if (null !== paths.ninjaPath) {
+      let envPATH = variables.get('PATH');
+      if (undefined !== envPATH) {
+        const env_paths = envPATH.split(';');
+        const ninja_path = path.dirname(paths.ninjaPath);
+        const ninja_base_path = env_paths.find(path_el => path_el === ninja_path);
+        if (undefined === ninja_base_path) {
+          envPATH = envPATH.concat(';' + ninja_path);
+          variables.set('PATH', envPATH);
+        }
+      }
+    }
+
     return variables;
   }
 }
