@@ -14,12 +14,15 @@ import {
   USER_KITS_FILEPATH,
   kitsPathForWorkspaceFolder,
   OLD_USER_KITS_FILEPATH,
+  scanforkitsKitName,
+  unspecifiedKitName,
+  unspecifiedKitType
 } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
 import rollbar from '@cmt/rollbar';
-import { chokidarOnAnyChange, ProgressHandle, reportProgress, unspecifiedKitName, unspecifiedKitType } from '@cmt/util';
+import { chokidarOnAnyChange, ProgressHandle, reportProgress} from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -60,7 +63,7 @@ export class KitsController {
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
-    this._kitsWatcher.close();
+    this._kitsWatcher.close().then(null, null);
   }
 
   get availableKits() {
@@ -88,7 +91,7 @@ export class KitsController {
     // Special kits
     const special_kits: ReadonlyArray<Kit> = [
       // Spcial __scanforkits__ kit used for invoking the "Scan for kits"
-      {name: '__scanforkits__'},
+      {name: scanforkitsKitName},
       // Special __unspec__ kit for opting-out of kits
       {name: unspecifiedKitName}
     ];
@@ -251,7 +254,7 @@ export class KitsController {
       switch (kit.name) {
       case unspecifiedKitName:
         return `[${localize('unspecified.kit.name', 'Unspecified')}]`;
-      case '__scanforkits__':
+      case scanforkitsKitName:
         return `[${localize('scan.for.kits.button', 'Scan for kits')}]`;
       default:
         return kit.name;
@@ -275,7 +278,7 @@ export class KitsController {
       // No selection was made
       return false;
     } else {
-      if (chosen_kit.kit.name == '__scanforkits__') {
+      if (chosen_kit.kit.name == scanforkitsKitName) {
         await this.setFolderActiveKit(null);
         await KitsController.scanForKits();
         return false;
@@ -421,7 +424,7 @@ export class KitsController {
     // Remove the special kits
     const stripped_kits = kits.filter(kit => {
       return ((kit.name !== unspecifiedKitName) &&
-              (kit.name !== '__scanforkits__'));
+              (kit.name !== scanforkitsKitName));
     });
 
     // Sort the kits by name so they always appear in order in the file.

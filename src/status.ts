@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import {BasicTestResults} from '@cmt/ctest';
 import * as nls from 'vscode-nls';
-import {unspecifiedKitName} from '@cmt/util';
+import {unspecifiedKitName} from '@cmt/kit';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
