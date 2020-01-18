@@ -320,7 +320,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (kit.preferredGenerator)
       preferredGenerators.push(kit.preferredGenerator);
 
-    this._generator = await this.findBestGenerator(preferredGenerators);
+    // Use the "best generator" selection logic only if the user did not define already
+    // in settings (via "cmake.generator") a particular generator to be used.
+    if (this.config.generator) {
+      this._generator = {
+        name: this.config.generator,
+        platform: this.config.platform || undefined,
+        toolset: this.config.toolset || undefined,
+      };
+    } else {
+      this._generator = await this.findBestGenerator(preferredGenerators);
+    }
   }
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
@@ -528,6 +538,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         if (gen_name == 'Unix Makefiles') {
           return this.testHaveCommand('make');
         }
+        if (gen_name == 'MSYS Makefiles') {
+          return platform === 'win32' && this.testHaveCommand('make');
+        }
         return false;
       })();
       if (!generator_present) {
@@ -622,26 +635,30 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const telemetryMeasures: telemetry.Measures = {
         Duration: timeEnd - timeStart,
       };
-      if (consumer instanceof CMakeOutputConsumer) {
-        let errorCount: number = 0;
-        let warningCount: number = 0;
-        consumer.diagnostics.forEach(v => {
-          if (v.diag.severity === 0) {
-            errorCount++;
-          } else if (v.diag.severity === 1) {
-            warningCount++;
-          }
-        });
-        telemetryMeasures['ErrorCount'] = errorCount;
-        telemetryMeasures['WarningCount'] = warningCount;
-      } else {
-        // Wrong type: shouldn't get here, just in case
-        rollbar.error('Wrong build result type.');
-        telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
+      if (consumer) {
+        if (consumer instanceof CMakeOutputConsumer) {
+          let errorCount: number = 0;
+          let warningCount: number = 0;
+          consumer.diagnostics.forEach(v => {
+            if (v.diag.severity === 0) {
+              errorCount++;
+            } else if (v.diag.severity === 1) {
+              warningCount++;
+            }
+          });
+          telemetryMeasures['ErrorCount'] = errorCount;
+          telemetryMeasures['WarningCount'] = warningCount;
+        } else {
+          // Wrong type: shouldn't get here, just in case
+          rollbar.error('Wrong build result type.');
+          telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
+        }
       }
       telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
       return retc;
+    } catch {
+      return -1;
     } finally { this.configRunning = false; }
   }
 
@@ -748,26 +765,28 @@ export abstract class CMakeDriver implements vscode.Disposable {
       Duration: timeEnd - timeStart,
     };
     if (child) {
-      if (consumer instanceof CMakeBuildConsumer &&
+      if (consumer) {
+        if (consumer instanceof CMakeBuildConsumer &&
           consumer.compileConsumer instanceof CompileOutputConsumer) {
-        let errorCount: number = 0;
-        let warningCount: number = 0;
-        for (const compiler in consumer.compileConsumer.compilers) {
-          const parser: RawDiagnosticParser = consumer.compileConsumer.compilers[compiler];
-          parser.diagnostics.forEach(v => {
-            if (v.severity === 'error' || v.severity === 'fatal error') {
-              errorCount++;
-            } else if (v.severity === 'warning') {
-              warningCount++;
-            }
-          });
+          let errorCount: number = 0;
+          let warningCount: number = 0;
+          for (const compiler in consumer.compileConsumer.compilers) {
+            const parser: RawDiagnosticParser = consumer.compileConsumer.compilers[compiler];
+            parser.diagnostics.forEach(v => {
+              if (v.severity === 'error' || v.severity === 'fatal error') {
+                errorCount++;
+              } else if (v.severity === 'warning') {
+                warningCount++;
+              }
+            });
+          }
+          telemetryMeasures['ErrorCount'] = errorCount;
+          telemetryMeasures['WarningCount'] = warningCount;
+        } else {
+          // Wrong type: shouldn't get here, just in case
+          rollbar.error('Wrong build result type.');
+          telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;
         }
-        telemetryMeasures['ErrorCount'] = errorCount;
-        telemetryMeasures['WarningCount'] = warningCount;
-      } else {
-        // Wrong type: shouldn't get here, just in case
-        rollbar.error('Wrong build result type.');
-        telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;
       }
       telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
     } else {
@@ -777,12 +796,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
       this.buildRunning = false;
       return -1;
     }
-    const post_build_ok = await this.doPostBuild();
-    if (!post_build_ok) {
-      this.buildRunning = false;
-      return -1;
+    if (!this.m_stop_process) {
+      const post_build_ok = await this.doPostBuild();
+      if (!post_build_ok) {
+        this.buildRunning = false;
+        return -1;
+      }
     }
-    await this._refreshExpansions();
+    if (!this.m_stop_process) {
+      await this._refreshExpansions();
+    }
+
     this.buildRunning = false;
     return (await child.result).retc;
   }
@@ -838,6 +862,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [];
       else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
         return ['-j', this.config.numJobs.toString()];
+      else if (/Visual Studio/.test(gen) && target !== 'clean')
+        return ['/maxcpucount:' + this.config.numJobs.toString()];
       else
         return [];
     })();
@@ -883,19 +909,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * If called then the current process should be stopped.
+   * This could be the configuration or the build process.
+   */
+  async onStop(): Promise<void> {}
+
+  private m_stop_process = false;
+  /**
    * Stops the currently running process at user request
    */
-  async stopCurrentProcess(): Promise<boolean> {
-    const cur = this._currentBuildProcess;
-    if (!cur) {
-      return false;
-    }
-    if (cur.child)
-      await util.termProc(cur.child);
+  async stopCurrentProcess(): Promise<void> {
+    this.m_stop_process = true;
 
-    this._currentBuildProcess = null;
-    this.buildRunning = false;
-    return true;
+    const cur = this._currentBuildProcess;
+    if (cur) {
+      if (cur.child)
+        await util.termProc(cur.child);
+    }
+
+    await this.onStop();
   }
 
   /**

@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Konfiguruje se pracovní prostor při otvírání elementu {0}.",
 	"double.loaded.instance": "Dvakrát se načetla instance nástrojů CMake Tools pro složku pracovního prostoru.",
 	"creating.backend": "Vytváří se back-end.",
-	"post.folder.open": "Po otevření složky",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Složka pracovního prostoru byla odebrána, ale není přidružená k instanci rozšíření.",
 	"loading.workspace.folder.name": "Načítá se složka pracovního prostoru {0}.",
 	"loading.workspace.folder": "Načítá se složka pracovního prostoru.",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "Dokončeno: {0} (vrácena neserializovatelná hodnota)",
 	"loading.extension.commands": "Načítání příkazů rozšíření",
 	"register.command": "Zaregistrujte příkaz rozšíření CMakeTools {0}.",
-	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
+	"uninstall.old.cmaketools": "Odinstalujte prosím všechny starší verze rozšíření CMake Tools. Od verze 1.2.0 jej publikuje Microsoft.",
 	"cmake.tools.initializing": "Inicializují se nástroje CMake Tools...",
 	"deactivate.cmaketools": "Deaktivovat CMakeTools"
 }

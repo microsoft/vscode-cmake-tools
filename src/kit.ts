@@ -535,6 +535,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `cd /d "%~dp0"`,
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
     `call "${devbat}" ${args.join(' ')} || exit`,
+    `cd /d "%~dp0"`, /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
@@ -575,7 +576,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     console.log(`Error running ${devbat} ${args.join(' ')}, can not found INCLUDE`);
     return;
   }
-  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {3}', devbat, args.join(' '), JSON.stringify([...vars])));
+  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
   return vars;
 }
 
@@ -598,7 +599,8 @@ const VsGenerators: {[key: string]: string} = {
   12: 'Visual Studio 12 2013',
   VS140COMNTOOLS: 'Visual Studio 14 2015',
   14: 'Visual Studio 14 2015',
-  15: 'Visual Studio 15 2017'
+  15: 'Visual Studio 15 2017',
+  16: 'Visual Studio 16 2019'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
@@ -750,18 +752,23 @@ export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools:
 }
 
 async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
-  console.assert(kit.visualStudio);
-  console.assert(kit.visualStudioArchitecture);
-  const installs = await vsInstallations();
-  const match = (inst: VSInstallation) =>
-      // old Kit format
-      (legacyKitVSName(inst) == kit.visualStudio) ||
-      // new Kit format
-      (kitVSName(inst) === kit.visualStudio) ||
-      // Clang for VS kit format
-      (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+    if (process.platform !== "win32") {
+        return undefined;
+    }
 
-  return installs.find(inst => match(inst));
+    console.assert(kit.visualStudio);
+    console.assert(kit.visualStudioArchitecture);
+
+    const installs = await vsInstallations();
+    const match = (inst: VSInstallation) =>
+        // old Kit format
+        (legacyKitVSName(inst) == kit.visualStudio) ||
+        // new Kit format
+        (kitVSName(inst) === kit.visualStudio) ||
+        // Clang for VS kit format
+        (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
+
+    return installs.find(inst => match(inst));
 }
 
 export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
@@ -787,7 +794,15 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
           util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
     }
   }
-  return new Map(util.chain(host_env, kit_env));
+  const env = new Map(util.chain(host_env, kit_env));
+  if (env.has("CMT_MINGW_PATH")) {
+    if (env.has("PATH")) {
+      env.set("PATH", env.get("PATH")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    } else if (env.has("Path")) {
+      env.set("Path", env.get("Path")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+    }
+  }
+  return env;
 }
 
 export async function findCLCompilerPath(env: Map<string, string>): Promise<string|null> {
@@ -836,23 +851,28 @@ export async function scanForKits(cmakeTools: CMakeTools | null, opt?: KitScanOp
     const isWin32 = process.platform === 'win32';
 
     pr.report({message: localize('scanning.for.cmake.kits', 'Scanning for CMake kits...')});
-    let scan_paths = [] as string[];
+
+    const scan_paths = new Set<string>();
 
     // Search directories on `PATH` for compiler binaries
     if (process.env.hasOwnProperty('PATH')) {
       const sep = isWin32 ? ';' : ':';
-      scan_paths = scan_paths.concat((process.env.PATH as string).split(sep));
+      for (const dir of (process.env.PATH as string).split(sep)) {
+        scan_paths.add(dir);
+      }
     }
 
     // Search them all in parallel
     let kit_promises = [] as Promise<Kit[]>[];
     if (isWin32 && kit_options.minGWSearchDirs) {
-      scan_paths = scan_paths.concat(convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs));
+      for (const dir of convertMingwDirsToSearchPaths(kit_options.minGWSearchDirs)) {
+        scan_paths.add(dir);
+      }
     }
-
-    const compiler_kits = scan_paths.map(path_el => scanDirForCompilerKits(path_el, pr));
+    
+    const compiler_kits = Array.from(scan_paths).map(path_el => scanDirForCompilerKits(path_el, pr));
     kit_promises = kit_promises.concat(compiler_kits);
-
+    
     if (isWin32) {
       // Prepare clang-cl search paths
       const clang_paths = new Set<string>();
@@ -862,6 +882,7 @@ export async function scanForKits(cmakeTools: CMakeTools | null, opt?: KitScanOp
         const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
         clang_paths.add(llvm_root);
       }
+      
       // Default installation locations
       clang_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
       clang_paths.add('C:\\Program Files\\LLVM\\bin');
@@ -895,7 +916,7 @@ export async function scanForKits(cmakeTools: CMakeTools | null, opt?: KitScanOp
  */
 export async function descriptionForKit(kit: Kit): Promise<string> {
   if (kit.toolchainFile) {
-    return localize('kit.for.toolchain.fiile', 'Kit for toolchain file {0}', kit.toolchainFile);
+    return localize('kit.for.toolchain.file', 'Kit for toolchain file {0}', kit.toolchainFile);
   }
   if (kit.visualStudio) {
     const vs_install = await getVSInstallForKit(kit);
@@ -974,18 +995,6 @@ export function kitsPathForWorkspaceFolder(ws: vscode.WorkspaceFolder): string {
 export function kitsForWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
   const ws_kits_file = path.join(dirPath, '.vscode/cmake-kits.json');
   return readKitsFile(ws_kits_file);
-}
-
-/**
- * Get the kits available for a given workspace directory. Differs from
- * `kitsForWorkspaceDirectory` in that it also returns kits declared in the
- * user-local kits file.
- * @param dirPath The path to a VSCode workspace directory
- */
-export async function kitsAvailableInWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
-  const user_kits_pr = readKitsFile(USER_KITS_FILEPATH);
-  const ws_kits_pr = kitsForWorkspaceDirectory(dirPath);
-  return Promise.all([user_kits_pr, ws_kits_pr]).then(([user_kits, ws_kits]) => user_kits.concat(ws_kits));
 }
 
 export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import {BasicTestResults} from './ctest';
+import {BasicTestResults} from '@cmt/ctest';
 import * as nls from 'vscode-nls';
+import {unspecifiedKitName} from '@cmt/util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -19,6 +20,7 @@ function setVisible(i: Hideable, v: boolean) {
 }
 
 export class StatusBar implements vscode.Disposable {
+  private readonly _activeFolderButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.6);
   private readonly _cmakeToolsStatusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.5);
   private readonly _kitSelectionButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.45);
   private readonly _buildButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.4);
@@ -28,8 +30,12 @@ export class StatusBar implements vscode.Disposable {
   private readonly _testButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
   private readonly _warningMessage = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
 
+  private readonly _activeFolderButtonAutoSelectTooltip = localize('active.folder.auto.select.tooltip', 'Active folder');
+  private readonly _activeFolderButtonTooltip = localize('active.folder.tooltip', 'Select Active folder');
+
   dispose() {
     const items = [
+      this._activeFolderButton,
       this._cmakeToolsStatusItem,
       this._kitSelectionButton,
       this._buildButton,
@@ -44,6 +50,9 @@ export class StatusBar implements vscode.Disposable {
   }
 
   constructor() {
+    this._activeFolderButton.command = 'cmake.selectActiveFolder';
+    this._activeFolderButton.tooltip = this._activeFolderButtonTooltip;
+    this._activeFolderButton.text = this._activeFolder;
     this._cmakeToolsStatusItem.command = 'cmake.setVariant';
     this._cmakeToolsStatusItem.tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');
     this._buildButton.command = 'cmake.build';
@@ -62,6 +71,7 @@ export class StatusBar implements vscode.Disposable {
   }
 
   reloadVisibility() {
+    setVisible(this._activeFolderButton, Boolean(this._visible && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1 && !!this._activeFolderButton.text));
     const autovis_items = [
       this._cmakeToolsStatusItem,
       this._buildButton,
@@ -97,7 +107,7 @@ export class StatusBar implements vscode.Disposable {
       this._debugButton.text = '$(bug)';
       this._launchTargetNameButton.hide();
     } else {
-      this._debugButton.text = '$(bug) Debug';
+      this._debugButton.text = `$(bug) ${localize('debug', 'Debug')}`;
       if (this._visible) {
         this._launchTargetNameButton.show();
       }
@@ -105,10 +115,28 @@ export class StatusBar implements vscode.Disposable {
     this.reloadVisibility();
   }
 
+  private _reloadActiveFolderButton() {
+    this._activeFolderButton.text = this._activeFolder;
+    this._activeFolderButton.tooltip = this._autoSelectActiveFolder ? this._activeFolderButtonAutoSelectTooltip : this._activeFolderButtonTooltip;
+    this.reloadVisibility();
+  }
+
+  private _activeFolder: string = '';
+  setActiveFolderName(v: string) {
+    this._activeFolder = v;
+    this._reloadActiveFolderButton();
+  }
+
+  private _autoSelectActiveFolder: boolean = false;
+  setAutoSelectActiveFolder(autoSelectActiveFolder: boolean) {
+    this._autoSelectActiveFolder = autoSelectActiveFolder;
+    this._reloadActiveFolderButton();
+  }
+
   /**
    * The build type label. Determined by the active build variant
    */
-  private _buildTypeLabel: string = 'Unconfigured';
+  private _buildTypeLabel: string = localize('unconfigured', 'Unconfigured');
   setBuildTypeLabel(v: string) {
     this._buildTypeLabel = v;
     this._reloadStatusButton();
@@ -163,13 +191,13 @@ export class StatusBar implements vscode.Disposable {
     const total = v.total;
     const good = passing == total;
     const icon = good ? 'check' : 'x';
-    let testPassingTest: string;
+    let testPassingText: string;
     if (total == 1) {
-      testPassingTest = localize('test.passing', '{0}/{1} test passing', passing, total);
+      testPassingText = localize('test.passing', '{0}/{1} test passing', passing, total);
     } else {
-      testPassingTest = localize('tests.passing', '{0}/{1} tests passing', passing, total);
+      testPassingText = localize('tests.passing', '{0}/{1} tests passing', passing, total);
     }
-    this._testButton.text = `$(${icon}) ${testPassingTest}', passing, total)}`;
+    this._testButton.text = `$(${icon}) ${testPassingText}`;
     this._testButton.color = good ? 'lightgreen' : 'yellow';
   }
 
@@ -207,7 +235,7 @@ export class StatusBar implements vscode.Disposable {
   }
 
   setActiveKitName(v: string) {
-    if (v === '__unspec__') {
+    if (v === unspecifiedKitName) {
       this._activeKitName = `[${localize('no.active.kit', 'No active kit')}]`;
     } else {
       this._activeKitName = v;

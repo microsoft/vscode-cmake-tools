@@ -7,6 +7,7 @@ require('module-alias/register');
 import * as path from 'path';
 import {SmokeContext, SUITE_REGISTRY, SmokeSuite, SmokeTest} from './smoke';
 import {fs} from '@cmt/pr';
+import * as vscode from 'vscode';
 
 // tslint:disable:no-console
 
@@ -57,6 +58,10 @@ class CMakeToolsSmokeTestRunner implements TestRunner {
   private async _runDirTest(smokeDir: string, smokeOutDir: string, testDir: string) {
     // `pr_root` is a directory where we put the project that we will test against.
     const pr_root = path.join(smokeDir, '_project-dir');
+    const pr_root_workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(pr_root));
+    if (!pr_root_workspaceFolder) {
+      throw Error(`Path ${pr_root} does not exist`);
+    }
     // Wipe the project-root dir clean
     await this._wipeDirectory(pr_root);
 
@@ -68,7 +73,7 @@ class CMakeToolsSmokeTestRunner implements TestRunner {
     const test_out = path.join(smokeOutDir, test_rel);
     const test_js = path.join(test_out, 'test.js');
     const ext_dir = path.normalize(path.join(smokeDir, '../..'));
-    const ctx = new SmokeContext(pr_root, ext_dir);
+    const ctx = new SmokeContext(pr_root_workspaceFolder, ext_dir);
     try {
       await this._runTestFile(ctx, test_js);
     } finally {

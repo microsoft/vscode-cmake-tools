@@ -16,5 +16,6 @@
 	"cookie.not.known.message": "CMake サーバーの Cookie \"{0}\" は既知のメッセージに対応していません",
 	"cant.yet.handle.message": "まだ {0} メッセージを処理できていません",
 	"sending.message.to.cmake-server": "cmake-server にメッセージを送信しています: {0}",
-	"configuring.using.generator.with.platform.and.toolset": "\"{0}\" CMake ジェネレーターをプラットフォーム \"{1}\" とツールセット {2} で使用して構成しています"
+	"configuring.using.generator": "\"{0}\" CMake ジェネレーターを",
+	"with.platform.and.toolset": "プラットフォーム \"{0}\" とツールセット {1} で使用して構成しています"
 }

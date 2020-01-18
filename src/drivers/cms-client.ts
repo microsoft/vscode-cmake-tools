@@ -224,6 +224,7 @@ export interface CodeModelFileGroup {
   includePath?: {path: string; isSystem?: boolean;}[];
   defines?: string[];
   sources: string[];
+  isGenerated: boolean;
 }
 
 export type TargetTypeString = ('STATIC_LIBRARY' | 'MODULE_LIBRARY' | 'SHARED_LIBRARY' | 'OBJECT_LIBRARY' | 'EXECUTABLE' | 'UTILITY' | 'INTERFACE_LIBRARY');
@@ -505,7 +506,9 @@ export class CMakeServerClient {
 
   cmakeInputs(params?: CMakeInputsParams): Promise<CMakeInputsContent> { return this.sendRequest('cmakeInputs', params); }
 
+  protected _shutdown = false;
   public async shutdown() {
+    this._shutdown = true;
     this._pipe.end();
     await this._endPromise;
   }
@@ -533,10 +536,16 @@ export class CMakeServerClient {
         const pipe = this._pipe = net.createConnection(pipe_file);
         pipe.on('data', this._onMoreData.bind(this));
         pipe.on('error', e => {
-          debugger;
           pipe.end();
-          rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'), {pipe: pipe_file}, params.onPipeError(e));
-          reject(e);
+          if (!this._shutdown) {
+            debugger;
+            rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'),
+                                {pipe: pipe_file},
+                                params.onPipeError(e));
+            reject(e);
+          } else {
+            resolve();
+          }
         });
         pipe.on('end', () => {
           pipe.end();
@@ -622,9 +631,12 @@ export class CMakeServerClient {
               hsparams.platform = generator.platform;
               hsparams.toolset = generator.toolset;
 
-              log.info(localize('configuring.using.generator.with.platform.and.toolset',
-                'Configuring using the "{0}" CMake generator with plattform "{1}" and toolset {2}',
-                hsparams.generator, hsparams.platform, JSON.stringify(hsparams.toolset || {})));
+              const configureMessage: string = localize('configuring.using.generator',
+                                                'Configuring using the "{0}" CMake generator', hsparams.generator);
+              const extraMessage: string = hsparams.platform || hsparams.toolset ?
+                localize('with.platform.and.toolset', ' with platform "{0}" and toolset {1}', hsparams.platform, JSON.stringify(hsparams.toolset || {})) :
+                "";
+              log.info(configureMessage + extraMessage);
             }
 
             await client.sendRequest('handshake', hsparams);

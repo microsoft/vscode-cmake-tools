@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "Configurando o workspace no {0} aberto",
 	"double.loaded.instance": "Instância de Ferramentas CMake com carregamento duplo para a pasta do workspace",
 	"creating.backend": "Criando o back-end",
-	"post.folder.open": "Postar a pasta aberta",
+	"post.folder.open": "Post-folder-open",
 	"workspace.folder.removed": "Pasta do workspace removida, mas não associada a uma instância de extensão",
 	"loading.workspace.folder.name": "Carregando a pasta do workspace {0}",
 	"loading.workspace.folder": "Carregando a pasta do workspace",
@@ -65,7 +65,7 @@
 	"cmake.finished.returned.unserializable": "{0} concluído (retornou um valor não serializável)",
 	"loading.extension.commands": "Carregando comandos de extensão",
 	"register.command": "Registrar o comando de extensão de CMakeTools {0}",
-	"uninstall.old.cmaketools": "Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.",
+	"uninstall.old.cmaketools": "Desinstale as versões mais antigas da extensão de Ferramentas CMake. Iniciando com a versão 1.2.0, a extensão passou a ser publicada pela Microsoft.",
 	"cmake.tools.initializing": "Ferramentas CMake inicializando...",
 	"deactivate.cmaketools": "Desativar CMakeTools"
 }

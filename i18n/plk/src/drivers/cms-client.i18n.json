@@ -16,5 +16,6 @@
 	"cookie.not.known.message": "Plik cookie serwera narzędzia CMake „{0}” nie odpowiada znanemu komunikatowi",
 	"cant.yet.handle.message": "Nie można jeszcze obsłużyć komunikatów {0}",
 	"sending.message.to.cmake-server": "Wysyłanie komunikatu do programu cmake-server: {0}",
-	"configuring.using.generator.with.platform.and.toolset": "Konfigurowanie przy użyciu generatora narzędzia CMake „{0}” za pomocą platformy „{1}” i zestawu narzędzi {2}"
+	"configuring.using.generator": "Konfigurowanie korzystania z generatora narzędzia CMake „{0}”",
+	"with.platform.and.toolset": " z platformą „{0}” i zestawem narzędzi {1}"
 }
