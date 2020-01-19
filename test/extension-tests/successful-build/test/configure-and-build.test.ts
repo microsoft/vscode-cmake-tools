@@ -141,12 +141,12 @@ suite('Build', async () => {
 
     // Run test
     testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-    await cmt.setKit(await getMatchingSystemKit(compiler[0].kitLabel, cmt));
+    await cmt.setKit(await getMatchingSystemKit(cmt, compiler[0].kitLabel));
 
     await cmt.build();
 
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-    await cmt.setKit(await getMatchingSystemKit(compiler[1].kitLabel, cmt));
+    await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
 
     await cmt.build();
     const result1 = await testEnv.result.getResultAsJson();
@@ -202,11 +202,11 @@ suite('Build', async () => {
          const compiler = os_compilers[workername];
 
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-         await cmt.setKit(await getMatchingSystemKit(compiler[0].kitLabel, cmt));
+         await cmt.setKit(await getMatchingSystemKit(cmt, compiler[0].kitLabel));
          await cmt.build();
 
          testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-         await cmt.setKit(await getMatchingSystemKit(compiler[1].kitLabel, cmt));
+         await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
          await cmt.build();
 
          const result1 = await testEnv.result.getResultAsJson();

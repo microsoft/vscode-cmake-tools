@@ -45,7 +45,7 @@ export async function getFirstSystemKit(cmakeTools: CMakeTools): Promise<Kit> {
   return kits[0];
 }
 
-export async function getMatchingSystemKit(re: RegExp, cmakeTools: CMakeTools): Promise<Kit> {
+export async function getMatchingSystemKit(cmakeTools: CMakeTools, re: RegExp): Promise<Kit> {
   const kits = await getSystemKits(cmakeTools);
   return getMatchingKit(kits, re);
 }

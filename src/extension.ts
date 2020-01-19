@@ -519,8 +519,10 @@ class ExtensionManager implements vscode.Disposable {
    * Watches for changes to the kits file
    */
   private readonly _kitsWatcher =
-      util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH, {ignoreInitial: true}),
-                               _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
+   util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH,
+                                           {ignoreInitial: true}),
+                                           _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this._folders.activeFolder?.cmakeTools)));
+
 
   /**
    * Set the current kit for the specified workspace folder
@@ -569,7 +571,11 @@ class ExtensionManager implements vscode.Disposable {
 
   async scanForKits() {
     KitsController.minGWSearchDirs = this._getMinGWDirs();
-    const duplicateRemoved = await KitsController.scanForKits();
+    const cmakeTools = this._folders.activeFolder?.cmakeTools;
+    if (undefined === cmakeTools) {
+      return;
+    }
+    const duplicateRemoved = await KitsController.scanForKits(cmakeTools);
     if (duplicateRemoved) {
       // Check each folder. If there is an active kit set and if it is of the old definition,
       // unset the kit
