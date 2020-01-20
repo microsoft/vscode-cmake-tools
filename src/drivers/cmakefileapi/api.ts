@@ -52,17 +52,30 @@ export interface CMakeCacheEntry {
 }
 
 export namespace CodeModelKind {
-
 export interface PathInfo {
-  'build': string;
-  'source': string;
+  build: string;
+  source: string;
 }
+
+export interface DirectoryMetadata {
+  source: string;
+  build: string;
+  hasInstallRule: boolean;
+}
+
+export interface ProjectMetadata {
+  name: string;
+  targetIndexes?: number[];
+  directoryIndexes: number[];
+}
+
 export interface Configuration {
   name: string;
   targets: Target[];
-  directories: {source: string, build: string, hasInstallRule: boolean;}[];
-  projects: {name: string; targetIndexes?: number[], directoryIndexes: number[]}[];
+  directories: DirectoryMetadata[];
+  projects: ProjectMetadata[];
 }
+
 export interface Content {
   version: ApiVersion;
   paths: PathInfo;
@@ -75,22 +88,48 @@ export interface Target {
   jsonFile: string;
 }
 
+export interface PreprocessorDefinitionMetadata {
+  define: string;
+}
+
+export interface IncludeMetadata {
+  path: string;
+}
+
+export interface SysRoot {
+  path: string;
+}
+
+export interface CompileCommandFragments {
+  fragment: string;
+}
+
 export interface CompileGroup {
   language: string;
-  includes: {path: string;}[];
-  defines: {define: string;}[];
-  compileCommandFragments: {fragment: string;}[];
+  includes: IncludeMetadata[];
+  defines: PreprocessorDefinitionMetadata[];
+  compileCommandFragments: CompileCommandFragments[];
   sourceIndexes: number[];
-  sysroot: {path: string;};
+  sysroot: SysRoot;
+}
+
+export interface ArtifactPath {
+  path: string;
+}
+
+export interface TargetSourcefile {
+  path: string;
+  compileGroupIndex?: number;
+  isGenerated?: boolean;
 }
 
 export interface TargetObject {
   name: string;
   type: string;
-  artifacts: [{path: string}];
+  artifacts: ArtifactPath[];
   nameOnDisk: string;
   paths: PathInfo;
-  sources: {path: string; compileGroupIndex?: number, isGenerated?: boolean}[];
+  sources: TargetSourcefile[];
   compileGroups?: CompileGroup[];
 }
 }

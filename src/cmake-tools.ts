@@ -268,13 +268,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
     let communicationMode = this.workspaceContext.config.cmakeCommunicationMode;
 
-    if (this.workspaceContext.config.useCMakeServer) {
-      log.warning(
-        localize('please.upgrade.configuration',
-          'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
-      communicationMode = 'serverAPI';
-    }
-
     if (communicationMode == 'automatic') {
       if (cmake.isFileApiModSupported) {
         communicationMode = 'fileAPI';

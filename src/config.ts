@@ -4,9 +4,16 @@
  * `ConfigurationReader` class.
  */ /** */
 
+import * as logging from '@cmt/logging';
 import * as util from '@cmt/util';
 import * as os from 'os';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+
+nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
+const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
@@ -192,7 +199,14 @@ export class ConfigurationReader implements vscode.Disposable {
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
-    return this.configData.cmakeCommunicationMode;
+    let communicationMode = this.configData.cmakeCommunicationMode;
+    if (this.useCMakeServer) {
+      log.warning(localize(
+          'please.upgrade.configuration',
+          'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
+      communicationMode = 'serverAPI';
+    }
+    return communicationMode;
   }
 
   get numJobs(): number {

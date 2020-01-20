@@ -10,7 +10,6 @@ import {
 } from '@cmt/drivers/codemodel-driver-interface';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
-import rollbar from '@cmt/rollbar';
 import * as path from 'path';
 
 const log = logging.createLogger('cmakefileapi-helper');
@@ -36,11 +35,11 @@ export async function loadIndexFile(reply_path: string): Promise<index_api.Index
   const files = await fs.readdir(reply_path);
   log.debug(`Found index files: ${JSON.stringify(files)}`);
 
-  const index_file = files.find(filename => filename.startsWith('index-'));
-  if (!index_file) {
-    throw Error('Unexpected count of index files');
+  const index_files = files.filter(filename => filename.startsWith('index-')).sort();
+  if (index_files.length == 0) {
+    throw Error('No index file found.');
   }
-  const index_file_path = path.join(reply_path, index_file);
+  const index_file_path = path.join(reply_path, index_files[index_files.length - 1]);
   const file_content = await fs.readFile(index_file_path);
 
   return JSON.parse(file_content.toString()) as index_api.Index.IndexFile;
@@ -72,7 +71,7 @@ function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.C
     };
     const type = entry_type_translation_map[el.type];
     if (type === undefined) {
-      rollbar.error(`Unknown cache entry type ${el.type}`);
+      log.warning(`Unknown cache entry type ${el.type}`);
       return acc;
     }
     const helpstring = findPropertyValue(el, 'HELPSTRING');
@@ -116,7 +115,7 @@ export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string
                                                               configuration: index_api.CodeModelKind.Configuration):
     Promise<{name: string, targets: api.Target[]}> {
   const metaTargets = [];
-  if (configuration.directories[0].hasInstallRule ? configuration.directories[0].hasInstallRule : false) {
+  if (configuration.directories[0].hasInstallRule) {
     metaTargets.push({
       type: 'rich' as 'rich',
       name: 'install',
@@ -154,7 +153,7 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
       isGenerated: false,
       sources: [],
       language: group.language,
-      includePath: group.defines ? group.includes : [],
+      includePath: group.includes ? group.includes : [],
       compileFlags,
       defines: group.defines ? group.defines.map(define => define.define) : []
     };
@@ -182,7 +181,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
 
   const fileGroups = convertToExtCodeModelFileGroup(targetObject);
 
-  // This implementation expects the there is only on sysroot in a target.
+  // This implementation expects that there is only one sysroot in a target.
   // The ServerAPI only has provided one sysroot. In the FileAPI,
   // each compileGroup has its separate sysroot.
   let sysroot;
@@ -197,10 +196,9 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
     type: targetObject.type,
     sourceDirectory: convertToAbsolutePath(targetObject.paths.source, root_paths.source),
     fullName: targetObject.nameOnDisk,
-    artifacts: targetObject.artifacts
-        ? targetObject.artifacts.map(
-              a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), root_paths.build))
-        : [],
+    artifacts: targetObject.artifacts ? targetObject.artifacts.map(
+                   a => convertToAbsolutePath(path.join(targetObject.paths.build, a.path), root_paths.build))
+                                      : [],
     fileGroups,
     sysroot
   } as CodeModelTarget;

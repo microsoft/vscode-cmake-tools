@@ -934,7 +934,7 @@
             "fileAPI",
             "automatic"
           ],
-          "description": "Allow selecting the communication protocol between the extension and CMake.",
+          "description": "%cmake-tools.configuration.cmake.cmakeCommunicationMode%",
           "scope": "resource"
         },
         "cmake.ignoreKitEnv": {
