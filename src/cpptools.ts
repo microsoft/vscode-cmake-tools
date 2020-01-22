@@ -127,6 +127,31 @@ export function parseCompileFlags(args: string[], lang?: string): CompileFlagInf
 }
 
 /**
+ * Determine the IntelliSenseMode.
+ */
+function getIntelliSenseMode(compiler_path: string) {
+  const compiler_name = path.basename(compiler_path || "").toLocaleLowerCase();
+  if (compiler_name === 'cl.exe') {
+    const arch = path.basename(path.dirname(compiler_path));
+    // This will pick x64 for arm/arm64 targets. We'll need to update this when arm IntelliSenseModes are added.
+    return (arch === 'x86') ? 'msvc-x86' : 'msvc-x64';
+  } else if (compiler_name.indexOf('clang') >= 0) {
+    return 'clang-x64'; // TODO: determine bit-ness
+  } else if (compiler_name.indexOf('gcc') >= 0) {
+    return 'gcc-x64'; // TODO: determine bit-ness
+  } else {
+    // unknown compiler; pick platform defaults.
+    if (process.platform === 'win32') {
+      return 'msvc-x64';
+    } else if (process.platform === 'darwin') {
+      return 'clang-x64';
+    } else {
+      return 'gcc-x64';
+    }
+  }
+}
+
+/**
  * Type given when updating the configuration data stored in the file index.
  */
 export interface CodeModelParams {
@@ -239,7 +264,6 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     if (!comp_path) {
       throw new MissingCompilerException();
     }
-    const is_msvc = comp_path && (path.basename(comp_path).toLocaleLowerCase() === 'cl.exe');
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
@@ -267,7 +291,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       defines,
       standard,
       includePath,
-      intelliSenseMode: is_msvc ? 'msvc-x64' : 'clang-x64',
+      intelliSenseMode: getIntelliSenseMode(comp_path),
       compilerPath: comp_path || undefined,
       compilerArgs: flags || undefined
     };
