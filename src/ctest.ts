@@ -106,7 +106,7 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
   if (typeof node === 'string') {
     return node;
   }
-  let buffer = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
+  let buffer = !!node.$.encoding ? Buffer.from(node._, node.$.encoding) : Buffer.from(node._, 'utf-8');
   if (!!node.$.compression) {
     buffer = zlib.unzipSync(buffer);
   }

@@ -35,7 +35,7 @@
 	"scanning.for.kits": "Setler için taranıyor",
 	"scanning.for.cmake.kits": "CMake setleri için taranıyor...",
 	"found.kit": "{0} Seti Bulundu",
-	"kit.for.toolchain.fiile": "{0} araç zinciri dosyası için set",
+	"kit.for.toolchain.file": "{0} araç zinciri dosyası için set",
 	"using.compilers.for": "{0} için derleyiciler kullanılıyor ({1} mimarisi)",
 	"using.compilers": "{0} derleyicileri kullanılıyor",
 	"unspecified.let.cmake.guess": "Belirtilmemiş (CMake'in hangi derleyicilerin ve ortamın kullanılacağını tahmin etmesine izin verin)",

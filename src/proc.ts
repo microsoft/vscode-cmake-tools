@@ -172,7 +172,7 @@ export function execute(command: string,
         let stderr_line_acc = '';
         child.stdout.on('data', (data: Uint8Array) => {
           rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), {data, command, args}, () => {
-            const str = iconv.decode(new Buffer(data), encoding);
+            const str = iconv.decode(Buffer.from(data), encoding);
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
             while (lines.length > 1) {
               line_acc += lines[0];
