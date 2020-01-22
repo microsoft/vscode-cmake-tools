@@ -36,7 +36,7 @@
 	"scan.for.kits.button": "扫描工具包",
 	"cancel.button": "取消",
 	"rescanning.for.kits": "重新扫描工具包",
-	"found.duplicate.kits": "已找到在 cmake-tools-kits.json 中保存了旧 ID 的 Visual Studio 工具包。",
+	"found.duplicate.kits": "在 cmake-tools-kits.json 中找到了保存的 Visual Studio 工具包和旧 ID。",
 	"delete.duplicate.kits": "是否要从 cmake-tools-kits.json 删除重复的 Visual Studio 工具包?",
 	"no.button": "否",
 	"saving.kits.to": "正在将工具包保存到 {0}",
