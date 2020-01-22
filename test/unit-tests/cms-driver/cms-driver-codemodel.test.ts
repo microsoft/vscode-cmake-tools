@@ -71,7 +71,7 @@ suite('CMake-Server-Driver tests', () => {
 
   async function generateCodeModelForConfiguredDriver(args: string[] =
                                                           []): Promise<null|codemodel_api.CodeModelContent> {
-    const config = ConfigurationReader.createForDirectory(root);
+    const config = ConfigurationReader.create();
     const executable = await getCMakeExecutableInformation(cmakePath);
 
     driver = await cms_driver.CMakeServerClientDriver
