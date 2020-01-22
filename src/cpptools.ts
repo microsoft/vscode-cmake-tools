@@ -131,7 +131,7 @@ export function parseCompileFlags(args: string[], lang?: string): CompileFlagInf
  */
 function getIntelliSenseMode(compiler_path: string) {
   const compiler_name = path.basename(compiler_path || "").toLocaleLowerCase();
-  if (compiler_name.endsWith('cl.exe')) {
+  if (compiler_name === 'cl.exe') {
     const arch = path.basename(path.dirname(compiler_path));
     // This will pick x64 for arm/arm64 targets. We'll need to update this when arm IntelliSenseModes are added.
     return (arch === 'x86') ? 'msvc-x86' : 'msvc-x64';
