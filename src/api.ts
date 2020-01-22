@@ -175,11 +175,11 @@ export interface CMakeToolsAPI extends Disposable {
   /**
    * Event fired when the configure/generate stage completes
    */
-  readonly reconfigured: Event<void>;
+  readonly onReconfigured: Event<void>;
   /**
    * Event fired when the active target changes.
    */
-  readonly targetChangedEvent: Event<void>;
+  readonly onTargetChanged: Event<void>;
 
   /**
    * Execute a command using the CMake executable.

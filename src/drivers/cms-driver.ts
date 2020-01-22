@@ -32,8 +32,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     this.config.onChange('configureEnvironment', () => this._restartClient());
   }
 
-  // TODO: Refactor to make this assertion unecessary
-  private _cmsClient!: Promise<cms.CMakeServerClient>;
+  private _cmsClient: Promise<cms.CMakeServerClient|null> = Promise.resolve(null);
   private _clientChangeInProgress: Promise<void> = Promise.resolve();
   private _globalSettings!: cms.GlobalSettingsContent;
   private _cacheEntries = new Map<string, cache.Entry>();
@@ -63,8 +62,27 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
   async asyncDispose() {
     this._codeModelChanged.dispose();
     this._progressEmitter.dispose();
-    if (this._cmsClient) {
-      await (await this._cmsClient).shutdown();
+
+    await this.shutdownClient();
+  }
+
+  private async shutdownClient() {
+    const cl = await this._cmsClient;
+    if (cl) {
+      await cl.shutdown();
+    }
+  }
+
+  private async getClient(): Promise<cms.CMakeServerClient> {
+    if (!(await this._cmsClient)) {
+      this._cmsClient = this._startNewClient();
+    }
+
+    const client_started = await this._cmsClient;
+    if (!(client_started)) {
+      throw Error('Unable to start cms client');
+    } else {
+      return client_started;
     }
   }
 
@@ -72,7 +90,9 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     const old_cl = await this._cmsClient;
     this._cmsClient = (async () => {
       // Stop the server before we try to rip out any old files
-      await old_cl.shutdown();
+      if (old_cl) {
+        await old_cl.shutdown();
+      }
       await this._cleanPriorConfiguration();
       return this._startNewClient();
     })();
@@ -80,7 +100,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   protected async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
     await this._clientChangeInProgress;
-    const cl = await this._cmsClient;
+    const cl = await this.getClient();
     const sub = this.onMessage(msg => {
       if (consumer) {
         for (const line of msg.split('\n')) {
@@ -113,7 +133,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
   }
 
   async _refreshPostConfigure(): Promise<void> {
-    const cl = await this._cmsClient;
+    const cl = await this.getClient();
     const cmake_inputs = await cl.cmakeInputs();  // <-- 1. This line generates the error
     // Scan all the CMake inputs and capture their mtime so we can check for
     // out-of-dateness later
@@ -231,7 +251,8 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
   private async _setKitAndRestart(need_clean: boolean, cb: () => Promise<void>) {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
     const client = await this._cmsClient;
-    await client.shutdown();
+    if (client)
+      await client.shutdown();
     if (need_clean) {
       await this._cleanPriorConfiguration();
     }
@@ -250,15 +271,14 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   private async _restartClient(): Promise<void> {
     this._cmsClient = this._doRestartClient();
-    const client = await this._cmsClient;
+    const client = await this.getClient();
     this._globalSettings = await client.getGlobalSettings();
   }
 
   private async _doRestartClient(): Promise<cms.CMakeServerClient> {
-    const old_client = this._cmsClient;
+    const old_client = await this._cmsClient;
     if (old_client) {
-      const cl = await old_client;
-      await cl.shutdown();
+      await old_client.shutdown();
     }
     return this._startNewClient();
   }
@@ -290,6 +310,14 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   private readonly _onMessageEmitter = new vscode.EventEmitter<string>();
   get onMessage() { return this._onMessageEmitter.event; }
+
+  async onStop(): Promise<void> {
+    const client = await this._cmsClient;
+    if (client) {
+      await client.shutdown();
+      this._cmsClient = Promise.resolve(null);
+    }
+  }
 
   protected async doInit(): Promise<void> { await this._restartClient(); }
 

@@ -36,7 +36,7 @@
 	"scan.for.kits.button": "Cerca kit",
 	"cancel.button": "Annulla",
 	"rescanning.for.kits": "Rianalisi dei kit",
-	"found.duplicate.kits": "In cmake-tools-kits.json sono stati trovati kit di Visual Studio con ID salvati obsoleti.",
+	"found.duplicate.kits": "Sono stati trovati kit di Visual Studio con ID obsoleti salvati in cmake-tools-kits.json.",
 	"delete.duplicate.kits": "Eliminare i kit di Visual Studio duplicati da cmake-tools-kits.json?",
 	"no.button": "No",
 	"saving.kits.to": "Salvataggio dei kit in {0}",
