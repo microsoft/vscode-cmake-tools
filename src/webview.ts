@@ -11,11 +11,13 @@ export class ConfigurationWebview {
   private readonly _panel: vscode.WebviewPanel;
   cachePath = '';
 
+  save: () => void;
+
   get panel() {
       return this._panel;
   }
 
-  constructor(cachePath: string) {
+  constructor(cachePath: string, save: () => void) {
     this._panel = vscode.window.createWebviewPanel(
       'cmakeConfiguration', // Identifies the type of the webview. Used internally
       'CMake Configuration', // Title of the panel displayed to the user
@@ -26,6 +28,7 @@ export class ConfigurationWebview {
     );
 
     this.cachePath = cachePath;
+    this.save = save;
   }
 
   async initPanel() {
@@ -45,6 +48,8 @@ export class ConfigurationWebview {
           await this.saveCmakeCache(options);
           this._panel.title = 'CMake Configuration';
           vscode.window.showInformationMessage('CMake options have been saved.');
+          // start configure
+          this.save();
         } else {
           this._panel.title = 'CMake Configuration *';
         }

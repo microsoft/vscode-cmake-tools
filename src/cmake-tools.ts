@@ -893,7 +893,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return new Promise(resolve => resolve(1));
       }
 
-      this._webview = new ConfigurationWebview(drv.cachePath);
+      this._webview = new ConfigurationWebview(drv.cachePath, async () => {
+        await this.build();
+      });
       await this._webview.initPanel();
 
       this._webview.panel.onDidDispose(() => {
