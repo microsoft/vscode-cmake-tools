@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CMakeCache } from './cache';
 import * as api from './api';
+import { CMakeDriver } from './drivers/driver';
 
 interface IOption {
     key: string;
@@ -9,15 +10,14 @@ interface IOption {
 
 export class ConfigurationWebview {
   private readonly _panel: vscode.WebviewPanel;
-  cachePath = '';
-
-  save: () => void;
+  private cachePath = '';
 
   get panel() {
       return this._panel;
   }
 
-  constructor(cachePath: string, save: () => void) {
+  constructor(protected drv: CMakeDriver,
+      protected save: () => void) {
     this._panel = vscode.window.createWebviewPanel(
       'cmakeConfiguration', // Identifies the type of the webview. Used internally
       'CMake Configuration', // Title of the panel displayed to the user
@@ -27,8 +27,7 @@ export class ConfigurationWebview {
       }
     );
 
-    this.cachePath = cachePath;
-    this.save = save;
+    this.cachePath = this.drv.cachePath;
   }
 
   async initPanel() {
@@ -51,7 +50,7 @@ export class ConfigurationWebview {
           // start configure
           this.save();
         } else {
-          this._panel.title = 'CMake Configuration *';
+          this._panel.title = 'CMake Configuration*';
         }
       } catch (error) {
         vscode.window.showErrorMessage(error);

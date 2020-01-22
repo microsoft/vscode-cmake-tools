@@ -572,17 +572,64 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 progress.report({message: localize('configuring.project', 'Configuring project')});
                 let retc: number;
                 switch (type) {
-                case ConfigureType.Normal:
-                  retc = await drv.configure(extra_args, consumer);
-                  break;
-                case ConfigureType.Clean:
-                  retc = await drv.cleanConfigure(extra_args, consumer);
-                  break;
-                default:
-                  rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
-                  retc = await this.configure(extra_args, ConfigureType.Normal);
-                  break;
+                  case ConfigureType.Normal:
+                      retc = await drv.configure(extra_args, consumer);
+                    break;
+                  case ConfigureType.Clean:
+                      retc = await drv.cleanConfigure(extra_args, consumer);
+                    break;
+                  default:
+                      rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
+                      retc = await this.configure(extra_args, ConfigureType.Normal);
+                    break;
                 }
+                if (retc === 0) {
+                  await this._refreshCompileDatabase(drv.expansionOptions);
+                }
+                await this._ctestController.reloadTests(drv);
+                this._onReconfiguredEmitter.fire();
+                return retc;
+              } finally {
+                progress.report({message: localize('finishing.configure', 'Finishing configure')});
+                prog_sub.dispose();
+              }
+            } else {
+              progress.report({message: localize('configure.failed', 'Failed to configure project')});
+              return -1;
+            }
+          });
+        },
+    );
+  }
+
+  /**
+   * Configure without cmake settings
+   */
+  rawConfigure(): Thenable<number> {
+    return vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: localize('configuring.project', 'Configuring project'),
+        },
+        async progress => {
+          progress.report({message: localize('preparing.to.configure', 'Preparing to configure')});
+          log.debug(localize('run.configure', 'Run configure'), []);
+          return this._doConfigure(progress, async consumer => {
+            const drv = await this.getCMakeDriverInstance();
+            if (drv) {
+              let old_prog = 0;
+              const prog_sub = drv.onProgress(pr => {
+                const new_prog
+                    = 100 * (pr.progressCurrent - pr.progressMinimum) / (pr.progressMaximum - pr.progressMinimum);
+                const increment = new_prog - old_prog;
+                if (increment >= 1) {
+                  old_prog += increment;
+                  progress.report({increment});
+                }
+              });
+              try {
+                progress.report({message: localize('configuring.project', 'Configuring project')});
+                const retc = await drv.configure([], consumer, true);
                 if (retc === 0) {
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
@@ -893,8 +940,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return new Promise(resolve => resolve(1));
       }
 
-      this._webview = new ConfigurationWebview(drv.cachePath, async () => {
-        await this.build();
+      this._webview = new ConfigurationWebview(drv, async () => {
+        await this.rawConfigure();
       });
       await this._webview.initPanel();
 
