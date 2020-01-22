@@ -194,12 +194,16 @@ class Paths {
 
       for (const tool_path of bundled_tool_paths) {
         if (await fs.exists(tool_path.cmake)) {
-          // Append the bundled Ninja build system path to the VSCode's process' environment variable 'PATH'
-          if (await fs.exists(tool_path.ninja)) {
-            vsCMakePaths.ninja = tool_path.ninja;
-          }
           // CMake can be still used without Ninja
           vsCMakePaths.cmake = tool_path.cmake;
+
+          // Check for Ninja in case it was removed in later VS versions
+          if (await fs.exists(tool_path.ninja)) {
+            vsCMakePaths.ninja = tool_path.ninja;
+
+            // Return the first CMake/Ninja set found
+            break;
+          }
         }
       }
     }
