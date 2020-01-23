@@ -119,6 +119,10 @@ export class ConfigurationWebview {
             border-bottom: 1px solid rgba(255,255,255,0.045);
           }
 
+          tr.content-tr:hover {
+            background: rgba(255, 255, 255, .25);
+          }
+
           input#search {
             width: 98%;
             padding: 11px 0px 11px 11px;
