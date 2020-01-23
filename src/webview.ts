@@ -186,7 +186,7 @@ export class ConfigurationWebview {
         <h1>CMake Configuration<span class="invisible" id="not-saved">*</span></h1>
         <small>Here you can configure your cmake options by the touch of a button.</small>
         <hr>
-        <input class="search" type="text" id="search" oninput="search()" placeholder="Search">
+        <input class="search" type="text" id="search" oninput="search()" placeholder="Search" autofocus>
         <table style="width:100%">
           <tr style="
             height: 35px;
