@@ -310,7 +310,7 @@ class ExtensionManager implements vscode.Disposable {
         doConfigure: boolean;
       }
       const chosen = await vscode.window.showInformationMessage<Choice1>(
-          localize('configure.this.project', 'Would you like to configure this project?'),
+          localize('configure.this.project', 'Would you like to configure project \'{0}\'?', ws.name),
           {},
           {title: localize('yes.button', 'Yes'), doConfigure: true},
           {title: localize('not.now.button', 'Not now'), doConfigure: false},
