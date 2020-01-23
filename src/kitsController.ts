@@ -14,9 +14,8 @@ import {
   USER_KITS_FILEPATH,
   kitsPathForWorkspaceFolder,
   OLD_USER_KITS_FILEPATH,
-  scanforkitsKitName,
-  unspecifiedKitName,
-  unspecifiedKitType
+  SpecialKits,
+  UnspecifiedKit
 } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
@@ -63,7 +62,7 @@ export class KitsController {
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
-    this._kitsWatcher.close().then(null, null);
+    this._kitsWatcher.close();
   }
 
   get availableKits() {
@@ -88,12 +87,12 @@ export class KitsController {
                         {from: OLD_USER_KITS_FILEPATH, to: USER_KITS_FILEPATH});
     }
 
-    // Special kits
+    // Special kits - include order is important
     const special_kits: ReadonlyArray<Kit> = [
       // Spcial __scanforkits__ kit used for invoking the "Scan for kits"
-      {name: scanforkitsKitName},
+      {name: SpecialKits.ScanForKits},
       // Special __unspec__ kit for opting-out of kits
-      {name: unspecifiedKitName}
+      {name: SpecialKits.Unspecified}
     ];
 
     // Load user-kits
@@ -137,12 +136,12 @@ export class KitsController {
    */
   async setFolderActiveKit(k: Kit|null): Promise<string> {
     const inst = this.cmakeTools;
-    const raw_name = k ? k.name : unspecifiedKitName;
+    const raw_name = k ? k.name : SpecialKits.Unspecified;
     if (inst) {
       // Generate a message that we will show in the progress notification
       let message = '';
       switch (raw_name) {
-      case unspecifiedKitName:
+      case SpecialKits.Unspecified:
         // Empty string/unspec is un-setting the kit:
         message = localize('unsetting.kit', 'Unsetting kit');
         break;
@@ -163,21 +162,21 @@ export class KitsController {
     return raw_name;
   }
 
-  private async _checkHaveKits(): Promise<unspecifiedKitType|'ok'|'cancel'> {
+  private async _checkHaveKits(): Promise<UnspecifiedKit|'ok'|'cancel'> {
     const avail = this.availableKits;
     if (avail.length > 1) {
       // We have kits. Okay.
       return 'ok';
     }
-    if (avail[0].name !== unspecifiedKitName) {
-      // We should _always_ have an unspecifiedKit.
-      rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', unspecifiedKitName));
+    if (avail[0].name !== SpecialKits.Unspecified) {
+      // We should _always_ have the 'UnspecifiedKit'.
+      rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
       return 'ok';
     }
     // We don't have any kits defined. Ask the user what to do. This is safe to block
     // because it is a modal dialog
     interface FirstScanItem extends vscode.MessageItem {
-      action: 'scan'|unspecifiedKitType|'cancel';
+      action: 'scan'|UnspecifiedKit|'cancel';
     }
     const choices: FirstScanItem[] = [
       {
@@ -186,7 +185,7 @@ export class KitsController {
       },
       {
         title: localize('do.not.use.kit.button', 'Do not use a kit'),
-        action: unspecifiedKitName,
+        action: SpecialKits.Unspecified,
       },
       {
         title: localize('close.button', 'Close'),
@@ -212,9 +211,9 @@ export class KitsController {
       }
       return 'ok';
     }
-    case unspecifiedKitName: {
-      await this.setFolderActiveKit({name: unspecifiedKitName});
-      return unspecifiedKitName;
+    case SpecialKits.Unspecified: {
+      await this.setFolderActiveKit({name: SpecialKits.Unspecified});
+      return SpecialKits.Unspecified as UnspecifiedKit;
     }
     case 'cancel': {
       return 'cancel';
@@ -234,8 +233,8 @@ export class KitsController {
     case 'cancel':
       // The user doesn't want to perform any special action
       return false;
-    case unspecifiedKitName:
-      // The user chose to use the unspecifiedKit
+    case SpecialKits.Unspecified:
+      // The user chose to use the 'UnspecifiedKit'
       return true;
     case 'ok':
       // 'ok' means we have kits defined and should do regular kit selection
@@ -252,10 +251,10 @@ export class KitsController {
     // Generate the quickpick items from our known kits
     const getKitName = (kit: Kit) => {
       switch (kit.name) {
-      case unspecifiedKitName:
-        return `[${localize('unspecified.kit.name', 'Unspecified')}]`;
-      case scanforkitsKitName:
+      case SpecialKits.ScanForKits as string:
         return `[${localize('scan.for.kits.button', 'Scan for kits')}]`;
+      case SpecialKits.Unspecified as string:
+        return `[${localize('unspecified.kit.name', 'Unspecified')}]`;
       default:
         return kit.name;
       }
@@ -278,12 +277,10 @@ export class KitsController {
       // No selection was made
       return false;
     } else {
-      if (chosen_kit.kit.name == scanforkitsKitName) {
-        await this.setFolderActiveKit(null);
+      if (chosen_kit.kit.name == SpecialKits.ScanForKits) {
         await KitsController.scanForKits();
         return false;
-      }
-      else {
+      } else {
         log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
         await this.setFolderActiveKit(chosen_kit.kit);
         return true;
@@ -297,7 +294,7 @@ export class KitsController {
   async setKitByName(kitName: string) {
     let newKit: Kit | undefined;
     if (!kitName) {
-        kitName = unspecifiedKitName;
+        kitName = SpecialKits.Unspecified;
     }
     newKit = this.availableKits.find(kit => kit.name === kitName);
     await this.setFolderActiveKit(newKit || null);
@@ -423,8 +420,8 @@ export class KitsController {
 
     // Remove the special kits
     const stripped_kits = kits.filter(kit => {
-      return ((kit.name !== unspecifiedKitName) &&
-              (kit.name !== scanforkitsKitName));
+      return ((kit.name !== SpecialKits.ScanForKits) &&
+              (kit.name !== SpecialKits.Unspecified));
     });
 
     // Sort the kits by name so they always appear in order in the file.

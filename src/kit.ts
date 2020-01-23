@@ -25,10 +25,11 @@ const log = logging.createLogger('kit');
 /**
  * Special kit types and names
  */
-export type scanforkitsKitType = '__scanforkits__';
-export const scanforkitsKitName: scanforkitsKitType = '__scanforkits__';
-export type unspecifiedKitType = '__unspec__';
-export const unspecifiedKitName: unspecifiedKitType = '__unspec__';
+export enum SpecialKits {
+  ScanForKits = '__scanforkits__',
+  Unspecified = '__unspecified__'
+}
+export type UnspecifiedKit = SpecialKits.Unspecified;
 
 type ProgressReporter = vscode.Progress<{message?: string}>;
 
@@ -909,8 +910,8 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
     return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
   }
-  if (kit.name === scanforkitsKitName) {
-    return localize('rescanning.for.kits', 'Rescanning for kits');
+  if (kit.name === SpecialKits.ScanForKits) {
+    return localize('search.for.compilers', 'Search for compilers on this computer');
   }
   return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
