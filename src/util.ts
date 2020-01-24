@@ -128,7 +128,9 @@ export function heavyNormalizePath(p: string): string {
 }
 
 export function resolvePath(inpath: string, base: string) {
-  return path.isAbsolute(inpath) ? inpath : lightNormalizePath(path.join(base, inpath));
+  const abspath = path.isAbsolute(inpath) ? inpath : path.join(base, inpath);
+  // Even absolute paths need to be normalized since they could contain rogue .. and .
+  return lightNormalizePath(abspath);
 }
 
 /**

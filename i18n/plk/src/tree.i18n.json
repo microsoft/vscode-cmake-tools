@@ -14,5 +14,6 @@
 	"item.render.issue": "Wystąpił problem podczas renderowania tego elementu. To jest usterka.",
 	"empty.project": "Pusty projekt",
 	"update.project.with.mismatch": "Aktualizuj projekt z niezgodną właściwością nazwy",
+	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that does not yet exist?",
 	"error.rendering.children.nodes": "Błąd podczas renderowania węzłów podrzędnych"
 }
