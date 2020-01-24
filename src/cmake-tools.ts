@@ -245,7 +245,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const quickStart = localize('quickstart.cmake.project', 'Quickstart a new CMake project');
       const changeSetting = localize('edit.setting', 'Edit the \'cmake.sourceDirectory\' setting');
       const result = await vscode.window.showErrorMessage(
-            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the workspace folder'), quickStart, changeSetting);
+            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'', this.folderName), quickStart, changeSetting);
       if (result === quickStart) {
         vscode.commands.executeCommand('cmake.quickStart');
       } else if (result === changeSetting) {
@@ -852,7 +852,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!drv.targets.length) {
       return (await vscode.window.showInputBox({prompt: localize('enter.target.name', 'Enter a target name')})) || null;
     } else {
-      const choices = drv.targets.map((t): vscode.QuickPickItem => {
+      const choices = drv.uniqueTargets.map((t): vscode.QuickPickItem => {
         switch (t.type) {
         case 'named': {
           return {

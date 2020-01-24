@@ -83,6 +83,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
   abstract get executableTargets(): api.ExecutableTarget[];
 
   /**
+   * List of unique targets known to CMake
+   */
+  abstract get uniqueTargets(): api.Target[];
+
+  /**
    * Do any necessary disposal for the driver. For the CMake Server driver,
    * this entails shutting down the server process and closing the open pipes.
    *
@@ -389,6 +394,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
       log.debug('Run _refreshExpansions cb');
       const opts = this.expansionOptions;
       this._sourceDirectory = util.lightNormalizePath(await expand.expandString(this.config.sourceDirectory, opts));
+      if (path.basename(this._sourceDirectory).toLocaleLowerCase() === "cmakelists.txt") {
+        // Don't fail if CMakeLists.txt was accidentally appended to the sourceDirectory.
+        this._sourceDirectory = path.dirname(this._sourceDirectory);
+      }
       this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
       const installPrefix = this.config.installPrefix;
