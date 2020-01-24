@@ -14,5 +14,6 @@
 	"item.render.issue": "Houve um problema ao renderizar este item. Isso é um bug",
 	"empty.project": "Projeto vazio",
 	"update.project.with.mismatch": "Atualizar o projeto com propriedade de nome incompatível",
+	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that does not yet exist?",
 	"error.rendering.children.nodes": "Erro ao renderizar os nós filhos"
 }
