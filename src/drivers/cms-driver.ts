@@ -133,12 +133,12 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
   }
 
   async _refreshPostConfigure(): Promise<void> {
-    const cl = await this.getClient();
-    const cmake_inputs = await cl.cmakeInputs();  // <-- 1. This line generates the error
+    const client = await this.getClient();
+    const cmake_inputs = await client.cmakeInputs();  // <-- 1. This line generates the error
     // Scan all the CMake inputs and capture their mtime so we can check for
     // out-of-dateness later
     this._cmakeInputFileSet = await InputFileSet.create(cmake_inputs);
-    const clcache = await cl.getCMakeCacheContent();
+    const clcache = await client.getCMakeCacheContent();
     this._cacheEntries = clcache.cache.reduce((acc, el) => {
       const entry_map: {[key: string]: api.CacheEntryType|undefined} = {
         BOOL: api.CacheEntryType.Bool,
@@ -158,7 +158,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
               new cache.Entry(el.key, el.value, type, el.properties.HELPSTRING, el.properties.ADVANCED === '1'));
       return acc;
     }, new Map<string, cache.Entry>());
-    this.codeModel = await cl.sendRequest('codemodel');
+    this.codeModel = await client.codemodel();
     this._codeModelChanged.fire(this.codeModel);
   }
 
