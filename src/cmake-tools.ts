@@ -269,7 +269,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let communicationMode = this.workspaceContext.config.cmakeCommunicationMode;
 
     if (communicationMode == 'automatic') {
-      if (cmake.isFileApiModSupported) {
+      if (cmake.isFileApiModeSupported) {
         communicationMode = 'fileAPI';
       } else if (cmake.isServerModeSupported) {
         communicationMode = 'serverAPI';
@@ -280,8 +280,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (communicationMode != 'fileAPI') {
         log.warning(
           localize('please.upgrade.cmake',
-            'CMake FileApi is not available with the current CMake executable. Please upgrade to CMake {0} or newer.',
-            versionToString(cmake.minimalFileApiModeVersion)));
+            'For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.',
+            versionToString(cmake.minimalServerModeVersion)));
       }
     }
 

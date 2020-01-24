@@ -12,15 +12,14 @@ import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import * as path from 'path';
 
-const log = logging.createLogger('cmakefileapi-helper');
+const log = logging.createLogger('cmakefileapi-parser');
 
 export async function createQueryFileForApi(api_path: string): Promise<string> {
   const query_path = path.join(api_path, 'query', 'client-vscode');
   const query_file_path = path.join(query_path, 'query.json');
   await fs.mkdir_p(query_path);
 
-  const requests
-      = {requests: [{kind: 'cache', version: 2}, {kind: 'codemodel', version: 2}, {kind: 'cmakeFiles', version: 1}]};
+  const requests = {requests: [{kind: 'cache', version: 2}, {kind: 'codemodel', version: 2}]};
 
   await fs.writeFile(query_file_path, JSON.stringify(requests));
   return query_file_path;
@@ -48,6 +47,13 @@ export async function loadIndexFile(reply_path: string): Promise<index_api.Index
 export async function loadCacheContent(filename: string): Promise<Map<string, api.CacheEntry>> {
   const file_content = await fs.readFile(filename);
   const cache_from_cmake = JSON.parse(file_content.toString()) as index_api.Cache.CacheContent;
+
+  const expected_version = {major: 2, minor: 0};
+  const detected_version = cache_from_cmake.version;
+  if (detected_version.major != expected_version.major || detected_version.minor != expected_version.minor) {
+    log.warning(`Cache object version (${detected_version.major}.${detected_version.minor}) of FileAPI is not as ` +
+                `expected (${expected_version.major}.${expected_version.minor}). It may not work correct.`);
+  }
 
   return convertFileApiCacheToExtensionCache(cache_from_cmake);
 }
@@ -83,7 +89,16 @@ function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.C
 
 export async function loadCodeModelContent(filename: string): Promise<index_api.CodeModelKind.Content> {
   const file_content = await fs.readFile(filename);
-  return JSON.parse(file_content.toString()) as index_api.CodeModelKind.Content;
+  const codemodel = JSON.parse(file_content.toString()) as index_api.CodeModelKind.Content;
+  const expected_version = {major: 2, minor: 0};
+  const detected_version = codemodel.version;
+
+  if (detected_version.major != expected_version.major || detected_version.minor != expected_version.minor) {
+    log.warning(`Code model version (${detected_version.major}.${detected_version.minor}) of FileAPI is not as ` +
+                `expected (${expected_version.major}.${expected_version.minor}). It may not work correct.`);
+  }
+
+  return codemodel;
 }
 
 export async function loadTargetObject(filename: string): Promise<index_api.CodeModelKind.TargetObject> {

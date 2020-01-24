@@ -5,7 +5,7 @@ export interface CMakeExecutable {
   path: string;
   isPresent: boolean;
   isServerModeSupported?: boolean;
-  isFileApiModSupported?: boolean;
+  isFileApiModeSupported?: boolean;
   version?: util.Version;
   minimalServerModeVersion: util.Version;
   minimalFileApiModeVersion: util.Version;
@@ -32,7 +32,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
         cmake.isServerModeSupported = util.versionGreater(cmake.version, cmake.minimalServerModeVersion);
 
         // Support for new file based API, it replace the server mode
-        cmake.isFileApiModSupported = util.versionGreater(cmake.version, cmake.minimalFileApiModeVersion) ||
+        cmake.isFileApiModeSupported = util.versionGreater(cmake.version, cmake.minimalFileApiModeVersion) ||
             util.versionEquals(cmake.version, cmake.minimalFileApiModeVersion);
         cmake.isPresent = true;
       }

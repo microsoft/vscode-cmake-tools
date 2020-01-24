@@ -200,7 +200,7 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
-    if (this.useCMakeServer) {
+    if (communicationMode == "automatic" && this.useCMakeServer) {
       log.warning(localize(
           'please.upgrade.configuration',
           'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
