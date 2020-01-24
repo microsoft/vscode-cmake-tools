@@ -14,5 +14,6 @@
 	"item.render.issue": "Problem beim Rendern dieses Elements. Dies ist ein Fehler.",
 	"empty.project": "Leeres Projekt",
 	"update.project.with.mismatch": "Projekt mit nicht übereinstimmender name-Eigenschaft aktualisieren",
+	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that does not yet exist?",
 	"error.rendering.children.nodes": "Fehler beim Rendern untergeordneter Knoten."
 }
