@@ -23,6 +23,15 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('kit');
 
+/**
+ * Special kit types and names
+ */
+export enum SpecialKits {
+  ScanForKits = '__scanforkits__',
+  Unspecified = '__unspecified__'
+}
+export type UnspecifiedKit = SpecialKits.Unspecified;
+
 type ProgressReporter = vscode.Progress<{message?: string}>;
 
 /**
@@ -848,6 +857,9 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
   if (kit.compilers) {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
     return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
+  }
+  if (kit.name === SpecialKits.ScanForKits) {
+    return localize('search.for.compilers', 'Search for compilers on this computer');
   }
   return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
