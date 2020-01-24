@@ -60,6 +60,7 @@ export class KitsController {
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
+    // tslint:disable-next-line: no-floating-promises
     this._kitsWatcher.close();
   }
 
