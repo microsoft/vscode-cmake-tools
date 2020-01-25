@@ -14,5 +14,6 @@
 	"item.render.issue": "Si è verificato un errore durante il rendering di questo elemento. Questo è un bug",
 	"empty.project": "Progetto vuoto",
 	"update.project.with.mismatch": "Aggiorna il progetto con la proprietà name non corrispondente",
+	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that does not yet exist?",
 	"error.rendering.children.nodes": "Si è verificato un errore durante il rendering dei nodi figlio"
 }

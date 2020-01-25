@@ -163,9 +163,9 @@ export function execute(command: string,
 
     const encoding = options.outputEncoding ? options.outputEncoding:'utf8';
 
-    result = new Promise<ExecutionResult>((resolve, reject) => {
+    result = new Promise<ExecutionResult>(resolve => {
       if (child) {
-        child.on('error', err => { reject(err); });
+        child.on('error', err => { resolve({ retc: -1, stdout: "", stderr: err.message }); });
         let stdout_acc = '';
         let line_acc = '';
         let stderr_acc = '';

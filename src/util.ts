@@ -1,4 +1,5 @@
 import * as child_process from 'child_process';
+import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
@@ -124,7 +125,9 @@ export function heavyNormalizePath(p: string): string {
 }
 
 export function resolvePath(inpath: string, base: string) {
-  return path.isAbsolute(inpath) ? inpath : lightNormalizePath(path.join(base, inpath));
+  const abspath = path.isAbsolute(inpath) ? inpath : path.join(base, inpath);
+  // Even absolute paths need to be normalized since they could contain rogue .. and .
+  return lightNormalizePath(abspath);
 }
 
 /**
@@ -146,16 +149,6 @@ export function splitPath(p: string): string[] {
   }
   arr.push(path.basename(p));
   return arr;
-}
-
-/**
- * Retrieve the primary workspace folder, or 'null' if no folder is open.
- */
-export function getPrimaryWorkspaceFolder(): vscode.Uri|null {
-  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-    return vscode.workspace.workspaceFolders[0].uri;
-  }
-  return null;
 }
 
 /**
@@ -543,4 +536,26 @@ export function checkFileExists(filePath: string): Promise<boolean> {
           }
       });
   });
+}
+
+export function disposeAll(disp: Iterable<vscode.Disposable>) {
+  for (const d of disp) {
+    d.dispose();
+  }
+}
+
+export function reportProgress(progress: ProgressHandle|undefined, message: string) {
+  if (progress) {
+    progress.report({message});
+  }
+}
+
+export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
+  return watcher.on('add', listener)
+                .on('change', listener)
+                .on('unlink', listener);
+}
+
+export function isString(x: any): x is string {
+  return Object.prototype.toString.call(x) === "[object String]";
 }
