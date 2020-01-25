@@ -82,7 +82,10 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     // This workaround load the information from cache.
     if (await fs.exists(this.cachePath)) {
       await this.loadGeneratorInformationFromCache(this.cachePath);
-      await this.doConfigure([], undefined);
+      const code_model_exist = await this.updateCodeModel();
+      if (!code_model_exist) {
+        await this.doConfigure([], undefined);
+      }
     } else {
       this._generatorInformation = this.generator;
     }
@@ -147,8 +150,9 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     log.trace(res.stdout);
     if (res.retc == 0) {
       this._needsReconfigure = false;
+      await this.updateCodeModel();
     }
-    await this.updateCodeModel();
+
     return res.retc === null ? -1 : res.retc;
   }
 
@@ -163,7 +167,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     return path.join(api_path, 'reply');
   }
 
-  private async updateCodeModel() {
+  private async updateCodeModel(): Promise<boolean> {
     const reply_path = this.getCMakeReplyPath();
     const indexFile = await loadIndexFile(reply_path);
     if (indexFile) {
@@ -186,6 +190,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       this._codeModel = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
       this._codeModelChanged.fire(this._codeModel);
     }
+    return indexFile !== null;
   }
 
   private _codeModel: codemodel.CodeModelContent|null = null;
@@ -211,9 +216,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
   /**
    * List of unique targets known to CMake
    */
-  get uniqueTargets(): api.Target[] {
-    return this.targets.reduce(targetReducer, []);
-  }
+  get uniqueTargets(): api.Target[] { return this.targets.reduce(targetReducer, []); }
 
   get executableTargets(): ExecutableTarget[] {
     return this.uniqueTargets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
@@ -242,7 +245,7 @@ function targetReducer(set: api.Target[], t: api.Target): api.Target[] {
 
 function compareTargets(a: api.Target, b: api.Target): boolean {
   let same = false;
-  if(a.type === b.type) {
+  if (a.type === b.type) {
     same = a.name == b.name;
     if (a.type === 'rich' && b.type === 'rich') {
       same = same && (a.filepath == b.filepath);
