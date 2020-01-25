@@ -208,8 +208,15 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     }
   }
 
+  /**
+   * List of unique targets known to CMake
+   */
+  get uniqueTargets(): api.Target[] {
+    return this.targets.reduce(targetReducer, []);
+  }
+
   get executableTargets(): ExecutableTarget[] {
-    return this.targets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
+    return this.uniqueTargets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
         .map(t => ({
                name: t.name,
                path: (t as api.RichTarget).filepath,
@@ -218,4 +225,30 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
 
   private readonly _codeModelChanged = new vscode.EventEmitter<null|codemodel.CodeModelContent>();
   get onCodeModelChanged() { return this._codeModelChanged.event; }
+}
+
+/**
+ * Helper function for Array.reduce
+ *
+ * @param set the accumulator
+ * @t the RichTarget currently being examined.
+ */
+function targetReducer(set: api.Target[], t: api.Target): api.Target[] {
+  if (!set.find(t2 => compareTargets(t, t2))) {
+    set.push(t);
+  }
+  return set;
+}
+
+function compareTargets(a: api.Target, b: api.Target): boolean {
+  let same = false;
+  if(a.type === b.type) {
+    same = a.name == b.name;
+    if (a.type === 'rich' && b.type === 'rich') {
+      same = same && (a.filepath == b.filepath);
+      same = same && (a.targetType == b.targetType);
+    }
+  }
+
+  return same;
 }

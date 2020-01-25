@@ -35,8 +35,6 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
 
   suite('CMake-Driver tests', () => {
     const cmakePath: string = process.env.CMAKE_EXECUTABLE? process.env.CMAKE_EXECUTABLE: 'cmake';
-    const workspacePath: string = 'test/unit-tests/driver/workspace';
-    const root = getTestRootFilePath(workspacePath);
     const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/test_project');
     const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/empty_project');
     const badCommandWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/bad_command');
@@ -90,7 +88,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     });
 
     test(`All target for ${kitDefault.name}`, async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
@@ -103,7 +101,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(60000);
 
     test('Check binary dir', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
@@ -111,7 +109,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(60000);
 
     test('Configure fails', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, badCommandWorkspaceFolder, async () => {}, []);
@@ -119,7 +117,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('Build', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
@@ -132,7 +130,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('Configure fails on invalid preferred generator', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       const kit = {name: 'GCC', preferredGenerator: {name: 'BlaBla'}} as Kit;
@@ -143,7 +141,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(60000);
 
     test('Throw exception on set kit without preferred generator found', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
@@ -152,7 +150,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('Try build on empty dir', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -166,7 +164,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(60000);
 
     test('No parallel configuration', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -184,7 +182,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('No parallel clean configuration', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -202,7 +200,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('No parallel builds', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -222,7 +220,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('No build parallel to configure', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -242,7 +240,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('No configure parallel to build', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -262,7 +260,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('No build parallel to clean configuration', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -282,7 +280,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
 
 
     test('No clean configuration parallel to build', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
@@ -303,7 +301,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
 
 
     test('Test pre-configured workspace', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitNinja, defaultWorkspaceFolder, async () => {}, []);
@@ -318,7 +316,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(60000);
 
     test('Test generator switch', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
@@ -333,7 +331,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     test('Test Visual Studio kit with wrong all target name', async () => {
       if (process.platform !== 'win32') return;
 
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
@@ -343,7 +341,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
 
     test('Test Ninja kit with wrong all target name', async () => {
       if (process.platform !== 'win32') return;
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitNinja, defaultWorkspaceFolder, async () => {}, []);
@@ -352,7 +350,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('Test extra arguments on configure', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
@@ -361,7 +359,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable, c
     }).timeout(90000);
 
     test('Test extra arguments on clean and configure', async () => {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create()
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);

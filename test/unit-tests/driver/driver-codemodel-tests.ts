@@ -78,7 +78,7 @@ export function makeCodeModelDriverTestsuite(
 
     async function generateCodeModelForConfiguredDriver(args: string[] =
                                                             []): Promise<null|codemodel_api.CodeModelContent> {
-      const config = ConfigurationReader.createForDirectory(root);
+      const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
