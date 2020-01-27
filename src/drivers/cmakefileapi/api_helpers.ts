@@ -11,6 +11,10 @@ import {
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import * as path from 'path';
+import * as nls from 'vscode-nls';
+
+nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cmakefileapi-parser');
 
@@ -51,8 +55,13 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
   const expected_version = {major: 2, minor: 0};
   const detected_version = cache_from_cmake.version;
   if (detected_version.major != expected_version.major || detected_version.minor != expected_version.minor) {
-    log.warning(`Cache object version (${detected_version.major}.${detected_version.minor}) of FileAPI is not as ` +
-                `expected (${expected_version.major}.${expected_version.minor}). It may not work correct.`);
+    log.warning(localize(
+        'cache.object.version',
+        'Cache object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
+        detected_version.major,
+        detected_version.minor,
+        expected_version.major,
+        expected_version.minor));
   }
 
   return convertFileApiCacheToExtensionCache(cache_from_cmake);
@@ -77,7 +86,7 @@ function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.C
     };
     const type = entry_type_translation_map[el.type];
     if (type === undefined) {
-      log.warning(`Unknown cache entry type ${el.type}`);
+      log.warning(localize('cache.entry.unknowntype', 'Unknown cache entry type: {0}.', el.type));
       return acc;
     }
     const helpstring = findPropertyValue(el, 'HELPSTRING');
@@ -94,8 +103,13 @@ export async function loadCodeModelContent(filename: string): Promise<index_api.
   const detected_version = codemodel.version;
 
   if (detected_version.major != expected_version.major || detected_version.minor != expected_version.minor) {
-    log.warning(`Code model version (${detected_version.major}.${detected_version.minor}) of FileAPI is not as ` +
-                `expected (${expected_version.major}.${expected_version.minor}). It may not work correct.`);
+    log.warning(localize(
+        'code.model.version',
+        'Code model version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
+        detected_version.major,
+        detected_version.minor,
+        expected_version.major,
+        expected_version.minor));
   }
 
   return codemodel;
