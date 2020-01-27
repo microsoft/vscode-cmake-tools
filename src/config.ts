@@ -4,17 +4,27 @@
  * `ConfigurationReader` class.
  */ /** */
 
+import * as logging from '@cmt/logging';
 import * as util from '@cmt/util';
 import * as os from 'os';
 import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
+
+nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
+const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
+
+export type CMakeCommunicationMode = 'legacy'|'serverAPI'|'fileAPI'|'automatic';
 
 interface HardEnv {
   [key: string]: string;
 }
 
 export interface ExtensionConfigurationSettings {
+  autoSelectActiveFolder: boolean;
   cmakePath: string;
   buildDirectory: string;
   installPrefix: string|null;
@@ -48,6 +58,7 @@ export interface ExtensionConfigurationSettings {
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   useCMakeServer: boolean;
+  cmakeCommunicationMode: CMakeCommunicationMode;
   ignoreKitEnv: boolean;
   buildTask: boolean;
   outputLogEncoding: string;
@@ -85,20 +96,20 @@ export class ConfigurationReader implements vscode.Disposable {
    *
    * @param workspacePath A directory to use for the config
    */
-  static createForDirectory(dirPath: string): ConfigurationReader {
-    const data = ConfigurationReader.loadForPath(dirPath);
+  static create(folder?: vscode.WorkspaceFolder): ConfigurationReader {
+    const data = ConfigurationReader.loadConfig(folder);
     const reader = new ConfigurationReader(data);
     reader._updateSubscription = vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration('cmake', vscode.Uri.file(dirPath))) {
-        const new_data = ConfigurationReader.loadForPath(dirPath);
+      if (e.affectsConfiguration('cmake', folder?.uri)) {
+        const new_data = ConfigurationReader.loadConfig(folder);
         reader.update(new_data);
       }
     });
     return reader;
   }
 
-  static loadForPath(filePath: string): ExtensionConfigurationSettings {
-    const data = vscode.workspace.getConfiguration('cmake', vscode.Uri.file(filePath)) as any as
+  static loadConfig(folder?: vscode.WorkspaceFolder): ExtensionConfigurationSettings {
+    const data = vscode.workspace.getConfiguration('cmake', folder?.uri) as any as
         ExtensionConfigurationSettings;
     const platmap = {
       win32: 'windows',
@@ -127,6 +138,8 @@ export class ConfigurationReader implements vscode.Disposable {
       }
     }
   }
+
+  get autoSelectActiveFolder(): boolean { return this.configData.autoSelectActiveFolder; }
 
   get buildDirectory(): string { return this.configData.buildDirectory; }
 
@@ -188,6 +201,17 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
+  get cmakeCommunicationMode(): CMakeCommunicationMode {
+    let communicationMode = this.configData.cmakeCommunicationMode;
+    if (communicationMode == "automatic" && this.useCMakeServer) {
+      log.warning(localize(
+          'please.upgrade.configuration',
+          'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
+      communicationMode = 'serverAPI';
+    }
+    return communicationMode;
+  }
+
   get numJobs(): number {
     const jobs = this.parallelJobs;
     if (!!jobs) {
@@ -222,6 +246,7 @@ export class ConfigurationReader implements vscode.Disposable {
   get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
 
   private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
+    autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
     cmakePath: new vscode.EventEmitter<string>(),
     buildDirectory: new vscode.EventEmitter<string>(),
     installPrefix: new vscode.EventEmitter<string|null>(),
@@ -255,6 +280,7 @@ export class ConfigurationReader implements vscode.Disposable {
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
+    cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
     ignoreKitEnv: new vscode.EventEmitter<boolean>(),
     buildTask: new vscode.EventEmitter<boolean>(),
     outputLogEncoding: new vscode.EventEmitter<string>(),
@@ -270,7 +296,9 @@ export class ConfigurationReader implements vscode.Disposable {
   onChange<K extends keyof ExtensionConfigurationSettings>(setting: K,
                                                            cb: (value: ExtensionConfigurationSettings[K]) => void):
       vscode.Disposable {
-    const emitter: vscode.EventEmitter<ExtensionConfigurationSettings[K]> = this._emitters[setting];
+    // Can't use vscode.EventEmitter<ExtensionConfigurationSettings[K]> here, potentially because K and keyof ExtensionConfigurationSettings
+    // may not be the same...
+    const emitter: vscode.EventEmitter<any> = this._emitters[setting];
     return emitter.event(cb);
   }
 }
