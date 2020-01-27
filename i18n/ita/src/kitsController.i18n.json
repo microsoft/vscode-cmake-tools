@@ -18,7 +18,7 @@
 	"start.selection.of.kits": "Avvia la selezione dei kit. Sono stati trovati {0} kit.",
 	"opening.kit.selection": "Apertura della selezione rapida per la selezione del kit",
 	"unspecified.kit.name": "Non specificata",
-	"select.a.kit.placeholder": "Select a Kit for {0}",
+	"select.a.kit.placeholder": "Selezionare un kit per {0}",
 	"user.cancelled.kit.selection": "Selezione del kit annullata dall'utente",
 	"user.selected.kit": "Kit {0} selezionato dall'utente",
 	"kit.references.non-existent": "Il kit \"{0}\" fa riferimento a un binario non esistente del compilatore [{1}]. Specificare l'operazione da eseguire.",

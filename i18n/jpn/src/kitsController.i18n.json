@@ -18,7 +18,7 @@
 	"start.selection.of.kits": "キットの選択を開始します。{0} 個のキットが見つかりました。",
 	"opening.kit.selection": "キット選択 QuickPick を開いています",
 	"unspecified.kit.name": "未指定",
-	"select.a.kit.placeholder": "Select a Kit for {0}",
+	"select.a.kit.placeholder": "{0} のキットを選択してください",
 	"user.cancelled.kit.selection": "ユーザーがキットの選択をキャンセルしました",
 	"user.selected.kit": "ユーザーがキット {0} を選択しました",
 	"kit.references.non-existent": "キット \"{0}\" は、存在しないコンパイラ バイナリ [{1}] を参照しています。どうしますか?",
