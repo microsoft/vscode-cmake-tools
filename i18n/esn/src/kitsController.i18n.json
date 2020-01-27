@@ -18,7 +18,7 @@
 	"start.selection.of.kits": "Iniciar la selección de kits. Kits encontrados: {0}.",
 	"opening.kit.selection": "Abriendo la selección de kit de QuickPick",
 	"unspecified.kit.name": "No especificado",
-	"select.a.kit.placeholder": "Select a Kit for {0}",
+	"select.a.kit.placeholder": "Seleccionar un kit para {0}",
 	"user.cancelled.kit.selection": "Selección de kit cancelada por el usuario",
 	"user.selected.kit": "Kit {0} seleccionado por el usuario",
 	"kit.references.non-existent": "El kit \"{0}\" hace referencia a un binario del compilador [{1}] que no existe. ¿Qué quiere hacer?",
