@@ -398,6 +398,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // Don't fail if CMakeLists.txt was accidentally appended to the sourceDirectory.
         this._sourceDirectory = path.dirname(this._sourceDirectory);
       }
+      if (!(await util.checkFileExists(this._sourceDirectory))) {
+        rollbar.error(localize('sourcedirectory.not.a.directory', '"sourceDirectory" is not a directory: {0}', this._sourceDirectory));
+      }
       this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
       const installPrefix = this.config.installPrefix;
