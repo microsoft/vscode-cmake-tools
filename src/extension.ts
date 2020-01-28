@@ -387,12 +387,13 @@ class ExtensionManager implements vscode.Disposable {
    * Show UI to allow the user to select an active kit
    */
   async selectActiveFolder() {
-    if (vscode.workspace.workspaceFolders?.length && !this._workspaceConfig.autoSelectActiveFolder) {
+    if (vscode.workspace.workspaceFolders?.length) {
       const lastActiveFolderPath = this._folders.activeFolder?.folder.uri.fsPath;
       const selection = await vscode.window.showWorkspaceFolderPick();
       if (selection) {
         // Ingore if user cancelled
         await this._setActiveFolder(selection);
+        telemetry.logEvent("selectactivefolder");
         // _folders.activeFolder must be there at this time
         const currentActiveFolderPath = this._folders.activeFolder!.folder.uri.fsPath;
         this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);

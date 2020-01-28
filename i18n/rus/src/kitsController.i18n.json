@@ -18,7 +18,7 @@
 	"start.selection.of.kits": "Начало выбора наборов. Обнаружено наборов: {0}.",
 	"opening.kit.selection": "Открытие средства выбора наборов QuickPick.",
 	"unspecified.kit.name": "Не указано",
-	"select.a.kit.placeholder": "Select a Kit for {0}",
+	"select.a.kit.placeholder": "Выберите набор для {0}",
 	"user.cancelled.kit.selection": "Выбор набора отменен пользователем.",
 	"user.selected.kit": "Выбранный пользователем набор: {0}.",
 	"kit.references.non-existent": "Набор \"{0}\" ссылается на несуществующий двоичный файл компилятора [{1}]. Что вы хотели бы сделать?",

@@ -859,6 +859,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private _currentBuildProcess: proc.Subprocess|null = null;
 
+  private correctAllTargetName(targetname: string) {
+    if (targetname === 'all' || targetname == 'ALL_BUILD') {
+      return this.allTargetName;
+    } else {
+      return targetname;
+    }
+  }
+
   async getCMakeBuildCommand(target: string): Promise<proc.BuildCommand|null> {
     const ok = await this._beforeConfigureOrBuild();
     if (!ok) {
@@ -866,6 +874,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     const gen = this.generatorName;
+    target = this.correctAllTargetName(target);
+
     const generator_args = (() => {
       if (!gen)
         return [];

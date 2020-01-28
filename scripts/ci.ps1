@@ -111,7 +111,7 @@ Invoke-ChronicCommand "Compiling Tests" $yarn run pretest
 Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
 
 # Get the CMake binary that we will use to run our tests
-$cmake_binary = Install-TestCMake -Version "3.10.0"
+$cmake_binary = Install-TestCMake -Version "3.16.2"
 $Env:CMAKE_EXECUTABLE = $cmake_binary
 
 # Add cmake to search path environment variable
