@@ -275,14 +275,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     if (communicationMode == 'automatic') {
       if (cmake.isFileApiModeSupported) {
-        communicationMode = 'fileAPI';
+        communicationMode = 'fileApi';
       } else if (cmake.isServerModeSupported) {
-        communicationMode = 'serverAPI';
+        communicationMode = 'serverApi';
       } else {
         communicationMode = 'legacy';
       }
 
-      if (communicationMode != 'fileAPI') {
+      if (communicationMode != 'fileApi' && communicationMode != 'serverApi') {
         log.warning(
           localize('please.upgrade.cmake',
             'For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.',
@@ -293,11 +293,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     try {
       this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
       switch (communicationMode) {
-        case 'fileAPI':
+        case 'fileApi':
           drv = await CMakeFileApiDriver
               .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
           break;
-        case 'serverAPI':
+        case 'serverApi':
           drv = await CMakeServerClientDriver
               .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
           break;

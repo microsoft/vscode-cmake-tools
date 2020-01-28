@@ -1106,8 +1106,8 @@
           "default": "automatic",
           "enum": [
             "legacy",
-            "serverAPI",
-            "fileAPI",
+            "serverApi",
+            "fileApi",
             "automatic"
           ],
           "description": "%cmake-tools.configuration.cmake.cmakeCommunicationMode%",
