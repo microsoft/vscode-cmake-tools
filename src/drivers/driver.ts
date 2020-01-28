@@ -399,7 +399,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this._sourceDirectory = path.dirname(this._sourceDirectory);
       }
       if (!(await util.checkFileExists(this._sourceDirectory))) {
-        rollbar.error(localize('sourcedirectory.not.a.directory', '"sourceDirectory" is not a directory: {0}', this._sourceDirectory));
+        rollbar.error(localize('sourcedirectory.not.a.directory', '"sourceDirectory" is not a directory'), {sourceDirectory: this._sourceDirectory});
       }
       this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
