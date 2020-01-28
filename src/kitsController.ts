@@ -281,7 +281,7 @@ export class KitsController {
       return false;
     } else {
       if (chosen_kit.kit.name == SpecialKits.ScanForKits) {
-        await KitsController.scanForKits();
+        await KitsController.scanForKits(this.cmakeTools);
         return false;
       } else {
         log.debug(localize('user.selected.kit', 'User selected kit {0}', JSON.stringify(chosen_kit)));
