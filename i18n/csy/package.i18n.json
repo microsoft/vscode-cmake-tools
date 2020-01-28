@@ -111,5 +111,6 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Povolit protokolování trasování do souboru a konzoly (velmi vysoké objemy dat)",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Vybrat aktivní složku automaticky",
 	"cmake-tools.configuration.views.cmake.folders.description": "Složky",
-	"cmake-tools.configuration.views.cmake.outline.description": "Osnova projektu"
+	"cmake-tools.configuration.views.cmake.outline.description": "Osnova projektu",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
 }

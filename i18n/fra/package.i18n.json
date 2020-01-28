@@ -111,5 +111,6 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Active la journalisation des traces dans le fichier et la console (très bruyant).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Sélectionner le dossier actif automatiquement",
 	"cmake-tools.configuration.views.cmake.folders.description": "Dossiers",
-	"cmake-tools.configuration.views.cmake.outline.description": "Structure du projet"
+	"cmake-tools.configuration.views.cmake.outline.description": "Structure du projet",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
 }
