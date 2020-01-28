@@ -20,7 +20,7 @@ export class ConfigurationWebview {
       protected save: () => void) {
     this._panel = vscode.window.createWebviewPanel(
       'cmakeConfiguration', // Identifies the type of the webview. Used internally
-      'CMake Configuration', // Title of the panel displayed to the user
+      'CMake Cache Editor', // Title of the panel displayed to the user
       vscode.ViewColumn.One, // Editor column to show the new webview panel in.
       {
         enableScripts: true
@@ -45,12 +45,12 @@ export class ConfigurationWebview {
       try {
         if (options) {
           await this.saveCmakeCache(options);
-          this._panel.title = 'CMake Configuration';
+          this._panel.title = 'CMake Cache Editor';
           vscode.window.showInformationMessage('CMake options have been saved.');
           // start configure
           this.save();
         } else {
-          this._panel.title = 'CMake Configuration*';
+          this._panel.title = 'CMake Cache Editor*';
         }
       } catch (error) {
         vscode.window.showErrorMessage(error);
@@ -99,7 +99,7 @@ export class ConfigurationWebview {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CMake Configuration</title>
+        <title>CMake Cache Editor</title>
         <style>
           table {
             border: 1px solid black;
@@ -187,7 +187,7 @@ export class ConfigurationWebview {
     <body>
       <div class="container">
         <button id="save" onclick="save()">Save</button>
-        <h1>CMake Configuration<span class="invisible" id="not-saved">*</span></h1>
+        <h1>CMake Cache Editor<span class="invisible" id="not-saved">*</span></h1>
         <small>Here you can configure your cmake options by the touch of a button.</small>
         <hr>
         <input class="search" type="text" id="search" oninput="search()" placeholder="Search" autofocus>
