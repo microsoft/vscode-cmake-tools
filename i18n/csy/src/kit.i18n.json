@@ -37,7 +37,7 @@
 	"kit.for.toolchain.file": "Sada pro soubor sady nástrojů {0}",
 	"using.compilers.for": "Používají se kompilátory pro {0} (architektura {1}).",
 	"using.compilers": "Používají se kompilátory: {0}",
-	"search.for.compilers": "Search for compilers on this computer",
+	"search.for.compilers": "Vyhledat kompilátory na tomto počítači",
 	"unspecified.let.cmake.guess": "Neurčeno (Ať nástroje CMake odhadnou, jaké kompilátory a prostředí používat)",
 	"not.reading.nonexistent.kit": "Nečte se soubor neexistujících sad: {0}",
 	"reading.kits.file": "Čte se soubor sad {0}.",

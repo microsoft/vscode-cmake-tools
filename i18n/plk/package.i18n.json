@@ -111,5 +111,6 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Włącz rejestrowanie śledzenia w pliku i na konsoli (bardzo dużo danych).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Wybierz aktywny folder automatycznie",
 	"cmake-tools.configuration.views.cmake.folders.description": "Foldery",
-	"cmake-tools.configuration.views.cmake.outline.description": "Konspekt projektu"
+	"cmake-tools.configuration.views.cmake.outline.description": "Konspekt projektu",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
 }
