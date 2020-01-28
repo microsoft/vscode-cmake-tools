@@ -1118,8 +1118,20 @@
         },
         "cmake.useCMakeServer": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "%cmake-tools.configuration.cmake.useCMakeServer.description%",
+          "scope": "resource"
+        },
+        "cmake.cmakeCommunicationMode": {
+          "type": "string",
+          "default": "automatic",
+          "enum": [
+            "legacy",
+            "serverAPI",
+            "fileAPI",
+            "automatic"
+          ],
+          "description": "%cmake-tools.configuration.cmake.cmakeCommunicationMode%",
           "scope": "resource"
         },
         "cmake.ignoreKitEnv": {

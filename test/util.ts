@@ -15,9 +15,6 @@ chai.use(chaiAsPromised);
 
 export {expect};
 
-export type unspecifiedKitType = '__unspec__';
-export const unspecifiedKitName: unspecifiedKitType = '__unspec__';
-
 export async function clearExistingKitConfigurationFile() {
   await fs.writeFile(path.join(paths.dataDir, 'cmake-kits.json'), '[]');
 }
