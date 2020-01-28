@@ -271,18 +271,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let drv: CMakeDriver;
     const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
-    let communicationMode = this.workspaceContext.config.cmakeCommunicationMode;
+    let communicationMode = this.workspaceContext.config.cmakeCommunicationMode.toLowerCase();
 
     if (communicationMode == 'automatic') {
       if (cmake.isFileApiModeSupported) {
-        communicationMode = 'fileApi';
+        communicationMode = 'fileapi';
       } else if (cmake.isServerModeSupported) {
-        communicationMode = 'serverApi';
+        communicationMode = 'serverapi';
       } else {
         communicationMode = 'legacy';
       }
 
-      if (communicationMode != 'fileApi' && communicationMode != 'serverApi') {
+      if (communicationMode != 'fileapi' && communicationMode != 'serverapi') {
         log.warning(
           localize('please.upgrade.cmake',
             'For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.',
@@ -293,11 +293,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     try {
       this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
       switch (communicationMode) {
-        case 'fileApi':
+        case 'fileapi':
           drv = await CMakeFileApiDriver
               .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
           break;
-        case 'serverApi':
+        case 'serverapi':
           drv = await CMakeServerClientDriver
               .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
           break;
