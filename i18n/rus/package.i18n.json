@@ -111,5 +111,6 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Включение ведения журнала трассировки в файле и в консоли (большое число сообщений).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Автоматический выбор активной папки",
 	"cmake-tools.configuration.views.cmake.folders.description": "Папки",
-	"cmake-tools.configuration.views.cmake.outline.description": "Структура проекта"
+	"cmake-tools.configuration.views.cmake.outline.description": "Структура проекта",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
 }

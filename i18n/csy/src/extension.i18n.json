@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Znovu se čtou sady.",
 	"dispose.cmake.tools": "Uvolnit nástroje CMake Tools",
-	"configure.this.project": "Would you like to configure project '{0}'?",
+	"configure.this.project": "Chcete nakonfigurovat projekt {0}?",
 	"yes.button": "Ano",
 	"not.now.button": "Teď ne",
 	"always.configure.on.open": "Chcete vždycky konfigurovat projekty při otevření?",
