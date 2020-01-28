@@ -111,5 +111,6 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "為檔案及主控台啟用追蹤記錄 (雜訊非常多)。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Select active folder automatically",
 	"cmake-tools.configuration.views.cmake.folders.description": "資料夾",
-	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱"
+	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
 }

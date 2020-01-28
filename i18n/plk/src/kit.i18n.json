@@ -37,7 +37,7 @@
 	"kit.for.toolchain.file": "Zestaw dla pliku łańcucha narzędzi {0}",
 	"using.compilers.for": "Użycie kompilatorów dla elementu {0} (architektura {1})",
 	"using.compilers": "Użycie kompilatorów: {0}",
-	"search.for.compilers": "Search for compilers on this computer",
+	"search.for.compilers": "Wyszukaj kompilatory na tym komputerze",
 	"unspecified.let.cmake.guess": "Nieokreślone (narzędzie CMake ma zgadnąć kompilatory i środowisko do użycia)",
 	"not.reading.nonexistent.kit": "Bez odczytywania pliku nieistniejących zestawów: {0}",
 	"reading.kits.file": "Odczytywanie pliku zestawów {0}",

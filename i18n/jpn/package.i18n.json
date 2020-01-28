@@ -111,5 +111,6 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "ファイルおよびコンソールへのトレース ログを有効にします (非常に煩雑になります)。",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "アクティブなフォルダーを自動的に選択します",
 	"cmake-tools.configuration.views.cmake.folders.description": "フォルダー",
-	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要"
+	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
 }

@@ -17,7 +17,7 @@
 	"missing.cmakelists": "CMakeLists.txt was not found in the root of the folder '{0}'",
 	"starting.cmake.driver": "正在啟動 CMake 驅動程式",
 	"bad.cmake.executable": "錯誤的 CMake 可執行檔 \"{0}\"。",
-	"please.upgrade.cmake": "目前的 CMake 可執行檔無法使用 CMake 伺服器。請升級為 CMake {0} 或更新版本。",
+	"please.upgrade.cmake": "For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.",
 	"starting.cmake.driver.status": "正在啟動 CMake 伺服器...",
 	"ready.status": "就緒",
 	"unable.to.execute.cmake.command": "無法執行 cmake 命令，沒有有效的 cmake 驅動程式執行個體。",

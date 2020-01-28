@@ -18,7 +18,7 @@
 	"start.selection.of.kits": "Set seçimi başladı. {0} set bulundu.",
 	"opening.kit.selection": "QuickPick set seçimi açılıyor",
 	"unspecified.kit.name": "Belirtilmemiş",
-	"select.a.kit.placeholder": "Select a Kit for {0}",
+	"select.a.kit.placeholder": "{0} için bir Paket seçin",
 	"user.cancelled.kit.selection": "Kullanıcı Set seçimini iptal etti",
 	"user.selected.kit": "Kullanıcı {0} setini seçti",
 	"kit.references.non-existent": "\"{0}\" seti mevcut olmayan bir derleyici ikilisine [{1}] başvuruyor. Ne yapmak istiyorsunuz?",
