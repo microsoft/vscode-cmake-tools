@@ -746,9 +746,9 @@ class ExtensionManager implements vscode.Disposable {
     return false;
   }
 
-  install(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.install(), folder); }
+  install(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.install(), folder, true); }
 
-  installAll() { return this.mapCMakeToolsAll(cmt => cmt.install()); }
+  installAll() { return this.mapCMakeToolsAll(cmt => cmt.install(), true); }
 
   editCache(folder: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.editCache(), folder); }
 
