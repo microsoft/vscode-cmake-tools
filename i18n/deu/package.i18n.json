@@ -112,5 +112,6 @@
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Hiermit wird die Ablaufverfolgungsprotokollierung in Datei und Konsole aktiviert (große Datenmenge).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Aktiven Ordner automatisch auswählen",
 	"cmake-tools.configuration.views.cmake.folders.description": "Ordner",
-	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung"
+	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
 }

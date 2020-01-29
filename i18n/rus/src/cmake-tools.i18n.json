@@ -17,7 +17,7 @@
 	"missing.cmakelists": "CMakeLists.txt was not found in the root of the folder '{0}'",
 	"starting.cmake.driver": "Запуск драйвера CMake.",
 	"bad.cmake.executable": "Неверный исполняемый файл CMake \"{0}\".",
-	"please.upgrade.cmake": "Сервер CMake недоступен в текущем исполняемом файле CMake. Обновите CMake до версии {0} или более поздней версии.",
+	"please.upgrade.cmake": "For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.",
 	"starting.cmake.driver.status": "Запуск сервера CMake…",
 	"ready.status": "Готово",
 	"unable.to.execute.cmake.command": "Не удалось выполнить команду CMake, отсутствует допустимый экземпляр драйвера CMake.",

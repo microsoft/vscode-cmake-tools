@@ -17,7 +17,7 @@
 	"missing.cmakelists": "\"CMakeLists.txt\" wurde im Stamm des Ordners \"{0}\" nicht gefunden.",
 	"starting.cmake.driver": "CMake-Treiber wird gestartet.",
 	"bad.cmake.executable": "Ungültige ausführbare CMake-Datei \"{0}\".",
-	"please.upgrade.cmake": "Der CMake-Server ist mit der aktuellen ausführbaren CMake-Datei nicht verfügbar. Führen Sie ein Upgrade auf CMake {0} oder höher aus.",
+	"please.upgrade.cmake": "For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.",
 	"starting.cmake.driver.status": "Der CMake-Server wird gestartet...",
 	"ready.status": "Bereit",
 	"unable.to.execute.cmake.command": "Der CMake-Befehl kann nicht ausgeführt werden, es ist keine gültige CMake-Treiberinstanz vorhanden.",

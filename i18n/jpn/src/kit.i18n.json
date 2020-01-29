@@ -37,7 +37,7 @@
 	"kit.for.toolchain.file": "ツールチェーン ファイル {0} 用のキット",
 	"using.compilers.for": "{0} 用のコンパイラ ({1} アーキテクチャ) を使用しています",
 	"using.compilers": "コンパイラ {0} を使用しています",
-	"search.for.compilers": "Search for compilers on this computer",
+	"search.for.compilers": "このコンピューターでコンパイラを検索する",
 	"unspecified.let.cmake.guess": "指定なし (使用するコンパイラと環境を CMake に推測させる)",
 	"not.reading.nonexistent.kit": "存在しないキット ファイルは読み取りません: {0}",
 	"reading.kits.file": "キット ファイル {0} を読み取っています",
