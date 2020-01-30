@@ -45,7 +45,6 @@
                 "HasVs": "true"
             },
             "preLaunchTask": "build-tests-with-tsc-watch"
-            // "smartStep": true
         },
         {
             "name": "Launch Extension Tests (without-cmakelist-file)",
@@ -81,7 +80,6 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
         },
         {
             "name": "Launch Extension Tests (successful-build)",
@@ -124,7 +122,90 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
+        },
+        {
+            "name": "Launch Extension Tests (single-root-UI)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceFolder}/test/extension-tests/single-root-UI/project-folder",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI/*",
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI/test/*"
+            ],
+            "preLaunchTask": "build-tests-with-tsc-watch",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            },
+            "osx": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
+        },
+        {
+            "name": "Launch Extension Tests (multi-root-UI)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceFolder}/test/extension-tests/multi-root-UI/project-workspace.code-workspace",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/multi-root-UI"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/extension-tests/multi-root-UI/*",
+                "${workspaceFolder}/out/test/extension-tests/multi-root-UI/test/*"
+            ],
+            "preLaunchTask": "build-tests-with-tsc-watch",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            },
+            "osx": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
         },
         {
             "name": "Launch Extension Tests (vs-preferred-gen)",
@@ -160,7 +241,6 @@
                     "HasVs": "false"
                 }
             }
-            // "smartStep": true
         },
         {
             "type": "node",

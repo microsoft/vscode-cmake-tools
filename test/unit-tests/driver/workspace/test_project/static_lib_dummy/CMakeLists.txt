@@ -1,0 +1,1 @@
+add_library(StaticLibDummy "info.cpp" "test2.cpp")

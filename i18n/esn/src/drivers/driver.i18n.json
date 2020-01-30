@@ -12,6 +12,7 @@
 	"switching.to.kit": "Cambiando al kit {0}",
 	"cmakedriver.kit.set.to": "El kit de CMakeDriver se estableció en {0}",
 	"setting.new.variant": "Estableciendo la nueva variante {0}",
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory",
 	"command.version.test.return.code": "Código de retorno de la prueba de versión del comando {0}",
 	"trying.to.detect.generator": "Intentando detectar el generador que el sistema admite",
 	"start.configure": "Iniciar la configuración",

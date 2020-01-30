@@ -14,5 +14,6 @@
 	"item.render.issue": "Při vykreslování této položky došlo k problému. Toto je chyba.",
 	"empty.project": "Prázdný projekt",
 	"update.project.with.mismatch": "Aktualizovat projekt s neshodnou vlastností názvu",
+	"error.update.code.model.on.nonexist.folder": "Aktualizuje se model kódu ve složce, která ještě neexistuje?",
 	"error.rendering.children.nodes": "Chyba při vykreslování podřízených uzlů"
 }
