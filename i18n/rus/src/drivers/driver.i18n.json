@@ -12,6 +12,7 @@
 	"switching.to.kit": "Переключение на набор: {0}",
 	"cmakedriver.kit.set.to": "Для набора CMakeDriver задано значение {0}.",
 	"setting.new.variant": "Установка нового варианта {0}.",
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory",
 	"command.version.test.return.code": "Код возврата при проверке версии команды {0}",
 	"trying.to.detect.generator": "Попытка найти генератор, поддерживаемый системой.",
 	"start.configure": "Запустить настройку",

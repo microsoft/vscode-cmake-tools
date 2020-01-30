@@ -14,7 +14,7 @@
 	"no.source.directory.found": "У вас нет открытого каталога источника.",
 	"quickstart.cmake.project": "Быстрый запуск нового проекта CMake",
 	"edit.setting": "Изменить параметр \"cmake.sourceDirectory\"",
-	"missing.cmakelists": "CMakeLists.txt was not found in the root of the folder '{0}'",
+	"missing.cmakelists": "Файл CMakeLists.txt не найден в корневом каталоге папки \"{0}\"",
 	"starting.cmake.driver": "Запуск драйвера CMake.",
 	"bad.cmake.executable": "Неверный исполняемый файл CMake \"{0}\".",
 	"please.upgrade.cmake": "For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.",
