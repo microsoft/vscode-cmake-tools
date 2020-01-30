@@ -43,6 +43,8 @@
     "cmake-tools.command.cmake.outline.setDefaultTarget.title": "Set as Build Target",
     "cmake-tools.command.cmake.outline.setLaunchTarget.title": "Set as Launch/Debug Target",
     "cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Open CMakeLists.txt",
+    "cmake-tools.command.cmake.hideLaunchCommand.title": "Hide launch command",
+    "cmake-tools.command.cmake.hideDebugCommand.title": "Hide debug command",
     "cmake-tools.command.cmake.folders.setActiveFolder.title": "Set Active Folder",
     "cmake-tools.configuration.title": "CMake Tools configuration",
     "cmake-tools.configuration.cmake.cmakePath.description": "Name/path of the CMake executable to use.",

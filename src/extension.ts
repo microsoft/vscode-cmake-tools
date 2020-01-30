@@ -39,6 +39,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('extension');
 
 const MULTI_ROOT_MODE_KEY = 'cmake:multiRoot';
+const HIDE_LAUNCH_COMMAND_KEY = 'cmake:hideLaunchCommand';
+const HIDE_DEBUG_COMMAND_KEY = 'cmake:hideDebugCommand';
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
@@ -854,6 +856,17 @@ class ExtensionManager implements vscode.Disposable {
   resetState(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.resetState(), folder); }
 
   async viewLog() { await logging.showLogFile(); }
+
+  async hideLaunchCommand(shouldHide: boolean = true) {
+    // Don't hide command to launch/debug target here since the target can still be useful, one example is in launch.json
+    this._statusBar.hideDebugButton(shouldHide);
+    await util.setContextValue(HIDE_LAUNCH_COMMAND_KEY, shouldHide);
+  }
+
+  async hideDebugCommand(shouldHide: boolean = true) {
+    // Don't hide command to launch/debug target here since the target can still be useful, one example is in launch.json
+    await util.setContextValue(HIDE_DEBUG_COMMAND_KEY, shouldHide);
+  }
 }
 
 /**
@@ -941,7 +954,9 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'resetState',
     'viewLog',
     'compileFile',
-    'tasksBuildCommand'
+    'tasksBuildCommand',
+    'hideLaunchCommand',
+    'hideDebugCommand'
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 
