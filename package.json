@@ -366,14 +366,6 @@
       {
         "command": "cmake.outline.revealInCMakeLists",
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
-      },
-      {
-        "command": "cmake.hideLaunchCommand",
-        "title": "%cmake-tools.command.cmake.hideLaunchCommand.title%"
-      },
-      {
-        "command": "cmake.hideDebugCommand",
-        "title": "%cmake-tools.command.cmake.hideDebugCommand.title%"
       }
     ],
     "menus": {
@@ -471,14 +463,6 @@
         {
           "command": "cmake.stopAll",
           "when": "cmake:multiRoot"
-        },
-        {
-          "command": "cmake.hideLaunchCommand",
-          "when": "never"
-        },
-        {
-          "command": "cmake.hideDebugCommand",
-          "when": "never"
         },
         {
           "command": "cmake.outline.configure",
