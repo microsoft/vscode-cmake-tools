@@ -17,7 +17,7 @@
 	"missing.cmakelists": "No se encontró CMakeLists.txt en la raíz de la carpeta \"{0}\".",
 	"starting.cmake.driver": "Iniciando el controlador de CMake",
 	"bad.cmake.executable": "El ejecutable de CMake \"{0}\" es incorrecto.",
-	"please.upgrade.cmake": "El servidor de CMake no está disponible con el ejecutable actual de CMake. Actualice a CMake {0} o posterior.",
+	"please.upgrade.cmake": "For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.",
 	"starting.cmake.driver.status": "Iniciando el servidor de CMake...",
 	"ready.status": "Listo",
 	"unable.to.execute.cmake.command": "No se puede ejecutar el comando de cmake, no hay ninguna instancia del controlador de cmake válida.",

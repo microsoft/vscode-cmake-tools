@@ -37,7 +37,7 @@
 	"kit.for.toolchain.file": "{0} araç zinciri dosyası için set",
 	"using.compilers.for": "{0} için derleyiciler kullanılıyor ({1} mimarisi)",
 	"using.compilers": "{0} derleyicileri kullanılıyor",
-	"search.for.compilers": "Search for compilers on this computer",
+	"search.for.compilers": "Bu bilgisayarda derleyicileri ara",
 	"unspecified.let.cmake.guess": "Belirtilmemiş (CMake'in hangi derleyicilerin ve ortamın kullanılacağını tahmin etmesine izin verin)",
 	"not.reading.nonexistent.kit": "Mevcut olmayan set dosyası okunmuyor: {0}",
 	"reading.kits.file": "{0} set dosyası okunuyor",

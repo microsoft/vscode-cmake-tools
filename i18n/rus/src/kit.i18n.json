@@ -37,7 +37,7 @@
 	"kit.for.toolchain.file": "Набор для файла цепочки инструментов {0}",
 	"using.compilers.for": "Использование компиляторов для {0} (архитектура {1}).",
 	"using.compilers": "Использование компиляторов: {0}",
-	"search.for.compilers": "Search for compilers on this computer",
+	"search.for.compilers": "Поиск компиляторов на этом компьютере",
 	"unspecified.let.cmake.guess": "Не указано (разрешить CMake определить используемые компиляторы и среду)",
 	"not.reading.nonexistent.kit": "Не удается прочитать несуществующий файл наборов: {0}",
 	"reading.kits.file": "Чтение файла наборов {0}.",

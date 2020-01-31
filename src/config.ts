@@ -17,7 +17,7 @@ const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
 
-export type CMakeCommunicationMode = 'legacy'|'serverAPI'|'fileAPI'|'automatic';
+export type CMakeCommunicationMode = 'legacy'|'serverApi'|'fileApi'|'automatic';
 
 interface HardEnv {
   [key: string]: string;
@@ -207,7 +207,7 @@ export class ConfigurationReader implements vscode.Disposable {
       log.warning(localize(
           'please.upgrade.configuration',
           'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
-      communicationMode = 'serverAPI';
+      communicationMode = 'serverApi';
     }
     return communicationMode;
   }

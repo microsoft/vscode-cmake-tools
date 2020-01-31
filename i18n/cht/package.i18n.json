@@ -105,6 +105,7 @@
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "組態成功之後，將 compile_commands.json 複製到此位置。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "開啟 CMake 專案目錄時自動進行組態。",
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "啟用 CMake 伺服器。",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "執行 CMake 命令時，不使用套件環境變數。",
 	"cmake-tools.configuration.cmake.buildTask.description": "使用 tasks.json 而非內部處理序的組建。",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "外部命令輸出的編譯 (例如 cmake -- build)。",
