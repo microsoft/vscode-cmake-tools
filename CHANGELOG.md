@@ -6,10 +6,9 @@ Improvements:
 - Add support for `${command:cmake.buildKit}`. [#334](https://github.com/microsoft/vscode-cmake-tools/issues/334) [@xgdgsc](https://github.com/xgdgsc)
 - Add LLVM_ROOT and Visual Studio Clang locations to the search path for Kits. [#914](https://github.com/microsoft/vscode-cmake-tools/issues/914) [@Zingam](https://github.com/Zingam)
 - Support additional `intelliSenseModes` in the configuration provider. [#960](https://github.com/microsoft/vscode-cmake-tools/issues/960)
-- Detection of bundled CMake in Visual Studio. [#610](https://github.com/microsoft/vscode-cmake-tools/issues/610)
-- Refactor CMakeServerClient.sendRequest() to improve consistency. [PR #949](https://github.com/microsoft/vscode-cmake-tools/pull/949)
-- "Scan for kits" option in kits QuickPick. [#864](https://github.com/microsoft/vscode-cmake-tools/issues/864)
-- Implementation of the CMake 3.15.0-rc2 cmake-file-api. [PR #720](https://github.com/microsoft/vscode-cmake-tools/pull/720)
+- Detect bundled CMake in Visual Studio. [#610](https://github.com/microsoft/vscode-cmake-tools/issues/610) [@Zingam](https://github.com/Zingam)
+- Add "Scan for kits" option in kits QuickPick. [#864](https://github.com/microsoft/vscode-cmake-tools/issues/864) [@Zingam](https://github.com/Zingam)
+- Implement the CMake File API. [PR #720](https://github.com/microsoft/vscode-cmake-tools/pull/720) [@KoeMai](https://github.com/KoeMai)
 
 Bug Fixes:
 - Support temp folders not located on system drive. [PR #974](https://github.com/microsoft/vscode-cmake-tools/pull/974) [@Carsten87](https://github.com/Carsten87)
@@ -20,15 +19,8 @@ Bug Fixes:
 - Normalize both absolute and relative paths. [PR #963](https://github.com/microsoft/vscode-cmake-tools/pull/963) [@GeorchW](https://github.com/GeorchW)
 - Filter out duplicate targets from the target selector. [#863](https://github.com/microsoft/vscode-cmake-tools/issues/863)
 - Fix a crash when `chcp` is not found on the machine. [#977](https://github.com/microsoft/vscode-cmake-tools/issues/977)
-- CMakeLists.txt and sourceDirectory fixes:
-    - Don't fail if CMakeLists.txt was appended to sourceDirectory. [#1014](https://github.com/microsoft/vscode-cmake-tools/issues/1014)
-    - Print the value of sourceDirectory when it is invalid. [#1025](https://github.com/microsoft/vscode-cmake-tools/issues/1025)
-- Active folder fixes:
-    - Allow temporary override of active folder. [PR #1021](https://github.com/microsoft/vscode-cmake-tools/pull/1021)
-    - Improve various messages with the folder name information. [PR #1018](https://github.com/microsoft/vscode-cmake-tools/pull/1018)
-- Clear the output for "install" if the setting dictates. [PR #1030](https://github.com/microsoft/vscode-cmake-tools/pull/1030)
-- Change the name for unspecified kit back to __unspec__. [PR #1033](https://github.com/microsoft/vscode-cmake-tools/pull/1033)
-- Mark all tests as 'not run' in case of build failure when running CTest. [PR #980](https://github.com/microsoft/vscode-cmake-tools/pull/980)
+- Don't fail if CMakeLists.txt was appended to sourceDirectory. [#1014](https://github.com/microsoft/vscode-cmake-tools/issues/1014)
+- Mark all tests as 'not run' in case of build failure when running CTest. [PR #980](https://github.com/microsoft/vscode-cmake-tools/pull/980) [@Morozov-5F](https://github.com/Morozov-5F)
 
 ## 1.2.3
 Bug fixes:
