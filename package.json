@@ -439,18 +439,20 @@
           "command": "cmake.editCache"
         },
         {
-          "command": "cmake.debugTarget"
+          "command": "cmake.debugTarget",
+          "when": "!cmake:hideDebugCommand"
         },
         {
           "command": "cmake.debugTargetAll",
-          "when": "cmake:multiRoot"
+          "when": "cmake:multiRoot && !cmake:hideDebugCommand"
         },
         {
-          "command": "cmake.launchTarget"
+          "command": "cmake.launchTarget",
+          "when": "!cmake:hideLaunchCommand"
         },
         {
           "command": "cmake.launchTargetAll",
-          "when": "cmake:multiRoot"
+          "when": "cmake:multiRoot && !cmake:hideLaunchCommand"
         },
         {
           "command": "cmake.selectLaunchTarget"
@@ -1174,11 +1176,12 @@
       {
         "key": "ctrl+f5",
         "command": "cmake.debugTarget",
-        "when": "!inDebugMode && inCMakeProject"
+        "when": "!inDebugMode && inCMakeProject && !cmake:hideDebugCommand"
       },
       {
         "key": "shift+f5",
-        "command": "cmake.launchTarget"
+        "command": "cmake.launchTarget",
+        "when": "!cmake:hideDebugCommand"
       }
     ],
     "viewsContainers": {

@@ -84,7 +84,7 @@ export class StatusBar implements vscode.Disposable {
       setVisible(item, this._visible && !!item.text);
     }
     setVisible(this._debugButton,
-               this._visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined
+               this._visible && !this._hideDebugButton && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined
                    && !!this._debugButton.text);
   }
 
@@ -249,5 +249,11 @@ export class StatusBar implements vscode.Disposable {
     this._warningMessage.text = `$(alert) ${msg}`;
     this._warningMessage.show();
     setTimeout(() => this._warningMessage.hide(), 5000);
+  }
+
+  private _hideDebugButton = false;
+  hideDebugButton(shouldHide: boolean = true) {
+    this._hideDebugButton = shouldHide;
+    this.reloadVisibility();
   }
 }
