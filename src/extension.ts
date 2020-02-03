@@ -858,13 +858,13 @@ class ExtensionManager implements vscode.Disposable {
   async viewLog() { await logging.showLogFile(); }
 
   async hideLaunchCommand(shouldHide: boolean = true) {
-    // Don't hide command to get/set launch/debug target here since the target can still be useful, one example is in launch.json
-    this._statusBar.hideDebugButton(shouldHide);
+    // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.luanchTargetPath} in launch.json
     await util.setContextValue(HIDE_LAUNCH_COMMAND_KEY, shouldHide);
   }
 
   async hideDebugCommand(shouldHide: boolean = true) {
-    // Don't hide command to get/set launch/debug target here since the target can still be useful, one example is in launch.json
+    // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.luanchTargetPath} in launch.json
+    this._statusBar.hideDebugButton(shouldHide);
     await util.setContextValue(HIDE_DEBUG_COMMAND_KEY, shouldHide);
   }
 }
