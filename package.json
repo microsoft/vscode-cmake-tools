@@ -1303,6 +1303,7 @@
     "marked": "^0.7.0",
     "diff": "^3.5.0",
     "handlebars": "^4.5.3",
-    "https-proxy-agent": "^2.2.4"
+    "https-proxy-agent": "^2.2.4",
+    "serialize-javascript": "^2.1.1"
   }
 }
