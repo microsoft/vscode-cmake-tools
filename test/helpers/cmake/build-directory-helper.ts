@@ -13,5 +13,7 @@ export class BuildDirectoryHelper {
 
   public get location(): string { return this._location; }
 
-  public get isCMakeCachePresent(): boolean { return fs.existsSync(path.join(this.location, 'CMakeCache.txt')); }
+  public get cmakeCachePath(): string { return path.join(this.location, 'CMakeCache.txt'); }
+
+  public get isCMakeCachePresent(): boolean { return fs.existsSync(this.cmakeCachePath); }
 }

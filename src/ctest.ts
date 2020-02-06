@@ -106,7 +106,7 @@ function decodeOutputMeasurement(node: EncodedMeasurementValue|string): string {
   if (typeof node === 'string') {
     return node;
   }
-  let buffer = !!node.$.encoding ? new Buffer(node._, node.$.encoding) : new Buffer(node._, 'utf-8');
+  let buffer = !!node.$.encoding ? Buffer.from(node._, node.$.encoding) : Buffer.from(node._, 'utf-8');
   if (!!node.$.compression) {
     buffer = zlib.unzipSync(buffer);
   }
@@ -421,7 +421,6 @@ export class CTestDriver implements vscode.Disposable {
     return tests;
   }
 
-
   private async _reloadTestResults(_sourceDir: string, _tagdir: string, test_xml: string): Promise<void> {
     this.testResults = await readTestResultsFile(test_xml);
     const failing = this.testResults.Site.Testing.Test.filter(t => t.Status === 'failed');
@@ -431,5 +430,19 @@ export class CTestDriver implements vscode.Disposable {
       new_decors.push(...await parseTestOutput(t.Output));
     }
     this._decorationManager.failingTestDecorations = new_decors;
+  }
+
+  /**
+   * Marks all current tests as not run. Useful in case of build failure, for example.
+   */
+  markAllCurrentTestsAsNotRun(): void {
+    const currentTestResults = this.testResults;
+    if (!currentTestResults) {
+      return;
+    }
+    for (const cTestRes of currentTestResults.Site.Testing.Test) {
+      cTestRes.Status = 'notrun';
+    }
+    this.testResults = currentTestResults;
   }
 }

@@ -111,7 +111,7 @@ Invoke-ChronicCommand "Compiling Tests" $yarn run pretest
 Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
 
 # Get the CMake binary that we will use to run our tests
-$cmake_binary = Install-TestCMake -Version "3.10.0"
+$cmake_binary = Install-TestCMake -Version "3.16.2"
 $Env:CMAKE_EXECUTABLE = $cmake_binary
 
 # Add cmake to search path environment variable
@@ -153,10 +153,16 @@ if (! $NoTest) {
 
     Invoke-SmokeTests
 
-    foreach ($name in @("successful-build"; )) {
+    foreach ($name in @("successful-build"; "single-root-UI"; )) {
         Invoke-VSCodeTest "CMake Tools: $name" `
             -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
             -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
+    }
+
+    foreach ($name in @("multi-root-UI"; )) {
+        Invoke-VSCodeTest "CMake Tools: $name" `
+            -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
+            -Workspace "$REPO_DIR/test/extension-tests/$name/project-workspace.code-workspace"
     }
 }
 

@@ -4,6 +4,7 @@ import {expect} from '@test/util';
 
 function createConfig(conf: Partial<ExtensionConfigurationSettings>): ConfigurationReader {
   const ret = new ConfigurationReader({
+    autoSelectActiveFolder: false,
     cmakePath: '',
     buildDirectory: '',
     installPrefix: null,
@@ -39,6 +40,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     copyCompileCommands: null,
     configureOnOpen: null,
     useCMakeServer: true,
+    cmakeCommunicationMode: 'automatic',
     ignoreKitEnv: false,
     buildTask: false,
     outputLogEncoding: 'auto',
