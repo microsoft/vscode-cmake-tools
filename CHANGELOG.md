@@ -21,6 +21,9 @@ Bug Fixes:
 - Fix a crash when `chcp` is not found on the machine. [#977](https://github.com/microsoft/vscode-cmake-tools/issues/977)
 - Don't fail if CMakeLists.txt was appended to sourceDirectory. [#1014](https://github.com/microsoft/vscode-cmake-tools/issues/1014)
 - Mark all tests as 'not run' in case of build failure when running CTest. [PR #980](https://github.com/microsoft/vscode-cmake-tools/pull/980) [@Morozov-5F](https://github.com/Morozov-5F)
+- Add command to hide launch/debug commands and debug button. [PR #1035](https://github.com/microsoft/vscode-cmake-tools/pull/1035)
+- Add support for ${workspaceFolderBasename}. [#869](https://github.com/microsoft/vscode-cmake-tools/issues/869)
+- Fix exception thrown by debug/launch commands. [#1036](https://github.com/microsoft/vscode-cmake-tools/issues/1036)
 
 ## 1.2.3
 Bug fixes:
