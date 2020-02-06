@@ -223,15 +223,18 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   private _checkStringFolderArgs(folder?: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
-    if (folder === undefined && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
       // We don't want to break existing setup for single root projects.
       return vscode.workspace.workspaceFolders[0];
     }
     if (util.isString(folder)) {
       // Expected schema is file...
-      return vscode.workspace.getWorkspaceFolder(vscode.Uri.file(folder as string));
+     return vscode.workspace.getWorkspaceFolder(vscode.Uri.file(folder as string));
     }
-    return folder as vscode.WorkspaceFolder;
+    if ((folder as vscode.WorkspaceFolder).uri) {
+      return folder;
+    }
+    return this._folders.activeFolder?.folder;
   }
 
   private async _pickFolder() {
