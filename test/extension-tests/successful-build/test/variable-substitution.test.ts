@@ -116,6 +116,24 @@ suite('[Variable Substitution]', async () => {
     expect(typeof cacheEntry.value).to.eq('string', '[workspaceRootFolderName] unexpected cache entry value type');
   }).timeout(100000);
 
+  test('Check substitution for "workspaceFolderBasename"', async () => {
+    // Set fake settings
+    testEnv.config.updatePartial({configureSettings: {workspaceFolderBasename: '${workspaceFolderBasename}'}});
+
+    // Configure
+    expect(await cmt.configure()).to.be.eq(0, '[workspaceFolderBasename] configure failed');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+    const cache = await CMakeCache.fromPath(await cmt.cachePath);
+
+    const cacheEntry = cache.get('workspaceFolderBasename') as api.CacheEntry;
+    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[workspaceFolderBasename] unexpected cache entry type');
+    expect(cacheEntry.key)
+        .to.eq('workspaceFolderBasename', '[workspaceFolderBasename] unexpected cache entry key name');
+    expect(cacheEntry.as<string>())
+        .to.eq(path.basename(testEnv.projectFolder.location), '[workspaceFolderBasename] substitution incorrect');
+    expect(typeof cacheEntry.value).to.eq('string', '[workspaceFolderBasename] unexpected cache entry value type');
+  }).timeout(100000);
+
   test('Check substitution for "generator"', async () => {
     // Set fake settings
     testEnv.config.updatePartial({configureSettings: {generator: '${generator}'}});

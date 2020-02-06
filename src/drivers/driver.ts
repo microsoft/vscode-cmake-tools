@@ -214,6 +214,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       workspaceFolder: ws_root,
       buildType: this.currentBuildType,
       workspaceRootFolderName: path.basename(ws_root),
+      workspaceFolderBasename: path.basename(ws_root),
       generator: this.generatorName || 'null',
       userHome: paths.userHome,
       buildKit: this._kit ? this._kit.name : '__unknownkit__',
@@ -397,6 +398,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (path.basename(this._sourceDirectory).toLocaleLowerCase() === "cmakelists.txt") {
         // Don't fail if CMakeLists.txt was accidentally appended to the sourceDirectory.
         this._sourceDirectory = path.dirname(this._sourceDirectory);
+      }
+      if (!(await util.checkDirectoryExists(this._sourceDirectory))) {
+        rollbar.error(localize('sourcedirectory.not.a.directory', '"sourceDirectory" is not a directory'), {sourceDirectory: this._sourceDirectory});
       }
       this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 

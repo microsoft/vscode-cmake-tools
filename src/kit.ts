@@ -29,7 +29,7 @@ const log = logging.createLogger('kit');
  */
 export enum SpecialKits {
   ScanForKits = '__scanforkits__',
-  Unspecified = '__unspecified__'
+  Unspecified = '__unspec__'
 }
 export type UnspecifiedKit = SpecialKits.Unspecified;
 

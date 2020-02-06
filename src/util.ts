@@ -539,11 +539,15 @@ export function getLocaleId(): string {
 export function checkFileExists(filePath: string): Promise<boolean> {
   return new Promise((resolve, _reject) => {
       fs.stat(filePath, (_err, stats) => {
-          if (stats && stats.isFile()) {
-              resolve(true);
-          } else {
-              resolve(false);
-          }
+          resolve(stats && stats.isFile());
+      });
+  });
+}
+
+export function checkDirectoryExists(filePath: string): Promise<boolean> {
+  return new Promise((resolve, _reject) => {
+      fs.stat(filePath, (_err, stats) => {
+          resolve(stats && stats.isDirectory());
       });
   });
 }
