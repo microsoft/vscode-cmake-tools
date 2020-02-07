@@ -12,7 +12,7 @@
 	"switching.to.kit": "{0} setine geçiş yapılıyor",
 	"cmakedriver.kit.set.to": "CMakeDriver Seti {0} olarak ayarlandı",
 	"setting.new.variant": "Yeni {0} varyantı ayarlanıyor",
-	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory",
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\" bir dizin değil",
 	"command.version.test.return.code": "Komut sürümü test dönüş kodu: {0}",
 	"trying.to.detect.generator": "Sistem tarafından desteklenen oluşturucu algılanmaya çalışılıyor",
 	"start.configure": "Yapılandırmayı başlat",

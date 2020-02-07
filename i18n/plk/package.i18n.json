@@ -105,7 +105,7 @@
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Kopiuj plik compile_commands.json do tej lokalizacji po pomyślnym skonfigurowaniu.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automatycznie konfiguruj katalogi projektu narzędzia CMake przy ich otwieraniu.",
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "Włącz serwer narzędzia CMake.",
-	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "Protokół używany do komunikacji między rozszerzeniem i narzędziem CMake",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Nie używaj zmiennych środowiskowych zestawu podczas uruchamiania poleceń narzędzia CMake.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Kompiluj przy użyciu pliku tasks.json zamiast procesu wewnętrznego.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Kodowanie danych wyjściowych z poleceń zewnętrznych (np. cmake --build).",

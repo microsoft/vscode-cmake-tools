@@ -105,7 +105,7 @@
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "成功配置后将 compile_commands.json 复制到此位置。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "在 CMake 项目目录打开时自动对其进行配置。",
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "启用 CMake 服务器。",
-	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "用于在扩展和 CMake 之间进行通信的协议",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "运行 CMake 命令时，请勿使用工具包环境变量。",
 	"cmake-tools.configuration.cmake.buildTask.description": "使用 tasks.json 生成，而非使用内部进程。",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "来自外部命令的输出的编码(例如 cmake -- build)。",
