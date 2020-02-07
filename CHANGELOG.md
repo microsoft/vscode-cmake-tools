@@ -24,6 +24,7 @@ Bug Fixes:
 - Add command to hide launch/debug commands and debug button. [PR #1035](https://github.com/microsoft/vscode-cmake-tools/pull/1035)
 - Add support for `${workspaceFolderBasename}`. [#869](https://github.com/microsoft/vscode-cmake-tools/issues/869)
 - Fix exception thrown by debug/launch commands. [#1036](https://github.com/microsoft/vscode-cmake-tools/issues/1036)
+- Fix the CMake minimum version for file-api and implement a fallback logic (to server communication mode) when file-api is requested but not supported. [PR #1051](https://github.com/microsoft/vscode-cmake-tools/pull/1051)
 
 ## 1.2.3
 Bug fixes:
