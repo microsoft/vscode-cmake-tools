@@ -17,7 +17,7 @@
 	"missing.cmakelists": "V kořenu složky {0} se nenašel soubor CMakeLists.txt.",
 	"starting.cmake.driver": "Spouští se ovladač CMake.",
 	"bad.cmake.executable": "Nesprávný spustitelný soubor nástrojů CMake {0}",
-	"please.upgrade.cmake": "For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.",
+	"please.upgrade.cmake": "Aby vaše prostředí bylo co nejlepší, vyžaduje se podpora serveru CMake nebo file-api. Upgradujte prosím CMake na verzi {0} nebo novější.",
 	"starting.cmake.driver.status": "Spouští se server CMake...",
 	"ready.status": "Připraveno",
 	"unable.to.execute.cmake.command": "Nejde spustit příkaz cmake, neexistuje platná instance ovladače cmake.",
