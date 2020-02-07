@@ -16,7 +16,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     path,
     isPresent: false,
     minimalServerModeVersion: util.parseVersion('3.7.1'),
-    minimalFileApiModeVersion: util.parseVersion('3.15.0'),
+    minimalFileApiModeVersion: util.parseVersion('3.14.0'),
   };
 
   if (path.length != 0) {
