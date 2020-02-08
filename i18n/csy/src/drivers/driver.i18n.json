@@ -12,7 +12,7 @@
 	"switching.to.kit": "Přepíná se na sadu: {0}.",
 	"cmakedriver.kit.set.to": "Sada CMakeDriver je nastavená na {0}.",
 	"setting.new.variant": "Nastavuje se nová varianta {0}.",
-	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory",
+	"sourcedirectory.not.a.directory": "sourceDirectory není adresář.",
 	"command.version.test.return.code": "Návratový kód testovací verze příkazu {0}",
 	"trying.to.detect.generator": "Probíhá pokus o zjištění generátoru podporovaného systémem.",
 	"start.configure": "Spustit konfiguraci",

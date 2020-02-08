@@ -281,13 +281,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       } else {
         communicationMode = 'legacy';
       }
-
-      if (communicationMode != 'fileapi' && communicationMode != 'serverapi') {
-        log.warning(
-          localize('please.upgrade.cmake',
-            'For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.',
-            versionToString(cmake.minimalServerModeVersion)));
+    } else if (communicationMode == 'fileapi') {
+      if (!cmake.isFileApiModeSupported) {
+        if (cmake.isServerModeSupported) {
+          communicationMode = 'serverapi';
+          log.warning(
+            localize('switch.to.serverapi',
+              'CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.',
+              versionToString(cmake.minimalFileApiModeVersion)));
+        } else {
+          communicationMode = 'legacy';
+        }
       }
+    }
+
+    if (communicationMode != 'fileapi' && communicationMode != 'serverapi') {
+      log.warning(
+        localize('please.upgrade.cmake',
+          'For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.',
+          versionToString(cmake.minimalServerModeVersion)));
     }
 
     try {
