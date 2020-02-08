@@ -210,14 +210,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
-      workspaceRoot: ws_root,
-      workspaceFolder: ws_root,
-      buildType: this.currentBuildType,
-      workspaceRootFolderName: path.basename(ws_root),
-      workspaceFolderBasename: path.basename(ws_root),
-      generator: this.generatorName || 'null',
-      userHome: paths.userHome,
       buildKit: this._kit ? this._kit.name : '__unknownkit__',
+      buildType: this.currentBuildType,
+      generator: this.generatorName || 'null',
+      workspaceFolder: ws_root,
+      workspaceFolderBasename: path.basename(ws_root),
+      workspaceHash: util.makeHashString(ws_root),
+      workspaceRoot: ws_root,
+      workspaceRootFolderName: path.basename(ws_root),
+      userHome: paths.userHome,
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',
     };

@@ -9,6 +9,7 @@ import * as which from 'which';
 import {vsInstallations} from './installs/visual-studio';
 import {expandString} from './expand';
 import {fs} from './pr';
+import * as util from '@cmt/util';
 
 interface VSCMakePaths {
   cmake: string | null;
@@ -133,14 +134,15 @@ class Paths {
 
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
-        workspaceRoot: wsc.folder.uri.fsPath,
-        workspaceFolder: wsc.folder.uri.fsPath,
-        userHome: this.userHome,
         buildKit: '',
         buildType: '',
         generator: '',
+        workspaceFolder: wsc.folder.uri.fsPath,
+        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+        workspaceRoot: wsc.folder.uri.fsPath,
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
-        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath)
+        workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
+        userHome: this.userHome,
       },
     });
 
