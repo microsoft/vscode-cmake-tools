@@ -17,6 +17,7 @@
 	"missing.cmakelists": "Файл CMakeLists.txt не найден в корневом каталоге папки \"{0}\"",
 	"starting.cmake.driver": "Запуск драйвера CMake.",
 	"bad.cmake.executable": "Неверный исполняемый файл CMake \"{0}\".",
+	"switch.to.serverapi": "CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.",
 	"please.upgrade.cmake": "Для оптимальной работы требуется поддержка сервера CMake или file-api. Обновите CMake до версии {0} или более поздней версии.",
 	"starting.cmake.driver.status": "Запуск сервера CMake…",
 	"ready.status": "Готово",
