@@ -6,7 +6,7 @@ import * as path from 'path';
 
 // tslint:disable:no-unused-expression
 
-suite('[Debug/Lauch interface]', async () => {
+suite('[Debug/Launch interface]', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
