@@ -15,11 +15,83 @@ interface VSCMakePaths {
   ninja: string | null;
 }
 
+class WindowsEnvironment {
+  readEnvironmentVariable(variableName: string): string | undefined {
+    let variableValue: string | undefined = undefined;
+
+    if (process.platform === 'win32') {
+      if (process.env.hasOwnProperty(variableName)) {
+        variableValue = process.env[variableName];
+      } else {
+        console.assert(`Environment variable \"${variableName}\" does not exist.`);
+      }
+    } else {
+      console.assert(`Attempting to read a Windows envrionment variable \"${variableName}\" on an non-Windows platform \"${process.platform}`);
+    }
+
+    return variableValue;
+  }
+
+  // Properties
+
+  get APPDATA(): string {
+    return this.readEnvironmentVariable('APPDATA')!;
+}
+
+  get LOCALAPPDATA(): string {
+      return this.readEnvironmentVariable('LOCALAPPDATA')!;
+  }
+
+  get ALLUSERPROFILE(): string {
+    return this.readEnvironmentVariable('ProgramData')!;
+  }
+
+  get ComSpec(): string {
+    let comSpec = this.readEnvironmentVariable('ComSpec');
+
+    if (undefined === comSpec) {
+      comSpec = this.SystemRoot + '\\system32\\cmd.exe';
+    }
+
+    return comSpec;
+  }
+
+  get HOMEDRIVE(): string {
+    return this.readEnvironmentVariable('HOMEDRIVE')!;
+  }
+
+  get HOMEPATH(): string {
+    return this.readEnvironmentVariable('HOMEPATH')!;
+  }
+
+  get ProgramFilesX86(): string {
+    return this.readEnvironmentVariable('ProgramFiles(x86)')!;
+  }
+
+  get ProgramFiles(): string {
+    return this.readEnvironmentVariable('ProgramFiles')!;
+  }
+
+  get SystemDrive(): string {
+    return this.readEnvironmentVariable('SystemDrive')!;
+  }
+
+  get SystemRoot(): string {
+    return this.readEnvironmentVariable('SystemRoot')!;
+  }
+
+  get TEMP(): string {
+    return this.readEnvironmentVariable('TEMP')!;
+  }
+}
+
 /**
  * Directory class.
  */
 class Paths {
   private _ninjaPath : string | null = null;
+
+  readonly windows: WindowsEnvironment = new WindowsEnvironment;
 
   /**
    * The current user's home directory
