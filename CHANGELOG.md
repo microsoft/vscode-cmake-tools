@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.4.0
+Improvements:
+- Support environment variables for Kit.toolchainFile. [#991](https://github.com/microsoft/vscode-cmake-tools/pull/991)[#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
+
 ## 1.3.0
 Improvements:
 - Multi-root support. You can now open multiple folders in VS Code and CMake Tools will allow you to configure each of the projects in those folders.
