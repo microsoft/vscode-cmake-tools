@@ -17,6 +17,7 @@
 	"missing.cmakelists": "フォルダー '{0}' のルートに CMakeLists.txt が見つかりませんでした",
 	"starting.cmake.driver": "CMake ドライバーを開始しています",
 	"bad.cmake.executable": "CMake 実行可能ファイル \"{0}\" が正しくありません。",
+	"switch.to.serverapi": "CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.",
 	"please.upgrade.cmake": "最適なエクスペリエンスを得るためには、CMake サーバーまたは file-api サポートが必要です。CMake を {0} またはそれ以降にアップグレードしてください。",
 	"starting.cmake.driver.status": "CMake サーバーを開始しています...",
 	"ready.status": "準備完了",
