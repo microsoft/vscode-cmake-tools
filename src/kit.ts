@@ -866,7 +866,18 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
 
 async function expandKitVariables(kit: Kit): Promise<Kit> {
   if (kit.toolchainFile) {
-    kit.toolchainFile = await expand.expandString(kit.toolchainFile, {});
+    kit.toolchainFile = await expand.expandString(kit.toolchainFile, {
+      vars: {
+        buildKit: kit.name,
+        buildType: '${buildType}',  // Unsupported variable substitutions use identity.
+        generator: '${generator}',
+        userHome: paths.userHome,
+        workspaceFolder: '${workspaceFolder}',
+        workspaceFolderBasename: '${workspaceFolderBasename}',
+        workspaceRoot: '${workspaceRoot}',
+        workspaceRootFolderName: '${workspaceRootFolderName}'
+      }
+    });
   }
   return kit;
 }
