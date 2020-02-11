@@ -42,6 +42,8 @@ class SmokeTestExtensionContext implements vscode.ExtensionContext {
 
   get storagePath() { return path.join(this.extensionPath, '.smoke-storage'); }
 
+  get globalStoragePath() { return path.join(this.extensionPath, '.smoke-global-storage'); }
+
   get logPath() { return path.join(this.extensionPath, '.smoke-logs'); }
 }
 

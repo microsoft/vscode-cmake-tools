@@ -6,6 +6,8 @@ export class FakeContextDefinition implements vscode.ExtensionContext {
 
   get storagePath(): string|undefined { throw new Error('Method not implemented.'); }
 
+  get globalStoragePath(): string { throw new Error('Method not implemented.'); }
+
   get subscriptions(): {dispose(): any;}[] { throw new Error('Method not implemented.'); }
 
   workspaceState: vscode.Memento = new TestMemento();
