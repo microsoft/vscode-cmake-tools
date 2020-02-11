@@ -2,7 +2,7 @@
 
 ## 1.4.0
 Improvements:
-- Support environment variables for Kit.toolchainFile. [#991](https://github.com/microsoft/vscode-cmake-tools/pull/991)[#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
+- Support variables for Kit.toolchainFile. [#991](https://github.com/microsoft/vscode-cmake-tools/pull/991)[#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
 
 ## 1.3.0
 Improvements:
