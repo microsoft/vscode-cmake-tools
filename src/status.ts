@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import {BasicTestResults} from '@cmt/ctest';
 import * as nls from 'vscode-nls';
-import {unspecifiedKitName} from '@cmt/util';
+import {SpecialKits} from '@cmt/kit';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -84,7 +84,7 @@ export class StatusBar implements vscode.Disposable {
       setVisible(item, this._visible && !!item.text);
     }
     setVisible(this._debugButton,
-               this._visible && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined
+               this._visible && !this._hideDebugButton && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined
                    && !!this._debugButton.text);
   }
 
@@ -235,7 +235,7 @@ export class StatusBar implements vscode.Disposable {
   }
 
   setActiveKitName(v: string) {
-    if (v === unspecifiedKitName) {
+    if (v === SpecialKits.Unspecified) {
       this._activeKitName = `[${localize('no.active.kit', 'No active kit')}]`;
     } else {
       this._activeKitName = v;
@@ -249,5 +249,11 @@ export class StatusBar implements vscode.Disposable {
     this._warningMessage.text = `$(alert) ${msg}`;
     this._warningMessage.show();
     setTimeout(() => this._warningMessage.hide(), 5000);
+  }
+
+  private _hideDebugButton = false;
+  hideDebugButton(shouldHide: boolean = true) {
+    this._hideDebugButton = shouldHide;
+    this.reloadVisibility();
   }
 }

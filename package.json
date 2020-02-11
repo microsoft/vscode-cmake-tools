@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -439,18 +439,20 @@
           "command": "cmake.editCache"
         },
         {
-          "command": "cmake.debugTarget"
+          "command": "cmake.debugTarget",
+          "when": "!cmake:hideDebugCommand"
         },
         {
           "command": "cmake.debugTargetAll",
-          "when": "cmake:multiRoot"
+          "when": "cmake:multiRoot && !cmake:hideDebugCommand"
         },
         {
-          "command": "cmake.launchTarget"
+          "command": "cmake.launchTarget",
+          "when": "!cmake:hideLaunchCommand"
         },
         {
           "command": "cmake.launchTargetAll",
-          "when": "cmake:multiRoot"
+          "when": "cmake:multiRoot && !cmake:hideLaunchCommand"
         },
         {
           "command": "cmake.selectLaunchTarget"
@@ -1097,8 +1099,20 @@
         },
         "cmake.useCMakeServer": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "%cmake-tools.configuration.cmake.useCMakeServer.description%",
+          "scope": "resource"
+        },
+        "cmake.cmakeCommunicationMode": {
+          "type": "string",
+          "default": "automatic",
+          "enum": [
+            "legacy",
+            "serverApi",
+            "fileApi",
+            "automatic"
+          ],
+          "description": "%cmake-tools.configuration.cmake.cmakeCommunicationMode%",
           "scope": "resource"
         },
         "cmake.ignoreKitEnv": {
@@ -1162,11 +1176,12 @@
       {
         "key": "ctrl+f5",
         "command": "cmake.debugTarget",
-        "when": "!inDebugMode && inCMakeProject"
+        "when": "!inDebugMode && inCMakeProject && !cmake:hideDebugCommand"
       },
       {
         "key": "shift+f5",
-        "command": "cmake.launchTarget"
+        "command": "cmake.launchTarget",
+        "when": "!cmake:hideDebugCommand"
       }
     ],
     "viewsContainers": {
@@ -1288,6 +1303,7 @@
     "marked": "^0.7.0",
     "diff": "^3.5.0",
     "handlebars": "^4.5.3",
-    "https-proxy-agent": "^2.2.4"
+    "https-proxy-agent": "^2.2.4",
+    "serialize-javascript": "^2.1.1"
   }
 }

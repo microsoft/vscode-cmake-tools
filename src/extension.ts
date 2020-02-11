@@ -39,6 +39,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('extension');
 
 const MULTI_ROOT_MODE_KEY = 'cmake:multiRoot';
+const HIDE_LAUNCH_COMMAND_KEY = 'cmake:hideLaunchCommand';
+const HIDE_DEBUG_COMMAND_KEY = 'cmake:hideDebugCommand';
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
@@ -221,7 +223,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   private _checkStringFolderArgs(folder?: vscode.WorkspaceFolder | string): vscode.WorkspaceFolder | undefined {
-    if (folder === undefined && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length === 1) {
       // We don't want to break existing setup for single root projects.
       return vscode.workspace.workspaceFolders[0];
     }
@@ -229,7 +231,10 @@ class ExtensionManager implements vscode.Disposable {
       // Expected schema is file...
       return vscode.workspace.getWorkspaceFolder(vscode.Uri.file(folder as string));
     }
-    return folder as vscode.WorkspaceFolder;
+    if ((folder as vscode.WorkspaceFolder).uri) {
+      return folder;
+    }
+    return this._folders.activeFolder?.folder;
   }
 
   private async _pickFolder() {
@@ -311,7 +316,7 @@ class ExtensionManager implements vscode.Disposable {
         doConfigure: boolean;
       }
       const chosen = await vscode.window.showInformationMessage<Choice1>(
-          localize('configure.this.project', 'Would you like to configure this project?'),
+          localize('configure.this.project', 'Would you like to configure project \'{0}\'?', ws.name),
           {},
           {title: localize('yes.button', 'Yes'), doConfigure: true},
           {title: localize('not.now.button', 'Not now'), doConfigure: false},
@@ -388,12 +393,13 @@ class ExtensionManager implements vscode.Disposable {
    * Show UI to allow the user to select an active kit
    */
   async selectActiveFolder() {
-    if (vscode.workspace.workspaceFolders?.length && !this._workspaceConfig.autoSelectActiveFolder) {
+    if (vscode.workspace.workspaceFolders?.length) {
       const lastActiveFolderPath = this._folders.activeFolder?.folder.uri.fsPath;
       const selection = await vscode.window.showWorkspaceFolderPick();
       if (selection) {
         // Ingore if user cancelled
         await this._setActiveFolder(selection);
+        telemetry.logEvent("selectactivefolder");
         // _folders.activeFolder must be there at this time
         const currentActiveFolderPath = this._folders.activeFolder!.folder.uri.fsPath;
         this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
@@ -746,9 +752,9 @@ class ExtensionManager implements vscode.Disposable {
     return false;
   }
 
-  install(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.install(), folder); }
+  install(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.install(), folder, true); }
 
-  installAll() { return this.mapCMakeToolsAll(cmt => cmt.install()); }
+  installAll() { return this.mapCMakeToolsAll(cmt => cmt.install(), true); }
 
   editCache(folder: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.editCache(), folder); }
 
@@ -854,6 +860,17 @@ class ExtensionManager implements vscode.Disposable {
   resetState(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.resetState(), folder); }
 
   async viewLog() { await logging.showLogFile(); }
+
+  async hideLaunchCommand(shouldHide: boolean = true) {
+    // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
+    await util.setContextValue(HIDE_LAUNCH_COMMAND_KEY, shouldHide);
+  }
+
+  async hideDebugCommand(shouldHide: boolean = true) {
+    // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
+    this._statusBar.hideDebugButton(shouldHide);
+    await util.setContextValue(HIDE_DEBUG_COMMAND_KEY, shouldHide);
+  }
 }
 
 /**
@@ -941,7 +958,9 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'resetState',
     'viewLog',
     'compileFile',
-    'tasksBuildCommand'
+    'tasksBuildCommand',
+    'hideLaunchCommand',
+    'hideDebugCommand'
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 

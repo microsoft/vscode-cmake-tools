@@ -36,6 +36,7 @@ import rollbar from './rollbar';
 import * as telemetry from './telemetry';
 import {setContextValue} from './util';
 import {VariantManager} from './variant';
+import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
 
@@ -245,7 +246,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const quickStart = localize('quickstart.cmake.project', 'Quickstart a new CMake project');
       const changeSetting = localize('edit.setting', 'Edit the \'cmake.sourceDirectory\' setting');
       const result = await vscode.window.showErrorMessage(
-            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the workspace folder'), quickStart, changeSetting);
+            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'', this.folderName), quickStart, changeSetting);
       if (result === quickStart) {
         vscode.commands.executeCommand('cmake.quickStart');
       } else if (result === changeSetting) {
@@ -270,26 +271,54 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let drv: CMakeDriver;
     const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
-    if (this.workspaceContext.config.useCMakeServer) {
-      if (cmake.isServerModeSupported) {
-        drv = await CMakeServerClientDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+    let communicationMode = this.workspaceContext.config.cmakeCommunicationMode.toLowerCase();
+
+    if (communicationMode == 'automatic') {
+      if (cmake.isFileApiModeSupported) {
+        communicationMode = 'fileapi';
+      } else if (cmake.isServerModeSupported) {
+        communicationMode = 'serverapi';
       } else {
-        log.warning(
-          localize('please.upgrade.cmake',
-            'CMake Server is not available with the current CMake executable. Please upgrade to CMake {0} or newer.',
-            versionToString(cmake.minimalServerModeVersion)));
-        drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+        communicationMode = 'legacy';
       }
-    } else {
-      // We didn't start the server backend, so we'll use the legacy one
-      try {
-        this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
-        drv = await LegacyCMakeDriver
-                  .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
-      } finally { this._statusMessage.set(localize('ready.status', 'Ready')); }
+    } else if (communicationMode == 'fileapi') {
+      if (!cmake.isFileApiModeSupported) {
+        if (cmake.isServerModeSupported) {
+          communicationMode = 'serverapi';
+          log.warning(
+            localize('switch.to.serverapi',
+              'CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.',
+              versionToString(cmake.minimalFileApiModeVersion)));
+        } else {
+          communicationMode = 'legacy';
+        }
+      }
     }
+
+    if (communicationMode != 'fileapi' && communicationMode != 'serverapi') {
+      log.warning(
+        localize('please.upgrade.cmake',
+          'For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.',
+          versionToString(cmake.minimalServerModeVersion)));
+    }
+
+    try {
+      this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
+      switch (communicationMode) {
+        case 'fileapi':
+          drv = await CMakeFileApiDriver
+              .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+          break;
+        case 'serverapi':
+          drv = await CMakeServerClientDriver
+              .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+          break;
+        default:
+          drv = await LegacyCMakeDriver
+            .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+        }
+    } finally { this._statusMessage.set(localize('ready.status', 'Ready')); }
+
     await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
@@ -852,7 +881,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!drv.targets.length) {
       return (await vscode.window.showInputBox({prompt: localize('enter.target.name', 'Enter a target name')})) || null;
     } else {
-      const choices = drv.targets.map((t): vscode.QuickPickItem => {
+      const choices = drv.uniqueTargets.map((t): vscode.QuickPickItem => {
         switch (t.type) {
         case 'named': {
           return {
@@ -887,8 +916,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   private readonly _ctestController = new CTestDriver(this.workspaceContext);
   async ctest(): Promise<number> {
+
     const build_retc = await this.build();
     if (build_retc !== 0) {
+      this._ctestController.markAllCurrentTestsAsNotRun();
       return build_retc;
     }
 

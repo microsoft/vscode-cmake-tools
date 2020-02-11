@@ -10,9 +10,6 @@ import * as nls from 'vscode-nls';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-export type unspecifiedKitType = '__unspec__';
-export const unspecifiedKitName: unspecifiedKitType = '__unspec__';
-
 /**
  * Escape a string so it can be used as a regular expression
  */
@@ -128,7 +125,9 @@ export function heavyNormalizePath(p: string): string {
 }
 
 export function resolvePath(inpath: string, base: string) {
-  return path.isAbsolute(inpath) ? inpath : lightNormalizePath(path.join(base, inpath));
+  const abspath = path.isAbsolute(inpath) ? inpath : path.join(base, inpath);
+  // Even absolute paths need to be normalized since they could contain rogue .. and .
+  return lightNormalizePath(abspath);
 }
 
 /**
@@ -530,11 +529,15 @@ export function getLocaleId(): string {
 export function checkFileExists(filePath: string): Promise<boolean> {
   return new Promise((resolve, _reject) => {
       fs.stat(filePath, (_err, stats) => {
-          if (stats && stats.isFile()) {
-              resolve(true);
-          } else {
-              resolve(false);
-          }
+          resolve(stats && stats.isFile());
+      });
+  });
+}
+
+export function checkDirectoryExists(filePath: string): Promise<boolean> {
+  return new Promise((resolve, _reject) => {
+      fs.stat(filePath, (_err, stats) => {
+          resolve(stats && stats.isDirectory());
       });
   });
 }
