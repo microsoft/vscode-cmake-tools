@@ -28,6 +28,7 @@ export interface RequiredExpansionContextVars {
   buildType: string;
   buildKit: string;
   workspaceRootFolderName: string;
+  workspaceFolderBasename: string;
   generator: string;
   userHome: string;
 }
@@ -127,7 +128,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
       continue;  // Don't execute commands more than once per string
     }
     try {
-      const command_ret = await vscode.commands.executeCommand(command);
+      const command_ret = await vscode.commands.executeCommand(command, opts.vars.workspaceFolder);
       subs.set(full, `${command_ret}`);
     } catch (e) { log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} ({2})', command, tmpl, e)); }
   }

@@ -1,4 +1,4 @@
-import {Kit, scanForVSKits} from '@cmt/kit';
+import {Kit, scanForVSKits, SpecialKits, UnspecifiedKit} from '@cmt/kit';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -48,15 +48,15 @@ class SmokeTestExtensionContext implements vscode.ExtensionContext {
 type TestResult<T> = Thenable<T>|T;
 
 export class SmokeContext {
-  constructor(readonly projectDir: string, readonly extensionPath: string) {}
+  constructor(readonly projectDir: vscode.WorkspaceFolder, readonly extensionPath: string) {}
 
   private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
-  async createCMakeTools(opts: {kit?: Kit|'__unspec__'}): Promise<CMakeTools> {
+  async createCMakeTools(opts: {kit?: Kit|UnspecifiedKit}): Promise<CMakeTools> {
     const cmt = await CMakeTools.createForDirectory(this.projectDir, this._extContext);
     if (opts.kit) {
-      if (opts.kit === '__unspec__') {
-        await cmt.setKit({name: '__unspec__'});
+      if (opts.kit === SpecialKits.Unspecified) {
+        await cmt.setKit({name: SpecialKits.Unspecified});
       } else {
         await cmt.setKit(opts.kit);
       }
@@ -64,7 +64,7 @@ export class SmokeContext {
     return cmt;
   }
 
-  async withCMakeTools<T>(opts: {kit?: Kit|'__unspec__', run: (cmt: CMakeTools) => TestResult<T>}): Promise<T> {
+  async withCMakeTools<T>(opts: {kit?: Kit|UnspecifiedKit, run: (cmt: CMakeTools) => TestResult<T>}): Promise<T> {
     const cmt = await this.createCMakeTools(opts);
     try {
       const value = await Promise.resolve(opts.run(cmt));
@@ -192,9 +192,9 @@ function getVSKits() {
   return _VS_KITS_PROMISE;
 }
 
-export async function smokeTestDefaultKit(): Promise<Kit|'__unspec__'> {
+export async function smokeTestDefaultKit(): Promise<Kit|UnspecifiedKit> {
   if (process.platform !== 'win32') {
-    return '__unspec__';
+    return SpecialKits.Unspecified as UnspecifiedKit;
   } else {
     const kits = await getVSKits();
     if (kits.length === 0) {

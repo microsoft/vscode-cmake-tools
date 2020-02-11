@@ -1,5 +1,30 @@
 # What's New?
 
+## 1.3.0
+Improvements:
+- Multi-root support. You can now open multiple folders in VS Code and CMake Tools will allow you to configure each of the projects in those folders.
+- Add support for `${command:cmake.buildKit}`. [#334](https://github.com/microsoft/vscode-cmake-tools/issues/334) [@xgdgsc](https://github.com/xgdgsc)
+- Add LLVM_ROOT and Visual Studio Clang locations to the search path for Kits. [#914](https://github.com/microsoft/vscode-cmake-tools/issues/914) [@Zingam](https://github.com/Zingam)
+- Support additional `intelliSenseModes` in the configuration provider. [#960](https://github.com/microsoft/vscode-cmake-tools/issues/960)
+- Detect bundled CMake in Visual Studio. [#610](https://github.com/microsoft/vscode-cmake-tools/issues/610) [@Zingam](https://github.com/Zingam)
+- Add "Scan for kits" option in kits QuickPick. [#864](https://github.com/microsoft/vscode-cmake-tools/issues/864) [@Zingam](https://github.com/Zingam)
+- Implement the CMake File API. [PR #720](https://github.com/microsoft/vscode-cmake-tools/pull/720) [@KoeMai](https://github.com/KoeMai)
+
+Bug Fixes:
+- Support temp folders not located on system drive. [PR #974](https://github.com/microsoft/vscode-cmake-tools/pull/974) [@Carsten87](https://github.com/Carsten87)
+- Add MinGW path to the environment. [PR #983](https://github.com/microsoft/vscode-cmake-tools/pull/983)
+- Don't do a clean build for utility targets. [#643](https://github.com/microsoft/vscode-cmake-tools/issues/643) [@rcxdude](https://github.com/rcxdude)
+- Visual Studio builds should support `cmake.parallelJobs` setting. [PR #975](https://github.com/microsoft/vscode-cmake-tools/pull/975) [@tonka3000](https://github.com/tonka3000)
+- Fix build cancellation. [#946](https://github.com/microsoft/vscode-cmake-tools/issues/946) [#781](https://github.com/microsoft/vscode-cmake-tools/issues/781) [#522](https://github.com/microsoft/vscode-cmake-tools/issues/522) [@KoeMai](https://github.com/KoeMai)
+- Normalize both absolute and relative paths. [PR #963](https://github.com/microsoft/vscode-cmake-tools/pull/963) [@GeorchW](https://github.com/GeorchW)
+- Filter out duplicate targets from the target selector. [#863](https://github.com/microsoft/vscode-cmake-tools/issues/863)
+- Fix a crash when `chcp` is not found on the machine. [#977](https://github.com/microsoft/vscode-cmake-tools/issues/977)
+- Don't fail if CMakeLists.txt was appended to sourceDirectory. [#1014](https://github.com/microsoft/vscode-cmake-tools/issues/1014)
+- Mark all tests as 'not run' in case of build failure when running CTest. [PR #980](https://github.com/microsoft/vscode-cmake-tools/pull/980) [@Morozov-5F](https://github.com/Morozov-5F)
+- Add command to hide launch/debug commands and debug button. [PR #1035](https://github.com/microsoft/vscode-cmake-tools/pull/1035)
+- Add support for `${workspaceFolderBasename}`. [#869](https://github.com/microsoft/vscode-cmake-tools/issues/869)
+- Fix exception thrown by debug/launch commands. [#1036](https://github.com/microsoft/vscode-cmake-tools/issues/1036)
+
 ## 1.2.3
 Bug fixes:
 - CTest status bar button text appears malformed. [#911](https://github.com/microsoft/vscode-cmake-tools/issues/911)

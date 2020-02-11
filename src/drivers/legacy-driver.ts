@@ -101,6 +101,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
 
   get targets() { return []; }
   get executableTargets() { return []; }
+  get uniqueTargets() { return []; }
 
   /**
    * Watcher for the CMake cache file on disk.
