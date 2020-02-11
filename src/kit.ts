@@ -780,7 +780,7 @@ export async function scanForKits(opt?: KitScanOptions) {
   };
 
   return vscode.window.withProgress(prog, async pr => {
-    const isWin32 = process.platform === 'win32';
+    const isWin32 = (process.platform === 'win32');
 
     pr.report({message: localize('scanning.for.cmake.kits', 'Scanning for CMake kits...')});
     const scan_paths = new Set<string>();
@@ -812,8 +812,8 @@ export async function scanForKits(opt?: KitScanOptions) {
         clang_cl_paths.add(llvm_root);
       }
       // Default installation locations
-      clang_cl_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
-      clang_cl_paths.add('C:\\Program Files\\LLVM\\bin');
+      clang_cl_paths.add(paths.windows.ProgramFiles + '\\LLVM\\bin');
+      clang_cl_paths.add(paths.windows.ProgramFilesX86 + '\\LLVM\\bin');
       // PATH environment variable locations
       scan_paths.forEach(path_el => clang_cl_paths.add(path_el));
       // LLVM bundled in VS locations

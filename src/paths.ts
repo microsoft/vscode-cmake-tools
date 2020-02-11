@@ -1,6 +1,6 @@
 /**
  * This module defines important directories and paths to the extension
- */ /** */
+ */
 
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
@@ -110,7 +110,7 @@ class Paths {
    */
   get userLocalDir(): string {
     if (process.platform == 'win32') {
-      return process.env['LocalAppData']!;
+      return this.windows.LOCALAPPDATA;
     } else {
       const xdg_dir = process.env['XDG_DATA_HOME'];
       if (xdg_dir) {
@@ -123,7 +123,7 @@ class Paths {
 
   get userRoamingDir(): string {
     if (process.platform == 'win32') {
-      return process.env['AppData']!;
+      return this.windows.APPDATA;
     } else {
       const xdg_dir = process.env['XDG_CONFIG_HOME'];
       if (xdg_dir) {
@@ -147,11 +147,22 @@ class Paths {
   get roamingDataDir(): string { return path.join(this.userRoamingDir, 'CMakeTools'); }
 
   /**
+   * Returns e.g. "C:\" on Windows and "/" on Unix-like systems
+   */
+  get rootPath(): string {
+    if (process.platform === 'win32') {
+      return this.windows.SystemDrive;
+    } else {
+      return '/';
+    }
+  }
+
+  /**
    * Get the platform-specific temporary directory
    */
   get tmpDir(): string {
     if (process.platform == 'win32') {
-      return process.env['TEMP']!;
+      return this.windows.TEMP;
     } else {
       return '/tmp';
     }
@@ -223,8 +234,8 @@ class Paths {
         if (raw == 'auto' || raw == 'cmake') {
           // We didn't find it on the $PATH. Try some good guesses
           const default_cmake_paths = [
-            `C:\\Program Files\\CMake\\bin\\cmake.exe`,
-            `C:\\Program Files (x86)\\CMake\\bin\\cmake.exe`,
+            this.windows.ProgramFiles + '\\CMake\\bin\\cmake.exe',
+            this.windows.ProgramFilesX86 + '\\CMake\\bin\\cmake.exe'
           ];
           for (const cmake_path of default_cmake_paths) {
             if (await fs.exists(cmake_path)) {

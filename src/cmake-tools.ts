@@ -39,6 +39,7 @@ import {VariantManager} from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
+import paths from './paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1247,7 +1248,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     };
     if (process.platform == 'win32') {
       // Use cmd.exe on Windows
-      termOptions.shellPath = 'C:\\Windows\\System32\\cmd.exe';
+      termOptions.shellPath = paths.windows.ComSpec;
     }
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal(termOptions);
