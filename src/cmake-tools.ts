@@ -272,30 +272,33 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const preferredGenerators = this.getPreferredGenerators();
     const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
     let communicationMode = this.workspaceContext.config.cmakeCommunicationMode.toLowerCase();
+    const fileApi = 'fileapi';
+    const serverApi = 'serverapi';
+    const legacy = 'legacy';
 
-    if (communicationMode == 'automatic') {
+    if (communicationMode !== fileApi && communicationMode !== serverApi && communicationMode !== legacy) {
       if (cmake.isFileApiModeSupported) {
-        communicationMode = 'fileapi';
+        communicationMode = fileApi;
       } else if (cmake.isServerModeSupported) {
-        communicationMode = 'serverapi';
+        communicationMode = serverApi;
       } else {
-        communicationMode = 'legacy';
+        communicationMode = legacy;
       }
-    } else if (communicationMode == 'fileapi') {
+    } else if (communicationMode === fileApi) {
       if (!cmake.isFileApiModeSupported) {
         if (cmake.isServerModeSupported) {
-          communicationMode = 'serverapi';
+          communicationMode = serverApi;
           log.warning(
             localize('switch.to.serverapi',
               'CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.',
               versionToString(cmake.minimalFileApiModeVersion)));
         } else {
-          communicationMode = 'legacy';
+          communicationMode = legacy;
         }
       }
     }
 
-    if (communicationMode != 'fileapi' && communicationMode != 'serverapi') {
+    if (communicationMode !== fileApi && communicationMode !== serverApi) {
       log.warning(
         localize('please.upgrade.cmake',
           'For the best experience, CMake server or file-api support is required. Please upgrade CMake to {0} or newer.',
@@ -303,13 +306,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     try {
-      this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
+      if (communicationMode === serverApi) {
+        this._statusMessage.set(localize('starting.cmake.driver.status', 'Starting CMake Server...'));
+      }
       switch (communicationMode) {
-        case 'fileapi':
+        case fileApi:
           drv = await CMakeFileApiDriver
               .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
           break;
-        case 'serverapi':
+        case serverApi:
           drv = await CMakeServerClientDriver
               .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
           break;
