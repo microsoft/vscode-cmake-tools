@@ -17,7 +17,7 @@
 	"missing.cmakelists": "在文件夹 \"{0}\" 的根中找不到 CMakeLists.txt",
 	"starting.cmake.driver": "正在启动 CMake 驱动程序",
 	"bad.cmake.executable": "CMake 可执行文件“{0}”不正确。",
-	"switch.to.serverapi": "CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.",
+	"switch.to.serverapi": "在低于 {0} 的版本中不支持 CMake 文件-API 通信模式。正在切换到 CMake 服务器通信模式。",
 	"please.upgrade.cmake": "为获得最佳体验，必须具备 CMake 服务器或 file-api 支持。请将 CMake 升级到 {0} 或更高版本。",
 	"starting.cmake.driver.status": "正在启动 CMake 服务器...",
 	"ready.status": "就绪",
