@@ -17,6 +17,7 @@
 	"missing.cmakelists": "Nie znaleziono pliku CMakeLists.txt w katalogu głównym folderu „{0}”",
 	"starting.cmake.driver": "Uruchamianie sterownika narzędzia CMake",
 	"bad.cmake.executable": "Nieprawidłowy plik wykonywalny narzędzia CMake „{0}”.",
+	"switch.to.serverapi": "CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.",
 	"please.upgrade.cmake": "Aby zapewnić najlepsze środowisko, wymagana jest obsługa interfejsu file-api lub serwera narzędzia CMake. Uaktualnij narzędzie CMake do wersji {0} lub nowszej.",
 	"starting.cmake.driver.status": "Trwa uruchamianie serwera narzędzia CMake...",
 	"ready.status": "Gotowe",

@@ -17,6 +17,7 @@
 	"missing.cmakelists": "CMakeLists.txt est introuvable à la racine du dossier '{0}'",
 	"starting.cmake.driver": "Démarrage du pilote CMake",
 	"bad.cmake.executable": "Exécutable CMake incorrect \"{0}\".",
+	"switch.to.serverapi": "CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.",
 	"please.upgrade.cmake": "Pour une expérience optimale, la prise en charge du serveur CMake ou de l'API de fichier est nécessaire. Effectuez une mise à niveau de CMake vers la version {0} ou une version plus récente.",
 	"starting.cmake.driver.status": "Démarrage du serveur CMake...",
 	"ready.status": "Prêt",
