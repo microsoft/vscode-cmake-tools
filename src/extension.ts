@@ -450,6 +450,7 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  private cpptoolsReady: boolean = false;
   private _updateCodeModel(folder: CMakeToolsFolder) {
     const cmt = folder.cmakeTools;
     this._projectOutlineProvider.updateCodeModel(
@@ -479,10 +480,11 @@ class ExtensionManager implements vscode.Disposable {
         const opts = drv ? drv.expansionOptions : undefined;
         const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
-        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
+        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget});
         await this.ensureCppToolsProviderRegistered();
-        if (cpptools.notifyReady) {
+        if (cpptools.notifyReady && !this.cpptoolsReady) {
           cpptools.notifyReady(this._configProvider);
+          this.cpptoolsReady = true;
         } else {
           cpptools.didChangeCustomConfiguration(this._configProvider);
         }
