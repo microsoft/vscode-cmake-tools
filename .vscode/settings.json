@@ -8,6 +8,8 @@
     },
     "typescript.tsdk": "./node_modules/typescript/lib", // we want to use the TS server from our node_modules folder to control its version
     "files.trimTrailingWhitespace": true,
-    "clang-format.executable": "${workspaceFolder}/node_modules/.bin/clang-format",
-    "editor.tabSize": 2
+    "editor.tabSize": 4,
+    "typescript.format.enable": true,
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces": false,
+    "editor.detectIndentation": false
 }

@@ -4,11 +4,11 @@
  * ------------------------------------------------------------------------------------------ */
 'use strict';
 
-import * as util from './util';
 import TelemetryReporter from 'vscode-extension-telemetry';
+import * as util from './util';
 
-export type Properties = { [key: string]: string };
-export type Measures = { [key: string]: number };
+export type Properties = {[key: string]: string};
+export type Measures = {[key: string]: number};
 
 interface IPackageInfo {
     name: string;
