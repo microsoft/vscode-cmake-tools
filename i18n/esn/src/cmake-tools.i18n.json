@@ -62,7 +62,7 @@
 	"run.build": "Compilando la carpeta: {0}",
 	"unable.to.configure": "Error de compilación: no se puede configurar el proyecto",
 	"driver.died.after.successful.configure": "El controlador de CMake finalizó de forma inmediata después de que la configuración se realizara correctamente.",
-	"building.status": "Edificio",
+	"building.status": "Compilando",
 	"building.target": "Compilando: {0}",
 	"stop.on.cancellation": "Detener al cancelar",
 	"starting.build": "Iniciando la compilación",
