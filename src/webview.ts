@@ -10,7 +10,7 @@ interface IOption {
 
 export class ConfigurationWebview {
   private readonly _panel: vscode.WebviewPanel;
-  private cachePath = '';
+  cachePath = '';
 
   get panel() {
       return this._panel;
