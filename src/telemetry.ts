@@ -28,7 +28,7 @@ export function activate(): void {
 
 export function deactivate(): void {
     if (telemetryReporter) {
-        telemetryReporter.dispose();
+        telemetryReporter.dispose().then(() => {}, () => {});
     }
 }
 
