@@ -140,6 +140,7 @@ class Paths {
         buildType: '',
         generator: '',
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
+        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath)
       },
     });
 

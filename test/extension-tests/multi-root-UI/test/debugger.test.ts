@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 
 // tslint:disable:no-unused-expression
 
-suite('[Debug/Lauch interface]', async () => {
+suite('[Debug/Launch interface]', async () => {
   let testEnv: DefaultEnvironment;
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {

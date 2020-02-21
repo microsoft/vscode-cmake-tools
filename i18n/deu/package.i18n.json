@@ -106,12 +106,12 @@
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Hiermit wird \"compile_commands.json\" nach erfolgreicher Konfiguration an diesen Speicherort kopiert.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Hiermit werden CMake-Projektverzeichnisse beim Öffnen automatisch konfiguriert.",
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "Hiermit wird CMake-Server aktiviert.",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "Das für die Kommunikation zwischen der Erweiterung und CMake verwendete Protokoll",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Hiermit werden die Umgebungsvariablen des Kits beim Ausführen von CMake-Befehlen nicht verwendet.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Über \"tasks.json\" statt über internen Prozess erstellen",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Codierung der Ausgabe von externen Befehlen (z. B.: cmake --build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Hiermit wird die Ablaufverfolgungsprotokollierung in Datei und Konsole aktiviert (große Datenmenge).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Aktiven Ordner automatisch auswählen",
 	"cmake-tools.configuration.views.cmake.folders.description": "Ordner",
-	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung",
-	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
+	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung"
 }

@@ -105,12 +105,12 @@
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Başarılı bir yapılandırmadan sonra compile_commands.json dosyasını bu konuma kopyala.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake proje dizinleri açıldığında bu dizinleri otomatik olarak yapılandır.",
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "CMake sunucusunu etkinleştirin.",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "Uzantı ve CMake arasında iletişim kurmak için kullanılan protokol",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "CMake komutlarını çalıştırırken set ortamı değişkenlerini kullanmayın.",
 	"cmake-tools.configuration.cmake.buildTask.description": "İç işlem yerine tasks.json kullanarak derle.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Dış komutlardan (ör. cmake -- build) gelen çıkışın kodlaması.",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Dosya ve konsolda izleme günlüğünü etkinleştirin (çok gürültülü).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Etkin klasörü otomatik olarak seç",
 	"cmake-tools.configuration.views.cmake.folders.description": "Klasörler",
-	"cmake-tools.configuration.views.cmake.outline.description": "Proje Ana Hattı",
-	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
+	"cmake-tools.configuration.views.cmake.outline.description": "Proje Ana Hattı"
 }

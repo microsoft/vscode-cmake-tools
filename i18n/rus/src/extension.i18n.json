@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "Повторное чтение наборов.",
 	"dispose.cmake.tools": "Удаление Средств CMake",
-	"configure.this.project": "Would you like to configure project '{0}'?",
+	"configure.this.project": "Вы хотите настроить проект \"{0}\"?",
 	"yes.button": "Да",
 	"not.now.button": "Не сейчас",
 	"always.configure.on.open": "Всегда настраивать проекты при открытии?",

@@ -37,7 +37,7 @@
 	"kit.for.toolchain.file": "Kit pour le fichier de chaîne d'outils {0}",
 	"using.compilers.for": "Utilisation de compilateurs pour {0} (architecture {1})",
 	"using.compilers": "Utilisation des compilateurs : {0}",
-	"search.for.compilers": "Search for compilers on this computer",
+	"search.for.compilers": "Rechercher des compilateurs sur cet ordinateur",
 	"unspecified.let.cmake.guess": "Non spécifié (laisser CMake identifier les compilateurs et l'environnement à utiliser)",
 	"not.reading.nonexistent.kit": "Impossible de lire un fichier de kits inexistant : {0}",
 	"reading.kits.file": "Lecture du fichier de kits {0}",

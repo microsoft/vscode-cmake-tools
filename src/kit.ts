@@ -28,8 +28,9 @@ const log = logging.createLogger('kit');
  */
 export enum SpecialKits {
   ScanForKits = '__scanforkits__',
-  Unspecified = '__unspecified__'
+  Unspecified = '__unspec__'
 }
+export const SpecialKitsCount: number = 2;
 export type UnspecifiedKit = SpecialKits.Unspecified;
 
 type ProgressReporter = vscode.Progress<{message?: string}>;

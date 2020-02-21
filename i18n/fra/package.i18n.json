@@ -105,12 +105,12 @@
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copie compile_commands.json à cet emplacement après une configuration réussie.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configure automatiquement les répertoires de projet CMake quand ils s'ouvrent.",
 	"cmake-tools.configuration.cmake.useCMakeServer.description": "Active le serveur CMake.",
+	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "Protocole de communication entre l'extension et CMake",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "N'utilise pas les variables d'environnement de kit au moment de l'exécution de commandes CMake.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Effectue une build à l'aide de tasks.json au lieu du processus interne.",
 	"cmake-tools.configuration.cmake.outputLogEncoding.description": "Encodage de la sortie à partir de commandes externes (par exemple cmake -- build).",
 	"cmake-tools.configuration.cmake.enableTraceLogging.description": "Active la journalisation des traces dans le fichier et la console (très bruyant).",
 	"cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Sélectionner le dossier actif automatiquement",
 	"cmake-tools.configuration.views.cmake.folders.description": "Dossiers",
-	"cmake-tools.configuration.views.cmake.outline.description": "Structure du projet",
-	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake"
+	"cmake-tools.configuration.views.cmake.outline.description": "Structure du projet"
 }

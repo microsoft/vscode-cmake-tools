@@ -37,7 +37,7 @@
 	"kit.for.toolchain.file": "工具鏈檔案 {0} 的套件",
 	"using.compilers.for": "使用 {0} 的編譯器({1} 架構)",
 	"using.compilers": "正在使用編譯器: {0}",
-	"search.for.compilers": "Search for compilers on this computer",
+	"search.for.compilers": "搜尋這部電腦上的編譯器",
 	"unspecified.let.cmake.guess": "未指定 (讓 CMake 猜測要使用的編譯器與環境)",
 	"not.reading.nonexistent.kit": "未讀取不存在的套件檔案: {0}",
 	"reading.kits.file": "正在讀取套件檔案 {0}",
