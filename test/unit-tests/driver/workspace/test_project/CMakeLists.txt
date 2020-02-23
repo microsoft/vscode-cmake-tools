@@ -9,6 +9,21 @@ add_subdirectory(shared_lib_dummy)
 add_executable(TestBuildProcess main.cpp)
 set_property(TARGET TestBuildProcess PROPERTY CXX_STANDARD 98)
 
+add_executable(TestBuildProcessOtherOutputDir main.cpp)
+set_property(TARGET TestBuildProcessOtherOutputDir PROPERTY CXX_STANDARD 98)
+
+set_target_properties( TestBuildProcessOtherOutputDir
+    PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
+    LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin"
+)
+target_compile_definitions(TestBuildProcessOtherOutputDir PRIVATE
+    "CMT_COOKIE=\"${CMT_COOKIE}\""
+    "C_COMPILER_ID=\"${CMAKE_C_COMPILER_ID}\""
+)
+target_link_libraries(TestBuildProcessOtherOutputDir StaticLibDummy)
+
 add_custom_command(
     TARGET TestBuildProcess
     POST_BUILD
@@ -16,6 +31,7 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Running in ${CMAKE_CURRENT_BINARY_DIR}"
 )
+
 
 set(extraArgsEnvironment "${EXTRA_ARGS_TEST}" CACHE STRING "environment")
 set(configureEnvironment "$ENV{_CONFIGURE_ENV}" CACHE STRING "configureEnvironment")

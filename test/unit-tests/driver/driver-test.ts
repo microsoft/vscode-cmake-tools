@@ -127,9 +127,12 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       expect(await driver.cleanConfigure([])).to.be.eq(0);
       expect(await driver.build(driver.allTargetName)).to.be.eq(0);
 
-      expect(driver.executableTargets.length).to.be.eq(1);
+      expect(driver.executableTargets.length).to.be.eq(2);
       expect(driver.executableTargets[0].name).to.be.equal('TestBuildProcess');
       expect(fs.existsSync(driver.executableTargets[0].path)).to.be.true;
+
+      expect(driver.executableTargets[1].name).to.be.equal('TestBuildProcessOtherOutputDir');
+      expect(fs.existsSync(driver.executableTargets[1].path)).to.be.true;
     }).timeout(90000);
 
     test('Configure fails on invalid preferred generator', async () => {
