@@ -216,14 +216,14 @@ class Paths {
 
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
-        workspaceRoot: wsc.folder.uri.fsPath,
-        workspaceFolder: wsc.folder.uri.fsPath,
-        userHome: this.userHome,
         buildKit: '',
         buildType: '',
         generator: '',
+        workspaceFolder: wsc.folder.uri.fsPath,
+        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+        workspaceRoot: wsc.folder.uri.fsPath,
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
-        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath)
+        userHome: this.userHome,
       },
     });
 
