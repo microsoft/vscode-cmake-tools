@@ -190,6 +190,7 @@ export class VariantManager implements vscode.Disposable {
 
 
   dispose() {
+    // tslint:disable-next-line: no-floating-promises
     this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
