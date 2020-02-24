@@ -17,6 +17,7 @@
 	"missing.cmakelists": "CMakeLists.txt가 '{0}' 폴더의 루트에 없음",
 	"starting.cmake.driver": "CMake 드라이버를 시작하는 중",
 	"bad.cmake.executable": "잘못된 CMake 실행 파일 \"{0}\".",
+	"switch.to.serverapi": "{0} 이전 버전에서는 CMake file-api 통신 모드가 지원되지 않습니다. CMake 서버 통신 모드로 전환하는 중입니다.",
 	"please.upgrade.cmake": "최상의 환경을 위해 CMake 서버 또는 file-api 지원이 필요합니다. CMake를 {0} 이상으로 업그레이드하세요.",
 	"starting.cmake.driver.status": "CMake 서버를 시작하는 중...",
 	"ready.status": "준비",
