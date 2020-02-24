@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.3.1
+Bug Fixes:
+- Toolset and platform are swapped when reading from CMake cache. [#1065](https://github.com/microsoft/vscode-cmake-tools/issues/1065)
+- Unable to debug targets when path is specified as absolute by the cmake-file-api. [#1067](https://github.com/microsoft/vscode-cmake-tools/issues/1067)
+
 ## 1.3.0
 Improvements:
 - Multi-root support. You can now open multiple folders in VS Code and CMake Tools will allow you to configure each of the projects in those folders.
