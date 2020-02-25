@@ -17,7 +17,7 @@
 	"missing.cmakelists": "CMakeLists.txt, '{0}' klasörünün kökünde bulunamadı",
 	"starting.cmake.driver": "CMake sürücüsü başlatılıyor",
 	"bad.cmake.executable": "Hatalı \"{0}\" CMake yürütülebilir dosyası.",
-	"switch.to.serverapi": "CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.",
+	"switch.to.serverapi": "CMake dosya-API iletişim modu, {0} öncesi sürümlerde desteklenmiyor. CMake sunucu iletişimi moduna geçiliyor.",
 	"please.upgrade.cmake": "En iyi deneyim için CMake sunucusu veya file-api desteği gereklidir. Lütfen CMake'i {0} veya daha yeni bir sürüme yükseltin.",
 	"starting.cmake.driver.status": "CMake Sunucusu başlatılıyor...",
 	"ready.status": "Hazır",

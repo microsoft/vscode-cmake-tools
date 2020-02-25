@@ -4,6 +4,14 @@
 Improvements:
 - Support variables for Kit.toolchainFile. [#991](https://github.com/microsoft/vscode-cmake-tools/pull/991)[#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
 
+## 1.3.1
+Improvements:
+- Show "Collapse all" command on project outline view. [#839](https://github.com/microsoft/vscode-cmake-tools/issues/839) [@dirondin](https://github.com/dirondin)
+
+Bug Fixes:
+- Toolset and platform are swapped when reading from CMake cache. [#1065](https://github.com/microsoft/vscode-cmake-tools/issues/1065)
+- Unable to debug targets when path is specified as absolute by the cmake-file-api. [#1067](https://github.com/microsoft/vscode-cmake-tools/issues/1067) [@KoeMai](https://github.com/KoeMai)
+
 ## 1.3.0
 Improvements:
 - Multi-root support. You can now open multiple folders in VS Code and CMake Tools will allow you to configure each of the projects in those folders.
