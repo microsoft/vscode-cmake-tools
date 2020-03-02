@@ -264,13 +264,15 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     if (!comp_path) {
       throw new MissingCompilerException();
     }
+    const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
+    const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
 
     const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
-    for (const includePathItem of includePath) {
+    for (const includePathItem of normalizedIncludePath) {
       if (newBrowsePath.indexOf(includePathItem) < 0) {
         newBrowsePath.push(includePathItem);
       }
@@ -283,16 +285,16 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
       standard,
-      compilerPath: comp_path || undefined,
+      compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
 
     return {
       defines,
       standard,
-      includePath,
+      includePath: normalizedIncludePath,
       intelliSenseMode: getIntelliSenseMode(comp_path),
-      compilerPath: comp_path || undefined,
+      compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
   }
