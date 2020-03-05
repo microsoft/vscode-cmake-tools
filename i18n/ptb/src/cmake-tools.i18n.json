@@ -62,7 +62,7 @@
 	"run.build": "Compilando a pasta: {0}",
 	"unable.to.configure": "Falha no build: não é possível configurar o projeto",
 	"driver.died.after.successful.configure": "O driver do CMake foi encerrado imediatamente após o êxito da configuração",
-	"building.status": "Construção",
+	"building.status": "Compilando",
 	"building.target": "Compilando: {0}",
 	"stop.on.cancellation": "Interromper no cancelamento",
 	"starting.build": "Iniciando o build",

@@ -62,7 +62,7 @@
 	"run.build": "Yapı klasörü: {0}",
 	"unable.to.configure": "Derleme başarısız oldu: Proje yapılandırılamıyor",
 	"driver.died.after.successful.configure": "CMake sürücüsü, başarılı yapılandırmadan hemen sonra sonlandırıldı",
-	"building.status": "Oluşturma",
+	"building.status": "Derleniyor",
 	"building.target": "Derleniyor: {0}",
 	"stop.on.cancellation": "İptalde durdur",
 	"starting.build": "Derleme başlatılıyor",
