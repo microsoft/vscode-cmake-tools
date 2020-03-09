@@ -17,7 +17,7 @@
 	"missing.cmakelists": "\"CMakeLists.txt\" wurde im Stamm des Ordners \"{0}\" nicht gefunden.",
 	"starting.cmake.driver": "CMake-Treiber wird gestartet.",
 	"bad.cmake.executable": "Ungültige ausführbare CMake-Datei \"{0}\".",
-	"switch.to.serverapi": "CMake file-api communication mode is not supported in versions earlier than {0}. Switching to CMake server communication mode.",
+	"switch.to.serverapi": "Der CMake-Kommunikationsmodus \"file-api\" wird in Versionen vor {0} nicht unterstützt. Es wird zum CMake-Serverkommunikationsmodus gewechselt.",
 	"please.upgrade.cmake": "Für ein optimales Benutzererlebnis ist die Unterstützung von CMake-Server oder file-api erforderlich. Führen Sie ein Upgrade auf CMake {0} oder höher durch.",
 	"starting.cmake.driver.status": "Der CMake-Server wird gestartet...",
 	"ready.status": "Bereit",

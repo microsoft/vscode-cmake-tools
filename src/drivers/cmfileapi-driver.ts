@@ -65,13 +65,13 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
 
     this._generator = {
       name: cache.get('CMAKE_GENERATOR')!.value,
-      toolset: cache.get('CMAKE_GENERATOR_PLATFORM') ? cache.get('CMAKE_GENERATOR_PLATFORM')!.value : undefined,
-      platform: cache.get('CMAKE_GENERATOR_TOOLSET') ? cache.get('CMAKE_GENERATOR_TOOLSET')!.value : undefined
+      platform: cache.get('CMAKE_GENERATOR_PLATFORM') ? cache.get('CMAKE_GENERATOR_PLATFORM')!.value : undefined,
+      toolset: cache.get('CMAKE_GENERATOR_TOOLSET') ? cache.get('CMAKE_GENERATOR_TOOLSET')!.value : undefined
     } as CMakeGenerator;
 
     this._generatorInformation = {
       name: cache.get('CMAKE_GENERATOR')!.value,
-      platform: cache.get('CMAKE_GENERATOR_TOOLSET') ? cache.get('CMAKE_GENERATOR_TOOLSET')!.value : undefined
+      platform: cache.get('CMAKE_GENERATOR_PLATFORM') ? cache.get('CMAKE_GENERATOR_PLATFORM')!.value : undefined
     };
   }
 
