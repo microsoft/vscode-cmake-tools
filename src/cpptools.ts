@@ -94,14 +94,14 @@ export function parseCompileFlags(args: string[], lang?: string): CompileFlagInf
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (lang === 'CXX') {
+      if (lang === 'CXX' || lang === 'OBJCXX' ) {
         const s = parseCppStandard(std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
           standard = s;
         }
-      } else if (lang === 'C') {
+      } else if (lang === 'C' || lang === 'OBJC' ) {
         const s = parseCStandard(std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
