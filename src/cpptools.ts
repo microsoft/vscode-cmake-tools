@@ -181,7 +181,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   /** Our name visible to cpptools */
   readonly name = 'CMake Tools';
   /** Our extension ID, visible to cpptools */
-  readonly extensionId = 'vector-of-bool.cmake-tools';
+  readonly extensionId = 'ms-vscode.cmake-tools';
   /**
    * This value determines if we need to show the user an error message about missing compilers. When an update succeeds
    * without missing any compilers, we set this to `true`, otherwise `false`.
