@@ -495,7 +495,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
   updateCodeModel(folder: vscode.WorkspaceFolder, model: codemodel_api.CodeModelContent|null, ctx: ExternalUpdateContext) {
     let existing = this._folders.get(folder.uri.fsPath);
     if (!existing) {
-      rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that does not yet exist?'));
+      rollbar.error(localize('error.update.code.model.on.nonexist.folder', 'Updating code model on folder that does not yet exist.'));
       // That's an error, but we can keep going otherwise.
       existing = new WorkspaceFolderNode(folder);
       this._folders.set(folder.uri.fsPath, existing);
