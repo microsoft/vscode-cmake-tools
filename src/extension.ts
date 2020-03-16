@@ -201,8 +201,10 @@ class ExtensionManager implements vscode.Disposable {
    * The project outline tree data provider
    */
   private readonly _projectOutlineProvider = new ProjectOutlineProvider();
-  private readonly _projectOutlineDisposer
-      = vscode.window.registerTreeDataProvider('cmake.outline', this._projectOutlineProvider);
+  private readonly _projectOutlineTreeView = vscode.window.createTreeView('cmake.outline', {
+    treeDataProvider: this._projectOutlineProvider,
+    showCollapseAll: true
+  });
 
   /**
    * CppTools project configuration provider. Tells cpptools how to search for
@@ -292,8 +294,9 @@ class ExtensionManager implements vscode.Disposable {
       )
     );
     this._onDidChangeActiveTextEditorSub.dispose();
+    // tslint:disable-next-line: no-floating-promises
     this._kitsWatcher.close();
-    this._projectOutlineDisposer.dispose();
+    this._projectOutlineTreeView.dispose();
     if (this._cppToolsAPI) {
       this._cppToolsAPI.dispose();
     }

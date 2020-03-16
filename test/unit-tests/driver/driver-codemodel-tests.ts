@@ -124,11 +124,11 @@ export function makeCodeModelDriverTestsuite(
     }).timeout(90000);
 
 
-    test('Test first executable target directory', async () => {
+    test('Test executable target information', async () => {
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE' && t.name == 'TestBuildProcess');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label

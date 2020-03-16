@@ -15,7 +15,8 @@ import {
   kitsPathForWorkspaceFolder,
   OLD_USER_KITS_FILEPATH,
   SpecialKits,
-  UnspecifiedKit
+  UnspecifiedKit,
+  SpecialKitsCount
 } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
@@ -62,6 +63,7 @@ export class KitsController {
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
+    // tslint:disable-next-line: no-floating-promises
     this._kitsWatcher.close();
   }
 
@@ -164,11 +166,11 @@ export class KitsController {
 
   private async _checkHaveKits(): Promise<UnspecifiedKit|'ok'|'cancel'> {
     const avail = this.availableKits;
-    if (avail.length > 1) {
+    if (avail.length > SpecialKitsCount) {
       // We have kits. Okay.
       return 'ok';
     }
-    if (avail[0].name !== SpecialKits.Unspecified) {
+    if (!avail.find(kit => kit.name == SpecialKits.Unspecified)) {
       // We should _always_ have the 'UnspecifiedKit'.
       rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
       return 'ok';

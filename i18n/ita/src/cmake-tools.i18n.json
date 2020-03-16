@@ -17,6 +17,7 @@
 	"missing.cmakelists": "CMakeLists.txt non è stato trovato nella radice della cartella '{0}'",
 	"starting.cmake.driver": "Avvio del driver di CMake",
 	"bad.cmake.executable": "L'eseguibile di CMake \"{0}\" non è valido.",
+	"switch.to.serverapi": "La modalità di comunicazione file-api di CMake non è supportata in versioni precedenti alla {0}. Verrà effettuato il passaggio alla modalità di comunicazione server di CMake.",
 	"please.upgrade.cmake": "Per un'esperienza ottimale è richiesto il supporto di file-api o il server CMake. Aggiornare CMake alla versione {0} o a una versione successiva.",
 	"starting.cmake.driver.status": "Avvio del server CMake...",
 	"ready.status": "Pronto",
