@@ -10,15 +10,15 @@ this extension to where it is today!
 
 # Important Links:
 
-- [Getting started](https://vector-of-bool.github.io/docs/vscode-cmake-tools/getting_started.html)
-- [Configuring a project](https://vector-of-bool.github.io/docs/vscode-cmake-tools/configuring.html)
-- [Building a project](https://vector-of-bool.github.io/docs/vscode-cmake-tools/building.html)
-- [Configuring CMake Tools](https://vector-of-bool.github.io/docs/vscode-cmake-tools/settings.html)
-- [How do I...?](https://vector-of-bool.github.io/docs/vscode-cmake-tools/how_do_i.html)
-- [FAQ](https://vector-of-bool.github.io/docs/vscode-cmake-tools/faq.html)
-- [Read the online documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/index.html)
-- [Contributing](https://vector-of-bool.github.io/docs/vscode-cmake-tools/development.html)
-- [Read the changelog](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html)
+- [Getting started](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/getting_started.rst)
+- [Configuring a project](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/configuring.rst)
+- [Building a project](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/building.rst)
+- [Configuring CMake Tools](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/settings.rst)
+- [How do I...?](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/how_do_i.rst)
+- [FAQ](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/faq.rst)
+- [Read the online documentation](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/index.rst)
+- [Contributing](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/development.rst)
+- [Read the changelog](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/changelog.rst)
 
 ## Issues? Questions? Feature requests?
 
