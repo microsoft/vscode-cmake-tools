@@ -237,6 +237,14 @@ produces in its output channel. Set to one of "trace", "debug", "info", "note",
     Regardless of the logging level, CMake Tools writes *all* levels of logging
     to the CMake Tools log file. This file is useful for
     :ref:`troubleshooting <troubleshooting>`.
+    
+.. _conf-cmake.parallelJobs:
+
+``cmake.parallelJobs``
+**********************
+
+By specifying a number, you can define how many jobs are run in parallel during the build.
+This affects the ``-j`` option for the underlying build tool.
 
 .. _var-subs:
 
