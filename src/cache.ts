@@ -139,12 +139,13 @@ export class CMakeCache {
       if (line.startsWith('//')) {
         docs_acc += /^\/\/(.*)/.exec(line)![1] + ' ';
       } else {
-        const match = /^(.*?):(.*?)=(.*)/.exec(line);
+        const match = /^("(.*?)"|(.*?)):([^:]*?)=(.*)/.exec(line);
         if (!match) {
           rollbar.error(localize('failed.to.read.line.from.cmake.cache.file', 'Failed to read a line from a CMake cache file {0}', line));
           continue;
         }
-        const [, name, typename, valuestr] = match;
+        const [, , quoted_name, unquoted_name, typename, valuestr] = match;
+        const name = quoted_name || unquoted_name;
         if (!name || !typename)
           continue;
         log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typename, 'valuestr', valuestr));

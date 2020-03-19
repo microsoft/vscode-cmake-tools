@@ -41,6 +41,24 @@ suite('Cache test', async () => {
       expect(entry.helpString).to.eq('This line is docs');
     }
   });
+  test('Read cache entry with double quotes because of colon', async () => {
+    const str = "\"FIRSTPART:SECONDPART\":STRING=value";
+    const entries = CMakeCache.parseCache(str);
+    expect(entries.size).to.eq(1);
+    expect(entries.has('FIRSTPART:SECONDPART')).to.be.true;
+    const entry = entries.get('FIRSTPART:SECONDPART')!;
+    expect(entry.value).to.eq('value');
+    expect(entry.type).to.eq(api.CacheEntryType.String);
+  });
+  test('Read cache entry with double quotes, but no colon', async() => {
+    const str = "\"QUOTED\":STRING=value";
+    const entries = CMakeCache.parseCache(str);
+    expect(entries.size).to.eq(1);
+    expect(entries.has('QUOTED')).to.be.true;
+    const entry = entries.get('QUOTED')!;
+    expect(entry.value).to.eq('value');
+    expect(entry.type).to.eq(api.CacheEntryType.String);
+  });
   test('Falsey values', () => {
     const false_things = [
       '0',
