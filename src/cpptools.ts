@@ -31,6 +31,7 @@ export interface CompileFlagInformation {
 class MissingCompilerException extends Error {}
 
 interface TargetDefaults {
+  name: string;
   includePath: string[];
   compileFlags: string[];
   defines: string[];
@@ -170,6 +171,10 @@ export interface CodeModelParams {
    * property.
    */
   clCompilerPath?: string|null;
+  /**
+   * The active target
+   */
+  activeTarget: string|null;
 }
 
 /**
@@ -202,7 +207,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _getConfiguration(uri: vscode.Uri): cpt.SourceFileConfigurationItem|undefined {
     const norm_path = util.platformNormalizePath(uri.fsPath);
-    return this._fileIndex.get(norm_path);
+    const configurations = this._fileIndex.get(norm_path);
+    if (this._activeTarget && configurations?.has(this._activeTarget)) {
+      return configurations!.get(this._activeTarget);
+    } else {
+      return configurations?.values().next().value; // Any value is fine if the target doesn't match
+    }
   }
 
   /**
@@ -243,9 +253,14 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
   /**
    * Index of files to configurations, using the normalized path to the file
-   * as the key.
+   * as the key to the <target,configuration>.
    */
-  private readonly _fileIndex = new Map<string, cpt.SourceFileConfigurationItem>();
+  private readonly _fileIndex = new Map<string, Map<string, cpt.SourceFileConfigurationItem>>();
+
+  /**
+   * If a source file configuration exists for the active target, we will prefer that one when asked.
+   */
+  private _activeTarget: string|null = null;
 
   /**
    * Create a source file configuration for the given file group.
@@ -315,10 +330,19 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
       const abs_norm = util.platformNormalizePath(abs);
-      this._fileIndex.set(abs_norm, {
-        uri: vscode.Uri.file(abs).toString(),
-        configuration,
-      });
+      if (this._fileIndex.has(abs_norm)) {
+        this._fileIndex.get(abs_norm)!.set(target.name, {
+          uri: vscode.Uri.file(abs).toString(),
+          configuration
+        });
+      } else {
+        const data = new Map<string, cpt.SourceFileConfigurationItem>();
+        data.set(target.name, {
+          uri: vscode.Uri.file(abs).toString(),
+          configuration,
+        });
+        this._fileIndex.set(abs_norm, data);
+      }
       const dir = path.dirname(abs_norm);
       if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
         this._workspaceBrowseConfiguration.browsePath.push(dir);
@@ -333,6 +357,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   updateConfigurationData(opts: CodeModelParams) {
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
+    this._activeTarget = opts.activeTarget;
     for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
@@ -347,12 +372,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           const sysroot = target.sysroot || '';
           for (const grp of target.fileGroups || []) {
             try {
-
               this._updateFileGroup(
                   target.sourceDirectory || '',
                   grp,
                   opts,
                   {
+                    name: target.name,
                     compileFlags,
                     includePath,
                     defines,
