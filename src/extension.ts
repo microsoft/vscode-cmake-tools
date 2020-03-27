@@ -327,10 +327,12 @@ class ExtensionManager implements vscode.Disposable {
         // Do nothing. User cancelled
         return;
       }
-      const perist_message
-          = chosen.doConfigure ?
+      const perist_message = chosen.doConfigure ?
             localize('always.configure.on.open', 'Always configure projects upon opening?') :
-            localize('never.configure.on.open', 'Never configure projects on opening?');
+            localize('never.configure.on.open', 'Configure projects on opening?');
+      const button_messages = chosen.doConfigure ?
+            [ localize('yes.button', 'Yes'), localize('no.button', 'No') ] :
+            [ localize('never.button', 'Never'), localize('never.for.this.workspace.button', 'Not this workspace') ];
       interface Choice2 {
         title: string;
         persistMode: 'user'|'workspace';
@@ -341,8 +343,8 @@ class ExtensionManager implements vscode.Disposable {
                 .showInformationMessage<Choice2>(
                     perist_message,
                     {},
-                    {title: localize('yes.button', 'Yes'), persistMode: 'user'},
-                    {title: localize('for.this.workspace.button', 'For this Workspace'), persistMode: 'workspace'},
+                    {title: button_messages[0], persistMode: 'user'},
+                    {title: button_messages[1], persistMode: 'workspace'},
                     )
                 .then(async choice => {
                   if (!choice) {
