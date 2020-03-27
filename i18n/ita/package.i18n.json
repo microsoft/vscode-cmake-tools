@@ -50,7 +50,7 @@
 	"cmake-tools.command.cmake.outline.revealInCMakeLists.title": "Apri CMakeLists.txt",
 	"cmake-tools.command.cmake.folders.setActiveFolder.title": "Imposta la cartella attiva",
 	"cmake-tools.configuration.title": "Configurazione di CMake Tools",
-	"cmake-tools.configuration.cmake.cmakePath.description": "Nome/percorso dell'eseguibile di CMake da usare.",
+	"cmake-tools.configuration.cmake.cmakePath.description": "Nome/Percorso dell'eseguibile di CMake da usare.",
 	"cmake-tools.configuration.cmake.buildDirectory.description": "Directory di destinazione dei file di compilazione di CMake.",
 	"cmake-tools.configuration.cmake.installPrefix.description": "Directory di destinazione dei file di installazione di CMake.",
 	"cmake-tools.configuration.cmake.sourceDirectory.description": "Directory del file CMakeLists.txt radice.",
