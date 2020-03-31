@@ -6,7 +6,7 @@
 {
 	"rereading.kits": "重新读取工具包",
 	"dispose.cmake.tools": "释放 CMake 工具",
-	"configure.this.project": "要配置项目 \"{0}\" 吗?",
+	"configure.this.project": "要配置项目“{0}”吗?",
 	"yes.button": "是",
 	"not.now.button": "暂不处理",
 	"always.configure.on.open": "始终在打开时配置项目?",
@@ -15,7 +15,7 @@
 	"persist.config.on.open.setting": "保留“打开即配置”设置",
 	"configuring.workspace.on.open": "正在打开的 {0} 上配置工作区",
 	"update.code.model.for.cpptools": "更新 cpptools 的代码模型",
-	"filed.to.open.cache.file.on.code.model.update": "无法在代码模型更新时打开 CMake 缓存文件",
+	"filed.to.open.cache.file.on.code.model.update": "未能在代码模型更新时打开 CMake 缓存文件",
 	"opening.text.editor.for": "正在打开适用于 {0} 的文本编辑器",
 	"no.kits.file.what.to.do": "不存在任何工具包文件。你要执行什么操作?",
 	"scan.for.kits.button": "扫描工具包",
