@@ -597,20 +597,22 @@ export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, s
   const script_path = path.join(paths.tmpDir, script_filename);
   const environment_path = path.join(paths.tmpDir, environment_filename); // path of temp file in which the script writes the env vars to
 
-  const script = [];
+  let script = '';
+  let run_command = '';
   if (process.platform == 'win32') { // windows
-    script.push(`call "${kit.environmentSetupScript}"`); // call the user batch script
-    script.push(`set >> ${environment_path}`); // write env vars to temp file
+    script += `call "${kit.environmentSetupScript}"\r\n`; // call the user batch script
+    script += `set >> ${environment_path}`; // write env vars to temp file
+    run_command = 'call ' + script_path;
   } else { // non-windows
-    script.push(`. "${kit.environmentSetupScript}"`); // run the user shell script
-    script.push(`printenv >> ${environment_path}`); // write env vars to temp file
+    script += `source "${kit.environmentSetupScript}"\n`; // run the user shell script
+    script +=`printenv >> ${environment_path}`; // write env vars to temp file
+    run_command = '/bin/bash -c "source ' + script_path + '"'; // run script in bash to enable bash-builtin commands like 'source'
   }
   try {
     await fs.unlink(environment_path); // delete the temp file if it exists
   } catch (error) {}
-  await fs.writeFile(script_path, script.join('\r\n')); // write batch file
+  await fs.writeFile(script_path, script); // write batch file
 
-  const run_command = (process.platform == 'win32' ? 'call ' : '. ') + script_path;
   const res = await proc.execute(run_command, [], null, {shell: true, silent: true}).result; // run script
   await fs.unlink(script_path); // delete script file
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
