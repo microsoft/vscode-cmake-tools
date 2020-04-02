@@ -601,7 +601,7 @@ export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, s
   if (process.platform == 'win32') { // windows
     script.push(`call "${kit.environmentSetupScript}"`); // call the user batch script
     script.push(`set >> ${environment_path}`); // write env vars to temp file
-    } else { // non-windows
+  } else { // non-windows
     script.push(`. "${kit.environmentSetupScript}"`); // run the user shell script
     script.push(`printenv >> ${environment_path}`); // write env vars to temp file
   }

@@ -33,8 +33,7 @@ suite('Kits test', async () => {
     // generate a file with test batch / shell script that sets two env vars
     if (process.platform == 'win32') {
       await fs.writeFile(script_path, `set "TESTVAR12=abc"\r\nset "TESTVAR13=cde"`);
-    }
-      else {
+    } else {
       await fs.writeFile(script_path, `export "TESTVAR12=abc"\nexport "TESTVAR13=cde"`);
     }
 
