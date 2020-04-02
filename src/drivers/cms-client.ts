@@ -468,45 +468,67 @@ export class CMakeServerClient {
     log.warning(localize('cant.yet.handle.message', 'Can\'t yet handle the {0} messages', some.type));
   }
 
-  sendRequest(t: 'handshake', p: HandshakeParams): Promise<HandshakeContent>;
-  sendRequest(t: 'globalSettings', p?: GlobalSettingsParams): Promise<GlobalSettingsContent>;
-  sendRequest(t: 'setGlobalSettings', p: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent>;
-  sendRequest(t: 'configure', p: ConfigureParams): Promise<ConfigureContent>;
-  sendRequest(t: 'compute', p?: ComputeParams): Promise<ComputeContent>;
-  sendRequest(t: 'codemodel', p?: CodeModelParams): Promise<CodeModelContent>;
-  sendRequest(t: 'cmakeInputs', p?: CMakeInputsParams): Promise<CMakeInputsContent>;
-  sendRequest(T: 'cache', p?: CacheParams): Promise<CacheContent>;
-  sendRequest(type: string, params: any = {}): Promise<any> {
-    const cp = {type, ...params};
-    const cookie = cp.cookie = Math.random().toString();
-    const pr = new Promise((resolve, reject) => { this._promisesResolvers.set(cookie, {resolve, reject}); });
-    const msg = JSON.stringify(cp);
+  private _sendRequest(type: 'handshake', params: HandshakeParams): Promise<HandshakeContent>;
+  private _sendRequest(type: 'globalSettings', params?: GlobalSettingsParams): Promise<GlobalSettingsContent>;
+  private _sendRequest(type: 'setGlobalSettings', params: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent>;
+  private _sendRequest(type: 'configure', params: ConfigureParams): Promise<ConfigureContent>;
+  private _sendRequest(type: 'compute', params?: ComputeParams): Promise<ComputeContent>;
+  private _sendRequest(type: 'codemodel', params?: CodeModelParams): Promise<CodeModelContent>;
+  private _sendRequest(type: 'cmakeInputs', params?: CMakeInputsParams): Promise<CMakeInputsContent>;
+  private _sendRequest(type: 'cache', params?: CacheParams): Promise<CacheContent>;
+  private _sendRequest(type: string, params: any = {}): Promise<any> {
+    const cookiedMessage = {type, ...params};
+    const cookie = cookiedMessage.cookie = Math.random().toString();
+    const promise = new Promise((resolve, reject) => { this._promisesResolvers.set(cookie, {resolve, reject}); });
+    const jsonMessage = JSON.stringify(cookiedMessage);
     if (ENABLE_CMSERVER_PROTO_DEBUG) {
-      log.debug(localize('sending.message.to.cmake-server', 'Sending message to cmake-server: {0}', msg));
+      log.debug(localize('sending.message.to.cmake-server', 'Sending message to cmake-server: {0}', jsonMessage));
     }
     this._pipe.write('\n[== "CMake Server" ==[\n');
-    this._pipe.write(msg);
+    this._pipe.write(jsonMessage);
     this._pipe.write('\n]== "CMake Server" ==]\n');
-    return pr;
+    return promise;
   }
+
+  /**
+   * CMake server requests:
+   */
 
   setGlobalSettings(params: SetGlobalSettingsParams): Promise<SetGlobalSettingsContent> {
-    return this.sendRequest('setGlobalSettings', params);
+    return this._sendRequest('setGlobalSettings', params);
   }
 
-  getCMakeCacheContent(): Promise<CacheContent> { return this.sendRequest('cache'); }
+  handshake(params: HandshakeParams): Promise<HandshakeContent> {
+    return this._sendRequest('handshake', params);
+  }
 
-  getGlobalSettings(): Promise<GlobalSettingsContent> { return this.sendRequest('globalSettings'); }
+  getCMakeCacheContent(): Promise<CacheContent> {
+    return this._sendRequest('cache');
+  }
 
-  configure(params: ConfigureParams): Promise<ConfigureContent> { return this.sendRequest('configure', params); }
+  getGlobalSettings(): Promise<GlobalSettingsContent> {
+    return this._sendRequest('globalSettings');
+  }
 
-  compute(params?: ComputeParams): Promise<ComputeParams> { return this.sendRequest('compute', params); }
+  configure(params: ConfigureParams): Promise<ConfigureContent> {
+    return this._sendRequest('configure', params);
+  }
 
-  codemodel(params?: CodeModelParams): Promise<CodeModelContent> { return this.sendRequest('codemodel', params); }
+  compute(params?: ComputeParams): Promise<ComputeParams> {
+    return this._sendRequest('compute', params);
+  }
 
-  cmakeInputs(params?: CMakeInputsParams): Promise<CMakeInputsContent> { return this.sendRequest('cmakeInputs', params); }
+  codemodel(params?: CodeModelParams): Promise<CodeModelContent> {
+    return this._sendRequest('codemodel', params);
+  }
 
+  cmakeInputs(params?: CMakeInputsParams): Promise<CMakeInputsContent> {
+    return this._sendRequest('cmakeInputs', params);
+  }
+
+  protected _shutdown = false;
   public async shutdown() {
+    this._shutdown = true;
     this._pipe.end();
     await this._endPromise;
   }
@@ -534,10 +556,16 @@ export class CMakeServerClient {
         const pipe = this._pipe = net.createConnection(pipe_file);
         pipe.on('data', this._onMoreData.bind(this));
         pipe.on('error', e => {
-          debugger;
           pipe.end();
-          rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'), {pipe: pipe_file}, params.onPipeError(e));
-          reject(e);
+          if (!this._shutdown) {
+            debugger;
+            rollbar.takePromise(localize('pipe.error.from.cmake-server', 'Pipe error from cmake-server'),
+                                {pipe: pipe_file},
+                                params.onPipeError(e));
+            reject(e);
+          } else {
+            resolve();
+          }
         });
         pipe.on('end', () => {
           pipe.end();
@@ -631,7 +659,7 @@ export class CMakeServerClient {
               log.info(configureMessage + extraMessage);
             }
 
-            await client.sendRequest('handshake', hsparams);
+            await client.handshake(hsparams);
             resolved = true;
             resolve(client);
           } catch (e) {
