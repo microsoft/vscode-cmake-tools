@@ -61,17 +61,17 @@ suite('CppTools tests', () => {
       }]
     };
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target1'});
+    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target1', folder: here});
     let configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG1');
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target2'});
+    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target2', folder: here});
     configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG2');
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'all'});
+    provider.updateConfigurationData({cache, codeModel, activeTarget: 'all', folder: here});
     configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines.some(def => def === 'FLAG1' || def === 'FLAG2')).to.be.true;
