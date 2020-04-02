@@ -602,11 +602,11 @@ export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, s
   if (process.platform == 'win32') { // windows
     script += `call "${kit.environmentSetupScript}"\r\n`; // call the user batch script
     script += `set >> ${environment_path}`; // write env vars to temp file
-    run_command = 'call ' + script_path;
+    run_command = `call ${script_path}`;
   } else { // non-windows
     script += `source "${kit.environmentSetupScript}"\n`; // run the user shell script
     script +=`printenv >> ${environment_path}`; // write env vars to temp file
-    run_command = '/bin/bash -c "source ' + script_path + '"'; // run script in bash to enable bash-builtin commands like 'source'
+    run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
   }
   try {
     await fs.unlink(environment_path); // delete the temp file if it exists
