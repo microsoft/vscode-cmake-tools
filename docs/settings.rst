@@ -220,7 +220,6 @@ need to be on your ``$PATH`` for it to be found via Kit scanning.
 **********************
 
 By specifying a number, you can define how many jobs are run in parallel during the build.
-This affects the ``-j`` option for the underlying build tool.
 
 .. _conf-cmake.preferredGenerators:
 
