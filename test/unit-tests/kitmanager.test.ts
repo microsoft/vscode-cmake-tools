@@ -37,7 +37,7 @@ suite('Kits test', async () => {
       await fs.writeFile(script_path, `export "TESTVAR12=abc"\nexport "TESTVAR13=cde"`);
     }
 
-    const kit = { name: "Test Kit 1", environmentVariablesShellScript: script_path };
+    const kit = { name: "Test Kit 1", environmentSetupScript: script_path };
     const env_vars = await getShellScriptEnvironment(kit);
     await fs.unlink(script_path);
     expect(env_vars).to.not.be.undefined;
