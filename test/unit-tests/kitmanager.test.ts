@@ -31,10 +31,12 @@ suite('Kits test', async () => {
     const fname = `cmake-kit-test-${Math.random().toString()}.${fname_extension}`;
     const script_path = path.join(paths.tmpDir, fname);
     // generate a file with test batch / shell script that sets two env vars
-    if (process.platform == 'win32')
+    if (process.platform == 'win32') {
       await fs.writeFile(script_path, `set "TESTVAR12=abc"\r\nset "TESTVAR13=cde"`);
-    else
-      await fs.writeFile(script_path, `export "TESTVAR12=abc"\r\nexport "TESTVAR13=cde"`);
+    }
+      else {
+      await fs.writeFile(script_path, `export "TESTVAR12=abc"\nexport "TESTVAR13=cde"`);
+    }
 
     const kit = { name: "Test Kit 1", environmentVariablesShellScript: script_path };
     const env_vars = await getShellScriptEnvironment(kit);
