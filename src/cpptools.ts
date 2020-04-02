@@ -176,7 +176,7 @@ export interface CodeModelParams {
    */
   activeTarget: string|null;
   /**
-   * Workspace folder.
+   * Workspace folder full path.
    */
   folder: string
 }
@@ -289,7 +289,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
-    const normalizedIncludePath = includePath.map(p => util.lightNormalizePath(p));
+    const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
 
     const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
     for (const includePathItem of normalizedIncludePath) {
@@ -350,7 +350,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         });
         this._fileIndex.set(abs_norm, data);
       }
-      const dir = path.dirname(util.lightNormalizePath(abs));
+      const dir = path.dirname(abs_norm);
       if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
         this._workspaceBrowseConfiguration.browsePath.push(dir);
       }
