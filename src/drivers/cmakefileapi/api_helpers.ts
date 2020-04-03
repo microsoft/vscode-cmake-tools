@@ -178,7 +178,9 @@ export async function loadConfigurationTargetMap(reply_path: string, codeModel_f
 }
 
 function convertToAbsolutePath(input_path: string, base_path: string) {
-  return path.normalize(path.join(base_path, input_path));
+  // Prepend the base path to the input path if the input path is relative.
+  const absolute_path = path.isAbsolute(input_path) ? input_path : path.join(base_path, input_path);
+  return path.normalize(absolute_path);
 }
 
 function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject): CodeModelFileGroup[] {
