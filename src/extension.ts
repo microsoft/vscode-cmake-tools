@@ -456,7 +456,7 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
-  private cpptoolsReady: boolean = false;
+  private cpptoolsNumFoldersReady: number = 0;
   private _updateCodeModel(folder: CMakeToolsFolder) {
     const cmt = folder.cmakeTools;
     this._projectOutlineProvider.updateCodeModel(
@@ -469,7 +469,7 @@ class ExtensionManager implements vscode.Disposable {
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
       if (!this._cppToolsAPI) {
-        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v2);
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v3);
       }
       if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
         const codeModel = cmt.codeModel;
@@ -486,11 +486,13 @@ class ExtensionManager implements vscode.Disposable {
         const opts = drv ? drv.expansionOptions : undefined;
         const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
-        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget});
+        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
         await this.ensureCppToolsProviderRegistered();
-        if (cpptools.notifyReady && !this.cpptoolsReady) {
-          cpptools.notifyReady(this._configProvider);
-          this.cpptoolsReady = true;
+        if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
+          ++this.cpptoolsNumFoldersReady;
+          if (this.cpptoolsNumFoldersReady === this._folders.size) {
+            cpptools.notifyReady(this._configProvider);
+          }
         } else {
           cpptools.didChangeCustomConfiguration(this._configProvider);
         }
