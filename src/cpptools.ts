@@ -178,7 +178,7 @@ export interface CodeModelParams {
   /**
    * Workspace folder full path.
    */
-  folder: string
+  folder: string;
 }
 
 /**
@@ -204,7 +204,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   private _lastUpdateSucceeded = true;
 
   private _workspaceBrowseConfiguration: cpt.WorkspaceBrowseConfiguration = {browsePath: []};
-  private _workspaceBrowseConfigurations = new Map<string, cpt.WorkspaceBrowseConfiguration>();
+  private readonly _workspaceBrowseConfigurations = new Map<string, cpt.WorkspaceBrowseConfiguration>();
 
   /**
    * Get the SourceFileConfigurationItem from the index for the given URI

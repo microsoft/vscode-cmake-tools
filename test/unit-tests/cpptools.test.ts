@@ -65,7 +65,7 @@ suite('CppTools tests', () => {
     provider.updateConfigurationData({cache, codeModel, activeTarget: 'target1', folder: here});
 
     // Update configuration with a 2nd workspace folder.
-    let smokeFolder = util.lightNormalizePath(path.join(here, '../smoke'));
+    const smokeFolder = util.lightNormalizePath(path.join(here, '../smoke'));
     const sourceFile2 = path.join(smokeFolder, 'main.cpp');
     const uri2 = vscode.Uri.file(sourceFile2);
     const codeModel2: codemodel_api.CodeModelContent = {
@@ -105,17 +105,17 @@ suite('CppTools tests', () => {
     expect(configurations[0].configuration.defines).to.not.have.all.members(['FLAG1', 'FLAG2']);
 
     // Verify the per-folder browsePath.
-    let canProvideBrowseConfigPerFolder: boolean = await provider.canProvideBrowseConfigurationsPerFolder();
+    const canProvideBrowseConfigPerFolder: boolean = await provider.canProvideBrowseConfigurationsPerFolder();
     expect(canProvideBrowseConfigPerFolder).to.eq(true);
-    let browseConfig = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(here));
+    const browseConfig = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(here));
     expect(browseConfig.browsePath.length).to.eq(1);
     expect(browseConfig.browsePath[0]).to.eq(here);
 
     // Verify the browsePath with a different folder.
-    let configurations2 = await provider.provideConfigurations([uri2]);
+    const configurations2 = await provider.provideConfigurations([uri2]);
     expect(configurations2.length).to.eq(1);
     expect(configurations2[0].configuration.defines).to.contain('FLAG1');
-    let browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
+    const browseConfig2 = await provider.provideFolderBrowseConfiguration(vscode.Uri.file(smokeFolder));
     expect(browseConfig2.browsePath.length).to.eq(1);
     expect(browseConfig2.browsePath[0]).to.eq(smokeFolder);
   });
