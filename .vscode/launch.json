@@ -213,9 +213,9 @@
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "${workspaceFolder}/test/extension-tests/vs-preferred-gen/project-folder",
+                "${workspaceFolder}/test/extension-tests/successful-build/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/vs-preferred-gen"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/successful-build"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -223,8 +223,8 @@
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/src/*",
                 "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/vs-preferred-gen/*",
-                "${workspaceFolder}/out/test/extension-tests/vs-preferred-gen/test/*"
+                "${workspaceFolder}/out/test/extension-tests/successful-build/*",
+                "${workspaceFolder}/out/test/extension-tests/successful-build/test/*"
             ],
             "preLaunchTask": "build-tests-with-tsc-watch",
             "windows": {

@@ -331,6 +331,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (kit.preferredGenerator)
       preferredGenerators.push(kit.preferredGenerator);
 
+    // If no preferred generator is defined by the current kit or the user settings,
+    // it's time to consider the defaults.
+    if (preferredGenerators.length === 0) {
+      preferredGenerators.push({name: "Ninja"});
+      preferredGenerators.push({name: "Unix Makefiles"});
+    }
+
     // Use the "best generator" selection logic only if the user did not define already
     // in settings (via "cmake.generator") a particular generator to be used.
     if (this.config.generator) {
@@ -541,6 +548,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator|null> {
     log.debug(localize('trying.to.detect.generator', 'Trying to detect generator supported by system'));
     const platform = process.platform;
+
     for (const gen of preferredGenerators) {
       const gen_name = gen.name;
       const generator_present = await (async(): Promise<boolean> => {
