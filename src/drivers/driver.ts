@@ -676,6 +676,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       return retc;
     } catch {
+      log.info(localize('configure.failed', 'Failed to configure project'));
       return -1;
     } finally { this.configRunning = false; }
   }
