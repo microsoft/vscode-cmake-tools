@@ -289,12 +289,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
-
-    // Skip case normalization, because otherwise consumers of browsePath may call
-    // vscode.workspace.getWorkspaceFolder(browsePath) and get "undefined".
-    // If somehow 2 casings end up getting added for the same path, that is okay,
-    // because the duplicates can be removed by the user of the browsePath.
-    const normalizedIncludePath = includePath.map(p => util.normalizePath(p, {normCase: 'never', normUnicode: 'platform'}));
+    const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
 
     const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
     for (const includePathItem of normalizedIncludePath) {
@@ -355,10 +350,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         });
         this._fileIndex.set(abs_norm, data);
       }
-
-      // Skip case normalization, see the more detailed comment above.
-      const dir = path.dirname(util.normalizePath(abs, {normCase: 'never', normUnicode: 'platform'}));
-
+      const dir = path.dirname(abs_norm);
       if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
         this._workspaceBrowseConfiguration.browsePath.push(dir);
       }
