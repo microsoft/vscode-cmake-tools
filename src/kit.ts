@@ -430,28 +430,22 @@ export function vsDisplayName(inst: VSInstallation): string {
  * @param inst The VSInstallation to use
  * @param arch The desired architecture (e.g. x86, amd64)
  */
-function kitName(inst: VSInstallation, arch: string): string {
-  return `${vsDisplayName(inst)} - ${arch}`;
-}
+function kitName(inst: VSInstallation, hostArch: string, targetArch: string): string {
+  // We still keep the amd64 alias for x64, only in the name of the detected VS kits,
+  // for compatibility reasons. Switching to 'x64' means leaving
+  // orphaned 'amd64' kits around ("Scan for kits" does not delete them yet)
+  // and also it may require a new kit selection.
+  // VS toolsets paths on disk, vcvarsall.bat parameters and CMake arguments are all x64 now.
+  // We can revise later whether to change to 'x64' in the VS kit name as well and how to mitigate it.
+  if (hostArch === "x64") {
+    hostArch = "amd64";
+  }
 
-/**
- * Extract the toolset host architecture from the kit name suffix.
- * The rule is: [hostArch]_[targetArch] or both [arch] if no "_" is present.
- * @param hostTargetArch
- */
-function kitHostArch(hostTargetArch: string): string {
-  const hostArch: string = hostTargetArch.split("_")[0];
-  return hostArch;
-}
+  if (targetArch === "x64") {
+    targetArch = "amd64";
+  }
 
-/**
- * Extract the toolset host architecture from the kit name suffix.
- * The rule is: [hostArch]_[targetArch] or both [arch] if no "_" is present.
- * @param hostTargetArch
- */
-function kitTargetArch(hostTargetArch: string): string {
-  const targetArch: string = hostTargetArch.split("_")[1] || hostTargetArch;
-  return targetArch;
+  return `${vsDisplayName(inst)} - ${kitHostTargetArch(hostArch, targetArch)}`;
 }
 
 /**
@@ -461,12 +455,7 @@ function kitTargetArch(hostTargetArch: string): string {
  * @param targetArch The architecture of the target
  */
 function kitHostTargetArch(hostArch: string, targetArch: string): string {
-  let hostTargetArch: string = hostArch;
-  if (targetArch && vsHostTargetArchsFromGenPlatform[targetArch] !== hostArch) {
-    hostTargetArch = hostTargetArch.concat("_").concat(vsHostTargetArchsFromGenPlatform[targetArch]);
-  }
-
-  return hostTargetArch;
+  return hostArch === targetArch ? hostArch : hostArch.concat("_").concat(targetArch);
 }
 
 /**
@@ -560,32 +549,12 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
 }
 
 /**
- * Platform arguments for VS Generators
- * For example, x86 and amd64_x86 will generate -A win32
+ * Platform arguments for VS Generators.
+ * Currently, there is a mismatch only between x86 and win32.
+ * For example, VS kits x86 and amd64_x86 will generate -A win32
  */
 const genPlatformFromVsHostTargetArchs: {[key: string]: string} = {
-  x86: 'win32',
-  amd64: 'x64',
-  arm: 'arm'
-};
-
-/**
- * Reverse of genPlatformFromVsHostTargetArchs
- */
-const vsHostTargetArchsFromGenPlatform: {[key: string]: string} = {
-  win32: 'x86',
-  x64: 'amd64',
-  arm: 'arm'
-};
-
-/**
- * Host arguments for VS toolsets
- * For example, amd64 and amd64_arm will generate -T host=x64
- * No need for the reverse of this.
- */
-const toolsetHostFromVsHostTargetArchs: {[key: string]: string} = {
-  x86: 'x86',
-  amd64: 'x64'
+  x86: 'win32'
 };
 
 /**
@@ -602,18 +571,38 @@ const VsGenerators: {[key: string]: string} = {
   16: 'Visual Studio 16 2019'
 };
 
-async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
-  console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} arch:${arch}`);
+async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch: string): Promise<Map<string, string>|null> {
+  console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
+
+  // TODO: if needed, cover also the scenario of VS older than 2017,
+  // which has vcvarsall.bat in a different location (Program Files x86\Microsoft Visual Studio [ver]\VC)
+  // and which is not recognizing x64 alias for amd64.
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
   let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', 'vcvarsall.bat');
   const majorVersion = parseInt(inst.installationVersion);
   if (majorVersion < 15) {
     devbat = path.join(inst.installationPath, 'VC', 'vcvarsall.bat');
   }
-  const variables = await collectDevBatVars(devbat, [`${arch}`], majorVersion, common_dir);
+  const variables = await collectDevBatVars(devbat, [`${kitHostTargetArch(hostArch, targetArch)}`], majorVersion, common_dir);
   if (!variables) {
     return null;
   } else {
+    // When invoked for arm or arm64, the vcvarsall.bat script creates an x86 environment,
+    // when the arm(64) components are not installed.
+    // The way to differentiate between the two cases is to check that the first path
+    // in the PATH environment variable ends with the target architecture.
+    // The logic applies to any new future target architectures and also to x86/amd64,
+    // even if they are always installed by default.
+    let pathStr: string | undefined = variables.get('PATH');
+    if (!pathStr) {
+      return null;
+    }
+
+    pathStr = pathStr.split(";")[0].toLowerCase();
+    if (!pathStr.endsWith(targetArch)) {
+      return null;
+    }
+
     // This is a very *hacky* and sub-optimal solution, but it
     // works for now. This *helps* CMake make the right decision
     // when you have the release and pre-release edition of the same
@@ -654,17 +643,16 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
  * @param inst A VS installation from vswhere
  * @param hostTargetArch The host-target architecture combination to try
  */
-async function tryCreateNewVCEnvironment(inst: VSInstallation, hostTargetArch: string, pr?: ProgressReporter): Promise<Kit|null> {
-  const name = kitName(inst, hostTargetArch);
-  const hostArch: string = kitHostArch(hostTargetArch);
-  const targetArch: string = kitTargetArch(hostTargetArch);
+async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string, targetArch: string, pr?: ProgressReporter): Promise<Kit|null> {
+  const name = kitName(inst, hostArch, targetArch);
   log.debug(localize('checking.for.kit', 'Checking for kit: {0}', name));
   if (pr) {
     pr.report({message: localize('checking', 'Checking {0}', name)});
   }
-  const variables = await varsForVSInstallation(inst, hostTargetArch);
-  if (!variables)
+  const variables = await varsForVSInstallation(inst, hostArch, targetArch);
+  if (!variables) {
     return null;
+  }
 
   const kit: Kit = {
     name,
@@ -683,11 +671,9 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostTargetArch: s
       log.debug(` ${localize('generator.present', 'Generator Present: {0}', generatorName)}`);
       kit.preferredGenerator = {
         name: generatorName,
-        platform: genPlatformFromVsHostTargetArchs[targetArch] as string || undefined,
+        platform: genPlatformFromVsHostTargetArchs[targetArch] as string || targetArch,
         // CMake generator toolsets support also different versions (via -T version=).
-        // TODO: identify multiple MSVC toolsets under the same VS installation:
-        // [VS Installation Path]\\VC\\Tools\\MSVC\\[MSVC Version]\\bin\\[HostArch]\\[TargetArch]
-        toolset: "host=" + toolsetHostFromVsHostTargetArchs[hostArch]
+        toolset: "host=" + hostArch
       };
     }
     log.debug(` ${localize('selected.preferred.generator.name', 'Selected Preferred Generator Name: {0} {1}', generatorName, JSON.stringify(kit.preferredGenerator))}`);
@@ -703,15 +689,24 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   const installs = await vsInstallations();
   const prs = installs.map(async(inst): Promise<Kit[]> => {
     const ret = [] as Kit[];
-    // TODO: exclude toolsets that are not yet installed.
-    // For example, arm is not part of the default VS installation
-    // and scanning for kits shouldn't find it in this case.
-    const hostTargetArches = ['x86', 'amd64', 'x86_amd64', 'x86_arm', 'amd64_arm', 'amd64_x86'];
-    const sub_prs = hostTargetArches.map(arch => tryCreateNewVCEnvironment(inst, arch, pr));
+    const hostArches: string[] = ['x86', 'x64'];
+    const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
+
+    const sub_prs: Promise<Kit | null>[] = [];
+    hostArches.forEach(hostArch => {
+      targetArches.forEach(targetArch => {
+        const kit: Promise<Kit | null> = tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr);
+        if (kit) {
+          sub_prs.push(kit);
+        }
+      });
+    });
+
     const maybe_kits = await Promise.all(sub_prs);
     maybe_kits.map(k => k ? ret.push(k) : null);
     return ret;
-  });
+});
+
   const vs_kits = await Promise.all(prs);
   return ([] as Kit[]).concat(...vs_kits);
 }
@@ -774,7 +769,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
     return null;
   }
 
-  return varsForVSInstallation(requested, kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform!));
+  return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform!);
 }
 
 export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {

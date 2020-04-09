@@ -113,9 +113,10 @@ command palette. The following process occurs to find available kits:
     CMake tools includes a bundled ``vswhere.exe`` which it uses to ask about
     existing Visual Studio instances installed on the system.
 
-    For each of ``x86``, ``amd64``, ``x86_amd64``, ``x86_arm``, ``amd64_arm``,
-    and ``amd64_x86``, CMake Tools will check for installed Visual C++
-    environments. A kit is generated for each existing MSVC toolchain.
+    For each of ``x86``, ``amd64``, ``x86_amd64``, ``x86_arm``, ``x86_arm64``,
+    ``amd64_x86``, ``amd64_arm``, and ``amd64_arm64``, CMake Tools will check
+    // for installed Visual C++ environments.
+    // A kit is generated for each existing MSVC toolchain.
 
 #. **Save results to the user-local kits file**
 
