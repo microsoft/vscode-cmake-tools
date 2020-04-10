@@ -1265,7 +1265,7 @@
     "gulp-sourcemaps": "^2.6.5",
     "gulp-typescript": "^5.0.1",
     "jsonc-parser": "^2.1.1",
-    "minimist": "^1.2.2",
+    "minimist": "^1.2.3",
     "mocha": "^4.1.0",
     "module-alias": "^2.2.1",
     "sinon": "~5.0.7",

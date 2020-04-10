@@ -175,6 +175,10 @@ export interface CodeModelParams {
    * The active target
    */
   activeTarget: string|null;
+  /**
+   * Workspace folder full path.
+   */
+  folder: string;
 }
 
 /**
@@ -200,6 +204,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   private _lastUpdateSucceeded = true;
 
   private _workspaceBrowseConfiguration: cpt.WorkspaceBrowseConfiguration = {browsePath: []};
+  private readonly _workspaceBrowseConfigurations = new Map<string, cpt.WorkspaceBrowseConfiguration>();
 
   /**
    * Get the SourceFileConfigurationItem from the index for the given URI
@@ -242,10 +247,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   async provideBrowseConfiguration() { return this._workspaceBrowseConfiguration; }
 
-  async canProvideBrowseConfigurationsPerFolder() { return false; }
+  async canProvideBrowseConfigurationsPerFolder() { return true; }
 
   async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
-    throw new Error(localize('method.not.implemented', "Method not implemented."));
+    return this._workspaceBrowseConfigurations.get(util.platformNormalizePath(_uri.fsPath)) ?? this._workspaceBrowseConfiguration;
   }
 
   /** No-op */
@@ -284,7 +289,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
-    const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
+
+    // Skip case normalization, because otherwise consumers of browsePath may call
+    // vscode.workspace.getWorkspaceFolder(browsePath) and get "undefined".
+    // If somehow 2 casings end up getting added for the same path, that is okay,
+    // because the duplicates can be removed by the user of the browsePath.
+    const normalizedIncludePath = includePath.map(p => util.normalizePath(p, {normCase: 'never', normUnicode: 'platform'}));
 
     const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
     for (const includePathItem of normalizedIncludePath) {
@@ -303,6 +313,8 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
+
+    this._workspaceBrowseConfigurations.set(util.platformNormalizePath(opts.folder), this._workspaceBrowseConfiguration);
 
     return {
       defines,
@@ -343,7 +355,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         });
         this._fileIndex.set(abs_norm, data);
       }
-      const dir = path.dirname(abs_norm);
+
+      // Skip case normalization, see the more detailed comment above.
+      const dir = path.dirname(util.normalizePath(abs, {normCase: 'never', normUnicode: 'platform'}));
+
       if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
         this._workspaceBrowseConfiguration.browsePath.push(dir);
       }
