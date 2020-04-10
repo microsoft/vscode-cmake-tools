@@ -428,7 +428,8 @@ export function vsDisplayName(inst: VSInstallation): string {
  * Construct the Kit.name property.
  *
  * @param inst The VSInstallation to use
- * @param arch The desired architecture (e.g. x86, amd64)
+ * @param hostArch The architecture of the toolset host (e.g. x86, x64|amd64)
+ * @param targetArch The architecture of the toolset target (e.g. x86, x64|amd64, arm, arm64)
  */
 function kitName(inst: VSInstallation, hostArch: string, targetArch: string): string {
   // We still keep the amd64 alias for x64, only in the name of the detected VS kits,
@@ -437,15 +438,7 @@ function kitName(inst: VSInstallation, hostArch: string, targetArch: string): st
   // and also it may require a new kit selection.
   // VS toolsets paths on disk, vcvarsall.bat parameters and CMake arguments are all x64 now.
   // We can revise later whether to change to 'x64' in the VS kit name as well and how to mitigate it.
-  if (hostArch === "x64") {
-    hostArch = "amd64";
-  }
-
-  if (targetArch === "x64") {
-    targetArch = "amd64";
-  }
-
-  return `${vsDisplayName(inst)} - ${kitHostTargetArch(hostArch, targetArch)}`;
+  return `${vsDisplayName(inst)} - ${kitHostTargetArch(hostArch, targetArch, true)}`;
 }
 
 /**
@@ -453,9 +446,23 @@ function kitName(inst: VSInstallation, hostArch: string, targetArch: string): st
  * from the VS kit architecture (host) and generator platform (target).
  * @param hostArch The architecture of the host toolset
  * @param targetArch The architecture of the target
+ * @param amd64Alias Whether amd64 is preferred over x64.
  */
-function kitHostTargetArch(hostArch: string, targetArch: string): string {
-  return hostArch === targetArch ? hostArch : hostArch.concat("_").concat(targetArch);
+function kitHostTargetArch(hostArch: string, targetArch: string, amd64Alias: boolean = false): string {
+  // There are cases when we don't want to use the 'x64' alias of the 'amd64' architecture,
+  // like for older VS installs, for the VS kit names (for compatibility reasons)
+  // or for arm/arm64 specific vcvars scripts.
+  if (amd64Alias) {
+    if (hostArch === "x64") {
+      hostArch = "amd64";
+    }
+
+    if (targetArch === "x64") {
+      targetArch = "amd64";
+    }
+  }
+
+  return hostArch === targetArch ? hostArch : `${hostArch}_${targetArch}`;
 }
 
 /**
@@ -573,36 +580,29 @@ const VsGenerators: {[key: string]: string} = {
 
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch: string): Promise<Map<string, string>|null> {
   console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
-
-  // TODO: if needed, cover also the scenario of VS older than 2017,
-  // which has vcvarsall.bat in a different location (Program Files x86\Microsoft Visual Studio [ver]\VC)
-  // and which is not recognizing x64 alias for amd64.
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
-  let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', 'vcvarsall.bat');
+  let vcvarsScript: string = 'vcvarsall.bat';
+  if (targetArch == "arm" || targetArch == "arm64") {
+    // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
+    vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
+  }
+
+  let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', vcvarsScript);
   const majorVersion = parseInt(inst.installationVersion);
   if (majorVersion < 15) {
-    devbat = path.join(inst.installationPath, 'VC', 'vcvarsall.bat');
+    devbat = path.join(inst.installationPath, 'VC', vcvarsScript);
   }
-  const variables = await collectDevBatVars(devbat, [`${kitHostTargetArch(hostArch, targetArch)}`], majorVersion, common_dir);
+
+  // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
+  // in the given VS installation.
+  if (!await fs.exists(devbat)) {
+    return null;
+  }
+
+  const variables = await collectDevBatVars(devbat, [kitHostTargetArch(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
   if (!variables) {
     return null;
   } else {
-    // When invoked for arm or arm64, the vcvarsall.bat script creates an x86 environment,
-    // when the arm(64) components are not installed.
-    // The way to differentiate between the two cases is to check that the first path
-    // in the PATH environment variable ends with the target architecture.
-    // The logic applies to any new future target architectures and also to x86/amd64,
-    // even if they are always installed by default.
-    let pathStr: string | undefined = variables.get('PATH');
-    if (!pathStr) {
-      return null;
-    }
-
-    pathStr = pathStr.split(";")[0].toLowerCase();
-    if (!pathStr.endsWith(targetArch)) {
-      return null;
-    }
-
     // This is a very *hacky* and sub-optimal solution, but it
     // works for now. This *helps* CMake make the right decision
     // when you have the release and pre-release edition of the same
