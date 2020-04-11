@@ -378,9 +378,9 @@ export class TargetNode extends BaseNode {
 }
 
 class ProjectNode extends BaseNode {
-  constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder) { super(name); }
+  constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDir: string) { super(name); }
 
-  private readonly _rootDir = new DirectoryNode<TargetNode>(this.name, '', '');
+  private readonly _rootDir = new DirectoryNode<TargetNode>(this.sourceDir, '', '');
 
   getOrderTuple() { return []; }
 
@@ -391,6 +391,7 @@ class ProjectNode extends BaseNode {
     if (this.getChildren().length === 0) {
       item.label += ` — (${localize('empty.project', 'Empty project')})`;
     }
+    item.tooltip=`${this.name}\n${this.sourceDir}`;
     return item;
   }
 
@@ -458,7 +459,7 @@ class WorkspaceFolderNode extends BaseNode {
     const config = model.configurations[0];
     const new_children: BaseNode[] = [];
     for (const pr of config.projects) {
-      const item = new ProjectNode(pr.name, ctx.folder);
+      const item = new ProjectNode(pr.name, ctx.folder, pr.sourceDirectory);
       item.update(pr, ctx);
       new_children.push(item);
     }
