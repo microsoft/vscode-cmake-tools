@@ -380,7 +380,7 @@ export class TargetNode extends BaseNode {
 class ProjectNode extends BaseNode {
   constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder) { super(name); }
 
-  private readonly _rootDir = new DirectoryNode<TargetNode>('', '', '');
+  private readonly _rootDir = new DirectoryNode<TargetNode>(this.name, '', '');
 
   getOrderTuple() { return []; }
 
