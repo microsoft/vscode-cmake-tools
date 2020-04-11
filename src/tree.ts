@@ -378,9 +378,9 @@ export class TargetNode extends BaseNode {
 }
 
 class ProjectNode extends BaseNode {
-  constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDir: string) { super(name); }
+  constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDirectory: string) { super(name); }
 
-  private readonly _rootDir = new DirectoryNode<TargetNode>(this.sourceDir, '', '');
+  private readonly _rootDir = new DirectoryNode<TargetNode>(this.sourceDirectory, '', '');
 
   getOrderTuple() { return []; }
 
@@ -391,7 +391,7 @@ class ProjectNode extends BaseNode {
     if (this.getChildren().length === 0) {
       item.label += ` — (${localize('empty.project', 'Empty project')})`;
     }
-    item.tooltip=`${this.name}\n${this.sourceDir}`;
+    item.tooltip=`${this.name}\n${this.sourceDirectory}`;
     return item;
   }
 
