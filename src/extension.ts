@@ -233,10 +233,11 @@ class ExtensionManager implements vscode.Disposable {
       // Expected schema is file...
       return vscode.workspace.getWorkspaceFolder(vscode.Uri.file(folder as string));
     }
-    if ((folder as vscode.WorkspaceFolder).uri) {
-      return folder;
+    const workspaceFolder = folder as vscode.WorkspaceFolder;
+    if (util.isNullOrUndefined(folder) || util.isNullOrUndefined(workspaceFolder.uri)) {
+      return this._folders.activeFolder?.folder;
     }
-    return this._folders.activeFolder?.folder;
+    return workspaceFolder;
   }
 
   private async _pickFolder() {
@@ -327,10 +328,12 @@ class ExtensionManager implements vscode.Disposable {
         // Do nothing. User cancelled
         return;
       }
-      const perist_message
-          = chosen.doConfigure ?
+      const perist_message = chosen.doConfigure ?
             localize('always.configure.on.open', 'Always configure projects upon opening?') :
-            localize('never.configure.on.open', 'Never configure projects on opening?');
+            localize('never.configure.on.open', 'Configure projects on opening?');
+      const button_messages = chosen.doConfigure ?
+            [ localize('yes.button', 'Yes'), localize('no.button', 'No') ] :
+            [ localize('never.button', 'Never'), localize('never.for.this.workspace.button', 'Not this workspace') ];
       interface Choice2 {
         title: string;
         persistMode: 'user'|'workspace';
@@ -341,8 +344,8 @@ class ExtensionManager implements vscode.Disposable {
                 .showInformationMessage<Choice2>(
                     perist_message,
                     {},
-                    {title: localize('yes.button', 'Yes'), persistMode: 'user'},
-                    {title: localize('for.this.workspace.button', 'For this Workspace'), persistMode: 'workspace'},
+                    {title: button_messages[0], persistMode: 'user'},
+                    {title: button_messages[1], persistMode: 'workspace'},
                     )
                 .then(async choice => {
                   if (!choice) {
@@ -453,6 +456,7 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  private cpptoolsNumFoldersReady: number = 0;
   private _updateCodeModel(folder: CMakeToolsFolder) {
     const cmt = folder.cmakeTools;
     this._projectOutlineProvider.updateCodeModel(
@@ -465,7 +469,7 @@ class ExtensionManager implements vscode.Disposable {
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
       if (!this._cppToolsAPI) {
-        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v2);
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v3);
       }
       if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
         const codeModel = cmt.codeModel;
@@ -482,10 +486,13 @@ class ExtensionManager implements vscode.Disposable {
         const opts = drv ? drv.expansionOptions : undefined;
         const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
-        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath});
+        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
         await this.ensureCppToolsProviderRegistered();
-        if (cpptools.notifyReady) {
-          cpptools.notifyReady(this._configProvider);
+        if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
+          ++this.cpptoolsNumFoldersReady;
+          if (this.cpptoolsNumFoldersReady === this._folders.size) {
+            cpptools.notifyReady(this._configProvider);
+          }
         } else {
           cpptools.didChangeCustomConfiguration(this._configProvider);
         }

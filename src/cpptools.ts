@@ -31,6 +31,7 @@ export interface CompileFlagInformation {
 class MissingCompilerException extends Error {}
 
 interface TargetDefaults {
+  name: string;
   includePath: string[];
   compileFlags: string[];
   defines: string[];
@@ -94,14 +95,14 @@ export function parseCompileFlags(args: string[], lang?: string): CompileFlagInf
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (lang === 'CXX') {
+      if (lang === 'CXX' || lang === 'OBJCXX' ) {
         const s = parseCppStandard(std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
           standard = s;
         }
-      } else if (lang === 'C') {
+      } else if (lang === 'C' || lang === 'OBJC' ) {
         const s = parseCStandard(std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
@@ -170,6 +171,14 @@ export interface CodeModelParams {
    * property.
    */
   clCompilerPath?: string|null;
+  /**
+   * The active target
+   */
+  activeTarget: string|null;
+  /**
+   * Workspace folder full path.
+   */
+  folder: string;
 }
 
 /**
@@ -181,7 +190,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   /** Our name visible to cpptools */
   readonly name = 'CMake Tools';
   /** Our extension ID, visible to cpptools */
-  readonly extensionId = 'vector-of-bool.cmake-tools';
+  readonly extensionId = 'ms-vscode.cmake-tools';
   /**
    * This value determines if we need to show the user an error message about missing compilers. When an update succeeds
    * without missing any compilers, we set this to `true`, otherwise `false`.
@@ -195,6 +204,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   private _lastUpdateSucceeded = true;
 
   private _workspaceBrowseConfiguration: cpt.WorkspaceBrowseConfiguration = {browsePath: []};
+  private readonly _workspaceBrowseConfigurations = new Map<string, cpt.WorkspaceBrowseConfiguration>();
 
   /**
    * Get the SourceFileConfigurationItem from the index for the given URI
@@ -202,7 +212,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _getConfiguration(uri: vscode.Uri): cpt.SourceFileConfigurationItem|undefined {
     const norm_path = util.platformNormalizePath(uri.fsPath);
-    return this._fileIndex.get(norm_path);
+    const configurations = this._fileIndex.get(norm_path);
+    if (this._activeTarget && configurations?.has(this._activeTarget)) {
+      return configurations!.get(this._activeTarget);
+    } else {
+      return configurations?.values().next().value; // Any value is fine if the target doesn't match
+    }
   }
 
   /**
@@ -232,10 +247,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   async provideBrowseConfiguration() { return this._workspaceBrowseConfiguration; }
 
-  async canProvideBrowseConfigurationsPerFolder() { return false; }
+  async canProvideBrowseConfigurationsPerFolder() { return true; }
 
   async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
-    throw new Error(localize('method.not.implemented', "Method not implemented."));
+    return this._workspaceBrowseConfigurations.get(util.platformNormalizePath(_uri.fsPath)) ?? this._workspaceBrowseConfiguration;
   }
 
   /** No-op */
@@ -243,9 +258,14 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
   /**
    * Index of files to configurations, using the normalized path to the file
-   * as the key.
+   * as the key to the <target,configuration>.
    */
-  private readonly _fileIndex = new Map<string, cpt.SourceFileConfigurationItem>();
+  private readonly _fileIndex = new Map<string, Map<string, cpt.SourceFileConfigurationItem>>();
+
+  /**
+   * If a source file configuration exists for the active target, we will prefer that one when asked.
+   */
+  private _activeTarget: string|null = null;
 
   /**
    * Create a source file configuration for the given file group.
@@ -264,13 +284,20 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     if (!comp_path) {
       throw new MissingCompilerException();
     }
+    const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions} = parseCompileFlags(flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
 
+    // Skip case normalization, because otherwise consumers of browsePath may call
+    // vscode.workspace.getWorkspaceFolder(browsePath) and get "undefined".
+    // If somehow 2 casings end up getting added for the same path, that is okay,
+    // because the duplicates can be removed by the user of the browsePath.
+    const normalizedIncludePath = includePath.map(p => util.normalizePath(p, {normCase: 'never', normUnicode: 'platform'}));
+
     const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
-    for (const includePathItem of includePath) {
+    for (const includePathItem of normalizedIncludePath) {
       if (newBrowsePath.indexOf(includePathItem) < 0) {
         newBrowsePath.push(includePathItem);
       }
@@ -283,16 +310,18 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
       standard,
-      compilerPath: comp_path || undefined,
+      compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
+
+    this._workspaceBrowseConfigurations.set(util.platformNormalizePath(opts.folder), this._workspaceBrowseConfiguration);
 
     return {
       defines,
       standard,
-      includePath,
+      includePath: normalizedIncludePath,
       intelliSenseMode: getIntelliSenseMode(comp_path),
-      compilerPath: comp_path || undefined,
+      compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
   }
@@ -313,11 +342,23 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     for (const src of grp.sources) {
       const abs = path.isAbsolute(src) ? src : path.join(sourceDir, src);
       const abs_norm = util.platformNormalizePath(abs);
-      this._fileIndex.set(abs_norm, {
-        uri: vscode.Uri.file(abs).toString(),
-        configuration,
-      });
-      const dir = path.dirname(abs_norm);
+      if (this._fileIndex.has(abs_norm)) {
+        this._fileIndex.get(abs_norm)!.set(target.name, {
+          uri: vscode.Uri.file(abs).toString(),
+          configuration
+        });
+      } else {
+        const data = new Map<string, cpt.SourceFileConfigurationItem>();
+        data.set(target.name, {
+          uri: vscode.Uri.file(abs).toString(),
+          configuration,
+        });
+        this._fileIndex.set(abs_norm, data);
+      }
+
+      // Skip case normalization, see the more detailed comment above.
+      const dir = path.dirname(util.normalizePath(abs, {normCase: 'never', normUnicode: 'platform'}));
+
       if (this._workspaceBrowseConfiguration.browsePath.indexOf(dir) < 0) {
         this._workspaceBrowseConfiguration.browsePath.push(dir);
       }
@@ -331,6 +372,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   updateConfigurationData(opts: CodeModelParams) {
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
+    this._activeTarget = opts.activeTarget;
     for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
@@ -345,12 +387,12 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           const sysroot = target.sysroot || '';
           for (const grp of target.fileGroups || []) {
             try {
-
               this._updateFileGroup(
                   target.sourceDirectory || '',
                   grp,
                   opts,
                   {
+                    name: target.name,
                     compileFlags,
                     includePath,
                     defines,

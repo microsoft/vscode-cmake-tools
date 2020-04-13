@@ -62,7 +62,7 @@
 	"run.build": "フォルダーのビルド中: {0}",
 	"unable.to.configure": "ビルドに失敗しました。プロジェクトを構成できません",
 	"driver.died.after.successful.configure": "CMake ドライバーは、構成が成功した直後に停止しました",
-	"building.status": "ビルド",
+	"building.status": "ビルド中",
 	"building.target": "{0} をビルドしています",
 	"stop.on.cancellation": "キャンセル時に停止",
 	"starting.build": "ビルドを開始しています",

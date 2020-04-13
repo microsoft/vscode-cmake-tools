@@ -563,3 +563,9 @@ export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path
 export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
 }
+
+export function isNullOrUndefined(x?: any): boolean {
+  // Double equals provides the correct answer for 'null' and 'undefined'
+  // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
+  return x == null;
+}
