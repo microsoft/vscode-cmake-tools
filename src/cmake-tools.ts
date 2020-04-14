@@ -39,7 +39,7 @@ import {VariantManager} from './variant';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
 import { CMakeToolsFolder } from './folders';
-import { ConfigurationWebview } from './webview';
+import { ConfigurationWebview } from './cache-view';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -973,7 +973,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return 1;
       }
 
-      this._cacheEditorWebview = new ConfigurationWebview(drv, async () => {
+      this._cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
         await this.rawConfigure();
       });
       await this._cacheEditorWebview.initPanel();

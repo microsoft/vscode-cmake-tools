@@ -1,59 +1,66 @@
 import * as vscode from 'vscode';
-import { CMakeCache } from './cache';
+import * as nls from 'vscode-nls';
 import * as api from './api';
-import { CMakeDriver } from './drivers/driver';
+import { CMakeCache } from './cache';
+
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 interface IOption {
     key: string;
     value: boolean;
 }
 
-export class ConfigurationWebview {
-  private readonly _panel: vscode.WebviewPanel;
-  cachePath = '';
 
+/**
+ * This object manages the webview rendering.
+ */
+export class ConfigurationWebview {
+
+  WINDOW_TITLE = 'CMake Cache Editor';
+  WINDOW_TITLE_UNSAVED = 'CMake Cache Editor*';
+
+  private readonly _panel: vscode.WebviewPanel;
   get panel() {
       return this._panel;
   }
 
-  constructor(protected drv: CMakeDriver,
+  constructor(protected cachePath: string,
       protected save: () => void) {
     this._panel = vscode.window.createWebviewPanel(
       'cmakeConfiguration', // Identifies the type of the webview. Used internally
       'CMake Cache Editor', // Title of the panel displayed to the user
       vscode.ViewColumn.One, // Editor column to show the new webview panel in.
       {
+        // this is needed for the html view to trigger events in the extension
         enableScripts: true
       }
     );
-
-    this.cachePath = this.drv.cachePath;
   }
 
+  /**
+   * Initializes the panel, registers events and renders initial content
+   */
   async initPanel() {
-    await this.updateWebview(this._panel);
+    await this.renderWebview(this._panel);
 
     this._panel.onDidChangeViewState(async event => {
       // reset options when user clicks on panel
       if (event.webviewPanel.visible) {
-        await this.updateWebview(event.webviewPanel);
+        await this.renderWebview(event.webviewPanel);
       }
     });
 
     // handle checkbox value change event
     this._panel.webview.onDidReceiveMessage(async (options: IOption[]) => {
-      try {
-        if (options) {
-          await this.saveCmakeCache(options);
-          this._panel.title = 'CMake Cache Editor';
-          vscode.window.showInformationMessage('CMake options have been saved.');
-          // start configure
-          this.save();
-        } else {
-          this._panel.title = 'CMake Cache Editor*';
-        }
-      } catch (error) {
-        vscode.window.showErrorMessage(error);
+      if (options) {
+        await this.saveCmakeCache(options);
+        this._panel.title = this.WINDOW_TITLE;
+        vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
+        // start configure
+        this.save();
+      } else {
+        this._panel.title = this.WINDOW_TITLE_UNSAVED;
       }
     });
   }
@@ -82,16 +89,24 @@ export class ConfigurationWebview {
     });
   }
 
-  async updateWebview(panel?: vscode.WebviewPanel) {
+  /**
+   *
+   * @param panel
+   */
+  async renderWebview(panel?: vscode.WebviewPanel) {
     if (!panel) {
         panel = this._panel;
     }
 
     const options: IOption[] = await this.getConfigurationOptions();
-    panel.webview.html = this.getWebviewContent(options);
+    panel.webview.html = this.getWebviewMarkup(options);
   }
 
-  getWebviewContent(options: IOption[]) {
+  /**
+   * Returns an HTML markup
+   * @param options CMake Cache Options
+   */
+  getWebviewMarkup(options: IOption[]) {
     const key = '%TABLE_ROWS%';
     let html = `
     <!DOCTYPE html>
