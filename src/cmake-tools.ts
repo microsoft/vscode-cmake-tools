@@ -169,10 +169,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _cmakeDriver: Promise<CMakeDriver|null> = Promise.resolve(null);
 
   /**
-   * webview object
-   * handles everything regarding webview
+   * This object manages the CMake Cache Editor GUI
    */
-  private _webview: ConfigurationWebview | undefined;
+  private _cacheEditorWebview: ConfigurationWebview | undefined;
 
   /**
    * Event fired just as CMakeTools is about to be disposed
@@ -967,23 +966,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.openConfiguration`
    */
   async openConfiguration(): Promise<number> {
-    if (!this._webview) {
+    if (!this._cacheEditorWebview) {
       const drv = await this.getCMakeDriverInstance();
       if (!drv) {
         vscode.window.showErrorMessage('No CMakeCache.txt file has been found. Please configure project first!');
         return new Promise(resolve => resolve(1));
       }
 
-      this._webview = new ConfigurationWebview(drv, async () => {
+      this._cacheEditorWebview = new ConfigurationWebview(drv, async () => {
         await this.rawConfigure();
       });
-      await this._webview.initPanel();
+      await this._cacheEditorWebview.initPanel();
 
-      this._webview.panel.onDidDispose(() => {
-        this._webview = undefined;
+      this._cacheEditorWebview.panel.onDidDispose(() => {
+        this._cacheEditorWebview = undefined;
       });
     } else {
-      this._webview.panel.reveal();
+      this._cacheEditorWebview.panel.reveal();
     }
 
     return new Promise(resolve => resolve(0));
