@@ -28,7 +28,6 @@
 	"cmake-tools.command.cmake.clean.title": "Bereinigen",
 	"cmake-tools.command.cmake.cleanAll.title": "Alle Projekte bereinigen",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Neuerstellung bereinigen",
-	"cmake-tools.command.cmake.openConfiguration.title": "Konfiguration öffnen",
 	"cmake-tools.command.cmake.cleanRebuildAll.title": "Neuerstellung aller Projekte bereinigen",
 	"cmake-tools.command.cmake.ctest.title": "Tests durchführen",
 	"cmake-tools.command.cmake.ctestAll.title": "Tests für alle Projekte ausführen",

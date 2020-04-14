@@ -28,7 +28,6 @@
 	"cmake-tools.command.cmake.clean.title": "清理",
 	"cmake-tools.command.cmake.cleanAll.title": "清理所有项目",
 	"cmake-tools.command.cmake.cleanRebuild.title": "清除重新生成",
-	"cmake-tools.command.cmake.openConfiguration.title": "清除重新生成",
 	"cmake-tools.command.cmake.cleanRebuildAll.title": "清理所有项目的重新生成",
 	"cmake-tools.command.cmake.ctest.title": "运行测试",
 	"cmake-tools.command.cmake.ctestAll.title": "为所有项目运行测试",
