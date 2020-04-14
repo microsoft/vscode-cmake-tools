@@ -180,28 +180,37 @@ export class CMakeCache {
     return entries;
   }
 
-  async replace(content: string, key: string, value: boolean): Promise<string> {
-    return new Promise(resolve => {
-      const re = key + ':.+=(.+)';
-      const found = content.match(re);
+  /**
+   * Takes a configuration file as a content string and replaces the cmake cache keys with the corresponding value (i.e. 'TRUE' or 'FALSE').
+   * @param content Configuration File Content as String
+   * @param key The CMake Cache Option Key to edit
+   * @param value Boolean value
+   */
+  private replace(content: string, key: string, value: boolean): string {
+    const re = key + ':.+=(.+)';
+    const found = content.match(re);
 
-      if (found && found.length >= 2) {
-        const line = found[0];
-        const currentVal = found[1];
-        const newValueLine = line.replace(currentVal, value ? 'TRUE' : 'FALSE');
-        resolve(content.replace(line, newValueLine));
-      } else {
-        resolve('');
-      }
-    });
+    if (found && found.length >= 2) {
+      const line = found[0];
+      const currentVal = found[1];
+      const newValueLine = line.replace(currentVal, value ? 'TRUE' : 'FALSE');
+      return content.replace(line, newValueLine);
+    } else {
+      return '';
+    }
   }
 
+  /**
+   * Will replace value cmake option in the current loaded workspace.
+   * @param key cmake option name
+   * @param value value of cmake option
+   */
   async replaceOption(key: string, value: boolean) {
     return new Promise(async resolve => {
-      const exists = await fs.exists(this.path);
+      const exists = fs.exists(this.path);
       if (exists) {
         const content = (await fs.readFile(this.path)).toString();
-        resolve(await this.replace(content, key, value));
+        resolve(this.replace(content, key, value));
       } else {
         resolve('');
       }
