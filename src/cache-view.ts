@@ -6,7 +6,7 @@ import { CMakeCache } from './cache';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-interface IOption {
+export interface IOption {
     key: string;
     value: boolean;
 }
