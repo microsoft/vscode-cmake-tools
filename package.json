@@ -1181,7 +1181,7 @@
       {
         "key": "shift+f5",
         "command": "cmake.launchTarget",
-        "when": "!cmake:hideDebugCommand"
+        "when": "!inDebugMode && !cmake:hideDebugCommand"
       }
     ],
     "viewsContainers": {
