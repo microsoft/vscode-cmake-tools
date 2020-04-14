@@ -644,7 +644,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   async setKitByName(kitName: string, folder?: vscode.WorkspaceFolder) {
     if (folder) {
-      const result = this._folders.get(folder)?.kitsController.setKitByName(kitName);
+      await this._folders.get(folder)?.kitsController.setKitByName(kitName);
     } else {
       for (const cmtFolder of this._folders) {
         await cmtFolder.kitsController.setKitByName(kitName);
