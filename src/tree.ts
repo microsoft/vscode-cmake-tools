@@ -135,7 +135,7 @@ function sortStringForType(type: codemodel_api.TargetTypeString): string {
 
 export class DirectoryNode<Node extends BaseNode> extends BaseNode {
   constructor(readonly prefix: string, readonly parent: string, readonly pathPart: string) {
-    super(`${prefix}${path.sep}${path.normalize(pathPart)}`)
+    super(`${prefix}${path.sep}${path.normalize(pathPart)}`);
   }
 
   private _subdirs = new Map<string, DirectoryNode<Node>>();
