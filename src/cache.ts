@@ -206,15 +206,13 @@ export class CMakeCache {
    * @param value value of cmake option
    */
   async replaceOption(key: string, value: boolean) {
-    return new Promise(async resolve => {
-      const exists = fs.exists(this.path);
-      if (exists) {
-        const content = (await fs.readFile(this.path)).toString();
-        resolve(this.replace(content, key, value));
-      } else {
-        resolve('');
-      }
-    });
+    const exists = fs.exists(this.path);
+    if (exists) {
+      const content = (await fs.readFile(this.path)).toString();
+      return this.replace(content, key, value);
+    }
+
+    return '';
   }
 
   async replaceOptions(options: Array<{key: string, value: boolean}>) {
