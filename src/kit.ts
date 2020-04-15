@@ -97,6 +97,11 @@ export interface Kit {
   visualStudioArchitecture?: string;
 
   /**
+   * Filename of a shell script which sets environment variables for the kit
+   */
+  environmentSetupScript?: string;
+
+  /**
    * Path to a CMake toolchain file.
    */
   toolchainFile?: string;
@@ -525,6 +530,64 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
 }
 
 /**
+ * Gets the environment variables set by a shell script.
+ * @param kit The kit to get the environment variables for
+ */
+export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, string>|undefined> {
+  console.assert(kit.environmentSetupScript);
+  const filename = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
+  const script_filename = `vs-cmt-${filename}`;
+  const environment_filename = script_filename + '.env';
+  const script_path = path.join(paths.tmpDir, script_filename);
+  const environment_path = path.join(paths.tmpDir, environment_filename); // path of temp file in which the script writes the env vars to
+
+  let script = '';
+  let run_command = '';
+  if (process.platform == 'win32') { // windows
+    script += `call "${kit.environmentSetupScript}"\r\n`; // call the user batch script
+    script += `set >> ${environment_path}`; // write env vars to temp file
+    run_command = `call ${script_path}`;
+  } else { // non-windows
+    script += `source "${kit.environmentSetupScript}"\n`; // run the user shell script
+    script +=`printenv >> ${environment_path}`; // write env vars to temp file
+    run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
+  }
+  try {
+    await fs.unlink(environment_path); // delete the temp file if it exists
+  } catch (error) {}
+  await fs.writeFile(script_path, script); // write batch file
+
+  const res = await proc.execute(run_command, [], null, {shell: true, silent: true}).result; // run script
+  await fs.unlink(script_path); // delete script file
+  const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
+
+  let env = '';
+  try {
+    /* When the script failed, envpath would not exist */
+    env = await fs.readFile(environment_path, {encoding: 'utf8'});
+    await fs.unlink(environment_path);
+  } catch (error) { log.error(error); }
+  if (!env || env === '') {
+    console.log(`Error running ${kit.environmentSetupScript} with:`, output);
+    return;
+  }
+
+  // split and trim env vars
+  const vars
+      = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
+          const match = /(\w+)=?(.*)/.exec(line);
+          if (match) {
+            acc.set(match[1], match[2]);
+          } else {
+            log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
+          }
+          return acc;
+        }, new Map());
+  log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', kit.environmentSetupScript, JSON.stringify([...vars])));
+  return vars;
+}
+
+/**
  * Platform arguments for VS Generators
  */
 const VsArchitectures: {[key: string]: string} = {
@@ -713,12 +776,22 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
 }
 
 export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {
-  const host_env = objectPairs(process.env) as [string, string][];
+  let host_env;
   const kit_env = objectPairs(kit.environmentVariables || {});
   if (opts) {
     for (const env_var of kit_env) {
       env_var[1] = await expand.expandString(env_var[1], opts);
     }
+  }
+  if (kit.environmentSetupScript) {
+    const shell_vars = await getShellScriptEnvironment(kit);
+    if (shell_vars) {
+      host_env = util.map(shell_vars, ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]) as [string, string][];
+    }
+  }
+  if (host_env === undefined) {
+    // get host_env from process if it was not set by shell script before
+    host_env = objectPairs(process.env) as [string, string][];
   }
   if (kit.visualStudio && kit.visualStudioArchitecture) {
     const vs_vars = await getVSKitEnvironment(kit);
