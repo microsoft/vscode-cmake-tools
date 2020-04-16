@@ -513,12 +513,6 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
     existing.updateCodeModel(model, {...ctx, nodesToUpdate: updates, folder});
 
     this._changeEvent.fire(null);
-    // i have no idea why this was added.
-    // if you have a structure project/dir/target/dir/...
-    // it breaks the tree view.
-    // for (const node of updates) {
-    //   this._changeEvent.fire(node);
-    // }
   }
 
   getChildren(node?: BaseNode): BaseNode[] {
