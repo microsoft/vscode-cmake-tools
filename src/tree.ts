@@ -135,7 +135,7 @@ function sortStringForType(type: codemodel_api.TargetTypeString): string {
 
 export class DirectoryNode<Node extends BaseNode> extends BaseNode {
   constructor(readonly prefix: string, readonly parent: string, readonly pathPart: string) {
-    super(`${prefix}::${path.join(parent, pathPart)}`);
+    super(`${prefix}${path.sep}${path.normalize(pathPart)}`);
   }
 
   private _subdirs = new Map<string, DirectoryNode<Node>>();
@@ -210,7 +210,10 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
 }
 
 export class SourceFileNode extends BaseNode {
-  constructor(readonly targetName: string, readonly filePath: string) { super(`${targetName}::${filePath}`); }
+  constructor(readonly prefix: string, readonly sourcePath: string, readonly filePath: string) {
+    // id: {prefix}::filename:directory of file relative to Target
+    super(`${prefix}::${path.basename(filePath)}:${path.relative(sourcePath, path.dirname(filePath))}`);
+  }
 
   get name() { return path.basename(this.filePath); }
 
@@ -233,8 +236,9 @@ export class SourceFileNode extends BaseNode {
 }
 
 export class TargetNode extends BaseNode {
-  constructor(readonly projectName: string, cm: codemodel_api.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
-    super(`${projectName}::${cm.name}`);
+  constructor(readonly prefix: string, readonly projectName: string, cm: codemodel_api.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
+    // id: {prefix}::target_name:target_path
+    super(`${prefix}::${cm.fullName || cm.name}:${cm.sourceDirectory || ''}`);
     this.name = cm.name;
     this.sourceDir = cm.sourceDirectory || '';
     this._rootDir = new DirectoryNode<SourceFileNode>(this.id, this.sourceDir, '');
@@ -346,11 +350,11 @@ export class TargetNode extends BaseNode {
         }
         const src_dir = path.dirname(src);
         const relpath = path.relative(this.sourceDir, src_dir);
-        addToTree(tree, relpath, new SourceFileNode(this.name, src));
+        addToTree(tree, relpath, new SourceFileNode(this.id, this.sourceDir, src));
       }
     }
 
-    addToTree(tree, '', new SourceFileNode(this.name, path.join(this.sourceDir, 'CMakeLists.txt')));
+    addToTree(tree, '', new SourceFileNode(this.id, this.sourceDir, path.join(this.sourceDir, 'CMakeLists.txt')));
 
     collapseTreeInplace(tree);
 
@@ -378,9 +382,12 @@ export class TargetNode extends BaseNode {
 }
 
 class ProjectNode extends BaseNode {
-  constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder) { super(name); }
+  constructor(readonly name: string, readonly folder: vscode.WorkspaceFolder, readonly sourceDirectory: string) {
+    // id: project_name:project_directory
+    super(`${name}:${sourceDirectory}`);
+   }
 
-  private readonly _rootDir = new DirectoryNode<TargetNode>('', '', '');
+  private readonly _rootDir = new DirectoryNode<TargetNode>(this.id, '', '');
 
   getOrderTuple() { return []; }
 
@@ -391,6 +398,7 @@ class ProjectNode extends BaseNode {
     if (this.getChildren().length === 0) {
       item.label += ` — (${localize('empty.project', 'Empty project')})`;
     }
+    item.tooltip=`${this.name}\n${this.sourceDirectory}`;
     return item;
   }
 
@@ -417,7 +425,7 @@ class ProjectNode extends BaseNode {
       context: ctx,
       update: (tgt, cm) => tgt.update(cm, ctx),
       create: cm => {
-        const node = new TargetNode(this.name, cm, this.folder);
+        const node = new TargetNode(this.id, this.name, cm, this.folder);
         node.update(cm, ctx);
         return node;
       },
@@ -458,7 +466,7 @@ class WorkspaceFolderNode extends BaseNode {
     const config = model.configurations[0];
     const new_children: BaseNode[] = [];
     for (const pr of config.projects) {
-      const item = new ProjectNode(pr.name, ctx.folder);
+      const item = new ProjectNode(pr.name, ctx.folder, pr.sourceDirectory);
       item.update(pr, ctx);
       new_children.push(item);
     }
@@ -505,9 +513,6 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
     existing.updateCodeModel(model, {...ctx, nodesToUpdate: updates, folder});
 
     this._changeEvent.fire(null);
-    for (const node of updates) {
-      this._changeEvent.fire(node);
-    }
   }
 
   getChildren(node?: BaseNode): BaseNode[] {
