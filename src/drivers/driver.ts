@@ -526,7 +526,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
 
-  private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
+  public async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent: true});
     try {
       const result = await child.result;

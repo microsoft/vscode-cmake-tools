@@ -319,8 +319,15 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
            this.timeout(BUILD_TIMEOUT);
            context.testEnv.config.updatePartial({preferredGenerators: []});
            expect(await context.cmt.build()).to.eql(0);
+
            const result = await context.testEnv.result.getResultAsJson();
-           expect(result['cmake-generator']).to.match(buildSystem.expectedDefaultGenerator);
+           // "Ninja" and "Unix Makefiles" are always the default preferred generators
+           // if no other overriding property is set.
+           // The extension verifies for each if they are present (installed)
+           // and starts with "Ninja".
+           const isNinjaInstalled = await context.cmt.isNinjaInstalled();
+           expect(result['cmake-generator']).to.eql(isNinjaInstalled ? "Ninja" : "Unix Makefiles");
+
            expect(context.testEnv.errorMessagesQueue.length)
                .to.eql(0, 'Wrong message ' + context.testEnv.errorMessagesQueue[0]);
          });
