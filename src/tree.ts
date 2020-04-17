@@ -225,7 +225,10 @@ export class SourceFileNode extends BaseNode {
     const item = new vscode.TreeItem(path.basename(this.filePath));
     item.id = this.id;
     item.resourceUri = vscode.Uri.file(this.filePath);
-    item.contextValue = 'nodeType=file';
+    const name = this.name.toLowerCase();
+    const cml = name == "cmakelists.txt";
+    const compilable = name.search(/\.c/)!==-1;
+    item.contextValue = ['nodeType=file', `compilable=${compilable}`, `cmakelists=${cml}`].join(',');
     item.command = {
       title: localize('open.file', 'Open file'),
       command: 'vscode.open',

@@ -625,7 +625,12 @@
         },
         {
           "command": "cmake.outline.compileFile",
-          "when": "view == cmake.outline && viewItem =~ /nodeType=file/",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /compilable=true/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.configureAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
           "group": "inline"
         }
       ],
