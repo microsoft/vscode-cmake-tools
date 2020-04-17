@@ -400,6 +400,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._statusMessage.set(localize('ready.status', 'Ready'));
   }
 
+  async isNinjaInstalled() : Promise<boolean> {
+    const drv = await this._cmakeDriver;
+
+    if (drv) {
+      return await drv.testHaveCommand('ninja') || drv.testHaveCommand('ninja-build');
+    }
+
+    return false;
+  }
+
   async setKit(kit: Kit|null) {
     this._activeKit = kit;
     if (kit) {
