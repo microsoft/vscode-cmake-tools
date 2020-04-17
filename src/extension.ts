@@ -28,7 +28,7 @@ import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StatusBar} from '@cmt/status';
 import * as telemetry from '@cmt/telemetry';
-import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
+import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
@@ -440,6 +440,7 @@ class ExtensionManager implements vscode.Disposable {
     this._folders.setActiveFolder(ws);
     this._statusBar.setActiveFolderName(ws?.name || '');
     this._statusBar.setActiveKitName(this._folders.activeFolder?.cmakeTools.activeKit?.name || '');
+    this._projectOutlineProvider.setActiveFolder(ws);
     this._setupSubscriptions();
   }
 
@@ -812,7 +813,10 @@ class ExtensionManager implements vscode.Disposable {
     }
     vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
   }
-
+  async selectWorkspace(file?: vscode.WorkspaceFolder) {
+    if (!file) return;
+    await this._setActiveFolder(file);
+  }
   ctest(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.ctest(), folder); }
 
   ctestAll() { return this.mapCMakeToolsAll(cmt => cmt.ctest()); }
@@ -967,6 +971,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'resetState',
     'viewLog',
     'compileFile',
+    'selectWorkspace',
     'tasksBuildCommand',
     'hideLaunchCommand',
     'hideDebugCommand'
@@ -1012,6 +1017,8 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
                                       (what: TargetNode) => what.openInCMakeLists()),
       vscode.commands.registerCommand('cmake.outline.compileFile',
                                       (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
+      vscode.commands.registerCommand('cmake.outline.selectWorkspace',
+                                      (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
   ]);
 }
 

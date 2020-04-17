@@ -441,16 +441,29 @@ interface ExternalUpdateContext {
   defaultTarget?: string;
 }
 
-class WorkspaceFolderNode extends BaseNode {
+export class WorkspaceFolderNode extends BaseNode {
   constructor(readonly wsFolder: vscode.WorkspaceFolder) { super(`wsf/${wsFolder.uri.fsPath}`); }
   private _children: BaseNode[] = [];
+
+  private _active: boolean = false;
+  setActive(active:boolean) {
+    this._active = active;
+  }
 
   getOrderTuple() { return [this.id]; }
 
   getTreeItem() {
     const item = new vscode.TreeItem(this.wsFolder.uri.fsPath, vscode.TreeItemCollapsibleState.Expanded);
     item.iconPath = vscode.ThemeIcon.Folder;
-    item.label += ' — Workspace Folder';
+    item.id = this.wsFolder.uri.fsPath;
+    let description:string;
+    if (this._active) {
+      description = localize('workspace.active', 'Active Workspace');
+    } else {
+      description = localize('workspace', 'Workspace');
+    }
+    item.description = `[${description}]`;
+    item.contextValue = ['nodeType=workspace', `selected=${this._active}`].join(',');
     return item;
   }
 
@@ -483,6 +496,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
   get onDidChangeTreeData() { return this._changeEvent.event; }
 
   private readonly _folders = new Map<string, WorkspaceFolderNode>();
+  private _selected_workspace?:WorkspaceFolderNode;
 
   addAllCurrentFolders() {
     for (const wsf of vscode.workspace.workspaceFolders || []) {
@@ -531,6 +545,21 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
       rollbar.error(localize('error.rendering.children.nodes', 'Error while rendering children nodes'));
       return [];
     }
+  }
+
+  setActiveFolder(ws: vscode.WorkspaceFolder | undefined):void {
+    if (!ws) return;
+    const current_node = this._selected_workspace;
+    const new_node = this._folders.get(ws.uri.fsPath);
+    if (current_node) {
+      current_node.setActive(false);
+      this._changeEvent.fire(current_node);
+    }
+    if (new_node) {
+      new_node.setActive(true);
+      this._changeEvent.fire(new_node);
+    }
+    this._selected_workspace = new_node;
   }
 
   async getTreeItem(node: BaseNode) { return node.getTreeItem(); }
