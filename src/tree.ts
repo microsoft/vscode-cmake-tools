@@ -210,7 +210,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
 }
 
 export class SourceFileNode extends BaseNode {
-  constructor(readonly prefix: string, readonly sourcePath: string, readonly filePath: string) {
+  constructor(readonly prefix: string, readonly sourcePath: string, readonly filePath: string, private _language?: string) {
     // id: {prefix}::filename:directory of file relative to Target
     super(`${prefix}::${path.basename(filePath)}:${path.relative(sourcePath, path.dirname(filePath))}`);
   }
@@ -227,8 +227,8 @@ export class SourceFileNode extends BaseNode {
     item.resourceUri = vscode.Uri.file(this.filePath);
     const name = this.name.toLowerCase();
     const cml = name == "cmakelists.txt";
-    const compilable = name.search(/\.c/)!==-1;
-    item.contextValue = ['nodeType=file', `compilable=${compilable}`, `cmakelists=${cml}`].join(',');
+    const is_compilable = ['CXX', 'C'].indexOf(this._language||'')!==-1;
+    item.contextValue = ['nodeType=file', `compilable=${is_compilable}`, `cmakelists=${cml}`].join(',');
     item.command = {
       title: localize('open.file', 'Open file'),
       command: 'vscode.open',
@@ -353,7 +353,7 @@ export class TargetNode extends BaseNode {
         }
         const src_dir = path.dirname(src);
         const relpath = path.relative(this.sourceDir, src_dir);
-        addToTree(tree, relpath, new SourceFileNode(this.id, this.sourceDir, src));
+        addToTree(tree, relpath, new SourceFileNode(this.id, this.sourceDir, src, grp.language));
       }
     }
 
