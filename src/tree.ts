@@ -210,7 +210,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
 }
 
 export class SourceFileNode extends BaseNode {
-  constructor(readonly prefix: string, readonly sourcePath: string, readonly filePath: string, private _language?: string) {
+  constructor(readonly prefix: string, readonly sourcePath: string, readonly filePath: string, private readonly _language?: string) {
     // id: {prefix}::filename:directory of file relative to Target
     super(`${prefix}::${path.basename(filePath)}:${path.relative(sourcePath, path.dirname(filePath))}`);
   }
