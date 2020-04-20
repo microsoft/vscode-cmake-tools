@@ -24,7 +24,7 @@
 	"cmake-tools.command.cmake.cleanConfigure.title": "Odstranit mezipaměť a znovu nakonfigurovat",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Vymazat mezipaměť a překonfigurovat všechny projekty",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Vyčistit a znovu nakonfigurovat",
-	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Vyčistit a překonfigurovat všechny projekty",
+	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Vyčistit a znovu nakonfigurovat všechny projekty",
 	"cmake-tools.command.cmake.clean.title": "Vyčistit",
 	"cmake-tools.command.cmake.cleanAll.title": "Vyčistit všechny projekty",
 	"cmake-tools.command.cmake.cleanRebuild.title": "Vyčistit a znovu sestavit",
