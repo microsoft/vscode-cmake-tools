@@ -28,7 +28,6 @@ export class StatusBar implements vscode.Disposable {
   private readonly _debugButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.25);
   private readonly _launchTargetNameButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.2);
   private readonly _testButton = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3.1);
-  private readonly _warningMessage = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 3);
 
   private readonly _activeFolderButtonAutoSelectTooltip = localize('active.folder.auto.select.tooltip', 'Active folder');
   private readonly _activeFolderButtonTooltip = localize('active.folder.tooltip', 'Select Active folder');
@@ -42,7 +41,6 @@ export class StatusBar implements vscode.Disposable {
       this._targetButton,
       this._launchTargetNameButton,
       this._testButton,
-      this._warningMessage,
     ];
     for (const item of items) {
       item.dispose();
@@ -243,13 +241,6 @@ export class StatusBar implements vscode.Disposable {
     this._reloadKitsButton();
   }
   private _activeKitName: string = '';
-
-  showWarningMessage(msg: string) {
-    this._warningMessage.color = 'yellow';
-    this._warningMessage.text = `$(alert) ${msg}`;
-    this._warningMessage.show();
-    setTimeout(() => this._warningMessage.hide(), 5000);
-  }
 
   private _hideDebugButton = false;
   hideDebugButton(shouldHide: boolean = true) {
