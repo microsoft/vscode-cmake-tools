@@ -2,18 +2,18 @@ import * as vscode from 'vscode';
 import {BasicTestResults} from '@cmt/ctest';
 import * as nls from 'vscode-nls';
 import {SpecialKits} from '@cmt/kit';
+import {StatusBarButtonType as ButtonType, ConfigurationReader } from '@cmt/config';
 
 // FIXME: Show workspace selection if a folder is added to workspace
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-type ButtonType = "text" | "short" | "icon" | "hidden";
 abstract class Button {
   set command(v:string|null) { this._button.command = v || undefined;}
   private _forceHidden:boolean = false;
   set forceHidden(v:boolean) { this._forceHidden = v; this.update(); }
-  constructor(protected readonly priority: number) {
+  constructor(protected readonly _config: ConfigurationReader, protected readonly priority: number) {
     this._button.command = this._button.command;
   }
   protected readonly _button = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, this.priority);
@@ -95,7 +95,7 @@ class ActiveFolderButton extends Button {
   protected isVisible() {
     return Boolean(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1 && !!this.getText());
   }
-  protected getType():ButtonType { return 'icon'; } // TODO: settings icon/text
+  protected getType():ButtonType { return this._config.statusbar.workspace.type; }
   protected getTextIcon(): string { return '$(folder-active)';}
   protected getTooltipIcon(): string { return `CMake: ${this.getTooltipNormal()}\n${this.getTextNormal()}`;}
 }
@@ -110,7 +110,7 @@ class CMakeStatus extends Button {
   set buildTypeLabel(v:string) { CMakeStatus._buildTypeLabel = v; this.update();}
   set statusMessage(v:string) { CMakeStatus._statusMessage = v; this.update();}
 
-  protected getType():ButtonType { return 'short'; } // TODO: settings icon/text
+  protected getType():ButtonType { return this._config.statusbar.status.type; }
   protected getTextNormal() {
     return `CMake: ${CMakeStatus._buildTypeLabel}: ${CMakeStatus._statusMessage}`;
   }
@@ -123,7 +123,7 @@ class KitSelection extends Button {
   command = 'cmake.selectKit';
   tooltip = localize('click.to.change.kit.tooltip', 'Click to change the active kit');
 
-  protected getType():ButtonType { return 'short'; } // TODO: settings icon/text
+  protected getType():ButtonType { return this._config.statusbar.kit.type; }
   protected getTextNormal():string {
     const text = this.text;
     if (text === SpecialKits.Unspecified) {
@@ -135,7 +135,7 @@ class KitSelection extends Button {
     return text;
   }
   protected getTextShort() {
-    const len = 10;
+    const len = this._config.statusbar.kit.length;
     let text = this.getTextNormal();
     if (len+3<text.length) {
       text = `${text.substr(0, len)}...`;
@@ -149,10 +149,12 @@ class BuildTargetSelectionButton extends Button {
   command = 'cmake.setDefaultTarget';
   tooltip = localize('set.active.target.tooltip', 'Set the active target to build');
   protected getTextNormal():string { return `[${this.text}]`; }
+  protected getType():ButtonType { return this._config.statusbar.build_target.type; }
 }
 class LaunchTargetSelectionButton extends Button {
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
+  protected getType():ButtonType { return this._config.statusbar.launch_target.type; }
 }
 class CheckCPPToolsButton extends Button {
   protected isVisible() {
@@ -164,14 +166,17 @@ class DebugButton extends CheckCPPToolsButton {
   command = 'cmake.debugTarget';
   tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
   text = '$(bug)';
+  protected getType():ButtonType { return this._config.statusbar.debug.type; }
 }
 class LaunchButton extends CheckCPPToolsButton {
   command = 'cmake.launchTarget';
   tooltip = localize('launch.tooltip', 'Launch');
   text = '$(play)';
+  protected getType():ButtonType { return this._config.statusbar.launch.type; }
 }
 
 class CTestButton extends Button {
+  protected getType():ButtonType { return this._config.statusbar.ctest.type; }
   command = 'cmake.ctest';
   tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
   private readonly _default = localize('run.ctest', 'Run CTest');
@@ -221,30 +226,30 @@ class BuildButton extends CheckCPPToolsButton {
   private _getCurrentText() { return this._isBusy?BuildButton._stop:BuildButton._build; }
   private _getCurrentIcon() { return this._isBusy?'$(x)':'$(gear)'; }
 
-  protected getType():ButtonType { return 'icon'; } // TODO: settings icon/text
   getTextIcon() {return this._getCurrentIcon();}
   getTextNormal() { return `${this._getCurrentIcon()} ${this._getCurrentText()}`;}
   getTooltipIcon() { return this._getCurrentText();}
   isVisible() { return this._isBusy || true; }
+  protected getType():ButtonType { return this._config.statusbar.build.type; }
 }
 
 export class StatusBar implements vscode.Disposable {
-  private readonly _kitSelectionButton = new KitSelection(3.6);
-  private readonly _cmakeToolsStatusItem = new CMakeStatus(3.55);
+  private readonly _kitSelectionButton = new KitSelection(this._config, 3.6);
+  private readonly _cmakeToolsStatusItem = new CMakeStatus(this._config,3.55);
 
-  private readonly _activeFolderButton = new ActiveFolderButton(3.5);
-  private readonly _buildTargetNameButton = new BuildTargetSelectionButton(3.45);
-  private readonly _buildButton:BuildButton = new BuildButton(3.4);
+  private readonly _activeFolderButton = new ActiveFolderButton(this._config,3.5);
+  private readonly _buildTargetNameButton = new BuildTargetSelectionButton(this._config,3.45);
+  private readonly _buildButton:BuildButton = new BuildButton(this._config,3.4);
 
-  private readonly _launchTargetNameButton = new LaunchTargetSelectionButton(3.35);
-  private readonly _debugButton:DebugButton = new DebugButton(3.3);
-  private readonly _runButton = new LaunchButton(3.25);
+  private readonly _launchTargetNameButton = new LaunchTargetSelectionButton(this._config,3.35);
+  private readonly _debugButton:DebugButton = new DebugButton(this._config,3.3);
+  private readonly _runButton = new LaunchButton(this._config,3.25);
 
-  private readonly _testButton = new CTestButton(3.2);
+  private readonly _testButton = new CTestButton(this._config,3.2);
 
   private readonly _buttons: Button[];
 
-  constructor() {
+  constructor(private readonly _config: ConfigurationReader) {
     this._buttons = [
       this._activeFolderButton,
       this._cmakeToolsStatusItem,
@@ -256,6 +261,7 @@ export class StatusBar implements vscode.Disposable {
       this._testButton,
       this._runButton
     ];
+    this._config.onChange('statusbar', ()=>this.update());
     this.update();
   }
 

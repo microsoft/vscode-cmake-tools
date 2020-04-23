@@ -19,8 +19,41 @@ export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal
 
 export type CMakeCommunicationMode = 'legacy'|'serverApi'|'fileApi'|'automatic';
 
+export type StatusBarButtonType = "text" | "short" | "icon" | "hidden";
+
 interface HardEnv {
   [key: string]: string;
+}
+
+export interface StatusBarConfig {
+  kit: {
+    type: StatusBarButtonType;
+    length: number;
+  };
+  status: {
+    type: StatusBarButtonType;
+  };
+  workspace: {
+    type: StatusBarButtonType;
+  };
+  build_target: {
+    type: StatusBarButtonType;
+  };
+  build: {
+    type: StatusBarButtonType;
+  };
+  launch_target: {
+    type: StatusBarButtonType;
+  };
+  debug: {
+    type: StatusBarButtonType;
+  };
+  launch: {
+    type: StatusBarButtonType;
+  };
+  ctest: {
+    type: StatusBarButtonType;
+  };
 }
 
 export interface ExtensionConfigurationSettings {
@@ -64,6 +97,7 @@ export interface ExtensionConfigurationSettings {
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
+  statusbar: StatusBarConfig;
 }
 
 type EmittersOf<T> = {
@@ -83,6 +117,8 @@ export class ConfigurationReader implements vscode.Disposable {
   constructor(private readonly _configData: ExtensionConfigurationSettings) {}
 
   get configData() { return this._configData; }
+
+  get statusbar() { return this._configData.statusbar; }
 
   dispose() {
     if (this._updateSubscription) {
@@ -286,6 +322,8 @@ export class ConfigurationReader implements vscode.Disposable {
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+    statusbar: new vscode.EventEmitter<StatusBarConfig>()
+
   };
 
   /**

@@ -1150,6 +1150,96 @@
           ],
           "scope": "window"
         },
+        "cmake.statusbar.kit.type": {
+          "type": "string",
+          "default": "text",
+          "enum": [
+            "text",
+            "short",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.kit.length": {
+          "type": "integer",
+          "default": 10,
+          "scope": "window"
+        },
+        "cmake.statusbar.status.type": {
+          "type": "string",
+          "default": "text",
+          "enum": [
+            "text",
+            "short",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.workspace.type": {
+          "type": "string",
+          "default": "text",
+          "enum": [
+            "text",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.build_target.type": {
+          "type": "string",
+          "default": "text",
+          "enum": [
+            "text",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.build.type": {
+          "type": "string",
+          "default": "text",
+          "enum": [
+            "text",
+            "icon",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.launch_target.type": {
+          "type": "string",
+          "default": "text",
+          "enum": [
+            "text",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.debug.type": {
+          "type": "string",
+          "default": "icon",
+          "enum": [
+            "icon",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.launch.type": {
+          "type": "string",
+          "default": "icon",
+          "enum": [
+            "icon",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.ctest.type": {
+          "type": "string",
+          "default": "text",
+          "enum": [
+            "text",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+
         "cmake.revealLog": {
           "type": "string",
           "default": "always",

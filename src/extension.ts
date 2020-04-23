@@ -183,7 +183,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * The status bar controller
    */
-  private readonly _statusBar = new StatusBar();
+  private readonly _statusBar = new StatusBar(this._workspaceConfig);
   // Subscriptions for status bar items:
   private _statusMessageSub: vscode.Disposable = new DummyDisposable();
   private _targetNameSub: vscode.Disposable = new DummyDisposable();
