@@ -631,8 +631,43 @@
           "group": "2_targetState@2"
         },
         {
+          "command": "cmake.outline.configureAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@1"
+        },
+        {
+          "command": "cmake.outline.buildAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@2"
+        },
+        {
+          "command": "cmake.outline.cleanAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@3"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@4"
+        },
+        {
+          "command": "cmake.outline.cleanRebuildAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "1_fileActions@5"
+        },
+        {
           "command": "cmake.outline.compileFile",
-          "when": "view == cmake.outline && viewItem =~ /nodeType=file/",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /compilable=true/",
+          "group": "1_fileActions@6"
+        },
+        {
+          "command": "cmake.outline.compileFile",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /compilable=true/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.configureAll",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
           "group": "inline"
         },
         {
@@ -671,6 +706,26 @@
         {
           "command": "cmake.compileFile",
           "when": "resourceLangId == c"
+        },
+        {
+          "command": "cmake.outline.configureAll",
+          "when": "resourceFilename == CMakeLists.txt"
+        },
+        {
+          "command": "cmake.outline.buildAll",
+          "when": "resourceFilename == CMakeLists.txt"
+        },
+        {
+          "command": "cmake.outline.cleanAll",
+          "when": "resourceFilename == CMakeLists.txt"
+        },
+        {
+          "command": "cmake.outline.cleanConfigureAll",
+          "when": "resourceFilename == CMakeLists.txt"
+        },
+        {
+          "command": "cmake.outline.cleanRebuildAll",
+          "when": "resourceFilename == CMakeLists.txt"
         }
       ]
     },
@@ -751,10 +806,7 @@
         },
         "cmake.preferredGenerators": {
           "type": "array",
-          "default": [
-            "Ninja",
-            "Unix Makefiles"
-          ],
+          "default": [],
           "description": "%cmake-tools.configuration.cmake.preferredGenerators.description%",
           "scope": "resource"
         },
