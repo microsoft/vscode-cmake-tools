@@ -399,10 +399,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     this._statusMessage.set(localize('ready.status', 'Ready'));
 
-    this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument((td) => {
-      let str = td.uri.fsPath;
+    this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(td => {
+      const str = td.uri.fsPath;
       if (str.endsWith("CMakeLists.txt")) {
-        log.debug("We are saving a CMakeLists.txt file, attempting automatic reconfigure...");
+        log.debug(localize('cmakelists.save.trigger.reconfigure', "We are saving a CMakeLists.txt file, attempting automatic reconfigure..."));
         this.configure([], ConfigureType.Normal);
       }
     }));
