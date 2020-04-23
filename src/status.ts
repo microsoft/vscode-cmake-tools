@@ -245,6 +245,7 @@ class CTestButton extends Button {
 
   private _enabled:boolean = false;
   private _results: BasicTestResults|null = null;
+  private _color: string = '';
 
   protected getType():ButtonType {
     return this._config.statusbar.ctest.type;
@@ -254,17 +255,24 @@ class CTestButton extends Button {
     this._enabled = v;
     this.update();
   }
-
   set results(v:BasicTestResults|null) {
     this._results = v;
-    if (!v) { // TODO: check if color is used
-      this._button.color = '';
+    if (!v) {
+      this._color = '';
     } else {
-      this._button.color = v.passing===v.total?'lightgreen' : 'yellow';
+      this._color = v.passing===v.total?'lightgreen' : 'yellow';
     }
     this.update();
   }
 
+  update() {
+    super.update();
+    if (this._config.statusbar.ctest.color) {
+      this._button.color = this._color;
+    } else {
+      this._button.color = '';
+    }
+  }
   isVisible() {
     return this._enabled;
   }

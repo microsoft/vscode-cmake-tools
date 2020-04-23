@@ -74,6 +74,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
       },
       ctest: {
         type: 'text',
+        color: true,
       }
     }
   });

@@ -52,6 +52,7 @@ export interface StatusBarConfig {
     type: StatusBarButtonType;
   };
   ctest: {
+    color: boolean;
     type: StatusBarButtonType;
   };
 }
