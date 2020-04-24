@@ -188,10 +188,7 @@
       {
         "command": "cmake.outline.selectWorkspace",
         "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
-        "icon": {
-          "dark": "res/dark/build-icon.svg",
-          "light": "res/light/build-icon.svg"
-        }
+        "icon": "$(gear)"
       },
       {
         "command": "cmake.install",
