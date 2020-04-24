@@ -64,6 +64,7 @@ export interface ExtensionConfigurationSettings {
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
+  launchArgs: string[];
 }
 
 type EmittersOf<T> = {
@@ -201,6 +202,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
+  get launchArgs(): string[] { return this.configData.launchArgs; }
+
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
     if (communicationMode == "automatic" && this.useCMakeServer) {
@@ -286,6 +289,7 @@ export class ConfigurationReader implements vscode.Disposable {
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+    launchArgs: new vscode.EventEmitter<string[]>(),
   };
 
   /**
