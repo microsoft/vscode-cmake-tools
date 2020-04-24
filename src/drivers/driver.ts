@@ -12,6 +12,7 @@ import {CompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
 import {CMakeBuildConsumer, CompileOutputConsumer} from '@cmt/diagnostics/build';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
+import * as ext from '@cmt/extension';
 import {RawDiagnosticParser} from '@cmt/diagnostics/util';
 import {ProgressMessage} from '@cmt/drivers/cms-client';
 import * as expand from '@cmt/expand';
@@ -616,7 +617,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
     this.configRunning = true;
     try {
+      // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
+      // (example: cmake.sourceDirectory).
+      await this._refreshExpansions();
       log.debug(localize('start.configure', 'Start configure'), extra_args);
+
       const pre_check_ok = await this._beforeConfigureOrBuild();
       if (!pre_check_ok) {
         return -1;
@@ -637,7 +642,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const expanded_flags = await Promise.all(expanded_flags_promises);
       log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
 
-      // Expand all important paths
+      // A more complete round of expansions
       await this._refreshExpansions();
 
       const timeStart: number = new Date().getTime();
@@ -850,6 +855,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
       return false;
     }
 
+    // Ensure full activation of CMake Tools.
+    await ext.partialActivation(false);
     return true;
   }
 
