@@ -25,36 +25,40 @@ interface HardEnv {
   [key: string]: string;
 }
 
+export interface AdvancedStatusBarConfig {
+  kit?: {
+    type?: StatusBarButtonType;
+    length?: number;
+  };
+  status?: {
+    type?: StatusBarButtonType;
+  };
+  workspace?: {
+    type?: StatusBarButtonType;
+  };
+  buildTarget?: {
+    type?: StatusBarButtonType;
+  };
+  build?: {
+    type?: StatusBarButtonType;
+  };
+  launchTarget?: {
+    type?: StatusBarButtonType;
+  };
+  debug?: {
+    type?: StatusBarButtonType;
+  };
+  launch?: {
+    type?: StatusBarButtonType;
+  };
+  ctest?: {
+    color?: boolean;
+    type?: StatusBarButtonType;
+  };
+}
 export interface StatusBarConfig {
-  kit: {
-    type: StatusBarButtonType;
-    length: number;
-  };
-  status: {
-    type: StatusBarButtonType;
-  };
-  workspace: {
-    type: StatusBarButtonType;
-  };
-  build_target: {
-    type: StatusBarButtonType;
-  };
-  build: {
-    type: StatusBarButtonType;
-  };
-  launch_target: {
-    type: StatusBarButtonType;
-  };
-  debug: {
-    type: StatusBarButtonType;
-  };
-  launch: {
-    type: StatusBarButtonType;
-  };
-  ctest: {
-    color: boolean;
-    type: StatusBarButtonType;
-  };
+  advanced?: AdvancedStatusBarConfig;
+  type: StatusBarButtonType;
 }
 
 export interface ExtensionConfigurationSettings {

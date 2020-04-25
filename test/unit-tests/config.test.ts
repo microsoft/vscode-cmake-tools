@@ -47,35 +47,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     enableTraceLogging: false,
     loggingLevel: 'info',
     statusbar: {
-      kit: {
-        type: 'text',
-        length: 10,
-      },
-      status: {
-        type: 'text',
-      },
-      workspace: {
-        type: 'text',
-      },
-      build_target: {
-        type: 'text',
-      },
-      build: {
-        type: 'text',
-      },
-      launch_target: {
-        type: 'text',
-      },
-      debug: {
-        type: 'text',
-      },
-      launch: {
-        type: 'text',
-      },
-      ctest: {
-        type: 'text',
-        color: true,
-      }
+      advanced: {},
+      type: "text"
     }
   });
   ret.updatePartial(conf);
