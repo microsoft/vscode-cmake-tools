@@ -872,6 +872,7 @@ class ExtensionManager implements vscode.Disposable {
 
   async hideLaunchCommand(shouldHide: boolean = true) {
     // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
+    this._statusBar.hideLaunchButton(shouldHide);
     await util.setContextValue(HIDE_LAUNCH_COMMAND_KEY, shouldHide);
   }
 

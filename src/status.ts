@@ -224,18 +224,33 @@ class CheckCPPToolsButton extends Button {
     return vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined;
   }
 }
-
 class DebugButton extends CheckCPPToolsButton {
   settings = 'debug';
   command = 'cmake.debugTarget';
   text = '$(bug)';
   tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
+  private _hidden: boolean = false;
+  set hidden(v:boolean) {
+    this._hidden = v;
+    this.update();
+  }
+  isVisible() {
+    return super.isVisible() && !this._hidden;
+  }
 }
 class LaunchButton extends Button {
   settings = 'launch';
   command = 'cmake.launchTarget';
   text = '$(play)';
   tooltip = localize('launch.tooltip', 'Launch');
+  private _hidden: boolean = false;
+  set hidden(v:boolean) {
+    this._hidden = v;
+    this.update();
+  }
+  isVisible() {
+    return super.isVisible() && !this._hidden;
+  }
 }
 
 class CTestButton extends Button {
@@ -342,7 +357,7 @@ export class StatusBar implements vscode.Disposable {
 
   private readonly _launchTargetNameButton = new LaunchTargetSelectionButton(this._config, 3.3); //3.35
   private readonly _debugButton:DebugButton = new DebugButton(this._config, 3.25); //3.3
-  private readonly _runButton = new LaunchButton(this._config, 3.2); //3.25
+  private readonly _launchButton = new LaunchButton(this._config, 3.2); //3.25
 
   private readonly _testButton = new CTestButton(this._config, 3.1); //3.2
 
@@ -358,7 +373,7 @@ export class StatusBar implements vscode.Disposable {
       this._debugButton,
       this._buildButton,
       this._testButton,
-      this._runButton
+      this._launchButton
     ];
     this._config.onChange('statusbar', ()=>this.update());
     this.update();
@@ -379,8 +394,6 @@ export class StatusBar implements vscode.Disposable {
   setIsBusy = (v:boolean) => this._buildButton.isBusy = v;
   setActiveKitName = (v:string) => this._kitSelectionButton.text = v;
 
-  hideDebugButton(shouldHide: boolean = true) {
-    if (false) return shouldHide;
-    // TODO: Find out if this is called...
-  }
+  hideLaunchButton = (shouldHide: boolean = true) => this._launchButton.hidden = shouldHide;
+  hideDebugButton = (shouldHide: boolean = true) => this._debugButton.hidden = shouldHide;
 }
