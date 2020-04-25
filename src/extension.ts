@@ -813,9 +813,9 @@ class ExtensionManager implements vscode.Disposable {
     }
     vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
   }
-  async selectWorkspace(file?: vscode.WorkspaceFolder) {
-    if (!file) return;
-    await this._setActiveFolder(file);
+  async selectWorkspace(folder?: vscode.WorkspaceFolder) {
+    if (!folder) return;
+    await this._setActiveFolder(folder);
   }
   ctest(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.ctest(), folder); }
 
