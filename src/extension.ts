@@ -26,6 +26,7 @@ import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
+import {StateManager} from './state';
 import {StatusBar} from '@cmt/status';
 import * as telemetry from '@cmt/telemetry';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
@@ -125,6 +126,21 @@ class ExtensionManager implements vscode.Disposable {
       }
       this._statusBar.setAutoSelectActiveFolder(v);
     });
+
+    this._workspaceConfig.onChange('sourceDirectory', async v => {
+      await this._onDidChangeActiveTextEditorSub.dispose();
+      if (v) {
+        this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
+      } else {
+        this._onDidChangeActiveTextEditorSub = new DummyDisposable();
+      }
+
+      // Reset to a full activation mode.
+      // If required, the extension will switch back to partial activation mode
+      // after more analysis triggered by the below configure.
+      await partialActivation(false);
+      await vscode.commands.executeCommand("cmake.configure");
+    });
   }
 
   private _onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
@@ -165,6 +181,23 @@ class ExtensionManager implements vscode.Disposable {
     telemetry.logEvent('open', telemetryProperties);
   }
 
+  // Partial activation means that the CMake Tools commands are hidden
+  // from the commands pallette and the status bar is not visible.
+  // The context variable "cmake:cmtPartiallyActive" is always equal
+  // to the state setting ignoreCMakeListsMissing.
+  // To have them both always in sync, cmake:cmtPartiallyActive is set
+  // by the getter and setter of ignoreCMakeListsMissing.
+  public async partialActivation(partiallyActive: boolean) {
+    let workspaceFolder: vscode.WorkspaceFolder | undefined = this._folders.activeFolder?.cmakeTools.folder;
+    if (!workspaceFolder) {
+      workspaceFolder = vscode.workspace.workspaceFolders![0];
+    }
+
+    const extensionState = new StateManager(this.extensionContext, workspaceFolder);
+    extensionState.ignoreCMakeListsMissing = partiallyActive;
+    this._statusBar.setVisible(!partiallyActive);
+  }
+
   /**
    * Create a new extension manager instance. There must only be one!
    * @param ctx The extension context
@@ -179,6 +212,9 @@ class ExtensionManager implements vscode.Disposable {
    * The folder controller manages multiple instances. One per folder.
    */
   private readonly _folders = new CMakeToolsFolderController(this.extensionContext);
+  public getActiveFolder(): vscode.WorkspaceFolder {
+    return this._folders.activeFolder?.cmakeTools.folder || vscode.workspace.workspaceFolders![0];
+  }
 
   /**
    * The status bar controller
@@ -813,10 +849,12 @@ class ExtensionManager implements vscode.Disposable {
     }
     vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
   }
+
   async selectWorkspace(folder?: vscode.WorkspaceFolder) {
     if (!folder) return;
     await this._setActiveFolder(folder);
   }
+
   ctest(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.ctest(), folder); }
 
   ctestAll() { return this.mapCMakeToolsAll(cmt => cmt.ctest()); }
@@ -1063,8 +1101,20 @@ export async function activate(context: vscode.ExtensionContext) {
       progress => setup(context, progress),
   );
 
+    // Start with a partial activation mode if the user previously set so.
+    // Later configure analysis may change the activation mode.
+    const extensionState = new StateManager(context, _EXT_MANAGER?.getActiveFolder() || vscode.workspace.workspaceFolders![0]);
+    const ignoreCMakeListsMissing: boolean = extensionState.ignoreCMakeListsMissing || false;
+    if (ignoreCMakeListsMissing) {
+      await partialActivation(true);
+    }
+
   // TODO: Return the extension API
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
+}
+
+export async function partialActivation(partiallyActive: boolean) {
+  _EXT_MANAGER?.partialActivation(partiallyActive);
 }
 
 // this method is called when your extension is deactivated

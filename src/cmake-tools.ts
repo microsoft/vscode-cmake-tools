@@ -36,9 +36,10 @@ import rollbar from './rollbar';
 import * as telemetry from './telemetry';
 import {setContextValue} from './util';
 import {VariantManager} from './variant';
-import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
+import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
-import { CMakeToolsFolder } from './folders';
+import {CMakeToolsFolder} from './folders';
+import {partialActivation} from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -243,15 +244,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       vscode.window.showErrorMessage(localize('no.source.directory.found', 'You do not have a source directory open'));
       break;
     case CMakePreconditionProblems.MissingCMakeListsFile:
-      const quickStart = localize('quickstart.cmake.project', 'Quickstart a new CMake project');
-      const changeSetting = localize('edit.setting', 'Edit the \'cmake.sourceDirectory\' setting');
-      const result = await vscode.window.showErrorMessage(
-            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'', this.folderName), quickStart, changeSetting);
-      if (result === quickStart) {
-        vscode.commands.executeCommand('cmake.quickStart');
-      } else if (result === changeSetting) {
-        vscode.commands.executeCommand('workbench.action.openSettings');
+      if (!this.workspaceContext.state.ignoreCMakeListsMissing) {
+        const quickStart = localize('quickstart.cmake.project', 'Create');
+        const changeSetting = localize('edit.setting', 'Locate');
+        const ignoreCMakeListsMissing = localize('ignore.activation', 'Ignore');
+        const result = await vscode.window.showErrorMessage(
+            localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
+            quickStart, changeSetting, ignoreCMakeListsMissing);
+        if (result === quickStart) {
+          vscode.commands.executeCommand('cmake.quickStart');
+        } else if (result === changeSetting) {
+          vscode.commands.executeCommand('workbench.action.openSettings');
+        } else if (result === ignoreCMakeListsMissing) {
+          // Switch to partial CMake Tools activation to hide commands and status bar.
+          await partialActivation(true);
+        }
       }
+
       break;
     }
   }
@@ -399,11 +408,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     this._statusMessage.set(localize('ready.status', 'Ready'));
 
-    this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(td => {
+    this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async td => {
       const str = td.uri.fsPath;
       if (str.endsWith("CMakeLists.txt")) {
+        // Reset to a full activation mode.
+        // If required, the extension will switch back to partial activation mode
+        // after more analysis triggered by the below configure.
+        await partialActivation(false);
+
         log.debug(localize('cmakelists.save.trigger.reconfigure', "We are saving a CMakeLists.txt file, attempting automatic reconfigure..."));
-        this.configure([], ConfigureType.Normal);
+        await this.configure([], ConfigureType.Normal);
       }
     }));
   }
