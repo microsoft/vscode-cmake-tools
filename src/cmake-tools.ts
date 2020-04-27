@@ -398,6 +398,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._ctestController.onResultsChanged(res => { this._testResults.set(res); });
 
     this._statusMessage.set(localize('ready.status', 'Ready'));
+
+    this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(td => {
+      const str = td.uri.fsPath;
+      if (str.endsWith("CMakeLists.txt")) {
+        log.debug(localize('cmakelists.save.trigger.reconfigure', "We are saving a CMakeLists.txt file, attempting automatic reconfigure..."));
+        this.configure([], ConfigureType.Normal);
+      }
+    }));
   }
 
   async isNinjaInstalled() : Promise<boolean> {
