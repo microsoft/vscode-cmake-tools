@@ -186,6 +186,11 @@
         }
       },
       {
+        "command": "cmake.outline.selectWorkspace",
+        "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
+        "icon": "$(gear)"
+      },
+      {
         "command": "cmake.install",
         "title": "%cmake-tools.command.cmake.install.title%",
         "category": "CMake"
@@ -485,6 +490,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.selectWorkspace",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.cleanConfigure",
           "when": "never"
         },
@@ -656,6 +665,11 @@
         {
           "command": "cmake.outline.configureAll",
           "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.selectWorkspace",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=workspace/ && viewItem =~ /selected=false/",
           "group": "inline"
         }
       ],
