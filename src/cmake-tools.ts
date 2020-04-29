@@ -233,6 +233,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * configuration tasks are run
    */
   private async cmakePreConditionProblemHandler(e: CMakePreconditionProblems): Promise<void> {
+    // The only reason for limiting the functionality of CMake Tools extension
+    // (like hiding commands or the status bar) is a missing CMakeLists.txt file
+    // under the folder location set by the cmake.sourceDirectory setting.
+    // This is only one of more cases treated here, so start with assuming that partial activation is not needed.
+    let partiallyActive: boolean = false;
+
     switch (e) {
     case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
       vscode.window.showErrorMessage(localize('configuration.already.in.progress', 'Configuration is already in progress.'));
@@ -256,13 +262,26 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         } else if (result === changeSetting) {
           vscode.commands.executeCommand('workbench.action.openSettings');
         } else if (result === ignoreCMakeListsMissing) {
-          // Switch to partial CMake Tools activation to hide commands and status bar.
-          await partialActivation(true);
+          // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
+          // (hide commands and status bar) and record this choice so that this popup doesn't trigger next time.
+          // The switch back to full functionality can be done later by changes to the cmake.sourceDirectory setting
+          // or to the CMakeLists.txt file, a successful configure or a configure failing with anything but CMakePreconditionProblems.MissingCMakeListsFile.
+          // After that switch (back to a full activation), another occurrence of missing CMakeLists.txt
+          // would trigger this popup again.
+          partiallyActive = true;
         }
+      } else {
+        // Previously, the user decided to ignore the missing CMakeFiles.txt.
+        // Since we are here in cmakePreConditionProblemHandler, for the case of CMakePreconditionProblems.MissingCMakeListsFile,
+        // it means that there weren't yet any reasons to switch to full functionality,
+        // so keep partiallyActive as true.
+        partiallyActive = true;
       }
 
       break;
     }
+
+    await partialActivation(partiallyActive);
   }
 
   /**
@@ -643,6 +662,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   break;
                 }
                 if (retc === 0) {
+                  // Switch to full CMake Tools extension functionality:
+                  // visible status bar and commands in the pallette.
+                  await partialActivation(false);
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
                 await this._ctestController.reloadTests(drv);

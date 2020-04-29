@@ -188,12 +188,7 @@ class ExtensionManager implements vscode.Disposable {
   // To have them both always in sync, cmake:cmtPartiallyActive is set
   // by the getter and setter of ignoreCMakeListsMissing.
   public async partialActivation(partiallyActive: boolean) {
-    let workspaceFolder: vscode.WorkspaceFolder | undefined = this._folders?.activeFolder?.cmakeTools.folder;
-    if (!workspaceFolder) {
-      workspaceFolder = vscode.workspace.workspaceFolders![0];
-    }
-
-    const extensionState = new StateManager(this.extensionContext, workspaceFolder);
+    const extensionState = new StateManager(this.extensionContext, this.getActiveFolder());
     extensionState.ignoreCMakeListsMissing = partiallyActive;
     this._statusBar.setVisible(!partiallyActive);
   }
@@ -213,7 +208,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private readonly _folders = new CMakeToolsFolderController(this.extensionContext);
   public getActiveFolder(): vscode.WorkspaceFolder {
-    return this._folders.activeFolder?.cmakeTools.folder || vscode.workspace.workspaceFolders![0];
+    return this._folders?.activeFolder?.cmakeTools.folder || vscode.workspace.workspaceFolders![0];
   }
 
   /**
@@ -1100,14 +1095,6 @@ export async function activate(context: vscode.ExtensionContext) {
       },
       progress => setup(context, progress),
   );
-
-    // Start with a partial activation mode if the user previously set so.
-    // Later configure analysis may change the activation mode.
-    const extensionState = new StateManager(context, _EXT_MANAGER?.getActiveFolder() || vscode.workspace.workspaceFolders![0]);
-    const ignoreCMakeListsMissing: boolean = extensionState.ignoreCMakeListsMissing || false;
-    if (ignoreCMakeListsMissing) {
-      await partialActivation(true);
-    }
 
   // TODO: Return the extension API
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
