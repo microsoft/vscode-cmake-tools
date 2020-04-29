@@ -188,7 +188,7 @@ class ExtensionManager implements vscode.Disposable {
   // To have them both always in sync, cmake:cmtPartiallyActive is set
   // by the getter and setter of ignoreCMakeListsMissing.
   public async partialActivation(partiallyActive: boolean) {
-    let workspaceFolder: vscode.WorkspaceFolder | undefined = this._folders.activeFolder?.cmakeTools.folder;
+    let workspaceFolder: vscode.WorkspaceFolder | undefined = this._folders?.activeFolder?.cmakeTools.folder;
     if (!workspaceFolder) {
       workspaceFolder = vscode.workspace.workspaceFolders![0];
     }
@@ -1114,7 +1114,7 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export async function partialActivation(partiallyActive: boolean) {
-  _EXT_MANAGER?.partialActivation(partiallyActive);
+    _EXT_MANAGER?.partialActivation(partiallyActive);
 }
 
 // this method is called when your extension is deactivated

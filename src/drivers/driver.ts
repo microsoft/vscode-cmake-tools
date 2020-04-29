@@ -12,7 +12,6 @@ import {CompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
 import {CMakeBuildConsumer, CompileOutputConsumer} from '@cmt/diagnostics/build';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
-import * as ext from '@cmt/extension';
 import {RawDiagnosticParser} from '@cmt/diagnostics/util';
 import {ProgressMessage} from '@cmt/drivers/cms-client';
 import * as expand from '@cmt/expand';
@@ -864,8 +863,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       return false;
     }
 
-    // Ensure full activation of CMake Tools.
-    await ext.partialActivation(false);
     return true;
   }
 
