@@ -22,10 +22,12 @@ suite('CppTools tests', () => {
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
     info = parseCompileFlags(['-DFOO=BAR', '/D', 'BAZ=QUX']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR', 'BAZ=QUX']);
-    // Parse language standard
     expect(info.standard).to.eql('c++17');
+    // Parse language standard
     info = parseCompileFlags(['-std=c++03']);
     expect(info.standard).to.eql('c++03');
+    info = parseCompileFlags(['-std=gnu++14']);
+    expect(info.standard).to.eql('gnu++14');
     // Parse target architecture
     info = parseCompileFlags(['--target=aarch64-arm-none-eabi']);
     expect(info.targetArch).to.eql('arm64');
