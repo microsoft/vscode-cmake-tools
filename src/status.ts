@@ -17,7 +17,7 @@ abstract class Button {
   private _forceHidden:boolean = false;
   private _text: string = '';
   private _tooltip: string|null = null;
-  readonly settings : string|null = null;
+  readonly settingsName : string|null = null;
 
   set command(v:string|null) {
     this._button.command = v || undefined;
@@ -62,8 +62,8 @@ abstract class Button {
     return true;
   }
   protected getType():ButtonType | null {
-    if (this.settings) {
-      return Object(this._config.statusbar.advanced)[this.settings]?.type || null;
+    if (this.settingsName) {
+      return Object(this._config.statusbar.advanced)[this.settingsName]?.type || null;
     }
     return null;
   }
@@ -118,7 +118,7 @@ abstract class Button {
 }
 
 class ActiveFolderButton extends Button {
-  settings = 'workspace';
+  settingsName = 'workspace';
   command = "cmake.selectActiveFolder";
 
   private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
@@ -148,7 +148,7 @@ class ActiveFolderButton extends Button {
 }
 
 class CMakeStatus extends Button {
-  settings = 'status';
+  settingsName = 'status';
   command = "cmake.setVariant";
   tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');
 
@@ -172,7 +172,7 @@ class CMakeStatus extends Button {
 }
 
 class KitSelection extends Button {
-  settings = 'kit';
+  settingsName = 'kit';
   command = 'cmake.selectKit';
   tooltip = localize('click.to.change.kit.tooltip', 'Click to change the active kit');
 
@@ -206,7 +206,7 @@ class KitSelection extends Button {
 }
 
 class BuildTargetSelectionButton extends Button {
-  settings = 'buildTarget';
+  settingsName = 'buildTarget';
   command = 'cmake.setDefaultTarget';
   tooltip = localize('set.active.target.tooltip', 'Set the active target to build');
 
@@ -215,7 +215,7 @@ class BuildTargetSelectionButton extends Button {
   }
 }
 class LaunchTargetSelectionButton extends Button {
-  settings = 'launchTarget';
+  settingsName = 'launchTarget';
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
 }
@@ -225,7 +225,7 @@ class CheckCPPToolsButton extends Button {
   }
 }
 class DebugButton extends CheckCPPToolsButton {
-  settings = 'debug';
+  settingsName = 'debug';
   command = 'cmake.debugTarget';
   text = '$(bug)';
   tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
@@ -239,7 +239,7 @@ class DebugButton extends CheckCPPToolsButton {
   }
 }
 class LaunchButton extends Button {
-  settings = 'launch';
+  settingsName = 'launch';
   command = 'cmake.launchTarget';
   text = '$(play)';
   tooltip = localize('launch.tooltip', 'Launch');
@@ -256,7 +256,7 @@ class LaunchButton extends Button {
 class CTestButton extends Button {
   private static readonly _default = localize('run.ctest', 'Run CTest');
 
-  settings = 'ctest';
+  settingsName = 'ctest';
   command = 'cmake.ctest';
   tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
 
@@ -315,7 +315,7 @@ class BuildButton extends Button {
   private static readonly _build = localize('build', 'Build');
   private static readonly _stop = localize('stop', 'Stop');
 
-  settings = 'build';
+  settingsName = 'build';
   command = 'cmake.build';
 
   private _isBusy:boolean = false;
