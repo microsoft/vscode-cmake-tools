@@ -55,13 +55,13 @@ abstract class Button {
   }
 
   private _isVisible():boolean {
-    return this.isVisible() && this.getType() !== "hidden" && this.getText() != '';
+    return this.isVisible() && this._getType() !== "hidden" && this.getText() != '';
   }
 
   protected isVisible():boolean {
     return true;
   }
-  protected getType():ButtonType | null {
+  private _getType():ButtonType | null {
     if (this.settingsName) {
       return Object(this._config.statusbar.advanced)[this.settingsName]?.type || this._config.statusbar.type || null;
     }
@@ -69,7 +69,7 @@ abstract class Button {
   }
 
   getTooltip():string|null {
-    const type = this.getType();
+    const type = this._getType();
     switch (type) {
       case "hidden":
         return null;
@@ -82,7 +82,7 @@ abstract class Button {
     }
   }
   getText():string {
-    const type = this.getType();
+    const type = this._getType();
     switch (type) {
       case "icon":
         return this.getTextIcon();
