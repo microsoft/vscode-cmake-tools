@@ -59,7 +59,7 @@ suite('CppTools tests', () => {
     mode = getIntelliSenseMode('clang', 'arm');
     expect(mode).to.eql('clang-arm');
     mode = getIntelliSenseMode('gcc', undefined);
-    expect(mode).to.eql('gcc-x64')
+    expect(mode).to.eql('gcc-x64');
     mode = getIntelliSenseMode('g++', 'x86');
     expect(mode).to.eql('gcc-x86');
     mode = getIntelliSenseMode('arm-none-eabi-g++', undefined);

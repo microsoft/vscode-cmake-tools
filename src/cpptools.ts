@@ -78,7 +78,7 @@ function parseCStandard(std: string): StandardVersion|null {
 
 function parseTargetArch(target: string): Architecture {
 // ARM options from https://en.wikipedia.org/wiki/ARM_architecture#Cores
-  const is_arm_32: (value: string) => boolean = (value) => {
+  const is_arm_32: (value: string) => boolean = value => {
     if (value.indexOf('armv8-r') >=0 || value.indexOf('armv8-m') >=0) {
       return true;
     } else {
@@ -87,7 +87,7 @@ function parseTargetArch(target: string): Architecture {
       const verNum = +verStr;
       return verNum <= 7;
     }
-  }
+  };
   switch(target) {
     case '-m32':
     case 'i686':
