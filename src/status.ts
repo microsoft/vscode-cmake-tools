@@ -55,7 +55,7 @@ abstract class Button {
   }
 
   private _isVisible():boolean {
-    return this.isVisible() && (this.getType() || this.getDefaultType()) !== "hidden" && this.getText() != '';
+    return this.isVisible() && this.getType() !== "hidden" && this.getText() != '';
   }
 
   protected isVisible():boolean {
@@ -63,16 +63,13 @@ abstract class Button {
   }
   protected getType():ButtonType | null {
     if (this.settingsName) {
-      return Object(this._config.statusbar.advanced)[this.settingsName]?.type || null;
+      return Object(this._config.statusbar.advanced)[this.settingsName]?.type || this._config.statusbar.type || null;
     }
-    return null;
-  }
-  protected getDefaultType():ButtonType {
-    return this._config.statusbar.type;
+    return this._config.statusbar.type || null;
   }
 
   getTooltip():string|null {
-    const type = this.getType() || this.getDefaultType();
+    const type = this.getType();
     switch (type) {
       case "hidden":
         return null;
@@ -85,7 +82,7 @@ abstract class Button {
     }
   }
   getText():string {
-    const type = this.getType() || this.getDefaultType();
+    const type = this.getType();
     switch (type) {
       case "icon":
         return this.getTextIcon();
