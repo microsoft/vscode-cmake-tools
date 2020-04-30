@@ -1,4 +1,4 @@
-import {parseCompileFlags, CppConfigurationProvider} from '@cmt/cpptools';
+import {parseCompileFlags, getIntelliSenseMode, CppConfigurationProvider} from '@cmt/cpptools';
 import {expect} from '@test/util';
 import { CMakeCache } from '@cmt/cache';
 import * as path from 'path';
@@ -15,15 +15,67 @@ function getTestResourceFilePath(filename: string): string {
 
 suite('CppTools tests', () => {
   test('Parse some compiler flags', () => {
+    // Parse definition
     let info = parseCompileFlags(['-DFOO=BAR']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
     info = parseCompileFlags(['-D', 'FOO=BAR']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
     info = parseCompileFlags(['-DFOO=BAR', '/D', 'BAZ=QUX']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR', 'BAZ=QUX']);
+    // Parse language standard
     expect(info.standard).to.eql('c++17');
     info = parseCompileFlags(['-std=c++03']);
     expect(info.standard).to.eql('c++03');
+    // Parse target architecture
+    info = parseCompileFlags(['--target=aarch64-arm-none-eabi']);
+    expect(info.targetArch).to.eql('arm64');
+    info = parseCompileFlags(['-target', 'arm-arm-none-eabi']);
+    expect(info.targetArch).to.eql('arm');
+    info = parseCompileFlags(['-arch=x86_64']);
+    expect(info.targetArch).to.eql('x64');
+    info = parseCompileFlags(['-arch', 'aarch64']);
+    expect(info.targetArch).to.eql('arm64');
+    info = parseCompileFlags(['-arch', 'i686']);
+    expect(info.targetArch).to.eql('x86');
+    info = parseCompileFlags(['/arch:x86_64']);
+    expect(info.targetArch).to.eql('x64');
+    info = parseCompileFlags(['-march=amd64']);
+    expect(info.targetArch).to.eql('x64');
+    info = parseCompileFlags(['-m32']);
+    expect(info.targetArch).to.eql('x86');
+    info = parseCompileFlags(['-m00']);
+    expect(info.targetArch).to.eql(undefined);
+  });
+
+  test('Get IntelliSenseMode', () => {
+    let mode = getIntelliSenseMode('armclang', 'arm');
+    expect(mode).to.eql('clang-arm');
+    mode = getIntelliSenseMode('armclang', 'arm64');
+    expect(mode).to.eql('clang-arm64');
+    mode = getIntelliSenseMode('armclang', undefined);
+    expect(mode).to.eql('clang-arm');
+    mode = getIntelliSenseMode('clang', 'x64');
+    expect(mode).to.eql('clang-x64');
+    mode = getIntelliSenseMode('clang', 'arm');
+    expect(mode).to.eql('clang-arm');
+    mode = getIntelliSenseMode('gcc', undefined);
+    expect(mode).to.eql('gcc-x64')
+    mode = getIntelliSenseMode('g++', 'x86');
+    expect(mode).to.eql('gcc-x86');
+    mode = getIntelliSenseMode('arm-none-eabi-g++', undefined);
+    expect(mode).to.eql('gcc-arm');
+    mode = getIntelliSenseMode('aarch64-linux-gnu-gcc', undefined);
+    expect(mode).to.eql('gcc-arm64');
+    mode = getIntelliSenseMode('bin//Hostx64//x64//cl.exe', undefined);
+    expect(mode).to.eql('msvc-x64');
+    mode = getIntelliSenseMode('bin//Hostx64//x86//cl.exe', undefined);
+    expect(mode).to.eql('msvc-x86');
+    mode = getIntelliSenseMode('bin//Hostx64//arm//cl.exe', undefined);
+    expect(mode).to.eql('msvc-arm');
+    mode = getIntelliSenseMode('bin//Hostx64//arm64//cl.exe', undefined);
+    expect(mode).to.eql('msvc-arm64');
+    mode = getIntelliSenseMode('cl.exe', undefined);
+    expect(mode).to.eql('msvc-x64');
   });
 
   test('Validate code model', async () => {
