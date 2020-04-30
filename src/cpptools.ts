@@ -42,7 +42,7 @@ interface TargetDefaults {
 }
 
 function parseCppStandard(std: string): StandardVersion|null {
-  let is_gnu = std.startsWith('gnu');
+  const is_gnu = std.startsWith('gnu');
   if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
   } else if (std.endsWith('++17') || std.endsWith('++1z')) {
@@ -62,7 +62,7 @@ function parseCppStandard(std: string): StandardVersion|null {
 
 function parseCStandard(std: string): StandardVersion|null {
   // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-  let is_gnu = std.startsWith('gnu');
+  const is_gnu = std.startsWith('gnu');
   if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(std)) {
     return is_gnu ? 'gnu89' : 'c89';
   } else if (/(c|gnu)(99|9x|iso9899:(1999|199x))/.test(std)) {
@@ -78,7 +78,7 @@ function parseCStandard(std: string): StandardVersion|null {
 
 function parseTargetArch(target: string): Architecture {
 // ARM options from https://en.wikipedia.org/wiki/ARM_architecture#Cores
-  let is_arm_32: (value: string) => boolean = (value) => {
+  const is_arm_32: (value: string) => boolean = (value) => {
     if (value.indexOf('armv8-r') >=0 || value.indexOf('armv8-m') >=0) {
       return true;
     } else {
