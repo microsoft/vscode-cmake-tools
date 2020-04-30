@@ -345,18 +345,19 @@ class BuildButton extends Button {
 }
 
 export class StatusBar implements vscode.Disposable {
-  private readonly _kitSelectionButton = new KitSelection(this._config, 3.45); //3.6
-  private readonly _cmakeToolsStatusItem = new CMakeStatus(this._config, 3.5); //3.55
+  private readonly _activeFolderButton = new ActiveFolderButton(this._config, 3.6);
 
-  private readonly _activeFolderButton = new ActiveFolderButton(this._config, 3.6); // 3.5
-  private readonly _buildTargetNameButton = new BuildTargetSelectionButton(this._config, 3.45); // 3.45
-  private readonly _buildButton:BuildButton = new BuildButton(this._config, 3.4); //3.4
+  private readonly _cmakeToolsStatusItem = new CMakeStatus(this._config, 3.5);
+  private readonly _kitSelectionButton = new KitSelection(this._config, 3.4);
 
-  private readonly _launchTargetNameButton = new LaunchTargetSelectionButton(this._config, 3.3); //3.35
-  private readonly _debugButton:DebugButton = new DebugButton(this._config, 3.25); //3.3
-  private readonly _launchButton = new LaunchButton(this._config, 3.2); //3.25
+  private readonly _buildButton:BuildButton = new BuildButton(this._config, 3.35);
+  private readonly _buildTargetNameButton = new BuildTargetSelectionButton(this._config, 3.3);
 
-  private readonly _testButton = new CTestButton(this._config, 3.1); //3.2
+  private readonly _debugButton:DebugButton = new DebugButton(this._config, 3.22);
+  private readonly _launchButton = new LaunchButton(this._config, 3.21);
+  private readonly _launchTargetNameButton = new LaunchTargetSelectionButton(this._config, 3.2);
+
+  private readonly _testButton = new CTestButton(this._config, 3.1);
 
   private readonly _buttons: Button[];
 
