@@ -365,6 +365,10 @@ class ExtensionManager implements vscode.Disposable {
     if (should_configure) {
       // We've opened a new workspace folder, and the user wants us to
       // configure it now.
+      if (cmt.workspaceContext.config.scanForKitsOnOpen) {
+        await this.scanForKits();
+      }
+
       log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
       // Ensure that there is a kit. This is required for new instances.
       if (!await this._ensureActiveKit(cmt)) {
