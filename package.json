@@ -1163,6 +1163,12 @@
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
           "scope": "resource"
         },
+        "cmake.skipConfigureIfCachePresent": {
+          "type": "boolean",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description%",
+          "scope": "resource"
+        },
         "cmake.useCMakeServer": {
           "type": "boolean",
           "default": false,
