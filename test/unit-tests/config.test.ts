@@ -39,6 +39,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     emscriptenSearchDirs: [],
     copyCompileCommands: null,
     configureOnOpen: null,
+    scanForKitsOnOpen: false,
     useCMakeServer: true,
     cmakeCommunicationMode: 'automatic',
     ignoreKitEnv: false,
