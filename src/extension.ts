@@ -138,7 +138,7 @@ class ExtensionManager implements vscode.Disposable {
       // Reset to a full activation mode.
       // If required, the extension will switch back to partial activation mode
       // after more analysis triggered by the below configure.
-      await partialActivation(false);
+      await enableFullFeatureSet(true);
       await vscode.commands.executeCommand("cmake.configure");
     });
   }
@@ -183,14 +183,18 @@ class ExtensionManager implements vscode.Disposable {
 
   // Partial activation means that the CMake Tools commands are hidden
   // from the commands pallette and the status bar is not visible.
-  // The context variable "cmake:cmtPartiallyActive" is always equal
+  // The context variable "cmake:enableFullFeatureSet" is always equal
   // to the state setting ignoreCMakeListsMissing.
-  // To have them both always in sync, cmake:cmtPartiallyActive is set
+  // To have them both always in sync, cmake:enableFullFeatureSet is set
   // by the getter and setter of ignoreCMakeListsMissing.
-  public async partialActivation(partiallyActive: boolean) {
-    const extensionState = new StateManager(this.extensionContext, this.getActiveFolder());
-    extensionState.ignoreCMakeListsMissing = partiallyActive;
-    this._statusBar.setVisible(!partiallyActive);
+  public async enableFullFeatureSet(fullFeatureSet: boolean) {
+    const activeFolder = this.getActiveFolder();
+    if (activeFolder) {
+      const extensionState = new StateManager(this.extensionContext, activeFolder);
+      extensionState.ignoreCMakeListsMissing = !fullFeatureSet;
+    }
+
+    this._statusBar.setVisible(fullFeatureSet);
   }
 
   /**
@@ -207,7 +211,11 @@ class ExtensionManager implements vscode.Disposable {
    * The folder controller manages multiple instances. One per folder.
    */
   private readonly _folders = new CMakeToolsFolderController(this.extensionContext);
-  public getActiveFolder(): vscode.WorkspaceFolder {
+  public getActiveFolder(): vscode.WorkspaceFolder | undefined {
+    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+      return undefined;
+    }
+
     return this._folders?.activeFolder?.cmakeTools.folder || vscode.workspace.workspaceFolders![0];
   }
 
@@ -1100,8 +1108,8 @@ export async function activate(context: vscode.ExtensionContext) {
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
 }
 
-export async function partialActivation(partiallyActive: boolean) {
-    _EXT_MANAGER?.partialActivation(partiallyActive);
+export async function enableFullFeatureSet(fullFeatureSet: boolean) {
+    _EXT_MANAGER?.enableFullFeatureSet(fullFeatureSet);
 }
 
 // this method is called when your extension is deactivated

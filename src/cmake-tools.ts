@@ -39,7 +39,7 @@ import {VariantManager} from './variant';
 import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
 import {CMakeToolsFolder} from './folders';
-import {partialActivation} from './extension';
+import {enableFullFeatureSet} from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -237,7 +237,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // (like hiding commands or the status bar) is a missing CMakeLists.txt file
     // under the folder location set by the cmake.sourceDirectory setting.
     // This is only one of more cases treated here, so start with assuming that partial activation is not needed.
-    let partiallyActive: boolean = false;
+    let fullFeatureSet: boolean = true;
 
     switch (e) {
     case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
@@ -253,14 +253,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!this.workspaceContext.state.ignoreCMakeListsMissing) {
         const quickStart = localize('quickstart.cmake.project', 'Create');
         const changeSetting = localize('edit.setting', 'Locate');
-        const ignoreCMakeListsMissing = localize('ignore.activation', 'Ignore');
+        const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
         const result = await vscode.window.showErrorMessage(
             localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
             quickStart, changeSetting, ignoreCMakeListsMissing);
         if (result === quickStart) {
           vscode.commands.executeCommand('cmake.quickStart');
         } else if (result === changeSetting) {
-          vscode.commands.executeCommand('workbench.action.openSettings');
+          const openOpts: vscode.OpenDialogOptions = {
+            canSelectMany: false,
+            defaultUri: this.folder.uri,
+            filters: {"CMake files": ["txt"], "All files": ["*"]},
+            openLabel: "Load",
+          };
+          const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
+          if (cmakeListsFile) {
+            const fullPathDir: string = path.parse(cmakeListsFile[0].fsPath).dir;
+            const relPathDir: string = path.relative(this.folder.uri.fsPath, fullPathDir);
+            vscode.workspace.getConfiguration('cmake').update("sourceDirectory", path.join("${workspaceFolder}", relPathDir));
+          }
         } else if (result === ignoreCMakeListsMissing) {
           // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
           // (hide commands and status bar) and record this choice so that this popup doesn't trigger next time.
@@ -268,20 +279,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           // or to the CMakeLists.txt file, a successful configure or a configure failing with anything but CMakePreconditionProblems.MissingCMakeListsFile.
           // After that switch (back to a full activation), another occurrence of missing CMakeLists.txt
           // would trigger this popup again.
-          partiallyActive = true;
+          fullFeatureSet = false;
         }
       } else {
         // Previously, the user decided to ignore the missing CMakeFiles.txt.
         // Since we are here in cmakePreConditionProblemHandler, for the case of CMakePreconditionProblems.MissingCMakeListsFile,
         // it means that there weren't yet any reasons to switch to full functionality,
-        // so keep partiallyActive as true.
-        partiallyActive = true;
+        // so keep enableFullFeatureSet as true.
+        fullFeatureSet = false;
       }
 
       break;
     }
 
-    await partialActivation(partiallyActive);
+    await enableFullFeatureSet(fullFeatureSet);
   }
 
   /**
@@ -433,7 +444,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // Reset to a full activation mode.
         // If required, the extension will switch back to partial activation mode
         // after more analysis triggered by the below configure.
-        await partialActivation(false);
+        await enableFullFeatureSet(true);
 
         log.debug(localize('cmakelists.save.trigger.reconfigure', "We are saving a CMakeLists.txt file, attempting automatic reconfigure..."));
         await this.configure([], ConfigureType.Normal);
@@ -664,7 +675,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 if (retc === 0) {
                   // Switch to full CMake Tools extension functionality:
                   // visible status bar and commands in the pallette.
-                  await partialActivation(false);
+                  await enableFullFeatureSet(true);
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
                 await this._ctestController.reloadTests(drv);

@@ -29,12 +29,12 @@ export class StateManager {
   // Set the context var here in both getter and setter?
   get ignoreCMakeListsMissing(): boolean {
     const ignore = this._get<boolean>('ignoreCMakeListsMissing') || false;
-    util.setContextValue("cmake:cmtPartiallyActive", ignore);
+    util.setContextValue("cmake:enableFullFeatureSet", !ignore);
     return ignore;
   }
   set ignoreCMakeListsMissing(v: boolean) {
     this._update('ignoreCMakeListsMissing', v);
-    util.setContextValue("cmake:cmtPartiallyActive", v);
+    util.setContextValue("cmake:enableFullFeatureSet", !v);
   }
 
   /**
