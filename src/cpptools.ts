@@ -41,8 +41,8 @@ interface TargetDefaults {
   defines: string[];
 }
 
-function parseCppStandard(std: string): StandardVersion|null {
-  const is_gnu = std.startsWith('gnu');
+function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion|null {
+  const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
   } else if (std.endsWith('++17') || std.endsWith('++1z')) {
@@ -60,9 +60,9 @@ function parseCppStandard(std: string): StandardVersion|null {
   }
 }
 
-function parseCStandard(std: string): StandardVersion|null {
+function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null {
   // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
-  const is_gnu = std.startsWith('gnu');
+  const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(std)) {
     return is_gnu ? 'gnu89' : 'c89';
   } else if (/(c|gnu)(99|9x|iso9899:(1999|199x))/.test(std)) {
@@ -106,10 +106,11 @@ function parseTargetArch(target: string): Architecture {
   return undefined;
 }
 
-export function parseCompileFlags(args: string[], lang?: string): CompileFlagInformation {
+export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?: string): CompileFlagInformation {
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
   let standard: StandardVersion = (lang === 'C') ? 'c11' : 'c++17';
+  const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
@@ -158,23 +159,23 @@ export function parseCompileFlags(args: string[], lang?: string): CompileFlagInf
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
       if (lang === 'CXX' || lang === 'OBJCXX' ) {
-        const s = parseCppStandard(std);
+        const s = parseCppStandard(std, can_use_gnu_std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
           standard = s;
         }
       } else if (lang === 'C' || lang === 'OBJC' ) {
-        const s = parseCStandard(std);
+        const s = parseCStandard(std, can_use_gnu_std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
         } else {
           standard = s;
         }
       } else if (lang === undefined) {
-        let s = parseCppStandard(std);
+        let s = parseCppStandard(std, can_use_gnu_std);
         if (s === null) {
-          s = parseCStandard(std);
+          s = parseCStandard(std, can_use_gnu_std);
         }
         if (s === null) {
           log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
@@ -193,15 +194,15 @@ export function parseCompileFlags(args: string[], lang?: string): CompileFlagInf
  * Determine the IntelliSenseMode based on hints from compiler path
  * and target architecture parsed from compiler flags.
  */
-export function getIntelliSenseMode(compiler_path: string, target_arch: Architecture) {
+export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: string, target_arch: Architecture) {
   const compiler_name = path.basename(compiler_path || "").toLocaleLowerCase();
   if (compiler_name === 'cl.exe') {
     const clArch = path.basename(path.dirname(compiler_path));
     switch (clArch) {
       case 'arm64':
-        return 'msvc-arm64';
+        return (cptVersion >= cpt.Version.v4) ? 'msvc-arm64' : 'msvc-x64';
       case 'arm':
-        return 'msvc-arm';
+        return (cptVersion >= cpt.Version.v4) ? 'msvc-arm' : 'msvc-x86';
       case 'x86':
         return 'msvc-x86';
       case 'x64':
@@ -211,17 +212,17 @@ export function getIntelliSenseMode(compiler_path: string, target_arch: Architec
   } else if (compiler_name.indexOf('armclang') >= 0) {
     switch (target_arch) {
       case 'arm64':
-        return 'clang-arm64';
+        return (cptVersion >= cpt.Version.v4) ? 'clang-arm64' : 'clang-x64';
       case 'arm':
       default:
-        return 'clang-arm';
+        return (cptVersion >= cpt.Version.v4) ? 'clang-arm' : 'clang-x86';
     }
   } else if (compiler_name.indexOf('clang') >= 0) {
     switch (target_arch) {
       case 'arm64':
-        return 'clang-arm64';
+        return (cptVersion >= cpt.Version.v4) ? 'clang-arm64' : 'clang-x64';
       case 'arm':
-        return 'clang-arm';
+        return (cptVersion >= cpt.Version.v4) ? 'clang-arm' : 'clang-x86';
       case 'x86':
         return 'clang-x86';
       case 'x64':
@@ -231,9 +232,9 @@ export function getIntelliSenseMode(compiler_path: string, target_arch: Architec
   }  else if (compiler_name.indexOf('aarch64') >= 0) {
     // Compiler with 'aarch64' in its name may also have 'arm', so check for
     // aarch64 compilers before checking for ARM specific compilers.
-    return 'gcc-arm64';
+    return (cptVersion >= cpt.Version.v4) ? 'gcc-arm64' : 'gcc-x64';
   } else if (compiler_name.indexOf('arm') >= 0) {
-    return 'gcc-arm';
+    return (cptVersion >= cpt.Version.v4) ? 'gcc-arm' : 'gcc-x86';
   } else if (compiler_name.indexOf('gcc') >= 0 || compiler_name.indexOf('g++') >= 0) {
     switch (target_arch) {
       case 'x86':
@@ -359,6 +360,11 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   dispose() {}
 
   /**
+   * Version of Cpptools API
+   */
+  private _cpptoolsVersion: cpt.Version = cpt.Version.latest;
+
+  /**
    * Index of files to configurations, using the normalized path to the file
    * as the key to the <target,configuration>.
    */
@@ -388,7 +394,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
     const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
-    const {standard, extraDefinitions, targetArch} = parseCompileFlags(flags, lang);
+    const {standard, extraDefinitions, targetArch} = parseCompileFlags(this._cpptoolsVersion, flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
 
@@ -422,7 +428,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       defines,
       standard,
       includePath: normalizedIncludePath,
-      intelliSenseMode: getIntelliSenseMode(comp_path, targetArch),
+      intelliSenseMode: getIntelliSenseMode(this._cpptoolsVersion, comp_path, targetArch),
       compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
@@ -465,6 +471,14 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         this._workspaceBrowseConfiguration.browsePath.push(dir);
       }
     }
+  }
+
+  /**
+   * Saves the version of Cpptools API.
+   * @param version
+   */
+  saveCppToolsVersion(version: cpt.Version) {
+    this._cpptoolsVersion = version;
   }
 
   /**
