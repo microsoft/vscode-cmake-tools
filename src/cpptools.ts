@@ -82,8 +82,8 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null
 }
 
 function parseTargetArch(target: string): Architecture {
-// ARM options from https://en.wikipedia.org/wiki/ARM_architecture#Cores
   const is_arm_32: (value: string) => boolean = value => {
+    // ARM verions from https://en.wikipedia.org/wiki/ARM_architecture#Cores
     if (value.indexOf('armv8-r') >=0 || value.indexOf('armv8-m') >=0) {
       return true;
     } else {
