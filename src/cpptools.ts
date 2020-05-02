@@ -70,7 +70,12 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null
   } else if (/(c|gnu)(11|1x|iso9899:2011)/.test(std)) {
     return is_gnu ? 'gnu11' : 'c11';
   } else if (/(c|gnu)(17|18|iso9899:(2017|2018))/.test(std)) {
-    return is_gnu ? 'gnu18' : 'c18';
+    if (can_use_gnu) {
+      // cpptools supports 'c18' in same version it supports GNU std.
+      return is_gnu ? 'gnu18' : 'c18';
+    } else {
+      return 'c11';
+    }
   } else {
     return null;
   }
