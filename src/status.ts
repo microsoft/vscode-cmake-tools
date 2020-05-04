@@ -17,7 +17,12 @@ abstract class Button {
   private _forceHidden:boolean = false;
   private _text: string = '';
   private _tooltip: string|null = null;
+  private _icon: string|null = null;
   readonly settingsName : string|null = null;
+
+  set icon(v:string|null) {
+    this._icon = v?`$(${v})`: null;
+  }
 
   set command(v:string|null) {
     this._button.command = v || undefined;
@@ -45,17 +50,22 @@ abstract class Button {
   }
   update():void {
     const visible = this._isVisible();
-    if (visible && !this._forceHidden) {
-      this._button.text = this.getText();
-      this._button.tooltip = this.getTooltip() || undefined;
-      this._button.show();
-    } else {
+    if (!visible || this._forceHidden) {
       this._button.hide();
+      return;
     }
+    const text = this.getText(true);
+    if (text==='') {
+      this._button.hide();
+      return;
+    }
+    this._button.text = text;
+    this._button.tooltip = this.getTooltip() || undefined;
+    this._button.show();
   }
 
   private _isVisible():boolean {
-    return this.isVisible() && this.getType() !== "hidden" && this.getText() != '';
+    return this.isVisible() && this.getType() !== "hidden";
   }
 
   protected isVisible():boolean {
@@ -81,23 +91,45 @@ abstract class Button {
         return this.getTooltipNormal();
     }
   }
-  getText():string {
+  getText(icon:boolean=false):string {
     const type = this.getType();
+    let text:string;
     switch (type) {
       case "icon":
-        return this.getTextIcon();
+        text = this.getTextIcon();
+        break;
       case "short":
-        return this.getTextShort();
+        text = this.getTextShort();
+        break;
       default:
-        return this.getTextNormal();
+        text = this.getTextNormal();
+        break;
     }
+    if (!icon) {
+      return text;
+    }
+    if (!this._icon) {
+      return text;
+    }
+    if (text=='') {
+      return this._icon || '';
+    }
+    return `${this._icon} ${text}`;
   }
 
   protected getTooltipNormal():string|null {
     return this._tooltip;
   }
   protected getTooltipShort():string|null {
-    return this.getTooltipNormal();
+    const tooltip = this.getTooltipNormal();
+    const text = this.getTextNormal();
+    if (!tooltip && !text) {
+      return null;
+    }
+    if (!tooltip || !text) {
+      return `CMake: ${tooltip||text}`;
+    }
+    return `CMake: ${tooltip}\n${text}`;
   }
   protected getTooltipIcon():string|null {
     return this.getTooltipShort();
@@ -110,7 +142,7 @@ abstract class Button {
     return this.getTextNormal();
   }
   protected getTextIcon():string {
-    return this.getTextShort();
+    return '';
   }
 }
 
@@ -122,23 +154,19 @@ class CheckCPPToolsButton extends Button {
     return vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined;
   }
 }
-class HideInIconModeButton extends Button {
-  protected isVisible():boolean {
-    return this.getType() != 'icon';
-  }
-}
 
 //---------------------------------------------
 //---------------- Button Class ---------------
 //---------------------------------------------
 class ActiveFolderButton extends Button {
-  settingsName = 'workspace';
-  command = "cmake.selectActiveFolder";
-
   private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
   private static readonly _toolTip = localize('active.folder.tooltip', 'Select Active folder');
-  private _autoSelect: boolean = false;
 
+  settingsName = 'workspace';
+  command = "cmake.selectActiveFolder";
+  icon = 'folder-active';
+
+  private _autoSelect: boolean = false;
   set autoSelect(v:boolean) {
     this._autoSelect = v;
     this.update();
@@ -153,22 +181,15 @@ class ActiveFolderButton extends Button {
   protected isVisible():boolean {
     return Boolean(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1 && !!this.getText());
   }
-  protected getTextIcon():string {
-    return '$(folder-active)';
-  }
-  protected getTooltipIcon():string {
-    return `CMake: ${this.getTooltipNormal()}\n${this.getTextNormal()}`;
-  }
 }
 
-class CMakeStatus extends HideInIconModeButton {
+class CMakeStatus extends Button {
   settingsName = 'status';
   command = "cmake.setVariant";
   tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');
 
   private _buildTypeLabel: string = localize('unconfigured', 'Unconfigured');
   private _statusMessage: string = localize('loading.status', 'Loading...');
-
   set buildTypeLabel(v: string) {
     this._buildTypeLabel = v;
     this.update();
@@ -186,23 +207,25 @@ class CMakeStatus extends HideInIconModeButton {
 }
 
 class KitSelection extends Button {
+  private static readonly _noActiveKit = localize('no.active.kit', 'No active kit');
+  private static readonly _noKitSelected = localize('no.kit.selected', 'No Kit Selected');
+
   settingsName = 'kit';
   command = 'cmake.selectKit';
+  icon = 'tools';
   tooltip = localize('click.to.change.kit.tooltip', 'Click to change the active kit');
 
   protected getTextNormal():string {
     const text = this.text;
     if (text === SpecialKits.Unspecified) {
-      return `[${localize('no.active.kit', 'No active kit')}]`;
+      return KitSelection._noActiveKit;
     }
     if (text.length === 0) {
-      return localize('no.kit.selected', 'No Kit Selected');
+      return KitSelection._noKitSelected;
     }
     return text;
   }
-  protected getTextIcon(): string {
-    return `$(tools)`;
-  }
+
   protected getTextShort() {
     const len = Number(this._config.statusbar.advanced?.kit?.length) || 20;
     let text = this.getTextNormal();
@@ -211,15 +234,9 @@ class KitSelection extends Button {
     }
     return text;
   }
-  protected getTooltipShort(): string {
-    return `${this.getTooltipNormal()}\n${this.getTextNormal()}`;
-  }
-  protected getTooltipIcon(): string {
-    return `${this.getTooltipNormal()}\n${this.getTextNormal()}`;
-  }
 }
 
-class BuildTargetSelectionButton extends HideInIconModeButton {
+class BuildTargetSelectionButton extends Button {
   settingsName = 'buildTarget';
   command = 'cmake.setDefaultTarget';
   tooltip = localize('set.active.target.tooltip', 'Set the active target to build');
@@ -228,7 +245,7 @@ class BuildTargetSelectionButton extends HideInIconModeButton {
     return `[${this.text}]`;
   }
 }
-class LaunchTargetSelectionButton extends HideInIconModeButton {
+class LaunchTargetSelectionButton extends Button {
   settingsName = 'launchTarget';
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
@@ -236,13 +253,15 @@ class LaunchTargetSelectionButton extends HideInIconModeButton {
 class DebugButton extends CheckCPPToolsButton {
   settingsName = 'debug';
   command = 'cmake.debugTarget';
-  text = '$(bug)';
+  icon = 'bug';
   tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
+
   private _hidden: boolean = false;
   set hidden(v:boolean) {
     this._hidden = v;
     this.update();
   }
+
   isVisible() {
     return super.isVisible() && !this._hidden;
   }
@@ -250,21 +269,21 @@ class DebugButton extends CheckCPPToolsButton {
 class LaunchButton extends Button {
   settingsName = 'launch';
   command = 'cmake.launchTarget';
-  text = '$(play)';
+  icon = 'play';
   tooltip = localize('launch.tooltip', 'Launch the selected target in the terminal window');
+
   private _hidden: boolean = false;
   set hidden(v:boolean) {
     this._hidden = v;
     this.update();
   }
+
   isVisible() {
     return super.isVisible() && !this._hidden;
   }
 }
 
 class CTestButton extends Button {
-  private static readonly _default = localize('run.ctest', 'Run CTest');
-
   settingsName = 'ctest';
   command = 'cmake.ctest';
   tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
@@ -292,6 +311,12 @@ class CTestButton extends Button {
   }
 
   update() {
+    if (this._results) {
+      const {passing, total} = this._results;
+      this.icon = passing == total? 'check' : 'x';
+    } else {
+      this.icon = 'beaker';
+    }
     super.update();
     if (this._isUseColor()) {
       this._button.color = this._color;
@@ -306,18 +331,13 @@ class CTestButton extends Button {
   protected getTextNormal():string {
     if (!this._results) {
       this._button.color = '';
-      return CTestButton._default;
+      return localize('run.ctest', 'Run CTest');
     }
     const {passing, total} = this._results;
-    const good = passing == total;
-    let testPassingText: string;
     if (total == 1) {
-      testPassingText = localize('test.passing', '{0}/{1} test passing', passing, total);
-    } else {
-      testPassingText = localize('tests.passing', '{0}/{1} tests passing', passing, total);
+      return localize('test.passing', '{0}/{1} test passing', passing, total);
     }
-    const icon = good ? 'check' : 'x';
-    return `$(${icon}) ${testPassingText}`;
+    return localize('tests.passing', '{0}/{1} tests passing', passing, total);
   }
 }
 class BuildButton extends Button {
@@ -328,28 +348,17 @@ class BuildButton extends Button {
   command = 'cmake.build';
 
   private _isBusy:boolean = false;
-
   set isBusy(v: boolean) {
     this._isBusy = v;
     this._button.command = v ? 'cmake.stop' : 'cmake.build';
-    this.update();
+    this.text = this._isBusy? BuildButton._stop:BuildButton._build;
+    // update implicitly called in set text.
+    // this.update();
   }
 
-  private _getCurrentText():string {
-    return this._isBusy?BuildButton._stop:BuildButton._build;
-  }
-  private _getCurrentIcon():string {
-    return this._isBusy?'$(x)':'$(gear)';
-  }
-
-  getTextIcon():string {
-    return this._getCurrentIcon();
-  }
-  getTextNormal():string {
-    return `${this._getCurrentIcon()} ${this._getCurrentText()}`;
-  }
-  getTooltipIcon():string {
-    return this._getCurrentText();
+  update():void {
+    this.icon = this._isBusy?'x':'gear';
+    super.update();
   }
   isVisible():boolean {
     return this._isBusy || true;
