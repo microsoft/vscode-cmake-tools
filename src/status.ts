@@ -307,7 +307,7 @@ class CTestButton extends Button {
   }
 
   private _isUseColor():boolean {
-    return this._config.statusbar.advanced?.ctest?.color===false;
+    return this._config.statusbar.advanced?.ctest?.color===true;
   }
 
   update() {
