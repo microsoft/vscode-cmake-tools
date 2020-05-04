@@ -251,7 +251,7 @@ class LaunchButton extends Button {
   settingsName = 'launch';
   command = 'cmake.launchTarget';
   text = '$(play)';
-  tooltip = localize('launch.tooltip', 'Launch');
+  tooltip = localize('launch.tooltip', 'Launch the selected target in the terminal window');
   private _hidden: boolean = false;
   set hidden(v:boolean) {
     this._hidden = v;
