@@ -55,13 +55,13 @@ abstract class Button {
   }
 
   private _isVisible():boolean {
-    return this.isVisible() && this._getType() !== "hidden" && this.getText() != '';
+    return this.isVisible() && this.getType() !== "hidden" && this.getText() != '';
   }
 
   protected isVisible():boolean {
     return true;
   }
-  private _getType():ButtonType | null {
+  protected getType():ButtonType | null {
     if (this.settingsName) {
       return Object(this._config.statusbar.advanced)[this.settingsName]?.type || this._config.statusbar.type || null;
     }
@@ -69,7 +69,7 @@ abstract class Button {
   }
 
   getTooltip():string|null {
-    const type = this._getType();
+    const type = this.getType();
     switch (type) {
       case "hidden":
         return null;
@@ -82,7 +82,7 @@ abstract class Button {
     }
   }
   getText():string {
-    const type = this._getType();
+    const type = this.getType();
     switch (type) {
       case "icon":
         return this.getTextIcon();
@@ -114,6 +114,23 @@ abstract class Button {
   }
 }
 
+//---------------------------------------------
+//---------------- Helper Class ---------------
+//---------------------------------------------
+class CheckCPPToolsButton extends Button {
+  protected isVisible() {
+    return vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined;
+  }
+}
+class HideInIconModeButton extends Button {
+  protected isVisible():boolean {
+    return this.getType() != 'icon';
+  }
+}
+
+//---------------------------------------------
+//---------------- Button Class ---------------
+//---------------------------------------------
 class ActiveFolderButton extends Button {
   settingsName = 'workspace';
   command = "cmake.selectActiveFolder";
@@ -144,7 +161,7 @@ class ActiveFolderButton extends Button {
   }
 }
 
-class CMakeStatus extends Button {
+class CMakeStatus extends HideInIconModeButton {
   settingsName = 'status';
   command = "cmake.setVariant";
   tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');
@@ -202,7 +219,7 @@ class KitSelection extends Button {
   }
 }
 
-class BuildTargetSelectionButton extends Button {
+class BuildTargetSelectionButton extends HideInIconModeButton {
   settingsName = 'buildTarget';
   command = 'cmake.setDefaultTarget';
   tooltip = localize('set.active.target.tooltip', 'Set the active target to build');
@@ -211,15 +228,10 @@ class BuildTargetSelectionButton extends Button {
     return `[${this.text}]`;
   }
 }
-class LaunchTargetSelectionButton extends Button {
+class LaunchTargetSelectionButton extends HideInIconModeButton {
   settingsName = 'launchTarget';
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
-}
-class CheckCPPToolsButton extends Button {
-  protected isVisible() {
-    return vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined;
-  }
 }
 class DebugButton extends CheckCPPToolsButton {
   settingsName = 'debug';
