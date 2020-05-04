@@ -149,9 +149,18 @@ abstract class Button {
 //---------------------------------------------
 //---------------- Helper Class ---------------
 //---------------------------------------------
-class CheckCPPToolsButton extends Button {
-  protected isVisible() {
-    return vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined;
+
+class TargetTooltipButton extends Button {
+  private _target: string|null = null;
+  set target(v: string|null) {
+    this._target = v?`[${v}]`:null;
+    this.update();
+  }
+  getTooltipNormal() {
+    if (this.tooltip && this._target) {
+      return `${this.tooltip}\n${this._target}`;
+    }
+    return this._target || this.tooltip || null;
   }
 }
 
@@ -252,8 +261,12 @@ class LaunchTargetSelectionButton extends Button {
   settingsName = 'launchTarget';
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
+
+  protected getTextNormal():string {
+    return `[${this.text}]`;
+  }
 }
-class DebugButton extends CheckCPPToolsButton {
+class DebugButton extends TargetTooltipButton {
   settingsName = 'debug';
   command = 'cmake.debugTarget';
   icon = 'bug';
@@ -266,10 +279,10 @@ class DebugButton extends CheckCPPToolsButton {
   }
 
   isVisible() {
-    return super.isVisible() && !this._hidden;
+    return !this._hidden && vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined;
   }
 }
-class LaunchButton extends Button {
+class LaunchButton extends TargetTooltipButton {
   settingsName = 'launch';
   command = 'cmake.launchTarget';
   icon = 'play';
@@ -343,12 +356,13 @@ class CTestButton extends Button {
     return localize('tests.passing', '{0}/{1} tests passing', passing, total);
   }
 }
-class BuildButton extends Button {
+class BuildButton extends TargetTooltipButton {
   private static readonly _build = localize('build', 'Build');
   private static readonly _stop = localize('stop', 'Stop');
 
   settingsName = 'build';
   command = 'cmake.build';
+  tooltip = localize('build.tooltip', 'Build the selected target');
 
   private _isBusy:boolean = false;
   set isBusy(v: boolean) {
@@ -409,8 +423,15 @@ export class StatusBar implements vscode.Disposable {
   setAutoSelectActiveFolder = (autoSelectActiveFolder: boolean) => this._activeFolderButton.autoSelect = autoSelectActiveFolder;
   setBuildTypeLabel = (v: string) => this._cmakeToolsStatusItem.buildTypeLabel = v;
   setStatusMessage = (v: string) => this._cmakeToolsStatusItem.statusMessage = v;
-  setBuildTargetName = (v: string) => this._buildTargetNameButton.text = v;
-  setLaunchTargetName = (v: string) => this._launchTargetNameButton.text = v;
+  setBuildTargetName = (v: string) => {
+    this._buildTargetNameButton.text = v;
+    this._buildButton.target = v;
+  }
+  setLaunchTargetName = (v: string) => {
+    this._launchTargetNameButton.text = v;
+    this._launchButton.target = v;
+    this._debugButton.target = v;
+  }
   setCTestEnabled = (v: boolean) => this._testButton.enabled = v;
   setTestResults = (v: BasicTestResults|null) => this._testButton.results = v;
   setIsBusy = (v:boolean) => this._buildButton.isBusy = v;
