@@ -48,7 +48,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     loggingLevel: 'info',
     statusbar: {
       advanced: {},
-      type: "text"
+      visibility: "default"
     }
   });
   ret.updatePartial(conf);

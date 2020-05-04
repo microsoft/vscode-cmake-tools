@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import {BasicTestResults} from '@cmt/ctest';
 import * as nls from 'vscode-nls';
 import {SpecialKits} from '@cmt/kit';
-import {StatusBarButtonType as ButtonType, ConfigurationReader } from '@cmt/config';
+import {StatusBarButtonVisibility as ButtonVisibility, ConfigurationReader } from '@cmt/config';
 
 // FIXME: Show workspace selection if a folder is added to workspace
 
@@ -65,40 +65,40 @@ abstract class Button {
   }
 
   private _isVisible():boolean {
-    return this.isVisible() && this.getType() !== "hidden";
+    return this.isVisible() && this._getVisibility() !== "hidden";
   }
 
   protected isVisible():boolean {
     return true;
   }
-  protected getType():ButtonType | null {
+  private _getVisibility():ButtonVisibility | null {
     if (this.settingsName) {
-      return Object(this._config.statusbar.advanced)[this.settingsName]?.type || this._config.statusbar.type || null;
+      return Object(this._config.statusbar.advanced)[this.settingsName]?.visibility || this._config.statusbar.visibility || null;
     }
-    return this._config.statusbar.type || null;
+    return this._config.statusbar.visibility || null;
   }
 
   getTooltip():string|null {
-    const type = this.getType();
-    switch (type) {
+    const visibility = this._getVisibility();
+    switch (visibility) {
       case "hidden":
         return null;
       case "icon":
         return this.getTooltipIcon();
-      case "short":
+      case "compact":
         return this.getTooltipShort();
       default:
         return this.getTooltipNormal();
     }
   }
   getText(icon:boolean=false):string {
-    const type = this.getType();
+    const type = this._getVisibility();
     let text:string;
     switch (type) {
       case "icon":
         text = this.getTextIcon();
         break;
-      case "short":
+      case "compact":
         text = this.getTextShort();
         break;
       default:

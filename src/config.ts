@@ -19,7 +19,7 @@ export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal
 
 export type CMakeCommunicationMode = 'legacy'|'serverApi'|'fileApi'|'automatic';
 
-export type StatusBarButtonType = "text" | "short" | "icon" | "hidden";
+export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
 
 interface HardEnv {
   [key: string]: string;
@@ -27,38 +27,38 @@ interface HardEnv {
 
 export interface AdvancedStatusBarConfig {
   kit?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
     length?: number;
   };
   status?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
   workspace?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
   buildTarget?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
   build?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
   launchTarget?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
   debug?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
   launch?: {
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
   ctest?: {
     color?: boolean;
-    type?: StatusBarButtonType;
+    visibility?: StatusBarButtonVisibility;
   };
 }
 export interface StatusBarConfig {
   advanced?: AdvancedStatusBarConfig;
-  type: StatusBarButtonType;
+  visibility: StatusBarButtonVisibility;
 }
 
 export interface ExtensionConfigurationSettings {

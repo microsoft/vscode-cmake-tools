@@ -1205,12 +1205,13 @@
           ],
           "scope": "window"
         },
-        "cmake.statusbar.type": {
+        "cmake.statusbar.visibility": {
           "type": "string",
-          "default": "text",
+          "default": "default",
+          "description": "%cmake-tools.configuration.cmake.statusbar.visibility.description%",
           "enum": [
-            "text",
-            "short",
+            "default",
+            "compact",
             "icon",
             "hidden"
           ],
@@ -1219,15 +1220,16 @@
         "cmake.statusbar.advanced": {
           "type": "object",
           "default": null,
+          "description": "%cmake-tools.configuration.cmake.statusbar.advanced.description%",
           "properties": {
             "kit": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
-                    "text",
-                    "short",
+                    "default",
+                    "compact",
                     "icon",
                     "hidden"
                   ]
@@ -1240,12 +1242,12 @@
             "status": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
-                  "default": "text",
                   "enum": [
-                    "text",
-                    "short",
+                    "default",
+                    "compact",
+                    "icon",
                     "hidden"
                   ]
                 }
@@ -1254,10 +1256,11 @@
             "workspace": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
-                    "text",
+                    "default",
+                    "compact",
                     "icon",
                     "hidden"
                   ]
@@ -1267,10 +1270,12 @@
             "buildTarget": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
-                    "text",
+                    "default",
+                    "compact",
+                    "icon",
                     "hidden"
                   ]
                 }
@@ -1279,10 +1284,11 @@
             "build": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
-                    "text",
+                    "default",
+                    "compact",
                     "icon",
                     "hidden"
                   ]
@@ -1292,10 +1298,12 @@
             "launchTarget": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
-                    "text",
+                    "default",
+                    "compact",
+                    "icon",
                     "hidden"
                   ]
                 }
@@ -1304,9 +1312,11 @@
             "debug": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
+                    "default",
+                    "compact",
                     "icon",
                     "hidden"
                   ]
@@ -1316,9 +1326,11 @@
             "launch": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
+                    "default",
+                    "compact",
                     "icon",
                     "hidden"
                   ]
@@ -1328,10 +1340,12 @@
             "ctest": {
               "type": "object",
               "properties": {
-                "type": {
+                "visibility": {
                   "type": "string",
                   "enum": [
-                    "text",
+                    "default",
+                    "compact",
+                    "icon",
                     "hidden"
                   ]
                 },
