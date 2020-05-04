@@ -227,7 +227,10 @@ class KitSelection extends Button {
   }
 
   protected getTextShort() {
-    const len = Number(this._config.statusbar.advanced?.kit?.length) || 20;
+    let len = this._config.statusbar.advanced?.kit?.length || 0;
+    if (!Number.isInteger(len) || len <= 0) {
+      len = 20;
+    }
     let text = this.getTextNormal();
     if (len + 3 < text.length) {
       text = `${text.substr(0, len)}...`;
