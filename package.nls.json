@@ -108,6 +108,10 @@
     "cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Select active folder automatically",
     "cmake-tools.configuration.cmake.statusbar.visibility.description": "Select default visibility of statusbar buttons (e.g. compact)",
     "cmake-tools.configuration.cmake.statusbar.advanced.description": "Change settings of individual statusbar buttons (e.g. visibility). This overwrites the default settings.",
+    "cmake-tools.configuration.cmake.statusbar.advanced.visibility.description": "Select visibility (e.g. compact)",
+    "cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Change button color dependent on success of tests",
+    "cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Set maximum length of visible text in compact mode.",
+
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline"
 }
