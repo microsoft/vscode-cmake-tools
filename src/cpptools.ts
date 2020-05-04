@@ -112,10 +112,10 @@ function parseTargetArch(target: string): Architecture {
 }
 
 export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?: string): CompileFlagInformation {
+  const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
   let standard: StandardVersion = (lang === 'C') ? 'c11' : 'c++17';
-  const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
@@ -200,14 +200,15 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
  * and target architecture parsed from compiler flags.
  */
 export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: string, target_arch: Architecture) {
+  const can_use_arm = (cptVersion >= cpt.Version.v4);
   const compiler_name = path.basename(compiler_path || "").toLocaleLowerCase();
   if (compiler_name === 'cl.exe') {
     const clArch = path.basename(path.dirname(compiler_path));
     switch (clArch) {
       case 'arm64':
-        return (cptVersion >= cpt.Version.v4) ? 'msvc-arm64' : 'msvc-x64';
+        return can_use_arm ? 'msvc-arm64' : 'msvc-x64';
       case 'arm':
-        return (cptVersion >= cpt.Version.v4) ? 'msvc-arm' : 'msvc-x86';
+        return can_use_arm ? 'msvc-arm' : 'msvc-x86';
       case 'x86':
         return 'msvc-x86';
       case 'x64':
@@ -217,17 +218,17 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
   } else if (compiler_name.indexOf('armclang') >= 0) {
     switch (target_arch) {
       case 'arm64':
-        return (cptVersion >= cpt.Version.v4) ? 'clang-arm64' : 'clang-x64';
+        return can_use_arm ? 'clang-arm64' : 'clang-x64';
       case 'arm':
       default:
-        return (cptVersion >= cpt.Version.v4) ? 'clang-arm' : 'clang-x86';
+        return can_use_arm ? 'clang-arm' : 'clang-x86';
     }
   } else if (compiler_name.indexOf('clang') >= 0) {
     switch (target_arch) {
       case 'arm64':
-        return (cptVersion >= cpt.Version.v4) ? 'clang-arm64' : 'clang-x64';
+        return can_use_arm ? 'clang-arm64' : 'clang-x64';
       case 'arm':
-        return (cptVersion >= cpt.Version.v4) ? 'clang-arm' : 'clang-x86';
+        return can_use_arm ? 'clang-arm' : 'clang-x86';
       case 'x86':
         return 'clang-x86';
       case 'x64':
@@ -237,9 +238,9 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
   }  else if (compiler_name.indexOf('aarch64') >= 0) {
     // Compiler with 'aarch64' in its name may also have 'arm', so check for
     // aarch64 compilers before checking for ARM specific compilers.
-    return (cptVersion >= cpt.Version.v4) ? 'gcc-arm64' : 'gcc-x64';
+    return can_use_arm ? 'gcc-arm64' : 'gcc-x64';
   } else if (compiler_name.indexOf('arm') >= 0) {
-    return (cptVersion >= cpt.Version.v4) ? 'gcc-arm' : 'gcc-x86';
+    return can_use_arm ? 'gcc-arm' : 'gcc-x86';
   } else if (compiler_name.indexOf('gcc') >= 0 || compiler_name.indexOf('g++') >= 0) {
     switch (target_arch) {
       case 'x86':
