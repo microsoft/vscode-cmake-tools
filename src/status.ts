@@ -353,6 +353,14 @@ class CTestButton extends Button {
     }
     return localize('tests.passing', '{0}/{1} tests passing', passing, total);
   }
+
+  protected getTextShort(): string {
+    if (!this._results) {
+      return '-';
+    }
+    const {passing, total} = this._results;
+    return `${passing}/${total}`;
+  }
 }
 
 class BuildButton extends Button {
