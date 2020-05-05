@@ -202,7 +202,14 @@ class CMakeStatus extends Button {
     return `CMake: ${this.text}: ${this._statusMessage}`;
   }
   protected getTextShort() {
-    return `${this.text}: ${this._statusMessage}`;
+    return this.text;
+  }
+
+  protected getTooltipNormal():string {
+    return `${this.tooltip}\n${this.text}: ${this._statusMessage}`;
+  }
+  protected getTooltipShort(): string {
+    return `CMake: ${this.getTooltipNormal()}`;
   }
 }
 
