@@ -137,7 +137,7 @@ abstract class Button {
   }
 }
 
-class ActiveFolderButton extends Button {
+class WorkspaceButton extends Button {
   private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
   private static readonly _toolTip = localize('active.folder.tooltip', 'Select Active folder');
 
@@ -153,9 +153,9 @@ class ActiveFolderButton extends Button {
 
   protected getTooltipNormal(): string|null {
     if (this._autoSelect) {
-      return ActiveFolderButton._autoSelectToolTip;
+      return WorkspaceButton._autoSelectToolTip;
     }
-    return ActiveFolderButton._toolTip;
+    return WorkspaceButton._toolTip;
   }
 
   protected isVisible(): boolean {
@@ -177,11 +177,11 @@ class CMakeStatus extends Button {
     this.update();
   }
 
-  protected getTextNormal() { return `CMake: ${this.text}: ${this._statusMessage}`; }
-  protected getTextShort() { return this.text; }
+  protected getTextNormal(): string { return `CMake: ${this.text}: ${this._statusMessage}`; }
+  protected getTextShort(): string { return this.text; }
 
-  protected getTooltipNormal(): string { return `${this.tooltip}\n${this.text}: ${this._statusMessage}`; }
-  protected getTooltipShort(): string { return `CMake: ${this.getTooltipNormal()}`; }
+  protected getTooltipNormal(): string|null { return `${this.tooltip}\n${this.text}: ${this._statusMessage}`; }
+  protected getTooltipShort(): string|null { return `CMake: ${this.getTooltipNormal()}`; }
 }
 
 class KitSelection extends Button {
@@ -203,7 +203,7 @@ class KitSelection extends Button {
     }
     return text;
   }
-  protected getTextShort() {
+  protected getTextShort(): string {
     let len = this.config.statusbar.advanced?.kit?.length || 0;
     if (!Number.isInteger(len) || len <= 0) {
       len = 20;
@@ -226,14 +226,14 @@ class LaunchTargetSelectionButton extends Button {
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
 
-  protected getTextNormal() {
+  protected getTextNormal(): string {
     if (this.text == '') {
       return '[-]';
     }
     return this.text;
   }
 
-  protected getTooltipShort() { return this.tooltip; }
+  protected getTooltipShort(): string|null { return this.tooltip; }
 }
 
 class DebugButton extends Button {
@@ -261,7 +261,7 @@ class DebugButton extends Button {
     return this.tooltip;
   }
 
-  protected isVisible() { return !this._hidden && hasCPPTools(); }
+  protected isVisible(): boolean { return !this._hidden && hasCPPTools(); }
 }
 class LaunchButton extends Button {
   settingsName = 'launch';
@@ -288,7 +288,7 @@ class LaunchButton extends Button {
     return this.tooltip;
   }
 
-  protected isVisible() { return super.isVisible() && !this._hidden; }
+  protected isVisible(): boolean { return super.isVisible() && !this._hidden; }
 }
 
 class CTestButton extends Button {
@@ -314,7 +314,7 @@ class CTestButton extends Button {
     this.update();
   }
 
-  update() {
+  update(): void {
     if (this._results) {
       const {passing, total} = this._results;
       this.icon = passing == total ? 'check' : 'x';
@@ -329,7 +329,7 @@ class CTestButton extends Button {
     super.update();
   }
 
-  protected isVisible() { return this._enabled; }
+  protected isVisible(): boolean { return this._enabled; }
 
   protected getTextNormal(): string {
     if (!this._results) {
@@ -376,19 +376,21 @@ class BuildButton extends Button {
     this.update();
   }
 
+  protected getTextShort(): string { return ''; }
+
   protected getTooltipNormal(): string|null {
     if (!!this._target) {
       return `${this.tooltip}\n${this._target}`;
     }
     return this.tooltip;
   }
-  protected getTooltipShort = () => this.getTooltipNormal();
+  protected getTooltipShort(): string|null { return this.getTooltipNormal(); }
 
   protected isVisible(): boolean { return this._isBusy || true; }
 }
 
 export class StatusBar implements vscode.Disposable {
-  private readonly _activeFolderButton = new ActiveFolderButton(this._config, 3.6);
+  private readonly _workspaceButton = new WorkspaceButton(this._config, 3.6);
 
   private readonly _cmakeToolsStatusItem = new CMakeStatus(this._config, 3.5);
   private readonly _kitSelectionButton = new KitSelection(this._config, 3.4);
@@ -406,7 +408,7 @@ export class StatusBar implements vscode.Disposable {
 
   constructor(private readonly _config: ConfigurationReader) {
     this._buttons = [
-      this._activeFolderButton,
+      this._workspaceButton,
       this._cmakeToolsStatusItem,
       this._kitSelectionButton,
       this._buildTargetNameButton,
@@ -420,31 +422,33 @@ export class StatusBar implements vscode.Disposable {
     this.update();
   }
 
-  dispose = () => this._buttons.forEach(btn => btn.dispose());
-  update = () => this._buttons.forEach(btn => btn.update());
-  setVisible = (v: boolean) => this._buttons.forEach(btn => btn.forceHidden = !v);
+  dispose(): void { this._buttons.forEach(btn => btn.dispose()); }
+  update(): void { this._buttons.forEach(btn => btn.update()); }
 
-  setActiveFolderName = (v: string) => this._activeFolderButton.text = v;
-  setAutoSelectActiveFolder = (autoSelectActiveFolder: boolean) => this._activeFolderButton.autoSelect
-      = autoSelectActiveFolder;
-  setBuildTypeLabel = (v: string) => this._cmakeToolsStatusItem.text = v;
-  setStatusMessage = (v: string) => this._cmakeToolsStatusItem.statusMessage = v;
-  setBuildTargetName = (v: string) => {
+  setVisible(v: boolean): void { this._buttons.forEach(btn => btn.forceHidden = !v); }
+
+  setActiveFolderName(v: string): void { this._workspaceButton.text = v; }
+  setAutoSelectActiveFolder(autoSelectActiveFolder: boolean): void {
+    this._workspaceButton.autoSelect = autoSelectActiveFolder;
+  }
+  setBuildTypeLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
+  setStatusMessage(v: string): void { this._cmakeToolsStatusItem.statusMessage = v; }
+  setBuildTargetName(v: string): void {
     v = `[${v}]`;
     this._buildTargetNameButton.text = v;
     this._buildButton.target = v;
-  };
-  setLaunchTargetName = (v: string) => {
+  }
+  setLaunchTargetName(v: string): void {
     v = v == '' ? v : `[${v}]`;
     this._launchTargetNameButton.text = v;
     this._launchButton.target = v;
     this._debugButton.target = v;
-  };
-  setCTestEnabled = (v: boolean) => this._testButton.enabled = v;
-  setTestResults = (v: BasicTestResults|null) => this._testButton.results = v;
-  setIsBusy = (v: boolean) => this._buildButton.isBusy = v;
-  setActiveKitName = (v: string) => this._kitSelectionButton.text = v;
+  }
+  setCTestEnabled(v: boolean): void { this._testButton.enabled = v; }
+  setTestResults(v: BasicTestResults|null): void { this._testButton.results = v; }
+  setIsBusy(v: boolean): void { this._buildButton.isBusy = v; }
+  setActiveKitName(v: string): void { this._kitSelectionButton.text = v; }
 
-  hideLaunchButton = (shouldHide: boolean = true) => this._launchButton.hidden = shouldHide;
-  hideDebugButton = (shouldHide: boolean = true) => this._debugButton.hidden = shouldHide;
+  hideLaunchButton(shouldHide: boolean = true): void { this._launchButton.hidden = shouldHide; }
+  hideDebugButton(shouldHide: boolean = true): void { this._debugButton.hidden = shouldHide; }
 }
