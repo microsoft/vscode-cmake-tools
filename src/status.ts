@@ -254,6 +254,17 @@ class LaunchTargetSelectionButton extends Button {
   settingsName = 'launchTarget';
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
+
+  protected getTextNormal() {
+    if (this.text=='') {
+      return '[-]';
+    }
+    return this.text;
+  }
+
+  protected getTooltipShort() {
+    return this.tooltip;
+  }
 }
 
 class DebugButton extends Button  {
