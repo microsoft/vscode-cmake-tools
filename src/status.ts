@@ -274,9 +274,22 @@ class DebugButton extends Button  {
   tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
 
   private _hidden: boolean = false;
+  private _target: string|null = null;
+
   set hidden(v:boolean) {
     this._hidden = v;
     this.update();
+  }
+  set target(v: string|null) {
+    this._target = v;
+    this.update();
+  }
+
+  protected getTooltipNormal(): string|null {
+    if (!!this._target) {
+      return `${this.tooltip}\n${this._target}`;
+    }
+    return this.tooltip;
   }
 
   protected isVisible() {
@@ -290,9 +303,22 @@ class LaunchButton extends Button {
   tooltip = localize('launch.tooltip', 'Launch the selected target in the terminal window');
 
   private _hidden: boolean = false;
+  private _target: string|null = null;
+
   set hidden(v:boolean) {
     this._hidden = v;
     this.update();
+  }
+  set target(v: string|null) {
+    this._target = v;
+    this.update();
+  }
+
+  protected getTooltipNormal(): string|null {
+    if (!!this._target) {
+      return `${this.tooltip}\n${this._target}`;
+    }
+    return this.tooltip;
   }
 
   protected isVisible() {
@@ -372,6 +398,7 @@ class BuildButton extends Button {
   tooltip = localize('build.tooltip', 'Build the selected target');
 
   private _isBusy:boolean = false;
+  private _target: string|null = null;
 
   set isBusy(v: boolean) {
     this._isBusy = v;
@@ -381,6 +408,18 @@ class BuildButton extends Button {
     // update implicitly called in set text.
     //this.update();
   }
+  set target(v: string|null) {
+    this._target = v;
+    this.update();
+  }
+
+  protected getTooltipNormal(): string|null {
+    if (!!this._target) {
+      return `${this.tooltip}\n${this._target}`;
+    }
+    return this.tooltip;
+  }
+  protected getTooltipShort = () => this.getTooltipNormal();
 
   protected isVisible():boolean {
     return this._isBusy || true;
@@ -431,10 +470,13 @@ export class StatusBar implements vscode.Disposable {
   setBuildTargetName = (v: string) => {
     v = `[${v}]`;
     this._buildTargetNameButton.text = v;
+    this._buildButton.target = v;
   }
   setLaunchTargetName = (v: string) => {
     v = v==''?v:`[${v}]`;
     this._launchTargetNameButton.text = v;
+    this._launchButton.target = v;
+    this._debugButton.target = v;
   }
   setCTestEnabled = (v: boolean) => this._testButton.enabled = v;
   setTestResults = (v: BasicTestResults|null) => this._testButton.results = v;
