@@ -17,70 +17,100 @@ function getTestResourceFilePath(filename: string): string {
 suite('CppTools tests', () => {
   test('Parse some compiler flags', () => {
     // Parse definition
-    const cpptoolsVersion = Version.v4;
-    let info = parseCompileFlags(cpptoolsVersion, ['-DFOO=BAR']);
+    const cpptoolsVersion3 = Version.v3;
+    const cpptoolsVersion4 = Version.v4;
+
+    // Verify CppTools API version 4
+    let info = parseCompileFlags(cpptoolsVersion4, ['-DFOO=BAR']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
-    info = parseCompileFlags(cpptoolsVersion, ['-D', 'FOO=BAR']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-D', 'FOO=BAR']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
-    info = parseCompileFlags(cpptoolsVersion, ['-DFOO=BAR', '/D', 'BAZ=QUX']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-DFOO=BAR', '/D', 'BAZ=QUX']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR', 'BAZ=QUX']);
     expect(info.standard).to.eql('c++17');
     // Parse language standard
-    info = parseCompileFlags(cpptoolsVersion, ['-std=c++03']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-std=c++03']);
     expect(info.standard).to.eql('c++03');
-    info = parseCompileFlags(cpptoolsVersion, ['-std=gnu++14']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-std=gnu++14']);
     expect(info.standard).to.eql('gnu++14');
+    info = parseCompileFlags(cpptoolsVersion4, ['-std=c18']);
+    expect(info.standard).to.eql('c18');
     // Parse target architecture
-    info = parseCompileFlags(cpptoolsVersion, ['--target=aarch64-arm-none-eabi']);
+    info = parseCompileFlags(cpptoolsVersion4, ['--target=aarch64-arm-none-eabi']);
     expect(info.targetArch).to.eql('arm64');
-    info = parseCompileFlags(cpptoolsVersion, ['-target', 'arm-arm-none-eabi']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-target', 'arm-arm-none-eabi']);
     expect(info.targetArch).to.eql('arm');
-    info = parseCompileFlags(cpptoolsVersion, ['-arch=x86_64']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-arch=x86_64']);
     expect(info.targetArch).to.eql('x64');
-    info = parseCompileFlags(cpptoolsVersion, ['-arch', 'aarch64']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-arch', 'aarch64']);
     expect(info.targetArch).to.eql('arm64');
-    info = parseCompileFlags(cpptoolsVersion, ['-arch', 'i686']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-arch', 'i686']);
     expect(info.targetArch).to.eql('x86');
-    info = parseCompileFlags(cpptoolsVersion, ['/arch:x86_64']);
+    info = parseCompileFlags(cpptoolsVersion4, ['/arch:x86_64']);
     expect(info.targetArch).to.eql('x64');
-    info = parseCompileFlags(cpptoolsVersion, ['-march=amd64']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-march=amd64']);
     expect(info.targetArch).to.eql('x64');
-    info = parseCompileFlags(cpptoolsVersion, ['-m32']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-m32']);
     expect(info.targetArch).to.eql('x86');
-    info = parseCompileFlags(cpptoolsVersion, ['-m00']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-m00']);
     expect(info.targetArch).to.eql(undefined);
+
+    // Verify CppTools API version 3
+    info = parseCompileFlags(cpptoolsVersion3, ['-std=c++03']);
+    expect(info.standard).to.eql('c++03');
+    info = parseCompileFlags(cpptoolsVersion3, ['-std=gnu++14']);
+    expect(info.standard).to.eql('c++14');
+    info = parseCompileFlags(cpptoolsVersion3, ['-std=c18']);
+    expect(info.standard).to.eql('c11');
   });
 
   test('Get IntelliSenseMode', () => {
-    const cpptoolsVersion = Version.v4;
-    let mode = getIntelliSenseMode(cpptoolsVersion, 'armclang', 'arm');
+    const cpptoolsVersion3 = Version.v3;
+    const cpptoolsVersion4 = Version.v4;
+
+    // Verify CppTools API version 4
+    let mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', 'arm');
     expect(mode).to.eql('clang-arm');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'armclang', 'arm64');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', 'arm64');
     expect(mode).to.eql('clang-arm64');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'armclang', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', undefined);
     expect(mode).to.eql('clang-arm');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'clang', 'x64');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'clang', 'x64');
     expect(mode).to.eql('clang-x64');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'clang', 'arm');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'clang', 'arm');
     expect(mode).to.eql('clang-arm');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'gcc', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'gcc', undefined);
     expect(mode).to.eql('gcc-x64');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'g++', 'x86');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'g++', 'x86');
     expect(mode).to.eql('gcc-x86');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'arm-none-eabi-g++', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'arm-none-eabi-g++', undefined);
     expect(mode).to.eql('gcc-arm');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'aarch64-linux-gnu-gcc', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'aarch64-linux-gnu-gcc', undefined);
     expect(mode).to.eql('gcc-arm64');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'bin//Hostx64//x64//cl.exe', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//x64//cl.exe', undefined);
     expect(mode).to.eql('msvc-x64');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'bin//Hostx64//x86//cl.exe', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//x86//cl.exe', undefined);
     expect(mode).to.eql('msvc-x86');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'bin//Hostx64//arm//cl.exe', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//arm//cl.exe', undefined);
     expect(mode).to.eql('msvc-arm');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'bin//Hostx64//arm64//cl.exe', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//arm64//cl.exe', undefined);
     expect(mode).to.eql('msvc-arm64');
-    mode = getIntelliSenseMode(cpptoolsVersion, 'cl.exe', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'cl.exe', undefined);
     expect(mode).to.eql('msvc-x64');
+
+    // Verify CppTools API version 3
+    mode = getIntelliSenseMode(cpptoolsVersion3, 'bin//Hostx64//arm//cl.exe', undefined);
+    expect(mode).to.eql('msvc-x86');
+    mode = getIntelliSenseMode(cpptoolsVersion3, 'bin//Hostx64//arm64//cl.exe', undefined);
+    expect(mode).to.eql('msvc-x64');
+    mode = getIntelliSenseMode(cpptoolsVersion3, 'arm-none-eabi-g++', undefined);
+    expect(mode).to.eql('gcc-x86');
+    mode = getIntelliSenseMode(cpptoolsVersion3, 'aarch64-linux-gnu-gcc', undefined);
+    expect(mode).to.eql('gcc-x64');
+    mode = getIntelliSenseMode(cpptoolsVersion3, 'clang', 'arm64');
+    expect(mode).to.eql('clang-x64');
+    mode = getIntelliSenseMode(cpptoolsVersion3, 'clang', 'arm');
+    expect(mode).to.eql('clang-x86');
   });
 
   test('Validate code model', async () => {

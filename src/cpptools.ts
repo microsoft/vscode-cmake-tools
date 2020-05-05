@@ -82,6 +82,7 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null
 }
 
 function parseTargetArch(target: string): Architecture {
+  // Value of target param is lowercased.
   const is_arm_32: (value: string) => boolean = value => {
     // ARM verions from https://en.wikipedia.org/wiki/ARM_architecture#Cores
     if (value.indexOf('armv8-r') >=0 || value.indexOf('armv8-m') >=0) {
@@ -102,6 +103,7 @@ function parseTargetArch(target: string): Architecture {
     case 'x86_64':
       return 'x64';
   }
+  // Check triple target value
   if (target.indexOf('aarch64') >= 0 || target.indexOf('armv8-a') >= 0 || target.indexOf('armv8.') >= 0) {
     return 'arm64';
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
@@ -400,7 +402,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
     const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
-    const {standard, extraDefinitions, targetArch} = parseCompileFlags(this._cpptoolsVersion, flags, lang);
+    const {standard, extraDefinitions, targetArch} = parseCompileFlags(this.cpptoolsVersion, flags, lang);
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
 
@@ -434,7 +436,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       defines,
       standard,
       includePath: normalizedIncludePath,
-      intelliSenseMode: getIntelliSenseMode(this._cpptoolsVersion, comp_path, targetArch),
+      intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArch),
       compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
@@ -479,12 +481,18 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
   }
 
-  /**
-   * Saves the version of Cpptools API.
-   * @param version
+    /**
+   * Gets the version of Cpptools API.
    */
-  saveCppToolsVersion(version: cpt.Version) {
-    this._cpptoolsVersion = version;
+  get cpptoolsVersion(): cpt.Version {
+    return this._cpptoolsVersion;
+  }
+  /**
+   * Set the version of Cpptools API.
+   * @param value of CppTools API version
+   */
+  set cpptoolsVersion(value: cpt.Version) {
+    this._cpptoolsVersion = value;
   }
 
   /**
