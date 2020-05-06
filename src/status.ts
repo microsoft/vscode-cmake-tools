@@ -256,7 +256,7 @@ class DebugButton extends Button {
 
   protected getTooltipNormal(): string|null {
     if (!!this._target) {
-      return `${this.tooltip}\n${this._target}`;
+      return `${this.tooltip}: ${this._target}`;
     }
     return this.tooltip;
   }
@@ -283,7 +283,7 @@ class LaunchButton extends Button {
 
   protected getTooltipNormal(): string|null {
     if (!!this._target) {
-      return `${this.tooltip}\n${this._target}`;
+      return `${this.tooltip}: ${this._target}`;
     }
     return this.tooltip;
   }
@@ -380,7 +380,7 @@ class BuildButton extends Button {
 
   protected getTooltipNormal(): string|null {
     if (!!this._target) {
-      return `${this.tooltip}\n${this._target}`;
+      return `${this.tooltip}: ${this._target}`;
     }
     return this.tooltip;
   }
