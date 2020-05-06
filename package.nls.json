@@ -106,12 +106,11 @@
     "cmake-tools.configuration.cmake.outputLogEncoding.description": "Encoding of the output from external commands (eg.cmake -- build).",
     "cmake-tools.configuration.cmake.enableTraceLogging.description": "Enable trace logging to file and console (very noisy).",
     "cmake-tools.configuration.cmake.autoSelectActiveFolder.description": "Select active folder automatically",
-    "cmake-tools.configuration.cmake.statusbar.visibility.description": "Select default visibility of statusbar buttons (e.g. compact)",
-    "cmake-tools.configuration.cmake.statusbar.advanced.description": "Change settings of individual statusbar buttons (e.g. visibility). This overwrites the default settings.",
-    "cmake-tools.configuration.cmake.statusbar.advanced.visibility.description": "Select visibility (e.g. compact)",
-    "cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Change button color dependent on success of tests",
-    "cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Set maximum length of visible text in compact mode.",
-
+    "cmake-tools.configuration.cmake.statusbar.visibility.description": "Configures how the extension displays the buttons in the status bar",
+    "cmake-tools.configuration.cmake.statusbar.advanced.description": "Configures the settings for individual status bar buttons. These settings overwrite the more general 'cmake.statusbar.visibility' setting.",
+    "cmake-tools.configuration.cmake.statusbar.advanced.visibility.description": "Configures how the extension displays this button in the status bar",
+    "cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Enables a change in color for this button depending on test results",
+    "cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configures the maximum length of visible text in 'compact' mode.",
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline"
 }
