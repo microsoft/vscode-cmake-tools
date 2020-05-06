@@ -1163,12 +1163,6 @@
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
           "scope": "resource"
         },
-        "cmake.useCMakeServer": {
-          "type": "boolean",
-          "default": false,
-          "description": "%cmake-tools.configuration.cmake.useCMakeServer.description%",
-          "scope": "resource"
-        },
         "cmake.cmakeCommunicationMode": {
           "type": "string",
           "default": "automatic",
