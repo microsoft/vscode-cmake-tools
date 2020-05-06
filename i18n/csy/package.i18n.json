@@ -104,7 +104,6 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Adresáře, ve kterých může být nainstalovaný Emscripten",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Po úspěšné konfiguraci zkopírovat soubor compile_commands.json do tohoto umístění",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automaticky konfigurovat adresáře projektu CMake při jejich otevření",
-	"cmake-tools.configuration.cmake.useCMakeServer.description": "Povolit server CMake",
 	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "Protokol, pomocí kterého se komunikuje mezi rozšířením a nástrojem CMake",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Při spouštění příkazů CMake nepoužívat proměnné prostředí sady",
 	"cmake-tools.configuration.cmake.buildTask.description": "Sestavit pomocí souboru tasks.json místo interního procesu",
