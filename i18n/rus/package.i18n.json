@@ -104,7 +104,6 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Каталоги, где возможна установка Emscripten.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Копирование сюда файла compile_commands.json после выполнения настройки.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Автоматическая настройка каталогов проекта CMake при их открытии.",
-	"cmake-tools.configuration.cmake.useCMakeServer.description": "Включение сервера CMake.",
 	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "Протокол, используемый для взаимодействия между расширением и CMake",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Отключение использования переменных среды при выполнении команд CMake.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Сборка с помощью tasks.json вместо внутреннего процесса.",

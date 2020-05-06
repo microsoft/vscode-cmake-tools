@@ -104,7 +104,6 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten'in yüklü olabileceği dizinler.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Başarılı bir yapılandırmadan sonra compile_commands.json dosyasını bu konuma kopyala.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake proje dizinleri açıldığında bu dizinleri otomatik olarak yapılandır.",
-	"cmake-tools.configuration.cmake.useCMakeServer.description": "CMake sunucusunu etkinleştirin.",
 	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "Uzantı ve CMake arasında iletişim kurmak için kullanılan protokol",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "CMake komutlarını çalıştırırken set ortamı değişkenlerini kullanmayın.",
 	"cmake-tools.configuration.cmake.buildTask.description": "İç işlem yerine tasks.json kullanarak derle.",
