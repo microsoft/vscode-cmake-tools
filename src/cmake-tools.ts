@@ -738,8 +738,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const needsReconfigure: boolean = await drv.checkNeedsReconfigure();
 
-    const skip_configure_if_cache_present = this.workspaceContext.config.skipConfigureIfCachePresent;
-    if (skip_configure_if_cache_present && needsReconfigure && await fs.exists(drv.cachePath)) {
+    const skipConfigureIfCachePresent = this.workspaceContext.config.skipConfigureIfCachePresent;
+    if skipConfigureIfCachePresent && needsReconfigure && await fs.exists(drv.cachePath)) {
       log.info(localize('warn.skip.configure.when.cache.present',
                           'The extension determined that a configuration is needed at this moment \
                           but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. \
