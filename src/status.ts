@@ -4,8 +4,6 @@ import {SpecialKits} from '@cmt/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-// FIXME: Show workspace selection if a folder is added to workspace
-
 nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
@@ -41,6 +39,8 @@ abstract class Button {
     this.update();
   }
 
+  get bracketText(): string { return `[${this._text}]`; }
+
   get tooltip(): string|null { return this._tooltip; }
   set tooltip(v: string|null) {
     this._tooltip = v;
@@ -68,7 +68,12 @@ abstract class Button {
     this.button.show();
   }
 
-  protected getTextNormal(): string { return this._text; }
+  protected getTextNormal(): string {
+    if (this._text.length > 0) {
+      return this.bracketText;
+    }
+    return '';
+  }
   protected getTextShort(): string { return this.getTextNormal(); }
   protected getTextIcon(): string { return ''; }
 
@@ -80,13 +85,19 @@ abstract class Button {
       return null;
     }
     if (!tooltip || !text) {
-      return `CMake: ${tooltip || text}`;
+      return this.prependCMake(`${tooltip || text}`);
     }
-    return `CMake: ${tooltip}\n${text}`;
+    return this.prependCMake(`${text}\n${tooltip}`);
   }
   protected getTooltipIcon(): string|null { return this.getTooltipShort(); }
 
   protected isVisible(): boolean { return true; }
+  protected prependCMake(text: string|null): any {
+    if (!!text) {
+      return `CMake: ${text}`;
+    }
+    return text;
+  }
 
   private _isVisible(): boolean { return this.isVisible() && this._getVisibility() !== 'hidden'; }
   private _getVisibility(): ButtonVisibility|null {
@@ -138,12 +149,14 @@ abstract class Button {
 }
 
 class WorkspaceButton extends Button {
-  private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
-  private static readonly _toolTip = localize('active.folder.tooltip', 'Select Active folder');
+  // private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
+  // private static readonly _toolTip = localize('active.folder.tooltip', 'Select Active folder');
+  private static readonly _autoSelectToolTip = localize('active.folder.auto.tooltip', 'auto');
 
   settingsName = 'workspace';
   command = 'cmake.selectActiveFolder';
   icon = 'folder-active';
+  tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active workspace');
 
   private _autoSelect: boolean = false;
   set autoSelect(v: boolean) {
@@ -153,10 +166,12 @@ class WorkspaceButton extends Button {
 
   protected getTooltipNormal(): string|null {
     if (this._autoSelect) {
-      return WorkspaceButton._autoSelectToolTip;
+      return `${this.tooltip} (${WorkspaceButton._autoSelectToolTip})`;
     }
-    return WorkspaceButton._toolTip;
+    return this.tooltip;
   }
+  protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
+  protected getTooltipIcon(): string|null { return super.getTooltipShort(); }
 
   protected isVisible(): boolean {
     return Boolean(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1);
@@ -177,11 +192,12 @@ class CMakeStatus extends Button {
     this.update();
   }
 
-  protected getTextNormal(): string { return `CMake: ${this.text}: ${this._statusMessage}`; }
-  protected getTextShort(): string { return this.text; }
+  protected getTextNormal(): string { return this.prependCMake(`${this.bracketText}: ${this._statusMessage}`); }
+  protected getTextShort(): string { return this.bracketText; }
 
-  protected getTooltipNormal(): string|null { return `${this.tooltip}\n${this.text}: ${this._statusMessage}`; }
-  protected getTooltipShort(): string|null { return `CMake: ${this.getTooltipNormal()}`; }
+  protected getTooltipShort(): string|null {
+    return this.prependCMake(`${this.bracketText} - ${this._statusMessage}\n${this.tooltip}`);
+  }
 }
 
 class KitSelection extends Button {
@@ -201,7 +217,7 @@ class KitSelection extends Button {
     if (text.length === 0) {
       return KitSelection._noKitSelected;
     }
-    return text;
+    return this.bracketText;
   }
   protected getTextShort(): string {
     let len = this.config.statusbar.advanced?.kit?.length || 0;
@@ -211,8 +227,18 @@ class KitSelection extends Button {
     let text = this.getTextNormal();
     if (len + 3 < text.length) {
       text = `${text.substr(0, len)}...`;
+      if (text.startsWith('[')) {
+        text = `${text}]`;
+      }
     }
     return text;
+  }
+
+  protected getTooltipShort(): string|null {
+    if (this.getTextNormal() == this.getTextShort()) {
+      return this.prependCMake(this.getTooltipNormal());
+    }
+    return super.getTooltipShort();
   }
 }
 
@@ -220,20 +246,15 @@ class BuildTargetSelectionButton extends Button {
   settingsName = 'buildTarget';
   command = 'cmake.setDefaultTarget';
   tooltip = localize('set.active.target.tooltip', 'Set the active target to build');
+
+  protected getTooltipShort(): string|null { return this.prependCMake(this.tooltip); }
 }
 class LaunchTargetSelectionButton extends Button {
   settingsName = 'launchTarget';
   command = 'cmake.selectLaunchTarget';
   tooltip = localize('select.target.tooltip', 'Select the target to launch');
 
-  protected getTextNormal(): string {
-    if (this.text == '') {
-      return '[-]';
-    }
-    return this.text;
-  }
-
-  protected getTooltipShort(): string|null { return this.tooltip; }
+  protected getTooltipShort(): string|null { return this.prependCMake(this.tooltip); }
 }
 
 class DebugButton extends Button {
@@ -256,7 +277,7 @@ class DebugButton extends Button {
 
   protected getTooltipNormal(): string|null {
     if (!!this._target) {
-      return `${this.tooltip}: ${this._target}`;
+      return `${this.tooltip}: [${this._target}]`;
     }
     return this.tooltip;
   }
@@ -283,7 +304,7 @@ class LaunchButton extends Button {
 
   protected getTooltipNormal(): string|null {
     if (!!this._target) {
-      return `${this.tooltip}: ${this._target}`;
+      return `${this.tooltip}: [${this._target}]`;
     }
     return this.tooltip;
   }
@@ -345,10 +366,18 @@ class CTestButton extends Button {
 
   protected getTextShort(): string {
     if (!this._results) {
-      return '-';
+      return '';
     }
     const {passing, total} = this._results;
     return `${passing}/${total}`;
+  }
+
+  protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
+  protected getTooltipIcon() {
+    if (!!this._results) {
+      return this.prependCMake(`${this.getTextNormal()}\n${this.getTooltipNormal()}`);
+    }
+    return this.getTooltipShort();
   }
 }
 
@@ -376,15 +405,16 @@ class BuildButton extends Button {
     this.update();
   }
 
+  protected getTextNormal(): string { return this.text; }
   protected getTextShort(): string { return ''; }
 
   protected getTooltipNormal(): string|null {
     if (!!this._target) {
-      return `${this.tooltip}: ${this._target}`;
+      return `${this.tooltip}: [${this._target}]`;
     }
     return this.tooltip;
   }
-  protected getTooltipShort(): string|null { return this.getTooltipNormal(); }
+  protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
 
   protected isVisible(): boolean { return this._isBusy || true; }
 }
@@ -434,12 +464,10 @@ export class StatusBar implements vscode.Disposable {
   setBuildTypeLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
   setStatusMessage(v: string): void { this._cmakeToolsStatusItem.statusMessage = v; }
   setBuildTargetName(v: string): void {
-    v = `[${v}]`;
     this._buildTargetNameButton.text = v;
     this._buildButton.target = v;
   }
   setLaunchTargetName(v: string): void {
-    v = v == '' ? v : `[${v}]`;
     this._launchTargetNameButton.text = v;
     this._launchButton.target = v;
     this._debugButton.target = v;
