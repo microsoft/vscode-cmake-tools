@@ -470,7 +470,7 @@ class ExtensionManager implements vscode.Disposable {
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
       if (!this._cppToolsAPI) {
-        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v3);
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v4);
       }
       if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
         const codeModel = cmt.codeModel;
@@ -487,6 +487,7 @@ class ExtensionManager implements vscode.Disposable {
         const opts = drv ? drv.expansionOptions : undefined;
         const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
+        this._configProvider.cpptoolsVersion = cpptools.getVersion();
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
         await this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {

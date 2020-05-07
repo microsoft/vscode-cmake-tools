@@ -104,7 +104,6 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten がインストールされる可能性のあるディレクトリです。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "構成が正常に完了したら、compile_commands.json をこの場所にコピーします。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake プロジェクト ディレクトリを開いたときに自動的に構成します。",
-	"cmake-tools.configuration.cmake.useCMakeServer.description": "CMake サーバーを有効にします。",
 	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "拡張機能と CMake の間の通信に使用されるプロトコル",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "CMake コマンドの実行時には、キットの環境変数を使用しないでください。",
 	"cmake-tools.configuration.cmake.buildTask.description": "内部プロセスではなく tasks.json を使用してビルドします。",
