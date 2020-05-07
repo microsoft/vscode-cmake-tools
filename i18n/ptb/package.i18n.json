@@ -104,6 +104,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Os diretórios nos quais o Emscripten pode ser instalado.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copiar o compile_commands.json neste local após uma configuração bem-sucedida.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configurar os diretórios de projeto do CMake automaticamente quando eles forem abertos.",
+	"cmake-tools.configuration.cmake.useCMakeServer.description": "Habilitar o servidor do CMake.",
 	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "O protocolo usado para a comunicação entre a extensão e o CMake",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "Não use as variáveis de ambiente do kit ao executar os comandos do CMake.",
 	"cmake-tools.configuration.cmake.buildTask.description": "Compilar usando o tasks.json em vez do processo interno.",
