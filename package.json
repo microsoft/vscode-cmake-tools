@@ -1213,15 +1213,6 @@
             "always",
             "never"
           ]
-        },
-        "cmake.launchArgs": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "description": "%cmake-tools.configuration.cmake.launchArgs.description%",
-          "default": [],
-          "scope": "resource"
         }
       }
     },

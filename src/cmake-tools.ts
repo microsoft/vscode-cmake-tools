@@ -1173,10 +1173,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.getCurrentLaunchTarget();
   }
 
-  /**
-   * Implementation of `cmake.debugTarget`
-   */
-  async debugTarget(name?: string): Promise<vscode.DebugSession|null> {
+
+  async getDebugConfig(targetExecutable: api.ExecutableTarget): Promise<debugger_mod.Configuration|null> {
     const drv = await this.getCMakeDriverInstance();
     if (!drv) {
       vscode.window.showErrorMessage(localize('set.up.and.build.project.before.debugging', 'Set up and build your CMake project before debugging.'));
@@ -1193,12 +1191,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               open('https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html');
             }
           });
-      return null;
-    }
-
-    const targetExecutable = await this.prepareLaunchTargetExecutable(name);
-    if (!targetExecutable) {
-      log.error(localize('failed.to.prepare.target', 'Failed to prepare executable target with name \'{0}\'', name));
       return null;
     }
 
@@ -1231,6 +1223,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // add debug configuration from settings
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
+    return debug_config
+  }
+  /**
+   * Implementation of `cmake.debugTarget`
+   */
+  async debugTarget(name?: string): Promise<vscode.DebugSession|null> {
+    const targetExecutable = await this.prepareLaunchTargetExecutable(name);
+    if (!targetExecutable) {
+      log.error(localize('failed.to.prepare.target', 'Failed to prepare executable target with name \'{0}\'', name));
+      return null;
+    }
+
+    const debug_config = await this.getDebugConfig(targetExecutable);
+    if (debug_config === null) {
+      return null;
+    }
+
     log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
       workspace: this.folder.uri.toString(),
       config: debug_config,
@@ -1257,6 +1266,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       // a target.
       return null;
     }
+
     const termOptions: vscode.TerminalOptions = {
       name: 'CMake/Launch',
     };
@@ -1268,9 +1278,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._launchTerminal = vscode.window.createTerminal(termOptions);
     const quoted = shlex.quote(executable.path);
 
-    const launch_args = this.workspaceContext.config.launchArgs;
-    if (launch_args.length != 0) {
-      this._launchTerminal.sendText(quoted.concat(" ", launch_args.join(" ")));
+    const debug_config = await this.getDebugConfig(executable);
+    if (debug_config && debug_config.args && debug_config.args.length != 0) {
+      this._launchTerminal.sendText(quoted.concat(" ", debug_config.args.join(" ")));
     } else {
       this._launchTerminal.sendText(quoted);
     }
