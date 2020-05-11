@@ -2772,9 +2772,9 @@ isstream@~0.1.2:
   integrity sha1-R+Y/evVa+m+S4VAOaQ64uFKcCZo=
 
 jquery@^3.4.1:
-  version "3.4.1"
-  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.4.1.tgz#714f1f8d9dde4bdfa55764ba37ef214630d80ef2"
-  integrity sha512-36+AdBzCL+y6qjw5Tx7HgzeGCzC81MDDgaUP8ld2zhx58HdqXGoBd+tHdrBMiyjGQs0Hxs/MLZTu/eHNJJuWPw==
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.5.0.tgz#9980b97d9e4194611c36530e7dc46a58d7340fc9"
+  integrity sha512-Xb7SVYMvygPxbFMpTFQiHh1J7HClEaThguL15N/Gg37Lri/qKyhRGZYzHRyLH8Stq3Aow0LsHO2O2ci86fCrNQ==
 
 js-tokens@^4.0.0:
   version "4.0.0"
@@ -5152,10 +5152,10 @@ vm-browserify@^1.0.1:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.2.tgz#78641c488b8e6ca91a75f511e7a3b32a86e5dda0"
   integrity sha512-2ham8XPWTONajOR0ohOKOHXkm3+gaBmGut3SRuu75xLd/RRaY6vqgh8NBYYk7+RW3u5AtzPQZG8F10LHkl0lAQ==
 
-vscode-cpptools@^3.0.1:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/vscode-cpptools/-/vscode-cpptools-3.1.0.tgz#fbc0e493e81a05baf01702ea8b9467c39fba257d"
-  integrity sha512-z4W/A1TQMEtqTEWNY3Hb4HJcJ2J3HeaLHp3TyqCotoRkLU8ovH4jmDb5tNTyh3DgIiaAAnDalO03A4wm5IvNBg==
+vscode-cpptools@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/vscode-cpptools/-/vscode-cpptools-4.0.1.tgz#7e591572b437a6aca47b767487b52bc253e6d911"
+  integrity sha512-2IjtWe7rjIp20J+5m0Yjpa8TjGhdQWChwE49iYJBUUTHFqJDFq0aXNAyiDNw6BDWI1Q2Z/gmeQGsJBoxTb0J0Q==
 
 vscode-extension-telemetry@^0.1.2:
   version "0.1.2"

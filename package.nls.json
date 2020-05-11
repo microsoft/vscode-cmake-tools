@@ -99,7 +99,7 @@
     "cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directories where Emscripten may be installed.",
     "cmake-tools.configuration.cmake.copyCompileCommands.description": "Copy compile_commands.json to this location after a successful configure.",
     "cmake-tools.configuration.cmake.configureOnOpen.description": "Automatically configure CMake project directories when they are opened.",
-    "cmake-tools.configuration.cmake.useCMakeServer.description": "Enable CMake server.",
+    "cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description": "Skip over the configure process if cache is present.",
     "cmake-tools.configuration.cmake.cmakeCommunicationMode": "The protocol used to communicate between the extension and CMake",
     "cmake-tools.configuration.cmake.ignoreKitEnv.description": "Do not use the kit environment variables when running CMake commands.",
     "cmake-tools.configuration.cmake.buildTask.description": "Build using tasks.json instead of internal process.",

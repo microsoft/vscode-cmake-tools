@@ -186,6 +186,11 @@
         }
       },
       {
+        "command": "cmake.outline.selectWorkspace",
+        "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
+        "icon": "$(gear)"
+      },
+      {
         "command": "cmake.install",
         "title": "%cmake-tools.command.cmake.install.title%",
         "category": "CMake"
@@ -485,6 +490,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.selectWorkspace",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.cleanConfigure",
           "when": "never"
         },
@@ -656,6 +665,11 @@
         {
           "command": "cmake.outline.configureAll",
           "when": "view == cmake.outline && viewItem =~ /nodeType=file/ && viewItem =~ /cmakelists=true/",
+          "group": "inline"
+        },
+        {
+          "command": "cmake.outline.selectWorkspace",
+          "when": "view == cmake.outline && viewItem =~ /nodeType=workspace/ && viewItem =~ /selected=false/",
           "group": "inline"
         }
       ],
@@ -1149,10 +1163,10 @@
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
           "scope": "resource"
         },
-        "cmake.useCMakeServer": {
+        "cmake.skipConfigureIfCachePresent": {
           "type": "boolean",
-          "default": false,
-          "description": "%cmake-tools.configuration.cmake.useCMakeServer.description%",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.skipConfigureIfCachePresent.description%",
           "scope": "resource"
         },
         "cmake.cmakeCommunicationMode": {
@@ -1509,7 +1523,7 @@
     "open": "^6.4.0",
     "rimraf": "^2.5.4",
     "tmp": "^0.0.33",
-    "vscode-cpptools": "^3.0.1",
+    "vscode-cpptools": "^4.0.1",
     "vscode-extension-telemetry": "^0.1.2",
     "vscode-nls": "^4.1.1",
     "which": "~1.3.0",
