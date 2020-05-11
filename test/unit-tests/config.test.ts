@@ -47,6 +47,10 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     outputLogEncoding: 'auto',
     enableTraceLogging: false,
     loggingLevel: 'info',
+    statusbar: {
+      advanced: {},
+      visibility: "default"
+    }
   });
   ret.updatePartial(conf);
   return ret;

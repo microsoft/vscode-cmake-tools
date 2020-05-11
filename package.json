@@ -1219,6 +1219,170 @@
           ],
           "scope": "window"
         },
+        "cmake.statusbar.visibility": {
+          "type": "string",
+          "default": "default",
+          "description": "%cmake-tools.configuration.cmake.statusbar.visibility.description%",
+          "enum": [
+            "default",
+            "compact",
+            "icon",
+            "hidden"
+          ],
+          "scope": "window"
+        },
+        "cmake.statusbar.advanced": {
+          "type": "object",
+          "default": {},
+          "description": "%cmake-tools.configuration.cmake.statusbar.advanced.description%",
+          "properties": {
+            "kit": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                },
+                "length": {
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.length.description%",
+                  "type": "integer",
+                  "default": 20
+                }
+              }
+            },
+            "status": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                }
+              }
+            },
+            "workspace": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                }
+              }
+            },
+            "buildTarget": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                }
+              }
+            },
+            "build": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                }
+              }
+            },
+            "launchTarget": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                }
+              }
+            },
+            "debug": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                }
+              }
+            },
+            "launch": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                }
+              }
+            },
+            "ctest": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                },
+                "color": {
+                  "type":"boolean",
+                  "default": false,
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description%"
+                }
+              }
+            }
+          }
+        },
         "cmake.revealLog": {
           "type": "string",
           "default": "always",

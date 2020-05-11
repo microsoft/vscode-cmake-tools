@@ -58,7 +58,7 @@ type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | nu
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
     telemetry.activate();
-    this._statusBar.targetName = 'all';
+    this._statusBar.setBuildTargetName('all');
     this._folders.onAfterAddFolder(async cmtFolder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
       if (this._folders.size === 1) {
@@ -183,7 +183,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * The status bar controller
    */
-  private readonly _statusBar = new StatusBar();
+  private readonly _statusBar = new StatusBar(this._workspaceConfig);
   // Subscriptions for status bar items:
   private _statusMessageSub: vscode.Disposable = new DummyDisposable();
   private _targetNameSub: vscode.Disposable = new DummyDisposable();
@@ -389,7 +389,7 @@ class ExtensionManager implements vscode.Disposable {
       } else if (!ws) {
         // When adding a folder but the focus is on somewhere else
         // Do nothing but make sure we are showing the active folder correctly
-        this._statusBar.reloadVisibility();
+        this._statusBar.update();
       }
     }
   }
@@ -520,14 +520,14 @@ class ExtensionManager implements vscode.Disposable {
       this._statusBar.setVisible(true);
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
-        this._statusBar.targetName = t;
+        this._statusBar.setBuildTargetName(t);
       });
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');
       });
-      this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
-      this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
+      this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.setCTestEnabled(e));
+      this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.setTestResults(r));
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
     }
@@ -877,6 +877,7 @@ class ExtensionManager implements vscode.Disposable {
 
   async hideLaunchCommand(shouldHide: boolean = true) {
     // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
+    this._statusBar.hideLaunchButton(shouldHide);
     await util.setContextValue(HIDE_LAUNCH_COMMAND_KEY, shouldHide);
   }
 
