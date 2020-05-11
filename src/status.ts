@@ -151,23 +151,24 @@ abstract class Button {
 class WorkspaceButton extends Button {
   // private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
   // private static readonly _toolTip = localize('active.folder.tooltip', 'Select Active folder');
-  private static readonly _autoSelectToolTip = localize('active.folder.auto.tooltip', 'auto');
+  // private static readonly _autoSelectToolTip = localize('active.folder.auto.tooltip', 'auto');
 
   settingsName = 'workspace';
   command = 'cmake.selectActiveFolder';
   icon = 'folder-active';
   tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active folder');
 
-  private _autoSelect: boolean = false;
+  // private _autoSelect: boolean = false;
   set autoSelect(v: boolean) {
-    this._autoSelect = v;
-    this.update();
+    if (v) {}
+    // this._autoSelect = v;
+    // this.update();
   }
 
   protected getTooltipNormal(): string|null {
-    if (this._autoSelect) {
-      return `${this.tooltip} (${WorkspaceButton._autoSelectToolTip})`;
-    }
+    // if (this._autoSelect) {
+    //  return `${this.tooltip} (${WorkspaceButton._autoSelectToolTip})`;
+    //}
     return this.tooltip;
   }
   protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
