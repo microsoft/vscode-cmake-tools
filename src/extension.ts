@@ -181,20 +181,30 @@ class ExtensionManager implements vscode.Disposable {
     telemetry.logEvent('open', telemetryProperties);
   }
 
+  public getActiveFolderContext() : StateManager | undefined {
+    const activeFolder = this.getActiveFolder();
+    if (activeFolder) {
+      const extensionState = new StateManager(this.extensionContext, activeFolder);
+      return extensionState;
+    }
+
+    return undefined;
+  }
+
   // Partial activation means that the CMake Tools commands are hidden
   // from the commands pallette and the status bar is not visible.
   // The context variable "cmake:enableFullFeatureSet" is always equal
   // to the state setting ignoreCMakeListsMissing.
   // To have them both always in sync, cmake:enableFullFeatureSet is set
   // by the getter and setter of ignoreCMakeListsMissing.
-  public async enableFullFeatureSet(fullFeatureSet: boolean) {
-    const activeFolder = this.getActiveFolder();
-    if (activeFolder) {
-      const extensionState = new StateManager(this.extensionContext, activeFolder);
-      extensionState.ignoreCMakeListsMissing = !fullFeatureSet;
+  public enableFullFeatureSet(fullFeatureSet: boolean) {
+    const context = this.getActiveFolderContext();
+    if (context) {
+      context.ignoreCMakeListsMissing = !fullFeatureSet;
+      this._statusBar.setVisible(fullFeatureSet);
+    } else {
+      log.info(localize('', 'enableFullFeatureSet(\'{fullFeatureSet}\') called but not active folder found.'));
     }
-
-    this._statusBar.setVisible(fullFeatureSet);
   }
 
   /**
@@ -935,9 +945,12 @@ let _EXT_MANAGER: ExtensionManager|null = null;
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, localize('initial.setup', 'Initial setup'));
-  await util.setContextValue('cmakeToolsActive', true);
+
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
+
+  // Enable full or partial feature set, depending on state variable.
+  ext.enableFullFeatureSet(!ext.getActiveFolderContext()?.ignoreCMakeListsMissing);
 
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {

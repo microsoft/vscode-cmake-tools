@@ -260,9 +260,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         if (result === quickStart) {
           vscode.commands.executeCommand('cmake.quickStart');
         } else if (result === changeSetting) {
+          // Open the search file dialog from the path set by cmake.sourceDirectory or from the current workspace folder
+          // if the setting is not defined.
+          const drv = await this._cmakeDriver;
+          const defaultUriPath: string = drv ? drv.sourceDir : this.folder.uri.fsPath;
+          const defaultUri = vscode.Uri.file(defaultUriPath);
           const openOpts: vscode.OpenDialogOptions = {
             canSelectMany: false,
-            defaultUri: this.folder.uri,
+            defaultUri,
             filters: {"CMake files": ["txt"], "All files": ["*"]},
             openLabel: "Load",
           };
@@ -271,6 +276,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             const fullPathDir: string = path.parse(cmakeListsFile[0].fsPath).dir;
             const relPathDir: string = path.relative(this.folder.uri.fsPath, fullPathDir);
             vscode.workspace.getConfiguration('cmake').update("sourceDirectory", path.join("${workspaceFolder}", relPathDir));
+          } else {
+            fullFeatureSet = false;
           }
         } else if (result === ignoreCMakeListsMissing) {
           // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
@@ -366,6 +373,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
+
     // All set up. Fulfill the driver promise.
     return drv;
   }
@@ -1336,7 +1344,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -2;
     }
 
-    const sourceDir = cmtFolder.folder.uri.fsPath;
+    const drv = await this._cmakeDriver;
+    const sourceDir = drv ? drv.sourceDir : cmtFolder.folder.uri.fsPath;
     const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
 
     if (await fs.exists(mainListFile)) {
