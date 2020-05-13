@@ -784,11 +784,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   private async _needsReconfigure(): Promise<boolean> {
     const drv = await this.getCMakeDriverInstance();
-    if (!drv || await drv.checkNeedsReconfigure()) {
+    if (!drv) {
       return true;
-    } else {
+    }
+
+    const needsReconfigure: boolean = await drv.checkNeedsReconfigure();
+
+    const skipConfigureIfCachePresent = this.workspaceContext.config.skipConfigureIfCachePresent;
+    if (skipConfigureIfCachePresent && needsReconfigure && await fs.exists(drv.cachePath)) {
+      log.info(localize('warn.skip.configure.when.cache.present',
+                          'The extension determined that a configuration is needed at this moment \
+                          but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. \
+                          Make sure the CMake cache is in sync with the latest configuration changes.'));
       return false;
     }
+
+    return needsReconfigure;
   }
 
   async ensureConfigured(): Promise<number|null> {
@@ -800,7 +811,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!await this.maybeAutoSaveAll()) {
       return -1;
     }
-    if (await drv.checkNeedsReconfigure()) {
+    if (await this._needsReconfigure()) {
       return this.configure();
     } else {
       return 0;

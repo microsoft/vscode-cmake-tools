@@ -39,6 +39,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     emscriptenSearchDirs: [],
     copyCompileCommands: null,
     configureOnOpen: null,
+    skipConfigureIfCachePresent: null,
     useCMakeServer: true,
     cmakeCommunicationMode: 'automatic',
     ignoreKitEnv: false,
@@ -46,6 +47,10 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     outputLogEncoding: 'auto',
     enableTraceLogging: false,
     loggingLevel: 'info',
+    statusbar: {
+      advanced: {},
+      visibility: "default"
+    }
   });
   ret.updatePartial(conf);
   return ret;
