@@ -203,7 +203,7 @@ class ExtensionManager implements vscode.Disposable {
       context.ignoreCMakeListsMissing = !fullFeatureSet;
       this._statusBar.setVisible(fullFeatureSet);
     } else {
-      log.error(localize('enableFullFeatureSet.no.active.folder', 'enableFullFeatureSet({0}) called but not active folder found.'), fullFeatureSet);
+      log.trace(localize('enableFullFeatureSet.no.active.folder', 'enableFullFeatureSet({0}) called but not active folder found.'), fullFeatureSet);
     }
   }
 
