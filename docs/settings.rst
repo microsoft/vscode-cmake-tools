@@ -268,6 +268,9 @@ using ``${variable}`` syntax. The following built-in variables are expanded:
 ``${buildKit}``
     The current CMake kit name, eg. ``GCC 7.3.0``
 
+``${buildKitShort}``
+    The shortened version of current CMake kit name, eg. ``gcc7``
+
 ``${generator}``
     The name of the CMake generator, eg. ``Ninja``
 

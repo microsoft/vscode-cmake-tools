@@ -62,6 +62,11 @@ export interface Kit {
   name: string;
 
   /**
+   * The short name of the kit
+   */
+  shortName?: string;
+
+  /**
    * The preferred CMake generator for this kit
    */
   preferredGenerator?: CMakeGenerator;
@@ -167,6 +172,15 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
   };
 }
 
+function majorVersionSemver(semver: string) : string|null {
+  const major_version_re = /^(\d+)./;
+  const major_version_match = major_version_re.exec(semver);
+  if (major_version_match !== null) {
+    return major_version_match[1];
+  }
+  return null;
+}
+
 /**
  * Convert a binary (by path) to a CompilerKit. This checks if the named binary
  * is a GCC or Clang compiler and gets its version. If it is not a compiler,
@@ -214,16 +228,19 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
       description += `for ${target_triple_match[1].slice(0, -1)} `;
     }
     const name = `GCC ${description}${version}`;
+    const major_version = majorVersionSemver(version) ?? version;
+    const short_name = `gcc${major_version}`;
     log.debug(localize('detected.gcc.compiler', 'Detected GCC compiler: {0}', bin));
     let gccKit: Kit = {
       name,
+      shortName: short_name,
       compilers: {
         C: bin,
       }
     };
 
     if (await fs.exists(gxx_bin)) {
-      gccKit = {name, compilers: {C: bin, CXX: gxx_bin}};
+      gccKit = {name, shortName: short_name, compilers: {C: bin, CXX: gxx_bin}};
     }
 
     const isWin32 = process.platform === 'win32';
@@ -281,10 +298,13 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
     const name = `Clang ${version.version}`;
+    const major_version = majorVersionSemver(version.version) ?? version.version;
+    const short_name = `clang${major_version}`;
     log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
     if (await fs.exists(clangxx_bin)) {
       return {
         name,
+        shortName: short_name,
         compilers: {
           C: bin,
           CXX: clangxx_bin,
@@ -293,6 +313,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     } else {
       return {
         name,
+        shortName: short_name,
         compilers: {
           C: bin,
         },
@@ -716,9 +737,13 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
   if (!variables) {
     return null;
   }
+  const major_version = majorVersionSemver(inst.installationVersion) ?? inst.installationVersion;
+  const arch = kitHostTargetArch(hostArch, targetArch);
+  const short_name = `msvc${major_version}_${arch}`;
 
   const kit: Kit = {
     name,
+    shortName: short_name,
     visualStudio: kitVSName(inst),
     visualStudioArchitecture: hostArch
   };
@@ -786,8 +811,11 @@ async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[]):
     return vsInstalls.map((vs): Kit => {
       const installName = vsDisplayName(vs);
       const vs_arch = (version.target && version.target.includes('i686-pc')) ? 'x86' : 'amd64';
+      const major_version = majorVersionSemver(version.version) ?? version.version;
+      const short_name = `clang_msvc${major_version}`;
       return {
         name: localize('clang.for.msvc', 'Clang {0} for MSVC with {1} ({2})', version.version, installName, vs_arch),
+        shortName: short_name,
         visualStudio: kitVSName(vs),
         visualStudioArchitecture: vs_arch,
         compilers: {

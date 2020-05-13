@@ -137,6 +137,7 @@ class Paths {
         workspaceFolder: wsc.folder.uri.fsPath,
         userHome: this.userHome,
         buildKit: '',
+        buildKitShort: '',
         buildType: '',
         generator: '',
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),

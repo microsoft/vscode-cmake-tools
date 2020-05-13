@@ -218,6 +218,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       generator: this.generatorName || 'null',
       userHome: paths.userHome,
       buildKit: this._kit ? this._kit.name : '__unknownkit__',
+      buildKitShort: this._kit ? (this._kit.shortName ?? this._kit.name) : '__unknownkit__',
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',
     };
@@ -317,6 +318,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const opts = this.expansionOptions;
     opts.vars.buildKit = kit.name;
+    opts.vars.buildKitShort = kit.shortName ?? kit.name;
     const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
     const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);

@@ -308,4 +308,9 @@ export interface CMakeToolsAPI extends Disposable {
    * Get the build kit
    */
   buildKit(): Thenable<string|null>;
+
+    /**
+   * Get the short build kit
+   */
+  buildKitShort(): Thenable<string|null>;
 }

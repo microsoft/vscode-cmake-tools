@@ -841,6 +841,8 @@ class ExtensionManager implements vscode.Disposable {
 
   buildKit(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildKit(), folder); }
 
+  buildKitShort(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildKitShort(), folder); }
+
   executableTargets(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(async cmt => (await cmt.executableTargets).map(target => target.name), folder); }
 
   tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.tasksBuildCommand(), folder); }
@@ -961,6 +963,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'launchTargetPath',
     'launchTargetDirectory',
     'buildKit',
+    'buildKitShort',
     'buildType',
     'buildDirectory',
     'executableTargets',
