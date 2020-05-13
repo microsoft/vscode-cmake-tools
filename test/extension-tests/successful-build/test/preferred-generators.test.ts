@@ -310,19 +310,26 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
                .to.be.contains('Unable to determine what CMake generator to use.');
          });
 
-    // This test is NOT valid for kits which have any preferred generator defined
-    // since we expect CMT to reject the build.
-    test(`Reject if all \'preferredGenerators\' fields are empty (${buildSystem.defaultKit})`,
+    // This test verifies that kits without any preferred generator defined
+    // are still able to pick one preferred generator from the default list
+    // (Ninja + Unix Makefiles)
+    test(`Select default if all \'preferredGenerators\' fields are empty (${buildSystem.defaultKit})`,
          async function(this: ITestCallbackContext) {
            skipTestIf({preferredGeneratorIsAvailable: true}, this, context);
            this.timeout(BUILD_TIMEOUT);
-
            context.testEnv.config.updatePartial({preferredGenerators: []});
-           await expect(context.cmt.build()).to.eventually.be.rejected;
+           expect(await context.cmt.build()).to.eql(0);
 
-           expect(context.testEnv.errorMessagesQueue.length).to.gte(1);
-           expect(context.testEnv.errorMessagesQueue[0])
-               .to.be.contains('Unable to determine what CMake generator to use.');
+           const result = await context.testEnv.result.getResultAsJson();
+           // "Ninja" and "Unix Makefiles" are always the default preferred generators
+           // if no other overriding property is set.
+           // The extension verifies for each if they are present (installed)
+           // and starts with "Ninja".
+           const isNinjaInstalled = await context.cmt.isNinjaInstalled();
+           expect(result['cmake-generator']).to.eql(isNinjaInstalled ? "Ninja" : "Unix Makefiles");
+
+           expect(context.testEnv.errorMessagesQueue.length)
+               .to.eql(0, 'Wrong message ' + context.testEnv.errorMessagesQueue[0]);
          });
 
     test(`Use preferred generator from settings or kit file (${buildSystem.defaultKit})`,

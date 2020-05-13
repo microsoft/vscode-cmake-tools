@@ -28,7 +28,7 @@ import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StatusBar} from '@cmt/status';
 import * as telemetry from '@cmt/telemetry';
-import {ProjectOutlineProvider, TargetNode, SourceFileNode} from '@cmt/tree';
+import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
@@ -58,7 +58,7 @@ type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | nu
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
     telemetry.activate();
-    this._statusBar.targetName = 'all';
+    this._statusBar.setBuildTargetName('all');
     this._folders.onAfterAddFolder(async cmtFolder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
       if (this._folders.size === 1) {
@@ -183,7 +183,7 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * The status bar controller
    */
-  private readonly _statusBar = new StatusBar();
+  private readonly _statusBar = new StatusBar(this._workspaceConfig);
   // Subscriptions for status bar items:
   private _statusMessageSub: vscode.Disposable = new DummyDisposable();
   private _targetNameSub: vscode.Disposable = new DummyDisposable();
@@ -389,7 +389,7 @@ class ExtensionManager implements vscode.Disposable {
       } else if (!ws) {
         // When adding a folder but the focus is on somewhere else
         // Do nothing but make sure we are showing the active folder correctly
-        this._statusBar.reloadVisibility();
+        this._statusBar.update();
       }
     }
   }
@@ -440,6 +440,7 @@ class ExtensionManager implements vscode.Disposable {
     this._folders.setActiveFolder(ws);
     this._statusBar.setActiveFolderName(ws?.name || '');
     this._statusBar.setActiveKitName(this._folders.activeFolder?.cmakeTools.activeKit?.name || '');
+    this._projectOutlineProvider.setActiveFolder(ws);
     this._setupSubscriptions();
   }
 
@@ -469,7 +470,7 @@ class ExtensionManager implements vscode.Disposable {
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
       if (!this._cppToolsAPI) {
-        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v3);
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v4);
       }
       if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
         const codeModel = cmt.codeModel;
@@ -486,6 +487,7 @@ class ExtensionManager implements vscode.Disposable {
         const opts = drv ? drv.expansionOptions : undefined;
         const env = await effectiveKitEnvironment(kit, opts);
         const clCompilerPath = await findCLCompilerPath(env);
+        this._configProvider.cpptoolsVersion = cpptools.getVersion();
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
         await this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
@@ -518,14 +520,14 @@ class ExtensionManager implements vscode.Disposable {
       this._statusBar.setVisible(true);
       this._statusMessageSub = cmt.onStatusMessageChanged(FireNow, s => this._statusBar.setStatusMessage(s));
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
-        this._statusBar.targetName = t;
+        this._statusBar.setBuildTargetName(t);
       });
       this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');
       });
-      this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.ctestEnabled = e);
-      this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.testResults = r);
+      this._ctestEnabledSub = cmt.onCTestEnabledChanged(FireNow, e => this._statusBar.setCTestEnabled(e));
+      this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.setTestResults(r));
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
     }
@@ -812,7 +814,10 @@ class ExtensionManager implements vscode.Disposable {
     }
     vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
   }
-
+  async selectWorkspace(folder?: vscode.WorkspaceFolder) {
+    if (!folder) return;
+    await this._setActiveFolder(folder);
+  }
   ctest(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.ctest(), folder); }
 
   ctestAll() { return this.mapCMakeToolsAll(cmt => cmt.ctest()); }
@@ -872,6 +877,7 @@ class ExtensionManager implements vscode.Disposable {
 
   async hideLaunchCommand(shouldHide: boolean = true) {
     // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
+    this._statusBar.hideLaunchButton(shouldHide);
     await util.setContextValue(HIDE_LAUNCH_COMMAND_KEY, shouldHide);
   }
 
@@ -967,6 +973,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'resetState',
     'viewLog',
     'compileFile',
+    'selectWorkspace',
     'tasksBuildCommand',
     'hideLaunchCommand',
     'hideDebugCommand'
@@ -1012,6 +1019,8 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
                                       (what: TargetNode) => what.openInCMakeLists()),
       vscode.commands.registerCommand('cmake.outline.compileFile',
                                       (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
+      vscode.commands.registerCommand('cmake.outline.selectWorkspace',
+                                      (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
   ]);
 }
 

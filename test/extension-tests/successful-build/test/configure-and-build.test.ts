@@ -179,15 +179,29 @@ suite('Build', async () => {
     // Run Configure kit without preferred generator
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
     await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-    expect(cmt.activeKit).to.be.null;
+    await cmt.build();
+    // Keep result1 for a later comparison
+    const result1 = await testEnv.result.getResultAsJson();
 
-    // Test return to workin kit
+    // Test return to previous kit
     testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
     await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
     await cmt.build();
 
-    const result1 = await testEnv.result.getResultAsJson();
-    expect(result1['cmake-generator']).to.eql(compiler[0].generator);
+    const result2 = await testEnv.result.getResultAsJson();
+    expect(result2['cmake-generator']).to.eql(compiler[0].generator);
+
+    // result1 (for no preferred generator given) should be the same as
+    // a list of default preferred generators: Ninja + Unix Makefiles.
+    // These defaults take effect only when no other preferred generator
+    // is deduced from other sources: settings (cmake.generator, cmake.preferredGenerators)
+    // or kits preferred generator in cmake-tools-kits.json.
+    testEnv.config.updatePartial({preferredGenerators: ["Ninja", "Unix Makefiles"]});
+    testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+    await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
+    await cmt.build();
+    const result3 = await testEnv.result.getResultAsJson();
+    expect(result1['cmake-generator']).to.eql(result3['cmake-generator']);
   }).timeout(100000);
 
   test('Test kit switch between different preferred generators and compilers',
