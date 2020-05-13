@@ -453,7 +453,8 @@
           "command": "cmake.resetState"
         },
         {
-          "command": "cmake.configureAll"
+          "command": "cmake.configureAll",
+          "when": "cmake:multiRoot"
         },
         {
           "when": "cmake:enableFullFeatureSet",
