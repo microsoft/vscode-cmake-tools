@@ -20,7 +20,7 @@ import {
   USER_KITS_FILEPATH,
   findCLCompilerPath,
   effectiveKitEnvironment,
-  scanForKits,
+  scanForKitsIfNeeded,
 } from '@cmt/kit';
 import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
@@ -1051,14 +1051,8 @@ export async function activate(context: vscode.ExtensionContext) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
 
-    // Rescan if the kits version (saved in the extension state) is not the same as the extension version,
-    // to avoid eventual breaking changes in the kits definitions.
-    const kitsVersion = context.workspaceState.get<string>('kitsVersion');
-    const extVersion = vscode.extensions.getExtension('ms-vscode.cmake-tools')?.packageJSON.version;
-    if (!kitsVersion || kitsVersion !== extVersion) {
-      await scanForKits();
-      context.workspaceState.update('kitsVersion', extVersion);
-    }
+    // Silent re-scan when detecting a breaking change in the kits definition.
+    await scanForKitsIfNeeded(context);
 
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());

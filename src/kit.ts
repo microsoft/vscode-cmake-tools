@@ -973,6 +973,18 @@ export async function scanForKits(opt?: KitScanOptions) {
   });
 }
 
+// Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
+export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<void> {
+  const kitsVersionSaved = context.workspaceState.get<number>('kitsVersionSaved');
+  const kitsVersionCurrent = 1;
+
+  // Scan also when there is no kits version saved in the state.
+  if (!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) {
+    await scanForKits();
+    context.workspaceState.update('kitsVersionSaved', kitsVersionCurrent);
+  }
+}
+
 /**
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
