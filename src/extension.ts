@@ -20,6 +20,7 @@ import {
   USER_KITS_FILEPATH,
   findCLCompilerPath,
   effectiveKitEnvironment,
+  scanForKits,
 } from '@cmt/kit';
 import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
@@ -365,10 +366,6 @@ class ExtensionManager implements vscode.Disposable {
     if (should_configure) {
       // We've opened a new workspace folder, and the user wants us to
       // configure it now.
-      if (cmt.workspaceContext.config.scanForKitsOnOpen) {
-        await this.scanForKits();
-      }
-
       log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
       // Ensure that there is a kit. This is required for new instances.
       if (!await this._ensureActiveKit(cmt)) {
@@ -1052,6 +1049,15 @@ export async function activate(context: vscode.ExtensionContext) {
     const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
+    }
+
+    // Rescan if the kits version (saved in the extension state) is not the same as the extension version,
+    // to avoid eventual breaking changes in the kits definitions.
+    const kitsVersion = context.workspaceState.get<string>('kitsVersion');
+    const extVersion = vscode.extensions.getExtension('ms-vscode.cmake-tools')?.packageJSON.version;
+    if (!kitsVersion || kitsVersion !== extVersion) {
+      await scanForKits();
+      context.workspaceState.update('kitsVersion', extVersion);
     }
 
   // Register a protocol handler to serve localized schemas

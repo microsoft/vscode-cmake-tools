@@ -57,7 +57,6 @@ export interface ExtensionConfigurationSettings {
   emscriptenSearchDirs: string[];
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
-  scanForKitsOnOpen: boolean|null;
   useCMakeServer: boolean;
   cmakeCommunicationMode: CMakeCommunicationMode;
   ignoreKitEnv: boolean;
@@ -200,8 +199,6 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get configureOnOpen() { return this.configData.configureOnOpen; }
 
-  get scanForKitsOnOpen() { return this.configData.scanForKitsOnOpen; }
-
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
@@ -282,7 +279,6 @@ export class ConfigurationReader implements vscode.Disposable {
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
-    scanForKitsOnOpen: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
     cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
     ignoreKitEnv: new vscode.EventEmitter<boolean>(),
