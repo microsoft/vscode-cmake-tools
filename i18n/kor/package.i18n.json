@@ -104,6 +104,7 @@
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten을 설치할 수 있는 디렉터리입니다.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "구성에 성공한 후 compile_commands.json을 이 위치로 복사합니다.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake 프로젝트 디렉터리를 열 때 자동으로 구성합니다.",
+	"cmake-tools.configuration.cmake.useCMakeServer.description": "CMake 서버를 사용합니다.",
 	"cmake-tools.configuration.cmake.cmakeCommunicationMode": "확장과 CMake 간 통신에 사용되는 프로토콜입니다.",
 	"cmake-tools.configuration.cmake.ignoreKitEnv.description": "CMake 명령을 실행할 때 키트 환경 변수를 사용하지 않습니다.",
 	"cmake-tools.configuration.cmake.buildTask.description": "내부 프로세스 대신 tasks.json을 사용하여 빌드합니다.",
