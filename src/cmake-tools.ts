@@ -262,12 +262,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         } else if (result === changeSetting) {
           // Open the search file dialog from the path set by cmake.sourceDirectory or from the current workspace folder
           // if the setting is not defined.
-          const drv = await this._cmakeDriver;
-          const defaultUriPath: string = drv ? drv.sourceDir : this.folder.uri.fsPath;
-          const defaultUri = vscode.Uri.file(defaultUriPath);
           const openOpts: vscode.OpenDialogOptions = {
             canSelectMany: false,
-            defaultUri,
+            defaultUri: vscode.Uri.file(this.folder.uri.fsPath),
             filters: {"CMake files": ["txt"], "All files": ["*"]},
             openLabel: "Load",
           };
@@ -1344,8 +1341,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -2;
     }
 
-    const drv = await this._cmakeDriver;
-    const sourceDir = drv ? drv.sourceDir : cmtFolder.folder.uri.fsPath;
+    const sourceDir = cmtFolder.folder.uri.fsPath;
     const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
 
     if (await fs.exists(mainListFile)) {
