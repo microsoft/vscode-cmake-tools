@@ -975,7 +975,7 @@ export async function scanForKits(opt?: KitScanOptions) {
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
 export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<void> {
-  const kitsVersionSaved = context.workspaceState.get<number>('kitsVersionSaved');
+  const kitsVersionSaved = context.globalState.get<number>('kitsVersionSaved');
   const kitsVersionCurrent = 1;
 
   // Scan also when there is no kits version saved in the state.
