@@ -1,24 +1,22 @@
 # What's New?
 
-## 1.4
+## 1.4.0
 Improvements:
-- Commit text. [PR #pullNumber](https://github.com/microsoft/vscode-cmake-tools/pull/pullNumber) [@gitHubUser](https://github.com/gitHubUser)
 - Documentation updates. [PR #1130](https://github.com/microsoft/vscode-cmake-tools/pull/1130) [@zalava](https://github.com/zalava)
 - Add support for per-folder browse path. [#1073](https://github.com/microsoft/vscode-cmake-tools/issues/1073)
 - Use a shell script to set environment variables for a kit. [#809](https://github.com/microsoft/vscode-cmake-tools/issues/809) [@pisker](https://github.com/pisker)
 - Improvements of the status bar UI. [PR #1200](https://github.com/microsoft/vscode-cmake-tools/pull/1200) [@SchweizS](https://github.com/SchweizS)
 - Add context menu for CMakeLists. [#741](https://github.com/microsoft/vscode-cmake-tools/issues/741) [@SchweizS](https://github.com/SchweizS)
-- Support partial CMake Tools activation for non cmake repos. [PR #1206](https://github.com/microsoft/vscode-cmake-tools/pull/1206)
+- Support partial CMake Tools activation for non cmake repos. [#1167](https://github.com/microsoft/vscode-cmake-tools/issues/1167)
 - Support ARM IntelliSense modes. [#1155](https://github.com/microsoft/vscode-cmake-tools/issues/1155)
 - Support GNU language standards. [#1208](https://github.com/microsoft/vscode-cmake-tools/issues/1208)
 - Add indication of active workspace to project outline. [#1183](https://github.com/microsoft/vscode-cmake-tools/issues/1183) [@SchweizS](https://github.com/SchweizS)
 
 Bug Fixes:
-- Commit text. [#issueNumber](https://github.com/microsoft/vscode-cmake-tools/issues/issueNumber) [@gitHubUser](https://github.com/gitHubUser)
 - Skip over debugger guessing logic if cmake.debugConfig explicitly sets miDebuggerPath. [#1060](https://github.com/microsoft/vscode-cmake-tools/issues/1060)
 - Normalize all paths sent to CppTools. [#1099](https://github.com/microsoft/vscode-cmake-tools/issues/1099)
 - Add support for Objective-C and Objective-C++. [#1108](https://github.com/microsoft/vscode-cmake-tools/issues/1108) [@marksisson](https://github.com/marksisson)
-- Update extension id. [PR #1116](https://github.com/microsoft/vscode-cmake-tools/pull/1116) [@ChristianS99](https://github.com/ChristianS99)
+- Update the configuration provider id. [#1045](https://github.com/microsoft/vscode-cmake-tools/issues/1045) [@ChristianS99](https://github.com/ChristianS99)
 - Clear the terminal for Compile Active File. [#1122](https://github.com/microsoft/vscode-cmake-tools/issues/1122)
 - Update vswhere to a version that supports utf-8. [#1104](https://github.com/microsoft/vscode-cmake-tools/issues/1104)
 - Support source files outside the base path. [#1140](https://github.com/microsoft/vscode-cmake-tools/issues/1140)
@@ -30,8 +28,8 @@ Bug Fixes:
 - Skip configuring when cache is present and according setting is on. [#984](https://github.com/microsoft/vscode-cmake-tools/issues/984)
 - Remove deprecated cmake.useCMakeServer setting. [#1059](https://github.com/microsoft/vscode-cmake-tools/issues/1059)
 - Trigger automatic CMake configure on CMakeLists.txt save. [#1187](https://github.com/microsoft/vscode-cmake-tools/issues/1187) [@Yuri6037](https://github.com/Yuri6037)
-- Silently scannig for kits:
-    - when there is no available kits. [PR #1192](https://github.com/microsoft/vscode-cmake-tools/pull/1192)
+- Silently scanning for kits:
+    - when there is no available kits json file. [PR #1192](https://github.com/microsoft/vscode-cmake-tools/pull/1192)
     - when the extension introduces breaking changes in the kits definition. [#1195](https://github.com/microsoft/vscode-cmake-tools/issues/1195)
 - Various unhandled exceptions and crash fixes:
     - "cannot read property 'length' of undefined" when CMake not found in path. [#1110](https://github.com/microsoft/vscode-cmake-tools/issues/1110)
