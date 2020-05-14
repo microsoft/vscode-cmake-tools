@@ -12,6 +12,7 @@ import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import * as path from 'path';
 import * as nls from 'vscode-nls';
+import rollbar from '@cmt/rollbar';
 
 nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -21,11 +22,14 @@ const log = logging.createLogger('cmakefileapi-parser');
 export async function createQueryFileForApi(api_path: string): Promise<string> {
   const query_path = path.join(api_path, 'query', 'client-vscode');
   const query_file_path = path.join(query_path, 'query.json');
-  await fs.mkdir_p(query_path);
-
   const requests = {requests: [{kind: 'cache', version: 2}, {kind: 'codemodel', version: 2}]};
-
-  await fs.writeFile(query_file_path, JSON.stringify(requests));
+  try {
+    await fs.mkdir_p(query_path);
+    await fs.writeFile(query_file_path, JSON.stringify(requests));
+  } catch (e) {
+    rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', query_file_path), e);
+    throw e;
+  }
   return query_file_path;
 }
 
@@ -178,7 +182,9 @@ export async function loadConfigurationTargetMap(reply_path: string, codeModel_f
 }
 
 function convertToAbsolutePath(input_path: string, base_path: string) {
-  return path.normalize(path.join(base_path, input_path));
+  // Prepend the base path to the input path if the input path is relative.
+  const absolute_path = path.isAbsolute(input_path) ? input_path : path.join(base_path, input_path);
+  return path.normalize(absolute_path);
 }
 
 function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject): CodeModelFileGroup[] {

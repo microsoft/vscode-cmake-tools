@@ -132,7 +132,7 @@ function searchForCompilerPathInCache(cache: CMakeCache): string|null {
   return null;
 }
 
-export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string):
+export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string, debuggerPathOverride?: string):
     Promise<Configuration|null> {
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
@@ -148,21 +148,23 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     throw Error(localize('no.compiler.found.in.cache', 'No compiler found in cache file.'));  // MSVC should be already found by CMAKE_LINKER
   }
 
-  const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
-  // Look for lldb-mi
-  let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
-  if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1) && await checkDebugger(clang_debugger_path)) {
-    return createLLDBDebugConfiguration(clang_debugger_path, target);
-  } else {
-    // Look for gdb
-    clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-    if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
-      return createGDBDebugConfiguration(clang_debugger_path, target);
+  if (!debuggerPathOverride) {
+    const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
+    // Look for lldb-mi
+    let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
+    if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1) && await checkDebugger(clang_debugger_path)) {
+      return createLLDBDebugConfiguration(clang_debugger_path, target);
     } else {
-      // Look for lldb
-      clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-      if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
-        return createLLDBDebugConfiguration(clang_debugger_path, target);
+      // Look for gdb
+      clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
+      if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
+        return createGDBDebugConfiguration(clang_debugger_path, target);
+      } else {
+        // Look for lldb
+        clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
+        if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
+          return createLLDBDebugConfiguration(clang_debugger_path, target);
+        }
       }
     }
   }
@@ -170,7 +172,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
   const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
-  const gdb_debugger_path = compiler_path.replace(gcc_compiler_regex, description.miMode);
+  const gdb_debugger_path = debuggerPathOverride || compiler_path.replace(gcc_compiler_regex, description.miMode);
   if (gdb_debugger_path.search(new RegExp(description.miMode)) != -1) {
     return description.createConfig(gdb_debugger_path, target);
   }
