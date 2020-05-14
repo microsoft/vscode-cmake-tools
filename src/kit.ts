@@ -979,7 +979,8 @@ export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Pr
   const kitsVersionCurrent = 1;
 
   // Scan also when there is no kits version saved in the state.
-  if (!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) {
+  if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
+       process.env['CMT_TESTING'] !== '1') {
     await scanForKits();
     context.globalState.update('kitsVersionSaved', kitsVersionCurrent);
   }
