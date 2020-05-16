@@ -556,7 +556,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           return acc;
         }, new Map());
   if (vars.get('INCLUDE') === '') {
-    console.log(`Error running ${devbat} ${args.join(' ')}, can not found INCLUDE`);
+    console.log(`Error running ${devbat} ${args.join(' ')}, cannot find INCLUDE`);
     return;
   }
   log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
