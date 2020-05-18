@@ -418,6 +418,9 @@ class ExtensionManager implements vscode.Disposable {
       log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
       // Ensure that there is a kit. This is required for new instances.
       if (!await this._ensureActiveKit(cmt)) {
+        // If no kit is selected, the configure process will not continue and we don't want to enable
+        // the full feature set of CMake Tools.
+        await enableFullFeatureSet(false);
         return;
       }
       await cmt.configure();
