@@ -436,7 +436,7 @@ export function vsDisplayName(inst: VSInstallation): string {
  * @param hostArch The architecture of the toolset host (e.g. x86, x64|amd64)
  * @param targetArch The architecture of the toolset target (e.g. x86, x64|amd64, arm, arm64)
  */
-function kitName(inst: VSInstallation, hostArch: string, targetArch: string): string {
+function kitName(inst: VSInstallation, hostArch: string, targetArch?: string): string {
   // We still keep the amd64 alias for x64, only in the name of the detected VS kits,
   // for compatibility reasons. Switching to 'x64' means leaving
   // orphaned 'amd64' kits around ("Scan for kits" does not delete them yet)
@@ -453,7 +453,7 @@ function kitName(inst: VSInstallation, hostArch: string, targetArch: string): st
  * @param targetArch The architecture of the target
  * @param amd64Alias Whether amd64 is preferred over x64.
  */
-function kitHostTargetArch(hostArch: string, targetArch: string, amd64Alias: boolean = false): string {
+function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
   // There are cases when we don't want to use the 'x64' alias of the 'amd64' architecture,
   // like for older VS installs, for the VS kit names (for compatibility reasons)
   // or for arm/arm64 specific vcvars scripts.
@@ -467,7 +467,10 @@ function kitHostTargetArch(hostArch: string, targetArch: string, amd64Alias: boo
     }
   }
 
-  return hostArch === targetArch ? hostArch : `${hostArch}_${targetArch}`;
+  if (targetArch) {
+    return hostArch === targetArch ? hostArch : `${hostArch}_${targetArch}`;
+  }
+  return hostArch;
 }
 
 /**
@@ -553,7 +556,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           return acc;
         }, new Map());
   if (vars.get('INCLUDE') === '') {
-    console.log(`Error running ${devbat} ${args.join(' ')}, can not found INCLUDE`);
+    console.log(`Error running ${devbat} ${args.join(' ')}, cannot find INCLUDE`);
     return;
   }
   log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
@@ -641,7 +644,7 @@ const VsGenerators: {[key: string]: string} = {
   16: 'Visual Studio 16 2019'
 };
 
-async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch: string): Promise<Map<string, string>|null> {
+async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string>|null> {
   console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
   let vcvarsScript: string = 'vcvarsall.bat';
@@ -832,7 +835,7 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
     return null;
   }
 
-  return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform!);
+  return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
 }
 
 export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {
@@ -997,7 +1000,7 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
   if (kit.visualStudio) {
     const inst = await getVSInstallForKit(kit);
     if (inst) {
-      const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform!);
+      const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
       return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(inst), hostTargetArch);
     }
     return '';
