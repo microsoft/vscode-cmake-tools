@@ -109,7 +109,7 @@ function parseTargetArch(target: string): Architecture {
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
     return 'arm';
   }
-  log.warning(localize('unknown.control.gflag.targetArch', 'Unknown target architecture flag: {0}', target));
+  // TODO: whitelist architecture values and add telemetry
   return undefined;
 }
 
@@ -134,7 +134,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));
+        // TODO: whitelist architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -148,7 +148,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));
+        // TODO: whitelist architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
