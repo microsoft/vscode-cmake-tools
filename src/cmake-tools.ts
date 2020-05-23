@@ -1157,6 +1157,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Implementation of `cmake.launchTargetFilename`. It just calls launchTargetPath and
+   * extracts the filename form the result.
+   */
+  async launchTargetFilename(): Promise<string|null> {
+    const targetPath = await this.launchTargetPath();
+    if (targetPath === null) {
+      return null;
+    }
+    return path.basename(targetPath);
+  }
+
+  /**
    * Implementation of `cmake.buildType`
    */
   async currentBuildType(): Promise<string|null> {
