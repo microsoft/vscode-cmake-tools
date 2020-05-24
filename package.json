@@ -55,6 +55,7 @@
     "onCommand:cmake.launchTargetAll",
     "onCommand:cmake.launchTargetPath",
     "onCommand:cmake.launchTargetDirectory",
+    "onCommand:cmake.launchTargetFilename",
     "onCommand:cmake.buildType",
     "onCommand:cmake.buildDirectory",
     "onCommand:cmake.executableTargets",

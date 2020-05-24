@@ -1017,6 +1017,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'quickStart',
     'launchTargetPath',
     'launchTargetDirectory',
+    'launchTargetFilename',
     'buildKit',
     'buildType',
     'buildDirectory',
