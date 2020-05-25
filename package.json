@@ -823,14 +823,14 @@
           "group": "CMake:build"
         },
         {
-          "command": "cmake.launchTarget",
-          "when": "cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
-          "group": "CMake:run"
-        },
-        {
           "command": "cmake.debugTarget",
           "when": "cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
-          "group": "CMake:run"
+          "group": "CMake:run@1"
+        },
+        {
+          "command": "cmake.launchTarget",
+          "when": "cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
+          "group": "CMake:run@2"
         }
       ]
     },
