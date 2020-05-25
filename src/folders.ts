@@ -82,7 +82,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * @param ws The workspace folder to search
    */
   get(ws: vscode.WorkspaceFolder | undefined): CMakeToolsFolder | undefined {
-    return (ws && ws.uri) ? this._instances.get(ws.uri.fsPath) : ws;
+    return (ws && ws.uri) ? this._instances.get(ws.uri.fsPath) : undefined;
   }
 
   /**
