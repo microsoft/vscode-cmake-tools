@@ -810,6 +810,23 @@
           "command": "cmake.outline.cleanRebuildAll",
           "when": "resourceFilename == CMakeLists.txt && cmake:enableFullFeatureSet"
         }
+      ],
+      "touchBar": [
+        {
+          "when": "cmake:enableFullFeatureSet",
+          "command": "cmake.outline.buildTarget",
+          "group": "CMake"
+        },
+        {
+          "command": "cmake.outline.launchTarget",
+          "when": "!cmake:hideDebugCommand && cmake:enableFullFeatureSet",
+          "group": "CMake"
+        },
+        {
+          "command": "cmake.outline.debugTarget",
+          "when": "!cmake:hideDebugCommand && cmake:enableFullFeatureSet",
+          "group": "CMake"
+        }
       ]
     },
     "configuration": {
@@ -1461,7 +1478,7 @@
                   ]
                 },
                 "color": {
-                  "type":"boolean",
+                  "type": "boolean",
                   "default": false,
                   "description": "%cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description%"
                 }
