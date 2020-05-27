@@ -434,9 +434,9 @@ export function vsDisplayName(inst: VSInstallation): string {
  *
  * @param inst The VSInstallation to use
  * @param hostArch The architecture of the toolset host (e.g. x86, x64|amd64)
- * @param targetArch The architecture of the toolset target (e.g. x86, x64|amd64, arm, arm64)
+ * @param targetArch The architecture of the toolset target (e.g. win32|x86, x64|amd64, arm, arm64)
  */
-function kitName(inst: VSInstallation, hostArch: string, targetArch?: string): string {
+function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string): string {
   // We still keep the amd64 alias for x64, only in the name of the detected VS kits,
   // for compatibility reasons. Switching to 'x64' means leaving
   // orphaned 'amd64' kits around ("Scan for kits" does not delete them yet)
@@ -467,10 +467,20 @@ function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: bo
     }
   }
 
-  if (targetArch) {
-    return hostArch === targetArch ? hostArch : `${hostArch}_${targetArch}`;
+  if (!targetArch) {
+    targetArch = hostArch;
   }
-  return hostArch;
+
+  // CMake preferred generator platform requires 'win32', while vcvars are still using 'x86'.
+  // This function is called only for VS generators, so it is safe to overwrite
+  // targetArch with the vcvars naming.
+  // In case of any future new mismatches, use the vsArchFromGeneratorPlatform table
+  // instead of hard coding for win32 and x86.
+  // Currently, there is no need of a similar overwrite operation on hostArch,
+  // because CMake host target does not have the same name mismatch with VS.
+  targetArch = vsArchFromGeneratorPlatform[targetArch] || targetArch;
+
+  return (hostArch === targetArch) ? hostArch : `${hostArch}_${targetArch}`;
 }
 
 /**
@@ -626,8 +636,13 @@ export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, s
  * Currently, there is a mismatch only between x86 and win32.
  * For example, VS kits x86 and amd64_x86 will generate -A win32
  */
-const genPlatformFromVsHostTargetArchs: {[key: string]: string} = {
+const generatorPlatformFromVSArch: {[key: string]: string} = {
   x86: 'win32'
+};
+
+// The reverse of generatorPlatformFromVSArch
+const vsArchFromGeneratorPlatform: {[key: string]: string} = {
+  win32: 'x86'
 };
 
 /**
@@ -707,10 +722,11 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
 /**
  * Try to get a VSKit from a VS installation and architecture
  * @param inst A VS installation from vswhere
- * @param hostTargetArch The host-target architecture combination to try
+ * @param hostArch The host architecture
+ * @param targetArch The target architecture
  */
 async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string, targetArch: string, pr?: ProgressReporter): Promise<Kit|null> {
-  const name = kitName(inst, hostArch, targetArch);
+  const name = vsKitName(inst, hostArch, targetArch);
   log.debug(localize('checking.for.kit', 'Checking for kit: {0}', name));
   if (pr) {
     pr.report({message: localize('checking', 'Checking {0}', name)});
@@ -737,7 +753,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
       log.debug(` ${localize('generator.present', 'Generator Present: {0}', generatorName)}`);
       kit.preferredGenerator = {
         name: generatorName,
-        platform: genPlatformFromVsHostTargetArchs[targetArch] as string || targetArch,
+        platform: generatorPlatformFromVSArch[targetArch] as string || targetArch,
         // CMake generator toolsets support also different versions (via -T version=).
         toolset: "host=" + hostArch
       };
