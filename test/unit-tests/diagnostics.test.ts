@@ -315,6 +315,60 @@ suite('Diagnostics', async () => {
     expect(path.win32.isAbsolute(diag.file)).to.be.true;
   });
 
+  test('Parsing DIAB Diagnostics', () => {
+    const lines = [
+      '"C:\\path\\source\\debug\\debug.c", line 631: warning (dcc:1518): variable i is never used'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.compilers.diab.diagnostics).to.have.length(1);
+    const diag = build_consumer.compilers.diab.diagnostics[0];
+
+    expect(diag.location.start.line).to.eq(630);
+    expect(diag.location.start.character).to.eq(0);
+    expect(diag.message).to.eq('variable i is never used');
+    expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
+    expect(diag.code).to.eq('dcc:1518');
+    expect(diag.severity).to.eq('warning');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.true;
+  });
+
+  test('Parsing DIAB Diagnostics catastrophic error', () => {
+    const lines = [
+      '"C:\\path\\source\\debug\\debug.c", line 631: catastrophic error (etoa:5711): cannot open source file "../debug.h"'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.compilers.diab.diagnostics).to.have.length(1);
+    const diag = build_consumer.compilers.diab.diagnostics[0];
+
+    expect(diag.location.start.line).to.eq(630);
+    expect(diag.location.start.character).to.eq(0);
+    expect(diag.message).to.eq('cannot open source file "../debug.h"');
+    expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
+    expect(diag.code).to.eq('etoa:5711');
+    expect(diag.severity).to.eq('catastrophic error');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.true;
+  });
+
+  test('Parsing DIAB Diagnostics fatal error without line number', () => {
+    const lines = [
+      '"C:\\path\\source\\debug\\debug.c", fatal error (etoa:1635): License error: FLEXlm error: License server machine is down or not responding.'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.compilers.diab.diagnostics).to.have.length(1);
+    const diag = build_consumer.compilers.diab.diagnostics[0];
+
+    expect(diag.location.start.line).to.eq(0);
+    expect(diag.location.start.character).to.eq(0);
+    expect(diag.message).to.eq('License error: FLEXlm error: License server machine is down or not responding.');
+    expect(diag.file).to.eq('C:\\path\\source\\debug\\debug.c');
+    expect(diag.code).to.eq('etoa:1635');
+    expect(diag.severity).to.eq('fatal error');
+    expect(path.win32.normalize(diag.file)).to.eq(diag.file);
+    expect(path.win32.isAbsolute(diag.file)).to.be.true;
+  });
+
   test('No parsing Make errors', () => {
     const lines = [
       `make[2]: *** [CMakeFiles/myApp.dir/build.make:87: CMakeFiles/myApp.dir/app.cpp.o] Error 1`,
