@@ -1516,12 +1516,12 @@
       {
         "key": "ctrl+f5",
         "command": "cmake.debugTarget",
-        "when": "!inDebugMode && inCMakeProject && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
+        "when": "!inDebugMode && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       },
       {
         "key": "shift+f5",
         "command": "cmake.launchTarget",
-        "when": "!cmake:hideDebugCommand && cmake:enableFullFeatureSet"
+        "when": "!inDebugMode && !cmake:hideLaunchCommand && cmake:enableFullFeatureSet"
       }
     ],
     "viewsContainers": {

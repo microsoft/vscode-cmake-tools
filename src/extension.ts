@@ -1112,7 +1112,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
-  vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
   await vscode.window.withProgress(
       {
