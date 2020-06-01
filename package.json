@@ -813,7 +813,13 @@
       ],
       "touchBar": [
         {
+          "command": "cmake.configure",
+          "when": "!cmake:enableFullFeatureSet",
+          "group": "CMake:build"
+        },
+        {
           "command": "cmake.build",
+          "alt": "cmake.configure",
           "when": "cmake:enableFullFeatureSet && !cmake:isBuilding",
           "group": "CMake:build"
         },
@@ -824,13 +830,14 @@
         },
         {
           "command": "cmake.debugTarget",
+          "alt": "cmake.selectLaunchTarget",
           "when": "cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
-          "group": "CMake:run@1"
+          "group": "CMake:run"
         },
         {
           "command": "cmake.launchTarget",
           "when": "cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
-          "group": "CMake:run@2"
+          "group": "CMake:run"
         }
       ]
     },
