@@ -364,7 +364,7 @@ class ExtensionManager implements vscode.Disposable {
     const cmt = info.cmakeTools;
 
     // Silent re-scan when detecting a breaking change in the kits definition.
-    await scanForKitsIfNeeded(cmt.extensionContext);
+    const silentScanForKitsNeeded: boolean = await scanForKitsIfNeeded(cmt.extensionContext);
 
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
@@ -425,6 +425,12 @@ class ExtensionManager implements vscode.Disposable {
         return;
       }
       await cmt.configure();
+    } else if (silentScanForKitsNeeded) {
+      // This warning will show up the first time after deciding not to configure, if a version change has been detected
+      // in the kits definition. This may happen during a CMake Tools extension upgrade.
+      // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+      // being tied to global state variable.
+      log.warning(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'));
     }
     this._updateCodeModel(info);
   }
