@@ -1499,7 +1499,7 @@
       {
         "key": "shift+f5",
         "command": "cmake.launchTarget",
-        "when": "!cmake:hideDebugCommand && cmake:enableFullFeatureSet"
+        "when": "!inDebugMode && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       }
     ],
     "viewsContainers": {
