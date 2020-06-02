@@ -334,11 +334,12 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       await driver.cleanConfigure([]);
       await driver.asyncDispose();
 
+      // Configure with a different generator should overwrite the previous Ninja generator.
       driver = null;
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
       expect(await driver.configure([])).to.be.eq(0);
-      expect(driver.generatorName).to.be.eq(kitNinja.preferredGenerator!.name);
-      expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
+      expect(driver.generatorName).to.be.eq(kitDefault.preferredGenerator!.name);
+      expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq(kitDefault.preferredGenerator!.name);
     }).timeout(60000);
 
     test('Test generator switch', async () => {
