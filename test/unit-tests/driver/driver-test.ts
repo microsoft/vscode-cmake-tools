@@ -6,6 +6,8 @@ import * as chaiString from 'chai-string';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
+import {CMakeServerClientDriver} from '@cmt/drivers/cms-driver';
 
 chai.use(chaiString);
 
@@ -334,12 +336,19 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       await driver.cleanConfigure([]);
       await driver.asyncDispose();
 
-      // Configure with a different generator should overwrite the previous Ninja generator.
       driver = null;
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
       expect(await driver.configure([])).to.be.eq(0);
-      expect(driver.generatorName).to.be.eq(kitDefault.preferredGenerator!.name);
-      expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq(kitDefault.preferredGenerator!.name);
+
+      const expFileApi = driver instanceof CMakeFileApiDriver;
+      const expSrv = driver instanceof CMakeServerClientDriver;
+      expect (!expFileApi || !expSrv); // mutually exclusive
+
+      // Configure with a different generator should overwrite the previous Ninja generator
+      // for fileApi and not for cmakeServer communication modes.
+      const kitBaseline = expFileApi ? kitDefault : kitNinja;
+      expect(driver.generatorName).to.be.eq(kitBaseline.preferredGenerator!.name);
+      expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq(kitBaseline.preferredGenerator!.name);
     }).timeout(60000);
 
     test('Test generator switch', async () => {
