@@ -7,6 +7,7 @@ import * as util from '@cmt/util';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as kitsController from '@cmt/kitsController';
 
 import {VSInstallation, vsInstallations} from './installs/visual-studio';
 import * as expand from './expand';
@@ -993,16 +994,20 @@ export async function scanForKits(opt?: KitScanOptions) {
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<void> {
+export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<boolean> {
   const kitsVersionSaved = context.globalState.get<number>('kitsVersionSaved');
-  const kitsVersionCurrent = 1;
+  const kitsVersionCurrent = 2;
 
   // Scan also when there is no kits version saved in the state.
   if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
        process.env['CMT_TESTING'] !== '1') {
-    await scanForKits();
+    log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
+    await kitsController.KitsController.scanForKits();
     context.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+    return true;
   }
+
+  return false;
 }
 
 /**
