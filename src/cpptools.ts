@@ -205,7 +205,7 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
   const can_use_arm = (cptVersion >= cpt.Version.v4);
   const compiler_name = path.basename(compiler_path || "").toLocaleLowerCase();
   if (compiler_name === 'cl.exe') {
-    const clArch = path.basename(path.dirname(compiler_path));
+    const clArch = path.basename(path.dirname(compiler_path)).toLocaleLowerCase();
     switch (clArch) {
       case 'arm64':
         return can_use_arm ? 'msvc-arm64' : 'msvc-x64';
