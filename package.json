@@ -815,7 +815,12 @@
         {
           "command": "cmake.configure",
           "when": "!cmake:enableFullFeatureSet",
-          "group": "CMake:build"
+          "group": "CMake:start"
+        },
+        {
+          "command": "cmake.quickStart",
+          "when": "!cmake:enableFullFeatureSet",
+          "group": "CMake:start"
         },
         {
           "command": "cmake.build",
