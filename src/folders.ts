@@ -79,10 +79,20 @@ export class CMakeToolsFolderController implements vscode.Disposable {
 
   /**
    * Get the CMakeTools instance associated with the given workspace folder, or undefined
-   * @param ws The workspace folder to search
+   * @param ws The workspace folder to search, or array of command and workspace path
    */
-  get(ws: vscode.WorkspaceFolder | undefined): CMakeToolsFolder | undefined {
-    return (ws && ws.uri) ? this._instances.get(ws.uri.fsPath) : undefined;
+  get(ws: vscode.WorkspaceFolder | Array<string> | undefined): CMakeToolsFolder | undefined {
+    if (ws) {
+      if ((<vscode.WorkspaceFolder>ws).uri) {
+        const folder = (<vscode.WorkspaceFolder>ws);
+        return this._instances.get(folder.uri.fsPath);
+      } else if (<Array<string>>ws){
+        const command = (<Array<string>>ws);
+        return this._instances.get(command[command.length - 1]);
+      }
+    } else {
+      return undefined;
+    }
   }
 
   /**
