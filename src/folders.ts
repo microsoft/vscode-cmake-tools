@@ -8,6 +8,7 @@ import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as util from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -83,12 +84,12 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    */
   get(ws: vscode.WorkspaceFolder | Array<string> | undefined): CMakeToolsFolder | undefined {
     if (ws) {
-      if ((ws as vscode.WorkspaceFolder).uri) {
-        const folder = (<vscode.WorkspaceFolder>ws);
-        return this._instances.get(folder.uri.fsPath);
-      } else if (ws as Array<string>){
-        const command = (<Array<string>>ws);
+      if (util.isArrayOfString(ws)) {
+        const command = ws as Array<string>;
         return this._instances.get(command[command.length - 1]);
+      } else if ((ws as vscode.WorkspaceFolder).uri) {
+        const folder = ws as vscode.WorkspaceFolder;
+        return this._instances.get(folder.uri.fsPath);
       }
     }
     return undefined;
