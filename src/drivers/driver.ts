@@ -25,6 +25,7 @@ import * as shlex from '@cmt/shlex';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
+import {enableFullFeatureSet} from '@cmt/extension';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -593,6 +594,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private buildRunning: boolean = false;
 
+  public configOrBuildInProgress() : boolean {
+    return this.configRunning || this.buildRunning;
+  }
+
   /**
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
@@ -632,6 +637,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const pre_check_ok = await this._beforeConfigureOrBuild();
       if (!pre_check_ok) {
         return -1;
+      }
+
+      // _beforeConfigureOrBuild contains the only scenario when we would want partial features set
+      // (when CMakeLists.txt is missing from the root folder and from the sourceDirectory location).
+      // A successful configure or a failed configure with any other reason than the above
+      // (which is treated within _beforeConfigureOrBuild) still require a full features set.
+      const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder as string));
+      if (folder) {
+        await enableFullFeatureSet(true, folder);
       }
 
       const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);

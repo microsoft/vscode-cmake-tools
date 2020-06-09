@@ -104,6 +104,13 @@ class ExtensionManager implements vscode.Disposable {
           this._setupSubscriptions();
         }
         await util.setContextValue(MULTI_ROOT_MODE_KEY, this._folders.isMultiRoot);
+
+        // Removing a workspace should trigger a re-evaluation of the partial/full activation mode
+        // of the extension, because the visibility depends on having at least one folder
+        // with valid CMakeLists.txt. If that one happens to be this, we need an opportunity
+        // to hide the commands and status bar.
+        this._enableFullFeatureSetOnWorkspace = false;
+        this.enableWorkspaceFoldersFullFeatureSet();
       }
 
       this._onDidChangeActiveTextEditorSub.dispose();
@@ -126,21 +133,6 @@ class ExtensionManager implements vscode.Disposable {
         }
       }
       this._statusBar.setAutoSelectActiveFolder(v);
-    });
-
-    this._workspaceConfig.onChange('sourceDirectory', async v => {
-      await this._onDidChangeActiveTextEditorSub.dispose();
-      if (v) {
-        this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
-      } else {
-        this._onDidChangeActiveTextEditorSub = new DummyDisposable();
-      }
-
-      // Reset to a full activation mode.
-      // If required, the extension will switch back to partial activation mode
-      // after more analysis triggered by the below configure.
-      await enableFullFeatureSet(true);
-      await vscode.commands.executeCommand("cmake.configure");
     });
   }
 
@@ -182,30 +174,24 @@ class ExtensionManager implements vscode.Disposable {
     telemetry.logEvent('open', telemetryProperties);
   }
 
-  public getActiveFolderContext() : StateManager | undefined {
-    const activeFolder = this.getActiveFolder();
-    if (activeFolder) {
-      const extensionState = new StateManager(this.extensionContext, activeFolder);
-      return extensionState;
-    }
-
-    return undefined;
+  public getFolderContext(folder: vscode.WorkspaceFolder): StateManager {
+    return new StateManager(this.extensionContext, folder);
   }
 
   // Partial activation means that the CMake Tools commands are hidden
   // from the commands pallette and the status bar is not visible.
-  // The context variable "cmake:enableFullFeatureSet" is always equal
-  // to the state setting ignoreCMakeListsMissing.
-  // To have them both always in sync, cmake:enableFullFeatureSet is set
-  // by the getter and setter of ignoreCMakeListsMissing.
-  public enableFullFeatureSet(fullFeatureSet: boolean) {
-    const context = this.getActiveFolderContext();
-    if (context) {
-      context.ignoreCMakeListsMissing = !fullFeatureSet;
-      this._statusBar.setVisible(fullFeatureSet);
-    } else {
-      log.trace(localize('enableFullFeatureSet.no.active.folder', 'enableFullFeatureSet({0}) called but not active folder found.'), fullFeatureSet);
-    }
+  // The context variable "cmake:enableFullFeatureSet" (which controls
+  // all the cmake commands and UI elements) is set to true,
+  // if there is at least one folder with full features set enabled.
+  // We need to add this private _enableFullFeaturesSetOnWorkspace here
+  // because currently there is no way of reading a context variable
+  // like cmake:enableFullFeatureSet, to apply the OR operation on it.
+  private _enableFullFeatureSetOnWorkspace = false;
+  public enableFullFeatureSet(fullFeatureSet: boolean, folder: vscode.WorkspaceFolder) {
+    this.getFolderContext(folder).ignoreCMakeListsMissing = !fullFeatureSet;
+    this._enableFullFeatureSetOnWorkspace = this._enableFullFeatureSetOnWorkspace || fullFeatureSet;
+    util.setContextValue("cmake:enableFullFeatureSet", this._enableFullFeatureSetOnWorkspace);
+    this._statusBar.setVisible(this._enableFullFeatureSetOnWorkspace);
   }
 
   /**
@@ -222,13 +208,6 @@ class ExtensionManager implements vscode.Disposable {
    * The folder controller manages multiple instances. One per folder.
    */
   private readonly _folders = new CMakeToolsFolderController(this.extensionContext);
-  public getActiveFolder(): vscode.WorkspaceFolder | undefined {
-    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
-      return undefined;
-    }
-
-    return this._folders?.activeFolder?.cmakeTools.folder || vscode.workspace.workspaceFolders![0];
-  }
 
   /**
    * The status bar controller
@@ -938,6 +917,14 @@ class ExtensionManager implements vscode.Disposable {
     this._statusBar.hideDebugButton(shouldHide);
     await util.setContextValue(HIDE_DEBUG_COMMAND_KEY, shouldHide);
   }
+
+  // Helper that loops through all the workspace folders to enable full or partial feature set
+  // depending on their 'ignoreCMakeListsMissing' state variable.
+  enableWorkspaceFoldersFullFeatureSet() {
+    for (const cmtFolder of this._folders) {
+      this.enableFullFeatureSet(!this.getFolderContext(cmtFolder.folder)?.ignoreCMakeListsMissing, cmtFolder.folder);
+    }
+  }
 }
 
 /**
@@ -952,8 +939,8 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
 
-  // Enable full or partial feature set, depending on state variable.
-  ext.enableFullFeatureSet(!ext.getActiveFolderContext()?.ignoreCMakeListsMissing);
+  // Enable full or partial feature set for each workspace folder, depending on their state variable.
+  ext.enableWorkspaceFoldersFullFeatureSet();
 
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
@@ -1127,8 +1114,8 @@ export async function activate(context: vscode.ExtensionContext) {
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
 }
 
-export async function enableFullFeatureSet(fullFeatureSet: boolean) {
-    _EXT_MANAGER?.enableFullFeatureSet(fullFeatureSet);
+export async function enableFullFeatureSet(fullFeatureSet: boolean, folder: vscode.WorkspaceFolder) {
+    _EXT_MANAGER?.enableFullFeatureSet(fullFeatureSet, folder);
 }
 
 // this method is called when your extension is deactivated

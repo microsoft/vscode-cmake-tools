@@ -95,6 +95,7 @@ export interface ExtensionConfigurationSettings {
   emscriptenSearchDirs: string[];
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
+  configureOnEdit: boolean;
   skipConfigureIfCachePresent: boolean|null;
   useCMakeServer: boolean;
   cmakeCommunicationMode: CMakeCommunicationMode;
@@ -241,6 +242,8 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get configureOnOpen() { return this.configData.configureOnOpen; }
 
+  get configureOnEdit() { return this.configData.configureOnEdit; }
+
   get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
 
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
@@ -323,6 +326,7 @@ export class ConfigurationReader implements vscode.Disposable {
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
+    configureOnEdit: new vscode.EventEmitter<boolean>(),
     skipConfigureIfCachePresent: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
     cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
