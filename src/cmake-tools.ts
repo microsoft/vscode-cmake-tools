@@ -476,7 +476,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           }
         } else {
           log.warning(localize('cmakelists.save.could.not.reconfigure',
-           'Detected saving of CMakeLists.txt but could not configure because there is no valid driver or the project is already building/configuring.'));
+           'Changes were detected in CMakeLists.txt but we could not reconfigure the project because another operation is already in progress.'));
           log.debug(localize('needs.reconfigure', 'The project needs to be reconfigured so that the changes saved in CMakeLists.txt have effect.'));
         }
       }
