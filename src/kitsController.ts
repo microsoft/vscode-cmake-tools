@@ -43,6 +43,7 @@ export class KitsController {
   static userKits: Kit[] = [];
 
   private static checkingHaveKits = false;
+  public static isScanningForKits() { return this.checkingHaveKits; }
 
   folderKits: Kit[] = [];
 
