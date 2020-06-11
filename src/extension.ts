@@ -341,6 +341,10 @@ class ExtensionManager implements vscode.Disposable {
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
     const ws = info.folder;
     const cmt = info.cmakeTools;
+
+    // Silent re-scan when detecting a breaking change in the kits definition.
+    const silentScanForKitsNeeded: boolean = await scanForKitsIfNeeded(cmt.extensionContext);
+
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
       interface Choice1 {
@@ -400,6 +404,20 @@ class ExtensionManager implements vscode.Disposable {
         return;
       }
       await cmt.configure();
+    } else if (silentScanForKitsNeeded) {
+      // This popup will show up the first time after deciding not to configure, if a version change has been detected
+      // in the kits definition. This may happen during a CMake Tools extension upgrade.
+      // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+      // being tied to a global state variable.
+      const configureButtonMessage = localize('configure.now.button', 'Configure Now');
+      const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
+      if (result === configureButtonMessage) {
+        // Ensure that there is a kit. This is required for new instances.
+        if (!await this._ensureActiveKit(cmt)) {
+          return;
+        }
+        await cmt.configure();
+      }
     }
     this._updateCodeModel(info);
   }
@@ -1093,9 +1111,6 @@ export async function activate(context: vscode.ExtensionContext) {
     if (oldCMakeToolsExtension) {
         await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
     }
-
-    // Silent re-scan when detecting a breaking change in the kits definition.
-    await scanForKitsIfNeeded(context);
 
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
