@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+      {
+          "label": "ConfigureTask",
+          "command": "${command:cmake.configure}",
+          "type": "shell",
+          "group": "build",
+          "problemMatcher": []
+      },
+      {
+          "label": "BuildTask",
+          "command": "${command:cmake.build}",
+          "type": "shell",
+          "group": "build",
+          "problemMatcher": []
+      }
+  ]
+}

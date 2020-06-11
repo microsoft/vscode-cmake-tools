@@ -1,6 +1,6 @@
-import {fs} from '@cmt/pr';
-import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
-import {logFilePath} from '@cmt/logging';
+import { fs } from '@cmt/pr';
+import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
+import { logFilePath } from '@cmt/logging';
 import {
   clearExistingKitConfigurationFile,
   DefaultEnvironment,
@@ -8,7 +8,7 @@ import {
   getFirstSystemKit,
   getMatchingSystemKit
 } from '@test/util';
-import {ITestCallbackContext} from 'mocha';
+import { ITestCallbackContext } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
@@ -27,8 +27,10 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
+  let buildTask: vscode.Task;
+  let configureTask: vscode.Task;
 
-  suiteSetup(async function(this: Mocha.IHookCallbackContext) {
+  suiteSetup(async function (this: Mocha.IHookCallbackContext) {
     this.timeout(100000);
 
     const build_loc = 'build';
@@ -42,9 +44,15 @@ suite('Build', async () => {
     // No new kit selection is needed
     await vscode.commands.executeCommand('cmake.scanForKits');
     await clearExistingKitConfigurationFile();
+
+    const tasks = await vscode.tasks.fetchTasks();
+    this.buildTask = tasks.find(({ name }) => name === 'BuildTask');
+    expect(this.buildTask).to.be.an('object');
+    this.configureTask = tasks.find(({ name }) => name === 'ConfigureTask');
+    expect(this.configureTask).to.be.an('object');
   });
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function (this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
 
     const kit = await getFirstSystemKit();
@@ -53,7 +61,7 @@ suite('Build', async () => {
     testEnv.projectFolder.buildDirectory.clear();
   });
 
-  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+  teardown(async function (this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
     const logPath = logFilePath();
     testEnv.clean();
@@ -83,8 +91,22 @@ suite('Build', async () => {
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(100000);
 
+  test('Configure (Task)', async () => {
+    const result = await vscode.tasks.executeTask(configureTask);
+    expect(result).to.be.eq(0);
+
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
+  }).timeout(100000);
+
   test('Build', async () => {
     expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
+
+    const result = await testEnv.result.getResultAsJson();
+    expect(result['cookie']).to.eq('passed-cookie');
+  }).timeout(100000);
+
+  test('Build (Task)', async () => {
+    const buildResult = await vscode.tasks.executeTask(buildTask);
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
@@ -98,6 +120,15 @@ suite('Build', async () => {
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(100000);
 
+  test('Configure and Build (Tasks)', async () => {
+    expect(await vscode.tasks.executeTask(configureTask)).to.be.eq(0);
+    expect(await vscode.tasks.executeTask(buildTask)).to.be.eq(0);
+
+    const result = await testEnv.result.getResultAsJson();
+    expect(result['cookie']).to.eq('passed-cookie');
+  }).timeout(100000);
+
+
   test('Configure and Build run target', async () => {
     expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
 
@@ -109,11 +140,11 @@ suite('Build', async () => {
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(100000);
 
-  test('Test kit switch after missing preferred generator', async function(this: ITestCallbackContext) {
+  test('Test kit switch after missing preferred generator', async function (this: ITestCallbackContext) {
     // Select compiler build node dependent
-    const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
-      linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
-      win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
+    const os_compilers: { [osName: string]: { kitLabel: RegExp, compiler: string }[] } = {
+      linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
+      win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
     };
     if (!(workername in os_compilers))
       this.skip();
@@ -134,30 +165,30 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Test kit switch between different preferred generators and compilers',
-       async function(this: ITestCallbackContext) {
-         // Select compiler build node dependent
-         const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
-           linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
-           win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
-         };
-         if (!(workername in os_compilers))
-           this.skip();
-         const compiler = os_compilers[workername];
+    async function (this: ITestCallbackContext) {
+      // Select compiler build node dependent
+      const os_compilers: { [osName: string]: { kitLabel: RegExp, compiler: string }[] } = {
+        linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
+        win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+      };
+      if (!(workername in os_compilers))
+        this.skip();
+      const compiler = os_compilers[workername];
 
-         testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-         await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[0].kitLabel)).name);
-         await vscode.commands.executeCommand('cmake.build');
+      testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
+      await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[0].kitLabel)).name);
+      await vscode.commands.executeCommand('cmake.build');
 
-         testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-         await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[1].kitLabel)).name);
-         await vscode.commands.executeCommand('cmake.build');
+      testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
+      await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[1].kitLabel)).name);
+      await vscode.commands.executeCommand('cmake.build');
 
-         const result1 = await testEnv.result.getResultAsJson();
-         expect(result1['compiler']).to.eql(compiler[1].compiler);
-       })
-      .timeout(100000);
+      const result1 = await testEnv.result.getResultAsJson();
+      expect(result1['compiler']).to.eql(compiler[1].compiler);
+    })
+    .timeout(100000);
 
-  test('Test build twice', async function(this: ITestCallbackContext) {
+  test('Test build twice', async function (this: ITestCallbackContext) {
     console.log('1. Build');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
     console.log('2. Build');
@@ -165,14 +196,14 @@ suite('Build', async () => {
     await testEnv.result.getResultAsJson();
   }).timeout(100000);
 
-  test('Test build twice with clean', async function(this: ITestCallbackContext) {
+  test('Test build twice with clean', async function (this: ITestCallbackContext) {
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
     await vscode.commands.executeCommand('cmake.clean');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
     await testEnv.result.getResultAsJson();
   }).timeout(100000);
 
-  test('Test build twice with clean configure', async function(this: ITestCallbackContext) {
+  test('Test build twice with clean configure', async function (this: ITestCallbackContext) {
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
     await vscode.commands.executeCommand('cmake.cleanConfigure');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
@@ -180,7 +211,7 @@ suite('Build', async () => {
     await testEnv.result.getResultAsJson();
   }).timeout(100000);
 
-  test('Test build twice with rebuild configure', async function(this: ITestCallbackContext) {
+  test('Test build twice with rebuild configure', async function (this: ITestCallbackContext) {
     // Select compiler build node dependent
     await vscode.commands.executeCommand('cmake.build');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
@@ -190,7 +221,7 @@ suite('Build', async () => {
     await testEnv.result.getResultAsJson();
   }).timeout(100000);
 
-  test('Test -all version of commands', async function(this: ITestCallbackContext) {
+  test('Test -all version of commands', async function (this: ITestCallbackContext) {
     // Run build twice first
     expect(await vscode.commands.executeCommand('cmake.buildAll')).eq(0);
     expect(await vscode.commands.executeCommand('cmake.buildAll')).eq(0);
