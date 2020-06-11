@@ -115,7 +115,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
           log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
           await this.configure([]);
         } else if (this.workspaceFolder) {
-          const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file((this.workspaceFolder)));
+          const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
           if (folder) {
             await ext.enableFullFeatureSet(true, folder);
           }

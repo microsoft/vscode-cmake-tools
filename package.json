@@ -1252,7 +1252,7 @@
         "cmake.configureOnEdit": {
           "type": "boolean",
           "default": true,
-          "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
+          "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
           "scope": "resource"
         },
         "cmake.skipConfigureIfCachePresent": {

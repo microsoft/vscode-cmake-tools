@@ -639,15 +639,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return -1;
       }
 
-      // _beforeConfigureOrBuild contains the only scenario when we would want partial features set
-      // (when CMakeLists.txt is missing from the root folder and from the sourceDirectory location).
-      // A successful configure or a failed configure with any other reason than the above
-      // (which is treated within _beforeConfigureOrBuild) still require a full features set.
-      const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder as string));
-      if (folder) {
-        await enableFullFeatureSet(true, folder);
-      }
-
       const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
       const define_flags = this.generateCMakeSettingsFlags();
       const init_cache_flags = this.generateInitCacheFlags();
@@ -875,6 +866,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
       log.debug(localize('no.configurating', 'No configuring: There is no {0}', cmake_list));
       await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile);
       return false;
+    }
+
+    // Returning success here should require a full activation mode,
+    // even if the configure process will fail later.
+    const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder as string));
+    if (folder) {
+      await enableFullFeatureSet(true, folder);
     }
 
     return true;
