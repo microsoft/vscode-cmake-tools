@@ -343,7 +343,10 @@ class ExtensionManager implements vscode.Disposable {
     const cmt = info.cmakeTools;
 
     // Silent re-scan when detecting a breaking change in the kits definition.
-    const silentScanForKitsNeeded: boolean = await scanForKitsIfNeeded(cmt.extensionContext);
+    // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
+    const silentScanForKitsNeeded: boolean = vscode.workspace.workspaceFolders !== undefined &&
+                                             vscode.workspace.workspaceFolders[0] === cmt.folder &&
+                                             await scanForKitsIfNeeded(cmt.extensionContext);
 
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
