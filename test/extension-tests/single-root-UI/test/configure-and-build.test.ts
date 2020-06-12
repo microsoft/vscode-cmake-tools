@@ -92,8 +92,8 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Configure (Task)', async () => {
-    const result = await vscode.tasks.executeTask(configureTask);
-    expect(result).to.be.eq(0);
+    const confResult = await vscode.tasks.executeTask(configureTask);
+    expect(confResult).to.be.eq(0);
 
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(100000);
@@ -107,6 +107,7 @@ suite('Build', async () => {
 
   test('Build (Task)', async () => {
     const buildResult = await vscode.tasks.executeTask(buildTask);
+    expect(buildResult).to.be.eq(0);
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
