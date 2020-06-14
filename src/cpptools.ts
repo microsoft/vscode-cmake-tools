@@ -205,7 +205,7 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
   const can_use_arm = (cptVersion >= cpt.Version.v4);
   const compiler_name = path.basename(compiler_path || "").toLocaleLowerCase();
   if (compiler_name === 'cl.exe') {
-    const clArch = path.basename(path.dirname(compiler_path));
+    const clArch = path.basename(path.dirname(compiler_path)).toLocaleLowerCase();
     switch (clArch) {
       case 'arm64':
         return can_use_arm ? 'msvc-arm64' : 'msvc-x64';
@@ -391,7 +391,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
-    const lang = fileGroup.language;
+    const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
     // Try the group's language's compiler, then the C++ compiler, then the C compiler.
     const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`) || opts.cache.get('CMAKE_CXX_COMPILER')
         || opts.cache.get('CMAKE_C_COMPILER');

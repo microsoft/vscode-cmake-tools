@@ -3,6 +3,8 @@ import {CMakeCache} from '@cmt/cache';
 import * as proc from '@cmt/proc';
 import {createLogger} from './logging';
 import * as nls from 'vscode-nls';
+import * as path from 'path';
+import * as vscode from 'vscode';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -150,17 +152,23 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 
   if (!debuggerPathOverride) {
     const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
-    // Look for lldb-mi
+    // Look for a debugger, in the following order:
+    const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
+    const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
     let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
+    // 1. lldb-mi in the compiler path
     if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1) && await checkDebugger(clang_debugger_path)) {
       return createLLDBDebugConfiguration(clang_debugger_path, target);
+    } else if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
+      // 2. lldb-mi installed by CppTools
+      return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
     } else {
-      // Look for gdb
+      // 3. gdb in the compiler path
       clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
       if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
         return createGDBDebugConfiguration(clang_debugger_path, target);
       } else {
-        // Look for lldb
+        // 4. lldb in the compiler path
         clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
         if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
           return createLLDBDebugConfiguration(clang_debugger_path, target);
