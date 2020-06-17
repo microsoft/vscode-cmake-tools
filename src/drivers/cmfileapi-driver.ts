@@ -21,7 +21,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as ext from '@cmt/extension';
+//import * as ext from '@cmt/extension';
 
 import {NoGeneratorError} from './cms-driver';
 
@@ -120,25 +120,25 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       rollbar.invokeAsync('Reloading CMake Cache', () => this.updateCodeModel());
     });
 
-    this.config.onChange('sourceDirectory', async () => {
-      // The configure process can determine correctly whether the features set activation
-      // should be full or partial, so there is no need to proactively enable full here,
-      // unless the automatic configure is disabled.
-      // If there is a configure or a build in progress, we should avoid setting full activation here,
-      // even if cmake.configureOnEdit is true, because this may overwrite a different decision
-      // that was done earlier by that ongoing configure process.
-      if (!this.configOrBuildInProgress()) {
-        if (this.config.configureOnEdit) {
-          log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
-          await this.configure([]);
-        } else if (this.workspaceFolder) {
-          const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
-          if (folder) {
-            await ext.enableFullFeatureSet(true, folder);
-          }
-        }
-      }
-    });
+    // this.config.onChange('sourceDirectory', async () => {
+    //   // The configure process can determine correctly whether the features set activation
+    //   // should be full or partial, so there is no need to proactively enable full here,
+    //   // unless the automatic configure is disabled.
+    //   // If there is a configure or a build in progress, we should avoid setting full activation here,
+    //   // even if cmake.configureOnEdit is true, because this may overwrite a different decision
+    //   // that was done earlier by that ongoing configure process.
+    //   if (!this.configOrBuildInProgress()) {
+    //     if (this.config.configureOnEdit) {
+    //       log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
+    //       await this.configure([]);
+    //     } else if (this.workspaceFolder) {
+    //       const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
+    //       if (folder) {
+    //         //await ext.enableFullFeatureSet(true, folder);
+    //       }
+    //     }
+    //   }
+    // });
   }
 
   doConfigureSettingsChange() { this._needsReconfigure = true; }

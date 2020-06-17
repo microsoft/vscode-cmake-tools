@@ -706,6 +706,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 if (retc === 0) {
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
+                if (retc !== 2) {
+                  // Partial activation mode is required only for -2 error code,
+                  // which represents a missing CMakeLists.txt
+                  await enableFullFeatureSet(true, this.folder);
+                }
                 await this._ctestController.reloadTests(drv);
                 this._onReconfiguredEmitter.fire();
                 return retc;

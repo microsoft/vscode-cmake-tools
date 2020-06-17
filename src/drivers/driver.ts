@@ -25,7 +25,6 @@ import * as shlex from '@cmt/shlex';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
-import {enableFullFeatureSet} from '@cmt/extension';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -636,7 +635,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       const pre_check_ok = await this._beforeConfigureOrBuild();
       if (!pre_check_ok) {
-        return -1;
+        return -2;
       }
 
       const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
@@ -866,13 +865,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       log.debug(localize('no.configurating', 'No configuring: There is no {0}', cmake_list));
       await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile);
       return false;
-    }
-
-    // Returning success here should require a full activation mode,
-    // even if the configure process will fail later.
-    const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder as string));
-    if (folder) {
-      await enableFullFeatureSet(true, folder);
     }
 
     return true;
