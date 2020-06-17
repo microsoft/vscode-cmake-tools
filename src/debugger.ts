@@ -154,29 +154,31 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     // Look for a debugger, in the following order:
     // 1. LLDB-MI
     const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
-    let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
-    if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1)) {
+    let mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
+    if ((mi_debugger_path.search(new RegExp('lldb-mi')) != -1)) {
       const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
       const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
         // 1a. lldb-mi in the compiler path
-      if (await checkDebugger(clang_debugger_path)) {
-        return createLLDBDebugConfiguration(clang_debugger_path, target);
-      } else if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
-        // 1b. lldb-mi installed by CppTools
+      if (await checkDebugger(mi_debugger_path)) {
+        return createLLDBDebugConfiguration(mi_debugger_path, target);
+      }
+
+      // 1b. lldb-mi installed by CppTools
+      if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
         return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
       }
     }
 
     // 2. gdb in the compiler path
-    clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-    if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
-      return createGDBDebugConfiguration(clang_debugger_path, target);
-    } else {
-      // 3. lldb in the compiler path
-      clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-      if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
-        return createLLDBDebugConfiguration(clang_debugger_path, target);
-      }
+    mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
+    if ((mi_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(mi_debugger_path)) {
+      return createGDBDebugConfiguration(mi_debugger_path, target);
+    }
+
+    // 3. lldb in the compiler path
+    mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
+    if ((mi_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(mi_debugger_path)) {
+      return createLLDBDebugConfiguration(mi_debugger_path, target);
     }
   }
 
