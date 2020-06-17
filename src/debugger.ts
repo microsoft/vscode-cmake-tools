@@ -153,22 +153,17 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   if (!debuggerPathOverride) {
     const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
     // Look for a debugger, in the following order:
-    const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
-    const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
     let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
     // 1. lldb-mi in the compiler path
     if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1) && await checkDebugger(clang_debugger_path)) {
       return createLLDBDebugConfiguration(clang_debugger_path, target);
-    } else if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
-      // 2. lldb-mi installed by CppTools
-      return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
     } else {
-      // 3. gdb in the compiler path
+      // 2. gdb in the compiler path
       clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
       if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
         return createGDBDebugConfiguration(clang_debugger_path, target);
       } else {
-        // 4. lldb in the compiler path
+        // 3. lldb in the compiler path
         clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
         if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
           return createLLDBDebugConfiguration(clang_debugger_path, target);
@@ -177,6 +172,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     }
   }
 
+  // 4. lldb for MAC or gdb otherwise, in the compiler path
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
   const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
@@ -185,9 +181,17 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     return description.createConfig(gdb_debugger_path, target);
   }
 
+  // 5. MSVC debugger
   const is_msvc_compiler = compiler_path.endsWith('cl.exe');
   if (is_msvc_compiler) {
     return createMSVCDebugConfiguration(target);
+  }
+
+  // 6. lldb-mi installed by CppTools
+  const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
+  const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
+  if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
+    return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
   }
 
   log.warning(localize('unable.to.determine.debugger.for.compiler',
