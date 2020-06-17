@@ -151,12 +151,20 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   }
 
   if (!debuggerPathOverride) {
-    const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
     // Look for a debugger, in the following order:
+    // 1. LLDB-MI
+    const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
     let clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
-    // 1. lldb-mi in the compiler path
-    if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1) && await checkDebugger(clang_debugger_path)) {
-      return createLLDBDebugConfiguration(clang_debugger_path, target);
+    if ((clang_debugger_path.search(new RegExp('lldb-mi')) != -1)) {
+      const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
+      const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
+        // 1a. lldb-mi in the compiler path
+      if (await checkDebugger(clang_debugger_path)) {
+        return createLLDBDebugConfiguration(clang_debugger_path, target);
+      } else if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
+        // 1b. lldb-mi installed by CppTools
+        return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
+      }
     } else {
       // 2. gdb in the compiler path
       clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
@@ -172,7 +180,6 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     }
   }
 
-  // 4. lldb for MAC or gdb otherwise, in the compiler path
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
   const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
@@ -181,17 +188,9 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     return description.createConfig(gdb_debugger_path, target);
   }
 
-  // 5. MSVC debugger
   const is_msvc_compiler = compiler_path.endsWith('cl.exe');
   if (is_msvc_compiler) {
     return createMSVCDebugConfiguration(target);
-  }
-
-  // 6. lldb-mi installed by CppTools
-  const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
-  const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
-  if (cpptoolsDebuggerPath && await checkDebugger(cpptoolsDebuggerPath)) {
-    return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
   }
 
   log.warning(localize('unable.to.determine.debugger.for.compiler',
