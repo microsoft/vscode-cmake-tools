@@ -1,7 +1,7 @@
 
 [Source](https://vector-of-bool.github.io/docs/vscode-cmake-tools/troubleshooting.html "Permalink to Troubleshooting CMake Tools — CMake Tools 1.4.0 documentation")
 
-# Troubleshooting CMake Tools — CMake Tools 1.4.0 documentation
+# Troubleshoot CMake Tools
 
 CMake Tools, like any piece of software, may misbehave. There are several things to do to check what is going wrong.
 
