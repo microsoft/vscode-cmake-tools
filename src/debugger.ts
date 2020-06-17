@@ -165,17 +165,17 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
         // 1b. lldb-mi installed by CppTools
         return createLLDBDebugConfiguration(cpptoolsDebuggerPath, target);
       }
+    }
+
+    // 2. gdb in the compiler path
+    clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
+    if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
+      return createGDBDebugConfiguration(clang_debugger_path, target);
     } else {
-      // 2. gdb in the compiler path
-      clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-      if ((clang_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(clang_debugger_path)) {
-        return createGDBDebugConfiguration(clang_debugger_path, target);
-      } else {
-        // 3. lldb in the compiler path
-        clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-        if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
-          return createLLDBDebugConfiguration(clang_debugger_path, target);
-        }
+      // 3. lldb in the compiler path
+      clang_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
+      if ((clang_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(clang_debugger_path)) {
+        return createLLDBDebugConfiguration(clang_debugger_path, target);
       }
     }
   }
