@@ -62,4 +62,4 @@ Be careful of long-running commands. It is unspecified when or how many times CM
 ## Next steps
 
 - [Get started with CMake Tools on Linux](https://code.visualstudio.com/docs/cpp/cmake-linux)
-- Review [How CMake Tools builds](JTW _ TBD See this target: https://vector-of-bool.github.io/docs/vscode-cmake-tools/building.html#building-how link to that when ported).
+- Review [How CMake Tools builds](build.md#how-cmake-tools-builds)

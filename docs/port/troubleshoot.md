@@ -1,50 +1,47 @@
-
-[Source](https://vector-of-bool.github.io/docs/vscode-cmake-tools/troubleshooting.html "Permalink to Troubleshooting CMake Tools — CMake Tools 1.4.0 documentation")
-
 # Troubleshoot CMake Tools
 
-CMake Tools, like any piece of software, may misbehave. There are several things to do to check what is going wrong.
+## Common Issues and Resolutions
 
-Note
+### CMake Tools can't provide IntelliSense configuration
 
-Should any of the below actions be necessary for any reason **be aware that you have encountered a bug**.
+If you see a message that CMake Tools can't provide IntelliSense configuration, or see that #include directives are not resolving in the editor (the #include directive has a green underline), this means that the relevant source file is not attached to a CMake target.
 
-If CMake Tools hasn't given you a useful help or error message, or has behaved in a counter-intuitive way without being otherwise documented, then the behavior can _and should_ be considered a bug.
+If the file that receives this message is outside of your project, it is safe to ignore it.
 
-Please visit [the support chat][1], and/or check for or open a relevant [GitHub issue][2].
+If you are receiving this message for files within your project, you probably need to add the source file to a target.
 
-## Reset the Extension State[¶][3]
+This issue is most common with header files in a project. Header files should be included in the source list of a target. Even though CMake will not try to compile or process these headers in any special way, CMake Tools uses this information to provide a better user experience.
 
-CMake Tools persists certain workspace settings in an internal _memento_ that is opaque to the user. This includes things like the active target and variant. If this state were to somehow be corrupted or inconsistent, this state can be reset via the _CMake: Reset CMake Tools extension state_ command.
+### Green underlines/squiggles beneath `#include` directives
 
-Warning
+See above.
 
-Resetting the state will automatically reload the current workspace!
+### Debugging ignores `launch.json`
 
-## Increasing the Log Level[¶][4]
+To specify additional debugging options, and/or use a different debugging engine, refer to [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file).
 
-CMake Tools exposes a lot of optional logging that isn't enabled by default. The [cmake.loggingLevel][5] setting can be used to increase the amount of output written to the _CMake/Build_ output channel.
+> [!IMPORTANT] The target debugging feature is restricted to launching target executables with a default configuration in the `cpptools` debugging engine.
 
-## Checking the Log File[¶][6]
+## Troubleshoot CMake Tools
 
-Regardless of the user-visible log level, CMake Tools writes all log entries for all levels to a user-local log file. This file can be opened with the _CMake: Open the CMake Tools log file_ command.
+### Reset CMake Tools extension state
 
-Note
+CMake Tools persists workspace settings for things like the active target and variant. If this state is corrupted or inconsistent, open the VS Code command pallette and reset it by running the **CMake: Reset CMake Tools extension state** command.
 
-This file is user-local, _not_ workspace-local. This file includes all log entries since the extension was installed. It may be very large.
+Resetting the state will automatically reload the current workspace.
 
-## Open a GitHub Issue[¶][7]
+### Increase the logging level
 
-Issue reports are very welcome! CMake Tools is developed and maintained entirely by volunteer work, so there is no rigorous QA process. End-user issue reports are all we have to go on!
+CMake Tools provides optional logging that isn't enabled by default. Use the [cmake.loggingLevel](cmake-settings.md) setting to increase the amount of output written to the _CMake/Build_ output channel.
 
-**And remember:** If your question isn't answered in this documentation, **that's a documentation bug**!
+### Check the log file
 
-[1]: https://gitter.im/vscode-cmake-tools/support
-[2]: https://github.com/vector-of-bool/vscode-cmake-tools/issues
-[3]: https://vector-of-bool.github.io#reset-the-extension-state "Permalink to this headline"
-[4]: https://vector-of-bool.github.io#increasing-the-log-level "Permalink to this headline"
-[5]: https://vector-of-bool.github.io/settings.html#conf-cmake-logginglevel
-[6]: https://vector-of-bool.github.io#checking-the-log-file "Permalink to this headline"
-[7]: https://vector-of-bool.github.io#open-a-github-issue "Permalink to this headline"
+Regardless of the user-visible log level, CMake Tools writes all log entries, for all levels, to a user-local log file. Open the VS Code command pallette and run the *CMake: Open the CMake Tools log file* command to view this log file.
 
-  
+This file is user-local, not workspace-local. This file includes all log entries since the extension was installed and may be very large.
+
+## Get help
+
+Check the [CMake Tools issue tracker](https://github.com/vector-of-bool/vscode-cmake-tools/issues) and [What's New](https://github.com/microsoft/vscode-cmake-tools/blob/develop/CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report.  Feel free to open an issue if your problem hasn't been reported.
+
+Please visit [the support chat](https://gitter.im/vscode-cmake-tools/support). This is a community chat. Microsoft does not monitor it.

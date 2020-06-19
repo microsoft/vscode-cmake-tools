@@ -91,7 +91,7 @@ A variant is a specific combination of one option from each of the defined setti
 
 1. The environment variables from `env` are set for the CMake process.
 
-## Large variants file example
+## Large variant file example
 
 Given the following variants file:
 ```yaml
