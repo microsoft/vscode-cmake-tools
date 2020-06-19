@@ -27,8 +27,8 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
-  let buildTask: vscode.Task;
-  let configureTask: vscode.Task;
+  const configureTask = new vscode.Task({ type: "build" }, vscode.TaskScope.Workspace, "Configure", "CMake", new vscode.ShellExecution("${command:cmake.configure}"));
+  const buildTask = new vscode.Task({ type: "build" }, vscode.TaskScope.Workspace, "Build", "CMake", new vscode.ShellExecution("${command:cmake.build}"));
 
   suiteSetup(async function (this: Mocha.IHookCallbackContext) {
     this.timeout(100000);
@@ -44,12 +44,6 @@ suite('Build', async () => {
     // No new kit selection is needed
     await vscode.commands.executeCommand('cmake.scanForKits');
     await clearExistingKitConfigurationFile();
-
-    const tasks = await vscode.tasks.fetchTasks();
-    this.buildTask = tasks.find(({ name }) => name === 'BuildTask');
-    expect(this.buildTask).to.be.an('object');
-    this.configureTask = tasks.find(({ name }) => name === 'ConfigureTask');
-    expect(this.configureTask).to.be.an('object');
   });
 
   setup(async function (this: Mocha.IBeforeAndAfterContext) {
@@ -92,8 +86,8 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Configure (Task)', async () => {
-    const confResult = await vscode.tasks.executeTask(configureTask);
-    expect(confResult).to.be.eq(0);
+    const result = await vscode.tasks.executeTask(configureTask);
+    expect(result).to.be.eq(0);
 
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(100000);
@@ -106,8 +100,7 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Build (Task)', async () => {
-    const buildResult = await vscode.tasks.executeTask(buildTask);
-    expect(buildResult).to.be.eq(0);
+    await vscode.tasks.executeTask(buildTask);
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
@@ -122,8 +115,8 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Configure and Build (Tasks)', async () => {
-    expect(await vscode.tasks.executeTask(configureTask)).to.be.eq(0);
-    expect(await vscode.tasks.executeTask(buildTask)).to.be.eq(0);
+    await vscode.tasks.executeTask(configureTask);
+    await vscode.tasks.executeTask(buildTask);
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
