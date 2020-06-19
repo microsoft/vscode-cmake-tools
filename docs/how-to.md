@@ -31,3 +31,7 @@ See [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-fi
 CMake Tools currently supports Microsoft's cpptools extension. If the cpptools extension is installed and enabled, then configuring your project will provide this integration automatically.
 
 Cpptools will show a prompt confirming that you wish to use CMake Tools to provide the configuration information for your project. Accept this prompt to activate the integration. Subsequently, CMake Tools will provide and automatically update cpptools configuration information for each source file in your project.
+
+## Next steps
+
+- Explore the [CMake Tools documentation](readme.md)

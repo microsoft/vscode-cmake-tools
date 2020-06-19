@@ -84,7 +84,7 @@ All of the above are taken into account to perform the configure. Once finished,
 
 CMake Tools is designed to work well with an external CMake process. If you choose to run CMake from another command line, or other IDE/tool, it should work provided the host environment is set up properly.
 
-> [!IMPORTANT]
+> **Important:**
 > CMake Tools is unaware of any changes made by an external CMake process, and you will need to re-run the CMake configure within CMake Tools to have up-to-date project information.
 
 ## Clean configure
@@ -101,3 +101,4 @@ CMake Tools will do a clean configure automatically if you change the active kit
 
 - Explore how to build at [CMake Tools build](build.md)
 - Learn how kits work at [CMake Kits](kits.md)
+- Explore the [CMake Tools documentation](readme.md)

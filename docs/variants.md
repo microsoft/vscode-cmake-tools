@@ -17,7 +17,7 @@ By default, if a variants file isn't present, CMake Tools loads four variants th
 
 Selecting one of these variants configures and builds using the corresponding build type.
 
-> [!IMPORTANT]
+> **Important:**
 > CMake Tools does not respect `CMAKE_CONFIGURATION_TYPES`. Only the default configuration types listed above are present. A custom variant file is required to load other build types.
 
 For smaller projects, you don't need to provide a custom `cmake-variants.yaml` file. The default CMake build types will work fine.
@@ -26,7 +26,7 @@ Large projects with more complex configuration options can specify additional bu
 
 The variants file can be placed either in the root of the project directory, or in the project's `.vscode` subdirectory.
 
-> [!NOTE]
+> **Note:**
 > CMake Tools provides a YAML validation schema, but it is only checked in the editor when using the **YAML Support by Red Hat** extension. 
 
 You can use either `cmake-variants.json` or `cmake-variants.yaml` with the same result. The examples here use the YAML format, but can also be defined in JSON.

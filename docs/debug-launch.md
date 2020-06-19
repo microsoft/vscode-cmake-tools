@@ -4,7 +4,7 @@ CMake Tools makes it easier to set up debugging. Because C and C++ projects may 
 
 If you define any executable targets via CMake, CMake Tools will be aware of them and allow you to start debugging them.
 
-> [!NOTE]
+> **Note:**
 > Debugging is only supported when CMake is in  _CMake Server_ mode. This mode is enabled automatically for CMake versions 3.7.2 and above. It is not available on older versions.
 
 If you are running an older version of CMake and want to use target debugging, update your CMake version to version 3.7.2 or higher.
@@ -25,12 +25,12 @@ Selecting the active launch target button will show the launch target selector s
 
 Quick-debugging lets you start a debugger on a target without creating a `launch.json`.
 
-> [!NOTE]
+> **Note:**
 > Only the debugger from Microsoft's `vscode-cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file) below for information about `launch.json` and using other debuggers.
 
 Start quick debugging by running the  *CMake: Debug Target* command from the VS Code command pallette, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
 
-> [!NOTE]
+> **Note:**
 > Quick-debugging does not let you specify program arguments or other debugging options. See the next section for more options.
 
 ## Debug using a launch.json file
@@ -82,7 +82,7 @@ Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetP
 
 The value of the `program` attribute is expanded by CMake Tools to be the absolute path of the program to run.
 
-> [!NOTE]
+> **Note:**
 > You must successfully [configure](configuring.html#configuring) before `cmake.launchTargetPath` and `cmake.launchTargetDirectory` will resolve correctly.
 
 ## Run without debugging
@@ -95,3 +95,4 @@ The output of the target will be shown in an integrated terminal.
 
 - See how to [Troubleshoot CMake Tools](troubleshoot.md)
 - Consult the [Frequently Asked Questions](faq.md)
+- Explore the [CMake Tools documentation](readme.md)

@@ -10,8 +10,7 @@ You can start a build by:
 
 When the build starts, the CMake Tools output panel opens to display build tool output. The **Build** button will change to a **Stop** button, and may show a progress bar for the running build. Pressing the **Stop** button cancels the running build. Starting a build while another build is running will cancel the current build and start a new one.
 
-> [!NOTE]
-> The progress bar only displays if the build tool emits output lines that can be parsed to get a percentage of the build progress. This includes Ninja and Makefile generators. MSBuild does not emit this information, so no progress bar will be visible.
+> **Note:** The progress bar only displays if the build tool emits output lines that can be parsed to get a percentage of the build progress. This includes Ninja and Makefile generators. MSBuild does not emit this information, so no progress bar will be visible.
 
 The results of the build are written to the directory specified by [cmake.buildDirectory](cmake-settings.md). This defaults to a subdirectory of the project directory, so the build results are visible within the project explorer. The exact file paths will depend on your CMake project configuration.
 
@@ -53,4 +52,4 @@ To clean the build, from the VS Code command pallette run the **CMake: Clean** c
 
 - Use CMake Tools to [launch and debug](debug-launch.md)
 - Learn about [CMake settings](cmake-settings.md#cmake-settings) you can set to control the build.
-- 
+- Explore the [CMake Tools documentation](readme.md)

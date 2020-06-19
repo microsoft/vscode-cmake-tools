@@ -8,7 +8,7 @@ A _kit_ defines project-agnostic and configuration-agnostic info about how to bu
 
 Kits are mostly CMake-generator-agnostic (a CMake generator writes the input files for the native build system). Visual Studio kits have a preferred generator that will be used as a fallback to ensure a matching MSBuild and .sln generator are used for the Visual C++ compiler.
 
-> [!NOTE]
+> **Note:**
 > * If you use the [Ninja](https://ninja-build.org/) build system, don't worry about Visual Studio CMake Generators. CMake Tools will prefer Ninja if it is present, unless configured otherwise.
 > * If you change the active kit while a project is configured, the project configuration will be re-generated with the chosen kit.
 > * Using a kit is recommended but optional. If you don't use a kit, CMake will perform its own automatic detection.
@@ -27,7 +27,7 @@ The user-local list of kits is stored in the `cmake-kits.json` file, which you c
 
 You can manually edit this file to define new global kits. The contents of this file will be automatically updated by CMake Tools during a [scan for kits](#scan_for_kits)
 
-> [!WARNING]
+> **Warning:**
 > Don't modify kits that the CMake Tools extension creates because your changes will be overwritten during the next [scan for kits](#scan_for_kits).
 
 ### Project kits
@@ -45,7 +45,7 @@ Update [User-local kits](#user-local-kits) by running **Scan for Kits** from the
  - CMake tools uses the `PATH` environment variable to get a list of directories where compilers can be found.
  - CMake Tools looks for `gcc` and `clang` binaries on the `PATH` and gets version information from each executable it finds. For `gcc`, if a corresponding `g++` executable resides in the same directory it is added to the kit as the corresponding C++ compiler. The same applies for a `clang++` binary in the directory of a `clang` executable.
  
-> [!NOTE]
+> **Note:**
 > CMake Tools only automatically detects `Clang` and `GCC`. If you'd like auto-detection for more tools, please [Open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) with information about the compiler binary names and how to parse its version information.
 
 **2. Find Visual Studio installations**
@@ -58,7 +58,7 @@ Update [User-local kits](#user-local-kits) by running **Scan for Kits** from the
 
 - The [User-local kit](#user-local-kits) `cmake-kits.json` file is updated with the new kit information.
 
-> [!WARNING]
+> **Warning:**
 > The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-kits.json`. It only adds and updates existing ones.
 
 ## Kit options
@@ -109,11 +109,11 @@ CMake Tools automatically sets up the environment for working with Visual C++. I
 }
 ```
 
-Explanation of keys:
+Keys:
 > `visualStudio` : the name of a Visual Studio installation obtained by `VSWhere`.\
 > `visualStudioArchitecture`: the Visual Studio target architecture that would be passed to the `vcvarsall.bat` file when entering the VS dev environment.
 
-> [!NOTE]
+> **Note:**
 > To use Visual C++, both `visualStudio` and `visualStudioArchitecture` must be specified. Omitting either one won't work.
 
 ### General options
@@ -133,3 +133,7 @@ The following additional options may be specified:
 `environmentVariables`
 
 > A JSON object of key-value pairs specifying additional environment variables to be defined when using this kit.
+
+## Next steps
+
+- Explore the [CMake Tools documentation](readme.md)
