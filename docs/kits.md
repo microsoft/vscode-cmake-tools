@@ -136,4 +136,4 @@ The following additional options may be specified:
 
 ## Next steps
 
-- Explore the [CMake Tools documentation](readme.md)
+- Explore the [CMake Tools documentation](README.md)

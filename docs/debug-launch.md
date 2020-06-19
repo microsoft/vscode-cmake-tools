@@ -26,7 +26,7 @@ Selecting the active launch target button will show the launch target selector s
 Quick-debugging lets you start a debugger on a target without creating a `launch.json`.
 
 > **Note:**
-> Only the debugger from Microsoft's `vscode-cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file) below for information about `launch.json` and using other debuggers.
+> Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file) below for information about `launch.json` and using other debuggers.
 
 Start quick debugging by running the  *CMake: Debug Target* command from the VS Code command pallette, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
 
@@ -35,7 +35,7 @@ Start quick debugging by running the  *CMake: Debug Target* command from the VS 
 
 ## Debug using a launch.json file
 
-You can specify the working directory or command line arguments for debugging, or use another debugger than the one included with Microsoft's `vscode-cpptools`, by creating a `launch.json` file.
+You can specify the working directory or command line arguments for debugging, or use another debugger than the one included with Microsoft's `vscode-ms-vscode.cpptools`, by creating a `launch.json` file.
 
 You'll need to know the path to the executable binary, which may be difficult to know in advance. CMake Tools can help by using command substitution in the `launch.json` file. This is already used by things like process selection when attaching to a running process. It works by specifying a command-based substitution in the appropriate field of `launch.json`.
 
@@ -95,4 +95,4 @@ The output of the target will be shown in an integrated terminal.
 
 - See how to [Troubleshoot CMake Tools](troubleshoot.md)
 - Consult the [Frequently Asked Questions](faq.md)
-- Explore the [CMake Tools documentation](readme.md)
+- Explore the [CMake Tools documentation](README.md)

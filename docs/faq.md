@@ -1,4 +1,4 @@
-# Frequently Asked Questions — CMake Tools 1.4.0 documentation
+# Frequently asked questions — CMake Tools 1.4.0 documentation
 
 ## How can I get help?
 
@@ -8,15 +8,15 @@ Also look in the [Troubleshooting guide](troubleshoot.md).
 
 Check the [CMake Tools issue tracker](https://github.com/vector-of-bool/vscode-cmake-tools/issues) and [What's New](https://github.com/microsoft/vscode-cmake-tools/blob/develop/CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report. Feel free to [Open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) if your problem hasn't been reported.
 
-Explore the [CMake Tools documentation](readme.md)
+Explore the [CMake Tools documentation](README.md)
 
-## What About CMake language support?
+## What about CMake language support?
 
 CMake Tools was created separately from the [CMake extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake), which provides language coloring and autocompletion support.
 
 ## How do I learn about CMake?
 
-CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake. See Jason Turner's [C++ Weekly - Intro to CMake][https://www.youtube.com/watch?v=HPMvU64RUTY] for a good video introduction.
+CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake. See Jason Turner's [C++ Weekly - Intro to CMake](https://www.youtube.com/watch?v=HPMvU64RUTY) for a good video introduction.
 
 [CMake's documentation](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) is also available.
 

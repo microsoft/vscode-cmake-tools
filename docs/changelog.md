@@ -27,7 +27,7 @@
 - On Windows, "Launch target in terminal" will use `cmd.exe` unconditionally.
   This works around issues with command quoting in PowerShell.
   [#562](https://github.com/vector-of-bool/vscode-cmake-tools/issues/562)
-- "Debug target" will prefer `lldb-mi` to `lldb`. Fixes issues where `cpptools` is unable to launch the debugger.
+- "Debug target" will prefer `lldb-mi` to `lldb`. Fixes issues where `ms-vscode.cpptools` is unable to launch the debugger.
   [#584](https://github.com/vector-of-bool/vscode-cmake-tools/issues/584)
 - Document the `environmentVariables` field on kits.
   [#586](https://github.com/vector-of-bool/vscode-cmake-tools/issues/568)
@@ -75,11 +75,11 @@ See the [1.1.1 milestone on GitHub](https://github.com/vector-of-bool/vscode-cma
 - Automatically configure a project when it is opened. CMake Tools will ask you the first time, and this preference can be persisted.
 - Will automatically ask you for a debug target if you try to debug but haven't yet set one.
 
-### Cpptools integration
+### ms-vscode.cpptools integration
 
 Recent versions of Microsoft's C and C++ extension now export an extensibility API that gives external sources the opportunity to provide project configuration information on a file-by-file basis.
 
-CMake Tools 1.1.0+ uses this API to provide per-file compilation and configuration information to support the C++ extension. This means that a properly set up CMake project doesn't need to manually set configuration information in order to receive the benefits of cpptools' IntelliSense engine.
+CMake Tools 1.1.0+ uses this API to provide per-file compilation and configuration information to support the C++ extension. This means that a properly set up CMake project doesn't need to manually set configuration information in order to receive the benefits of ms-vscode.cpptools' IntelliSense engine.
 
 See [Set up include paths for C++ IntelliSense](how-to.md#set-up-include-paths-for-c-intellisense) for more details.
 

@@ -63,4 +63,4 @@ Be aware of using long-running commands. It is unspecified when, or how many tim
 
 - [Get started with CMake Tools on Linux](https://code.visualstudio.com/docs/cpp/cmake-linux)
 - Review [How CMake Tools builds](build.md#how-cmake-tools-builds)
-- Explore the [CMake Tools documentation](readme.md)
+- Explore the [CMake Tools documentation](README.md)

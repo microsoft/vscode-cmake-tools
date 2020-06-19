@@ -101,4 +101,4 @@ CMake Tools will do a clean configure automatically if you change the active kit
 
 - Explore how to build at [CMake Tools build](build.md)
 - Learn how kits work at [CMake Kits](kits.md)
-- Explore the [CMake Tools documentation](readme.md)
+- Explore the [CMake Tools documentation](README.md)

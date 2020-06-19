@@ -12,15 +12,15 @@ If you are receiving this message for files within your project, you probably ne
 
 This issue is most common with header files in a project. Header files should be included in the source list of a target. Even though CMake will not try to compile or process these headers in any special way, CMake Tools uses this information to provide a better user experience.
 
-### Green underlines/squiggles beneath `#include` directives
+### Green squiggles beneath #include directives
 
 See above.
 
-### Debugging ignores `launch.json`
+### Debugging ignores launch.json
 
 If the **Debug** button and Debug target features are ignoring your `launch.json` file, refer to [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file).
 
-> **Important:** The target debugging feature is restricted to launching target executables with a default configuration in the `cpptools` debugging engine.
+> **Important:** The target debugging feature is restricted to launching target executables with a default configuration in the `ms-vscode.cpptools` debugging engine.
 
 ### Reset CMake Tools extension state
 

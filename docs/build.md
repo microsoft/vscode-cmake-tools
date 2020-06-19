@@ -52,4 +52,4 @@ To clean the build, from the VS Code command pallette run the **CMake: Clean** c
 
 - Use CMake Tools to [launch and debug](debug-launch.md)
 - Learn about [CMake settings](cmake-settings.md#cmake-settings) you can set to control the build.
-- Explore the [CMake Tools documentation](readme.md)
+- Explore the [CMake Tools documentation](README.md)

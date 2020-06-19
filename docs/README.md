@@ -2,14 +2,14 @@
 
 CMake Tools is an extension designed to make it easy to work with CMake-based projects.
 
- If you are new, try the [CMake Tools quick start](https://code.visualstudio.com/docs/cpp/CMake-linux) and the [Frequently asked questions](faq.md).
+ If you are new, try the [CMake Tools quick start](https://code.visualstudio.com/docs/cpp/CMake-linux) and see the [frequently asked questions](faq.md).
 
 [How to](how-to.md)
 * [Create a new project](how-to.md#create-a-new-project)
 * [Configure a project](how-to.md#configure-a-project)
 * [Build a project](how-to.md#build-a-project)
 * [Debug a project](how-to.md#debug-a-project)
-* [Pass command-line arguments to the debugger](how-to.md#pass-command-line-arguments-to-the-debugger)
+* [Pass command-line arguments to the debugger](debug-launch.md#debug-using-a-launchjson-file)
 * [Set up include paths for C++ IntelliSense](how-to.md#set-up-include-paths-for-c-intellisense)
 
 [Kits](kits.md)
@@ -49,8 +49,8 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 [Troubleshoot CMake Tools](troubleshoot.md#troubleshoot-cmake-tools)
 * [Common issues and resolutions](troubleshoot.md#common-issues-and-resolutions)
 * [CMake Tools is unable to provide IntelliSense configuration](troubleshoot.md#error-cmake-tools-is-unable-to-provide-intellisense-configuration)
-* [Green underlines/squiggles beneath `#include` directives](troubleshoot.md#green-underlinessquiggles-beneath-include-directives)
-* [Debugging ignores `launch.json`](troubleshoot.md#debugging-ignores-launchjson)
+* [Green squiggles beneath #include directives](troubleshoot.md#green-squiggles-beneath-include-directives)
+* [Debugging ignores launch.json](troubleshoot.md#debugging-ignores-launchjson)
 * [Reset CMake Tools extension state](troubleshoot.md#reset-cmake-tools-extension-state)
 * [Increase the logging level](troubleshoot.md#increase-the-logging-level)
 * [Check the log file](troubleshoot.md#check-the-log-file)
@@ -58,13 +58,13 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 
 [Frequently asked questions](faq.md)
 * [How can I get help?](faq.md#how-can-i-get-help)
-* [What About CMake language support?](faq.md#what-about-cmake-language-support)
+* [What about CMake language support?](faq.md#what-about-cmake-language-support)
 * [How do I learn about CMake?](faq.md#how-do-i-learn-about-cmake)
 * [How does CMake Tools work with C and C++ IntelliSense?](faq.md#how-does-cmake-tools-work-with-c-and-c-intellisense)
 * [How do I perform common tasks](faq.md#how-do-i-perform-common-tasks)
 
 [How to contribute](contribute.md)
-* [Developer reference][Developer Reference](contribute.md#developer-reference)
+* [Developer Reference](contribute.md#developer-reference)
 * [Build the CMake Tools extension](contribute.md#build-the-cmake-tools-extension)
 * [Coding guidelines](contribute.md#coding-guidelines)
 
