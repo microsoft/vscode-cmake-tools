@@ -9,7 +9,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {ProgressHandle, versionToString} from '@cmt/util';
+import {ProgressHandle, versionToString, lightNormalizePath} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -271,8 +271,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
           if (cmakeListsFile) {
             const fullPathDir: string = path.parse(cmakeListsFile[0].fsPath).dir;
-            const relPathDir: string = path.relative(this.folder.uri.fsPath, fullPathDir);
-            vscode.workspace.getConfiguration('cmake').update("sourceDirectory", path.join("${workspaceFolder}", relPathDir));
+            const relPathDir: string = lightNormalizePath(path.relative(this.folder.uri.fsPath, fullPathDir));
+            const joinedPath = "${workspaceFolder}/".concat(relPathDir);
+            vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", joinedPath);
+            const drv = await this.getCMakeDriverInstance();
+            if (drv) {
+              drv.config.updatePartial({sourceDirectory: joinedPath});
+            } else {
+              const reloadWindowButton = localize('reload.window', 'Reload Window');
+              const reload = await vscode.window.showErrorMessage(localize('setting.sourceDirectory.failed.needs.reload.window',
+                    'Something went wrong while updating the cmake.sourceDirectory setting. Please run the "Reload window" command for the change to take effect.'),
+                    reloadWindowButton);
+              if (reload === reloadWindowButton) {
+                vscode.commands.executeCommand('workbench.action.reloadWindow');
+              }
+            }
           } else {
             fullFeatureSet = false;
           }
@@ -289,14 +302,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // Previously, the user decided to ignore the missing CMakeFiles.txt.
         // Since we are here in cmakePreConditionProblemHandler, for the case of CMakePreconditionProblems.MissingCMakeListsFile,
         // it means that there weren't yet any reasons to switch to full functionality,
-        // so keep enableFullFeatureSet as true.
+        // so keep enableFullFeatureSet as false.
         fullFeatureSet = false;
       }
 
       break;
     }
 
-    await enableFullFeatureSet(fullFeatureSet);
+    await enableFullFeatureSet(fullFeatureSet, this.folder);
   }
 
   /**
@@ -445,14 +458,27 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async td => {
       const str = td.uri.fsPath;
-      if (str.endsWith("CMakeLists.txt")) {
-        // Reset to a full activation mode.
-        // If required, the extension will switch back to partial activation mode
-        // after more analysis triggered by the below configure.
-        await enableFullFeatureSet(true);
-
-        log.debug(localize('cmakelists.save.trigger.reconfigure', "We are saving a CMakeLists.txt file, attempting automatic reconfigure..."));
-        await this.configure([], ConfigureType.Normal);
+      const sourceDirectory = await this.sourceDir;
+      if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
+        // The configure process can determine correctly whether the features set activation
+        // should be full or partial, so there is no need to proactively enable full here,
+        // unless the automatic configure is disabled.
+        // If there is a configure or a build in progress, we should avoid setting full activation here,
+        // even if cmake.configureOnEdit is true, because this may overwrite a different decision
+        // that was done earlier by that ongoing configure process.
+        const drv = await this.getCMakeDriverInstance();
+        if (drv && !drv.configOrBuildInProgress()) {
+          if (drv.config.configureOnEdit) {
+            log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
+            await this.configure([], ConfigureType.Normal);
+          } else {
+            await enableFullFeatureSet(true, this.folder);
+          }
+        } else {
+          log.warning(localize('cmakelists.save.could.not.reconfigure',
+           'Changes were detected in CMakeLists.txt but we could not reconfigure the project because another operation is already in progress.'));
+          log.debug(localize('needs.reconfigure', 'The project needs to be reconfigured so that the changes saved in CMakeLists.txt have effect.'));
+        }
       }
     }));
   }
@@ -678,10 +704,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   break;
                 }
                 if (retc === 0) {
-                  // Switch to full CMake Tools extension functionality:
-                  // visible status bar and commands in the pallette.
-                  await enableFullFeatureSet(true);
                   await this._refreshCompileDatabase(drv.expansionOptions);
+                }
+                if (retc !== -2) {
+                  // Partial activation mode is required only for -2 error code,
+                  // which represents a missing CMakeLists.txt
+                  await enableFullFeatureSet(true, this.folder);
                 }
                 await this._ctestController.reloadTests(drv);
                 this._onReconfiguredEmitter.fire();

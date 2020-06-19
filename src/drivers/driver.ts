@@ -593,6 +593,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private buildRunning: boolean = false;
 
+  public configOrBuildInProgress() : boolean {
+    return this.configRunning || this.buildRunning;
+  }
+
   /**
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
@@ -631,7 +635,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       const pre_check_ok = await this._beforeConfigureOrBuild();
       if (!pre_check_ok) {
-        return -1;
+        return -2;
       }
 
       const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);

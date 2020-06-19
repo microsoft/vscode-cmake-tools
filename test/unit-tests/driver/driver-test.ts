@@ -180,7 +180,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, emptyWorkspaceFolder, checkPreconditionHelper, []);
-      expect(await driver.cleanConfigure([])).to.be.eq(-1);
+      expect(await driver.cleanConfigure([])).to.be.eq(-2);
       expect(called).to.be.true;
     }).timeout(60000);
 
