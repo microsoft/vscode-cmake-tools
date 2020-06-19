@@ -86,8 +86,8 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Configure (Task)', async () => {
-    const result = await vscode.tasks.executeTask(configureTask);
-    expect(result).to.be.eq(0);
+    const configureResult = await vscode.tasks.executeTask(configureTask);
+    expect(configureResult).to.be.an('object');
 
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(100000);
@@ -100,7 +100,8 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Build (Task)', async () => {
-    await vscode.tasks.executeTask(buildTask);
+    const buildResult = await vscode.tasks.executeTask(buildTask);
+    expect(buildResult).to.be.an('object');
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
@@ -115,8 +116,10 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Configure and Build (Tasks)', async () => {
-    await vscode.tasks.executeTask(configureTask);
-    await vscode.tasks.executeTask(buildTask);
+    const configureResult = await vscode.tasks.executeTask(configureTask);
+    expect(configureResult).to.be.an('object');
+    const buildResult = await vscode.tasks.executeTask(buildTask);
+    expect(buildResult).to.be.an('object');
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
