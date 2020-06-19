@@ -43,5 +43,5 @@ Will CMake Tools Ever Support ``<XYZ>``?
 ****************************************
 
 Only if you voice support for it as a `GitHub issue
-<https://github.com/vector-of-bool/vscode-cmake-tools/issues>`_. Open an feature
+<https://github.com/vector-of-bool/vscode-cmake-tools/issues>`_. Open a feature
 request or search for and provide feedback for an existing one!
