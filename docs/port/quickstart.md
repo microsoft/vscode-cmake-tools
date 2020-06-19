@@ -24,7 +24,7 @@ When first opening a project, a status bar item will read **No Kit Selected**:
 
 ![_images/no_kits.png][3]
 
-To select a kit, click this statusbar button, or run the _Select a Kit_ command from the command palette. A quick-pick will appear:
+To select a kit, click this statusbar button, or run the _Select a Kit_ command from the command palette. A quick pick list will appear:
 
 ![_images/kit_selector.png][4]
 
@@ -50,7 +50,7 @@ Before selecting a variant, the variant slot on the statusbar will read _Unknown
 
 ![_images/no_variant.png][7]
 
-To select a variant, click this statusbar button, or run the _Set build type_ command from the command palette. A quick-pick will appear:
+To select a variant, click this statusbar button, or run the _Set build type_ command from the command palette. A quick pick list will appear:
 
 ![_images/variant_selector.png][8]
 

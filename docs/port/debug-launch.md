@@ -87,11 +87,11 @@ The value of the `program` attribute is expanded by CMake Tools to be the absolu
 
 ## Run without debugging
 
-If you want to run a target without debugging it, run the *CMake: Execute the current target without a debugger* command, or by pressing the keyboard shortcut (the default is **Shift+F5**).
+If you want to run a target without debugging it, from VS Code's command pallette, run the *CMake: Execute the current target without a debugger* command, or by pressing the keyboard shortcut (the default is :kbd:`Shift+F5`).
 
 The output of the target will be shown in an integrated terminal.
 
 ## Next steps
 
-- See how to [troubleshoot CMake Tools issues](JTW)
-- Consult the [FAQ](JTW)
+- See how to [Troubleshoot CMake Tools](troubleshoot.md)
+- Consult the [Frequently Asked Questions](faq.md)

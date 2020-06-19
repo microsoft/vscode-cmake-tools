@@ -10,10 +10,10 @@ The following concepts will help you understand how CMake Tools interacts with C
 
 * The _CMake Cache_ is a list of key-value pairs that persist between runs of the configure process. It contains the following:
 
-    * Values that are often heavy or slow to compute, such as whether a `-flag` or `#include` file is supported by the compiler.
+    * Values that are expensive to determine, such as whether a `-flag` or `#include` file is supported by the compiler.
     * Values that rarely change, such as the path to a header/library.
     * Values that offer control to the developer, such as `BUILD_TESTING` to determine whether or not to build test libraries/executables.
-* _Cache initializer arguments_ are the arguments passed to CMake that set values in the cache before any CMake scripts are run. These allow you to control the build settings. On the CMake command line, these appear as `-D` arguments. (CMake Tools doesn't use  CMake's `-C` argument).
+* _Cache initializer arguments_ are the arguments passed to CMake that set values in the cache before any CMake scripts are run. These allow you to control the build settings. On the CMake command line, these appear as `-D` arguments. (CMake Tools doesn't use CMake's `-C` argument).
 * Unless overwritten or deleted, values in the CMake Cache persist between CMake runs.
 * CMake doesn't do the build itself, it relies on build tools installed on your system. The result of a _configure_ depends on the CMake _Generator_. The _Generator_ tells CMake what kind of tool will be used to compile and generate the results of the build. There are several families of generators available:
 
@@ -57,7 +57,7 @@ When CMake Tools runs the configure step, it takes the following into considerat
 
 1. **The configuration options**
 
-    CMake Tools has a variety of locations where configuration options can be defined. They are searched in order and merged together, with later searches taking precedence over earlier ones  in the case of overlapping keys. The locations are:
+    CMake Tools has a variety of locations where configuration options can be defined. They are searched in order and merged together. When keys have the same name, the most recent value found during the search is used. The search locations are:
 
     1. The [cmake.configureSettings](cmake-settings.md#cmake-settings) option from `settings.json`.
     2. The `settings` value from the active [Variant options](variants.md#variants-options).
@@ -82,7 +82,7 @@ All of the above are taken into account to perform the configure. Once finished,
 
 ## Configuring outside CMake Tools
 
-CMake Tools is designed to work with an external CMake process. If you choose to run CMake from another command line, or other IDE/tool, all should work successfully provided the host environment is set up properly.
+CMake Tools is designed to work well with an external CMake process. If you choose to run CMake from another command line, or other IDE/tool, it should work provided the host environment is set up properly.
 
 > [!IMPORTANT]
 > CMake Tools is unaware of any changes made by an external CMake process, and you will need to re-run the CMake configure within CMake Tools to have up-to-date project information.
@@ -93,7 +93,7 @@ To get CMake Tools to do a "clean configure", run **CMake: Delete cached built s
 
 A clean configure deletes the `CMakeCache.txt` file and `CMakeFiles` directory from the build directory. This resets all of CMake's default state.
 
-A clean configure is required for certain build system changes, such as when the active kit changes, but may als be convenient as a "reset" if you have changed configuration settings outside of CMake Tools.
+A clean configure is required for certain build system changes, such as when the active kit changes, but may als be convenient as a reset if you have changed configuration settings outside of CMake Tools.
 
 CMake Tools will do a clean configure automatically if you change the active kit.
 

@@ -2,7 +2,7 @@
 
 ## Common Issues and Resolutions
 
-### CMake Tools can't provide IntelliSense configuration
+### Error: CMake Tools is unable to provide IntelliSense configuration
 
 If you see a message that CMake Tools can't provide IntelliSense configuration, or see that #include directives are not resolving in the editor (the #include directive has a green underline), this means that the relevant source file is not attached to a CMake target.
 
@@ -18,7 +18,7 @@ See above.
 
 ### Debugging ignores `launch.json`
 
-To specify additional debugging options, and/or use a different debugging engine, refer to [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file).
+If the **Debug** button and Debug target features are ignoring your `launch.json` file, refer to [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file).
 
 > [!IMPORTANT] The target debugging feature is restricted to launching target executables with a default configuration in the `cpptools` debugging engine.
 

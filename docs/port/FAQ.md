@@ -1,20 +1,27 @@
-
-[Source](https://vector-of-bool.github.io/docs/vscode-cmake-tools/faq.html "Permalink to Frequently Asked Questions — CMake Tools 1.4.0 documentation")
-
 # Frequently Asked Questions — CMake Tools 1.4.0 documentation
 
-## What About CMake Language Support?
+## How can I get help?
 
-CMake Tools was create separately from the [CMake extension][1], which provides language coloring and autocompletion support.
+Please visit [the end-user support chat](https://gitter.im/vscode-cmake-tools/support). This is a community chat. Microsoft does not actively monitor it.
 
-## I'm New to CMake. Help?
+Also look in the [Troubleshooting guide](troubleshoot.md).
 
-CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake. A good video introduction can be found in Jason Turner's [C++ Weekly - Intro to CMake][2].
+Check the [CMake Tools issue tracker](https://github.com/vector-of-bool/vscode-cmake-tools/issues) and [What's New](https://github.com/microsoft/vscode-cmake-tools/blob/develop/CHANGELOG.md) to see if your issue is already known/solved before submitting a question or bug report. Feel free to [Open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) if your problem hasn't been reported.
 
-[CMake's documentation][3] is also available.
+## What About CMake language support?
 
-[1]: https://marketplace.visualstudio.com/items?itemName=twxs.cmake
-[2]: https://www.youtube.com/watch?v=HPMvU64RUTY
-[3]: https://cmake.org/cmake/help/latest/
+CMake Tools was created separately from the [CMake extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake), which provides language coloring and autocompletion support.
 
-  
+## How do I learn about CMake?
+
+CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake. See Jason Turner's [C++ Weekly - Intro to CMake][https://www.youtube.com/watch?v=HPMvU64RUTY] for a good video introduction.
+
+[CMake's documentation](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) is also available.
+
+## How does CMake Tools work with C and C++ IntelliSense?
+
+See [Pass command-line arguments to the debugger](how-to.md#pass-command-line-arguments-to-the-debugger)
+
+## How do I perform common tasks
+
+See the [How To](how-to.md).

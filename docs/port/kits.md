@@ -2,24 +2,24 @@
 
 A _kit_ defines project-agnostic and configuration-agnostic info about how to build code. A kit can include:
 
-- A set of compilers for some set of languages: these are locked at specific versions so that you can switch your compiler version quickly and easily.
+- A set of compilers: these are locked at specific versions so that you can switch your compiler version quickly and easily.
 - A Visual Studio installation: building for Visual Studio involves more than just finding the necessary compiler executable. Visual C++ requires certain environment variables to be set to tell it how to find and link to the Visual C++ toolchain headers and libraries.
 - A toolchain file: The low-level way to instruct CMake how to compile and link for a target. CMake Tools handles toolchain files using kits.
 
 Kits are mostly CMake-generator-agnostic (a CMake generator writes the input files for the native build system). Visual Studio kits have a preferred generator that will be used as a fallback to ensure a matching MSBuild and .sln generator are used for the Visual C++ compiler.
 
 > [!NOTE]
-> * If you use the [Ninja](https://ninja-build.org/) build system, you don't need to worry about Visual Studio CMake Generators. CMake Tools will prefer Ninja if it is present, unless configured otherwise.
+> * If you use the [Ninja](https://ninja-build.org/) build system, don't worry about Visual Studio CMake Generators. CMake Tools will prefer Ninja if it is present, unless configured otherwise.
 > * If you change the active kit while a project is configured, the project configuration will be re-generated with the chosen kit.
 > * Using a kit is recommended but optional. If you don't use a kit, CMake will perform its own automatic detection.
 
 ## How kits are found and defined
 
-When the CMake Tools run for the first time, it will [scan for kits](#scan_for_kits) to find available toolchains. It populates the initial list of kits by looking in directories where known compilers are typically installed, and uses `vswhere` to find Visual Studio installations.
+When the CMake Tools extension runs for the first time, it will [scan for kits](#scan_for_kits) to find available toolchains. It populates the initial list of kits by looking in directories where known compilers are typically installed, and uses `vswhere` to find Visual Studio installations.
 
 ### User-local kits
 
-User-local kits are kits that are available to a particular user for all projects open with CMake Tools.
+A user-local kit is a kit that is available to a particular user for all projects open with CMake Tools.
 
 The user-local list of kits is stored in the `cmake-kits.json` file, which you can edit by invoking **Edit CMake Kits** from the command palette:
 
@@ -32,33 +32,31 @@ You can manually edit this file to define new global kits. The contents of this 
 
 ### Project kits
 
-Default user-local kits are available for all projects that use CMake Tools. To define a project-local kit, create a `.vscode/cmake-kits.json` file in the project directory. You manage the contents of this file manually, but CMake Tools will automatically reload and refresh when it sees this file added, removed, or changed. When changing kits, you can select both user-local and project-local kits.
+Default user-local kits are available for all projects that use CMake Tools. To define a project-local kit, create a `.vscode/cmake-kits.json` file in the project directory. You manage the contents of this file manually, but CMake Tools will automatically reload and refresh when it sees this file added, removed, or changed. When changing kits, you can select from both user-local and project-local kits.
 
-An example of when a project-local kit is useful is when the project defines its own CMake toolchain file(s). A [toolchain kit](#toolchain) can be defined that specifies this file to be loaded. The `.vscode/cmake-kits.json` file can be committed to source control and shared with other developers for easier collaboration on the named toolchain.
+An example of when a project-local kit is useful is when the project defines its own CMake toolchain file(s). A [toolchain kit](#toolchain) can be defined that specifies this file to be loaded. You can commit the `.vscode/cmake-kits.json` to source control and share it with other developers for easier collaboration using the named toolchain.
 
 ### Scan for kits
 
-[User-local kits](#user-local-kits) can be updated by running **Scan for Kits** from the command palette. The following process finds the available kits:
+Update [User-local kits](#user-local-kits) by running **Scan for Kits** from the VS Code command palette. The following process is used to find available kits:
 
 **1. Search the current PATH for compilers**
 
  - CMake tools uses the `PATH` environment variable to get a list of directories where compilers can be found.
- - CMake Tools looks for `gcc` and `clang` binaries on the `PATH` and gets version information from each executable it finds.
- 
- - For `gcc`, if a corresponding `g++` executable resides in the same directory it is added to the kit as the corresponding C++ compiler. The same applies for a `clang++` binary in the directory of a `clang` executable.
+ - CMake Tools looks for `gcc` and `clang` binaries on the `PATH` and gets version information from each executable it finds. For `gcc`, if a corresponding `g++` executable resides in the same directory it is added to the kit as the corresponding C++ compiler. The same applies for a `clang++` binary in the directory of a `clang` executable.
  
 > [!NOTE]
-> CMake Tools only automatically detects `Clang` and `GCC`. If you'd like auto-detection for more tools, please open an issue on the GitHub page with information about the compiler binary names and how to parse its version information. JTW
+> CMake Tools only automatically detects `Clang` and `GCC`. If you'd like auto-detection for more tools, please [Open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) with information about the compiler binary names and how to parse its version information.
 
 **2. Find Visual Studio installations**
 
-- CMake tools includes `vswhere.exe` which it uses to find Visual Studio instances installed on the system.
+- CMake tools includes `vswhere.exe`, which it uses to find Visual Studio instances installed on the system.
  
-- For each of `x86`, `amd64`, `x86_amd64`, `x86_arm`, `x86_arm64`, `amd64_x86`, `amd64_arm`, and `amd64_arm64`, CMake Tools checks for installed Visual C++ environments. A kit is generated for each existing MSVC toolchain.
+- For each of `x86`, `amd64`, `x86_amd64`, `x86_arm`, `x86_arm64`, `amd64_x86`, `amd64_arm`, and `amd64_arm64`, CMake Tools checks for installed Visual C++ environments. A kit is generated for each existing MSVC toolchain that is found.
 
 **3. Save results to the user-local kits file**
 
-- The [User-local kit](#user-local-kits)  `cmake-kits.json` file is updated with the new kit information.
+- The [User-local kit](#user-local-kits) `cmake-kits.json` file is updated with the new kit information.
 
 > [!WARNING]
 > The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-kits.json`. It only adds and updates existing ones.
@@ -103,22 +101,22 @@ CMake Tools will pass this path for `CMAKE_TOOLCHAIN_FILE` during configuration.
 
 CMake Tools automatically sets up the environment for working with Visual C++. It is best to let CMake Tools generate the kits first, then duplicate and modify them:
 
-```xml    
+```xml
 {
     "name": "A Visual Studio",
     "visualStudio": "Visual Studio Build Tools 2017",
     "visualStudioArchitecture": "amd64"
 }
 ```
-Keys:
-> `visualStudio` : the name of a Visual Studio installation obtained by `VSWhere`. 
-   
+
+Explanation of keys:
+> `visualStudio` : the name of a Visual Studio installation obtained by `VSWhere`.\
 > `visualStudioArchitecture`: the Visual Studio target architecture that would be passed to the `vcvarsall.bat` file when entering the VS dev environment.
 
 > [!NOTE]
 > To use Visual C++, both `visualStudio` and `visualStudioArchitecture` must be specified. Omitting either one won't work.
 
-### Generic options
+### General options
 
 The following additional options may be specified:
 
