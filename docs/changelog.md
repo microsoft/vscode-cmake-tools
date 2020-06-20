@@ -4,11 +4,11 @@
 
 ### Removed
 
-- The visual CMake cache editor GUI is gone. The API with which it was drawn is
+- [#579](https://github.com/vector-of-bool/vscode-cmake-tools/issues/579): the visual CMake cache editor GUI is gone. The API with which it was drawn is
   being removed from a future version of VS Code, and the feature had many
   issues. A future CMake GUI will be introduced with more features and greater
   stability.
-  [#579](https://github.com/vector-of-bool/vscode-cmake-tools/issues/579)
+  
 
 ### Features and updates
 
@@ -24,18 +24,11 @@
 
 ### Fixes
 
-- On Windows, "Launch target in terminal" will use `cmd.exe` unconditionally.
-  This works around issues with command quoting in PowerShell.
-  [#562](https://github.com/vector-of-bool/vscode-cmake-tools/issues/562)
-- "Debug target" will prefer `lldb-mi` to `lldb`. Fixes issues where `ms-vscode.cpptools` is unable to launch the debugger.
-  [#584](https://github.com/vector-of-bool/vscode-cmake-tools/issues/584)
-- Document the `environmentVariables` field on kits.
-  [#586](https://github.com/vector-of-bool/vscode-cmake-tools/issues/568)
-- Fix legacy CMake mode not setting the CMake generator.
-  [#567](https://github.com/vector-of-bool/vscode-cmake-tools/issues/567)
-- Permit limited variable expansion for `cmake.cmakePath` in `settings.json`
-  (refer to documentation for more details).
-  [#569](https://github.com/vector-of-bool/vscode-cmake-tools/issues/569)
+- [#562](https://github.com/vector-of-bool/vscode-cmake-tools/issues/562): On Windows, "Launch target in terminal" will use `cmd.exe` unconditionally. This works around issues with command quoting in PowerShell.
+- [#584](https://github.com/vector-of-bool/vscode-cmake-tools/issues/584): "Debug target" will prefer `lldb-mi` to `lldb`. Fixes issues where `ms-vscode.cpptools` is unable to launch the debugger.
+- [#586](https://github.com/vector-of-bool/vscode-cmake-tools/issues/568): Document the `environmentVariables` field on kits.
+- [#567](https://github.com/vector-of-bool/vscode-cmake-tools/issues/567): Fix legacy CMake mode not setting the CMake generator.  
+- [#569](https://github.com/vector-of-bool/vscode-cmake-tools/issues/569): Permit limited variable expansion for `cmake.cmakePath` in `settings.json`  
 
 ## 1.1.2
 
@@ -57,7 +50,7 @@ Fixes and updates
 - Fix failure to provide IntelliSense information for header files even after adding them to a target.
 - "Unexpected stderr/stdout..." no longer appears. This output is now logged as regular CMake status messages.
 
-**BREAKING CHANGE**: Variant substitutions follow a new `${variant:var-key}` syntax to match the special namespacing of substitutions. See [Variable substitution](cmake-settings.md#variable-substitution).
+**BREAKING CHANGE**: Variant substitutions follow a new `${variant:var-key}` syntax to match the special namespacing of substitutions. See [variable substitution](cmake-settings.md#variable-substitution).
 
 See the [1.1.1 milestone on GitHub](https://github.com/vector-of-bool/vscode-cmake-tools/milestone/12?closed=1) for more details.
 
@@ -71,7 +64,7 @@ See the [1.1.1 milestone on GitHub](https://github.com/vector-of-bool/vscode-cma
   - The debugger can be started by right-clicking on the desired executable.
 
 - Update progress and cancellation notifications. Now uses the official VSCode progress APIs. A *Cancel* button is visible on the progress notification to cancel the build.
-- Progress for the *Configure/Generate* phase. Relies on CMake to generate reliable progress values.
+- Show progress for the *Configure/Generate* phase. This depends on CMake to generate reliable progress values.
 - Automatically configure a project when it is opened. CMake Tools will ask you the first time, and this preference can be persisted.
 - Will automatically ask you for a debug target if you try to debug but haven't yet set one.
 
@@ -81,7 +74,7 @@ Recent versions of Microsoft's C and C++ extension now export an extensibility A
 
 CMake Tools 1.1.0+ uses this API to provide per-file compilation and configuration information to support the C++ extension. This means that a properly set up CMake project doesn't need to manually set configuration information in order to receive the benefits of ms-vscode.cpptools' IntelliSense engine.
 
-See [Set up include paths for C++ IntelliSense](how-to.md#set-up-include-paths-for-c-intellisense) for more details.
+See [set up include paths for C++ IntelliSense](how-to.md#set-up-include-paths-for-c-intellisense) for more details.
 
 ## 1.0.1
 
@@ -101,7 +94,7 @@ Marks the first stable release. It is now a developer-ready tool that is suitabl
 - Option to build on `cmake.launchTargetPath` (Launch-before-debug). See [cmake.buildBeforeRun](cmake-settings.md#cmake-settings) for more details.
 - [LLVM for Windows](https://llvm.org/builds) is now supported as an auto-detected Kit type.
 - To support LLVM for Windows, kit options can now be freely mixed-and-matched, e.g. setting a toolchain file along with a Visual Studio environment.
-- Cache initialization files are now supported in `settings.json`. See [cmake.cacheInit][CMake settings](cmake-settings.md#cmake-settings).
+- Cache initialization files are now supported in `settings.json`. See [cmake.cacheInit](cmake-settings.md#cmake-settings).
 - Kits are now optional. If no kit is active, CMake Tools will ask you if you want to scan, select a kit, or opt-out of kits. If no kit is chosen, CMake Tools let CMake decide what to do.
 - GCC cross-compilers are now detected as regular compilers for compiler kits.
 - Setting [cmake.defaultVariants](cmake-settings.md#cmake-settings) is respected again.
@@ -113,18 +106,12 @@ Marks the first stable release. It is now a developer-ready tool that is suitabl
 
 ### Bug fixes and updates
 
-- Attempted fix for "No build system was generated yet" by implementing more reliable dirty-checks when running a build/configure.
-  [#385](https://github.com/vector-of-bool/vscode-cmake-tools/issues/385)
-- Fix handling spaces in filepaths when running `vswhere.exe`.
-  [#381](https://github.com/vector-of-bool/vscode-cmake-tools/pull/381)
-- Fix environment variables from `settings.json` being ignored when using legacy (non-cmake-server) mode.
-  [#384](https://github.com/vector-of-bool/vscode-cmake-tools/issues/384)
-- Do not case-normalize diagnostics on Windows. This prevents VSCode from considering two equivalent paths to be different when opening them from the problems panel.
-  [#395](https://github.com/vector-of-bool/vscode-cmake-tools/pull/395)
-- Reset progress when build finishes. Stops a flash of "%100" when starting a new build.
-  [#394](https://github.com/vector-of-bool/vscode-cmake-tools/pull/394)
-- Better error message when trying to use debugging on non-cmake-server.
-  [#388](https://github.com/vector-of-bool/vscode-cmake-tools/issues/388)
+- [#385](https://github.com/vector-of-bool/vscode-cmake-tools/issues/385): Attempted fix for "No build system was generated yet" by implementing more reliable dirty-checks when running a build/configure.
+ - [#381](https://github.com/vector-of-bool/vscode-cmake-tools/pull/381): Fix handling spaces in filepaths when running `vswhere.exe`.  
+- [#384](https://github.com/vector-of-bool/vscode-cmake-tools/issues/384): Fix environment variables from `settings.json` being ignored when using legacy (non-cmake-server) mode.
+- [#395](https://github.com/vector-of-bool/vscode-cmake-tools/pull/395): Do not case-normalize diagnostics on Windows. This prevents VSCode from considering two equivalent paths to be different when opening them from the problems panel.
+- [#394](https://github.com/vector-of-bool/vscode-cmake-tools/pull/394): Reset progress when build finishes. Stops a flash of "%100" when starting a new build.
+- [#388](https://github.com/vector-of-bool/vscode-cmake-tools/issues/388): Better error message when trying to use debugging on non-cmake-server.
 
 ## 0.11.0
 

@@ -20,7 +20,7 @@ This page links to documentation for common tasks.
 ## Debug a project
 
 * From the command palette in VS Code, run the **CMake: Debug Target** command, press the keyboard shortcut **Ctrl+F5**, or press the **Debug** button in the status bar.
-* See the [CMake: target debugging and launching](debug-launch.md) page for more information.
+* See the [CMake:Target debugging and launching](debug-launch.md) page for more information.
 
 ## Pass command-line arguments to the debugger
 

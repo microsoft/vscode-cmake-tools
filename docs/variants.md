@@ -2,9 +2,9 @@
 
 CMake Tools introduces the concept of _CMake variants_, which are a way to group together and combine a common set of build options and give them a name.
 
-The main way to create a variant is via a `cmake-variants.json`, or `cmake-variants.yaml` file.
+The main way to create a variant is via a `cmake-variants.json` or `cmake-variants.yaml` file.
 
-Variants are a different concept than toolchains or toolsets. Those are handled by [CMake Kits](kits.md).
+Variants are a different concept than toolchains or toolsets. Those are handled by [CMake kits](kits.md).
 
 By default, if a variants file isn't present, CMake Tools loads four variants that correspond to default CMake build types: **Release**, **Debug**, **MinRelSize**, and **RelWithDebInfo**. These variants do the following:
 
@@ -20,7 +20,7 @@ Selecting one of these variants configures and builds using the corresponding bu
 > **Important:**
 > CMake Tools does not respect `CMAKE_CONFIGURATION_TYPES`. Only the default configuration types listed above are present. A custom variant file is required to load other build types.
 
-For smaller projects, you don't need to provide a custom `cmake-variants.yaml` file. The default CMake build types will work fine.
+For smaller projects, you don't need to provide a custom `cmake-variants.yaml` file. The default CMake build types work fine.
 
 Large projects with more complex configuration options can specify additional build variants.
 
@@ -68,11 +68,11 @@ A choice may specify any of the following options, but must include the `short` 
 |Option  |Description  |
 |---------|---------|
 |`short`|  A short human-readable string describing the option. |
-|`long` (Optional) | A lengthier human-readable string describing the option. |
-|`buildType` (Optional) |  An optional string to set for `CMAKE_BUILD_TYPE` when the option is active. |
-|`linkage` (Optional) |  Either `static` or `shared`. Sets the value of `CMAKE_BUILD_SHARED_LIBS`. |
-|`settings` (Optional) | A map of arbitrary CMake cache options to pass via the CMake command line with `-D`. Similar to the `cmake.configureSettings` in `settings.json`. |
-|`env` (Optional) | A map of key-value string pairs specifying additional environment variables to set during CMake _configure_ (not build). These environment variables take precedence over environment variables from `settings.json`, the current [CMake kit](kits.md), and environment variables set by the system. |
+|`long (Optional)` | A lengthier human-readable string describing the option. |
+|`buildType (Optional)` |  An optional string to set for `CMAKE_BUILD_TYPE` when the option is active. |
+|`linkage (Optional)` |  Either `static` or `shared`. Sets the value of `CMAKE_BUILD_SHARED_LIBS`. |
+|`settings (Optional)` | A map of arbitrary CMake cache options to pass via the CMake command line with `-D`. Similar to the `cmake.configureSettings` in `settings.json`. |
+|`env (Optional)` | A map of key-value string pairs specifying additional environment variables to set during CMake _configure_ (not build). These environment variables take precedence over environment variables from `settings.json`, the current [CMake kit](kits.md), and environment variables set by the system. |
 
 The options above are only valid under entries in the `choices` map.
 
@@ -84,7 +84,7 @@ A variant is a specific combination of one option from each setting. When CMake 
 
 1. All `settings` from the chosen options are passed as `-D` arguments to the CMake process.
 
-1. The `buildType` is used for `CMAKE_BUILD_TYPE`, the `\--config` flag for the build (for multi-configuration generators), and for the CTest `\--config` flag.
+1. The `buildType` is used for `CMAKE_BUILD_TYPE`, the `--config` flag for the build (for multi-configuration generators), and for the CTest `--config` flag.
 
 1. If `linkage` is `true`, `BUILD_SHARED_LIBS` is set to `ON`. If `linkage` is `false`, `BUILD_SHARED_LIBS` is set to `OFF`. If not specified, `BUILD_SHARED_LIBS` isn't set on the CMake command line.
 

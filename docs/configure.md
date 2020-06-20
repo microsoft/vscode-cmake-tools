@@ -19,7 +19,7 @@ The following concepts will help you understand how CMake Tools interacts with C
 
     |Generator |Description|
     |---------|---------|
-    |Ninja | Emits files for the [Ninja build tool](https://ninja-build.org). This is the generator CMake Tools tries first, unless configured otherwise. (See `cmake.preferredGenerators` in [CMake Tools settings](cmake-settings.md#cmake-settings). |
+    |Ninja | Emits files for the [Ninja build tool](https://ninja-build.org). This is the generator CMake Tools tries first, unless configured otherwise. See [cmake.preferredGenerators](cmake-settings.md#cmake-settings). |
     |Makefile |  Emits a `Makefile` for the project that can be built via `make`.|
     |Visual Studio     | Emits visual studio solutions and project files. There are many different Visual Studio generators, so it is recommended to let CMake Tools automatically determine the appropriate generator.|
 
@@ -35,16 +35,16 @@ When CMake Tools runs the configure step, it takes the following into considerat
 
     [CMake kits](kits.md) provide information about the toolchains available on your system that can be used with CMake to build your projects.
 
-    * For [Toolchain](kits.md#specify-a-toolchain), CMake Tools sets the CMake cache variable `CMAKE_TOOLCHAIN_FILE` to the path to the file specified by the kit.
+    * For [toolchain](kits.md#specify-a-toolchain), CMake Tools sets the CMake cache variable `CMAKE_TOOLCHAIN_FILE` to the path to the file specified by the kit.
 
-    * For [Compilers](kits.md#specify-a-compiler), CMake Tools sets the `CMAKE_<LANG>_COMPILER` cache variable to point to the path for each `<LANG>` defined in the kit.
+    * For [compilers](kits.md#specify-a-compiler), CMake Tools sets the `CMAKE_<LANG>_COMPILER` cache variable to point to the path for each `<LANG>` defined in the kit.
 
     * For [Visual Studio](kits.md#visual-studio), CMake Tools starts the CMake Server process with the environment variables necessary to use the selected Visual Studio installation. It also sets `CC` and `CXX` to `cl.exe` so that CMake will detect the Visual C++ compiler as the primary compiler, even if other compilers like GCC are present on `$Path`.
 
     Each kit may also define additional cache variable settings required for the kit to operate. A kit may also define a `preferredGenerator`.
 
-    For more information about how kits work, see [CMake Kits](kits.md).\
-    For more information about the different types of kits, see [Kit options](kits.md#kit-options)
+    See [CMake kits](kits.md) for more information about how kits work.\
+    See [Kit options](kits.md#kit-options) for more information about the different types of kits.
 
 1. **Which generator to use**
 
@@ -60,11 +60,11 @@ When CMake Tools runs the configure step, it takes the following into considerat
     CMake Tools has a variety of locations where configuration options can be defined. They are searched in order and merged together. When keys have the same name, the most recent value found during the search is used. The search locations are:
 
     1. The [cmake.configureSettings](cmake-settings.md#cmake-settings) option from `settings.json`.
-    2. The `settings` value from the active [Variant options](variants.md#variants-options).
-    3. `BUILD_SHARED_LIBS` is set based on [Variant options](variants.html#variants-opts).
-    4. `CMAKE_BUILD_TYPE` is set based on [Variant options](variants.html#variants-opts).
-    5. `CMAKE_INSTALL_PREFIX` is set based on [cmake.installPrefix](settings.html#conf-cmake-installprefix).
-    6. `CMAKE_TOOLCHAIN_FILE` is set for [Toolchain](kits.md#specify-a-toolchain).
+    2. The `settings` value from the active [variant options](variants.md#variants-options).
+    3. `BUILD_SHARED_LIBS` is set based on [variant options](variants.md#variants-options).
+    4. `CMAKE_BUILD_TYPE` is set based on [variant options](variants.md#variants-options).
+    5. `CMAKE_INSTALL_PREFIX` is set based on [cmake.installPrefix](cmake-settings.md#cmake-settings).
+    6. `CMAKE_TOOLCHAIN_FILE` is set for [toolchain](kits.md#specify-a-toolchain).
     7. The [cmakeSettings](kits.md#generic-options) attribute on the active kit.
 
     Additionally, [cmake.configureArgs](cmake-settings.md#cmake-settings) are passed before any of the above.
@@ -78,7 +78,7 @@ When CMake Tools runs the configure step, it takes the following into considerat
     3. The value of [cmake.configureEnvironment](cmake-settings.md#cmake-settings).
     4. The environment variables required by the active [variant](variants.md).
 
-All of the above are taken into account to perform the configure. Once finished, CMake Tools loads project information from CMake and generates diagnostics based on CMake's output. You are now ready to [build](build.md).
+All of the above are taken into account to perform the configure. Once finished, CMake Tools loads project information from CMake and generates diagnostics based on CMake's output. You are now ready to [build with CMake Tools](build.md).
 
 ## Configuring outside CMake Tools
 
@@ -89,7 +89,7 @@ CMake Tools is designed to work well with an external CMake process. If you choo
 
 ## Clean configure
 
-To get CMake Tools to do a "clean configure", run **CMake: Delete cached built settings and reconfigure** from the command palette in VS Code.
+To get CMake Tools to do a clean configure, run **CMake: Delete cached built settings and reconfigure** from the command palette in VS Code.
 
 A clean configure deletes the `CMakeCache.txt` file and `CMakeFiles` directory from the build directory. This resets all of CMake's default state.
 
@@ -99,6 +99,6 @@ CMake Tools will do a clean configure automatically if you change the active kit
 
 ## Next steps
 
-- Explore how to build at [CMake Tools build](build.md)
+- Explore how to build at [Build with CMake Tools](build.md)
 - Learn how kits work at [CMake Kits](kits.md)
 - Explore the [CMake Tools documentation](README.md)

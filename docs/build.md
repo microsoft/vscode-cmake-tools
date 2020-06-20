@@ -5,14 +5,14 @@ Once you have [configured](configure.md) your project, you can run a CMake build
 You can start a build by:
 
 1. Running **CMake: Build** from the VS Code command pallette.
-2. Pressing the keyboard shortcut (the default is :kbd:`F7`).
+2. Pressing the keyboard shortcut (the default is `F7`).
 3. Selecting the **Build** button in the VS Code status bar.
 
 When the build starts, the CMake Tools output panel opens to display build tool output. The **Build** button will change to a **Stop** button, and may show a progress bar for the running build. Pressing the **Stop** button cancels the running build. Starting a build while another build is running will cancel the current build and start a new one.
 
 > **Note:** The progress bar only displays if the build tool emits output lines that can be parsed to get a percentage of the build progress. This includes Ninja and Makefile generators. MSBuild does not emit this information, so no progress bar will be visible.
 
-The results of the build are written to the directory specified by [cmake.buildDirectory](cmake-settings.md). This defaults to a subdirectory of the project directory, so the build results are visible within the project explorer. The exact file paths will depend on your CMake project configuration.
+The results of the build are written to the directory specified by [cmake.buildDirectory](cmake-settings.md#cmake-settings). This defaults to a subdirectory of the project directory, so the build results are visible within the project explorer. The exact file paths will depend on your CMake project configuration.
 
 ## Build the default target
 
@@ -28,7 +28,7 @@ Selecting this button shows a quick pick list for all the targets CMake Tools is
 
 ## Build a single target
 
-You can build a single target without changing the current build target from the VS Code command pallette by running the **CMake: Build a target** command, or by pressing the keyboard shortcut (default is :kbd:`Shift+F7`). CMake will build any dependent targets, even if they aren't directly selected.
+You can build a single target without changing the current build target from the VS Code command pallette by running the **CMake: Build a target** command, or by pressing the keyboard shortcut (default is `Shift+F7`). CMake will build any dependent targets, even if they aren't directly selected.
 
 ## How CMake Tools builds
 
@@ -36,11 +36,11 @@ You can build a single target without changing the current build target from the
 
 CMake Tools builds by passing the `--build` flag to CMake. This flag is used as a generator-agnostic build invocation tool. CMake tools also passes `--config <build-type>`, based on the current build type from the active [variant](variants.md). This instructs multi-configuration build tools which configuration they should build.
 
-For advanced scenarios, additional flags to `--build` can be set with [cmake.buildArgs](cmake-settings.md), and additional flags for the underlying build tool can be set with [cmake.buildToolArgs](cmake-settings.md).
+For advanced scenarios, additional flags to `--build` can be set with [cmake.buildArgs](cmake-settings.md#cmake-settings), and additional flags for the underlying build tool can be set with [cmake.buildToolArgs](cmake-settings.md#cmake-settings).
 
 ### The build environment
 
-Environment variables are inherited from the calling Visual Studio Code process, with additional variables from the [cmake.buildEnvironment](cmake-settings.md) and [cmake.environment](cmake-settings.md) settings.
+Environment variables are inherited from the calling Visual Studio Code process, with additional variables from the [cmake.buildEnvironment](cmake-settings.md#cmake-settings) and [cmake.environment](cmake-settings.md#cmake-settings) settings.
 
 If you are using a [Visual Studio Kit](kits.md#visual-Studio), CMake Tools runs the build with the appropriate environment variables set to build with the chosen version of Visual Studio, much like how it sets these environment variables when [configuring](configure.md#how-cmake-tools-configures).
 

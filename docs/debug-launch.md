@@ -1,4 +1,4 @@
-# CMake: target debugging and launching
+# CMake: Debug and launch
 
 CMake Tools makes it easier to set up debugging. Because C and C++ projects may define multiple (sometimes dozens or even hundreds) of executables, creating a `launch.json` may be difficult.
 
@@ -9,7 +9,7 @@ If you define any executable targets via CMake, CMake Tools will be aware of the
 
 If you are running an older version of CMake and want to use target debugging, update your CMake version to version 3.7.2 or higher.
 
-By default, launching or debugging an executable target causes it to be built first. This can be disabled with the [cmake.buildBeforeRun](cmake-settings.md) setting.
+By default, launching or debugging an executable target causes it to be built first. This can be disabled with the [cmake.buildBeforeRun](cmake-settings.md#cmake-settings) setting.
 
 ## Select a launch target
 
@@ -26,7 +26,7 @@ Selecting the active launch target button will show the launch target selector s
 Quick-debugging lets you start a debugger on a target without creating a `launch.json`.
 
 > **Note:**
-> Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file) below for information about `launch.json` and using other debuggers.
+> Only the debugger from Microsoft's `vscode-ms-vscode.cpptools` extension supports quick-debugging. See [Debug using a launch.json file](#debug-using-a-launchjson-file), below, for information about `launch.json` and using other debuggers.
 
 Start quick debugging by running the  *CMake: Debug Target* command from the VS Code command pallette, or by pressing the keyboard shortcut (the default is **Ctrl+F5**).
 
@@ -83,16 +83,15 @@ Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetP
 The value of the `program` attribute is expanded by CMake Tools to be the absolute path of the program to run.
 
 > **Note:**
-> You must successfully [configure](configuring.html#configuring) before `cmake.launchTargetPath` and `cmake.launchTargetDirectory` will resolve correctly.
+> You must successfully [configure](configure.md) before `cmake.launchTargetPath` and `cmake.launchTargetDirectory` will resolve correctly.
 
 ## Run without debugging
 
-If you want to run a target without debugging it, from VS Code's command pallette, run the *CMake: Execute the current target without a debugger* command, or by pressing the keyboard shortcut (the default is :kbd:`Shift+F5`).
+If you want to run a target without debugging it, from VS Code's command pallette, run the *CMake: Execute the current target without a debugger* command, or by pressing the keyboard shortcut (the default `Shift+F5`).
 
 The output of the target will be shown in an integrated terminal.
 
 ## Next steps
 
-- See how to [Troubleshoot CMake Tools](troubleshoot.md)
-- Consult the [Frequently Asked Questions](faq.md)
+- See how to [troubleshoot CMake Tools](troubleshoot.md)
 - Explore the [CMake Tools documentation](README.md)

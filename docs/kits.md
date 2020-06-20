@@ -15,7 +15,7 @@ Kits are mostly CMake-generator-agnostic (a CMake generator writes the input fil
 
 ## How kits are found and defined
 
-When the CMake Tools extension runs for the first time, it will [scan for kits](#scan_for_kits) to find available toolchains. It populates the initial list of kits by looking in directories where known compilers are typically installed, and uses `vswhere` to find Visual Studio installations.
+When the CMake Tools extension runs for the first time, it will [scan for kits](#scan-for-kits) to find available toolchains. It populates the initial list of kits by looking in directories where known compilers are typically installed, and uses `vswhere` to find Visual Studio installations.
 
 ### User-local kits
 
@@ -25,20 +25,20 @@ The user-local list of kits is stored in the `cmake-kits.json` file, which you c
 
 ![Example cmake_kits_json file](images/cmake_kits_json.png)
 
-You can manually edit this file to define new global kits. The contents of this file will be automatically updated by CMake Tools during a [scan for kits](#scan_for_kits)
+You can manually edit this file to define new global kits. The contents of this file will be automatically updated by CMake Tools during a [scan for kits](#scan-for-kits).
 
 > **Warning:**
-> Don't modify kits that the CMake Tools extension creates because your changes will be overwritten during the next [scan for kits](#scan_for_kits).
+> Don't modify kits that the CMake Tools extension creates because your changes will be overwritten during the next [scan for kits](#scan-for-kits).
 
 ### Project kits
 
 Default user-local kits are available for all projects that use CMake Tools. To define a project-local kit, create a `.vscode/cmake-kits.json` file in the project directory. You manage the contents of this file manually, but CMake Tools will automatically reload and refresh when it sees this file added, removed, or changed. When changing kits, you can select from both user-local and project-local kits.
 
-An example of when a project-local kit is useful is when the project defines its own CMake toolchain file(s). A [toolchain kit](#toolchain) can be defined that specifies this file to be loaded. You can commit the `.vscode/cmake-kits.json` to source control and share it with other developers for easier collaboration using the named toolchain.
+An example of when a project-local kit is useful is when the project defines its own CMake toolchain file(s). A [toolchain kit](#specify-a-toolchain) can be defined that specifies this file to be loaded. You can commit the `.vscode/cmake-kits.json` to source control and share it with other developers for easier collaboration using the named toolchain.
 
 ### Scan for kits
 
-Update [User-local kits](#user-local-kits) by running **Scan for Kits** from the VS Code command palette. The following process is used to find available kits:
+Update [user-local kits](#user-local-kits) by running **Scan for Kits** from the VS Code command palette. The following process is used to find available kits:
 
 **1. Search the current PATH for compilers**
 
@@ -46,7 +46,7 @@ Update [User-local kits](#user-local-kits) by running **Scan for Kits** from the
  - CMake Tools looks for `gcc` and `clang` binaries on the `PATH` and gets version information from each executable it finds. For `gcc`, if a corresponding `g++` executable resides in the same directory it is added to the kit as the corresponding C++ compiler. The same applies for a `clang++` binary in the directory of a `clang` executable.
  
 > **Note:**
-> CMake Tools only automatically detects `Clang` and `GCC`. If you'd like auto-detection for more tools, please [Open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) with information about the compiler binary names and how to parse its version information.
+> CMake Tools only automatically detects `Clang` and `GCC`. If you'd like auto-detection for more tools, please [open a Github issue](https://github.com/microsoft/vscode-cmake-tools/issues) with information about the compiler binary names and how to parse its version information.
 
 **2. Find Visual Studio installations**
 
@@ -56,7 +56,7 @@ Update [User-local kits](#user-local-kits) by running **Scan for Kits** from the
 
 **3. Save results to the user-local kits file**
 
-- The [User-local kit](#user-local-kits) `cmake-kits.json` file is updated with the new kit information.
+- The [user-local kit](#user-local-kits) `cmake-kits.json` file is updated with the new kit information.
 
 > **Warning:**
 > The name of each kit is generated from the kit compiler and version information. Kits with the same name will be overwritten. To prevent custom kits from being overwritten, give them unique names. CMake Tools will not delete entries from `cmake-kits.json`. It only adds and updates existing ones.
