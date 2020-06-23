@@ -43,7 +43,7 @@ suite('Build', async () => {
       { type: "build" },
       vscode.TaskScope.Workspace,
       "Configure",
-      "CMake",
+      "shell",
       new vscode.ShellExecution("${command:cmake.configure}", { cwd: testEnv.projectFolder.location })
     );
 
@@ -51,7 +51,7 @@ suite('Build', async () => {
       { type: "build" },
       vscode.TaskScope.Workspace,
       "Build",
-      "CMake",
+      "shell",
       new vscode.ShellExecution("${command:cmake.build}", { cwd: testEnv.projectFolder.location })
     );
 
