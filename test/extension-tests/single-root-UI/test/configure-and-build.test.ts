@@ -27,8 +27,8 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
-  const configureTask = new vscode.Task({ type: "build" }, vscode.TaskScope.Workspace, "Configure", "CMake", new vscode.ShellExecution("${command:cmake.configure}"));
-  const buildTask = new vscode.Task({ type: "build" }, vscode.TaskScope.Workspace, "Build", "CMake", new vscode.ShellExecution("${command:cmake.build}"));
+  let configureTask: vscode.Task;
+  let buildTask: vscode.Task;
 
   suiteSetup(async function (this: Mocha.IHookCallbackContext) {
     this.timeout(100000);
@@ -38,6 +38,22 @@ suite('Build', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
+
+    configureTask = new vscode.Task(
+      { type: "build" },
+      vscode.TaskScope.Workspace,
+      "Configure",
+      "CMake",
+      new vscode.ShellExecution("${command:cmake.configure}", { cwd: testEnv.projectFolder.location })
+    );
+
+    buildTask = new vscode.Task(
+      { type: "build" },
+      vscode.TaskScope.Workspace,
+      "Build",
+      "CMake",
+      new vscode.ShellExecution("${command:cmake.build}", { cwd: testEnv.projectFolder.location })
+    );
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
