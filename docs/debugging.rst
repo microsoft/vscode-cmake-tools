@@ -78,7 +78,7 @@ using ``launch.json`` is that the path to the executable binary might be
 difficult to know in advance. CMake Tools can help by using
 *Command substitution* in ``launch.json``. This is already used by things like
 the process selection when attaching to a running process. It works by simply
-specifying a a command-based substitution in the appropriate field of
+specifying a command-based substitution in the appropriate field of
 ``launch.json``.
 
 Here is a minimal example of a ``launch.json`` that uses the
