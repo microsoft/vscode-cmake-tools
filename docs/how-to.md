@@ -10,7 +10,7 @@ This page links to documentation for common tasks.
 ## Configure a project
 
 * From the command palette in VS Code, run the **CMake: Configure** command.
-* See the *Configure Hello World* section of the [CMake Tools on Linux tutorial](https://code.visualstudio.com/docs/cpp/cmake-linux#_configure-hello-world), or the more in-depth [CMakeTools configure step](configure.md#the-cmake-tools-configure-step) documentation.
+* See the *Configure Hello World* section of the [CMake Tools on Linux tutorial](https://code.visualstudio.com/docs/cpp/cmake-linux#_configure-hello-world), or the more in-depth [CMake Tools configure step](configure.md#the-cmake-tools-configure-step) documentation.
 
 ## Build a project
 

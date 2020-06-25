@@ -1,4 +1,4 @@
-# Configure CMake tools settings
+# Configure CMake Tools settings
 
 CMake Tools supports a variety of settings that can be set at the user, or workspace, level via VSCode's `settings.json` file. This topic  covers the available options and how they are used.
 
