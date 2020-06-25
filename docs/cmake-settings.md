@@ -1,4 +1,4 @@
-# Configure CMake tools
+# Configure CMake tools settings
 
 CMake Tools supports a variety of settings that can be set at the user, or workspace, level via VSCode's `settings.json` file. This topic  covers the available options and how they are used.
 
@@ -8,13 +8,15 @@ Options that support substitution, in the table below, allow variable references
 
 |Setting  |Description | Default value | Supports substitution |
 |---------|---------|---------|-----|
-|`cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
+| `cmake.autoSelectActiveFolder`| If 'false', your active folder only changes if you manually run the `CMake: Select Active Folder` command. | 'true' | no |
+| `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |
 | `cmake.buildEnvironment`| An object containing `key:value` pairs of environment variables, which will be passed only to the compiler. | `null` (no environment variables specified) | yes | 
 | `cmake.buildToolArgs` | An array of additional arguments to pass to the underlying build tool. | `[]` (empty array-no additional arguments) | yes |
 |  `cmake.cacheInit` | Path, or list of paths, to cache-initialization files. Passed to CMake via the `-C` command-line argument. | `[]` (empty array-no cache initializer files) | no |
 | `cmake.cmakePath`| Specify location of the cmake executable. | `cmake` (causes CMake Tools to search the `PATH` environment variable, as well as some hard-coded locations.) | Supports substitution for `workspaceRoot`, `workspaceFolder`, `workspaceRootFolderName`, `userHome`, `${command:...}` and `${env:...}`. Other substitutions result in an empty string. |
+| `cmake.cmakeCommunicationMode` | Specifies the protocol for communicating between the extension and CMake | `automatic` | no |
 | `cmake.configureArgs` | Arguments to CMake that will be passed during the configure process. Prefer to use `cmake.configureSettings` or [CMake variants](variants.md).</br> Do not pass `-D` arguments using this setting. | `[]` (empty array-no arguments) | yes |
 | `cmake.configureEnvironment` | An object containing `key:value` pairs of environment variables, which will be passed to CMake only when configuring.| `null` (no environment variable pairs) | yes |
 | `cmake.configureSettings` | An object containing `key:value` pairs, which will be passed to CMake when configuring. The same as passing `-DVAR_NAME=ON` via `cmake.configureArgs`. | `null` (no values) | yes |
@@ -55,12 +57,13 @@ Variant options are expanded using the `${variant:VARIANTNAME}` syntax, where th
 
 ### Command substitution
 
-CMake Tools can expand VS Code commands. for example, you can expand the `launch.json` command using the syntax `${command:launch.json}`
+CMake Tools can expand VS Code commands. for example, you can expand the path to the launch target by using the syntax `${command:cmake.launchTargetPath}`
 
-Be aware of using long-running commands. It is unspecified when, or how many times, CMake Tools will execute a command for a given expansion.
+Be careful with long-running commands because it isn't specified when, or how many times, CMake Tools will execute a command for a given expansion.
 
 ## Next steps
 
+- Learn about [user vs. workspace settings](https://code.visualstudio.com/docs/getstarted/settings)
 - [Get started with CMake Tools on Linux](https://code.visualstudio.com/docs/cpp/cmake-linux)
 - Review [How CMake Tools builds](build.md#how-cmake-tools-builds)
 - Explore the [CMake Tools documentation](README.md)

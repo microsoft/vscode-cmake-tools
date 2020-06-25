@@ -5,7 +5,7 @@ CMake Tools makes it easier to set up debugging. Because C and C++ projects may 
 If you define any executable targets via CMake, CMake Tools will be aware of them and allow you to start debugging them.
 
 > **Note:**
-> Debugging is only supported when CMake is in  _CMake Server_ mode. This mode is enabled automatically for CMake versions 3.7.2 and above. It is not available on older versions.
+> Debugging is supported when CMake is using either _CMake Server_ or the cmake-file-api. These modes are enabled automatically for CMake versions 3.7.2 and above. Debugging is not available on older versions.
 
 If you are running an older version of CMake and want to use target debugging, update your CMake version to version 3.7.2 or higher.
 

@@ -42,7 +42,7 @@ For advanced scenarios, additional flags to `--build` can be set with [cmake.bui
 
 Environment variables are inherited from the calling Visual Studio Code process, with additional variables from the [cmake.buildEnvironment](cmake-settings.md#cmake-settings) and [cmake.environment](cmake-settings.md#cmake-settings) settings.
 
-If you are using a [Visual Studio Kit](kits.md#visual-Studio), CMake Tools runs the build with the appropriate environment variables set to build with the chosen version of Visual Studio, much like how it sets these environment variables when [configuring](configure.md#how-cmake-tools-configures).
+If you are using a [Visual Studio Kit](kits.md#visual-Studio), CMake Tools runs the build with the appropriate environment variables set to build with the chosen version of Visual Studio, much like how it sets these environment variables during [the CMakeTools configure step](configure.md#the-cmake-tools-configure-step).
 
 ## Clean build
 

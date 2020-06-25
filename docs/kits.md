@@ -25,10 +25,10 @@ The user-local list of kits is stored in the `cmake-kits.json` file, which you c
 
 ![Example cmake_kits_json file](images/cmake_kits_json.png)
 
-You can manually edit this file to define new global kits. The contents of this file will be automatically updated by CMake Tools during a [scan for kits](#scan-for-kits).
+You can manually edit this file to define new global kits, however the contents of this file will be automatically updated by CMake Tools during a [scan for kits](#scan-for-kits).
 
-> **Warning:**
-> Don't modify kits that the CMake Tools extension creates because your changes will be overwritten during the next [scan for kits](#scan-for-kits).
+> **Tip:**
+> Define a new kit with your desired settings rather than modify kits that the CMake Tools extension creates so that your changes aren't overwritten during the next [scan for kits](#scan-for-kits).
 
 ### Project kits
 

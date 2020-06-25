@@ -18,8 +18,8 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 
 [Configure](configure.md)
 * [CMake configuration process overview](configure.md#cmake-configuration-process-overview)
-* [How CMake tools configures](configure.md#how-cmake-tools-configures)
-* [Configuring outside of CMake tools](configure.md#configuring-outside-cmake-tools)
+* [The CMake tools configure step](configure.md#the-cmake-tools-configure-step).
+* [The configure step outside of CMake Tools](configure.md#the-configure-step-outside-of-cmake-tools)
 * [Clean configure](configure.md#clean-configure)
 
 [Variants](variants.md)
@@ -42,7 +42,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [Debug using a launch.json file](debug-launch.md#debug-using-a-launchjson-file)
 * [Run without debugging](debug-launch.md#run-without-debugging)
 
-[Configure CMake tools](cmake-settings.md)
+[Configure CMake tools settings](cmake-settings.md)
 * [CMake Tools settings](cmake-settings.md#cmake-settings)
 * [Variable substitution](cmake-settings.md#variable-substitution)
 
@@ -67,5 +67,3 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [Developer Reference](contribute.md#developer-reference)
 * [Build the CMake Tools extension](contribute.md#build-the-cmake-tools-extension)
 * [Coding guidelines](contribute.md#coding-guidelines)
-
-[Changelog and history](changelog.md)

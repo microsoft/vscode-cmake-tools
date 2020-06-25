@@ -1,8 +1,4 @@
-# CMake's configuration process
-
-CMake Tools wraps the CMake configure process separately from the build process.
-
-## CMake configuration process overview
+# The CMake configure process
 
 In CMake, _configure_ refers to detecting requirements and generating the build files that will produce the final compiled artifacts.
 
@@ -25,9 +21,9 @@ The following concepts will help you understand how CMake Tools interacts with C
 
 Regardless of generator, CMake Tools always supports building from within Visual Studio Code. If you are building from within Visual Studio Code, we recommend you use the [Ninja build tool](https://ninja-build.org/).
 
-## How CMake Tools configures
+## The CMake Tools configure step
 
-CMake Tools drives CMake via CMake Server, an execution mode of CMake that provides a persistent connection to get project information.
+CMake Tools drives CMake via the cmake-file-api which provides project info via a file on disk.
 
 When CMake Tools runs the configure step, it takes the following into consideration:
 
@@ -39,7 +35,7 @@ When CMake Tools runs the configure step, it takes the following into considerat
 
     * For [compilers](kits.md#specify-a-compiler), CMake Tools sets the `CMAKE_<LANG>_COMPILER` cache variable to point to the path for each `<LANG>` defined in the kit.
 
-    * For [Visual Studio](kits.md#visual-studio), CMake Tools starts the CMake Server process with the environment variables necessary to use the selected Visual Studio installation. It also sets `CC` and `CXX` to `cl.exe` so that CMake will detect the Visual C++ compiler as the primary compiler, even if other compilers like GCC are present on `$Path`.
+    * For [Visual Studio](kits.md#visual-studio), CMake Tools sets environment variables necessary to use the selected Visual Studio installation, and sets `CC` and `CXX` to `cl.exe` so that CMake will detect the Visual C++ compiler as the primary compiler, even if other compilers like GCC are present on `$Path`.
 
     Each kit may also define additional cache variable settings required for the kit to operate. A kit may also define a `preferredGenerator`.
 
@@ -80,7 +76,7 @@ When CMake Tools runs the configure step, it takes the following into considerat
 
 All of the above are taken into account to perform the configure. Once finished, CMake Tools loads project information from CMake and generates diagnostics based on CMake's output. You are now ready to [build with CMake Tools](build.md).
 
-## Configuring outside CMake Tools
+## The configure step outside of CMake Tools
 
 CMake Tools is designed to work well with an external CMake process. If you choose to run CMake from another command line, or other IDE/tool, it should work provided the host environment is set up properly.
 
