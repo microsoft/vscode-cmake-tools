@@ -3,12 +3,7 @@
 [CMake Tools](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools) provides the native developer a full-featured, convenient, and
 powerful workflow for CMake-based projects in Visual Studio Code.
 
-## Maintainer Changes (6/26/20)
-
-We have integrated all of the docs from **vector-of-bool's** site, here!
-Docs for the extension will be maintained in this repo going forward.
-
-# Important doc links:
+## Important doc links
 
 - [CMake Tools quick start](https://code.visualstudio.com/docs/cpp/CMake-linux)
 - [Configure a project](docs/how-to.md#configure-a-project)
@@ -19,11 +14,6 @@ Docs for the extension will be maintained in this repo going forward.
 - [FAQ](docs/faq.md)
 - [Read the online documentation](docs/readme.md)
 - [Contribute](docs/contribute.md)
-
-## Maintainer changes (7/12/19)
-
-**vector-of-bool** has moved on to other things and Microsoft is now maintaining this extension. Thank you **vector-of-bool** for all of your hard work getting
-this extension to where it is today!
 
 ## Issues? Questions? Feature requests?
 
