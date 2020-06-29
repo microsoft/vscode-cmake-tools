@@ -3,7 +3,7 @@
  *
  * This module uses the [vscode-cpptools API](https://www.npmjs.com/package/vscode-cpptools)
  * to provide that extension with per-file configuration information.
- */ /** */
+ */
 
 import {CMakeCache} from '@cmt/cache';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
