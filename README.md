@@ -32,4 +32,4 @@ This extension collects usage data and sends it to Microsoft to help improve our
 
 ### Credits
 
-This project was started by @vector-of-bool and is now currently maintained by Microsoft.
+This project was started by [@vector-of-bool](https://github.com/vector-of-bool) and is now currently maintained by Microsoft.
