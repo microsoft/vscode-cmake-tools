@@ -7,6 +7,7 @@ import * as util from '@cmt/util';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as kitsController from '@cmt/kitsController';
 
 import {VSInstallation, vsInstallations} from './installs/visual-studio';
 import * as expand from './expand';
@@ -95,6 +96,11 @@ export interface Kit {
    * from the dev environment batch file.
    */
   visualStudioArchitecture?: string;
+
+  /**
+   * Filename of a shell script which sets environment variables for the kit
+   */
+  environmentSetupScript?: string;
 
   /**
    * Path to a CMake toolchain file.
@@ -428,10 +434,54 @@ export function vsDisplayName(inst: VSInstallation): string {
  * Construct the Kit.name property.
  *
  * @param inst The VSInstallation to use
- * @param arch The desired architecture (e.g. x86, amd64)
+ * @param hostArch The architecture of the toolset host (e.g. x86, x64|amd64)
+ * @param targetArch The architecture of the toolset target (e.g. win32|x86, x64|amd64, arm, arm64)
  */
-function kitName(inst: VSInstallation, arch: string): string {
-  return `${vsDisplayName(inst)} - ${arch}`;
+function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string): string {
+  // We still keep the amd64 alias for x64, only in the name of the detected VS kits,
+  // for compatibility reasons. Switching to 'x64' means leaving
+  // orphaned 'amd64' kits around ("Scan for kits" does not delete them yet)
+  // and also it may require a new kit selection.
+  // VS toolsets paths on disk, vcvarsall.bat parameters and CMake arguments are all x64 now.
+  // We can revise later whether to change to 'x64' in the VS kit name as well and how to mitigate it.
+  return `${vsDisplayName(inst)} - ${kitHostTargetArch(hostArch, targetArch, true)}`;
+}
+
+/**
+ * Create the host-target arch specification of a VS install,
+ * from the VS kit architecture (host) and generator platform (target).
+ * @param hostArch The architecture of the host toolset
+ * @param targetArch The architecture of the target
+ * @param amd64Alias Whether amd64 is preferred over x64.
+ */
+function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
+  // There are cases when we don't want to use the 'x64' alias of the 'amd64' architecture,
+  // like for older VS installs, for the VS kit names (for compatibility reasons)
+  // or for arm/arm64 specific vcvars scripts.
+  if (amd64Alias) {
+    if (hostArch === "x64") {
+      hostArch = "amd64";
+    }
+
+    if (targetArch === "x64") {
+      targetArch = "amd64";
+    }
+  }
+
+  if (!targetArch) {
+    targetArch = hostArch;
+  }
+
+  // CMake preferred generator platform requires 'win32', while vcvars are still using 'x86'.
+  // This function is called only for VS generators, so it is safe to overwrite
+  // targetArch with the vcvars naming.
+  // In case of any future new mismatches, use the vsArchFromGeneratorPlatform table
+  // instead of hard coding for win32 and x86.
+  // Currently, there is no need of a similar overwrite operation on hostArch,
+  // because CMake host target does not have the same name mismatch with VS.
+  targetArch = vsArchFromGeneratorPlatform[targetArch] || targetArch;
+
+  return (hostArch === targetArch) ? hostArch : `${hostArch}_${targetArch}`;
 }
 
 /**
@@ -517,7 +567,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           return acc;
         }, new Map());
   if (vars.get('INCLUDE') === '') {
-    console.log(`Error running ${devbat} ${args.join(' ')}, can not found INCLUDE`);
+    console.log(`Error running ${devbat} ${args.join(' ')}, cannot find INCLUDE`);
     return;
   }
   log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
@@ -525,12 +575,75 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
 }
 
 /**
- * Platform arguments for VS Generators
+ * Gets the environment variables set by a shell script.
+ * @param kit The kit to get the environment variables for
  */
-const VsArchitectures: {[key: string]: string} = {
-  amd64: 'x64',
-  arm: 'ARM',
-  amd64_arm: 'ARM',
+export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, string>|undefined> {
+  console.assert(kit.environmentSetupScript);
+  const filename = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
+  const script_filename = `vs-cmt-${filename}`;
+  const environment_filename = script_filename + '.env';
+  const script_path = path.join(paths.tmpDir, script_filename);
+  const environment_path = path.join(paths.tmpDir, environment_filename); // path of temp file in which the script writes the env vars to
+
+  let script = '';
+  let run_command = '';
+  if (process.platform == 'win32') { // windows
+    script += `call "${kit.environmentSetupScript}"\r\n`; // call the user batch script
+    script += `set >> ${environment_path}`; // write env vars to temp file
+    run_command = `call ${script_path}`;
+  } else { // non-windows
+    script += `source "${kit.environmentSetupScript}"\n`; // run the user shell script
+    script +=`printenv >> ${environment_path}`; // write env vars to temp file
+    run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
+  }
+  try {
+    await fs.unlink(environment_path); // delete the temp file if it exists
+  } catch (error) {}
+  await fs.writeFile(script_path, script); // write batch file
+
+  const res = await proc.execute(run_command, [], null, {shell: true, silent: true}).result; // run script
+  await fs.unlink(script_path); // delete script file
+  const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
+
+  let env = '';
+  try {
+    /* When the script failed, envpath would not exist */
+    env = await fs.readFile(environment_path, {encoding: 'utf8'});
+    await fs.unlink(environment_path);
+  } catch (error) { log.error(error); }
+  if (!env || env === '') {
+    console.log(`Error running ${kit.environmentSetupScript} with:`, output);
+    return;
+  }
+
+  // split and trim env vars
+  const vars
+      = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
+          const match = /(\w+)=?(.*)/.exec(line);
+          if (match) {
+            acc.set(match[1], match[2]);
+          } else {
+            log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
+          }
+          return acc;
+        }, new Map());
+  log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', kit.environmentSetupScript, JSON.stringify([...vars])));
+  return vars;
+}
+
+/**
+ * Platform arguments for VS Generators
+ * Currently, there is a mismatch only between x86 and win32.
+ * For example, VS kits x86 and amd64_x86 will generate -A win32
+ */
+const generatorPlatformFromVSArch: {[key: string]: string} = {
+  x86: 'win32'
+};
+
+// The reverse of generatorPlatformFromVSArch
+const vsArchFromGeneratorPlatform: {[key: string]: string} = {
+  win32: 'x86'
 };
 
 /**
@@ -547,15 +660,28 @@ const VsGenerators: {[key: string]: string} = {
   16: 'Visual Studio 16 2019'
 };
 
-async function varsForVSInstallation(inst: VSInstallation, arch: string): Promise<Map<string, string>|null> {
-  console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} arch:${arch}`);
+async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string>|null> {
+  console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
-  let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', 'vcvarsall.bat');
+  let vcvarsScript: string = 'vcvarsall.bat';
+  if (targetArch == "arm" || targetArch == "arm64") {
+    // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
+    vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
+  }
+
+  let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', vcvarsScript);
   const majorVersion = parseInt(inst.installationVersion);
   if (majorVersion < 15) {
-    devbat = path.join(inst.installationPath, 'VC', 'vcvarsall.bat');
+    devbat = path.join(inst.installationPath, 'VC', vcvarsScript);
   }
-  const variables = await collectDevBatVars(devbat, [`${arch}`], majorVersion, common_dir);
+
+  // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
+  // in the given VS installation.
+  if (!await fs.exists(devbat)) {
+    return null;
+  }
+
+  const variables = await collectDevBatVars(devbat, [kitHostTargetArch(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
   if (!variables) {
     return null;
   } else {
@@ -577,11 +703,11 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
     variables.set('CC', 'cl.exe');
     variables.set('CXX', 'cl.exe');
 
-    if (null !== paths.ninjaPath) {
+    if (paths.ninjaPath) {
       let envPATH = variables.get('PATH');
       if (undefined !== envPATH) {
         const env_paths = envPATH.split(';');
-        const ninja_path = path.dirname(paths.ninjaPath);
+        const ninja_path = path.dirname(paths.ninjaPath!);
         const ninja_base_path = env_paths.find(path_el => path_el === ninja_path);
         if (undefined === ninja_base_path) {
           envPATH = envPATH.concat(';' + ninja_path);
@@ -597,22 +723,24 @@ async function varsForVSInstallation(inst: VSInstallation, arch: string): Promis
 /**
  * Try to get a VSKit from a VS installation and architecture
  * @param inst A VS installation from vswhere
- * @param arch The architecture to try
+ * @param hostArch The host architecture
+ * @param targetArch The target architecture
  */
-async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?: ProgressReporter): Promise<Kit|null> {
-  const name = kitName(inst, arch);
+async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string, targetArch: string, pr?: ProgressReporter): Promise<Kit|null> {
+  const name = vsKitName(inst, hostArch, targetArch);
   log.debug(localize('checking.for.kit', 'Checking for kit: {0}', name));
   if (pr) {
     pr.report({message: localize('checking', 'Checking {0}', name)});
   }
-  const variables = await varsForVSInstallation(inst, arch);
-  if (!variables)
+  const variables = await varsForVSInstallation(inst, hostArch, targetArch);
+  if (!variables) {
     return null;
+  }
 
   const kit: Kit = {
     name,
     visualStudio: kitVSName(inst),
-    visualStudioArchitecture: arch,
+    visualStudioArchitecture: hostArch
   };
 
   const version = /^(\d+)+./.exec(inst.installationVersion);
@@ -626,7 +754,9 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, arch: string, pr?
       log.debug(` ${localize('generator.present', 'Generator Present: {0}', generatorName)}`);
       kit.preferredGenerator = {
         name: generatorName,
-        platform: VsArchitectures[arch] as string || undefined,
+        platform: generatorPlatformFromVSArch[targetArch] as string || targetArch,
+        // CMake generator toolsets support also different versions (via -T version=).
+        toolset: "host=" + hostArch
       };
     }
     log.debug(` ${localize('selected.preferred.generator.name', 'Selected Preferred Generator Name: {0} {1}', generatorName, JSON.stringify(kit.preferredGenerator))}`);
@@ -642,12 +772,24 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   const installs = await vsInstallations();
   const prs = installs.map(async(inst): Promise<Kit[]> => {
     const ret = [] as Kit[];
-    const arches = ['x86', 'amd64', 'x86_amd64', 'x86_arm', 'amd64_arm', 'amd64_x86'];
-    const sub_prs = arches.map(arch => tryCreateNewVCEnvironment(inst, arch, pr));
+    const hostArches: string[] = ['x86', 'x64'];
+    const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
+
+    const sub_prs: Promise<Kit | null>[] = [];
+    hostArches.forEach(hostArch => {
+      targetArches.forEach(targetArch => {
+        const kit: Promise<Kit | null> = tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr);
+        if (kit) {
+          sub_prs.push(kit);
+        }
+      });
+    });
+
     const maybe_kits = await Promise.all(sub_prs);
     maybe_kits.map(k => k ? ret.push(k) : null);
     return ret;
-  });
+});
+
   const vs_kits = await Promise.all(prs);
   return ([] as Kit[]).concat(...vs_kits);
 }
@@ -709,16 +851,27 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
   if (!requested) {
     return null;
   }
-  return varsForVSInstallation(requested, kit.visualStudioArchitecture!);
+
+  return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
 }
 
 export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {
-  const host_env = objectPairs(process.env) as [string, string][];
+  let host_env;
   const kit_env = objectPairs(kit.environmentVariables || {});
   if (opts) {
     for (const env_var of kit_env) {
       env_var[1] = await expand.expandString(env_var[1], opts);
     }
+  }
+  if (kit.environmentSetupScript) {
+    const shell_vars = await getShellScriptEnvironment(kit);
+    if (shell_vars) {
+      host_env = util.map(shell_vars, ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]) as [string, string][];
+    }
+  }
+  if (host_env === undefined) {
+    // get host_env from process if it was not set by shell script before
+    host_env = objectPairs(process.env) as [string, string][];
   }
   if (kit.visualStudio && kit.visualStudioArchitecture) {
     const vs_vars = await getVSKitEnvironment(kit);
@@ -840,6 +993,23 @@ export async function scanForKits(opt?: KitScanOptions) {
   });
 }
 
+// Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
+export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<boolean> {
+  const kitsVersionSaved = context.globalState.get<number>('kitsVersionSaved');
+  const kitsVersionCurrent = 2;
+
+  // Scan also when there is no kits version saved in the state.
+  if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
+       process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
+    log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
+    await kitsController.KitsController.scanForKits();
+    context.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
@@ -851,7 +1021,8 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
   if (kit.visualStudio) {
     const inst = await getVSInstallForKit(kit);
     if (inst) {
-      return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(inst), kit.visualStudioArchitecture);
+      const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+      return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(inst), hostTargetArch);
     }
     return '';
   }

@@ -15,7 +15,6 @@ import {
   kitsPathForWorkspaceFolder,
   OLD_USER_KITS_FILEPATH,
   SpecialKits,
-  UnspecifiedKit,
   SpecialKitsCount
 } from '@cmt/kit';
 import * as logging from '@cmt/logging';
@@ -42,6 +41,9 @@ export class KitsController {
    * The kits available from the user-local kits file
    */
   static userKits: Kit[] = [];
+
+  private static checkingHaveKits = false;
+  public static isScanningForKits() { return this.checkingHaveKits; }
 
   folderKits: Kit[] = [];
 
@@ -164,62 +166,31 @@ export class KitsController {
     return raw_name;
   }
 
-  private async _checkHaveKits(): Promise<UnspecifiedKit|'ok'|'cancel'> {
+  private async _checkHaveKits(): Promise<boolean> {
     const avail = this.availableKits;
     if (avail.length > SpecialKitsCount) {
       // We have kits. Okay.
-      return 'ok';
+      return true;
     }
     if (!avail.find(kit => kit.name == SpecialKits.Unspecified)) {
       // We should _always_ have the 'UnspecifiedKit'.
       rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
-      return 'ok';
+      return false;
     }
-    // We don't have any kits defined. Ask the user what to do. This is safe to block
-    // because it is a modal dialog
-    interface FirstScanItem extends vscode.MessageItem {
-      action: 'scan'|UnspecifiedKit|'cancel';
-    }
-    const choices: FirstScanItem[] = [
-      {
-        title: localize('scan.for.kits.button', 'Scan for kits'),
-        action: 'scan',
-      },
-      {
-        title: localize('do.not.use.kit.button', 'Do not use a kit'),
-        action: SpecialKits.Unspecified,
-      },
-      {
-        title: localize('close.button', 'Close'),
-        isCloseAffordance: true,
-        action: 'cancel',
-      }
-    ];
-    const chosen = await vscode.window.showInformationMessage(
-        localize('no.kits.available', 'No CMake kits are available. What would you like to do?'),
-        {modal: true},
-        ...choices,
-    );
-    if (!chosen) {
-      // User closed the dialog
-      return 'cancel';
-    }
-    switch (chosen.action) {
-    case 'scan': {
+
+    // We don't have any kits defined. Scan for kits
+    if (!KitsController.checkingHaveKits) {
+      KitsController.checkingHaveKits = true;
       if (!KitsController.minGWSearchDirs) {
         await KitsController.scanForKits();
       } else {
         await vscode.commands.executeCommand('cmake.scanForKits');
       }
-      return 'ok';
-    }
-    case SpecialKits.Unspecified: {
-      await this.setFolderActiveKit({name: SpecialKits.Unspecified});
-      return SpecialKits.Unspecified as UnspecifiedKit;
-    }
-    case 'cancel': {
-      return 'cancel';
-    }
+      KitsController.checkingHaveKits = false;
+      return true;
+    } else {
+      rollbar.error(localize('already.checking.kits', 'Already checking kits. Please try again later.'));
+      return false;
     }
   }
 
@@ -229,18 +200,10 @@ export class KitsController {
    * Show UI to allow the user to select an active kit
    */
   async selectKit(): Promise<boolean> {
-    // Check that we have kits, or if the user doesn't want to use a kit.
+    // Check that we have kits
     const state = await this._checkHaveKits();
-    switch (state) {
-    case 'cancel':
-      // The user doesn't want to perform any special action
+    if (!state) {
       return false;
-    case SpecialKits.Unspecified:
-      // The user chose to use the 'UnspecifiedKit'
-      return true;
-    case 'ok':
-      // 'ok' means we have kits defined and should do regular kit selection
-      break;
     }
 
     const avail = this.availableKits;
