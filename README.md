@@ -1,24 +1,18 @@
 # CMake Tools
 
-[CMake Tools](https://marketplace.visualstudio.com/items?itemName=vector-of-bool.cmake-tools) provides the native developer a full-featured, convenient, and
-powerful workflow for CMake-based projects in Visual Studio Code.
+[CMake Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools) provides the native developer a full-featured, convenient, and powerful workflow for CMake-based projects in Visual Studio Code.
 
-## Maintainer Changes (7/12/19)
+## Important doc links
 
-**vector-of-bool** has moved on to other things and Microsoft is now maintaining this extension. Thank you **vector-of-bool** for all of your hard work getting
-this extension to where it is today!
-
-# Important Links:
-
-- [Getting started](https://vector-of-bool.github.io/docs/vscode-cmake-tools/getting_started.html)
-- [Configuring a project](https://vector-of-bool.github.io/docs/vscode-cmake-tools/configuring.html)
-- [Building a project](https://vector-of-bool.github.io/docs/vscode-cmake-tools/building.html)
-- [Configuring CMake Tools](https://vector-of-bool.github.io/docs/vscode-cmake-tools/settings.html)
-- [How do I...?](https://vector-of-bool.github.io/docs/vscode-cmake-tools/how_do_i.html)
-- [FAQ](https://vector-of-bool.github.io/docs/vscode-cmake-tools/faq.html)
-- [Read the online documentation](https://vector-of-bool.github.io/docs/vscode-cmake-tools/index.html)
-- [Contributing](https://vector-of-bool.github.io/docs/vscode-cmake-tools/development.html)
-- [Read the changelog](https://vector-of-bool.github.io/docs/vscode-cmake-tools/changelog.html)
+- [CMake Tools quick start](https://code.visualstudio.com/docs/cpp/CMake-linux)
+- [Configure a project](docs/how-to.md#configure-a-project)
+- [Build a project](docs/how-to.md#build-a-project)
+- [Debug a project](docs/how-to.md#debug-a-project)
+- [Configure CMake Tools settings](docs/cmake-settings.md)
+- [How to](docs/how-to.md)
+- [FAQ](docs/faq.md)
+- [Read the online documentation](docs/readme.md)
+- [Contribute](docs/contribute.md)
 
 ## Issues? Questions? Feature requests?
 
@@ -35,3 +29,7 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 ### Data/Telemetry
 
 This extension collects usage data and sends it to Microsoft to help improve our products and services. Collection of telemetry is controlled via the same setting provided by Visual Studio Code: `"telemetry.enableTelemetry"`. Read our [privacy statement](https://privacy.microsoft.com/en-us/privacystatement) to learn more.
+
+### Credits
+
+This project was started by [@vector-of-bool](https://github.com/vector-of-bool) and is now currently maintained by Microsoft.
