@@ -21,8 +21,12 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
   public resolveTask(_task: vscode.Task): vscode.Task | undefined {
     const task = _task.definition.task;
     if (task) {
-      const definition: CMakeTaskDefinition = <any>_task.definition;
-      return new vscode.Task(definition, definition.task, CMakeTaskProvider.CMakeType, new vscode.ShellExecution("${command:cmake." + `${definition.task}` + "}"));
+      return new vscode.Task(
+        _task.definition,
+        task,
+        CMakeTaskProvider.CMakeType,
+        new vscode.ShellExecution("${command:cmake." + `${task}` + "}")
+      );
     }
     return undefined;
   }
