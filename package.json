@@ -72,7 +72,8 @@
     "onCommand:cmake.outline.configureAll",
     "onCommand:cmake.outline.buildAll",
     "workspaceContains:**/CMakeLists.txt",
-    "workspaceContains:.vscode/cmake-kits.json"
+    "workspaceContains:.vscode/cmake-kits.json",
+    "onCommand:workbench.action.tasks.runTask"
   ],
   "main": "./dist/main",
   "contributes": {
@@ -418,6 +419,20 @@
         "command": "cmake.outline.revealInCMakeLists",
         "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "cmake",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "CMake command"
+          }
+        }
       }
     ],
     "menus": {
@@ -1467,7 +1482,7 @@
                   ]
                 },
                 "color": {
-                  "type":"boolean",
+                  "type": "boolean",
                   "default": false,
                   "description": "%cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description%"
                 }

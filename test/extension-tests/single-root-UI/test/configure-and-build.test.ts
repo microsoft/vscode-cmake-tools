@@ -35,24 +35,23 @@ suite('Build', async () => {
 
     const build_loc = 'build';
     const exe_res = 'output.txt';
+    const taskType = "cmake";
 
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
 
     configureTask = new vscode.Task(
-      { type: "build" },
+      { type: taskType, command: "configure" },
       vscode.TaskScope.Workspace,
       "Configure",
-      "shell",
-      new vscode.ShellExecution("${command:cmake.configure}", { cwd: testEnv.projectFolder.location })
+      taskType
     );
 
     buildTask = new vscode.Task(
-      { type: "build" },
+      { type: taskType, command: "build" },
       vscode.TaskScope.Workspace,
       "Build",
-      "shell",
-      new vscode.ShellExecution("${command:cmake.build}", { cwd: testEnv.projectFolder.location })
+      taskType
     );
 
     // This test will use all on the same kit.

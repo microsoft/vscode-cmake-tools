@@ -47,7 +47,7 @@
             "isBackground": true,
             "presentation": {
                 "echo": false,
-                "reveal": "never",
+                "reveal": "silent",
                 "showReuseMessage": false,
                 "clear": true
             }
