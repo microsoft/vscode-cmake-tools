@@ -34,6 +34,7 @@
 	"scanning.for.kits": "Es wird nach Kits gesucht.",
 	"scanning.for.cmake.kits": "Es wird nach CMake-Kits gesucht...",
 	"found.kit": "Kit gefunden: {0}",
+	"silent.kits.rescan": "Detected kits definition version change from {0} to {1}. Silently scanning for kits.",
 	"kit.for.toolchain.file": "Kit für Toolkettendatei \"{0}\"",
 	"using.compilers.for": "Compiler für {0} werden verwendet ({1}-Architektur).",
 	"using.compilers": "Compiler werden verwendet: {0}",
