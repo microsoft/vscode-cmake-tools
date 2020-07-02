@@ -11,5 +11,5 @@
 	"build.all.target": "Cible spéciale pour générer toutes les cibles disponibles",
 	"install.all.target": "Cible spéciale pour installer toutes les cibles disponibles",
 	"utility.target": "Cible de l'utilitaire",
-	"cmakelists.save.trigger.reconfigure": "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."
+	"cmakelists.save.trigger.reconfigure": "Mise à jour du paramètre 'cmake.sourceDirectory' détectée, tentative de reconfiguration automatique..."
 }

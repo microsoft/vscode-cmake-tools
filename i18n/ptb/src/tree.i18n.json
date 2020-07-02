@@ -14,8 +14,8 @@
 	"item.render.issue": "Houve um problema ao renderizar este item. Isso é um bug",
 	"empty.project": "Projeto vazio",
 	"update.project.with.mismatch": "Atualizar o projeto com propriedade de nome incompatível",
-	"workspace.active": "Active Workspace",
+	"workspace.active": "Workspace Ativo",
 	"workspace": "Workspace",
-	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that has not yet been loaded.",
+	"error.update.code.model.on.nonexist.folder": "Atualizando o modelo de código em uma pasta que ainda não foi carregada.",
 	"error.rendering.children.nodes": "Erro ao renderizar os nós filhos"
 }

@@ -14,8 +14,8 @@
 	"item.render.issue": "Un problème s'est produit durant le rendu de cet élément. Il s'agit d'un bogue",
 	"empty.project": "Projet vide",
 	"update.project.with.mismatch": "Mettre à jour le projet avec une propriété name incompatible",
-	"workspace.active": "Active Workspace",
-	"workspace": "Workspace",
-	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that has not yet been loaded.",
+	"workspace.active": "Espace de travail actif",
+	"workspace": "Espace de travail",
+	"error.update.code.model.on.nonexist.folder": "Mise à jour du modèle de code sur un dossier qui n'a pas encore été chargé.",
 	"error.rendering.children.nodes": "Erreur durant le rendu des nœuds enfants"
 }
