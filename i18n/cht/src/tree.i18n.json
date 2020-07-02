@@ -15,7 +15,7 @@
 	"empty.project": "空白專案",
 	"update.project.with.mismatch": "更新具有不符名稱屬性的專案",
 	"workspace.active": "Active Workspace",
-	"workspace": "Workspace",
+	"workspace": "工作區",
 	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that has not yet been loaded.",
 	"error.rendering.children.nodes": "轉譯子節點時發生錯誤"
 }

@@ -16,7 +16,7 @@
 	"never.for.this.workspace.button": "Not this workspace",
 	"persist.config.on.open.setting": "保存 config-on-open 設定",
 	"configuring.workspace.on.open": "正在於開啟的 {0} 上設定工作區",
-	"configure.now.button": "Configure Now",
+	"configure.now.button": "立即設定",
 	"configure.recommended": "It is recommended to reconfigure after upgrading to a new kits definition.",
 	"update.code.model.for.cpptools": "更新 cpptools 的程式碼模型",
 	"filed.to.open.cache.file.on.code.model.update": "無法在程式碼模型更新時開啟 CMake 快取檔案",
