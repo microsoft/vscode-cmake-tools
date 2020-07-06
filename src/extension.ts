@@ -93,7 +93,7 @@ class ExtensionManager implements vscode.Disposable {
     });
     this._folders.onAfterRemoveFolder (async folder => {
       console.assert((vscode.workspace.workspaceFolders === undefined && this._folders.size === 0) ||
-                    (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this._folders.size));
+                     (vscode.workspace.workspaceFolders !== undefined && vscode.workspace.workspaceFolders.length === this._folders.size));
       this._codeModelUpdateSubs.delete(folder.uri.fsPath);
       if (!vscode.workspace.workspaceFolders?.length) {
         await this._setActiveFolder(undefined);
@@ -345,8 +345,8 @@ class ExtensionManager implements vscode.Disposable {
     // Silent re-scan when detecting a breaking change in the kits definition.
     // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
     const silentScanForKitsNeeded: boolean = vscode.workspace.workspaceFolders !== undefined &&
-                                            vscode.workspace.workspaceFolders[0] === cmt.folder &&
-                                            await scanForKitsIfNeeded(cmt.extensionContext);
+                                             vscode.workspace.workspaceFolders[0] === cmt.folder &&
+                                             await scanForKitsIfNeeded(cmt.extensionContext);
 
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
@@ -467,7 +467,7 @@ class ExtensionManager implements vscode.Disposable {
 
   private _initActiveFolder() {
     if (vscode.window.activeTextEditor && this._workspaceConfig.autoSelectActiveFolder) {
-      return this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
+       return this._onDidChangeActiveTextEditor(vscode.window.activeTextEditor);
     }
     const activeFolder = this.extensionContext.workspaceState.get<string>('activeFolder');
     let folder: vscode.WorkspaceFolder | undefined;
@@ -496,12 +496,12 @@ class ExtensionManager implements vscode.Disposable {
 
   private _disposeSubs() {
     for (const sub of [this._statusMessageSub,
-                      this._targetNameSub,
-                      this._buildTypeSub,
-                      this._launchTargetSub,
-                      this._ctestEnabledSub,
-                      this._testResultsSub,
-                      this._isBusySub,
+                       this._targetNameSub,
+                       this._buildTypeSub,
+                       this._launchTargetSub,
+                       this._ctestEnabledSub,
+                       this._testResultsSub,
+                       this._isBusySub,
     ]) {
       sub.dispose();
     }
@@ -588,7 +588,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private readonly _kitsWatcher =
       util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH, {ignoreInitial: true}),
-                              _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
+                               _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
 
   /**
    * Set the current kit for the specified workspace folder
