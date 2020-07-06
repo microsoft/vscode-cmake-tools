@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "Marca de control del estándar C desconocida: {0}",
 	"unknown.control.gflag": "Marca de control del estándar desconocida: {0}",
 	"unknown language": "Lenguaje desconocido: {0}",
-	"method.not.implemented": "El método no está implementado.",
 	"path.not.found.in.cmake.cache": "No se encontró la ruta de acceso al compilador de uno o más archivos de código fuente en la memoria caché de CMake. Si usa un archivo de cadena de herramientas, probablemente deba especificar la opción CACHE al establecer la ruta de acceso del compilador de C o C++."
 }

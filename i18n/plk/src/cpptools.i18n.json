@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "Nieznana flaga kontrolki standardowej języka C: {0}",
 	"unknown.control.gflag": "Nieznana flaga kontrolki standardowej: {0}",
 	"unknown language": "Nieznany język: {0}",
-	"method.not.implemented": "Metoda nie jest zaimplementowana.",
 	"path.not.found.in.cmake.cache": "W pamięci podręcznej narzędzia CMake nie znaleziono ścieżki do kompilatora dla co najmniej jednego pliku źródłowego. Jeśli jest używany plik łańcucha narzędzi, prawdopodobnie oznacza to, że należy określić opcję CACHE w ramach ustawiania ścieżki kompilatora języka C i/lub C++."
 }

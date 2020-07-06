@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "正在尝试检测系统支持的生成器",
 	"start.configure": "开始配置",
 	"cmake.flags.are": "CMake 标志为 {0}",
+	"configure.failed": "未能配置项目",
 	"no.kit.is.set": "未设置任何工具包!",
 	"using.compilers.in.for.configure": "正在使用 {0} 中的编译器进行配置",
 	"using.cmake.toolchain.for.configure": "正在使用 CMake 工具链 {0} 进行配置",

@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "Unbekanntes C-Standardsteuerungsflag: {0}",
 	"unknown.control.gflag": "Unbekanntes Standardsteuerungsflag: {0}",
 	"unknown language": "Unbekannte Sprache: {0}",
-	"method.not.implemented": "Die Methode ist nicht implementiert.",
 	"path.not.found.in.cmake.cache": "Für mindestens eine Quelldatei wurde der Pfad zum Compiler nicht im CMake-Cache gefunden. Wenn Sie eine Toolkettendatei verwenden, müssen Sie beim Festlegen des C- und/oder C++-Compilerpfads wahrscheinlich die CACHE-Option angeben."
 }
