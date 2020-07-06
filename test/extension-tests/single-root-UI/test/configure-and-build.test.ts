@@ -27,7 +27,6 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
-  let configureTask: vscode.Task;
   let buildTask: vscode.Task;
 
   suiteSetup(async function(this: Mocha.IHookCallbackContext) {
@@ -40,17 +39,10 @@ suite('Build', async () => {
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
 
-    configureTask = new vscode.Task(
-      { type: taskType, command: "configure" },
-      vscode.TaskScope.Workspace,
-      "Configure",
-      taskType
-    );
-
     buildTask = new vscode.Task(
       { type: taskType, command: "build" },
       vscode.TaskScope.Workspace,
-      "Build",
+      "build",
       taskType
     );
 
@@ -100,13 +92,6 @@ suite('Build', async () => {
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(100000);
 
-  test('Configure (Task)', async () => {
-    const configureResult = await vscode.tasks.executeTask(configureTask);
-    expect(configureResult).to.be.an('object');
-
-    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
-  }).timeout(100000);
-
   test('Build', async () => {
     expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
 
@@ -125,16 +110,6 @@ suite('Build', async () => {
   test('Configure and Build', async () => {
     expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0);
     expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
-
-    const result = await testEnv.result.getResultAsJson();
-    expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(100000);
-
-  test('Configure and Build (Tasks)', async () => {
-    const configureResult = await vscode.tasks.executeTask(configureTask);
-    expect(configureResult).to.be.an('object');
-    const buildResult = await vscode.tasks.executeTask(buildTask);
-    expect(buildResult).to.be.an('object');
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
