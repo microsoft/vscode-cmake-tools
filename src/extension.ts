@@ -48,15 +48,15 @@ type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
 
 /**
-* A class to manage the extension.
-*
-* Yeah, yeah. It's another "Manager", but this is to be the only one.
-*
-* This is the true "singleton" of the extension. It acts as the glue between
-* the lower layers and the VSCode UX. When a user presses a button to
-* necessitate user input, this class acts as intermediary and will send
-* important information down to the lower layers.
-*/
+ * A class to manage the extension.
+ *
+ * Yeah, yeah. It's another "Manager", but this is to be the only one.
+ *
+ * This is the true "singleton" of the extension. It acts as the glue between
+ * the lower layers and the VSCode UX. When a user presses a button to
+ * necessitate user input, this class acts as intermediary and will send
+ * important information down to the lower layers.
+ */
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
     telemetry.activate();
@@ -141,8 +141,8 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
   /**
-  * Second-phase async init
-  */
+   * Second-phase async init
+   */
   private async _init() {
     let isMultiRoot = false;
     if (vscode.workspace.workspaceFolders) {
@@ -195,9 +195,9 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Create a new extension manager instance. There must only be one!
-  * @param ctx The extension context
-  */
+   * Create a new extension manager instance. There must only be one!
+   * @param ctx The extension context
+   */
   static async create(ctx: vscode.ExtensionContext) {
     const inst = new ExtensionManager(ctx);
     await inst._init();
@@ -205,13 +205,13 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * The folder controller manages multiple instances. One per folder.
-  */
+   * The folder controller manages multiple instances. One per folder.
+   */
   private readonly _folders = new CMakeToolsFolderController(this.extensionContext);
 
   /**
-  * The status bar controller
-  */
+   * The status bar controller
+   */
   private readonly _statusBar = new StatusBar(this._workspaceConfig);
   // Subscriptions for status bar items:
   private _statusMessageSub: vscode.Disposable = new DummyDisposable();
@@ -227,8 +227,8 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _codeModelUpdateSubs = new Map<string, vscode.Disposable[]>();
 
   /**
-  * The project outline tree data provider
-  */
+   * The project outline tree data provider
+   */
   private readonly _projectOutlineProvider = new ProjectOutlineProvider();
   private readonly _projectOutlineTreeView = vscode.window.createTreeView('cmake.outline', {
     treeDataProvider: this._projectOutlineProvider,
@@ -236,9 +236,9 @@ class ExtensionManager implements vscode.Disposable {
   });
 
   /**
-  * CppTools project configuration provider. Tells cpptools how to search for
-  * includes, preprocessor defs, etc.
-  */
+   * CppTools project configuration provider. Tells cpptools how to search for
+   * includes, preprocessor defs, etc.
+   */
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
   private _configProviderRegister?: Promise<void>;
@@ -279,11 +279,11 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Ensure that there is an active kit for the current CMakeTools.
-  *
-  * @returns `false` if there is not active CMakeTools, or it has no active kit
-  * and the user cancelled the kit selection dialog.
-  */
+   * Ensure that there is an active kit for the current CMakeTools.
+   *
+   * @returns `false` if there is not active CMakeTools, or it has no active kit
+   * and the user cancelled the kit selection dialog.
+   */
   private async _ensureActiveKit(cmt?: CMakeTools): Promise<boolean> {
     if (!cmt) {
       cmt = this._folders.activeFolder?.cmakeTools;
@@ -307,15 +307,15 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Dispose of the CMake Tools extension.
-  *
-  * If you can, prefer to call `asyncDispose`, which awaits on the children.
-  */
+   * Dispose of the CMake Tools extension.
+   *
+   * If you can, prefer to call `asyncDispose`, which awaits on the children.
+   */
   dispose() { rollbar.invokeAsync(localize('dispose.cmake.tools', 'Dispose of CMake Tools'), () => this.asyncDispose()); }
 
   /**
-  * Asynchronously dispose of all the child objects.
-  */
+   * Asynchronously dispose of all the child objects.
+   */
   async asyncDispose() {
     this._disposeSubs();
     this._codeModelUpdateSubs.forEach(
@@ -445,8 +445,8 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Show UI to allow the user to select an active kit
-  */
+   * Show UI to allow the user to select an active kit
+   */
   async selectActiveFolder() {
     if (vscode.workspace.workspaceFolders?.length) {
       const lastActiveFolderPath = this._folders.activeFolder?.folder.uri.fsPath;
@@ -481,10 +481,10 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Set the active workspace folder. This reloads a lot of different bits and
-  * pieces to control which backend has control and receives user input.
-  * @param ws The workspace to activate
-  */
+   * Set the active workspace folder. This reloads a lot of different bits and
+   * pieces to control which backend has control and receives user input.
+   * @param ws The workspace to activate
+   */
   private async _setActiveFolder(ws: vscode.WorkspaceFolder | undefined) {
     // Set the new workspace
     this._folders.setActiveFolder(ws);
@@ -584,16 +584,16 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Watches for changes to the kits file
-  */
+   * Watches for changes to the kits file
+   */
   private readonly _kitsWatcher =
       util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH, {ignoreInitial: true}),
                               _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
 
   /**
-  * Set the current kit for the specified workspace folder
-  * @param k The kit
-  */
+   * Set the current kit for the specified workspace folder
+   * @param k The kit
+   */
   async _setFolderKit(wsf: vscode.WorkspaceFolder, k: Kit|null) {
     const cmtFolder = this._folders.get(wsf);
     // Ignore if folder doesn't exist
@@ -603,8 +603,8 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Opens a text editor with the user-local `cmake-kits.json` file.
-  */
+   * Opens a text editor with the user-local `cmake-kits.json` file.
+   */
   async editKits(): Promise<vscode.TextEditor|null> {
     log.debug(localize('opening.text.editor.for', 'Opening text editor for {0}', USER_KITS_FILEPATH));
     if (!await fs.exists(USER_KITS_FILEPATH)) {
@@ -654,8 +654,8 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Get the current MinGW search directories
-  */
+   * Get the current MinGW search directories
+   */
   private _getMinGWDirs(): string[] {
     const result = new Set<string>();
     for (const dir of this._workspaceConfig.mingwSearchDirs) {
@@ -665,8 +665,8 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Show UI to allow the user to select an active kit
-  */
+   * Show UI to allow the user to select an active kit
+   */
   async selectKit(folder?: vscode.WorkspaceFolder): Promise<boolean> {
     if (process.env['CMT_TESTING'] === '1') {
       log.trace(localize('running.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
@@ -691,9 +691,9 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Set the current kit used in the specified folder by name of the kit
-  * For backward compatibility, apply kitName to all folders if folder is undefined
-  */
+   * Set the current kit used in the specified folder by name of the kit
+   * For backward compatibility, apply kitName to all folders if folder is undefined
+   */
   async setKitByName(kitName: string, folder?: vscode.WorkspaceFolder) {
     if (folder) {
       await this._folders.get(folder)?.kitsController.setKitByName(kitName);
@@ -840,10 +840,10 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   /**
-  * Compile a single source file.
-  * @param file The file to compile. Either a file path or the URI to the file.
-  * If not provided, compiles the file in the active text editor.
-  */
+   * Compile a single source file.
+   * @param file The file to compile. Either a file path or the URI to the file.
+   * If not provided, compiles the file in the active text editor.
+   */
   async compileFile(file?: string|vscode.Uri) {
     this._cleanOutputChannel();
     if (file instanceof vscode.Uri) {
@@ -949,9 +949,9 @@ class ExtensionManager implements vscode.Disposable {
 }
 
 /**
-* The global extension manager. There is only one of these, even if multiple
-* backends.
-*/
+ * The global extension manager. There is only one of these, even if multiple
+ * backends.
+ */
 let _EXT_MANAGER: ExtensionManager|null = null;
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
@@ -1104,10 +1104,10 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
 let cmakeTaskProvider: vscode.Disposable | undefined;
 
 /**
-* Starts up the extension.
-* @param context The extension context
-* @returns A promise that will resolve when the extension is ready for use
-*/
+ * Starts up the extension.
+ * @param context The extension context
+ * @returns A promise that will resolve when the extension is ready for use
+ */
 export async function activate(context: vscode.ExtensionContext) {
     // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
     // because the publisher changed (from vector-of-bool into ms-vscode),
@@ -1121,7 +1121,7 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
-// Refister a task provider to resolve tasks
+// Register a task provider to resolve tasks
 cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider());
 
   await vscode.window.withProgress(
