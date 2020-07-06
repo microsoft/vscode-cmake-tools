@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "未知的 C 標準控制旗標: {0}",
 	"unknown.control.gflag": "未知的標準控制旗標: {0}",
 	"unknown language": "未知的語言: {0}",
-	"method.not.implemented": "方法未實作。",
 	"path.not.found.in.cmake.cache": "在 CMake 快取中找不到一或多個來源檔案的編譯器路徑。如果您目前使用工具鏈檔案，這可能意味著您必須在設定 C 和 (或) C++ 編譯器路徑時指定 CACHE 選項"
 }

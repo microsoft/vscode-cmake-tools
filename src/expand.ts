@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import {createLogger} from './logging';
 import {EnvironmentVariables} from './proc';
-import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths} from './util';
+import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths, errorToString} from './util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -129,7 +129,9 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     try {
       const command_ret = await vscode.commands.executeCommand(command, opts.vars.workspaceFolder);
       subs.set(full, `${command_ret}`);
-    } catch (e) { log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} ({2})', command, tmpl, e)); }
+    } catch (e) {
+      log.warning(localize('exception.executing.command', 'Exception while executing command {0} for string: {1} {2}', command, tmpl, errorToString(e)));
+    }
   }
 
   let final_str = tmpl;

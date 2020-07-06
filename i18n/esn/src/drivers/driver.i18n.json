@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "Intentando detectar el generador que el sistema admite",
 	"start.configure": "Iniciar la configuración",
 	"cmake.flags.are": "Las marcas de CMake son {0}",
+	"configure.failed": "No se pudo configurar el proyecto.",
 	"no.kit.is.set": "No se ha establecido ningún kit.",
 	"using.compilers.in.for.configure": "Usando los compiladores en {0} para configurar",
 	"using.cmake.toolchain.for.configure": "Usando la cadena de herramientas de CMake {0} para configurar",

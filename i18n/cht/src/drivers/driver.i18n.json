@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "正在嘗試偵測系統支援的產生器",
 	"start.configure": "啟動設定",
 	"cmake.flags.are": "CMake 旗標為 {0}",
+	"configure.failed": "無法設定專案",
 	"no.kit.is.set": "未設定套件!",
 	"using.compilers.in.for.configure": "正在使用 {0} 中的編譯器進行設定",
 	"using.cmake.toolchain.for.configure": "正在使用 CMake 工具鏈 {0} 進行設定",

@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "Tentando detectar o gerador compatível com o sistema",
 	"start.configure": "Iniciar a configuração",
 	"cmake.flags.are": "Sinalizadores do CMake: {0}",
+	"configure.failed": "Falha ao configurar o projeto",
 	"no.kit.is.set": "Nenhum kit está definido!",
 	"using.compilers.in.for.configure": "Usando compiladores em {0} para configurar",
 	"using.cmake.toolchain.for.configure": "Usando a cadeia de ferramentas CMake {0} para configurar",

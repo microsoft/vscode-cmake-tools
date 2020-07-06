@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "Tentative de détection du générateur pris en charge par le système",
 	"start.configure": "Démarrer la configuration",
 	"cmake.flags.are": "Indicateurs CMake : {0}",
+	"configure.failed": "Échec de configuration du projet",
 	"no.kit.is.set": "Aucun kit n'est défini !",
 	"using.compilers.in.for.configure": "Utilisation de compilateurs dans {0} pour la configuration",
 	"using.cmake.toolchain.for.configure": "Utilisation de la chaîne d'outils CMake {0} pour la configuration",
