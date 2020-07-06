@@ -29,6 +29,7 @@ import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StateManager} from './state';
 import {StatusBar} from '@cmt/status';
+import {CMakeTaskProvider} from '@cmt/taskprovider';
 import * as telemetry from '@cmt/telemetry';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
 import * as util from '@cmt/util';
@@ -953,6 +954,7 @@ class ExtensionManager implements vscode.Disposable {
  * backends.
  */
 let _EXT_MANAGER: ExtensionManager|null = null;
+let cmakeTaskProvider: vscode.Disposable | undefined;
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, localize('initial.setup', 'Initial setup'));
@@ -1085,6 +1087,12 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.selectWorkspace',
                                       (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
   ]);
+
+  // Register a task provider to resolve tasks
+  // TODO: extend
+  cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({
+      "build": await ext.tasksBuildCommand()
+    }));
 }
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
@@ -1100,8 +1108,6 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
     return fs.readFile(localizedFilePath, "utf8");
   }
 }
-
-let cmakeTaskProvider: vscode.Disposable | undefined;
 
 /**
  * Starts up the extension.
@@ -1120,9 +1126,6 @@ export async function activate(context: vscode.ExtensionContext) {
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
-
-// Register a task provider to resolve tasks
-cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider());
 
   await vscode.window.withProgress(
       {
