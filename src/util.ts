@@ -337,7 +337,17 @@ export function parseVersion(str: string): Version {
   };
 }
 
-export function versionToString(ver: Version): string { return `${ver.major}.${ver.minor}.${ver.patch}`; }
+export function versionToString(ver: Version): string {
+  return `${ver.major}.${ver.minor}.${ver.patch}`;
+}
+
+export function errorToString(e: any): string {
+  if (e.stack) {
+    // e.stack has both the message and the stack in it.
+    return `\n\t${e.stack}`;
+  }
+  return `\n\t${e.toString()}`;
+}
 
 export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<Out>): Iterable<Out> {
   for (const elem of rng) {

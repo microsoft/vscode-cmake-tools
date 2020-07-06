@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "Flag di controllo standard C sconosciuto: {0}",
 	"unknown.control.gflag": "Flag di controllo standard sconosciuto: {0}",
 	"unknown language": "Linguaggio sconosciuto: {0}",
-	"method.not.implemented": "Metodo non implementato.",
 	"path.not.found.in.cmake.cache": "Il percorso del compilatore per uno o più file di origine non è stato trovato nella cache di CMake. Se si usa un file di toolchain, è necessario specificare l'opzione CACHE quando si imposta il percorso del compilatore C e/o C++"
 }

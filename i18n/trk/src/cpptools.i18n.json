@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "Bilinmeyen C standart denetim bayrağı: {0}",
 	"unknown.control.gflag": "Bilinmeyen standart denetim bayrağı: {0}",
 	"unknown language": "Bilinmeyen dil: {0}",
-	"method.not.implemented": "Yöntem uygulanmadı.",
 	"path.not.found.in.cmake.cache": "Bir veya daha fazla kaynak dosya için derleyicinin yolu CMake önbelleğinde bulunamadı. Bir araç zinciri dosyası kullanıyorsanız, bu büyük olasılıkla C ve/veya C++ derleyici yolunuzu ayarlarken CACHE seçeneğini belirtmeniz gerektiği anlamına gelir"
 }

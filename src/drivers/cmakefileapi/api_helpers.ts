@@ -58,7 +58,7 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
 
   const expected_version = {major: 2, minor: 0};
   const detected_version = cache_from_cmake.version;
-  if (detected_version.major != expected_version.major || detected_version.minor != expected_version.minor) {
+  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
     log.warning(localize(
         'cache.object.version',
         'Cache object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',

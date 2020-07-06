@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "C 标准控件标志未知: {0}",
 	"unknown.control.gflag": "未知标准控制标志: {0}",
 	"unknown language": "未知语言: {0}",
-	"method.not.implemented": "方法未实现。",
 	"path.not.found.in.cmake.cache": "在 CMake 缓存中找不到适用于一个或多个源文件的编译器的路径。如果使用工具链文件，这可能意味着在设置 C 和/或 C++ 编译器路径时需要指定缓存选项"
 }

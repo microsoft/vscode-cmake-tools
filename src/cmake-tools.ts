@@ -650,14 +650,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       } catch (e) {
         vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
           'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
-          compdb_path, expanded_dest, pardir, e));
+          compdb_path, expanded_dest, pardir, e.toString()));
         return;
       }
       try {
         await fs.copyFile(compdb_path, expanded_dest);
       } catch (e) {
         // Just display the error. It's the best we can do.
-        vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e));
+        vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
         return;
       }
     }
