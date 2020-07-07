@@ -11,7 +11,7 @@
 	"unsetting.kit": "正在取消设置工具包",
 	"loading.kit": "正在加载工具包 {0}",
 	"invalid.only.kit": "唯一的工具包无效。应找到“{0}”",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "已检查工具包，请稍后再试。",
 	"start.selection.of.kits": "开始选择工具包。已找到 {0} 个工具包。",
 	"opening.kit.selection": "正在打开工具包选项快速选择",
 	"scan.for.kits.button": "扫描工具包",
