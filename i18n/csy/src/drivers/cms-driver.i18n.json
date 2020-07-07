@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "Nenašel se žádný odpovídající model kódu pro aktuální typ sestavení. Nemělo by to být možné.",
 	"build.all.target": "Speciální cíl umožňující sestavení všech dostupných cílů",
 	"install.all.target": "Speciální cíl umožňující instalaci všech dostupných cílů",
-	"utility.target": "Cíl nástroje"
+	"utility.target": "Cíl nástroje",
+	"cmakelists.save.trigger.reconfigure": "Zjistila se aktualizace nastavení cmake.sourceDirectory, probíhá pokus o automatickou změnu konfigurace..."
 }

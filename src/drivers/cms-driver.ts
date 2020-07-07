@@ -13,7 +13,8 @@ import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
-import { ConfigurationReader } from '@cmt/config';
+import {ConfigurationReader} from '@cmt/config';
+import {errorToString} from '@cmt/util';
 import * as nls from 'vscode-nls';
 import * as ext from '@cmt/extension';
 
@@ -116,7 +117,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       await cl.compute();
     } catch (e) {
       if (e instanceof cms.ServerError) {
-        log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', e.toString()));
+        log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', errorToString(e)));
         return 1;
       } else {
         throw e;

@@ -34,6 +34,7 @@
 	"scanning.for.kits": "Skanowanie w poszukiwaniu zestawów",
 	"scanning.for.cmake.kits": "Trwa skanowanie w poszukiwaniu zestawów narzędzia CMake...",
 	"found.kit": "Znaleziono zestaw: {0}",
+	"silent.kits.rescan": "Wykryto zmianę wersji definicji zestawów z {0} na {1}. Tras dyskretne skanowanie w poszukiwaniu zestawów.",
 	"kit.for.toolchain.file": "Zestaw dla pliku łańcucha narzędzi {0}",
 	"using.compilers.for": "Użycie kompilatorów dla elementu {0} (architektura {1})",
 	"using.compilers": "Użycie kompilatorów: {0}",

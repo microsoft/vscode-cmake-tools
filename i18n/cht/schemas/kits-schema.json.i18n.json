@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "工具鏈檔案路徑",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Visual Studio 產品名稱",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "要設為目標的架構",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "修改套件環境的指令碼絕對路徑",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "環境變數的值",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "CMake 設定的值",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "設定此套件的慣用 CMake 產生器",

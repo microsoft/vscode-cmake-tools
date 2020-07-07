@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "Indicateur de contrôle de norme C inconnu : {0}",
 	"unknown.control.gflag": "Indicateur de contrôle standard inconnu : {0}",
 	"unknown language": "Langage inconnu : {0}",
-	"method.not.implemented": "Méthode non implémentée.",
 	"path.not.found.in.cmake.cache": "Le chemin du compilateur pour un ou plusieurs fichiers sources est introuvable dans le cache CMake. Si vous utilisez un fichier de chaîne d'outils, cela signifie probablement que vous devez spécifier l'option CACHE au moment de définir le chemin de votre compilateur C et/ou C++"
 }

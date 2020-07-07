@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "找不到與目前組建類型相符的程式碼模型。不可能發生這種情況",
 	"build.all.target": "用來建置所有可用目標的特殊目標",
 	"install.all.target": "用來安裝所有可用目標的特殊目標",
-	"utility.target": "公用程式目標"
+	"utility.target": "公用程式目標",
+	"cmakelists.save.trigger.reconfigure": "偵測到 'cmake.sourceDirectory' 設定更新，正在嘗試自動重新設定..."
 }
