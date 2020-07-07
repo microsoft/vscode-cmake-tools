@@ -11,5 +11,5 @@
 	"build.all.target": "Tüm kullanılabilir hedefleri derlemek için özel bir hedef",
 	"install.all.target": "Tüm kullanılabilir hedefleri yüklemek için özel bir hedef",
 	"utility.target": "Yardımcı program hedefi",
-	"cmakelists.save.trigger.reconfigure": "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."
+	"cmakelists.save.trigger.reconfigure": "'cmake.sourceDirectory' ayarı güncelleştirildi, otomatik olarak yeniden yapılandırılmaya çalışılıyor..."
 }

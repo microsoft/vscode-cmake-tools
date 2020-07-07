@@ -11,5 +11,5 @@
 	"build.all.target": "用來建置所有可用目標的特殊目標",
 	"install.all.target": "用來安裝所有可用目標的特殊目標",
 	"utility.target": "公用程式目標",
-	"cmakelists.save.trigger.reconfigure": "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."
+	"cmakelists.save.trigger.reconfigure": "偵測到 'cmake.sourceDirectory' 設定更新，正在嘗試自動重新設定..."
 }

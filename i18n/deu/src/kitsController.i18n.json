@@ -11,7 +11,7 @@
 	"unsetting.kit": "Die Einstellung des Kits wird aufgehoben.",
 	"loading.kit": "Kit \"{0}\" wird geladen.",
 	"invalid.only.kit": "Nur ungültiges Kit. Erwartet: {0}",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "Kits werden bereits überprüft. Versuchen Sie es später noch mal.",
 	"start.selection.of.kits": "Starten Sie die Auswahl der Kits. {0} Kits gefunden.",
 	"opening.kit.selection": "QuickPick zur Kitauswahl wird geöffnet.",
 	"scan.for.kits.button": "Nach Kits suchen",

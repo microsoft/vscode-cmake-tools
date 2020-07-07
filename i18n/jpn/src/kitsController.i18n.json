@@ -11,7 +11,7 @@
 	"unsetting.kit": "キットの設定を解除しています",
 	"loading.kit": "キット {0} を読み込んでいます",
 	"invalid.only.kit": "キットのみ無効です。`{0}` が必要です",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "キットは既に確認中です。後でもう一度お試しください。",
 	"start.selection.of.kits": "キットの選択を開始します。{0} 個のキットが見つかりました。",
 	"opening.kit.selection": "キット選択 QuickPick を開いています",
 	"scan.for.kits.button": "キットのスキャン",

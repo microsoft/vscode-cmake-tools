@@ -11,7 +11,7 @@
 	"unsetting.kit": "Anulando el kit",
 	"loading.kit": "Cargando el kit {0}",
 	"invalid.only.kit": "Solo un kit no válido. Se esperaba encontrar \"{0}\".",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "Ya se están comprobando los kits. Vuelva a intentarlo más tarde.",
 	"start.selection.of.kits": "Iniciar la selección de kits. Kits encontrados: {0}.",
 	"opening.kit.selection": "Abriendo la selección de kit de QuickPick",
 	"scan.for.kits.button": "Buscar para kits",
