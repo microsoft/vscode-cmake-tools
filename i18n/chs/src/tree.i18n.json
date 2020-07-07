@@ -16,6 +16,6 @@
 	"update.project.with.mismatch": "更新具有不匹配的名称属性的项目",
 	"workspace.active": "活动工作区",
 	"workspace": "工作区",
-	"error.update.code.model.on.nonexist.folder": "Updating code model on folder that has not yet been loaded.",
+	"error.update.code.model.on.nonexist.folder": "正在对尚未加载的文件夹更新代码模型。",
 	"error.rendering.children.nodes": "呈现子节点时出错"
 }

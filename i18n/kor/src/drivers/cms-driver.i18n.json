@@ -11,5 +11,5 @@
 	"build.all.target": "사용 가능한 모든 대상을 빌드할 특수 대상",
 	"install.all.target": "사용 가능한 모든 대상을 설치할 특수 대상",
 	"utility.target": "유틸리티 대상",
-	"cmakelists.save.trigger.reconfigure": "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."
+	"cmakelists.save.trigger.reconfigure": "'cmake.sourceDirectory' 설정 업데이트가 검색되어 자동 다시 구성을 시도하는 중..."
 }

@@ -11,7 +11,7 @@
 	"unsetting.kit": "Set ayarı kaldırılıyor",
 	"loading.kit": "{0} seti yükleniyor",
 	"invalid.only.kit": "Yalnızca set geçersiz. `{0}` bulunması bekleniyordu",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "Setler zaten denetleniyor. Lütfen daha sonra yeniden deneyin.",
 	"start.selection.of.kits": "Set seçimi başladı. {0} set bulundu.",
 	"opening.kit.selection": "QuickPick set seçimi açılıyor",
 	"scan.for.kits.button": "Setler için tara",

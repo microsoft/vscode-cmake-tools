@@ -11,7 +11,7 @@
 	"unsetting.kit": "Cofanie ustawienia zestawu",
 	"loading.kit": "Ładowanie zestawu {0}",
 	"invalid.only.kit": "Jedyny zestaw jest nieprawidłowy. Oczekiwano znalezienia elementu „{0}”.",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "Sprawdzanie zestawów już trwa. Spróbuj ponownie później.",
 	"start.selection.of.kits": "Rozpocznij wybieranie zestawów. Liczba znalezionych zestawów: {0}.",
 	"opening.kit.selection": "Otwieranie elementu QuickPick wyboru zestawu",
 	"scan.for.kits.button": "Skanuj w poszukiwaniu zestawów",
