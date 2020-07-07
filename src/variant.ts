@@ -259,7 +259,9 @@ export class VariantManager implements vscode.Disposable {
         } else {
           new_variants = yaml.load(content) as VarFileRoot;
         }
-      } catch (e) { log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, e)); }
+      } catch (e) {
+        log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, util.errorToString(e)));
+      }
     }
 
     const is_valid = validate(new_variants);

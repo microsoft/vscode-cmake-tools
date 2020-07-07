@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "Não foi localizado nenhum modelo de código correspondente para o tipo de build atual. Isso não deve ser possível",
 	"build.all.target": "Um destino especial para compilar todos os destinos disponíveis",
 	"install.all.target": "Um destino especial para instalar todos os destinos disponíveis",
-	"utility.target": "Destino do utilitário"
+	"utility.target": "Destino do utilitário",
+	"cmakelists.save.trigger.reconfigure": "Foi detectada a atualização da configuração 'cmake.sourceDirectory', tentando reconfigurar automaticamente..."
 }

@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "Próba wykrycia generatora obsługiwanego przez system",
 	"start.configure": "Uruchom konfigurowanie",
 	"cmake.flags.are": "Flagi narzędzia Cmake: {0}",
+	"configure.failed": "Nie udało się skonfigurować projektu",
 	"no.kit.is.set": "Nie ustawiono zestawu!",
 	"using.compilers.in.for.configure": "Użycie kompilatorów w lokalizacji {0} do konfigurowania",
 	"using.cmake.toolchain.for.configure": "Użycie łańcucha narzędzi programu CMake {0} do konfigurowania",

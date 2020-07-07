@@ -7,6 +7,7 @@ import * as util from '@cmt/util';
 import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as kitsController from '@cmt/kitsController';
 
 import {VSInstallation, vsInstallations} from './installs/visual-studio';
 import * as expand from './expand';
@@ -317,7 +318,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
       return [];
     }
   } catch (e) {
-    log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, e));
+    log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
     if (e.code == 'ENOENT') {
       return [];
     }
@@ -350,7 +351,7 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
     try {
       return await kitIfCompiler(bin, pr);
     } catch (e) {
-      log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, e));
+      log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
       if (e.code == 'EACCES') {
         // The binary may not be executable by this user...
         return null;
@@ -702,11 +703,11 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
     variables.set('CC', 'cl.exe');
     variables.set('CXX', 'cl.exe');
 
-    if (null !== paths.ninjaPath) {
+    if (paths.ninjaPath) {
       let envPATH = variables.get('PATH');
       if (undefined !== envPATH) {
         const env_paths = envPATH.split(';');
-        const ninja_path = path.dirname(paths.ninjaPath);
+        const ninja_path = path.dirname(paths.ninjaPath!);
         const ninja_base_path = env_paths.find(path_el => path_el === ninja_path);
         if (undefined === ninja_base_path) {
           envPATH = envPATH.concat(';' + ninja_path);
@@ -993,16 +994,20 @@ export async function scanForKits(opt?: KitScanOptions) {
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<void> {
+export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<boolean> {
   const kitsVersionSaved = context.globalState.get<number>('kitsVersionSaved');
-  const kitsVersionCurrent = 1;
+  const kitsVersionCurrent = 2;
 
   // Scan also when there is no kits version saved in the state.
   if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
-       process.env['CMT_TESTING'] !== '1') {
-    await scanForKits();
+       process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
+    log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
+    await kitsController.KitsController.scanForKits();
     context.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+    return true;
   }
+
+  return false;
 }
 
 /**
@@ -1042,14 +1047,14 @@ export async function readKitsFile(filepath: string): Promise<Kit[]> {
   try {
     kits_raw = json5.parse(content_str.toLocaleString());
   } catch (e) {
-    log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', "cmake-kits.json", e));
+    log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filepath), util.errorToString(e)));
     return [];
   }
   const validator = await loadSchema('schemas/kits-schema.json');
   const is_valid = validator(kits_raw);
   if (!is_valid) {
     const errors = validator.errors!;
-    log.error(localize('invalid.file.error', 'Invalid {0} ({1}):', "cmake-kits.json", filepath));
+    log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filepath), filepath));
     for (const err of errors) {
       log.error(` >> ${err.dataPath}: ${err.message}`);
     }

@@ -91,9 +91,9 @@ suite('CppTools tests', () => {
     expect(mode).to.eql('msvc-x64');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//x86//cl.exe', undefined);
     expect(mode).to.eql('msvc-x86');
-    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//arm//cl.exe', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//ARM//cl.exe', undefined);
     expect(mode).to.eql('msvc-arm');
-    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//arm64//cl.exe', undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'bin//Hostx64//ARM64//cl.exe', undefined);
     expect(mode).to.eql('msvc-arm64');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'cl.exe', undefined);
     expect(mode).to.eql('msvc-x64');

@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "시스템에서 지원되는 생성기를 검색하는 중",
 	"start.configure": "구성 시작",
 	"cmake.flags.are": "CMake 플래그가 {0}임",
+	"configure.failed": "프로젝트를 구성하지 못함",
 	"no.kit.is.set": "키트가 설정되지 않았습니다.",
 	"using.compilers.in.for.configure": "구성을 위해 {0}의 컴파일러를 사용하는 중",
 	"using.cmake.toolchain.for.configure": "구성을 위해 CMake 도구 체인 {0}을(를) 사용하는 중",
