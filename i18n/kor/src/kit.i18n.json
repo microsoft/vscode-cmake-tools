@@ -34,6 +34,7 @@
 	"scanning.for.kits": "키트를 검색하는 중",
 	"scanning.for.cmake.kits": "CMake 키트를 검색하는 중...",
 	"found.kit": "찾은 키트: {0}",
+	"silent.kits.rescan": "{0}에서 {1}(으)로의 키트 정의 버전 변경이 검색되었습니다. 키트를 자동으로 검사합니다.",
 	"kit.for.toolchain.file": "도구 체인 파일 {0}용 키트",
 	"using.compilers.for": "{0}({1} 아키텍처)에 대한 컴파일러를 사용하는 중",
 	"using.compilers": "컴파일러를 사용하는 중: {0}",

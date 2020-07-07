@@ -1,4 +1,3 @@
-import * as util from '@cmt/util';
 import * as vscode from 'vscode';
 
 /**
@@ -26,15 +25,11 @@ export class StateManager {
    * Whether the user chose to ignore the popup message about missing CMakeLists.txt
    * from the root folder, for a code base that is not fully activating CMake Tools.
    */
-  // Set the context var here in both getter and setter?
   get ignoreCMakeListsMissing(): boolean {
-    const ignore = this._get<boolean>('ignoreCMakeListsMissing') || false;
-    util.setContextValue("cmake:enableFullFeatureSet", !ignore);
-    return ignore;
+    return this._get<boolean>('ignoreCMakeListsMissing') || false;
   }
   set ignoreCMakeListsMissing(v: boolean) {
     this._update('ignoreCMakeListsMissing', v);
-    util.setContextValue("cmake:enableFullFeatureSet", !v);
   }
 
   /**

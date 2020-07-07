@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "Попытка найти генератор, поддерживаемый системой.",
 	"start.configure": "Запустить настройку",
 	"cmake.flags.are": "Флаги CMake: {0}",
+	"configure.failed": "Не удалось настроить проект.",
 	"no.kit.is.set": "Набор не задан.",
 	"using.compilers.in.for.configure": "Использование компиляторов в {0} для настройки.",
 	"using.cmake.toolchain.for.configure": "Использование цепочки инструментов CMake {0} для настройки.",

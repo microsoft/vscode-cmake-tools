@@ -13,8 +13,10 @@ import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
-import { ConfigurationReader } from '@cmt/config';
+import {ConfigurationReader} from '@cmt/config';
+import {errorToString} from '@cmt/util';
 import * as nls from 'vscode-nls';
+import * as ext from '@cmt/extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -115,7 +117,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       await cl.compute();
     } catch (e) {
       if (e instanceof cms.ServerError) {
-        log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', e.toString()));
+        log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', errorToString(e)));
         return 1;
       } else {
         throw e;
@@ -319,7 +321,30 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     }
   }
 
-  protected async doInit(): Promise<void> { await this._restartClient(); }
+  protected async doInit(): Promise<void> {
+    await this._restartClient();
+
+
+    this.config.onChange('sourceDirectory', async () => {
+      // The configure process can determine correctly whether the features set activation
+      // should be full or partial, so there is no need to proactively enable full here,
+      // unless the automatic configure is disabled.
+      // If there is a configure or a build in progress, we should avoid setting full activation here,
+      // even if cmake.configureOnEdit is true, because this may overwrite a different decision
+      // that was done earlier by that ongoing configure process.
+      if (!this.configOrBuildInProgress()) {
+        if (this.config.configureOnEdit) {
+          log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
+          await this.configure([]);
+        } else if (this.workspaceFolder) {
+          const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
+          if (folder) {
+            await ext.enableFullFeatureSet(true, folder);
+          }
+        }
+      }
+    });
+  }
 
   static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
     return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferredGenerators);

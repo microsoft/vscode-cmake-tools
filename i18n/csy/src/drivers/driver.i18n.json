@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "Probíhá pokus o zjištění generátoru podporovaného systémem.",
 	"start.configure": "Spustit konfiguraci",
 	"cmake.flags.are": "Příznaky CMake jsou {0}.",
+	"configure.failed": "Nepovedlo se nakonfigurovat projekt.",
 	"no.kit.is.set": "Není nastavená žádná sada!",
 	"using.compilers.in.for.configure": "Používají se kompilátory v místě {0} pro konfiguraci.",
 	"using.cmake.toolchain.for.configure": "Používá se sada nástrojů CMake {0} pro konfiguraci.",

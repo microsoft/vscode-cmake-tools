@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -1250,6 +1250,12 @@
           "description": "%cmake-tools.configuration.cmake.configureOnOpen.description%",
           "scope": "resource"
         },
+        "cmake.configureOnEdit": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
+          "scope": "resource"
+        },
         "cmake.skipConfigureIfCachePresent": {
           "type": "boolean",
           "default": null,
@@ -1500,7 +1506,7 @@
       {
         "key": "shift+f5",
         "command": "cmake.launchTarget",
-        "when": "!cmake:hideDebugCommand && cmake:enableFullFeatureSet"
+        "when": "!inDebugMode && !cmake:hideDebugCommand && cmake:enableFullFeatureSet"
       }
     ],
     "viewsContainers": {

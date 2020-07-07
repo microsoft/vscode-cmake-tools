@@ -34,6 +34,7 @@
 	"scanning.for.kits": "正在掃描套件",
 	"scanning.for.cmake.kits": "正在掃描 CMake 套件...",
 	"found.kit": "找到套件: {0}",
+	"silent.kits.rescan": "偵測到套件定義版本從 {0} 變更為 {1}。以無訊息的方式自動掃描套件。",
 	"kit.for.toolchain.file": "工具鏈檔案 {0} 的套件",
 	"using.compilers.for": "使用 {0} 的編譯器({1} 架構)",
 	"using.compilers": "正在使用編譯器: {0}",

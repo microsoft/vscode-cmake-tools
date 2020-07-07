@@ -34,6 +34,7 @@
 	"scanning.for.kits": "Buscando kits",
 	"scanning.for.cmake.kits": "Examinando los kits de CMake...",
 	"found.kit": "Kit encontrado: {0}",
+	"silent.kits.rescan": "Se detectó un cambio de la versión de definición de los kits de {0} a {1}. Los kits se están examinando en modo silencioso.",
 	"kit.for.toolchain.file": "Kit para el archivo de la cadena de herramientas {0}",
 	"using.compilers.for": "Usando los compiladores para {0} (arquitectura {1})",
 	"using.compilers": "Usando los compiladores: {0}",
