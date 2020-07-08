@@ -587,3 +587,7 @@ export function isNullOrUndefined(x?: any): boolean {
   // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
   return x == null;
 }
+
+export function isWorkspaceFolder(x?: any): boolean {
+  return 'uri' in x && 'name' in x && 'index' in x;
+}
