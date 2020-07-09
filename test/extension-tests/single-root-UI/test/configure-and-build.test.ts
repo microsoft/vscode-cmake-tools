@@ -27,24 +27,15 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
-  let buildTask: vscode.Task;
 
   suiteSetup(async function(this: Mocha.IHookCallbackContext) {
     this.timeout(100000);
 
     const build_loc = 'build';
     const exe_res = 'output.txt';
-    const taskType = "cmake";
 
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-
-    buildTask = new vscode.Task(
-      { type: taskType, command: "build" },
-      vscode.TaskScope.Workspace,
-      "build",
-      taskType
-    );
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -94,14 +85,6 @@ suite('Build', async () => {
 
   test('Build', async () => {
     expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
-
-    const result = await testEnv.result.getResultAsJson();
-    expect(result['cookie']).to.eq('passed-cookie');
-  }).timeout(100000);
-
-  test('Build (Task)', async () => {
-    const buildResult = await vscode.tasks.executeTask(buildTask);
-    expect(buildResult).to.be.an('object');
 
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
