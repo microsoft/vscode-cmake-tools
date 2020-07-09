@@ -791,7 +791,7 @@ class ExtensionManager implements vscode.Disposable {
 
   build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, true); }
 
-  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(name[-1]), true); }
+  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[-1] : name), true); }
 
   setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.setDefaultTarget(name), folder); }
 
