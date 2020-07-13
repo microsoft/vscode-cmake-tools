@@ -1603,7 +1603,7 @@
     "typedoc": "^0.15.3",
     "typescript": "^3.7.2",
     "vscode": "^1.1.36",
-    "vscode-nls-dev": "^3.2.6",
+    "vscode-nls-dev": "^3.3.2",
     "webpack": "^4.39.2",
     "webpack-cli": "^3.3.7"
   },
@@ -1612,7 +1612,7 @@
     "chokidar": "^3.3.0",
     "es6-promisify": "~5.0.0",
     "handlebars": "^4.5.3",
-    "iconv-lite": "^0.4.21",
+    "iconv-lite": "^0.6.2",
     "js-yaml": "^3.6.1",
     "json5": "^0.5.1",
     "open": "^6.4.0",
