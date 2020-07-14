@@ -161,7 +161,7 @@ export function execute(command: string,
     if (options.encoding)
       child.stdout.setEncoding(options.encoding);
 
-    const encoding = options.outputEncoding ? options.outputEncoding:'utf8';
+    const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
 
     result = new Promise<ExecutionResult>(resolve => {
       if (child) {
