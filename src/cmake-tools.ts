@@ -108,11 +108,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _targetName = new Property<string>('all');
 
   /**
-   * The current build type
+   * The current variant
    */
-  get buildType() { return this._buildType.value; }
-  get onBuildTypeChanged() { return this._buildType.changeEvent; }
-  private readonly _buildType = new Property<string>('Unconfigured');
+  get activeVariant() { return this._activeVariant.value; }
+  get onActiveVariantChanged() { return this._activeVariant.changeEvent; }
+  private readonly _activeVariant = new Property<string>('Unconfigured');
 
   /**
    * The "launch target" (the target that will be run by debugging)
@@ -200,7 +200,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     for (const disp of [this._statusMessage,
                         this._targetName,
-                        this._buildType,
+                        this._activeVariant,
                         this._ctestEnabled,
                         this._testResults,
                         this._isBusy,
@@ -434,7 +434,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Start up the variant manager
     await this._variantManager.initialize();
     // Set the status bar message
-    this._buildType.set(this._variantManager.activeVariantOptions.short);
+    this._activeVariant.set(this._variantManager.activeVariantOptions.short);
     // Restore the debug target
     this._launchTargetName.set(this.workspaceContext.state.launchTargetName || '');
 
@@ -446,7 +446,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         const drv = await this.getCMakeDriverInstance();
         if (drv) {
           await drv.setVariant(this._variantManager.activeVariantOptions, this._variantManager.activeKeywordSetting);
-          this._buildType.set(this._variantManager.activeVariantOptions.short);
+          this._activeVariant.set(this._variantManager.activeVariantOptions.short);
           // We don't configure yet, since someone else might be in the middle of a configure
         }
       });
@@ -1200,10 +1200,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.buildType`
    */
   async currentBuildType(): Promise<string|null> {
-    if (this.buildType == 'Unconfigured') {
+    const drv = await this.getCMakeDriverInstance();
+    if (!drv || this.activeVariant == 'Unconfigured') {
       return null;
     }
-    return this.buildType;
+    return drv.currentBuildType;
   }
 
   /**
