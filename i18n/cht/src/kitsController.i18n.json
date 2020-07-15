@@ -11,7 +11,7 @@
 	"unsetting.kit": "正在取消設定套件",
 	"loading.kit": "正在載入套件 {0}",
 	"invalid.only.kit": "僅套件無效。應找到 '{0}'",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "已在檢查套件。請稍後再試一次。",
 	"start.selection.of.kits": "開始選取套件。找到 {0} 個套件。",
 	"opening.kit.selection": "正在開啟套件選取 QuickPick",
 	"scan.for.kits.button": "掃描套件",

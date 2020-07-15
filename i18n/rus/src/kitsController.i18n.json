@@ -11,7 +11,7 @@
 	"unsetting.kit": "Отмена настройки набора.",
 	"loading.kit": "Загрузка набора {0}.",
 	"invalid.only.kit": "Недопустимый набор. Ожидаемый набор: \"{0}\".",
-	"already.checking.kits": "Already checking kits. Please try again later.",
+	"already.checking.kits": "Проверка наборов уже выполняется. Повторите попытку позже.",
 	"start.selection.of.kits": "Начало выбора наборов. Обнаружено наборов: {0}.",
 	"opening.kit.selection": "Открытие средства выбора наборов QuickPick.",
 	"scan.for.kits.button": "Поиск наборов",
