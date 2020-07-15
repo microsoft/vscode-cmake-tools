@@ -1200,11 +1200,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.buildType`
    */
   async currentBuildType(): Promise<string|null> {
-    const drv = await this.getCMakeDriverInstance();
-    if (!drv || this.activeVariant == 'Unconfigured') {
-      return null;
-    }
-    return drv.currentBuildType;
+    return this._variantManager.activeVariantOptions.buildType || null;
   }
 
   /**
