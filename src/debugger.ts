@@ -5,6 +5,7 @@ import {createLogger} from './logging';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { fs } from './pr';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -185,7 +186,13 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
   const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
-  const gdb_debugger_path = debuggerPathOverride || compiler_path.replace(gcc_compiler_regex, description.miMode);
+  let gdb_debugger_path = debuggerPathOverride || compiler_path.replace(gcc_compiler_regex, description.miMode);
+  if (path.isAbsolute(gdb_debugger_path) && !await fs.exists(gdb_debugger_path)) {
+    gdb_debugger_path = path.join(path.dirname(compiler_path), description.miMode);
+    if (process.platform === 'win32') {
+      gdb_debugger_path = gdb_debugger_path + '.exe';
+    }
+  }
   if (gdb_debugger_path.search(new RegExp(description.miMode)) != -1) {
     return description.createConfig(gdb_debugger_path, target);
   }
