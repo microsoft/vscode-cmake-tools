@@ -8,21 +8,13 @@ Documentation for the code is kept within the code, and is extracted via `TypeDo
 
 ## Build the CMake Tools extension
 
-As with most VS Code extensions, you'll need `Node.JS <https://nodejs.org/en/>` installed.
+As with most VS Code extensions, you'll need `Node.JS <https://nodejs.org/en/>` installed. We use [yarn](https://yarnpkg.com/getting-started/install) to compile the code.
 
 The process is:
 
-1. Install dependencies
+1. Open the repo in VS Code
 
-```bash
-$ npm install
-```
-
-1. Compile the code:
-
-```bash
-$ npm install
-```
+2. Press <kbd>F5</kbd> to build and run the extension
 
 ## Coding guidelines
 
