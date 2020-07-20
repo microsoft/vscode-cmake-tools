@@ -989,7 +989,8 @@
               "gcc",
               "gnuld",
               "msvc",
-              "ghs"
+              "ghs",
+              "diab"
             ]
           },
           "default": [
@@ -997,7 +998,8 @@
             "gcc",
             "gnuld",
             "msvc",
-            "ghs"
+            "ghs",
+            "diab"
           ],
           "scope": "resource"
         },
