@@ -84,7 +84,7 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: '${fileDirname}',
     args: [],
     MIMode: 'lldb',
     miDebuggerPath: debuggerPath,
@@ -97,7 +97,7 @@ function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
     type: 'cppvsdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: '${fileDirname}',
     args: [],
     program: target.path
   };
