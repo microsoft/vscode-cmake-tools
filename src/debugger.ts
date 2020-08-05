@@ -60,7 +60,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: '${fileDirname}',
     args: [],
     MIMode: 'gdb',
     miDebuggerPath: debuggerPath,
