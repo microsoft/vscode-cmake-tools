@@ -16,3 +16,4 @@ package-lock.json
 **/*.nls.json
 **/*.nls.*.json
 test.txt
+schemas/azure-repos-vscode/
