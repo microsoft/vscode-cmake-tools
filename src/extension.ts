@@ -22,7 +22,7 @@ import {
   effectiveKitEnvironment,
   scanForKitsIfNeeded,
 } from '@cmt/kit';
-import {KitsController} from '@cmt/kitsController';
+import {KitsController, KitsReadMode} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
@@ -638,6 +638,9 @@ class ExtensionManager implements vscode.Disposable {
   async scanForKits() {
     KitsController.minGWSearchDirs = this._getMinGWDirs();
     const duplicateRemoved = await KitsController.scanForKits();
+
+    await this._folders.activeFolder?.kitsController.readKits(KitsReadMode.folderKits);
+
     if (duplicateRemoved) {
       // Check each folder. If there is an active kit set and if it is of the old definition,
       // unset the kit
