@@ -589,12 +589,11 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
   let script = '';
   let run_command = '';
 
-  let environmentSetupScript = kit.environmentSetupScript + '';
+  let environmentSetupScript = kit.environmentSetupScript;
   if (opts) {
     environmentSetupScript = await expand.expandString(environmentSetupScript, opts);
   }
 
-  // environmentSetupScript = await expand.expandString(${kit.environmentSetupScript}, CMakeDriver.expansionOptions);
   if (process.platform == 'win32') { // windows
     script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
     script += `set >> ${environment_path}`; // write env vars to temp file
