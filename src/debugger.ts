@@ -60,7 +60,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     MIMode: 'gdb',
     miDebuggerPath: debuggerPath,
@@ -84,7 +84,7 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     MIMode: 'lldb',
     miDebuggerPath: debuggerPath,
@@ -97,7 +97,7 @@ function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
     type: 'cppvsdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     program: target.path
   };
