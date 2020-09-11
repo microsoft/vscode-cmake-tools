@@ -93,7 +93,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
           Warning: vscode.DiagnosticSeverity.Warning,
           Error: vscode.DiagnosticSeverity.Error,
         };
-        const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), '', diagmap[level]);
+        const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), line, diagmap[level]);
         vsdiag.source = `CMake (${command})`;
         vsdiag.relatedInformation = [];
         const filepath = util.resolvePath(filename, this.sourceDir);
