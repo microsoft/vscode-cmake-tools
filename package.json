@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -55,6 +55,7 @@
     "onCommand:cmake.launchTargetAll",
     "onCommand:cmake.launchTargetPath",
     "onCommand:cmake.launchTargetDirectory",
+    "onCommand:cmake.launchTargetFilename",
     "onCommand:cmake.buildType",
     "onCommand:cmake.buildDirectory",
     "onCommand:cmake.executableTargets",
@@ -973,7 +974,8 @@
               "gcc",
               "gnuld",
               "msvc",
-              "ghs"
+              "ghs",
+              "diab"
             ]
           },
           "default": [
@@ -981,7 +983,8 @@
             "gcc",
             "gnuld",
             "msvc",
-            "ghs"
+            "ghs",
+            "diab"
           ],
           "scope": "resource"
         },
@@ -1602,7 +1605,7 @@
     "typedoc": "^0.15.3",
     "typescript": "^3.7.2",
     "vscode": "^1.1.36",
-    "vscode-nls-dev": "^3.2.6",
+    "vscode-nls-dev": "^3.3.2",
     "webpack": "^4.39.2",
     "webpack-cli": "^3.3.7"
   },
@@ -1611,7 +1614,7 @@
     "chokidar": "^3.3.0",
     "es6-promisify": "~5.0.0",
     "handlebars": "^4.5.3",
-    "iconv-lite": "^0.4.21",
+    "iconv-lite": "^0.6.2",
     "js-yaml": "^3.6.1",
     "json5": "^0.5.1",
     "open": "^6.4.0",
@@ -1626,8 +1629,11 @@
   "resolutions": {
     "marked": "^0.7.0",
     "diff": "^3.5.0",
-    "handlebars": "^4.5.3",
     "https-proxy-agent": "^2.2.4",
-    "serialize-javascript": "^2.1.1"
+    "**/minimist": "^0.2.1",
+    "webpack/acorn": "^6.4.1",
+    "webpack/terser-webpack-plugin": "^1.4.5",
+    "yargs-parser": "^15.0.1",
+    "node-fetch": "^2.6.1"
   }
 }

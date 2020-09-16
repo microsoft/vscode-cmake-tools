@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "ツールチェーン ファイルへのパス",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Visual Studio 製品の名前",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "ターゲットにするアーキテクチャ",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "キットの環境を変更するスクリプトへの絶対パス",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "環境変数の値",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "CMake 設定の値",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "このキットの優先 CMake ジェネレーターを設定します",

@@ -34,6 +34,7 @@
 	"scanning.for.kits": "Hledají se sady.",
 	"scanning.for.cmake.kits": "Hledají se sady CMake...",
 	"found.kit": "Nalezena sada: {0}",
+	"silent.kits.rescan": "Zjistila se změna verze definice sad z {0} na {1}. Kontrolují se sady v tichém režimu.",
 	"kit.for.toolchain.file": "Sada pro soubor sady nástrojů {0}",
 	"using.compilers.for": "Používají se kompilátory pro {0} (architektura {1}).",
 	"using.compilers": "Používají se kompilátory: {0}",

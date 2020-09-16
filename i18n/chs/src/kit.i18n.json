@@ -34,6 +34,7 @@
 	"scanning.for.kits": "正在扫描工具包",
 	"scanning.for.cmake.kits": "正在扫描 CMake 工具包...",
 	"found.kit": "已找到工具包: {0}",
+	"silent.kits.rescan": "检测到工具包定义版本已从 {0} 更改为 {1}。扫描工具包但不显示提示。",
 	"kit.for.toolchain.file": "适用于工具链文件 {0} 的工具包",
 	"using.compilers.for": "将编译器用于 {0} ({1} 体系结构)",
 	"using.compilers": "使用编译器: {0}",

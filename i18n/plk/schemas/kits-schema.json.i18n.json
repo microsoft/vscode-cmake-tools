@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Ścieżka do pliku łańcucha narzędzi",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Nazwa produktu Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Architektura docelowa",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Ścieżka bezwzględna do skryptu, który modyfikuje środowisko zestawu",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Wartość zmiennej środowiskowej",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "Wartość ustawienia narzędzia CMake",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Ustaw preferowany generator narzędzia CMake dla tego zestawu",

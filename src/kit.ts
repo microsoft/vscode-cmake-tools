@@ -129,7 +129,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     return null;
   }
   const lines = exec.stderr.split('\n');
-  const version_re = /^(?:Apple LLVM|Apple clang|clang) version ([^\s-]+)[\s-]/;
+  const version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)[\s-]/;
   let version: string = "";
   let fullVersion: string = "";
   for (const line of lines) {
@@ -318,7 +318,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
       return [];
     }
   } catch (e) {
-    log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, e));
+    log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
     if (e.code == 'ENOENT') {
       return [];
     }
@@ -351,7 +351,7 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
     try {
       return await kitIfCompiler(bin, pr);
     } catch (e) {
-      log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, e));
+      log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
       if (e.code == 'EACCES') {
         // The binary may not be executable by this user...
         return null;
@@ -1047,14 +1047,14 @@ export async function readKitsFile(filepath: string): Promise<Kit[]> {
   try {
     kits_raw = json5.parse(content_str.toLocaleString());
   } catch (e) {
-    log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', "cmake-kits.json", e));
+    log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(filepath), util.errorToString(e)));
     return [];
   }
   const validator = await loadSchema('schemas/kits-schema.json');
   const is_valid = validator(kits_raw);
   if (!is_valid) {
     const errors = validator.errors!;
-    log.error(localize('invalid.file.error', 'Invalid {0} ({1}):', "cmake-kits.json", filepath));
+    log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(filepath), filepath));
     for (const err of errors) {
       log.error(` >> ${err.dataPath}: ${err.message}`);
     }

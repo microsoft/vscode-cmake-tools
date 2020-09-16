@@ -34,6 +34,7 @@
 	"scanning.for.kits": "キットをスキャンしています",
 	"scanning.for.cmake.kits": "CMake キットをスキャンしています...",
 	"found.kit": "見つかったキット: {0}",
+	"silent.kits.rescan": "検出キット定義のバージョンが {0} から {1} に変更されました。メッセージを表示せずにキットをスキャンしています。",
 	"kit.for.toolchain.file": "ツールチェーン ファイル {0} 用のキット",
 	"using.compilers.for": "{0} 用のコンパイラ ({1} アーキテクチャ) を使用しています",
 	"using.compilers": "コンパイラ {0} を使用しています",

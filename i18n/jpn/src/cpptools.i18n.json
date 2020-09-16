@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "不明な C 標準コントロール フラグ: {0}",
 	"unknown.control.gflag": "不明な標準コントロール フラグ: {0}",
 	"unknown language": "不明な言語: {0}",
-	"method.not.implemented": "メソッドは実装されていません。",
 	"path.not.found.in.cmake.cache": "1 つ以上のソース ファイルについてコンパイラへのパスが CMake キャッシュ内に見つかりませんでした。ツールチェーン ファイルを使用している場合は、おそらく、C または C++ コンパイラ パスを設定するときに CACHE オプションを指定する必要があることを意味しています"
 }

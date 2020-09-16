@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "도구 체인 파일 경로",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Visual Studio 제품 이름",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "대상에 대한 아키텍처",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "키트의 환경을 수정하는 스크립트의 절대 경로",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "환경 변수 값",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "CMake 설정 값",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "이 키트의 기본 설정 CMake 생성기 설정",

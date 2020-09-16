@@ -650,14 +650,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       } catch (e) {
         vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
           'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
-          compdb_path, expanded_dest, pardir, e));
+          compdb_path, expanded_dest, pardir, e.toString()));
         return;
       }
       try {
         await fs.copyFile(compdb_path, expanded_dest);
       } catch (e) {
         // Just display the error. It's the best we can do.
-        vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e));
+        vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
         return;
       }
     }
@@ -1185,6 +1185,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Implementation of `cmake.launchTargetFilename`. It just calls launchTargetPath and
+   * extracts the filename form the result.
+   */
+  async launchTargetFilename(): Promise<string|null> {
+    const targetPath = await this.launchTargetPath();
+    if (targetPath === null) {
+      return null;
+    }
+    return path.basename(targetPath);
+  }
+
+  /**
    * Implementation of `cmake.buildType`
    */
   async currentBuildType(): Promise<string|null> {
@@ -1358,6 +1370,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     const termOptions: vscode.TerminalOptions = {
       name: 'CMake/Launch',
+      cwd: path.dirname(executable.path),
     };
     if (process.platform == 'win32') {
       // Use cmd.exe on Windows

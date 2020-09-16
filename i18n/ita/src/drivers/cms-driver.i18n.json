@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "Non è stato trovato alcun modello di codice corrispondente per il tipo di compilazione corrente. Questo comportamento non è possibile",
 	"build.all.target": "Destinazione speciale per la compilazione di tutte le destinazioni disponibili",
 	"install.all.target": "Destinazione speciale per l'installazione di tutte le destinazioni disponibili",
-	"utility.target": "Destinazione dell'utilità"
+	"utility.target": "Destinazione dell'utilità",
+	"cmakelists.save.trigger.reconfigure": "È stato rilevato un aggiornamento dell'impostazione 'cmake.sourceDirectory'. Verrà effettuato un tentativo di riconfigurazione automatica..."
 }

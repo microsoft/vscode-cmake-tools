@@ -34,6 +34,7 @@
 	"scanning.for.kits": "Setler için taranıyor",
 	"scanning.for.cmake.kits": "CMake setleri için taranıyor...",
 	"found.kit": "{0} Seti Bulundu",
+	"silent.kits.rescan": "{0} olan set tanımı sürümünün {1} olarak değiştirildiği algılandı. Setler sessizce taranıyor.",
 	"kit.for.toolchain.file": "{0} araç zinciri dosyası için set",
 	"using.compilers.for": "{0} için derleyiciler kullanılıyor ({1} mimarisi)",
 	"using.compilers": "{0} derleyicileri kullanılıyor",
