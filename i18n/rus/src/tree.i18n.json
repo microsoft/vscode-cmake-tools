@@ -14,6 +14,8 @@
 	"item.render.issue": "Возникла проблема при отрисовке этого элемента. Это ошибка.",
 	"empty.project": "Пустой проект",
 	"update.project.with.mismatch": "Обновление проекта с несоответствующим свойством имени",
-	"error.update.code.model.on.nonexist.folder": "Обновление модели кода в папке, которая еще не существует?",
+	"workspace.active": "Активная рабочая область",
+	"workspace": "Рабочая область",
+	"error.update.code.model.on.nonexist.folder": "Обновление модели кода в папке, которая еще не загружена.",
 	"error.rendering.children.nodes": "Ошибка при отображении дочерних узлов."
 }

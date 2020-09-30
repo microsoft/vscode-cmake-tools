@@ -208,41 +208,6 @@
             }
         },
         {
-            "name": "Launch Extension Tests (vs-preferred-gen)",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "${workspaceFolder}/test/extension-tests/vs-preferred-gen/project-folder",
-                "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/vs-preferred-gen"
-            ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
-                "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/vs-preferred-gen/*",
-                "${workspaceFolder}/out/test/extension-tests/vs-preferred-gen/test/*"
-            ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
-            "windows": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "true"
-                }
-            },
-            "linux": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            }
-        },
-        {
             "type": "node",
             "request": "launch",
             "name": "Backend tests",

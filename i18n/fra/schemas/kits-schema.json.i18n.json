@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Chemin d'un fichier de chaîne d'outils",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Nom du produit Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Architecture à cibler",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Chemin absolu d'un script qui modifie l'environnement pour le kit",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Valeur de la variable d'environnement",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "Valeur du paramètre CMake",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Définir un générateur CMake par défaut pour ce kit",

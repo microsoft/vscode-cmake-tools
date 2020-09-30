@@ -1,6 +1,7 @@
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 chai.use(chaiAsPromised);
 
@@ -37,13 +38,24 @@ suite('Select debugger', async () => {
       throw new Error();
     }
     expect(config.name).to.be.eq('Debug Test');
-    expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
-    expect(config['miDebuggerPath']).to.be.eq('gdb');
     expect(stub.called).to.be.true;
 
+    // If CppTools extension is installed, the lldb-mi installed with that extension
+    // will represent the debugger fallback instead of gdb.
+    const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
+    const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
+    if (cpptoolsDebuggerPath) {
+      expect(config['MIMode']).to.be.eq('lldb');
+      expect(config['miDebuggerPath']).to.be.eq(cpptoolsDebuggerPath);
+      expect(stub.calledWith('gdb')).to.be.false;
+    } else {
+      expect(config['MIMode']).to.be.eq('gdb');
+      expect(config['miDebuggerPath']).to.be.eq('gdb');
+      expect(stub.calledWith('gdb')).to.be.true;
+    }
+
     expect(stub.calledWith('lldb-mi')).to.be.true;
-    expect(stub.calledWith('gdb')).to.be.true;
   });
 
   test('Create debug config from cache - GCC', async () => {

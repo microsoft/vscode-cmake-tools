@@ -331,6 +331,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (kit.preferredGenerator)
       preferredGenerators.push(kit.preferredGenerator);
 
+    // If no preferred generator is defined by the current kit or the user settings,
+    // it's time to consider the defaults.
+    if (preferredGenerators.length === 0) {
+      preferredGenerators.push({name: "Ninja"});
+      preferredGenerators.push({name: "Unix Makefiles"});
+    }
+
     // Use the "best generator" selection logic only if the user did not define already
     // in settings (via "cmake.generator") a particular generator to be used.
     if (this.config.generator) {
@@ -519,7 +526,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
 
-  private async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
+  public async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent: true});
     try {
       const result = await child.result;
@@ -541,6 +548,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   async findBestGenerator(preferredGenerators: CMakeGenerator[]): Promise<CMakeGenerator|null> {
     log.debug(localize('trying.to.detect.generator', 'Trying to detect generator supported by system'));
     const platform = process.platform;
+
     for (const gen of preferredGenerators) {
       const gen_name = gen.name;
       const generator_present = await (async(): Promise<boolean> => {
@@ -585,6 +593,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private buildRunning: boolean = false;
 
+  public configOrBuildInProgress() : boolean {
+    return this.configRunning || this.buildRunning;
+  }
+
   /**
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
@@ -616,10 +628,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
     this.configRunning = true;
     try {
+      // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
+      // (example: cmake.sourceDirectory).
+      await this._refreshExpansions();
       log.debug(localize('start.configure', 'Start configure'), extra_args);
+
       const pre_check_ok = await this._beforeConfigureOrBuild();
       if (!pre_check_ok) {
-        return -1;
+        return -2;
       }
 
       const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
@@ -637,7 +653,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const expanded_flags = await Promise.all(expanded_flags_promises);
       log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
 
-      // Expand all important paths
+      // A more complete round of expansions
       await this._refreshExpansions();
 
       const timeStart: number = new Date().getTime();

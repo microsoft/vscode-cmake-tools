@@ -34,6 +34,7 @@
 	"scanning.for.kits": "正在掃描套件",
 	"scanning.for.cmake.kits": "正在掃描 CMake 套件...",
 	"found.kit": "找到套件: {0}",
+	"silent.kits.rescan": "偵測到套件定義版本從 {0} 變更為 {1}。以無訊息的方式自動掃描套件。",
 	"kit.for.toolchain.file": "工具鏈檔案 {0} 的套件",
 	"using.compilers.for": "使用 {0} 的編譯器({1} 架構)",
 	"using.compilers": "正在使用編譯器: {0}",
@@ -42,7 +43,7 @@
 	"not.reading.nonexistent.kit": "未讀取不存在的套件檔案: {0}",
 	"reading.kits.file": "正在讀取套件檔案 {0}",
 	"failed.to.parse": "無法剖析 {0}: {1}",
-	"invalid.file.error": "{0} 無效 ({1}):",
+	"invalid.file.error": "套件內容 {0} ({1}) 無效:",
 	"successfully.loaded.kits": "已成功從 {1} 載入 {0} 個套件",
 	"clean.not.needed": "不需要清除: 未選取先前的套件",
 	"clean.needed": "需要清除: 已變更套件"

@@ -6,6 +6,8 @@ import * as chaiString from 'chai-string';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
+import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
+import {CMakeServerClientDriver} from '@cmt/drivers/cms-driver';
 
 chai.use(chaiString);
 
@@ -148,13 +150,23 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
           .to.be.rejectedWith('No usable generator found.');
     }).timeout(60000);
 
-    test('Throw exception on set kit without preferred generator found', async () => {
+    test('Set kit without a preferred generator', async () => {
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
 
-      await expect(driver.setKit({name: 'GCC'}, [])).to.be.rejectedWith('No usable generator found.');
+      // Set kit without a preferred generator
+      await driver.setKit({name: 'GCC'}, []);
+      expect(await driver.cleanConfigure([])).to.be.eq(0);
+      const kit1 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
+
+      // Set kit with a list of two default preferred generators, for comparison
+      await driver.setKit({name: 'GCC'}, [{name: 'Ninja'}, {name: 'Unix Makefiles'}]);
+      expect(await driver.configure([])).to.be.eq(0);
+      const kit2 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
+
+      expect(kit1).to.be.equal(kit2);
     }).timeout(90000);
 
     test('Try build on empty dir', async () => {
@@ -168,7 +180,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, emptyWorkspaceFolder, checkPreconditionHelper, []);
-      expect(await driver.cleanConfigure([])).to.be.eq(-1);
+      expect(await driver.cleanConfigure([])).to.be.eq(-2);
       expect(called).to.be.true;
     }).timeout(60000);
 
@@ -327,8 +339,16 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       driver = null;
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
       expect(await driver.configure([])).to.be.eq(0);
-      expect(driver.generatorName).to.be.eq(kitNinja.preferredGenerator!.name);
-      expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
+
+      const expFileApi = driver instanceof CMakeFileApiDriver;
+      const expSrv = driver instanceof CMakeServerClientDriver;
+      expect (!expFileApi || !expSrv); // mutually exclusive
+
+      // Configure with a different generator should overwrite the previous Ninja generator
+      // for fileApi and not for cmakeServer communication modes.
+      const kitBaseline = expFileApi ? kitDefault : kitNinja;
+      expect(driver.generatorName).to.be.eq(kitBaseline.preferredGenerator!.name);
+      expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq(kitBaseline.preferredGenerator!.name);
     }).timeout(60000);
 
     test('Test generator switch', async () => {

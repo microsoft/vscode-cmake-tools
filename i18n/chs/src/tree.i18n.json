@@ -14,6 +14,8 @@
 	"item.render.issue": "呈现此项目时出现问题。这是 bug",
 	"empty.project": "空项目",
 	"update.project.with.mismatch": "更新具有不匹配的名称属性的项目",
-	"error.update.code.model.on.nonexist.folder": "正在更新文件夹的代码模型，但文件夹尚不存在?",
+	"workspace.active": "活动工作区",
+	"workspace": "工作区",
+	"error.update.code.model.on.nonexist.folder": "正在对尚未加载的文件夹更新代码模型。",
 	"error.rendering.children.nodes": "呈现子节点时出错"
 }
