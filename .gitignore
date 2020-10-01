@@ -8,11 +8,12 @@ vscode-extensions-localization-export/
 vscode-translations-import/
 .ci-build
 .DS_Store
+debug.log
 npm-debug.log
 package-lock.json
+test.txt
 *.db*
 *.vsix
 **/nls.*.json
 **/*.nls.json
 **/*.nls.*.json
-test.txt

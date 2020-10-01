@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "Mevcut olmayan set dosyası okunmuyor: {0}",
 	"reading.kits.file": "{0} set dosyası okunuyor",
 	"failed.to.parse": "{0} ayrıştırılamadı: {1}",
-	"invalid.file.error": "Geçersiz {0} ({1}):",
+	"invalid.file.error": "Geçersiz kit içeriği {0} ({1}):",
 	"successfully.loaded.kits": "{1} konumundaki {0} set başarıyla yüklendi",
 	"clean.not.needed": "Temizleme gerekmiyor: Önceki Set seçilmedi",
 	"clean.needed": "Temizleme gerekiyor: Set değiştirildi"

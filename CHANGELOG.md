@@ -1,5 +1,18 @@
 # What's New?
 
+## 1.4.2
+Improvements:
+- Added new variable substitution command: `${command:cmake.launchTargetFilename}`. [#632](https://github.com/microsoft/vscode-cmake-tools/issues/632) [@ebai101](https://github.com/ebai101)
+- Add output parser for Wind River Diab compiler. [PR #1267](https://github.com/microsoft/vscode-cmake-tools/issues/1267) [@ce3a](https://github.com/ce3a)
+- Set application run directory to executable path. [#1395](https://github.com/microsoft/vscode-cmake-tools/issues/1395) [@Shatur95](https://github.com/Shatur95)
+
+Bug Fixes:
+- Allow minor version of File API protocol to be greater than expected. [#1341](https://github.com/microsoft/vscode-cmake-tools/issues/1341) [@KyleFromKitware](https://github.com/KyleFromKitware)
+- Fix high-hitting crash related to output stream encoding. [PR #1367](https://github.com/microsoft/vscode-cmake-tools/issues/1367)
+- Fix high-hitting crash: "message must be set" introduced by VS Code 1.49.0. [#1432](https://github.com/microsoft/vscode-cmake-tools/issues/1432)
+- Fix detection of clang 10 on Debian. [#1330](https://github.com/microsoft/vscode-cmake-tools/issues/1330)
+- Detect gdb for msys2 MinGW properly. [PR #1338](https://github.com/microsoft/vscode-cmake-tools/issues/1338) [@lygstate](https://github.com/lygstate)
+
 ## 1.4.1
 Bug Fixes:
 - VS environment not set correctly. [#1243](https://github.com/microsoft/vscode-cmake-tools/issues/1243)
