@@ -1038,16 +1038,16 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<boolean> {
-  const kitsVersionSaved = context.globalState.get<number>('kitsVersionSaved');
+export async function scanForKitsIfNeeded(cmt: CMakeTools) : Promise<boolean> {
+  const kitsVersionSaved = cmt.extensionContext.globalState.get<number>('kitsVersionSaved');
   const kitsVersionCurrent = 2;
 
   // Scan also when there is no kits version saved in the state.
   if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
        process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
     log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-    await kitsController.KitsController.scanForKits();
-    context.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+    await kitsController.KitsController.scanForKits(cmt);
+    cmt.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
     return true;
   }
 
@@ -1074,6 +1074,7 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
         const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
         return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), hostTargetArch);
       }
+    }
     return '';
   }
   if (kit.compilers) {

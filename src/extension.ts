@@ -346,7 +346,7 @@ class ExtensionManager implements vscode.Disposable {
     // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
     const silentScanForKitsNeeded: boolean = vscode.workspace.workspaceFolders !== undefined &&
                                              vscode.workspace.workspaceFolders[0] === cmt.folder &&
-                                             await scanForKitsIfNeeded(cmt.extensionContext);
+                                             await scanForKitsIfNeeded(cmt);
 
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
