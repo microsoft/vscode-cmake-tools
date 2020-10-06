@@ -277,7 +277,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     }
 
     if (version.target && version.target.includes('msvc') &&
-      version.installedDir && !version.installedDir.includes("Microsoft Visual Studio")) {
+      version.installedDir && version.installedDir.includes("Microsoft Visual Studio")) {
       // Skip MSVC ABI compatible Clang installations (bundled within VS), which will be handled in 'scanForClangForMSVCKits()' later.
       // But still process any Clang installations outside VS (right in Program Files for example), even if their version
       // mentions msvc.
