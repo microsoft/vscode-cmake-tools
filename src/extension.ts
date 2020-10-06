@@ -292,7 +292,6 @@ class ExtensionManager implements vscode.Disposable {
       )
     );
     this._onDidChangeActiveTextEditorSub.dispose();
-    this._kitsWatcher.close();
     this._projectOutlineDisposer.dispose();
     if (this._cppToolsAPI) {
       this._cppToolsAPI.dispose();
@@ -303,6 +302,7 @@ class ExtensionManager implements vscode.Disposable {
     }
     this._folders.dispose();
     telemetry.deactivate();
+    return this._kitsWatcher.close();
   }
 
   async _postWorkspaceOpen(info: CMakeToolsFolder) {

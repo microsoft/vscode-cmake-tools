@@ -268,10 +268,15 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     if (version === null) {
       return null;
     }
-    if (version.target && version.target.includes('msvc')) {
-      // Skip MSVC ABI compatible Clang installations, which will be handled in 'scanForClangForMSVCKits()' later
+
+    if (version.target && version.target.includes('msvc') &&
+      version.installedDir && !version.installedDir.includes("Microsoft Visual Studio")) {
+      // Skip MSVC ABI compatible Clang installations (bundled within VS), which will be handled in 'scanForClangForMSVCKits()' later.
+      // But still process any Clang installations outside VS (right in Program Files for example), even if their version
+      // mentions msvc.
       return null;
     }
+
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
     const name = `Clang ${version.version}`;
@@ -687,20 +692,26 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
       clang_cli = '(GNU CLI)';
     }
 
-    return vsInstalls.map((vs): Kit => {
+    const clangKits: Kit[] = [];
+    vsInstalls.forEach(vs => {
       const install_name = vsDisplayName(vs);
       const vs_arch = (version.target && version.target.includes('i686-pc')) ? 'x86' : 'amd64';
 
-      return {
-        name: localize('clang.for.msvc', 'Clang {0} {1} with {2} ({3})', version.version, clang_cli, install_name, vs_arch),
-        visualStudio: kitVSName(vs),
-        visualStudioArchitecture: vs_arch,
-        compilers: {
-          C: binPath,
-          CXX: binPath,
-        },
-      };
+      const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
+      if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
+      util.checkFileExists(util.lightNormalizePath(binPath))) {
+        clangKits.push({
+          name: localize('clang.for.msvc', 'Clang {0} {1} with {2} ({3})', version.version, clang_cli, install_name, vs_arch),
+          visualStudio: kitVSName(vs),
+          visualStudioArchitecture: vs_arch,
+          compilers: {
+            C: binPath,
+            CXX: binPath,
+          }
+        });
+      }
     });
+    return clangKits;
   });
   return ([] as Kit[]).concat(...kits);
 }
@@ -830,6 +841,9 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
       }
     }
 
+    // Default installation locations
+    scan_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
+    scan_paths.add('C:\\Program Files\\LLVM\\bin');
     const compiler_kits = Array.from(scan_paths).map(path_el => scanDirForCompilerKits(path_el, pr));
     kit_promises = kit_promises.concat(compiler_kits);
 
@@ -843,15 +857,14 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
         clang_paths.add(llvm_root);
       }
 
-      // Default installation locations
-      clang_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
-      clang_paths.add('C:\\Program Files\\LLVM\\bin');
       // PATH environment variable locations
       scan_paths.forEach(path_el => clang_paths.add(path_el));
       // LLVM bundled in VS locations
       const vs_installs = await vsInstallations();
-      const bundled_clang_paths = vs_installs.map(vs_install => {
-        return vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin";
+      const bundled_clang_paths: string[] = [];
+      vs_installs.forEach(vs_install => {
+        bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin");
+        bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\x64\\bin");
       });
       bundled_clang_paths.forEach(path_el => {clang_paths.add(path_el);});
 
