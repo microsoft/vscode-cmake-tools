@@ -34,6 +34,7 @@
 	"scanning.for.kits": "Buscando kits",
 	"scanning.for.cmake.kits": "Examinando los kits de CMake...",
 	"found.kit": "Kit encontrado: {0}",
+	"silent.kits.rescan": "Se detectó un cambio de la versión de definición de los kits de {0} a {1}. Los kits se están examinando en modo silencioso.",
 	"kit.for.toolchain.file": "Kit para el archivo de la cadena de herramientas {0}",
 	"using.compilers.for": "Usando los compiladores para {0} (arquitectura {1})",
 	"using.compilers": "Usando los compiladores: {0}",
@@ -42,7 +43,7 @@
 	"not.reading.nonexistent.kit": "No se está leyendo el archivo de kits no existentes: {0}",
 	"reading.kits.file": "Leyendo el archivo de kits {0}",
 	"failed.to.parse": "No se pudo analizar {0}: {1}",
-	"invalid.file.error": "{0} no válido ({1}):",
+	"invalid.file.error": "Contenido del kit {0} ({1}) no válido:",
 	"successfully.loaded.kits": "Se han cargado correctamente {0} kits de {1}",
 	"clean.not.needed": "No es necesario limpiar: no se ha seleccionado ningún kit anterior",
 	"clean.needed": "Es necesario limpiar: el kit se ha cambiado"

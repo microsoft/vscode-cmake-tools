@@ -5,7 +5,7 @@ import CMakeTools from '@cmt/cmake-tools';
 
 // tslint:disable:no-unused-expression
 
-suite('[Debug/Lauch interface]', async () => {
+suite('[Debug/Launch interface]', async () => {
   let testEnv: DefaultEnvironment;
   let cmakeTools: CMakeTools;
 

@@ -19,8 +19,46 @@ export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal
 
 export type CMakeCommunicationMode = 'legacy'|'serverApi'|'fileApi'|'automatic';
 
+export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
+
 interface HardEnv {
   [key: string]: string;
+}
+
+export interface AdvancedStatusBarConfig {
+  kit?: {
+    visibility?: StatusBarButtonVisibility;
+    length?: number;
+  };
+  status?: {
+    visibility?: StatusBarButtonVisibility;
+  };
+  workspace?: {
+    visibility?: StatusBarButtonVisibility;
+  };
+  buildTarget?: {
+    visibility?: StatusBarButtonVisibility;
+  };
+  build?: {
+    visibility?: StatusBarButtonVisibility;
+  };
+  launchTarget?: {
+    visibility?: StatusBarButtonVisibility;
+  };
+  debug?: {
+    visibility?: StatusBarButtonVisibility;
+  };
+  launch?: {
+    visibility?: StatusBarButtonVisibility;
+  };
+  ctest?: {
+    color?: boolean;
+    visibility?: StatusBarButtonVisibility;
+  };
+}
+export interface StatusBarConfig {
+  advanced?: AdvancedStatusBarConfig;
+  visibility: StatusBarButtonVisibility;
 }
 
 export interface ExtensionConfigurationSettings {
@@ -57,6 +95,8 @@ export interface ExtensionConfigurationSettings {
   emscriptenSearchDirs: string[];
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
+  configureOnEdit: boolean;
+  skipConfigureIfCachePresent: boolean|null;
   useCMakeServer: boolean;
   cmakeCommunicationMode: CMakeCommunicationMode;
   ignoreKitEnv: boolean;
@@ -64,6 +104,7 @@ export interface ExtensionConfigurationSettings {
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
+  statusbar: StatusBarConfig;
 }
 
 type EmittersOf<T> = {
@@ -83,6 +124,8 @@ export class ConfigurationReader implements vscode.Disposable {
   constructor(private readonly _configData: ExtensionConfigurationSettings) {}
 
   get configData() { return this._configData; }
+
+  get statusbar() { return this._configData.statusbar; }
 
   dispose() {
     if (this._updateSubscription) {
@@ -199,6 +242,10 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get configureOnOpen() { return this.configData.configureOnOpen; }
 
+  get configureOnEdit() { return this.configData.configureOnEdit; }
+
+  get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
+
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
@@ -279,6 +326,8 @@ export class ConfigurationReader implements vscode.Disposable {
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
+    configureOnEdit: new vscode.EventEmitter<boolean>(),
+    skipConfigureIfCachePresent: new vscode.EventEmitter<boolean|null>(),
     useCMakeServer: new vscode.EventEmitter<boolean>(),
     cmakeCommunicationMode: new vscode.EventEmitter<CMakeCommunicationMode>(),
     ignoreKitEnv: new vscode.EventEmitter<boolean>(),
@@ -286,6 +335,8 @@ export class ConfigurationReader implements vscode.Disposable {
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+    statusbar: new vscode.EventEmitter<StatusBarConfig>()
+
   };
 
   /**

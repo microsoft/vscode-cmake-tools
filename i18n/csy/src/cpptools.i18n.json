@@ -9,6 +9,5 @@
 	"unknown.control.gflag.c": "Neznámý standardní řídicí příznak jazyka C: {0}",
 	"unknown.control.gflag": "Neznámý standardní řídicí příznak: {0}",
 	"unknown language": "Neznámý jazyk: {0}",
-	"method.not.implemented": "Metoda není implementovaná.",
 	"path.not.found.in.cmake.cache": "Cesta ke kompilátoru pro jeden nebo více zdrojových souborů nebyla v mezipaměti CMake nalezena. Pokud používáte soubor sady nástrojů, pravděpodobně to znamená, že musíte zadat parametr CACHE, když nastavíte cestu kompilátoru jazyka C nebo C++."
 }

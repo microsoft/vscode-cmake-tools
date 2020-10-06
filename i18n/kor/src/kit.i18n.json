@@ -34,6 +34,7 @@
 	"scanning.for.kits": "키트를 검색하는 중",
 	"scanning.for.cmake.kits": "CMake 키트를 검색하는 중...",
 	"found.kit": "찾은 키트: {0}",
+	"silent.kits.rescan": "{0}에서 {1}(으)로의 키트 정의 버전 변경이 검색되었습니다. 키트를 자동으로 검사합니다.",
 	"kit.for.toolchain.file": "도구 체인 파일 {0}용 키트",
 	"using.compilers.for": "{0}({1} 아키텍처)에 대한 컴파일러를 사용하는 중",
 	"using.compilers": "컴파일러를 사용하는 중: {0}",
@@ -42,7 +43,7 @@
 	"not.reading.nonexistent.kit": "존재하지 않는 키트 파일을 읽지 않음: {0}",
 	"reading.kits.file": "키트 파일 {0}을(를) 읽는 중",
 	"failed.to.parse": "{0}을(를) 구문 분석하지 못함: {1}",
-	"invalid.file.error": "잘못된 {0}({1}):",
+	"invalid.file.error": "잘못된 키트 콘텐츠 {0}({1}):",
 	"successfully.loaded.kits": "{1}에서 {0}개 키트를 로드함",
 	"clean.not.needed": "정리 필요 없음: 이전 키트를 선택하지 않음",
 	"clean.needed": "정리 필요: 키트가 변경됨"

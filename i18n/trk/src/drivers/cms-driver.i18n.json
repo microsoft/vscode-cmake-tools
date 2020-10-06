@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "Geçerli derleme türü için eşleşen bir kod modeli bulunamadı. Bunun olmaması gerekir",
 	"build.all.target": "Tüm kullanılabilir hedefleri derlemek için özel bir hedef",
 	"install.all.target": "Tüm kullanılabilir hedefleri yüklemek için özel bir hedef",
-	"utility.target": "Yardımcı program hedefi"
+	"utility.target": "Yardımcı program hedefi",
+	"cmakelists.save.trigger.reconfigure": "'cmake.sourceDirectory' ayarı güncelleştirildi, otomatik olarak yeniden yapılandırılmaya çalışılıyor..."
 }

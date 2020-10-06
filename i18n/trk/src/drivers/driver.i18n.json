@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "Sistem tarafından desteklenen oluşturucu algılanmaya çalışılıyor",
 	"start.configure": "Yapılandırmayı başlat",
 	"cmake.flags.are": "CMake bayrakları: {0}",
+	"configure.failed": "Proje yapılandırılamadı",
 	"no.kit.is.set": "Ayarlanan set yok!",
 	"using.compilers.in.for.configure": "Yapılandırma için {0} konumundaki derleyiciler kullanılıyor",
 	"using.cmake.toolchain.for.configure": "Yapılandırma için {0} CMake araç zinciri kullanılıyor",

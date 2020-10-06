@@ -22,6 +22,17 @@ export class StateManager {
   }
 
   /**
+   * Whether the user chose to ignore the popup message about missing CMakeLists.txt
+   * from the root folder, for a code base that is not fully activating CMake Tools.
+   */
+  get ignoreCMakeListsMissing(): boolean {
+    return this._get<boolean>('ignoreCMakeListsMissing') || false;
+  }
+  set ignoreCMakeListsMissing(v: boolean) {
+    this._update('ignoreCMakeListsMissing', v);
+  }
+
+  /**
    * The name of the workspace-local active kit.
    */
   get activeKitName(): string|null {
@@ -73,5 +84,6 @@ export class StateManager {
     this.launchTargetName = null;
     this.defaultBuildTarget = null;
     this.activeKitName = null;
+    this.ignoreCMakeListsMissing = false;
   }
 }

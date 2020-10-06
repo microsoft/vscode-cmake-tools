@@ -17,6 +17,7 @@
 	"trying.to.detect.generator": "システムでサポートされているジェネレーターを検出しようとしています",
 	"start.configure": "構成の開始",
 	"cmake.flags.are": "CMake フラグ: {0}",
+	"configure.failed": "プロジェクトを構成できませんでした",
 	"no.kit.is.set": "キットが設定されていません。",
 	"using.compilers.in.for.configure": "{0} 内のコンパイラを使用して構成しています",
 	"using.cmake.toolchain.for.configure": "CMake ツールチェーン {0} を使用して構成しています",

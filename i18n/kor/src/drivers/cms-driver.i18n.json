@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "현재 빌드 형식에 대한 일치하는 코드 모델이 없습니다. 일치하는 코드 모델이 있어야 합니다.",
 	"build.all.target": "사용 가능한 모든 대상을 빌드할 특수 대상",
 	"install.all.target": "사용 가능한 모든 대상을 설치할 특수 대상",
-	"utility.target": "유틸리티 대상"
+	"utility.target": "유틸리티 대상",
+	"cmakelists.save.trigger.reconfigure": "'cmake.sourceDirectory' 설정 업데이트가 검색되어 자동 다시 구성을 시도하는 중..."
 }

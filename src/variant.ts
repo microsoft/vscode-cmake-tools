@@ -190,6 +190,7 @@ export class VariantManager implements vscode.Disposable {
 
 
   dispose() {
+    // tslint:disable-next-line: no-floating-promises
     this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
@@ -203,7 +204,8 @@ export class VariantManager implements vscode.Disposable {
     if (!vscode.workspace.workspaceFolders) {
       return;  // Nothing we can do. We have no directory open
     }
-    const base_path = folder.uri.path;
+    // Ref: https://code.visualstudio.com/api/references/vscode-api#Uri
+    const base_path = folder.uri.fsPath;
     for (const filename of ['cmake-variants.yaml',
                             'cmake-variants.json',
                             '.vscode/cmake-variants.yaml',
@@ -258,7 +260,9 @@ export class VariantManager implements vscode.Disposable {
         } else {
           new_variants = yaml.load(content) as VarFileRoot;
         }
-      } catch (e) { log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, e)); }
+      } catch (e) {
+        log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, util.errorToString(e)));
+      }
     }
 
     const is_valid = validate(new_variants);

@@ -6,7 +6,7 @@ import * as path from 'path';
 
 // tslint:disable:no-unused-expression
 
-suite('[Debug/Lauch interface]', async () => {
+suite('[Debug/Launch interface]', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
@@ -51,6 +51,15 @@ suite('[Debug/Lauch interface]', async () => {
     await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
     expect(await cmt.launchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
+  });
+
+  test('Test launchTargetFilename for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    expect(await cmt.launchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
   });
 
   test('Test build on launch (default)', async () => {

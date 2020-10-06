@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Ruta de acceso a un archivo de cadena de herramientas",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Nombre del producto de Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Arquitectura de destino",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Ruta de acceso absoluta a un script que modifica el entorno del kit",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Valor de la variable de entorno",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "Valor para la configuración de CMake",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Establecer un generador de CMake preferido para el kit",

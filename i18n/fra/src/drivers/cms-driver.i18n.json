@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "Le modèle de code correspondant est introuvable pour le type de build actuel. Cela ne doit pas se produire",
 	"build.all.target": "Cible spéciale pour générer toutes les cibles disponibles",
 	"install.all.target": "Cible spéciale pour installer toutes les cibles disponibles",
-	"utility.target": "Cible de l'utilitaire"
+	"utility.target": "Cible de l'utilitaire",
+	"cmakelists.save.trigger.reconfigure": "Mise à jour du paramètre 'cmake.sourceDirectory' détectée, tentative de reconfiguration automatique..."
 }
