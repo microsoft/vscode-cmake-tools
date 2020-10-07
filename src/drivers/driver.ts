@@ -924,7 +924,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
     const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
-                     .concat(this.config.buildArgs, ['--'], generator_args, this.config.buildToolArgs);
+                     .concat(this.config.buildArgs, generator_args, this.config.buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises) as string[];
