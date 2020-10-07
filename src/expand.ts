@@ -92,7 +92,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     }
   }
 
-  const env_re = /\$\{env:(.+?)\}/g;
+  const env_re = /\$\{env:(.+)\}/g;
   while ((mat = env_re.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
@@ -100,7 +100,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     subs.set(full, repl);
   }
 
-  const env_re2 = /\$\{env\.(.+?)\}/g;
+  const env_re2 = /\$\{env\.(.+)\}/g;
   while ((mat = env_re2.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
@@ -108,9 +108,21 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     subs.set(full, repl);
   }
 
+  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    const folder_re = /\$\{workspaceFolder:(.+)\}/g;
+    while (mat = folder_re.exec(tmpl)) {
+      const full = mat[0];
+      const folderName = mat[1];
+      const f = vscode.workspace.workspaceFolders.find(folder => folder.name.toLocaleLowerCase() === folderName.toLocaleLowerCase());
+      if (f) {
+        subs.set(full, f.uri.fsPath);
+      }
+    }
+  }
+
   if (opts.variantVars) {
     const variants = opts.variantVars;
-    const variant_regex = /\$\{variant:(.+?)\}/g;
+    const variant_regex = /\$\{variant:(.+)\}/g;
     while ((mat = variant_regex.exec(tmpl))) {
       const full = mat[0];
       const varname = mat[1];
@@ -119,7 +131,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     }
   }
 
-  const command_re = /\$\{command:(.+?)\}/g;
+  const command_re = /\$\{command:(.+)\}/g;
   while ((mat = command_re.exec(tmpl))) {
     const full = mat[0];
     const command = mat[1];

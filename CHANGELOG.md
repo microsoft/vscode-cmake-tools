@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.5.0
+Improvements:
+- Support variables for Kit.toolchainFile. [#991](https://github.com/microsoft/vscode-cmake-tools/pull/991)[#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
+
 ## 1.4.2
 Improvements:
 - Added new variable substitution command: `${command:cmake.launchTargetFilename}`. [#632](https://github.com/microsoft/vscode-cmake-tools/issues/632) [@ebai101](https://github.com/ebai101)

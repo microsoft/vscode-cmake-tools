@@ -1036,6 +1036,24 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
   return localize('unspecified.let.cmake.guess', 'Unspecified (Let CMake guess what compilers and environment to use)');
 }
 
+async function expandKitVariables(kit: Kit): Promise<Kit> {
+  if (kit.toolchainFile) {
+    kit.toolchainFile = await expand.expandString(kit.toolchainFile, {
+      vars: {
+        buildKit: kit.name,
+        buildType: '${buildType}',  // Unsupported variable substitutions use identity.
+        generator: '${generator}',
+        userHome: paths.userHome,
+        workspaceFolder: '${workspaceFolder}',
+        workspaceFolderBasename: '${workspaceFolderBasename}',
+        workspaceRoot: '${workspaceRoot}',
+        workspaceRootFolderName: '${workspaceRootFolderName}'
+      }
+    });
+  }
+  return kit;
+}
+
 export async function readKitsFile(filepath: string): Promise<Kit[]> {
   if (!await fs.exists(filepath)) {
     log.debug(localize('not.reading.nonexistent.kit', 'Not reading non-existent kits file: {0}', filepath));
@@ -1062,7 +1080,7 @@ export async function readKitsFile(filepath: string): Promise<Kit[]> {
   }
   const kits = kits_raw as Kit[];
   log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, filepath));
-  return dropNulls(kits);
+  return Promise.all(dropNulls(kits).map(expandKitVariables));
 }
 
 function convertMingwDirsToSearchPaths(mingwDirs: string[]): string[] {
