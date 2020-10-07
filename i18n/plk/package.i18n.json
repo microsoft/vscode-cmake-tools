@@ -72,7 +72,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Ścieżka do pliku wykonywalnego narzędzia CTest. Jeśli wartość jest równa null, zostanie określona na podstawie parametru cmake.cmakePath (zaleca się pozostawienie wartości null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Liczba równoległych zadań testowych. Użyj wartości zero, aby użyć wartości parametru cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analizuj dane wyjściowe kompilatora pod kątem ostrzeżeń i błędów.",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Analizatory danych wyjściowych do użycia. Obsługiwane analizatory to „cmake”, „gcc”, „gnuld” dla danych wyjściowych konsolidatora typu GNULD, „msvc” dla programu Microsoft Visual C++ oraz „ghs” dla kompilatora Green Hills z parametrami --no_wrap_diagnostics --brief_diagnostics.",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Analizatory danych wyjściowych do użycia. Obsługiwane analizatory to „cmake”, „gcc”, „gnuld” dla danych wyjściowych konsolidatora typu GNULD, „msvc” dla programu Microsoft Visual C++, „ghs” dla kompilatora Green Hills z parametrami --no_wrap_diagnostics --brief_diagnostics oraz „diab” dla kompilatora Wind River Diab.",
 	"cmake-tools.configuration.cmake.debugConfig.description": "Konfiguracja debugowania do użycia podczas debugowania elementu docelowego.",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Ścieżki wyszukiwania symboli debugera programu Visual Studio.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Ścieżki dla programu GDB lub LLDB na potrzeby wyszukiwania plików so.",
