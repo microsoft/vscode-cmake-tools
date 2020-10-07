@@ -72,7 +72,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Путь к исполняемому файлу CTest. Если он равен NULL, значение будет выводиться из cmake.cmakePath (рекомендуется оставить NULL).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Число параллельных тестовых заданий. Укажите нуль, чтобы использовать значение cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Анализ вывода компилятора на наличие предупреждений и ошибок.",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Используемые средства анализа выходных данных. Поддерживаемые средства анализа: \"cmake\", \"gcc\", \"gnuld\" для вывода компоновщика в стиле GNULD, \"msvc\" для Microsoft Visual C++ и \"ghs\" для компилятора Green Hills с параметрами --no_wrap_diagnostics --brief_diagnostics.",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Используемые средства анализа выходных данных. Поддерживаются \"cmake\", \"gcc\", \"gnuld\" для вывода компоновщика в стиле GNULD, \"msvc\" для Microsoft Visual C++, \"ghs\" для компилятора Green Hills с параметрами --no_wrap_diagnostics --brief_diagnostics, а также \"diab\" для компилятора Wind River Diab.",
 	"cmake-tools.configuration.cmake.debugConfig.description": "Конфигурация, используемая при отладке целевого объекта.",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Пути для поиска символов отладчика Visual Studio.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Пути для поиска файлов SO для отладчиков GDB или LLDB.",

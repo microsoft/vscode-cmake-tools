@@ -1365,8 +1365,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       // a target.
       return null;
     }
+    const user_config = this.workspaceContext.config.debugConfig;
     const termOptions: vscode.TerminalOptions = {
       name: 'CMake/Launch',
+      cwd: (user_config && user_config.cwd) || path.dirname(executable.path),
     };
     if (process.platform == 'win32') {
       // Use cmd.exe on Windows
