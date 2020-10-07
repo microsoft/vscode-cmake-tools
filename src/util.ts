@@ -157,6 +157,7 @@ export function splitPath(p: string): string[] {
  */
 export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
+    value = value.toUpperCase();
     return !(['', 'FALSE', 'OFF', '0', 'NOTFOUND', 'NO', 'N', 'IGNORE'].indexOf(value) >= 0
              || value.endsWith('-NOTFOUND'));
   }

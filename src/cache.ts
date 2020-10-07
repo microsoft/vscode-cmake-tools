@@ -186,17 +186,17 @@ export class CMakeCache {
    * @param key The CMake Cache Option Key to edit
    * @param value Boolean value
    */
-  private replace(content: string, key: string, value: boolean): string {
+  private replace(content: string, key: string, value: string): string {
     const re = key + ':.+=(.+)';
     const found = content.match(re);
 
     if (found && found.length >= 2) {
       const line = found[0];
       const currentVal = found[1];
-      const newValueLine = line.replace(currentVal, value ? 'TRUE' : 'FALSE');
+      const newValueLine = line.replace(currentVal, value);
       return content.replace(line, newValueLine);
     } else {
-      return '';
+      return content;
     }
   }
 
@@ -205,7 +205,7 @@ export class CMakeCache {
    * @param key cmake option name
    * @param value value of cmake option
    */
-  async replaceOption(key: string, value: boolean) {
+  async replaceOption(key: string, value: string) {
     const exists = fs.exists(this.path);
     if (exists) {
       const content = (await fs.readFile(this.path)).toString();
@@ -215,13 +215,13 @@ export class CMakeCache {
     return '';
   }
 
-  async replaceOptions(options: Array<{key: string, value: boolean}>) {
+  async replaceOptions(options: Array<{key: string, value: string}>) {
     return new Promise(async resolve => {
       const exists = await fs.exists(this.path);
       if (exists) {
         let content = (await fs.readFile(this.path)).toString();
         for (const option of options) {
-          content = await this.replace(content, option.key, option.value);
+          content = this.replace(content, option.key, option.value);
         }
         resolve(content);
       } else {
@@ -230,7 +230,7 @@ export class CMakeCache {
     });
   }
 
-  async save(key: string, value: boolean) {
+  async save(key: string, value: string) {
     const content = await this.replaceOption(key, value);
     if (await fs.exists(this.path)) {
       if (content) {
@@ -239,7 +239,7 @@ export class CMakeCache {
     }
   }
 
-  async saveAll(options: Array<{key: string, value: boolean}>) {
+  async saveAll(options: Array<{key: string, value: string}>) {
     const content = await this.replaceOptions(options);
     if (await fs.exists(this.path)) {
       if (content) {

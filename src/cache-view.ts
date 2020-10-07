@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as api from './api';
+import * as util from './util';
 import { CMakeCache } from './cache';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -8,7 +9,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export interface IOption {
     key: string;
-    value: boolean;
+    type: string;
+    value: string;
 }
 
 
@@ -80,8 +82,10 @@ export class ConfigurationWebview {
       // get cmake cache
       const cmakeCache = await CMakeCache.fromPath(this.cachePath);
       for (const entry of cmakeCache.allEntries) {
-        if (entry.type === api.CacheEntryType.Bool) {
-          options.push({ key: entry.key, value: entry.value });
+        // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
+        // Not useful to show these entries in the list.
+        if (entry.type !== api.CacheEntryType.Static) {
+          options.push({ key: entry.key, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value });
         }
       }
 
@@ -180,11 +184,17 @@ export class ConfigurationWebview {
           }
 
           function save() {
-            const inputs = [...document.querySelectorAll('.cmake-input')];
-            const values = inputs.map(x => { return { key: x.id, value: x.checked } });
+            const inputsBool = [...document.querySelectorAll('.cmake-input-bool')];
+            const valuesBool = inputsBool.map(x => { return { key: x.id, value: x.checked } });
+
+            const inputsString = [...document.querySelectorAll('.cmake-input-string')];
+            const valuesString = inputsString.map(x => {
+              const setting = document.getElementById(x.id);
+              return { key: x.id, value: setting.value };
+            });
 
             document.getElementById('not-saved').classList.add('invisible');
-            vscode.postMessage(values);
+            vscode.postMessage(valuesBool.concat(valuesString));
           }
 
           function search() {
@@ -223,15 +233,26 @@ export class ConfigurationWebview {
 
     // compile a list of table rows that contain the key and value pairs
     const tableRows = options.map(option => {
-      return `<tr class="content-tr">
+      if (option.type === "Bool") {
+        return `<tr class="content-tr">
         <td></td>
         <td>${option.key}</td>
         <td>
-          <input class="cmake-input" id="${option.key}" onclick="toggleKey('${option.key}')"
-                 type="checkbox" ${option.value ? 'checked' : ''}>
-          <label id="LABEL_${option.key}" for="${option.key}">${option.value ? 'ON': 'OFF'}</label>
+          <input class="cmake-input-bool" id="${option.key}" onclick="toggleKey('${option.key}')"
+                 type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
+          <label id="LABEL_${option.key}" for="${option.key}">${util.isTruthy(option.value) ? 'ON' : 'OFF'}</label>
         </td>
       </tr>`;
+      } else {
+        return `<tr class="content-tr">
+        <td></td>
+        <td>${option.key}</td>
+        <td>
+          <input class="cmake-input-string" id="${option.key}" value="${option.value}"
+                 type="text">
+        </td>
+      </tr>`;
+      }
     });
 
     html = html.replace(key, tableRows.join(""));
