@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "未讀取不存在的套件檔案: {0}",
 	"reading.kits.file": "正在讀取套件檔案 {0}",
 	"failed.to.parse": "無法剖析 {0}: {1}",
-	"invalid.file.error": "{0} 無效 ({1}):",
+	"invalid.file.error": "套件內容 {0} ({1}) 無效:",
 	"successfully.loaded.kits": "已成功從 {1} 載入 {0} 個套件",
 	"clean.not.needed": "不需要清除: 未選取先前的套件",
 	"clean.needed": "需要清除: 已變更套件"
