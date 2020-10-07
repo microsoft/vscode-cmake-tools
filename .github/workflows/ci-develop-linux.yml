@@ -1,4 +1,4 @@
-name: CI
+name: CI (Linux)
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - name: Install dependent packages
         run: sudo apt install powershell gdb xvfb
 
-      - name: Run the CI script
+      - name: Build the extension and run tests
         uses: GabrielBB/xvfb-action@v1.4
         with:
           # Command to execute using xvfb
