@@ -1492,12 +1492,12 @@
     "keybindings": [
       {
         "key": "f7",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "!cmake:hideBuildCommand && cmake:enableFullFeatureSet",
         "command": "cmake.build"
       },
       {
         "key": "shift+f7",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "!cmake:hideBuildCommand && cmake:enableFullFeatureSet",
         "command": "cmake.buildWithTarget"
       },
       {
