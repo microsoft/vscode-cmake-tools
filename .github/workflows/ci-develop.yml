@@ -25,12 +25,9 @@ jobs:
       - name: Install dependent packages
         run: sudo apt install powershell gdb xvfb
 
-      - name: Set up X-server redirection
-        run: |
-          export DISPLAY=:99.0
-          sh -e /etc/init.d/xvfb start
-          sleep 3
-          
       - name: Run the CI script
-        run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          # Command to execute using xvfb
+          run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
 
