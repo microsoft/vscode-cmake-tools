@@ -468,7 +468,7 @@ export class StatusBar implements vscode.Disposable {
   setAutoSelectActiveFolder(autoSelectActiveFolder: boolean): void {
     this._workspaceButton.autoSelect = autoSelectActiveFolder;
   }
-  setBuildTypeLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
+  setVariantLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
   setStatusMessage(v: string): void { this._cmakeToolsStatusItem.statusMessage = v; }
   setBuildTargetName(v: string): void {
     this._buildTargetNameButton.text = v;
