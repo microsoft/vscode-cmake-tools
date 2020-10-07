@@ -136,7 +136,7 @@ suite('[Debug/Launch interface]', async () => {
     expect(launchProgrammPath).to.be.not.null;
 
     // Remove file if not exists
-    const createdFileOnExecution = path.join(testEnv.projectFolder.location, 'test.txt');
+    const createdFileOnExecution = path.join(path.dirname(launchProgrammPath!), 'test.txt');
     if (fs.existsSync(createdFileOnExecution)) {
       fs.unlinkSync(createdFileOnExecution);
     }
