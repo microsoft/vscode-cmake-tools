@@ -67,7 +67,7 @@
     "cmake-tools.configuration.cmake.ctestPath.description": "Path to CTest executable. If null, will be inferred from cmake.cmakePath (recommended to leave null).",
     "cmake-tools.configuration.cmake.ctest.parallelJobs.description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
-    "cmake-tools.configuration.cmake.enabledOutputParsers.description": "Output parsers to use. Supported parsers 'cmake', 'gcc', 'gnuld' for GNULD-style inker output, 'msvc' for Microsoft Visual C++, and 'ghs' for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics.",
+    "cmake-tools.configuration.cmake.enabledOutputParsers.description": "Output parsers to use. Supported parsers 'cmake', 'gcc', 'gnuld' for GNULD-style linker output, 'msvc' for Microsoft Visual C++, 'ghs' for the Green Hills compiler with --no_wrap_diagnostics --brief_diagnostics, and 'diab' for the Wind River Diab compiler.",
     "cmake-tools.configuration.cmake.debugConfig.description": "The debug configuration to use when debugging a target.",
     "cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Visual Studio debugger symbol search paths.",
     "cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Paths for GDB or LLDB to search for .so files.",

@@ -34,7 +34,7 @@
 	"scanning.for.kits": "Поиск наборов.",
 	"scanning.for.cmake.kits": "Поиск наборов CMake…",
 	"found.kit": "Обнаруженный набор: {0}.",
-	"silent.kits.rescan": "Detected kits definition version change from {0} to {1}. Silently scanning for kits.",
+	"silent.kits.rescan": "Обнаружено изменение версии определения наборов с {0} на {1}. Выполняется автоматическая проверка наборов.",
 	"kit.for.toolchain.file": "Набор для файла цепочки инструментов {0}",
 	"using.compilers.for": "Использование компиляторов для {0} (архитектура {1}).",
 	"using.compilers": "Использование компиляторов: {0}",
@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "Не удается прочитать несуществующий файл наборов: {0}",
 	"reading.kits.file": "Чтение файла наборов {0}.",
 	"failed.to.parse": "Не удалось проанализировать {0}: {1}",
-	"invalid.file.error": "Недопустимый {0} ({1}):",
+	"invalid.file.error": "Недопустимое содержимое комплекта {0} ({1}):",
 	"successfully.loaded.kits": "Наборы ({0}) из {1} загружены.",
 	"clean.not.needed": "Очистка не требуется: предыдущий набор не выбран.",
 	"clean.needed": "Требуется очистка: набор изменен."

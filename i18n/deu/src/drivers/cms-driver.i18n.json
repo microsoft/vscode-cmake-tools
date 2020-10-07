@@ -11,5 +11,5 @@
 	"build.all.target": "Ein spezielles Ziel zum Erstellen aller verfügbaren Ziele",
 	"install.all.target": "Ein spezielles Ziel zum Installieren aller verfügbaren Ziele",
 	"utility.target": "Hilfsprogrammziel",
-	"cmakelists.save.trigger.reconfigure": "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."
+	"cmakelists.save.trigger.reconfigure": "Update für Einstellung \"cmake.sourceDirectory\" erkannt. Automatische Neukonfiguration wird versucht..."
 }

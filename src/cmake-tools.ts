@@ -1185,6 +1185,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Implementation of `cmake.launchTargetFilename`. It just calls launchTargetPath and
+   * extracts the filename form the result.
+   */
+  async launchTargetFilename(): Promise<string|null> {
+    const targetPath = await this.launchTargetPath();
+    if (targetPath === null) {
+      return null;
+    }
+    return path.basename(targetPath);
+  }
+
+  /**
    * Implementation of `cmake.buildType`
    */
   async currentBuildType(): Promise<string|null> {
@@ -1356,8 +1368,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       // a target.
       return null;
     }
+    const user_config = this.workspaceContext.config.debugConfig;
     const termOptions: vscode.TerminalOptions = {
       name: 'CMake/Launch',
+      cwd: (user_config && user_config.cwd) || path.dirname(executable.path),
     };
     if (process.platform == 'win32') {
       // Use cmd.exe on Windows

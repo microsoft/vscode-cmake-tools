@@ -34,7 +34,7 @@
 	"scanning.for.kits": "キットをスキャンしています",
 	"scanning.for.cmake.kits": "CMake キットをスキャンしています...",
 	"found.kit": "見つかったキット: {0}",
-	"silent.kits.rescan": "Detected kits definition version change from {0} to {1}. Silently scanning for kits.",
+	"silent.kits.rescan": "検出キット定義のバージョンが {0} から {1} に変更されました。メッセージを表示せずにキットをスキャンしています。",
 	"kit.for.toolchain.file": "ツールチェーン ファイル {0} 用のキット",
 	"using.compilers.for": "{0} 用のコンパイラ ({1} アーキテクチャ) を使用しています",
 	"using.compilers": "コンパイラ {0} を使用しています",
@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "存在しないキット ファイルは読み取りません: {0}",
 	"reading.kits.file": "キット ファイル {0} を読み取っています",
 	"failed.to.parse": "{0} を解析できませんでした: {1}",
-	"invalid.file.error": "無効な {0} ({1}):",
+	"invalid.file.error": "無効なキットの内容 {0} ({1}):",
 	"successfully.loaded.kits": "{1} から {0} 個のキットが正常に読み込まれました",
 	"clean.not.needed": "クリーンは不要: 前のキットは選択されていません",
 	"clean.needed": "クリーンが必要: キットが変更されました"
