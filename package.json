@@ -1604,6 +1604,7 @@
     "minimist": "^1.2.3",
     "mocha": "^4.1.0",
     "module-alias": "^2.2.1",
+    "node-loader": "^1.0.1",
     "sinon": "~5.0.7",
     "ts-loader": "^6.0.4",
     "ts-node": "^6.0.0",
