@@ -1,0 +1,18 @@
+name: CI (macOS)
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Build the extension and run tests
+        run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
