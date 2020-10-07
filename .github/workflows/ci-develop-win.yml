@@ -1,4 +1,4 @@
-name: CI (macOS)
+name: CI (Windows)
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macOS-10.15
+    runs-on: windows-2019
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -21,4 +21,4 @@ jobs:
           check-latest: true
 
       - name: Build the extension and run tests
-        run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
+        run: powershell -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
