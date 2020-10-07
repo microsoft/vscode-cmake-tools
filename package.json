@@ -1612,8 +1612,8 @@
     "typescript": "^3.7.2",
     "vscode": "^1.1.36",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7"
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "ajv": "^4.7.5",
@@ -1633,6 +1633,7 @@
     "xml2js": "^0.4.17"
   },
   "resolutions": {
+    "chokidar": "^3.3.0",
     "marked": "^0.7.0",
     "diff": "^3.5.0",
     "https-proxy-agent": "^2.2.4",
