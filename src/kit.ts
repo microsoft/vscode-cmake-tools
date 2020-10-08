@@ -591,7 +591,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
 
   let environmentSetupScript = kit.environmentSetupScript;
   if (opts) {
-    environmentSetupScript = await expand.expandString(environmentSetupScript, opts);
+    environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
   }
 
   if (process.platform == 'win32') { // windows
