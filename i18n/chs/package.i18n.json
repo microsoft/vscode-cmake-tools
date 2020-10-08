@@ -72,7 +72,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可执行文件的路径。如果为 null，则从 cmake.cmakePath 推理(建议保留为 null)。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "并行测试作业的数量。使用零即可利用 cmake.parallelJobs 的值。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "分析编译器输出以查找警告和错误。",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "要使用的输出分析程序。支持的分析程序 \"cmake\"、\"gcc\"、\"gnuld\"(适用于 GNULD 样式的 inker 输出)、\"msvc\"(适用于 Microsoft Visual C++)和 \"ghs\"(适用于 Green Hills 编译器，具有 --no_wrap_diagnostics --brief_diagnostics)。",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "要使用的输出分析程序。支持的分析程序 \"cmake\"、\"gcc\"、\"gnuld\"(适用于 GNULD 样式的 inker 输出)、\"msvc\"(适用于 Microsoft Visual C++)、\"ghs\"(适用于 Green Hills 编译器，具有 --no_wrap_diagnostics --brief_diagnostics)，以及 \"diab\" (适用于 Wind River Diab 编译器)。",
 	"cmake-tools.configuration.cmake.debugConfig.description": "要在调试目标时使用的调试配置。",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Visual Studio 调试程序符号搜索路径。",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "用于搜索 .so 文件的 GDB 或 LLDB 的路径。",
