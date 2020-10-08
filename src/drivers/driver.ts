@@ -206,7 +206,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * The options that will be passed to `expand.expandString` for this driver.
    */
   get expansionOptions(): expand.ExpansionOptions {
-    const ws_root = this.workspaceFolder || '.';
+    const ws_root = util.lightNormalizePath(this.workspaceFolder || '.');
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
