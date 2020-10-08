@@ -567,6 +567,7 @@ export function reportProgress(progress: ProgressHandle|undefined, message: stri
 
 export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
   return watcher.on('add', listener)
+                .on('raw', listener)
                 .on('change', listener)
                 .on('unlink', listener);
 }
