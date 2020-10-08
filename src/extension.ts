@@ -22,7 +22,7 @@ import {
   effectiveKitEnvironment,
   scanForKitsIfNeeded,
 } from '@cmt/kit';
-import {KitsController} from '@cmt/kitsController';
+import {KitsController, KitsReadMode} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
@@ -644,6 +644,7 @@ class ExtensionManager implements vscode.Disposable {
     if (undefined === cmakeTools) {
       return;
     }
+
     const duplicateRemoved = await KitsController.scanForKits(cmakeTools);
     if (duplicateRemoved) {
       // Check each folder. If there is an active kit set and if it is of the old definition,
