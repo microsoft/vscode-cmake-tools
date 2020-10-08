@@ -72,7 +72,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 実行可能ファイルへのパス。null の場合、cmake.cmakePath から推論されます (null のままにすることをお勧めします)。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "並列テスト ジョブの数。cmake.parallelJobs の値を使用するには、0 を指定します。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "コンパイラ出力の警告とエラーを解析します。",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "使用する出力パーサー。サポートされるパーサーは、GNULD スタイルのリンカー出力の場合は 'cmake'、'gcc'、'gnuld'、Microsoft Visual C++ の場合は 'msvc'、--no_wrap_diagnostics --brief_diagnostics を指定した Green Hills Compiler の場合は 'ghs' です。",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "使用する出力パーサー。サポートされるパーサーは、GNULD スタイルのリンカー出力の場合は 'cmake'、'gcc'、'gnuld'、Microsoft Visual C++ の場合は 'msvc'、--no_wrap_diagnostics --brief_diagnostics を指定した Green Hills Compiler の場合は 'ghs'、Wind River Diab Compiler の場合は 'diab' です。",
 	"cmake-tools.configuration.cmake.debugConfig.description": "ターゲットのデバッグ時に使用するデバッグ構成です。",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Visual Studio デバッガーのシンボル検索パスです。",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": ".so ファイルを検索する GDB または LLDB のパスです。",
