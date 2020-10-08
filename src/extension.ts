@@ -22,7 +22,7 @@ import {
   effectiveKitEnvironment,
   scanForKitsIfNeeded,
 } from '@cmt/kit';
-import {KitsController, KitsReadMode} from '@cmt/kitsController';
+import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
