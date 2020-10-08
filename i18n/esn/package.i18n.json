@@ -72,7 +72,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "Ruta de acceso al ejecutable de CTest. Si es NULL, se inferirá de cmake.cmakePath (se recomienda dejar NULL).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Número de trabajos de prueba paralelos. Use cero para utilizar el valor de cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analiza la salida del compilador para encontrar advertencias y errores.",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Analizadores de salida que se van a usar. Analizadores admitidos: \"cmake\", \"gcc\", \"gnuld\" para la salida del enlazador GNULD, \"msvc\" para Microsoft Visual C++ y \"ghs\" para el compilador de Green Hills con --no_wrap_diagnostics --brief_diagnostics.",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "Analizadores de salida que se van a usar. Analizadores admitidos: \"cmake\", \"gcc\", \"gnuld\" para la salida del enlazador GNULD, \"msvc\" para Microsoft Visual C++, \"ghs\" para el compilador de Green Hills con --no_wrap_diagnostics --brief_diagnostics y\"diab\" para el compilador de Wind River Diab.",
 	"cmake-tools.configuration.cmake.debugConfig.description": "Configuración de depuración que se va a usar al depurar un destino.",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Rutas de acceso de búsqueda de símbolos del depurador de Visual Studio.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": "Rutas de acceso para GDB o LLDB para buscar archivos .so.",

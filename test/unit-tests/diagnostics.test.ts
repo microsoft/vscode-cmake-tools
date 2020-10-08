@@ -53,7 +53,7 @@ suite('Diagnostics', async () => {
     expect(diag.filepath).to.eq('dummyPath/CMakeLists.txt');
     expect(diag.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
     expect(diag.diag.source).to.eq('CMake (message)');
-    expect(diag.diag.message).to.eq('I am a warning!');
+    expect(diag.diag.message).to.endsWith('I am a warning!');
     expect(diag.diag.range.start.line).to.eq(13);  // Line numbers are one-based
   });
   test('Parse two diags', () => {
@@ -80,8 +80,8 @@ suite('Diagnostics', async () => {
     expect(error.diag.range.start.line).to.eq(12);
     expect(warning.diag.source).to.eq('CMake (message)');
     expect(error.diag.source).to.eq('CMake (some_error_function)');
-    expect(warning.diag.message).to.eq('I am a warning!');
-    expect(error.diag.message).to.eq('I am an error!');
+    expect(warning.diag.message).to.endsWith('I am a warning!');
+    expect(error.diag.message).to.endsWith('I am an error!');
   });
   test('Parse diags with call stacks', () => {
     const error_output = [
@@ -98,7 +98,7 @@ suite('Diagnostics', async () => {
     expect(consumer.diagnostics.length).to.eq(1);
     const warning = consumer.diagnostics[0];
     expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-    expect(warning.diag.message).to.eq('I\'m an inner warning');
+    expect(warning.diag.message).to.endsWith('I\'m an inner warning');
     expect(warning.diag.range.start.line).to.eq(14);
     expect(warning.diag.source).to.eq('CMake (message)');
   });
@@ -117,7 +117,7 @@ suite('Diagnostics', async () => {
     expect(consumer.diagnostics.length).to.eq(1);
     const warning = consumer.diagnostics[0];
     expect(warning.diag.severity).to.eq(vscode.DiagnosticSeverity.Warning);
-    expect(warning.diag.message).to.eq('I\'m an inner warning');
+    expect(warning.diag.message).to.endsWith('I\'m an inner warning');
     expect(warning.diag.range.start.line).to.eq(14);
     expect(warning.diag.source).to.eq('CMake (message)');
   });

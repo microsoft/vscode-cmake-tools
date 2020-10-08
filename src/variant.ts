@@ -204,7 +204,8 @@ export class VariantManager implements vscode.Disposable {
     if (!vscode.workspace.workspaceFolders) {
       return;  // Nothing we can do. We have no directory open
     }
-    const base_path = folder.uri.path;
+    // Ref: https://code.visualstudio.com/api/references/vscode-api#Uri
+    const base_path = folder.uri.fsPath;
     for (const filename of ['cmake-variants.yaml',
                             'cmake-variants.json',
                             '.vscode/cmake-variants.yaml',

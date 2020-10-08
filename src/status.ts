@@ -392,6 +392,12 @@ class BuildButton extends Button {
 
   private _isBusy: boolean = false;
   private _target: string|null = null;
+  private _hidden: boolean = false;
+
+  set hidden(v: boolean) {
+    this._hidden = v;
+    this.update();
+  }
 
   set isBusy(v: boolean) {
     this._isBusy = v;
@@ -417,7 +423,7 @@ class BuildButton extends Button {
   }
   protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
 
-  protected isVisible(): boolean { return this._isBusy || true; }
+  protected isVisible(): boolean { return !this._hidden && (this._isBusy || true); }
 }
 
 export class StatusBar implements vscode.Disposable {
@@ -462,7 +468,7 @@ export class StatusBar implements vscode.Disposable {
   setAutoSelectActiveFolder(autoSelectActiveFolder: boolean): void {
     this._workspaceButton.autoSelect = autoSelectActiveFolder;
   }
-  setBuildTypeLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
+  setVariantLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
   setStatusMessage(v: string): void { this._cmakeToolsStatusItem.statusMessage = v; }
   setBuildTargetName(v: string): void {
     this._buildTargetNameButton.text = v;
@@ -480,4 +486,5 @@ export class StatusBar implements vscode.Disposable {
 
   hideLaunchButton(shouldHide: boolean = true): void { this._launchButton.hidden = shouldHide; }
   hideDebugButton(shouldHide: boolean = true): void { this._debugButton.hidden = shouldHide; }
+  hideBuildButton(shouldHide: boolean = true): void { this._buildButton.hidden = shouldHide; }
 }

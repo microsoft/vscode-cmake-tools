@@ -72,7 +72,7 @@
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 실행 파일의 경로입니다. Null인 경우 cmake.cmakePath에서 유추됩니다(null을 유지하는 것이 좋음).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "병렬 테스트 작업의 수입니다. cmake.parallelJobs 값을 사용하려면 0을 사용합니다.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "경고 및 오류에 대한 컴파일러 출력을 구문 분석합니다.",
-	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "사용할 출력 파서입니다. 지원되는 파서: GNULD 스타일 링커 출력의 경우 'cmake', 'gcc', 'gnuld', Microsoft Visual C++의 경우 'msvc', Green Hills 컴파일러의 경우 'ghs'(--no_wrap_diagnostics --brief_diagnostics 포함).",
+	"cmake-tools.configuration.cmake.enabledOutputParsers.description": "사용할 출력 파서입니다. 지원되는 파서: GNULD 스타일 링커 출력의 경우 'cmake', 'gcc', 'gnuld', Microsoft Visual C++의 경우 'msvc', Green Hills 컴파일러의 경우 'ghs'(--no_wrap_diagnostics --brief_diagnostics 포함), Wind River Diab 컴파일러의 경우 'diab'",
 	"cmake-tools.configuration.cmake.debugConfig.description": "대상을 디버깅할 때 사용할 디버그 구성입니다.",
 	"cmake-tools.configuration.cmake.debugConfig.symbolSearchPath.description": "Visual Studio 디버거 기호 검색 경로입니다.",
 	"cmake-tools.configuration.cmake.debugConfig.additionalSOLibSearchPath.description": ".so 파일을 검색할 GDB 또는 LLDB 경로입니다.",
