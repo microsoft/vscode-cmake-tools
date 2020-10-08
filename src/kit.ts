@@ -578,7 +578,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
  * Gets the environment variables set by a shell script.
  * @param kit The kit to get the environment variables for
  */
-export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, string>|undefined> {
+export async function getShellScriptEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>|undefined> {
   console.assert(kit.environmentSetupScript);
   const filename = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
   const script_filename = `vs-cmt-${filename}`;
@@ -588,12 +588,18 @@ export async function getShellScriptEnvironment(kit: Kit): Promise<Map<string, s
 
   let script = '';
   let run_command = '';
+
+  let environmentSetupScript = kit.environmentSetupScript;
+  if (opts) {
+    environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
+  }
+
   if (process.platform == 'win32') { // windows
-    script += `call "${kit.environmentSetupScript}"\r\n`; // call the user batch script
+    script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
     script += `set >> ${environment_path}`; // write env vars to temp file
     run_command = `call ${script_path}`;
   } else { // non-windows
-    script += `source "${kit.environmentSetupScript}"\n`; // run the user shell script
+    script += `source "${environmentSetupScript}"\n`; // run the user shell script
     script +=`printenv >> ${environment_path}`; // write env vars to temp file
     run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
   }
@@ -864,7 +870,7 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     }
   }
   if (kit.environmentSetupScript) {
-    const shell_vars = await getShellScriptEnvironment(kit);
+    const shell_vars = await getShellScriptEnvironment(kit, opts);
     if (shell_vars) {
       host_env = util.map(shell_vars, ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]) as [string, string][];
     }
