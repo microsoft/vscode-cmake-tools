@@ -9,7 +9,7 @@ suite('[Toolchain Substitution]', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.Context) {
     this.timeout(100000);
     if (process.platform === 'win32')
       this.skip();
@@ -30,7 +30,7 @@ suite('[Toolchain Substitution]', async () => {
     testEnv.projectFolder.buildDirectory.clear();
   });
 
-  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+  teardown(async function(this: Mocha.Context) {
     this.timeout(30000);
     await cmt.asyncDispose();
     testEnv.teardown();
