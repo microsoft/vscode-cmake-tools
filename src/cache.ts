@@ -206,8 +206,8 @@ export class CMakeCache {
    * @param key cmake option name
    * @param value value of cmake option
    */
-  async replaceOption(key: string, value: string) {
-    const exists = fs.exists(this.path);
+  async replaceOption(key: string, value: string): Promise<string> {
+    const exists = await fs.exists(this.path);
     if (exists) {
       const content = (await fs.readFile(this.path)).toString();
       return this.replace(content, key, value);
@@ -216,34 +216,31 @@ export class CMakeCache {
     return '';
   }
 
-  async replaceOptions(options: Array<{key: string, value: string}>) {
-    return new Promise(async resolve => {
-      const exists = await fs.exists(this.path);
-      if (exists) {
-        let content = (await fs.readFile(this.path)).toString();
-        for (const option of options) {
-          content = this.replace(content, option.key, option.value);
-        }
-        resolve(content);
-      } else {
-        resolve('');
+  async replaceOptions(options: Array<{key: string, value: string}>): Promise<string> {
+    const exists = await fs.exists(this.path);
+    if (exists) {
+      let content = (await fs.readFile(this.path)).toString();
+      for (const option of options) {
+        content = this.replace(content, option.key, option.value);
       }
-    });
+      return content;
+    }
+    return '';
   }
 
-  async save(key: string, value: string) {
+  async save(key: string, value: string): Promise<void> {
     const content = await this.replaceOption(key, value);
-    if (await fs.exists(this.path)) {
-      if (content) {
+    if (content) {
+      if (await fs.exists(this.path)) {
         await fs.writeFile(this.path, content);
       }
     }
   }
 
-  async saveAll(options: Array<{key: string, value: string}>) {
+  async saveAll(options: Array<{key: string, value: string}>): Promise<void> {
     const content = await this.replaceOptions(options);
-    if (await fs.exists(this.path)) {
-      if (content) {
+    if (content) {
+      if (await fs.exists(this.path)) {
         await fs.writeFile(this.path, content);
       }
     }

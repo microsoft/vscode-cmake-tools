@@ -120,8 +120,26 @@ export class ConfigurationWebview {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>CMake Cache Editor</title>
         <style>
-          table {
-            border: 1px solid black;
+          .vscode-light {
+              color: #1e1e1e
+          }
+
+          .vscode-dark {
+              color: #ddd
+          }
+
+          .vscode-high-contrast {
+              color: #fff
+          }
+
+
+          .vscode-light table {
+            border: 1px solid;
+            border-collapse: collapse;
+          }
+
+          .vscode-dark table {
+            border: 1px solid;
             border-collapse: collapse;
           }
 
@@ -142,6 +160,14 @@ export class ConfigurationWebview {
             background: rgba(255, 255, 255, .25);
           }
 
+          .vscode-light table > tr > th {
+            background: rgba(0, 0, 0, .69)
+          }
+
+          .vscode-dark table > tr > th {
+            background: rgba(255, 255, 255, .69)
+          }
+
           input#search {
             width: 98%;
             padding: 11px 0px 11px 11px;
@@ -152,7 +178,19 @@ export class ConfigurationWebview {
             display: none;
           }
 
-          button#save {
+          .vscode-light button#save {
+            float: right;
+            padding: 10px 25px;
+            margin-top: 15px;
+            background: none;
+            color: black;
+            text-transform: uppercase;
+            font-weight: bold;
+            border: 1px solid #1e1e1e;
+            transition: 100ms ease-in-out;
+          }
+
+          .vscode-dark button#save {
             float: right;
             padding: 10px 25px;
             margin-top: 15px;
@@ -160,13 +198,16 @@ export class ConfigurationWebview {
             color: white;
             text-transform: uppercase;
             font-weight: bold;
-            border: 1px solid transparent;
-            border-image: linear-gradient(to bottom right, #b827fc 0%, #2c90fc 25%, #b8fd33 50%, #fec837 75%, #fd1892 100%);
-            border-image-slice: 1;
+            border: 1px solid #ddd;
             transition: 100ms ease-in-out;
           }
 
-          button#save:hover {
+          .vscode-light button#save:hover {
+            cursor: pointer;
+            background: #ddd;
+          }
+
+          .vscode-dark button#save:hover {
             cursor: pointer;
             background: #333;
           }
@@ -213,13 +254,9 @@ export class ConfigurationWebview {
       <div class="container">
         <button id="save" onclick="save()">Save</button>
         <h1>CMake Cache Editor<span class="invisible" id="not-saved">*</span></h1>
-        <hr>
         <input class="search" type="text" id="search" oninput="search()" placeholder="Search" autofocus>
         <table style="width:100%">
-          <tr style="
-            height: 35px;
-            background: linear-gradient(90deg, rgba(145,145,173,1) 0%, rgba(163,163,194,1) 36%, rgba(130,130,171,1) 61%, rgba(141,137,163,1) 100%);
-          ">
+          <tr style="height: 35px;">
             <th style="width: 30px">#</th>
             <th style="width: 1px; white-space: nowrap;">Key</th>
             <th>Value</th>

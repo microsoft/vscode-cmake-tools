@@ -1038,7 +1038,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!this._cacheEditorWebview) {
       const drv = await this.getCMakeDriverInstance();
       if (!drv) {
-        vscode.window.showErrorMessage(localize('CACHE.LOAD.FAILED', 'No CMakeCache.txt file has been found. Please configure project first!'));
+        vscode.window.showErrorMessage(localize('cache.load.failed', 'No CMakeCache.txt file has been found. Please configure project first!'));
         return 1;
       }
 
