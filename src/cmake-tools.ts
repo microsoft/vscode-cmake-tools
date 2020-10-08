@@ -1378,7 +1378,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._launchTerminal = vscode.window.createTerminal(termOptions);
     const quoted = shlex.quote(executable.path);
     this._launchTerminal.sendText(quoted);
-    this._launchTerminal.show();
+    this._launchTerminal.show(true);
     return this._launchTerminal;
   }
 
