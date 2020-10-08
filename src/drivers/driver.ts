@@ -206,7 +206,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * The options that will be passed to `expand.expandString` for this driver.
    */
   get expansionOptions(): expand.ExpansionOptions {
-    const ws_root = this.workspaceFolder || '.';
+    const ws_root = util.lightNormalizePath(this.workspaceFolder || '.');
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
@@ -732,7 +732,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Always export so that we have compile_commands.json
     settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(true);
 
-    if (!this.isMultiConf) {
+    const config = vscode.workspace.getConfiguration();
+    const allowBuildTypeOnMultiConfig = config.get("cmake.setBuildTypeOnMultiConfig") || false;
+
+    if (!this.isMultiConf || (this.isMultiConf && allowBuildTypeOnMultiConfig)) {
       // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
       settingMap.CMAKE_BUILD_TYPE = util.cmakeify(this.currentBuildType);
     }
@@ -921,7 +924,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
     const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
-                     .concat(this.config.buildArgs, ['--'], generator_args, this.config.buildToolArgs);
+                     .concat(this.config.buildArgs, generator_args, this.config.buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises) as string[];

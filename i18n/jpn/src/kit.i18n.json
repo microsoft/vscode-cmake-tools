@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "存在しないキット ファイルは読み取りません: {0}",
 	"reading.kits.file": "キット ファイル {0} を読み取っています",
 	"failed.to.parse": "{0} を解析できませんでした: {1}",
-	"invalid.file.error": "無効な {0} ({1}):",
+	"invalid.file.error": "無効なキットの内容 {0} ({1}):",
 	"successfully.loaded.kits": "{1} から {0} 個のキットが正常に読み込まれました",
 	"clean.not.needed": "クリーンは不要: 前のキットは選択されていません",
 	"clean.needed": "クリーンが必要: キットが変更されました"

@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "No se está leyendo el archivo de kits no existentes: {0}",
 	"reading.kits.file": "Leyendo el archivo de kits {0}",
 	"failed.to.parse": "No se pudo analizar {0}: {1}",
-	"invalid.file.error": "{0} no válido ({1}):",
+	"invalid.file.error": "Contenido del kit {0} ({1}) no válido:",
 	"successfully.loaded.kits": "Se han cargado correctamente {0} kits de {1}",
 	"clean.not.needed": "No es necesario limpiar: no se ha seleccionado ningún kit anterior",
 	"clean.needed": "Es necesario limpiar: el kit se ha cambiado"

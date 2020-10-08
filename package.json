@@ -1258,6 +1258,12 @@
           "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
           "scope": "resource"
         },
+        "cmake.setBuildTypeOnMultiConfig": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description%",
+          "scope": "resource"
+        },
         "cmake.skipConfigureIfCachePresent": {
           "type": "boolean",
           "default": null,
@@ -1492,12 +1498,12 @@
     "keybindings": [
       {
         "key": "f7",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "!cmake:hideBuildCommand && cmake:enableFullFeatureSet",
         "command": "cmake.build"
       },
       {
         "key": "shift+f7",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "!cmake:hideBuildCommand && cmake:enableFullFeatureSet",
         "command": "cmake.buildWithTarget"
       },
       {
@@ -1598,6 +1604,7 @@
     "minimist": "^1.2.3",
     "mocha": "^4.1.0",
     "module-alias": "^2.2.1",
+    "node-loader": "^1.0.1",
     "sinon": "~5.0.7",
     "ts-loader": "^6.0.4",
     "ts-node": "^6.0.0",
@@ -1606,8 +1613,8 @@
     "typescript": "^3.7.2",
     "vscode": "^1.1.36",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7"
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "ajv": "^4.7.5",
@@ -1627,6 +1634,7 @@
     "xml2js": "^0.4.17"
   },
   "resolutions": {
+    "chokidar": "^3.3.0",
     "marked": "^0.7.0",
     "diff": "^3.5.0",
     "https-proxy-agent": "^2.2.4",
