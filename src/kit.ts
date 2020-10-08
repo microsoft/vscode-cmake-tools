@@ -286,7 +286,16 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
-    const name = `Clang ${version.version}`;
+    let name = `Clang ${version.version}`;
+    // On windows (except MinGW, Cygwin, etc... represented by a non undefined process.env.MSYSTEM),
+    // make the distinction between [Program Files]/LLVM and [Program Files(x86)]/LLVM in the kit name,
+    // to be able to represent both in the kits file.
+    // clang --version returns the same version.version for these 2 different installs,
+    // but version.target differs and can be used to ensure name uniqueness.
+    if (process.platform === "win32" && process.env.MSYSTEM === undefined) {
+      name += ` (${version.target})`;
+    }
+
     log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
     if (await fs.exists(clangxx_bin)) {
       return {
