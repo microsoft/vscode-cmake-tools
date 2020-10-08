@@ -213,7 +213,6 @@ export class ConfigurationWebview {
       <div class="container">
         <button id="save" onclick="save()">Save</button>
         <h1>CMake Cache Editor<span class="invisible" id="not-saved">*</span></h1>
-        <small>Here you can configure your cmake options by the touch of a button.</small>
         <hr>
         <input class="search" type="text" id="search" oninput="search()" placeholder="Search" autofocus>
         <table style="width:100%">
@@ -222,7 +221,7 @@ export class ConfigurationWebview {
             background: linear-gradient(90deg, rgba(145,145,173,1) 0%, rgba(163,163,194,1) 36%, rgba(130,130,171,1) 61%, rgba(141,137,163,1) 100%);
           ">
             <th style="width: 30px">#</th>
-            <th>Key</th>
+            <th style="width: 1px; white-space: nowrap;">Key</th>
             <th>Value</th>
           </tr>
           ${key}
@@ -248,7 +247,7 @@ export class ConfigurationWebview {
         <td></td>
         <td>${option.key}</td>
         <td>
-          <input class="cmake-input-string" id="${option.key}" value="${option.value}"
+          <input class="cmake-input-string" id="${option.key}" value="${option.value}" style="width: 90%;"
                  type="text">
         </td>
       </tr>`;

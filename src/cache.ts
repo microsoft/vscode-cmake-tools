@@ -8,6 +8,7 @@ import {fs} from './pr';
 import rollbar from './rollbar';
 import * as util from './util';
 import * as nls from 'vscode-nls';
+import { isBoolean } from 'util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -193,7 +194,7 @@ export class CMakeCache {
     if (found && found.length >= 2) {
       const line = found[0];
       const currentVal = found[1];
-      const newValueLine = line.replace(currentVal, value);
+      const newValueLine = line.replace(currentVal, isBoolean(value) ? (value ? "TRUE" : "FALSE") : value);
       return content.replace(line, newValueLine);
     } else {
       return content;
