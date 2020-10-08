@@ -11,7 +11,7 @@
 - [Configure CMake Tools settings](docs/cmake-settings.md)
 - [How to](docs/how-to.md)
 - [FAQ](docs/faq.md)
-- [Read the online documentation](docs/readme.md)
+- [Read the online documentation](docs/README.md)
 - [Contribute](docs/contribute.md)
 
 ## Issues? Questions? Feature requests?

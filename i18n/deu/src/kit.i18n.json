@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "Nicht vorhandene Kitdatei wird nicht gelesen: {0}",
 	"reading.kits.file": "Kitdatei \"{0}\" wird gelesen.",
 	"failed.to.parse": "Fehler beim Analysieren von \"{0}\": {1}",
-	"invalid.file.error": "\"{0}\" ungültig ({1}):",
+	"invalid.file.error": "Ungültige Kit-Inhalte \"{0}\" ({1}):",
 	"successfully.loaded.kits": "{0} Kits erfolgreich von \"{1}\" geladen.",
 	"clean.not.needed": "Bereinigen nicht erforderlich: Kein vorheriges Kit ausgewählt",
 	"clean.needed": "Bereinigen erforderlich: Kit geändert"
