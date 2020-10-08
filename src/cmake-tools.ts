@@ -1391,7 +1391,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -2;
     }
 
-    const sourceDir = cmtFolder.folder.uri.fsPath;
+    const sourceDir = await this.sourceDir;
     const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
 
     if (await fs.exists(mainListFile)) {
