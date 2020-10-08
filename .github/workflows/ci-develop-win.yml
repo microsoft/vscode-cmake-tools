@@ -21,4 +21,4 @@ jobs:
           check-latest: true
 
       - name: Build the extension and run tests
-        run: powershell -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
+        run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
