@@ -1,5 +1,3 @@
-import * as shlex from '@cmt/shlex';
-
 import {createLogger} from './logging';
 import {fs} from './pr';
 import * as util from './util';
@@ -16,7 +14,7 @@ interface BaseCompileCommand {
   output?: string;
 }
 
-interface StringCompileCommand extends BaseCompileCommand {
+export interface StringCompileCommand extends BaseCompileCommand {
   command: string;
 }
 
@@ -27,16 +25,16 @@ interface ArgsCompileCommand extends BaseCompileCommand {
 export type CompileCommand = StringCompileCommand|ArgsCompileCommand;
 
 export class CompilationDatabase {
-  private readonly _infoByFilePath: Map<string, ArgsCompileCommand>;
-  constructor(infos: CompileCommand[]) {
+  private readonly _infoByFilePath: Map<string, StringCompileCommand>;
+  constructor(infos: StringCompileCommand[]) {
     this._infoByFilePath = infos.reduce(
         (acc, cur) => acc.set(util.platformNormalizePath(cur.file), {
           directory: cur.directory,
           file: cur.file,
           output: cur.output,
-          arguments: 'arguments' in cur ? cur.arguments : [...shlex.split(cur.command)],
+          command: cur.command,
         }),
-        new Map<string, ArgsCompileCommand>(),
+        new Map<string, StringCompileCommand>(),
     );
   }
 
@@ -48,7 +46,7 @@ export class CompilationDatabase {
     }
     const data = await fs.readFile(dbpath);
     try {
-      const content = JSON.parse(data.toString()) as CompileCommand[];
+      const content = JSON.parse(data.toString()) as StringCompileCommand[];
       return new CompilationDatabase(content);
     } catch (e) {
       log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database "{0}": {1}', dbpath, util.errorToString(e)));
