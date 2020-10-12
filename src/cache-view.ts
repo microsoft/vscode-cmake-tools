@@ -257,7 +257,7 @@ export class ConfigurationWebview {
         <input class="search" type="text" id="search" oninput="search()" placeholder="Search" autofocus>
         <table style="width:100%">
           <tr style="height: 35px;">
-            <th style="width: 30px">#</th>
+            <th style="width: 30px"></th>
             <th style="width: 1px; white-space: nowrap;">Key</th>
             <th>Value</th>
           </tr>
