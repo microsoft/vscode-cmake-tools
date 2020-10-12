@@ -29,7 +29,7 @@
 	"detected.kit.for.version": "バージョンの VsKit が検出されました",
 	"generator.present": "ジェネレーターが存在します: {0}",
 	"selected.preferred.generator.name": "選択された優先ジェネレーター名: {0} {1}",
-	"clang.for.msvc": "{1} ({2}) での MSVC 用 Clang {0}",
+	"clang.for.msvc": "{2} ({3}) での MSVC 用 Clang {0}{1}",
 	"scanning.for.kits.on.system": "システムでキットをスキャンしています",
 	"scanning.for.kits": "キットをスキャンしています",
 	"scanning.for.cmake.kits": "CMake キットをスキャンしています...",

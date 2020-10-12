@@ -455,12 +455,22 @@ export function versionGreater(lhs: Version|string, rhs: Version|string): boolea
   return compareVersions(lhs, rhs) === Ordering.Greater;
 }
 
+export function versionGreaterOrEquals(lhs: Version|string, rhs: Version|string): boolean {
+  const ordering = compareVersions(lhs, rhs);
+  return (Ordering.Greater === ordering) || (Ordering.Equivalent === ordering);
+}
+
 export function versionEquals(lhs: Version|string, rhs: Version|string): boolean {
   return compareVersions(lhs, rhs) === Ordering.Equivalent;
 }
 
 export function versionLess(lhs: Version|string, rhs: Version|string): boolean {
   return compareVersions(lhs, rhs) === Ordering.Less;
+}
+
+export function versionLessOrEquals(lhs: Version|string, rhs: Version|string): boolean {
+  const ordering = compareVersions(lhs, rhs);
+  return (Ordering.Less === ordering) || (Ordering.Equivalent === ordering);
 }
 
 export function compare(a: any, b: any): Ordering {

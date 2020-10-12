@@ -140,7 +140,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
     const linker = entry.value as string;
-    const is_msvc_linker = linker.endsWith('link.exe');
+    const is_msvc_linker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
     if (is_msvc_linker) {
       return createMSVCDebugConfiguration(target);
     }

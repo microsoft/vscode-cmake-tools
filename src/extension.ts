@@ -22,7 +22,7 @@ import {
   effectiveKitEnvironment,
   scanForKitsIfNeeded,
 } from '@cmt/kit';
-import {KitsController, KitsReadMode} from '@cmt/kitsController';
+import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
 import {FireNow, FireLate} from '@cmt/prop';
@@ -347,7 +347,7 @@ class ExtensionManager implements vscode.Disposable {
     // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
     const silentScanForKitsNeeded: boolean = vscode.workspace.workspaceFolders !== undefined &&
                                              vscode.workspace.workspaceFolders[0] === cmt.folder &&
-                                             await scanForKitsIfNeeded(cmt.extensionContext);
+                                             await scanForKitsIfNeeded(cmt);
 
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
@@ -588,8 +588,10 @@ class ExtensionManager implements vscode.Disposable {
    * Watches for changes to the kits file
    */
   private readonly _kitsWatcher =
-      util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH, {ignoreInitial: true}),
-                               _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
+   util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH,
+                                           {ignoreInitial: true}),
+                                           _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this._folders.activeFolder?.cmakeTools)));
+
 
   /**
    * Set the current kit for the specified workspace folder
@@ -638,10 +640,12 @@ class ExtensionManager implements vscode.Disposable {
 
   async scanForKits() {
     KitsController.minGWSearchDirs = this._getMinGWDirs();
-    const duplicateRemoved = await KitsController.scanForKits();
+    const cmakeTools = this._folders.activeFolder?.cmakeTools;
+    if (undefined === cmakeTools) {
+      return;
+    }
 
-    await this._folders.activeFolder?.kitsController.readKits(KitsReadMode.folderKits);
-
+    const duplicateRemoved = await KitsController.scanForKits(cmakeTools);
     if (duplicateRemoved) {
       // Check each folder. If there is an active kit set and if it is of the old definition,
       // unset the kit
