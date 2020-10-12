@@ -51,7 +51,7 @@ suite('Build', async () => {
     this.timeout(100000);
 
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-    const kit = await getFirstSystemKit();
+    const kit = await getFirstSystemKit(cmt);
     console.log("Using following kit in next test: ", kit);
     await cmt.setKit(kit);
     testEnv.projectFolder.buildDirectory.clear();
@@ -141,12 +141,12 @@ suite('Build', async () => {
 
     // Run test
     testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-    await cmt.setKit(await getMatchingSystemKit(compiler[0].kitLabel));
+    await cmt.setKit(await getMatchingSystemKit(cmt, compiler[0].kitLabel));
 
     await cmt.build();
 
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-    await cmt.setKit(await getMatchingSystemKit(compiler[1].kitLabel));
+    await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
 
     await cmt.build();
     const result1 = await testEnv.result.getResultAsJson();
@@ -216,11 +216,11 @@ suite('Build', async () => {
          const compiler = os_compilers[workername];
 
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-         await cmt.setKit(await getMatchingSystemKit(compiler[0].kitLabel));
+         await cmt.setKit(await getMatchingSystemKit(cmt, compiler[0].kitLabel));
          await cmt.build();
 
          testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-         await cmt.setKit(await getMatchingSystemKit(compiler[1].kitLabel));
+         await cmt.setKit(await getMatchingSystemKit(cmt, compiler[1].kitLabel));
          await cmt.build();
 
          const result1 = await testEnv.result.getResultAsJson();
