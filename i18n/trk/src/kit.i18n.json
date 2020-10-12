@@ -29,7 +29,7 @@
 	"detected.kit.for.version": "Sürüm için VsKit algılandı",
 	"generator.present": "Mevcut Oluşturucu: {0}",
 	"selected.preferred.generator.name": "Seçili Tercih Edilen Oluşturucu Adı: {0} {1}",
-	"clang.for.msvc": "{1} ({2}) ile MSVC için {0} Clang",
+	"clang.for.msvc": "{2} ({3}) ile MSVC için {0}{1} Clang",
 	"scanning.for.kits.on.system": "Sistemdeki Setler için taranıyor",
 	"scanning.for.kits": "Setler için taranıyor",
 	"scanning.for.cmake.kits": "CMake setleri için taranıyor...",
@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "Mevcut olmayan set dosyası okunmuyor: {0}",
 	"reading.kits.file": "{0} set dosyası okunuyor",
 	"failed.to.parse": "{0} ayrıştırılamadı: {1}",
-	"invalid.file.error": "Geçersiz {0} ({1}):",
+	"invalid.file.error": "Geçersiz kit içeriği {0} ({1}):",
 	"successfully.loaded.kits": "{1} konumundaki {0} set başarıyla yüklendi",
 	"clean.not.needed": "Temizleme gerekmiyor: Önceki Set seçilmedi",
 	"clean.needed": "Temizleme gerekiyor: Set değiştirildi"

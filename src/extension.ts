@@ -44,6 +44,7 @@ const log = logging.createLogger('extension');
 const MULTI_ROOT_MODE_KEY = 'cmake:multiRoot';
 const HIDE_LAUNCH_COMMAND_KEY = 'cmake:hideLaunchCommand';
 const HIDE_DEBUG_COMMAND_KEY = 'cmake:hideDebugCommand';
+const HIDE_BUILD_COMMAND_KEY = 'cmake:hideBuildCommand';
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
@@ -347,7 +348,7 @@ class ExtensionManager implements vscode.Disposable {
     // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
     const silentScanForKitsNeeded: boolean = vscode.workspace.workspaceFolders !== undefined &&
                                              vscode.workspace.workspaceFolders[0] === cmt.folder &&
-                                             await scanForKitsIfNeeded(cmt.extensionContext);
+                                             await scanForKitsIfNeeded(cmt);
 
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
@@ -573,7 +574,7 @@ class ExtensionManager implements vscode.Disposable {
       this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
         this._statusBar.setBuildTargetName(t);
       });
-      this._buildTypeSub = cmt.onBuildTypeChanged(FireNow, bt => this._statusBar.setBuildTypeLabel(bt));
+      this._buildTypeSub = cmt.onActiveVariantChanged(FireNow, bt => this._statusBar.setVariantLabel(bt));
       this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
         this._statusBar.setLaunchTargetName(t || '');
       });
@@ -588,8 +589,10 @@ class ExtensionManager implements vscode.Disposable {
    * Watches for changes to the kits file
    */
   private readonly _kitsWatcher =
-      util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH, {ignoreInitial: true}),
-                               _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits()));
+   util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH,
+                                           {ignoreInitial: true}),
+                                           _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this._folders.activeFolder?.cmakeTools)));
+
 
   /**
    * Set the current kit for the specified workspace folder
@@ -638,7 +641,12 @@ class ExtensionManager implements vscode.Disposable {
 
   async scanForKits() {
     KitsController.minGWSearchDirs = this._getMinGWDirs();
-    const duplicateRemoved = await KitsController.scanForKits();
+    const cmakeTools = this._folders.activeFolder?.cmakeTools;
+    if (undefined === cmakeTools) {
+      return;
+    }
+
+    const duplicateRemoved = await KitsController.scanForKits(cmakeTools);
     if (duplicateRemoved) {
       // Check each folder. If there is an active kit set and if it is of the old definition,
       // unset the kit
@@ -942,6 +950,11 @@ class ExtensionManager implements vscode.Disposable {
     await util.setContextValue(HIDE_DEBUG_COMMAND_KEY, shouldHide);
   }
 
+  async hideBuildCommand(shouldHide: boolean = true) {
+    this._statusBar.hideBuildButton(shouldHide);
+    await util.setContextValue(HIDE_BUILD_COMMAND_KEY, shouldHide);
+  }
+
   // Helper that loops through all the workspace folders to enable full or partial feature set
   // depending on their 'ignoreCMakeListsMissing' state variable.
   enableWorkspaceFoldersFullFeatureSet() {
@@ -1044,7 +1057,8 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'selectWorkspace',
     'tasksBuildCommand',
     'hideLaunchCommand',
-    'hideDebugCommand'
+    'hideDebugCommand',
+    'hideBuildCommand'
     // 'toggleCoverageDecorations', // XXX: Should coverage decorations be revived?
   ];
 

@@ -22,7 +22,7 @@ suite('[Environment Variables in Variants]', async () => {
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
-    await cmt.setKit(await getFirstSystemKit());
+    await cmt.setKit(await getFirstSystemKit(cmt));
 
     testEnv.projectFolder.buildDirectory.clear();
   });

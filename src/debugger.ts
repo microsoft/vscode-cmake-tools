@@ -60,7 +60,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     MIMode: 'gdb',
     miDebuggerPath: debuggerPath,
@@ -84,7 +84,7 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     MIMode: 'lldb',
     miDebuggerPath: debuggerPath,
@@ -97,7 +97,7 @@ function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
     type: 'cppvsdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     program: target.path
   };
@@ -140,7 +140,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
     const linker = entry.value as string;
-    const is_msvc_linker = linker.endsWith('link.exe');
+    const is_msvc_linker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
     if (is_msvc_linker) {
       return createMSVCDebugConfiguration(target);
     }

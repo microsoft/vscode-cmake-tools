@@ -5,11 +5,13 @@ import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstS
 import {fs} from '@cmt/pr';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import CMakeTools from '@cmt/cmake-tools';
 
 // tslint:disable:no-unused-expression
 
 suite('[Environment Variables in Variants]', async () => {
   let testEnv: DefaultEnvironment;
+  let cmakeTools : CMakeTools;
 
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
@@ -18,13 +20,14 @@ suite('[Environment Variables in Variants]', async () => {
     const exe_res = 'output.txt';
 
     testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
+    cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
 
-    const kit = await getFirstSystemKit();
+    const kit = await getFirstSystemKit(cmakeTools);
     console.log("Using following kit in next test: ", kit);
     await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
 

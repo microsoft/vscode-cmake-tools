@@ -454,12 +454,22 @@ export function versionGreater(lhs: Version|string, rhs: Version|string): boolea
   return compareVersions(lhs, rhs) === Ordering.Greater;
 }
 
+export function versionGreaterOrEquals(lhs: Version|string, rhs: Version|string): boolean {
+  const ordering = compareVersions(lhs, rhs);
+  return (Ordering.Greater === ordering) || (Ordering.Equivalent === ordering);
+}
+
 export function versionEquals(lhs: Version|string, rhs: Version|string): boolean {
   return compareVersions(lhs, rhs) === Ordering.Equivalent;
 }
 
 export function versionLess(lhs: Version|string, rhs: Version|string): boolean {
   return compareVersions(lhs, rhs) === Ordering.Less;
+}
+
+export function versionLessOrEquals(lhs: Version|string, rhs: Version|string): boolean {
+  const ordering = compareVersions(lhs, rhs);
+  return (Ordering.Less === ordering) || (Ordering.Equivalent === ordering);
 }
 
 export function compare(a: any, b: any): Ordering {
@@ -566,6 +576,7 @@ export function reportProgress(progress: ProgressHandle|undefined, message: stri
 
 export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
   return watcher.on('add', listener)
+                .on('raw', listener)
                 .on('change', listener)
                 .on('unlink', listener);
 }

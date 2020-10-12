@@ -29,7 +29,7 @@
 	"detected.kit.for.version": "已偵測到 VsKit 的版本",
 	"generator.present": "產生器已存在: {0}",
 	"selected.preferred.generator.name": "已選取慣用產生器名稱: {0} {1}",
-	"clang.for.msvc": "適用於 {1} ({2}) 中 MSVC 的 Clang {0}",
+	"clang.for.msvc": "適用於 {2} ({3}) 中 MSVC 的 Clang {0}{1}",
 	"scanning.for.kits.on.system": "正在掃描系統上的套件",
 	"scanning.for.kits": "正在掃描套件",
 	"scanning.for.cmake.kits": "正在掃描 CMake 套件...",
@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "未讀取不存在的套件檔案: {0}",
 	"reading.kits.file": "正在讀取套件檔案 {0}",
 	"failed.to.parse": "無法剖析 {0}: {1}",
-	"invalid.file.error": "{0} 無效 ({1}):",
+	"invalid.file.error": "套件內容 {0} ({1}) 無效:",
 	"successfully.loaded.kits": "已成功從 {1} 載入 {0} 個套件",
 	"clean.not.needed": "不需要清除: 未選取先前的套件",
 	"clean.needed": "需要清除: 已變更套件"

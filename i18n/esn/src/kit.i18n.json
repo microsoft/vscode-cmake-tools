@@ -29,7 +29,7 @@
 	"detected.kit.for.version": "VsKit detectado para la versión",
 	"generator.present": "Generador presente: {0}",
 	"selected.preferred.generator.name": "Nombre de generador preferido seleccionado: {0} {1}",
-	"clang.for.msvc": "Clang {0} para MSVC con {1} ({2})",
+	"clang.for.msvc": "Clang {0}{1} para MSVC con {2} ({3})",
 	"scanning.for.kits.on.system": "Buscando kits en el sistema",
 	"scanning.for.kits": "Buscando kits",
 	"scanning.for.cmake.kits": "Examinando los kits de CMake...",
@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "No se está leyendo el archivo de kits no existentes: {0}",
 	"reading.kits.file": "Leyendo el archivo de kits {0}",
 	"failed.to.parse": "No se pudo analizar {0}: {1}",
-	"invalid.file.error": "{0} no válido ({1}):",
+	"invalid.file.error": "Contenido del kit {0} ({1}) no válido:",
 	"successfully.loaded.kits": "Se han cargado correctamente {0} kits de {1}",
 	"clean.not.needed": "No es necesario limpiar: no se ha seleccionado ningún kit anterior",
 	"clean.needed": "Es necesario limpiar: el kit se ha cambiado"

@@ -29,7 +29,7 @@
 	"detected.kit.for.version": "버전에 대한 검색된 VsKit",
 	"generator.present": "생성기가 있음: {0}",
 	"selected.preferred.generator.name": "선택된 기본 설정 생성기 이름: {0} {1}",
-	"clang.for.msvc": "{1}({2})이(가) 포함된 MSVC에 대한 Clang {0}",
+	"clang.for.msvc": "{2}({3})이(가) 포함된 MSVC에 대한 Clang {0}{1}",
 	"scanning.for.kits.on.system": "시스템에서 키트를 검색하는 중",
 	"scanning.for.kits": "키트를 검색하는 중",
 	"scanning.for.cmake.kits": "CMake 키트를 검색하는 중...",
@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "존재하지 않는 키트 파일을 읽지 않음: {0}",
 	"reading.kits.file": "키트 파일 {0}을(를) 읽는 중",
 	"failed.to.parse": "{0}을(를) 구문 분석하지 못함: {1}",
-	"invalid.file.error": "잘못된 {0}({1}):",
+	"invalid.file.error": "잘못된 키트 콘텐츠 {0}({1}):",
 	"successfully.loaded.kits": "{1}에서 {0}개 키트를 로드함",
 	"clean.not.needed": "정리 필요 없음: 이전 키트를 선택하지 않음",
 	"clean.needed": "정리 필요: 키트가 변경됨"

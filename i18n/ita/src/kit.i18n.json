@@ -29,7 +29,7 @@
 	"detected.kit.for.version": "Rilevato kit di Visual Studio per la versione",
 	"generator.present": "Generatore presente: {0}",
 	"selected.preferred.generator.name": "Nome del generatore preferito selezionato: {0} {1}",
-	"clang.for.msvc": "Clang {0} per MSVC con {1} ({2})",
+	"clang.for.msvc": "Clang {0}{1} per MSVC con {2} ({3})",
 	"scanning.for.kits.on.system": "Ricerca dei kit nel sistema",
 	"scanning.for.kits": "Ricerca dei kit",
 	"scanning.for.cmake.kits": "Ricerca dei kit CMake...",
@@ -43,7 +43,7 @@
 	"not.reading.nonexistent.kit": "Lettura del file dei kit non esistente non in corso: {0}",
 	"reading.kits.file": "Lettura del file dei kit {0}",
 	"failed.to.parse": "Non è stato possibile analizzare {0}: {1}",
-	"invalid.file.error": "{0} ({1}) non valido:",
+	"invalid.file.error": "Il contenuto {0} ({1}) del kit non è valido:",
 	"successfully.loaded.kits": "I {0} kit sono stati caricati da {1}",
 	"clean.not.needed": "Pulizia non necessaria: non è stato selezionato alcun kit precedente",
 	"clean.needed": "Pulizia necessaria: kit modificato"
