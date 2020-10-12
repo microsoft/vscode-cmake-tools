@@ -29,7 +29,7 @@
 	"detected.kit.for.version": "Обнаружен VsKit для версии.",
 	"generator.present": "Генератор существует: {0}",
 	"selected.preferred.generator.name": "Выбранное предпочтительное имя генератора: {0} {1}",
-	"clang.for.msvc": "Clang {0}{1} для MSVC с {2} ({3})",
+	"clang.for.msvc": "Clang {0} для MSVC с {1} ({2})",
 	"scanning.for.kits.on.system": "Поиск наборов в системе.",
 	"scanning.for.kits": "Поиск наборов.",
 	"scanning.for.cmake.kits": "Поиск наборов CMake…",
