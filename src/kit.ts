@@ -542,18 +542,20 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `@echo off`,
     `cd /d "%~dp0"`,
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
-    `call "${devbat}" ${args.join(' ')} || exit`,
+    `set "INCLUDE="`,
+    `call "${devbat}" ${args.join(' ')}`,
     `cd /d "%~dp0"`, /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
   }
+  const batContent = bat.join('\r\n');
   const batpath = path.join(paths.tmpDir, batfname);
   const envpath = path.join(paths.tmpDir, envfname);
   try {
     await fs.unlink(envpath);
   } catch (error) {}
-  await fs.writeFile(batpath, bat.join('\r\n'));
+  await fs.writeFile(batpath, batContent);
   const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
@@ -566,7 +568,9 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
   } catch (error) { log.error(error); }
 
   if (!env || env === '') {
-    console.log(`Error running ${devbat} ${args.join(' ')} with:`, output);
+    log.error(localize('script.run.error',
+        'Error running:{0} with args:{1}\nOutput are:\n{2}\nBat content are:\n{3}',
+        devbat, args.join(' '), output, batContent));
     return;
   }
 
@@ -581,7 +585,9 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           return acc;
         }, new Map());
   if (vars.get('INCLUDE') === '') {
-    console.log(`Error running ${devbat} ${args.join(' ')}, cannot find INCLUDE`);
+    log.error(localize('script.run.error.check',
+        'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}',
+        devbat, args.join(' '), env, batContent));
     return;
   }
   log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
