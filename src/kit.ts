@@ -9,14 +9,15 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as kitsController from '@cmt/kitsController';
 
-import {VSInstallation, vsInstallations} from './installs/visual-studio';
+import CMakeTools from './cmake-tools';
 import * as expand from './expand';
+import {VSInstallation, vsInstallations} from './installs/visual-studio';
 import * as logging from './logging';
 import paths from './paths';
 import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from './schema';
-import {compare, dropNulls, objectPairs, Ordering} from './util';
+import {compare, dropNulls, objectPairs, Ordering, versionLess} from './util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -274,14 +275,27 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     if (version === null) {
       return null;
     }
-    if (version.target && version.target.includes('msvc')) {
-      // DO NOT include Clang's that target MSVC but don't present the MSVC
-      // command-line interface. CMake does not support them properly.
+
+    if (version.target && version.target.includes('msvc') &&
+      version.installedDir && version.installedDir.includes("Microsoft Visual Studio")) {
+      // Skip MSVC ABI compatible Clang installations (bundled within VS), which will be handled in 'scanForClangForMSVCKits()' later.
+      // But still process any Clang installations outside VS (right in Program Files for example), even if their version
+      // mentions msvc.
       return null;
     }
+
     const clangxx_fname = fname.replace(/^clang/, 'clang++');
     const clangxx_bin = path.join(path.dirname(bin), clangxx_fname);
-    const name = `Clang ${version.version}`;
+    let name = `Clang ${version.version}`;
+    // On windows (except MinGW, Cygwin, etc... represented by a non undefined process.env.MSYSTEM),
+    // make the distinction between [Program Files]/LLVM and [Program Files(x86)]/LLVM in the kit name,
+    // to be able to represent both in the kits file.
+    // clang --version returns the same version.version for these 2 different installs,
+    // but version.target differs and can be used to ensure name uniqueness.
+    if (process.platform === "win32" && process.env.MSYSTEM === undefined) {
+      name += ` (${version.target})`;
+    }
+
     log.debug(localize('detected.clang.compiler', 'Detected Clang compiler: {0}', bin));
     if (await fs.exists(clangxx_bin)) {
       return {
@@ -528,18 +542,20 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `@echo off`,
     `cd /d "%~dp0"`,
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
-    `call "${devbat}" ${args.join(' ')} || exit`,
+    `set "INCLUDE="`,
+    `call "${devbat}" ${args.join(' ')}`,
     `cd /d "%~dp0"`, /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
   }
+  const batContent = bat.join('\r\n');
   const batpath = path.join(paths.tmpDir, batfname);
   const envpath = path.join(paths.tmpDir, envfname);
   try {
     await fs.unlink(envpath);
   } catch (error) {}
-  await fs.writeFile(batpath, bat.join('\r\n'));
+  await fs.writeFile(batpath, batContent);
   const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
   await fs.unlink(batpath);
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
@@ -552,7 +568,9 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
   } catch (error) { log.error(error); }
 
   if (!env || env === '') {
-    console.log(`Error running ${devbat} ${args.join(' ')} with:`, output);
+    log.error(localize('script.run.error',
+        'Error running:{0} with args:{1}\nOutput are:\n{2}\nBat content are:\n{3}',
+        devbat, args.join(' '), output, batContent));
     return;
   }
 
@@ -567,7 +585,9 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           return acc;
         }, new Map());
   if (vars.get('INCLUDE') === '') {
-    console.log(`Error running ${devbat} ${args.join(' ')}, cannot find INCLUDE`);
+    log.error(localize('script.run.error.check',
+        'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}',
+        devbat, args.join(' '), env, batContent));
     return;
   }
   log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
@@ -801,35 +821,69 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangCLKits(dir: string, vsInstalls: VSInstallation[]): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools: CMakeTools | undefined): Promise<Kit[]> {
   const kits = await scanDirectory(dir, async(binPath): Promise<Kit[]|null> => {
-    if (!path.basename(binPath).startsWith('clang-cl')) {
+    const isClangGNUCLI = (path.basename(binPath, '.exe') === 'clang');
+    const isClangCL = (path.basename(binPath, '.exe') === 'clang-cl');
+    if (!isClangGNUCLI && !isClangCL) {
       return null;
     }
+
     const version = await getClangVersion(binPath);
     if (version === null) {
       return null;
     }
-    return vsInstalls.map((vs): Kit => {
-      const installName = vsDisplayName(vs);
+
+    let clang_cli = '(MSVC CLI)';
+
+    // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
+    if (isClangGNUCLI) {
+      if (undefined === cmakeTools) {
+        log.error("failed.to.scan.for.kits", "Failed to scan for kits:", "cmakeTools is undefined");
+
+        return null;
+      } else {
+        const cmake_executable = await cmakeTools?.getCMakeExecutable();
+        if (undefined === cmake_executable.version) {
+          return null;
+        } else {
+          if (versionLess(cmake_executable.version, '3.15.0')) {
+            // Could not find a supported CMake version
+            return null;
+          }
+        }
+      }
+      // Found a supported CMake version
+      clang_cli = '(GNU CLI)';
+    }
+
+    const clangKits: Kit[] = [];
+    vsInstalls.forEach(vs => {
+      const install_name = vsDisplayName(vs);
       const vs_arch = (version.target && version.target.includes('i686-pc')) ? 'x86' : 'amd64';
-      return {
-        name: localize('clang.for.msvc', 'Clang {0} for MSVC with {1} ({2})', version.version, installName, vs_arch),
-        visualStudio: kitVSName(vs),
-        visualStudioArchitecture: vs_arch,
-        compilers: {
-          C: binPath,
-          CXX: binPath,
-        },
-      };
+
+      const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
+      if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
+      util.checkFileExists(util.lightNormalizePath(binPath))) {
+        clangKits.push({
+          name: localize('clang.for.msvc', 'Clang {0} {1} with {2} ({3})', version.version, clang_cli, install_name, vs_arch),
+          visualStudio: kitVSName(vs),
+          visualStudioArchitecture: vs_arch,
+          compilers: {
+            C: binPath,
+            CXX: binPath,
+          }
+        });
+      }
     });
+    return clangKits;
   });
   return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangCLKits(searchPaths: string[]): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools: CMakeTools | undefined): Promise<Promise<Kit[]>[]> {
   const vs_installs = await vsInstallations();
-  const results = searchPaths.map(p => scanDirForClangCLKits(p, vs_installs));
+  const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeTools));
   return results;
 }
 
@@ -931,7 +985,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(opt?: KitScanOptions) {
+export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitScanOptions) {
   const kit_options = opt || {};
 
   log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
@@ -944,6 +998,7 @@ export async function scanForKits(opt?: KitScanOptions) {
     const isWin32 = process.platform === 'win32';
 
     pr.report({message: localize('scanning.for.cmake.kits', 'Scanning for CMake kits...')});
+
     const scan_paths = new Set<string>();
 
     // Search directories on `PATH` for compiler binaries
@@ -961,35 +1016,39 @@ export async function scanForKits(opt?: KitScanOptions) {
         scan_paths.add(dir);
       }
     }
+
+    // Default installation locations
+    scan_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
+    scan_paths.add('C:\\Program Files\\LLVM\\bin');
     const compiler_kits = Array.from(scan_paths).map(path_el => scanDirForCompilerKits(path_el, pr));
     kit_promises = kit_promises.concat(compiler_kits);
+
     if (isWin32) {
       // Prepare clang-cl search paths
-      const clang_cl_paths = new Set<string>();
+      const clang_paths = new Set<string>();
 
       // LLVM_ROOT environment variable location
       if (process.env.hasOwnProperty('LLVM_ROOT')) {
         const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
-        clang_cl_paths.add(llvm_root);
+        clang_paths.add(llvm_root);
       }
-      // Default installation locations
-      clang_cl_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
-      clang_cl_paths.add('C:\\Program Files\\LLVM\\bin');
+
       // PATH environment variable locations
-      scan_paths.forEach(path_el => clang_cl_paths.add(path_el));
+      scan_paths.forEach(path_el => clang_paths.add(path_el));
       // LLVM bundled in VS locations
       const vs_installs = await vsInstallations();
-      const bundled_clang_cl_paths = vs_installs.map(vs_install => {
-        return vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin";
+      const bundled_clang_paths: string[] = [];
+      vs_installs.forEach(vs_install => {
+        bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin");
+        bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\x64\\bin");
       });
-      bundled_clang_cl_paths.forEach(path_ => {clang_cl_paths.add(path_);});
+      bundled_clang_paths.forEach(path_el => {clang_paths.add(path_el);});
 
       // Scan for kits
       const vs_kits = scanForVSKits(pr);
       kit_promises.push(vs_kits);
-      const cl_paths = Array.from(clang_cl_paths);
-      const clang_cl_kits = await scanForClangCLKits(cl_paths);
-      kit_promises = kit_promises.concat(clang_cl_kits);
+      const clang_kits = await scanForClangForMSVCKits(Array.from(clang_paths), cmakeTools);
+      kit_promises = kit_promises.concat(clang_kits);
     }
 
     const arrays = await Promise.all(kit_promises);
@@ -1001,16 +1060,16 @@ export async function scanForKits(opt?: KitScanOptions) {
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(context: vscode.ExtensionContext) : Promise<boolean> {
-  const kitsVersionSaved = context.globalState.get<number>('kitsVersionSaved');
+export async function scanForKitsIfNeeded(cmt: CMakeTools) : Promise<boolean> {
+  const kitsVersionSaved = cmt.extensionContext.globalState.get<number>('kitsVersionSaved');
   const kitsVersionCurrent = 2;
 
   // Scan also when there is no kits version saved in the state.
   if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
        process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
     log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
-    await kitsController.KitsController.scanForKits();
-    context.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+    await kitsController.KitsController.scanForKits(cmt);
+    cmt.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
     return true;
   }
 
@@ -1026,10 +1085,17 @@ export async function descriptionForKit(kit: Kit): Promise<string> {
     return localize('kit.for.toolchain.file', 'Kit for toolchain file {0}', kit.toolchainFile);
   }
   if (kit.visualStudio) {
-    const inst = await getVSInstallForKit(kit);
-    if (inst) {
-      const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
-      return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(inst), hostTargetArch);
+    const vs_install = await getVSInstallForKit(kit);
+    if (vs_install) {
+      if (kit.compilers) {
+        // Clang for MSVC
+        const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
+        return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
+      } else {
+        // MSVC
+        const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+        return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), hostTargetArch);
+      }
     }
     return '';
   }
