@@ -1159,7 +1159,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.launchTargetPath`
    */
   async launchTargetPath(): Promise<string|null> {
-    const executable = await this.prepareLaunchTargetExecutable();
+    if (await this._needsReconfigure()) {
+      const rc = await this.configure();
+      if (rc !== 0) {
+        return null;
+      }
+    }
+    const executable = await this.getOrSelectLaunchTarget();
     if (!executable) {
       log.showChannel();
       log.warning('=======================================================');
