@@ -3,9 +3,6 @@ name: Build VSIX
 on:
   push:
     branches: [ develop ]
-  # temporary so it can be tested
-  pull_request:
-    branches: [ develop ]
 
 jobs:
   build:
