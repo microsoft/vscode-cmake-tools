@@ -22,8 +22,8 @@ jobs:
       - name: Find and Replace
         uses: jacobtomlinson/gha-find-replace@master
         with:
-          find: "&quot;version&quot;: &quot;(\d+\.\d+\.\d+)&quot;"
-          replace: "&quot;version&quot;: &quot;$1-${{ steps.get-latest-commit.outputs.latest_commit_sha }}&quot;"
+          find: "\"version\": \"(\\d+\\.\\d+\\.\\d+)\""
+          replace: "\"version\": \"$1-${{ steps.get-latest-commit.outputs.latest_commit_sha }}\""
           include: "package.json"
 
       - name: Install VSCE
