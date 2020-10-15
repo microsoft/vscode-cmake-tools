@@ -15,22 +15,25 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v1.4.3
+
       - name: Get the latest commit on PR
         id: get-latest-commit
         uses: ActionsRML/get-PR-latest-commit@v1
 
-      - name: Find and Replace
+      - name: Update the package version
         uses: jacobtomlinson/gha-find-replace@master
         with:
           find: "\"version\": \"(\\d+\\.\\d+\\.\\d+)\""
           replace: "\"version\": \"$1-${{ steps.get-latest-commit.outputs.latest_commit_sha }}\""
           include: "package.json"
 
-      - name: Install VSCE
-        run: npm install -g vsce
-
-      - name: Package the extension
-        run: vsce package --yarn -o cmake-tools.vsix
+      - name: Build the VSIX
+        run:  |
+          npm install
+          npm install -g vsce
+          vsce package --yarn -o cmake-tools.vsix
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v2.1.4
