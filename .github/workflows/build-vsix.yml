@@ -1,0 +1,40 @@
+name: Build VSIX
+
+on:
+  push:
+    branches: [ develop ]
+  # temporary so it can be tested
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Get the latest commit on PR
+        id: get-latest-commit
+        uses: ActionsRML/get-PR-latest-commit@v1
+
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@master
+        with:
+          find: "&quot;version&quot;: &quot;(\d+\.\d+\.\d+)&quot;"
+          replace: "&quot;version&quot;: &quot;$1-${{ steps.get-latest-commit.outputs.latest_commit_sha }}&quot;"
+          include: "package.json"
+
+      - name: Install VSCE
+        run: npm install -g vsce
+
+      - name: Package the extension
+        run: vsce package --yarn -o cmake-tools.vsix
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v2.1.4
+        with:
+          name: cmake-tools.vsix
+          path: ./cmake-tools.vsix
+          if-no-files-found: error
