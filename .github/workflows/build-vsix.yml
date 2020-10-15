@@ -18,15 +18,15 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v1.4.3
 
-      - name: Get the latest commit on PR
-        id: get-latest-commit
-        uses: ActionsRML/get-PR-latest-commit@v1
+      - name: Get Short SHA
+        id: get-short-sha
+        run: echo "::set-output name=sha::$(git rev-parse ${{ GITHUB_SHA }})"
 
       - name: Update the package version
         uses: jacobtomlinson/gha-find-replace@master
         with:
           find: "\"version\": \"(\\d+\\.\\d+\\.\\d+)\""
-          replace: "\"version\": \"$1-${{ steps.get-latest-commit.outputs.latest_commit_sha }}\""
+          replace: "\"version\": \"$1-${{ steps.get-short-sha.outputs.sha }}\""
           include: "package.json"
 
       - name: Build the VSIX
