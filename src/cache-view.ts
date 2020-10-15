@@ -68,9 +68,8 @@ export class ConfigurationWebview {
   }
 
   async saveCmakeCache(options: IOption[]) {
-    //const cmakeCache = await CMakeCache.fromPath(this.cachePath);
-    options;
-    //await cmakeCache.saveAll(options);
+    const cmakeCache = await CMakeCache.fromPath(this.cachePath);
+    await cmakeCache.saveAll(options);
   }
 
   /**
