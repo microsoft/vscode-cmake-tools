@@ -44,7 +44,13 @@
             "problemMatcher": [
                 "$tsc-watch"
             ],
-            "isBackground": true
+            "isBackground": true,
+            "presentation": {
+                "echo": false,
+                "reveal": "silent",
+                "showReuseMessage": false,
+                "clear": true
+            }
         }
     ]
 }
