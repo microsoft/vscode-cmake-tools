@@ -41,7 +41,7 @@ You'll need to know the path to the executable binary, which may be difficult to
 
 Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetPath` and `cmake.getLaunchTargetDirectory` to start a debugger on the active launch target:
 
-```json
+```jsonc
 {
     "version": "0.2.0",
     "configurations": [
