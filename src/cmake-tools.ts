@@ -1193,16 +1193,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * Implementation of `cmake.launchTargetPath`
+   * Implementation of `cmake.launchTargetPath`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
    */
   async launchTargetPath(): Promise<string|null> {
-    if (await this._needsReconfigure()) {
-      const rc = await this.configure();
-      if (rc !== 0) {
-        return null;
-      }
-    }
-    const executable = await this.getOrSelectLaunchTarget();
+    const executable = await this.prepareLaunchTargetExecutable();
     if (!executable) {
       log.showChannel();
       log.warning('=======================================================');
@@ -1216,8 +1210,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * Implementation of `cmake.launchTargetDirectory`. It just calls launchTargetPath and
-   * extracts the directory form the result.
+   * Implementation of `cmake.launchTargetDirectory`.
    */
   async launchTargetDirectory(): Promise<string|null> {
     const targetPath = await this.launchTargetPath();
@@ -1228,11 +1221,56 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * Implementation of `cmake.launchTargetFilename`. It just calls launchTargetPath and
-   * extracts the filename form the result.
+   * Implementation of `cmake.launchTargetFilename`.
    */
   async launchTargetFilename(): Promise<string|null> {
     const targetPath = await this.launchTargetPath();
+    if (targetPath === null) {
+      return null;
+    }
+    return path.basename(targetPath);
+  }
+
+  /**
+   * Implementation of `cmake.getLaunchTargetPath`. This does not ensure the target exists.
+   */
+  async getLaunchTargetPath(): Promise<string|null> {
+    if (await this._needsReconfigure()) {
+      const rc = await this.configure();
+      if (rc !== 0) {
+        return null;
+      }
+    }
+    const target = await this.getOrSelectLaunchTarget();
+    if (!target) {
+      log.showChannel();
+      log.warning('=======================================================');
+      log.warning(localize('no.executable.target.found.to.launch', 'No executable target was found to launch. Please check:'));
+      log.warning(` - ${localize('have.you.called.add_executable', 'Have you called add_executable() in your CMake project?')}`);
+      log.warning(` - ${localize('have.you.configured', 'Have you executed a successful CMake configure?')}`);
+      log.warning(localize('no.program.will.be.executed', 'No program will be executed'));
+      return null;
+    }
+
+    return target.path;
+  }
+
+  /**
+   * Implementation of `cmake.getLaunchTargetDirectory`. This does not ensure the target exists.
+   */
+  async getLaunchTargetDirectory(): Promise<string|null> {
+    const targetPath = await this.getLaunchTargetDirectory();
+    if (targetPath === null) {
+      return null;
+    }
+    return path.dirname(targetPath);
+  }
+
+  /**
+   * Implementation of `cmake.getLaunchTargetFilename`. This does not ensure the target exists.
+   */
+  async getLaunchTargetFilename(): Promise<string|null> {
+    const targetPath = await this.getLaunchTargetPath();
     if (targetPath === null) {
       return null;
     }
@@ -1271,12 +1309,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async prepareLaunchTargetExecutable(name?: string): Promise<api.ExecutableTarget|null> {
     let chosen: api.ExecutableTarget;
-    if (await this._needsReconfigure()) {
+
+    // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
+    // executable targets and may show an uneccessary prompt to the user
+    const isReconfigurationNeeded = await this._needsReconfigure();
+    if (isReconfigurationNeeded) {
       const rc = await this.configure();
       if (rc !== 0) {
+        log.debug(localize('project.configuration.failed', 'Configuration of project failed.'));
         return null;
       }
     }
+
     if (name) {
       const found = (await this.executableTargets).find(e => e.name === name);
       if (!found) {
@@ -1289,17 +1333,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return null;
       }
       chosen = current;
-    }
-
-    // Ensure that we've configured the project already. If we haven't, `getOrSelectLaunchTarget` won't see any
-    // executable targets and may show an uneccessary prompt to the user
-    const isReconfigurationNeeded = await this._needsReconfigure();
-    if (isReconfigurationNeeded) {
-      const rc = await this.configure();
-      if (rc !== 0) {
-        log.debug(localize('project.configuration.failed', 'Configuration of project failed.'));
-        return null;
-      }
     }
 
     const buildOnLaunch = this.workspaceContext.config.buildBeforeRun;

@@ -65,11 +65,14 @@ Supported commands for substitution:
 
 |command|substitution|
 |-------|------------|
-|`cmake.launchTargetPath`|The full path to the target executable, including the filename|
-|`cmake.launchTargetDirectory`|The full path to the target executable's directory|
-|`cmake.launchTargetFilename`|The name of the target executable file without any path information|
-|`cmake.buildType`|Same as `${buildType}`. The current CMake build type. For example: `Debug`, `Release`, `MinSizeRel`|
-|`cmake.buildKit`|Same as `${buildKit}`. |
+|`cmake.getLaunchTargetPath`|The full path to the target executable, including the filename. The existence of the target is not validated.|
+|`cmake.getLaunchTargetDirectory`|The full path to the target executable's directory. The existence of the directory is not validated.|
+|`cmake.getLaunchTargetFilename`|The name of the target executable file without any path information. The existence of the target is not validated.|
+|`cmake.launchTargetPath`|The full path to the target executable, including the filename. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
+|`cmake.launchTargetDirectory`|The full path to the target executable's directory. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
+|`cmake.launchTargetFilename`|The name of the target executable file without any path information. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
+|`cmake.buildType`|Same as `${buildType}`. The current CMake build type.|
+|`cmake.buildKit`|Same as `${buildKit}`. The current CMake kit name.|
 |`cmake.buildDirectory`|The full path to the directory where CMake cache files are located|
 
 ## Next steps
