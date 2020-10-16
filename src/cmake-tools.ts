@@ -1210,7 +1210,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * Implementation of `cmake.launchTargetDirectory`.
+   * Implementation of `cmake.launchTargetDirectory`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
    */
   async launchTargetDirectory(): Promise<string|null> {
     const targetPath = await this.launchTargetPath();
@@ -1221,7 +1221,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
-   * Implementation of `cmake.launchTargetFilename`.
+   * Implementation of `cmake.launchTargetFilename`. This also ensures the target exists if `cmake.buildBeforeRun` is set.
    */
   async launchTargetFilename(): Promise<string|null> {
     const targetPath = await this.launchTargetPath();
@@ -1259,7 +1259,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.getLaunchTargetDirectory`. This does not ensure the target exists.
    */
   async getLaunchTargetDirectory(): Promise<string|null> {
-    const targetPath = await this.getLaunchTargetDirectory();
+    const targetPath = await this.getLaunchTargetPath();
     if (targetPath === null) {
       return null;
     }
