@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -73,7 +73,8 @@
     "onCommand:cmake.outline.configureAll",
     "onCommand:cmake.outline.buildAll",
     "workspaceContains:**/CMakeLists.txt",
-    "workspaceContains:.vscode/cmake-kits.json"
+    "workspaceContains:.vscode/cmake-kits.json",
+    "onCommand:workbench.action.tasks.runTask"
   ],
   "main": "./dist/main",
   "contributes": {
@@ -293,6 +294,15 @@
         "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
       },
       {
+        "command": "cmake.openConfiguration",
+        "title": "%cmake-tools.command.cmake.openConfiguration.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.openConfiguration",
+        "title": "%cmake-tools.command.cmake.openConfiguration.title%"
+      },
+      {
         "command": "cmake.ctest",
         "title": "%cmake-tools.command.cmake.ctest.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -421,6 +431,20 @@
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
       }
     ],
+    "taskDefinitions": [
+      {
+        "type": "cmake",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "CMake command"
+          }
+        }
+      }
+    ],
     "menus": {
       "commandPalette": [
         {
@@ -517,6 +541,9 @@
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
         },
         {
+          "command": "cmake.openConfiguration"
+        },
+        {
           "when": "cmake:enableFullFeatureSet",
           "command": "cmake.ctest"
         },
@@ -605,6 +632,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.openConfiguration",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.stop",
           "when": "never"
         },
@@ -670,6 +701,11 @@
         {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet",
+          "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.outline.openConfiguration",
+          "when": "view == cmake.outline",
           "group": "1_cmakeOutline"
         }
       ],
@@ -810,6 +846,40 @@
         {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "resourceFilename == CMakeLists.txt && cmake:enableFullFeatureSet"
+        }
+      ],
+      "touchBar": [
+        {
+          "command": "cmake.configure",
+          "when": "!cmake:enableFullFeatureSet",
+          "group": "CMake:start"
+        },
+        {
+          "command": "cmake.quickStart",
+          "when": "!cmake:enableFullFeatureSet",
+          "group": "CMake:start"
+        },
+        {
+          "command": "cmake.build",
+          "alt": "cmake.configure",
+          "when": "cmake:enableFullFeatureSet && !cmake:isBuilding",
+          "group": "CMake:build"
+        },
+        {
+          "command": "cmake.stop",
+          "when": "cmake:enableFullFeatureSet && cmake:isBuilding",
+          "group": "CMake:build"
+        },
+        {
+          "command": "cmake.debugTarget",
+          "alt": "cmake.selectLaunchTarget",
+          "when": "cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
+          "group": "CMake:run"
+        },
+        {
+          "command": "cmake.launchTarget",
+          "when": "cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
+          "group": "CMake:run"
         }
       ]
     },
@@ -1476,7 +1546,7 @@
                   ]
                 },
                 "color": {
-                  "type":"boolean",
+                  "type": "boolean",
                   "default": false,
                   "description": "%cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description%"
                 }

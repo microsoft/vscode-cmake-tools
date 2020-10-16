@@ -157,6 +157,7 @@ export function splitPath(p: string): string[] {
  */
 export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
+    value = value.toUpperCase();
     return !(['', 'FALSE', 'OFF', '0', 'NOTFOUND', 'NO', 'N', 'IGNORE'].indexOf(value) >= 0
              || value.endsWith('-NOTFOUND'));
   }
@@ -585,8 +586,20 @@ export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
 }
 
+export function isArray(x: any): x is any[] {
+  return x instanceof Array;
+}
+
+export function isArrayOfString(x: any): x is string[] {
+  return isArray(x) && x.every(isString);
+}
+
 export function isNullOrUndefined(x?: any): boolean {
   // Double equals provides the correct answer for 'null' and 'undefined'
   // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
   return x == null;
+}
+
+export function isWorkspaceFolder(x?: any): boolean {
+  return 'uri' in x && 'name' in x && 'index' in x;
 }

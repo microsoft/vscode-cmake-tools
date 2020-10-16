@@ -617,7 +617,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this.configure(extra_args, consumer);
   }
 
-  async configure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
+  async configure(extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -639,7 +639,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
 
       const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
-      const define_flags = this.generateCMakeSettingsFlags();
+      const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
       const init_cache_flags = this.generateInitCacheFlags();
 
       // Get expanded configure environment

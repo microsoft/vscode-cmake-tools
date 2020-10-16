@@ -29,6 +29,7 @@ import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StateManager} from './state';
 import {StatusBar} from '@cmt/status';
+import {CMakeTaskProvider} from '@cmt/taskprovider';
 import * as telemetry from '@cmt/telemetry';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
 import * as util from '@cmt/util';
@@ -796,9 +797,11 @@ class ExtensionManager implements vscode.Disposable {
 
   configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configure(), true); }
 
+  openConfiguration() { return this.mapCMakeToolsFolder(cmt => cmt.openConfiguration()); }
+
   build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, true); }
 
-  buildAll(name?: string) { return this.mapCMakeToolsAll(cmt => cmt.build(name), true); }
+  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[-1] : name), true); }
 
   setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.setDefaultTarget(name), folder); }
 
@@ -829,7 +832,7 @@ class ExtensionManager implements vscode.Disposable {
 
   clean(folder?: vscode.WorkspaceFolder) { return this.build(folder, 'clean'); }
 
-  cleanAll() { return this.buildAll('clean'); }
+  cleanAll() { return this.buildAll(['clean']); }
 
   cleanRebuild(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.cleanRebuild(), folder, true); }
 
@@ -968,6 +971,7 @@ class ExtensionManager implements vscode.Disposable {
  * backends.
  */
 let _EXT_MANAGER: ExtensionManager|null = null;
+let cmakeTaskProvider: vscode.Disposable | undefined;
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, localize('initial.setup', 'Initial setup'));
@@ -1031,6 +1035,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'cleanRebuildAll',
     'configure',
     'configureAll',
+    'openConfiguration',
     'ctest',
     'ctestAll',
     'stop',
@@ -1081,6 +1086,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
       vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
       vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
+      vscode.commands.registerCommand('cmake.outline.openConfiguration', () => runCommand('openConfiguration')),
       vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
       // Commands for outline items:
       vscode.commands.registerCommand('cmake.outline.buildTarget',
@@ -1102,6 +1108,12 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.selectWorkspace',
                                       (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
   ]);
+
+  // Register a task provider to resolve tasks
+  // TODO: extend
+  cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({
+      build: await ext.tasksBuildCommand()
+    }));
 }
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
@@ -1158,5 +1170,8 @@ export async function deactivate() {
   log.debug(localize('deactivate.cmaketools', 'Deactivate CMakeTools'));
   if (_EXT_MANAGER) {
     await _EXT_MANAGER.asyncDispose();
+  }
+  if (cmakeTaskProvider) {
+    cmakeTaskProvider.dispose();
   }
 }
