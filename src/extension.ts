@@ -797,6 +797,8 @@ class ExtensionManager implements vscode.Disposable {
 
   configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configure(), true); }
 
+  openConfiguration() { return this.mapCMakeToolsFolder(cmt => cmt.openConfiguration()); }
+
   build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, true); }
 
   buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[-1] : name), true); }
@@ -1033,6 +1035,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'cleanRebuildAll',
     'configure',
     'configureAll',
+    'openConfiguration',
     'ctest',
     'ctestAll',
     'stop',
@@ -1083,6 +1086,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
       vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
       vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
+      vscode.commands.registerCommand('cmake.outline.openConfiguration', () => runCommand('openConfiguration')),
       vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
       // Commands for outline items:
       vscode.commands.registerCommand('cmake.outline.buildTarget',

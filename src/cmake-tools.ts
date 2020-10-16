@@ -39,6 +39,7 @@ import {VariantManager} from './variant';
 import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
 import {CMakeToolsFolder} from './folders';
+import {ConfigurationWebview} from './cache-view';
 import {enableFullFeatureSet} from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -53,6 +54,7 @@ const CMAKE_LOGGER = logging.createLogger('cmake');
 enum ConfigureType {
   Normal,
   Clean,
+  Cache,
 }
 
 /**
@@ -167,6 +169,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * any time by the user making changes to the workspace configuration.
    */
   private _cmakeDriver: Promise<CMakeDriver|null> = Promise.resolve(null);
+
+  /**
+   * This object manages the CMake Cache Editor GUI
+   */
+  private _cacheEditorWebview: ConfigurationWebview | undefined;
 
   /**
    * Event fired just as CMakeTools is about to be disposed
@@ -691,17 +698,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               try {
                 progress.report({message: localize('configuring.project', 'Configuring project')});
                 let retc: number;
-                switch (type) {
-                case ConfigureType.Normal:
-                  retc = await drv.configure(extra_args, consumer);
-                  break;
-                case ConfigureType.Clean:
-                  retc = await drv.cleanConfigure(extra_args, consumer);
-                  break;
-                default:
-                  rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
-                  retc = await this.configure(extra_args, ConfigureType.Normal);
-                  break;
+                if (type == ConfigureType.Cache) {
+                  retc = await drv.configure([], consumer, true);
+                } else {
+                  switch (type) {
+                    case ConfigureType.Normal:
+                        retc = await drv.configure(extra_args, consumer);
+                      break;
+                    case ConfigureType.Clean:
+                        retc = await drv.cleanConfigure(extra_args, consumer);
+                      break;
+                    default:
+                        rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
+                        retc = await this.configure(extra_args, ConfigureType.Normal);
+                      break;
+                  }
                 }
                 if (retc === 0) {
                   await this._refreshCompileDatabase(drv.expansionOptions);
@@ -976,6 +987,32 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     vscode.workspace.openTextDocument(vscode.Uri.file(drv.cachePath))
         .then(doc => { vscode.window.showTextDocument(doc); });
+  }
+
+    /**
+   * Implementation of `cmake.openConfiguration`
+   */
+  async openConfiguration(): Promise<number> {
+    if (!this._cacheEditorWebview) {
+      const drv = await this.getCMakeDriverInstance();
+      if (!drv) {
+        vscode.window.showErrorMessage(localize('cache.load.failed', 'No CMakeCache.txt file has been found. Please configure project first!'));
+        return 1;
+      }
+
+      this._cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
+        await this.configure([], ConfigureType.Cache);
+      });
+      await this._cacheEditorWebview.initPanel();
+
+      this._cacheEditorWebview.panel.onDidDispose(() => {
+        this._cacheEditorWebview = undefined;
+      });
+    } else {
+      this._cacheEditorWebview.panel.reveal();
+    }
+
+    return 0;
   }
 
   async buildWithTarget(): Promise<number> {
