@@ -5,6 +5,7 @@ import {createLogger} from './logging';
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { fs } from './pr';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -59,7 +60,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     MIMode: 'gdb',
     miDebuggerPath: debuggerPath,
@@ -83,7 +84,7 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     type: 'cppdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     MIMode: 'lldb',
     miDebuggerPath: debuggerPath,
@@ -96,7 +97,7 @@ function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
     type: 'cppvsdbg',
     name: `Debug ${target.name}`,
     request: 'launch',
-    cwd: '${workspaceFolder}',
+    cwd: path.dirname(target.path),
     args: [],
     program: target.path
   };
@@ -139,7 +140,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
     const linker = entry.value as string;
-    const is_msvc_linker = linker.endsWith('link.exe');
+    const is_msvc_linker = linker.endsWith('link.exe') || linker.endsWith('ld.lld.exe');
     if (is_msvc_linker) {
       return createMSVCDebugConfiguration(target);
     }
@@ -185,7 +186,13 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
   const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
   const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
-  const gdb_debugger_path = debuggerPathOverride || compiler_path.replace(gcc_compiler_regex, description.miMode);
+  let gdb_debugger_path = debuggerPathOverride || compiler_path.replace(gcc_compiler_regex, description.miMode);
+  if (path.isAbsolute(gdb_debugger_path) && !await fs.exists(gdb_debugger_path)) {
+    gdb_debugger_path = path.join(path.dirname(compiler_path), description.miMode);
+    if (process.platform === 'win32') {
+      gdb_debugger_path = gdb_debugger_path + '.exe';
+    }
+  }
   if (gdb_debugger_path.search(new RegExp(description.miMode)) != -1) {
     return description.createConfig(gdb_debugger_path, target);
   }

@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -73,7 +73,8 @@
     "onCommand:cmake.outline.configureAll",
     "onCommand:cmake.outline.buildAll",
     "workspaceContains:**/CMakeLists.txt",
-    "workspaceContains:.vscode/cmake-kits.json"
+    "workspaceContains:.vscode/cmake-kits.json",
+    "onCommand:workbench.action.tasks.runTask"
   ],
   "main": "./dist/main",
   "contributes": {
@@ -293,6 +294,15 @@
         "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
       },
       {
+        "command": "cmake.openConfiguration",
+        "title": "%cmake-tools.command.cmake.openConfiguration.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.outline.openConfiguration",
+        "title": "%cmake-tools.command.cmake.openConfiguration.title%"
+      },
+      {
         "command": "cmake.ctest",
         "title": "%cmake-tools.command.cmake.ctest.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -421,6 +431,20 @@
         "title": "%cmake-tools.command.cmake.outline.revealInCMakeLists.title%"
       }
     ],
+    "taskDefinitions": [
+      {
+        "type": "cmake",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "CMake command"
+          }
+        }
+      }
+    ],
     "menus": {
       "commandPalette": [
         {
@@ -517,6 +541,9 @@
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
         },
         {
+          "command": "cmake.openConfiguration"
+        },
+        {
           "when": "cmake:enableFullFeatureSet",
           "command": "cmake.ctest"
         },
@@ -605,6 +632,10 @@
           "when": "never"
         },
         {
+          "command": "cmake.outline.openConfiguration",
+          "when": "never"
+        },
+        {
           "command": "cmake.outline.stop",
           "when": "never"
         },
@@ -670,6 +701,11 @@
         {
           "command": "cmake.outline.cleanRebuildAll",
           "when": "view == cmake.outline && cmake:enableFullFeatureSet",
+          "group": "1_cmakeOutline"
+        },
+        {
+          "command": "cmake.outline.openConfiguration",
+          "when": "view == cmake.outline",
           "group": "1_cmakeOutline"
         }
       ],
@@ -1008,7 +1044,8 @@
               "gcc",
               "gnuld",
               "msvc",
-              "ghs"
+              "ghs",
+              "diab"
             ]
           },
           "default": [
@@ -1016,7 +1053,8 @@
             "gcc",
             "gnuld",
             "msvc",
-            "ghs"
+            "ghs",
+            "diab"
           ],
           "scope": "resource"
         },
@@ -1290,6 +1328,12 @@
           "description": "%cmake-tools.configuration.cmake.configureOnEdit.description%",
           "scope": "resource"
         },
+        "cmake.setBuildTypeOnMultiConfig": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.setBuildTypeOnMultiConfig.description%",
+          "scope": "resource"
+        },
         "cmake.skipConfigureIfCachePresent": {
           "type": "boolean",
           "default": null,
@@ -1524,12 +1568,12 @@
     "keybindings": [
       {
         "key": "f7",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "!cmake:hideBuildCommand && cmake:enableFullFeatureSet",
         "command": "cmake.build"
       },
       {
         "key": "shift+f7",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "!cmake:hideBuildCommand && cmake:enableFullFeatureSet",
         "command": "cmake.buildWithTarget"
       },
       {
@@ -1627,9 +1671,9 @@
     "gulp-sourcemaps": "^2.6.5",
     "gulp-typescript": "^5.0.1",
     "jsonc-parser": "^2.1.1",
-    "minimist": "^1.2.3",
     "mocha": "^4.1.0",
     "module-alias": "^2.2.1",
+    "node-loader": "^1.0.1",
     "sinon": "~5.0.7",
     "ts-loader": "^6.0.4",
     "ts-node": "^6.0.0",
@@ -1638,14 +1682,15 @@
     "typescript": "^3.7.2",
     "vscode": "^1.1.36",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^4.39.2",
-    "webpack-cli": "^3.3.7"
+    "webpack": "^4.44.2",
+    "webpack-cli": "^3.3.12"
   },
   "dependencies": {
     "ajv": "^4.7.5",
     "chokidar": "^3.3.0",
     "es6-promisify": "~5.0.0",
-    "handlebars": "^4.5.3",
+    "handlebars": "^4.7.6",
+    "minimist": "^1.2.5",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^3.6.1",
     "json5": "^0.5.1",
@@ -1659,10 +1704,14 @@
     "xml2js": "^0.4.17"
   },
   "resolutions": {
+    "chokidar": "^3.3.0",
     "marked": "^0.7.0",
     "diff": "^3.5.0",
-    "handlebars": "^4.5.3",
     "https-proxy-agent": "^2.2.4",
-    "serialize-javascript": "^2.1.1"
+    "**/minimist": "^1.2.5",
+    "webpack/acorn": "^6.4.1",
+    "webpack/terser-webpack-plugin": "^1.4.5",
+    "yargs-parser": "^15.0.1",
+    "node-fetch": "^2.6.1"
   }
 }

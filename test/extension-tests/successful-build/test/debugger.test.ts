@@ -15,7 +15,7 @@ suite('[Debug/Launch interface]', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-    await cmt.setKit(await getFirstSystemKit());
+    await cmt.setKit(await getFirstSystemKit(cmt));
     testEnv.projectFolder.buildDirectory.clear();
     expect(await cmt.build()).to.be.eq(0);
   });
@@ -136,7 +136,7 @@ suite('[Debug/Launch interface]', async () => {
     expect(launchProgrammPath).to.be.not.null;
 
     // Remove file if not exists
-    const createdFileOnExecution = path.join(testEnv.projectFolder.location, 'test.txt');
+    const createdFileOnExecution = path.join(path.dirname(launchProgrammPath!), 'test.txt');
     if (fs.existsSync(createdFileOnExecution)) {
       fs.unlinkSync(createdFileOnExecution);
     }
