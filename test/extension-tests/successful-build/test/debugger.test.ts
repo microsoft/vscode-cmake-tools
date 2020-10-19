@@ -35,6 +35,16 @@ suite('[Debug/Launch interface]', async () => {
     //sinon.assert.calledWith(testEnv.vs_debug_start_debugging);
   }).timeout(60000);
 
+  test('Test buildTargetName for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    expect(await cmt.buildTargetName()).to.be.eq(await cmt.allTargetName);
+
+    await cmt.setDefaultTarget(executablesTargets[0].name);
+    expect(await cmt.buildTargetName()).to.be.eq(executablesTargets[0].name);
+  });
+
   test('Test launchTargetPath for use in other extensions or launch.json', async () => {
     const executablesTargets = await cmt.executableTargets;
     expect(executablesTargets.length).to.be.not.eq(0);

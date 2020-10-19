@@ -900,6 +900,7 @@ class ExtensionManager implements vscode.Disposable {
   getLaunchTargetPath(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetPath(), folder); }
   getLaunchTargetDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetDirectory(), folder); }
   getLaunchTargetFilename(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetFilename(), folder); }
+  buildTargetName(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildTargetName(), folder); }
   buildType(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.currentBuildType(), folder); }
   buildDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildDirectory(), folder); }
   buildKit(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildKit(), folder); }
@@ -1045,6 +1046,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'getLaunchTargetPath',
     'getLaunchTargetDirectory',
     'getLaunchTargetFilename',
+    'buildTargetName',
     'buildKit',
     'buildType',
     'buildDirectory',

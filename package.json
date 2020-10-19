@@ -51,6 +51,7 @@
     "onCommand:cmake.viewLog",
     "onCommand:cmake.install",
     "onCommand:cmake.installAll",
+    "onCommand:cmake.buildTargetName",
     "onCommand:cmake.launchTarget",
     "onCommand:cmake.launchTargetAll",
     "onCommand:cmake.launchTargetPath",

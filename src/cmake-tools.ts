@@ -1139,6 +1139,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   /**
+   * Implementation of `cmake.getBuildTargetName`
+   */
+  async buildTargetName(): Promise<string|null> {
+    return this.workspaceContext.state.defaultBuildTarget || this.allTargetName;
+  }
+
+  /**
    * Implementation of `cmake.selectLaunchTarget`
    */
   async selectLaunchTarget(name?: string): Promise<string|null> { return this.setLaunchTargetByName(name); }
