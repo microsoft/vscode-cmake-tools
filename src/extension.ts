@@ -895,15 +895,14 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   launchTargetPath(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.launchTargetPath(), folder); }
-
   launchTargetDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.launchTargetDirectory(), folder); }
-
   launchTargetFilename(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.launchTargetFilename(), folder); }
-
+  getLaunchTargetPath(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetPath(), folder); }
+  getLaunchTargetDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetDirectory(), folder); }
+  getLaunchTargetFilename(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetFilename(), folder); }
+  buildTargetName(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildTargetName(), folder); }
   buildType(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.currentBuildType(), folder); }
-
   buildDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildDirectory(), folder); }
-
   buildKit(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildKit(), folder); }
 
   executableTargets(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(async cmt => (await cmt.executableTargets).map(target => target.name), folder); }
@@ -1044,6 +1043,10 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
     'launchTargetPath',
     'launchTargetDirectory',
     'launchTargetFilename',
+    'getLaunchTargetPath',
+    'getLaunchTargetDirectory',
+    'getLaunchTargetFilename',
+    'buildTargetName',
     'buildKit',
     'buildType',
     'buildDirectory',

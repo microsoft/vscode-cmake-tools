@@ -12,7 +12,7 @@ Options that support substitution, in the table below, allow variable references
 | `cmake.buildArgs` | An array of additional arguments to pass to `cmake --build`. | `[]` (empty array-no additional arguments) | yes |
 | `cmake.buildBeforeRun` | If `true`, build the launch/debug target before running the target. | `true` | no |
 | `cmake.buildDirectory` | Specify the build directory (i.e. the root directory where `CMakeCache.txt` will be generated.) | `${workspaceFolder}/build` | yes |
-| `cmake.buildEnvironment`| An object containing `key:value` pairs of environment variables, which will be passed only to the compiler. | `null` (no environment variables specified) | yes | 
+| `cmake.buildEnvironment`| An object containing `key:value` pairs of environment variables, which will be passed only to the compiler. | `null` (no environment variables specified) | yes |
 | `cmake.buildToolArgs` | An array of additional arguments to pass to the underlying build tool. | `[]` (empty array-no additional arguments) | yes |
 |  `cmake.cacheInit` | Path, or list of paths, to cache-initialization files. Passed to CMake via the `-C` command-line argument. | `[]` (empty array-no cache initializer files) | no |
 | `cmake.cmakePath`| Specify location of the cmake executable. | `cmake` (causes CMake Tools to search the `PATH` environment variable, as well as some hard-coded locations.) | Supports substitution for `workspaceRoot`, `workspaceFolder`, `workspaceRootFolderName`, `userHome`, `${command:...}` and `${env:...}`. Other substitutions result in an empty string. |
@@ -36,7 +36,7 @@ Options that support substitution, in the table below, allow variable references
 
 Some options support the replacement of special values in their string value by using a `${variable}` syntax. The following built-in variables are expanded:
 
-| Variable  | Expansion  |
+| Variable | Expansion |
 |---------|---------|
 |`${workspaceRoot}`|**DEPRECATED**. The full path to the workspace root directory.|
 |`${workspaceFolder}` | The full path to the workspace root directory. |
@@ -57,9 +57,24 @@ Variant options are expanded using the `${variant:VARIANTNAME}` syntax, where th
 
 ### Command substitution
 
-CMake Tools can expand VS Code commands. for example, you can expand the path to the launch target by using the syntax `${command:cmake.launchTargetPath}`
+CMake Tools can expand VS Code commands. For example, you can expand the path to the launch target by using the syntax `${command:cmake.launchTargetPath}`
 
 Be careful with long-running commands because it isn't specified when, or how many times, CMake Tools will execute a command for a given expansion.
+
+Supported commands for substitution:
+
+|command|substitution|
+|-------|------------|
+|`cmake.getLaunchTargetPath`|The full path to the target executable, including the filename. The existence of the target is not validated.|
+|`cmake.getLaunchTargetDirectory`|The full path to the target executable's directory. The existence of the directory is not validated.|
+|`cmake.getLaunchTargetFilename`|The name of the target executable file without any path information. The existence of the target is not validated.|
+|`cmake.launchTargetPath`|The full path to the target executable, including the filename. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
+|`cmake.launchTargetDirectory`|The full path to the target executable's directory. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
+|`cmake.launchTargetFilename`|The name of the target executable file without any path information. If `cmake.buildBeforeRun` is true, invoking this substitution will also start a build.|
+|`cmake.buildTargetName`|The current target selected for build.|
+|`cmake.buildType`|Same as `${buildType}`. The current CMake build type.|
+|`cmake.buildKit`|Same as `${buildKit}`. The current CMake kit name.|
+|`cmake.buildDirectory`|The full path to the directory where CMake cache files are located|
 
 ## Next steps
 
