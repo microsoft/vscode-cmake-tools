@@ -549,14 +549,29 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
   }
-  const batContent = bat.join('\r\n');
-  const batpath = path.join(paths.tmpDir, batfname);
-  const envpath = path.join(paths.tmpDir, envfname);
+
+  // writeFile and unlink don't need quotes (they work just fine with an unquoted path with space)
+  // but they might fail sometimes if quotes are present, so remove for now any quotes
+  // that may have been defined by the user (the command prompt experience makes it very likely
+  // for the user to use quotes when defining an environment variable with a space containing path).
+  const tmpDir: string = paths.tmpDir?.replace(/"/mg, "");
+  if (!tmpDir) {
+    console.log(`TEMP dir is not set. ${devbat} will not run.`);
+    return;
+  }
+
+  const batpath = path.join(tmpDir, batfname);
+  const envpath = path.join(tmpDir, envfname);
+
   try {
     await fs.unlink(envpath);
   } catch (error) {}
+
+  const batContent = bat.join('\r\n');
   await fs.writeFile(batpath, batContent);
-  const res = await proc.execute(batpath, [], null, {shell: true, silent: true}).result;
+
+  // Quote the script file path before running it, in case there are spaces.
+  const res = await proc.execute(`"${batpath}"`, [], null, { shell: true, silent: true }).result;
   await fs.unlink(batpath);
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
@@ -603,8 +618,19 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
   const filename = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
   const script_filename = `vs-cmt-${filename}`;
   const environment_filename = script_filename + '.env';
-  const script_path = path.join(paths.tmpDir, script_filename);
-  const environment_path = path.join(paths.tmpDir, environment_filename); // path of temp file in which the script writes the env vars to
+
+  // writeFile and unlink don't need quotes (they work just fine with an unquoted path with space)
+  // but they might fail sometimes if quotes are present, so remove for now any quotes
+  // that may have been defined by the user (the command prompt experience makes it very likely
+  // for the user to use quotes when defining an environment variable with a space containing path).
+  const tmpDir: string = paths.tmpDir?.replace(/"/mg, "");
+  if (!tmpDir) {
+    console.log(`TEMP dir is not set. Shell script "${script_filename}" will not run.`);
+    return;
+  }
+
+  const script_path = path.join(tmpDir, script_filename);
+  const environment_path = path.join(tmpDir, environment_filename); // path of temp file in which the script writes the env vars to
 
   let script = '';
   let run_command = '';
@@ -616,8 +642,9 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
 
   if (process.platform == 'win32') { // windows
     script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
-    script += `set >> ${environment_path}`; // write env vars to temp file
-    run_command = `call ${script_path}`;
+    script += `set >> "${environment_path}"`; // write env vars to temp file
+    // Quote the script file path before running it, in case there are spaces.
+    run_command = `call "${script_path}"`;
   } else { // non-windows
     script += `source "${environmentSetupScript}"\n`; // run the user shell script
     script +=`printenv >> ${environment_path}`; // write env vars to temp file
