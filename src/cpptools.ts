@@ -504,7 +504,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           /// 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
           const grps = target.fileGroups || [];
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-          const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
+          const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
           const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
           const sysroot = target.sysroot || '';
           for (const grp of target.fileGroups || []) {
