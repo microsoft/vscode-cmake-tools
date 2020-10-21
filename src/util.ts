@@ -157,7 +157,6 @@ export function splitPath(p: string): string[] {
  */
 export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
-    value = value.toUpperCase();
     return !(['', 'FALSE', 'OFF', '0', 'NOTFOUND', 'NO', 'N', 'IGNORE'].indexOf(value) >= 0
              || value.endsWith('-NOTFOUND'));
   }
@@ -577,7 +576,6 @@ export function reportProgress(progress: ProgressHandle|undefined, message: stri
 
 export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path: string, stats?: fs.Stats | undefined) => void) {
   return watcher.on('add', listener)
-                .on('raw', listener)
                 .on('change', listener)
                 .on('unlink', listener);
 }
