@@ -601,7 +601,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
    */
-  public async cleanConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
+  public async cleanConfigure(trigger: string, extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -614,10 +614,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     await this.doPreCleanConfigure();
     this.configRunning = false;
 
-    return this.configure(extra_args, consumer);
+    return this.configure(trigger, extra_args, consumer);
   }
 
-  async configure(extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
+  async configure(trigger: string, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -665,7 +665,24 @@ export abstract class CMakeDriver implements vscode.Disposable {
         CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
         CMakeGenerator: this.generatorName || '',
         ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+        Toolchain: this._kit?.toolchainFile ? "true" : "false", // UseToolchain?
+        Trigger: trigger
       };
+
+      if (this._kit?.compilers) {
+        if (this._kit.compilers["C"]) {
+          telemetryProperties.CCompiler = this._kit.compilers["C"];
+        }
+
+        if (this._kit.compilers["CXX"]) {
+          telemetryProperties.CXXCompiler = this._kit.compilers["CXX"];
+        }
+      }
+
+      if (this._kit?.visualStudioArchitecture) {
+        telemetryProperties.VisualStudioArchitecture = this._kit?.visualStudioArchitecture;
+      }
+
       const telemetryMeasures: telemetry.Measures = {
         Duration: timeEnd - timeStart,
       };

@@ -11,7 +11,7 @@ import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
 
 import {CMakeCache} from '@cmt/cache';
-import CMakeTools from '@cmt/cmake-tools';
+import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
 import {ConfigurationReader} from '@cmt/config';
 import {CppConfigurationProvider} from '@cmt/cpptools';
 import {CMakeToolsFolderController, CMakeToolsFolder} from '@cmt/folders';
@@ -408,7 +408,7 @@ class ExtensionManager implements vscode.Disposable {
       if (!await this._ensureActiveKit(cmt)) {
         return;
       }
-      await cmt.configure();
+      await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.configureOnOpen);
     } else if (silentScanForKitsNeeded) {
       // This popup will show up the first time after deciding not to configure, if a version change has been detected
       // in the kits definition. This may happen during a CMake Tools extension upgrade.
@@ -421,7 +421,7 @@ class ExtensionManager implements vscode.Disposable {
         if (!await this._ensureActiveKit(cmt)) {
           return;
         }
-        await cmt.configure();
+        await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.buttonNewKitsDefinition);
       }
     }
     this._updateCodeModel(info);
@@ -789,13 +789,13 @@ class ExtensionManager implements vscode.Disposable {
     return Promise.resolve(null);
   }
 
-  cleanConfigure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.cleanConfigure(), folder, true); }
+  cleanConfigure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigure), folder, true); }
 
-  cleanConfigureAll() { return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(), true); }
+  cleanConfigureAll() { return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), true); }
 
-  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configure(), folder, true); }
+  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configure([], ConfigureType.Normal, ConfigureTrigger.commandConfigure), folder, true); }
 
-  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configure(), true); }
+  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configure([], ConfigureType.Normal, ConfigureTrigger.commandConfigureAll), true); }
 
   openConfiguration() { return this.mapCMakeToolsFolder(cmt => cmt.openConfiguration()); }
 

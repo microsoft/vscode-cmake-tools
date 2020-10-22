@@ -51,10 +51,28 @@ const log = logging.createLogger('main');
 const BUILD_LOGGER = logging.createLogger('build');
 const CMAKE_LOGGER = logging.createLogger('cmake');
 
-enum ConfigureType {
+export enum ConfigureType {
   Normal,
   Clean,
   Cache,
+}
+
+export enum ConfigureTrigger {
+  api = "Triggered by calling configure commands via the CMake Tools API",
+  runTests = "Triggered by running the tests suite",
+  badHomeDir = "Clean Configure after bad HOME dir",
+  configureOnOpen = "Configure when cmake.configureOnOpen is set",
+  quickStart = "Configure after creating a new project via QuickStart",
+  setVariant = "Configure after setting a new variant",
+  cmakeListsChange = "Configure after CMakeLists.txt change",
+  sourceDirectoryChange = "Configure after a change in the sourceDirectory setting",
+  buttonNewKitsDefinition = "Reconfigure after new kits definition",
+  compilation = "Build, build all or single file compilation",
+  launch = "Debug, launch or related commands",
+  commandConfigure = "Command Pallette: Configure",
+  commandCleanConfigure = "Command Pallette: Clean Configure",
+  commandConfigureAll = "Command Pallette: Configure All",
+  commandCleanConfigureAll = "Command Pallette: Clean Configure All",
 }
 
 /**
@@ -477,7 +495,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         if (drv && !drv.configOrBuildInProgress()) {
           if (drv.config.configureOnEdit) {
             log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
-            await this.configure([], ConfigureType.Normal);
+            await this.configure([], ConfigureType.Normal, ConfigureTrigger.cmakeListsChange);
           } else {
             await enableFullFeatureSet(true, this.folder);
           }
@@ -578,7 +596,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                       try {
                         await fs.rmdir(path.join(path.dirname(e.badCachePath), 'CMakeFiles'));
                       } catch (e2) { log.error(localize('failed.to.remove.cmakefiles.for.cache', 'Failed to remove CMakeFiles for cache: {0} {1}', e.badCachePath, e2)); }
-                        await this.cleanConfigure();
+                        await this.cleanConfigure(ConfigureTrigger.badHomeDir);
                       });
                   }
                 });
@@ -672,8 +690,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   /**
    * Implementation of `cmake.configure`
+   * trigger: describes the circumstance that caused this configure to be run.
+   *          In order to avoid a breaking change in the CMake Tools API,
+   *          this parameter can default to that scenario.
+   *          All other configure calls in this extension are able to provide
+   *          proper trigger information.
    */
-  configure(extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
+  configure(extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal, trigger: ConfigureTrigger = ConfigureTrigger.api): Thenable<number> {
     return vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -699,18 +722,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 progress.report({message: localize('configuring.project', 'Configuring project')});
                 let retc: number;
                 if (type == ConfigureType.Cache) {
-                  retc = await drv.configure([], consumer, true);
+                  retc = await drv.configure(trigger, [], consumer, true);
                 } else {
                   switch (type) {
                     case ConfigureType.Normal:
-                        retc = await drv.configure(extra_args, consumer);
+                        retc = await drv.configure(trigger, extra_args, consumer);
                       break;
                     case ConfigureType.Clean:
-                        retc = await drv.cleanConfigure(extra_args, consumer);
+                        retc = await drv.cleanConfigure(trigger, extra_args, consumer);
                       break;
                     default:
                         rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
-                        retc = await this.configure(extra_args, ConfigureType.Normal);
+                        retc = await this.configure(extra_args, ConfigureType.Normal, trigger);
                       break;
                   }
                 }
@@ -740,8 +763,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   /**
    * Implementation of `cmake.cleanConfigure()
+   * trigger: describes the circumstance that caused this configure to be run.
+   *          In order to avoid a breaking change in the CMake Tools API,
+   *          this parameter can default to that scenario.
+   *          All other configure calls in this extension are able to provide
+   *          proper trigger information.
    */
-  cleanConfigure() { return this.configure([], ConfigureType.Clean); }
+  cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) { return this.configure([], ConfigureType.Clean, trigger); }
 
   /**
    * Save all open files. "maybe" because the user may have disabled auto-saving
@@ -851,7 +879,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -1;
     }
     if (await this._needsReconfigure()) {
-      return this.configure();
+      return this.configure([], ConfigureType.Normal, ConfigureTrigger.compilation);
     } else {
       return 0;
     }
@@ -1109,7 +1137,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async setVariant(name?: string) {
     // Make this function compatibile with return code style...
     if (await this._variantManager.selectVariant(name)) {
-      await this.configure();
+      await this.configure([], ConfigureType.Normal, ConfigureTrigger.setVariant);
       return 0; // succeeded
     }
     return 1; // failed
@@ -1155,7 +1183,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async setLaunchTargetByName(name?: string|null) {
     if (await this._needsReconfigure()) {
-      const rc = await this.configure();
+      const rc = await this.configure([], ConfigureType.Normal, ConfigureTrigger.launch);
       if (rc !== 0) {
         return null;
       }
@@ -1243,7 +1271,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async getLaunchTargetPath(): Promise<string|null> {
     if (await this._needsReconfigure()) {
-      const rc = await this.configure();
+      const rc = await this.configure([], ConfigureType.Normal, ConfigureTrigger.launch);
       if (rc !== 0) {
         return null;
       }
@@ -1321,7 +1349,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // executable targets and may show an uneccessary prompt to the user
     const isReconfigurationNeeded = await this._needsReconfigure();
     if (isReconfigurationNeeded) {
-      const rc = await this.configure();
+      const rc = await this.configure([], ConfigureType.Normal, ConfigureTrigger.launch);
       if (rc !== 0) {
         log.debug(localize('project.configuration.failed', 'Configuration of project failed.'));
         return null;
@@ -1548,7 +1576,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await fs.writeFile(mainListFile, init);
     const doc = await vscode.workspace.openTextDocument(mainListFile);
     await vscode.window.showTextDocument(doc);
-    return this.configure();
+    return this.configure([], ConfigureType.Normal, ConfigureTrigger.quickStart);
   }
 
   /**

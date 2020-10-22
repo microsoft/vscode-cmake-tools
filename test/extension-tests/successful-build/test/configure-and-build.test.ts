@@ -1,4 +1,4 @@
-import {CMakeTools} from '@cmt/cmake-tools';
+import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
 import {fs} from '@cmt/pr';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
 import {logFilePath} from '@cmt/logging';
@@ -83,7 +83,7 @@ suite('Build', async () => {
   });
 
   test('Configure', async () => {
-    expect(await cmt.configure()).to.be.eq(0);
+    expect(await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests)).to.be.eq(0);
 
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'no expected cache present');
   }).timeout(100000);
@@ -97,7 +97,7 @@ suite('Build', async () => {
 
 
   test('Configure and Build', async () => {
-    expect(await cmt.configure()).to.be.eq(0);
+    expect(await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests)).to.be.eq(0);
     expect(await cmt.build()).to.be.eq(0);
 
     const result = await testEnv.result.getResultAsJson();
@@ -105,7 +105,7 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Configure and Build run target', async () => {
-    expect(await cmt.configure()).to.be.eq(0);
+    expect(await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests)).to.be.eq(0);
 
     const targets = await cmt.targets;
     const runTestTargetElement = targets.find(item => item.name === 'runTestTarget');
@@ -121,7 +121,7 @@ suite('Build', async () => {
 
   test('Configure with cache-initializer', async () => {
     testEnv.config.updatePartial({cacheInit: 'TestCacheInit.cmake'});
-    expect(await cmt.configure()).to.be.eq(0);
+    expect(await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests)).to.be.eq(0);
     await cmt.setDefaultTarget('runTestTarget');
     expect(await cmt.build()).to.be.eq(0);
     const resultFile = new TestProgramResult(testEnv.projectFolder.buildDirectory.location, 'output_target.txt');
@@ -286,7 +286,7 @@ suite('Build', async () => {
 
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
     await cmt.setKit(await getMatchingProjectKit(compiler[1].kitLabel, testEnv.projectFolder.location));
-    await cmt.configure();
+    await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests);
 
     testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
     await cmt.setKit(await getMatchingProjectKit(compiler[0].kitLabel, testEnv.projectFolder.location));
@@ -313,7 +313,7 @@ suite('Build', async () => {
 
   test('Test build twice with clean configure', async function(this: ITestCallbackContext) {
     expect(await cmt.build()).eq(0);
-    await cmt.cleanConfigure();
+    await cmt.cleanConfigure(ConfigureTrigger.runTests);
     expect(await cmt.build()).eq(0);
 
     await testEnv.result.getResultAsJson();
@@ -331,11 +331,11 @@ suite('Build', async () => {
 
   test('Copy compile_commands.json to a pre-determined path', async () => {
     expect(await fs.exists(compdb_cp_path), 'File shouldn\'t be there!').to.be.false;
-    let retc = await cmt.configure();
+    let retc = await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests);
     expect(retc).to.eq(0);
     expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
     testEnv.config.updatePartial({copyCompileCommands: compdb_cp_path});
-    retc = await cmt.configure();
+    retc = await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests);
     expect(retc).to.eq(0);
     expect(await fs.exists(compdb_cp_path), 'File wasn\'t copied').to.be.true;
   }).timeout(100000);

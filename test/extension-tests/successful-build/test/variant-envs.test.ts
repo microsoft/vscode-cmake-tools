@@ -1,7 +1,7 @@
 
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
-import {CMakeTools} from '@cmt/cmake-tools';
+import {CMakeTools, ConfigureTrigger, ConfigureType} from '@cmt/cmake-tools';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import {fs} from '@cmt/pr';
 import * as path from 'path';
@@ -42,7 +42,7 @@ suite('[Environment Variables in Variants]', async () => {
   test('Check for environment variables being passed to configure', async () => {
     // Set fake settings
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[variantEnv] configure failed');
+    expect(await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests)).to.be.eq(0, '[variantEnv] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
