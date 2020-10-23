@@ -949,31 +949,64 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   launchTargetPath(folder?: vscode.WorkspaceFolder | string) {
-    telemetry.logEvent("launchTargetPath");
+    telemetry.logEvent("substitution", {command: "launchTargetPath"});
     return this.mapQueryCMakeTools(cmt => cmt.launchTargetPath(), folder);
   }
 
   launchTargetDirectory(folder?: vscode.WorkspaceFolder | string) {
-    telemetry.logEvent("launchTargetDirectory");
+    telemetry.logEvent("substitution", {command: "launchTargetDirectory"});
     return this.mapQueryCMakeTools(cmt => cmt.launchTargetDirectory(), folder);
   }
 
   launchTargetFilename(folder?: vscode.WorkspaceFolder | string) {
-    telemetry.logEvent("launchTargetFilename");
+    telemetry.logEvent("substitution", {command: "launchTargetFilename"});
     return this.mapQueryCMakeTools(cmt => cmt.launchTargetFilename(), folder);
   }
 
-  getLaunchTargetPath(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetPath(), folder); }
-  getLaunchTargetDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetDirectory(), folder); }
-  getLaunchTargetFilename(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetFilename(), folder); }
-  buildTargetName(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildTargetName(), folder); }
-  buildType(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.currentBuildType(), folder); }
-  buildDirectory(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildDirectory(), folder); }
-  buildKit(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.buildKit(), folder); }
+  getLaunchTargetPath(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "getLaunchTargetPath"});
+    return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetPath(), folder);
+  }
 
-  executableTargets(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(async cmt => (await cmt.executableTargets).map(target => target.name), folder); }
+  getLaunchTargetDirectory(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "getLaunchTargetDirectory"});
+    return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetDirectory(), folder);
+  }
 
-  tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) { return this.mapQueryCMakeTools(cmt => cmt.tasksBuildCommand(), folder); }
+  getLaunchTargetFilename(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "getLaunchTargetFilename"});
+    return this.mapQueryCMakeTools(cmt => cmt.getLaunchTargetFilename(), folder);
+  }
+
+  buildTargetName(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "buildTargetName"});
+    return this.mapQueryCMakeTools(cmt => cmt.buildTargetName(), folder);
+  }
+
+  buildType(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "buildType"});
+    return this.mapQueryCMakeTools(cmt => cmt.currentBuildType(), folder);
+  }
+
+  buildDirectory(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "buildDirectory"});
+    return this.mapQueryCMakeTools(cmt => cmt.buildDirectory(), folder);
+  }
+
+  buildKit(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "buildKit"});
+    return this.mapQueryCMakeTools(cmt => cmt.buildKit(), folder);
+  }
+
+  executableTargets(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "executableTargets"});
+    return this.mapQueryCMakeTools(async cmt => (await cmt.executableTargets).map(target => target.name), folder);
+  }
+
+  tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
+    telemetry.logEvent("substitution", {command: "tasksBuildCommand"});
+    return this.mapQueryCMakeTools(cmt => cmt.tasksBuildCommand(), folder);
+  }
 
   async debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> { return this.mapCMakeToolsFolder(cmt => cmt.debugTarget(name), folder); }
 
