@@ -7,6 +7,7 @@
 import * as logging from '@cmt/logging';
 import * as util from '@cmt/util';
 import * as os from 'os';
+import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
@@ -145,7 +146,15 @@ export class ConfigurationReader implements vscode.Disposable {
     reader._updateSubscription = vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('cmake', folder?.uri)) {
         const new_data = ConfigurationReader.loadConfig(folder);
-        reader.update(new_data);
+        const updatedKeys = reader.update(new_data);
+
+        if (updatedKeys.length > 0) {
+          const telemetryProperties: telemetry.Properties = {
+            isSet: updatedKeys.join(";")
+          };
+
+          telemetry.logEvent("settings", telemetryProperties);
+        }
       }
     });
     return reader;
@@ -164,8 +173,9 @@ export class ConfigurationReader implements vscode.Disposable {
     return {...data, ...(for_platform || {})};
   }
 
-  update(newData: ExtensionConfigurationSettings) { this.updatePartial(newData); }
-  updatePartial(newData: Partial<ExtensionConfigurationSettings>) {
+  update(newData: ExtensionConfigurationSettings): string[] { return this.updatePartial(newData); }
+  updatePartial(newData: Partial<ExtensionConfigurationSettings>): string[] {
+    const keys: string[] = [];
     const old_values = {...this.configData};
     Object.assign(this.configData, newData);
     for (const key_ of Object.getOwnPropertyNames(newData)) {
@@ -178,8 +188,11 @@ export class ConfigurationReader implements vscode.Disposable {
       if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
         const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
         em.fire(newData[key]);
+        keys.push(key);
       }
     }
+
+    return keys;
   }
 
   get autoSelectActiveFolder(): boolean { return this.configData.autoSelectActiveFolder; }

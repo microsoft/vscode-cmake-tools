@@ -481,9 +481,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     this._statusMessage.set(localize('ready.status', 'Ready'));
 
+    this.extensionContext.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async td => {
+      const str = td.uri.fsPath;
+      const sourceDirectory = await this.sourceDir;
+      if ((str.endsWith("CMakeLists.txt") || str.endsWith(".cmake")) && lightNormalizePath(str).startsWith(sourceDirectory)) {
+        telemetry.logEvent("cmakeFileOpen");
+      }
+    }));
+
     this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async td => {
       const str = td.uri.fsPath;
       const sourceDirectory = await this.sourceDir;
+      if ((str.endsWith("CMakeLists.txt") || str.endsWith(".cmake")) && lightNormalizePath(str).startsWith(sourceDirectory)) {
+        telemetry.logEvent("cmakeFileWrite");
+      }
+
       if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
         // The configure process can determine correctly whether the features set activation
         // should be full or partial, so there is no need to proactively enable full here,
@@ -1454,6 +1466,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       workspace: this.folder.uri.toString(),
       config: debug_config,
     }));
+
+    const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('debugConfig');
+    const customSetting = (cfg?.globalValue !== undefined || cfg?.workspaceValue !== undefined || cfg?.workspaceFolderValue !== undefined);
+    let dbg = debug_config.MIMode;
+    if (!dbg && debug_config.type === "cppvsdbg") {
+      dbg = "vsdbg";
+    }
+    const telemetryProperties: telemetry.Properties = {
+      customSetting: customSetting.toString(),
+      debugger: dbg
+    };
+
+    telemetry.logEvent('debug', telemetryProperties);
+
     await vscode.debug.startDebugging(this.folder, debug_config);
     return vscode.debug.activeDebugSession!;
   }
