@@ -20,7 +20,7 @@ smokeSuite('no-ctest-in-bindir', suite => {
         cmt.workspaceContext.config.updatePartial({
           cmakePath: path.join(ctx.projectDir.uri.fsPath, 'bin', cmake_filename),
         });
-        expect(await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.runTests)).to.eq(0);
+        expect(await cmt.configure(ConfigureTrigger.runTests, [], ConfigureType.Normal)).to.eq(0);
         expect(await cmt.build()).to.eq(0);
         expect(await cmt.ctest()).to.eq(0);
       }

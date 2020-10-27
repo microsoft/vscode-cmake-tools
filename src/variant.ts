@@ -189,6 +189,8 @@ export class VariantManager implements vscode.Disposable {
    */
   private readonly _variantFileWatcher = chokidar.watch([], {ignoreInitial: true});
 
+  private customVariantsFileExists: boolean = false;
+
 
   dispose() {
     // tslint:disable-next-line: no-floating-promises
@@ -232,6 +234,7 @@ export class VariantManager implements vscode.Disposable {
   }
 
   private async _reloadVariantsFile(filepath?: string) {
+    this.customVariantsFileExists = false;
     const validate = await loadSchema('schemas/variants-schema.json');
 
     const workdir = this.folder.uri.fsPath;
@@ -254,6 +257,7 @@ export class VariantManager implements vscode.Disposable {
     let new_variants = this.loadVariantsFromSettings();
     // Check once more that we have a file to read
     if (filepath && await fs.exists(filepath)) {
+      this.customVariantsFileExists = true;
       const content = (await fs.readFile(filepath)).toString();
       try {
         if (filepath.endsWith('.json')) {
@@ -387,10 +391,7 @@ export class VariantManager implements vscode.Disposable {
 
       const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('defaultVariants');
       const telemetryProperties: telemetry.Properties = {
-        customFile: (util.checkFileExists("cmake-variants.json") ||
-                     util.checkFileExists("cmake-variants.yaml") ||
-                     util.checkFileExists(".vscode/cmake-variants.json") ||
-                     util.checkFileExists(".vscode/cmake-variants.yaml")).toString(),
+        customFile: (this.customVariantsFileExists).toString(),
         customSetting: (cfg?.globalValue !== undefined ||
                         cfg?.workspaceValue !== undefined ||
                         cfg?.workspaceFolderValue !== undefined).toString()

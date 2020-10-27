@@ -408,7 +408,7 @@ class ExtensionManager implements vscode.Disposable {
       if (!await this._ensureActiveKit(cmt)) {
         return;
       }
-      await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.configureOnOpen);
+      await cmt.configure(ConfigureTrigger.configureOnOpen, [], ConfigureType.Normal);
     } else if (silentScanForKitsNeeded) {
       // This popup will show up the first time after deciding not to configure, if a version change has been detected
       // in the kits definition. This may happen during a CMake Tools extension upgrade.
@@ -421,7 +421,7 @@ class ExtensionManager implements vscode.Disposable {
         if (!await this._ensureActiveKit(cmt)) {
           return;
         }
-        await cmt.configure([], ConfigureType.Normal, ConfigureTrigger.buttonNewKitsDefinition);
+        await cmt.configure(ConfigureTrigger.buttonNewKitsDefinition, [], ConfigureType.Normal);
       }
     }
     this._updateCodeModel(info);
@@ -819,9 +819,9 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), true);
   }
 
-  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configure([], ConfigureType.Normal, ConfigureTrigger.commandConfigure), folder, true); }
+  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configure(ConfigureTrigger.commandConfigure, [], ConfigureType.Normal), folder, true); }
 
-  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configure([], ConfigureType.Normal, ConfigureTrigger.commandConfigureAll), true); }
+  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configure(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), true); }
 
   openConfiguration() { return this.mapCMakeToolsFolder(cmt => cmt.openConfiguration()); }
 

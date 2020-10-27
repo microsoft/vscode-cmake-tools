@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as api from '@cmt/api';
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/code-pages';
+import {ConfigureTrigger} from "@cmt/cmake-tools";
 import {CompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
 import {CMakeBuildConsumer, CompileOutputConsumer} from '@cmt/diagnostics/build';
@@ -601,7 +602,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Perform a clean configure. Deletes cached files before running the config
    * @param consumer The output consumer
    */
-  public async cleanConfigure(trigger: string, extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
+  public async cleanConfigure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -617,7 +618,61 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this.configure(trigger, extra_args, consumer);
   }
 
-  async configure(trigger: string, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
+  async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp): Promise<string> {
+    const args = [];
+    if (arg) {
+      args.push(arg);
+    }
+    const child = this.executeCommand(program, args, undefined, {silent: true, cwd});
+    try {
+      const result = await child.result;
+      log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
+      // cl.exe version information is printed on stderr when no source files are given
+      const versionLine = (program === "cl") ? result.stderr : result.stdout; //.split("\\n")[0];
+      const match = regexp.exec(versionLine);
+      return match ? match[1] : "error";
+    } catch (e) {
+      const e2: NodeJS.ErrnoException = e;
+      log.debug(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
+      if (e2.code === 'error') {
+        return e2.code;
+      }
+      throw e;
+    }
+  }
+
+  async getCompilerVersion(compilerPath: string) : Promise<string | undefined> {
+    const compilerName = path.parse(compilerPath).name;
+    const compilerDir = path.parse(compilerPath).dir;
+    let versionSwitch;
+    let versionRegexp;
+    switch (compilerName) {
+      case "cl":
+        // cl does not have a version switch but it outputs the compiler version on stderr
+        // when no source files arguments are given
+        versionRegexp = /.* Compiler Version (.*) for .*/mg;
+        break;
+      case "gcc":
+      case "g++:":
+      case "cpp:":
+      case "c++:":
+        versionSwitch = "--version";
+        versionRegexp = RegExp(`${compilerName} .* (.*)`, "mg");
+        break;
+      case "clang":
+      case "clang-cl":
+      case "clang++":
+        versionSwitch = "--version";
+        versionRegexp = /clang version (.*) /mg;
+        break;
+      default:
+        return; // don't disclose information for compilers not in the known list
+    }
+
+    return `${compilerName}(${await this.testCompilerVersion(compilerName, compilerDir, versionSwitch, versionRegexp)})`;
+  }
+
+  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -670,12 +725,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
       };
 
       if (this._kit?.compilers) {
+        let cCompilerVersion;
+        let cppCompilerVersion;
         if (this._kit.compilers["C"]) {
-          telemetryProperties.CCompiler = this._kit.compilers["C"];
+          cCompilerVersion = await this.getCompilerVersion(this._kit.compilers["C"]);
         }
 
         if (this._kit.compilers["CXX"]) {
-          telemetryProperties.CXXCompiler = this._kit.compilers["CXX"];
+          cppCompilerVersion = await this.getCompilerVersion(this._kit.compilers["CXX"]);
+        }
+
+        if (cCompilerVersion) {
+          telemetryProperties.CCompiler = cCompilerVersion;
+        }
+
+        if (cppCompilerVersion) {
+          telemetryProperties.CppCompiler = cppCompilerVersion;
         }
       }
 
