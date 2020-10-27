@@ -190,7 +190,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
           standard = s;
         }
       } else {
-        log.warning(localize('unknown language', 'Unknown language: {0}', value));
+        log.warning(localize('unknown language', 'Unknown language: {0}', lang));
       }
     }
   }
