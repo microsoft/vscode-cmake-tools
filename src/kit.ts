@@ -551,13 +551,19 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
   }
 
   // writeFile and unlink don't need quotes (they work just fine with an unquoted path with space)
-  // but they might fail sometimes if quotes are present, so remove for now any quotes
+  // but they might fail sometimes if quotes are present, so remove for now any surrounding quotes
   // that may have been defined by the user (the command prompt experience makes it very likely
   // for the user to use quotes when defining an environment variable with a space containing path).
-  const tmpDir: string = paths.tmpDir?.replace(/"/mg, "");
+  //const tmpDir: string = paths.tmpDir?.replace(/"/mg, "");
+  let tmpDir: string = paths.tmpDir;
   if (!tmpDir) {
     console.log(`TEMP dir is not set. ${devbat} will not run.`);
     return;
+  }
+
+  tmpDir = tmpDir.trim();
+  if (tmpDir.startsWith('"') && tmpDir.endsWith('"')) {
+    tmpDir = tmpDir.substring(1, tmpDir.length - 1);
   }
 
   const batpath = path.join(tmpDir, batfname);
@@ -620,13 +626,18 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
   const environment_filename = script_filename + '.env';
 
   // writeFile and unlink don't need quotes (they work just fine with an unquoted path with space)
-  // but they might fail sometimes if quotes are present, so remove for now any quotes
+  // but they might fail sometimes if quotes are present, so remove for now any surrounding quotes
   // that may have been defined by the user (the command prompt experience makes it very likely
   // for the user to use quotes when defining an environment variable with a space containing path).
-  const tmpDir: string = paths.tmpDir?.replace(/"/mg, "");
+  let tmpDir: string = paths.tmpDir;
   if (!tmpDir) {
     console.log(`TEMP dir is not set. Shell script "${script_filename}" will not run.`);
     return;
+  }
+
+  tmpDir = tmpDir.trim();
+  if (tmpDir.startsWith('"') && tmpDir.endsWith('"')) {
+    tmpDir = tmpDir.substring(1, tmpDir.length - 1);
   }
 
   const script_path = path.join(tmpDir, script_filename);
