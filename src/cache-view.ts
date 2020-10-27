@@ -18,9 +18,9 @@ export interface IOption {
  * This object manages the webview rendering.
  */
 export class ConfigurationWebview {
-
-  WINDOW_TITLE = 'CMake Cache Editor';
-  WINDOW_TITLE_UNSAVED = 'CMake Cache Editor*';
+  private readonly cmakeCacheEditorText = localize("cmake.cache.editor", "CMake Cache Editor");
+  WINDOW_TITLE = this.cmakeCacheEditorText;
+  WINDOW_TITLE_UNSAVED = `${this.cmakeCacheEditorText}*`;
 
   private readonly _panel: vscode.WebviewPanel;
   get panel() {
@@ -31,7 +31,7 @@ export class ConfigurationWebview {
       protected save: () => void) {
     this._panel = vscode.window.createWebviewPanel(
       'cmakeConfiguration', // Identifies the type of the webview. Used internally
-      'CMake Cache Editor', // Title of the panel displayed to the user
+      this.cmakeCacheEditorText, // Title of the panel displayed to the user
       vscode.ViewColumn.One, // Editor column to show the new webview panel in.
       {
         // this is needed for the html view to trigger events in the extension
@@ -112,13 +112,20 @@ export class ConfigurationWebview {
    */
   getWebviewMarkup(options: IOption[]) {
     const key = '%TABLE_ROWS%';
+    const searchButtonText = localize("search", "Search");
+    const saveButtonText = localize("save", "Save");
+    const keyColumnText = localize ("key", "Key");
+    const valueColumnText = localize("value", "Value");
+    const onButtonText = localize("on", "ON");
+    const offButtonText = localize("off", "OFF");
+
     let html = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CMake Cache Editor</title>
+        <title>${this.cmakeCacheEditorText}</title>
         <style>
           .vscode-light {
               color: #1e1e1e
@@ -200,7 +207,7 @@ export class ConfigurationWebview {
           const vscode = acquireVsCodeApi();
           function toggleKey(id) {
             const label = document.getElementById('LABEL_' + id);
-            label.textContent = label.textContent == 'ON' ? 'OFF' : 'ON';
+            label.textContent = label.textContent == '${onButtonText}' ? '${offButtonText}' : '${onButtonText}';
             vscode.postMessage(false);
             document.getElementById('not-saved').classList.remove('invisible');
           }
@@ -229,14 +236,14 @@ export class ConfigurationWebview {
     </head>
     <body>
       <div class="container">
-        <button id="save" onclick="save()">Save</button>
-        <h1>CMake Cache Editor<span class="invisible" id="not-saved">*</span></h1>
-        <input class="search" type="text" id="search" oninput="search()" placeholder="Search" autofocus>
+        <button id="save" onclick="save()">${saveButtonText}</button>
+        <h1>${this.cmakeCacheEditorText}<span class="invisible" id="not-saved">*</span></h1>
+        <input class="search" type="text" id="search" oninput="search()" placeholder="${searchButtonText}" autofocus>
         <table style="width:100%">
           <tr style="height: 35px;">
             <th style="width: 30px"></th>
-            <th style="width: 1px; white-space: nowrap;">Key</th>
-            <th>Value</th>
+            <th style="width: 1px; white-space: nowrap;">${keyColumnText}</th>
+            <th>${valueColumnText}</th>
           </tr>
           ${key}
         </table>
@@ -253,7 +260,7 @@ export class ConfigurationWebview {
         <td>
           <input class="cmake-input-bool" id="${option.key}" onclick="toggleKey('${option.key}')"
                  type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
-          <label id="LABEL_${option.key}" for="${option.key}">${util.isTruthy(option.value) ? 'ON' : 'OFF'}</label>
+          <label id="LABEL_${option.key}" for="${option.key}">${util.isTruthy(option.value) ? `${onButtonText}` : `${offButtonText}`}</label>
         </td>
       </tr>`;
       } else {
