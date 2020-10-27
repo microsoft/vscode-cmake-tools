@@ -42,7 +42,7 @@ suite('[Environment Variables in Variants]', async () => {
   test('Check for environment variables being passed to configure', async () => {
     // Set fake settings
     // Configure
-    expect(await cmt.configure(ConfigureTrigger.runTests, [], ConfigureType.Normal)).to.be.eq(0, '[variantEnv] configure failed');
+    expect(await cmt.configure(ConfigureTrigger.runTests)).to.be.eq(0, '[variantEnv] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 

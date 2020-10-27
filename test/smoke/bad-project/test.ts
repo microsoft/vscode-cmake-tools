@@ -9,7 +9,7 @@ smokeSuite('bad-project', suite => {
       kit: await smokeTestDefaultKit(),
       async run(cmt) {
         expect( (await cmt.getCMakeExecutable()).isFileApiModeSupported).to.be.equal(true);
-        const retc = await cmt.configure(ConfigureTrigger.runTests, [], ConfigureType.Normal);
+        const retc = await cmt.configure(ConfigureTrigger.runTests);
         // Test will fail because of a bad command:
         expect(retc, 'Configure should have failed').to.eq(1);
       }
