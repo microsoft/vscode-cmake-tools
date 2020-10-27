@@ -554,7 +554,6 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
   // but they might fail sometimes if quotes are present, so remove for now any surrounding quotes
   // that may have been defined by the user (the command prompt experience makes it very likely
   // for the user to use quotes when defining an environment variable with a space containing path).
-  //const tmpDir: string = paths.tmpDir?.replace(/"/mg, "");
   let tmpDir: string = paths.tmpDir;
   if (!tmpDir) {
     console.log(`TEMP dir is not set. ${devbat} will not run.`);
