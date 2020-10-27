@@ -1,6 +1,6 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
-import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
+import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import paths from '@cmt/paths';
 import {objectPairs, platformNormalizePath} from '@cmt/util';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';

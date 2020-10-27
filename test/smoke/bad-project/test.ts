@@ -1,4 +1,4 @@
-import { ConfigureTrigger, ConfigureType } from '@cmt/cmake-tools';
+import {ConfigureTrigger} from '@cmt/cmake-tools';
 import {expect} from 'chai';
 
 import {smokeSuite, smokeTestDefaultKit} from '../smoke';

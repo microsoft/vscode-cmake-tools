@@ -1,4 +1,4 @@
-import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
+import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import {fs} from '@cmt/pr';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
 import {logFilePath} from '@cmt/logging';
