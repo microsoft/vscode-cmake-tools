@@ -165,7 +165,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (lang === 'CXX' || lang === 'OBJCXX' ) {
+      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA' ) {
         const s = parseCppStandard(std, can_use_gnu_std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
@@ -190,7 +190,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
           standard = s;
         }
       } else {
-        log.warning(localize('unknown language', 'Unknown language: {0}', value));
+        log.warning(localize('unknown language', 'Unknown language: {0}', lang));
       }
     }
   }
