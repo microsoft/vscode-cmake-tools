@@ -127,6 +127,81 @@ export class ConfigurationWebview {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${this.cmakeCacheEditorText}</title>
         <style>
+          .select-default {
+              width: 300px;
+              height: 25px;
+              font-size: 13px;
+              font-family:sans-serif;
+              color: var(--vscode-settings-dropdownForeground);
+              background: var(--vscode-settings-dropdownBackground);
+              border: 1px solid var(--vscode-settings-dropdownBorder);
+          }
+
+          .cmake-input-string {
+              position: relative;
+              background-color: var(--vscode-settings-textInputBackground);
+              color: var(--vscode-settings-textInputForeground);
+              width: 800px;
+              height: 25px;
+          }
+
+          .cmake-input-string select {
+              position: absolute;
+              font-size: 13px;
+              font-family: sans-serif;
+              border: 1px solid var(--vscode-settings-textInputBorder);
+              height: 25px;
+              margin: auto;
+              color: var(--vscode-settings-textInputForeground);
+              background: var(--vscode-settings-textInputBackground);
+          }
+
+          .cmake-input-string input {
+              position: absolute;
+              top: 1px;
+              left: 1px;
+              right: 1px;
+              bottom: 1px;
+              height: 25px;
+              font-size: 13px;
+              border: none;
+              color: var(--vscode-settings-textInputForeground);
+              background: var(--vscode-settings-textInputBackground);
+          }
+
+          .cmake-input-string select:focus,
+          .cmake-input-string input:focus {
+              outline-offset: 0px;
+              border-color: var(--vscode-focusBorder);
+              contrastBorder: var(--vscode-focusBorder);
+              contrastActiveBorder: var(--vscode-focusBorder);
+          }
+          .vscode-light .input-disabled {
+              background-color:rgba(255, 255, 255, 0.4);
+              color: rgb(138, 138, 138);
+              border: solid 1px rgb(201, 198, 198);
+          }
+
+          .vscode-dark .input-disabled {
+              background-color: rgba(255, 255, 255, 0.1);
+              color: rgb(167, 167, 167);
+          }
+
+          .vscode-high-contrast .input-disabled {
+               background-color: transparent;
+               color: #fff;
+               border: solid 1px rgb(255, 255, 255);
+          }
+
+          .vscode-high-contrast code > div {
+              background-color: #000
+          }
+
+          .vscode-high-contrast h1 {
+              border-color: #000
+          }
+
+
           .vscode-light {
               color: #1e1e1e
           }
@@ -151,7 +226,7 @@ export class ConfigurationWebview {
             margin: 30px auto;
           }
           tr {
-            height: 30px;
+            height: 25px;
             background: rgba(255,255,255,.1);
             border-bottom: 1px solid rgba(255,255,255,0.045);
           }
@@ -168,39 +243,76 @@ export class ConfigurationWebview {
             width: 98%;
             padding: 11px 0px 11px 11px;
             margin: 10px 0;
+            color: var(--vscode-settings-textInputForeground);
+            background: var(--vscode-settings-textInputBackground);
+            border: 1px solid var(--vscode-settings-textInputBorder);
           }
           .invisible {
             display: none;
           }
-          .vscode-light button#save {
-            float: right;
-            padding: 10px 25px;
-            margin-top: 15px;
-            background: none;
-            color: black;
-            text-transform: uppercase;
-            font-weight: bold;
-            border: 1px solid #1e1e1e;
-            transition: 100ms ease-in-out;
-          }
+          .vscode-light button#save,
           .vscode-dark button#save {
             float: right;
             padding: 10px 25px;
             margin-top: 15px;
-            background: none;
-            color: white;
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
             text-transform: uppercase;
             font-weight: bold;
-            border: 1px solid #ddd;
+            border: solid 1px var(--vscode-contrastBorder);
             transition: 100ms ease-in-out;
           }
-          .vscode-light button#save:hover {
-            cursor: pointer;
-            background: #ddd;
-          }
+          .vscode-light button#save:hover,
           .vscode-dark button#save:hover {
             cursor: pointer;
-            background: #333;
+            background-color: var(--vscode-button-hoverBackground);
+          }
+          .vscode-light button#save:focus,
+          .vscode-light button#save input:focus,
+          .vscode-light button#save select:focus,
+          .vscode-dark button#save:focus {
+            outline: 1px solid -webkit-focus-ring-color;
+            outline-offset: 2px;
+            border-color: var(--vscode-focusBorder);
+            border: var(--vscode-focusBorder);
+            contrastBorder: var(--vscode-focusBorder);
+            contrastActiveBorder: var(--vscode-focusBorder);
+          }
+          .vscode-light button#save:active,
+          .vscode-dark button#save:active {
+            outline: none;
+          }
+
+          checkbox:active,
+          checkbox {
+            color: var(--vscode-settings-checkboxForeground);
+            background: var(--vscode-settings-checkboxForeground);
+            border: var(--vscode-settings-checkboxBorder);
+          }
+
+          .vscode-light cmake-input-bool input:checked,
+          .vscode-dark cmake-input-bool {
+            color: var(--vscode-settings-checkboxForeground);
+            background: var(--vscode-settings-checkboxForeground);
+            border: var(--vscode-settings-checkboxBorder);
+          }
+
+          .cmake-input-bool input:checked,
+          .cmake-input-bool:active,
+          .cmake-input-bool {
+            color: var(--vscode-settings-checkboxForeground);
+            background: var(--vscode-settings-checkboxForeground);
+            border: var(--vscode-settings-checkboxBorder);
+          }
+          a:focus,
+          input:focus,
+          select:focus,
+          textarea:focus {
+              outline: 1px solid -webkit-focus-ring-color;
+              outline-offset: -1px;
+              border-color: var(--vscode-focusBorder);
+              contrastBorder: var(--vscode-focusBorder);
+              contrastActiveBorder: var(--vscode-focusBorder);
           }
         </style>
         <script>
@@ -240,7 +352,7 @@ export class ConfigurationWebview {
         <h1>${this.cmakeCacheEditorText}<span class="invisible" id="not-saved">*</span></h1>
         <input class="search" type="text" id="search" oninput="search()" placeholder="${searchButtonText}" autofocus>
         <table style="width:100%">
-          <tr style="height: 35px;">
+          <tr style="height: 25px;">
             <th style="width: 30px"></th>
             <th style="width: 1px; white-space: nowrap;">${keyColumnText}</th>
             <th>${valueColumnText}</th>
