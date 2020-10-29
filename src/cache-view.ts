@@ -162,45 +162,17 @@ export class ConfigurationWebview {
               border: 1px solid var(--vscode-settings-dropdownBorder);
           }
 
-          .cmake-input-string {
-              position: relative;
-              background-color: var(--vscode-settings-textInputBackground);
-              color: var(--vscode-settings-textInputForeground);
-              width: 800px;
-              height: 25px;
+          input {
+            height: 17px;
+            padding: 6px;
+            border: solid 1px;
+            font-size: 13px;
+            font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+            color: var(--vscode-settings-textInputForeground);
+            background: var(--vscode-settings-textInputBackground);
+            border: 1px solid var(--vscode-settings-textInputBorder);
           }
 
-          .cmake-input-string select {
-              position: absolute;
-              font-size: 13px;
-              font-family: sans-serif;
-              border: 1px solid var(--vscode-settings-textInputBorder);
-              height: 25px;
-              margin: auto;
-              color: var(--vscode-settings-textInputForeground);
-              background: var(--vscode-settings-textInputBackground);
-          }
-
-          .cmake-input-string input {
-              position: absolute;
-              top: 1px;
-              left: 1px;
-              right: 1px;
-              bottom: 1px;
-              height: 25px;
-              font-size: 13px;
-              border: none;
-              color: var(--vscode-settings-textInputForeground);
-              background: var(--vscode-settings-textInputBackground);
-          }
-
-          .cmake-input-string select:focus,
-          .cmake-input-string input:focus {
-              outline-offset: 0px;
-              border-color: var(--vscode-focusBorder);
-              contrastBorder: var(--vscode-focusBorder);
-              contrastActiveBorder: var(--vscode-focusBorder);
-          }
           .vscode-light .input-disabled {
               background-color:rgba(255, 255, 255, 0.4);
               color: rgb(138, 138, 138);
@@ -226,7 +198,6 @@ export class ConfigurationWebview {
               border-color: #000
           }
 
-
           .vscode-light {
               color: #1e1e1e
           }
@@ -236,12 +207,13 @@ export class ConfigurationWebview {
           .vscode-high-contrast {
               color: #fff
           }
-          .vscode-light table {
-            border: 1px solid;
+          .vscode-light table,
+          .vscode-high-contrast table {
+            border: 1px solid var(--vscode-settings-textInputBorder);
             border-collapse: collapse;
           }
           .vscode-dark table {
-            border: 1px solid;
+            border: 1px solid rgb(255,255,255,0.3);
             border-collapse: collapse;
           }
           .container {
@@ -252,17 +224,12 @@ export class ConfigurationWebview {
           }
           tr {
             height: 25px;
+          }
+          .vscode-light th {
+            background: rgba(0,0,0,.1);
+          }
+          .vscode-dark th {
             background: rgba(255,255,255,.1);
-            border-bottom: 1px solid rgba(255,255,255,0.045);
-          }
-          tr.content-tr:hover {
-            background: rgba(255, 255, 255, .25);
-          }
-          .vscode-light table > tr > th {
-            background: rgba(0, 0, 0, .69)
-          }
-          .vscode-dark table > tr > th {
-            background: rgba(255, 255, 255, .69)
           }
           input#search {
             width: 98%;
@@ -275,8 +242,7 @@ export class ConfigurationWebview {
           .invisible {
             display: none;
           }
-          .vscode-light button#save,
-          .vscode-dark button#save {
+          button#save {
             float: right;
             padding: 10px 25px;
             margin-top: 15px;
@@ -287,15 +253,13 @@ export class ConfigurationWebview {
             border: solid 1px var(--vscode-contrastBorder);
             transition: 100ms ease-in-out;
           }
-          .vscode-light button#save:hover,
-          .vscode-dark button#save:hover {
+          button#save:hover {
             cursor: pointer;
             background-color: var(--vscode-button-hoverBackground);
           }
-          .vscode-light button#save:focus,
-          .vscode-light button#save input:focus,
-          .vscode-light button#save select:focus,
-          .vscode-dark button#save:focus {
+          button#save:focus,
+          button#save input:focus,
+          button#save select:focus {
             outline: 1px solid -webkit-focus-ring-color;
             outline-offset: 2px;
             border-color: var(--vscode-focusBorder);
@@ -303,8 +267,7 @@ export class ConfigurationWebview {
             contrastBorder: var(--vscode-focusBorder);
             contrastActiveBorder: var(--vscode-focusBorder);
           }
-          .vscode-light button#save:active,
-          .vscode-dark button#save:active {
+          button#save:active {
             outline: none;
           }
 
@@ -404,7 +367,7 @@ export class ConfigurationWebview {
         <td></td>
         <td>${option.key}</td>
         <td>
-          <input class="cmake-input-string" id="${option.key}" value="${option.value}" style="width: 90%;"
+          <input id="${option.key}" value="${option.value}" style="width: 90%;"
                  type="text" onfocusout="editFocusOut('${option.key}')" onblur="editFocusOut('${option.key}')">
         </td>
       </tr>`;
