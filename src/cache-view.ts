@@ -23,6 +23,7 @@ export class ConfigurationWebview {
   WINDOW_TITLE_UNSAVED = `${this.cmakeCacheEditorText}*`;
 
   private readonly _panel: vscode.WebviewPanel;
+  private _options: IOption[] = [];
   get panel() {
       return this._panel;
   }
@@ -40,6 +41,16 @@ export class ConfigurationWebview {
     );
   }
 
+  async persistCacheEntries() {
+    if (this._panel.title === this.WINDOW_TITLE_UNSAVED) {
+      await this.saveCmakeCache(this._options);
+      vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
+      // start configure
+      this.save();
+      this._panel.title = this.WINDOW_TITLE;
+    }
+  }
+
   /**
    * Initializes the panel, registers events and renders initial content
    */
@@ -50,19 +61,30 @@ export class ConfigurationWebview {
       // reset options when user clicks on panel
       if (event.webviewPanel.visible) {
         await this.renderWebview(event.webviewPanel);
+      } else {
+        await this.persistCacheEntries();
       }
     });
 
-    // handle checkbox value change event
-    this._panel.webview.onDidReceiveMessage(async (options: IOption[]) => {
-      if (options) {
-        await this.saveCmakeCache(options);
-        this._panel.title = this.WINDOW_TITLE;
-        vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
-        // start configure
-        this.save();
+    this._panel.onDidDispose(async event => {
+      console.log(`disposing webview ${event} - ${this._panel}`);
+      await this.persistCacheEntries();
+  });
+
+    // handles the following events:
+    //     - checkbox update (update entry in the internal array)
+    //     - editbox update (update entry in the internal array)
+    //     - save button (save the internal array into the cache file)
+    this._panel.webview.onDidReceiveMessage(async (option: IOption) => {
+      if (!option) {
+        await this.persistCacheEntries();
       } else {
-        this._panel.title = this.WINDOW_TITLE_UNSAVED;
+        const index = this._options.findIndex(opt => opt.key === option.key);
+        if (this._options[index].value !== option.value) {
+          this._panel.title = this.WINDOW_TITLE_UNSAVED;
+          this._options[index].type = option.type;
+          this._options[index].value = option.value;
+        }
       }
     });
   }
@@ -102,15 +124,18 @@ export class ConfigurationWebview {
         panel = this._panel;
     }
 
-    const options: IOption[] = await this.getConfigurationOptions();
-    panel.webview.html = this.getWebviewMarkup(options);
+    if (this._options.length === 0) {
+      this._options = this._options.concat(await this.getConfigurationOptions());
+    }
+
+    panel.webview.html = this.getWebviewMarkup();
   }
 
   /**
    * Returns an HTML markup
    * @param options CMake Cache Options
    */
-  getWebviewMarkup(options: IOption[]) {
+  getWebviewMarkup() {
     const key = '%TABLE_ROWS%';
     const searchButtonText = localize("search", "Search");
     const saveButtonText = localize("save", "Save");
@@ -320,19 +345,18 @@ export class ConfigurationWebview {
           function toggleKey(id) {
             const label = document.getElementById('LABEL_' + id);
             label.textContent = label.textContent == '${onButtonText}' ? '${offButtonText}' : '${onButtonText}';
-            vscode.postMessage(false);
+            const checkbox = document.getElementById(id);
+            vscode.postMessage({key: id, type: "Bool", value: checkbox.checked});
+            document.getElementById('not-saved').classList.remove('invisible');
+          }
+          function editFocusOut(id) {
+            const editbox = document.getElementById(id);
+            vscode.postMessage({key: id, type: "String", value: editbox.value});
             document.getElementById('not-saved').classList.remove('invisible');
           }
           function save() {
-            const inputsBool = [...document.querySelectorAll('.cmake-input-bool')];
-            const valuesBool = inputsBool.map(x => { return { key: x.id, value: x.checked } });
-            const inputsString = [...document.querySelectorAll('.cmake-input-string')];
-            const valuesString = inputsString.map(x => {
-              const setting = document.getElementById(x.id);
-              return { key: x.id, value: setting.value };
-            });
             document.getElementById('not-saved').classList.add('invisible');
-            vscode.postMessage(valuesBool.concat(valuesString));
+            vscode.postMessage(false);
           }
           function search() {
             const filter = document.getElementById('search').value.toLowerCase();
@@ -346,7 +370,7 @@ export class ConfigurationWebview {
           }
         </script>
     </head>
-    <body>
+    <body onbeforeunload="return save()">
       <div class="container">
         <button id="save" onclick="save()">${saveButtonText}</button>
         <h1>${this.cmakeCacheEditorText}<span class="invisible" id="not-saved">*</span></h1>
@@ -364,7 +388,7 @@ export class ConfigurationWebview {
     </html>`;
 
     // compile a list of table rows that contain the key and value pairs
-    const tableRows = options.map(option => {
+    const tableRows = this._options.map(option => {
       if (option.type === "Bool") {
         return `<tr class="content-tr">
         <td></td>
@@ -381,7 +405,7 @@ export class ConfigurationWebview {
         <td>${option.key}</td>
         <td>
           <input class="cmake-input-string" id="${option.key}" value="${option.value}" style="width: 90%;"
-                 type="text">
+                 type="text" onfocusout="editFocusOut('${option.key}')" onblur="editFocusOut('${option.key}')">
         </td>
       </tr>`;
       }
