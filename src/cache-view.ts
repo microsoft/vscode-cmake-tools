@@ -2,15 +2,20 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as api from './api';
 import * as util from './util';
+
 import { CMakeCache } from './cache';
+
+import * as logging from './logging';
+const log = logging.createLogger('cache');
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export interface IOption {
-    key: string;
-    type: string;
-    value: string;
+    key: string;    // same as CMake cache variable key names
+    type: string;   // "Bool" for boolean and "String" for anything else for now
+    value: string;  // value from the cache file or changed in the UI
+    dirty: boolean; // if the variable was edited in the UI
 }
 
 
@@ -19,9 +24,25 @@ export interface IOption {
  */
 export class ConfigurationWebview {
   private readonly cmakeCacheEditorText = localize("cmake.cache.editor", "CMake Cache Editor");
-  WINDOW_TITLE = this.cmakeCacheEditorText;
-  WINDOW_TITLE_UNSAVED = `${this.cmakeCacheEditorText}*`;
 
+  // The dirty state of the whole webview.
+  private _dirty: boolean = false;
+  get dirty(): boolean { return this._dirty; }
+  set dirty(d: boolean) {
+    this._dirty = d;
+
+    if (this._panel.title) {
+      // The webview title should reflect the dirty state
+      this._panel.title = this.cmakeCacheEditorText;
+      if (d) {
+        this._panel.title += "*";
+      } else {
+        // If the global dirty state gets cleared, make sure all the entries
+        // of the cache table have their state dirty updated accordingly.
+        this._options.forEach(opt => { opt.dirty = false; });
+      }
+    }
+  }
   private readonly _panel: vscode.WebviewPanel;
   private _options: IOption[] = [];
   get panel() {
@@ -41,13 +62,100 @@ export class ConfigurationWebview {
     );
   }
 
+  // Save from the UI table into the CMake cache file if there are any unsaved edits.
   async persistCacheEntries() {
-    if (this._panel.title === this.WINDOW_TITLE_UNSAVED) {
+    if (this.dirty) {
       await this.saveCmakeCache(this._options);
       vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
       // start configure
       this.save();
-      this._panel.title = this.WINDOW_TITLE;
+      this.dirty = false;
+    }
+  }
+
+  /**
+   * Called when the extension detects a cache change performed outside this webview.
+   * The webview is updated with the latest cache variables (this includes new or deleted entries),
+   * but for merge conflicts the user is asked which values to keep.
+   */
+  async refreshPanel() {
+    if (this.dirty) {
+      const newOptions = await this.getConfigurationOptions();
+      const mergedOptions: IOption[] = [];
+      let conflictsExist = false;
+      newOptions.forEach(option => {
+        const index = this._options.findIndex(opt => opt.key === option.key);
+        // Add to the final list of cache entries if it's a new, an unchanged value
+        // or a changed value of a cache variable that is not dirty in the webview.
+        if (index === -1 ||
+            this._options[index].value === option.value ||
+            !this._options[index].dirty) {
+          mergedOptions.push(option);
+        } else {
+          // Log the cache value mismatch in the Output Channel, until we display the conflicts
+          // more friendly in the UI.
+          conflictsExist = true;
+          log.info(`Detected a cache merge conflict for entry "${option.key}": ` +
+            `value in CMakeCache.txt="${option.value}", ` +
+            `value in UI="${this._options[index].value}"`);
+
+          // Include in the final list of cache entries the version from UI.
+          // If later the user choses 'ignore' or 'fromUI', the UI value is good for both
+          // and in case of 'fromCache' the read operation will be done from the cache
+          // and will override the value displayed currently in the UI.
+          // If we don't do this then any merge conflicting entries will disappear from the list
+          // if in the middle and will be showed at the end (because we would need to add them
+          // via a concat).
+          mergedOptions.push(this._options[index]);
+        }
+      });
+
+      // Any variables present in the current webview but not in the latest CMake Cache file
+      // represent deleted cache entries. Remember them because in the 'ignore' case below
+      // we need to keep them.
+      const deletedOptions: IOption[] = [];
+      this._options.forEach(option => {
+        if (newOptions.findIndex(opt => opt.key === option.key) === -1) {
+          deletedOptions.push(option);
+        }
+      });
+
+      let result;
+      // Don't reload the conflicting CMake cache entries. Keep but don't save the current edits.
+      // Include any new or non-conflicting CMake cache updates.
+      const ignore = localize('ignore', 'Ignore');
+      // Persist the currently unsaved edits.
+      const fromUI = localize('from.UI', 'From UI');
+      // Reload the CMake cache, losing the curent unsaved edits.
+      const fromCache = localize('from.cache', 'From Cache');
+      if (conflictsExist) {
+        result = await vscode.window.showWarningMessage(
+          localize('merge.cache.edits', "The CMake cache has been modified outside this webview " +
+            "and there are conflicts with the current unsaved edits." +
+            "Which values do you want to keep?"), ignore, fromCache, fromUI);
+        if (result === fromUI) {
+          this._options = mergedOptions;
+          await this.persistCacheEntries();
+        } else if (result === fromCache) {
+          this._options = newOptions;
+        }
+      } else {
+        this._options = mergedOptions;
+      }
+
+      // The webview needs a re-render also for the "ignore" or "fromUI" cases
+      // to reflect all the unconflicting changes.
+      if (this._panel.visible) {
+        await this.renderWebview(this._panel, false);
+      }
+
+      // Keep the unsaved look in case the user decided to ignore the CMake Cache conflicts
+      // between the webview and the file on disk.
+      if (result !== ignore) {
+        this.dirty = false;
+      }
+    } else {
+      this._options = await this.getConfigurationOptions();
     }
   }
 
@@ -55,21 +163,26 @@ export class ConfigurationWebview {
    * Initializes the panel, registers events and renders initial content
    */
   async initPanel() {
-    await this.renderWebview(this._panel);
+    await this.renderWebview(this._panel, true);
 
     this._panel.onDidChangeViewState(async event => {
-      // reset options when user clicks on panel
       if (event.webviewPanel.visible) {
-        await this.renderWebview(event.webviewPanel);
-      } else {
-        await this.persistCacheEntries();
+        await this.renderWebview(event.webviewPanel, false);
       }
     });
 
     this._panel.onDidDispose(async event => {
       console.log(`disposing webview ${event} - ${this._panel}`);
-      await this.persistCacheEntries();
-  });
+      if (this.dirty) {
+        const yes = localize('yes', 'Yes');
+        const no = localize('no', 'No');
+        const result = await vscode.window.showWarningMessage(
+          localize('unsaved.cache.edits', "Do you want to save the latest cache edits?"), yes, no);
+        if (result === yes) {
+          await this.persistCacheEntries();
+        }
+      }
+    });
 
     // handles the following events:
     //     - checkbox update (update entry in the internal array)
@@ -81,7 +194,8 @@ export class ConfigurationWebview {
       } else {
         const index = this._options.findIndex(opt => opt.key === option.key);
         if (this._options[index].value !== option.value) {
-          this._panel.title = this.WINDOW_TITLE_UNSAVED;
+          this.dirty = true;
+          this._options[index].dirty = true;
           this._options[index].type = option.type;
           this._options[index].value = option.value;
         }
@@ -107,7 +221,7 @@ export class ConfigurationWebview {
         // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
         // Not useful to show these entries in the list.
         if (entry.type !== api.CacheEntryType.Static) {
-          options.push({ key: entry.key, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value });
+          options.push({ key: entry.key, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
         }
       }
 
@@ -119,12 +233,12 @@ export class ConfigurationWebview {
    *
    * @param panel
    */
-  async renderWebview(panel?: vscode.WebviewPanel) {
+  async renderWebview(panel?: vscode.WebviewPanel, refresh: boolean = false) {
     if (!panel) {
         panel = this._panel;
     }
 
-    if (this._options.length === 0) {
+    if (refresh) {
       this._options = this._options.concat(await this.getConfigurationOptions());
     }
 
@@ -141,8 +255,6 @@ export class ConfigurationWebview {
     const saveButtonText = localize("save", "Save");
     const keyColumnText = localize ("key", "Key");
     const valueColumnText = localize("value", "Value");
-    const onButtonText = localize("on", "ON");
-    const offButtonText = localize("off", "OFF");
 
     let html = `
     <!DOCTYPE html>
@@ -307,12 +419,12 @@ export class ConfigurationWebview {
           const vscode = acquireVsCodeApi();
           function toggleKey(id) {
             const label = document.getElementById('LABEL_' + id);
-            label.textContent = label.textContent == '${onButtonText}' ? '${offButtonText}' : '${onButtonText}';
+            label.textContent = label.textContent == 'ON' ? 'OFF' : 'ON';
             const checkbox = document.getElementById(id);
             vscode.postMessage({key: id, type: "Bool", value: checkbox.checked});
             document.getElementById('not-saved').classList.remove('invisible');
           }
-          function editFocusOut(id) {
+          function edit(id) {
             const editbox = document.getElementById(id);
             vscode.postMessage({key: id, type: "String", value: editbox.value});
             document.getElementById('not-saved').classList.remove('invisible');
@@ -333,7 +445,7 @@ export class ConfigurationWebview {
           }
         </script>
     </head>
-    <body onbeforeunload="return save()">
+    <body>
       <div class="container">
         <button id="save" onclick="save()">${saveButtonText}</button>
         <h1>${this.cmakeCacheEditorText}<span class="invisible" id="not-saved">*</span></h1>
@@ -359,7 +471,7 @@ export class ConfigurationWebview {
         <td>
           <input class="cmake-input-bool" id="${option.key}" onclick="toggleKey('${option.key}')"
                  type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
-          <label id="LABEL_${option.key}" for="${option.key}">${util.isTruthy(option.value) ? `${onButtonText}` : `${offButtonText}`}</label>
+          <label id="LABEL_${option.key}" for="${option.key}">${util.isTruthy(option.value) ? `ON` : `OFF`}</label>
         </td>
       </tr>`;
       } else {
@@ -368,7 +480,7 @@ export class ConfigurationWebview {
         <td>${option.key}</td>
         <td>
           <input id="${option.key}" value="${option.value}" style="width: 90%;"
-                 type="text" onfocusout="editFocusOut('${option.key}')" onblur="editFocusOut('${option.key}')">
+                 type="text" oninput="edit('${option.key}')">
         </td>
       </tr>`;
       }

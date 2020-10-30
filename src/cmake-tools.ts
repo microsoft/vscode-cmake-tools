@@ -324,7 +324,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           fullFeatureSet = false;
         }
       } else {
-        // Previously, the user decided to ignore the missing CMakeFiles.txt.
+        // Previously, the user decided to ignore the missing CMakeLists.txt.
         // Since we are here in cmakePreConditionProblemHandler, for the case of CMakePreconditionProblems.MissingCMakeListsFile,
         // it means that there weren't yet any reasons to switch to full functionality,
         // so keep enableFullFeatureSet as false.
@@ -483,6 +483,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async td => {
       const str = td.uri.fsPath;
+      const drv = await this.getCMakeDriverInstance();
+
+      // If we detect a change in the CMake cache file, refresh the webview
+      if (this._cacheEditorWebview && drv && lightNormalizePath(str) === drv.cachePath) {
+        await this._cacheEditorWebview.refreshPanel();
+      }
+
       const sourceDirectory = await this.sourceDir;
       if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
         // The configure process can determine correctly whether the features set activation
@@ -491,7 +498,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // If there is a configure or a build in progress, we should avoid setting full activation here,
         // even if cmake.configureOnEdit is true, because this may overwrite a different decision
         // that was done earlier by that ongoing configure process.
-        const drv = await this.getCMakeDriverInstance();
         if (drv && !drv.configOrBuildInProgress()) {
           if (drv.config.configureOnEdit) {
             log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
