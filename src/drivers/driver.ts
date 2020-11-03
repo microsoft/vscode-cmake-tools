@@ -40,6 +40,11 @@ export enum CMakePreconditionProblems {
   MissingCMakeListsFile
 }
 
+interface CompilerInfo {
+  path: string;
+  version: string;
+}
+
 export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems) => Promise<void>;
 
 function nullableValueToString(arg: any|null|undefined): string { return arg === null ? 'empty' : arg; }
@@ -626,22 +631,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const child = this.executeCommand(program, args, undefined, {silent: true, cwd});
     try {
       const result = await child.result;
-      log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
+      console.log(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
       // cl.exe version information is printed on stderr when no source files are given
       const versionLine = (program === "cl") ? result.stderr : result.stdout; //.split("\\n")[0];
       const match = regexp.exec(versionLine);
-      return match ? match[1] : "error";
+      return match ? match[2] : "error";
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
-      log.debug(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
-      if (e2.code === 'error') {
-        return e2.code;
-      }
-      throw e;
+      console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
+      return "error";
     }
   }
 
-  async getCompilerVersion(compilerPath: string) : Promise<string | undefined> {
+  async getCompilerVersion(compilerPath: string) : Promise<CompilerInfo | undefined> {
     const compilerName = path.parse(compilerPath).name;
     const compilerDir = path.parse(compilerPath).dir;
     let versionSwitch;
@@ -650,26 +652,31 @@ export abstract class CMakeDriver implements vscode.Disposable {
       case "cl":
         // cl does not have a version switch but it outputs the compiler version on stderr
         // when no source files arguments are given
-        versionRegexp = /.* Compiler Version (.*) for .*/mg;
+        versionRegexp = /.* (Compiler Version) (.*) for .*/mg;
+        break;
+      case "gpp":
+        versionSwitch = "--version";
+        versionRegexp = RegExp(`(${compilerName}) (.*)`, "mg");
         break;
       case "gcc":
       case "g++:":
       case "cpp:":
       case "c++:":
         versionSwitch = "--version";
-        versionRegexp = RegExp(`${compilerName} .* (.*)`, "mg");
+        versionRegexp = RegExp(`(${compilerName}) .* (.*)`, "mg");
         break;
       case "clang":
       case "clang-cl":
       case "clang++":
         versionSwitch = "--version";
-        versionRegexp = /clang version (.*) /mg;
+        versionRegexp = /(Apple LLVM|clang) version (.*)- /mg;
         break;
       default:
-        return; // don't disclose information for compilers not in the known list
+        return {path: "other", version: "unknown"}; // don't disclose information for compilers not in the known list
     }
 
-    return `${compilerName}(${await this.testCompilerVersion(compilerName, compilerDir, versionSwitch, versionRegexp)})`;
+    return {path: compilerName,
+            version: await this.testCompilerVersion(compilerName, compilerDir, versionSwitch, versionRegexp)};
   }
 
   async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
@@ -736,11 +743,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
 
         if (cCompilerVersion) {
-          telemetryProperties.CCompiler = cCompilerVersion;
+          telemetryProperties.CCompilerPath = cCompilerVersion.path;
+          telemetryProperties.CCompilerVersion = cCompilerVersion.version;
         }
 
         if (cppCompilerVersion) {
-          telemetryProperties.CppCompiler = cppCompilerVersion;
+          telemetryProperties.CppCompilerPath = cppCompilerVersion.path;
+          telemetryProperties.CppCompilerVersion = cppCompilerVersion.version;
         }
       }
 

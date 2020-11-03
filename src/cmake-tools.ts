@@ -507,7 +507,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         if (drv && !drv.configOrBuildInProgress()) {
           if (drv.config.configureOnEdit) {
             log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
-            await this.configure(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
+            await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
           } else {
             await enableFullFeatureSet(true, this.folder);
           }
@@ -708,7 +708,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    *          All other configure calls in this extension are able to provide
    *          proper trigger information.
    */
-  configure(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
+  configure(extra_args: string[] = []): Thenable<number> {
+    return this.configureInternal(ConfigureTrigger.api, extra_args, ConfigureType.Normal);
+  }
+
+  configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
     return vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -745,7 +749,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                       break;
                     default:
                         rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
-                        retc = await this.configure(trigger, extra_args, ConfigureType.Normal);
+                        retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
                       break;
                   }
                 }
@@ -781,7 +785,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    *          All other configure calls in this extension are able to provide
    *          proper trigger information.
    */
-  cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) { return this.configure(trigger, [], ConfigureType.Clean); }
+  cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) { return this.configureInternal(trigger, [], ConfigureType.Clean); }
 
   /**
    * Save all open files. "maybe" because the user may have disabled auto-saving
@@ -891,7 +895,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -1;
     }
     if (await this._needsReconfigure()) {
-      return this.configure(ConfigureTrigger.compilation, [], ConfigureType.Normal);
+      return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal);
     } else {
       return 0;
     }
@@ -1018,7 +1022,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         localize('project.not.yet.configured', 'This project has not yet been configured'),
         localize('configure.now.button', 'Configure Now')));
       if (do_conf) {
-        if (await this.configure() !== 0)
+        if (await this.configureInternal() !== 0)
           return;
       } else {
         return;
@@ -1041,7 +1045,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
 
       this._cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
-        await this.configure(ConfigureTrigger.commandOpenConfiguration, [], ConfigureType.Cache);
+        await this.configureInternal(ConfigureTrigger.commandOpenConfiguration, [], ConfigureType.Cache);
       });
       await this._cacheEditorWebview.initPanel();
 
@@ -1149,7 +1153,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async setVariant(name?: string) {
     // Make this function compatibile with return code style...
     if (await this._variantManager.selectVariant(name)) {
-      await this.configure(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+      await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
       return 0; // succeeded
     }
     return 1; // failed
@@ -1195,7 +1199,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async setLaunchTargetByName(name?: string|null) {
     if (await this._needsReconfigure()) {
-      const rc = await this.configure(ConfigureTrigger.launch, [], ConfigureType.Normal);
+      const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
       if (rc !== 0) {
         return null;
       }
@@ -1283,7 +1287,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async getLaunchTargetPath(): Promise<string|null> {
     if (await this._needsReconfigure()) {
-      const rc = await this.configure(ConfigureTrigger.launch, [], ConfigureType.Normal);
+      const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
       if (rc !== 0) {
         return null;
       }
@@ -1361,7 +1365,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // executable targets and may show an uneccessary prompt to the user
     const isReconfigurationNeeded = await this._needsReconfigure();
     if (isReconfigurationNeeded) {
-      const rc = await this.configure(ConfigureTrigger.launch, [], ConfigureType.Normal);
+      const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
       if (rc !== 0) {
         log.debug(localize('project.configuration.failed', 'Configuration of project failed.'));
         return null;
@@ -1602,7 +1606,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await fs.writeFile(mainListFile, init);
     const doc = await vscode.workspace.openTextDocument(mainListFile);
     await vscode.window.showTextDocument(doc);
-    return this.configure(ConfigureTrigger.quickStart, [], ConfigureType.Normal,);
+    return this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal,);
   }
 
   /**

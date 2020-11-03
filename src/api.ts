@@ -8,7 +8,7 @@
  */ /** */
 
 import {DebugSession, Disposable, Event, Terminal} from 'vscode';
-import {ConfigureTrigger} from '@cmt/cmake-tools';
+//import {ConfigureTrigger} from '@cmt/cmake-tools';
 
 /**
  * The result of executing a program.
@@ -213,7 +213,7 @@ export interface CMakeToolsAPI extends Disposable {
    * @param extraArgs Extra arguments to pass on the CMake command line
    * @returns The exit code of CMake
    */
-  configure(trigger?: ConfigureTrigger, extraArgs?: string[]): Thenable<number>;
+  configure(extraArgs?: string[]): Thenable<number>;
 
   /**
    * Build the project
