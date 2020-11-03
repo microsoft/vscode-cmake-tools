@@ -1,6 +1,6 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
-import {CMakeTools, ConfigureTrigger, ConfigureType} from '@cmt/cmake-tools';
+import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import {readKitsFile, kitsForWorkspaceDirectory, USER_KITS_FILEPATH} from '@cmt/kit';
 import {platformNormalizePath} from '@cmt/util';
 import {DefaultEnvironment, expect} from '@test/util';
@@ -38,7 +38,7 @@ suite('[Toolchain Substitution]', async () => {
 
   test('Check substitution within toolchain kits', async () => {
     // Configure
-    expect(await cmt.configure(ConfigureTrigger.runTests, [], ConfigureType.Normal)).to.be.eq(0, '[toolchain] configure failed');
+    expect(await cmt.configure(ConfigureTrigger.runTests)).to.be.eq(0, '[toolchain] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 

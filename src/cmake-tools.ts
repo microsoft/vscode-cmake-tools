@@ -171,6 +171,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private readonly _codeModel = new Property<codemodel_api.CodeModelContent|null>(null);
   private _codeModelDriverSub: vscode.Disposable|null = null;
 
+  private readonly _communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
+    log.info(localize('communication.changed.restart.driver', "Restarting the CMake driver after a communication mode change."));
+    return this._reloadCMakeDriver();
+  });
+
+  private readonly _generatorSub = this.workspaceContext.config.onChange('generator', () => {
+    log.info(localize('generator.changed.restart.driver', "Restarting the CMake driver after a generator change."));
+    return this._reloadCMakeDriver();
+  });
+
+  private readonly _preferredGeneratorsSub = this.workspaceContext.config.onChange('preferredGenerators', () => {
+    log.info(localize('preferredGenerator.changed.restart.driver', "Restarting the CMake driver after a preferredGenerators change."));
+    return this._reloadCMakeDriver();
+  });
+
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
    */
@@ -209,6 +224,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._termCloseSub.dispose();
     if (this._launchTerminal) {
       this._launchTerminal.dispose();
+    }
+    for (const sub of [this._generatorSub, this._preferredGeneratorsSub, this._communicationModeSub]) {
+      sub.dispose();
     }
     rollbar.invokeAsync(localize('extension.dispose', 'Extension dispose'), () => this.asyncDispose());
   }
@@ -444,14 +462,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Reload/restarts the CMake Driver
    */
-  // private async _reloadCMakeDriver() {
-  //   log.debug(localize('reloading.driver', 'Reloading CMake driver'));
-  //   const drv = await this._cmakeDriver;
-  //   log.debug(localize('disposing.old.driver', 'Diposing old CMake driver'));
-  //   await drv.asyncDispose();
-  //   return this._cmakeDriver = this._startNewCMakeDriver();
-  // }
-
+  private async _reloadCMakeDriver() {
+    const drv = await this._cmakeDriver;
+    if (drv) {
+      log.debug(localize('reloading.driver', 'Reloading CMake driver'));
+      await drv.asyncDispose();
+      return this._cmakeDriver = this._startNewCMakeDriver(await this.getCMakeExecutable());
+    }
+  }
   /**
    * Second phase of two-phase init. Called by `create`.
    */
