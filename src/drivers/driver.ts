@@ -646,33 +646,81 @@ export abstract class CMakeDriver implements vscode.Disposable {
   async getCompilerVersion(compilerPath: string) : Promise<CompilerInfo | undefined> {
     const compilerName = path.parse(compilerPath).name;
     const compilerDir = path.parse(compilerPath).dir;
-    let versionSwitch;
-    let versionRegexp;
+    // Start with the most common scenarios of version switch and output, later override case by case.
+    let versionSwitch: string | undefined = "-v"; // works for most compilers
+    let versionRegexp: RegExp | undefined = RegExp(`(version) ([^\s]+)`, "mgi");
     switch (compilerName) {
-      case "cl":
-        // cl does not have a version switch but it outputs the compiler version on stderr
-        // when no source files arguments are given
-        versionRegexp = /.* (Compiler Version) (.*) for .*/mg;
-        break;
-      case "gpp":
-        versionSwitch = "--version";
-        versionRegexp = RegExp(`(${compilerName}) (.*)`, "mg");
-        break;
+      // Most common version output (gcc and family):
+      //     gcc -v: gcc version 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)
       case "gcc":
+      case "cc":
       case "g++:":
       case "cpp:":
       case "c++:":
-        versionSwitch = "--version";
-        versionRegexp = RegExp(`(${compilerName}) .* (.*)`, "mg");
+      case "dcc":
+      case "eccp":
+      case "edgcpfe":
+      case "mcc":
+      case "tcc":
         break;
+
+      case "cl":
+        // cl does not have a version switch but it outputs the compiler version on stderr
+        // when no source files arguments are given
+        versionSwitch = undefined;
+        versionRegexp = /.* (Compiler Version) (.*) for .*/mg;
+        break;
+
+      case "gpp":
+        // gpp --version: gpp 2.25
+        versionSwitch = "--version";
+        versionRegexp = RegExp(`(${compilerName}) ([^\s]+)`, "mgi");
+        break;
+
+      case "icc":
+      case "kcc":
+      case "pgc++":
+      case "aCC":
+        versionSwitch = "-V";
+        break;
+
+      case "armcc":
+        versionSwitch = "--version_number";
+        versionRegexp = /.*/mg;
+        break;
+
+      case "bcc32":
+      case "bcc32c":
+      case "bcc64":
+      case "bcca":
+      case "bccios":
+      case "bccosx":
+        versionSwitch = "--version";
+        versionRegexp = /.* (C\+\+) ([^\s]+) for .*/mg;
+        break;
+
       case "clang":
       case "clang-cl":
       case "clang++":
-        versionSwitch = "--version";
+      case "armclang":
+        // clang -v: clang version 10.0.0-4ubuntu1
         versionRegexp = /(Apple LLVM|clang) version (.*)- /mg;
         break;
+
+      case "openCC":
+      case "pathCC":
+        versionSwitch = "--version";
+        break;
+
+      // We don't know of version switches for the following compilers so return only the compiler name
+      case "dmc":
+      case "tpp":
+      case "vac++":
+      case "xlc++":
+        return { path: compilerName, version: "unknown"};
+
       default:
-        return {path: "other", version: "unknown"}; // don't disclose information for compilers not in the known list
+        return { path: "other", version: "unknown"}; // don't disclose information for compilers not in the known list
     }
 
     return {path: compilerName,
