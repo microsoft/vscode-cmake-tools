@@ -38,7 +38,7 @@ suite('[Toolchain Substitution]', async () => {
 
   test('Check substitution within toolchain kits', async () => {
     // Configure
-    expect(await cmt.configure(ConfigureTrigger.runTests)).to.be.eq(0, '[toolchain] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[toolchain] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
