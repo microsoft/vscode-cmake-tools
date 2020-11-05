@@ -2,7 +2,7 @@
 
 ## 1.5.0
 Improvements:
-- Support variables for Kit.toolchainFile. [PR #991](https://github.com/microsoft/vscode-cmake-tools/pull/991)[#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
+- Support variables for Kit.toolchainFile. [PR #991](https://github.com/microsoft/vscode-cmake-tools/pull/991) [#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
 - Implement cmake:hideBuildCommand context option. [PR #1355](https://github.com/microsoft/vscode-cmake-tools/pull/1355) [@tritao](https://github.com/tritao)
 - Add option to set CMAKE_BUILD_TYPE also on multi-config generators. [PR #1393](https://github.com/microsoft/vscode-cmake-tools/pull/1393) [@tonka3000](https://github.com/tonka3000)
 - Detect Clang for MSVC (GNU CLI) kits. [#823](https://github.com/microsoft/vscode-cmake-tools/issues/823) [@omcnoe](https://github.com/omcnoe)
@@ -24,7 +24,6 @@ Bug Fixes:
 - Hide "Unknown Language" for CUDA source files. [PR #1502](https://github.com/microsoft/vscode-cmake-tools/issues/1502) [@Synxis](https://github.com/Synxis)
 - Ensure immediate effect of settings for communication mode and all generator related. [PR #1500](https://github.com/microsoft/vscode-cmake-tools/issues/1500)
 - Fix shell script and vcvars devbat when TEMP folder has a space in the middle. [#1492](https://github.com/microsoft/vscode-cmake-tools/issues/1492)
-
 
 ## 1.4.2
 Improvements:
