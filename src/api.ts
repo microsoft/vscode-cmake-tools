@@ -9,7 +9,6 @@
 
 import {DebugSession, Disposable, Event, Terminal} from 'vscode';
 
-
 /**
  * The result of executing a program.
  */

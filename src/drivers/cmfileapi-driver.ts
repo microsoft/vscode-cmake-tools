@@ -1,4 +1,5 @@
 import * as api from '@cmt/api';
+import {ConfigureTrigger} from '@cmt/cmake-tools';
 import {ExecutableTarget} from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
@@ -130,7 +131,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       if (!this.configOrBuildInProgress()) {
         if (this.config.configureOnEdit) {
           log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
-          await this.configure([]);
+          await this.configure(ConfigureTrigger.sourceDirectoryChange, []);
         } else if (this.workspaceFolder) {
           const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
           if (folder) {
