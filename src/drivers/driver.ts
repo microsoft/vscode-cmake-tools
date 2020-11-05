@@ -905,16 +905,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const gen = this.generatorName;
     target = this.correctAllTargetName(target);
 
-    const generator_args = (() => {
-      if (!gen)
-        return [];
-      else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return ['-j', this.config.numJobs.toString()];
-      else if (/Visual Studio/.test(gen) && target !== 'clean')
-        return ['/maxcpucount:' + this.config.numJobs.toString()];
-      else
-        return [];
-    })();
+    const buildArgs: string[] = this.config.buildArgs.slice(0);
+    const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
+
+    // Prefer using CMake's build options to set parallelism over tool-specific switches.
+    // The feature is not available until version 3.14.
+    if (this.cmake.version && this.cmake.version.major >= 3 && this.cmake.version.minor > 13) {
+      buildArgs.push('-j');
+      if (this.config.numJobs) {
+        buildArgs.push(this.config.numJobs.toString());
+      }
+    } else {
+      if (gen) {
+        if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean') {
+          buildToolArgs.push('-j', this.config.numJobs.toString());
+        } else if (/Visual Studio/.test(gen) && target !== 'clean') {
+          buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
+        }
+      }
+    }
 
     const build_env = {} as {[key: string]: string};
     build_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
@@ -924,7 +933,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
 
     const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
-                     .concat(this.config.buildArgs, generator_args, this.config.buildToolArgs);
+                     .concat(buildArgs, buildToolArgs);
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises) as string[];
