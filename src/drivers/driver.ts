@@ -623,7 +623,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this.configure(trigger, extra_args, consumer);
   }
 
-  async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp): Promise<string | undefined> {
+  async testCompilerVersion(program: string, cwd: string, arg: string | undefined,
+                            regexp: RegExp, captureGroup: number): Promise<string | undefined> {
     const args = [];
     if (arg) {
       args.push(arg);
@@ -632,12 +633,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
     try {
       const result = await child.result;
       console.log(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
-      // cl.exe version information is printed on stderr when no source files are given
-      const versionLine = (program === "cl") ? result.stderr : result.stdout;
+      // Various compilers will output into stdout, others in stderr.
+      // It's safe to concat them into one string to search in, since it's enough to analyze
+      // the first match (stderr can't print a different version than stdout).
+      const versionLine = result.stderr.concat(result.stdout);
       const match = regexp.exec(versionLine);
       // Make sure that all the regexp in compilerAllowList are written in a way that match[2] is the indeed the version.
       // This number may change in future as we add more cases and index 2 might be difficult to ensure for all of them.
-      return match ? match[2] : "error";
+      return match ? match[captureGroup] : "error";
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
       console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
@@ -651,153 +654,182 @@ export abstract class CMakeDriver implements vscode.Disposable {
     {
       name: "gcc",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "cc",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "g++",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "cpp",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "c++",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "dcc",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "eccp",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "edgcpfe",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "mcc",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "tcc",
       versionSwitch: "-v",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     // cl does not have a version switch but it outputs the compiler version on stderr
     // when no source files arguments are given
     {
       name: "cl",
       versionSwitch: undefined,
-      versionOutputRegexp: ".* (Compiler Version) (.*) for .*"
+      versionOutputRegexp: ".* Compiler Version (.*) for .*",
+      captureGroup: 1
     },
     // gpp --version: gpp 2.25
     {
       name: "gpp",
       versionSwitch: "--version",
-      versionOutputRegexp: "(gpp) ([^\s]+)"
+      versionOutputRegexp: "gpp ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "icc",
       versionSwitch: "-V",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "kcc",
       versionSwitch: "-V",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "pgc++",
       versionSwitch: "-V",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "aCC",
       versionSwitch: "-V",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "armcc",
       versionSwitch: "--version_number",
-      versionOutputRegexp: ".*"
+      versionOutputRegexp: ".*",
+      captureGroup: 1
     },
     {
       name: "bcc32",
       versionSwitch: "--version",
-      versionOutputRegexp: ".* (C\\+\\+) ([^\\s]+) for .*"
+      versionOutputRegexp: ".* C\\+\\+ ([^\\s]+) for .*",
+      captureGroup: 1
     },
     {
       name: "bcc32c",
       versionSwitch: "--version",
-      versionOutputRegexp: ".* (C\\+\\+) ([^\\s]+) for .*"
+      versionOutputRegexp: ".* C\\+\\+ ([^\\s]+) for .*",
+      captureGroup: 1
     },
     {
       name: "bcc64",
       versionSwitch: "--version",
-      versionOutputRegexp: ".* (C\\+\\+) ([^\\s]+) for .*"
+      versionOutputRegexp: ".* C\\+\\+ ([^\\s]+) for .*",
+      captureGroup: 1
     },
     {
       name: "bcca",
       versionSwitch: "--version",
-      versionOutputRegexp: ".* (C\\+\\+) ([^\\s]+) for .*"
+      versionOutputRegexp: ".* C\\+\\+ ([^\\s]+) for .*",
+      captureGroup: 1
     },
     {
       name: "bccios",
       versionSwitch: "--version",
-      versionOutputRegexp: ".* (C\\+\\+) ([^\\s]+) for .*"
+      versionOutputRegexp: ".* C\\+\\+ ([^\\s]+) for .*",
+      captureGroup: 1
     },
     {
       name: "bccosx",
       versionSwitch: "--version",
-      versionOutputRegexp: ".* (C\\+\\+) ([^\\s]+) for .*"
+      versionOutputRegexp: ".* C\\+\\+ ([^\\s]+) for .*",
+      captureGroup: 1
     },
     // clang -v: clang version 10.0.0-4ubuntu1
     {
       name: "clang",
       versionSwitch: "-v",
-      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- "
+      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+      captureGroup: 2
     },
     {
       name: "clang-cl",
       versionSwitch: "-v",
-      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- "
+      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+      captureGroup: 2
     },
     {
       name: "clang++",
       versionSwitch: "-v",
-      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- "
+      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+      captureGroup: 2
     },
     {
       name: "armclang",
       versionSwitch: "-v",
-      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- "
+      versionOutputRegexp: "(Apple LLVM|clang) version (.*)- ",
+      captureGroup: 2
     },
     {
       name: "openCC",
       versionSwitch: "--version",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
     {
       name: "pathCC",
       versionSwitch: "--version",
-      versionOutputRegexp: "(version) ([^\s]+)"
+      versionOutputRegexp: "version ([^\\s]+)",
+      captureGroup: 1
     },
-    // We don't know of version switches for the following compilers so return only the compiler name
+    // We don't know of version switches for the following compilers so define only the compiler name
     {
       name: "dmc",
       versionSwitch: undefined,
@@ -826,7 +858,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const compilerDir = path.parse(compilerPath).dir;
 
     // Find an equivalent in the compilers allowed list.
-    const compiler = this.compilerAllowList.find(comp => compilerName.endsWith(comp.name));
+    const compiler = this.compilerAllowList.find(comp => compilerName.includes(comp.name));
 
     // Mask any unrecognized compiler as "other" to hide private information
     let allowedCompilerName = compiler ? compiler.name : "other";
@@ -848,7 +880,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // since some compilers can output their version without a specific switch.
     let version;
     if (compiler?.versionOutputRegexp) {
-      version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch, RegExp(compiler.versionOutputRegexp, "mgi")) || "unknown";
+      version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch,
+                                               RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
     } else {
       version = "unknown";
     }
