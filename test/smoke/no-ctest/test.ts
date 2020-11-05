@@ -1,3 +1,4 @@
+import {ConfigureTrigger} from '@cmt/cmake-tools';
 import {expect} from 'chai';
 import * as path from 'path';
 
@@ -19,7 +20,7 @@ smokeSuite('no-ctest-in-bindir', suite => {
         cmt.workspaceContext.config.updatePartial({
           cmakePath: path.join(ctx.projectDir.uri.fsPath, 'bin', cmake_filename),
         });
-        expect(await cmt.configure()).to.eq(0);
+        expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.eq(0);
         expect(await cmt.build()).to.eq(0);
         expect(await cmt.ctest()).to.eq(0);
       }
