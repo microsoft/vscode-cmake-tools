@@ -12,7 +12,6 @@ Improvements:
 
 Bug Fixes:
 - Set right base_path for variant config files. [PR #1462](https://github.com/microsoft/vscode-cmake-tools/pull/1462) [@leolcao](https://github.com/leolcao)
-- Remove duplicate option start signs. [#1280](https://github.com/microsoft/vscode-cmake-tools/issues/1280) [@dnkbln](https://github.com/dnkbln)
 - Inconsistent buildType substitution. [#1366](https://github.com/microsoft/vscode-cmake-tools/issues/1366)
 - ${workspaceFolder} is not working for "environmentSetupScript" option. [#1309](https://github.com/microsoft/vscode-cmake-tools/issues/1309) [@Yaxley123](https://github.com/Yaxley123)
 - Preserve focus when executing "CMake:Run Without Debugging". [#1138](https://github.com/microsoft/vscode-cmake-tools/issues/1138) [@estshorter](https://github.com/estshorter)
