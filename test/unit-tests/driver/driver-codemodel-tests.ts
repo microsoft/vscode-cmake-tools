@@ -1,5 +1,6 @@
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {ConfigurationReader} from '@cmt/config';
+import {ConfigureTrigger} from '@cmt/cmake-tools';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import * as chai from 'chai';
 import {expect} from 'chai';
@@ -86,7 +87,7 @@ export function makeCodeModelDriverTestsuite(
       if (driver instanceof codemodel_api.CodeModelDriver) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
       }
-      expect(await driver.configure(args)).to.be.eq(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, args)).to.be.eq(0);
       return code_model;
     }
 

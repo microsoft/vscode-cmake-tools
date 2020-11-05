@@ -37,11 +37,11 @@ Start quick debugging by running the  *CMake: Debug Target* command from the VS 
 
 You can specify the working directory or command line arguments for debugging, or use another debugger than the one included with Microsoft's `vscode-ms-vscode.cpptools`, by creating a `launch.json` file.
 
-You'll need to know the path to the executable binary, which may be difficult to know in advance. CMake Tools can help by using command substitution in the `launch.json` file. This is already used by things like process selection when attaching to a running process. It works by specifying a command-based substitution in the appropriate field of `launch.json`.
+You'll need to know the path to the executable binary, which may be difficult to know in advance. CMake Tools can help by using [command substitution](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/cmake-settings.md#command-substitution) in the `launch.json` file. This is already used by things like process selection when attaching to a running process. It works by specifying a command-based substitution in the appropriate field of `launch.json`.
 
-Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetPath` and `cmake.launchTargetDirectory` to start a debugger on the active launch target:
+Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetPath` and `cmake.getLaunchTargetDirectory` to start a debugger on the active launch target:
 
-```json
+```jsonc
 {
     "version": "0.2.0",
     "configurations": [
@@ -59,7 +59,7 @@ Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetP
                     // add the directory where our target was built to the PATHs
                     // it gets resolved by CMake Tools:
                     "name": "PATH",
-                    "value": "$PATH:${command:cmake.launchTargetDirectory}"
+                    "value": "$PATH:${command:cmake.getLaunchTargetDirectory}"
                 },
                 {
                     "name": "OTHER_VALUE",
@@ -83,7 +83,7 @@ Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetP
 The value of the `program` attribute is expanded by CMake Tools to be the absolute path of the program to run.
 
 > **Note:**
-> You must successfully [configure](configure.md) before `cmake.launchTargetPath` and `cmake.launchTargetDirectory` will resolve correctly.
+> You must successfully [configure](configure.md) before `cmake.launchTargetPath` and `cmake.getLaunchTargetDirectory` will resolve correctly.
 
 ## Run without debugging
 

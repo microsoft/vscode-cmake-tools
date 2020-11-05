@@ -1,9 +1,34 @@
 # What's New?
 
+## 1.5.0
+Improvements:
+- Support variables for Kit.toolchainFile. [PR #991](https://github.com/microsoft/vscode-cmake-tools/pull/991) [#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
+- Implement cmake:hideBuildCommand context option. [PR #1355](https://github.com/microsoft/vscode-cmake-tools/pull/1355) [@tritao](https://github.com/tritao)
+- Add option to set CMAKE_BUILD_TYPE also on multi-config generators. [PR #1393](https://github.com/microsoft/vscode-cmake-tools/pull/1393) [@tonka3000](https://github.com/tonka3000)
+- Detect Clang for MSVC (GNU CLI) kits. [#823](https://github.com/microsoft/vscode-cmake-tools/issues/823) [@omcnoe](https://github.com/omcnoe)
+- GUI support for CMake Tools cache. [#513](https://github.com/microsoft/vscode-cmake-tools/issues/513) [@nieroger](https://github.com/nieroger)
+- Tasks support. [PR #1268](https://github.com/microsoft/vscode-cmake-tools/pull/1268) [@vptrbv](https://github.com/vptrbv)
+- MacBook Pro touchbar support. [#499](https://github.com/microsoft/vscode-cmake-tools/issues/499) [@vptrbv](https://github.com/vptrbv)
+
+Bug Fixes:
+- Set right base_path for variant config files. [PR #1462](https://github.com/microsoft/vscode-cmake-tools/pull/1462) [@leolcao](https://github.com/leolcao)
+- Inconsistent buildType substitution. [#1366](https://github.com/microsoft/vscode-cmake-tools/issues/1366)
+- ${workspaceFolder} is not working for "environmentSetupScript" option. [#1309](https://github.com/microsoft/vscode-cmake-tools/issues/1309) [@Yaxley123](https://github.com/Yaxley123)
+- Preserve focus when executing "CMake:Run Without Debugging". [#1138](https://github.com/microsoft/vscode-cmake-tools/issues/1138) [@estshorter](https://github.com/estshorter)
+- Problems with CMake: Quick Start. [#1004](https://github.com/microsoft/vscode-cmake-tools/issues/1004) [@alan-wr](https://github.com/alan-wr)
+- Remove depends on optimist by upgrade handlebars. [PR #1447](https://github.com/microsoft/vscode-cmake-tools/pull/1447) [@lygstate](https://github.com/lygstate)
+- Ignore the vcvars dev-bat call result. [PR #1403](https://github.com/microsoft/vscode-cmake-tools/pull/1403) [@lygstate](https://github.com/lygstate)
+- Fix vs2010 which doesn't recognize host=x64. [PR #1481](https://github.com/microsoft/vscode-cmake-tools/pull/1481) [@lygstate](https://github.com/lygstate)
+- Don't rebuild when doing command substitution. [#1487](https://github.com/microsoft/vscode-cmake-tools/issues/1487)
+- Duplicate compiler flags should not be removed. [PR #1497](https://github.com/microsoft/vscode-cmake-tools/issues/1497)
+- Hide "Unknown Language" for CUDA source files. [PR #1502](https://github.com/microsoft/vscode-cmake-tools/issues/1502) [@Synxis](https://github.com/Synxis)
+- Ensure immediate effect of settings for communication mode and all generator related. [PR #1500](https://github.com/microsoft/vscode-cmake-tools/issues/1500)
+- Fix shell script and vcvars devbat when TEMP folder has a space in the middle. [#1492](https://github.com/microsoft/vscode-cmake-tools/issues/1492)
+
 ## 1.4.2
 Improvements:
 - Added new variable substitution command: `${command:cmake.launchTargetFilename}`. [#632](https://github.com/microsoft/vscode-cmake-tools/issues/632) [@ebai101](https://github.com/ebai101)
-- Add output parser for Wind River Diab compiler. [PR #1267](https://github.com/microsoft/vscode-cmake-tools/issues/1267) [@ce3a](https://github.com/ce3a)
+- Add output parser for Wind River Diab compiler. [PR #1267](https://github.com/microsoft/vscode-cmake-tools/pull/1267) [@ce3a](https://github.com/ce3a)
 - Set application run directory to executable path. [#1395](https://github.com/microsoft/vscode-cmake-tools/issues/1395) [@Shatur95](https://github.com/Shatur95)
 
 Bug Fixes:
