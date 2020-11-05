@@ -8,7 +8,6 @@
  */ /** */
 
 import {DebugSession, Disposable, Event, Terminal} from 'vscode';
-//import {ConfigureTrigger} from '@cmt/cmake-tools';
 
 /**
  * The result of executing a program.
