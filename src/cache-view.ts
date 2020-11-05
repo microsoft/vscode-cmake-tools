@@ -130,9 +130,10 @@ export class ConfigurationWebview {
       const fromCache = localize('from.cache', 'From Cache');
       if (conflictsExist) {
         result = await vscode.window.showWarningMessage(
-          localize('merge.cache.edits', "The CMake cache has been modified outside this webview \
-                                         and there are conflicts with the current unsaved edits. \
-                                         Which values do you want to keep?"), ignore, fromCache, fromUI);
+          localize('merge.cache.edits', "The CMake cache has been modified outside this webview and there are conflicts with the current unsaved edits. Which values do you want to keep?"),
+          ignore,
+          fromCache,
+          fromUI);
         if (result === fromUI) {
           this._options = mergedOptions;
           await this.persistCacheEntries();
