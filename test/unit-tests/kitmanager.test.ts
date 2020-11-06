@@ -30,6 +30,7 @@ suite('Kits test', async () => {
       'ToolchainKit 1',
       'ToolchainKit 2',
       'ToolchainKit 3',
+      'ToolchainKit 4',
       'VSCode Kit 1',
       'VSCode Kit 2',
     ]);
