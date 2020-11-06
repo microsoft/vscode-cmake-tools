@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.5.1
+Bug Fixes:
+- Fix regular expression for variables values used in settings and kits json. [#1526](https://github.com/microsoft/vscode-cmake-tools/issues/1526) [#1525](https://github.com/microsoft/vscode-cmake-tools/issues/1525)
+- Add a setting to control whether the Touch Bar is visible or not. [PR 1529#](https://github.com/microsoft/vscode-cmake-tools/pull/1529)
+
 ## 1.5.0
 Improvements:
 - Support variables for Kit.toolchainFile. [PR #991](https://github.com/microsoft/vscode-cmake-tools/pull/991) [#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
