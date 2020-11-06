@@ -42,6 +42,7 @@ suite('Kits test', async () => {
 
     expect(kits.filter(k => "ToolchainKit 2" === k.name)[0].toolchainFile).to.eq("Test/toolchain.cmake");
     expect(kits.filter(k => "ToolchainKit 3" === k.name)[0].toolchainFile).to.eq(`${folderName}/toolchain.cmake`);
+    expect(kits.filter(k => "ToolchainKit 4" === k.name)[0].toolchainFile).to.eq(`${folderName}/Test/toolchain.cmake`);
   });
 
   test('Test load env vars from shell script', async() => {
