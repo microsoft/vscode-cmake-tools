@@ -12,7 +12,7 @@ import * as nls from 'vscode-nls';
 
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
-import {ConfigurationReader} from '@cmt/config';
+import {ConfigurationReader, TouchBarConfig} from '@cmt/config';
 import {CppConfigurationProvider} from '@cmt/cpptools';
 import {CMakeToolsFolderController, CMakeToolsFolder} from '@cmt/folders';
 import {
@@ -142,10 +142,16 @@ class ExtensionManager implements vscode.Disposable {
 
   private readonly _workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
+  private updateTouchBarVisibility(config: TouchBarConfig) {
+    util.setContextValue("cmake:enableTouchBar", config.visibility === "default");
+  }
   /**
    * Second-phase async init
    */
   private async _init() {
+    this.updateTouchBarVisibility(this._workspaceConfig.touchbar);
+    this._workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
+
     let isMultiRoot = false;
     if (vscode.workspace.workspaceFolders) {
       await this._folders.loadAllCurrent();

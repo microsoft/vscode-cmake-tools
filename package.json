@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -855,34 +855,34 @@
       "touchBar": [
         {
           "command": "cmake.configure",
-          "when": "!cmake:enableFullFeatureSet",
+          "when": "cmake:enableTouchBar && !cmake:enableFullFeatureSet",
           "group": "CMake:start"
         },
         {
           "command": "cmake.quickStart",
-          "when": "!cmake:enableFullFeatureSet",
+          "when": "cmake:enableTouchBar && !cmake:enableFullFeatureSet",
           "group": "CMake:start"
         },
         {
           "command": "cmake.build",
           "alt": "cmake.configure",
-          "when": "cmake:enableFullFeatureSet && !cmake:isBuilding",
+          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:isBuilding",
           "group": "CMake:build"
         },
         {
           "command": "cmake.stop",
-          "when": "cmake:enableFullFeatureSet && cmake:isBuilding",
+          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && cmake:isBuilding",
           "group": "CMake:build"
         },
         {
           "command": "cmake.debugTarget",
           "alt": "cmake.selectLaunchTarget",
-          "when": "cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
+          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
           "group": "CMake:run"
         },
         {
           "command": "cmake.launchTarget",
-          "when": "cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
+          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
           "group": "CMake:run"
         }
       ]
@@ -1391,6 +1391,20 @@
             "warning",
             "error",
             "fatal"
+          ],
+          "scope": "window"
+        },
+        "cmake.touchbar.visibility": {
+          "type": "string",
+          "default": "default",
+          "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+          "enum": [
+            "default",
+            "hidden"
+          ],
+          "enumDescriptions": [
+            "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+            "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
           ],
           "scope": "window"
         },
