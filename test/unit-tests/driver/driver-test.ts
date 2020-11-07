@@ -1,4 +1,5 @@
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
+import {ConfigureTrigger} from '@cmt/cmake-tools';
 import {ConfigurationReader} from '@cmt/config';
 import * as chai from 'chai';
 import {expect} from 'chai';
@@ -118,7 +119,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, badCommandWorkspaceFolder, async () => {}, []);
-      expect(await driver.cleanConfigure([])).to.be.eq(1);
+      expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(1);
     }).timeout(90000);
 
     test('Build', async () => {
@@ -126,7 +127,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-      expect(await driver.cleanConfigure([])).to.be.eq(0);
+      expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(0);
       expect(await driver.build(driver.allTargetName)).to.be.eq(0);
 
       expect(driver.executableTargets.length).to.be.eq(2);
@@ -158,12 +159,12 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       // Set kit without a preferred generator
       await driver.setKit({name: 'GCC'}, []);
-      expect(await driver.cleanConfigure([])).to.be.eq(0);
+      expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(0);
       const kit1 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 
       // Set kit with a list of two default preferred generators, for comparison
       await driver.setKit({name: 'GCC'}, [{name: 'Ninja'}, {name: 'Unix Makefiles'}]);
-      expect(await driver.configure([])).to.be.eq(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
       const kit2 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 
       expect(kit1).to.be.equal(kit2);
@@ -180,7 +181,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, emptyWorkspaceFolder, checkPreconditionHelper, []);
-      expect(await driver.cleanConfigure([])).to.be.eq(-2);
+      expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(-2);
       expect(called).to.be.true;
     }).timeout(60000);
 
@@ -195,8 +196,8 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-      const configure1 = driver.configure([]);
-      const configure2 = driver.configure([]);
+      const configure1 = driver.configure(ConfigureTrigger.runTests, []);
+      const configure2 = driver.configure(ConfigureTrigger.runTests, []);
 
       expect(await configure1).to.be.equal(0);
       expect(await configure2).to.be.equal(-1);
@@ -214,8 +215,8 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-      const configure1 = driver.cleanConfigure([]);
-      const configure2 = driver.cleanConfigure([]);
+      const configure1 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
+      const configure2 = driver.cleanConfigure(ConfigureTrigger.runTests, []);
 
       expect(await configure1).to.be.equal(0);
       expect(await configure2).to.be.equal(-1);
@@ -234,7 +235,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-      expect(await driver.configure([])).to.be.equal(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
       const build1 = driver.build(driver.allTargetName);
       const build2 = driver.build(driver.allTargetName);
 
@@ -255,8 +256,8 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-      expect(await driver.configure([])).to.be.equal(0);
-      const configure = driver.configure([]);
+      expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
+      const configure = driver.configure(ConfigureTrigger.runTests, []);
       const build = driver.build(driver.allTargetName);
 
       expect(await configure).to.be.equal(0);
@@ -276,9 +277,9 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-      expect(await driver.configure([])).to.be.equal(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
       const build = driver.build(driver.allTargetName);
-      const configure = driver.configure([]);
+      const configure = driver.configure(ConfigureTrigger.runTests, []);
 
       expect(await build).to.be.equal(0);
       expect(await configure).to.be.equal(-1);
@@ -297,7 +298,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-      const configure = driver.cleanConfigure([]);
+      const configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
       const build = driver.build(driver.allTargetName);
 
       expect(await configure).to.be.equal(0);
@@ -318,9 +319,9 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       };
       driver
           = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
-      expect(await driver.configure([])).to.be.equal(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.equal(0);
       const build = driver.build(driver.allTargetName);
-      const configure = driver.cleanConfigure([]);
+      const configure = driver.cleanConfigure(ConfigureTrigger.runTests, []);
 
       expect(await build).to.be.equal(0);
       expect(await configure).to.be.equal(-1);
@@ -333,12 +334,12 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitNinja, defaultWorkspaceFolder, async () => {}, []);
-      await driver.cleanConfigure([]);
+      await driver.cleanConfigure(ConfigureTrigger.runTests, []);
       await driver.asyncDispose();
 
       driver = null;
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-      expect(await driver.configure([])).to.be.eq(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
 
       const expFileApi = driver instanceof CMakeFileApiDriver;
       const expSrv = driver instanceof CMakeServerClientDriver;
@@ -356,11 +357,11 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-      await driver.cleanConfigure([]);
+      await driver.cleanConfigure(ConfigureTrigger.runTests, []);
       expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.not.eq('Ninja');
 
       await driver.setKit(kitNinja, [{name: 'Ninja'}]);
-      expect(await driver.configure([])).to.be.eq(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
       expect(driver.cmakeCacheEntries.get('CMAKE_GENERATOR')!.value).to.be.eq('Ninja');
     }).timeout(90000);
 
@@ -372,7 +373,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-      await driver.cleanConfigure([]);
+      await driver.cleanConfigure(ConfigureTrigger.runTests, []);
       expect(await driver.build('all')).to.be.eq(0, 'Automatic correction of all target failed');
     }).timeout(90000);
 
@@ -383,7 +384,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitNinja, defaultWorkspaceFolder, async () => {}, []);
-      await driver.cleanConfigure([]);
+      await driver.cleanConfigure(ConfigureTrigger.runTests, []);
       expect(await driver.build('ALL_BUILD')).to.be.eq(0, 'Automatic correction of ALL_BUILD target failed');
     }).timeout(90000);
 
@@ -392,7 +393,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-      await driver.configure(['-DEXTRA_ARGS_TEST=Hallo']);
+      await driver.configure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
       expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
     }).timeout(90000);
 
@@ -401,7 +402,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
-      await driver.cleanConfigure(['-DEXTRA_ARGS_TEST=Hallo']);
+      await driver.cleanConfigure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
       expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
     }).timeout(90000);
   });

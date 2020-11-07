@@ -165,7 +165,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (lang === 'CXX' || lang === 'OBJCXX' ) {
+      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA' ) {
         const s = parseCppStandard(std, can_use_gnu_std);
         if (s === null) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
@@ -190,7 +190,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
           standard = s;
         }
       } else {
-        log.warning(localize('unknown language', 'Unknown language: {0}', value));
+        log.warning(localize('unknown language', 'Unknown language: {0}', lang));
       }
     }
   }
@@ -504,7 +504,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
           /// 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
           const grps = target.fileGroups || [];
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-          const compileFlags = [...new Set(util.flatMap(grps, grp => shlex.split(grp.compileFlags || '')))];
+          const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
           const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
           const sysroot = target.sysroot || '';
           for (const grp of target.fileGroups || []) {
