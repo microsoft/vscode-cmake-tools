@@ -1225,9 +1225,11 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
   // Register a task provider to resolve tasks
   // TODO: extend
-  cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({
+  rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
+    cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({
       build: await ext.tasksBuildCommand()
     }));
+  });
 }
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
