@@ -74,7 +74,8 @@ Supported commands for substitution:
 |`cmake.buildTargetName`|The current target selected for build.|
 |`cmake.buildType`|Same as `${buildType}`. The current CMake build type.|
 |`cmake.buildKit`|Same as `${buildKit}`. The current CMake kit name.|
-|`cmake.buildDirectory`|The full path to the directory where CMake cache files are located|
+|`cmake.buildDirectory`|The full path to the directory where CMake cache files are located.|
+|`cmake.tasksBuildCommand`|The CMake command used to build your project based on the currently selected Kit + Variant + Target. Suitable for use within `tasks.json`.|
 
 ## Next steps
 
