@@ -1,9 +1,13 @@
 # What's New?
 
+## 1.5.2
+Bug Fixes:
+- Fix deadlock caused by commands invoked in string expansion during activation. [PR #1532](https://github.com/microsoft/vscode-cmake-tools/issues/1532)
+
 ## 1.5.1
 Bug Fixes:
 - Fix regular expression for variables values used in settings and kits json. [#1526](https://github.com/microsoft/vscode-cmake-tools/issues/1526) [#1525](https://github.com/microsoft/vscode-cmake-tools/issues/1525)
-- Add a setting to control whether the Touch Bar is visible or not. [PR 1529#](https://github.com/microsoft/vscode-cmake-tools/pull/1529)
+- Add a setting to control whether the Touch Bar is visible or not. [PR #1529](https://github.com/microsoft/vscode-cmake-tools/pull/1529)
 
 ## 1.5.0
 Improvements:
