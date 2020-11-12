@@ -34,6 +34,7 @@
 	"cmake.finished.returned.unserializable": "Zakończono {0} (zwrócono wartość, której nie można serializować)",
 	"loading.extension.commands": "Ładowanie poleceń rozszerzenia",
 	"register.command": "Zarejestruj polecenie rozszerzenia CMakeTools {0}",
+	"registerTaskProvider": "Register the task provider.",
 	"uninstall.old.cmaketools": "Odinstaluj wszystkie starsze wersje rozszerzenia narzędzi CMake. Jest ono teraz publikowane przez firmę Microsoft, począwszy od wersji 1.2.0.",
 	"cmake.tools.initializing": "Trwa inicjowanie narzędzi CMake Tools...",
 	"deactivate.cmaketools": "Dezaktywuj rozszerzenie CMakeTools"
