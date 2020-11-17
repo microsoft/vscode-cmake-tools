@@ -40,7 +40,7 @@ import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import {enableFullFeatureSet} from './extension';
+import {enableFullFeatureSet, registerTaskProvider} from './extension';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -428,6 +428,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
 
+    // Make sure to re-register the task provider when a new driver is created
+    await registerTaskProvider(await this.tasksBuildCommandDrv(drv));
+
     // All set up. Fulfill the driver promise.
     return drv;
   }
@@ -655,6 +658,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._codeModelDriverSub = drv.onCodeModelChanged(cm => { this._codeModel.set(cm); });
         }
       }
+
       return this._cmakeDriver;
     });
   }
@@ -925,18 +929,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+  async tasksBuildCommandDrv(drv: CMakeDriver): Promise<string | null> {
+    const target = this.workspaceContext.state.defaultBuildTarget || drv.allTargetName;
+    const buildargs = await drv.getCMakeBuildCommand(target);
+    return (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
+  }
+
   /**
    * Implementation of `cmake.tasksBuildCommand`
    */
   async tasksBuildCommand(): Promise<string|null> {
     const drv = await this.getCMakeDriverInstance();
-    if (!drv) {
-      throw new Error(localize('cmake.drive.died.during.tasksbuildcommend', 'CMake driver died during tasksBuildCommand'));
-    }
-
-    const target = this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
-    const buildargs = await drv.getCMakeBuildCommand(target);
-    return (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
+    return drv ? this.tasksBuildCommandDrv(drv) : null;
   }
 
   private m_promise_build: Promise<number> = Promise.resolve(0);

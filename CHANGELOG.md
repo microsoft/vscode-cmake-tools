@@ -1,8 +1,13 @@
 # What's New?
 
+## 1.5.3
+Bug Fixes:
+- "Clean all projects" broken since 1.5.0. [#1542](https://github.com/microsoft/vscode-cmake-tools/issues/1542)
+- CMake task provider should not attempt to register until the CMake driver is available.  [#1549](https://github.com/microsoft/vscode-cmake-tools/issues/1549)
+
 ## 1.5.2
 Bug Fixes:
-- Fix deadlock caused by commands invoked in string expansion during activation. [PR #1532](https://github.com/microsoft/vscode-cmake-tools/issues/1532)
+- Fix deadlock caused by commands invoked in string expansion during activation. [PR #1532](https://github.com/microsoft/vscode-cmake-tools/pull/1532)
 
 ## 1.5.1
 Bug Fixes:
