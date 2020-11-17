@@ -34,7 +34,7 @@
 	"cmake.finished.returned.unserializable": "{0} tamamlandı (seri hale getirilemeyen bir değer döndürüldü)",
 	"loading.extension.commands": "Uzantı komutları yükleniyor",
 	"register.command": "{0} CMake Araçları uzantısını komutunu kaydet",
-	"registerTaskProvider": "Register the task provider.",
+	"registerTaskProvider": "Görev sağlayıcısını kaydedin.",
 	"uninstall.old.cmaketools": "Lütfen CMake Araçları uzantısının eski sürümlerini kaldırın. Uzantı, 1.2.0 sürümünden itibaren Microsoft tarafından yayımlanmaktadır.",
 	"cmake.tools.initializing": "CMake Araçları başlatılıyor...",
 	"deactivate.cmaketools": "CMake Araçları'nı devre dışı bırak"

@@ -34,7 +34,7 @@
 	"cmake.finished.returned.unserializable": "Dokončeno: {0} (vrácena neserializovatelná hodnota)",
 	"loading.extension.commands": "Načítání příkazů rozšíření",
 	"register.command": "Zaregistrujte příkaz rozšíření CMakeTools {0}.",
-	"registerTaskProvider": "Register the task provider.",
+	"registerTaskProvider": "Zaregistrujte zprostředkovatele úloh.",
 	"uninstall.old.cmaketools": "Odinstalujte prosím všechny starší verze rozšíření CMake Tools. Od verze 1.2.0 jej publikuje Microsoft.",
 	"cmake.tools.initializing": "Inicializují se nástroje CMake Tools...",
 	"deactivate.cmaketools": "Deaktivovat CMakeTools"

@@ -34,7 +34,7 @@
 	"cmake.finished.returned.unserializable": "{0} завершено (возвращено несериализуемое значение).",
 	"loading.extension.commands": "Загрузка команд расширения.",
 	"register.command": "Регистрация команды расширения CMakeTools {0}",
-	"registerTaskProvider": "Register the task provider.",
+	"registerTaskProvider": "Регистрация поставщика задач.",
 	"uninstall.old.cmaketools": "Удалите все старые версии расширения \"Средства CMake\". Начиная с версии 1.2.0, это расширение публикуется корпорацией Майкрософт.",
 	"cmake.tools.initializing": "Инициализация Средств CMake…",
 	"deactivate.cmaketools": "Деактивировать CMakeTools"
