@@ -1,5 +1,5 @@
 export interface ShlexOptions {
-  mode: 'windows'|'posix';
+  mode: 'windows' | 'posix';
 }
 
 export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
@@ -11,9 +11,10 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
   if (opt.mode == 'posix') {
     escapeChars += '\\';
   }
-  let quoteChar: string|undefined;
-  let escapeChar: string|undefined;
-  let token: string|undefined;
+  let quoteChar: string | undefined;
+  let escapeChar: string | undefined;
+  let token: string | undefined;
+  let subquote: boolean = false;
   for (let i = 0; i < str.length; ++i) {
     const char = str.charAt(i);
     if (escapeChar) {
@@ -41,17 +42,29 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
 
     if (quoteChar) {
       if (char === quoteChar) {
+        // Reached the end of a sub-quoted token.
+        if (subquote) {
+          subquote = false;
+          token = token + char;
+        }
         // Reached the end of a quoted token.
         quoteChar = undefined;
         continue;
       }
-
       // Another quoted char
       token = (token || '') + char;
       continue;
     }
 
     if (quoteChars.includes(char)) {
+      // Beginning of a sub-quoted token
+      if (i > 1 && str.substring(i - 1, i + 1) === "\\\"") {
+        subquote = true;
+        quoteChar = char;
+        // Accumulate
+        token = (token || '') + char;
+        continue;
+      }
       // Beginning a new quoted token
       quoteChar = char;
       token = '';
