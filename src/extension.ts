@@ -833,7 +833,7 @@ class ExtensionManager implements vscode.Disposable {
 
   build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, true); }
 
-  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[-1] : name), true); }
+  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[name.length - 1] : name), true); }
 
   setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.setDefaultTarget(name), folder); }
 
@@ -1009,7 +1009,7 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapQueryCMakeTools(async cmt => (await cmt.executableTargets).map(target => target.name), folder);
   }
 
-  tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
+  async tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
     telemetry.logEvent("substitution", {command: "tasksBuildCommand"});
     return this.mapQueryCMakeTools(cmt => cmt.tasksBuildCommand(), folder);
   }
@@ -1082,6 +1082,18 @@ class ExtensionManager implements vscode.Disposable {
  */
 let _EXT_MANAGER: ExtensionManager|null = null;
 let cmakeTaskProvider: vscode.Disposable | undefined;
+
+export async function registerTaskProvider(command: string | null) {
+  if (command) {
+    rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
+      if (cmakeTaskProvider) {
+        cmakeTaskProvider.dispose();
+      }
+
+      cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({ build: command }));
+    });
+  }
+}
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, localize('initial.setup', 'Initial setup'));
@@ -1222,14 +1234,6 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.selectWorkspace',
                                       (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
   ]);
-
-  // Register a task provider to resolve tasks
-  // TODO: extend
-  rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
-    cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({
-      build: await ext.tasksBuildCommand()
-    }));
-  });
 }
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {
