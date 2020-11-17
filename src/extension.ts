@@ -833,7 +833,7 @@ class ExtensionManager implements vscode.Disposable {
 
   build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, true); }
 
-  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name.slice(-1)[0] : name), true); }
+  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[name.length - 1] : name), true); }
 
   setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.setDefaultTarget(name), folder); }
 
@@ -1086,6 +1086,10 @@ let cmakeTaskProvider: vscode.Disposable | undefined;
 export async function registerTaskProvider(command: string | null) {
   if (command) {
     rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
+      if (cmakeTaskProvider) {
+        cmakeTaskProvider.dispose();
+      }
+
       cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({ build: command }));
     });
   }
