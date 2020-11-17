@@ -45,7 +45,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
         // Reached the end of a sub-quoted token.
         if (subquote) {
           subquote = false;
-          token = token + char;
+          token = (token || '') + char;
         }
         // Reached the end of a quoted token.
         quoteChar = undefined;
