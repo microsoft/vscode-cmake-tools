@@ -1011,7 +1011,7 @@ class ExtensionManager implements vscode.Disposable {
 
   async tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
     telemetry.logEvent("substitution", {command: "tasksBuildCommand"});
-    return this.mapQueryCMakeTools(async cmt => await cmt.tasksBuildCommand(), folder);
+    return this.mapQueryCMakeTools(cmt => cmt.tasksBuildCommand(), folder);
   }
 
   async debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> { return this.mapCMakeToolsFolder(cmt => cmt.debugTarget(name), folder); }

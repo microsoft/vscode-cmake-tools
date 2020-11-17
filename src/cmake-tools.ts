@@ -429,7 +429,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await this._ctestController.reloadTests(drv);
 
     // Make sure to re-register the task provider when a new driver is created
-    registerTaskProvider(await this.tasksBuildCommandDrv(drv));
+    await registerTaskProvider(await this.tasksBuildCommandDrv(drv));
 
     // All set up. Fulfill the driver promise.
     return drv;
