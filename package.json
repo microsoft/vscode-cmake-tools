@@ -1580,6 +1580,11 @@
             "always",
             "never"
           ]
+        },
+        "cmake.exportCompileCommandFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "%cmake-tools.configuration.cmake.exportCompileCommandFile.description%"
         }
       }
     },
