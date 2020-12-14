@@ -58,7 +58,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
 
     if (quoteChars.includes(char)) {
       // Beginning of a sub-quoted token
-      if (i > 1 && str.substring(i - 1, i + 1) === "\\\"") {
+      if (i > 0 && (opt.mode === 'posix' ? str.substring(i - 1, i + 1) === "\\\'" : str.substring(i - 1, i + 1) === "\\\"")) {
         subquote = true;
         quoteChar = char;
         // Accumulate
