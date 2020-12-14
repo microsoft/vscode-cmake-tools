@@ -1032,7 +1032,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const config = vscode.workspace.getConfiguration();
     // Export compile_commands.json
-    let exportCompileCommandFile: boolean = config.get("cmake.exportCompileCommandFile") === undefined ? true : (config.get("cmake.exportCompileCommandFile") || false);
+    const exportCompileCommandFile: boolean = config.get("cmake.exportCompileCommandFile") === undefined ? true : (config.get("cmake.exportCompileCommandFile") || false);
     settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandFile);
 
     const allowBuildTypeOnMultiConfig = config.get("cmake.setBuildTypeOnMultiConfig") || false;
