@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "現在のビルドの種類に一致するコード モデルが見つかりませんでした。これは無効です",
 	"build.all.target": "すべての使用可能なターゲットをビルドする特別なターゲット",
 	"install.all.target": "すべての使用可能なターゲットをインストールする特別なターゲット",
-	"utility.target": "ユーティリティのターゲット"
+	"utility.target": "ユーティリティのターゲット",
+	"cmakelists.save.trigger.reconfigure": "'cmake.sourceDirectory' 設定の更新が検出されました。自動再構成を試行しています..."
 }

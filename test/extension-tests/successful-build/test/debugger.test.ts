@@ -15,7 +15,7 @@ suite('[Debug/Launch interface]', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-    await cmt.setKit(await getFirstSystemKit());
+    await cmt.setKit(await getFirstSystemKit(cmt));
     testEnv.projectFolder.buildDirectory.clear();
     expect(await cmt.build()).to.be.eq(0);
   });
@@ -35,6 +35,16 @@ suite('[Debug/Launch interface]', async () => {
     //sinon.assert.calledWith(testEnv.vs_debug_start_debugging);
   }).timeout(60000);
 
+  test('Test buildTargetName for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    expect(await cmt.buildTargetName()).to.be.eq(await cmt.allTargetName);
+
+    await cmt.setDefaultTarget(executablesTargets[0].name);
+    expect(await cmt.buildTargetName()).to.be.eq(executablesTargets[0].name);
+  });
+
   test('Test launchTargetPath for use in other extensions or launch.json', async () => {
     const executablesTargets = await cmt.executableTargets;
     expect(executablesTargets.length).to.be.not.eq(0);
@@ -53,6 +63,42 @@ suite('[Debug/Launch interface]', async () => {
     expect(await cmt.launchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
   });
 
+  test('Test launchTargetFilename for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    expect(await cmt.launchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
+  });
+
+  test('Test getLaunchTargetPath for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    expect(await cmt.getLaunchTargetPath()).to.be.eq(executablesTargets[0].path);
+  });
+
+  test('Test getLaunchTargetDirectory for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    expect(await cmt.getLaunchTargetDirectory()).to.be.eq(path.dirname(executablesTargets[0].path));
+  });
+
+  test('Test getLaunchTargetFilename for use in other extensions or launch.json', async () => {
+    const executablesTargets = await cmt.executableTargets;
+    expect(executablesTargets.length).to.be.not.eq(0);
+
+    await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+    expect(await cmt.getLaunchTargetFilename()).to.be.eq(path.basename(executablesTargets[0].path));
+  });
+
   test('Test build on launch (default)', async () => {
     testEnv.config.updatePartial({buildBeforeRun: undefined});
 
@@ -60,17 +106,20 @@ suite('[Debug/Launch interface]', async () => {
     expect(executablesTargets.length).to.be.not.eq(0);
     await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
-    const launchProgrammPath = await cmt.launchTargetPath();
-    expect(launchProgrammPath).to.be.not.null;
-    const validPath: string = launchProgrammPath!;
+    const launchProgramPath = await cmt.launchTargetPath();
+    expect(launchProgramPath).to.be.not.null;
+    const validPath: string = launchProgramPath!;
 
     // Check that the compiled files does not exist
     fs.unlinkSync(validPath);
     expect(fs.existsSync(validPath)).to.be.false;
 
-    await cmt.launchTargetPath();
+    // Check that the 'get' version does not rebuild the target
+    await cmt.getLaunchTargetPath();
+    expect(fs.existsSync(validPath)).to.be.false;
 
-    // Check that it is compiled as a new file
+    // Check that the original version does rebuild the target
+    await cmt.launchTargetPath();
     expect(fs.existsSync(validPath)).to.be.false;
   }).timeout(60000);
 
@@ -81,9 +130,9 @@ suite('[Debug/Launch interface]', async () => {
     expect(executablesTargets.length).to.be.not.eq(0);
     await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
-    const launchProgrammPath = await cmt.launchTargetPath();
-    expect(launchProgrammPath).to.be.not.null;
-    const validPath: string = launchProgrammPath!;
+    const launchProgramPath = await cmt.launchTargetPath();
+    expect(launchProgramPath).to.be.not.null;
+    const validPath: string = launchProgramPath!;
 
     // Check that the compiled files does not exist
     fs.unlinkSync(validPath);
@@ -102,9 +151,9 @@ suite('[Debug/Launch interface]', async () => {
     expect(executablesTargets.length).to.be.not.eq(0);
     await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
-    const launchProgrammPath = await cmt.launchTargetPath();
-    expect(launchProgrammPath).to.be.not.null;
-    const validPath: string = launchProgrammPath!;
+    const launchProgramPath = await cmt.launchTargetPath();
+    expect(launchProgramPath).to.be.not.null;
+    const validPath: string = launchProgramPath!;
 
     // Check that the compiled files does not exist
     fs.unlinkSync(validPath);
@@ -123,11 +172,11 @@ suite('[Debug/Launch interface]', async () => {
     expect(executablesTargets.length).to.be.not.eq(0);
     await cmt.setLaunchTargetByName(executablesTargets[0].name);
 
-    const launchProgrammPath = await cmt.launchTargetPath();
-    expect(launchProgrammPath).to.be.not.null;
+    const launchProgramPath = await cmt.launchTargetPath();
+    expect(launchProgramPath).to.be.not.null;
 
     // Remove file if not exists
-    const createdFileOnExecution = path.join(testEnv.projectFolder.location, 'test.txt');
+    const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
     if (fs.existsSync(createdFileOnExecution)) {
       fs.unlinkSync(createdFileOnExecution);
     }

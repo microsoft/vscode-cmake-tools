@@ -11,8 +11,8 @@ import {expandString} from './expand';
 import {fs} from './pr';
 
 interface VSCMakePaths {
-  cmake: string | null;
-  ninja: string | null;
+  cmake?: string;
+  ninja?: string;
 }
 
 class WindowsEnvironment {
@@ -89,7 +89,7 @@ class WindowsEnvironment {
  * Directory class.
  */
 class Paths {
-  private _ninjaPath : string | null = null;
+  private _ninjaPath?: string;
 
   readonly windows: WindowsEnvironment = new WindowsEnvironment;
 
@@ -212,7 +212,7 @@ class Paths {
   }
 
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
-    this._ninjaPath = null;
+    this._ninjaPath = undefined;
 
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
@@ -227,42 +227,42 @@ class Paths {
       },
     });
 
-    if (raw == 'auto' || raw == 'cmake') {
+    if (raw === 'auto' || raw === 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');
-      if (!on_path && (process.platform === 'win32')) {
-        if (raw == 'auto' || raw == 'cmake') {
-          // We didn't find it on the $PATH. Try some good guesses
-          const default_cmake_paths = [
-            this.windows.ProgramFiles + '\\CMake\\bin\\cmake.exe',
-            this.windows.ProgramFilesX86 + '\\CMake\\bin\\cmake.exe'
-          ];
-          for (const cmake_path of default_cmake_paths) {
-            if (await fs.exists(cmake_path)) {
-              return cmake_path;
-            }
-          }
-
-          // Look for bundled CMake executables in Visual Studio install paths
-          const bundled_tools_paths = await this.vsCMakePaths();
-          if (null !== bundled_tools_paths.cmake) {
-            this._ninjaPath = bundled_tools_paths.ninja;
-
-            return bundled_tools_paths.cmake;
+      
+      if (on_path) {
+        return on_path;
+      }
+      if (process.platform === 'win32') {
+        // We didn't find it on the $PATH. Try some good guesses
+        const cmake_relative_path = '\\CMake\\bin\\cmake.exe'
+        const default_cmake_paths = [
+          this.windows.ProgramFiles + cmake_relative_path,
+          this.windows.ProgramFilesX86 + cmake_relative_path
+        ];
+        for (const cmake_path of default_cmake_paths) {
+          if (await fs.exists(cmake_path)) {
+            return cmake_path;
           }
         }
 
-        return null;
-      }
+        // Look for bundled CMake executables in Visual Studio install paths
+        const bundled_tools_paths = await this.vsCMakePaths();
+        if (bundled_tools_paths.cmake) {
+          this._ninjaPath = bundled_tools_paths.ninja;
 
-      return on_path;
+          return bundled_tools_paths.cmake!;
+        }
+      }
+      return null;
     }
 
     return raw;
   }
 
   async vsCMakePaths(): Promise<VSCMakePaths> {
-    const vsCMakePaths = {} as VSCMakePaths;
+    const vsCMakePaths: VSCMakePaths = {};
 
     const vs_installations = await vsInstallations();
     if (vs_installations.length > 0) {

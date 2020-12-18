@@ -1,0 +1,43 @@
+name: Build VSIX
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: '12'
+          check-latest: true
+
+      - name: Get Short SHA
+        id: get-short-sha
+        run: echo "::set-output name=sha::$(git rev-parse --short ${GITHUB_SHA})"
+
+      - name: Update the package version
+        uses: jacobtomlinson/gha-find-replace@master
+        with:
+          find: "\"version\": \"(\\d+\\.\\d+\\.\\d+)\""
+          replace: "\"version\": \"$1-${{ steps.get-short-sha.outputs.sha }}\""
+          include: "package.json"
+
+      - name: Build the VSIX
+        run:  |
+          npm install
+          npm install -g vsce
+          vsce package --yarn -o cmake-tools.vsix
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v2.1.4
+        with:
+          name: cmake-tools.vsix
+          path: ./cmake-tools.vsix
+          if-no-files-found: error

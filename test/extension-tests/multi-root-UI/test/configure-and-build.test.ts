@@ -12,6 +12,7 @@ import {ITestCallbackContext} from 'mocha';
 import * as fs_ from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import CMakeTools from '@cmt/cmake-tools';
 
 // tslint:disable:no-unused-expression
 
@@ -28,6 +29,7 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
+  let cmakeTools : CMakeTools;
 
   suiteSetup(async function(this: Mocha.IHookCallbackContext) {
     this.timeout(100000);
@@ -37,6 +39,7 @@ suite('Build', async () => {
 
     testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
     compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
+    cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -48,7 +51,7 @@ suite('Build', async () => {
   setup(async function(this: Mocha.IBeforeAndAfterContext) {
     this.timeout(100000);
 
-    const kit = await getFirstSystemKit();
+    const kit = await getFirstSystemKit(cmakeTools);
     console.log("Using following kit in next test: ", kit);
     await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
     testEnv.projectFolder.buildDirectory.clear();
@@ -135,12 +138,12 @@ suite('Build', async () => {
 
     // Run test
     testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-    await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[0].kitLabel)).name);
+    await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[0].kitLabel)).name);
 
     await vscode.commands.executeCommand('cmake.buildAll');
 
     testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-    await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[1].kitLabel)).name);
+    await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[1].kitLabel)).name);
 
     await vscode.commands.executeCommand('cmake.buildAll');
     const result = await testEnv.result.getResultAsJson();
@@ -159,11 +162,11 @@ suite('Build', async () => {
          const compiler = os_compilers[workername];
 
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
-         await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[0].kitLabel)).name);
+         await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[0].kitLabel)).name);
          await vscode.commands.executeCommand('cmake.buildAll');
 
          testEnv.kitSelection.defaultKitLabel = compiler[1].kitLabel;
-         await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(compiler[1].kitLabel)).name);
+         await vscode.commands.executeCommand('cmake.setKitByName', (await getMatchingSystemKit(cmakeTools, compiler[1].kitLabel)).name);
          await vscode.commands.executeCommand('cmake.buildAll');
 
          const result = await testEnv.result.getResultAsJson();

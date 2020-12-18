@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Araç zinciri dosyasının yolu",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Visual Studio ürününün adı",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Hedeflenecek mimari",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Set için ortamı değiştiren betiğin mutlak yolu",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Ortam değişkeninin değeri",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "CMake Ayarının değeri",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Bu Set için tercih edilen bir CMake oluşturucusu ayarlayın",

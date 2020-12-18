@@ -1,5 +1,6 @@
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {ConfigurationReader} from '@cmt/config';
+import {ConfigureTrigger} from '@cmt/cmake-tools';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import * as chai from 'chai';
 import {expect} from 'chai';
@@ -86,7 +87,7 @@ export function makeCodeModelDriverTestsuite(
       if (driver instanceof codemodel_api.CodeModelDriver) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
       }
-      expect(await driver.configure(args)).to.be.eq(0);
+      expect(await driver.configure(ConfigureTrigger.runTests, args)).to.be.eq(0);
       return code_model;
     }
 
@@ -124,11 +125,11 @@ export function makeCodeModelDriverTestsuite(
     }).timeout(90000);
 
 
-    test('Test first executable target directory', async () => {
+    test('Test executable target information', async () => {
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE' && t.name == 'TestBuildProcess');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label

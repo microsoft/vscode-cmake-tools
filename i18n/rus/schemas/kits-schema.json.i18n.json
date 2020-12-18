@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Путь к файлу цепочки инструментов",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Имя продукта Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Целевая архитектура",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Абсолютный путь к сценарию, изменяющему среду для набора",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Значение переменной среды",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "Значение параметра CMake",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Установить предпочтительный генератор CMake для этого набора",
