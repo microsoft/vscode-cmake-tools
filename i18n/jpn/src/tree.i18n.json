@@ -14,6 +14,8 @@
 	"item.render.issue": "このアイテムのレンダリングで問題が発生しました。これはバグです",
 	"empty.project": "空のプロジェクト",
 	"update.project.with.mismatch": "一致しない名前プロパティを持つプロジェクトを更新する",
-	"error.update.code.model.on.nonexist.folder": "存在していないフォルダーでコード モデルを更新していますか?",
+	"workspace.active": "アクティブなワークスペース",
+	"workspace": "ワークスペース",
+	"error.update.code.model.on.nonexist.folder": "まだ読み込まれていないフォルダーでコード モデルを更新しています。",
 	"error.rendering.children.nodes": "子ノードのレンダリング中にエラーが発生しました"
 }

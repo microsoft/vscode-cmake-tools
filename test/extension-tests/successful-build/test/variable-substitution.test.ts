@@ -1,6 +1,6 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
-import {CMakeTools} from '@cmt/cmake-tools';
+import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import paths from '@cmt/paths';
 import {objectPairs, platformNormalizePath, makeHashString} from '@cmt/util';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
@@ -20,7 +20,7 @@ suite('[Variable Substitution]', async () => {
     // No rescan of the tools is needed
     // No new kit selection is needed
     await clearExistingKitConfigurationFile();
-    await cmt.setKit(await getFirstSystemKit());
+    await cmt.setKit(await getFirstSystemKit(cmt));
 
     testEnv.projectFolder.buildDirectory.clear();
   });
@@ -36,7 +36,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {workspaceRoot: '${workspaceRoot}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[workspaceRoot] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[workspaceRoot] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -53,7 +53,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {workspaceFolder: '${workspaceFolder}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[workspaceFolder] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[workspaceFolder] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -89,7 +89,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {buildType: '${buildType}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[buildType] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[buildType] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -105,7 +105,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {buildKit: '${buildKit}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[buildKit] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[buildKit] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -122,7 +122,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {workspaceRootFolderName: '${workspaceRootFolderName}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[workspaceRootFolderName] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[workspaceRootFolderName] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -140,7 +140,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {workspaceFolderBasename: '${workspaceFolderBasename}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[workspaceFolderBasename] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[workspaceFolderBasename] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -158,7 +158,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {generator: '${generator}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[generator] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[generator] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -175,7 +175,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: {userHome: '${userHome}'}});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[userHome] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[userHome] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -196,7 +196,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({configureSettings: configSettings});
 
     // Configure and retrieve generated cache
-    expect(await cmt.configure()).to.be.eq(0, '[variant] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[variant] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, '[variant] cache not found');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
@@ -223,7 +223,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.config.updatePartial({installPrefix: '${workspaceFolder}/build/dist'});
 
     // Configure
-    expect(await cmt.configure()).to.be.eq(0, '[cmakeInstallPrefix] configure failed');
+    expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0, '[cmakeInstallPrefix] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 

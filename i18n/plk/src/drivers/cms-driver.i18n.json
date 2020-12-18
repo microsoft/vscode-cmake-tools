@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "Nie znaleziono pasującego modelu kodu dla bieżącego typu kompilacji. To nie powinno być możliwe.",
 	"build.all.target": "Specjalny element docelowy umożliwiający kompilowanie wszystkich dostępnych elementów docelowych",
 	"install.all.target": "Specjalny element docelowy umożliwiający zainstalowanie wszystkich dostępnych elementów docelowych",
-	"utility.target": "Element docelowy narzędzia"
+	"utility.target": "Element docelowy narzędzia",
+	"cmakelists.save.trigger.reconfigure": "Wykryto aktualizację ustawienia „cmake.sourceDirectory”. Trwa próba automatycznej zmiany konfiguracji..."
 }

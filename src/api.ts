@@ -9,7 +9,6 @@
 
 import {DebugSession, Disposable, Event, Terminal} from 'vscode';
 
-
 /**
  * The result of executing a program.
  */
@@ -288,6 +287,11 @@ export interface CMakeToolsAPI extends Disposable {
    * Get the directory to the active launch target
    */
   launchTargetDirectory(): Thenable<string|null>;
+
+  /**
+   * Get the filename of the active launch target
+   */
+  launchTargetFilename(): Thenable<string|null>;
 
   /**
    * Get the selected build type

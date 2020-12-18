@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 
 import * as gcc from './gcc';
 import * as ghs from './ghs';
+import * as diab from './diab';
 import * as gnu_ld from './gnu-ld';
 import * as mvsc from './msvc';
 import {FileDiagnostic, RawDiagnosticParser} from './util';
@@ -20,6 +21,7 @@ export class Compilers {
 
   gcc = new gcc.Parser();
   ghs = new ghs.Parser();
+  diab = new diab.Parser();
   gnuLD = new gnu_ld.Parser();
   msvc = new mvsc.Parser();
 }
@@ -45,6 +47,7 @@ export class CompileOutputConsumer implements OutputConsumer {
       switch (p) {
       case 'warning':
         return vscode.DiagnosticSeverity.Warning;
+      case 'catastrophic error':
       case 'fatal error':
       case 'error':
         return vscode.DiagnosticSeverity.Error;
@@ -60,6 +63,7 @@ export class CompileOutputConsumer implements OutputConsumer {
       GCC: this.compilers.gcc.diagnostics,
       MSVC: this.compilers.msvc.diagnostics,
       GHS: this.compilers.ghs.diagnostics,
+      DIAB: this.compilers.diab.diagnostics,
       link: this.compilers.gnuLD.diagnostics,
     };
     const arrs = util.objectPairs(by_source).map(([source, diags]) => {

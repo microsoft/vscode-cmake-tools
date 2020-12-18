@@ -1,0 +1,24 @@
+name: CI (Linux)
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Install dependent packages
+        run: sudo apt install powershell gdb xvfb
+
+      - name: Build the extension and run tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          # Command to execute using xvfb
+          run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1

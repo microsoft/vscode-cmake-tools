@@ -29,21 +29,21 @@ export async function getExtension() {
 
 let AVAIL_KITS: Promise<Kit[]> | null = null;
 
-export async function getSystemKits(): Promise<Kit[]> {
+export async function getSystemKits(cmakeTools: CMakeTools): Promise<Kit[]> {
   if (AVAIL_KITS === null) {
-    AVAIL_KITS = scanForKits();
+    AVAIL_KITS = scanForKits(cmakeTools);
   }
   return AVAIL_KITS;
 }
 
-export async function getFirstSystemKit(): Promise<Kit> {
-  const kits = await getSystemKits();
+export async function getFirstSystemKit(cmakeTools: CMakeTools): Promise<Kit> {
+  const kits = await getSystemKits(cmakeTools);
   console.assert(kits.length >= 1, 'No kits found for testing');
   return kits[0];
 }
 
-export async function getMatchingSystemKit(re: RegExp): Promise<Kit> {
-  const kits = await getSystemKits();
+export async function getMatchingSystemKit(cmakeTools: CMakeTools, re: RegExp): Promise<Kit> {
+  const kits = await getSystemKits(cmakeTools);
   return getMatchingKit(kits, re);
 }
 

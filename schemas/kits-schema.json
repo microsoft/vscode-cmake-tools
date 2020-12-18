@@ -35,6 +35,10 @@
                 "type": "string",
                 "description": "Architecture to target"
             },
+            "environmentSetupScript": {
+                "type": "string",
+                "description": "The absolute path to a script that modifies the environment for the Kit"
+            },
             "environmentVariables": {
                 "type": "object",
                 "patternProperties": {

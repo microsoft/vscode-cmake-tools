@@ -3,6 +3,7 @@ import * as chokidar from 'chokidar';
 import * as yaml from 'js-yaml';
 import * as json5 from 'json5';
 import * as path from 'path';
+import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 
 import {ConfigurationReader} from '@cmt/config';
@@ -188,8 +189,11 @@ export class VariantManager implements vscode.Disposable {
    */
   private readonly _variantFileWatcher = chokidar.watch([], {ignoreInitial: true});
 
+  private customVariantsFileExists: boolean = false;
+
 
   dispose() {
+    // tslint:disable-next-line: no-floating-promises
     this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
@@ -203,7 +207,8 @@ export class VariantManager implements vscode.Disposable {
     if (!vscode.workspace.workspaceFolders) {
       return;  // Nothing we can do. We have no directory open
     }
-    const base_path = folder.uri.path;
+    // Ref: https://code.visualstudio.com/api/references/vscode-api#Uri
+    const base_path = folder.uri.fsPath;
     for (const filename of ['cmake-variants.yaml',
                             'cmake-variants.json',
                             '.vscode/cmake-variants.yaml',
@@ -229,6 +234,7 @@ export class VariantManager implements vscode.Disposable {
   }
 
   private async _reloadVariantsFile(filepath?: string) {
+    this.customVariantsFileExists = false;
     const validate = await loadSchema('schemas/variants-schema.json');
 
     const workdir = this.folder.uri.fsPath;
@@ -251,6 +257,7 @@ export class VariantManager implements vscode.Disposable {
     let new_variants = this.loadVariantsFromSettings();
     // Check once more that we have a file to read
     if (filepath && await fs.exists(filepath)) {
+      this.customVariantsFileExists = true;
       const content = (await fs.readFile(filepath)).toString();
       try {
         if (filepath.endsWith('.json')) {
@@ -258,7 +265,9 @@ export class VariantManager implements vscode.Disposable {
         } else {
           new_variants = yaml.load(content) as VarFileRoot;
         }
-      } catch (e) { log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, e)); }
+      } catch (e) {
+        log.error(localize('error.parsing', 'Error parsing {0}: {1}', filepath, util.errorToString(e)));
+      }
     }
 
     const is_valid = validate(new_variants);
@@ -379,6 +388,17 @@ export class VariantManager implements vscode.Disposable {
       if (!chosen) {
         return false;
       }
+
+      const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('defaultVariants');
+      const telemetryProperties: telemetry.Properties = {
+        customFile: (this.customVariantsFileExists).toString(),
+        customSetting: (cfg?.globalValue !== undefined ||
+                        cfg?.workspaceValue !== undefined ||
+                        cfg?.workspaceFolderValue !== undefined).toString()
+      };
+
+      telemetry.logEvent('variantSelection', telemetryProperties);
+
       this.publishActiveKeywordSettings(chosen.keywordSettings);
       return true;
     }

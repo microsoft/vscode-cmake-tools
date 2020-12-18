@@ -14,6 +14,8 @@
 	"item.render.issue": "Bu öğe işlenirken bir sorun oluştu. Bu bir hatadır",
 	"empty.project": "Boş proje",
 	"update.project.with.mismatch": "Eşleşmeyen ad özelliğine sahip projeyi güncelleştir",
-	"error.update.code.model.on.nonexist.folder": "Henüz mevcut olmayan klasördeki kod modelini mi güncelleştiriyorsunuz?",
+	"workspace.active": "Etkin Çalışma Alanı",
+	"workspace": "Çalışma alanı",
+	"error.update.code.model.on.nonexist.folder": "Henüz yüklenmeyen klasördeki kod modeli güncelleştiriliyor.",
 	"error.rendering.children.nodes": "Alt düğümler işlenirken hata oluştu"
 }
