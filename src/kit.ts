@@ -981,11 +981,28 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     }
   }
   const env = new Map(util.chain(host_env, kit_env));
-  if (env.has("CMT_MINGW_PATH")) {
+  const isWin32 = process.platform === 'win32';
+  if (isWin32)
+  {
+    const path_list: string[] = [];
+    const cCompiler = kit.compilers?.C;
+    /* Force add the compiler executable dir to the PATH env */
+    if (cCompiler) {
+      path_list.push(path.dirname(cCompiler));
+    }
+    const cmt_mingw_path = env.get("CMT_MINGW_PATH");
+    if (cmt_mingw_path) {
+      path_list.push(cmt_mingw_path);
+    }
+    let path_key : string | undefined = undefined;
     if (env.has("PATH")) {
-      env.set("PATH", env.get("PATH")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+      path_key = "PATH";
     } else if (env.has("Path")) {
-      env.set("Path", env.get("Path")!.concat(`;${env.get("CMT_MINGW_PATH")}`));
+      path_key = "Path";
+    }
+    if (path_key) {
+      path_list.unshift(env.get(path_key) ?? '');
+      env.set(path_key, path_list.join(';'));
     }
   }
   return env;
