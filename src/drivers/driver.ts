@@ -1030,10 +1030,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
       settingMap.BUILD_SHARED_LIBS = util.cmakeify(this._variantLinkage === 'shared');
     }
 
-    // Always export so that we have compile_commands.json
-    settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(true);
-
     const config = vscode.workspace.getConfiguration();
+    // Export compile_commands.json
+    const exportCompileCommandsFile: boolean = config.get("cmake.exportCompileCommandsFile") === undefined ? true : (config.get("cmake.exportCompileCommandsFile") || false);
+    settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
+
     const allowBuildTypeOnMultiConfig = config.get("cmake.setBuildTypeOnMultiConfig") || false;
 
     if (!this.isMultiConf || (this.isMultiConf && allowBuildTypeOnMultiConfig)) {
