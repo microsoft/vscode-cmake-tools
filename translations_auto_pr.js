@@ -153,7 +153,10 @@ octokit.pulls.list({ owner: repoOwner, repo: repoName }).then(({data}) => {
     console.log(`Restoring default git permissions`);
     cp.execSync('git remote remove origin');
     cp.execSync(`git remote add origin https://github.com/${repoOwner}/${repoName}.git`);
-    
+
+    console.log(`Run 'git fetch' against updated remote`);
+    cp.execSync('git fetch');
+
     console.log(`Switching back to develop (git checkout develop)`);
     cp.execSync('git checkout develop');
 
