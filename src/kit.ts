@@ -130,7 +130,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     return null;
   }
   const lines = exec.stderr.split('\n');
-  const version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)[\s-]/;
+  const version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)(?:[\s-]|$)/;
   let version: string = "";
   let fullVersion: string = "";
   for (const line of lines) {
