@@ -1,0 +1,15 @@
+-------------------- Auto-Git Log --------------------
+		Thu Jan 21 2021 07:50:32 GMT+0330 (وقت عادی ایران)
+------------------------------------------------------
+
+Modified files:
+
+
+Created files:
+* .autogit/logs/log-21-0-2021-7-20-15.txt
+
+
+Deleted files:
+
+
+Renamed files:
