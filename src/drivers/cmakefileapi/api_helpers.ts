@@ -187,7 +187,8 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
   return path.normalize(absolute_path);
 }
 
-function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject): CodeModelFileGroup[] {
+function convertToExtCodeModelFileGroup(root_paths: index_api.CodeModelKind.PathInfo, targetObject: index_api.CodeModelKind.TargetObject):
+    CodeModelFileGroup[] {
   const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
     const compileFlags
         = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
@@ -204,9 +205,10 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
   // Collection all without compilegroup like headers
   const defaultIndex = fileGroup.push({sources: [], isGenerated: false} as CodeModelFileGroup) - 1;
 
-
+  const src_path = convertToAbsolutePath(targetObject.paths.source, root_paths.source);
   targetObject.sources.forEach(sourcefile => {
-    const file_path = path.relative(targetObject.paths.source, sourcefile.path).replace('\\', '/');
+    const file_abs_path = convertToAbsolutePath(sourcefile.path, root_paths.source);
+    const file_path = path.relative(src_path, file_abs_path).replace('\\', '/');
     if (sourcefile.compileGroupIndex !== undefined) {
       fileGroup[sourcefile.compileGroupIndex].sources.push(file_path);
     } else {
@@ -222,7 +224,7 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
 async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
   const targetObject = await loadTargetObject(jsonfile);
 
-  const fileGroups = convertToExtCodeModelFileGroup(targetObject);
+  const fileGroups = convertToExtCodeModelFileGroup(root_paths, targetObject);
 
   // This implementation expects that there is only one sysroot in a target.
   // The ServerAPI only has provided one sysroot. In the FileAPI,
