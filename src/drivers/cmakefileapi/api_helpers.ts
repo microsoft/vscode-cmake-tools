@@ -208,7 +208,7 @@ function convertToExtCodeModelFileGroup(root_paths: index_api.CodeModelKind.Path
   const src_path = convertToAbsolutePath(targetObject.paths.source, root_paths.source);
   targetObject.sources.forEach(sourcefile => {
     const file_abs_path = convertToAbsolutePath(sourcefile.path, root_paths.source);
-    const file_path = path.relative(src_path, file_abs_path).replace('\\', '/');
+    const file_path = path.relative(src_path, file_abs_path).replace(/\\/g, '/');
     if (sourcefile.compileGroupIndex !== undefined) {
       fileGroup[sourcefile.compileGroupIndex].sources.push(file_path);
     } else {
