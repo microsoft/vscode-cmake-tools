@@ -41,6 +41,7 @@ export function makeCodeModelDriverTestsuite(
     const workspacePath: string = 'test/unit-tests/driver/workspace';
     const root = getTestRootFilePath(workspacePath);
     const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/test_project');
+    const notInRootWorksapceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/not_in_root_project/cmake');
     const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/empty_project');
 
     let kitDefault: Kit;
@@ -63,6 +64,10 @@ export function makeCodeModelDriverTestsuite(
         done('Default build folder still exists');
       }
 
+      if (!cleanupBuildDir(path.join(notInRootWorksapceFolder, 'build'))) {
+        done('Default build folder still exists');
+      }
+
       if (!cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
         done('Empty project build folder still exists');
       }
@@ -77,12 +82,14 @@ export function makeCodeModelDriverTestsuite(
     });
 
 
-    async function generateCodeModelForConfiguredDriver(args: string[] =
-                                                            []): Promise<null|codemodel_api.CodeModelContent> {
+    async function generateCodeModelForConfiguredDriver(
+        args: string[] = [],
+        worksapce: string = defaultWorkspaceFolder
+        ): Promise<null|codemodel_api.CodeModelContent> {
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 
-      driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+      driver = await driver_generator(executable, config, kitDefault, worksapce, async () => {}, []);
       let code_model: null|codemodel_api.CodeModelContent = null;
       if (driver instanceof codemodel_api.CodeModelDriver) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
@@ -245,6 +252,32 @@ export function makeCodeModelDriverTestsuite(
       const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
       expect(target).to.be.not.undefined;
       expect(target!.sysroot).to.be.eq('/tmp');
+    }).timeout(90000);
+
+    test('Test CMakeList.txt not in root executable target information', async () => {
+      const codemodel_data = await generateCodeModelForConfiguredDriver([], notInRootWorksapceFolder);
+      expect(codemodel_data).to.be.not.null;
+
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE' && t.name == 'NotInRoot');
+      expect(target).to.be.not.undefined;
+
+      // Test target name used for node label
+      expect(target!.name).to.be.eq('NotInRoot');
+      const executableName = process.platform === 'win32' ? 'NotInRoot.exe' : 'NotInRoot';
+      expect(target!.fullName).to.be.eq(executableName);
+      expect(target!.type).to.be.eq('EXECUTABLE');
+
+      // Test location of project source directory
+      // used by tree view to make paths relative
+      expect(path.normalize(target!.sourceDirectory!).toLowerCase())
+          .to.eq(path.normalize(path.join(root, 'not_in_root_project', 'cmake')).toLowerCase());
+
+      // Test main source file used in by tree view
+      expect(target!.fileGroups).to.be.not.undefined;
+      const compile_information = target!.fileGroups!.find(t => !!t.language);
+
+      expect(compile_information).to.be.not.undefined;
+      expect(compile_information!.sources).to.include('../main.cpp');
     }).timeout(90000);
   });
 }
