@@ -814,13 +814,14 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
   const majorVersion = parseInt(inst.installationVersion);
   if (version) {
     const generatorName: string|undefined = VsGenerators[version[1]];
+    let host: string = hostArch.toLowerCase().replace(/ /g, "").startsWith("host=") ? hostArch : "host=" + hostArch;
     if (generatorName) {
       log.debug(` ${localize('generator.present', 'Generator Present: {0}', generatorName)}`);
       kit.preferredGenerator = {
         name: generatorName,
         platform: generatorPlatformFromVSArch[targetArch] as string || targetArch,
         // CMake generator toolsets support also different versions (via -T version=).
-        toolset: majorVersion < 15 ? undefined : "host=" + hostArch
+        toolset: majorVersion < 15 ? undefined : host
       };
     }
     log.debug(` ${localize('selected.preferred.generator.name', 'Selected Preferred Generator Name: {0} {1}', generatorName, JSON.stringify(kit.preferredGenerator))}`);
