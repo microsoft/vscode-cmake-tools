@@ -814,7 +814,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
   const majorVersion = parseInt(inst.installationVersion);
   if (version) {
     const generatorName: string|undefined = VsGenerators[version[1]];
-    let host: string = hostArch.toLowerCase().replace(/ /g, "").startsWith("host=") ? hostArch : "host=" + hostArch;
+    const host: string = hostArch.toLowerCase().replace(/ /g, "").startsWith("host=") ? hostArch : "host=" + hostArch;
     if (generatorName) {
       log.debug(` ${localize('generator.present', 'Generator Present: {0}', generatorName)}`);
       kit.preferredGenerator = {
