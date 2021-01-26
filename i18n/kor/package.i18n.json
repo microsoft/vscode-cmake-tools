@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "테스트 결과에 따라 이 단추의 색을 변경합니다.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'컴팩트' 모드에서 표시되는 텍스트의 최대 길이를 구성합니다.",
 	"cmake-tools.configuration.views.cmake.folders.description": "폴더",
-	"cmake-tools.configuration.views.cmake.outline.description": "프로젝트 개요"
+	"cmake-tools.configuration.views.cmake.outline.description": "프로젝트 개요",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
 }
