@@ -904,9 +904,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
       if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
       util.checkFileExists(util.lightNormalizePath(binPath))) {
         clangKits.push({
-          name: localize({key: 'clang.for.vsmsvc',
-                          comment: ["Clang should stay at the beginning of the string as it is used in UI sorting"]},
-                        'Clang {0} {1} with {2} ({3})', version.version, clang_cli, install_name, vs_arch),
+          name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
           visualStudio: kitVSName(vs),
           visualStudioArchitecture: vs_arch,
           compilers: {
