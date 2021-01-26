@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Povolí změnu barvy tohoto tlačítka v závislosti na výsledcích testů.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Nakonfiguruje maximální délku viditelného textu v režimu compact.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Složky",
-	"cmake-tools.configuration.views.cmake.outline.description": "Osnova projektu"
+	"cmake-tools.configuration.views.cmake.outline.description": "Osnova projektu",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
 }

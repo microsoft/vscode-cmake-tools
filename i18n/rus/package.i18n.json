@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Позволяет изменять цвет этой кнопки в зависимости от результатов теста.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Настраивает максимальную длину видимого текста в \"компактном\" режиме.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Папки",
-	"cmake-tools.configuration.views.cmake.outline.description": "Структура проекта"
+	"cmake-tools.configuration.views.cmake.outline.description": "Структура проекта",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
 }

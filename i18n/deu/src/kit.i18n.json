@@ -31,6 +31,7 @@
 	"detected.kit.for.version": "Erkanntes VsKit für Version",
 	"generator.present": "Generator vorhanden: {0}",
 	"selected.preferred.generator.name": "Ausgewählter bevorzugter Generatorname: {0} {1}",
+	"clang.for.vsmsvc": "Clang {0} {1} mit {2} ({3})",
 	"scanning.for.kits.on.system": "Es wird nach Kits auf dem System gesucht.",
 	"scanning.for.kits": "Es wird nach Kits gesucht.",
 	"scanning.for.cmake.kits": "Es wird nach CMake-Kits gesucht...",

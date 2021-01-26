@@ -31,6 +31,7 @@
 	"detected.kit.for.version": "버전에 대한 검색된 VsKit",
 	"generator.present": "생성기가 있음: {0}",
 	"selected.preferred.generator.name": "선택된 기본 설정 생성기 이름: {0} {1}",
+	"clang.for.vsmsvc": "{2}을(를) 사용하는 Clang {0} {1}({3})",
 	"scanning.for.kits.on.system": "시스템에서 키트를 검색하는 중",
 	"scanning.for.kits": "키트를 검색하는 중",
 	"scanning.for.cmake.kits": "CMake 키트를 검색하는 중...",
