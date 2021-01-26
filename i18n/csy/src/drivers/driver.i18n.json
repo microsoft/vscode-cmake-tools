@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "sourceDirectory není adresář.",
 	"command.version.test.return.code": "Návratový kód testovací verze příkazu {0}",
 	"trying.to.detect.generator": "Probíhá pokus o zjištění generátoru podporovaného systémem.",
+	"compiler.version.return.code": "Návratový kód testu verze kompilátoru {0}",
 	"start.configure": "Spustit konfiguraci",
 	"cmake.flags.are": "Příznaky CMake jsou {0}.",
 	"configure.failed": "Nepovedlo se nakonfigurovat projekt.",

@@ -28,6 +28,7 @@
 	"no.active.folder": "无活动文件夹。",
 	"invalid.folder": "无效的文件夹。",
 	"compilation information.not.found": "找不到此文件的编译信息",
+	"registerTaskProvider": "注册任务提供程序。",
 	"initial.setup": "初始设置",
 	"started": "已启动",
 	"cmake.finished.returned": "{0} 已完成(已返回 {1})",

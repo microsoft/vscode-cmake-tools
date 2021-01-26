@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "\"sourceDirectory\" не является каталогом.",
 	"command.version.test.return.code": "Код возврата при проверке версии команды {0}",
 	"trying.to.detect.generator": "Попытка найти генератор, поддерживаемый системой.",
+	"compiler.version.return.code": "Код возврата при проверке версии компилятора: {0}",
 	"start.configure": "Запустить настройку",
 	"cmake.flags.are": "Флаги CMake: {0}",
 	"configure.failed": "Не удалось настроить проект.",

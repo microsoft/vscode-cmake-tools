@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "\"sourceDirectory\" bir dizin değil",
 	"command.version.test.return.code": "Komut sürümü test dönüş kodu: {0}",
 	"trying.to.detect.generator": "Sistem tarafından desteklenen oluşturucu algılanmaya çalışılıyor",
+	"compiler.version.return.code": "{0} derleyici sürümü test dönüşü kodu",
 	"start.configure": "Yapılandırmayı başlat",
 	"cmake.flags.are": "CMake bayrakları: {0}",
 	"configure.failed": "Proje yapılandırılamadı",

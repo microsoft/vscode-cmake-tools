@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "\"sourceDirectory\" no es un directorio",
 	"command.version.test.return.code": "Código de retorno de la prueba de versión del comando {0}",
 	"trying.to.detect.generator": "Intentando detectar el generador que el sistema admite",
+	"compiler.version.return.code": "Código de retorno de la prueba de versión del compilador {0}",
 	"start.configure": "Iniciar la configuración",
 	"cmake.flags.are": "Las marcas de CMake son {0}",
 	"configure.failed": "No se pudo configurar el proyecto.",

@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "Element „sourceDirectory” nie jest katalogiem",
 	"command.version.test.return.code": "Kod powrotny testu wersji polecenia {0}",
 	"trying.to.detect.generator": "Próba wykrycia generatora obsługiwanego przez system",
+	"compiler.version.return.code": "Kod powrotny testu wersji kompilatora {0}",
 	"start.configure": "Uruchom konfigurowanie",
 	"cmake.flags.are": "Flagi narzędzia Cmake: {0}",
 	"configure.failed": "Nie udało się skonfigurować projektu",

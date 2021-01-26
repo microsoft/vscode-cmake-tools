@@ -28,6 +28,7 @@
 	"no.active.folder": "非作用中的資料夾。",
 	"invalid.folder": "資料夾無效。",
 	"compilation information.not.found": "找不到此檔案的編譯資訊",
+	"registerTaskProvider": "註冊工作提供者。",
 	"initial.setup": "初始設定",
 	"started": "已啟動",
 	"cmake.finished.returned": "{0} 已完成 (傳回 {1})",

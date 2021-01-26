@@ -28,6 +28,7 @@
 	"no.active.folder": "アクティブなフォルダーがありません。",
 	"invalid.folder": "無効なフォルダーです。",
 	"compilation information.not.found": "このファイルのコンパイル情報が見つかりません",
+	"registerTaskProvider": "タスク プロバイダーを登録します。",
 	"initial.setup": "初期セットアップ",
 	"started": "開始",
 	"cmake.finished.returned": "{0} が完了しました ({1} が返されました)",

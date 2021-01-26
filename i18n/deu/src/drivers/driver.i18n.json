@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "\"sourceDirectory\" ist kein Verzeichnis.",
 	"command.version.test.return.code": "Rückgabecode von Befehlsversionstest: {0}",
 	"trying.to.detect.generator": "Es wird versucht, einen vom System unterstützten Generator zu ermitteln.",
+	"compiler.version.return.code": "Rückgabecode von Compilerversionstest: {0}",
 	"start.configure": "Konfiguration starten",
 	"cmake.flags.are": "CMake-Flags: {0}",
 	"configure.failed": "Fehler beim Konfigurieren des Projekts.",

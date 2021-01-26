@@ -28,6 +28,7 @@
 	"no.active.folder": "Aucun dossier actif.",
 	"invalid.folder": "Dossier non valide.",
 	"compilation information.not.found": "Les informations de compilation sont introuvables pour ce fichier",
+	"registerTaskProvider": "Inscrivez le fournisseur de tâches.",
 	"initial.setup": "Configuration initiale",
 	"started": "démarré",
 	"cmake.finished.returned": "{0} a pris fin ({1} retourné)",

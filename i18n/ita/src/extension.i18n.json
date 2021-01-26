@@ -28,6 +28,7 @@
 	"no.active.folder": "Non sono presenti cartelle attive.",
 	"invalid.folder": "La cartella non è valida.",
 	"compilation information.not.found": "Non è possibile trovare le informazioni di compilazione per questo file",
+	"registerTaskProvider": "Registra il provider di attività.",
 	"initial.setup": "Configurazione iniziale",
 	"started": "avviato",
 	"cmake.finished.returned": "{0} terminato (ha restituito {1})",

@@ -28,6 +28,7 @@
 	"no.active.folder": "Нет активной папки.",
 	"invalid.folder": "Недопустимая рабочая папка.",
 	"compilation information.not.found": "Не удалось найти сведения о компиляции для этого файла.",
+	"registerTaskProvider": "Регистрация поставщика задач.",
 	"initial.setup": "Начальная настройка",
 	"started": "запущено",
 	"cmake.finished.returned": "{0} завершено (возвращено {1}).",

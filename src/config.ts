@@ -7,6 +7,7 @@
 import * as logging from '@cmt/logging';
 import * as util from '@cmt/util';
 import * as os from 'os';
+import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
@@ -16,13 +17,16 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = logging.createLogger('config');
 
 export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal';
-
 export type CMakeCommunicationMode = 'legacy'|'serverApi'|'fileApi'|'automatic';
-
 export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
+export type TouchBarButtonVisibility = "default" | "hidden";
 
 interface HardEnv {
   [key: string]: string;
+}
+
+export interface TouchBarConfig {
+  visibility: TouchBarButtonVisibility;
 }
 
 export interface AdvancedStatusBarConfig {
@@ -56,6 +60,7 @@ export interface AdvancedStatusBarConfig {
     visibility?: StatusBarButtonVisibility;
   };
 }
+
 export interface StatusBarConfig {
   advanced?: AdvancedStatusBarConfig;
   visibility: StatusBarButtonVisibility;
@@ -104,6 +109,7 @@ export interface ExtensionConfigurationSettings {
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
+  touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
 }
 
@@ -125,8 +131,6 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get configData() { return this._configData; }
 
-  get statusbar() { return this._configData.statusbar; }
-
   dispose() {
     if (this._updateSubscription) {
       this._updateSubscription.dispose();
@@ -145,7 +149,15 @@ export class ConfigurationReader implements vscode.Disposable {
     reader._updateSubscription = vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('cmake', folder?.uri)) {
         const new_data = ConfigurationReader.loadConfig(folder);
-        reader.update(new_data);
+        const updatedKeys = reader.update(new_data);
+
+        if (updatedKeys.length > 0) {
+          const telemetryProperties: telemetry.Properties = {
+            isSet: updatedKeys.join(";")
+          };
+
+          telemetry.logEvent("settings", telemetryProperties);
+        }
       }
     });
     return reader;
@@ -164,8 +176,9 @@ export class ConfigurationReader implements vscode.Disposable {
     return {...data, ...(for_platform || {})};
   }
 
-  update(newData: ExtensionConfigurationSettings) { this.updatePartial(newData); }
-  updatePartial(newData: Partial<ExtensionConfigurationSettings>) {
+  update(newData: ExtensionConfigurationSettings): string[] { return this.updatePartial(newData); }
+  updatePartial(newData: Partial<ExtensionConfigurationSettings>): string[] {
+    const keys: string[] = [];
     const old_values = {...this.configData};
     Object.assign(this.configData, newData);
     for (const key_ of Object.getOwnPropertyNames(newData)) {
@@ -178,74 +191,45 @@ export class ConfigurationReader implements vscode.Disposable {
       if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
         const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
         em.fire(newData[key]);
+        keys.push(key);
       }
     }
+
+    return keys;
   }
 
   get autoSelectActiveFolder(): boolean { return this.configData.autoSelectActiveFolder; }
-
   get buildDirectory(): string { return this.configData.buildDirectory; }
-
   get installPrefix(): string|null { return this.configData.installPrefix; }
-
   get sourceDirectory(): string { return this.configData.sourceDirectory as string; }
-
   get saveBeforeBuild(): boolean { return !!this.configData.saveBeforeBuild; }
-
   get buildBeforeRun(): boolean { return this.configData.buildBeforeRun; }
-
   get clearOutputBeforeBuild(): boolean { return !!this.configData.clearOutputBeforeBuild; }
-
   get configureSettings(): any { return this.configData.configureSettings; }
-
   get cacheInit() { return this.configData.cacheInit; }
-
   get preferredGenerators(): string[] { return this.configData.preferredGenerators; }
-
   get generator(): string|null { return this.configData.generator; }
-
   get toolset(): string|null { return this.configData.toolset; }
-
   get platform(): string|null { return this.configData.platform; }
-
   get configureArgs(): string[] { return this.configData.configureArgs; }
-
   get buildArgs(): string[] { return this.configData.buildArgs; }
-
   get buildToolArgs(): string[] { return this.configData.buildToolArgs; }
-
   get parallelJobs(): number { return this.configData.parallelJobs; }
-
   get ctest_parallelJobs(): number|null { return this.configData.ctest.parallelJobs; }
-
   get parseBuildDiagnostics(): boolean { return !!this.configData.parseBuildDiagnostics; }
-
   get enableOutputParsers(): string[]|null { return this.configData.enabledOutputParsers; }
-
   get raw_cmakePath(): string { return this.configData.cmakePath; }
-
   get raw_ctestPath(): string { return this.configData.ctestPath; }
-
   get debugConfig(): any { return this.configData.debugConfig; }
-
   get environment() { return this.configData.environment; }
-
   get configureEnvironment() { return this.configData.configureEnvironment; }
-
   get buildEnvironment() { return this.configData.buildEnvironment; }
-
   get testEnvironment() { return this.configData.testEnvironment; }
-
   get defaultVariants(): Object { return this.configData.defaultVariants; }
-
   get ctestArgs(): string[] { return this.configData.ctestArgs; }
-
   get configureOnOpen() { return this.configData.configureOnOpen; }
-
   get configureOnEdit() { return this.configData.configureOnEdit; }
-
   get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
-
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
@@ -276,10 +260,12 @@ export class ConfigurationReader implements vscode.Disposable {
   }
 
   get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
-
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
-
   get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
+  get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
+  get buildTask(): boolean { return this.configData.buildTask; }
+  get outputLogEncoding(): string { return this.configData.outputLogEncoding; }
+  get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
 
   get loggingLevel(): LogLevelKey {
     if (process.env['CMT_LOGGING_LEVEL']) {
@@ -287,10 +273,9 @@ export class ConfigurationReader implements vscode.Disposable {
     }
     return this.configData.loggingLevel;
   }
-  get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
-  get buildTask(): boolean { return this.configData.buildTask; }
-  get outputLogEncoding(): string { return this.configData.outputLogEncoding; }
-  get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
+
+  get touchbar(): TouchBarConfig { return this.configData.touchbar; }
+  get statusbar() { return this._configData.statusbar; }
 
   private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
     autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
@@ -335,8 +320,8 @@ export class ConfigurationReader implements vscode.Disposable {
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+    touchbar: new vscode.EventEmitter<TouchBarConfig>(),
     statusbar: new vscode.EventEmitter<StatusBarConfig>()
-
   };
 
   /**

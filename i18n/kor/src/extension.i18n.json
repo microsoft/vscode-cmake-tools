@@ -28,6 +28,7 @@
 	"no.active.folder": "활성 폴더가 없습니다.",
 	"invalid.folder": "폴더가 잘못되었습니다.",
 	"compilation information.not.found": "이 파일의 컴파일 정보를 찾을 수 없음",
+	"registerTaskProvider": "작업 공급자를 등록하세요.",
 	"initial.setup": "초기 설정",
 	"started": "시작됨",
 	"cmake.finished.returned": "{0} 완료({1}이(가) 반환됨)",

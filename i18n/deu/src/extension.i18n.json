@@ -28,6 +28,7 @@
 	"no.active.folder": "Kein aktiver Ordner.",
 	"invalid.folder": "Ungültiger Ordner.",
 	"compilation information.not.found": "Die Kompilierungsinformationen für diese Datei wurden nicht gefunden.",
+	"registerTaskProvider": "Registrieren Sie den Aufgabenanbieter.",
 	"initial.setup": "Erste Einrichtung",
 	"started": "gestartet",
 	"cmake.finished.returned": "{0} abgeschlossen ({1} zurückgegeben)",

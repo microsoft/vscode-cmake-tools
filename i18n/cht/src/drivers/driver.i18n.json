@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "\"sourceDirectory\" 不是目錄",
 	"command.version.test.return.code": "命令版本測試傳回碼 {0}",
 	"trying.to.detect.generator": "正在嘗試偵測系統支援的產生器",
+	"compiler.version.return.code": "編譯器版本測試傳回碼 {0}",
 	"start.configure": "啟動設定",
 	"cmake.flags.are": "CMake 旗標為 {0}",
 	"configure.failed": "無法設定專案",

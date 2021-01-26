@@ -28,6 +28,7 @@
 	"no.active.folder": "Não há nenhuma pasta ativa.",
 	"invalid.folder": "Pasta inválida.",
 	"compilation information.not.found": "Não é possível localizar informações para este arquivo",
+	"registerTaskProvider": "Registrar o provedor de tarefas.",
 	"initial.setup": "Instalação inicial",
 	"started": "iniciado",
 	"cmake.finished.returned": "{0} concluído ({1} retornados)",

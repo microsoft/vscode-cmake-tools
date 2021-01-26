@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "\"sourceDirectory\" 不是目录",
 	"command.version.test.return.code": "命令版本测试返回代码 {0}",
 	"trying.to.detect.generator": "正在尝试检测系统支持的生成器",
+	"compiler.version.return.code": "编译器版本测试返回代码 {0}",
 	"start.configure": "开始配置",
 	"cmake.flags.are": "CMake 标志为 {0}",
 	"configure.failed": "未能配置项目",

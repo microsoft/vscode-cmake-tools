@@ -15,6 +15,7 @@
 	"sourcedirectory.not.a.directory": "\"sourceDirectory\" はディレクトリではありません",
 	"command.version.test.return.code": "コマンド バージョン テストのリターン コード {0}",
 	"trying.to.detect.generator": "システムでサポートされているジェネレーターを検出しようとしています",
+	"compiler.version.return.code": "コンパイラ バージョン テストのリターン コード {0}",
 	"start.configure": "構成の開始",
 	"cmake.flags.are": "CMake フラグ: {0}",
 	"configure.failed": "プロジェクトを構成できませんでした",

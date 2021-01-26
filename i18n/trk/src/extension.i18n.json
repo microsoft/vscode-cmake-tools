@@ -28,6 +28,7 @@
 	"no.active.folder": "Etkin klasör yok.",
 	"invalid.folder": "Geçersiz klasör.",
 	"compilation information.not.found": "Bu dosya için derleme bilgileri bulunamıyor",
+	"registerTaskProvider": "Görev sağlayıcısını kaydedin.",
 	"initial.setup": "Başlangıç kurulumu",
 	"started": "başlatıldı",
 	"cmake.finished.returned": "{0} tamamlandı ({1} döndürüldü)",
