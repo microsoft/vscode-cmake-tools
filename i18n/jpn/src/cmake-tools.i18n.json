@@ -69,7 +69,6 @@
 	"waiting.on.variant": "バリアントの選択を待機しています",
 	"no.variant.abort": "バリアントが選択されていません。構成を中止します",
 	"warn.skip.configure.when.cache.present": "拡張機能によって、現時点で構成が必要であると判断されましたが、 \\\n                          設定 cmake.skipConfigureWhenCachePresent がオンになっているため、スキップしています。\\\n                          CMake キャッシュが最新の構成変更と同期していることをご確認ください。",
-	"cmake.drive.died.during.tasksbuildcommend": "tasksBuildCommand の実行中に CMake ドライバーが停止しました",
 	"run.build": "フォルダーのビルド中: {0}",
 	"unable.to.configure": "ビルドに失敗しました。プロジェクトを構成できません",
 	"driver.died.after.successful.configure": "CMake ドライバーは、構成が成功した直後に停止しました",

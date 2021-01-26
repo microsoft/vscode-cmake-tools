@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Hiermit wird die Farbänderung für diese Schaltfläche je nach Testergebnis aktiviert.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Hiermit wird die maximale Länge des sichtbaren Texts im Compact-Modus konfiguriert.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Ordner",
-	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung"
+	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
 }

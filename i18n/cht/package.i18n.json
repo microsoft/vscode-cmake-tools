@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "允許根據測試結果變更此按鈕的色彩。",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "在「精簡」模式中設定顯示文字的最大長度。",
 	"cmake-tools.configuration.views.cmake.folders.description": "資料夾",
-	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱"
+	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
 }

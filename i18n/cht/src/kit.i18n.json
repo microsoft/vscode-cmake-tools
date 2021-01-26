@@ -31,6 +31,7 @@
 	"detected.kit.for.version": "已偵測到 VsKit 的版本",
 	"generator.present": "產生器已存在: {0}",
 	"selected.preferred.generator.name": "已選取慣用產生器名稱: {0} {1}",
+	"clang.for.vsmsvc": "具有 {2} ({3}) 的 Clang {0} {1}",
 	"scanning.for.kits.on.system": "正在掃描系統上的套件",
 	"scanning.for.kits": "正在掃描套件",
 	"scanning.for.cmake.kits": "正在掃描 CMake 套件...",

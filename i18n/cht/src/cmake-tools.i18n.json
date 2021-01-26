@@ -69,7 +69,6 @@
 	"waiting.on.variant": "正在等候變化選取項目",
 	"no.variant.abort": "未選取任何變化。中止設定",
 	"warn.skip.configure.when.cache.present": "延伸模組判斷目前需要設定\\\n                          但因為設定 cmake.skipConfigureWhenCachePresent 已開啟，所以正在跳過設定。\\\n                          請確定 CMake 快取與最新的設定變更同步。",
-	"cmake.drive.died.during.tasksbuildcommend": "CMake 驅動程式在 tasksBuildCommand 期間已終止",
 	"run.build": "正在建置資料夾: {0}",
 	"unable.to.configure": "建置失敗: 無法設定專案",
 	"driver.died.after.successful.configure": "設定成功後，CMake 驅動程式已隨即終止",
