@@ -31,6 +31,7 @@
 	"detected.kit.for.version": "Sürüm için VsKit algılandı",
 	"generator.present": "Mevcut Oluşturucu: {0}",
 	"selected.preferred.generator.name": "Seçili Tercih Edilen Oluşturucu Adı: {0} {1}",
+	"clang.for.vsmsvc": "{2} ({3}) ile Clang {0} {1}",
 	"scanning.for.kits.on.system": "Sistemdeki Setler için taranıyor",
 	"scanning.for.kits": "Setler için taranıyor",
 	"scanning.for.cmake.kits": "CMake setleri için taranıyor...",

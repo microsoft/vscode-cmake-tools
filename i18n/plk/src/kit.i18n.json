@@ -31,6 +31,7 @@
 	"detected.kit.for.version": "Wykryto zestaw VsKit dla wersji",
 	"generator.present": "Generator jest dostępny: {0}",
 	"selected.preferred.generator.name": "Nazwa wybranego preferowanego generatora: {0} {1}",
+	"clang.for.vsmsvc": "Clang {0}, {1} dla architektury {2} ({3})",
 	"scanning.for.kits.on.system": "Trwa skanowanie w poszukiwaniu zestawów w systemie",
 	"scanning.for.kits": "Skanowanie w poszukiwaniu zestawów",
 	"scanning.for.cmake.kits": "Trwa skanowanie w poszukiwaniu zestawów narzędzia CMake...",

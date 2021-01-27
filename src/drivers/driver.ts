@@ -387,7 +387,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param keywordSetting Variant Keywords for identification of a variant option
    */
   async setVariant(opts: VariantOption, keywordSetting: Map<string, string>|null) {
-    log.debug(localize('setting.new.variant', 'Setting new variant {0}', opts.long || '(Unnamed)'));
+    log.debug(localize('setting.new.variant', 'Setting new variant {0}', opts.short || '(Unnamed)'));
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
     this._variantLinkage = opts.linkage || null;

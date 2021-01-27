@@ -69,7 +69,6 @@
 	"waiting.on.variant": "Čeká se na výběr varianty.",
 	"no.variant.abort": "Není vybraná žádná varianta. Přerušte příkaz configure.",
 	"warn.skip.configure.when.cache.present": "Rozšíření zjistilo, že se v tuto chvíli vyžaduje konfigurace, \\\n                          ale přeskakujeme ji, protože je zapnuté nastavení cmake.skipConfigureWhenCachePresent. \\\n                          Ujistěte se, že je mezipaměť CMake synchronizovaná s nejnovějšími změnami konfigurace.",
-	"cmake.drive.died.during.tasksbuildcommend": "Během operace tasksBuildCommand se ukončil ovladač CMake.",
 	"run.build": "Sestavuje se složka: {0}",
 	"unable.to.configure": "Sestavení se nepovedlo: projekt nejde nakonfigurovat",
 	"driver.died.after.successful.configure": "Ovladač CMake se ukončil hned po úspěšné konfiguraci.",

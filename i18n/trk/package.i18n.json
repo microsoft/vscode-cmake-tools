@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Test sonuçlarına bağlı olarak bu düğmenin renginde bir değişikliğe neden olur.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'Sıkıştırılmış' modda görünen metnin maksimum uzunluğunu yapılandırır.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Klasörler",
-	"cmake-tools.configuration.views.cmake.outline.description": "Proje Ana Hattı"
+	"cmake-tools.configuration.views.cmake.outline.description": "Proje Ana Hattı",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
 }

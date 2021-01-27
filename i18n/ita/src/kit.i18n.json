@@ -31,6 +31,7 @@
 	"detected.kit.for.version": "Rilevato kit di Visual Studio per la versione",
 	"generator.present": "Generatore presente: {0}",
 	"selected.preferred.generator.name": "Nome del generatore preferito selezionato: {0} {1}",
+	"clang.for.vsmsvc": "Clang {0} {1} con {2} ({3})",
 	"scanning.for.kits.on.system": "Ricerca dei kit nel sistema",
 	"scanning.for.kits": "Ricerca dei kit",
 	"scanning.for.cmake.kits": "Ricerca dei kit CMake...",
