@@ -1735,5 +1735,7 @@
     "webpack/terser-webpack-plugin": "^1.4.5",
     "yargs-parser": "^15.0.1",
     "node-fetch": "^2.6.1"
-  }
+  },
+  "extensionPack": [
+    "twxs.cmake"]
 }
