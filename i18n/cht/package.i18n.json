@@ -124,5 +124,5 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "在「精簡」模式中設定顯示文字的最大長度。",
 	"cmake-tools.configuration.views.cmake.folders.description": "資料夾",
 	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "啟用匯出 compile_commands.json。"
 }
