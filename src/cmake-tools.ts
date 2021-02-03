@@ -961,7 +961,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
     }
     const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
-    this.reRegisterTaskProviderforNewTarget(drv, target);
+    await this.reRegisterTaskProviderforNewTarget(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
@@ -1210,7 +1210,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     await this._setDefaultBuildTarget(target);
     const drv = await this._cmakeDriver;
-    this.reRegisterTaskProviderforNewTarget(drv, target);
+    await this.reRegisterTaskProviderforNewTarget(drv, target);
   }
 
   async reRegisterTaskProviderforNewTarget(drv: CMakeDriver | null, target: string) {
