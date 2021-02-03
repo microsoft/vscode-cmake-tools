@@ -69,7 +69,6 @@
 	"waiting.on.variant": "Ожидание выбора варианта.",
 	"no.variant.abort": "Вариант не выбран. Прервите настройку.",
 	"warn.skip.configure.when.cache.present": "Расширение определило, что сейчас требуется выполнить настройку, \\\n                          но настройка будет пропущена, так как параметр cmake.skipConfigureWhenCachePresent установлен. \\\n                          Убедитесь, что кэш CMake синхронизирован с последними изменениями конфигурации.",
-	"cmake.drive.died.during.tasksbuildcommend": "Драйвер CMake завершил работу во время tasksBuildCommand",
 	"run.build": "Сборка папки: {0}",
 	"unable.to.configure": "Сборка не выполнена: невозможно настроить проект.",
 	"driver.died.after.successful.configure": "Драйвер CMake завершил работу сразу же после успешной настройки.",

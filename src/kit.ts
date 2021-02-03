@@ -130,7 +130,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     return null;
   }
   const lines = exec.stderr.split('\n');
-  const version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)[\s-]/;
+  const version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)(?:[\s-]|$)/;
   let version: string = "";
   let fullVersion: string = "";
   for (const line of lines) {
@@ -814,13 +814,14 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
   const majorVersion = parseInt(inst.installationVersion);
   if (version) {
     const generatorName: string|undefined = VsGenerators[version[1]];
+    const host: string = hostArch.toLowerCase().replace(/ /g, "").startsWith("host=") ? hostArch : "host=" + hostArch;
     if (generatorName) {
       log.debug(` ${localize('generator.present', 'Generator Present: {0}', generatorName)}`);
       kit.preferredGenerator = {
         name: generatorName,
         platform: generatorPlatformFromVSArch[targetArch] as string || targetArch,
         // CMake generator toolsets support also different versions (via -T version=).
-        toolset: majorVersion < 15 ? undefined : "host=" + hostArch
+        toolset: majorVersion < 15 ? undefined : host
       };
     }
     log.debug(` ${localize('selected.preferred.generator.name', 'Selected Preferred Generator Name: {0} {1}', generatorName, JSON.stringify(kit.preferredGenerator))}`);
@@ -903,9 +904,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
       if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
       util.checkFileExists(util.lightNormalizePath(binPath))) {
         clangKits.push({
-          name: localize({key: 'clang.for.vsmsvc',
-                          comment: ["Clang should stay at the beginning of the string as it is used in UI sorting"]},
-                        'Clang {0} {1} with {2} ({3})', version.version, clang_cli, install_name, vs_arch),
+          name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
           visualStudio: kitVSName(vs),
           visualStudioArchitecture: vs_arch,
           compilers: {

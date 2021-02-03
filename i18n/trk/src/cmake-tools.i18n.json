@@ -69,7 +69,6 @@
 	"waiting.on.variant": "Varyant seçimi bekleniyor",
 	"no.variant.abort": "Seçilen varyant yok. Yapılandırmayı durdur",
 	"warn.skip.configure.when.cache.present": "Uzantı, şu anda bir yapılandırmanın gerektiğini belirledi \\\n                          ancak cmake.skipConfigureWhenCachePresent özelliği AÇIK olduğundan atlanıyor. \\\n                          CMake önbelleğinin en son yapılandırma değişiklikleriyle eşitlendiğinden emin olun.",
-	"cmake.drive.died.during.tasksbuildcommend": "CMake sürücüsü tasksBuildCommand sırasında sonlandırıldı",
 	"run.build": "Yapı klasörü: {0}",
 	"unable.to.configure": "Derleme başarısız oldu: Proje yapılandırılamıyor",
 	"driver.died.after.successful.configure": "CMake sürücüsü, başarılı yapılandırmadan hemen sonra sonlandırıldı",

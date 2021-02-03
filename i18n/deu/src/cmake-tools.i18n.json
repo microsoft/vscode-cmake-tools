@@ -69,7 +69,6 @@
 	"waiting.on.variant": "Warten auf Variantenauswahl",
 	"no.variant.abort": "Keine Variante ausgewählt. Konfiguration abbrechen",
 	"warn.skip.configure.when.cache.present": "Die Erweiterung hat festgestellt, dass momentan eine Konfiguration erforderlich ist, \\\n                          aber diese wird übersprungen, weil die Einstellung \"cmake.skipConfigureWhenCachePresent\" aktiviert ist. \\\n                          Stellen Sie sicher, dass der CMake-Cache mit den neuesten Konfigurationsänderungen synchronisiert ist.",
-	"cmake.drive.died.during.tasksbuildcommend": "Der CMake-Treiber wurde während tasksBuildCommand beendet.",
 	"run.build": "Ordner wird erstellt: {0}",
 	"unable.to.configure": "Buildfehler: Das Projekt konnte nicht konfiguriert werden.",
 	"driver.died.after.successful.configure": "Der CMake-Treiber wurde unmittelbar nach der erfolgreichen Konfiguration beendet.",

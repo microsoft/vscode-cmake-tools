@@ -69,7 +69,6 @@
 	"waiting.on.variant": "En attente de la sélection de variante",
 	"no.variant.abort": "Aucune variante sélectionnée. Abandon de la configuration",
 	"warn.skip.configure.when.cache.present": "L'extension a déterminé qu'une configuration est actuellement nécessaire, \\\n                          mais nous l'ignorons parce que cmake.skipConfigureWhenCachePresent est activé. \\\n                          Vérifiez que le cache CMake est synchronisé avec les derniers changements de configuration.",
-	"cmake.drive.died.during.tasksbuildcommend": "Le pilote CMake a cessé de fonctionner durant tasksBuildCommand",
 	"run.build": "Génération du dossier : {0}",
 	"unable.to.configure": "Échec de la build : impossible de configurer le projet",
 	"driver.died.after.successful.configure": "Le pilote CMake a cessé de fonctionner juste après la réussite de la configuration",

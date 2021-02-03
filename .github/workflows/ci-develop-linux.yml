@@ -8,14 +8,16 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
       - name: Install dependent packages
-        run: sudo apt install powershell gdb xvfb
+        run: |
+          sudo apt update
+          sudo apt install powershell gdb xvfb
 
       - name: Build the extension and run tests
         uses: GabrielBB/xvfb-action@v1.4

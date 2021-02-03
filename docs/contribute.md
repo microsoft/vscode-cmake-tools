@@ -31,7 +31,8 @@ To lint the source as you make changes, install the [tslint extension](https://m
 
 * Use inline field initializers whenever possible.
 * Declare properties in constructor parameters lists, when possible.
-* Use `lowerCamelCase` for public members, methods, and function/method parameters.
-* Use `snake_case` for variables.
+* Use `lowerCamelCase` for public members, methods, variables, and function/method parameters.
 * Use `kebab-case` (hyphen-separated-names) for files and directories. 
 * Prefix private members/methods with an underscore and write them `_withCamelCase`.
+
+> `snake_case` was used historically for variables in this repo, but we will be phasing that style out. All new variables should be `lowerCamelCase`.
