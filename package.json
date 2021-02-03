@@ -1737,5 +1737,6 @@
     "node-fetch": "^2.6.1"
   },
   "extensionPack": [
-    "twxs.cmake"]
+    "twxs.cmake"
+  ]
 }
