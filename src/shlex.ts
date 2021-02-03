@@ -73,7 +73,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
 
     if (/[\t \n\r\f]/.test(char)) {
       if (token !== undefined) {
-        yield token;
+        yield quote(token, opt);
       }
       token = undefined;
       continue;
@@ -84,7 +84,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
   }
 
   if (token !== undefined) {
-    yield token;
+    yield quote(token, opt);
   }
 }
 
