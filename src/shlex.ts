@@ -71,9 +71,9 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
       continue;
     }
 
-    if (/[\t \n\r\f]/.test(char)) {
+    if (!quoteChar && /[\t \n\r\f]/.test(char)) {
       if (token !== undefined) {
-        yield quote(token, opt);
+        yield token.includes(' ') ? `"${token}"` : token;
       }
       token = undefined;
       continue;
@@ -84,7 +84,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
   }
 
   if (token !== undefined) {
-    yield quote(token, opt);
+    yield token.includes(' ') ? `"${token}"` : token;
   }
 }
 
