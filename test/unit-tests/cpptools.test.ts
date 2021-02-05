@@ -146,7 +146,8 @@ suite('CppTools tests', () => {
             }
           ]
         }]
-      }]
+      }],
+      toolchains: new Map<string, codemodel_api.CodeModelToolchain>()
     };
 
     provider.updateConfigurationData({cache, codeModel, activeTarget: 'target1', folder: here});
@@ -172,11 +173,16 @@ suite('CppTools tests', () => {
               }]
             }]
         }]
-      }]
+      }],
+      toolchains: new Map<string, codemodel_api.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
     };
     provider.updateConfigurationData({cache, codeModel: codeModel2, activeTarget: 'target3', folder: smokeFolder});
 
-    let configurations = await provider.provideConfigurations([uri]);
+    let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile2)]);
+    expect(configurations.length).to.eq(1);
+    expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');
+
+    configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG1');
 
@@ -184,6 +190,7 @@ suite('CppTools tests', () => {
     configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG2');
+    expect(configurations[0].configuration.compilerPath).to.eq('clang++');
 
     provider.updateConfigurationData({cache, codeModel, activeTarget: 'all', folder: here});
     configurations = await provider.provideConfigurations([uri]);
