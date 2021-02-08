@@ -7,20 +7,17 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     mode: process.platform === 'win32' ? 'windows' : 'posix',
   };
   const quoteChars = opt.mode === 'posix' ? '\'"' : '"';
-  let escapeChars = '';
-  if (opt.mode == 'posix') {
-    escapeChars += '\\';
-  }
-  let quoteChar: string | undefined;
+  let escapeChars = '\\';
   let escapeChar: string | undefined;
   let token: string | undefined;
-  let subquote: boolean = false;
+  let isSubQuote: boolean = false;
+
   for (let i = 0; i < str.length; ++i) {
     const char = str.charAt(i);
     if (escapeChar) {
       if (char === '\n') {
         // Do nothing
-      } else if (!quoteChar || char !== quoteChar || escapeChars.includes(char)) {
+      } else if (escapeChars.includes(char)) {
         token = (token || '') + char;
       } else {
         token = (token || '') + escapeChar + char;
@@ -31,49 +28,35 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     }
 
     if (escapeChars.includes(char)) {
-      if (quoteChar && escapeChars.includes(quoteChar)) {
-        // Ignore this.
-      } else {
         // We're parsing an escape sequence.
         escapeChar = char;
         continue;
-      }
     }
 
-    if (quoteChar) {
-      if (char === quoteChar) {
-        // Reached the end of a sub-quoted token.
-        if (subquote) {
-          subquote = false;
+    if (isSubQuote) {
+      if (quoteChars.includes(char)) {
+          // Reached the end of a sub-quoted token.
+          isSubQuote = false;
           token = (token || '') + char;
-        }
-        // Reached the end of a quoted token.
-        quoteChar = undefined;
-        continue;
+          continue;
       }
       // Another quoted char
       token = (token || '') + char;
       continue;
     }
 
-    if (quoteChars.includes(char)) {
+    if (i > 0 && quoteChars.includes(char)) {
       // Beginning of a sub-quoted token
-      if (i > 0 && (opt.mode === 'posix' ? (str.substring(i - 1, i + 1) === "\\\'" || str.substring(i - 1, i + 1) === "\\\"") : str.substring(i - 1, i + 1) === "\\\"")) {
-        subquote = true;
-        quoteChar = char;
+        isSubQuote = true;
+        //quoteChar = char;
         // Accumulate
         token = (token || '') + char;
         continue;
-      }
-      // Beginning a new quoted token
-      quoteChar = char;
-      token = '';
-      continue;
     }
 
-    if (!quoteChar && /[\t \n\r\f]/.test(char)) {
+    if (!isSubQuote && /[\t \n\r\f]/.test(char)) {
       if (token !== undefined) {
-        yield token.includes(' ') ? `"${token}"` : token;
+        yield token;
       }
       token = undefined;
       continue;
@@ -84,7 +67,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
   }
 
   if (token !== undefined) {
-    yield token.includes(' ') ? `"${token}"` : token;
+    yield token;
   }
 }
 
