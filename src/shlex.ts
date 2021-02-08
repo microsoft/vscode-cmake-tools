@@ -28,17 +28,17 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     }
 
     if (escapeChars.includes(char)) {
-        // We're parsing an escape sequence.
-        escapeChar = char;
-        continue;
+      // We're parsing an escape sequence.
+      escapeChar = char;
+      continue;
     }
 
     if (isSubQuote) {
       if (quoteChars.includes(char)) {
-          // Reached the end of a sub-quoted token.
-          isSubQuote = false;
-          token = (token || '') + char;
-          continue;
+        // Reached the end of a sub-quoted token.
+        isSubQuote = false;
+        token = (token || '') + char;
+        continue;
       }
       // Another quoted char
       token = (token || '') + char;
@@ -47,11 +47,11 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
 
     if (i > 0 && quoteChars.includes(char)) {
       // Beginning of a sub-quoted token
-        isSubQuote = true;
-        //quoteChar = char;
-        // Accumulate
-        token = (token || '') + char;
-        continue;
+      isSubQuote = true;
+      //quoteChar = char;
+      // Accumulate
+      token = (token || '') + char;
+      continue;
     }
 
     if (!isSubQuote && /[\t \n\r\f]/.test(char)) {
