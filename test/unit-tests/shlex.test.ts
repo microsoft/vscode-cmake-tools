@@ -10,10 +10,30 @@ suite('shlex testing', () => {
     const pairs: [string, string[]][] = [
       ['foo', ['foo']],
       ['foo bar', ['foo', 'bar']],
-      ['"foo" bar', ['foo', 'bar']],
+      ['"foo" bar', ['"foo"', 'bar']],
       ['', []],
       ['""', ['']],
-      [`'quote arg'`, [`'quote`, `arg'`]],
+      [`'quote arg'`, [`'quote arg'`]],
+      ['Something    ', ['Something']],
+      ['"   fail"', ['   fail']],
+      ['    arg', ['arg']],
+      ['foo     bar', ['foo', 'bar']],
+      ['"C:\\Program Files" something', ['"C:\\Program Files"', 'something']],
+      ['foo "" bar', ['foo', '', 'bar']],
+    ];
+
+    for (const [cmd, expected] of pairs) {
+      expect(splitWin(cmd)).to.eql(expected, `Bad parse for string: ${cmd}`);
+    }
+  });
+  test('Posix shell splitting', () => {
+    const pairs: [string, string[]][] = [
+      ['foo', ['foo']],
+      ['foo bar', ['foo', 'bar']],
+      ['"foo" bar', ['"foo"', 'bar']],
+      ['', []],
+      ['""', ['']],
+      [`'quote arg'`, [`'quote arg'`]],
       ['Something    ', ['Something']],
       ['"   fail"', ['   fail']],
       ['    arg', ['arg']],
