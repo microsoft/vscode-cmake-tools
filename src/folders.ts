@@ -6,6 +6,7 @@ import CMakeTools from '@cmt/cmake-tools';
 import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
+import { PresetsController } from '@cmt/presetsController';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import * as util from './util';
@@ -14,13 +15,26 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export class CMakeToolsFolder {
-  private constructor(readonly cmakeTools: CMakeTools, readonly kitsController: KitsController) { }
+  private constructor(readonly cmakeTools: CMakeTools,
+                      readonly kitsController: KitsController,
+                      readonly presetsController: PresetsController) { }
 
   static async init(cmakeTools: CMakeTools) {
-    return new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools));
+    return new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools), new PresetsController(cmakeTools));
   }
 
   get folder() { return this.cmakeTools.folder; }
+
+  // Go through the decision tree here since there would be dependency issues if we do this in config.ts
+  get useCMakePresets(): boolean {
+    if (this.cmakeTools.workspaceContext.config.useCMakePresets === 'automatic') {
+      // Always check if configured before since the state could be reset
+      const state = this.cmakeTools.workspaceContext.state;
+      const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
+      return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
+    }
+    return this.cmakeTools.workspaceContext.config.useCMakePresets === 'true';
+  }
 
   dispose() {
     this.cmakeTools.dispose();

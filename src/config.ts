@@ -111,6 +111,7 @@ export interface ExtensionConfigurationSettings {
   loggingLevel: LogLevelKey;
   touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
+  useCMakePresets: string;
 }
 
 type EmittersOf<T> = {
@@ -232,6 +233,11 @@ export class ConfigurationReader implements vscode.Disposable {
   get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
+  /**
+   * Use folder.useCMakePresets() to check the actual decision on if we are using CMake presets.
+   */
+  get useCMakePresets(): string { return this.configData.useCMakePresets; }
+
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
     if (communicationMode == "automatic" && this.useCMakeServer) {
@@ -321,7 +327,8 @@ export class ConfigurationReader implements vscode.Disposable {
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
-    statusbar: new vscode.EventEmitter<StatusBarConfig>()
+    statusbar: new vscode.EventEmitter<StatusBarConfig>(),
+    useCMakePresets: new vscode.EventEmitter<string>()
   };
 
   /**

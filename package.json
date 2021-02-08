@@ -1585,6 +1585,16 @@
           "type": "boolean",
           "default": true,
           "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%"
+        },
+        "cmake.useCMakePresets":  {
+          "type": "string",
+          "enum": [
+            "true",
+            "false",
+            "automatic"
+          ],
+          "default": "automatic",
+          "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%"
         }
       }
     },
@@ -1647,6 +1657,14 @@
       {
         "fileMatch": "cmake-kits.json",
         "url": "cmake-tools-schema:///schemas/kits-schema.json"
+      },
+      {
+        "fileMatch": "CMakePresets.json",
+        "url": "https://gitlab.kitware.com/cmake/cmake/-/raw/release/Help/manual/presets/schema.json"
+      },
+      {
+        "fileMatch": "CMakeUserPresets.json",
+        "url": "https://gitlab.kitware.com/cmake/cmake/-/raw/release/Help/manual/presets/schema.json"
       }
     ]
   },
