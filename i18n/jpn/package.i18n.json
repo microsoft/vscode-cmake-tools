@@ -124,5 +124,5 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'compact' モードで表示されるテキストの最大長を構成します。",
 	"cmake-tools.configuration.views.cmake.folders.description": "フォルダー",
 	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json のエクスポートを有効にします。"
 }
