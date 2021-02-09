@@ -7,7 +7,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     mode: process.platform === 'win32' ? 'windows' : 'posix',
   };
   const quoteChars = opt.mode === 'posix' ? '\'"' : '"';
-  let escapeChars = '\\';
+  const escapeChars = '\\';
   let escapeChar: string | undefined;
   let token: string | undefined;
   let isSubQuote: boolean = false;
