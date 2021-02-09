@@ -130,7 +130,9 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
     return null;
   }
   const lines = exec.stderr.split('\n');
-  const version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)(?:[\s-]|$)/;
+  const versionWord: string = localize("version.word", "version");
+  const version_re_str: string = `^(?:Apple LLVM|.*clang) ${versionWord} ([^\s-]+)(?:[\s-]|$)`;
+  const version_re = RegExp(version_re_str, "mgi");
   let version: string = "";
   let fullVersion: string = "";
   for (const line of lines) {
@@ -194,12 +196,14 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     }
 
     const compiler_version_output = exec.stderr.trim().split('\n');
-    const version_re = /^gcc version (.*?) .*/;
+    const versionWord: string = localize("version.word", "version");
+    const version_re_str: string = `^gcc(-| )${versionWord} (.*?) .*`;
+    const version_re = RegExp(version_re_str, "mgi");
     let version: string = "";
     for (const line of compiler_version_output) {
       const version_match = version_re.exec(line);
       if (version_match !== null) {
-        version = version_match[1];
+        version = version_match[2];
         break;
       }
     }
