@@ -247,6 +247,26 @@
                 "CMT_QUIET_CONSOLE": "1",
                 "CMT_SMOKE_DIR": "${workspaceFolder}/test/smoke"
             }
-        }
+        },
+        {
+            "name": "Launch One Test",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionTestsPath=${workspaceFolder}/out/test/unit-tests"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/test/unit-tests/*"
+            ],
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1",
+                "HasVs": "true"
+            },
+            "preLaunchTask": "build-tests-with-tsc-watch"
+        },
     ]
 }
