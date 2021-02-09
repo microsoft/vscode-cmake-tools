@@ -22,7 +22,6 @@ import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
-import * as shlex from '@cmt/shlex';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
