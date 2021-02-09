@@ -131,7 +131,7 @@ async function getClangVersion(binPath: string): Promise<ClangVersion|null> {
   }
   const lines = exec.stderr.split('\n');
   const versionWord: string = localize("version.word", "version");
-  const version_re_str: string = `^(?:Apple LLVM|.*clang) ${versionWord} ([^\s-]+)(?:[\s-]|$)`;
+  const version_re_str: string = `^(?:Apple LLVM|.*clang) ${versionWord} ([^\\s-]+)(?:[\\s-]|$)`;
   const version_re = RegExp(version_re_str, "mgi");
   let version: string = "";
   let fullVersion: string = "";
