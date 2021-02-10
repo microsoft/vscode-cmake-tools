@@ -20,7 +20,7 @@ export class CMakeToolsFolder {
                       readonly presetsController: PresetsController) { }
 
   static async init(cmakeTools: CMakeTools) {
-    return new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools), new PresetsController(cmakeTools));
+    return new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools), await PresetsController.init(cmakeTools));
   }
 
   get folder() { return this.cmakeTools.folder; }
