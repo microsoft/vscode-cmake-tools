@@ -37,10 +37,10 @@ suite('shlex testing', () => {
       ['foo     bar', ['foo', 'bar']],
       ['"C:\\Program Files" something', ['"C:\\Program Files"', 'something']],
       ['foo "" bar', ['foo', '""', 'bar']],
-      [`\"\'fo o\'\" bar`, [`\"\'fo o\'\"`, 'bar']],
+      [`\"fo o\" bar`, [`\"fo o\"`, 'bar']],
       [`'quote arg'`, [`'quote arg'`]],
       ['"   fail"', ['"   fail"']],
-      [`-DAWESOME=\"\\\"\'fo o\' bar\\\"\"`, [`-DAWESOME=\"\\\"\'fo o\' bar\\\"\"`]],
+      [`-DAWESOME=\"\\\"fo o bar\\\"\"`, [`-DAWESOME=\"\\\"\'fo o\' bar\\\"\"`]],
     ];
 
     for (const [cmd, expected] of pairs) {
