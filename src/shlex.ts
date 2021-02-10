@@ -48,7 +48,6 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     if (quoteChars.includes(char)) {
       // Beginning of a sub-quoted token
       isSubQuote = true;
-      //quoteChar = char;
       // Accumulate
       token = (token || '') + char;
       continue;
