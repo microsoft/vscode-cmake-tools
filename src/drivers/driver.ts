@@ -266,34 +266,29 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Launch the given compilation command in an embedded terminal.
    * @param cmd The compilation command from a compilation database to run
    */
-  runCompileCommand(cmd: CompileCommand): vscode.Terminal {
-    if ('command' in cmd) {
-      const args = [...shlex.split(cmd.command)];
-      return this.runCompileCommand({directory: cmd.directory, file: cmd.file, arguments: args});
-    } else {
-      const env = this.getEffectiveSubprocessEnvironment();
-      const key = `${cmd.directory}${JSON.stringify(env)}`;
-      let existing = this._compileTerms.get(key);
-      if (existing && this.config.clearOutputBeforeBuild) {
-        this._compileTerms.delete(key);
-        existing.dispose();
-        existing = undefined;
-      }
-      if (!existing) {
-        const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
-        const term = vscode.window.createTerminal({
-          name: localize('file.compilation', 'File Compilation'),
-          cwd: cmd.directory,
-          env,
-          shellPath,
-        });
-        this._compileTerms.set(key, term);
-        existing = term;
-      }
-      existing.show();
-      existing.sendText(cmd.arguments.map(s => shlex.quote(s)).join(' ') + '\r\n');
-      return existing;
+  runCompileCommand(cmd: ArgsCompileCommand): vscode.Terminal {
+    const env = this.getEffectiveSubprocessEnvironment();
+    const key = `${cmd.directory}${JSON.stringify(env)}`;
+    let existing = this._compileTerms.get(key);
+    if (existing && this.config.clearOutputBeforeBuild) {
+      this._compileTerms.delete(key);
+      existing.dispose();
+      existing = undefined;
     }
+    if (!existing) {
+      const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
+      const term = vscode.window.createTerminal({
+        name: localize('file.compilation', 'File Compilation'),
+        cwd: cmd.directory,
+        env,
+        shellPath,
+      });
+      this._compileTerms.set(key, term);
+      existing = term;
+    }
+    existing.show();
+    existing.sendText(cmd.command + '\r\n');
+    return existing;
   }
 
   /**
