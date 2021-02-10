@@ -4,12 +4,11 @@
 
 import * as path from 'path';
 import * as vscode from 'vscode';
-
 import * as api from '@cmt/api';
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/code-pages';
 import {ConfigureTrigger} from "@cmt/cmake-tools";
-import {CompileCommand} from '@cmt/compdb';
+import {ArgsCompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
 import {CMakeBuildConsumer, CompileOutputConsumer} from '@cmt/diagnostics/build';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
