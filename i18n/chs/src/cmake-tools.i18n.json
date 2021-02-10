@@ -69,7 +69,6 @@
 	"waiting.on.variant": "正在等待变量选择",
 	"no.variant.abort": "未选择任何变量。中止配置",
 	"warn.skip.configure.when.cache.present": "扩展已确定目前需要配置，\\\n                          但由于 cmake.skipConfigureWhenCachePresent 设置已启用，我们将跳过配置。\\\n                          请确保 CMake 缓存与最新的配置更改同步。",
-	"cmake.drive.died.during.tasksbuildcommend": "CMake 驱动程序在 tasksBuildCommand 期间终止",
 	"run.build": "正在生成文件夹: {0}",
 	"unable.to.configure": "生成失败: 无法配置项目",
 	"driver.died.after.successful.configure": "CMake 驱动程序在成功配置后立即终止",

@@ -69,7 +69,6 @@
 	"waiting.on.variant": "Oczekiwanie przy wyborze wariantu",
 	"no.variant.abort": "Nie wybrano wariantu. Przerwij konfigurowanie.",
 	"warn.skip.configure.when.cache.present": "Rozszerzenie określiło, że w tym momencie jest wymagana konfiguracja, \\\n                          ale pominiemy ją, ponieważ ustawienie cmake.skipConfigureWhenCachePresent jest włączone. \\\n                          Upewnij się, że pamięć podręczna narzędzia CMake jest zsynchronizowana z najnowszymi zmianami konfiguracji.",
-	"cmake.drive.died.during.tasksbuildcommend": "Sterownik narzędzia CMake zakończył pracę podczas operacji tasksBuildCommand",
 	"run.build": "Kompilowanie folderu: {0}",
 	"unable.to.configure": "Kompilacja nie powiodła się: nie można skonfigurować projektu",
 	"driver.died.after.successful.configure": "Sterownik narzędzia CMake zakończył pracę natychmiast po pomyślnym skonfigurowaniu",

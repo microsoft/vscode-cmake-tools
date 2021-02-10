@@ -69,7 +69,6 @@
 	"waiting.on.variant": "In attesa della selezione della variante",
 	"no.variant.abort": "Non è stata selezionata alcuna variante. Interrompere la configurazione",
 	"warn.skip.configure.when.cache.present": "L'estensione ha determinato che in questo momento è necessaria una configurazione, \\\n                          ma verrà ignorata perché cmake.skipConfigureWhenCachePresent è impostato su ON. \\\n                          Assicurarsi che la cache CMake sia sincronizzata con le ultime modifiche apportate alla configurazione.",
-	"cmake.drive.died.during.tasksbuildcommend": "Il driver di CMake è stato arrestato durante tasksBuildCommand",
 	"run.build": "Compilazione della cartella: {0}",
 	"unable.to.configure": "Compilazione non riuscita: non è possibile configurare il progetto",
 	"driver.died.after.successful.configure": "Il driver di CMake è stato arrestato subito dopo il completamento della configurazione",
