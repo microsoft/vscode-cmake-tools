@@ -10,16 +10,16 @@ suite('shlex testing', () => {
     const pairs: [string, string[]][] = [
       ['foo', ['foo']],
       ['foo bar', ['foo', 'bar']],
-      //['"\'fo o\'" bar', ['"\'fo o\'"', 'bar']],
       ['', []],
       ['""', ['""']],
-      //[`'quote arg'`, [`'quote`, `arg'`]],
-      ['Something    ', ['Something']],
-      ['"   fail"', ['"   fail"']],
-      ['    arg', ['arg']],
+      ['    Something    ', ['Something']],
       ['foo     bar', ['foo', 'bar']],
       ['"C:\\Program Files" something', ['"C:\\Program Files"', 'something']],
       ['foo "" bar', ['foo', '""', 'bar']],
+      [`\"'fo o'\" bar`, [`\"'fo o'\"`, 'bar']],
+      [`'quote arg'`, [`'quote`, `arg'`]],
+      ['"   fail"', ['"   fail"']],
+      [`-DAWESOME=\"\\\"'fo o' bar\\\"\"`, [`-DAWESOME=\"\\\"'fo o' bar\\\"\"`]],
     ];
 
     for (const [cmd, expected] of pairs) {
@@ -30,17 +30,17 @@ suite('shlex testing', () => {
     const pairs: [string, string[]][] = [
       ['foo', ['foo']],
       ['foo bar', ['foo', 'bar']],
-      //['"\'fo o\'" bar', ['"\'fo o\'"', 'bar']],
       ['', []],
       ['""', ['""']],
-      //[`'quote arg'`, [`'quote arg'`]],
-      ['Something    ', ['Something']],
-      ['"   fail"', ['"   fail"']],
-      ['    arg', ['arg']],
+      [`''`, [`''`]],
+      ['    Something    ', ['Something']],
       ['foo     bar', ['foo', 'bar']],
       ['"C:\\Program Files" something', ['"C:\\Program Files"', 'something']],
       ['foo "" bar', ['foo', '""', 'bar']],
-      [`foo '' bar`, ['foo', `''`, 'bar']],
+      [`\"\'fo o\'\" bar`, [`\"\'fo o\'\"`, 'bar']],
+      [`'quote arg'`, [`'quote arg'`]],
+      ['"   fail"', ['"   fail"']],
+      [`-DAWESOME=\"\\\"\'fo o\' bar\\\"\"`, [`-DAWESOME=\"\\\"\'fo o\' bar\\\"\"`]],
     ];
 
     for (const [cmd, expected] of pairs) {
