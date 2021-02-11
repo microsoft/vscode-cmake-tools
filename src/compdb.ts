@@ -16,25 +16,21 @@ interface BaseCompileCommand {
   output?: string;
 }
 
-interface StringCompileCommand extends BaseCompileCommand {
+export interface ArgsCompileCommand extends BaseCompileCommand {
   command: string;
+  arguments?: string[];
 }
-
-interface ArgsCompileCommand extends BaseCompileCommand {
-  arguments: string[];
-}
-
-export type CompileCommand = StringCompileCommand|ArgsCompileCommand;
 
 export class CompilationDatabase {
   private readonly _infoByFilePath: Map<string, ArgsCompileCommand>;
-  constructor(infos: CompileCommand[]) {
+  constructor(infos: ArgsCompileCommand[]) {
     this._infoByFilePath = infos.reduce(
         (acc, cur) => acc.set(util.platformNormalizePath(cur.file), {
           directory: cur.directory,
           file: cur.file,
           output: cur.output,
-          arguments: 'arguments' in cur ? cur.arguments : [...shlex.split(cur.command)],
+          command: cur.command,
+          arguments: cur.arguments ? cur.arguments : [...shlex.split(cur.command)],
         }),
         new Map<string, ArgsCompileCommand>(),
     );
@@ -48,7 +44,7 @@ export class CompilationDatabase {
     }
     const data = await fs.readFile(dbpath);
     try {
-      const content = JSON.parse(data.toString()) as CompileCommand[];
+      const content = JSON.parse(data.toString()) as ArgsCompileCommand[];
       return new CompilationDatabase(content);
     } catch (e) {
       log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database "{0}": {1}', dbpath, util.errorToString(e)));

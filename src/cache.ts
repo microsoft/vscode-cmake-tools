@@ -188,7 +188,7 @@ export class CMakeCache {
    * @param value Boolean value
    */
   private replace(content: string, key: string, value: string): string {
-    const re = key + ':.+=(.+)';
+    const re = key + ':[^=]+=(.+)';
     const found = content.match(re);
 
     if (found && found.length >= 2) {

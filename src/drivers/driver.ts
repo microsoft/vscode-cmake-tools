@@ -9,7 +9,7 @@ import * as api from '@cmt/api';
 import {CMakeExecutable} from '@cmt/cmake/cmake-executable';
 import * as codepages from '@cmt/code-pages';
 import {ConfigureTrigger} from "@cmt/cmake-tools";
-import {CompileCommand} from '@cmt/compdb';
+import {ArgsCompileCommand} from '@cmt/compdb';
 import {ConfigurationReader} from '@cmt/config';
 import {CMakeBuildConsumer, CompileOutputConsumer} from '@cmt/diagnostics/build';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
@@ -22,7 +22,6 @@ import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 import * as proc from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
-import * as shlex from '@cmt/shlex';
 import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
@@ -267,34 +266,29 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Launch the given compilation command in an embedded terminal.
    * @param cmd The compilation command from a compilation database to run
    */
-  runCompileCommand(cmd: CompileCommand): vscode.Terminal {
-    if ('command' in cmd) {
-      const args = [...shlex.split(cmd.command)];
-      return this.runCompileCommand({directory: cmd.directory, file: cmd.file, arguments: args});
-    } else {
-      const env = this.getEffectiveSubprocessEnvironment();
-      const key = `${cmd.directory}${JSON.stringify(env)}`;
-      let existing = this._compileTerms.get(key);
-      if (existing && this.config.clearOutputBeforeBuild) {
-        this._compileTerms.delete(key);
-        existing.dispose();
-        existing = undefined;
-      }
-      if (!existing) {
-        const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
-        const term = vscode.window.createTerminal({
-          name: localize('file.compilation', 'File Compilation'),
-          cwd: cmd.directory,
-          env,
-          shellPath,
-        });
-        this._compileTerms.set(key, term);
-        existing = term;
-      }
-      existing.show();
-      existing.sendText(cmd.arguments.map(s => shlex.quote(s)).join(' ') + '\r\n');
-      return existing;
+  runCompileCommand(cmd: ArgsCompileCommand): vscode.Terminal {
+    const env = this.getEffectiveSubprocessEnvironment();
+    const key = `${cmd.directory}${JSON.stringify(env)}`;
+    let existing = this._compileTerms.get(key);
+    if (existing && this.config.clearOutputBeforeBuild) {
+      this._compileTerms.delete(key);
+      existing.dispose();
+      existing = undefined;
     }
+    if (!existing) {
+      const shellPath = process.platform === 'win32' ? 'cmd.exe' : undefined;
+      const term = vscode.window.createTerminal({
+        name: localize('file.compilation', 'File Compilation'),
+        cwd: cmd.directory,
+        env,
+        shellPath,
+      });
+      this._compileTerms.set(key, term);
+      existing = term;
+    }
+    existing.show();
+    existing.sendText(cmd.command + '\r\n');
+    return existing;
   }
 
   /**
@@ -387,7 +381,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param keywordSetting Variant Keywords for identification of a variant option
    */
   async setVariant(opts: VariantOption, keywordSetting: Map<string, string>|null) {
-    log.debug(localize('setting.new.variant', 'Setting new variant {0}', opts.long || '(Unnamed)'));
+    log.debug(localize('setting.new.variant', 'Setting new variant {0}', opts.short || '(Unnamed)'));
     this._variantBuildType = opts.buildType || this._variantBuildType;
     this._variantConfigureSettings = opts.settings || this._variantConfigureSettings;
     this._variantLinkage = opts.linkage || null;
@@ -1030,10 +1024,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
       settingMap.BUILD_SHARED_LIBS = util.cmakeify(this._variantLinkage === 'shared');
     }
 
-    // Always export so that we have compile_commands.json
-    settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(true);
-
     const config = vscode.workspace.getConfiguration();
+    // Export compile_commands.json
+    const exportCompileCommandsFile: boolean = config.get("cmake.exportCompileCommandsFile") === undefined ? true : (config.get("cmake.exportCompileCommandsFile") || false);
+    settingMap.CMAKE_EXPORT_COMPILE_COMMANDS = util.cmakeify(exportCompileCommandsFile);
+
     const allowBuildTypeOnMultiConfig = config.get("cmake.setBuildTypeOnMultiConfig") || false;
 
     if (!this.isMultiConf || (this.isMultiConf && allowBuildTypeOnMultiConfig)) {

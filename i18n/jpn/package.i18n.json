@@ -24,12 +24,12 @@
 	"cmake-tools.command.cmake.cleanConfigure.title": "キャッシュの削除と再構成",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "キャッシュの削除およびすべてのプロジェクトの再構成",
 	"cmake-tools.command.cmake.openConfiguration.title": "CMake キャッシュ (UI) の編集",
-	"cmake-tools.command.cmake.outline.cleanConfigure.title": "クリーン再構成",
-	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "すべてのプロジェクトの再構成の消去",
+	"cmake-tools.command.cmake.outline.cleanConfigure.title": "クリーンして再構成",
+	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "すべてのプロジェクトをクリーンして再構成",
 	"cmake-tools.command.cmake.clean.title": "クリーン",
-	"cmake-tools.command.cmake.cleanAll.title": "すべてのプロジェクトの消去",
-	"cmake-tools.command.cmake.cleanRebuild.title": "クリーン リビルド",
-	"cmake-tools.command.cmake.cleanRebuildAll.title": "すべてのプロジェクトのリビルドの消去",
+	"cmake-tools.command.cmake.cleanAll.title": "すべてのプロジェクトをクリーン",
+	"cmake-tools.command.cmake.cleanRebuild.title": "クリーンしてリビルド",
+	"cmake-tools.command.cmake.cleanRebuildAll.title": "すべてのプロジェクトをクリーンしてリビルド",
 	"cmake-tools.command.cmake.ctest.title": "テストの実行",
 	"cmake-tools.command.cmake.ctestAll.title": "すべてのプロジェクトのテスト実行",
 	"cmake-tools.command.cmake.editCache.title": "CMake キャッシュの編集",
@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "テスト結果に応じてこのボタンの色を変更することを有効にします。",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'compact' モードで表示されるテキストの最大長を構成します。",
 	"cmake-tools.configuration.views.cmake.folders.description": "フォルダー",
-	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要"
+	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json のエクスポートを有効にします。"
 }
