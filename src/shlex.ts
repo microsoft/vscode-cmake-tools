@@ -1,5 +1,5 @@
 export interface ShlexOptions {
-  mode: 'windows'|'posix';
+  mode: 'windows' | 'posix';
 }
 
 export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
@@ -7,19 +7,17 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     mode: process.platform === 'win32' ? 'windows' : 'posix',
   };
   const quoteChars = opt.mode === 'posix' ? '\'"' : '"';
-  let escapeChars = '';
-  if (opt.mode == 'posix') {
-    escapeChars += '\\';
-  }
-  let quoteChar: string|undefined;
-  let escapeChar: string|undefined;
-  let token: string|undefined;
+  const escapeChars = '\\';
+  let escapeChar: string | undefined;
+  let token: string | undefined;
+  let isSubQuote: boolean = false;
+
   for (let i = 0; i < str.length; ++i) {
     const char = str.charAt(i);
     if (escapeChar) {
       if (char === '\n') {
         // Do nothing
-      } else if (!quoteChar || char !== quoteChar || escapeChars.includes(char)) {
+      } else if (escapeChars.includes(char)) {
         token = (token || '') + char;
       } else {
         token = (token || '') + escapeChar + char;
@@ -30,35 +28,32 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
     }
 
     if (escapeChars.includes(char)) {
-      if (quoteChar && escapeChars.includes(quoteChar)) {
-        // Ignore this.
-      } else {
-        // We're parsing an escape sequence.
-        escapeChar = char;
-        continue;
-      }
+      // We're parsing an escape sequence.
+      escapeChar = char;
+      continue;
     }
 
-    if (quoteChar) {
-      if (char === quoteChar) {
-        // Reached the end of a quoted token.
-        quoteChar = undefined;
+    if (isSubQuote) {
+      if (quoteChars.includes(char)) {
+        // Reached the end of a sub-quoted token.
+        isSubQuote = false;
+        token = (token || '') + char;
         continue;
       }
-
       // Another quoted char
       token = (token || '') + char;
       continue;
     }
 
     if (quoteChars.includes(char)) {
-      // Beginning a new quoted token
-      quoteChar = char;
-      token = '';
+      // Beginning of a sub-quoted token
+      isSubQuote = true;
+      // Accumulate
+      token = (token || '') + char;
       continue;
     }
 
-    if (/[\t \n\r\f]/.test(char)) {
+    if (!isSubQuote && /[\t \n\r\f]/.test(char)) {
       if (token !== undefined) {
         yield token;
       }
