@@ -47,6 +47,6 @@
 	"failed.to.parse": "无法分析 {0}: {1}",
 	"invalid.file.error": "无效的工具包内容 {0} ({1}):",
 	"successfully.loaded.kits": "已成功从 {1} 加载 {0} 工具包",
-	"clean.not.needed": "不需要清除: 未选择任何以前的工具包",
-	"clean.needed": "需要清除: 已更改工具包"
+	"clean.not.needed": "不需要清理: 未选择任何以前的工具包",
+	"clean.needed": "需要清理: 已更改工具包"
 }
