@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "Testuje se binární soubor Clang: {0}",
 	"bad.clang.binary": "Chybný binární soubor Clang (parametr -v vrací jinou hodnotu než hodnotu nula): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "Chybný výstup při použití parametru -v pro binární soubor Clang {0}: {1}",
 	"testing.gcc.binary": "Testuje se binární soubor GCC: {0}",
 	"getting.gcc.version": "Načítá se verze GCC pro {0}.",
