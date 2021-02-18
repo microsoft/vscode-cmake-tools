@@ -47,6 +47,6 @@
 	"failed.to.parse": "Nepovedlo se parsovat {0}: {1}",
 	"invalid.file.error": "Neplatný obsah sady: {0} ({1}):",
 	"successfully.loaded.kits": "Úspěšně se načetly sady ({0}) z místa {1}.",
-	"clean.not.needed": "Čištění není nutné: nebyla vybrána žádná předchozí sada.",
-	"clean.needed": "Je nutné vyčištění: sada se změnila."
+	"clean.not.needed": "Vymazat není nutné: nebyla vybrána žádná předchozí sada.",
+	"clean.needed": "Je nutné vymazání: sada se změnila."
 }
