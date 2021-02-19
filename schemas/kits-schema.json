@@ -10,6 +10,22 @@
                 "type": "string",
                 "description": "Name of this kit"
             },
+            "vendor": {
+                "type": "string",
+                "description": "The vendor name of this kit"
+            },
+            "triple": {
+                "type": "string",
+                "description": "The target triple of this kit"
+            },
+            "version": {
+                "type": "string",
+                "description": "The version of this kit"
+            },
+            "versionRuntime": {
+                "type": "string",
+                "description": "The version of the C runtime for the kit"
+            },
             "keep": {
                 "type": "boolean",
                 "description": "If `true`, this kit will be kept even if it appears out-of-date."

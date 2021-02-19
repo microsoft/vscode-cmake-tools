@@ -8,7 +8,7 @@ chai.use(chaiAsPromised);
 
 import {Strand} from '@cmt/strand';
 
-function pause(time: number): Thenable<void> {
+function pause(time: number): Promise<void> {
   return new Promise(resolve => { setTimeout(() => resolve(), time); });
 }
 

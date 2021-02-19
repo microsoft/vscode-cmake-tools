@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "正在測試 Clang 二進位檔: {0}",
 	"bad.clang.binary": "錯誤的 Clang 二進位 (\"-v\" 傳回非零): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "錯誤的 Clang 二進位檔 {0} -v 輸出: {1}",
 	"testing.gcc.binary": "正在測試 GCC 二進位檔: {0}",
 	"getting.gcc.version": "正在取得 {0} 的 GCC 版本",

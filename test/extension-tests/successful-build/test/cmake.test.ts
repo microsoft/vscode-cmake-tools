@@ -5,7 +5,7 @@ suite('cmake', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.Context) {
     this.timeout(100000);
 
     const build_loc = 'build';
@@ -23,7 +23,7 @@ suite('cmake', async () => {
     testEnv.projectFolder.buildDirectory.clear();
   });
 
-  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+  teardown(async function(this: Mocha.Context) {
     this.timeout(30000);
     await cmt.asyncDispose();
     testEnv.teardown();

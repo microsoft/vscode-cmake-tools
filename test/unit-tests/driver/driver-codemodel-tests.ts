@@ -56,7 +56,7 @@ export function makeCodeModelDriverTestsuite(
           = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Unix Makefiles'}} as Kit;
     }
 
-    setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
+    setup(async function(this: Mocha.Context, done) {
       driver = null;
 
       if (!cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
@@ -69,7 +69,7 @@ export function makeCodeModelDriverTestsuite(
       done();
     });
 
-    teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+    teardown(async function(this: Mocha.Context) {
       this.timeout(20000);
       if (driver) {
         return driver.asyncDispose();
