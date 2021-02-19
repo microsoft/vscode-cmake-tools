@@ -150,13 +150,53 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * Compute the environment variables that apply with substitutions by expansionOptions
+   */
+  async computeExpandedEnvironment(in_env: proc.EnvironmentVariables, expanded_env:proc.EnvironmentVariables): Promise<proc.EnvironmentVariables>
+  {
+    const env = {} as {[key: string]: string};
+    const opts = this.expansionOptions;
+
+    await Promise.resolve(
+      util.objectPairs(in_env)
+      .forEach(async ([key, value]) => env[key] = await expand.expandString(value, {...opts, envOverride: expanded_env}))
+    );
+    return env;
+  }
+
+  /**
    * Get the environment variables that should be set at CMake-configure time.
    */
   async getConfigureEnvironment(): Promise<proc.EnvironmentVariables> {
-    return util.mergeEnvironment(this.getKitEnvironmentVariablesObject(),
-                                 await this.getExpandedEnvironment(),
-                                 await this.getBaseConfigureEnvironment(),
-                                 this._variantEnv);
+    let envs = this.getKitEnvironmentVariablesObject();
+    /* NOTE: By mergeEnvironment one by one to enable expanding self containd variable such as PATH properly */
+    /* If configureEnvironment and environment both configured different PATH, doing this will preserve them all */
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
+    return envs;
+  }
+
+  /**
+   * Get the environment variables that should be set at CMake-build time.
+   */
+  async getCMakeBuildCommandEnvironment(in_env: proc.EnvironmentVariables): Promise<proc.EnvironmentVariables> {
+    let envs = util.mergeEnvironment(in_env, this.getKitEnvironmentVariablesObject());
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
+    return envs;
+  }
+
+  /**
+   * Get the environment variables that should be set at CTest and running program time.
+   */
+  async getCTestCommandEnvironment(): Promise<proc.EnvironmentVariables> {
+    let envs = this.getKitEnvironmentVariablesObject();
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
+    return envs;
   }
 
   get onProgress(): vscode.Event<ProgressMessage> {
@@ -171,31 +211,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * classes from resetting the kit back to `null`.
    */
   private _kit: Kit|null = null;
-
-  /**
-   * Get the environment and apply any needed
-   * substitutions before returning it.
-   */
-  async getExpandedEnvironment(): Promise<{[key: string]: string}> {
-    const env = {} as {[key: string]: string};
-    const opts = this.expansionOptions;
-    await Promise.resolve(util.objectPairs(this.config.environment)
-                              .forEach(async ([key, value]) => env[key] = await expand.expandString(value, opts)));
-    return env;
-  }
-
-  /**
-   * Get the configure environment and apply any needed
-   * substitutions before returning it.
-   */
-  async getBaseConfigureEnvironment(): Promise<{[key: string]: string}> {
-    const config_env = {} as {[key: string]: string};
-    const opts = this.expansionOptions;
-    await Promise.resolve(
-        util.objectPairs(this.config.configureEnvironment)
-            .forEach(async ([key, value]) => config_env[key] = await expand.expandString(value, opts)));
-    return config_env;
-  }
 
   /**
    * Get the vscode root workspace folder.
@@ -1213,15 +1228,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return [];
     })();
 
-    const build_env = {} as {[key: string]: string};
-    build_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
-    const opts = this.expansionOptions;
-    await Promise.resolve(
-        util.objectPairs(util.mergeEnvironment(this.config.buildEnvironment, await this.getExpandedEnvironment()))
-            .forEach(async ([key, value]) => build_env[key] = await expand.expandString(value, opts)));
+    const ninja_env = {} as {[key: string]: string};
+    ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
+    const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
 
     const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
                      .concat(this.config.buildArgs, ['--'], generator_args, this.config.buildToolArgs);
+    const opts = this.expansionOptions;
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
     const expanded_args = await Promise.all(expanded_args_promises) as string[];
