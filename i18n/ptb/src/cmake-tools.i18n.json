@@ -69,7 +69,6 @@
 	"waiting.on.variant": "Aguardando a seleção da variante",
 	"no.variant.abort": "Nenhuma variante selecionada. Anular configuração",
 	"warn.skip.configure.when.cache.present": "A extensão determinou que uma configuração é necessária neste momento, \\\n                          mas estamos ignorando porque a configuração cmake.skipConfigureWhenCachePresent está ATIVADA. \\\n                          Verifique se o cache do CMake está em sincronia com as alterações de configuração mais recentes.",
-	"cmake.drive.died.during.tasksbuildcommend": "O driver do CMake foi encerrado durante tasksBuildCommand",
 	"run.build": "Compilando a pasta: {0}",
 	"unable.to.configure": "Falha no build: não é possível configurar o projeto",
 	"driver.died.after.successful.configure": "O driver do CMake foi encerrado imediatamente após o êxito da configuração",

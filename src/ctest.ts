@@ -360,8 +360,7 @@ export class CTestDriver implements vscode.Disposable {
         [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
             this.ws.config.ctestArgs),
         new CTestOutputLogger(),
-        {environment: this.ws.config.testEnvironment, cwd: driver.binaryDir});
-
+        {environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir});
     const res = await child.result;
     await this.reloadTests(driver);
     if (res.retc === null) {

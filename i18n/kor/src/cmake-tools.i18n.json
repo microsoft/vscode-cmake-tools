@@ -69,7 +69,6 @@
 	"waiting.on.variant": "variant 선택을 기다리는 중",
 	"no.variant.abort": "선택한 variant가 없으므로 구성을 중단합니다.",
 	"warn.skip.configure.when.cache.present": "확장에서 지금 구성이 필요한 것으로 확인했지만, \\\n                          cmake.skipConfigureWhenCachePresent 설정이 ON 상태여서 건너뜁니다. \\\n                          CMake 캐시가 최신 구성 변경 내용과 동기화 상태인지 확인하세요.",
-	"cmake.drive.died.during.tasksbuildcommend": "tasksBuildCommand 중에 CMake 드라이버가 종료됨",
 	"run.build": "폴더를 빌드하는 중: {0}",
 	"unable.to.configure": "빌드 실패: 프로젝트를 구성할 수 없음",
 	"driver.died.after.successful.configure": "구성에 성공한 후 바로 CMake 드라이버가 종료됨",
