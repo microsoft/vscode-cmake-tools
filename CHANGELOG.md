@@ -1,5 +1,117 @@
 # What's New?
 
+## 1.6.0
+Bug Fixes:
+- Fix Clang kit detection when version is at end of line. [#1342](https://github.com/microsoft/vscode-cmake-tools/issues/1342) [@falbrechtskirchinger](https://github.com/falbrechtskirchinger)
+- Fix cache variables regular expression dealing with '='. [#1613](https://github.com/microsoft/vscode-cmake-tools/issues/1613)
+- Add cmake.exportCompileCommandFile. [#1440](https://github.com/microsoft/vscode-cmake-tools/issues/1440)
+- Fix the regexp of Gcc/Clang version to account for localization and more possible text patterns. [#1575](https://github.com/microsoft/vscode-cmake-tools/issues/1575)
+- Fix regexp for compiler flags that contain spaces. [#1414](https://github.com/microsoft/vscode-cmake-tools/issues/1414)
+- Fix compile active file when definition has quoted text. [#969](https://github.com/microsoft/vscode-cmake-tools/issues/969)
+- Re-register the tasks provider when the current build targe changes. [#1576](https://github.com/microsoft/vscode-cmake-tools/issues/1576)
+- Don't localize the VS Clang kit name. [PR #1632](https://github.com/microsoft/vscode-cmake-tools/pull/1632)
+- Remove CMake Tools activation of non CMake projects when tasks.runask is executed. [PR #1642](https://github.com/microsoft/vscode-cmake-tools/pull/1642)
+- Add the TWXS CMake extension in the CMake Tools extension pack. [PR #1643](https://github.com/microsoft/vscode-cmake-tools/pull/1643)
+
+## 1.5.3
+Bug Fixes:
+- "Clean all projects" broken since 1.5.0. [#1542](https://github.com/microsoft/vscode-cmake-tools/issues/1542)
+- CMake task provider should not attempt to register until the CMake driver is available.  [#1549](https://github.com/microsoft/vscode-cmake-tools/issues/1549)
+
+## 1.5.2
+Bug Fixes:
+- Fix deadlock caused by commands invoked in string expansion during activation. [PR #1532](https://github.com/microsoft/vscode-cmake-tools/pull/1532)
+
+## 1.5.1
+Bug Fixes:
+- Fix regular expression for variables values used in settings and kits json. [#1526](https://github.com/microsoft/vscode-cmake-tools/issues/1526) [#1525](https://github.com/microsoft/vscode-cmake-tools/issues/1525)
+- Add a setting to control whether the Touch Bar is visible or not. [PR #1529](https://github.com/microsoft/vscode-cmake-tools/pull/1529)
+
+## 1.5.0
+Improvements:
+- Support variables for Kit.toolchainFile. [PR #991](https://github.com/microsoft/vscode-cmake-tools/pull/991) [#1056](https://github.com/microsoft/vscode-cmake-tools/issues/1056) [@blakehurd](https://github.com/blakehurd)/[@bobbrow](https://github.com/bobbrow)
+- Implement cmake:hideBuildCommand context option. [PR #1355](https://github.com/microsoft/vscode-cmake-tools/pull/1355) [@tritao](https://github.com/tritao)
+- Add option to set CMAKE_BUILD_TYPE also on multi-config generators. [PR #1393](https://github.com/microsoft/vscode-cmake-tools/pull/1393) [@tonka3000](https://github.com/tonka3000)
+- Detect Clang for MSVC (GNU CLI) kits. [#823](https://github.com/microsoft/vscode-cmake-tools/issues/823) [@omcnoe](https://github.com/omcnoe)
+- GUI support for CMake Tools cache. [#513](https://github.com/microsoft/vscode-cmake-tools/issues/513) [@nieroger](https://github.com/nieroger)
+- Tasks support. [PR #1268](https://github.com/microsoft/vscode-cmake-tools/pull/1268) [@vptrbv](https://github.com/vptrbv)
+- MacBook Pro touchbar support. [#499](https://github.com/microsoft/vscode-cmake-tools/issues/499) [@vptrbv](https://github.com/vptrbv)
+
+Bug Fixes:
+- Set right base_path for variant config files. [PR #1462](https://github.com/microsoft/vscode-cmake-tools/pull/1462) [@leolcao](https://github.com/leolcao)
+- Inconsistent buildType substitution. [#1366](https://github.com/microsoft/vscode-cmake-tools/issues/1366)
+- ${workspaceFolder} is not working for "environmentSetupScript" option. [#1309](https://github.com/microsoft/vscode-cmake-tools/issues/1309) [@Yaxley123](https://github.com/Yaxley123)
+- Preserve focus when executing "CMake:Run Without Debugging". [#1138](https://github.com/microsoft/vscode-cmake-tools/issues/1138) [@estshorter](https://github.com/estshorter)
+- Problems with CMake: Quick Start. [#1004](https://github.com/microsoft/vscode-cmake-tools/issues/1004) [@alan-wr](https://github.com/alan-wr)
+- Remove depends on optimist by upgrade handlebars. [PR #1447](https://github.com/microsoft/vscode-cmake-tools/pull/1447) [@lygstate](https://github.com/lygstate)
+- Ignore the vcvars dev-bat call result. [PR #1403](https://github.com/microsoft/vscode-cmake-tools/pull/1403) [@lygstate](https://github.com/lygstate)
+- Fix vs2010 which doesn't recognize host=x64. [PR #1481](https://github.com/microsoft/vscode-cmake-tools/pull/1481) [@lygstate](https://github.com/lygstate)
+- Don't rebuild when doing command substitution. [#1487](https://github.com/microsoft/vscode-cmake-tools/issues/1487)
+- Duplicate compiler flags should not be removed. [PR #1497](https://github.com/microsoft/vscode-cmake-tools/issues/1497)
+- Hide "Unknown Language" for CUDA source files. [PR #1502](https://github.com/microsoft/vscode-cmake-tools/issues/1502) [@Synxis](https://github.com/Synxis)
+- Ensure immediate effect of settings for communication mode and all generator related. [PR #1500](https://github.com/microsoft/vscode-cmake-tools/issues/1500)
+- Fix shell script and vcvars devbat when TEMP folder has a space in the middle. [#1492](https://github.com/microsoft/vscode-cmake-tools/issues/1492)
+
+## 1.4.2
+Improvements:
+- Added new variable substitution command: `${command:cmake.launchTargetFilename}`. [#632](https://github.com/microsoft/vscode-cmake-tools/issues/632) [@ebai101](https://github.com/ebai101)
+- Add output parser for Wind River Diab compiler. [PR #1267](https://github.com/microsoft/vscode-cmake-tools/pull/1267) [@ce3a](https://github.com/ce3a)
+- Set application run directory to executable path. [#1395](https://github.com/microsoft/vscode-cmake-tools/issues/1395) [@Shatur95](https://github.com/Shatur95)
+
+Bug Fixes:
+- Allow minor version of File API protocol to be greater than expected. [#1341](https://github.com/microsoft/vscode-cmake-tools/issues/1341) [@KyleFromKitware](https://github.com/KyleFromKitware)
+- Fix high-hitting crash related to output stream encoding. [PR #1367](https://github.com/microsoft/vscode-cmake-tools/issues/1367)
+- Fix high-hitting crash: "message must be set" introduced by VS Code 1.49.0. [#1432](https://github.com/microsoft/vscode-cmake-tools/issues/1432)
+- Fix detection of clang 10 on Debian. [#1330](https://github.com/microsoft/vscode-cmake-tools/issues/1330)
+- Detect gdb for msys2 MinGW properly. [PR #1338](https://github.com/microsoft/vscode-cmake-tools/issues/1338) [@lygstate](https://github.com/lygstate)
+
+## 1.4.1
+Bug Fixes:
+- VS environment not set correctly. [#1243](https://github.com/microsoft/vscode-cmake-tools/issues/1243)
+- VS kits don't set host/target arch properly for toolsets. [#1256](https://github.com/microsoft/vscode-cmake-tools/issues/1256)
+- Disable launchTarget key binding while debugging. [#1170](https://github.com/microsoft/vscode-cmake-tools/issues/1170)
+- System headers not found. [#1257](https://github.com/microsoft/vscode-cmake-tools/issues/1257)
+- Add setting to enable/disable automatic reconfiguring of projects. [#1259](https://github.com/microsoft/vscode-cmake-tools/issues/1259)
+- Partial/full CMT activation improperly persisted for multi-root projects. [#1269](https://github.com/microsoft/vscode-cmake-tools/issues/1269)
+- Fix MacOS debugging to work out of the box. [#1284](https://github.com/microsoft/vscode-cmake-tools/issues/1284)
+- Ensure the silent kits scanning is run once for multi-root. [#1302](https://github.com/microsoft/vscode-cmake-tools/issues/1302)
+
+## 1.4.0
+Improvements:
+- Documentation updates. [PR #1130](https://github.com/microsoft/vscode-cmake-tools/pull/1130) [@zalava](https://github.com/zalava)
+- Add support for per-folder browse path. [#1073](https://github.com/microsoft/vscode-cmake-tools/issues/1073)
+- Use a shell script to set environment variables for a kit. [#809](https://github.com/microsoft/vscode-cmake-tools/issues/809) [@pisker](https://github.com/pisker)
+- Improvements of the status bar UI. [PR #1200](https://github.com/microsoft/vscode-cmake-tools/pull/1200) [@SchweizS](https://github.com/SchweizS)
+- Add context menu for CMakeLists. [#741](https://github.com/microsoft/vscode-cmake-tools/issues/741) [@SchweizS](https://github.com/SchweizS)
+- Support partial CMake Tools activation for non cmake repos. [#1167](https://github.com/microsoft/vscode-cmake-tools/issues/1167)
+- Support ARM IntelliSense modes. [#1155](https://github.com/microsoft/vscode-cmake-tools/issues/1155)
+- Support GNU language standards. [#1208](https://github.com/microsoft/vscode-cmake-tools/issues/1208)
+- Add indication of active workspace to project outline. [#1183](https://github.com/microsoft/vscode-cmake-tools/issues/1183) [@SchweizS](https://github.com/SchweizS)
+
+Bug Fixes:
+- Skip over debugger guessing logic if cmake.debugConfig explicitly sets miDebuggerPath. [#1060](https://github.com/microsoft/vscode-cmake-tools/issues/1060)
+- Normalize all paths sent to CppTools. [#1099](https://github.com/microsoft/vscode-cmake-tools/issues/1099)
+- Add support for Objective-C and Objective-C++. [#1108](https://github.com/microsoft/vscode-cmake-tools/issues/1108) [@marksisson](https://github.com/marksisson)
+- Update the configuration provider id. [#1045](https://github.com/microsoft/vscode-cmake-tools/issues/1045) [@ChristianS99](https://github.com/ChristianS99)
+- Clear the terminal for Compile Active File. [#1122](https://github.com/microsoft/vscode-cmake-tools/issues/1122)
+- Update vswhere to a version that supports utf-8. [#1104](https://github.com/microsoft/vscode-cmake-tools/issues/1104)
+- Support source files outside the base path. [#1140](https://github.com/microsoft/vscode-cmake-tools/issues/1140)
+- Allow quotes in cache entries. [#1124](https://github.com/microsoft/vscode-cmake-tools/issues/1124) [@tmaslach](https://github.com/tmaslach)
+- Fix default preferred generators detection logic. [#1084](https://github.com/microsoft/vscode-cmake-tools/issues/1084)
+- Fix host and target platform information for VS kits. [#964](https://github.com/microsoft/vscode-cmake-tools/issues/964)
+- Fix error caused by duplicate project structure. [#587](https://github.com/microsoft/vscode-cmake-tools/issues/587) [@SchweizS](https://github.com/SchweizS)
+- Disable launchTarget key binding while debugging. [#1170](https://github.com/microsoft/vscode-cmake-tools/issues/1170)
+- Skip configuring when cache is present and according setting is on. [#984](https://github.com/microsoft/vscode-cmake-tools/issues/984)
+- Remove deprecated cmake.useCMakeServer setting. [#1059](https://github.com/microsoft/vscode-cmake-tools/issues/1059)
+- Trigger automatic CMake configure on CMakeLists.txt save. [#1187](https://github.com/microsoft/vscode-cmake-tools/issues/1187) [@Yuri6037](https://github.com/Yuri6037)
+- Silently scanning for kits:
+    - when there is no available kits json file. [PR #1192](https://github.com/microsoft/vscode-cmake-tools/pull/1192)
+    - when the extension introduces breaking changes in the kits definition. [#1195](https://github.com/microsoft/vscode-cmake-tools/issues/1195)
+- Various unhandled exceptions and crash fixes:
+    - "cannot read property 'length' of undefined" when CMake not found in path. [#1110](https://github.com/microsoft/vscode-cmake-tools/issues/1110)
+    - "cannot read property 'uri' of undefined" called by cmake.buildDirectory command. [#1150](https://github.com/microsoft/vscode-cmake-tools/issues/1150)
+    - high hitting crash in telemetry. [PR #1154](https://github.com/microsoft/vscode-cmake-tools/pull/1154)
+
 ## 1.3.1
 Improvements:
 - Show "Collapse all" command on project outline view. [#839](https://github.com/microsoft/vscode-cmake-tools/issues/839) [@dirondin](https://github.com/dirondin)

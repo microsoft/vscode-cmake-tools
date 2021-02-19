@@ -9,17 +9,18 @@ import * as which from 'which';
 import {vsInstallations} from './installs/visual-studio';
 import {expandString} from './expand';
 import {fs} from './pr';
+import * as util from '@cmt/util';
 
 interface VSCMakePaths {
-  cmake: string | null;
-  ninja: string | null;
+  cmake?: string;
+  ninja?: string;
 }
 
 /**
  * Directory class.
  */
 class Paths {
-  private _ninjaPath : string | null = null;
+  private _ninjaPath?: string;
 
   /**
    * The current user's home directory
@@ -129,18 +130,19 @@ class Paths {
   }
 
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
-    this._ninjaPath = null;
+    this._ninjaPath = undefined;
 
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
-        workspaceRoot: wsc.folder.uri.fsPath,
-        workspaceFolder: wsc.folder.uri.fsPath,
-        userHome: this.userHome,
         buildKit: '',
         buildType: '',
         generator: '',
+        workspaceFolder: wsc.folder.uri.fsPath,
+        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+        workspaceRoot: wsc.folder.uri.fsPath,
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
-        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath)
+        workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
+        userHome: this.userHome,
       },
     });
 
@@ -164,10 +166,10 @@ class Paths {
 
         // Look for bundled CMake executables in Visual Studio install paths
         const bundled_tools_paths = await this.vsCMakePaths();
-        if (null !== bundled_tools_paths.cmake) {
+        if (bundled_tools_paths.cmake) {
           this._ninjaPath = bundled_tools_paths.ninja;
 
-          return bundled_tools_paths.cmake;
+          return bundled_tools_paths.cmake!;
         }
       }
       return null;
@@ -177,7 +179,7 @@ class Paths {
   }
 
   async vsCMakePaths(): Promise<VSCMakePaths> {
-    const vsCMakePaths = {} as VSCMakePaths;
+    const vsCMakePaths: VSCMakePaths = {};
 
     const vs_installations = await vsInstallations();
     if (vs_installations.length > 0) {

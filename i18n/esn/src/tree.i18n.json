@@ -14,6 +14,8 @@
 	"item.render.issue": "Hubo un problema al representar este elemento. Esto es un error.",
 	"empty.project": "Proyecto vacío",
 	"update.project.with.mismatch": "Actualizar el proyecto con la propiedad del nombre no coincidente",
-	"error.update.code.model.on.nonexist.folder": "¿Se está actualizando el modelo de código en una carpeta que no existe aún?",
+	"workspace.active": "Área de trabajo activa",
+	"workspace": "Área de trabajo",
+	"error.update.code.model.on.nonexist.folder": "Actualizando el modelo de código en una carpeta que no se ha cargado aún.",
 	"error.rendering.children.nodes": "Error al representar los nodos secundarios."
 }

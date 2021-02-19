@@ -8,6 +8,7 @@ import {fs} from './pr';
 import rollbar from './rollbar';
 import * as util from './util';
 import * as nls from 'vscode-nls';
+import { isBoolean } from 'util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -178,6 +179,71 @@ export class CMakeCache {
 
     log.trace(localize('parsed.cache.entries', 'Parsed {0} cache entries', entries.size));
     return entries;
+  }
+
+  /**
+   * Takes a configuration file as a content string and replaces the cmake cache keys with the corresponding value (i.e. 'TRUE' or 'FALSE').
+   * @param content Configuration File Content as String
+   * @param key The CMake Cache Option Key to edit
+   * @param value Boolean value
+   */
+  private replace(content: string, key: string, value: string): string {
+    const re = key + ':[^=]+=(.+)';
+    const found = content.match(re);
+
+    if (found && found.length >= 2) {
+      const line = found[0];
+      const currentVal = found[1];
+      const newValueLine = line.replace(currentVal, isBoolean(value) ? (value ? "TRUE" : "FALSE") : value);
+      return content.replace(line, newValueLine);
+    } else {
+      return content;
+    }
+  }
+
+  /**
+   * Will replace value cmake option in the current loaded workspace.
+   * @param key cmake option name
+   * @param value value of cmake option
+   */
+  async replaceOption(key: string, value: string): Promise<string> {
+    const exists = await fs.exists(this.path);
+    if (exists) {
+      const content = (await fs.readFile(this.path)).toString();
+      return this.replace(content, key, value);
+    }
+
+    return '';
+  }
+
+  async replaceOptions(options: Array<{key: string, value: string}>): Promise<string> {
+    const exists = await fs.exists(this.path);
+    if (exists) {
+      let content = (await fs.readFile(this.path)).toString();
+      for (const option of options) {
+        content = this.replace(content, option.key, option.value);
+      }
+      return content;
+    }
+    return '';
+  }
+
+  async save(key: string, value: string): Promise<void> {
+    const content = await this.replaceOption(key, value);
+    if (content) {
+      if (await fs.exists(this.path)) {
+        await fs.writeFile(this.path, content);
+      }
+    }
+  }
+
+  async saveAll(options: Array<{key: string, value: string}>): Promise<void> {
+    const content = await this.replaceOptions(options);
+    if (content) {
+      if (await fs.exists(this.path)) {
+        await fs.writeFile(this.path, content);
+      }
+    }
   }
 
   /**

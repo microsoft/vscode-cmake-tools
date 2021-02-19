@@ -10,5 +10,6 @@
 	"found.no.matching.code.model": "Es wurde kein übereinstimmendes Codemodell für den aktuellen Buildtyp gefunden. Dies ist eigentlich nicht möglich.",
 	"build.all.target": "Ein spezielles Ziel zum Erstellen aller verfügbaren Ziele",
 	"install.all.target": "Ein spezielles Ziel zum Installieren aller verfügbaren Ziele",
-	"utility.target": "Hilfsprogrammziel"
+	"utility.target": "Hilfsprogrammziel",
+	"cmakelists.save.trigger.reconfigure": "Update für Einstellung \"cmake.sourceDirectory\" erkannt. Automatische Neukonfiguration wird versucht..."
 }

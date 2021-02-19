@@ -14,6 +14,8 @@
 	"item.render.issue": "이 항목을 렌더링하는 동안 버그로 인해 문제가 발생했습니다.",
 	"empty.project": "빈 프로젝트",
 	"update.project.with.mismatch": "일치하지 않는 이름 속성으로 프로젝트 업데이트",
-	"error.update.code.model.on.nonexist.folder": "아직 없는 폴더의 코드 모델을 업데이트하시겠습니까?",
+	"workspace.active": "활성 작업 영역",
+	"workspace": "작업 영역",
+	"error.update.code.model.on.nonexist.folder": "아직 로드되지 않은 폴더의 코드 모델을 업데이트하는 중입니다.",
 	"error.rendering.children.nodes": "자식 노드를 렌더링하는 동안 오류 발생"
 }

@@ -12,6 +12,7 @@
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Cesta k souboru sady nástrojů",
 	"schemas/kits-schema.json.items.properties.visualStudio": "Název produktu Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Cílená architektura",
+	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Absolutní cesta ke skriptu, který upravuje prostředí pro sadu",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Hodnota pro proměnnou prostředí",
 	"schemas/kits-schema.json.items.properties.cmakeSettings.patternProperties..*": "Hodnota pro nastavení CMake",
 	"schemas/kits-schema.json.items.properties.preferredGenerator": "Nastavit preferovaný generátor CMake pro tuto sadu",

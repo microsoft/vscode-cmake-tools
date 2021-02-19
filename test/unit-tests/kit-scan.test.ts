@@ -8,6 +8,9 @@ import {expect} from 'chai';
 import * as kit from '../../src/kit';
 import {fs} from '../../src/pr';
 
+import {CMakeTools} from '@cmt/cmake-tools';
+import {clearExistingKitConfigurationFile, DefaultEnvironment,} from '@test/util';
+
 // tslint:disable:no-unused-expression
 
 const here = __dirname;
@@ -24,6 +27,9 @@ function getPathWithoutCompilers() {
 }
 
 suite('Kits scan test', async () => {
+  let cmt: CMakeTools;
+  let testEnv: DefaultEnvironment;
+
   const fakebin = getTestRootFilePath('fakebin');
   const mingwMakePath = path.join(fakebin, 'mingw32-make');
   const mingwMakePathBackup = path.join(fakebin, 'mingw32-make.bak');
@@ -38,8 +44,16 @@ suite('Kits scan test', async () => {
 
   test('Detect system kits never throws',
        async () => {
+          const build_loc = 'build';
+          const exe_res = 'output.txt';
+
+          testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', build_loc, exe_res);
+          cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
+
+          await clearExistingKitConfigurationFile();
+
          // Don't care about the result, just check that we don't throw during the test
-         await kit.scanForKits();
+         await kit.scanForKits(cmt);
        })
       // Compiler detection can run a little slow
       .timeout(60000);

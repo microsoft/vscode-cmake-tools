@@ -1,14 +1,15 @@
 import * as child_process from 'child_process';
 import * as chokidar from 'chokidar';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 
 import {EnvironmentVariables, execute} from './proc';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -157,6 +158,7 @@ export function splitPath(p: string): string[] {
  */
 export function isTruthy(value: (boolean|string|null|undefined|number)) {
   if (typeof value === 'string') {
+    value = value.toUpperCase();
     return !(['', 'FALSE', 'OFF', '0', 'NOTFOUND', 'NO', 'N', 'IGNORE'].indexOf(value) >= 0
              || value.endsWith('-NOTFOUND'));
   }
@@ -337,7 +339,17 @@ export function parseVersion(str: string): Version {
   };
 }
 
-export function versionToString(ver: Version): string { return `${ver.major}.${ver.minor}.${ver.patch}`; }
+export function versionToString(ver: Version): string {
+  return `${ver.major}.${ver.minor}.${ver.patch}`;
+}
+
+export function errorToString(e: any): string {
+  if (e.stack) {
+    // e.stack has both the message and the stack in it.
+    return `\n\t${e.stack}`;
+  }
+  return `\n\t${e.toString()}`;
+}
 
 export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<Out>): Iterable<Out> {
   for (const elem of rng) {
@@ -444,12 +456,22 @@ export function versionGreater(lhs: Version|string, rhs: Version|string): boolea
   return compareVersions(lhs, rhs) === Ordering.Greater;
 }
 
+export function versionGreaterOrEquals(lhs: Version|string, rhs: Version|string): boolean {
+  const ordering = compareVersions(lhs, rhs);
+  return (Ordering.Greater === ordering) || (Ordering.Equivalent === ordering);
+}
+
 export function versionEquals(lhs: Version|string, rhs: Version|string): boolean {
   return compareVersions(lhs, rhs) === Ordering.Equivalent;
 }
 
 export function versionLess(lhs: Version|string, rhs: Version|string): boolean {
   return compareVersions(lhs, rhs) === Ordering.Less;
+}
+
+export function versionLessOrEquals(lhs: Version|string, rhs: Version|string): boolean {
+  const ordering = compareVersions(lhs, rhs);
+  return (Ordering.Less === ordering) || (Ordering.Equivalent === ordering);
 }
 
 export function compare(a: any, b: any): Ordering {
@@ -564,8 +586,27 @@ export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
 }
 
+export function makeHashString(str: string): string {
+    const crypto = require('crypto');
+    const hash = crypto.createHash('sha256');
+    hash.update(str);
+    return hash.digest('hex');
+}
+
+export function isArray(x: any): x is any[] {
+  return x instanceof Array;
+}
+
+export function isArrayOfString(x: any): x is string[] {
+  return isArray(x) && x.every(isString);
+}
+
 export function isNullOrUndefined(x?: any): boolean {
   // Double equals provides the correct answer for 'null' and 'undefined'
   // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
   return x == null;
+}
+
+export function isWorkspaceFolder(x?: any): boolean {
+  return 'uri' in x && 'name' in x && 'index' in x;
 }
