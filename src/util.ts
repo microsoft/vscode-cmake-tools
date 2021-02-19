@@ -1,14 +1,15 @@
 import * as child_process from 'child_process';
 import * as chokidar from 'chokidar';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 
 import {EnvironmentVariables, execute} from './proc';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -583,6 +584,13 @@ export function chokidarOnAnyChange(watcher: chokidar.FSWatcher, listener: (path
 
 export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
+}
+
+export function makeHashString(str: string): string {
+    const crypto = require('crypto');
+    const hash = crypto.createHash('sha256');
+    hash.update(str);
+    return hash.digest('hex');
 }
 
 export function isArray(x: any): x is any[] {
