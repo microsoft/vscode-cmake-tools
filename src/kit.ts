@@ -1165,6 +1165,7 @@ async function expandKitVariables(kit: Kit): Promise<Kit> {
         userHome: paths.userHome,
         workspaceFolder: '${workspaceFolder}',
         workspaceFolderBasename: '${workspaceFolderBasename}',
+        workspaceHash: '${workspaceHash}',
         workspaceRoot: '${workspaceRoot}',
         workspaceRootFolderName: '${workspaceRootFolderName}'
       }
