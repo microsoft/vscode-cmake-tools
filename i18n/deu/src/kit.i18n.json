@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "Clang-Binärdatei wird getestet: {0}",
 	"bad.clang.binary": "Ungültige Clang-Binärdatei (\"-v\" gibt ungleich null zurück): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "Ungültige -v-Ausgabe der Clang-Binärdatei \"{0}\": {1}",
 	"testing.gcc.binary": "GCC-Binärdatei wird getestet: {0}",
 	"getting.gcc.version": "Die GCC-Version für {0} wird abgerufen.",

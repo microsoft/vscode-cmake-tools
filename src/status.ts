@@ -415,7 +415,7 @@ class BuildButton extends Button {
     super(config, priority);
     this.command = 'cmake.build';
     this.tooltip = localize('build.tooltip', 'Build the selected target');
-    }
+  }
 
   private _isBusy: boolean = false;
   private _target: string|null = null;
