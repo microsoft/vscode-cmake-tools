@@ -7,7 +7,7 @@ import {expect} from '@test/util';
 suite('[MinGW Tests]', async () => {
   const mingw_dirs: string[] = ['C:\\Qt\\Tools\\mingw492_32', 'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64'];
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.Context) {
     this.timeout(100000);
   });
 

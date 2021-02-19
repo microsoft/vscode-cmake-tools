@@ -18,15 +18,15 @@ export interface ExecutionResult {
    */
   retc: number|null;
   /**
-   * The full standard output of the program. May be `null` if standard out
+   * The full standard output of the program. May be `` if standard out
    * was not captured.
    */
-  stdout: string|null;
+  stdout: string;
   /**
-   * Standard error output of the program. May be `null` if standard error was
+   * Standard error output of the program. May be `` if standard error was
    * not captured
    */
-  stderr: string|null;
+  stderr: string;
 }
 
 /**

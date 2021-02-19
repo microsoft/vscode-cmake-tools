@@ -3,11 +3,8 @@
  * ext.
  */ /** */
 
-import promisify_ = require('es6-promisify');
 import * as util from 'util';
-// VSCode doesn't ship with util.promisify yet, but we do have type definitions for it, so we'll
-// hack those type definitions onto the type of es6-promisify >:)
-const promisify = promisify_ as typeof util.promisify;
+const promisify = util.promisify;
 
 import * as fs_ from 'fs';
 import * as path from 'path';
