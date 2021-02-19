@@ -19,11 +19,15 @@ export class DefaultEnvironment {
     this.setupShowQuickPickerStub([this.kitSelection]);
 
     const errorQueue = this.errorMessagesQueue;
-    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake((message: string): Thenable<string|undefined> => {
+    const fakeShowErrorMessage = <T>(message: string, _options: vscode.MessageOptions, ..._items: T[]): Thenable<T | undefined> => {
       errorQueue.push(message);
       return Promise.resolve(undefined);
-    });
-    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(() => ({doOpen: false}));
+    };
+    this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake(fakeShowErrorMessage);
+    const fakeShowInformationMessage = <T>(_message: string, _options: vscode.MessageOptions, ..._items: T[]): Thenable<T | undefined> => {
+      return Promise.resolve(undefined);
+    };
+    this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(fakeShowInformationMessage);
     if (process.env.CMAKE_EXECUTABLE) {
       this.config.updatePartial( {cmakePath: process.env.CMAKE_EXECUTABLE});
     }
@@ -46,12 +50,13 @@ export class DefaultEnvironment {
   readonly kitSelection = new SelectKitPickerHandle(this.defaultKitLabel, this.excludeKitLabel);
 
   private setupShowQuickPickerStub(selections: QuickPickerHandleStrategy[]) {
-    this.sandbox.stub(vscode.window, 'showQuickPick').callsFake((items, options): Thenable<string|undefined> => {
-      if (options.placeHolder == selections[0].identifier) {
+    const fakeShowQuickPick = <T>(items: T[] | Thenable<T[]>, options?: vscode.QuickPickOptions, _token?: vscode.CancellationToken): Thenable<T | undefined> => {
+      if (options?.placeHolder == selections[0].identifier) {
         return Promise.resolve(selections[0].handleQuickPick(items));
       }
-      return Promise.reject(`Unknown quick pick "${options.placeHolder}"`);
-    });
+      return Promise.reject(`Unknown quick pick "${options?.placeHolder}"`);
+    };
+    this.sandbox.stub(vscode.window, 'showQuickPick').callsFake(fakeShowQuickPick);
   }
 
   public teardown(): void { this.sandbox.verifyAndRestore(); }
