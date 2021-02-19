@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "Testowanie pliku binarnego Clang: {0}",
 	"bad.clang.binary": "Nieprawidłowy plik binarny Clang (parametr „-v” powoduje zwrócenie wartości różnej od zera): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "Nieprawidłowe dane wyjściowe w przypadku użycia parametru -v dla pliku binarnego Clang {0}: {1}",
 	"testing.gcc.binary": "Testowanie pliku binarnego GCC: {0}",
 	"getting.gcc.version": "Pobieranie wersji programu GCC dla elementu {0}",
