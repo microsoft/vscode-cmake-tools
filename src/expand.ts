@@ -30,6 +30,14 @@ export interface RequiredExpansionContextVars {
   workspaceFolderBasename: string;
   workspaceHash: string;
   workspaceRoot: string;
+  buildKitVendor: string;
+  buildKitTriple: string;
+  buildKitVersion: string;
+  buildKitHostOs: string;
+  buildKitTargetOs: string;
+  buildKitTargetArch: string;
+  buildKitVersionMajor: string;
+  buildKitVersionMinor: string;
   workspaceRootFolderName: string;
   userHome: string;
 }

@@ -135,6 +135,14 @@ class Paths {
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
         buildKit: '',
+        buildKitVendor: '',
+        buildKitTriple: '',
+        buildKitVersion: '',
+        buildKitHostOs: '',
+        buildKitTargetOs: '',
+        buildKitTargetArch: '',
+        buildKitVersionMajor: '',
+        buildKitVersionMinor: '',
         buildType: '',
         generator: '',
         workspaceFolder: wsc.folder.uri.fsPath,

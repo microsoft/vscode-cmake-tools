@@ -16,7 +16,7 @@ import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
 import {RawDiagnosticParser} from '@cmt/diagnostics/util';
 import {ProgressMessage} from '@cmt/drivers/cms-client';
 import * as expand from '@cmt/expand';
-import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean} from '@cmt/kit';
+import {CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect} from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
@@ -26,6 +26,7 @@ import * as telemetry from '@cmt/telemetry';
 import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
 import * as nls from 'vscode-nls';
+import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -212,6 +213,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private _kit: Kit|null = null;
 
+  private _kitDetect: KitDetect|null = null;
+
   /**
    * Get the vscode root workspace folder.
    *
@@ -227,6 +230,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get expansionOptions(): expand.ExpansionOptions {
     const ws_root = util.lightNormalizePath(this.workspaceFolder || '.');
+    const target: Partial<TargetTriple> = parseTargetTriple(this._kitDetect?.triple ?? '') ?? {};
+    const version = this._kitDetect?.version ?? '0.0';
 
     // Fill in default replacements
     const vars: expand.ExpansionVars = {
@@ -239,6 +244,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
       workspaceRoot: ws_root,
       workspaceRootFolderName: path.basename(ws_root),
       userHome: paths.userHome,
+      buildKitVendor: this._kitDetect?.vendor ?? '__unknow_vendor__',
+      buildKitTriple: this._kitDetect?.triple ?? '__unknow_triple__',
+      buildKitVersion: version,
+      buildKitHostOs: process.platform,
+      buildKitTargetOs: target.targetOs ?? '__unknow_target_os__',
+      buildKitTargetArch: target.targetArch ?? '__unknow_target_arch__',
+      buildKitVersionMajor: majorVersionSemver(version),
+      buildKitVersionMinor: minorVersionSemver(version),
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',
     };
@@ -341,6 +354,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private async _setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
     this._kit = Object.seal({...kit});
+    this._kitDetect = await getKitDetect(this._kit);
     log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
