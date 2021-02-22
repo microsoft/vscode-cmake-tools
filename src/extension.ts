@@ -139,6 +139,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   private _onDidChangeActiveTextEditorSub: vscode.Disposable = new DummyDisposable();
+  private _onUseCMakePresetsChangedSub: vscode.Disposable = new DummyDisposable();
 
   private readonly _workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
@@ -165,6 +166,7 @@ class ExtensionManager implements vscode.Disposable {
       }
       await this._initActiveFolder();
       for (const cmtFolder of this._folders) {
+        this._onUseCMakePresetsChangedSub = cmtFolder.onUseCMakePresetsChanged(useCMakePresets => this._statusBar.useCMakePresets(useCMakePresets));
         this._codeModelUpdateSubs.set(cmtFolder.folder.uri.fsPath, [
           cmtFolder.cmakeTools.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
           cmtFolder.cmakeTools.onTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
@@ -332,6 +334,7 @@ class ExtensionManager implements vscode.Disposable {
       )
     );
     this._onDidChangeActiveTextEditorSub.dispose();
+    this._onUseCMakePresetsChangedSub.dispose();
     // tslint:disable-next-line: no-floating-promises
     this._kitsWatcher.close();
     this._projectOutlineTreeView.dispose();
@@ -497,7 +500,16 @@ class ExtensionManager implements vscode.Disposable {
     // Set the new workspace
     this._folders.setActiveFolder(ws);
     this._statusBar.setActiveFolderName(ws?.name || '');
-    this._statusBar.setActiveKitName(this._folders.activeFolder?.cmakeTools.activeKit?.name || '');
+    const activeFolder = this._folders.activeFolder;
+    const useCMakePresets = activeFolder?.useCMakePresets || false;
+    this._statusBar.useCMakePresets(useCMakePresets);
+    if (useCMakePresets) {
+      this._statusBar.setConfigurePresetName(activeFolder?.cmakeTools.configurePreset?.name || '');
+      this._statusBar.setBuildPresetName(activeFolder?.cmakeTools.configurePreset?.name || '');
+      this._statusBar.setTestPresetName(activeFolder?.cmakeTools.configurePreset?.name || '');
+    } else {
+      this._statusBar.setActiveKitName(activeFolder?.cmakeTools.activeKit?.name || '');
+    }
     this._projectOutlineProvider.setActiveFolder(ws);
     this._setupSubscriptions();
   }
@@ -684,7 +696,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   async selectKit(folder?: vscode.WorkspaceFolder): Promise<boolean> {
     if (process.env['CMT_TESTING'] === '1') {
-      log.trace(localize('running.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
+      log.trace(localize('selecting.kit.in.test.mode', 'Running CMakeTools in test mode. selectKit is disabled.'));
       return false;
     }
 
@@ -693,7 +705,7 @@ class ExtensionManager implements vscode.Disposable {
       return false;
     }
 
-    const kitName = await cmtFolder.kitsController.selectKit();
+    const kitSelected = await cmtFolder.kitsController.selectKit();
 
     let kitSelectionType;
     if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.activeKit) {
@@ -719,7 +731,7 @@ class ExtensionManager implements vscode.Disposable {
       telemetry.logEvent('kitSelection', telemetryProperties);
     }
 
-    if (kitName) {
+    if (kitSelected) {
       return true;
     }
     return false;
@@ -1074,6 +1086,75 @@ class ExtensionManager implements vscode.Disposable {
       this.enableFullFeatureSet(!this.getFolderContext(cmtFolder.folder)?.ignoreCMakeListsMissing, cmtFolder.folder);
     }
   }
+
+  /**
+   * Show UI to allow the user to select an active configure preset
+   */
+  async selectConfigurePreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
+    if (process.env['CMT_TESTING'] === '1') {
+      log.trace(localize('selecting.config.preset.in.test.mode', 'Running CMakeTools in test mode. selectConfigurePreset is disabled.'));
+      return false;
+    }
+
+    const cmtFolder = this._checkFolderArgs(folder);
+    if (!cmtFolder) {
+      return false;
+    }
+
+    const presetSelected = await cmtFolder.presetsController.selectConfigurePreset();
+    if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.configurePreset) {
+      this._statusBar.setConfigurePresetName(this._folders.activeFolder.cmakeTools.configurePreset.name);
+    }
+
+    if (presetSelected) {
+      return true;
+    }
+    return false;
+  }
+
+  async selectBuildPreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
+    if (process.env['CMT_TESTING'] === '1') {
+      log.trace(localize('selecting.build.preset.in.test.mode', 'Running CMakeTools in test mode. selectBuildPreset is disabled.'));
+      return false;
+    }
+
+    const cmtFolder = this._checkFolderArgs(folder);
+    if (!cmtFolder) {
+      return false;
+    }
+
+    const presetSelected = await cmtFolder.presetsController.selectBuildPreset();
+    if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.buildPreset) {
+      this._statusBar.setBuildPresetName(this._folders.activeFolder.cmakeTools.buildPreset.name);
+    }
+
+    if (presetSelected) {
+      return true;
+    }
+    return false;
+  }
+
+  async selectTestPreset(folder: vscode.WorkspaceFolder): Promise<boolean> {
+    if (process.env['CMT_TESTING'] === '1') {
+      log.trace(localize('selecting.test.preset.in.test.mode', 'Running CMakeTools in test mode. selectTestPreset is disabled.'));
+      return false;
+    }
+
+    const cmtFolder = this._checkFolderArgs(folder);
+    if (!cmtFolder) {
+      return false;
+    }
+
+    const presetSelected = await cmtFolder.presetsController.selectTestPreset();
+    if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.testPreset) {
+      this._statusBar.setTestPresetName(this._folders.activeFolder.cmakeTools.testPreset.name);
+    }
+
+    if (presetSelected) {
+      return true;
+    }
+    return false;
+  }
 }
 
 /**
@@ -1136,6 +1217,9 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
+    'selectConfigurePreset',
+    'selectBuildPreset',
+    'selectTestPreset',
     'selectActiveFolder',
     'editKits',
     'scanForKits',

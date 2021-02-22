@@ -84,6 +84,21 @@
   "contributes": {
     "commands": [
       {
+        "command": "cmake.selectConfigurePreset",
+        "title": "%cmake-tools.command.cmake.selectConfigurePreset.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.selectBuildPreset",
+        "title": "%cmake-tools.command.cmake.selectBuildPreset.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.selectTestPreset",
+        "title": "%cmake-tools.command.cmake.selectTestPreset.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.viewLog",
         "title": "%cmake-tools.command.cmake.viewLog.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -1425,6 +1440,66 @@
           "default": {},
           "description": "%cmake-tools.configuration.cmake.statusbar.advanced.description%",
           "properties": {
+            "configurePreset": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                },
+                "length": {
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.length.description%",
+                  "type": "integer",
+                  "default": 20
+                }
+              }
+            },
+            "buildPreset": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                },
+                "length": {
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.length.description%",
+                  "type": "integer",
+                  "default": 20
+                }
+              }
+            },
+            "testPreset": {
+              "type": "object",
+              "properties": {
+                "visibility": {
+                  "type": "string",
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.visibility.description%",
+                  "enum": [
+                    "default",
+                    "compact",
+                    "icon",
+                    "hidden"
+                  ]
+                },
+                "length": {
+                  "description": "%cmake-tools.configuration.cmake.statusbar.advanced.length.description%",
+                  "type": "integer",
+                  "default": 20
+                }
+              }
+            },
             "kit": {
               "type": "object",
               "properties": {
@@ -1660,11 +1735,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "https://gitlab.kitware.com/cmake/cmake/-/raw/release/Help/manual/presets/schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "https://gitlab.kitware.com/cmake/cmake/-/raw/release/Help/manual/presets/schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-schema.json"
       }
     ]
   },

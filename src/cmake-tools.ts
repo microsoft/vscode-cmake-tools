@@ -41,6 +41,7 @@ import * as nls from 'vscode-nls';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
 import {enableFullFeatureSet, registerTaskProvider} from './extension';
+import { ConfigurePreset, BuildPreset, TestPreset } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -120,6 +121,27 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get statusMessage() { return this._statusMessage.value; }
   get onStatusMessageChanged() { return this._statusMessage.changeEvent; }
   private readonly _statusMessage = new Property<string>(localize('initializing', 'Initializing'));
+
+  /**
+   * Currently selected configure preset
+   */
+  get configurePreset() { return this._configurePreset; }
+  set configurePreset(preset: ConfigurePreset | null) { this._configurePreset = preset; }
+  private _configurePreset: ConfigurePreset | null = null;
+
+  /**
+   * Currently selected build preset
+   */
+  get buildPreset() { return this._buildPreset; }
+  set buildPreset(preset: BuildPreset | null) { this._buildPreset = preset; }
+  private _buildPreset: BuildPreset | null = null;
+
+  /**
+   * Currently selected test preset
+   */
+  get testPreset() { return this._testPreset; }
+  set testPreset(preset: TestPreset | null) { this._testPreset = preset; }
+  private _testPreset: TestPreset | null = null;
 
   /**
    * The current target to build.

@@ -1,4 +1,7 @@
 {
+    "cmake-tools.command.cmake.selectConfigurePreset.title": "Select Configure Preset",
+    "cmake-tools.command.cmake.selectBuildPreset.title": "Select Build Preset",
+    "cmake-tools.command.cmake.selectTestPreset.title": "Select Test Preset",
     "cmake-tools.command.cmake.viewLog.title": "Open the CMake Tools Log File",
     "cmake-tools.command.cmake.editKits.title": "Edit User-Local CMake Kits",
     "cmake-tools.command.cmake.scanForKits.title": "Scan for Kits",
@@ -120,5 +123,5 @@
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
     "cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json.",
-    "cmake-tools.configuration.cmake.useCMakePresets.description": "Enables CMakePresets.json. When cmake.useCMakePresets.json, kits, variants, and some settings in settings.json will be ignored."
+    "cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json to configure drive CMake configure, build, and test. When using CMakePresets.json, kits, variants, and some settings in settings.json will be ignored."
 }

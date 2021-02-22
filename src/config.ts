@@ -30,6 +30,18 @@ export interface TouchBarConfig {
 }
 
 export interface AdvancedStatusBarConfig {
+  configurePreset?: {
+    visibility?: StatusBarButtonVisibility;
+    length?: number;
+  };
+  buildPreset?: {
+    visibility?: StatusBarButtonVisibility;
+    length?: number;
+  };
+  testPreset?: {
+    visibility?: StatusBarButtonVisibility;
+    length?: number;
+  };
   kit?: {
     visibility?: StatusBarButtonVisibility;
     length?: number;

@@ -13,7 +13,7 @@ import * as util from '@cmt/util';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-const log = logging.createLogger('kit');
+const log = logging.createLogger('preset');
 
 interface CmakeMinimumRequired {
   major: number;
@@ -35,11 +35,11 @@ export class PresetsController {
   private _cmakePresetsWatcher: chokidar.FSWatcher | undefined;
   private _cmakeUserPresetsWatcher: chokidar.FSWatcher | undefined;
   private _configurePresets: ConfigurePreset[] = [];
-  private _configureUserPresets: ConfigurePreset[] = [];
+  private _userConfigurePresets: ConfigurePreset[] = [];
   private _buildPresets: BuildPreset[] = [];
-  private _buildUserPresets: BuildPreset[] = [];
+  private _userBuildPresets: BuildPreset[] = [];
   private _testPresets: TestPreset[] = [];
-  private _testUserPresets:TestPreset[] = [];
+  private _userTestPresets:TestPreset[] = [];
 
   private readonly _cmakePresetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
   private readonly _cmakeUserPresetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
@@ -62,9 +62,9 @@ export class PresetsController {
 
     const updateUserPresets = async () => {
       const userPresetsFile = await presetsController.readPresetsFile(cmakePresetsPath);
-      presetsController._configureUserPresets = userPresetsFile?.configurePresets || [];
-      presetsController._buildUserPresets = userPresetsFile?.buildPresets || [];
-      presetsController._testUserPresets = userPresetsFile?.testPresets || [];
+      presetsController._userConfigurePresets = userPresetsFile?.configurePresets || [];
+      presetsController._userBuildPresets = userPresetsFile?.buildPresets || [];
+      presetsController._userTestPresets = userPresetsFile?.testPresets || [];
     }
 
     presetsController._cmakePresetsWatcher = chokidar.watch(cmakePresetsPath)
@@ -103,37 +103,17 @@ export class PresetsController {
 
   private constructor(private readonly cmakeTools: CMakeTools) { }
 
-  get cmakePresetsExist() {
-    return this._cmakePresetsExist;
-  }
+  get cmakePresetsExist() { return this._cmakePresetsExist; }
 
-  get cmakeUserPresetsExist() {
-    return this._cmakeUserPresetsExist;
-  }
+  get cmakeUserPresetsExist() { return this._cmakeUserPresetsExist; }
 
-  get configurePresets() {
-    return this._configurePresets.concat(this._configurePresets);
-  }
+  get configurePresets() { return this._configurePresets.concat(this._userConfigurePresets); }
 
-  get configureUerPresets() {
-    return this._configureUserPresets.concat(this._configureUserPresets);
-  }
+  get buildPresets() { return this._buildPresets.concat(this._userBuildPresets); }
 
-  get buildPresets() {
-    return this._buildPresets.concat(this._buildPresets);
-  }
+  get testPresets() { return this._testPresets.concat(this._userTestPresets); }
 
-  get buildUerPresets() {
-    return this._buildUserPresets.concat(this._buildUserPresets);
-  }
-
-  get testPresets() {
-    return this._testPresets.concat(this._testPresets);
-  }
-
-  get testUerPresets() {
-    return this._testUserPresets.concat(this._testUserPresets);
-  }
+  get folder() { return this.cmakeTools.folder; }
 
   /**
    * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
@@ -144,6 +124,102 @@ export class PresetsController {
    * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
    */
   onUserPresetsChanged(listener: () => any) { return this._cmakeUserPresetsChangedEmitter.event(listener); }
+
+  async selectConfigurePreset(): Promise<boolean> {
+    const presets = this.configurePresets;
+    if (presets.length === 0) {
+      return false;
+    }
+
+    log.debug(localize('start.selection.of.config.presets', 'Start selection of configure presets. Found {0} presets.', presets.length));
+
+    interface PresetItem extends vscode.QuickPickItem {
+      preset: ConfigurePreset;
+    }
+    log.debug(localize('opening.config.preset.selection', 'Opening configure preset selection QuickPick'));
+    const items: PresetItem[] = presets.map(
+        preset => ({
+          label: preset.displayName || preset.name,
+          description: preset.description,
+          preset,
+        }),
+    );
+    const chosen_preset = await vscode.window.showQuickPick(items,
+                                                            {placeHolder: localize('select.a.config.preset.placeholder', 'Select a configure preset for {0}', this.folder.name)});
+    if (chosen_preset === undefined) {
+      log.debug(localize('user.cancelled.config.preset.selection', 'User cancelled configure preset selection'));
+      return false;
+    } else {
+      log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosen_preset)));
+      this.cmakeTools.configurePreset = chosen_preset.preset;
+      // await this.setFolderConfigurePreset(chosen_preset.preset);
+      return true;
+    }
+  }
+
+  async selectBuildPreset(): Promise<boolean> {
+    const presets = this.buildPresets;
+    if (presets.length === 0) {
+      return false;
+    }
+
+    log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
+
+    interface PresetItem extends vscode.QuickPickItem {
+      preset: BuildPreset;
+    }
+    log.debug(localize('opening.build.preset.selection', 'Opening build preset selection QuickPick'));
+    const items: PresetItem[] = presets.map(
+        preset => ({
+          label: preset.displayName,
+          description: preset.description,
+          preset,
+        }),
+    );
+    const chosen_preset = await vscode.window.showQuickPick(items,
+                                                            {placeHolder: localize('select.a.build.preset.placeholder', 'Select a configure preset for {0}', this.folder.name)});
+    if (chosen_preset === undefined) {
+      log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
+      return false;
+    } else {
+      log.debug(localize('user.selected.build.preset', 'User selected build preset {0}', JSON.stringify(chosen_preset)));
+      this.cmakeTools.buildPreset = chosen_preset.preset;
+      // await this.setFolderBuildPreset(chosen_preset.preset);
+      return true;
+    }
+  }
+
+  async selectTestPreset(): Promise<boolean> {
+    const presets = this.testPresets;
+    if (presets.length === 0) {
+      return false;
+    }
+
+    log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
+
+    interface PresetItem extends vscode.QuickPickItem {
+      preset: TestPreset;
+    }
+    log.debug(localize('opening.test.preset.selection', 'Opening test preset selection QuickPick'));
+    const items: PresetItem[] = presets.map(
+        preset => ({
+          label: preset.displayName,
+          description: preset.description,
+          preset,
+        }),
+    );
+    const chosen_preset = await vscode.window.showQuickPick(items,
+                                                            {placeHolder: localize('select.a.test.preset.placeholder', 'Select a configure preset for {0}', this.folder.name)});
+    if (chosen_preset === undefined) {
+      log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
+      return false;
+    } else {
+      log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosen_preset)));
+      this.cmakeTools.testPreset = chosen_preset.preset;
+      // await this.setFolderTestPreset(chosen_preset.preset);
+      return true;
+    }
+  }
 
   private async readPresetsFile(file: string): Promise<PresetsFile | undefined> {
     if (!await fs.exists(file)) {
@@ -184,7 +260,7 @@ export class PresetsController {
         localize('presets.version.error', 'CMakePresets version 1 is not supported. How would you like to proceed?'),
         useKitsVars, changePresets);
     if (result === useKitsVars) {
-      vscode.workspace.getConfiguration('cmake', this.cmakeTools.folder.uri).update('useCMakePresets', false);
+      vscode.workspace.getConfiguration('cmake', this.folder.uri).update('useCMakePresets', false);
     } else {
       vscode.workspace.openTextDocument(vscode.Uri.file(file));
     }

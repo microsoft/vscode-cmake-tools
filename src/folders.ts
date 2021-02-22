@@ -15,12 +15,28 @@ nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFo
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export class CMakeToolsFolder {
+  private _wasUsingCMakePresets: boolean | undefined;
+  private _onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
+
   private constructor(readonly cmakeTools: CMakeTools,
                       readonly kitsController: KitsController,
-                      readonly presetsController: PresetsController) { }
+                      readonly presetsController: PresetsController) {
+    const useCMakePresetsChangedListener = () => {
+      const usingCMakePresets = this.useCMakePresets;
+      if (usingCMakePresets !== this._wasUsingCMakePresets) {
+        this._wasUsingCMakePresets = usingCMakePresets;
+        this._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
+      }
+    }
+    cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener);
+    presetsController.onPresetsChanged(useCMakePresetsChangedListener);
+    presetsController.onUserPresetsChanged(useCMakePresetsChangedListener);
+  }
 
   static async init(cmakeTools: CMakeTools) {
-    return new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools), await PresetsController.init(cmakeTools));
+    const cmtFolder = new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools), await PresetsController.init(cmakeTools));
+    cmtFolder._wasUsingCMakePresets = cmtFolder.useCMakePresets;
+    return cmtFolder;
   }
 
   get folder() { return this.cmakeTools.folder; }
@@ -28,13 +44,17 @@ export class CMakeToolsFolder {
   // Go through the decision tree here since there would be dependency issues if we do this in config.ts
   get useCMakePresets(): boolean {
     if (this.cmakeTools.workspaceContext.config.useCMakePresets === 'automatic') {
-      // Always check if configured before since the state could be reset
-      const state = this.cmakeTools.workspaceContext.state;
-      const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
-      return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
+      // TODO (P1): check if configured with kits + vars
+      // // Always check if configured before since the state could be reset
+      // const state = this.cmakeTools.workspaceContext.state;
+      // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
+      // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
+      return this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist;
     }
     return this.cmakeTools.workspaceContext.config.useCMakePresets === 'true';
   }
+
+  get onUseCMakePresetsChanged() { return this._onUseCMakePresetsChangedEmitter.event; }
 
   dispose() {
     this.cmakeTools.dispose();
