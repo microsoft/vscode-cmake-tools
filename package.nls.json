@@ -1,4 +1,8 @@
 {
+    "cmake-tools.command.cmake.openCMakePresets.title": "Open CMakePresets.json",
+    "cmake-tools.command.cmake.addConfigurePreset.title": "Add Configure Preset",
+    "cmake-tools.command.cmake.addBuildPreset.title": "Add Build Preset",
+    "cmake-tools.command.cmake.addTestPreset.title": "Add Test Preset",
     "cmake-tools.command.cmake.selectConfigurePreset.title": "Select Configure Preset",
     "cmake-tools.command.cmake.selectBuildPreset.title": "Select Build Preset",
     "cmake-tools.command.cmake.selectTestPreset.title": "Select Test Preset",

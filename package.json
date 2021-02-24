@@ -84,6 +84,26 @@
   "contributes": {
     "commands": [
       {
+        "command": "cmake.openCMakePresets",
+        "title": "%cmake-tools.command.cmake.openCMakePresets.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.addConfigurePreset",
+        "title": "%cmake-tools.command.cmake.addConfigurePreset.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.addBuildPreset",
+        "title": "%cmake-tools.command.cmake.addBuildPreset.title%",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.addTestPreset",
+        "title": "%cmake-tools.command.cmake.addTestPreset.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.selectConfigurePreset",
         "title": "%cmake-tools.command.cmake.selectConfigurePreset.title%",
         "category": "CMake"

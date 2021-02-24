@@ -1,7 +1,7 @@
 interface Preset {
   name: string;
-  displayName: string;
-  description: string;
+  displayName?: string;
+  description?: string;
 }
 
 export interface ConfigurePreset extends Preset {
