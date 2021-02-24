@@ -142,10 +142,8 @@ if (! $NoTest) {
     # Prepare to run our tests
     Invoke-TestPreparation -CMakePath $cmake_binary
 
-    if (! $PSVersionTable.OS.StartsWith("Darwin")) {
-        # For some reason, the backend tests fail on macOS
-        Invoke-MochaTest "CMake Tools: Backend tests"
-    }
+    # Running mocha backend tests
+    Invoke-MochaTest "CMake Tools: Backend tests"
 
     Invoke-VSCodeTest "CMake Tools: Unit tests" `
         -TestsPath "$REPO_DIR/out/test/unit-tests" `

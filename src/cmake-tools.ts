@@ -983,6 +983,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
     }
     const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
+    await this.reRegisterTaskProviderforNewTarget(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
@@ -1230,6 +1231,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return;
     }
     await this._setDefaultBuildTarget(target);
+    const drv = await this._cmakeDriver;
+    await this.reRegisterTaskProviderforNewTarget(drv, target);
+  }
+
+  async reRegisterTaskProviderforNewTarget(drv: CMakeDriver | null, target: string) {
+    if (drv) {
+      const buildargs = await drv.getCMakeBuildCommand(target);
+      const command = (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
+      await registerTaskProvider(command);
+    }
   }
 
   /**
@@ -1568,7 +1579,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal(termOptions);
     const quoted = shlex.quote(executable.path);
-    this._launchTerminal.sendText(quoted);
+
+    let launchArgs = '';
+    if (user_config && user_config.args) {
+        launchArgs = user_config.args.join(" ");
+    }
+
+    this._launchTerminal.sendText(`${quoted} ${launchArgs}`);
     this._launchTerminal.show(true);
     return this._launchTerminal;
   }

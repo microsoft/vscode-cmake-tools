@@ -12,7 +12,7 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Sélectionner une variante pour tous les projets",
 	"cmake-tools.command.cmake.configure.title": "Configurer",
 	"cmake-tools.command.cmake.configureAll.title": "Configurer tous les projets",
-	"cmake-tools.command.cmake.build.title": "Version",
+	"cmake-tools.command.cmake.build.title": "Build",
 	"cmake-tools.command.cmake.buildAll.title": "Générer tous les projets",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(Interne) Générer une cible en fonction de son nom",
 	"cmake-tools.command.cmake.compileFile.title": "Compiler le fichier actif",
@@ -124,5 +124,5 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configure la longueur maximale du texte visible en mode 'compact'.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Dossiers",
 	"cmake-tools.configuration.views.cmake.outline.description": "Structure du projet",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Permet l'exportation de compile_commands.json."
 }

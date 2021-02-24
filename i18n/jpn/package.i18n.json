@@ -26,8 +26,8 @@
 	"cmake-tools.command.cmake.openConfiguration.title": "CMake キャッシュ (UI) の編集",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "クリーンして再構成",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "すべてのプロジェクトをクリーンして再構成",
-	"cmake-tools.command.cmake.clean.title": "クリーン",
-	"cmake-tools.command.cmake.cleanAll.title": "すべてのプロジェクトをクリーン",
+	"cmake-tools.command.cmake.clean.title": "クリーンする",
+	"cmake-tools.command.cmake.cleanAll.title": "すべてのプロジェクトをクリーンする",
 	"cmake-tools.command.cmake.cleanRebuild.title": "クリーンしてリビルド",
 	"cmake-tools.command.cmake.cleanRebuildAll.title": "すべてのプロジェクトをクリーンしてリビルド",
 	"cmake-tools.command.cmake.ctest.title": "テストの実行",
@@ -124,5 +124,5 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'compact' モードで表示されるテキストの最大長を構成します。",
 	"cmake-tools.configuration.views.cmake.folders.description": "フォルダー",
 	"cmake-tools.configuration.views.cmake.outline.description": "プロジェクトの概要",
-	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json."
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json のエクスポートを有効にします。"
 }
