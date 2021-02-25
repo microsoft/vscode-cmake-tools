@@ -1655,7 +1655,7 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile-production",
-    "compile": "yarn install && webpack --mode development --watch",
+    "compile": "yarn install && webpack --mode development --watch --progress",
     "compile-production": "yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",
