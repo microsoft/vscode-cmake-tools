@@ -40,6 +40,7 @@ export interface RequiredExpansionContextVars {
   buildKitVersionMinor: string;
   workspaceRootFolderName: string;
   userHome: string;
+  rootPath: string;
 }
 
 /**

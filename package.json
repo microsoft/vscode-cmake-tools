@@ -1298,7 +1298,7 @@
             "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
           },
           "default": [
-            "C:\\MinGW"
+            "${rootPath}/MinGW"
           ],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
           "scope": "window"
