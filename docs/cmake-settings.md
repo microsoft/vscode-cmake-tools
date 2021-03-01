@@ -55,6 +55,7 @@ Some options support the replacement of special values in their string value by 
 |`${generator}`| The name of the CMake generator. For example: `Ninja`|
 |`${projectName}`|**DEPRECATED**. Expands to the constant string `"ProjectName"` CMake does not consider there to be just one project name to use. The concept of a single project does not work in CMake. Use `${workspaceRootFolderName}`, instead.|
 |`${userHome}`|  The full path to the current user's home directory. |
+|`${rootPath}`|  The system drive letter. |
 
 ### Environment variables
 
