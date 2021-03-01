@@ -404,12 +404,12 @@ export class PresetsController {
     }
   }
 
-  openCMakePresets(): Thenable<vscode.TextDocument> {
-    return vscode.workspace.openTextDocument(this._presetsPath);
+  openCMakePresets(): Thenable<vscode.TextEditor> {
+    return vscode.window.showTextDocument(vscode.Uri.file(this._presetsPath));
   }
 
-  openCMakeUserPresets(): Thenable<vscode.TextDocument> {
-    return vscode.workspace.openTextDocument(this._userPresetsPath);
+  openCMakeUserPresets(): Thenable<vscode.TextEditor> {
+    return vscode.window.showTextDocument(vscode.Uri.file(this._userPresetsPath));
   }
 
   private async readPresetsFile(file: string): Promise<PresetsFile | undefined> {
@@ -457,7 +457,7 @@ export class PresetsController {
     }
   }
 
-  private async updatePresetsFile(presetsFile: PresetsFile, isUserPresets = false): Promise<boolean> {
+  async updatePresetsFile(presetsFile: PresetsFile, isUserPresets = false): Promise<boolean> {
     const presetsFilePath = isUserPresets? this._userPresetsPath : this._presetsPath;
     try {
         await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile));
