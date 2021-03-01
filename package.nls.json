@@ -18,7 +18,7 @@
     "cmake-tools.command.cmake.setDefaultTarget.title": "Set Build Target",
     "cmake-tools.command.cmake.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.cleanConfigureAll.title": "Delete Cache and Reconfigure All Projects",
-    "cmake-tools.command.cmake.openConfiguration.title": "Edit CMake Cache (UI)",
+    "cmake-tools.command.cmake.editCacheUI.title": "Edit CMake Cache (UI)",
     "cmake-tools.command.cmake.outline.cleanConfigure.title": "Clean Reconfigure",
     "cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Clean Reconfigure All Projects",
     "cmake-tools.command.cmake.clean.title": "Clean",

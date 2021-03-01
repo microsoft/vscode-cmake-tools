@@ -74,6 +74,7 @@ export enum ConfigureTrigger {
   commandCleanConfigure = "commandCleanConfigure",
   commandConfigureAll = "commandConfigureAll",
   commandCleanConfigureAll = "commandCleanConfigureAll",
+  kitSelection = "kitSelection",
 }
 
 /**
