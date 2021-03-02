@@ -306,7 +306,7 @@ class ExtensionManager implements vscode.Disposable {
       // We have an active kit. We're good.
       return true;
     }
-    // No kit? Ask the user what they want, if showQuickPick allows.
+    // No kit? Ask the user what they want.
     const did_choose_kit = await this.selectKit(cmt.folder);
     if (!did_choose_kit && !cmt.activeKit) {
       // The user did not choose a kit and kit isn't set in other way such as setKitByName
@@ -441,8 +441,11 @@ class ExtensionManager implements vscode.Disposable {
 
     // Don't configure if the current project is not CMake based (it doesn't have a CMakeLists.txt in the sourceDirectory).
     const sourceDirectory: string = cmt.workspaceContext.config.sourceDirectory;
-    const expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
-    if (await fs.exists(expandedSourceDirectory + "/CMakeLists.txt")) {
+    let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
+    if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
+      expandedSourceDirectory = path.join(expandedSourceDirectory, "/CMakeLists.txt");
+    }
+    if (await fs.exists(expandedSourceDirectory)) {
       if (should_configure) {
         // We've opened a new workspace folder, and the user wants us to
         // configure it now.
