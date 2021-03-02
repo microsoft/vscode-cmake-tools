@@ -254,7 +254,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
       buildKitVersionMinor: minorVersionSemver(version),
       // DEPRECATED EXPANSION: Remove this in the future:
       projectName: 'ProjectName',
-      rootPath: paths.rootPath
     };
 
     // Update Variant replacements

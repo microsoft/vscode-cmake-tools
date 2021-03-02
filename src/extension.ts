@@ -676,12 +676,9 @@ class ExtensionManager implements vscode.Disposable {
   private async _getMinGWDirs(): Promise<string[]> {
     const optsVars: ExpansionVars = {
       userHome: paths.userHome,
-      rootPath: paths.rootPath,
 
       // This is called during scanning for kits, which is an operation that happens
       // outside the scope of a project folder, so it doesn't need the below variables.
-      // For example, the package.json setting "cmake.mingwSearchDirs" is using
-      // the rootPath variable and it shouldn't use any of the below ones.
       buildKit: "",
       buildType: "",
       generator: "",

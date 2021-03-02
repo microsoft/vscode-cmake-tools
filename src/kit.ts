@@ -1248,7 +1248,6 @@ async function expandKitVariables(kit: Kit): Promise<Kit> {
         buildKitVersionMinor: '${buildKitVersionMinor}',
         generator: '${generator}',
         userHome: paths.userHome,
-        rootPath: paths.rootPath,
         workspaceFolder: '${workspaceFolder}',
         workspaceFolderBasename: '${workspaceFolderBasename}',
         workspaceHash: '${workspaceHash}',

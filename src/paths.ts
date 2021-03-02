@@ -130,17 +130,6 @@ class Paths {
   get roamingDataDir(): string { return path.join(this.userRoamingDir, 'CMakeTools'); }
 
   /**
-   * Returns e.g. "C:\" on Windows and "/" on Unix-like systems
-   */
-   get rootPath(): string {
-    if (process.platform === 'win32') {
-      return this.windows.SystemDrive!;
-    } else {
-      return '/';
-    }
-  }
-
-  /**
    * Get the platform-specific temporary directory
    */
   get tmpDir(): string {
@@ -216,7 +205,6 @@ class Paths {
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
         workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
         userHome: this.userHome,
-        rootPath: this.rootPath,
       },
     });
 
