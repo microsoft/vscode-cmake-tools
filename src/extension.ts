@@ -5,10 +5,12 @@
 'use strict';
 
 import * as chokidar from 'chokidar';
+import {expandString, ExpansionVars} from './expand';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
+import paths from './paths';
 
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
@@ -21,7 +23,6 @@ import {
   findCLCompilerPath,
   effectiveKitEnvironment,
   scanForKitsIfNeeded,
-  SpecialKits
 } from '@cmt/kit';
 import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
@@ -289,12 +290,11 @@ class ExtensionManager implements vscode.Disposable {
 
   /**
    * Ensure that there is an active kit for the current CMakeTools.
-   * Ask the user to select one depending on showQuickPick boolean.
    *
    * @returns `false` if there is not active CMakeTools, or it has no active kit
    * and the user cancelled the kit selection dialog.
    */
-  private async _ensureActiveKit(cmt?: CMakeTools, showQuickPick: boolean = true): Promise<boolean> {
+  private async _ensureActiveKit(cmt?: CMakeTools): Promise<boolean> {
     if (!cmt) {
       cmt = this._folders.activeFolder?.cmakeTools;
     }
@@ -307,7 +307,7 @@ class ExtensionManager implements vscode.Disposable {
       return true;
     }
     // No kit? Ask the user what they want, if showQuickPick allows.
-    const did_choose_kit = showQuickPick && await this.selectKit(cmt.folder);
+    const did_choose_kit = await this.selectKit(cmt.folder);
     if (!did_choose_kit && !cmt.activeKit) {
       // The user did not choose a kit and kit isn't set in other way such as setKitByName
       return false;
@@ -349,29 +349,11 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async configureInternal(trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
-    // If there is no active kit defined for this project, set it temporarily to "unspecified".
-    // This is needed so that the kit selection quickPick is not shown from the very beginning.
-    // See more details in the comments of the state variable "userSelectedKit" (state.ts).
-    if (!await this._ensureActiveKit(cmt, false)) {
-      await cmt.setKit({name: SpecialKits.Unspecified});
+    if (!await this._ensureActiveKit(cmt)) {
+      return;
     }
 
-    const retc = await cmt.configureInternal(trigger, [], ConfigureType.Normal);
-
-    // If the configure process did not identify that CMakeLists.txt is missing,
-    // we can continue with asking the user for a kit selection.
-    // If the user does not select a kit at this point, the current configure
-    // is still going to be based on the temporary "unspecified" that was set earlier,
-    // but since the workspace state did not record a user selection it will ask again
-    // during the next configure.
-    if (retc !== -2 && !cmt.workspaceContext.state.userSelectedKit) {
-      if (await this.selectKit(cmt.folder) && cmt.activeKit?.name !== SpecialKits.Unspecified) {
-        // Configure again if the user selected a different kit than our original temporary "unspecified".
-        if (cmt.activeKit?.name !== SpecialKits.Unspecified) {
-          await cmt.configureInternal(ConfigureTrigger.kitSelection, [], ConfigureType.Normal);
-        }
-      }
-    }
+    await cmt.configureInternal(trigger, [], ConfigureType.Normal);
   }
 
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
@@ -435,21 +417,50 @@ class ExtensionManager implements vscode.Disposable {
       should_configure = chosen.doConfigure;
     }
 
-    if (should_configure) {
-      // We've opened a new workspace folder, and the user wants us to
-      // configure it now.
-      log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-      await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
-    } else if (silentScanForKitsNeeded) {
-      // This popup will show up the first time after deciding not to configure, if a version change has been detected
-      // in the kits definition. This may happen during a CMake Tools extension upgrade.
-      // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
-      // being tied to a global state variable.
-      const configureButtonMessage = localize('configure.now.button', 'Configure Now');
-      const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
-      if (result === configureButtonMessage) {
-        await this.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
+    const optsVars: ExpansionVars = {
+      userHome: paths.userHome,
+      workspaceFolder: cmt.workspaceContext.folder.uri.fsPath,
+      workspaceFolderBasename: cmt.workspaceContext.folder.name,
+      workspaceRoot: cmt.workspaceContext.folder.uri.fsPath,
+      workspaceRootFolderName: cmt.workspaceContext.folder.name,
+
+      // sourceDirectory cannot be defined based on any of the below variables.
+      buildKit: "",
+      buildType: "",
+      generator: "",
+      buildKitVendor: "",
+      buildKitTriple: "",
+      buildKitVersion: "",
+      buildKitHostOs: "",
+      buildKitTargetOs: "",
+      buildKitTargetArch: "",
+      buildKitVersionMajor: "",
+      buildKitVersionMinor: "",
+      workspaceHash: "",
+    };
+
+    // Don't configure if the current project is not CMake based (it doesn't have a CMakeLists.txt in the sourceDirectory).
+    const sourceDirectory: string = cmt.workspaceContext.config.sourceDirectory;
+    const expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
+    if (await fs.exists(expandedSourceDirectory + "/CMakeLists.txt")) {
+      if (should_configure) {
+        // We've opened a new workspace folder, and the user wants us to
+        // configure it now.
+        log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
+        await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
+      } else if (silentScanForKitsNeeded) {
+        // This popup will show up the first time after deciding not to configure, if a version change has been detected
+        // in the kits definition. This may happen during a CMake Tools extension upgrade.
+        // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+        // being tied to a global state variable.
+        const configureButtonMessage = localize('configure.now.button', 'Configure Now');
+        const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
+        if (result === configureButtonMessage) {
+          await this.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
+        }
       }
+    } else {
+      await enableFullFeatureSet(false, cmt.folder);
     }
 
     // Enable full or partial feature set for each workspace folder, depending on their state variable.
@@ -745,7 +756,6 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     if (kitName) {
-      cmtFolder.cmakeTools.workspaceContext.state.userSelectedKit = true;
       return true;
     }
 

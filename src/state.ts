@@ -33,27 +33,6 @@ export class StateManager {
   }
 
   /**
-   * Whether the extension had an opportunity to ask the user to select a kit,
-   * since this project was created (or since the last state reset).
-   * This is to fix the unwanted kit selection quickPick that is shown also for non CMake projects.
-   * A configure cannot succeed if no kit is given.
-   * Also, whether CMakeLists.txt is missing or not cannot be accurately determined
-   * without variable expansion functionality, which depends on the initial stages of configure.
-   * To solve this "chicken and egg" situation, if we find a project without a kit selected,
-   * we temporarily set an "unspecified kit", so that configure continues.
-   * If during configure we find that the CMakeLists.txt is missing, the user sees the popup
-   * and also was not inconvenienced with the kit selection quickPick.
-   * If the configure finds a CMakeLists.txt, by reading this state variable we know
-   * whether the kit selection was postponed or not and we can show the quickPick accordingly.
-   */
-  get userSelectedKit(): boolean {
-    return this._get<boolean>('userSelectedKit') || false;
-  }
-  set userSelectedKit(v: boolean) {
-    this._update('userSelectedKit', v);
-  }
-
-  /**
    * The name of the workspace-local active kit.
    */
   get activeKitName(): string|null {
@@ -106,6 +85,5 @@ export class StateManager {
     this.defaultBuildTarget = null;
     this.activeKitName = null;
     this.ignoreCMakeListsMissing = false;
-    this.userSelectedKit = false;
   }
 }
