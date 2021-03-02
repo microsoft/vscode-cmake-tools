@@ -443,7 +443,7 @@ class ExtensionManager implements vscode.Disposable {
     const sourceDirectory: string = cmt.workspaceContext.config.sourceDirectory;
     let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
     if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
-      expandedSourceDirectory = path.join(expandedSourceDirectory, "/CMakeLists.txt");
+      expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
     }
     if (await fs.exists(expandedSourceDirectory)) {
       if (should_configure) {
