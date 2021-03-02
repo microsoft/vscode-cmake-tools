@@ -22,13 +22,12 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
-  | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20";
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20";
 
 
 export interface CompileFlagInformation {
   extraDefinitions: string[];
-  standard: StandardVersion;
+  standard: StandardVersion | undefined;
   targetArch: Architecture;
 }
 
@@ -41,7 +40,7 @@ interface TargetDefaults {
   defines: string[];
 }
 
-function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion|null {
+function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion | undefined {
   const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
@@ -56,11 +55,11 @@ function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion|nu
   } else if (std.endsWith('++98')) {
     return is_gnu ? 'gnu++98' : 'c++98';
   } else {
-    return null;
+    return undefined;
   }
 }
 
-function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null {
+function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion | undefined {
   // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
   const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(std)) {
@@ -77,7 +76,7 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null
       return 'c11';
     }
   } else {
-    return null;
+    return undefined;
   }
 }
 
@@ -117,7 +116,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = (lang === 'C') ? 'c11' : 'c++17';
+  let standard: StandardVersion | undefined = undefined;
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
