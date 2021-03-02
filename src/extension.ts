@@ -143,7 +143,12 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
   private updateTouchBarVisibility(config: TouchBarConfig) {
-    util.setContextValue("cmake:enableTouchBar", config.visibility === "default");
+    let touchBarVisible = config.visibility === "default";
+    util.setContextValue("cmake:enableTouchBar", touchBarVisible);
+    util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
+    util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
+    util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
+    util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
   }
   /**
    * Second-phase async init

@@ -25,7 +25,15 @@ interface HardEnv {
   [key: string]: string;
 }
 
+export interface AdvancedTouchBarConfig {
+  configure?:  TouchBarButtonVisibility;
+  build?: TouchBarButtonVisibility;
+  debug?: TouchBarButtonVisibility;
+  launch?: TouchBarButtonVisibility;
+}
+
 export interface TouchBarConfig {
+  advanced?: AdvancedTouchBarConfig;
   visibility: TouchBarButtonVisibility;
 }
 
