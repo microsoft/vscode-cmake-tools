@@ -5,6 +5,7 @@
 'use strict';
 
 import * as chokidar from 'chokidar';
+import {expandString, ExpansionVars} from './expand';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
@@ -35,6 +36,7 @@ import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode}
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
+import paths from './paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -348,7 +350,7 @@ class ExtensionManager implements vscode.Disposable {
       await cmtf.cmakeTools.asyncDispose();
     }
     this._folders.dispose();
-    telemetry.deactivate();
+    await telemetry.deactivate();
   }
 
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
@@ -651,7 +653,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async scanForKits() {
-    KitsController.minGWSearchDirs = this._getMinGWDirs();
+    KitsController.minGWSearchDirs = await this._getMinGWDirs();
     const cmakeTools = this._folders.activeFolder?.cmakeTools;
     if (undefined === cmakeTools) {
       return;
@@ -676,10 +678,34 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Get the current MinGW search directories
    */
-  private _getMinGWDirs(): string[] {
+  private async _getMinGWDirs(): Promise<string[]> {
+    const optsVars: ExpansionVars = {
+      userHome: paths.userHome,
+
+      // This is called during scanning for kits, which is an operation that happens
+      // outside the scope of a project folder, so it doesn't need the below variables.
+      buildKit: "",
+      buildType: "",
+      generator: "",
+      workspaceFolder: "",
+      workspaceFolderBasename: "",
+      workspaceHash: "",
+      workspaceRoot: "",
+      workspaceRootFolderName: "",
+      buildKitVendor: "",
+      buildKitTriple: "",
+      buildKitVersion: "",
+      buildKitHostOs: "",
+      buildKitTargetOs: "",
+      buildKitTargetArch: "",
+      buildKitVersionMajor: "",
+      buildKitVersionMinor: "",
+      projectName: "",
+    };
     const result = new Set<string>();
     for (const dir of this._workspaceConfig.mingwSearchDirs) {
-      result.add(dir);
+      const expandedDir: string = util.lightNormalizePath(await expandString(dir, {vars: optsVars}));
+      result.add(expandedDir);
     }
     return Array.from(result);
   }
@@ -838,7 +864,7 @@ class ExtensionManager implements vscode.Disposable {
 
   build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, true); }
 
-  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[-1] : name), true); }
+  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[name.length - 1] : name), true); }
 
   setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.setDefaultTarget(name), folder); }
 
@@ -1014,7 +1040,7 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapQueryCMakeTools(async cmt => (await cmt.executableTargets).map(target => target.name), folder);
   }
 
-  tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
+  async tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
     telemetry.logEvent("substitution", {command: "tasksBuildCommand"});
     return this.mapQueryCMakeTools(cmt => cmt.tasksBuildCommand(), folder);
   }
@@ -1087,6 +1113,18 @@ class ExtensionManager implements vscode.Disposable {
  */
 let _EXT_MANAGER: ExtensionManager|null = null;
 let cmakeTaskProvider: vscode.Disposable | undefined;
+
+export async function registerTaskProvider(command: string | null) {
+  if (command) {
+    rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
+      if (cmakeTaskProvider) {
+        cmakeTaskProvider.dispose();
+      }
+
+      cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({ build: command }));
+    });
+  }
+}
 
 async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
   reportProgress(progress, localize('initial.setup', 'Initial setup'));
@@ -1227,14 +1265,6 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
       vscode.commands.registerCommand('cmake.outline.selectWorkspace',
                                       (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
   ]);
-
-  // Register a task provider to resolve tasks
-  // TODO: extend
-  rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
-    cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({
-      build: await ext.tasksBuildCommand()
-    }));
-  });
 }
 
 class SchemaProvider implements vscode.TextDocumentContentProvider {

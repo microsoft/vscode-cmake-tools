@@ -8,7 +8,6 @@ import {
   getFirstSystemKit,
   getMatchingSystemKit
 } from '@test/util';
-import {ITestCallbackContext} from 'mocha';
 import * as fs_ from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -31,7 +30,7 @@ suite('Build', async () => {
   let compdb_cp_path: string;
   let cmakeTools : CMakeTools;
 
-  suiteSetup(async function(this: Mocha.IHookCallbackContext) {
+  suiteSetup(async function(this: Mocha.Context) {
     this.timeout(100000);
 
     const build_loc = 'build';
@@ -48,7 +47,7 @@ suite('Build', async () => {
     await clearExistingKitConfigurationFile();
   });
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.Context) {
     this.timeout(100000);
 
     const kit = await getFirstSystemKit(cmakeTools);
@@ -57,12 +56,12 @@ suite('Build', async () => {
     testEnv.projectFolder.buildDirectory.clear();
   });
 
-  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+  teardown(async function(this: Mocha.Context) {
     this.timeout(100000);
     const logPath = logFilePath();
     testEnv.clean();
     if (await fs.exists(logPath)) {
-      if (this.currentTest.state == "failed") {
+      if (this.currentTest?.state == "failed") {
         const logContent = await fs.readFile(logPath);
         logContent.toString().split('\n').forEach(line => {
           console.log(line);
@@ -126,7 +125,7 @@ suite('Build', async () => {
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(200000);
 
-  test('Test kit switch after missing preferred generator', async function(this: ITestCallbackContext) {
+  test('Test kit switch after missing preferred generator', async function(this: Mocha.Context) {
     // Select compiler build node dependent
     const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
       linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
@@ -151,7 +150,7 @@ suite('Build', async () => {
   }).timeout(100000);
 
   test('Test kit switch between different preferred generators and compilers',
-       async function(this: ITestCallbackContext) {
+       async function(this: Mocha.Context) {
          // Select compiler build node dependent
          const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
            linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
@@ -174,26 +173,26 @@ suite('Build', async () => {
        })
       .timeout(100000);
 
-  test('Test build twice', async function(this: ITestCallbackContext) {
+  test('Test build twice', async function(this: Mocha.Context) {
     console.log('1. Build');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
     console.log('2. Build');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
   }).timeout(100000);
 
-  test('Test build twice with clean', async function(this: ITestCallbackContext) {
+  test('Test build twice with clean', async function(this: Mocha.Context) {
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
     await vscode.commands.executeCommand('cmake.clean');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
   }).timeout(100000);
 
-  test('Test build twice with clean configure', async function(this: ITestCallbackContext) {
+  test('Test build twice with clean configure', async function(this: Mocha.Context) {
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
     await vscode.commands.executeCommand('cmake.cleanConfigure');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
   }).timeout(100000);
 
-  test('Test build twice with rebuild configure', async function(this: ITestCallbackContext) {
+  test('Test build twice with rebuild configure', async function(this: Mocha.Context) {
     // Select compiler build node dependent
     await vscode.commands.executeCommand('cmake.build');
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
@@ -201,7 +200,7 @@ suite('Build', async () => {
     expect(await vscode.commands.executeCommand('cmake.build')).eq(0);
   }).timeout(100000);
 
-  test('Test -all version of commands', async function(this: ITestCallbackContext) {
+  test('Test -all version of commands', async function(this: Mocha.Context) {
     // Run build twice first
     expect(await vscode.commands.executeCommand('cmake.buildAll')).eq(0);
     expect(await vscode.commands.executeCommand('cmake.buildAll')).eq(0);

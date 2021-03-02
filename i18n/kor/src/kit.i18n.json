@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "Clang 이진 파일을 테스트하는 중: {0}",
 	"bad.clang.binary": "잘못된 Clang 이진 파일(\"-v\"가 0이 아닌 값을 반환함): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "잘못된 Clang 이진 파일 {0} -v 출력: {1}",
 	"testing.gcc.binary": "GCC 이진 파일을 테스트하는 중: {0}",
 	"getting.gcc.version": "{0}에 대한 GCC 버전을 가져오는 중",
@@ -31,7 +32,6 @@
 	"detected.kit.for.version": "버전에 대한 검색된 VsKit",
 	"generator.present": "생성기가 있음: {0}",
 	"selected.preferred.generator.name": "선택된 기본 설정 생성기 이름: {0} {1}",
-	"clang.for.msvc": "{2}을(를) 사용하는 Clang {0} {1}({3})",
 	"scanning.for.kits.on.system": "시스템에서 키트를 검색하는 중",
 	"scanning.for.kits": "키트를 검색하는 중",
 	"scanning.for.cmake.kits": "CMake 키트를 검색하는 중...",

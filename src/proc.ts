@@ -11,18 +11,13 @@ import * as util from './util';
 
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import { ExecutionResult } from './api';
+export { ExecutionResult } from './api';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('proc');
-
-export interface ExecutionResult {
-  retc: number|null;
-  stdout: string;
-  stderr: string;
-}
-
 
 /**
  * Return value for items that have progress information
@@ -147,8 +142,12 @@ export function execute(command: string,
   else
   {
     try {
-      child = proc.spawn(command, args, spawn_opts);
+      child = proc.spawn(command, args ?? [], spawn_opts);
     } catch {
+      child = undefined;
+    }
+    if (child === undefined)
+    {
       return {
         child: undefined,
         result: Promise.resolve({
@@ -159,18 +158,18 @@ export function execute(command: string,
       };
     }
     if (options.encoding)
-      child.stdout.setEncoding(options.encoding);
+      child.stdout?.setEncoding(options.encoding);
 
     const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
 
     result = new Promise<ExecutionResult>(resolve => {
       if (child) {
-        child.on('error', err => { resolve({ retc: -1, stdout: "", stderr: err.message }); });
+        child.on('error', err => { resolve({ retc: -1, stdout: "", stderr: err.message ?? '' }); });
         let stdout_acc = '';
         let line_acc = '';
         let stderr_acc = '';
         let stderr_line_acc = '';
-        child.stdout.on('data', (data: Uint8Array) => {
+        child.stdout?.on('data', (data: Uint8Array) => {
           rollbar.invoke(localize('processing.data.event.stdout', 'Processing "data" event from proc stdout'), {data, command, args}, () => {
             const str = iconv.decode(Buffer.from(data), encoding);
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
@@ -188,7 +187,7 @@ export function execute(command: string,
             stdout_acc += str;
           });
         });
-        child.stderr.on('data', (data: Uint8Array) => {
+        child.stderr?.on('data', (data: Uint8Array) => {
           rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), {data, command, args}, () => {
             const str = data.toString();
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);

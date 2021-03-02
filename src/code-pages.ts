@@ -195,7 +195,7 @@ async function _getWindowsCodePage(): Promise<string> {
     log.error(localize('failed.to.execute', 'Failed to execute {0}', "chcp"), chcp_res.stderr);
     return 'utf-8';
   }
-  const numStr = chcp_res.stdout.replace(/[^0-9]/ig, '');
+  const numStr = chcp_res.stdout ?? ''.replace(/[^0-9]/ig, '');
   const cpNum = parseInt(numStr);
   return getCodePageTable()[cpNum] || 'utf-8';
 }

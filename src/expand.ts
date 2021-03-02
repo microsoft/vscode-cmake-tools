@@ -23,15 +23,24 @@ const log = createLogger('expand');
  * variables are specified as properties on this interface.
  */
 export interface RequiredExpansionContextVars {
-  workspaceRoot: string;
-  workspaceFolder: string;
-  buildType: string;
   buildKit: string;
-  workspaceRootFolderName: string;
-  workspaceFolderBasename: string;
+  buildType: string;
   generator: string;
+  workspaceFolder: string;
+  workspaceFolderBasename: string;
+  workspaceHash: string;
+  workspaceRoot: string;
+  buildKitVendor: string;
+  buildKitTriple: string;
+  buildKitVersion: string;
+  buildKitHostOs: string;
+  buildKitTargetOs: string;
+  buildKitTargetArch: string;
+  buildKitVersionMajor: string;
+  buildKitVersionMinor: string;
+  workspaceRootFolderName: string;
   userHome: string;
-}
+  }
 
 /**
  * Key-value type for variable expansions

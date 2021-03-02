@@ -123,5 +123,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.ctest.color.description": "Habilita un cambio de color para este botón en función de los resultados de pruebas.",
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configura la longitud máxima del texto visible en el modo \"compacto\".",
 	"cmake-tools.configuration.views.cmake.folders.description": "Carpetas",
-	"cmake-tools.configuration.views.cmake.outline.description": "Esquema del proyecto"
+	"cmake-tools.configuration.views.cmake.outline.description": "Esquema del proyecto",
+	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita la exportación de compile_commands.json."
 }

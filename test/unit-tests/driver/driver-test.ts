@@ -69,7 +69,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       kitNinja = {name: 'GCC', compilers: {C: 'gcc', CXX: 'g++'}, preferredGenerator: {name: 'Ninja'}} as Kit;
     }
 
-    setup(async function(this: Mocha.IBeforeAndAfterContext, done) {
+    setup(async function(this: Mocha.Context, done) {
       driver = null;
 
       if (!cleanupBuildDir(path.join(defaultWorkspaceFolder, 'build'))) {
@@ -86,7 +86,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       done();
     });
 
-    teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+    teardown(async function(this: Mocha.Context) {
       this.timeout(20000);
       if (driver) {
         return driver.asyncDispose();

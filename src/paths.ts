@@ -1,6 +1,6 @@
 /**
  * This module defines important directories and paths to the extension
- */ /** */
+ */
 
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
@@ -9,10 +9,63 @@ import * as which from 'which';
 import {vsInstallations} from './installs/visual-studio';
 import {expandString} from './expand';
 import {fs} from './pr';
+import * as util from '@cmt/util';
 
 interface VSCMakePaths {
   cmake?: string;
   ninja?: string;
+}
+
+class WindowsEnvironment {
+  get AppData(): string | undefined {
+    return process.env['APPDATA'];
+}
+
+  get LocalAppData(): string | undefined {
+    return process.env['LOCALAPPDATA'];
+  }
+
+  get AllUserProfile(): string | undefined {
+    return process.env['ProgramData'];
+  }
+
+  get ComSpec(): string {
+    let comSpec = process.env['ComSpec'];
+
+    if (undefined === comSpec) {
+      comSpec = this.SystemRoot! + '\\system32\\cmd.exe';
+    }
+
+    return comSpec;
+  }
+
+  get HomeDrive(): string | undefined {
+    return process.env['HOMEDRIVE'];
+  }
+
+  get HomePath(): string | undefined {
+    return process.env['HOMEPATH'];
+  }
+
+  get ProgramFilesX86(): string | undefined {
+    return process.env['ProgramFiles(x86)'];
+  }
+
+  get ProgramFiles(): string | undefined {
+    return process.env['ProgramFiles'];
+  }
+
+  get SystemDrive(): string | undefined {
+    return process.env['SystemDrive'];
+  }
+
+  get SystemRoot(): string | undefined {
+    return process.env['SystemRoot'];
+  }
+
+  get Temp(): string | undefined {
+    return process.env['TEMP'];
+  }
 }
 
 /**
@@ -20,6 +73,8 @@ interface VSCMakePaths {
  */
 class Paths {
   private _ninjaPath?: string;
+
+  readonly windows: WindowsEnvironment = new WindowsEnvironment;
 
   /**
    * The current user's home directory
@@ -38,7 +93,7 @@ class Paths {
    */
   get userLocalDir(): string {
     if (process.platform == 'win32') {
-      return process.env['LocalAppData']!;
+      return this.windows.LocalAppData!;
     } else {
       const xdg_dir = process.env['XDG_DATA_HOME'];
       if (xdg_dir) {
@@ -51,7 +106,7 @@ class Paths {
 
   get userRoamingDir(): string {
     if (process.platform == 'win32') {
-      return process.env['AppData']!;
+      return this.windows.AppData!;
     } else {
       const xdg_dir = process.env['XDG_CONFIG_HOME'];
       if (xdg_dir) {
@@ -79,7 +134,7 @@ class Paths {
    */
   get tmpDir(): string {
     if (process.platform == 'win32') {
-      return process.env['TEMP']!;
+      return this.windows.Temp!;
     } else {
       return '/tmp';
     }
@@ -133,14 +188,23 @@ class Paths {
 
     const raw = await expandString(wsc.config.raw_cmakePath, {
       vars: {
-        workspaceRoot: wsc.folder.uri.fsPath,
-        workspaceFolder: wsc.folder.uri.fsPath,
-        userHome: this.userHome,
         buildKit: '',
+        buildKitVendor: '',
+        buildKitTriple: '',
+        buildKitVersion: '',
+        buildKitHostOs: '',
+        buildKitTargetOs: '',
+        buildKitTargetArch: '',
+        buildKitVersionMajor: '',
+        buildKitVersionMinor: '',
         buildType: '',
         generator: '',
+        workspaceFolder: wsc.folder.uri.fsPath,
+        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+        workspaceRoot: wsc.folder.uri.fsPath,
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
-        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath)
+        workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
+        userHome: this.userHome,
       },
     });
 
@@ -152,9 +216,10 @@ class Paths {
       }
       if (process.platform === 'win32') {
         // We didn't find it on the $PATH. Try some good guesses
+        const cmake_relative_path = '\\CMake\\bin\\cmake.exe';
         const default_cmake_paths = [
-          `C:\\Program Files\\CMake\\bin\\cmake.exe`,
-          `C:\\Program Files (x86)\\CMake\\bin\\cmake.exe`,
+          this.windows.ProgramFiles! + cmake_relative_path,
+          this.windows.ProgramFilesX86! + cmake_relative_path
         ];
         for (const cmake_path of default_cmake_paths) {
           if (await fs.exists(cmake_path)) {
