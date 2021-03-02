@@ -37,7 +37,6 @@ import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode}
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
-import paths from './paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
