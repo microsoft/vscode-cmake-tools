@@ -343,7 +343,7 @@ class ExtensionManager implements vscode.Disposable {
       await cmtf.cmakeTools.asyncDispose();
     }
     this._folders.dispose();
-    telemetry.deactivate();
+    await telemetry.deactivate();
   }
 
   async _postWorkspaceOpen(info: CMakeToolsFolder) {

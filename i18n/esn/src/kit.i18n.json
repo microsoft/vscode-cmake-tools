@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "Probando el binario de Clang: {0}",
 	"bad.clang.binary": "Binario de Clang incorrecto (\"-v\" devuelve un valor distinto de cero): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "Salida -v del binario de Clang {0} incorrecta: {1}",
 	"testing.gcc.binary": "Probando el binario de GCC: {0}",
 	"getting.gcc.version": "Obteniendo la versión de GCC para {0}",
@@ -31,7 +32,6 @@
 	"detected.kit.for.version": "VsKit detectado para la versión",
 	"generator.present": "Generador presente: {0}",
 	"selected.preferred.generator.name": "Nombre de generador preferido seleccionado: {0} {1}",
-	"clang.for.vsmsvc": "Clang {0} {1} con {2} ({3})",
 	"scanning.for.kits.on.system": "Buscando kits en el sistema",
 	"scanning.for.kits": "Buscando kits",
 	"scanning.for.cmake.kits": "Examinando los kits de CMake...",

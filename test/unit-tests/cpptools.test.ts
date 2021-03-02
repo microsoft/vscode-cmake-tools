@@ -33,8 +33,8 @@ suite('CppTools tests', () => {
     expect(info.standard).to.eql('c++03');
     info = parseCompileFlags(cpptoolsVersion4, ['-std=gnu++14']);
     expect(info.standard).to.eql('gnu++14');
-    info = parseCompileFlags(cpptoolsVersion4, ['-std=c18']);
-    expect(info.standard).to.eql('c18');
+    info = parseCompileFlags(cpptoolsVersion4, ['-std=c17']);
+    expect(info.standard).to.eql('c17');
     // Parse target architecture
     info = parseCompileFlags(cpptoolsVersion4, ['--target=aarch64-arm-none-eabi']);
     expect(info.targetArch).to.eql('arm64');
@@ -60,7 +60,7 @@ suite('CppTools tests', () => {
     expect(info.standard).to.eql('c++03');
     info = parseCompileFlags(cpptoolsVersion3, ['-std=gnu++14']);
     expect(info.standard).to.eql('c++14');
-    info = parseCompileFlags(cpptoolsVersion3, ['-std=c18']);
+    info = parseCompileFlags(cpptoolsVersion3, ['-std=c17']);
     expect(info.standard).to.eql('c11');
   });
 

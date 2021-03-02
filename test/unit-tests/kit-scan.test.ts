@@ -6,6 +6,7 @@ chai.use(chaiAsPromised);
 
 import {expect} from 'chai';
 import * as kit from '../../src/kit';
+import * as triple from '../../src/triple';
 import {fs} from '../../src/pr';
 
 import {CMakeTools} from '@cmt/cmake-tools';
@@ -42,6 +43,33 @@ suite('Kits scan test', async () => {
     }
   });
 
+  test('gcc target triple match', () => {
+    expect(triple.findTargetTriple('Reading specs from ../lib/gcc-lib/powerpc-wrs-vxworks/gcc-2.96/specs'))
+      .to.equal('powerpc-wrs-vxworks');
+    expect(triple.findTargetTriple(`Reading specs from C:\\WindRiver-VxWorks653-2.2.0.0\\gnu\\3.3.2-vxworks653\\x86-win32\\bin\..\\lib\\gcc-lib\\powerpc-wrs-vxworksae\\3.3.2\\specs`))
+      .to.equal('powerpc-wrs-vxworksae');
+    expect(triple.findTargetTriple('Target: x86_64-linux-gnu'))
+      .to.equal('x86_64-linux-gnu');
+    expect(triple.findTargetTriple('Target: x86_64-alpine-linux-musl'))
+      .to.equal('x86_64-alpine-linux-musl');
+    expect(triple.findTargetTriple('Target: powerpc-wrs-vxworks'))
+      .to.equal('powerpc-wrs-vxworks');
+    expect(triple.findTargetTriple('Target: x86_64-w64-mingw32'))
+      .to.equal('x86_64-w64-mingw32');
+    expect(triple.findTargetTriple('Target: i686-w64-mingw32'))
+      .to.equal('i686-w64-mingw32');
+    expect(triple.findTargetTriple('Target: x86_64-pc-msys'))
+      .to.equal('x86_64-pc-msys');
+    expect(triple.findTargetTriple('Target: x86_64-pc-windows-msvc'))
+      .to.equal('x86_64-pc-windows-msvc');
+    expect(triple.findTargetTriple('Target: arm-none-eabi'))
+      .to.equal('arm-none-eabi');
+    expect(triple.findTargetTriple('Target: arm-none-linux-gnueabi'))
+      .to.equal('arm-none-linux-gnueabi');
+    expect(triple.findTargetTriple('Target: arm-linux-gnueabihf'))
+      .to.equal('arm-linux-gnueabihf');
+  });
+
   test('Detect system kits never throws',
        async () => {
           const build_loc = 'build';
@@ -64,7 +92,7 @@ suite('Kits scan test', async () => {
     expect(compkit).to.not.be.null;
     expect(compkit!.compilers).has.property('C').equal(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
-    expect(compkit!.name).to.eq('GCC 42.1');
+    expect(compkit!.name).to.eq('GCC 42.1 x86_64-pc-linux-gnu');
   });
 
   test('Detect a GCC cross compiler compiler file', async () => {
@@ -73,7 +101,7 @@ suite('Kits scan test', async () => {
     expect(compkit).to.not.be.null;
     expect(compkit!.compilers).has.property('C').equal(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
-    expect(compkit!.name).to.eq('GCC for cross-compile 0.2.1000');
+    expect(compkit!.name).to.eq('GCC 0.2.1000 arm-none-eabi');
   });
 
   test('Detect a Clang compiler file', async () => {
@@ -82,16 +110,21 @@ suite('Kits scan test', async () => {
     expect(compkit).to.not.be.null;
     expect(compkit!.compilers).has.property('C').eq(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
-    expect(compkit!.name).to.eq('Clang 0.25');
+    expect(compkit!.name).to.eq('Clang 0.25 x86_64-pc-linux-gnu');
   });
 
   test('Detect an Apple-Clang compiler file', async () => {
     const compiler = path.join(fakebin, 'clang-8.1.0');
+    const compilerInfo = await kit.getCompilerVersion('Clang', compiler);
+    expect(compilerInfo).to.not.be.null;
+    expect(compilerInfo?.version).to.eq('8.1.0');
+    expect(compilerInfo?.target.targetArch).to.eq('x64');
+
     const compkit = await kit.kitIfCompiler(compiler);
     expect(compkit).to.not.be.null;
     expect(compkit!.compilers).has.property('C').eq(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
-    expect(compkit!.name).to.eq('Clang 8.1.0');
+    expect(compkit!.name).to.eq('Clang 8.1.0 x86_64-apple-darwin16.7.0');
   });
 
 
@@ -102,13 +135,18 @@ suite('Kits scan test', async () => {
     await disableMingwMake();
 
     const compiler = path.join(fakebin, 'mingw32-gcc');
+    const compilerInfo = await kit.getCompilerVersion('GCC', compiler);
+    expect(compilerInfo).to.not.be.null;
+    expect(compilerInfo?.version).to.eq('6.3.0');
+    expect(compilerInfo?.target.targetArch).to.eq('x64');
+
     const compkit = await kit.kitIfCompiler(compiler);
 
     expect(compkit).to.not.be.null;
     expect(compkit!.compilers).has.property('C').eq(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
 
-    expect(compkit!.name).to.eq('GCC for mingw32 6.3.0');
+    expect(compkit!.name).to.eq('GCC 6.3.0 x86_64-w64-mingw32');
     expect(compkit!.preferredGenerator).to.be.undefined;
     expect(compkit!.environmentVariables).to.be.undefined;
   });
@@ -125,7 +163,7 @@ suite('Kits scan test', async () => {
     expect(compkit!.compilers).has.property('C').eq(compiler);
     expect(compkit!.compilers).to.not.have.property('CXX');
 
-    expect(compkit!.name).to.eq('GCC for mingw32 6.3.0');
+    expect(compkit!.name).to.eq('GCC 6.3.0 x86_64-w64-mingw32');
     expect(compkit!.preferredGenerator!.name).to.eq('MinGW Makefiles');
     expect(compkit!.environmentVariables!.PATH).include('fakebin');
   });
@@ -184,11 +222,11 @@ suite('Kits scan test', async () => {
       expect(kits.length).to.be.eq(5);
       const names = kits.map(k => k.name).sort();
       expect(names).to.deep.eq([
-        'Clang 0.25',
-        'Clang 8.1.0',
-        'GCC 42.1',
-        'GCC for cross-compile 0.2.1000',
-        'GCC for mingw32 6.3.0'
+        'Clang 0.25 x86_64-pc-linux-gnu',
+        'Clang 8.1.0 x86_64-apple-darwin16.7.0',
+        'GCC 0.2.1000 arm-none-eabi',
+        'GCC 42.1 x86_64-pc-linux-gnu',
+        'GCC 6.3.0 x86_64-w64-mingw32'
       ]);
     }).timeout(10000);
   });

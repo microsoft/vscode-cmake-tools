@@ -62,7 +62,7 @@ export interface SiteData {
 export interface CTestResults { Site: SiteData; }
 
 interface EncodedMeasurementValue {
-  $: {encoding?: string; compression?: string;};
+  $: {encoding?: BufferEncoding; compression?: string;};
   _: string;
 }
 
@@ -360,8 +360,7 @@ export class CTestDriver implements vscode.Disposable {
         [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
             this.ws.config.ctestArgs),
         new CTestOutputLogger(),
-        {environment: this.ws.config.testEnvironment, cwd: driver.binaryDir});
-
+        {environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir});
     const res = await child.result;
     await this.reloadTests(driver);
     if (res.retc === null) {
@@ -401,11 +400,11 @@ export class CTestDriver implements vscode.Disposable {
       log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
       return this.tests = [];
     }
-    const tests = result.stdout.split('\n')
+    const tests = result.stdout?.split('\n')
                       .map(l => l.trim())
                       .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
                       .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
-                      .map(([_, id, tname]) => ({id: parseInt(id!), name: tname!}));
+                      .map(([_, id, tname]) => ({id: parseInt(id!), name: tname!})) ?? [];
     const tagfile = path.join(driver.binaryDir, 'Testing', 'TAG');
     const tag = (await fs.exists(tagfile)) ? (await fs.readFile(tagfile)).toString().split('\n')[0].trim() : null;
     const tagdir = tag ? path.join(driver.binaryDir, 'Testing', tag) : null;

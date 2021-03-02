@@ -1,5 +1,18 @@
 # What's New?
 
+## 1.6.0
+Bug Fixes:
+- Fix Clang kit detection when version is at end of line. [#1342](https://github.com/microsoft/vscode-cmake-tools/issues/1342) [@falbrechtskirchinger](https://github.com/falbrechtskirchinger)
+- Fix cache variables regular expression dealing with '='. [#1613](https://github.com/microsoft/vscode-cmake-tools/issues/1613)
+- Add cmake.exportCompileCommandFile. [#1440](https://github.com/microsoft/vscode-cmake-tools/issues/1440)
+- Fix the regexp of Gcc/Clang version to account for localization and more possible text patterns. [#1575](https://github.com/microsoft/vscode-cmake-tools/issues/1575)
+- Fix regexp for compiler flags that contain spaces. [#1414](https://github.com/microsoft/vscode-cmake-tools/issues/1414)
+- Fix compile active file when definition has quoted text. [#969](https://github.com/microsoft/vscode-cmake-tools/issues/969)
+- Re-register the tasks provider when the current build targe changes. [#1576](https://github.com/microsoft/vscode-cmake-tools/issues/1576)
+- Don't localize the VS Clang kit name. [PR #1632](https://github.com/microsoft/vscode-cmake-tools/pull/1632)
+- Remove CMake Tools activation of non CMake projects when tasks.runask is executed. [PR #1642](https://github.com/microsoft/vscode-cmake-tools/pull/1642)
+- Add the TWXS CMake extension in the CMake Tools extension pack. [PR #1643](https://github.com/microsoft/vscode-cmake-tools/pull/1643)
+
 ## 1.5.3
 Bug Fixes:
 - "Clean all projects" broken since 1.5.0. [#1542](https://github.com/microsoft/vscode-cmake-tools/issues/1542)

@@ -131,14 +131,10 @@ async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_
   if (targetObject.artifacts) {
     executable_path = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
     if (executable_path) {
-      if (await fs.exists(executable_path.path)) {
-        executable_path = path.normalize(executable_path.path);
-      } else {
-        executable_path = path.normalize(path.join(build_dir, executable_path.path));
-        if (!fs.exists(executable_path)) {
-          // Will be empty after cmake configuration
-          executable_path = "";
-        }
+      executable_path = convertToAbsolutePath(executable_path.path, build_dir);
+      if (!await fs.exists(executable_path)) {
+        // Will be empty after cmake configuration
+        executable_path = "";
       }
     }
   }

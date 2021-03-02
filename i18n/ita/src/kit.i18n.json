@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "Test del file binario Clang: {0}",
 	"bad.clang.binary": "Il file binario Clang non è valido (\"-v\" restituisce un valore diverso da zero): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "L'output -v del file binario {0} di Clang non è valido: {1}",
 	"testing.gcc.binary": "Test del file binario GCC: {0}",
 	"getting.gcc.version": "Recupero della versione GCC per {0}",
@@ -31,7 +32,6 @@
 	"detected.kit.for.version": "Rilevato kit di Visual Studio per la versione",
 	"generator.present": "Generatore presente: {0}",
 	"selected.preferred.generator.name": "Nome del generatore preferito selezionato: {0} {1}",
-	"clang.for.vsmsvc": "Clang {0} {1} con {2} ({3})",
 	"scanning.for.kits.on.system": "Ricerca dei kit nel sistema",
 	"scanning.for.kits": "Ricerca dei kit",
 	"scanning.for.cmake.kits": "Ricerca dei kit CMake...",

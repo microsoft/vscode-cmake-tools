@@ -6,6 +6,7 @@
 {
 	"testing.clang.binary": "Тестирование двоичного файла Clang: {0}",
 	"bad.clang.binary": "Недопустимый двоичный файл Clang (при запуске с параметром \"-v\" возвращается значение, отличное от нуля): {0}",
+	"version.word": "version",
 	"bad.clang.binary.output": "Недопустимый двоичный файл Clang {0}, при запуске с параметром \"-v\" возвращается {1}",
 	"testing.gcc.binary": "Тестирование двоичного файла GCC: {0}",
 	"getting.gcc.version": "Получение версии GCC для {0}.",
@@ -31,7 +32,6 @@
 	"detected.kit.for.version": "Обнаружен VsKit для версии.",
 	"generator.present": "Генератор существует: {0}",
 	"selected.preferred.generator.name": "Выбранное предпочтительное имя генератора: {0} {1}",
-	"clang.for.vsmsvc": "Clang {0} для {1} {2} ({3})",
 	"scanning.for.kits.on.system": "Поиск наборов в системе.",
 	"scanning.for.kits": "Поиск наборов.",
 	"scanning.for.cmake.kits": "Поиск наборов CMake…",

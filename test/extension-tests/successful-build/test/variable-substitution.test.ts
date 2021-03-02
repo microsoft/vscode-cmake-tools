@@ -2,7 +2,7 @@ import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import paths from '@cmt/paths';
-import {objectPairs, platformNormalizePath} from '@cmt/util';
+import {objectPairs, platformNormalizePath, makeHashString} from '@cmt/util';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import * as path from 'path';
 
@@ -10,7 +10,7 @@ suite('[Variable Substitution]', async () => {
   let cmt: CMakeTools;
   let testEnv: DefaultEnvironment;
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.Context) {
     this.timeout(100000);
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
@@ -25,7 +25,7 @@ suite('[Variable Substitution]', async () => {
     testEnv.projectFolder.buildDirectory.clear();
   });
 
-  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+  teardown(async function(this: Mocha.Context) {
     this.timeout(30000);
     await cmt.asyncDispose();
     testEnv.teardown();
@@ -63,6 +63,25 @@ suite('[Variable Substitution]', async () => {
     expect(platformNormalizePath(cacheEntry.as<string>()))
         .to.eq(platformNormalizePath(testEnv.projectFolder.location), '[workspaceFolder] substitution incorrect');
     expect(typeof cacheEntry.value).to.eq('string', '[workspaceFolder] unexpected cache entry value type');
+  }).timeout(100000);
+
+
+  test('Check substitution for "workspaceHash"', async () => {
+    // Set fake settings
+    testEnv.config.updatePartial({configureSettings: {workspaceHash: '${workspaceHash}'}});
+
+    // Configure
+    expect(await cmt.configure()).to.be.eq(0, '[workspaceHash] configure failed');
+    expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
+    const cache = await CMakeCache.fromPath(await cmt.cachePath);
+
+    const cacheEntry = cache.get('workspaceHash') as api.CacheEntry;
+    expect(cacheEntry.type).to.eq(api.CacheEntryType.String, '[workspaceHash] unexpected cache entry type');
+    expect(cacheEntry.key)
+        .to.eq('workspaceHash', '[workspaceHash] unexpected cache entry key name');
+    expect(cacheEntry.as<string>())
+        .to.eq(makeHashString(testEnv.projectFolder.location), '[workspaceHash] substitution incorrect');
+    expect(typeof cacheEntry.value).to.eq('string', '[workspaceHash] unexpected cache entry value type');
   }).timeout(100000);
 
   test('Check substitution for "buildType"', async () => {
