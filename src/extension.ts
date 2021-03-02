@@ -37,6 +37,7 @@ import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode}
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
+import paths from './paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -685,7 +686,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async scanForKits() {
-    KitsController.minGWSearchDirs = this._getMinGWDirs();
+    KitsController.minGWSearchDirs = await this._getMinGWDirs();
     const cmakeTools = this._folders.activeFolder?.cmakeTools;
     if (undefined === cmakeTools) {
       return;
@@ -710,10 +711,34 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Get the current MinGW search directories
    */
-  private _getMinGWDirs(): string[] {
+  private async _getMinGWDirs(): Promise<string[]> {
+    const optsVars: ExpansionVars = {
+      userHome: paths.userHome,
+
+      // This is called during scanning for kits, which is an operation that happens
+      // outside the scope of a project folder, so it doesn't need the below variables.
+      buildKit: "",
+      buildType: "",
+      generator: "",
+      workspaceFolder: "",
+      workspaceFolderBasename: "",
+      workspaceHash: "",
+      workspaceRoot: "",
+      workspaceRootFolderName: "",
+      buildKitVendor: "",
+      buildKitTriple: "",
+      buildKitVersion: "",
+      buildKitHostOs: "",
+      buildKitTargetOs: "",
+      buildKitTargetArch: "",
+      buildKitVersionMajor: "",
+      buildKitVersionMinor: "",
+      projectName: "",
+    };
     const result = new Set<string>();
     for (const dir of this._workspaceConfig.mingwSearchDirs) {
-      result.add(dir);
+      const expandedDir: string = util.lightNormalizePath(await expandString(dir, {vars: optsVars}));
+      result.add(expandedDir);
     }
     return Array.from(result);
   }
