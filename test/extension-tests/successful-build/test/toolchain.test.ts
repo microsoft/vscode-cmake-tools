@@ -1,7 +1,7 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
-import {readKitsFile, kitsForWorkspaceDirectory, USER_KITS_FILEPATH} from '@cmt/kit';
+import {readKitsFile, kitsForWorkspaceDirectory, additionalKits, USER_KITS_FILEPATH} from '@cmt/kit';
 import {platformNormalizePath} from '@cmt/util';
 import {DefaultEnvironment, expect} from '@test/util';
 
@@ -22,6 +22,14 @@ suite('[Toolchain Substitution]', async () => {
     const kits = user_kits.concat(ws_kits);
     const tc_kit = kits.find(k => k.name === 'Test Toolchain');
     expect(tc_kit).to.not.eq(undefined);
+
+    // Test additional user kits: point to the same .vscode/cmake-kits.json
+    // but via "cmake.additionalKitsFile" and additionalKits (instead of kitsForWorkspaceDirectory)
+    // helper in kits.ts. Results should be the same as the test above.
+    const add_kits = await additionalKits(cmt);
+    expect(add_kits.length).to.be.eq(ws_kits.length);
+    const tc_kit2 = kits.find(k => k.name === 'Test Toolchain');
+    expect(tc_kit2).to.not.eq(undefined);
 
     // Set preferred generators
     testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles']});
