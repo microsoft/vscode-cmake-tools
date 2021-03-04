@@ -22,8 +22,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = 'c89'|'c99'|'c11'|'c18'|'c++98'|'c++03'|'c++11'|'c++14'|'c++17'|'c++20'|
-  'gnu89'|'gnu99'|'gnu11'|'gnu18'|'gnu++98'|'gnu++03'|'gnu++11'|'gnu++14'|'gnu++17'|'gnu++20';
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
+  | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20";
 
 
 export interface CompileFlagInformation {
@@ -71,8 +71,8 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null
     return is_gnu ? 'gnu11' : 'c11';
   } else if (/(c|gnu)(17|18|iso9899:(2017|2018))/.test(std)) {
     if (can_use_gnu) {
-      // cpptools supports 'c18' in same version it supports GNU std.
-      return is_gnu ? 'gnu18' : 'c18';
+      // cpptools supports 'c17' in same version it supports GNU std.
+      return is_gnu ? 'gnu17' : 'c17';
     } else {
       return 'c11';
     }

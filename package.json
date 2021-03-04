@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -47,6 +47,7 @@
     "onCommand:cmake.debugTarget",
     "onCommand:cmake.debugTargetAll",
     "onCommand:cmake.editCache",
+    "onCommand:cmake.editCacheUI",
     "onCommand:cmake.editKits",
     "onCommand:cmake.viewLog",
     "onCommand:cmake.install",
@@ -297,13 +298,15 @@
         "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
       },
       {
-        "command": "cmake.openConfiguration",
-        "title": "%cmake-tools.command.cmake.openConfiguration.title%",
+        "command": "cmake.editCacheUI",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.editCacheUI.title%",
         "category": "CMake"
       },
       {
-        "command": "cmake.outline.openConfiguration",
-        "title": "%cmake-tools.command.cmake.openConfiguration.title%"
+        "command": "cmake.outline.editCacheUI",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.editCacheUI.title%"
       },
       {
         "command": "cmake.ctest",
@@ -391,7 +394,6 @@
       {
         "command": "cmake.resetState",
         "title": "%cmake-tools.command.cmake.resetState.title%",
-        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -477,7 +479,6 @@
           "command": "cmake.selectActiveFolder"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
           "command": "cmake.resetState"
         },
         {
@@ -544,7 +545,8 @@
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
         },
         {
-          "command": "cmake.openConfiguration"
+          "command": "cmake.editCacheUI",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -635,7 +637,7 @@
           "when": "never"
         },
         {
-          "command": "cmake.outline.openConfiguration",
+          "command": "cmake.outline.editCacheUI",
           "when": "never"
         },
         {
@@ -707,8 +709,8 @@
           "group": "1_cmakeOutline"
         },
         {
-          "command": "cmake.outline.openConfiguration",
-          "when": "view == cmake.outline",
+          "command": "cmake.outline.editCacheUI",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet",
           "group": "1_cmakeOutline"
         }
       ],
@@ -1298,7 +1300,7 @@
             "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
           },
           "default": [
-            "C:\\MinGW"
+            "${env:SystemDrive}/MinGW"
           ],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
           "scope": "window"
@@ -1655,8 +1657,8 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile-production",
-    "compile": "yarn install && webpack --mode development --watch --info-verbosity verbose",
-    "compile-production": "yarn install && yarn run translations-generate && webpack --mode production --vscode-nls",
+    "compile": "yarn install && webpack --mode development --watch --progress",
+    "compile-production": "yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",
     "translations-import": "gulp translations-import",
@@ -1664,76 +1666,72 @@
     "postinstall": "node ./node_modules/vscode/bin/install",
     "lint": "node ./node_modules/tslint/bin/tslint -p . --fix",
     "lint:nofix": "node ./node_modules/tslint/bin/tslint -p .",
-    "docs": "node ./node_modules/typedoc/bin/typedoc --mode modules --excludeExternals --out build/docs/dev --readme none src/ types/"
+    "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
   "devDependencies": {
-    "@octokit/rest": "^16.28.9",
-    "@types/ajv": "^0.0.3",
-    "@types/chai": "^4.0.4",
-    "@types/chai-as-promised": "^7.1.0",
-    "@types/chai-string": "^1.4.1",
-    "@types/es6-promisify": "~5.0.0",
-    "@types/js-yaml": "^3.5.28",
-    "@types/json5": "~0.0.29",
-    "@types/mocha": "~2.2.41",
-    "@types/node": "~8.9.3",
-    "@types/rimraf": "^0.0.28",
-    "@types/sinon": "~4.3.3",
-    "@types/tmp": "^0.0.33",
-    "@types/which": "~1.3.1",
-    "@types/xml2js": "^0.0.28",
-    "chai": "^4.1.2",
+    "@octokit/rest": "^18.1.1",
+    "@types/ajv": "^0.0.5",
+    "@types/chai": "^4.2.15",
+    "@types/chai-as-promised": "^7.1.3",
+    "@types/chai-string": "^1.4.2",
+    "@types/js-yaml": "^4.0.0",
+    "@types/json5": "~0.0.30",
+    "@types/mocha": "~8.2.0",
+    "@types/node": "~14.14.28",
+    "@types/rimraf": "^3.0.0",
+    "@types/sinon": "~9.0.10",
+    "@types/tmp": "^0.2.0",
+    "@types/which": "~2.0.0",
+    "@types/xml2js": "^0.4.8",
+    "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
-    "clang-format": "^1.2.2",
+    "clang-format": "^1.5.0",
     "event-stream": "^4.0.1",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^9.1.0",
     "gulp": "^4.0.2",
     "gulp-filter": "^6.0.0",
-    "gulp-sourcemaps": "^2.6.5",
+    "gulp-sourcemaps": "^3.0.0",
     "gulp-typescript": "^5.0.1",
-    "jsonc-parser": "^2.1.1",
-    "mocha": "^4.1.0",
-    "module-alias": "^2.2.1",
-    "node-loader": "^1.0.1",
-    "sinon": "~5.0.7",
-    "ts-loader": "^6.0.4",
-    "ts-node": "^6.0.0",
-    "tslint": "^5.9.1",
-    "typedoc": "^0.15.3",
-    "typescript": "^3.7.2",
+    "jsonc-parser": "^3.0.0",
+    "mocha": "^8.3.0",
+    "module-alias": "^2.2.2",
+    "node-loader": "^1.0.2",
+    "sinon": "~9.2.4",
+    "ts-loader": "^8.0.17",
+    "ts-node": "^9.1.1",
+    "tslint": "^5.20.1",
+    "typedoc": "^0.20.25",
+    "typescript": "^4.1.5",
     "vscode": "^1.1.36",
     "vscode-nls-dev": "^3.3.2",
-    "webpack": "^4.44.2",
-    "webpack-cli": "^3.3.12"
+    "webpack": "^5.22.0",
+    "webpack-cli": "^4.5.0"
   },
   "dependencies": {
-    "ajv": "^4.7.5",
-    "chokidar": "^3.3.0",
-    "es6-promisify": "~5.0.0",
-    "handlebars": "^4.7.6",
-    "minimist": "^1.2.5",
+    "ajv": "^7.1.0",
+    "chokidar": "^3.5.1",
+    "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
-    "js-yaml": "^3.6.1",
-    "json5": "^0.5.1",
-    "open": "^6.4.0",
-    "rimraf": "^2.5.4",
-    "tmp": "^0.0.33",
-    "vscode-cpptools": "^4.0.1",
-    "vscode-extension-telemetry": "^0.1.2",
-    "vscode-nls": "^4.1.1",
-    "which": "~1.3.0",
-    "xml2js": "^0.4.17"
+    "js-yaml": "^4.0.0",
+    "json5": "^2.2.0",
+    "minimist": "^1.2.5",
+    "open": "^7.4.1",
+    "rimraf": "^3.0.2",
+    "tmp": "^0.2.1",
+    "vscode-cpptools": "^5.0.0",
+    "vscode-extension-telemetry": "^0.1.6",
+    "vscode-nls": "^5.0.0",
+    "which": "~2.0.2",
+    "xml2js": "^0.4.23"
   },
   "resolutions": {
-    "chokidar": "^3.3.0",
+    "chokidar": "^3.5.1",
     "marked": "^0.7.0",
     "diff": "^3.5.0",
-    "https-proxy-agent": "^2.2.4",
+    "https-proxy-agent": "^5.0.0",
     "**/minimist": "^1.2.5",
-    "webpack/acorn": "^6.4.1",
-    "webpack/terser-webpack-plugin": "^1.4.5",
-    "yargs-parser": "^15.0.1",
+    "yargs-parser": "^20.2.4",
     "node-fetch": "^2.6.1"
   },
   "extensionPack": [

@@ -13,7 +13,7 @@ suite('[Environment Variables in Variants]', async () => {
   let testEnv: DefaultEnvironment;
   let cmakeTools : CMakeTools;
 
-  setup(async function(this: Mocha.IBeforeAndAfterContext) {
+  setup(async function(this: Mocha.Context) {
     this.timeout(100000);
 
     const build_loc = 'build';
@@ -34,7 +34,7 @@ suite('[Environment Variables in Variants]', async () => {
     testEnv.projectFolder.buildDirectory.clear();
   });
 
-  teardown(async function(this: Mocha.IBeforeAndAfterContext) {
+  teardown(async function(this: Mocha.Context) {
     const variantFileBackup = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
     if (await fs.exists(variantFileBackup)) {
       const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');

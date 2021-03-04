@@ -12,7 +12,7 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Sélectionner une variante pour tous les projets",
 	"cmake-tools.command.cmake.configure.title": "Configurer",
 	"cmake-tools.command.cmake.configureAll.title": "Configurer tous les projets",
-	"cmake-tools.command.cmake.build.title": "Build",
+	"cmake-tools.command.cmake.build.title": "Générer un build",
 	"cmake-tools.command.cmake.buildAll.title": "Générer tous les projets",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(Interne) Générer une cible en fonction de son nom",
 	"cmake-tools.command.cmake.compileFile.title": "Compiler le fichier actif",
