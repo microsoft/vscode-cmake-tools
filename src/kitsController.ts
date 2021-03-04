@@ -1,6 +1,7 @@
 'use strict';
 
 import * as chokidar from 'chokidar';
+import * as expand from './expand';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -46,17 +47,59 @@ export class KitsController {
   public static isScanningForKits() { return this.checkingHaveKits; }
 
   folderKits: Kit[] = [];
+  additionalKits: Kit[] = [];
 
   private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: chokidar.FSWatcher) { }
+
+  static async expandAdditionalKitsFile(cmakeTools: CMakeTools): Promise<string | null> {
+    let kitsFile: string | null = cmakeTools.workspaceContext.config.additionalKitsFile;
+    if (!kitsFile) {
+      return null;
+    }
+
+    const opts: expand.ExpansionOptions = {
+      vars: {
+        buildKit: cmakeTools.activeKit?.name || "",
+        buildType: await cmakeTools.currentBuildType() || "",
+        buildKitVendor: "",
+        buildKitTriple: "",
+        buildKitVersion: "",
+        buildKitHostOs: "",
+        buildKitTargetOs: "",
+        buildKitTargetArch: "",
+        buildKitVersionMajor: "",
+        buildKitVersionMinor: "",
+        generator: "",
+        userHome: paths.userHome,
+        workspaceFolder: cmakeTools.workspaceContext.folder.uri.fsPath,
+        workspaceFolderBasename: path.basename(cmakeTools.workspaceContext.folder.uri.fsPath),
+        workspaceHash: "",
+        workspaceRoot: cmakeTools.workspaceContext.folder.uri.fsPath,
+        workspaceRootFolderName: path.basename(cmakeTools.workspaceContext.folder.uri.fsPath),
+      }
+    };
+
+    kitsFile = await expand.expandString(kitsFile, opts);
+    return kitsFile;
+  }
 
   static async init(cmakeTools: CMakeTools) {
     if (KitsController.userKits.length === 0) {
       // never initialized before
       await KitsController.readUserKits(cmakeTools);
     }
-    const kitsWatcher = chokidar.watch(KitsController._workspaceKitsPath(cmakeTools.folder), {ignoreInitial: true});
+
+    const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeTools.folder)];
+    const additionalKitsFile: string | null = await KitsController.expandAdditionalKitsFile(cmakeTools);
+    if (additionalKitsFile) {
+      folderKitsFiles.push(additionalKitsFile);
+    }
+
+    const kitsWatcher = chokidar.watch(folderKitsFiles, {ignoreInitial: true});
     const kitsController = new KitsController(cmakeTools, kitsWatcher);
-    chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, kitsController.readKits(KitsReadMode.folderKits)));
+    chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
+                        kitsController.readKits(KitsReadMode.folderKits)));
+
     await kitsController.readKits(KitsReadMode.folderKits);
     return kitsController;
   }
@@ -71,7 +114,7 @@ export class KitsController {
 
   get availableKits() {
     console.assert(KitsController.length > 0, 'readKits should have been called at least once before.');
-    return KitsController.userKits.concat(this.folderKits);
+    return KitsController.userKits.concat(this.folderKits.concat(this.additionalKits));
   }
 
   get folder() { return this.cmakeTools.folder; }
@@ -119,17 +162,30 @@ export class KitsController {
     if (kitsReadMode === KitsReadMode.userKits || kitsReadMode === KitsReadMode.allAvailable) {
       await KitsController.readUserKits(this.cmakeTools, progress);
     }
+
     if (kitsReadMode === KitsReadMode.folderKits || kitsReadMode === KitsReadMode.allAvailable) {
-      // Read folder kits
+      // Read default folder kits
       this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder));
-      const current = this.cmakeTools.activeKit;
-      if (current) {
-        const already_active_kit = this.availableKits.find(kit => kit.name === current.name);
-        // Set the current kit to the one we have named
-        await this.setFolderActiveKit(already_active_kit || null);
+
+      // Read additional folder kits
+      const additionalKitsFile: string | null = await KitsController.expandAdditionalKitsFile(this.cmakeTools);
+      if (additionalKitsFile) {
+        this.additionalKits = await readKitsFile(additionalKitsFile);
       }
     }
-  }
+
+    // If the current kit was selected from the set that is updated with this call to readKits,
+    // load it again to ensure it is up to date.
+    const current = this.cmakeTools.activeKit;
+    if (current) {
+      const searchKits: Kit[] = (kitsReadMode === KitsReadMode.allAvailable) ? this.availableKits :
+                                (kitsReadMode === KitsReadMode.userKits) ? KitsController.userKits : this.folderKits.concat(this.additionalKits);
+      const already_active_kit = searchKits.find(kit => kit.name === current.name);
+      if (already_active_kit) {
+        await this.setFolderActiveKit(already_active_kit);
+      }
+    }
+}
 
   /**
    * The path to the workspace-local kits file, dependent on the path to the

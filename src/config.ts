@@ -109,6 +109,7 @@ export interface ExtensionConfigurationSettings {
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
+  additionalKitsFile: string | null;
   touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
 }
@@ -260,6 +261,7 @@ export class ConfigurationReader implements vscode.Disposable {
   }
 
   get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
+  get additionalKitsFile(): string | null { return this.configData.additionalKitsFile; }
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
   get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
   get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
@@ -320,6 +322,7 @@ export class ConfigurationReader implements vscode.Disposable {
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+    additionalKitsFile: new vscode.EventEmitter<string | null>(),
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
     statusbar: new vscode.EventEmitter<StatusBarConfig>()
   };
