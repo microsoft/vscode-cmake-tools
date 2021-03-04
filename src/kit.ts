@@ -1137,8 +1137,8 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
     }
 
     // Default installation locations
-    scan_paths.add('C:\\Program Files (x86)\\LLVM\\bin');
-    scan_paths.add('C:\\Program Files\\LLVM\\bin');
+    scan_paths.add(paths.windows.ProgramFilesX86! + '\\LLVM\\bin');
+    scan_paths.add(paths.windows.ProgramFiles! + '\\LLVM\\bin');
     const compiler_kits = Array.from(scan_paths).map(path_el => scanDirForCompilerKits(path_el, pr));
     kit_promises = kit_promises.concat(compiler_kits);
 
@@ -1151,6 +1151,10 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
         const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
         clang_paths.add(llvm_root);
       }
+
+      // Default installation locations
+      clang_paths.add(paths.windows.ProgramFiles! + '\\LLVM\\bin');
+      clang_paths.add(paths.windows.ProgramFilesX86! + '\\LLVM\\bin');
 
       // PATH environment variable locations
       scan_paths.forEach(path_el => clang_paths.add(path_el));
