@@ -1314,11 +1314,16 @@ export function kitsForWorkspaceDirectory(dirPath: string): Promise<Kit[]> {
 }
 
 /**
- * Get the kits defined by the user in the file pointed by "cmake.additionalKitsFile".
+ * Get the kits defined by the user in the files pointed by "cmake.additionalKits".
  */
-export async function additionalKits(cmakeTools: CMakeTools): Promise<Kit[]> {
-  const additionalKitsFile = await kitsController.KitsController.expandAdditionalKitsFile(cmakeTools);
-  return additionalKitsFile ? readKitsFile(additionalKitsFile) : [];
+export async function getAdditionalKits(cmakeTools: CMakeTools): Promise<Kit[]> {
+  const additionalKitFiles = await kitsController.KitsController.expandAdditionalKitFiles(cmakeTools);
+  let additionalKits: Kit[] = [];
+  for (const kitFile of additionalKitFiles) {
+    additionalKits = additionalKits.concat(await readKitsFile(kitFile));
+  }
+
+  return additionalKits;
 }
 
 export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {

@@ -44,7 +44,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     useCMakeServer: true,
     cmakeCommunicationMode: 'automatic',
     ignoreKitEnv: false,
-    additionalKitsFile: null,
+    additionalKits: [],
     buildTask: false,
     outputLogEncoding: 'auto',
     enableTraceLogging: false,

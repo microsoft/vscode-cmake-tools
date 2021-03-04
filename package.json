@@ -1571,10 +1571,10 @@
             }
           }
         },
-        "cmake.additionalKitsFile": {
-          "type": "string",
-          "default": null,
-          "description": "%cmake-tools.configuration.cmake.additionalKitsFile.description%",
+        "cmake.additionalKits": {
+          "type": "array",
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.additionalKits.description%",
           "scope": "resource"
         },
         "cmake.revealLog": {

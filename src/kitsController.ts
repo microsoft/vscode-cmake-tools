@@ -16,7 +16,8 @@ import {
   kitsPathForWorkspaceFolder,
   OLD_USER_KITS_FILEPATH,
   SpecialKits,
-  SpecialKitsCount
+  SpecialKitsCount,
+  getAdditionalKits
 } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
@@ -51,11 +52,9 @@ export class KitsController {
 
   private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: chokidar.FSWatcher) { }
 
-  static async expandAdditionalKitsFile(cmakeTools: CMakeTools): Promise<string | null> {
-    let kitsFile: string | null = cmakeTools.workspaceContext.config.additionalKitsFile;
-    if (!kitsFile) {
-      return null;
-    }
+  static async expandAdditionalKitFiles(cmakeTools: CMakeTools): Promise<string[]> {
+    const additionalKitFiles: string[] = cmakeTools.workspaceContext.config.additionalKits;
+    const expandedAdditionalKitFiles: string[] = [];
 
     const opts: expand.ExpansionOptions = {
       vars: {
@@ -79,8 +78,12 @@ export class KitsController {
       }
     };
 
-    kitsFile = await expand.expandString(kitsFile, opts);
-    return kitsFile;
+    await Promise.resolve(additionalKitFiles.forEach(async kitFile => {
+      const expandedKitFile: string = await expand.expandString(kitFile, opts);
+      expandedAdditionalKitFiles.push(expandedKitFile);
+    }));
+
+    return expandedAdditionalKitFiles;
   }
 
   static async init(cmakeTools: CMakeTools) {
@@ -89,12 +92,7 @@ export class KitsController {
       await KitsController.readUserKits(cmakeTools);
     }
 
-    const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeTools.folder)];
-    const additionalKitsFile: string | null = await KitsController.expandAdditionalKitsFile(cmakeTools);
-    if (additionalKitsFile) {
-      folderKitsFiles.push(additionalKitsFile);
-    }
-
+    const folderKitsFiles: string[] = [KitsController._workspaceKitsPath(cmakeTools.folder)].concat(await KitsController.expandAdditionalKitFiles(cmakeTools));
     const kitsWatcher = chokidar.watch(folderKitsFiles, {ignoreInitial: true});
     const kitsController = new KitsController(cmakeTools, kitsWatcher);
     chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
@@ -168,10 +166,7 @@ export class KitsController {
       this.folderKits = await readKitsFile(KitsController._workspaceKitsPath(this.folder));
 
       // Read additional folder kits
-      const additionalKitsFile: string | null = await KitsController.expandAdditionalKitsFile(this.cmakeTools);
-      if (additionalKitsFile) {
-        this.additionalKits = await readKitsFile(additionalKitsFile);
-      }
+      this.additionalKits = await getAdditionalKits(this.cmakeTools);
     }
 
     // If the current kit was selected from the set that is updated with this call to readKits,
