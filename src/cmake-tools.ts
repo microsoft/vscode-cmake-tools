@@ -38,6 +38,7 @@ import {setContextValue} from './util';
 import {VariantManager} from './variant';
 import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
+import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
 import {enableFullFeatureSet, registerTaskProvider} from './extension';
@@ -1552,7 +1553,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     };
     if (process.platform == 'win32') {
       // Use cmd.exe on Windows
-      termOptions.shellPath = 'C:\\Windows\\System32\\cmd.exe';
+      termOptions.shellPath = paths.windows.ComSpec;
     }
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal(termOptions);
