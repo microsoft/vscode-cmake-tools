@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Nastavit cíl sestavení",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Odstranit mezipaměť a znovu nakonfigurovat",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Vymazat mezipaměť a překonfigurovat všechny projekty",
-	"cmake-tools.command.cmake.openConfiguration.title": "Upravit mezipaměť CMake (uživatelské rozhraní)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Upravit mezipaměť CMake (uživatelské rozhraní)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Vymazat a znovu nakonfigurovat",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Vymazat a znovu nakonfigurovat všechny projekty",
 	"cmake-tools.command.cmake.clean.title": "Vymazat ",

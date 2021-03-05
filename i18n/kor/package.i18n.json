@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "빌드 대상 설정",
 	"cmake-tools.command.cmake.cleanConfigure.title": "캐시 삭제 및 다시 구성",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "캐시 삭제 및 모든 프로젝트 다시 구성",
-	"cmake-tools.command.cmake.openConfiguration.title": "CMake 캐시 편집(UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "CMake 캐시 편집(UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "클린 다시 구성",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "모든 프로젝트 클린 다시 구성",
 	"cmake-tools.command.cmake.clean.title": "정리",

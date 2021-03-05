@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "設定建置目標",
 	"cmake-tools.command.cmake.cleanConfigure.title": "刪除快取並重新設定",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "刪除快取並重新設定所有專案",
-	"cmake-tools.command.cmake.openConfiguration.title": "編輯 CMake 快取 (UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "編輯 CMake 快取 (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "清除重新設定",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "清除 [重新設定所有專案]",
 	"cmake-tools.command.cmake.clean.title": "清除",
