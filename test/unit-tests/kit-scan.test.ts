@@ -193,6 +193,7 @@ suite('Kits scan test', async () => {
         await fs.rmdir(path_with_compilername);
       }
     });
+    // does this fail for develop?
     test('Scan directory with compiler name', async () => {
       await fs.mkdir(path_with_compilername);
       // Scan the directory with fake compilers in it
@@ -209,6 +210,7 @@ suite('Kits scan test', async () => {
   });
 
   suite('Rescan kits', async () => {
+    // does this fail for develop?
     test('check empty kit list if no compilers in path', async () => {
       const partial_path = getPathWithoutCompilers();
       const kits = await kit.scanDirForCompilerKits(partial_path);
