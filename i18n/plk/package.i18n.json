@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Ustaw element docelowy kompilowania",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Usuń pamięć podręczną i skonfiguruj ponownie",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Usuń pamięć podręczną i skonfiguruj ponownie wszystkie projekty",
-	"cmake-tools.command.cmake.openConfiguration.title": "Edycja pamięci podręcznej narzędzia CMake (interfejs użytkownika)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Edycja pamięci podręcznej narzędzia CMake (interfejs użytkownika)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Wyczyść i skonfiguruj ponownie",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Wyczyść ponowne konfigurowanie wszystkich projektów",
 	"cmake-tools.command.cmake.clean.title": "Wyczyść",

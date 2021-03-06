@@ -10,6 +10,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
+import paths from './paths';
 
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
@@ -36,7 +37,6 @@ import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode}
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
-import paths from './paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -353,6 +353,14 @@ class ExtensionManager implements vscode.Disposable {
     await telemetry.deactivate();
   }
 
+  async configureInternal(trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
+    if (!await this._ensureActiveKit(cmt)) {
+      return;
+    }
+
+    await cmt.configureInternal(trigger, [], ConfigureType.Normal);
+  }
+
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
     const ws = info.folder;
     const cmt = info.cmakeTools;
@@ -413,30 +421,59 @@ class ExtensionManager implements vscode.Disposable {
       rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, persist_pr);
       should_configure = chosen.doConfigure;
     }
-    if (should_configure) {
-      // We've opened a new workspace folder, and the user wants us to
-      // configure it now.
-      log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-      // Ensure that there is a kit. This is required for new instances.
-      if (!await this._ensureActiveKit(cmt)) {
-        return;
-      }
-      await cmt.configureInternal(ConfigureTrigger.configureOnOpen, [], ConfigureType.Normal);
-    } else if (silentScanForKitsNeeded) {
-      // This popup will show up the first time after deciding not to configure, if a version change has been detected
-      // in the kits definition. This may happen during a CMake Tools extension upgrade.
-      // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
-      // being tied to a global state variable.
-      const configureButtonMessage = localize('configure.now.button', 'Configure Now');
-      const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
-      if (result === configureButtonMessage) {
-        // Ensure that there is a kit. This is required for new instances.
-        if (!await this._ensureActiveKit(cmt)) {
-          return;
-        }
-        await cmt.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, [], ConfigureType.Normal);
-      }
+
+    const optsVars: ExpansionVars = {
+      userHome: paths.userHome,
+      workspaceFolder: cmt.workspaceContext.folder.uri.fsPath,
+      workspaceFolderBasename: cmt.workspaceContext.folder.name,
+      workspaceRoot: cmt.workspaceContext.folder.uri.fsPath,
+      workspaceRootFolderName: cmt.workspaceContext.folder.name,
+
+      // sourceDirectory cannot be defined based on any of the below variables.
+      buildKit: "",
+      buildType: "",
+      generator: "",
+      buildKitVendor: "",
+      buildKitTriple: "",
+      buildKitVersion: "",
+      buildKitHostOs: "",
+      buildKitTargetOs: "",
+      buildKitTargetArch: "",
+      buildKitVersionMajor: "",
+      buildKitVersionMinor: "",
+      workspaceHash: "",
+    };
+
+    // Don't configure if the current project is not CMake based (it doesn't have a CMakeLists.txt in the sourceDirectory).
+    const sourceDirectory: string = cmt.workspaceContext.config.sourceDirectory;
+    let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
+    if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
+      expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
     }
+    if (await fs.exists(expandedSourceDirectory)) {
+      if (should_configure) {
+        // We've opened a new workspace folder, and the user wants us to
+        // configure it now.
+        log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
+        await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
+      } else if (silentScanForKitsNeeded) {
+        // This popup will show up the first time after deciding not to configure, if a version change has been detected
+        // in the kits definition. This may happen during a CMake Tools extension upgrade.
+        // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+        // being tied to a global state variable.
+        const configureButtonMessage = localize('configure.now.button', 'Configure Now');
+        const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
+        if (result === configureButtonMessage) {
+          await this.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
+        }
+      }
+    } else {
+      await enableFullFeatureSet(false, cmt.folder);
+    }
+
+    // Enable full or partial feature set for each workspace folder, depending on their state variable.
+    this.enableWorkspaceFoldersFullFeatureSet();
+
     this._updateCodeModel(info);
   }
 
@@ -753,6 +790,7 @@ class ExtensionManager implements vscode.Disposable {
     if (kitName) {
       return true;
     }
+
     return false;
   }
 
@@ -1131,9 +1169,6 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
 
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
-
-  // Enable full or partial feature set for each workspace folder, depending on their state variable.
-  ext.enableWorkspaceFoldersFullFeatureSet();
 
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
