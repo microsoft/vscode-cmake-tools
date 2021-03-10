@@ -158,7 +158,7 @@ class Paths {
   }
 
   async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
-    const ctest_path = wsc.config.raw_ctestPath;
+    const ctest_path = await this.expandStringWithVSCodeVars(wsc.config.raw_ctestPath, wsc);
     if (!ctest_path || ctest_path == 'auto') {
       const cmake = await this.getCMakePath(wsc);
       if (cmake === null) {
@@ -186,28 +186,7 @@ class Paths {
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
     this._ninjaPath = undefined;
 
-    const raw = await expandString(wsc.config.raw_cmakePath, {
-      vars: {
-        buildKit: '',
-        buildKitVendor: '',
-        buildKitTriple: '',
-        buildKitVersion: '',
-        buildKitHostOs: '',
-        buildKitTargetOs: '',
-        buildKitTargetArch: '',
-        buildKitVersionMajor: '',
-        buildKitVersionMinor: '',
-        buildType: '',
-        generator: '',
-        workspaceFolder: wsc.folder.uri.fsPath,
-        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
-        workspaceRoot: wsc.folder.uri.fsPath,
-        workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
-        workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
-        userHome: this.userHome,
-      },
-    });
-
+    const raw = await this.expandStringWithVSCodeVars(wsc.config.raw_cmakePath, wsc);
     if (raw === 'auto' || raw === 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');
@@ -239,6 +218,30 @@ class Paths {
     }
 
     return raw;
+  }
+
+  async expandStringWithVSCodeVars(tmpl: string, wsc: DirectoryContext): Promise<string> {
+    return expandString(tmpl, {
+      vars: {
+        buildKit: '',
+        buildKitVendor: '',
+        buildKitTriple: '',
+        buildKitVersion: '',
+        buildKitHostOs: '',
+        buildKitTargetOs: '',
+        buildKitTargetArch: '',
+        buildKitVersionMajor: '',
+        buildKitVersionMinor: '',
+        buildType: '',
+        generator: '',
+        workspaceFolder: wsc.folder.uri.fsPath,
+        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+        workspaceRoot: wsc.folder.uri.fsPath,
+        workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
+        workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
+        userHome: this.userHome,
+      },
+    });
   }
 
   async vsCMakePaths(): Promise<VSCMakePaths> {
