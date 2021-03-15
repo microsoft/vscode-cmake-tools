@@ -180,7 +180,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
         }
       } else if (lang === undefined) {
         let s = parseCppStandard(std, can_use_gnu_std);
-        if (s === null) {
+        if (!s) {
           s = parseCStandard(std, can_use_gnu_std);
         }
         if (!s) {
