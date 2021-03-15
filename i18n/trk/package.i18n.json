@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Derleme Hedefini Ayarla",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Önbelleği Sil ve Yeniden Yapılandır",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Önbelleği Sil ve Tüm Projeleri Yeniden Yapılandır",
-	"cmake-tools.command.cmake.openConfiguration.title": "CMake Önbelleğini Düzenle (UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "CMake Önbelleğini Düzenle (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Yeniden Yapılandırmayı Temizle",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Tüm Projeleri Temiz Olarak Yeniden Yapılandır",
 	"cmake-tools.command.cmake.clean.title": "Temizle",
