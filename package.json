@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -47,6 +47,7 @@
     "onCommand:cmake.debugTarget",
     "onCommand:cmake.debugTargetAll",
     "onCommand:cmake.editCache",
+    "onCommand:cmake.editCacheUI",
     "onCommand:cmake.editKits",
     "onCommand:cmake.viewLog",
     "onCommand:cmake.install",
@@ -297,13 +298,15 @@
         "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
       },
       {
-        "command": "cmake.openConfiguration",
-        "title": "%cmake-tools.command.cmake.openConfiguration.title%",
+        "command": "cmake.editCacheUI",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.editCacheUI.title%",
         "category": "CMake"
       },
       {
-        "command": "cmake.outline.openConfiguration",
-        "title": "%cmake-tools.command.cmake.openConfiguration.title%"
+        "command": "cmake.outline.editCacheUI",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.editCacheUI.title%"
       },
       {
         "command": "cmake.ctest",
@@ -391,7 +394,6 @@
       {
         "command": "cmake.resetState",
         "title": "%cmake-tools.command.cmake.resetState.title%",
-        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -477,7 +479,6 @@
           "command": "cmake.selectActiveFolder"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
           "command": "cmake.resetState"
         },
         {
@@ -544,7 +545,8 @@
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
         },
         {
-          "command": "cmake.openConfiguration"
+          "command": "cmake.editCacheUI",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -635,7 +637,7 @@
           "when": "never"
         },
         {
-          "command": "cmake.outline.openConfiguration",
+          "command": "cmake.outline.editCacheUI",
           "when": "never"
         },
         {
@@ -707,8 +709,8 @@
           "group": "1_cmakeOutline"
         },
         {
-          "command": "cmake.outline.openConfiguration",
-          "when": "view == cmake.outline",
+          "command": "cmake.outline.editCacheUI",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet",
           "group": "1_cmakeOutline"
         }
       ],
@@ -1298,7 +1300,7 @@
             "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
           },
           "default": [
-            "C:\\MinGW"
+            "${env:SystemDrive}/MinGW"
           ],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
           "scope": "window"
@@ -1655,7 +1657,7 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile-production",
-    "compile": "yarn install && webpack --mode development --watch --info-verbosity verbose",
+    "compile": "yarn install && webpack --mode development --watch --progress",
     "compile-production": "yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",

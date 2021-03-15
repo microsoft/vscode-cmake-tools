@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "ビルド ターゲットの設定",
 	"cmake-tools.command.cmake.cleanConfigure.title": "キャッシュの削除と再構成",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "キャッシュの削除およびすべてのプロジェクトの再構成",
-	"cmake-tools.command.cmake.openConfiguration.title": "CMake キャッシュ (UI) の編集",
+	"cmake-tools.command.cmake.editCacheUI.title": "CMake キャッシュ (UI) の編集",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "クリーンして再構成",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "すべてのプロジェクトをクリーンして再構成",
 	"cmake-tools.command.cmake.clean.title": "クリーンする",

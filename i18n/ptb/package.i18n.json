@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Definir o Destino de Build",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Excluir o Cache e Reconfigurar",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Excluir o Cache e Reconfigurar Todos os Projetos",
-	"cmake-tools.command.cmake.openConfiguration.title": "Editar o Cache do CMake (interface do usuário)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Editar o Cache do CMake (interface do usuário)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Reconfiguração Limpa",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Limpar a Ação Reconfigurar Todos os Projetos",
 	"cmake-tools.command.cmake.clean.title": "Limpar",
