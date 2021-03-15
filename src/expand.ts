@@ -22,14 +22,20 @@ const log = createLogger('expand');
  * references will be available when performing an expansion. Those guaranteed
  * variables are specified as properties on this interface.
  */
-export interface RequiredExpansionContextVars {
-  buildKit: string;
-  buildType: string;
+interface RequiredExpansionContextVars {
+  [key: string]: string;
   generator: string;
   workspaceFolder: string;
   workspaceFolderBasename: string;
   workspaceHash: string;
   workspaceRoot: string;
+  workspaceRootFolderName: string;
+  userHome: string;
+}
+
+export interface KitContextVars extends RequiredExpansionContextVars {
+  buildType: string;
+  buildKit: string;
   buildKitVendor: string;
   buildKitTriple: string;
   buildKitVersion: string;
@@ -38,15 +44,13 @@ export interface RequiredExpansionContextVars {
   buildKitTargetArch: string;
   buildKitVersionMajor: string;
   buildKitVersionMinor: string;
-  workspaceRootFolderName: string;
-  userHome: string;
 }
 
-/**
- * Key-value type for variable expansions
- */
-export interface ExpansionVars extends RequiredExpansionContextVars {
-  [key: string]: string;
+export interface PresetContextVars extends RequiredExpansionContextVars {
+  sourceDir: string;
+  sourceParentDir: string;
+  sourceDirName: string;
+  presetName: string;
 }
 
 /**
@@ -56,7 +60,7 @@ export interface ExpansionOptions {
   /**
    * Plain `${variable}` style expansions.
    */
-  vars: ExpansionVars;
+  vars: KitContextVars | PresetContextVars;
   /**
    * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
    *
@@ -68,7 +72,11 @@ export interface ExpansionOptions {
   /**
    * Variables for `${variant:var}`-style expansions.
    */
-  variantVars?: {[key: string]: string};
+  variantVars?: { [key: string]: string };
+  /**
+   * Do expandString recursively if set to true.
+   */
+  recursive?: boolean;
 }
 
 /**
@@ -79,9 +87,29 @@ export interface ExpansionOptions {
  * @returns A string with the variable references replaced
  */
 export async function expandString(tmpl: string, opts: ExpansionOptions) {
+  const MAX_RECURSION = 50;
+  let result = tmpl;
+  let didReplacement = false;
+
+  let i = 0;
+  do {
+    // TODO: consider a full circular reference check?
+    const expansion = await expandStringHelper(result, opts);
+    result = expansion.result;
+    didReplacement = expansion.didReplacement;
+    i++;
+  } while (i < MAX_RECURSION && opts.recursive && didReplacement);
+
+  if (i == MAX_RECURSION) {
+    log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
+  }
+
+  return replaceAll(result, '${dollar}', '$');
+}
+
+export async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
   const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
   const env = mergeEnvironment(envPreNormalize);
-
   const repls = opts.vars;
 
   // We accumulate a list of substitutions that we need to make, preventing
@@ -93,11 +121,14 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   while ((mat = var_re.exec(tmpl))) {
     const full = mat[0];
     const key = mat[1];
-    const repl = repls[key];
-    if (!repl) {
-      log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, tmpl));
-    } else {
-      subs.set(full, repl);
+    if (key !== 'dollar') {
+      // Replace dollar sign at the very end of the expanding process
+      const repl = repls[key];
+      if (!repl) {
+        log.warning(localize('invalid.variable.reference', 'Invalid variable reference {0} in string: {1}', full, tmpl));
+      } else {
+        subs.set(full, repl);
+      }
     }
   }
 
@@ -118,6 +149,30 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     const full = mat[0];
     const varname = mat[1];
     const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+    subs.set(full, repl);
+  }
+
+  const env_re3 = RegExp(`\\$env\\{(${varValueRegexp})\\}`, "g");
+  while ((mat = env_re3.exec(tmpl))) {
+    const full = mat[0];
+    const varname = mat[1];
+    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+    subs.set(full, repl);
+  }
+
+  const penv_re = RegExp(`\\$penv\\{(${varValueRegexp})\\}`, "g");
+  while ((mat = penv_re.exec(tmpl))) {
+    const full = mat[0];
+    const varname = mat[1];
+    const repl = fixPaths(process.env[normalizeEnvironmentVarname(varname)] || '') || '';
+    subs.set(full, repl);
+  }
+
+  const vendor_re = RegExp(`\\$vendor\\{(${varValueRegexp})\\}`, "g");
+  while ((mat = vendor_re.exec(tmpl))) {
+    const full = mat[0];
+    const varname = mat[1];
+    const repl = fixPaths(process.env[normalizeEnvironmentVarname(varname)] || '') || '';
     subs.set(full, repl);
   }
 
@@ -161,5 +216,5 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
 
   let final_str = tmpl;
   subs.forEach((value, key) => { final_str = replaceAll(final_str, key, value); });
-  return final_str;
+  return { result: final_str, didReplacement: subs.size > 0};
 }

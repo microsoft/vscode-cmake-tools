@@ -27,6 +27,7 @@ import * as util from '@cmt/util';
 import {ConfigureArguments, VariantOption} from '@cmt/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
+import { buildArgs, BuildPreset, configureArgs, ConfigurePreset, configurePresetChangeNeedsClean, ValueStrategy } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -215,6 +216,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private _kitDetect: KitDetect|null = null;
 
+  private _useCMakePresets: boolean = true;
+
+  get useCMakePresets(): boolean { return this._useCMakePresets; }
+
+  private _configurePreset: ConfigurePreset | null = null;
+
+  private _buildPreset: BuildPreset | null = null;
+
+  // private _testPreset: TestPreset | null = null;
+
   /**
    * Get the vscode root workspace folder.
    *
@@ -234,7 +245,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const version = this._kitDetect?.version ?? '0.0';
 
     // Fill in default replacements
-    const vars: expand.ExpansionVars = {
+    const vars: expand.KitContextVars = {
       buildKit: this._kit ? this._kit.name : '__unknownkit__',
       buildType: this.currentBuildType,
       generator: this.generatorName || 'null',
@@ -338,6 +349,57 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * Change the current configure preset. This lets the driver reload, if necessary.
+   * @param preset The new configure preset
+   */
+  async setConfigurePreset(preset: ConfigurePreset): Promise<void> {
+    log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', preset.name));
+
+    const newBinaryDir = this.binaryDir;
+    const needs_clean = this.binaryDir === newBinaryDir && configurePresetChangeNeedsClean(preset, this._configurePreset);
+    await this.doSetConfigurePreset(needs_clean, async () => { await this._setConfigurePreset(preset); });
+  }
+
+  private async _setConfigurePreset(preset: ConfigurePreset): Promise<void> {
+    this._configurePreset = preset;
+    log.debug(localize('cmakedriver.config.preset.set.to', 'CMakeDriver configure preset set to {0}', preset.name));
+
+    this._binaryDir = preset.binaryDir || '';
+
+    const getValue = (obj: string | ValueStrategy) => {
+      if (util.isString(obj)) {
+        return obj;
+      } else if (obj.strategy === 'set') {
+        return obj.value;
+      }
+    };
+
+    if (preset.generator) {
+      this._generator = {
+        name: preset.generator,
+        platform: preset.architecture ? getValue(preset.architecture) : undefined,
+        toolset: preset.toolset ? getValue(preset.toolset) : undefined,
+      };
+    } else {
+      log.debug(localize('no.generator', 'No generator specified'));
+    }
+  }
+
+  /**
+   * Change the current build preset
+   * @param preset The new build preset
+   */
+  async setBuildPreset(preset: BuildPreset): Promise<void> {
+    log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', preset.name));
+    await this.doSetBuildPreset(async () => { await this._setBuildPreset(preset); });
+  }
+
+  private async _setBuildPreset(preset: BuildPreset): Promise<void> {
+    this._buildPreset = preset;
+    log.debug(localize('cmakedriver.build.preset.set.to', 'CMakeDriver build preset set to {0}', preset.name));
+  }
+
+  /**
    * Change the current kit. This lets the driver reload, if necessary.
    * @param kit The new kit
    */
@@ -380,6 +442,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       this._generator = await this.findBestGenerator(preferredGenerators);
     }
   }
+
+  protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
+  protected abstract doSetBuildPreset(cb: () => Promise<void>): Promise<void>;
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
@@ -436,19 +501,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return this.doRefreshExpansions(async () => {
       log.debug('Run _refreshExpansions cb');
       const opts = this.expansionOptions;
-      this._sourceDirectory = util.lightNormalizePath(await expand.expandString(this.config.sourceDirectory, opts));
-      if (path.basename(this._sourceDirectory).toLocaleLowerCase() === "cmakelists.txt") {
-        // Don't fail if CMakeLists.txt was accidentally appended to the sourceDirectory.
-        this._sourceDirectory = path.dirname(this._sourceDirectory);
-      }
-      if (!(await util.checkDirectoryExists(this._sourceDirectory))) {
-        rollbar.error(localize('sourcedirectory.not.a.directory', '"sourceDirectory" is not a directory'), {sourceDirectory: this._sourceDirectory});
-      }
-      this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
+      this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, opts));
 
-      const installPrefix = this.config.installPrefix;
-      if (installPrefix) {
-        this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
+      if (!this.useCMakePresets) {
+        this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
+
+        const installPrefix = this.config.installPrefix;
+        if (installPrefix) {
+          this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
+        }
       }
 
       const copyCompileCommands = this.config.copyCompileCommands;
@@ -934,19 +995,30 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return -2;
       }
 
-      const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
-      const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
       const init_cache_flags = this.generateInitCacheFlags();
 
-      // Get expanded configure environment
-      const expanded_configure_env = await this.getConfigureEnvironment();
+      let expanded_flags: string[];
+      if (this.useCMakePresets) {
+        if (!this._configurePreset) {
+          log.debug(localize('no.config.Preset', 'No configure preset selected'));
+          return -3;
+        }
+        // For now, fields in presets are expanded when the preset is selected
+        expanded_flags = init_cache_flags.concat(configureArgs(this._configurePreset));
+      } else {
+        const common_flags = ['--no-warn-unused-cli'].concat(extra_args, this.config.configureArgs);
+        const define_flags = withoutCmakeSettings ? [] : this.generateCMakeSettingsFlags();
+        const final_flags = common_flags.concat(define_flags, init_cache_flags);
 
-      // Expand all flags
-      const final_flags = common_flags.concat(define_flags, init_cache_flags);
-      const opts = this.expansionOptions;
-      const expanded_flags_promises = final_flags.map(
-          async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
-      const expanded_flags = await Promise.all(expanded_flags_promises);
+        // Get expanded configure environment
+        const expanded_configure_env = await this.getConfigureEnvironment();
+
+        // Expand all flags
+        const opts = this.expansionOptions;
+        const expanded_flags_promises = final_flags.map(
+            async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
+        expanded_flags = await Promise.all(expanded_flags_promises);
+      }
       log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
 
       // A more complete round of expansions
@@ -961,7 +1033,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
         CMakeGenerator: this.generatorName || '',
         ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
-        Toolchain: this._kit?.toolchainFile ? "true" : "false", // UseToolchain?
+        Preset: this.useCMakePresets? 'true' : 'false',
+        Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
         Trigger: trigger
       };
 
@@ -1027,7 +1100,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     let cache_init: string[] = [];
     if (cache_init_conf === null) {
       // Do nothing
-    } else if (typeof cache_init_conf === 'string') {
+    } else if (util.isString(cache_init_conf)) {
       cache_init = [cache_init_conf];
     } else {
       cache_init = cache_init_conf;
@@ -1191,7 +1264,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
-      log.debug(localize('no.configurating', 'No configuring: There is no {0}', cmake_list));
+      log.debug(localize('not.configuring', 'Not configuring: There is no {0}', cmake_list));
       await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile);
       return false;
     }
@@ -1258,8 +1331,31 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {command: this.cmake.path, args: expanded_args, build_env};
   }
 
+  async getCMakeBuildCommandFromPreset(): Promise<proc.BuildCommand|null> {
+    const ok = await this._beforeConfigureOrBuild();
+    if (!ok) {
+      return null;
+    }
+
+    if (!this._buildPreset) {
+      log.debug(localize('no.build.preset', 'No build preset selected'));
+      return null;
+    }
+
+    const args = buildArgs(this._buildPreset);
+
+    log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
+
+    return {command: this.cmake.path, args, build_env: this._buildPreset.environment as proc.EnvironmentVariables};
+  }
+
   private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
-    const buildcmd = await this.getCMakeBuildCommand(target);
+    let buildcmd: proc.BuildCommand | null;
+    if (this.useCMakePresets) {
+      buildcmd = await this.getCMakeBuildCommandFromPreset();
+    } else {
+      buildcmd = await this.getCMakeBuildCommand(target);
+    }
     if (buildcmd) {
       let outputEnc = this.config.outputLogEncoding;
       if (outputEnc == 'auto') {
@@ -1309,9 +1405,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract get cmakeCacheEntries(): Map<string, api.CacheEntryProperties>;
 
-  private async _baseInit(kit: Kit|null, preferredGenerators: CMakeGenerator[]) {
-    if (kit) {
-      // Load up kit environment before starting any drivers.
+  private async _baseInit(useCMakePresets: boolean, kit: Kit|null, configurePreset: ConfigurePreset|null, preferredGenerators: CMakeGenerator[]) {
+    this._useCMakePresets = useCMakePresets;
+    // Load up kit or presets before starting any drivers.
+    if (useCMakePresets) {
+      if (configurePreset) {
+        await this._setConfigurePreset(configurePreset);
+      }
+    } else if (kit) {
       await this._setKit(kit, preferredGenerators);
     }
     await this._refreshExpansions();
@@ -1323,9 +1424,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Asynchronous initialization. Should be called by base classes during
    * their initialization.
    */
-  static async createDerived<T extends CMakeDriver>(inst: T, kit: Kit|null, preferredGenerators: CMakeGenerator[]):
-      Promise<T> {
-    await inst._baseInit(kit, preferredGenerators);
+  static async createDerived<T extends CMakeDriver>(inst: T,
+                                                    useCMakePresets: boolean,
+                                                    kit: Kit|null,
+                                                    configurePreset: ConfigurePreset|null,
+                                                    preferredGenerators: CMakeGenerator[]): Promise<T> {
+    await inst._baseInit(useCMakePresets, kit, configurePreset, preferredGenerators);
     return inst;
   }
 }

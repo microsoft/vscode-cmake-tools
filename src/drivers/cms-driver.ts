@@ -18,6 +18,7 @@ import {ConfigurationReader} from '@cmt/config';
 import {errorToString} from '@cmt/util';
 import * as nls from 'vscode-nls';
 import * as ext from '@cmt/extension';
+import { ConfigurePreset } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -267,9 +268,18 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     await this._restartClient();
   }
 
-  protected async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+  doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
     this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
     return this._clientChangeInProgress;
+  }
+
+  doSetConfigurePreset(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    this._clientChangeInProgress = this._setKitAndRestart(need_clean, cb);
+    return this._clientChangeInProgress;
+  }
+
+  doSetBuildPreset(cb: () => Promise<void>): Promise<void> {
+    return cb();
   }
 
   private async _restartClient(): Promise<void> {
@@ -347,8 +357,19 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     });
   }
 
-  static async create(cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit|null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
-    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler), kit, preferredGenerators);
+  static async create(cmake: CMakeExecutable,
+                      config: ConfigurationReader,
+                      useCMakePresets: boolean,
+                      kit: Kit|null,
+                      configurePreset: ConfigurePreset | null,
+                      workspaceFolder: string | null,
+                      preconditionHandler: CMakePreconditionProblemSolver,
+                      preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
+    return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler),
+                              useCMakePresets,
+                              kit,
+                              configurePreset,
+                              preferredGenerators);
   }
 }
 

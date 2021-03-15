@@ -7,14 +7,17 @@ import * as nls from 'vscode-nls';
 import { CMakeTools } from '@cmt/cmake-tools';
 import * as logging from '@cmt/logging';
 import { fs } from '@cmt/pr';
-import { ConfigurePreset, BuildPreset, TestPreset } from '@cmt/preset';
+import { ConfigurePreset, BuildPreset, TestPreset, Preset } from '@cmt/preset';
 import * as util from '@cmt/util';
-import rollbar from './rollbar';
+import rollbar from '@cmt/rollbar';
+import { expandString, ExpansionOptions } from '@cmt/expand';
+import { EnvironmentVariables } from '@cmt/proc';
+import paths from '@cmt/paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-const log = logging.createLogger('preset');
+const log = logging.createLogger('presetController');
 
 interface CmakeMinimumRequired {
   major: number;
@@ -35,53 +38,113 @@ export class PresetsController {
   private _userPresetsWatcher: chokidar.FSWatcher | undefined;
   private _presetsFile: PresetsFile | undefined;
   private _userPresetsFile: PresetsFile | undefined;
+  private _sourceDir: string = '';
 
-  private readonly _presetsPath: string;
-  private readonly _userPresetsPath: string;
   private readonly _presetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
   private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
   private readonly _subscriptions: vscode.Disposable[] = [
     this._presetsChangedEmitter,
     this._userPresetsChangedEmitter
-  ]
+  ];
 
   static async init(cmakeTools: CMakeTools): Promise<PresetsController> {
     const presetsController = new PresetsController(cmakeTools);
 
-    presetsController._presetsWatcher = chokidar.watch(presetsController._presetsPath)
-                                  .on('add', async () => {
-                                    presetsController._presetsFile = await presetsController.readPresetsFile(presetsController._presetsPath);
-                                    presetsController._presetsChangedEmitter.fire();
-                                  })
-                                  .on('change', async () => {
-                                    presetsController._presetsFile = await presetsController.readPresetsFile(presetsController._presetsPath);
-                                    presetsController._presetsChangedEmitter.fire();
-                                  })
-                                  .on('unlink', async () => {
-                                    presetsController._presetsFile = await presetsController.readPresetsFile(presetsController._presetsPath);
-                                    presetsController._presetsChangedEmitter.fire();
-                                  });
-    presetsController._userPresetsWatcher = chokidar.watch(presetsController._userPresetsPath)
-                                      .on('add', async () => {
-                                        presetsController._userPresetsFile = await presetsController.readPresetsFile(presetsController._userPresetsPath);
-                                        presetsController._userPresetsChangedEmitter.fire();
-                                      })
-                                      .on('change', async () => {
-                                        presetsController._userPresetsFile = await presetsController.readPresetsFile(presetsController._userPresetsPath);
-                                        presetsController._userPresetsChangedEmitter.fire();
-                                      })
-                                      .on('unlink', async () => {
-                                        presetsController._userPresetsFile = await presetsController.readPresetsFile(presetsController._userPresetsPath);
-                                        presetsController._userPresetsChangedEmitter.fire();
-                                      });
+    const expandSourceDir = async (dir: string) => {
+      const workspaceFolder = cmakeTools.folder.uri.fsPath;
+      const expansionOpts: ExpansionOptions = {
+        vars: {
+          workspaceFolder,
+          workspaceFolderBasename: path.basename(workspaceFolder),
+          workspaceHash: util.makeHashString(workspaceFolder),
+          workspaceRoot: workspaceFolder,
+          workspaceRootFolderName: path.dirname(workspaceFolder),
+          userHome: paths.userHome,
+          // Following fields are not supported for sourceDir expansion
+          generator: '${generator}',
+          sourceDir: '${sourceDir}',
+          sourceParentDir: '${sourceParentDir}',
+          sourceDirName: '${sourceDirName}',
+          presetName: '${presetName}'
+        }
+      };
+      return util.normalizeAndVerifySourceDir(await expandString(dir, expansionOpts));
+    };
+
+    presetsController._sourceDir = await expandSourceDir(cmakeTools.workspaceContext.config.sourceDirectory);
+
+    const reapplyPresets = async () => {
+      if (presetsController._cmakeTools.configurePreset) {
+        await presetsController.setConfigurePresetByName(presetsController._cmakeTools.configurePreset.name);
+      }
+      if (presetsController._cmakeTools.buildPreset) {
+        await presetsController.setBuildPresetByName(presetsController._cmakeTools.buildPreset.name);
+      }
+    };
+
+    const watchPresetsChange = async () => {
+      // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
+      // there might be timing issues, since listeners are invoked async.
+      presetsController._presetsFile = await presetsController.readPresetsFile(presetsController.presetsPath);
+      presetsController._userPresetsFile = await presetsController.readPresetsFile(presetsController.userPresetsPath);
+      await reapplyPresets();
+
+      if (presetsController._presetsWatcher) {
+        presetsController._presetsWatcher.close().then(() => {}, () => {});
+      }
+      if (presetsController._userPresetsWatcher) {
+        presetsController._userPresetsWatcher.close().then(() => {}, () => {});
+      }
+
+      presetsController._presetsWatcher = chokidar.watch(presetsController.presetsPath, { ignoreInitial: true })
+                                    .on('add', async () => {
+                                      presetsController._presetsFile = await presetsController.readPresetsFile(presetsController.presetsPath);
+                                      presetsController._presetsChangedEmitter.fire();
+                                    })
+                                    .on('change', async () => {
+                                      presetsController._presetsFile = await presetsController.readPresetsFile(presetsController.presetsPath);
+                                      await reapplyPresets();
+                                      presetsController._presetsChangedEmitter.fire();
+                                    })
+                                    .on('unlink', async () => {
+                                      presetsController._presetsFile = await presetsController.readPresetsFile(presetsController.presetsPath);
+                                      presetsController._presetsChangedEmitter.fire();
+                                    });
+      presetsController._userPresetsWatcher = chokidar.watch(presetsController.userPresetsPath, { ignoreInitial: true })
+                                        .on('add', async () => {
+                                          presetsController._userPresetsFile = await presetsController.readPresetsFile(presetsController.userPresetsPath);
+                                          presetsController._userPresetsChangedEmitter.fire();
+                                        })
+                                        .on('change', async () => {
+                                          presetsController._userPresetsFile = await presetsController.readPresetsFile(presetsController.userPresetsPath);
+                                          await reapplyPresets();
+                                          presetsController._userPresetsChangedEmitter.fire();
+                                        })
+                                        .on('unlink', async () => {
+                                          presetsController._userPresetsFile = await presetsController.readPresetsFile(presetsController.userPresetsPath);
+                                          presetsController._userPresetsChangedEmitter.fire();
+                                        });
+    };
+
+    await watchPresetsChange();
+
+    presetsController._subscriptions.push(cmakeTools.workspaceContext.config.onChange('sourceDirectory', async value => {
+      const oldSourceDir = presetsController._sourceDir;
+      presetsController._sourceDir = await expandSourceDir(value);
+
+      if (presetsController._sourceDir !== oldSourceDir) {
+        await watchPresetsChange();
+      }
+    }));
 
     return presetsController;
   }
 
-  private constructor(private readonly cmakeTools: CMakeTools) {
-    this._presetsPath = path.join(cmakeTools.folder.uri.fsPath, 'CMakePresets.json');
-    this._userPresetsPath = path.join(cmakeTools.folder.uri.fsPath, 'CMakeUserPresets.json');
-  }
+  private constructor(private readonly _cmakeTools: CMakeTools) { }
+
+  get presetsPath() { return path.join(this._sourceDir, 'CMakePresets.json'); }
+
+  get userPresetsPath() { return path.join(this._sourceDir, 'CMakeUserPresets.json'); }
 
   get cmakePresetsExist() { return !!this._presetsFile; }
 
@@ -105,7 +168,7 @@ export class PresetsController {
 
   get allTestPresets() { return this.testPresets.concat(this.userTestPresets); }
 
-  get folder() { return this.cmakeTools.folder; }
+  get folder() { return this._cmakeTools.folder; }
 
   /**
    * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
@@ -294,28 +357,40 @@ export class PresetsController {
   }
 
   async selectConfigurePreset(): Promise<boolean> {
-    const presets = this.allConfigurePresets;
-    if (presets.length === 0) {
+    const presets = this.configurePresets;
+    const userPresets = this.userConfigurePresets;
+    if (presets.length === 0 && userPresets.length === 0) {
       return false;
     }
 
-    log.debug(localize('start.selection.of.config.presets', 'Start selection of configure presets. Found {0} presets.', presets.length));
+    log.debug(localize('start.selection.of.config.presets', 'Start selection of configure presets. Found {0} presets.', presets.length + userPresets.length));
 
     interface PresetItem extends vscode.QuickPickItem {
       preset: ConfigurePreset;
+      isUserPreset: boolean;
     }
     log.debug(localize('opening.config.preset.selection', 'Opening configure preset selection QuickPick'));
-    const items: PresetItem[] = presets.map(
+    let items: PresetItem[] = presets.map(
         preset => ({
           label: preset.displayName || preset.name,
           description: preset.description,
           preset,
+          isUserPreset: false
         }),
     );
+    items = items.concat(userPresets.map(
+      preset => ({
+        label: preset.displayName || preset.name,
+        description: preset.description,
+        preset,
+        isUserPreset: true
+      }),
+    ));
     items.push({
       label: localize('add.config.preset', 'Add Configure Preset...'),
       description: localize('description.add.config.preset', 'Add a new configure preset'),
-      preset: { name: '__addPreset__' }
+      preset: { name: '__addPreset__' },
+      isUserPreset: false
     });
     const chosenPreset = await vscode.window.showQuickPick(items,
                                                             { placeHolder: localize('select.a.config.preset.placeholder', 'Select a configure preset for {0}', this.folder.name) });
@@ -326,19 +401,48 @@ export class PresetsController {
       return this.addConfigurePreset();
     } else {
       log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
-      this.cmakeTools.configurePreset = chosenPreset.preset;
-      // await this.setFolderConfigurePreset(chosenPreset.preset);
+      await this.expandConfigurePreset(chosenPreset.preset.name, chosenPreset.isUserPreset);
+      await this.setConfigurePreset(chosenPreset.preset);
       return true;
     }
   }
 
-  async selectBuildPreset(): Promise<boolean> {
-    const presets = this.allBuildPresets;
+  // Returns true if succeeded
+  async setConfigurePresetByName(presetName: string): Promise<boolean> {
+    const inst = this._cmakeTools;
+    if (inst) {
+      const preset = await this.expandConfigurePreset(presetName, true);
+      if (preset) {
+        await this.setConfigurePreset(preset);
+        return true;
+      }
+    }
+    return false;
+  }
 
-    log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
+  private async setConfigurePreset(preset: ConfigurePreset): Promise<void> {
+    const inst = this._cmakeTools;
+    if (inst) {
+      // Load the configure preset into the backend
+      await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: localize('loading.config.preset', 'Loading configure preset {0}', preset.name),
+          },
+          () => inst.setConfigurePreset(preset),
+      );
+    }
+  }
+
+  async selectBuildPreset(): Promise<boolean> {
+    const presets = this.buildPresets;
+    const userPresets = this.userBuildPresets;
+
+    log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length + userPresets.length));
 
     interface PresetItem extends vscode.QuickPickItem {
       preset: BuildPreset;
+      isUserPreset: boolean;
     }
     log.debug(localize('opening.build.preset.selection', 'Opening build preset selection QuickPick'));
     const items: PresetItem[] = presets.map(
@@ -346,12 +450,22 @@ export class PresetsController {
           label: preset.displayName || preset.name,
           description: preset.description,
           preset,
+          isUserPreset: false
         }),
     );
+    items.concat(userPresets.map(
+      preset => ({
+        label: preset.displayName || preset.name,
+        description: preset.description,
+        preset,
+        isUserPreset: true
+      }),
+    ));
     items.push({
       label: localize('add.build.preset', 'Add Build Preset...'),
       description: localize('description.add.build.preset', 'Add a new build preset'),
-      preset: { name: '__addPreset__' }
+      preset: { name: '__addPreset__' },
+      isUserPreset: false
     });
     const chosenPreset = await vscode.window.showQuickPick(items,
                                                             { placeHolder: localize('select.a.build.preset.placeholder', 'Select a configure preset for {0}', this.folder.name) });
@@ -362,9 +476,36 @@ export class PresetsController {
       return this.addBuildPreset();
     } else {
       log.debug(localize('user.selected.build.preset', 'User selected build preset {0}', JSON.stringify(chosenPreset)));
-      this.cmakeTools.buildPreset = chosenPreset.preset;
-      // await this.setFolderBuildPreset(chosenPreset.preset);
+      await this.expandBuildPreset(chosenPreset.preset.name, chosenPreset.isUserPreset);
+      await this.setBuildPreset(chosenPreset.preset);
       return true;
+    }
+  }
+
+  // Returns true if succeeded
+  async setBuildPresetByName(presetName: string): Promise<boolean> {
+    const inst = this._cmakeTools;
+    if (inst) {
+      const preset = await this.expandBuildPreset(presetName, true);
+      if (preset) {
+        await this.setBuildPreset(preset);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private async setBuildPreset(preset: BuildPreset): Promise<void> {
+    const inst = this._cmakeTools;
+    if (inst) {
+      // Load the build preset into the backend
+      await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: localize('loading.build.preset', 'Loading build preset {0}', preset.name),
+          },
+          () => inst.setBuildPreset(preset),
+      );
     }
   }
 
@@ -398,18 +539,18 @@ export class PresetsController {
       return this.addTestPreset();
     } else {
       log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosenPreset)));
-      this.cmakeTools.testPreset = chosenPreset.preset;
+      this._cmakeTools.testPreset = chosenPreset.preset;
       // await this.setFolderTestPreset(chosenPreset.preset);
       return true;
     }
   }
 
   openCMakePresets(): Thenable<vscode.TextEditor> {
-    return vscode.window.showTextDocument(vscode.Uri.file(this._presetsPath));
+    return vscode.window.showTextDocument(vscode.Uri.file(this.presetsPath));
   }
 
   openCMakeUserPresets(): Thenable<vscode.TextEditor> {
-    return vscode.window.showTextDocument(vscode.Uri.file(this._userPresetsPath));
+    return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
   }
 
   private async readPresetsFile(file: string): Promise<PresetsFile | undefined> {
@@ -458,7 +599,7 @@ export class PresetsController {
   }
 
   async updatePresetsFile(presetsFile: PresetsFile, isUserPresets = false): Promise<boolean> {
-    const presetsFilePath = isUserPresets? this._userPresetsPath : this._presetsPath;
+    const presetsFilePath = isUserPresets? this.userPresetsPath : this.presetsPath;
     try {
         await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile));
     } catch (e) {
@@ -469,12 +610,218 @@ export class PresetsController {
     return true;
   }
 
+  private getPresetByName<T extends Preset>(presets: T[], name: string): T | null {
+    for (const preset of presets) {
+      if (preset.name === name) {
+        return preset;
+      }
+    }
+    return null;
+  }
+
+  private readonly referencedConfigurePresets: Set<string> = new Set();
+  expandConfigurePreset(name: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+    this.referencedConfigurePresets.clear();
+    return this.expandConfigurePresetImpl(name, allowUserPreset);
+  }
+
+  private async expandConfigurePresetImpl(name: string, allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+    let preset = this.getPresetByName(this.configurePresets, name);
+    if (preset) {
+      return this.expandConfigurePresetHelper(preset);
+    }
+
+    if (allowUserPreset) {
+      preset = this.getPresetByName(this.userConfigurePresets, name);
+      if (preset) {
+        return this.expandConfigurePresetHelper(preset, true);
+      }
+    }
+
+    log.error(localize('config.preset.not.found', 'Could not find configure preset with name {0}', name));
+    return null;
+  }
+
+  private async expandConfigurePresetHelper(preset: ConfigurePreset, allowUserPreset: boolean = false) {
+    if (preset.__expanded) {
+      return preset;
+    }
+
+    if (this.referencedConfigurePresets.has(preset.name) && !preset.__expanded) {
+      // Refernced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+      log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
+      return null;
+    }
+
+    this.referencedConfigurePresets.add(preset.name);
+
+    // Init env and cacheVar to empty if not specified to avoid null checks later
+    if (!preset.environment) {
+      preset.environment = {};
+    }
+    if (!preset.cacheVariables) {
+      preset.cacheVariables = {};
+    }
+
+    // Expand inherits
+    if (preset.inherits) {
+      for (const parentName of preset.inherits) {
+        const parent = await this.expandConfigurePresetImpl(parentName, allowUserPreset);
+        if (parent) {
+          // Inherit environment
+          preset.environment = util.mergeEnvironment(parent.environment! as EnvironmentVariables, preset.environment as EnvironmentVariables);
+          // Inherit cache vars
+          for (const name in parent.cacheVariables) {
+            if (!preset.cacheVariables[name]) {
+              preset.cacheVariables[name] = parent.cacheVariables[name];
+            }
+          }
+          // Inherit other fields
+          let key: keyof ConfigurePreset;
+          for (key in parent) {
+            if (preset[key] === undefined) {
+              // 'as never' to bypass type check
+              preset[key] = parent[key] as never;
+            }
+          }
+        }
+      }
+    }
+
+    preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, preset.environment as EnvironmentVariables);
+
+    // Expand strings
+    const workspaceFolder = util.lightNormalizePath(this.folder.uri.fsPath);
+    const expansionOpts: ExpansionOptions = {
+      vars: {
+        generator: preset.generator || 'null',
+        workspaceFolder,
+        workspaceFolderBasename: path.basename(workspaceFolder),
+        workspaceHash: util.makeHashString(workspaceFolder),
+        workspaceRoot: workspaceFolder,
+        workspaceRootFolderName: path.dirname(workspaceFolder),
+        userHome: paths.userHome,
+        sourceDir: this._sourceDir,
+        sourceParentDir: path.dirname(this._sourceDir),
+        sourceDirName: path.basename(this._sourceDir),
+        presetName: preset.name
+      },
+      envOverride: preset.environment as EnvironmentVariables,
+      recursive: true
+    };
+    // Expand environment vars first since other fields may refer to them
+    if (preset.environment) {
+      for (const key in preset.environment) {
+        if (preset.environment[key]) {
+          preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+        }
+      }
+    }
+    if (preset.binaryDir) {
+      preset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
+    }
+    if (preset.cmakeExecutable) {
+      preset.cmakeExecutable = await expandString(preset.cmakeExecutable, expansionOpts);
+    }
+
+    type CacheVarObjType = { type: string, value: string | boolean};
+    for (const cacheVarName in preset.cacheVariables) {
+      if (util.isString(preset.cacheVariables[cacheVarName])) {
+        preset.cacheVariables[cacheVarName] = await expandString(preset.cacheVariables[cacheVarName] as string, expansionOpts);
+      } else if (util.isString((preset.cacheVariables[cacheVarName] as CacheVarObjType).value)) {
+        (preset.cacheVariables[cacheVarName] as CacheVarObjType).value = await expandString((preset.cacheVariables[cacheVarName] as CacheVarObjType).value as string, expansionOpts);
+      }
+    }
+
+    preset.__expanded = true;
+    return preset;
+  }
+
+  private readonly referencedBuildPresets: Set<string> = new Set();
+  expandBuildPreset(name: string, allowUserPreset: boolean = false): Promise<BuildPreset | null> {
+    this.referencedBuildPresets.clear();
+    return this.expandBuildPresetImpl(name, allowUserPreset);
+  }
+
+  private async expandBuildPresetImpl(name: string, allowUserPreset: boolean = false): Promise<BuildPreset | null> {
+    let preset = this.getPresetByName(this.buildPresets, name);
+    if (preset) {
+      return this.expandBuildPresetHelper(preset);
+    }
+
+    if (allowUserPreset) {
+      preset = this.getPresetByName(this.userBuildPresets, name);
+      if (preset) {
+        return this.expandBuildPresetHelper(preset, true);
+      }
+    }
+
+    log.error(localize('build.preset.not.found', 'Could not find build preset with name {0}', name));
+    return null;
+  }
+
+  private async expandBuildPresetHelper(preset: BuildPreset, allowUserPreset: boolean = false) {
+    if (preset.__expanded) {
+      return preset;
+    }
+
+    if (this.referencedBuildPresets.has(preset.name) && !preset.__expanded) {
+      // Refernced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+      log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
+      return null;
+    }
+
+    this.referencedBuildPresets.add(preset.name);
+
+    // Init env to empty if not specified to avoid null checks later
+    if (!preset.environment) {
+      preset.environment = {};
+    }
+    let inheritedEnv = {};
+
+    // Expand inherits
+    if (preset.inherits) {
+      for (const parentName of preset.inherits) {
+        const parent = await this.expandBuildPresetImpl(parentName, allowUserPreset);
+        if (parent) {
+          // Inherit environment
+          inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
+          // Inherit other fields
+          let key: keyof BuildPreset;
+          for (key in parent) {
+            if (preset[key] === undefined) {
+              // 'as never' to bypass type check
+              preset[key] = parent[key] as never;
+            }
+          }
+        }
+      }
+    }
+
+    // Expand configure preset. Evaluate this after inherits since it may come from parents
+    if (preset.configurePreset) {
+      const configurePreset = await this.expandConfigurePreset(preset.configurePreset, allowUserPreset);
+      if (configurePreset) {
+        preset.__binaryDir = configurePreset.binaryDir;
+
+        if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
+          inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
+        }
+      }
+    }
+
+    preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
+
+    preset.__expanded = true;
+    return preset;
+  }
+
   dispose() {
     if (this._presetsWatcher) {
-      this._presetsWatcher.close();
+      this._presetsWatcher.close().then(() => {}, () => {});
     }
     if (this._userPresetsWatcher) {
-      this._userPresetsWatcher.close();
+      this._userPresetsWatcher.close().then(() => {}, () => {});
     }
     util.disposeAll(this._subscriptions);
   }

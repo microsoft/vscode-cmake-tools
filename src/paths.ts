@@ -151,6 +151,9 @@ class Paths {
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
         workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
         userHome: this.userHome,
+        sourceDir: wsc.folder.uri.fsPath,
+        sourceParentDir: path.dirname(wsc.folder.uri.fsPath),
+        sourceDirName: path.basename(wsc.folder.uri.fsPath)
       },
     });
 

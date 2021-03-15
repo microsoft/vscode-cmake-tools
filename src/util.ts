@@ -610,3 +610,15 @@ export function isNullOrUndefined(x?: any): boolean {
 export function isWorkspaceFolder(x?: any): boolean {
   return 'uri' in x && 'name' in x && 'index' in x;
 }
+
+export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<string> {
+  let result = lightNormalizePath(sourceDir);
+  if (path.basename(result).toLocaleLowerCase() === "cmakelists.txt") {
+    // Don't fail if CMakeLists.txt was accidentally appended to the sourceDirectory.
+    result = path.dirname(result);
+  }
+  if (!(await checkDirectoryExists(result))) {
+    throw new Error(localize('sourcedirectory.not.a.directory', '"sourceDirectory: {0}" is not a directory', result));
+  }
+  return result;
+}

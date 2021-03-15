@@ -23,6 +23,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
+import { ConfigurePreset } from '@cmt/preset';
 
 import {NoGeneratorError} from './cms-driver';
 
@@ -45,13 +46,17 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
 
   static async create(cmake: CMakeExecutable,
                       config: ConfigurationReader,
+                      useCMakePresets: boolean,
                       kit: Kit|null,
+                      configurePreset: ConfigurePreset | null,
                       workspaceRootPath: string|null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
     log.debug('Creating instance of CMakeFileApiDriver');
     return this.createDerived(new CMakeFileApiDriver(cmake, config, workspaceRootPath, preconditionHandler),
+                              useCMakePresets,
                               kit,
+                              configurePreset,
                               preferredGenerators);
   }
 
@@ -154,6 +159,21 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     if (!this.generator) {
       throw new NoGeneratorError();
     }
+  }
+
+  async doSetConfigurePreset(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    this._needsReconfigure = true;
+    if (need_clean) {
+      await this._cleanPriorConfiguration();
+    }
+    await cb();
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
+  }
+
+  doSetBuildPreset(cb: () => Promise<void>): Promise<void> {
+    return cb();
   }
 
   async asyncDispose() {

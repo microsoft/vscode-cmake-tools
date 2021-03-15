@@ -114,6 +114,19 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   get folderName(): string { return this.folder.name; }
 
+  /**
+   * Whether we use presets
+   */
+  private _useCMakePresets = false; // The default value doesn't matter, value is set when folder is loaded
+  get useCMakePresets(): boolean { return this._useCMakePresets; }
+  async setUseCMakePresets(useCMakePresets: boolean) {
+    const oldValue = this._useCMakePresets;
+    if (oldValue !== useCMakePresets) {
+      this._useCMakePresets = useCMakePresets;
+      await this._reloadCMakeDriver();
+    }
+  }
+
   // Events that effect the user-interface
   /**
    * The status of this backend
@@ -126,8 +139,30 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected configure preset
    */
   get configurePreset() { return this._configurePreset; }
-  set configurePreset(preset: ConfigurePreset | null) { this._configurePreset = preset; }
   private _configurePreset: ConfigurePreset | null = null;
+  async setConfigurePreset(preset: ConfigurePreset | null) {
+    this._configurePreset = preset;
+    if (preset) {
+      log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
+      const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
+      if (drv) {
+        try {
+          this._statusMessage.set(localize('reloading.status', 'Reloading...'));
+          await drv.setConfigurePreset(preset);
+          this.workspaceContext.state.configurePresetName = preset.name;
+          this._statusMessage.set(localize('ready.status', 'Ready'));
+        } catch (error) {
+          vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset "{0}".', error));
+          this._statusMessage.set(localize('error.on.switch.config.preset', 'Error on switch of configure preset ({0})', error.message));
+          this._cmakeDriver = Promise.resolve(null);
+          this._configurePreset = null;
+        }
+      } else {
+        // Remember the selected configure preset for the next session.
+        this.workspaceContext.state.configurePresetName = preset.name;
+      }
+    }
+  }
 
   /**
    * Currently selected build preset
@@ -135,6 +170,29 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get buildPreset() { return this._buildPreset; }
   set buildPreset(preset: BuildPreset | null) { this._buildPreset = preset; }
   private _buildPreset: BuildPreset | null = null;
+  async setBuildPreset(preset: BuildPreset | null) {
+    this._buildPreset = preset;
+    if (preset) {
+      log.debug(localize('loading.new.build.preset', 'Loading new build preset into CMake driver'));
+      const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
+      if (drv) {
+        try {
+          this._statusMessage.set(localize('reloading.status', 'Reloading...'));
+          await drv.setBuildPreset(preset);
+          this.workspaceContext.state.buildPresetName = preset.name;
+          this._statusMessage.set(localize('ready.status', 'Ready'));
+        } catch (error) {
+          vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset "{0}".', error));
+          this._statusMessage.set(localize('error.on.switch.build.preset', 'Error on switch of build preset ({0})', error.message));
+          this._cmakeDriver = Promise.resolve(null);
+          this._buildPreset = null;
+        }
+      } else {
+        // Remember the selected build preset for the next session.
+        this.workspaceContext.state.buildPresetName = preset.name;
+      }
+    }
+  }
 
   /**
    * Currently selected test preset
@@ -383,7 +441,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * of the driver is atomic to those using it
    */
   private async _startNewCMakeDriver(cmake: CMakeExecutable): Promise<CMakeDriver> {
-    const kit = this.activeKit;
     log.debug(localize('starting.cmake.driver', 'Starting CMake driver'));
     if (!cmake.isPresent) {
       throw new Error(localize('bad.cmake.executable', 'Bad CMake executable "{0}".', cmake.path));
@@ -434,15 +491,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       switch (communicationMode) {
         case fileApi:
           drv = await CMakeFileApiDriver
-              .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+              .create(cmake, this.workspaceContext.config, !!this.configurePreset, this.activeKit, this.configurePreset, workspace, preConditionHandler, preferredGenerators);
           break;
         case serverApi:
           drv = await CMakeServerClientDriver
-              .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+              .create(cmake, this.workspaceContext.config, !!this.configurePreset, this.activeKit, this.configurePreset, workspace, preConditionHandler, preferredGenerators);
           break;
         default:
           drv = await LegacyCMakeDriver
-            .create(cmake, this.workspaceContext.config, kit, workspace, preConditionHandler, preferredGenerators);
+            .create(cmake, this.workspaceContext.config, !!this.configurePreset, this.activeKit, this.configurePreset, workspace, preConditionHandler, preferredGenerators);
         }
     } finally { this._statusMessage.set(localize('ready.status', 'Ready')); }
 
@@ -620,7 +677,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
     return this._driverStrand.execute(async () => {
-      if (!this.activeKit) {
+      if (!this.useCMakePresets && !this.activeKit) {
         log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kits defined'));
         return null;
       }
@@ -875,16 +932,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!await this.maybeAutoSaveAll()) {
       return -1;
     }
-    if (!this.activeKit) {
-      throw new Error(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake Tools'));
-    }
-    if (!this._variantManager.haveVariant) {
-      progress.report({message: localize('waiting.on.variant', 'Waiting on variant selection')});
-      await this._variantManager.selectVariant();
-      if (!this._variantManager.haveVariant) {
-        log.debug(localize('no.variant.abort', 'No variant selected. Abort configure'));
-        return -1;
+    if (!this.useCMakePresets) {
+      if (!this.activeKit) {
+        throw new Error(localize('cannot.configure.no.kit', 'Cannot configure: No kit is active for this CMake Tools'));
       }
+      if (!this._variantManager.haveVariant) {
+        progress.report({message: localize('waiting.on.variant', 'Waiting on variant selection')});
+        await this._variantManager.selectVariant();
+        if (!this._variantManager.haveVariant) {
+          log.debug(localize('no.variant.abort', 'No variant selected. Abort configure'));
+          return -1;
+        }
+      }
+    } else if (!this.configurePreset){
+      throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake Tools'));
     }
     log.showChannel();
     const consumer = new CMakeOutputConsumer(await this.sourceDir, CMAKE_LOGGER);
