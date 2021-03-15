@@ -610,7 +610,3 @@ export function isNullOrUndefined(x?: any): boolean {
 export function isWorkspaceFolder(x?: any): boolean {
   return 'uri' in x && 'name' in x && 'index' in x;
 }
-
-export function isCodespaces(): boolean {
-  return !!process.env["CODESPACES"];
-}

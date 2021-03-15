@@ -1329,20 +1329,7 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
-  if (!util.isCodespaces()) {
-    // Do not prompt for users of Codespaces.
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: localize('cmake.tools.initializing', 'CMake Tools initializing...'),
-        cancellable: false,
-      },
-      progress => setup(context, progress),
-    );
-  }
-  else {
-    return setup(context);
-  }
+  return setup(context);
 
   // TODO: Return the extension API
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
