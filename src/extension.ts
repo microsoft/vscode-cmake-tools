@@ -367,7 +367,6 @@ class ExtensionManager implements vscode.Disposable {
                                              await scanForKitsIfNeeded(cmt);
 
     let should_configure = cmt.workspaceContext.config.configureOnOpen;
-    let codespaces_first_configureOnOpen: boolean = false;
     if (should_configure === null && process.env['CMT_TESTING'] !== '1') {
       interface Choice1 {
         title: string;
@@ -416,9 +415,6 @@ class ExtensionManager implements vscode.Disposable {
                 });
       rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, persist_pr);
       should_configure = chosen.doConfigure;
-      if (util.isCodespaces()) {
-        codespaces_first_configureOnOpen = true;
-      }
     }
 
     const optsVars: ExpansionVars = {
@@ -454,9 +450,7 @@ class ExtensionManager implements vscode.Disposable {
         // We've opened a new workspace folder, and the user wants us to
         // configure it now.
         log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-        if (!util.isCodespaces() || codespaces_first_configureOnOpen) {
-          await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
-        }
+        await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
       } else if (silentScanForKitsNeeded) {
         // This popup will show up the first time after deciding not to configure, if a version change has been detected
         // in the kits definition. This may happen during a CMake Tools extension upgrade.
