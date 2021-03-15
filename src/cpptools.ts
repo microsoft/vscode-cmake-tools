@@ -27,7 +27,7 @@ type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++1
 
 export interface CompileFlagInformation {
   extraDefinitions: string[];
-  standard: StandardVersion | undefined;
+  standard?: StandardVersion;
   targetArch: Architecture;
 }
 
@@ -116,7 +116,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion | undefined = undefined;
+  let standard: StandardVersion | undefined;
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
