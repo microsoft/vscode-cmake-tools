@@ -227,7 +227,12 @@ export class ConfigurationReader implements vscode.Disposable {
   get testEnvironment() { return this.configData.testEnvironment; }
   get defaultVariants(): Object { return this.configData.defaultVariants; }
   get ctestArgs(): string[] { return this.configData.ctestArgs; }
-  get configureOnOpen() { return this.configData.configureOnOpen; }
+  get configureOnOpen() {
+    if (util.isCodespaces() && this.configData.configureOnOpen === null) {
+      return true;
+    }
+    return this.configData.configureOnOpen;
+  }
   get configureOnEdit() { return this.configData.configureOnEdit; }
   get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
