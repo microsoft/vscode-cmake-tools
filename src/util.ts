@@ -570,7 +570,7 @@ export function disposeAll(disp: Iterable<vscode.Disposable>) {
   }
 }
 
-export function reportProgress(progress: ProgressHandle|undefined, message: string) {
+export function reportProgress(message: string, progress?: ProgressHandle) {
   if (progress) {
     progress.report({message});
   }
