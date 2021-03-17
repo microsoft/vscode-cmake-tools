@@ -1631,6 +1631,15 @@
             }
           }
         },
+        "cmake.additionalKits": {
+          "type": "array",
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.additionalKits.description%",
+          "items": {
+            "type": "string"
+          },
+          "scope": "resource"
+        },
         "cmake.revealLog": {
           "type": "string",
           "default": "always",
