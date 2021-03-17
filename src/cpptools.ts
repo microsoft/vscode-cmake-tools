@@ -391,11 +391,17 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
-    // Try the group's language's compiler, then the C++ compiler, then the C compiler.
-    const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`) || opts.cache.get('CMAKE_CXX_COMPILER')
+    // First try to get toolchain values directly reported by CMake. Check the
+    // group's language compiler, then the C++ compiler, then the C compiler.
+    const comp_toolchains = opts.codeModel.toolchains.get(lang ?? "")
+        || opts.codeModel.toolchains.get('CXX')
+        || opts.codeModel.toolchains.get('C');
+    // If none of those work, fall back to the same order, but in the cache.
+    const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
+        || opts.cache.get('CMAKE_CXX_COMPILER')
         || opts.cache.get('CMAKE_C_COMPILER');
     // Try to get the path to the compiler we want to use
-    const comp_path = comp_cache ? comp_cache.as<string>() : opts.clCompilerPath;
+    const comp_path = comp_toolchains ? comp_toolchains.path : (comp_cache ? comp_cache.as<string>() : opts.clCompilerPath);
     if (!comp_path) {
       throw new MissingCompilerException();
     }
