@@ -35,6 +35,7 @@ import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode}
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
+import * as preset from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -546,9 +547,9 @@ class ExtensionManager implements vscode.Disposable {
       const configurePreset = activeFolder?.cmakeTools.configurePreset;
       const buildPreset = activeFolder?.cmakeTools.buildPreset;
       const testPreset = activeFolder?.cmakeTools.testPreset;
-      this._statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
-      this._statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-      this._statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
+      this._statusBar.setConfigurePresetName(configurePreset ? preset.getConfigurePresetDisplayName(configurePreset) || '' : '');
+      this._statusBar.setBuildPresetName(buildPreset ? preset.getBuildPresetDisplayName(buildPreset) || '' : '');
+      this._statusBar.setTestPresetName(testPreset ? preset.getTestPresetDisplayName(testPreset) || '' : '');
     } else {
       this._statusBar.setActiveKitName(activeFolder?.cmakeTools.activeKit?.name || '');
     }
@@ -645,9 +646,9 @@ class ExtensionManager implements vscode.Disposable {
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.setTestResults(r));
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
-      this._statusBar.setConfigurePresetName(cmt.configurePreset ? cmt.configurePreset.displayName || cmt.configurePreset.name : '');
-      this._statusBar.setBuildPresetName(cmt.buildPreset ? cmt.buildPreset.displayName || cmt.buildPreset.name : '');
-      this._statusBar.setTestPresetName(cmt.testPreset ? cmt.testPreset.displayName || cmt.testPreset.name : '');
+      this._statusBar.setConfigurePresetName(cmt.configurePreset ? preset.getConfigurePresetDisplayName(cmt.configurePreset) || '' : '');
+      this._statusBar.setBuildPresetName(cmt.buildPreset ? preset.getBuildPresetDisplayName(cmt.buildPreset) || '' : '');
+      this._statusBar.setTestPresetName(cmt.testPreset ? preset.getTestPresetDisplayName(cmt.testPreset) || '' : '');
     }
   }
 
@@ -1224,7 +1225,7 @@ class ExtensionManager implements vscode.Disposable {
     if (this._folders.activeFolder) {
       const configurePreset = this._folders.activeFolder.cmakeTools.configurePreset;
       if (configurePreset) {
-        this._statusBar.setConfigurePresetName(configurePreset.displayName || configurePreset.name);
+        this._statusBar.setConfigurePresetName(preset.getConfigurePresetDisplayName(configurePreset) || '');
       }
     }
 
@@ -1247,7 +1248,7 @@ class ExtensionManager implements vscode.Disposable {
 
     const presetSelected = await cmtFolder.presetsController.selectBuildPreset();
     if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.buildPreset) {
-      this._statusBar.setBuildPresetName(this._folders.activeFolder.cmakeTools.buildPreset.name);
+      this._statusBar.setBuildPresetName(preset.getBuildPresetDisplayName(this._folders.activeFolder.cmakeTools.buildPreset) || '');
     }
 
     return presetSelected;
@@ -1269,7 +1270,7 @@ class ExtensionManager implements vscode.Disposable {
 
     const presetSelected = await cmtFolder.presetsController.selectTestPreset();
     if (this._folders.activeFolder && this._folders.activeFolder.cmakeTools.testPreset) {
-      this._statusBar.setTestPresetName(this._folders.activeFolder.cmakeTools.testPreset.name);
+      this._statusBar.setTestPresetName(preset.getTestPresetDisplayName(this._folders.activeFolder.cmakeTools.testPreset) || '');
     }
 
     return presetSelected;

@@ -1,15 +1,16 @@
 /**
  * Class for managing workspace folders
  */ /** */
+import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 
+import * as util from '@cmt/util';
 import CMakeTools from '@cmt/cmake-tools';
 import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll } from '@cmt/util';
 import { PresetsController } from '@cmt/presetsController';
-import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
-import * as util from './util';
+import * as preset from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -31,8 +32,8 @@ export class CMakeToolsFolder {
       }
     };
     cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener);
-    presetsController.onPresetsChanged(useCMakePresetsChangedListener);
-    presetsController.onUserPresetsChanged(useCMakePresetsChangedListener);
+    preset.onPresetsChanged(useCMakePresetsChangedListener);
+    preset.onUserPresetsChanged(useCMakePresetsChangedListener);
   }
 
   static async init(cmakeTools: CMakeTools) {
@@ -53,7 +54,7 @@ export class CMakeToolsFolder {
       // const state = this.cmakeTools.workspaceContext.state;
       // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
       // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
-      return this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist;
+      return preset.presetsExist() || preset.userPresetsExist();
     }
     return this.cmakeTools.workspaceContext.config.useCMakePresets === 'true';
   }
@@ -199,11 +200,11 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     if (inst.useCMakePresets) {
       const configurePreset = new_cmt.workspaceContext.state.configurePresetName;
       if (configurePreset) {
-        await inst.presetsController.setConfigurePresetByName(configurePreset);
+        await inst.presetsController.setConfigurePreset(configurePreset);
       }
       const buildPreset = new_cmt.workspaceContext.state.buildPresetName;
       if (buildPreset) {
-        await inst.presetsController.setBuildPresetByName(buildPreset);
+        await inst.presetsController.setBuildPreset(buildPreset);
       }
     } else {
       // Check if the CMakeTools remembers what kit it was last using in this dir:

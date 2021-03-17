@@ -14,7 +14,7 @@ async function cmakeServerDriverFactory(cmake: CMakeExecutable,
                                         preconditionHandler: CMakePreconditionProblemSolver,
                                         preferredGenerators: CMakeGenerator[]) {
   const d: CMakeDriver = await cms_driver.CMakeServerClientDriver
-                             .create(cmake, config, false, kit, null, workspaceFolder, preconditionHandler, preferredGenerators);
+                             .create(cmake, config, false, kit, null, null, workspaceFolder, preconditionHandler, preferredGenerators);
   return d;
 }
 

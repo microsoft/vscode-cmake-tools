@@ -18,7 +18,6 @@ import {ConfigurationReader} from '@cmt/config';
 import {errorToString} from '@cmt/util';
 import * as nls from 'vscode-nls';
 import * as ext from '@cmt/extension';
-import { ConfigurePreset } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -361,7 +360,8 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                       config: ConfigurationReader,
                       useCMakePresets: boolean,
                       kit: Kit|null,
-                      configurePreset: ConfigurePreset | null,
+                      configurePreset: string | null,
+                      buildPreset: string | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
@@ -369,6 +369,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                               useCMakePresets,
                               kit,
                               configurePreset,
+                              buildPreset,
                               preferredGenerators);
   }
 }

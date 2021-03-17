@@ -41,7 +41,6 @@ import * as nls from 'vscode-nls';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
 import {enableFullFeatureSet, registerTaskProvider} from './extension';
-import { ConfigurePreset, BuildPreset, TestPreset } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -139,8 +138,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected configure preset
    */
   get configurePreset() { return this._configurePreset; }
-  private _configurePreset: ConfigurePreset | null = null;
-  async setConfigurePreset(preset: ConfigurePreset | null) {
+  private _configurePreset: string | null = null;
+  async setConfigurePreset(preset: string | null) {
     this._configurePreset = preset;
     if (preset) {
       log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
@@ -149,7 +148,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
           await drv.setConfigurePreset(preset);
-          this.workspaceContext.state.configurePresetName = preset.name;
+          this.workspaceContext.state.configurePresetName = preset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset "{0}".', error));
@@ -159,7 +158,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       } else {
         // Remember the selected configure preset for the next session.
-        this.workspaceContext.state.configurePresetName = preset.name;
+        this.workspaceContext.state.configurePresetName = preset;
       }
     }
   }
@@ -168,9 +167,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected build preset
    */
   get buildPreset() { return this._buildPreset; }
-  set buildPreset(preset: BuildPreset | null) { this._buildPreset = preset; }
-  private _buildPreset: BuildPreset | null = null;
-  async setBuildPreset(preset: BuildPreset | null) {
+  private _buildPreset: string | null = null;
+  async setBuildPreset(preset: string | null) {
     this._buildPreset = preset;
     if (preset) {
       log.debug(localize('loading.new.build.preset', 'Loading new build preset into CMake driver'));
@@ -179,7 +177,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
           await drv.setBuildPreset(preset);
-          this.workspaceContext.state.buildPresetName = preset.name;
+          this.workspaceContext.state.buildPresetName = preset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset "{0}".', error));
@@ -189,7 +187,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       } else {
         // Remember the selected build preset for the next session.
-        this.workspaceContext.state.buildPresetName = preset.name;
+        this.workspaceContext.state.buildPresetName = preset;
       }
     }
   }
@@ -198,8 +196,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected test preset
    */
   get testPreset() { return this._testPreset; }
-  set testPreset(preset: TestPreset | null) { this._testPreset = preset; }
-  private _testPreset: TestPreset | null = null;
+  set testPreset(preset: string | null) { this._testPreset = preset; }
+  private _testPreset: string | null = null;
 
   /**
    * The current target to build.
@@ -490,16 +488,36 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
       switch (communicationMode) {
         case fileApi:
-          drv = await CMakeFileApiDriver
-              .create(cmake, this.workspaceContext.config, !!this.configurePreset, this.activeKit, this.configurePreset, workspace, preConditionHandler, preferredGenerators);
+          drv = await CMakeFileApiDriver.create(cmake, this.workspaceContext.config,
+                                                !!this.configurePreset,
+                                                this.activeKit,
+                                                this.configurePreset,
+                                                this.buildPreset,
+                                                workspace,
+                                                preConditionHandler,
+                                                preferredGenerators);
           break;
         case serverApi:
-          drv = await CMakeServerClientDriver
-              .create(cmake, this.workspaceContext.config, !!this.configurePreset, this.activeKit, this.configurePreset, workspace, preConditionHandler, preferredGenerators);
+          drv = await CMakeServerClientDriver.create(cmake,
+                                                     this.workspaceContext.config,
+                                                     !!this.configurePreset,
+                                                     this.activeKit,
+                                                     this.configurePreset,
+                                                     this.buildPreset,
+                                                     workspace,
+                                                     preConditionHandler,
+                                                     preferredGenerators);
           break;
         default:
-          drv = await LegacyCMakeDriver
-            .create(cmake, this.workspaceContext.config, !!this.configurePreset, this.activeKit, this.configurePreset, workspace, preConditionHandler, preferredGenerators);
+          drv = await LegacyCMakeDriver.create(cmake,
+                                               this.workspaceContext.config,
+                                               !!this.configurePreset,
+                                               this.activeKit,
+                                               this.configurePreset,
+                                               this.buildPreset,
+                                               workspace,
+                                               preConditionHandler,
+                                               preferredGenerators);
         }
     } finally { this._statusMessage.set(localize('ready.status', 'Ready')); }
 
