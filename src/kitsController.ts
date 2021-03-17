@@ -144,7 +144,7 @@ export class KitsController {
     ];
 
     // Load user-kits
-    reportProgress(progress, localize('loading.kits', 'Loading kits'));
+    reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
     const user_kits: Kit[] = await readKitsFile(USER_KITS_FILEPATH);
 

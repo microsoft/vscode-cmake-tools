@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Establecer el destino de compilación",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Eliminar la memoria caché y volver a configurar",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Eliminar la memoria caché y reconfigurar todos los proyectos",
-	"cmake-tools.command.cmake.openConfiguration.title": "Editar la memoria caché de CMake (UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Editar la memoria caché de CMake (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Limpiar reconfiguración",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Limpiar reconfigurar todos los proyectos",
 	"cmake-tools.command.cmake.clean.title": "Limpiar",

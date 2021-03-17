@@ -27,7 +27,7 @@ suite('CppTools tests', () => {
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
     info = parseCompileFlags(cpptoolsVersion4, ['-DFOO=BAR', '/D', 'BAZ=QUX']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR', 'BAZ=QUX']);
-    expect(info.standard).to.eql('c++17');
+    expect(info.standard).to.eql(undefined);
     // Parse language standard
     info = parseCompileFlags(cpptoolsVersion4, ['-std=c++03']);
     expect(info.standard).to.eql('c++03');
