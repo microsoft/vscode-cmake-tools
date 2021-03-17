@@ -882,7 +882,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const compilerDir = path.parse(compilerPath).dir;
 
     // Find an equivalent in the compilers allowed list.
-    const compiler = this.compilerAllowList.find(comp => compilerName.includes(comp.name));
+    // To avoid finding "cl" instead of "clang" or "g++" instead of "clang++",
+    // sort the array from lengthier to shorter, so that the find operation
+    // would return the most precise match.
+    // The find condition must be "includes" instead of "equals"
+    // (which wouldn't otherwise need the sort) to avoid implementing separate handling
+    // for comiler file name prefixes and suffixes related to targeted architecture.
+    const sortedCompilerAllowList = this.compilerAllowList.sort((a, b) => {
+      if (a.name.length == b.name.length) {
+        return 0;
+      } else if (a.name.length > b.name.length) {
+        return -1;
+      } else {
+        return 1;
+      }
+    });
+    const compiler = sortedCompilerAllowList.find(comp => compilerName.includes(comp.name));
 
     // Mask any unrecognized compiler as "other" to hide private information
     let allowedCompilerName = compiler ? compiler.name : "other";
