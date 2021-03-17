@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Buildziel festlegen",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Cache löschen und neu konfigurieren",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Cache löschen und alle Projekte neu konfigurieren",
-	"cmake-tools.command.cmake.openConfiguration.title": "CMake-Cache bearbeiten (Benutzeroberfläche)",
+	"cmake-tools.command.cmake.editCacheUI.title": "CMake-Cache bearbeiten (Benutzeroberfläche)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Neukonfiguration bereinigen",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Alle Projekte sauber neu konfigurieren",
 	"cmake-tools.command.cmake.clean.title": "Bereinigen",

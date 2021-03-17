@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Définir la cible de build",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Supprimer le cache et reconfigurer",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Supprimer le cache et la reconfiguration de tous les projets",
-	"cmake-tools.command.cmake.openConfiguration.title": "Modifier le cache de CMake (IU)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Modifier le cache de CMake (IU)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Nouvelle reconfiguration",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Nouvelle reconfiguration de tous les projets",
 	"cmake-tools.command.cmake.clean.title": "Nettoyer",
