@@ -54,7 +54,6 @@ export class KitsController {
 
   static async expandAdditionalKitFiles(cmakeTools: CMakeTools): Promise<string[]> {
     const additionalKitFiles: string[] = cmakeTools.workspaceContext.config.additionalKits;
-    const expandedAdditionalKitFiles: string[] = [];
 
     const opts: expand.ExpansionOptions = {
       vars: {
@@ -78,12 +77,13 @@ export class KitsController {
       }
     };
 
-    await Promise.resolve(additionalKitFiles.forEach(async kitFile => {
-      const expandedKitFile: string = await expand.expandString(kitFile, opts);
+    const expandedAdditionalKitFiles: Promise<string>[] = [];
+    additionalKitFiles.forEach(kitFile => {
+      const expandedKitFile: Promise<string> = expand.expandString(kitFile, opts);
       expandedAdditionalKitFiles.push(expandedKitFile);
-    }));
+    });
 
-    return expandedAdditionalKitFiles;
+    return Promise.all(expandedAdditionalKitFiles);
   }
 
   static async init(cmakeTools: CMakeTools) {
