@@ -855,35 +855,35 @@
       ],
       "touchBar": [
         {
-          "command": "cmake.configure",
-          "when": "cmake:enableTouchBar && !cmake:enableFullFeatureSet",
-          "group": "CMake:start"
-        },
-        {
           "command": "cmake.quickStart",
           "when": "cmake:enableTouchBar && !cmake:enableFullFeatureSet",
           "group": "CMake:start"
         },
         {
+          "command": "cmake.configure",
+          "when": "cmake:enableTouchBar.configure && !cmake:isBuilding && !cmake:isConfiguring",
+          "group": "CMake:build"
+        },
+        {
           "command": "cmake.build",
           "alt": "cmake.configure",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:isBuilding",
+          "when": "cmake:enableTouchBar.build && cmake:enableFullFeatureSet && !cmake:isBuilding && !cmake:isConfiguring",
           "group": "CMake:build"
         },
         {
           "command": "cmake.stop",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && cmake:isBuilding",
+          "when": "cmake:enableTouchBar.build && cmake:enableFullFeatureSet && cmake:isBuilding",
           "group": "CMake:build"
         },
         {
           "command": "cmake.debugTarget",
           "alt": "cmake.selectLaunchTarget",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
+          "when": "cmake:enableTouchBar.debug && cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
           "group": "CMake:run"
         },
         {
           "command": "cmake.launchTarget",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
+          "when": "cmake:enableTouchBar.launch && cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
           "group": "CMake:run"
         }
       ]
@@ -1408,6 +1408,64 @@
             "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
           ],
           "scope": "window"
+        },
+        "cmake.touchbar.advanced": {
+          "type": "object",
+          "scope": "window",
+          "properties": {
+            "build": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            },
+            "configure": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            },
+            "debug": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            },
+            "launch": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            }
+          }
         },
         "cmake.statusbar.visibility": {
           "type": "string",
