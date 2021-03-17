@@ -1164,8 +1164,8 @@ export async function registerTaskProvider(command: string | null) {
   }
 }
 
-async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
-  reportProgress(progress, localize('initial.setup', 'Initial setup'));
+async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle) {
+  reportProgress(localize('initial.setup', 'Initial setup'), progress);
 
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
@@ -1260,7 +1260,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
   // Register the functions before the extension is done loading so that fast
   // fingers won't cause "unregistered command" errors while CMake Tools starts
   // up. The command wrapper will await on the extension promise.
-  reportProgress(progress, localize('loading.extension.commands', 'Loading extension commands'));
+  reportProgress(localize('loading.extension.commands', 'Loading extension commands'), progress);
   for (const key of funs) {
     log.trace(localize('register.command', 'Register CMakeTools extension command {0}', `cmake.${key}`));
     context.subscriptions.push(register(key));
@@ -1334,14 +1334,7 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
-  await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: localize('cmake.tools.initializing', 'CMake Tools initializing...'),
-        cancellable: false,
-      },
-      progress => setup(context, progress),
-  );
+  return setup(context);
 
   // TODO: Return the extension API
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
