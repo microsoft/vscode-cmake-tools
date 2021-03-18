@@ -36,6 +36,5 @@
 	"loading.extension.commands": "拡張コマンドを読み込んでいます",
 	"register.command": "CMakeTools 拡張コマンド {0} の登録",
 	"uninstall.old.cmaketools": "以前のバージョンの CMake Tools 拡張機能をすべてアンインストールしてください。バージョン1.2.0 以降、Microsoft によって公開されるようになりました。",
-	"cmake.tools.initializing": "CMake Tools を初期化しています...",
 	"deactivate.cmaketools": "CMakeTools の非アクティブ化"
 }

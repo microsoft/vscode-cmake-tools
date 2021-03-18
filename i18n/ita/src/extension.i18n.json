@@ -36,6 +36,5 @@
 	"loading.extension.commands": "Caricamento dei comandi dell'estensione",
 	"register.command": "Registra il comando {0} dell'estensione CMakeTools",
 	"uninstall.old.cmaketools": "Disinstallare le versioni precedenti dell'estensione CMake Tools. Tale estensione è ora pubblicata da Microsoft a partire dalla versione 1.2.0.",
-	"cmake.tools.initializing": "Inizializzazione di CMake Tools...",
 	"deactivate.cmaketools": "Disattiva CMakeTools"
 }
