@@ -158,7 +158,7 @@ class Paths {
   }
 
   async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
-    const ctest_path = await this.expandStringWithVSCodeVars(wsc.config.raw_ctestPath, wsc);
+    const ctest_path = await this.expandStringPath(wsc.config.raw_ctestPath, wsc);
     if (!ctest_path || ctest_path == 'auto') {
       const cmake = await this.getCMakePath(wsc);
       if (cmake === null) {
@@ -186,7 +186,7 @@ class Paths {
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
     this._ninjaPath = undefined;
 
-    const raw = await this.expandStringWithVSCodeVars(wsc.config.raw_cmakePath, wsc);
+    const raw = await this.expandStringPath(wsc.config.raw_cmakePath, wsc);
     if (raw === 'auto' || raw === 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');
@@ -220,8 +220,8 @@ class Paths {
     return raw;
   }
 
-  async expandStringWithVSCodeVars(tmpl: string, wsc: DirectoryContext): Promise<string> {
-    return expandString(tmpl, {
+  async expandStringPath(raw_path: string, wsc: DirectoryContext): Promise<string> {
+    return expandString(raw_path, {
       vars: {
         buildKit: '',
         buildKitVendor: '',
