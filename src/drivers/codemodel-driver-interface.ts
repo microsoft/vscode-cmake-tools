@@ -111,8 +111,14 @@ export interface CodeModelConfiguration {
   projects: CodeModelProject[];
 }
 
+export interface CodeModelToolchain {
+  path: string;
+}
+
 /** Describes the cmake model */
 export interface CodeModelContent {
   /** List of configurations provided by the selected generator */
   configurations: CodeModelConfiguration[];
+
+  toolchains: Map<string, CodeModelToolchain>;
 }
