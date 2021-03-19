@@ -55,6 +55,10 @@ export class LegacyCMakeDriver extends CMakeDriver {
     return cb();
   }
 
+  doSetTestPreset(cb: () => Promise<void>): Promise<void> {
+    return cb();
+  }
+
   // Legacy disposal does nothing
   async asyncDispose() { this._cacheWatcher.dispose(); }
 
@@ -112,6 +116,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
                       kit: Kit|null,
                       configurePreset: string | null,
                       buildPreset: string | null,
+                      testPreset: string | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
@@ -121,6 +126,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
                               kit,
                               configurePreset,
                               buildPreset,
+                              testPreset,
                               preferredGenerators);
   }
 

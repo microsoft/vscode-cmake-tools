@@ -49,6 +49,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
                       kit: Kit|null,
                       configurePreset: string | null,
                       buildPreset: string | null,
+                      testPreset: string | null,
                       workspaceRootPath: string|null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
@@ -58,6 +59,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
                               kit,
                               configurePreset,
                               buildPreset,
+                              testPreset,
                               preferredGenerators);
   }
 
@@ -174,6 +176,10 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
   }
 
   doSetBuildPreset(cb: () => Promise<void>): Promise<void> {
+    return cb();
+  }
+
+  doSetTestPreset(cb: () => Promise<void>): Promise<void> {
     return cb();
   }
 

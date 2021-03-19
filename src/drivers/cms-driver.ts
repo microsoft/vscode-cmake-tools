@@ -281,6 +281,10 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     return cb();
   }
 
+  doSetTestPreset(cb: () => Promise<void>): Promise<void> {
+    return cb();
+  }
+
   private async _restartClient(): Promise<void> {
     this._cmsClient = this._doRestartClient();
     const client = await this.getClient();
@@ -362,6 +366,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                       kit: Kit|null,
                       configurePreset: string | null,
                       buildPreset: string | null,
+                      testPreset: string | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
@@ -370,6 +375,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                               kit,
                               configurePreset,
                               buildPreset,
+                              testPreset,
                               preferredGenerators);
   }
 }

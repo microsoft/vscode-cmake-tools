@@ -32,7 +32,7 @@ export interface Preset {
   displayName?: string;
   description?: string;
   hidden?: boolean;
-  inherits?: string[];
+  inherits?: string | string[];
   environment?: { [key: string]: null | string };
   vendor?: object;
 
@@ -85,8 +85,8 @@ export interface BuildPreset extends Preset {
   verbose?: boolean;
   nativeToolOptions?: string[];
 
-  __binaryDir?: string; // Private field since we are getting this from the config preset
-  __generator?: string; // Private field since we are getting this from the config preset
+  __binaryDir?: string; // Private field for convenience. Getting this from the config preset
+  __generator?: string; // Private field for convenience. Getting this from the config preset
 }
 
 export interface OutputOptions {
@@ -143,6 +143,9 @@ export interface TestPreset extends Preset {
   output?: OutputOptions;
   filter?: TestFilter;
   execution?: ExecutionOptions;
+
+  __binaryDir?: string; // Private field for convenience. Getting this from the config preset
+  __generator?: string; // Private field for convenience. Getting this from the config preset
 }
 
 let presetsFile: PresetsFile | undefined;
@@ -301,6 +304,9 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
 
   // Expand inherits
   if (preset.inherits) {
+    if (util.isString(preset.inherits)) {
+      preset.inherits = [preset.inherits];
+    }
     for (const parentName of preset.inherits) {
       const parent = await expandConfigurePresetImpl(parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
@@ -336,7 +342,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
       workspaceRoot: workspaceFolder,
       workspaceRootFolderName: path.dirname(workspaceFolder),
       userHome: paths.userHome,
-      sourceDir: sourceDir,
+      sourceDir,
       sourceParentDir: path.dirname(sourceDir),
       sourceDirName: path.basename(sourceDir),
       presetName: preset.name
@@ -420,6 +426,9 @@ function getConfigurePresetForBuildPresetHelper(preset: BuildPreset, allowUserPr
   referencedBuildPresets.add(preset.name);
 
   if (preset.inherits) {
+    if (util.isString(preset.inherits)) {
+      preset.inherits = [preset.inherits];
+    }
     for (const parent of preset.inherits) {
       const parentConfigurePreset = getConfigurePresetForBuildPresetImpl(parent, allowUserPreset);
       if (parentConfigurePreset) {
@@ -489,6 +498,9 @@ async function expandBuildPresetHelper(preset: BuildPreset,
 
   // Expand inherits
   if (preset.inherits) {
+    if (util.isString(preset.inherits)) {
+      preset.inherits = [preset.inherits];
+    }
     for (const parentName of preset.inherits) {
       const parent = await expandBuildPresetImpl(parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
@@ -530,7 +542,129 @@ async function expandBuildPresetHelper(preset: BuildPreset,
       workspaceRoot: workspaceFolder,
       workspaceRootFolderName: path.dirname(workspaceFolder),
       userHome: paths.userHome,
-      sourceDir: sourceDir,
+      sourceDir,
+      sourceParentDir: path.dirname(sourceDir),
+      sourceDirName: path.basename(sourceDir),
+      presetName: preset.name
+    },
+    envOverride: preset.environment as EnvironmentVariables,
+    recursive: true
+  };
+  // Expand environment vars first since other fields may refer to them
+  if (preset.environment) {
+    for (const key in preset.environment) {
+      if (preset.environment[key]) {
+        preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+      }
+    }
+  }
+
+  preset.__expanded = true;
+  return preset;
+}
+
+const referencedTestPresets: Set<string> = new Set();
+
+/**
+ * This function can NOT be invoked on extension initialization. Or there might be deadlocks
+ */
+export function expandTestPreset(name: string,
+                                 workspaceFolder: string,
+                                 sourceDir: string,
+                                 allowUserPreset: boolean = false): Promise<TestPreset | null> {
+  referencedTestPresets.clear();
+  return expandTestPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset);
+}
+
+async function expandTestPresetImpl(name: string,
+                                    workspaceFolder: string,
+                                    sourceDir: string,
+                                    allowUserPreset: boolean = false): Promise<TestPreset | null> {
+  let preset = getPresetByName(testPresets(), name);
+  if (preset) {
+    return expandTestPresetHelper(preset, workspaceFolder, sourceDir);
+  }
+
+  if (allowUserPreset) {
+    preset = getPresetByName(userTestPresets(), name);
+    if (preset) {
+      return expandTestPresetHelper(preset, workspaceFolder, sourceDir, true);
+    }
+  }
+
+  log.error(localize('test.preset.not.found', 'Could not find test preset with name {0}', name));
+  return null;
+}
+
+async function expandTestPresetHelper(preset: TestPreset,
+                                      workspaceFolder: string,
+                                      sourceDir: string,
+                                      allowUserPreset: boolean = false) {
+  if (preset.__expanded) {
+    return preset;
+  }
+
+  if (referencedTestPresets.has(preset.name) && !preset.__expanded) {
+    // Refernced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+    log.error('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name);
+    return null;
+  }
+
+  referencedTestPresets.add(preset.name);
+
+  // Init env to empty if not specified to avoid null checks later
+  if (!preset.environment) {
+    preset.environment = {};
+  }
+  let inheritedEnv = {};
+
+  // Expand inherits
+  if (preset.inherits) {
+    if (util.isString(preset.inherits)) {
+      preset.inherits = [preset.inherits];
+    }
+    for (const parentName of preset.inherits) {
+      const parent = await expandTestPresetImpl(parentName, workspaceFolder, sourceDir, allowUserPreset);
+      if (parent) {
+        // Inherit environment
+        inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
+        // Inherit other fields
+        let key: keyof TestPreset;
+        for (key in parent) {
+          if (preset[key] === undefined) {
+            // 'as never' to bypass type check
+            preset[key] = parent[key] as never;
+          }
+        }
+      }
+    }
+  }
+
+  // Expand configure preset. Evaluate this after inherits since it may come from parents
+  if (preset.configurePreset) {
+    const configurePreset = await expandConfigurePreset(preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
+    if (configurePreset) {
+      preset.__binaryDir = configurePreset.binaryDir;
+      preset.__generator = configurePreset.generator;
+
+      if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
+        inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
+      }
+    }
+  }
+
+  preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
+
+  const expansionOpts: ExpansionOptions = {
+    vars: {
+      generator: preset.__generator || 'null',
+      workspaceFolder,
+      workspaceFolderBasename: path.basename(workspaceFolder),
+      workspaceHash: util.makeHashString(workspaceFolder),
+      workspaceRoot: workspaceFolder,
+      workspaceRootFolderName: path.dirname(workspaceFolder),
+      userHome: paths.userHome,
+      sourceDir,
       sourceParentDir: path.dirname(sourceDir),
       sourceDirName: path.basename(sourceDir),
       presetName: preset.name

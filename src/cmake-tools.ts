@@ -196,8 +196,30 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected test preset
    */
   get testPreset() { return this._testPreset; }
-  set testPreset(preset: string | null) { this._testPreset = preset; }
   private _testPreset: string | null = null;
+  async setTestPreset(preset: string | null) {
+    this._testPreset = preset;
+    if (preset) {
+      log.debug(localize('loading.new.test.preset', 'Loading new test preset into CMake driver'));
+      const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
+      if (drv) {
+        try {
+          this._statusMessage.set(localize('reloading.status', 'Reloading...'));
+          await drv.setTestPreset(preset);
+          this.workspaceContext.state.testPresetName = preset;
+          this._statusMessage.set(localize('ready.status', 'Ready'));
+        } catch (error) {
+          vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset "{0}".', error));
+          this._statusMessage.set(localize('error.on.switch.test.preset', 'Error on switch of test preset ({0})', error.message));
+          this._cmakeDriver = Promise.resolve(null);
+          this._testPreset = null;
+        }
+      } else {
+        // Remember the selected test preset for the next session.
+        this.workspaceContext.state.testPresetName = preset;
+      }
+    }
+  }
 
   /**
    * The current target to build.
@@ -493,6 +515,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                 this.activeKit,
                                                 this.configurePreset,
                                                 this.buildPreset,
+                                                this.testPreset,
                                                 workspace,
                                                 preConditionHandler,
                                                 preferredGenerators);
@@ -504,6 +527,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                      this.activeKit,
                                                      this.configurePreset,
                                                      this.buildPreset,
+                                                     this.testPreset,
                                                      workspace,
                                                      preConditionHandler,
                                                      preferredGenerators);
@@ -515,6 +539,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                this.activeKit,
                                                this.configurePreset,
                                                this.buildPreset,
+                                               this.testPreset,
                                                workspace,
                                                preConditionHandler,
                                                preferredGenerators);

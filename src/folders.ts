@@ -206,6 +206,10 @@ export class CMakeToolsFolderController implements vscode.Disposable {
       if (buildPreset) {
         await inst.presetsController.setBuildPreset(buildPreset);
       }
+      const testPreset = new_cmt.workspaceContext.state.testPresetName;
+      if (testPreset) {
+        await inst.presetsController.setTestPreset(testPreset);
+      }
     } else {
       // Check if the CMakeTools remembers what kit it was last using in this dir:
       const kit_name = new_cmt.workspaceContext.state.activeKitName;

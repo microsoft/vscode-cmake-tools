@@ -313,18 +313,18 @@ export class PresetsController {
     }
     log.debug(localize('opening.config.preset.selection', 'Opening configure preset selection QuickPick'));
     let items: PresetItem[] = presets.map(
-        preset => ({
-          label: preset.displayName || preset.name,
-          description: preset.description,
-          preset: preset.name,
+        _preset => ({
+          label: _preset.displayName || _preset.name,
+          description: _preset.description,
+          preset: _preset.name,
           isUserPreset: false
         }),
     );
     items = items.concat(userPresets.map(
-      preset => ({
-        label: preset.displayName || preset.name,
-        description: preset.description,
-        preset: preset.name,
+      _preset => ({
+        label: _preset.displayName || _preset.name,
+        description: _preset.description,
+        preset: _preset.name,
         isUserPreset: true
       }),
     ));
@@ -374,18 +374,18 @@ export class PresetsController {
     }
     log.debug(localize('opening.build.preset.selection', 'Opening build preset selection QuickPick'));
     const items: PresetItem[] = presets.map(
-        preset => ({
-          label: preset.displayName || preset.name,
-          description: preset.description,
-          preset: preset.name,
+      _preset => ({
+          label: _preset.displayName || _preset.name,
+          description: _preset.description,
+          preset: _preset.name,
           isUserPreset: false
         }),
     );
     items.concat(userPresets.map(
-      preset => ({
-        label: preset.displayName || preset.name,
-        description: preset.description,
-        preset: preset.name,
+      _preset => ({
+        label: _preset.displayName || _preset.name,
+        description: _preset.description,
+        preset: _preset.name,
         isUserPreset: true
       }),
     ));
@@ -435,18 +435,18 @@ export class PresetsController {
     }
     log.debug(localize('opening.test.preset.selection', 'Opening test preset selection QuickPick'));
     const items: PresetItem[] = presets.map(
-        preset => ({
-          label: preset.displayName || preset.name,
-          description: preset.description,
-          preset: preset.name,
+      _preset => ({
+          label: _preset.displayName || _preset.name,
+          description: _preset.description,
+          preset: _preset.name,
           isUserPreset: false
         }),
     );
     items.concat(userPresets.map(
-      preset => ({
-        label: preset.displayName || preset.name,
-        description: preset.description,
-        preset: preset.name,
+      _preset => ({
+        label: _preset.displayName || _preset.name,
+        description: _preset.description,
+        preset: _preset.name,
         isUserPreset: true
       }),
     ));
@@ -465,9 +465,22 @@ export class PresetsController {
       return this.addTestPreset();
     } else {
       log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosenPreset)));
-      this._cmakeTools.testPreset = chosenPreset.preset;
-      // await this.setFolderTestPreset(chosenPreset.preset);
+      await this.setTestPreset(chosenPreset.preset);
       return true;
+    }
+  }
+
+  async setTestPreset(presetName: string): Promise<void> {
+    const inst = this._cmakeTools;
+    if (inst) {
+      // Load the test preset into the backend
+      await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: localize('loading.test.preset', 'Loading test preset {0}', presetName),
+          },
+          () => inst.setTestPreset(presetName),
+      );
     }
   }
 

@@ -11,6 +11,7 @@ import {fs} from './pr';
 import {OutputConsumer} from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
+import { testArgs } from './preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -354,11 +355,23 @@ export class CTestDriver implements vscode.Disposable {
       return -2;
     }
 
-    const configuration = driver.currentBuildType;
+    let ctestArgs: string[];
+    if (driver.useCMakePresets) {
+      if (!driver.testPreset) {
+        log.error(localize('test.preset.not.set', 'Test preset is not set'));
+        return -3;
+      }
+      // Add --output-on-failure so we can show the result in status bar
+      ctestArgs = testArgs(driver.testPreset).concat(['--output-on-failure']);
+    } else {
+      const configuration = driver.currentBuildType;
+      ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
+        this.ws.config.ctestArgs);
+    }
+
     const child = driver.executeCommand(
         ctestpath,
-        [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
-            this.ws.config.ctestArgs),
+        ctestArgs,
         new CTestOutputLogger(),
         {environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir});
     const res = await child.result;
@@ -390,10 +403,18 @@ export class CTestDriver implements vscode.Disposable {
       return this.tests = [];
     }
 
-    const build_config = driver.currentBuildType;
+    const buildConfigArgs: string[] = [];
+    if (driver.useCMakePresets) {
+      const buildConfig = driver.testPreset?.configuration;
+      if (buildConfig) {
+        buildConfigArgs.push('-C', buildConfig);
+      }
+    } else {
+      buildConfigArgs.push('-C', driver.currentBuildType);
+    }
     const result
         = await driver
-              .executeCommand(ctestpath, ['-N', '-C', build_config], undefined, {cwd: driver.binaryDir, silent: true})
+              .executeCommand(ctestpath, ['-N', ...buildConfigArgs], undefined, {cwd: driver.binaryDir, silent: true})
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...

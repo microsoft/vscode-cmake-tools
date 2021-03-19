@@ -170,35 +170,47 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the environment variables that should be set at CMake-configure time.
    */
   async getConfigureEnvironment(): Promise<proc.EnvironmentVariables> {
-    let envs = this.getKitEnvironmentVariablesObject();
-    /* NOTE: By mergeEnvironment one by one to enable expanding self containd variable such as PATH properly */
-    /* If configureEnvironment and environment both configured different PATH, doing this will preserve them all */
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs));
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
-    return envs;
+    if (this.useCMakePresets) {
+      return this._configurePreset?.environment as proc.EnvironmentVariables;
+    } else {
+      let envs = this.getKitEnvironmentVariablesObject();
+      /* NOTE: By mergeEnvironment one by one to enable expanding self containd variable such as PATH properly */
+      /* If configureEnvironment and environment both configured different PATH, doing this will preserve them all */
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.configureEnvironment, envs));
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
+      return envs;
+    }
   }
 
   /**
    * Get the environment variables that should be set at CMake-build time.
    */
   async getCMakeBuildCommandEnvironment(in_env: proc.EnvironmentVariables): Promise<proc.EnvironmentVariables> {
-    let envs = util.mergeEnvironment(in_env, this.getKitEnvironmentVariablesObject());
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs));
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
-    return envs;
+    if (this.useCMakePresets) {
+      return this._buildPreset?.environment as proc.EnvironmentVariables;
+    } else {
+      let envs = util.mergeEnvironment(in_env, this.getKitEnvironmentVariablesObject());
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs));
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
+      return envs;
+    }
   }
 
   /**
    * Get the environment variables that should be set at CTest and running program time.
    */
   async getCTestCommandEnvironment(): Promise<proc.EnvironmentVariables> {
-    let envs = this.getKitEnvironmentVariablesObject();
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs));
-    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
-    return envs;
+    if (this.useCMakePresets) {
+      return this._testPreset?.environment as proc.EnvironmentVariables;
+    } else {
+      let envs = this.getKitEnvironmentVariablesObject();
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.testEnvironment, envs));
+      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
+      return envs;
+    }
   }
 
   get onProgress(): vscode.Event<ProgressMessage> {
@@ -224,7 +236,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private _buildPreset: preset.BuildPreset | null = null;
 
-  // private _testPreset: TestPreset | null = null;
+  private _testPreset: preset.TestPreset | null = null;
+
+  get testPreset(): preset.TestPreset | null { return this._testPreset; }
 
   /**
    * Get the vscode root workspace folder.
@@ -365,11 +379,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  private async _setConfigurePreset(preset: preset.ConfigurePreset): Promise<void> {
-    this._configurePreset = preset;
-    log.debug(localize('cmakedriver.config.preset.set.to', 'CMakeDriver configure preset set to {0}', preset.name));
+  private async _setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
+    this._configurePreset = configurePreset;
+    log.debug(localize('cmakedriver.config.preset.set.to', 'CMakeDriver configure preset set to {0}', configurePreset.name));
 
-    this._binaryDir = preset.binaryDir || '';
+    this._binaryDir = configurePreset.binaryDir || '';
 
     const getValue = (obj: string | preset.ValueStrategy) => {
       if (util.isString(obj)) {
@@ -379,11 +393,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
     };
 
-    if (preset.generator) {
+    if (configurePreset.generator) {
       this._generator = {
-        name: preset.generator,
-        platform: preset.architecture ? getValue(preset.architecture) : undefined,
-        toolset: preset.toolset ? getValue(preset.toolset) : undefined,
+        name: configurePreset.generator,
+        platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
+        toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined,
       };
     } else {
       log.debug(localize('no.generator', 'No generator specified'));
@@ -405,6 +419,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
     this._buildPreset = buildPreset;
     log.debug(localize('cmakedriver.build.preset.set.to', 'CMakeDriver build preset set to {0}', buildPreset.name));
+  }
+
+  /**
+   * Change the current test preset
+   * @param testPreset The new test preset
+   */
+  async setTestPreset(testPreset: string): Promise<void> {
+    log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset));
+    const expanded_preset = await preset.expandTestPreset(testPreset, util.lightNormalizePath(this.workspaceFolder || '.'), this.sourceDir, true);
+    if (expanded_preset) {
+      await this.doSetTestPreset(async () => { await this._setTestPreset(expanded_preset); });
+    }
+  }
+
+  private async _setTestPreset(testPreset: preset.TestPreset): Promise<void> {
+    this._testPreset = testPreset;
+    log.debug(localize('cmakedriver.test.preset.set.to', 'CMakeDriver test preset set to {0}', testPreset.name));
   }
 
   /**
@@ -453,6 +484,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   protected abstract doSetConfigurePreset(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
   protected abstract doSetBuildPreset(cb: () => Promise<void>): Promise<void>;
+  protected abstract doSetTestPreset(cb: () => Promise<void>): Promise<void>;
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
@@ -1417,6 +1449,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
                           kit: Kit | null,
                           configurePreset: string | null,
                           buildPreset: string | null,
+                          testPreset: string | null,
                           preferredGenerators: CMakeGenerator[]) {
     this._useCMakePresets = useCMakePresets;
     // Load up kit or presets before starting any drivers.
@@ -1426,6 +1459,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
       if (buildPreset) {
         await this.setBuildPreset(buildPreset);
+      }
+      if (testPreset) {
+        await this.setTestPreset(testPreset);
       }
     } else if (kit) {
       await this._setKit(kit, preferredGenerators);
@@ -1444,8 +1480,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                                                     kit: Kit | null,
                                                     configurePreset: string | null,
                                                     buildPreset: string | null,
+                                                    testPreset: string | null,
                                                     preferredGenerators: CMakeGenerator[]): Promise<T> {
-    await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, preferredGenerators);
+    await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators);
     return inst;
   }
 }

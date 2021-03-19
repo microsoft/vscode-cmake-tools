@@ -14,7 +14,7 @@ async function cmakeFileApiDriverFactory(cmake: CMakeExecutable,
                                          preconditionHandler: CMakePreconditionProblemSolver,
                                          preferredGenerators: CMakeGenerator[]) {
   const d: CMakeDriver
-      = await CMakeFileApiDriver.create(cmake, config, false, kit, null, null, workspaceFolder, preconditionHandler, preferredGenerators);
+      = await CMakeFileApiDriver.create(cmake, config, false, kit, null, null, null, workspaceFolder, preconditionHandler, preferredGenerators);
   return d;
 }
 

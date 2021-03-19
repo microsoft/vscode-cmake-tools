@@ -356,6 +356,27 @@ class ExtensionManager implements vscode.Disposable {
     return false;
   }
 
+  private readonly _ensureActiveTestPreset = async (cmt?: CMakeTools): Promise<boolean> => {
+    if (!cmt) {
+      cmt = this._folders.activeFolder?.cmakeTools;
+    }
+    if (!cmt) {
+      // No CMakeTools. Probably no workspace open.
+      return false;
+    }
+    if (cmt.useCMakePresets) {
+      if (cmt.testPreset) {
+        return true;
+      }
+      const did_choose_preset = await this.selectTestPreset(cmt.folder);
+      if (!did_choose_preset && !cmt.testPreset) {
+        return false;
+      }
+      return !!cmt.testPreset;
+    }
+    return false;
+  }
+
   /**
    * Dispose of the CMake Tools extension.
    *
@@ -1010,12 +1031,12 @@ class ExtensionManager implements vscode.Disposable {
 
   ctest(folder?: vscode.WorkspaceFolder) {
     telemetry.logEvent("runTests");
-    return this.mapCMakeToolsFolder(cmt => cmt.ctest(), folder);
+    return this.mapCMakeToolsFolder(cmt => cmt.ctest(), folder, this._ensureActiveTestPreset);
   }
 
   ctestAll() {
     telemetry.logEvent("runTests");
-    return this.mapCMakeToolsAll(cmt => cmt.ctest());
+    return this.mapCMakeToolsAll(cmt => cmt.ctest(), this._ensureActiveTestPreset);
   }
 
   stop(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.stop(), folder); }
