@@ -245,6 +245,10 @@ export function getPresetByName<T extends Preset>(presets: T[], name: string): T
   return null;
 }
 
+function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof TestPreset) {
+  return key !== 'name' && key !== 'hidden' && key !== 'inherits' && key !== 'description' && key !== 'displayName';
+}
+
 const referencedConfigurePresets: Set<string> = new Set();
 
 /**
@@ -321,7 +325,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
         // Inherit other fields
         let key: keyof ConfigurePreset;
         for (key in parent) {
-          if (preset[key] === undefined) {
+          if (isInheritable(key) && preset[key] === undefined) {
             // 'as never' to bypass type check
             preset[key] = parent[key] as never;
           }
@@ -362,7 +366,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
     preset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
   }
   if (preset.cmakeExecutable) {
-    preset.cmakeExecutable = await expandString(preset.cmakeExecutable, expansionOpts);
+    preset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts));
   }
 
   type CacheVarObjType = { type: string, value: string | boolean};
@@ -509,7 +513,7 @@ async function expandBuildPresetHelper(preset: BuildPreset,
         // Inherit other fields
         let key: keyof BuildPreset;
         for (key in parent) {
-          if (preset[key] === undefined) {
+          if (isInheritable(key) && preset[key] === undefined) {
             // 'as never' to bypass type check
             preset[key] = parent[key] as never;
           }
@@ -550,12 +554,29 @@ async function expandBuildPresetHelper(preset: BuildPreset,
     envOverride: preset.environment as EnvironmentVariables,
     recursive: true
   };
+
   // Expand environment vars first since other fields may refer to them
   if (preset.environment) {
     for (const key in preset.environment) {
       if (preset.environment[key]) {
         preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
       }
+    }
+  }
+
+  // Expand other fields
+  if (preset.targets) {
+    if (util.isString(preset.targets)) {
+      preset.targets = await expandString(preset.targets, expansionOpts);
+    } else {
+      for (const index in preset.targets) {
+        preset.targets[index] = await expandString(preset.targets[index], expansionOpts);
+      }
+    }
+  }
+  if (preset.nativeToolOptions) {
+    for (const index in preset.nativeToolOptions) {
+      preset.nativeToolOptions[index] = await expandString(preset.nativeToolOptions[index], expansionOpts);
     }
   }
 
@@ -631,7 +652,7 @@ async function expandTestPresetHelper(preset: TestPreset,
         // Inherit other fields
         let key: keyof TestPreset;
         for (key in parent) {
-          if (preset[key] === undefined) {
+          if (isInheritable(key) && preset[key] === undefined) {
             // 'as never' to bypass type check
             preset[key] = parent[key] as never;
           }
@@ -672,6 +693,7 @@ async function expandTestPresetHelper(preset: TestPreset,
     envOverride: preset.environment as EnvironmentVariables,
     recursive: true
   };
+
   // Expand environment vars first since other fields may refer to them
   if (preset.environment) {
     for (const key in preset.environment) {
@@ -679,6 +701,40 @@ async function expandTestPresetHelper(preset: TestPreset,
         preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
       }
     }
+  }
+
+  // Expand other fields
+  if (preset.overwriteConfigurationFile) {
+    for (const index in preset.overwriteConfigurationFile) {
+      preset.overwriteConfigurationFile[index] = await expandString(preset.overwriteConfigurationFile[index], expansionOpts);
+    }
+  }
+  if (preset.output?.outputLogFile) {
+    preset.output.outputLogFile = util.lightNormalizePath(await expandString(preset.output.outputLogFile, expansionOpts));
+  }
+  if (preset.filter?.include?.name) {
+    preset.filter.include.name = await expandString(preset.filter.include.name, expansionOpts);
+  }
+  if (util.isString(preset.filter?.include?.index)) {
+    preset.filter!.include!.index = await expandString(preset.filter!.include!.index, expansionOpts);
+  }
+  if (preset.filter?.exclude?.label) {
+    preset.filter.exclude.label = await expandString(preset.filter.exclude.label, expansionOpts);
+  }
+  if (preset.filter?.exclude?.name) {
+    preset.filter.exclude.name = await expandString(preset.filter.exclude.name, expansionOpts);
+  }
+  if (preset.filter?.exclude?.fixtures?.any) {
+    preset.filter.exclude.fixtures.any = await expandString(preset.filter.exclude.fixtures.any, expansionOpts);
+  }
+  if (preset.filter?.exclude?.fixtures?.setup) {
+    preset.filter.exclude.fixtures.setup = await expandString(preset.filter.exclude.fixtures.setup, expansionOpts);
+  }
+  if (preset.filter?.exclude?.fixtures?.cleanup) {
+    preset.filter.exclude.fixtures.cleanup = await expandString(preset.filter.exclude.fixtures.cleanup, expansionOpts);
+  }
+  if (preset.execution?.resourceSpecFile) {
+    preset.execution.resourceSpecFile = util.lightNormalizePath(await expandString(preset.execution.resourceSpecFile, expansionOpts));
   }
 
   preset.__expanded = true;
