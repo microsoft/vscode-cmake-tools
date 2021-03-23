@@ -197,8 +197,7 @@ class ExtensionManager implements vscode.Disposable {
   // because currently there is no way of reading a context variable
   // like cmake:enableFullFeatureSet, to apply the OR operation on it.
   private _enableFullFeatureSetOnWorkspace = false;
-  public enableFullFeatureSet(fullFeatureSet: boolean, folder: vscode.WorkspaceFolder) {
-    this.getFolderContext(folder).ignoreCMakeListsMissing = !fullFeatureSet;
+  public enableFullFeatureSet(fullFeatureSet: boolean) {
     this._enableFullFeatureSetOnWorkspace = this._enableFullFeatureSetOnWorkspace || fullFeatureSet;
     util.setContextValue("cmake:enableFullFeatureSet", this._enableFullFeatureSetOnWorkspace);
     this._statusBar.setVisible(this._enableFullFeatureSetOnWorkspace);
@@ -463,7 +462,7 @@ class ExtensionManager implements vscode.Disposable {
         }
       }
     } else {
-      await enableFullFeatureSet(false, cmt.folder);
+      await enableFullFeatureSet(false);
     }
 
     // Enable full or partial feature set for each workspace folder, depending on their state variable.
@@ -1135,7 +1134,7 @@ class ExtensionManager implements vscode.Disposable {
   // depending on their 'ignoreCMakeListsMissing' state variable.
   enableWorkspaceFoldersFullFeatureSet() {
     for (const cmtFolder of this._folders) {
-      this.enableFullFeatureSet(!this.getFolderContext(cmtFolder.folder)?.ignoreCMakeListsMissing, cmtFolder.folder);
+      this.enableFullFeatureSet(!this.getFolderContext(cmtFolder.folder)?.ignoreCMakeListsMissing);
     }
   }
 }
@@ -1335,8 +1334,8 @@ export async function activate(context: vscode.ExtensionContext) {
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
 }
 
-export async function enableFullFeatureSet(fullFeatureSet: boolean, folder: vscode.WorkspaceFolder) {
-    _EXT_MANAGER?.enableFullFeatureSet(fullFeatureSet, folder);
+export async function enableFullFeatureSet(fullFeatureSet: boolean) {
+    _EXT_MANAGER?.enableFullFeatureSet(fullFeatureSet);
 }
 
 // this method is called when your extension is deactivated

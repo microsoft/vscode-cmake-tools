@@ -135,7 +135,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
         } else if (this.workspaceFolder) {
           const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
           if (folder) {
-            await ext.enableFullFeatureSet(true, folder);
+            await ext.enableFullFeatureSet(true);
           }
         }
       }
