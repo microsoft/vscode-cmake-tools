@@ -1250,7 +1250,9 @@
             "type": "string"
           },
           "description": "%cmake-tools.configuration.cmake.ctestArgs.description%",
-          "default": [],
+          "default": [
+            "--output-on-failure"
+          ],
           "scope": "resource"
         },
         "cmake.environment": {
