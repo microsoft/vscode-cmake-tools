@@ -319,6 +319,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             const relPathDir: string = lightNormalizePath(path.relative(this.folder.uri.fsPath, fullPathDir));
             const joinedPath = "${workspaceFolder}/".concat(relPathDir);
             vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", joinedPath);
+            // tslint:disable-next-line: no-floating-promises
             this.getCMakeDriverInstance().then (d => {
               if (d) {
                 d.config.updatePartial({sourceDirectory: joinedPath});
