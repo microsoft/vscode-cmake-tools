@@ -249,6 +249,14 @@ function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof Te
   return key !== 'name' && key !== 'hidden' && key !== 'inherits' && key !== 'description' && key !== 'displayName';
 }
 
+function removeNullEnvVars(preset: Preset) {
+  if (preset.environment) {
+    for (const key in preset.environment) {
+      delete preset.environment[key];
+    }
+  }
+}
+
 const referencedConfigurePresets: Set<string> = new Set();
 
 /**
@@ -362,6 +370,10 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
       }
     }
   }
+
+  removeNullEnvVars(preset);
+
+  // Expand other fields
   if (preset.binaryDir) {
     preset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
   }
@@ -382,37 +394,68 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
   return preset;
 }
 
-// Used for both getConfigurePresetForBuildPreset and expandBuildPreset.
+// Used for both getConfigurePreset and expandBuildPreset.
 const referencedBuildPresets: Set<string> = new Set();
 
 /**
- * This is actually a very limited version of expandBuildPreset.
+ * This is actually a very limited version of expandBuildPreset/expandTestPreset.
  * This function CAN be invoked during extension initialization.
  * They should NOT be used together.
  * They should Not call each other.
  */
-export function getConfigurePresetForBuildPreset(name: string): string | null {
-  referencedBuildPresets.clear();
-  return getConfigurePresetForBuildPresetImpl(name);
+export function expandConfigurePresetForPresets(presetType: 'build' | 'test'): void {
+  if (presetType === 'build') {
+    for (const preset of buildPresets()) {
+      getConfigurePresetForPreset(preset.name, presetType);
+    }
+    for (const preset of userBuildPresets()) {
+      getConfigurePresetForPreset(preset.name, presetType);
+    }
+  } else {
+    for (const preset of testPresets()) {
+      getConfigurePresetForPreset(preset.name, presetType);
+    }
+    for (const preset of userTestPresets()) {
+      getConfigurePresetForPreset(preset.name, presetType);
+    }
+  }
 }
 
-function getConfigurePresetForBuildPresetImpl(name: string, allowUserPreset: boolean = false): string | null {
-  let preset = getPresetByName(buildPresets(), name);
+function getConfigurePresetForPreset(name: string, presetType: 'build' | 'test'): string | null {
+  if (presetType === 'build') {
+    referencedBuildPresets.clear();
+  } else {
+    referencedTestPresets.clear();
+  }
+  return getConfigurePresetForPresetImpl(name, presetType);
+}
+
+function getConfigurePresetForPresetImpl(name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
+  let preset: BuildPreset | TestPreset | null;
+  if (presetType === 'build') {
+    preset = getPresetByName(buildPresets(), name);
+  } else {
+    preset = getPresetByName(testPresets(), name);
+  }
   if (preset) {
-    return getConfigurePresetForBuildPresetHelper(preset);
+    return getConfigurePresetForPresetHelper(preset, presetType);
   }
 
   if (allowUserPreset) {
-    preset = getPresetByName(userBuildPresets(), name);
+    if (presetType === 'build') {
+      preset = getPresetByName(userBuildPresets(), name);
+    } else {
+      preset = getPresetByName(userTestPresets(), name);
+    }
     if (preset) {
-      return getConfigurePresetForBuildPresetHelper(preset, true);
+      return getConfigurePresetForPresetHelper(preset, presetType, true);
     }
   }
 
   return null;
 }
 
-function getConfigurePresetForBuildPresetHelper(preset: BuildPreset, allowUserPreset: boolean = false): string | null {
+function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
   if (preset.configurePreset) {
     return preset.configurePreset;
   }
@@ -421,20 +464,29 @@ function getConfigurePresetForBuildPresetHelper(preset: BuildPreset, allowUserPr
     return preset.configurePreset || null;
   }
 
-  if (referencedBuildPresets.has(preset.name)) {
-    // Refernced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
-    log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
-    return null;
-  }
+  if (presetType === 'build') {
+    if (referencedBuildPresets.has(preset.name)) {
+      // Refernced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
+      log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
+      return null;
+    }
 
-  referencedBuildPresets.add(preset.name);
+    referencedBuildPresets.add(preset.name);
+  } else {
+    if (referencedTestPresets.has(preset.name)) {
+      log.error('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name);
+      return null;
+    }
+
+    referencedTestPresets.add(preset.name);
+  }
 
   if (preset.inherits) {
     if (util.isString(preset.inherits)) {
       preset.inherits = [preset.inherits];
     }
     for (const parent of preset.inherits) {
-      const parentConfigurePreset = getConfigurePresetForBuildPresetImpl(parent, allowUserPreset);
+      const parentConfigurePreset = getConfigurePresetForPresetImpl(parent, presetType, allowUserPreset);
       if (parentConfigurePreset) {
         preset.configurePreset = parentConfigurePreset;
         return parentConfigurePreset;
@@ -563,6 +615,8 @@ async function expandBuildPresetHelper(preset: BuildPreset,
       }
     }
   }
+
+  removeNullEnvVars(preset);
 
   // Expand other fields
   if (preset.targets) {
@@ -702,6 +756,8 @@ async function expandTestPresetHelper(preset: TestPreset,
       }
     }
   }
+
+  removeNullEnvVars(preset);
 
   // Expand other fields
   if (preset.overwriteConfigurationFile) {

@@ -349,31 +349,49 @@ export class PresetsController {
   }
 
   async setConfigurePreset(presetName: string): Promise<void> {
-    const inst = this._cmakeTools;
-    if (inst) {
-      // Load the configure preset into the backend
-      await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: localize('loading.config.preset', 'Loading configure preset {0}', presetName),
-          },
-          () => inst.setConfigurePreset(presetName),
-      );
+    // Load the configure preset into the backend
+    await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: localize('loading.config.preset', 'Loading configure preset {0}', presetName),
+        },
+        () => this._cmakeTools.setConfigurePreset(presetName),
+    );
+  }
+
+  private async checkConfigurePreset(): Promise<string | null> {
+    const selectedConfigurePreset = this._cmakeTools.configurePreset;
+    if (!selectedConfigurePreset) {
+      const message_noConfigurePreset = localize('config.preset.required', 'A configure preset needs to be selected. How would you like to proceed?');
+      const option_selectConfigurePreset = localize('select.config.preset', 'Select configure preset');
+      const option_later = localize('later', 'later');
+      const result = await vscode.window.showErrorMessage(message_noConfigurePreset, option_selectConfigurePreset, option_later);
+      if (result === option_selectConfigurePreset && await vscode.commands.executeCommand('cmake.selectConfigurePreset')) {
+        return this._cmakeTools.configurePreset;
+      }
     }
+    return selectedConfigurePreset;
   }
 
   async selectBuildPreset(): Promise<boolean> {
+    preset.expandConfigurePresetForPresets('build');
     const presets = preset.buildPresets();
     const userPresets = preset.userBuildPresets();
 
     log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length + userPresets.length));
+
+    // configure preset required
+    const selectedConfigurePreset = await this.checkConfigurePreset();
+    if (!selectedConfigurePreset) {
+      return false;
+    }
 
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
       isUserPreset: boolean;
     }
     log.debug(localize('opening.build.preset.selection', 'Opening build preset selection QuickPick'));
-    const items: PresetItem[] = presets.map(
+    const items: PresetItem[] = presets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
       _preset => ({
           label: _preset.displayName || _preset.name,
           description: _preset.description,
@@ -381,7 +399,7 @@ export class PresetsController {
           isUserPreset: false
         }),
     );
-    items.concat(userPresets.map(
+    items.concat(userPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
       _preset => ({
         label: _preset.displayName || _preset.name,
         description: _preset.description,
@@ -410,31 +428,35 @@ export class PresetsController {
   }
 
   async setBuildPreset(presetName: string): Promise<void> {
-    const inst = this._cmakeTools;
-    if (inst) {
-      // Load the build preset into the backend
-      await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: localize('loading.build.preset', 'Loading build preset {0}', presetName),
-          },
-          () => inst.setBuildPreset(presetName),
-      );
-    }
+    // Load the build preset into the backend
+    await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: localize('loading.build.preset', 'Loading build preset {0}', presetName),
+        },
+        () => this._cmakeTools.setBuildPreset(presetName),
+    );
   }
 
   async selectTestPreset(): Promise<boolean> {
+    preset.expandConfigurePresetForPresets('test');
     const presets = preset.testPresets();
     const userPresets = preset.userTestPresets();
 
     log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
+
+    // configure preset required
+    const selectedConfigurePreset = await this.checkConfigurePreset();
+    if (!selectedConfigurePreset) {
+      return false;
+    }
 
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
       isUserPreset: boolean;
     }
     log.debug(localize('opening.test.preset.selection', 'Opening test preset selection QuickPick'));
-    const items: PresetItem[] = presets.map(
+    const items: PresetItem[] = presets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
       _preset => ({
           label: _preset.displayName || _preset.name,
           description: _preset.description,
@@ -442,7 +464,7 @@ export class PresetsController {
           isUserPreset: false
         }),
     );
-    items.concat(userPresets.map(
+    items.concat(userPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
       _preset => ({
         label: _preset.displayName || _preset.name,
         description: _preset.description,
@@ -471,17 +493,14 @@ export class PresetsController {
   }
 
   async setTestPreset(presetName: string): Promise<void> {
-    const inst = this._cmakeTools;
-    if (inst) {
-      // Load the test preset into the backend
-      await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: localize('loading.test.preset', 'Loading test preset {0}', presetName),
-          },
-          () => inst.setTestPreset(presetName),
-      );
-    }
+    // Load the test preset into the backend
+    await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: localize('loading.test.preset', 'Loading test preset {0}', presetName),
+        },
+        () => this._cmakeTools.setTestPreset(presetName),
+    );
   }
 
   openCMakePresets(): Thenable<vscode.TextEditor> {
@@ -520,6 +539,7 @@ export class PresetsController {
     // return Promise.all(dropNulls(kits).map(expandKitVariables));
     if (presetsFile.version < 2) {
       await this.showPresetsFileVersionError(file);
+      return undefined;
     }
     return presetsFile;
   }

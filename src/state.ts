@@ -107,6 +107,9 @@ export class StateManager {
    * Rest all current workspace state. Mostly for troubleshooting
    */
   reset() {
+    this.configurePresetName = null;
+    this.buildPresetName = null;
+    this.testPresetName = null;
     this.activeVariantSettings = null;
     this.launchTargetName = null;
     this.defaultBuildTarget = null;
