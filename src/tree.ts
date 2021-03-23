@@ -470,7 +470,7 @@ export class WorkspaceFolderNode extends BaseNode {
     return item;
   }
 
-  private _codeModel: codemodel_api.CodeModelContent = {configurations: []};
+  private _codeModel: codemodel_api.CodeModelContent = {configurations: [], toolchains: new Map<string, codemodel_api.CodeModelToolchain>()};
   get codeModel() { return this._codeModel; }
   updateCodeModel(model: codemodel_api.CodeModelContent|null, ctx: TreeUpdateContext) {
     if (!model || model.configurations.length < 1) {
