@@ -644,7 +644,7 @@ export class StatusBar implements vscode.Disposable {
   setActiveKitName(v: string): void { this._kitSelectionButton.text = v; }
   setConfigurePresetName(v:string): void { this._configurePresetButton.text = v; }
   setBuildPresetName(v:string): void { this._buildPresetButton.text = v; }
-  setTestPresetName(v:string): void { this._testPresetButton.text = v; }
+  setTestPresetName(v:string): void { this._testPresetButton.text = v; this.setCTestEnabled(true); }
 
   hideLaunchButton(shouldHide: boolean = true): void { this._launchButton.hidden = shouldHide; }
   hideDebugButton(shouldHide: boolean = true): void { this._debugButton.hidden = shouldHide; }

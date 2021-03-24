@@ -862,9 +862,7 @@ export function buildArgs(preset: BuildPreset): string[] {
   if (util.isString(preset.targets)) {
     result.push('--target', preset.targets);
   } else if (util.isArrayOfString(preset.targets)) {
-    for (const target of preset.targets) {
-      result.push('--target', target);
-    }
+    result.push('--target', ...preset.targets);
   }
 
   preset.nativeToolOptions && result.push('--', ...preset.nativeToolOptions);

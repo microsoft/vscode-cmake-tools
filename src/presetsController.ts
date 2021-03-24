@@ -63,6 +63,9 @@ export class PresetsController {
       if (cmakeTools.buildPreset) {
         await presetsController.setBuildPreset(cmakeTools.buildPreset);
       }
+      if (cmakeTools.testPreset) {
+        await presetsController.setTestPreset(cmakeTools.testPreset);
+      }
     };
 
     const watchPresetsChange = async () => {
