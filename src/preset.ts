@@ -252,7 +252,9 @@ function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof Te
 function removeNullEnvVars(preset: Preset) {
   if (preset.environment) {
     for (const key in preset.environment) {
-      delete preset.environment[key];
+      if (preset.environment[key] === null) {
+        delete preset.environment[key];
+      }
     }
   }
 }

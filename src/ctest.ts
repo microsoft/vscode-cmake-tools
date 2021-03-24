@@ -362,7 +362,7 @@ export class CTestDriver implements vscode.Disposable {
         return -3;
       }
       // Add a few more args so we can show the result in status bar
-      ctestArgs = ['-T', 'test', '--output-on-failure'].concat(testArgs(driver.testPreset));
+      ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
     } else {
       const configuration = driver.currentBuildType;
       ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
