@@ -15,10 +15,10 @@ const log = logging.createLogger('preset');
 
 export interface PresetsFile {
   version: number;
-  cmakeMinimumRequired: CmakeMinimumRequired;
-  configurePresets: ConfigurePreset[] | undefined;
-  buildPresets: BuildPreset[] | undefined;
-  testPresets: TestPreset[] | undefined;
+  cmakeMinimumRequired?: CmakeMinimumRequired;
+  configurePresets?: ConfigurePreset[] | undefined;
+  buildPresets?: BuildPreset[] | undefined;
+  testPresets?: TestPreset[] | undefined;
 }
 
 export interface CmakeMinimumRequired {
@@ -148,21 +148,33 @@ export interface TestPreset extends Preset {
   __generator?: string; // Private field for convenience. Getting this from the config preset
 }
 
+// original*PresetsFile's are each used to keep a copy by **value**. They are used to update
+// the presets files. non-original's are also used for caching during various expansions.
+let originalPresetsFile: PresetsFile | undefined;
+let originalUserPresetsFile: PresetsFile | undefined;
 let presetsFile: PresetsFile | undefined;
 let userPresetsFile: PresetsFile | undefined;
 const presetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
 const userPresetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
 
-export function presetsExist() {
-  return !!presetsFile;
+export function getOriginalPresetsFile() {
+  return originalPresetsFile;
+}
+
+export function getOriginalUserPresetsFile() {
+  return originalUserPresetsFile;
+}
+
+export function setOriginalPresetsFile(presets: PresetsFile | undefined) {
+  presetsFile = presets;
+}
+
+export function setOriginalUserPresetsFile(presets: PresetsFile | undefined) {
+  userPresetsFile = presets;
 }
 
 export function getPresetsFile() {
   return presetsFile;
-}
-
-export function userPresetsExist() {
-  return !!userPresetsFile;
 }
 
 export function getUserPresetsFile() {

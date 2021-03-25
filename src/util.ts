@@ -593,7 +593,7 @@ export function makeHashString(str: string): string {
     return hash.digest('hex');
 }
 
-export function isArray(x: any): x is any[] {
+export function isArray<T>(x: any): x is T[] {
   return x instanceof Array;
 }
 

@@ -23,6 +23,10 @@ export class PresetsController {
   private _userPresetsWatcher: chokidar.FSWatcher | undefined;
   private _sourceDir: string = '';
   private _sourceDirChangedSub: vscode.Disposable | undefined;
+  private _presetsFileExists = false;
+  private _userPresetsFileExists = false;
+
+  private static readonly _addPreset = '__addPreset__';
 
   static async init(cmakeTools: CMakeTools): Promise<PresetsController> {
     const presetsController = new PresetsController(cmakeTools);
@@ -50,12 +54,35 @@ export class PresetsController {
 
     presetsController._sourceDir = await expandSourceDir(cmakeTools.workspaceContext.config.sourceDirectory);
 
+    type SetPresetsFileFunc = (presets: preset.PresetsFile | undefined) => void
+    const resetPresetsFile = async (file: string,
+                                    setPresetsFile: SetPresetsFileFunc,
+                                    setOriginalPresetsFile: SetPresetsFileFunc,
+                                    fileExistCallback: (fileExists: boolean) => void) => {
+      const presetsFileBuffer = await presetsController.readPresetsFile(file);
+
+      // There might be a better location for this, but for now this is the best one...
+      fileExistCallback(Boolean(presetsFileBuffer));
+
+      let presetsFile = await presetsController.parsePresetsFile(presetsFileBuffer, file);
+      presetsFile = await presetsController.validatePresetsFile(presetsFile, file);
+      setPresetsFile(presetsFile);
+      // Parse again so we automatically have a copy by value
+      setOriginalPresetsFile(await presetsController.parsePresetsFile(presetsFileBuffer, file));
+    }
+
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
     // (need to clean or reload driver)
     const reapplyPresets = async () => {
       // Reset all changes due to expansion since parents could change
-      preset.setPresetsFile(await presetsController.readPresetsFile(presetsController.presetsPath));
-      preset.setUserPresetsFile(await presetsController.readPresetsFile(presetsController.userPresetsPath));
+      resetPresetsFile(presetsController.presetsPath,
+                       preset.setPresetsFile,
+                       preset.setOriginalPresetsFile,
+                       exists => presetsController._presetsFileExists = exists);
+      resetPresetsFile(presetsController.userPresetsPath,
+                       preset.setUserPresetsFile,
+                       preset.setOriginalUserPresetsFile,
+                       exists => presetsController._userPresetsFileExists = exists);
 
       if (cmakeTools.configurePreset) {
         await presetsController.setConfigurePreset(cmakeTools.configurePreset);
@@ -71,8 +98,7 @@ export class PresetsController {
     const watchPresetsChange = async () => {
       // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
       // there might be timing issues, since listeners are invoked async.
-      preset.setPresetsFile(await presetsController.readPresetsFile(presetsController.presetsPath));
-      preset.setUserPresetsFile(await presetsController.readPresetsFile(presetsController.userPresetsPath));
+      await reapplyPresets();
 
       if (presetsController._presetsWatcher) {
         presetsController._presetsWatcher.close().then(() => {}, () => {});
@@ -83,23 +109,23 @@ export class PresetsController {
 
       presetsController._presetsWatcher = chokidar.watch(presetsController.presetsPath, { ignoreInitial: true })
                                     .on('add', async () => {
-                                      preset.setPresetsFile(await presetsController.readPresetsFile(presetsController.presetsPath));
+                                      await reapplyPresets();
                                     })
                                     .on('change', async () => {
                                       await reapplyPresets();
                                     })
                                     .on('unlink', async () => {
-                                      preset.setPresetsFile(await presetsController.readPresetsFile(presetsController.presetsPath));
+                                      await reapplyPresets();
                                     });
       presetsController._userPresetsWatcher = chokidar.watch(presetsController.userPresetsPath, { ignoreInitial: true })
                                         .on('add', async () => {
-                                          preset.setUserPresetsFile(await presetsController.readPresetsFile(presetsController.userPresetsPath));
+                                          await reapplyPresets();
                                         })
                                         .on('change', async () => {
                                           await reapplyPresets();
                                         })
                                         .on('unlink', async () => {
-                                          preset.setUserPresetsFile(await presetsController.readPresetsFile(presetsController.userPresetsPath));
+                                          await reapplyPresets();
                                         });
     };
 
@@ -124,6 +150,21 @@ export class PresetsController {
   get userPresetsPath() { return path.join(this._sourceDir, 'CMakeUserPresets.json'); }
 
   get folder() { return this._cmakeTools.folder; }
+
+  get presetsFileExist() { return this._presetsFileExists || this._userPresetsFileExists; }
+
+  private showNameInputBox() {
+    return vscode.window.showInputBox({ placeHolder: localize('preset.name', 'Preset name') });
+  }
+
+  private getOsName() {
+    const platmap = {
+      win32: 'windows',
+      darwin: 'osx',
+      linux: 'linux',
+    } as {[k: string]: string};
+    return platmap[process.platform];
+  }
 
   async addConfigurePreset(): Promise<boolean> {
     interface AddPresetQuickPickItem extends vscode.QuickPickItem {
@@ -165,16 +206,58 @@ export class PresetsController {
       log.debug(localize('user.cancelled.add.config.preset', 'User cancelled adding configure preset'));
       return false;
     } else {
+      const name = await this.showNameInputBox();
+      if (!name) {
+        return false;
+      }
+
       switch(chosenItem.name) {
-        case SpecialOptions.ScanForCompilers:
+        case SpecialOptions.ScanForCompilers: {
           break;
-        case SpecialOptions.InheritConfigurationPreset:
+        }
+        case SpecialOptions.InheritConfigurationPreset: {
+          const placeHolder = localize('select.one.or.more.config.preset.placeholder', 'Select one or more configure presets');
+          const inherits = await this.showPresetSelector(preset.configurePresets(), { placeHolder, canPickMany: true });
+          const newPreset: preset.ConfigurePreset = { name, description: '', displayName: '', inherits };
+          this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
-        case SpecialOptions.ToolchainFile:
+        }
+        case SpecialOptions.ToolchainFile: {
+          const toolchain = await vscode.window.showOpenDialog({ /* Blank */ });
+          if (!toolchain) {
+            return false;
+          }
+          const newPreset: preset.ConfigurePreset = {
+            name,
+            displayName: `Configure preset using toolchain file`,
+            description: 'Sets Ninja generator, build and install directory',
+            generator: 'Ninja',
+            binaryDir: '${sourceDir}/out/build/${presetName}',
+            cacheVariables: {
+              CMAKE_BUILD_TYPE: 'Debug',
+              CMAKE_TOOLCHAIN_FILE: toolchain[0].path,
+              CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
+            }
+          }
+          this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
-        case SpecialOptions.Custom:
+        }
+        case SpecialOptions.Custom: {
+          const newPreset: preset.ConfigurePreset = {
+            name,
+            displayName: `Custom configure preset`,
+            description: 'Sets Ninja generator, build and install directory',
+            generator: 'Ninja',
+            binaryDir: '${sourceDir}/out/build/${presetName}',
+            cacheVariables: {
+              CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
+            }
+          };
+          this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
+        }
         default:
+          // Shouldn't reach here
           break;
       }
       return true;
@@ -185,7 +268,7 @@ export class PresetsController {
     const yes = localize('yes', 'Yes');
     const no = localize('no', 'No');
     const result = await vscode.window.showWarningMessage(
-      localize('no.config.preset', "No Configure Presets exist. Would you like to add a Configure Preset?"), yes, no);
+      localize('no.config.preset', 'No Configure Presets exist. Would you like to add a Configure Preset?'), yes, no);
     if (result === yes) {
       return this.addConfigurePreset();
     } else {
@@ -234,13 +317,31 @@ export class PresetsController {
       log.debug(localize('user.cancelled.add.build.preset', 'User cancelled adding build preset'));
       return false;
     } else {
+      const name = await this.showNameInputBox();
+      if (!name) {
+        return false;
+      }
+
       switch(chosenItem.name) {
-        case SpecialOptions.CreateFromConfigurationPreset:
+        case SpecialOptions.CreateFromConfigurationPreset: {
+          const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
+          const configurePreset = await this.showPresetSelector(preset.configurePresets(), { placeHolder });
+          const newPreset: preset.BuildPreset = { name, description: '', displayName: '', configurePreset };
+          this.addPresetAddUpdate(newPreset, 'buildPresets');
           break;
-        case SpecialOptions.InheritBuildPreset:
+        }
+        case SpecialOptions.InheritBuildPreset: {
+          const placeHolder = localize('select.one.or.more.build.preset.placeholder', 'Select one or more build presets');
+          const inherits = await this.showPresetSelector(preset.buildPresets(), { placeHolder, canPickMany: true });
+          const newPreset: preset.BuildPreset = { name, description: '', displayName: '', inherits };
+          this.addPresetAddUpdate(newPreset, 'buildPresets');
           break;
-        case SpecialOptions.Custom:
+        }
+        case SpecialOptions.Custom: {
+          const newPreset: preset.BuildPreset = { name, description: '', displayName: '' };
+          this.addPresetAddUpdate(newPreset, 'buildPresets');
           break;
+        }
         default:
           break;
       }
@@ -287,12 +388,29 @@ export class PresetsController {
       log.debug(localize('user.cancelled.add.test.preset', 'User cancelled adding test preset'));
       return false;
     } else {
+      const name = await this.showNameInputBox();
+      if (!name) {
+        return false;
+      }
+
       switch(chosenItem.name) {
-        case SpecialOptions.CreateFromConfigurationPreset:
+        case SpecialOptions.CreateFromConfigurationPreset: {
+          const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
+          const configurePreset = await this.showPresetSelector(preset.configurePresets(), { placeHolder });
+          const newPreset: preset.TestPreset = { name, description: '', displayName: '', configurePreset };
+          this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
-        case SpecialOptions.InheritTestPreset:
+        }
+        case SpecialOptions.InheritTestPreset: {
+          const placeHolder = localize('select.one.or.more.test.preset.placeholder', 'Select one or more test presets');
+          const inherits = await this.showPresetSelector(preset.testPresets(), { placeHolder, canPickMany: true });
+          const newPreset: preset.TestPreset = { name, description: '', displayName: '', inherits };
+          this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
+        }
         case SpecialOptions.Custom:
+          const newPreset: preset.TestPreset = { name, description: '', displayName: '' };
+          this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         default:
           break;
@@ -301,52 +419,50 @@ export class PresetsController {
     }
   }
 
-  async selectConfigurePreset(): Promise<boolean> {
-    const presets = preset.configurePresets();
-    const userPresets = preset.userConfigurePresets();
-    if (presets.length === 0 && userPresets.length === 0) {
-      return false;
-    }
-
-    log.debug(localize('start.selection.of.config.presets', 'Start selection of configure presets. Found {0} presets.', presets.length + userPresets.length));
-
+  // Returns the name of the preset selected
+  private async showPresetSelector(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true; }): Promise<string[] | undefined>;
+  private async showPresetSelector(presets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | undefined>;
+  private async showPresetSelector(presets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | string[] | undefined> {
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
-      isUserPreset: boolean;
     }
-    log.debug(localize('opening.config.preset.selection', 'Opening configure preset selection QuickPick'));
     let items: PresetItem[] = presets.map(
         _preset => ({
           label: _preset.displayName || _preset.name,
           description: _preset.description,
-          preset: _preset.name,
-          isUserPreset: false
+          preset: _preset.name
         }),
     );
-    items = items.concat(userPresets.map(
-      _preset => ({
-        label: _preset.displayName || _preset.name,
-        description: _preset.description,
-        preset: _preset.name,
-        isUserPreset: true
-      }),
-    ));
     items.push({
-      label: localize('add.config.preset', 'Add Configure Preset...'),
-      description: localize('description.add.config.preset', 'Add a new configure preset'),
-      preset: '__addPreset__',
-      isUserPreset: false
+      label: localize('add.new.preset', 'Add a New Preset...'),
+      preset: PresetsController._addPreset
     });
-    const chosenPreset = await vscode.window.showQuickPick(items,
-                                                            { placeHolder: localize('select.a.config.preset.placeholder', 'Select a configure preset for {0}', this.folder.name) });
+    const chosenPresets = await vscode.window.showQuickPick(items, options);
+    if (util.isArray<PresetItem>(chosenPresets)) {
+      return chosenPresets.map(_preset => _preset.preset);
+    }
+    return chosenPresets?.preset;
+  }
+
+  async selectConfigurePreset(): Promise<boolean> {
+    const presets = preset.configurePresets().concat(preset.userConfigurePresets());
+    if (presets.length === 0) {
+      return false;
+    }
+
+    log.debug(localize('start.selection.of.config.presets', 'Start selection of configure presets. Found {0} presets.', presets.length));
+
+    log.debug(localize('opening.config.preset.selection', 'Opening configure preset selection QuickPick'));
+    const placeHolder = localize('select.active.config.preset.placeholder', 'Select a configure preset for {0}', this.folder.name);
+    const chosenPreset = await this.showPresetSelector(presets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.config.preset.selection', 'User cancelled configure preset selection'));
       return false;
-    } else if (chosenPreset.preset === '__addPreset__') {
+    } else if (chosenPreset === '__addPreset__') {
       return this.addConfigurePreset();
     } else {
       log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
-      await this.setConfigurePreset(chosenPreset.preset);
+      await this.setConfigurePreset(chosenPreset);
       return true;
     }
   }
@@ -377,55 +493,30 @@ export class PresetsController {
   }
 
   async selectBuildPreset(): Promise<boolean> {
-    preset.expandConfigurePresetForPresets('build');
-    const presets = preset.buildPresets();
-    const userPresets = preset.userBuildPresets();
-
-    log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length + userPresets.length));
-
     // configure preset required
     const selectedConfigurePreset = await this.checkConfigurePreset();
     if (!selectedConfigurePreset) {
       return false;
     }
 
-    interface PresetItem extends vscode.QuickPickItem {
-      preset: string;
-      isUserPreset: boolean;
-    }
+    preset.expandConfigurePresetForPresets('build');
+    const presets = preset.buildPresets().
+                           concat(preset.userBuildPresets()).
+                           filter(_preset => _preset.configurePreset === selectedConfigurePreset);
+
+    log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
+
     log.debug(localize('opening.build.preset.selection', 'Opening build preset selection QuickPick'));
-    const items: PresetItem[] = presets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
-      _preset => ({
-          label: _preset.displayName || _preset.name,
-          description: _preset.description,
-          preset: _preset.name,
-          isUserPreset: false
-        }),
-    );
-    items.concat(userPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
-      _preset => ({
-        label: _preset.displayName || _preset.name,
-        description: _preset.description,
-        preset: _preset.name,
-        isUserPreset: true
-      }),
-    ));
-    items.push({
-      label: localize('add.build.preset', 'Add Build Preset...'),
-      description: localize('description.add.build.preset', 'Add a new build preset'),
-      preset: '__addPreset__',
-      isUserPreset: false
-    });
-    const chosenPreset = await vscode.window.showQuickPick(items,
-                                                            { placeHolder: localize('select.a.build.preset.placeholder', 'Select a configure preset for {0}', this.folder.name) });
+    const placeHolder = localize('select.active.build.preset.placeholder', 'Select a configure preset for {0}', this.folder.name);
+    const chosenPreset = await this.showPresetSelector(presets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
       return false;
-    } else if (chosenPreset.preset === '__addPreset__') {
+    } else if (chosenPreset === '__addPreset__') {
       return this.addBuildPreset();
     } else {
       log.debug(localize('user.selected.build.preset', 'User selected build preset {0}', JSON.stringify(chosenPreset)));
-      await this.setBuildPreset(chosenPreset.preset);
+      await this.setBuildPreset(chosenPreset);
       return true;
     }
   }
@@ -442,55 +533,28 @@ export class PresetsController {
   }
 
   async selectTestPreset(): Promise<boolean> {
-    preset.expandConfigurePresetForPresets('test');
-    const presets = preset.testPresets();
-    const userPresets = preset.userTestPresets();
-
-    log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
-
     // configure preset required
     const selectedConfigurePreset = await this.checkConfigurePreset();
     if (!selectedConfigurePreset) {
       return false;
     }
 
-    interface PresetItem extends vscode.QuickPickItem {
-      preset: string;
-      isUserPreset: boolean;
-    }
-    log.debug(localize('opening.test.preset.selection', 'Opening test preset selection QuickPick'));
-    const items: PresetItem[] = presets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
-      _preset => ({
-          label: _preset.displayName || _preset.name,
-          description: _preset.description,
-          preset: _preset.name,
-          isUserPreset: false
-        }),
-    );
-    items.concat(userPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset).map(
-      _preset => ({
-        label: _preset.displayName || _preset.name,
-        description: _preset.description,
-        preset: _preset.name,
-        isUserPreset: true
-      }),
-    ));
-    items.push({
-      label: localize('add.test.preset', 'Add Test Preset...'),
-      description: localize('description.add.test.preset', 'Add a new test preset'),
-      preset: '__addPreset__',
-      isUserPreset: false
-    });
-    const chosenPreset = await vscode.window.showQuickPick(items,
-                                                            {placeHolder: localize('select.a.test.preset.placeholder', 'Select a configure preset for {0}', this.folder.name)});
+    preset.expandConfigurePresetForPresets('test');
+    const presets = preset.testPresets().
+                           concat(preset.userTestPresets()).
+                           filter(_preset => _preset.configurePreset === selectedConfigurePreset);
+
+    log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
+    const placeHolder = localize('select.active.test.preset.placeholder', 'Select a configure preset for {0}', this.folder.name);
+    const chosenPreset = await this.showPresetSelector(presets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
       return false;
-    } else if (chosenPreset.preset === '__addPreset__') {
+    } else if (chosenPreset === '__addPreset__') {
       return this.addTestPreset();
     } else {
       log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosenPreset)));
-      await this.setTestPreset(chosenPreset.preset);
+      await this.setTestPreset(chosenPreset);
       return true;
     }
   }
@@ -514,17 +578,31 @@ export class PresetsController {
     return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
   }
 
-  private async readPresetsFile(file: string): Promise<preset.PresetsFile | undefined> {
+  private async readPresetsFile(file: string): Promise<Buffer | undefined> {
     if (!await fs.exists(file)) {
       return undefined;
     }
     log.debug(localize('reading.presets.file', 'Reading presets file {0}', file));
-    const presetsFileStr = await fs.readFile(file);
+    return fs.readFile(file);
+  }
+
+  private async parsePresetsFile(fileContent: Buffer | undefined, file: string): Promise<preset.PresetsFile | undefined> {
+    if (!fileContent) {
+      return undefined;
+    }
+
     let presetsFile: preset.PresetsFile;
     try {
-      presetsFile = json5.parse(presetsFileStr.toLocaleString());
+      presetsFile = json5.parse(fileContent.toLocaleString());
     } catch (e) {
       log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(file), util.errorToString(e)));
+      return undefined;
+    }
+    return presetsFile;
+  }
+
+  private async validatePresetsFile(presetsFile: preset.PresetsFile | undefined, file: string) {
+    if (!presetsFile) {
       return undefined;
     }
     // TODO: Validate presets file
@@ -560,10 +638,28 @@ export class PresetsController {
     }
   }
 
+  // Note: in case anyone want to change this, presetType must match the corresponding key in presets.json files
+  async addPresetAddUpdate(newPreset: preset.ConfigurePreset, presetType: 'configurePresets' | 'buildPresets' | 'testPresets') {
+    const originalPresetsFile: preset.PresetsFile = preset.getOriginalPresetsFile() || { version: 2 };
+    if (!originalPresetsFile[presetType]) {
+      originalPresetsFile[presetType] = [];
+    }
+    originalPresetsFile[presetType]!.push(newPreset);
+    this.updatePresetsFile(originalPresetsFile);
+  }
+
+  private getIndentationSettings() {
+    const config = vscode.workspace.getConfiguration('editor', this.folder.uri);
+    const tabSize = config.get<number>('tabSize') || 4;
+    const insertSpaces = config.get<boolean>('insertSpaces') || true;
+    return { insertSpaces, tabSize };
+  }
+
   async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false): Promise<boolean> {
     const presetsFilePath = isUserPresets? this.userPresetsPath : this.presetsPath;
+    const indent = this.getIndentationSettings();
     try {
-        await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile));
+        await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));
     } catch (e) {
       rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
       return false;

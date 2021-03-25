@@ -54,7 +54,7 @@ export class CMakeToolsFolder {
       // const state = this.cmakeTools.workspaceContext.state;
       // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
       // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
-      return preset.presetsExist() || preset.userPresetsExist();
+      return this.presetsController.presetsFileExist;
     }
     return this.cmakeTools.workspaceContext.config.useCMakePresets === 'true';
   }
