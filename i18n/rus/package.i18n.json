@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Настраивает максимальную длину видимого текста в \"компактном\" режиме.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Папки",
 	"cmake-tools.configuration.views.cmake.outline.description": "Структура проекта",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Массив путей к файлам пользовательских наборов",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Включает exporting compile_commands.json."
 }

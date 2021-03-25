@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Nakonfiguruje maximální délku viditelného textu v režimu compact.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Složky",
 	"cmake-tools.configuration.views.cmake.outline.description": "Osnova projektu",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Pole cest k vlastním sadám souborů",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umožňuje exportovat compile_commands.json."
 }
