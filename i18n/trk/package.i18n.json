@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'Sıkıştırılmış' modda görünen metnin maksimum uzunluğunu yapılandırır.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Klasörler",
 	"cmake-tools.configuration.views.cmake.outline.description": "Proje Ana Hattı",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Özel set dosyalarına yönelik yollar dizisi",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.js dosyasının dışarı aktarılmasını sağlar."
 }

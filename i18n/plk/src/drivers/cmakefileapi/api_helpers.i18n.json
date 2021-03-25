@@ -7,5 +7,6 @@
 	"failed.writing.to.file": "Nie można zapisać do pliku: {0}",
 	"cache.object.version": "Wersja obiektu pamięci podręcznej ({0}.{1}) interfejsu cmake-file-api jest nieoczekiwana. Oczekiwano wersji ({2}.{3}). Konfiguracja funkcji IntelliSense może być niepoprawna.",
 	"cache.entry.unknowntype": "Nieznany typ wpisu w pamięci podręcznej: {0}.",
-	"code.model.version": "Wersja modelu kodu ({0}.{1}) interfejsu cmake-file-api jest nieoczekiwana. Oczekiwano wersji ({2}.{3}). Konfiguracja funkcji IntelliSense może być niepoprawna."
+	"code.model.version": "Wersja modelu kodu ({0}.{1}) interfejsu cmake-file-api jest nieoczekiwana. Oczekiwano wersji ({2}.{3}). Konfiguracja funkcji IntelliSense może być niepoprawna.",
+	"toolchains.object.version": "Wersja obiektu łańcuchów narzędzi ({0}.{1}) interfejsu cmake-file-api jest nieoczekiwana. Oczekiwano wersji ({2}.{3}). Konfiguracja funkcji IntelliSense może być niepoprawna."
 }
