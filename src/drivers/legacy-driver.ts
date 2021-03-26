@@ -17,6 +17,7 @@ import rollbar from '@cmt/rollbar';
 import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
+import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -114,9 +115,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
                       config: ConfigurationReader,
                       useCMakePresets: boolean,
                       kit: Kit|null,
-                      configurePreset: string | null,
-                      buildPreset: string | null,
-                      testPreset: string | null,
+                      configurePreset: ConfigurePreset | null,
+                      buildPreset: BuildPreset | null,
+                      testPreset: TestPreset | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {

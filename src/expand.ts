@@ -77,6 +77,10 @@ export interface ExpansionOptions {
    * Do expandString recursively if set to true.
    */
   recursive?: boolean;
+  /**
+   * Support commands by default
+   */
+  doNotSupportCommands?: boolean;
 }
 
 /**
@@ -201,6 +205,10 @@ export async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
 
   const command_re = RegExp(`\\$\\{command:(${varValueRegexp})\\}`, "g");
   while ((mat = command_re.exec(tmpl))) {
+    if (opts.doNotSupportCommands) {
+      log.warning(localize('command.not.supported', 'Commands are not supported for string: {0}', tmpl));
+      break;
+    }
     const full = mat[0];
     const command = mat[1];
     if (subs.has(full)) {

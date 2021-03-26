@@ -41,6 +41,7 @@ import * as nls from 'vscode-nls';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
 import {enableFullFeatureSet, registerTaskProvider} from './extension';
+import * as preset from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -138,17 +139,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected configure preset
    */
   get configurePreset() { return this._configurePreset; }
-  private _configurePreset: string | null = null;
-  async setConfigurePreset(preset: string | null) {
-    this._configurePreset = preset;
-    if (preset) {
+  private _configurePreset: preset.ConfigurePreset | null = null;
+  async setConfigurePreset(configurePreset: string | null) {
+    if (configurePreset) {
+      log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
+      this._configurePreset = await preset.expandConfigurePreset(configurePreset,
+                                                                 lightNormalizePath(this.folder.uri.fsPath || '.'),
+                                                                 await this.sourceDir,
+                                                                 true);
+      if (!this._configurePreset) {
+        log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
+        return;
+      }
       log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
       const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
-          await drv.setConfigurePreset(preset);
-          this.workspaceContext.state.configurePresetName = preset;
+          await drv.setConfigurePreset(this._configurePreset);
+          this.workspaceContext.state.configurePresetName = configurePreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset "{0}".', error));
@@ -158,7 +167,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       } else {
         // Remember the selected configure preset for the next session.
-        this.workspaceContext.state.configurePresetName = preset;
+        this.workspaceContext.state.configurePresetName = configurePreset;
       }
     }
   }
@@ -167,17 +176,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected build preset
    */
   get buildPreset() { return this._buildPreset; }
-  private _buildPreset: string | null = null;
-  async setBuildPreset(preset: string | null) {
-    this._buildPreset = preset;
-    if (preset) {
+  private _buildPreset: preset.BuildPreset | null = null;
+  async setBuildPreset(buildPreset: string | null) {
+    if (buildPreset) {
+      log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
+      this._buildPreset = await preset.expandBuildPreset(buildPreset,
+                                                         lightNormalizePath(this.folder.uri.fsPath || '.'),
+                                                         await this.sourceDir,
+                                                         true);
+      if (!this._buildPreset) {
+        log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
+        return;
+      }
       log.debug(localize('loading.new.build.preset', 'Loading new build preset into CMake driver'));
       const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
-          await drv.setBuildPreset(preset);
-          this.workspaceContext.state.buildPresetName = preset;
+          await drv.setBuildPreset(this._buildPreset);
+          this.workspaceContext.state.buildPresetName = buildPreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset "{0}".', error));
@@ -187,7 +204,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       } else {
         // Remember the selected build preset for the next session.
-        this.workspaceContext.state.buildPresetName = preset;
+        this.workspaceContext.state.buildPresetName = buildPreset;
       }
     }
   }
@@ -196,17 +213,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Currently selected test preset
    */
   get testPreset() { return this._testPreset; }
-  private _testPreset: string | null = null;
-  async setTestPreset(preset: string | null) {
-    this._testPreset = preset;
-    if (preset) {
+  private _testPreset: preset.TestPreset | null = null;
+  async setTestPreset(testPreset: string | null) {
+    if (testPreset) {
+      log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
+      this._testPreset = await preset.expandTestPreset(testPreset,
+                                                       lightNormalizePath(this.folder.uri.fsPath || '.'),
+                                                       await this.sourceDir,
+                                                       true);
+      if (!this._testPreset) {
+        log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
+        return;
+      }
       log.debug(localize('loading.new.test.preset', 'Loading new test preset into CMake driver'));
       const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
-          await drv.setTestPreset(preset);
-          this.workspaceContext.state.testPresetName = preset;
+          await drv.setTestPreset(this._testPreset);
+          this.workspaceContext.state.testPresetName = testPreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset "{0}".', error));
@@ -216,7 +241,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       } else {
         // Remember the selected test preset for the next session.
-        this.workspaceContext.state.testPresetName = preset;
+        this.workspaceContext.state.testPresetName = testPreset;
       }
     }
   }
@@ -704,7 +729,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   async getCMakeExecutable() {
-    let cmakePath = await this.workspaceContext.getCMakePath();
+    const overWriteCMakePathSetting = this.useCMakePresets ? this._configurePreset?.cmakeExecutable : undefined;
+    let cmakePath = await this.workspaceContext.getCMakePath(overWriteCMakePathSetting);
     if (!cmakePath)
       cmakePath = '';
     return getCMakeExecutableInformation(cmakePath);

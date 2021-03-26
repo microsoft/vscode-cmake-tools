@@ -366,17 +366,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Change the current configure preset. This lets the driver reload, if necessary.
    * @param configurePreset The new configure preset
    */
-  async setConfigurePreset(configurePreset: string): Promise<void> {
-    log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset));
+  async setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
+    log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
 
-    this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, this.expansionOptions));
-    const expanded_preset = await preset.expandConfigurePreset(configurePreset, util.lightNormalizePath(this.workspaceFolder || '.'), this.sourceDir, true);
-
-    if (expanded_preset) {
-      const newBinaryDir = expanded_preset.binaryDir;
-      const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(expanded_preset, this._configurePreset);
-      await this.doSetConfigurePreset(needs_clean, async () => { await this._setConfigurePreset(expanded_preset); });
-    }
+    const newBinaryDir = configurePreset.binaryDir;
+    const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
+    await this.doSetConfigurePreset(needs_clean, async () => { await this._setConfigurePreset(configurePreset); });
   }
 
   private async _setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
@@ -408,12 +403,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Change the current build preset
    * @param buildPreset The new build preset
    */
-  async setBuildPreset(buildPreset: string): Promise<void> {
-    log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset));
-    const expanded_preset = await preset.expandBuildPreset(buildPreset, util.lightNormalizePath(this.workspaceFolder || '.'), this.sourceDir, true);
-    if (expanded_preset) {
-      await this.doSetBuildPreset(async () => { await this._setBuildPreset(expanded_preset); });
-    }
+  async setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
+    log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset.name));
+    await this.doSetBuildPreset(async () => { await this._setBuildPreset(buildPreset); });
   }
 
   private async _setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
@@ -425,12 +417,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Change the current test preset
    * @param testPreset The new test preset
    */
-  async setTestPreset(testPreset: string): Promise<void> {
-    log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset));
-    const expanded_preset = await preset.expandTestPreset(testPreset, util.lightNormalizePath(this.workspaceFolder || '.'), this.sourceDir, true);
-    if (expanded_preset) {
-      await this.doSetTestPreset(async () => { await this._setTestPreset(expanded_preset); });
-    }
+  async setTestPreset(testPreset: preset.TestPreset): Promise<void> {
+    log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset.name));
+    await this.doSetTestPreset(async () => { await this._setTestPreset(testPreset); });
   }
 
   private async _setTestPreset(testPreset: preset.TestPreset): Promise<void> {
@@ -1453,9 +1442,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private async _baseInit(useCMakePresets: boolean,
                           kit: Kit | null,
-                          configurePreset: string | null,
-                          buildPreset: string | null,
-                          testPreset: string | null,
+                          configurePreset: preset.ConfigurePreset | null,
+                          buildPreset: preset.BuildPreset | null,
+                          testPreset: preset.TestPreset | null,
                           preferredGenerators: CMakeGenerator[]) {
     this._useCMakePresets = useCMakePresets;
     // Load up kit or presets before starting any drivers.
@@ -1484,9 +1473,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
   static async createDerived<T extends CMakeDriver>(inst: T,
                                                     useCMakePresets: boolean,
                                                     kit: Kit | null,
-                                                    configurePreset: string | null,
-                                                    buildPreset: string | null,
-                                                    testPreset: string | null,
+                                                    configurePreset: preset.ConfigurePreset | null,
+                                                    buildPreset: preset.BuildPreset | null,
+                                                    testPreset: preset.TestPreset | null,
                                                     preferredGenerators: CMakeGenerator[]): Promise<T> {
     await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators);
     return inst;

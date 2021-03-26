@@ -23,6 +23,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
+import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 
 import {NoGeneratorError} from './cms-driver';
 
@@ -47,9 +48,9 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
                       config: ConfigurationReader,
                       useCMakePresets: boolean,
                       kit: Kit|null,
-                      configurePreset: string | null,
-                      buildPreset: string | null,
-                      testPreset: string | null,
+                      configurePreset: ConfigurePreset | null,
+                      buildPreset: BuildPreset | null,
+                      testPreset: TestPreset | null,
                       workspaceRootPath: string|null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {

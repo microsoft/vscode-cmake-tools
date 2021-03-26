@@ -191,26 +191,6 @@ export function setUserPresetsFile(presets: PresetsFile | undefined) {
   userPresetsChangedEmitter.fire();
 }
 
-function getDisplayName(name: string, presets: Preset[]): string | null {
-  for (const preset of presets) {
-    if (preset.name === name) {
-      return preset.displayName || preset.name;
-    }
-  }
-
-  return null;
-}
-
-export function getConfigurePresetDisplayName(name: string): string | null {
-  return getDisplayName(name, allConfigurePresets());
-}
-export function getBuildPresetDisplayName(name: string): string | null {
-  return getDisplayName(name, allBuildPresets());
-}
-export function getTestPresetDisplayName(name: string): string | null {
-  return getDisplayName(name, allTestPresets());
-}
-
 export function configurePresets() { return presetsFile?.configurePresets || []; }
 
 export function userConfigurePresets() { return userPresetsFile?.configurePresets || []; }
@@ -273,9 +253,6 @@ function removeNullEnvVars(preset: Preset) {
 
 const referencedConfigurePresets: Set<string> = new Set();
 
-/**
- * This function can NOT be invoked on extension initialization. Or there might be deadlocks
- */
 export function expandConfigurePreset(name: string,
                                       workspaceFolder: string,
                                       sourceDir: string,
@@ -374,7 +351,11 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
       presetName: preset.name
     },
     envOverride: preset.environment as EnvironmentVariables,
-    recursive: true
+    recursive: true,
+    // Don't support commands since expansion might be called on activation. If there is
+    // an extension depending on us, and there is a command in this extension is invoked,
+    // this would be a deadlock. This could be avoided but at a huge cost.
+    doNotSupportCommands: true
   };
   // Expand environment vars first since other fields may refer to them
   if (preset.environment) {
@@ -413,7 +394,7 @@ const referencedBuildPresets: Set<string> = new Set();
 
 /**
  * This is actually a very limited version of expandBuildPreset/expandTestPreset.
- * This function CAN be invoked during extension initialization.
+ * Use expandBuildPreset/expandTestPreset if other fields are needed.
  * They should NOT be used together.
  * They should Not call each other.
  */
@@ -511,9 +492,6 @@ function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, pre
   return null;
 }
 
-/**
- * This function can NOT be invoked on extension initialization. Or there might be deadlocks
- */
 export function expandBuildPreset(name: string,
                                   workspaceFolder: string,
                                   sourceDir: string,
@@ -618,7 +596,11 @@ async function expandBuildPresetHelper(preset: BuildPreset,
       presetName: preset.name
     },
     envOverride: preset.environment as EnvironmentVariables,
-    recursive: true
+    recursive: true,
+    // Don't support commands since expansion might be called on activation. If there is
+    // an extension depending on us, and there is a command in this extension is invoked,
+    // this would be a deadlock. This could be avoided but at a huge cost.
+    doNotSupportCommands: true
   };
 
   // Expand environment vars first since other fields may refer to them
@@ -654,9 +636,6 @@ async function expandBuildPresetHelper(preset: BuildPreset,
 
 const referencedTestPresets: Set<string> = new Set();
 
-/**
- * This function can NOT be invoked on extension initialization. Or there might be deadlocks
- */
 export function expandTestPreset(name: string,
                                  workspaceFolder: string,
                                  sourceDir: string,
@@ -759,7 +738,11 @@ async function expandTestPresetHelper(preset: TestPreset,
       presetName: preset.name
     },
     envOverride: preset.environment as EnvironmentVariables,
-    recursive: true
+    recursive: true,
+    // Don't support commands since expansion might be called on activation. If there is
+    // an extension depending on us, and there is a command in this extension is invoked,
+    // this would be a deadlock. This could be avoided but at a huge cost.
+    doNotSupportCommands: true
   };
 
   // Expand environment vars first since other fields may refer to them

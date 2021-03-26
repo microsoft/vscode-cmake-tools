@@ -85,13 +85,13 @@ export class PresetsController {
                        exists => presetsController._userPresetsFileExists = exists);
 
       if (cmakeTools.configurePreset) {
-        await presetsController.setConfigurePreset(cmakeTools.configurePreset);
+        await presetsController.setConfigurePreset(cmakeTools.configurePreset.name);
       }
       if (cmakeTools.buildPreset) {
-        await presetsController.setBuildPreset(cmakeTools.buildPreset);
+        await presetsController.setBuildPreset(cmakeTools.buildPreset.name);
       }
       if (cmakeTools.testPreset) {
-        await presetsController.setTestPreset(cmakeTools.testPreset);
+        await presetsController.setTestPreset(cmakeTools.testPreset.name);
       }
     };
 
@@ -478,7 +478,7 @@ export class PresetsController {
     );
   }
 
-  private async checkConfigurePreset(): Promise<string | null> {
+  private async checkConfigurePreset(): Promise<preset.ConfigurePreset | null> {
     const selectedConfigurePreset = this._cmakeTools.configurePreset;
     if (!selectedConfigurePreset) {
       const message_noConfigurePreset = localize('config.preset.required', 'A configure preset needs to be selected. How would you like to proceed?');
@@ -502,7 +502,7 @@ export class PresetsController {
     preset.expandConfigurePresetForPresets('build');
     const presets = preset.buildPresets().
                            concat(preset.userBuildPresets()).
-                           filter(_preset => _preset.configurePreset === selectedConfigurePreset);
+                           filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
 
     log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
 
@@ -542,7 +542,7 @@ export class PresetsController {
     preset.expandConfigurePresetForPresets('test');
     const presets = preset.testPresets().
                            concat(preset.userTestPresets()).
-                           filter(_preset => _preset.configurePreset === selectedConfigurePreset);
+                           filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
 
     log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
     const placeHolder = localize('select.active.test.preset.placeholder', 'Select a configure preset for {0}', this.folder.name);
