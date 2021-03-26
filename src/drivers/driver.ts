@@ -576,7 +576,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Directory where the targets will be installed.
    */
-  get installDir(): string|null { return this._installDir; }
+  private get installDir(): string|null { return this._installDir; }
   private _installDir: string|null = null;
 
   /**
@@ -656,6 +656,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return null;
   }
 
+  get cmakePathFromPreset(): string | undefined {
+    if (!this.useCMakePresets) {
+      return;
+    }
+    return this._configurePreset?.cmakeExecutable;
+  }
 
   public async testHaveCommand(program: string, args: string[] = ['--version']): Promise<boolean> {
     const child = this.executeCommand(program, args, undefined, {silent: true});

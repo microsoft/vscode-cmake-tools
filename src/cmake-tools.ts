@@ -704,7 +704,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   async getCMakeExecutable() {
-    let cmakePath = await this.workspaceContext.cmakePath;
+    let cmakePath = await this.workspaceContext.getCMakePath();
     if (!cmakePath)
       cmakePath = '';
     return getCMakeExecutableInformation(cmakePath);

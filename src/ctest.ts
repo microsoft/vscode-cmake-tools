@@ -349,7 +349,7 @@ export class CTestDriver implements vscode.Disposable {
     log.showChannel();
     this._decorationManager.clearFailingTestDecorations();
 
-    const ctestpath = await this.ws.ctestPath;
+    const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
     if (ctestpath === null) {
       log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return -2;
@@ -397,7 +397,7 @@ export class CTestDriver implements vscode.Disposable {
     this._decorationManager.binaryDir = driver.binaryDir;
     this.testingEnabled = true;
 
-    const ctestpath = await this.ws.ctestPath;
+    const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
     if (ctestpath === null) {
       log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return this.tests = [];

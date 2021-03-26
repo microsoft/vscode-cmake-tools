@@ -103,10 +103,10 @@ class Paths {
     });
   }
 
-  async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
+  async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string|null> {
     const ctest_path = wsc.config.raw_ctestPath;
     if (!ctest_path || ctest_path == 'auto') {
-      const cmake = await this.getCMakePath(wsc);
+      const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
       if (cmake === null) {
         return null;
       } else {
@@ -129,33 +129,36 @@ class Paths {
     }
   }
 
-  async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
+  async getCMakePath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string|null> {
     this._ninjaPath = undefined;
 
-    const raw = await expandString(wsc.config.raw_cmakePath, {
-      vars: {
-        buildKit: '',
-        buildKitVendor: '',
-        buildKitTriple: '',
-        buildKitVersion: '',
-        buildKitHostOs: '',
-        buildKitTargetOs: '',
-        buildKitTargetArch: '',
-        buildKitVersionMajor: '',
-        buildKitVersionMinor: '',
-        buildType: '',
-        generator: '',
-        workspaceFolder: wsc.folder.uri.fsPath,
-        workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
-        workspaceRoot: wsc.folder.uri.fsPath,
-        workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
-        workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
-        userHome: this.userHome,
-        sourceDir: wsc.folder.uri.fsPath,
-        sourceParentDir: path.dirname(wsc.folder.uri.fsPath),
-        sourceDirName: path.basename(wsc.folder.uri.fsPath)
-      },
-    });
+    let raw = overWriteCMakePathSetting;
+    if (!raw) {
+      raw = await expandString(wsc.config.raw_cmakePath, {
+        vars: {
+          buildKit: '',
+          buildKitVendor: '',
+          buildKitTriple: '',
+          buildKitVersion: '',
+          buildKitHostOs: '',
+          buildKitTargetOs: '',
+          buildKitTargetArch: '',
+          buildKitVersionMajor: '',
+          buildKitVersionMinor: '',
+          buildType: '',
+          generator: '',
+          workspaceFolder: wsc.folder.uri.fsPath,
+          workspaceFolderBasename: path.basename(wsc.folder.uri.fsPath),
+          workspaceRoot: wsc.folder.uri.fsPath,
+          workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
+          workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
+          userHome: this.userHome,
+          sourceDir: wsc.folder.uri.fsPath,
+          sourceParentDir: path.dirname(wsc.folder.uri.fsPath),
+          sourceDirName: path.basename(wsc.folder.uri.fsPath)
+        },
+      });
+    }
 
     if (raw === 'auto' || raw === 'cmake') {
       // We start by searching $PATH for cmake
