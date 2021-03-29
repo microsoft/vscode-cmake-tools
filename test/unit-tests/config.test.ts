@@ -31,6 +31,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     debugConfig: {},
     defaultVariants: {},
     ctestArgs: [],
+    ctestDefaultArgs: [],
     environment: {},
     configureEnvironment: {},
     buildEnvironment: {},
