@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configura la longitud máxima del texto visible en el modo \"compacto\".",
 	"cmake-tools.configuration.views.cmake.folders.description": "Carpetas",
 	"cmake-tools.configuration.views.cmake.outline.description": "Esquema del proyecto",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Matriz de rutas de acceso a los archivos de kit personalizados",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita la exportación de compile_commands.json."
 }

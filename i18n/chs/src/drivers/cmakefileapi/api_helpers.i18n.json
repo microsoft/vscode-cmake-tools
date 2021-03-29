@@ -7,5 +7,6 @@
 	"failed.writing.to.file": "未能写入文件 {0}",
 	"cache.object.version": "cmake-file-api 的缓存对象版本({0}.{1})不是预期版本。应为 ({2}.{3})。IntelliSense 配置可能不正确。",
 	"cache.entry.unknowntype": "未知的缓存条目类型: {0}。",
-	"code.model.version": "cmake-file-api 的代码模型版本({0}.{1})不是预期版本。应为 ({2}.{3})。IntelliSense 配置可能不正确。"
+	"code.model.version": "cmake-file-api 的代码模型版本({0}.{1})不是预期版本。应为 ({2}.{3})。IntelliSense 配置可能不正确。",
+	"toolchains.object.version": "cmake-file-api 的工具链对象版本({0}.{1})不是预期版本。应为 ({2}.{3})。IntelliSense 配置可能不正确。"
 }

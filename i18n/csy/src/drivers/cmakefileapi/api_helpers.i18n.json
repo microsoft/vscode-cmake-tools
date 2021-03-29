@@ -7,5 +7,6 @@
 	"failed.writing.to.file": "Nepovedlo se zapisovat do souboru {0}.",
 	"cache.object.version": "Verze objektu mezipaměti ({0}.{1}) pro cmake-file-api se neočekává. Očekává se ({2}.{3}). Je možné, že konfigurace IntelliSense není správná.",
 	"cache.entry.unknowntype": "Neznámý typ položky mezipaměti: {0}",
-	"code.model.version": "Verze modelu kódu ({0}.{1}) pro cmake-file-api se neočekává. Očekává se ({2}.{3}). Je možné, že konfigurace IntelliSense není správná."
+	"code.model.version": "Verze modelu kódu ({0}.{1}) pro cmake-file-api se neočekává. Očekává se ({2}.{3}). Je možné, že konfigurace IntelliSense není správná.",
+	"toolchains.object.version": "Verze objektu sad nástrojů ({0}.{1}) pro cmake-file-api se neočekává. Očekává se ({2}.{3}). Je možné, že konfigurace IntelliSense není správná."
 }
