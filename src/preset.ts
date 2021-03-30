@@ -29,6 +29,8 @@ export interface CmakeMinimumRequired {
   patch: number;
 }
 
+export type VendorType = { [key: string]: any };
+
 export interface Preset {
   name: string;
   displayName?: string;
@@ -36,7 +38,7 @@ export interface Preset {
   hidden?: boolean;
   inherits?: string | string[];
   environment?: { [key: string]: null | string };
-  vendor?: object;
+  vendor?: VendorType;
 
   __expanded?: boolean; // Private field to indicate if we have already expaned thie preset.
 }
@@ -67,6 +69,16 @@ export interface DebugOptions {
 
 type CacheVarType = null | boolean | string | { type: string, value: boolean | string };
 
+export type OsName = "Windows" | "Linux" | "macOS";
+
+export type Vendor_VsSettings = {
+  'microsoft.com/VisualStudioSettings/CMake/1.0': {
+    hostOS: OsName | OsName[];
+    [key: string]: any;
+  }
+  [key: string]: any;
+}
+
 export interface ConfigurePreset extends Preset {
   generator?: string;
   architecture?: string | ValueStrategy;
@@ -77,6 +89,7 @@ export interface ConfigurePreset extends Preset {
   warnings?: WarningOptions;
   errors?: ErrorOptions;
   debug?: DebugOptions;
+  vendor?: Vendor_VsSettings | VendorType;
 }
 
 export interface BuildPreset extends Preset {
@@ -264,7 +277,82 @@ export function setCompilers(_kits: Kit[]) {
   kits = _kits;
 }
 
+/**
+ * Used for both expandConfigurePreset and expandVendorForConfigurePreset
+ */
 const referencedConfigurePresets: Set<string> = new Set();
+
+/**
+ * This is actually a very limited version of expandConfigurePreset.
+ * Build/test presets currently don't need this, but We could extend this
+ * to work with build/test presets in the future.
+ * Use expandVendorPreset if other fields are needed.
+ * They should NOT be used together.
+ * They should Not call each other.
+ */
+export function expandVendorForConfigurePresets(): void {
+  for (const preset of configurePresets()) {
+    getVendorForConfigurePreset(preset.name);
+  }
+  for (const preset of userConfigurePresets()) {
+    getVendorForConfigurePreset(preset.name);
+  }
+}
+
+function getVendorForConfigurePreset(name: string): VendorType | Vendor_VsSettings | null {
+  referencedConfigurePresets.clear();
+  return getVendorForConfigurePresetImpl(name);
+}
+
+function getVendorForConfigurePresetImpl(name: string, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+  let preset = getPresetByName(configurePresets(), name);
+  if (preset) {
+    return getVendorForConfigurePresetHelper(preset);
+  }
+
+  if (allowUserPreset) {
+    preset = getPresetByName(userConfigurePresets(), name);
+    if (preset) {
+      return getVendorForConfigurePresetHelper(preset, true);
+    }
+  }
+
+  return null;
+}
+
+function getVendorForConfigurePresetHelper(preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+  if (preset.__expanded) {
+    return preset.vendor || null;
+  }
+
+  if (referencedConfigurePresets.has(preset.name)) {
+    // Refernced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
+    log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
+    return null;
+  }
+
+  referencedConfigurePresets.add(preset.name);
+
+  preset.vendor = preset.vendor || {};
+
+  if (preset.inherits) {
+    if (util.isString(preset.inherits)) {
+      preset.inherits = [preset.inherits];
+    }
+    for (const parent of preset.inherits) {
+      const parentVendor = getVendorForConfigurePresetImpl(parent, allowUserPreset);
+      if (parentVendor) {
+        for (const key in parentVendor) {
+          if (!preset.vendor[key]) {
+            preset.vendor[key] = parentVendor[key];
+          }
+        }
+      }
+    }
+  }
+
+  return preset.vendor || null;
+}
 
 export function expandConfigurePreset(name: string,
                                       workspaceFolder: string,

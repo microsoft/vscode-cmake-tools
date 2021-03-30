@@ -352,7 +352,7 @@ class ExtensionManager implements vscode.Disposable {
       }
       return !!cmt.buildPreset;
     }
-    return false;
+    return true;
   }
 
   private readonly _ensureActiveTestPreset = async (cmt?: CMakeTools): Promise<boolean> => {

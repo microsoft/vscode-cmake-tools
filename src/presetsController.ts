@@ -14,6 +14,7 @@ import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
+import { loadSchema } from '@cmt/schema';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -163,10 +164,10 @@ export class PresetsController {
 
   private getOsName() {
     const platmap = {
-      win32: 'windows',
-      darwin: 'osx',
-      linux: 'linux',
-    } as {[k: string]: string};
+      win32: 'Windows',
+      darwin: 'macOS',
+      linux: 'Linux',
+    } as {[k: string]: preset.OsName};
     return platmap[process.platform];
   }
 
@@ -510,10 +511,23 @@ export class PresetsController {
   }
 
   async selectConfigurePreset(): Promise<boolean> {
-    const presets = preset.configurePresets().concat(preset.userConfigurePresets());
-    if (presets.length === 0) {
-      return false;
-    }
+    preset.expandVendorForConfigurePresets();
+
+    const presets = preset.configurePresets().concat(preset.userConfigurePresets()).filter(
+      _preset => {
+        const supportedHost =  (_preset.vendor as preset.Vendor_VsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0'].hostOS;
+        const osName = this.getOsName();
+        if (supportedHost) {
+          if (util.isString(supportedHost)) {
+            return supportedHost === osName;
+          } else {
+            return supportedHost.includes(osName);
+          }
+        } else {
+          return true;
+        }
+      }
+    );
 
     log.debug(localize('start.selection.of.config.presets', 'Start selection of configure presets. Found {0} presets.', presets.length));
 
@@ -524,7 +538,8 @@ export class PresetsController {
       log.debug(localize('user.cancelled.config.preset.selection', 'User cancelled configure preset selection'));
       return false;
     } else if (chosenPreset === '__addPreset__') {
-      return this.addConfigurePreset();
+      await this.addConfigurePreset();
+      return false;
     } else {
       log.debug(localize('user.selected.config.preset', 'User selected configure preset {0}', JSON.stringify(chosenPreset)));
       await this.setConfigurePreset(chosenPreset);
@@ -572,13 +587,14 @@ export class PresetsController {
     log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
 
     log.debug(localize('opening.build.preset.selection', 'Opening build preset selection QuickPick'));
-    const placeHolder = localize('select.active.build.preset.placeholder', 'Select a configure preset for {0}', this.folder.name);
+    const placeHolder = localize('select.active.build.preset.placeholder', 'Select a build preset for {0}', this.folder.name);
     const chosenPreset = await this.showPresetSelector(presets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
       return false;
     } else if (chosenPreset === '__addPreset__') {
-      return this.addBuildPreset();
+      await this.addBuildPreset();
+      return false;
     } else {
       log.debug(localize('user.selected.build.preset', 'User selected build preset {0}', JSON.stringify(chosenPreset)));
       await this.setBuildPreset(chosenPreset);
@@ -610,13 +626,14 @@ export class PresetsController {
                            filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
 
     log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
-    const placeHolder = localize('select.active.test.preset.placeholder', 'Select a configure preset for {0}', this.folder.name);
+    const placeHolder = localize('select.active.test.preset.placeholder', 'Select a test preset for {0}', this.folder.name);
     const chosenPreset = await this.showPresetSelector(presets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
       return false;
     } else if (chosenPreset === '__addPreset__') {
-      return this.addTestPreset();
+      await this.addTestPreset();
+      return false;
     } else {
       log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosenPreset)));
       await this.setTestPreset(chosenPreset);
@@ -670,23 +687,21 @@ export class PresetsController {
     if (!presetsFile) {
       return undefined;
     }
-    // TODO: Validate presets file
-    // const validator = await loadSchema('schemas/kits-schema.json');
-    // const is_valid = validator(presetsFile);
-    // if (!is_valid) {
-    //   const errors = validator.errors!;
-    //   log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
-    //   for (const err of errors) {
-    //     log.error(` >> ${err.dataPath}: ${err.message}`);
-    //   }
-    //   return [];
-    // }
-    // log.info(localize('successfully.loaded.kits', 'Successfully loaded {0} kits from {1}', kits.length, file));
-    // return Promise.all(dropNulls(kits).map(expandKitVariables));
     if (presetsFile.version < 2) {
       await this.showPresetsFileVersionError(file);
       return undefined;
     }
+    const validator = await loadSchema('schemas/CMakePresets-schema.json');
+    const is_valid = validator(presetsFile);
+    if (!is_valid) {
+      const errors = validator.errors!;
+      log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
+      for (const err of errors) {
+        log.error(` >> ${err.dataPath}: ${err.message}`);
+      }
+      return undefined;
+    }
+    log.info(localize('successfully.validated.presets', 'Successfully validated presets kits in {0}', file));
     return presetsFile;
   }
 
