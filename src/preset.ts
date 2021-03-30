@@ -4,9 +4,11 @@ import * as path from 'path';
 
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
-import { EnvironmentVariables } from '@cmt/proc';
+import { EnvironmentVariables, execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
+import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit } from '@cmt/kit';
+import { compareVersions } from '@cmt/installs/visual-studio';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -63,13 +65,15 @@ export interface DebugOptions {
   find?: boolean;
 }
 
+type CacheVarType = null | boolean | string | { type: string, value: boolean | string };
+
 export interface ConfigurePreset extends Preset {
   generator?: string;
   architecture?: string | ValueStrategy;
   toolset?: string | ValueStrategy;
   binaryDir?: string;
   cmakeExecutable?: string;
-  cacheVariables?: { [key: string]: null | boolean | string | { type: string, value: boolean | string } };
+  cacheVariables?: { [key: string]: CacheVarType };
   warnings?: WarningOptions;
   errors?: ErrorOptions;
   debug?: DebugOptions;
@@ -166,11 +170,11 @@ export function getOriginalUserPresetsFile() {
 }
 
 export function setOriginalPresetsFile(presets: PresetsFile | undefined) {
-  presetsFile = presets;
+  originalPresetsFile = presets;
 }
 
 export function setOriginalUserPresetsFile(presets: PresetsFile | undefined) {
-  userPresetsFile = presets;
+  originalUserPresetsFile = presets;
 }
 
 export function getPresetsFile() {
@@ -251,6 +255,15 @@ function removeNullEnvVars(preset: Preset) {
   }
 }
 
+let kits: Kit[] = [];
+
+/**
+ * Using kits as compilers
+ */
+export function setCompilers(_kits: Kit[]) {
+  kits = _kits;
+}
+
 const referencedConfigurePresets: Set<string> = new Set();
 
 export function expandConfigurePreset(name: string,
@@ -306,6 +319,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
   }
 
   // Expand inherits
+  let inheritedEnv = {};
   if (preset.inherits) {
     if (util.isString(preset.inherits)) {
       preset.inherits = [preset.inherits];
@@ -314,7 +328,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
       const parent = await expandConfigurePresetImpl(parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
         // Inherit environment
-        preset.environment = util.mergeEnvironment(parent.environment! as EnvironmentVariables, preset.environment as EnvironmentVariables);
+        inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
         // Inherit cache vars
         for (const name in parent.cacheVariables) {
           if (!preset.cacheVariables[name]) {
@@ -333,7 +347,97 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
     }
   }
 
-  preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, preset.environment as EnvironmentVariables);
+  inheritedEnv = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
+  // If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
+  // then set the env automatically
+  let clEnv: EnvironmentVariables = {};
+  const getStringValueFromCacheVar = (variable: CacheVarType) => {
+    if (util.isString(variable)) {
+      return variable;
+    } else if (variable && typeof variable === 'object') {
+      return util.isString(variable.value) ? variable.value : null;
+    }
+    return null;
+  };
+  if (preset.cacheVariables) {
+    const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
+    const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
+    if (cxxCompiler === 'cl' || cxxCompiler === 'cl.exe' || cCompiler === 'cl' || cCompiler === 'cl.exe') {
+      const whereRes = await execute('where.exe', ['cl'], null, { environment: preset.environment as EnvironmentVariables,
+                                                                  silent: true,
+                                                                  encoding: 'utf8',
+                                                                  shell: true }).result;
+      if (!whereRes.stdout) {
+        // Not on PATH, need to set env
+        let arch = 'x86';
+        let toolsetArch = 'host=x86';
+        let toolsetVsVersion: string | undefined;
+        if (util.isString(preset.architecture)) {
+          arch = preset.architecture;
+        } else if (preset.architecture && preset.architecture.value) {
+          arch = preset.architecture.value;
+        } else {
+          log.warning(localize('no.cl.arch', 'No architecture specified for cl.exe, using x86 by default'));
+        }
+        const toolsetArchRegex = /(host=\w+),?/i;
+        const toolsetVsVersionRegex = /version=(\w+),?/i;
+        const noToolsetArchWarning = localize('no.cl.toolset.arch', 'No toolset architecture specified for cl.exe, using x86 by default');
+        const noToolsetVsVersionWarning = localize('no.cl.toolset.version', 'No toolset version specified for cl.exe, using latest by default');
+        const matchToolsetArchAndVersion = (toolset: string) => {
+          const tollsetArchMatches = toolset.match(toolsetArchRegex);
+          if (!tollsetArchMatches) {
+            log.warning(noToolsetArchWarning);
+          } else {
+            toolsetArch = tollsetArchMatches[1];
+          }
+          const tollsetVsVersionMatches = toolset.match(toolsetVsVersionRegex);
+          if (!tollsetVsVersionMatches) {
+            log.warning(noToolsetVsVersionWarning);
+          } else {
+            toolsetVsVersion = tollsetVsVersionMatches[1];
+          }
+        };
+        if (!preset.toolset) {
+          log.warning(noToolsetArchWarning);
+        } else if (util.isString(preset.toolset)) {
+          matchToolsetArchAndVersion(preset.toolset);
+        } else if (!preset.toolset.value) {
+          log.warning(noToolsetArchWarning);
+        } else {
+          matchToolsetArchAndVersion(preset.toolset.value);
+        }
+        let latestVsVersion: string = '';
+        let latestVsIndex = -1;
+        for (let i = 0; i < kits.length; i++) {
+          const kit = kits[i];
+          if (kit.visualStudio && kit.visualStudioVersion && !kit.compilers) {
+            if (kit.preferredGenerator &&
+                (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
+                kit.preferredGenerator.toolset === toolsetArch) {
+              if (toolsetVsVersion && kit.visualStudioVersion.startsWith(toolsetVsVersion)) {
+                latestVsVersion = kit.visualStudioVersion;
+                latestVsIndex = i;
+                break;
+              }
+              if (!toolsetVsVersion && compareVersions(latestVsVersion, kit.visualStudioVersion) < 0) {
+                latestVsVersion = kit.visualStudioVersion;
+                latestVsIndex = i;
+              }
+            }
+          }
+        }
+        if (latestVsIndex < 0) {
+          log.error(localize('specified.cl.not.found', 'Specified cl.exe with toolset {0} and architecture {1} are not found',
+                             toolsetVsVersion ? `${toolsetVsVersion},${toolsetArch}` : toolsetArch, arch));
+        } else {
+          clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
+        }
+      }
+    }
+  }
+
+  clEnv = util.mergeEnvironment(inheritedEnv as EnvironmentVariables, clEnv as EnvironmentVariables);
+  preset.environment = util.mergeEnvironment(clEnv as EnvironmentVariables, preset.environment as EnvironmentVariables);
 
   // Expand strings
   const expansionOpts: ExpansionOptions = {

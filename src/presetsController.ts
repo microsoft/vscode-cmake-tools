@@ -12,6 +12,8 @@ import * as util from '@cmt/util';
 import rollbar from '@cmt/rollbar';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
+import { KitsController } from '@cmt/kitsController';
+import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -28,8 +30,10 @@ export class PresetsController {
 
   private static readonly _addPreset = '__addPreset__';
 
-  static async init(cmakeTools: CMakeTools): Promise<PresetsController> {
-    const presetsController = new PresetsController(cmakeTools);
+  static async init(cmakeTools: CMakeTools, kitsController: KitsController): Promise<PresetsController> {
+    const presetsController = new PresetsController(cmakeTools, kitsController);
+
+    preset.setCompilers(kitsController.availableKits);
 
     const expandSourceDir = async (dir: string) => {
       const workspaceFolder = cmakeTools.folder.uri.fsPath;
@@ -54,7 +58,7 @@ export class PresetsController {
 
     presetsController._sourceDir = await expandSourceDir(cmakeTools.workspaceContext.config.sourceDirectory);
 
-    type SetPresetsFileFunc = (presets: preset.PresetsFile | undefined) => void
+    type SetPresetsFileFunc = (presets: preset.PresetsFile | undefined) => void;
     const resetPresetsFile = async (file: string,
                                     setPresetsFile: SetPresetsFileFunc,
                                     setOriginalPresetsFile: SetPresetsFileFunc,
@@ -69,20 +73,20 @@ export class PresetsController {
       setPresetsFile(presetsFile);
       // Parse again so we automatically have a copy by value
       setOriginalPresetsFile(await presetsController.parsePresetsFile(presetsFileBuffer, file));
-    }
+    };
 
     // Need to reapply presets every time presets changed since the binary dir or cmake path could change
     // (need to clean or reload driver)
     const reapplyPresets = async () => {
       // Reset all changes due to expansion since parents could change
-      resetPresetsFile(presetsController.presetsPath,
-                       preset.setPresetsFile,
-                       preset.setOriginalPresetsFile,
-                       exists => presetsController._presetsFileExists = exists);
-      resetPresetsFile(presetsController.userPresetsPath,
-                       preset.setUserPresetsFile,
-                       preset.setOriginalUserPresetsFile,
-                       exists => presetsController._userPresetsFileExists = exists);
+      await resetPresetsFile(presetsController.presetsPath,
+                             preset.setPresetsFile,
+                             preset.setOriginalPresetsFile,
+                             exists => presetsController._presetsFileExists = exists);
+      await resetPresetsFile(presetsController.userPresetsPath,
+                             preset.setUserPresetsFile,
+                             preset.setOriginalUserPresetsFile,
+                             exists => presetsController._userPresetsFileExists = exists);
 
       if (cmakeTools.configurePreset) {
         await presetsController.setConfigurePreset(cmakeTools.configurePreset.name);
@@ -143,7 +147,7 @@ export class PresetsController {
     return presetsController;
   }
 
-  private constructor(private readonly _cmakeTools: CMakeTools) { }
+  private constructor(private readonly _cmakeTools: CMakeTools, private readonly _kitsController: KitsController) { }
 
   get presetsPath() { return path.join(this._sourceDir, 'CMakePresets.json'); }
 
@@ -213,13 +217,73 @@ export class PresetsController {
 
       switch(chosenItem.name) {
         case SpecialOptions.ScanForCompilers: {
+          // Check that we have kits
+          if (!await this._kitsController.checkHaveKits()) {
+            return false;
+          }
+
+          const avail = this._kitsController.availableKits;
+          log.debug(localize('start.selection.of.compilers', 'Start selection of compilers. Found {0} compilers.', avail.length));
+
+          interface KitItem extends vscode.QuickPickItem {
+            kit: Kit;
+          }
+          log.debug(localize('opening.compiler.selection', 'Opening compiler selection QuickPick'));
+          // Generate the quickpick items from our known kits
+          const getKitName = (kit: Kit) => {
+            switch (kit.name) {
+            case SpecialKits.ScanForKits as string:
+              return `[${localize('scan.for.compilers.button', 'Scan for compilers')}]`;
+            default:
+              return kit.name;
+            }
+          };
+          const item_promises = avail.filter(kit => kit.name !== SpecialKits.Unspecified).map(
+              async (kit): Promise<KitItem> => ({
+                label: getKitName(kit),
+                description: await descriptionForKit(kit),
+                kit,
+              }),
+          );
+          const quickPickItems = await Promise.all(item_promises);
+          const chosen_kit = await vscode.window.showQuickPick(quickPickItems,
+                                                               {placeHolder: localize('select.a.compiler.placeholder', 'Select a Kit for {0}', this.folder.name)});
+          if (chosen_kit === undefined) {
+            log.debug(localize('user.cancelled.compiler.selection', 'User cancelled compiler selection'));
+            // No selection was made
+            return false;
+          } else {
+            if (chosen_kit.kit.name == SpecialKits.ScanForKits) {
+              await KitsController.scanForKits(this._cmakeTools);
+              preset.setCompilers(this._kitsController.availableKits);
+              return false;
+            } else {
+              log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
+              const newPreset: preset.ConfigurePreset = {
+                name,
+                displayName: chosen_kit.kit.name,
+                description: chosen_kit.description,
+                generator: chosen_kit.kit.preferredGenerator?.name,
+                toolset: chosen_kit.kit.preferredGenerator?.toolset,
+                architecture: chosen_kit.kit.preferredGenerator?.platform,
+                binaryDir: '${sourceDir}/out/build/${presetName}',
+                cacheVariables: {
+                  CMAKE_BUILD_TYPE: 'Debug',
+                  CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}',
+                  CMAKE_C_COMPILER: chosen_kit.kit.compilers?.['C']!,
+                  CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
+                }
+              };
+              await this.addPresetAddUpdate(newPreset, 'configurePresets');
+            }
+          }
           break;
         }
         case SpecialOptions.InheritConfigurationPreset: {
           const placeHolder = localize('select.one.or.more.config.preset.placeholder', 'Select one or more configure presets');
           const inherits = await this.showPresetSelector(preset.configurePresets(), { placeHolder, canPickMany: true });
           const newPreset: preset.ConfigurePreset = { name, description: '', displayName: '', inherits };
-          this.addPresetAddUpdate(newPreset, 'configurePresets');
+          await this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
         }
         case SpecialOptions.ToolchainFile: {
@@ -238,8 +302,8 @@ export class PresetsController {
               CMAKE_TOOLCHAIN_FILE: toolchain[0].path,
               CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
             }
-          }
-          this.addPresetAddUpdate(newPreset, 'configurePresets');
+          };
+          await this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
         }
         case SpecialOptions.Custom: {
@@ -253,7 +317,7 @@ export class PresetsController {
               CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
             }
           };
-          this.addPresetAddUpdate(newPreset, 'configurePresets');
+          await this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
         }
         default:
@@ -327,19 +391,19 @@ export class PresetsController {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
           const configurePreset = await this.showPresetSelector(preset.configurePresets(), { placeHolder });
           const newPreset: preset.BuildPreset = { name, description: '', displayName: '', configurePreset };
-          this.addPresetAddUpdate(newPreset, 'buildPresets');
+          await this.addPresetAddUpdate(newPreset, 'buildPresets');
           break;
         }
         case SpecialOptions.InheritBuildPreset: {
           const placeHolder = localize('select.one.or.more.build.preset.placeholder', 'Select one or more build presets');
           const inherits = await this.showPresetSelector(preset.buildPresets(), { placeHolder, canPickMany: true });
           const newPreset: preset.BuildPreset = { name, description: '', displayName: '', inherits };
-          this.addPresetAddUpdate(newPreset, 'buildPresets');
+          await this.addPresetAddUpdate(newPreset, 'buildPresets');
           break;
         }
         case SpecialOptions.Custom: {
           const newPreset: preset.BuildPreset = { name, description: '', displayName: '' };
-          this.addPresetAddUpdate(newPreset, 'buildPresets');
+          await this.addPresetAddUpdate(newPreset, 'buildPresets');
           break;
         }
         default:
@@ -398,20 +462,21 @@ export class PresetsController {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
           const configurePreset = await this.showPresetSelector(preset.configurePresets(), { placeHolder });
           const newPreset: preset.TestPreset = { name, description: '', displayName: '', configurePreset };
-          this.addPresetAddUpdate(newPreset, 'testPresets');
+          await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
         case SpecialOptions.InheritTestPreset: {
           const placeHolder = localize('select.one.or.more.test.preset.placeholder', 'Select one or more test presets');
           const inherits = await this.showPresetSelector(preset.testPresets(), { placeHolder, canPickMany: true });
           const newPreset: preset.TestPreset = { name, description: '', displayName: '', inherits };
-          this.addPresetAddUpdate(newPreset, 'testPresets');
+          await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
-        case SpecialOptions.Custom:
+        case SpecialOptions.Custom: {
           const newPreset: preset.TestPreset = { name, description: '', displayName: '' };
-          this.addPresetAddUpdate(newPreset, 'testPresets');
+          await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
+        }
         default:
           break;
       }
@@ -426,7 +491,7 @@ export class PresetsController {
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
     }
-    let items: PresetItem[] = presets.map(
+    const items: PresetItem[] = presets.filter(_preset => !_preset.hidden).map(
         _preset => ({
           label: _preset.displayName || _preset.name,
           description: _preset.description,
@@ -645,7 +710,7 @@ export class PresetsController {
       originalPresetsFile[presetType] = [];
     }
     originalPresetsFile[presetType]!.push(newPreset);
-    this.updatePresetsFile(originalPresetsFile);
+    await this.updatePresetsFile(originalPresetsFile);
   }
 
   private getIndentationSettings() {

@@ -121,7 +121,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
 
       this._generatorInformation = this.generator;
     }
-    if (!this.generator) {
+    if (!this.generator && !this.useCMakePresets) {
       throw new NoGeneratorError();
     }
 

@@ -115,10 +115,15 @@ export interface Kit extends KitDetect {
   compilers?: {[lang: string]: string};
 
   /**
+   * The visual studio name. This corresponds to the installationId returned by `vswhere`.
+   */
+  visualStudio?: string;
+
+  /**
    * The visual studio name. This corresponds to the major.minor version of
    * the installation returned by `vswhere`.
    */
-  visualStudio?: string;
+  visualStudioVersion?: string;
 
   /**
    * The architecture for the kit. This is used when asking for the architecture
@@ -867,6 +872,7 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
   const kit: Kit = {
     name,
     visualStudio: kitVSName(inst),
+    visualStudioVersion: inst.installationVersion,
     visualStudioArchitecture: hostArch
   };
 
@@ -970,6 +976,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         clangKits.push({
           name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
           visualStudio: kitVSName(vs),
+          visualStudioVersion: vs.installationVersion,
           visualStudioArchitecture: vs_arch,
           compilers: {
             C: binPath,
@@ -1334,4 +1341,11 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   } else {
     return false;
   }
+}
+
+/**
+ * Get the environment variables required by the current Kit
+ */
+export function getKitEnvironmentVariablesObject(kitEnvVars: Map<string, string>): proc.EnvironmentVariables {
+  return util.reduce(kitEnvVars.entries(), {}, (acc, [key, value]) => ({...acc, [key]: value}));
 }

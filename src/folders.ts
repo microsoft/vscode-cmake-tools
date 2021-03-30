@@ -37,7 +37,8 @@ export class CMakeToolsFolder {
   }
 
   static async init(cmakeTools: CMakeTools) {
-    const cmtFolder = new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools), await PresetsController.init(cmakeTools));
+    const kitsController = await KitsController.init(cmakeTools);
+    const cmtFolder = new CMakeToolsFolder(cmakeTools, kitsController, await PresetsController.init(cmakeTools, kitsController));
     const usingCMakePresets = cmtFolder.useCMakePresets;
     cmtFolder._wasUsingCMakePresets = usingCMakePresets;
     await cmakeTools.setUseCMakePresets(usingCMakePresets);

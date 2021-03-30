@@ -536,7 +536,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       switch (communicationMode) {
         case fileApi:
           drv = await CMakeFileApiDriver.create(cmake, this.workspaceContext.config,
-                                                !!this.configurePreset,
+                                                this.useCMakePresets,
                                                 this.activeKit,
                                                 this.configurePreset,
                                                 this.buildPreset,
@@ -548,7 +548,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         case serverApi:
           drv = await CMakeServerClientDriver.create(cmake,
                                                      this.workspaceContext.config,
-                                                     !!this.configurePreset,
+                                                     this.useCMakePresets,
                                                      this.activeKit,
                                                      this.configurePreset,
                                                      this.buildPreset,
@@ -560,7 +560,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         default:
           drv = await LegacyCMakeDriver.create(cmake,
                                                this.workspaceContext.config,
-                                               !!this.configurePreset,
+                                               this.useCMakePresets,
                                                this.activeKit,
                                                this.configurePreset,
                                                this.buildPreset,

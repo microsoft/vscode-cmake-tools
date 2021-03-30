@@ -413,6 +413,7 @@ class ExtensionManager implements vscode.Disposable {
     const ws = info.folder;
     const cmt = info.cmakeTools;
 
+    // Scan for kits even under presets mode, so we can create presets from compilers.
     // Silent re-scan when detecting a breaking change in the kits definition.
     // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
     const silentScanForKitsNeeded: boolean = vscode.workspace.workspaceFolders !== undefined &&
