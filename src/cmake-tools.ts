@@ -123,7 +123,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const oldValue = this._useCMakePresets;
     if (oldValue !== useCMakePresets) {
       this._useCMakePresets = useCMakePresets;
-      await this._reloadCMakeDriver();
+      const drv = await this._cmakeDriver;
+      if (drv) {
+        log.debug(localize('disposing.driver', 'Disposing CMake driver'));
+        await drv.asyncDispose();
+      }
     }
   }
 
