@@ -12,7 +12,7 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Sélectionner une variante pour tous les projets",
 	"cmake-tools.command.cmake.configure.title": "Configurer",
 	"cmake-tools.command.cmake.configureAll.title": "Configurer tous les projets",
-	"cmake-tools.command.cmake.build.title": "Build",
+	"cmake-tools.command.cmake.build.title": "Générer un build",
 	"cmake-tools.command.cmake.buildAll.title": "Générer tous les projets",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(Interne) Générer une cible en fonction de son nom",
 	"cmake-tools.command.cmake.compileFile.title": "Compiler le fichier actif",
@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Définir la cible de build",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Supprimer le cache et reconfigurer",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Supprimer le cache et la reconfiguration de tous les projets",
-	"cmake-tools.command.cmake.openConfiguration.title": "Modifier le cache de CMake (IU)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Modifier le cache de CMake (IU)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Nouvelle reconfiguration",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Nouvelle reconfiguration de tous les projets",
 	"cmake-tools.command.cmake.clean.title": "Nettoyer",
@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configure la longueur maximale du texte visible en mode 'compact'.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Dossiers",
 	"cmake-tools.configuration.views.cmake.outline.description": "Structure du projet",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Tableau des chemins des fichiers de kits personnalisés",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Permet l'exportation de compile_commands.json."
 }

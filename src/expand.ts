@@ -91,6 +91,10 @@ export interface ExpansionOptions {
  * @returns A string with the variable references replaced
  */
 export async function expandString(tmpl: string, opts: ExpansionOptions) {
+  if (!tmpl) {
+    return tmpl;
+  }
+
   const MAX_RECURSION = 50;
   let result = tmpl;
   let didReplacement = false;

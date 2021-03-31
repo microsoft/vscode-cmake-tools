@@ -36,6 +36,5 @@
 	"loading.extension.commands": "Uzantı komutları yükleniyor",
 	"register.command": "{0} CMake Araçları uzantısını komutunu kaydet",
 	"uninstall.old.cmaketools": "Lütfen CMake Araçları uzantısının eski sürümlerini kaldırın. Uzantı, 1.2.0 sürümünden itibaren Microsoft tarafından yayımlanmaktadır.",
-	"cmake.tools.initializing": "CMake Araçları başlatılıyor...",
 	"deactivate.cmaketools": "CMake Araçları'nı devre dışı bırak"
 }

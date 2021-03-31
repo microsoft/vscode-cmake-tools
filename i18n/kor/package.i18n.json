@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "빌드 대상 설정",
 	"cmake-tools.command.cmake.cleanConfigure.title": "캐시 삭제 및 다시 구성",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "캐시 삭제 및 모든 프로젝트 다시 구성",
-	"cmake-tools.command.cmake.openConfiguration.title": "CMake 캐시 편집(UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "CMake 캐시 편집(UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "클린 다시 구성",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "모든 프로젝트 클린 다시 구성",
 	"cmake-tools.command.cmake.clean.title": "정리",
@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "'컴팩트' 모드에서 표시되는 텍스트의 최대 길이를 구성합니다.",
 	"cmake-tools.configuration.views.cmake.folders.description": "폴더",
 	"cmake-tools.configuration.views.cmake.outline.description": "프로젝트 개요",
+	"cmake-tools.configuration.cmake.additionalKits.description": "사용자 지정 키트 파일의 경로 배열",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json 내보내기를 사용하도록 설정합니다."
 }

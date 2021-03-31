@@ -570,7 +570,7 @@ export function disposeAll(disp: Iterable<vscode.Disposable>) {
   }
 }
 
-export function reportProgress(progress: ProgressHandle|undefined, message: string) {
+export function reportProgress(message: string, progress?: ProgressHandle) {
   if (progress) {
     progress.report({message});
   }
@@ -621,4 +621,8 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
     throw new Error(localize('sourcedirectory.not.a.directory', '"sourceDirectory: {0}" is not a directory', result));
   }
   return result;
+}
+
+export function isCodespaces(): boolean {
+  return !!process.env["CODESPACES"];
 }

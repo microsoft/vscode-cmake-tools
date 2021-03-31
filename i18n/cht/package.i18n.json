@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "設定建置目標",
 	"cmake-tools.command.cmake.cleanConfigure.title": "刪除快取並重新設定",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "刪除快取並重新設定所有專案",
-	"cmake-tools.command.cmake.openConfiguration.title": "編輯 CMake 快取 (UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "編輯 CMake 快取 (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "清除重新設定",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "清除 [重新設定所有專案]",
 	"cmake-tools.command.cmake.clean.title": "清除",
@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "在「精簡」模式中設定顯示文字的最大長度。",
 	"cmake-tools.configuration.views.cmake.folders.description": "資料夾",
 	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱",
+	"cmake-tools.configuration.cmake.additionalKits.description": "自訂套件檔案的路徑陣列",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "啟用匯出 compile_commands.json。"
 }

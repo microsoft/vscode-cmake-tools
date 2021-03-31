@@ -151,6 +151,32 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
           .to.be.rejectedWith('No usable generator found.');
     }).timeout(60000);
 
+    test('Test compiler name reporting for telemetry', async () => {
+      const config = ConfigurationReader.create();
+      const executable = await getCMakeExecutableInformation(cmakePath);
+      driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+
+      // A few path examples that would exercise through the telemetry reporting rules:
+      // - any name that is not recognized is reported as "other"
+      // - any architecture reference found in either suffix or prefix is appended to the telemetry filtered name
+      //   (architecture specific keywords being arm, arm64, eabi and aarch64)
+      // - include a few of the compiler names that are substrings of others
+      let compilerInfo = await driver.getCompilerVersion("drive/folder/path/aarch64_clang++");
+      expect(compilerInfo.name).to.be.eq("clang++-aarch64");
+      compilerInfo = await driver.getCompilerVersion("drive/folder/path/clang_eabi");
+      expect(compilerInfo.name).to.be.eq("clang-eabi");
+      compilerInfo = await driver.getCompilerVersion("drive/folder/path/cl.exe");
+      expect(compilerInfo.name).to.be.eq("cl");
+      compilerInfo = await driver.getCompilerVersion("drive/folder/path/arm-xlc++");
+      expect(compilerInfo.name).to.be.eq("xlc++-arm");
+      compilerInfo = await driver.getCompilerVersion("drive/folder/path/other-prefix-gcc");
+      expect(compilerInfo.name).to.be.eq("gcc");
+      compilerInfo = await driver.getCompilerVersion("drive/folder/path/cc-other-suffix");
+      expect(compilerInfo.name).to.be.eq("cc");
+      compilerInfo = await driver.getCompilerVersion("drive/folder/path/unknown-arm64-compiler");
+      expect(compilerInfo.name).to.be.eq("other-arm64");
+    }).timeout(90000);
+
     test('Set kit without a preferred generator', async () => {
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);

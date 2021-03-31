@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "设置生成目标",
 	"cmake-tools.command.cmake.cleanConfigure.title": "删除缓存并重新配置",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "删除缓存并重新配置所有项目",
-	"cmake-tools.command.cmake.openConfiguration.title": "编辑 CMake 缓存(UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "编辑 CMake 缓存(UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "清理重新配置",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "清理所有项目的重新配置",
 	"cmake-tools.command.cmake.clean.title": "清理",
@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "配置可见文本在在“紧凑”模式下的最大长度。",
 	"cmake-tools.configuration.views.cmake.folders.description": "文件夹",
 	"cmake-tools.configuration.views.cmake.outline.description": "项目大纲",
+	"cmake-tools.configuration.cmake.additionalKits.description": "自定义工具包文件的路径数组",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "启用导出 compile_commands.json。"
 }

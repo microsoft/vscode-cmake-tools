@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Definir o Destino de Build",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Excluir o Cache e Reconfigurar",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Excluir o Cache e Reconfigurar Todos os Projetos",
-	"cmake-tools.command.cmake.openConfiguration.title": "Editar o Cache do CMake (interface do usuário)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Editar o Cache do CMake (interface do usuário)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Reconfiguração Limpa",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Limpar a Ação Reconfigurar Todos os Projetos",
 	"cmake-tools.command.cmake.clean.title": "Limpar",
@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configura o comprimento máximo do texto visível no modo 'compacto'.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Pastas",
 	"cmake-tools.configuration.views.cmake.outline.description": "Estrutura do Código do Projeto",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Matriz de caminhos para os arquivos do kit personalizado",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita a exportação de compile_commands.json."
 }

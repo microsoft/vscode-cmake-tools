@@ -77,7 +77,7 @@ export type Vendor_VsSettings = {
     [key: string]: any;
   }
   [key: string]: any;
-}
+};
 
 export interface ConfigurePreset extends Preset {
   generator?: string;

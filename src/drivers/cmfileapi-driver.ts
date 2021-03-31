@@ -10,7 +10,8 @@ import {
   loadCacheContent,
   loadConfigurationTargetMap,
   loadExtCodeModelContent,
-  loadIndexFile
+  loadIndexFile,
+  loadToolchains
 } from '@cmt/drivers/cmakefileapi/api_helpers';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
 import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
@@ -259,6 +260,20 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       }
       this._target_map = await loadConfigurationTargetMap(reply_path, codemodel_obj.jsonFile);
       this._codeModel = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
+
+      // load toolchains
+      const toolchains_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'toolchains');
+
+      // The "toolchains" object kind wasn't introduced until CMake 3.20, so
+      // it's not fatal if it's missing in the response.
+      if (!toolchains_obj) {
+        log.warning(localize(
+          'toolchains.object.unsupported',
+          'This version of CMake does not support the "toolchains" object kind. Compiler paths will be determined by reading CMakeCache.txt.'));
+      } else {
+        this._codeModel.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
+      }
+
       this._codeModelChanged.fire(this._codeModel);
     }
     return indexFile !== null;

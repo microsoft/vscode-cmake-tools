@@ -35,6 +35,8 @@ import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode}
 import * as util from '@cmt/util';
 import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
+import {expandString, KitContextVars} from '@cmt/expand';
+import paths from '@cmt/paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -144,7 +146,12 @@ class ExtensionManager implements vscode.Disposable {
   private readonly _workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
   private updateTouchBarVisibility(config: TouchBarConfig) {
-    util.setContextValue("cmake:enableTouchBar", config.visibility === "default");
+    const touchBarVisible = config.visibility === "default";
+    util.setContextValue("cmake:enableTouchBar", touchBarVisible);
+    util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
+    util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
+    util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
+    util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
   }
   /**
    * Second-phase async init
@@ -409,6 +416,14 @@ class ExtensionManager implements vscode.Disposable {
     await telemetry.deactivate();
   }
 
+  async configureInternal(trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
+    if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
+      return;
+    }
+
+    await cmt.configureInternal(trigger, [], ConfigureType.Normal);
+  }
+
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
     const ws = info.folder;
     const cmt = info.cmakeTools;
@@ -470,30 +485,59 @@ class ExtensionManager implements vscode.Disposable {
       rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, persist_pr);
       should_configure = chosen.doConfigure;
     }
-    if (should_configure) {
-      // We've opened a new workspace folder, and the user wants us to
-      // configure it now.
-      log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-      // Ensure that there is a kit. This is required for new instances.
-      if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
-        return;
-      }
-      await cmt.configureInternal(ConfigureTrigger.configureOnOpen, [], ConfigureType.Normal);
-    } else if (silentScanForKitsNeeded) {
-      // This popup will show up the first time after deciding not to configure, if a version change has been detected
-      // in the kits definition. This may happen during a CMake Tools extension upgrade.
-      // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
-      // being tied to a global state variable.
-      const configureButtonMessage = localize('configure.now.button', 'Configure Now');
-      const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
-      if (result === configureButtonMessage) {
-        // Ensure that there is a kit. This is required for new instances.
-        if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
-          return;
-        }
-        await cmt.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, [], ConfigureType.Normal);
-      }
+
+    const optsVars: KitContextVars = {
+      userHome: paths.userHome,
+      workspaceFolder: cmt.workspaceContext.folder.uri.fsPath,
+      workspaceFolderBasename: cmt.workspaceContext.folder.name,
+      workspaceRoot: cmt.workspaceContext.folder.uri.fsPath,
+      workspaceRootFolderName: cmt.workspaceContext.folder.name,
+
+      // sourceDirectory cannot be defined based on any of the below variables.
+      buildKit: "",
+      buildType: "",
+      generator: "",
+      buildKitVendor: "",
+      buildKitTriple: "",
+      buildKitVersion: "",
+      buildKitHostOs: "",
+      buildKitTargetOs: "",
+      buildKitTargetArch: "",
+      buildKitVersionMajor: "",
+      buildKitVersionMinor: "",
+      workspaceHash: "",
+    };
+
+    // Don't configure if the current project is not CMake based (it doesn't have a CMakeLists.txt in the sourceDirectory).
+    const sourceDirectory: string = cmt.workspaceContext.config.sourceDirectory;
+    let expandedSourceDirectory: string = util.lightNormalizePath(await expandString(sourceDirectory, { vars: optsVars }));
+    if (path.basename(expandedSourceDirectory).toLocaleLowerCase() !== "cmakelists.txt") {
+      expandedSourceDirectory = path.join(expandedSourceDirectory, "CMakeLists.txt");
     }
+    if (await fs.exists(expandedSourceDirectory)) {
+      if (should_configure) {
+        // We've opened a new workspace folder, and the user wants us to
+        // configure it now.
+        log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
+        await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
+      } else if (silentScanForKitsNeeded) {
+        // This popup will show up the first time after deciding not to configure, if a version change has been detected
+        // in the kits definition. This may happen during a CMake Tools extension upgrade.
+        // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+        // being tied to a global state variable.
+        const configureButtonMessage = localize('configure.now.button', 'Configure Now');
+        const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
+        if (result === configureButtonMessage) {
+          await this.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
+        }
+      }
+    } else {
+      await enableFullFeatureSet(false, cmt.folder);
+    }
+
+    // Enable full or partial feature set for each workspace folder, depending on their state variable.
+    this.enableWorkspaceFoldersFullFeatureSet();
+
     this._updateCodeModel(info);
   }
 
@@ -728,7 +772,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async scanForKits() {
-    KitsController.minGWSearchDirs = this._getMinGWDirs();
+    KitsController.minGWSearchDirs = await this._getMinGWDirs();
     const cmakeTools = this._folders.activeFolder?.cmakeTools;
     if (undefined === cmakeTools) {
       return;
@@ -753,10 +797,34 @@ class ExtensionManager implements vscode.Disposable {
   /**
    * Get the current MinGW search directories
    */
-  private _getMinGWDirs(): string[] {
+  private async _getMinGWDirs(): Promise<string[]> {
+    const optsVars: KitContextVars = {
+      userHome: paths.userHome,
+
+      // This is called during scanning for kits, which is an operation that happens
+      // outside the scope of a project folder, so it doesn't need the below variables.
+      buildKit: "",
+      buildType: "",
+      generator: "",
+      workspaceFolder: "",
+      workspaceFolderBasename: "",
+      workspaceHash: "",
+      workspaceRoot: "",
+      workspaceRootFolderName: "",
+      buildKitVendor: "",
+      buildKitTriple: "",
+      buildKitVersion: "",
+      buildKitHostOs: "",
+      buildKitTargetOs: "",
+      buildKitTargetArch: "",
+      buildKitVersionMajor: "",
+      buildKitVersionMinor: "",
+      projectName: "",
+    };
     const result = new Set<string>();
     for (const dir of this._workspaceConfig.mingwSearchDirs) {
-      result.add(dir);
+      const expandedDir: string = util.lightNormalizePath(await expandString(dir, {vars: optsVars}));
+      result.add(expandedDir);
     }
     return Array.from(result);
   }
@@ -804,6 +872,7 @@ class ExtensionManager implements vscode.Disposable {
     if (kitSelected) {
       return true;
     }
+
     return false;
   }
 
@@ -1315,14 +1384,11 @@ export async function registerTaskProvider(command: string | null) {
   }
 }
 
-async function setup(context: vscode.ExtensionContext, progress: ProgressHandle) {
-  reportProgress(progress, localize('initial.setup', 'Initial setup'));
+async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle) {
+  reportProgress(localize('initial.setup', 'Initial setup'), progress);
 
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
-
-  // Enable full or partial feature set for each workspace folder, depending on their state variable.
-  ext.enableWorkspaceFoldersFullFeatureSet();
 
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
@@ -1421,7 +1487,7 @@ async function setup(context: vscode.ExtensionContext, progress: ProgressHandle)
   // Register the functions before the extension is done loading so that fast
   // fingers won't cause "unregistered command" errors while CMake Tools starts
   // up. The command wrapper will await on the extension promise.
-  reportProgress(progress, localize('loading.extension.commands', 'Loading extension commands'));
+  reportProgress(localize('loading.extension.commands', 'Loading extension commands'), progress);
   for (const key of funs) {
     log.trace(localize('register.command', 'Register CMakeTools extension command {0}', `cmake.${key}`));
     context.subscriptions.push(register(key));
@@ -1495,14 +1561,7 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
-  await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: localize('cmake.tools.initializing', 'CMake Tools initializing...'),
-        cancellable: false,
-      },
-      progress => setup(context, progress),
-  );
+  return setup(context);
 
   // TODO: Return the extension API
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));

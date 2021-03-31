@@ -38,6 +38,7 @@ import {setContextValue} from './util';
 import {VariantManager} from './variant';
 import {CMakeFileApiDriver} from '@cmt/drivers/cmfileapi-driver';
 import * as nls from 'vscode-nls';
+import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
 import {enableFullFeatureSet, registerTaskProvider} from './extension';
@@ -903,6 +904,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
           return this._doConfigure(progress, async consumer => {
             const drv = await this.getCMakeDriverInstance();
+            const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
             if (drv) {
               let old_prog = 0;
               const prog_sub = drv.onProgress(pr => {
@@ -917,6 +919,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               try {
                 progress.report({message: localize('configuring.project', 'Configuring project')});
                 let retc: number;
+                await setContextValue(IS_CONFIGURING_KEY, true);
                 if (type == ConfigureType.Cache) {
                   retc = await drv.configure(trigger, [], consumer, true);
                 } else {
@@ -932,6 +935,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                         retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
                       break;
                   }
+                  await setContextValue(IS_CONFIGURING_KEY, false);
                 }
                 if (retc === 0) {
                   await this._refreshCompileDatabase(drv.expansionOptions);
@@ -945,6 +949,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 this._onReconfiguredEmitter.fire();
                 return retc;
               } finally {
+                await setContextValue(IS_CONFIGURING_KEY, false);
                 progress.report({message: localize('finishing.configure', 'Finishing configure')});
                 prog_sub.dispose();
               }
@@ -1708,7 +1713,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     };
     if (process.platform == 'win32') {
       // Use cmd.exe on Windows
-      termOptions.shellPath = 'C:\\Windows\\System32\\cmd.exe';
+      termOptions.shellPath = paths.windows.ComSpec;
     }
     if (!this._launchTerminal)
       this._launchTerminal = vscode.window.createTerminal(termOptions);

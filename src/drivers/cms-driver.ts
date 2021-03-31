@@ -163,7 +163,12 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       return acc;
     }, new Map<string, cache.Entry>());
     this.codeModel = await client.codemodel();
-    this._codeModelChanged.fire(this.codeModel);
+
+    // Toolchain information is not available with CMake server.
+    this._codeModelChanged.fire({
+        configurations: this.codeModel.configurations,
+        toolchains: new Map<string, codemodel.CodeModelToolchain>()
+    });
   }
 
   async doRefreshExpansions(cb: () => Promise<void>): Promise<void> {

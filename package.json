@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -47,6 +47,7 @@
     "onCommand:cmake.debugTarget",
     "onCommand:cmake.debugTargetAll",
     "onCommand:cmake.editCache",
+    "onCommand:cmake.editCacheUI",
     "onCommand:cmake.editKits",
     "onCommand:cmake.viewLog",
     "onCommand:cmake.install",
@@ -332,13 +333,15 @@
         "title": "%cmake-tools.command.cmake.cleanRebuildAll.title%"
       },
       {
-        "command": "cmake.openConfiguration",
-        "title": "%cmake-tools.command.cmake.openConfiguration.title%",
+        "command": "cmake.editCacheUI",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.editCacheUI.title%",
         "category": "CMake"
       },
       {
-        "command": "cmake.outline.openConfiguration",
-        "title": "%cmake-tools.command.cmake.openConfiguration.title%"
+        "command": "cmake.outline.editCacheUI",
+        "when": "cmake:enableFullFeatureSet",
+        "title": "%cmake-tools.command.cmake.editCacheUI.title%"
       },
       {
         "command": "cmake.ctest",
@@ -426,7 +429,6 @@
       {
         "command": "cmake.resetState",
         "title": "%cmake-tools.command.cmake.resetState.title%",
-        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -512,7 +514,6 @@
           "command": "cmake.selectActiveFolder"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
           "command": "cmake.resetState"
         },
         {
@@ -579,7 +580,8 @@
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
         },
         {
-          "command": "cmake.openConfiguration"
+          "command": "cmake.editCacheUI",
+          "when": "cmake:enableFullFeatureSet"
         },
         {
           "when": "cmake:enableFullFeatureSet",
@@ -670,7 +672,7 @@
           "when": "never"
         },
         {
-          "command": "cmake.outline.openConfiguration",
+          "command": "cmake.outline.editCacheUI",
           "when": "never"
         },
         {
@@ -742,8 +744,8 @@
           "group": "1_cmakeOutline"
         },
         {
-          "command": "cmake.outline.openConfiguration",
-          "when": "view == cmake.outline",
+          "command": "cmake.outline.editCacheUI",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet",
           "group": "1_cmakeOutline"
         }
       ],
@@ -888,35 +890,35 @@
       ],
       "touchBar": [
         {
-          "command": "cmake.configure",
-          "when": "cmake:enableTouchBar && !cmake:enableFullFeatureSet",
-          "group": "CMake:start"
-        },
-        {
           "command": "cmake.quickStart",
           "when": "cmake:enableTouchBar && !cmake:enableFullFeatureSet",
           "group": "CMake:start"
         },
         {
+          "command": "cmake.configure",
+          "when": "cmake:enableTouchBar.configure && !cmake:isBuilding && !cmake:isConfiguring",
+          "group": "CMake:build"
+        },
+        {
           "command": "cmake.build",
           "alt": "cmake.configure",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:isBuilding",
+          "when": "cmake:enableTouchBar.build && cmake:enableFullFeatureSet && !cmake:isBuilding && !cmake:isConfiguring",
           "group": "CMake:build"
         },
         {
           "command": "cmake.stop",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && cmake:isBuilding",
+          "when": "cmake:enableTouchBar.build && cmake:enableFullFeatureSet && cmake:isBuilding",
           "group": "CMake:build"
         },
         {
           "command": "cmake.debugTarget",
           "alt": "cmake.selectLaunchTarget",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
+          "when": "cmake:enableTouchBar.debug && cmake:enableFullFeatureSet && !cmake:hideDebugCommand",
           "group": "CMake:run"
         },
         {
           "command": "cmake.launchTarget",
-          "when": "cmake:enableTouchBar && cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
+          "when": "cmake:enableTouchBar.launch && cmake:enableFullFeatureSet && !cmake:hideLaunchCommand",
           "group": "CMake:run"
         }
       ]
@@ -1333,7 +1335,7 @@
             "description": "%cmake-tools.configuration.cmake.searchDirs.items.description%"
           },
           "default": [
-            "C:\\MinGW"
+            "${env:SystemDrive}/MinGW"
           ],
           "description": "%cmake-tools.configuration.cmake.mingwSearchDirs.description%",
           "scope": "window"
@@ -1441,6 +1443,64 @@
             "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
           ],
           "scope": "window"
+        },
+        "cmake.touchbar.advanced": {
+          "type": "object",
+          "scope": "window",
+          "properties": {
+            "build": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            },
+            "configure": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            },
+            "debug": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            },
+            "launch": {
+              "type": "string",
+              "default": "default",
+              "description": "%cmake-tools.configuration.cmake.touchbar.visibility.description%",
+              "enum": [
+                "default",
+                "hidden"
+              ],
+              "enumDescriptions": [
+                "%cmake-tools.configuration.cmake.touchbar.visibility.default.description%",
+                "%cmake-tools.configuration.cmake.touchbar.visibility.hidden.description%"
+              ]
+            }
+          }
         },
         "cmake.statusbar.visibility": {
           "type": "string",
@@ -1665,6 +1725,15 @@
               }
             }
           }
+        },
+        "cmake.additionalKits": {
+          "type": "array",
+          "default": [],
+          "description": "%cmake-tools.configuration.cmake.additionalKits.description%",
+          "items": {
+            "type": "string"
+          },
+          "scope": "resource"
         },
         "cmake.revealLog": {
           "type": "string",

@@ -25,7 +25,7 @@
     "cmake-tools.command.cmake.setDefaultTarget.title": "Set Build Target",
     "cmake-tools.command.cmake.cleanConfigure.title": "Delete Cache and Reconfigure",
     "cmake-tools.command.cmake.cleanConfigureAll.title": "Delete Cache and Reconfigure All Projects",
-    "cmake-tools.command.cmake.openConfiguration.title": "Edit CMake Cache (UI)",
+    "cmake-tools.command.cmake.editCacheUI.title": "Edit CMake Cache (UI)",
     "cmake-tools.command.cmake.outline.cleanConfigure.title": "Clean Reconfigure",
     "cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Clean Reconfigure All Projects",
     "cmake-tools.command.cmake.clean.title": "Clean",
@@ -126,6 +126,7 @@
     "cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configures the maximum length of visible text in 'compact' mode.",
     "cmake-tools.configuration.views.cmake.folders.description": "Folders",
     "cmake-tools.configuration.views.cmake.outline.description": "Project Outline",
+    "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files",
     "cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json.",
     "cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json to configure drive CMake configure, build, and test. When using CMakePresets.json, kits, variants, and some settings in settings.json will be ignored."
 }

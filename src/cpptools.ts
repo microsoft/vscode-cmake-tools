@@ -25,10 +25,9 @@ type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
 type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
   | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20";
 
-
 export interface CompileFlagInformation {
   extraDefinitions: string[];
-  standard: StandardVersion;
+  standard?: StandardVersion;
   targetArch: Architecture;
 }
 
@@ -41,7 +40,7 @@ interface TargetDefaults {
   defines: string[];
 }
 
-function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion|null {
+function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion | undefined {
   const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
@@ -56,11 +55,11 @@ function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion|nu
   } else if (std.endsWith('++98')) {
     return is_gnu ? 'gnu++98' : 'c++98';
   } else {
-    return null;
+    return undefined;
   }
 }
 
-function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null {
+function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion | undefined {
   // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
   const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(std)) {
@@ -77,7 +76,7 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion|null
       return 'c11';
     }
   } else {
-    return null;
+    return undefined;
   }
 }
 
@@ -117,7 +116,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = (lang === 'C') ? 'c11' : 'c++17';
+  let standard: StandardVersion | undefined;
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
@@ -167,24 +166,24 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const std = value.substring(5);
       if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA' ) {
         const s = parseCppStandard(std, can_use_gnu_std);
-        if (s === null) {
+        if (!s) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
           standard = s;
         }
       } else if (lang === 'C' || lang === 'OBJC' ) {
         const s = parseCStandard(std, can_use_gnu_std);
-        if (s === null) {
+        if (!s) {
           log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
         } else {
           standard = s;
         }
       } else if (lang === undefined) {
         let s = parseCppStandard(std, can_use_gnu_std);
-        if (s === null) {
+        if (!s) {
           s = parseCStandard(std, can_use_gnu_std);
         }
-        if (s === null) {
+        if (!s) {
           log.warning(localize('unknown.control.gflag', 'Unknown standard control flag: {0}', value));
         } else {
           standard = s;
@@ -392,11 +391,17 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
-    // Try the group's language's compiler, then the C++ compiler, then the C compiler.
-    const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`) || opts.cache.get('CMAKE_CXX_COMPILER')
+    // First try to get toolchain values directly reported by CMake. Check the
+    // group's language compiler, then the C++ compiler, then the C compiler.
+    const comp_toolchains = opts.codeModel.toolchains?.get(lang ?? "")
+        || opts.codeModel.toolchains?.get('CXX')
+        || opts.codeModel.toolchains?.get('C');
+    // If none of those work, fall back to the same order, but in the cache.
+    const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
+        || opts.cache.get('CMAKE_CXX_COMPILER')
         || opts.cache.get('CMAKE_C_COMPILER');
     // Try to get the path to the compiler we want to use
-    const comp_path = comp_cache ? comp_cache.as<string>() : opts.clCompilerPath;
+    const comp_path = comp_toolchains ? comp_toolchains.path : (comp_cache ? comp_cache.as<string>() : opts.clCompilerPath);
     if (!comp_path) {
       throw new MissingCompilerException();
     }
