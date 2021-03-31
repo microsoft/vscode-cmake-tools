@@ -342,10 +342,14 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
         if (this.config.configureOnEdit) {
           log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected 'cmake.sourceDirectory' setting update, attempting automatic reconfigure..."));
           await this.configure(ConfigureTrigger.sourceDirectoryChange, []);
-        } else if (this.workspaceFolder) {
+        }
+
+        // Evaluate for this folder (whose sourceDirectory setting just changed)
+        // if the new value points to a valid CMakeLists.txt.
+        if (this.workspaceFolder) {
           const folder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(this.workspaceFolder));
           if (folder) {
-            await ext.enableFullFeatureSet(true);
+            await ext.updateFullFeatureSetForFolder(folder);
           }
         }
       }
