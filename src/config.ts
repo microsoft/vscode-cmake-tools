@@ -187,7 +187,7 @@ export class ConfigurationReader implements vscode.Disposable {
   }
 
   update(newData: ExtensionConfigurationSettings): string[] { return this.updatePartial(newData); }
-  updatePartial(newData: Partial<ExtensionConfigurationSettings>): string[] {
+  updatePartial(newData: Partial<ExtensionConfigurationSettings>, fireEvent: boolean = true): string[] {
     const keys: string[] = [];
     const old_values = {...this.configData};
     Object.assign(this.configData, newData);
@@ -199,8 +199,10 @@ export class ConfigurationReader implements vscode.Disposable {
       const new_value = this.configData[key];
       const old_value = old_values[key];
       if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
-        const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
-        em.fire(newData[key]);
+        if (fireEvent) {
+          const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
+          em.fire(newData[key]);
+        }
         keys.push(key);
       }
     }

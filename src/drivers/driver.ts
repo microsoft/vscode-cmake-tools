@@ -45,7 +45,7 @@ interface CompilerInfo {
   version: string;
 }
 
-export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems) => Promise<void>;
+export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<void>;
 
 function nullableValueToString(arg: any|null|undefined): string { return arg === null ? 'empty' : arg; }
 
@@ -1201,7 +1201,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
       log.debug(localize('no.configurating', 'No configuring: There is no {0}', cmake_list));
-      await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile);
+      await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile, this.config);
       return false;
     }
 
@@ -1232,11 +1232,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   async getCMakeBuildCommand(target: string): Promise<proc.BuildCommand|null> {
-    const ok = await this._beforeConfigureOrBuild();
-    if (!ok) {
-      return null;
-    }
-
     const gen = this.generatorName;
     target = this.correctAllTargetName(target);
 
