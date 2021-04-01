@@ -3,9 +3,10 @@ import * as chokidar from 'chokidar';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
-import {EnvironmentVariables, execute} from './proc';
 import * as nls from 'vscode-nls';
+
+import {EnvironmentVariables, execute} from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -618,7 +619,7 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
     result = path.dirname(result);
   }
   if (!(await checkDirectoryExists(result))) {
-    throw new Error(localize('sourcedirectory.not.a.directory', '"sourceDirectory: {0}" is not a directory', result));
+    rollbar.error(localize('sourcedirectory.not.a.directory', '"sourceDirectory" is not a directory'), { sourceDirectory: result });
   }
   return result;
 }
