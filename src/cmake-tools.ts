@@ -41,7 +41,8 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import {enableFullFeatureSet, registerTaskProvider} from './extension';
+import {updateFullFeatureSetForFolder, registerTaskProvider, enableFullFeatureSet} from './extension';
+import { ConfigurationReader } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -277,13 +278,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async cmakePreConditionProblemHandler(e: CMakePreconditionProblems): Promise<void> {
-    // The only reason for limiting the functionality of CMake Tools extension
-    // (like hiding commands or the status bar) is a missing CMakeLists.txt file
-    // under the folder location set by the cmake.sourceDirectory setting.
-    // This is only one of more cases treated here, so start with assuming that partial activation is not needed.
-    let fullFeatureSet: boolean = true;
-
+  private async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, config?: ConfigurationReader): Promise<void> {
     switch (e) {
     case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
       vscode.window.showErrorMessage(localize('configuration.already.in.progress', 'Configuration is already in progress.'));
@@ -303,7 +298,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
             quickStart, changeSetting, ignoreCMakeListsMissing);
         if (result === quickStart) {
-          vscode.commands.executeCommand('cmake.quickStart');
+          // Return here, since the updateFolderFullFeature set below (after the "switch")
+          // will set unnecessarily a partial feature set view for this folder
+          // if quickStart doesn't finish early enough.
+          // quickStart will update correctly the full/partial view state at the end.
+          return vscode.commands.executeCommand('cmake.quickStart');
         } else if (result === changeSetting) {
           // Open the search file dialog from the path set by cmake.sourceDirectory or from the current workspace folder
           // if the setting is not defined.
@@ -319,20 +318,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             const relPathDir: string = lightNormalizePath(path.relative(this.folder.uri.fsPath, fullPathDir));
             const joinedPath = "${workspaceFolder}/".concat(relPathDir);
             vscode.workspace.getConfiguration('cmake', this.folder.uri).update("sourceDirectory", joinedPath);
-            const drv = await this.getCMakeDriverInstance();
-            if (drv) {
-              drv.config.updatePartial({sourceDirectory: joinedPath});
-            } else {
-              const reloadWindowButton = localize('reload.window', 'Reload Window');
-              const reload = await vscode.window.showErrorMessage(localize('setting.sourceDirectory.failed.needs.reload.window',
-                    'Something went wrong while updating the cmake.sourceDirectory setting. Please run the "Reload window" command for the change to take effect.'),
-                    reloadWindowButton);
-              if (reload === reloadWindowButton) {
-                vscode.commands.executeCommand('workbench.action.reloadWindow');
-              }
+
+            if (config) {
+              // Updating sourceDirectory here, at the beginning of the configure process,
+              // doesn't need to fire the settings change event (which would trigger unnecessarily
+              // another immediate configure, which will be blocked anyway).
+              config.updatePartial({sourceDirectory: joinedPath}, false);
+
+              // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
+              // we know that it exists and we don't need any other additional checks on its value,
+              // so simply enable full feature set.
+              enableFullFeatureSet(true);
             }
-          } else {
-            fullFeatureSet = false;
           }
         } else if (result === ignoreCMakeListsMissing) {
           // The user ignores the missing CMakeLists.txt file --> limit the CMake Tools extension functionality
@@ -341,20 +338,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           // or to the CMakeLists.txt file, a successful configure or a configure failing with anything but CMakePreconditionProblems.MissingCMakeListsFile.
           // After that switch (back to a full activation), another occurrence of missing CMakeLists.txt
           // would trigger this popup again.
-          fullFeatureSet = false;
+          this.workspaceContext.state.ignoreCMakeListsMissing = true;
         }
-      } else {
-        // Previously, the user decided to ignore the missing CMakeLists.txt.
-        // Since we are here in cmakePreConditionProblemHandler, for the case of CMakePreconditionProblems.MissingCMakeListsFile,
-        // it means that there weren't yet any reasons to switch to full functionality,
-        // so keep enableFullFeatureSet as false.
-        fullFeatureSet = false;
       }
 
       break;
     }
 
-    await enableFullFeatureSet(fullFeatureSet, this.folder);
+    // This CMT folder can go through various changes while executing this function
+    // that could be relevant to the partial/full feature set view.
+    // This is a good place for an update.
+    return updateFullFeatureSetForFolder(this.folder);
   }
 
   /**
@@ -371,7 +365,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const workspace = this.folder.uri.fsPath;
     let drv: CMakeDriver;
     const preferredGenerators = this.getPreferredGenerators();
-    const preConditionHandler = async (e: CMakePreconditionProblems) => this.cmakePreConditionProblemHandler(e);
+    const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, config);
     let communicationMode = this.workspaceContext.config.cmakeCommunicationMode.toLowerCase();
     const fileApi = 'fileapi';
     const serverApi = 'serverapi';
@@ -526,18 +520,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
 
       if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
-        // The configure process can determine correctly whether the features set activation
-        // should be full or partial, so there is no need to proactively enable full here,
-        // unless the automatic configure is disabled.
-        // If there is a configure or a build in progress, we should avoid setting full activation here,
-        // even if cmake.configureOnEdit is true, because this may overwrite a different decision
-        // that was done earlier by that ongoing configure process.
+        // CMakeLists.txt change event: its creation or deletion are relevant,
+        // so update full/partial feature set view for this folder.
+        await updateFullFeatureSetForFolder(this.folder);
         if (drv && !drv.configOrBuildInProgress()) {
           if (drv.config.configureOnEdit) {
             log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
             await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
-          } else {
-            await enableFullFeatureSet(true, this.folder);
           }
         } else {
           log.warning(localize('cmakelists.save.could.not.reconfigure',
@@ -788,11 +777,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 if (retc === 0) {
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
-                if (retc !== -2) {
-                  // Partial activation mode is required only for -2 error code,
-                  // which represents a missing CMakeLists.txt
-                  await enableFullFeatureSet(true, this.folder);
-                }
+
                 await this._ctestController.reloadTests(drv);
                 this._onReconfiguredEmitter.fire();
                 return retc;
@@ -1658,6 +1643,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await fs.writeFile(mainListFile, init);
     const doc = await vscode.workspace.openTextDocument(mainListFile);
     await vscode.window.showTextDocument(doc);
+
+    // By now, quickStart is succesful in creating a valid CMakeLists.txt.
+    // Regardless of the following configure return code,
+    // we want full feature set view for the whole workspace.
+    enableFullFeatureSet(true);
     return this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal,);
   }
 
@@ -1666,7 +1656,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async resetState() {
     this.workspaceContext.state.reset();
-    vscode.commands.executeCommand('workbench.action.reloadWindow');
   }
 
   get sourceDir() {
