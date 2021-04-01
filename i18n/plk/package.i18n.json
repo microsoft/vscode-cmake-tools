@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Konfiguruje maksymalną długość widocznego tekstu w trybie „kompaktowym”.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Foldery",
 	"cmake-tools.configuration.views.cmake.outline.description": "Konspekt projektu",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Tablica ścieżek do plików zestawów niestandardowych",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umożliwia eksportowanie pliku compile_commands.js."
 }

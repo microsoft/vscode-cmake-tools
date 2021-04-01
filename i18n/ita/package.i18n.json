@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configura la lunghezza massima del testo visibile in modalità 'compact'.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Cartelle",
 	"cmake-tools.configuration.views.cmake.outline.description": "Struttura del progetto",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Matrice di percorsi dei file di kit personalizzati",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Consente l'esportazione di compile_commands.json."
 }

@@ -7,5 +7,6 @@
 	"failed.writing.to.file": "Fehler beim Schreiben in Datei \"{0}\".",
 	"cache.object.version": "Unerwartete Cacheobjektversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch.",
 	"cache.entry.unknowntype": "Unbekannter Cacheeintragstyp: \"{0}\".",
-	"code.model.version": "Unerwartete Codemodellversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch."
+	"code.model.version": "Unerwartete Codemodellversion ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch.",
+	"toolchains.object.version": "Unerwartete Objektversion für \"toolchains\" ({0}.{1}) von cmake-file-api. Erwartet: ({2}.{3}). Möglicherweise ist die IntelliSense-Konfiguration falsch."
 }
