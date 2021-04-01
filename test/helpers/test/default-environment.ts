@@ -54,6 +54,7 @@ export class DefaultEnvironment {
       if (options?.placeHolder == selections[0].identifier) {
         return Promise.resolve(selections[0].handleQuickPick(items));
       }
+      console.trace();
       return Promise.reject(`Unknown quick pick "${options?.placeHolder}"`);
     };
     this.sandbox.stub(vscode.window, 'showQuickPick').callsFake(fakeShowQuickPick);
