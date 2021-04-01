@@ -44,6 +44,11 @@ export class KitsController {
    */
   static userKits: Kit[] = [];
 
+  /**
+   * The non-Kit entries (scan, unspecified)
+   */
+  static specialKits: Kit[] = [];
+
   private static checkingHaveKits = false;
   public static isScanningForKits() { return this.checkingHaveKits; }
 
@@ -97,6 +102,7 @@ export class KitsController {
     const kitsController = new KitsController(cmakeTools, kitsWatcher);
     chokidarOnAnyChange(kitsWatcher, _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading folder kits'), {},
                         kitsController.readKits(KitsReadMode.folderKits)));
+    cmakeTools.workspaceContext.config.onChange('additionalKits', () => kitsController.readKits(KitsReadMode.folderKits));
 
     await kitsController.readKits(KitsReadMode.folderKits);
     return kitsController;
@@ -112,7 +118,7 @@ export class KitsController {
 
   get availableKits() {
     console.assert(KitsController.length > 0, 'readKits should have been called at least once before.');
-    return KitsController.userKits.concat(this.folderKits.concat(this.additionalKits));
+    return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
   }
 
   get folder() { return this.cmakeTools.folder; }
@@ -136,7 +142,7 @@ export class KitsController {
     }
 
     // Special kits - include order is important
-    const special_kits: ReadonlyArray<Kit> = [
+    KitsController.specialKits = [
       // Spcial __scanforkits__ kit used for invoking the "Scan for kits"
       {name: SpecialKits.ScanForKits},
       // Special __unspec__ kit for opting-out of kits
@@ -146,9 +152,8 @@ export class KitsController {
     // Load user-kits
     reportProgress(localize('loading.kits', 'Loading kits'), progress);
 
-    const user_kits: Kit[] = await readKitsFile(USER_KITS_FILEPATH);
+    KitsController.userKits = await readKitsFile(USER_KITS_FILEPATH);
 
-    KitsController.userKits = [...special_kits, ...user_kits];
     // Pruning requires user interaction, so it happens fully async
     KitsController._startPruneOutdatedKitsAsync(cmakeTools);
   }

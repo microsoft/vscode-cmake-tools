@@ -366,7 +366,7 @@ export class CTestDriver implements vscode.Disposable {
     } else {
       const configuration = driver.currentBuildType;
       ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
-        this.ws.config.ctestArgs);
+        this.ws.config.ctestDefaultArgs, this.ws.config.ctestArgs);
     }
 
     const child = driver.executeCommand(
