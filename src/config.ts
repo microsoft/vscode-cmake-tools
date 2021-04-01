@@ -100,6 +100,7 @@ export interface ExtensionConfigurationSettings {
   debugConfig: object;
   defaultVariants: object;
   ctestArgs: string[];
+  ctestDefaultArgs: string[];
   environment: HardEnv;
   configureEnvironment: HardEnv;
   buildEnvironment: HardEnv;
@@ -238,6 +239,7 @@ export class ConfigurationReader implements vscode.Disposable {
   get testEnvironment() { return this.configData.testEnvironment; }
   get defaultVariants(): Object { return this.configData.defaultVariants; }
   get ctestArgs(): string[] { return this.configData.ctestArgs; }
+  get ctestDefaultArgs(): string[] { return this.configData.ctestDefaultArgs; }
   get configureOnOpen() {
     if (util.isCodespaces() && this.configData.configureOnOpen === null) {
       return true;
@@ -320,6 +322,7 @@ export class ConfigurationReader implements vscode.Disposable {
     debugConfig: new vscode.EventEmitter<object>(),
     defaultVariants: new vscode.EventEmitter<object>(),
     ctestArgs: new vscode.EventEmitter<string[]>(),
+    ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
     environment: new vscode.EventEmitter<HardEnv>(),
     configureEnvironment: new vscode.EventEmitter<HardEnv>(),
     buildEnvironment: new vscode.EventEmitter<HardEnv>(),
