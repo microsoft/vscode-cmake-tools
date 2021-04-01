@@ -169,4 +169,58 @@ suite('Select debugger', async () => {
     expect(config.name).to.be.eq('Debug Test');
     expect(config.type).to.be.eq('cppvsdbg');
   });
+
+  test('Create debug config from cache - debugger and debugger path overrides', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.returns(createExecuteReturn(0));
+
+    const target = {name: 'Test', path: 'Target'};
+    const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.miModes.gdb, "../folder/debugger/gdb");
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
+    expect(config.name).to.be.eq('Debug Test');
+    expect(config['MIMode']).to.be.eq('gdb');
+    expect(config.type).to.be.eq('cppdbg');
+    expect(config['miDebuggerPath']).to.be.eq('../folder/debugger/gdb');
+  });
+
+  test('Create debug config from cache - debugger override', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.returns(createExecuteReturn(0));
+
+    const target = {name: 'Test', path: 'Target'};
+    const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux', Debugger.miModes.lldb);
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
+    expect(config.name).to.be.eq('Debug Test');
+    expect(config['MIMode']).to.be.eq('lldb');
+    expect(config.type).to.be.eq('cppdbg');
+    expect(config['miDebuggerPath']).to.be.eq('lldb');
+  });
+
+  test('Create debug config from cache - debugger path override', async () => {
+    const stub = sandbox.stub(proc, 'execute');
+    stub.returns(createExecuteReturn(0));
+
+    const target = {name: 'Test', path: 'Target'};
+    const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', undefined, "../folder/debugger/lldb-mi");
+    expect(config).to.not.be.null;
+    if (!config) {
+      throw new Error();
+    }
+    expect(config.name).to.be.eq('Debug Test');
+    expect(config['MIMode']).to.be.eq('lldb');
+    expect(config.type).to.be.eq('cppdbg');
+    expect(config['miDebuggerPath']).to.be.eq('../folder/debugger/lldb-mi');
+  });
 });
