@@ -25,7 +25,15 @@ interface HardEnv {
   [key: string]: string;
 }
 
+export interface AdvancedTouchBarConfig {
+  configure?:  TouchBarButtonVisibility;
+  build?: TouchBarButtonVisibility;
+  debug?: TouchBarButtonVisibility;
+  launch?: TouchBarButtonVisibility;
+}
+
 export interface TouchBarConfig {
+  advanced?: AdvancedTouchBarConfig;
   visibility: TouchBarButtonVisibility;
 }
 
@@ -92,6 +100,7 @@ export interface ExtensionConfigurationSettings {
   debugConfig: object;
   defaultVariants: object;
   ctestArgs: string[];
+  ctestDefaultArgs: string[];
   environment: HardEnv;
   configureEnvironment: HardEnv;
   buildEnvironment: HardEnv;
@@ -109,6 +118,7 @@ export interface ExtensionConfigurationSettings {
   outputLogEncoding: string;
   enableTraceLogging: boolean;
   loggingLevel: LogLevelKey;
+  additionalKits: string[];
   touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
 }
@@ -177,7 +187,7 @@ export class ConfigurationReader implements vscode.Disposable {
   }
 
   update(newData: ExtensionConfigurationSettings): string[] { return this.updatePartial(newData); }
-  updatePartial(newData: Partial<ExtensionConfigurationSettings>): string[] {
+  updatePartial(newData: Partial<ExtensionConfigurationSettings>, fireEvent: boolean = true): string[] {
     const keys: string[] = [];
     const old_values = {...this.configData};
     Object.assign(this.configData, newData);
@@ -189,8 +199,10 @@ export class ConfigurationReader implements vscode.Disposable {
       const new_value = this.configData[key];
       const old_value = old_values[key];
       if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
-        const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
-        em.fire(newData[key]);
+        if (fireEvent) {
+          const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
+          em.fire(newData[key]);
+        }
         keys.push(key);
       }
     }
@@ -227,7 +239,13 @@ export class ConfigurationReader implements vscode.Disposable {
   get testEnvironment() { return this.configData.testEnvironment; }
   get defaultVariants(): Object { return this.configData.defaultVariants; }
   get ctestArgs(): string[] { return this.configData.ctestArgs; }
-  get configureOnOpen() { return this.configData.configureOnOpen; }
+  get ctestDefaultArgs(): string[] { return this.configData.ctestDefaultArgs; }
+  get configureOnOpen() {
+    if (util.isCodespaces() && this.configData.configureOnOpen === null) {
+      return true;
+    }
+    return this.configData.configureOnOpen;
+  }
   get configureOnEdit() { return this.configData.configureOnEdit; }
   get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
@@ -260,6 +278,7 @@ export class ConfigurationReader implements vscode.Disposable {
   }
 
   get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
+  get additionalKits(): string[] { return this.configData.additionalKits; }
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
   get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
   get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
@@ -303,6 +322,7 @@ export class ConfigurationReader implements vscode.Disposable {
     debugConfig: new vscode.EventEmitter<object>(),
     defaultVariants: new vscode.EventEmitter<object>(),
     ctestArgs: new vscode.EventEmitter<string[]>(),
+    ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
     environment: new vscode.EventEmitter<HardEnv>(),
     configureEnvironment: new vscode.EventEmitter<HardEnv>(),
     buildEnvironment: new vscode.EventEmitter<HardEnv>(),
@@ -320,6 +340,7 @@ export class ConfigurationReader implements vscode.Disposable {
     outputLogEncoding: new vscode.EventEmitter<string>(),
     enableTraceLogging: new vscode.EventEmitter<boolean>(),
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
+    additionalKits: new vscode.EventEmitter<string[]>(),
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
     statusbar: new vscode.EventEmitter<StatusBarConfig>()
   };

@@ -40,7 +40,7 @@ export interface RequiredExpansionContextVars {
   buildKitVersionMinor: string;
   workspaceRootFolderName: string;
   userHome: string;
-}
+  }
 
 /**
  * Key-value type for variable expansions

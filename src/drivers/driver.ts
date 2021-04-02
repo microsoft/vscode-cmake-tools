@@ -45,7 +45,7 @@ interface CompilerInfo {
   version: string;
 }
 
-export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems) => Promise<void>;
+export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<void>;
 
 function nullableValueToString(arg: any|null|undefined): string { return arg === null ? 'empty' : arg; }
 
@@ -882,7 +882,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const compilerDir = path.parse(compilerPath).dir;
 
     // Find an equivalent in the compilers allowed list.
-    const compiler = this.compilerAllowList.find(comp => compilerName.includes(comp.name));
+    // To avoid finding "cl" instead of "clang" or "g++" instead of "clang++",
+    // sort the array from lengthier to shorter, so that the find operation
+    // would return the most precise match.
+    // The find condition must be "includes" instead of "equals"
+    // (which wouldn't otherwise need the sort) to avoid implementing separate handling
+    // for compiler file name prefixes and suffixes related to targeted architecture.
+    const sortedCompilerAllowList = this.compilerAllowList.sort((a, b) => {
+      return b.name.length - a.name.length;
+    });
+    const compiler = sortedCompilerAllowList.find(comp => compilerName.includes(comp.name));
 
     // Mask any unrecognized compiler as "other" to hide private information
     let allowedCompilerName = compiler ? compiler.name : "other";
@@ -1192,7 +1201,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const cmake_list = this.mainListFile;
     if (!await fs.exists(cmake_list)) {
       log.debug(localize('no.configurating', 'No configuring: There is no {0}', cmake_list));
-      await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile);
+      await this.preconditionHandler(CMakePreconditionProblems.MissingCMakeListsFile, this.config);
       return false;
     }
 
@@ -1223,11 +1232,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   async getCMakeBuildCommand(target: string): Promise<proc.BuildCommand|null> {
-    const ok = await this._beforeConfigureOrBuild();
-    if (!ok) {
-      return null;
-    }
-
     const gen = this.generatorName;
     target = this.correctAllTargetName(target);
 

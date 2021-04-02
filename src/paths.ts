@@ -1,6 +1,6 @@
 /**
  * This module defines important directories and paths to the extension
- */ /** */
+ */
 
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
@@ -16,11 +16,65 @@ interface VSCMakePaths {
   ninja?: string;
 }
 
+class WindowsEnvironment {
+  get AppData(): string | undefined {
+    return process.env['APPDATA'];
+}
+
+  get LocalAppData(): string | undefined {
+    return process.env['LOCALAPPDATA'];
+  }
+
+  get AllUserProfile(): string | undefined {
+    return process.env['ProgramData'];
+  }
+
+  get ComSpec(): string {
+    let comSpec = process.env['ComSpec'];
+
+    if (undefined === comSpec) {
+      comSpec = this.SystemRoot! + '\\system32\\cmd.exe';
+    }
+
+    return comSpec;
+  }
+
+  get HomeDrive(): string | undefined {
+    return process.env['HOMEDRIVE'];
+  }
+
+  get HomePath(): string | undefined {
+    return process.env['HOMEPATH'];
+  }
+
+  get ProgramFilesX86(): string | undefined {
+    return process.env['ProgramFiles(x86)'];
+  }
+
+  get ProgramFiles(): string | undefined {
+    return process.env['ProgramFiles'];
+  }
+
+  get SystemDrive(): string | undefined {
+    return process.env['SystemDrive'];
+  }
+
+  get SystemRoot(): string | undefined {
+    return process.env['SystemRoot'];
+  }
+
+  get Temp(): string | undefined {
+    return process.env['TEMP'];
+  }
+}
+
 /**
  * Directory class.
  */
 class Paths {
   private _ninjaPath?: string;
+
+  readonly windows: WindowsEnvironment = new WindowsEnvironment;
 
   /**
    * The current user's home directory
@@ -39,7 +93,7 @@ class Paths {
    */
   get userLocalDir(): string {
     if (process.platform == 'win32') {
-      return process.env['LocalAppData']!;
+      return this.windows.LocalAppData!;
     } else {
       const xdg_dir = process.env['XDG_DATA_HOME'];
       if (xdg_dir) {
@@ -52,7 +106,7 @@ class Paths {
 
   get userRoamingDir(): string {
     if (process.platform == 'win32') {
-      return process.env['AppData']!;
+      return this.windows.AppData!;
     } else {
       const xdg_dir = process.env['XDG_CONFIG_HOME'];
       if (xdg_dir) {
@@ -80,7 +134,7 @@ class Paths {
    */
   get tmpDir(): string {
     if (process.platform == 'win32') {
-      return process.env['TEMP']!;
+      return this.windows.Temp!;
     } else {
       return '/tmp';
     }
@@ -104,7 +158,7 @@ class Paths {
   }
 
   async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
-    const ctest_path = wsc.config.raw_ctestPath;
+    const ctest_path = await this.expandStringPath(wsc.config.raw_ctestPath, wsc);
     if (!ctest_path || ctest_path == 'auto') {
       const cmake = await this.getCMakePath(wsc);
       if (cmake === null) {
@@ -132,7 +186,42 @@ class Paths {
   async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
     this._ninjaPath = undefined;
 
-    const raw = await expandString(wsc.config.raw_cmakePath, {
+    const raw = await this.expandStringPath(wsc.config.raw_cmakePath, wsc);
+    if (raw === 'auto' || raw === 'cmake') {
+      // We start by searching $PATH for cmake
+      const on_path = await this.which('cmake');
+      if (on_path) {
+        return on_path;
+      }
+      if (process.platform === 'win32') {
+        // We didn't find it on the $PATH. Try some good guesses
+        const cmake_relative_path = '\\CMake\\bin\\cmake.exe';
+        const default_cmake_paths = [
+          this.windows.ProgramFiles! + cmake_relative_path,
+          this.windows.ProgramFilesX86! + cmake_relative_path
+        ];
+        for (const cmake_path of default_cmake_paths) {
+          if (await fs.exists(cmake_path)) {
+            return cmake_path;
+          }
+        }
+
+        // Look for bundled CMake executables in Visual Studio install paths
+        const bundled_tools_paths = await this.vsCMakePaths();
+        if (bundled_tools_paths.cmake) {
+          this._ninjaPath = bundled_tools_paths.ninja;
+
+          return bundled_tools_paths.cmake!;
+        }
+      }
+      return null;
+    }
+
+    return raw;
+  }
+
+  async expandStringPath(raw_path: string, wsc: DirectoryContext): Promise<string> {
+    return expandString(raw_path, {
       vars: {
         buildKit: '',
         buildKitVendor: '',
@@ -153,37 +242,6 @@ class Paths {
         userHome: this.userHome,
       },
     });
-
-    if (raw === 'auto' || raw === 'cmake') {
-      // We start by searching $PATH for cmake
-      const on_path = await this.which('cmake');
-      if (on_path) {
-        return on_path;
-      }
-      if (process.platform === 'win32') {
-        // We didn't find it on the $PATH. Try some good guesses
-        const default_cmake_paths = [
-          `C:\\Program Files\\CMake\\bin\\cmake.exe`,
-          `C:\\Program Files (x86)\\CMake\\bin\\cmake.exe`,
-        ];
-        for (const cmake_path of default_cmake_paths) {
-          if (await fs.exists(cmake_path)) {
-            return cmake_path;
-          }
-        }
-
-        // Look for bundled CMake executables in Visual Studio install paths
-        const bundled_tools_paths = await this.vsCMakePaths();
-        if (bundled_tools_paths.cmake) {
-          this._ninjaPath = bundled_tools_paths.ninja;
-
-          return bundled_tools_paths.cmake!;
-        }
-      }
-      return null;
-    }
-
-    return raw;
   }
 
   async vsCMakePaths(): Promise<VSCMakePaths> {

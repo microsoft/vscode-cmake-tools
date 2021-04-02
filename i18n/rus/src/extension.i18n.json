@@ -36,6 +36,5 @@
 	"loading.extension.commands": "Загрузка команд расширения.",
 	"register.command": "Регистрация команды расширения CMakeTools {0}",
 	"uninstall.old.cmaketools": "Удалите все старые версии расширения \"Средства CMake\". Начиная с версии 1.2.0, это расширение публикуется корпорацией Майкрософт.",
-	"cmake.tools.initializing": "Инициализация Средств CMake…",
 	"deactivate.cmaketools": "Деактивировать CMakeTools"
 }

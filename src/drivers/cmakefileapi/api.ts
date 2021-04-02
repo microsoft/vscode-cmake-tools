@@ -133,3 +133,31 @@ export interface TargetObject {
   compileGroups?: CompileGroup[];
 }
 }
+
+export namespace Toolchains {
+export interface Content {
+  version: ApiVersion;
+  toolchains: Toolchain[];
+}
+
+export interface Toolchain {
+  language: string;
+  compiler: Compiler;
+  sourceFileExtensions?: string[];
+}
+
+export interface Compiler {
+  path?: string;
+  id?: string;
+  version?: string;
+  target?: string;
+  implicit: ImplicitCompilerInfo;
+}
+
+export interface ImplicitCompilerInfo {
+  includeDirectories?: string[];
+  linkDirectories?: string[];
+  linkFrameworkDirectories?: string[];
+  linkLibraries?: string[];
+}
+}

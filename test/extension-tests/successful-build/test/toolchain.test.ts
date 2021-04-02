@@ -1,7 +1,7 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
-import {readKitsFile, kitsForWorkspaceDirectory, USER_KITS_FILEPATH} from '@cmt/kit';
+import {readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH} from '@cmt/kit';
 import {platformNormalizePath} from '@cmt/util';
 import {DefaultEnvironment, expect} from '@test/util';
 
@@ -22,6 +22,17 @@ suite('[Toolchain Substitution]', async () => {
     const kits = user_kits.concat(ws_kits);
     const tc_kit = kits.find(k => k.name === 'Test Toolchain');
     expect(tc_kit).to.not.eq(undefined);
+
+    // Test additional user kits
+    const add_kits = await getAdditionalKits(cmt);
+    expect(add_kits.length).to.be.eq(4);
+    const additionalKitNames = add_kits.map(k => k.name);
+    expect(additionalKitNames).to.deep.eq([
+      "Inside1",
+      "Inside2",
+      "Outside1",
+      "Outside2"
+    ]);
 
     // Set preferred generators
     testEnv.config.updatePartial({preferredGenerators: ['Unix Makefiles']});

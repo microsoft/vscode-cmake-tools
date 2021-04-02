@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Buildziel festlegen",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Cache löschen und neu konfigurieren",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Cache löschen und alle Projekte neu konfigurieren",
-	"cmake-tools.command.cmake.openConfiguration.title": "CMake-Cache bearbeiten (Benutzeroberfläche)",
+	"cmake-tools.command.cmake.editCacheUI.title": "CMake-Cache bearbeiten (Benutzeroberfläche)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Neukonfiguration bereinigen",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Alle Projekte sauber neu konfigurieren",
 	"cmake-tools.command.cmake.clean.title": "Bereinigen",
@@ -124,5 +124,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Hiermit wird die maximale Länge des sichtbaren Texts im Compact-Modus konfiguriert.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Ordner",
 	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Array aus Pfaden zu benutzerdefinierten Kit-Dateien",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Ermöglicht das Exportieren von \"compile_commands.json\"."
 }

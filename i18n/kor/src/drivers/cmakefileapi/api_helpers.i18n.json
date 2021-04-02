@@ -7,5 +7,6 @@
 	"failed.writing.to.file": "{0} 파일에 쓰지 못함",
 	"cache.object.version": "cmake-file-api의 캐시 개체 버전({0}.{1})은(는) 필요하지 않습니다. ({2}.{3})이(가) 필요합니다. IntelliSense 구성이 잘못되었을 수 있습니다.",
 	"cache.entry.unknowntype": "알 수 없는 캐시 항목 형식 {0}입니다.",
-	"code.model.version": "cmake-file-api의 코드 모델 버전({0}.{1})은(는) 필요하지 않습니다. ({2}.{3})이(가) 필요합니다. IntelliSense 구성이 잘못되었을 수 있습니다."
+	"code.model.version": "cmake-file-api의 코드 모델 버전({0}.{1})은(는) 필요하지 않습니다. ({2}.{3})이(가) 필요합니다. IntelliSense 구성이 잘못되었을 수 있습니다.",
+	"toolchains.object.version": "cmake-file-api의 도구 체인 개체 버전({0}.{1})은(는) 필요하지 않습니다. ({2}.{3})이(가) 필요합니다. IntelliSense 구성이 잘못되었을 수 있습니다."
 }
