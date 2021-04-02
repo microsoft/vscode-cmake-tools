@@ -135,12 +135,12 @@ function searchForCompilerPathInCache(cache: CMakeCache): string|null {
   return null;
 }
 
-export enum miModes {
+export enum MIModes {
   lldb = 'lldb',
   gdb = 'gdb',
 }
 export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string,
-                                                     modeOverride?: miModes, debuggerPathOverride?: string):
+                                                     modeOverride?: MIModes, debuggerPathOverride?: string):
     Promise<Configuration|null> {
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {

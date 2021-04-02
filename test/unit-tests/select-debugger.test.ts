@@ -177,7 +177,7 @@ suite('Select debugger', async () => {
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
-    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.miModes.gdb, "../folder/debugger/gdb");
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.MIModes.gdb, "../folder/debugger/gdb");
     expect(config).to.not.be.null;
     if (!config) {
       throw new Error();
@@ -195,7 +195,7 @@ suite('Select debugger', async () => {
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
-    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux', Debugger.miModes.lldb);
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'linux', Debugger.MIModes.lldb);
     expect(config).to.not.be.null;
     if (!config) {
       throw new Error();
