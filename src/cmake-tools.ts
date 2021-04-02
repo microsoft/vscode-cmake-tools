@@ -71,7 +71,7 @@ export enum ConfigureTrigger {
   buttonNewKitsDefinition = "buttonNewKitsDefinition",
   compilation = "compilation",
   launch = "launch",
-  commandOpenConfiguration = "commandOpenConfiguration",
+  commandEditCacheUI = "commandEditCacheUI",
   commandConfigure = "commandConfigure",
   commandCleanConfigure = "commandCleanConfigure",
   commandConfigureAll = "commandConfigureAll",
@@ -514,11 +514,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await this._cacheEditorWebview.refreshPanel();
       }
 
-      const sourceDirectory = await this.sourceDir;
-      if (str.endsWith("CMakeLists.txt") || str.endsWith(".cmake")) {
-        telemetry.logEvent("cmakeFileWrite");
+      let fileType: string | undefined;
+      if (str.endsWith("CMakeLists.txt")) {
+        fileType = "CMakeLists";
+      } else if (str.endsWith("CMakeCache.txt")) {
+        fileType = "CMakeCache";
+      } else if (str.endsWith(".cmake")) {
+        fileType = ".cmake";
       }
 
+      if (fileType) {
+        telemetry.logEvent("cmakeFileWrite", {filetype: fileType});
+      }
+
+      const sourceDirectory = await this.sourceDir;
       if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
         // CMakeLists.txt change event: its creation or deletion are relevant,
         // so update full/partial feature set view for this folder.
@@ -1053,9 +1062,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
     /**
-   * Implementation of `cmake.openConfiguration`
+   * Implementation of `cmake.EditCacheUI`
    */
-  async openConfiguration(): Promise<number> {
+  async editCacheUI(): Promise<number> {
     if (!this._cacheEditorWebview) {
       const drv = await this.getCMakeDriverInstance();
       if (!drv) {
@@ -1064,7 +1073,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
 
       this._cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
-        await this.configureInternal(ConfigureTrigger.commandOpenConfiguration, [], ConfigureType.Cache);
+        await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
       });
       await this._cacheEditorWebview.initPanel();
 
