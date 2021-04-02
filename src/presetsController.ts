@@ -13,7 +13,7 @@ import rollbar from '@cmt/rollbar';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
-import { descriptionForKit, Kit, SpecialKits } from '@cmt/kit';
+import { descriptionForKit, Kit, SpecialKits, kitHostTargetArch } from '@cmt/kit';
 import { loadSchema } from '@cmt/schema';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -223,8 +223,35 @@ export class PresetsController {
             return false;
           }
 
-          const avail = this._kitsController.availableKits;
-          log.debug(localize('start.selection.of.compilers', 'Start selection of compilers. Found {0} compilers.', avail.length));
+          const allKits = this._kitsController.availableKits;
+          // Filter VS based on generators, for example:
+          // VS 2019 Release x86, VS 2019 Preview x86, and VS 2017 Release x86
+          // will be filtered to
+          // VS 2019 x86, VS 2017 x86
+          // Remove toolchain kits
+          const filteredKits: Kit[] = [];
+          for (const kit of allKits) {
+            if (kit.toolchainFile || kit.name === SpecialKits.Unspecified) {
+              continue;
+            }
+            let found = false;
+            if (kit.visualStudio && !kit.compilers) {
+              for (const filteredKit of filteredKits) {
+                if (filteredKit.preferredGenerator?.name === kit.preferredGenerator?.name &&
+                    filteredKit.preferredGenerator?.platform === kit.preferredGenerator?.platform &&
+                    filteredKit.preferredGenerator?.toolset === kit.preferredGenerator?.toolset) {
+                  // Found same generator in the filtered list
+                  found = true;
+                  break;
+                }
+              }
+            }
+            if (!found) {
+              filteredKits.push(kit);
+            }
+          }
+
+          log.debug(localize('start.selection.of.compilers', 'Start selection of compilers. Found {0} compilers.', filteredKits.length));
 
           interface KitItem extends vscode.QuickPickItem {
             kit: Kit;
@@ -232,17 +259,19 @@ export class PresetsController {
           log.debug(localize('opening.compiler.selection', 'Opening compiler selection QuickPick'));
           // Generate the quickpick items from our known kits
           const getKitName = (kit: Kit) => {
-            switch (kit.name) {
-            case SpecialKits.ScanForKits as string:
+            if (kit.name === SpecialKits.ScanForKits) {
               return `[${localize('scan.for.compilers.button', 'Scan for compilers')}]`;
-            default:
+            } else if (kit.visualStudio && !kit.compilers) {
+              const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform)
+              return `${(kit.preferredGenerator?.name || 'Visual Studio')} ${hostTargetArch}`;
+            } else {
               return kit.name;
             }
           };
-          const item_promises = avail.filter(kit => kit.name !== SpecialKits.Unspecified).map(
+          const item_promises = filteredKits.map(
               async (kit): Promise<KitItem> => ({
                 label: getKitName(kit),
-                description: await descriptionForKit(kit),
+                description: await descriptionForKit(kit, true),
                 kit,
               }),
           );

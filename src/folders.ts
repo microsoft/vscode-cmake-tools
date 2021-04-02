@@ -8,7 +8,7 @@ import * as util from '@cmt/util';
 import CMakeTools from '@cmt/cmake-tools';
 import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
-import { disposeAll } from '@cmt/util';
+import { disposeAll, setContextValue } from '@cmt/util';
 import { PresetsController } from '@cmt/presetsController';
 import * as preset from '@cmt/preset';
 
@@ -27,6 +27,7 @@ export class CMakeToolsFolder {
       const usingCMakePresets = this.useCMakePresets;
       if (usingCMakePresets !== this._wasUsingCMakePresets) {
         this._wasUsingCMakePresets = usingCMakePresets;
+        setContextValue('useCMakePresets', usingCMakePresets);
         await cmakeTools.setUseCMakePresets(usingCMakePresets);
         await CMakeToolsFolder.initializeKitOrPresetsInCmt(this);
         this._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
@@ -42,6 +43,7 @@ export class CMakeToolsFolder {
     const cmtFolder = new CMakeToolsFolder(cmakeTools, kitsController, await PresetsController.init(cmakeTools, kitsController));
     const usingCMakePresets = cmtFolder.useCMakePresets;
     cmtFolder._wasUsingCMakePresets = usingCMakePresets;
+    setContextValue('useCMakePresets', usingCMakePresets);
     await cmakeTools.setUseCMakePresets(usingCMakePresets);
     await CMakeToolsFolder.initializeKitOrPresetsInCmt(cmtFolder);
     return cmtFolder;

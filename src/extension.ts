@@ -465,6 +465,11 @@ class ExtensionManager implements vscode.Disposable {
     const ws = info.folder;
     const cmt = info.cmakeTools;
 
+    // Don't configure if the current project is not CMake based.
+    if (!await this.folderIsCMakeProject(cmt)) {
+      return;
+    }
+
     // Scan for kits even under presets mode, so we can create presets from compilers.
     // Silent re-scan when detecting a breaking change in the kits definition.
     // Do this only for the first folder, to avoid multiple rescans taking place in a multi-root workspace.
@@ -523,23 +528,20 @@ class ExtensionManager implements vscode.Disposable {
       should_configure = chosen.doConfigure;
     }
 
-    // Don't configure if the current project is not CMake based.
-    if (await this.folderIsCMakeProject(cmt)) {
-      if (should_configure) {
-        // We've opened a new workspace folder, and the user wants us to
-        // configure it now.
-        log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-        await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
-      } else if (silentScanForKitsNeeded) {
-        // This popup will show up the first time after deciding not to configure, if a version change has been detected
-        // in the kits definition. This may happen during a CMake Tools extension upgrade.
-        // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
-        // being tied to a global state variable.
-        const configureButtonMessage = localize('configure.now.button', 'Configure Now');
-        const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
-        if (result === configureButtonMessage) {
-          await this.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
-        }
+    if (should_configure) {
+      // We've opened a new workspace folder, and the user wants us to
+      // configure it now.
+      log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
+      await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
+    } else if (silentScanForKitsNeeded) {
+      // This popup will show up the first time after deciding not to configure, if a version change has been detected
+      // in the kits definition. This may happen during a CMake Tools extension upgrade.
+      // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+      // being tied to a global state variable.
+      const configureButtonMessage = localize('configure.now.button', 'Configure Now');
+      const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
+      if (result === configureButtonMessage) {
+        await this.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
       }
     }
 
@@ -774,6 +776,10 @@ class ExtensionManager implements vscode.Disposable {
     }
     const doc = await vscode.workspace.openTextDocument(USER_KITS_FILEPATH);
     return vscode.window.showTextDocument(doc);
+  }
+
+  async scanForCompilers() {
+    return this.scanForKits();
   }
 
   async scanForKits() {
@@ -1450,6 +1456,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'selectActiveFolder',
     'editKits',
     'scanForKits',
+    'scanForCompilers',
     'selectKit',
     'setKitByName',
     'build',

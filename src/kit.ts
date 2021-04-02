@@ -537,7 +537,7 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
  * @param targetArch The architecture of the target
  * @param amd64Alias Whether amd64 is preferred over x64.
  */
-function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
+export function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
   // There are cases when we don't want to use the 'x64' alias of the 'amd64' architecture,
   // like for older VS installs, for the VS kit names (for compatibility reasons)
   // or for arm/arm64 specific vcvars scripts.
@@ -1210,24 +1210,31 @@ export async function scanForKitsIfNeeded(cmt: CMakeTools) : Promise<boolean> {
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
  */
-export async function descriptionForKit(kit: Kit): Promise<string> {
+export async function descriptionForKit(kit: Kit, shortVsName: boolean = false): Promise<string> {
   if (kit.toolchainFile) {
     return localize('kit.for.toolchain.file', 'Kit for toolchain file {0}', kit.toolchainFile);
   }
   if (kit.visualStudio) {
-    const vs_install = await getVSInstallForKit(kit);
-    if (vs_install) {
-      if (kit.compilers) {
-        // Clang for MSVC
-        const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
-        return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
+    if (kit.compilers) {
+      // Clang for MSVC
+      const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
+      return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
+    } else if (shortVsName) {
+      const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+      if (kit.preferredGenerator) {
+        return localize('using.compilers.for.VS', 'Using compilers for {0} ({1} architecture)', kit.preferredGenerator?.name, hostTargetArch);
       } else {
-        // MSVC
-        const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
-        return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), hostTargetArch);
+        return localize('using.compilers.for.VS2', 'Using compilers for Visual Studio ({0} architecture)', hostTargetArch);
       }
+    } else {
+      // MSVC
+      const vs_install = await getVSInstallForKit(kit);
+      if (vs_install) {
+        const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+        return localize('using.compilers.for.VS', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), hostTargetArch);
+      }
+      return '';
     }
-    return '';
   }
   if (kit.compilers) {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);

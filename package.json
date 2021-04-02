@@ -86,36 +86,43 @@
       {
         "command": "cmake.openCMakePresets",
         "title": "%cmake-tools.command.cmake.openCMakePresets.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.addConfigurePreset",
         "title": "%cmake-tools.command.cmake.addConfigurePreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.addBuildPreset",
         "title": "%cmake-tools.command.cmake.addBuildPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.addTestPreset",
         "title": "%cmake-tools.command.cmake.addTestPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.selectConfigurePreset",
         "title": "%cmake-tools.command.cmake.selectConfigurePreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.selectBuildPreset",
         "title": "%cmake-tools.command.cmake.selectBuildPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.selectTestPreset",
         "title": "%cmake-tools.command.cmake.selectTestPreset.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
@@ -133,31 +140,37 @@
       {
         "command": "cmake.editKits",
         "title": "%cmake-tools.command.cmake.editKits.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.scanForKits",
         "title": "%cmake-tools.command.cmake.scanForKits.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.scanForCompilers",
+        "title": "%cmake-tools.command.cmake.scanForCompilers.title%",
+        "when": "cmake:enableFullFeatureSet && useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.selectKit",
         "title": "%cmake-tools.command.cmake.selectKit.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.setVariant",
         "title": "%cmake-tools.command.cmake.setVariant.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
         "category": "CMake"
       },
       {
         "command": "cmake.setVariantAll",
         "title": "%cmake-tools.command.cmake.setVariantAll.title%",
-        "when": "cmake:enableFullFeatureSet",
+        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
         "category": "CMake"
       },
       {
@@ -488,6 +501,34 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "cmake.openCMakePresets",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.addConfigurePreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.addBuildPreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.addTestPreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.selectConfigurePreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.selectBuildPreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "command": "cmake.selectTestPreset",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
           "when": "cmake:enableFullFeatureSet",
           "command": "cmake.viewLog"
         },
@@ -495,15 +536,19 @@
           "command": "cmake.configure"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
           "command": "cmake.scanForKits"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
+          "command": "cmake.scanForCompilers",
+          "when": "cmake:enableFullFeatureSet && useCMakePresets"
+        },
+        {
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
           "command": "cmake.selectKit"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
           "command": "cmake.editKits"
         },
         {
@@ -545,12 +590,12 @@
           "command": "cmake.compileFile"
         },
         {
-          "when": "cmake:enableFullFeatureSet",
+          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
           "command": "cmake.setVariant"
         },
         {
           "command": "cmake.setVariantAll",
-          "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
+          "when": "cmake:multiRoot && cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
           "when": "cmake:enableFullFeatureSet",

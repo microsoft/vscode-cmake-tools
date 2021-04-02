@@ -9,6 +9,7 @@
     "cmake-tools.command.cmake.viewLog.title": "Open the CMake Tools Log File",
     "cmake-tools.command.cmake.editKits.title": "Edit User-Local CMake Kits",
     "cmake-tools.command.cmake.scanForKits.title": "Scan for Kits",
+    "cmake-tools.command.cmake.scanForCompilers.title": "Scan for Compilers",
     "cmake-tools.command.cmake.selectKit.title": "Select a Kit",
     "cmake-tools.command.cmake.setVariant.title": "Select Variant",
     "cmake-tools.command.cmake.setVariantAll.title": "Select Variant for All Projects",
