@@ -903,7 +903,10 @@ class ExtensionManager implements vscode.Disposable {
 
   configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), true); }
 
-  openConfiguration() { return this.mapCMakeToolsFolder(cmt => cmt.openConfiguration()); }
+  editCacheUI() {
+    telemetry.logEvent("editCMakeCache", {command: "editCMakeCacheUI"});
+    return this.mapCMakeToolsFolder(cmt => cmt.editCacheUI());
+  }
 
   build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, true); }
 
@@ -941,7 +944,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   editCache(folder: vscode.WorkspaceFolder) {
-    telemetry.logEvent("editCMakeCache");
+    telemetry.logEvent("editCMakeCache", {command: "editCMakeCache"});
     return this.mapCMakeToolsFolder(cmt => cmt.editCache(), folder);
   }
 
@@ -1241,7 +1244,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'cleanRebuildAll',
     'configure',
     'configureAll',
-    'openConfiguration',
+    'editCacheUI',
     'ctest',
     'ctestAll',
     'stop',
@@ -1296,7 +1299,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
       vscode.commands.registerCommand('cmake.outline.stopAll', () => runCommand('stopAll')),
       vscode.commands.registerCommand('cmake.outline.cleanAll', () => runCommand('cleanAll')),
       vscode.commands.registerCommand('cmake.outline.cleanConfigureAll', () => runCommand('cleanConfigureAll')),
-      vscode.commands.registerCommand('cmake.outline.openConfiguration', () => runCommand('openConfiguration')),
+      vscode.commands.registerCommand('cmake.outline.editCacheUI', () => runCommand('editCacheUI')),
       vscode.commands.registerCommand('cmake.outline.cleanRebuildAll', () => runCommand('cleanRebuildAll')),
       // Commands for outline items:
       vscode.commands.registerCommand('cmake.outline.buildTarget',
