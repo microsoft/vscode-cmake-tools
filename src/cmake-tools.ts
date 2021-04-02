@@ -1478,7 +1478,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let debug_config;
     try {
       const cache = await CMakeCache.fromPath(drv.cachePath);
-      debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, targetExecutable, process.platform, this.workspaceContext.config.debugConfig?.miDebuggerPath);
+      debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, targetExecutable, process.platform,
+                                                                       this.workspaceContext.config.debugConfig?.MIMode,
+                                                                       this.workspaceContext.config.debugConfig?.miDebuggerPath);
       log.debug(localize('debug.configuration.from.cache', 'Debug configuration from cache: {0}', JSON.stringify(debug_config)));
     } catch (error) {
       vscode.window

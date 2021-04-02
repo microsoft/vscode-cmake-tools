@@ -135,7 +135,12 @@ function searchForCompilerPathInCache(cache: CMakeCache): string|null {
   return null;
 }
 
-export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string, debuggerPathOverride?: string):
+export enum MIModes {
+  lldb = 'lldb',
+  gdb = 'gdb',
+}
+export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string,
+                                                     modeOverride?: MIModes, debuggerPathOverride?: string):
     Promise<Configuration|null> {
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
@@ -156,7 +161,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     // 1. LLDB-MI
     const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
     let mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
-    if ((mi_debugger_path.search(new RegExp('lldb-mi')) != -1)) {
+    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb-mi')) != -1)) {
       const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
       const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
         // 1a. lldb-mi in the compiler path
@@ -172,18 +177,18 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 
     // 2. gdb in the compiler path
     mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-    if ((mi_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(mi_debugger_path)) {
+    if (modeOverride !== "lldb" && (mi_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(mi_debugger_path)) {
       return createGDBDebugConfiguration(mi_debugger_path, target);
     }
 
     // 3. lldb in the compiler path
     mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-    if ((mi_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(mi_debugger_path)) {
+    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(mi_debugger_path)) {
       return createLLDBDebugConfiguration(mi_debugger_path, target);
     }
   }
 
-  const debugger_name = platform == 'darwin' ? 'lldb' : 'gdb';
+  const debugger_name = modeOverride || (platform == 'darwin' ? 'lldb' : 'gdb');
   const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
   let gdb_debugger_path = debuggerPathOverride || compiler_path.replace(gcc_compiler_regex, description.miMode);
