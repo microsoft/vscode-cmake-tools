@@ -436,89 +436,105 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
   }
 
   inheritedEnv = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
-  // If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
-  // then set the env automatically
+
   let clEnv: EnvironmentVariables = {};
-  const getStringValueFromCacheVar = (variable: CacheVarType) => {
-    if (util.isString(variable)) {
-      return variable;
-    } else if (variable && typeof variable === 'object') {
-      return util.isString(variable.value) ? variable.value : null;
-    }
-    return null;
-  };
-  if (preset.cacheVariables) {
-    const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
-    const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-    if (cxxCompiler === 'cl' || cxxCompiler === 'cl.exe' || cCompiler === 'cl' || cCompiler === 'cl.exe') {
-      const whereRes = await execute('where.exe', ['cl'], null, { environment: preset.environment as EnvironmentVariables,
-                                                                  silent: true,
-                                                                  encoding: 'utf8',
-                                                                  shell: true }).result;
-      if (!whereRes.stdout) {
-        // Not on PATH, need to set env
-        let arch = 'x86';
-        let toolsetArch = 'host=x86';
-        let toolsetVsVersion: string | undefined;
-        if (util.isString(preset.architecture)) {
-          arch = preset.architecture;
-        } else if (preset.architecture && preset.architecture.value) {
-          arch = preset.architecture.value;
-        } else {
-          log.warning(localize('no.cl.arch', 'No architecture specified for cl.exe, using x86 by default'));
-        }
-        const toolsetArchRegex = /(host=\w+),?/i;
-        const toolsetVsVersionRegex = /version=(\w+),?/i;
-        const noToolsetArchWarning = localize('no.cl.toolset.arch', 'No toolset architecture specified for cl.exe, using x86 by default');
-        const noToolsetVsVersionWarning = localize('no.cl.toolset.version', 'No toolset version specified for cl.exe, using latest by default');
-        const matchToolsetArchAndVersion = (toolset: string) => {
-          const tollsetArchMatches = toolset.match(toolsetArchRegex);
-          if (!tollsetArchMatches) {
+
+  // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
+  // then set the env automatically
+  if (process.platform === 'win32') {
+    const getStringValueFromCacheVar = (variable: CacheVarType) => {
+      if (util.isString(variable)) {
+        return variable;
+      } else if (variable && typeof variable === 'object') {
+        return util.isString(variable.value) ? variable.value : null;
+      }
+      return null;
+    };
+    if (preset.cacheVariables) {
+      const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
+      const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
+      if (cxxCompiler === 'cl' || cxxCompiler === 'cl.exe' || cCompiler === 'cl' || cCompiler === 'cl.exe') {
+        const clLoc = await execute('where.exe', ['cl'], null, { environment: preset.environment as EnvironmentVariables,
+                                                                    silent: true,
+                                                                    encoding: 'utf8',
+                                                                    shell: true }).result;
+        if (!clLoc.stdout) {
+          // Not on PATH, need to set env
+          let arch = 'x86';
+          let toolsetArch = 'host=x86';
+          let toolsetVsVersion: string | undefined;
+          if (util.isString(preset.architecture)) {
+            arch = preset.architecture;
+          } else if (preset.architecture && preset.architecture.value) {
+            arch = preset.architecture.value;
+          } else {
+            log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
+          }
+          const toolsetArchRegex = /(host=\w+),?/i;
+          const toolsetVsVersionRegex = /version=(\w+),?/i;
+          const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using x86 by default', preset.name);
+          const noToolsetVsVersionWarning = localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name);
+          const matchToolsetArchAndVersion = (toolset: string) => {
+            const tollsetArchMatches = toolset.match(toolsetArchRegex);
+            if (!tollsetArchMatches) {
+              log.warning(noToolsetArchWarning);
+            } else {
+              toolsetArch = tollsetArchMatches[1];
+            }
+            const tollsetVsVersionMatches = toolset.match(toolsetVsVersionRegex);
+            if (!tollsetVsVersionMatches) {
+              log.warning(noToolsetVsVersionWarning);
+            } else {
+              toolsetVsVersion = tollsetVsVersionMatches[1];
+            }
+          };
+          if (!preset.toolset) {
+            log.warning(noToolsetArchWarning);
+          } else if (util.isString(preset.toolset)) {
+            matchToolsetArchAndVersion(preset.toolset);
+          } else if (!preset.toolset.value) {
             log.warning(noToolsetArchWarning);
           } else {
-            toolsetArch = tollsetArchMatches[1];
+            matchToolsetArchAndVersion(preset.toolset.value);
           }
-          const tollsetVsVersionMatches = toolset.match(toolsetVsVersionRegex);
-          if (!tollsetVsVersionMatches) {
-            log.warning(noToolsetVsVersionWarning);
-          } else {
-            toolsetVsVersion = tollsetVsVersionMatches[1];
-          }
-        };
-        if (!preset.toolset) {
-          log.warning(noToolsetArchWarning);
-        } else if (util.isString(preset.toolset)) {
-          matchToolsetArchAndVersion(preset.toolset);
-        } else if (!preset.toolset.value) {
-          log.warning(noToolsetArchWarning);
-        } else {
-          matchToolsetArchAndVersion(preset.toolset.value);
-        }
-        let latestVsVersion: string = '';
-        let latestVsIndex = -1;
-        for (let i = 0; i < kits.length; i++) {
-          const kit = kits[i];
-          if (kit.visualStudio && kit.visualStudioVersion && !kit.compilers) {
-            if (kit.preferredGenerator &&
-                (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
-                kit.preferredGenerator.toolset === toolsetArch) {
-              if (toolsetVsVersion && kit.visualStudioVersion.startsWith(toolsetVsVersion)) {
-                latestVsVersion = kit.visualStudioVersion;
-                latestVsIndex = i;
-                break;
-              }
-              if (!toolsetVsVersion && compareVersions(latestVsVersion, kit.visualStudioVersion) < 0) {
-                latestVsVersion = kit.visualStudioVersion;
-                latestVsIndex = i;
+          let latestVsVersion: string = '';
+          let latestVsIndex = -1;
+          for (let i = 0; i < kits.length; i++) {
+            const kit = kits[i];
+            if (kit.visualStudio && kit.visualStudioVersion && !kit.compilers) {
+              if (kit.preferredGenerator &&
+                  (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
+                  kit.preferredGenerator.toolset === toolsetArch) {
+                if (toolsetVsVersion && kit.visualStudioVersion.startsWith(toolsetVsVersion)) {
+                  latestVsVersion = kit.visualStudioVersion;
+                  latestVsIndex = i;
+                  break;
+                }
+                if (!toolsetVsVersion && compareVersions(latestVsVersion, kit.visualStudioVersion) < 0) {
+                  latestVsVersion = kit.visualStudioVersion;
+                  latestVsIndex = i;
+                }
               }
             }
           }
-        }
-        if (latestVsIndex < 0) {
-          log.error(localize('specified.cl.not.found', 'Specified cl.exe with toolset {0} and architecture {1} are not found',
-                             toolsetVsVersion ? `${toolsetVsVersion},${toolsetArch}` : toolsetArch, arch));
-        } else {
-          clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
+          if (latestVsIndex < 0) {
+            log.error(localize('specified.cl.not.found', 'Configure preset {0}: Specified cl.exe with toolset {1} and architecture {2} are not found',
+                              preset.name, toolsetVsVersion ? `${toolsetVsVersion},${toolsetArch}` : toolsetArch, arch));
+          } else {
+            clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
+            // if ninja isn't on path, try to look for it in a VS install
+            const ninjaLoc = await execute('where.exe', ['ninja'], null, { environment: preset.environment as EnvironmentVariables,
+                                                                           silent: true,
+                                                                           encoding: 'utf8',
+                                                                           shell: true }).result;
+            if (!ninjaLoc.stdout) {
+              const vsCMakePaths = await paths.vsCMakePaths();
+              if (vsCMakePaths.ninja) {
+                log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
+                clEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${clEnv['PATH']}`;
+              }
+            }
+          }
         }
       }
     }

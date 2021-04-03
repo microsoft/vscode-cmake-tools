@@ -262,7 +262,7 @@ export class PresetsController {
             if (kit.name === SpecialKits.ScanForKits) {
               return `[${localize('scan.for.compilers.button', 'Scan for compilers')}]`;
             } else if (kit.visualStudio && !kit.compilers) {
-              const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform)
+              const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
               return `${(kit.preferredGenerator?.name || 'Visual Studio')} ${hostTargetArch}`;
             } else {
               return kit.name;
@@ -585,6 +585,22 @@ export class PresetsController {
         },
         () => this._cmakeTools.setConfigurePreset(presetName),
     );
+    await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: localize('reloading.build.test.preset', 'Reloading build and test presets'),
+        },
+        async () => {
+          const buildPreset = this._cmakeTools.buildPreset?.name;
+          const testPreset = this._cmakeTools.testPreset?.name;
+          if (buildPreset) {
+            await this.setBuildPreset(buildPreset);
+          }
+          if (testPreset) {
+            await this.setTestPreset(testPreset);
+          }
+        }
+    );
   }
 
   private async checkConfigurePreset(): Promise<preset.ConfigurePreset | null> {
@@ -626,12 +642,20 @@ export class PresetsController {
       return false;
     } else {
       log.debug(localize('user.selected.build.preset', 'User selected build preset {0}', JSON.stringify(chosenPreset)));
-      await this.setBuildPreset(chosenPreset);
+      await this.setBuildPreset(chosenPreset, false);
       return true;
     }
   }
 
-  async setBuildPreset(presetName: string): Promise<void> {
+  async setBuildPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
+    if (needToCheckConfigurePreset) {
+      preset.expandConfigurePresetForPresets('build');
+      const _preset = preset.getPresetByName(preset.allBuildPresets(), presetName);
+      if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
+        log.error(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not mach the selected configure preset', presetName));
+        return;
+      }
+    }
     // Load the build preset into the backend
     await vscode.window.withProgress(
         {
@@ -665,12 +689,20 @@ export class PresetsController {
       return false;
     } else {
       log.debug(localize('user.selected.test.preset', 'User selected test preset {0}', JSON.stringify(chosenPreset)));
-      await this.setTestPreset(chosenPreset);
+      await this.setTestPreset(chosenPreset, false);
       return true;
     }
   }
 
-  async setTestPreset(presetName: string): Promise<void> {
+  async setTestPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
+    if (needToCheckConfigurePreset) {
+      preset.expandConfigurePresetForPresets('test');
+      const _preset = preset.getPresetByName(preset.allTestPresets(), presetName);
+      if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
+        log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not mach the selected configure preset', presetName));
+        return;
+      }
+    }
     // Load the test preset into the backend
     await vscode.window.withProgress(
         {
