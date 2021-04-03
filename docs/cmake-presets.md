@@ -1,4 +1,4 @@
-# Configure and build with CMake Presets 
+# Configure and build with CMake Presets
 
 CMake supports two files, `CMakePresets.json` and `CMakeUserPresets.json`, that allow users to specify common configure, build, and test options and share them with others.
 
