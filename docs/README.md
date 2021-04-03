@@ -19,6 +19,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 [Configure](configure.md)
 * [CMake configuration process overview](configure.md#cmake-configuration-process-overview)
 * [The CMake tools configure step](configure.md#the-cmake-tools-configure-step)
+* [Configure and build with CMake Presets](cmake-presets.md)
 * [The configure step outside of CMake Tools](configure.md#the-configure-step-outside-of-cmake-tools)
 * [Clean configure](configure.md#clean-configure)
 
