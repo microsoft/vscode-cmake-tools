@@ -248,7 +248,7 @@ class Paths {
     });
   }
 
-  async vsCMakePaths(): Promise<VSCMakePaths> {
+  async vsCMakePaths(preferredInstanceId?: string): Promise<VSCMakePaths> {
     const vsCMakePaths: VSCMakePaths = {};
 
     const vs_installations = await vsInstallations();
@@ -260,7 +260,11 @@ class Paths {
           cmake: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe',
           ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe'
         };
-        bundled_tool_paths.push(bundled_tool_path);
+        if (preferredInstanceId === install.instanceId) {
+          bundled_tool_paths.unshift(bundled_tool_path);
+        } else {
+          bundled_tool_paths.push(bundled_tool_path);
+        }
       }
 
       for (const tool_path of bundled_tool_paths) {

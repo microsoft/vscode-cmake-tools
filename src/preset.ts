@@ -528,7 +528,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
                                                                            encoding: 'utf8',
                                                                            shell: true }).result;
             if (!ninjaLoc.stdout) {
-              const vsCMakePaths = await paths.vsCMakePaths();
+              const vsCMakePaths = await paths.vsCMakePaths(kits[latestVsIndex].visualStudio);
               if (vsCMakePaths.ninja) {
                 log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
                 clEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${clEnv['PATH']}`;
