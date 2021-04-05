@@ -102,8 +102,10 @@ export interface BuildPreset extends Preset {
   verbose?: boolean;
   nativeToolOptions?: string[];
 
-  __binaryDir?: string; // Private field for convenience. Getting this from the config preset
-  __generator?: string; // Private field for convenience. Getting this from the config preset
+  // Private fields
+  __binaryDir?: string; // Getting this from the config preset
+  __generator?: string; // Getting this from the config preset
+  __targets?: string | string[]; // This field is translated to build args, so we can overwrite the target arguments.
 }
 
 export interface OutputOptions {
@@ -161,8 +163,9 @@ export interface TestPreset extends Preset {
   filter?: TestFilter;
   execution?: ExecutionOptions;
 
-  __binaryDir?: string; // Private field for convenience. Getting this from the config preset
-  __generator?: string; // Private field for convenience. Getting this from the config preset
+  // Private fields
+  __binaryDir?: string; // Getting this from the config preset
+  __generator?: string; // Getting this from the config preset
 }
 
 // original*PresetsFile's are each used to keep a copy by **value**. They are used to update
@@ -1064,10 +1067,10 @@ export function buildArgs(preset: BuildPreset): string[] {
   preset.cleanFirst && result.push('--clean-first');
   preset.verbose && result.push('--verbose');
 
-  if (util.isString(preset.targets)) {
-    result.push('--target', preset.targets);
-  } else if (util.isArrayOfString(preset.targets)) {
-    result.push('--target', ...preset.targets);
+  if (util.isString(preset.__targets)) {
+    result.push('--target', preset.__targets);
+  } else if (util.isArrayOfString(preset.__targets)) {
+    result.push('--target', ...preset.__targets);
   }
 
   preset.nativeToolOptions && result.push('--', ...preset.nativeToolOptions);

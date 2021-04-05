@@ -314,7 +314,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param cmd The compilation command from a compilation database to run
    */
   runCompileCommand(cmd: ArgsCompileCommand): vscode.Terminal {
-    const env = this.getEffectiveSubprocessEnvironment();
+    let env: proc.EnvironmentVariables;
+    if (this.useCMakePresets) {
+      // buildpreset.environment at least has process.env after expansion
+      env = this._buildPreset!.environment as proc.EnvironmentVariables;
+    } else {
+      env = this.getEffectiveSubprocessEnvironment();
+    }
     const key = `${cmd.directory}${JSON.stringify(env)}`;
     let existing = this._compileTerms.get(key);
     if (existing && this.config.clearOutputBeforeBuild) {
@@ -1066,14 +1072,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const timeEnd: number = new Date().getTime();
 
       const cmakeVersion = this.cmake.version;
-      const telemetryProperties: telemetry.Properties = {
-        CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
-        CMakeGenerator: this.generatorName || '',
-        ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
-        Preset: this.useCMakePresets? 'true' : 'false',
-        Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
-        Trigger: trigger
-      };
+      let telemetryProperties: telemetry.Properties;
+      if (this.useCMakePresets) {
+        telemetryProperties = {
+          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeGenerator: this.generatorName || '',
+          Preset: this.useCMakePresets? 'true' : 'false',
+          Trigger: trigger
+        };
+      } else {
+        telemetryProperties = {
+          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeGenerator: this.generatorName || '',
+          ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+          Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
+          Trigger: trigger
+        };
+      }
 
       if (this._kit?.compilers) {
         let cCompilerVersion;
@@ -1232,7 +1247,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const timeStart: number = new Date().getTime();
     const child = await this._doCMakeBuild(target, consumer);
     const timeEnd: number = new Date().getTime();
-    const telemetryProperties: telemetry.Properties = {
+    const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
       ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
     };
     const telemetryMeasures: telemetry.Measures = {
@@ -1363,7 +1378,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {command: this.cmake.path, args: expanded_args, build_env};
   }
 
-  async getCMakeBuildCommandFromPreset(): Promise<proc.BuildCommand|null> {
+  async getCMakeBuildCommandFromPreset(target: string): Promise<proc.BuildCommand|null> {
     const ok = await this._beforeConfigureOrBuild();
     if (!ok) {
       return null;
@@ -1372,6 +1387,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     if (!this._buildPreset) {
       log.debug(localize('no.build.preset', 'No build preset selected'));
       return null;
+    }
+
+    if (target) {
+      this._buildPreset.__targets = target;
+    } else {
+      this._buildPreset.__targets = this._buildPreset.targets;
     }
 
     const args = preset.buildArgs(this._buildPreset);
@@ -1384,7 +1405,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
     let buildcmd: proc.BuildCommand | null;
     if (this.useCMakePresets) {
-      buildcmd = await this.getCMakeBuildCommandFromPreset();
+      buildcmd = await this.getCMakeBuildCommandFromPreset(target);
     } else {
       buildcmd = await this.getCMakeBuildCommand(target);
     }
