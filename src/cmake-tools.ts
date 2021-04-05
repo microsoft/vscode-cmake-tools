@@ -41,7 +41,7 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import {updateFullFeatureSetForFolder, registerTaskProvider, enableFullFeatureSet} from './extension';
+import {updateFullFeatureSetForFolder, registerTaskProvider, enableFullFeatureSet, isActiveFolder} from './extension';
 import { ConfigurationReader } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -514,19 +514,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await this._cacheEditorWebview.refreshPanel();
       }
 
-      let fileType: string | undefined;
-      if (str.endsWith("CMakeLists.txt")) {
-        fileType = "CMakeLists";
-      } else if (str.endsWith("CMakeCache.txt")) {
-        fileType = "CMakeCache";
-      } else if (str.endsWith(".cmake")) {
-        fileType = ".cmake";
-      }
-
-      if (fileType) {
-        telemetry.logEvent("cmakeFileWrite", {filetype: fileType});
-      }
-
       const sourceDirectory = await this.sourceDir;
       if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
         // CMakeLists.txt change event: its creation or deletion are relevant,
@@ -541,6 +528,49 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           log.warning(localize('cmakelists.save.could.not.reconfigure',
            'Changes were detected in CMakeLists.txt but we could not reconfigure the project because another operation is already in progress.'));
           log.debug(localize('needs.reconfigure', 'The project needs to be reconfigured so that the changes saved in CMakeLists.txt have effect.'));
+        }
+      }
+
+      // For multi-root, the "onDidSaveTextDocument" will be received once for each project folder.
+      // To avoid misleading telemetry, consider the notification only for the active folder.
+      // There is always one active folder in a workspace and never more than one.
+      if (isActiveFolder(this.folder)) {
+        // "outside" evaluates whether the modified cmake file belongs to the active folder.
+        // Currently, we don't differentiate between outside active folder but inside any of the other
+        // workspace folders versus outside any folder referenced by the current workspace.
+        let outside: boolean = true;
+        let fileType: string | undefined;
+        if (str.endsWith("CMakeLists.txt")) {
+          fileType = "CMakeLists";
+
+          // The CMakeLists.txt belongs to the current active folder only if sourceDirectory points to it.
+          if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
+            outside = false;
+          }
+        } else if (str.endsWith("CMakeCache.txt")) {
+          fileType = "CMakeCache";
+          const binaryDirectory = await this.binaryDir;
+
+          // The CMakeCache.txt belongs to the current active folder only if binaryDirectory points to it.
+          if (str === path.join(binaryDirectory, "CMakeCache.txt")) {
+            outside = false;
+          }
+        } else if (str.endsWith(".cmake")) {
+          fileType = ".cmake";
+          const binaryDirectory = await this.binaryDir;
+
+          // Instead of parsing how and from where a *.cmake file is included or imported
+          // let's consider one inside the active folder if it's in the workspace folder,
+          // sourceDirectory or binaryDirectory.
+          if (str.startsWith(this.folder.uri.fsPath) ||
+              str.startsWith(sourceDirectory) ||
+              str.startsWith(binaryDirectory)) {
+            outside = false;
+          }
+        }
+
+        if (fileType) {
+          telemetry.logEvent("cmakeFileWrite", { filetype: fileType, outsideActiveFolder: outside.toString() });
         }
       }
     }));
