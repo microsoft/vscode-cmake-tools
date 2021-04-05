@@ -1235,23 +1235,32 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const gen = this.generatorName;
     target = this.correctAllTargetName(target);
 
-    const generator_args = (() => {
-      if (!gen)
-        return [];
-      else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return ['-j', this.config.numJobs.toString()];
-      else if (/Visual Studio/.test(gen) && target !== 'clean')
-        return ['/maxcpucount:' + this.config.numJobs.toString()];
-      else
-        return [];
-    })();
+    const buildArgs: string[] = this.config.buildArgs.slice(0);
+    const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
+
+    // Prefer using CMake's build options to set parallelism over tool-specific switches.
+    // The feature is not available until version 3.14.
+    if (this.cmake.version && this.cmake.version.major >= 3 && this.cmake.version.minor > 13) {
+      buildArgs.push('-j');
+      if (this.config.numJobs) {
+        buildArgs.push(this.config.numJobs.toString());
+      }
+    } else {
+      if (gen) {
+        if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean') {
+          buildToolArgs.push('-j', this.config.numJobs.toString());
+        } else if (/Visual Studio/.test(gen) && target !== 'clean') {
+          buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
+        }
+      }
+    }
 
     const ninja_env = {} as {[key: string]: string};
     ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
     const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
 
     const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
-                     .concat(this.config.buildArgs, ['--'], generator_args, this.config.buildToolArgs);
+                     .concat(buildArgs, buildToolArgs);
     const opts = this.expansionOptions;
     const expanded_args_promises
         = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
