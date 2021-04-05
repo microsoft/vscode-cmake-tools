@@ -19,8 +19,6 @@
 	"edit.setting": "Lokalizuj",
 	"ignore.activation": "Nie pokazuj ponownie",
 	"missing.cmakelists": "Nie znaleziono pliku CMakeLists.txt w katalogu głównym folderu „{0}”. W jaki sposób chcesz kontynuować?",
-	"reload.window": "Reload Window",
-	"setting.sourceDirectory.failed.needs.reload.window": "Wystąpił problem podczas aktualizowania ustawienia cmake.sourceDirectory. Uruchom polecenie „Reload Window”, aby zmiany zostały wprowadzone.",
 	"starting.cmake.driver": "Uruchamianie sterownika narzędzia CMake",
 	"bad.cmake.executable": "Nieprawidłowy plik wykonywalny narzędzia CMake „{0}”.",
 	"switch.to.serverapi": "Tryb komunikacji interfejsu API pliku narzędzia CMake nie jest obsługiwany w wersjach wcześniejszych niż {0}. Przełączanie do trybu komunikacji serwera narzędzia CMake.",
