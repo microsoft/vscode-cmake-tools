@@ -95,6 +95,7 @@
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "优化最小二进制大小 - 排除调试信息。",
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "进行优化，提高速度 - 包括调试信息。",
 	"cmake-tools.configuration.cmake.ctestArgs.description": "要传递给 CTest 的参数。",
+	"cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
 	"cmake-tools.configuration.cmake.environment.description": "要在运行 CMake 命令时设置的环境变量。",
 	"cmake-tools.configuration.cmake.environment.additionalProperties.description": "环境变量的值。",
 	"cmake-tools.configuration.cmake.configureEnvironment.description": "要在配置过程中传递给 CMake 的环境变量。",

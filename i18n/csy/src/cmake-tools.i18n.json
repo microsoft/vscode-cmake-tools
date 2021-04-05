@@ -19,8 +19,6 @@
 	"edit.setting": "Vyhledat",
 	"ignore.activation": "Znovu nezobrazovat",
 	"missing.cmakelists": "Soubor CMakeLists.txt se nenašel v kořenu složky {0}. Jak chcete pokračovat?",
-	"reload.window": "Znovu načíst okno",
-	"setting.sourceDirectory.failed.needs.reload.window": "Během aktualizace nastavení cmake.sourceDirectory se něco nepovedlo. Spusťte prosím příkaz Znovu načíst okno, aby se změna projevila.",
 	"starting.cmake.driver": "Spouští se ovladač CMake.",
 	"bad.cmake.executable": "Nesprávný spustitelný soubor nástrojů CMake {0}",
 	"switch.to.serverapi": "Režim komunikace pomocí rozhraní API souborů CMake se ve verzích starších než {0} nepodporuje. Přepíná se na režim komunikace pomocí serveru CMake.",

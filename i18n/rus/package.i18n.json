@@ -95,6 +95,7 @@
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Оптимизация для наименьшего размера двоичного файла — исключение отладочных данных.",
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Оптимизация для быстродействия — включение отладочных данных.",
 	"cmake-tools.configuration.cmake.ctestArgs.description": "Аргументы для передачи в CTest.",
+	"cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
 	"cmake-tools.configuration.cmake.environment.description": "Переменные сред, задаваемые при выполнении команд CMake.",
 	"cmake-tools.configuration.cmake.environment.additionalProperties.description": "Значение переменной среды.",
 	"cmake-tools.configuration.cmake.configureEnvironment.description": "Переменные сред для передачи CMake при настройке.",
