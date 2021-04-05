@@ -199,7 +199,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   public isActiveFolder(cmt: CMakeToolsFolder): boolean {
-    return this._folders.activeFolder == cmt;
+    return this._folders.activeFolder === cmt;
   }
 
   /**
