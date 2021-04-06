@@ -197,7 +197,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._buildPreset = await preset.expandBuildPreset(buildPreset,
                                                          lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                          await this.sourceDir,
-                                                         true);
+                                                         true,
+                                                         this.configurePreset?.name);
       if (!this._buildPreset) {
         log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
         return;
@@ -1121,7 +1122,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
     }
-    const target = target_ ? target_ : this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
+    let target = target_;
+    let targetName: string;
+    if (this.useCMakePresets) {
+      target = target;
+      targetName = this.buildPreset?.displayName || this.buildPreset?.name || '';
+    } else {
+      target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
+      targetName = target;
+    }
     await this.reRegisterTaskProviderforNewTarget(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
@@ -1131,7 +1140,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: localize('building.target', 'Building: {0}', target),
+            title: localize('building.target', 'Building: {0}', targetName),
             cancellable: true,
           },
           async (progress, cancel) => {
@@ -1374,8 +1383,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await this.reRegisterTaskProviderforNewTarget(drv, target);
   }
 
-  async reRegisterTaskProviderforNewTarget(drv: CMakeDriver | null, target: string) {
-    if (drv) {
+  async reRegisterTaskProviderforNewTarget(drv: CMakeDriver | null, target: string | undefined) {
+    if (drv && (this.useCMakePresets || target)) {
       const buildargs = await drv.getCMakeBuildCommand(target);
       const command = (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
       await registerTaskProvider(command);

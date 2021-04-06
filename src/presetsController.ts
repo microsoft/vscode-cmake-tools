@@ -630,6 +630,7 @@ export class PresetsController {
     const presets = preset.buildPresets().
                            concat(preset.userBuildPresets()).
                            filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
+    presets.push(preset.defaultBuildPreset);
 
     log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
 
@@ -650,7 +651,7 @@ export class PresetsController {
   }
 
   async setBuildPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
-    if (needToCheckConfigurePreset) {
+    if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
       preset.expandConfigurePresetForPresets('build');
       const _preset = preset.getPresetByName(preset.allBuildPresets(), presetName);
       if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {

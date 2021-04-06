@@ -1227,8 +1227,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     });
   }
 
-  async build(target: string, consumer?: proc.OutputConsumer): Promise<number|null> {
-    log.debug(localize('start.build', 'Start build'), target);
+  async build(target?: string, consumer?: proc.OutputConsumer): Promise<number|null> {
+    log.debug(localize('start.build', 'Start build'), target || '');
     if(this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1347,68 +1347,67 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  async getCMakeBuildCommand(target: string): Promise<proc.BuildCommand|null> {
-    const gen = this.generatorName;
-    target = this.correctAllTargetName(target);
-
-    const generator_args = (() => {
-      if (!gen)
-        return [];
-      else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
-        return ['-j', this.config.numJobs.toString()];
-      else if (/Visual Studio/.test(gen) && target !== 'clean')
-        return ['/maxcpucount:' + this.config.numJobs.toString()];
-      else
-        return [];
-    })();
-
-    const ninja_env = {} as {[key: string]: string};
-    ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
-    const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
-
-    const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
-                     .concat(this.config.buildArgs, ['--'], generator_args, this.config.buildToolArgs);
-    const opts = this.expansionOptions;
-    const expanded_args_promises
-        = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
-    const expanded_args = await Promise.all(expanded_args_promises) as string[];
-
-    log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(expanded_args)));
-
-    return {command: this.cmake.path, args: expanded_args, build_env};
-  }
-
-  async getCMakeBuildCommandFromPreset(target: string): Promise<proc.BuildCommand|null> {
-    const ok = await this._beforeConfigureOrBuild();
-    if (!ok) {
-      return null;
-    }
-
-    if (!this._buildPreset) {
-      log.debug(localize('no.build.preset', 'No build preset selected'));
-      return null;
-    }
-
-    if (target) {
-      this._buildPreset.__targets = target;
-    } else {
-      this._buildPreset.__targets = this._buildPreset.targets;
-    }
-
-    const args = preset.buildArgs(this._buildPreset);
-
-    log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
-
-    return {command: this.cmake.path, args, build_env: this._buildPreset.environment as proc.EnvironmentVariables};
-  }
-
-  private async _doCMakeBuild(target: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
-    let buildcmd: proc.BuildCommand | null;
+  async getCMakeBuildCommand(target?: string): Promise<proc.BuildCommand|null> {
     if (this.useCMakePresets) {
-      buildcmd = await this.getCMakeBuildCommandFromPreset(target);
+      const ok = await this._beforeConfigureOrBuild();
+      if (!ok) {
+        return null;
+      }
+
+      if (!this._buildPreset) {
+        log.debug(localize('no.build.preset', 'No build preset selected'));
+        return null;
+      }
+
+      if (target) {
+        this._buildPreset.__targets = target;
+      } else {
+        this._buildPreset.__targets = this._buildPreset.targets;
+      }
+
+      const args = preset.buildArgs(this._buildPreset);
+
+      log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(args)));
+
+      return {command: this.cmake.path, args, build_env: this._buildPreset.environment as proc.EnvironmentVariables};
     } else {
-      buildcmd = await this.getCMakeBuildCommand(target);
+      if (!target) {
+        return null;
+      }
+
+      const gen = this.generatorName;
+      target = this.correctAllTargetName(target);
+
+      const generator_args = (() => {
+        if (!gen)
+          return [];
+        else if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean')
+          return ['-j', this.config.numJobs.toString()];
+        else if (/Visual Studio/.test(gen) && target !== 'clean')
+          return ['/maxcpucount:' + this.config.numJobs.toString()];
+        else
+          return [];
+      })();
+
+      const ninja_env = {} as {[key: string]: string};
+      ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
+      const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
+
+      const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
+                      .concat(this.config.buildArgs, ['--'], generator_args, this.config.buildToolArgs);
+      const opts = this.expansionOptions;
+      const expanded_args_promises
+          = args.map(async (value: string) => expand.expandString(value, {...opts, envOverride: build_env}));
+      const expanded_args = await Promise.all(expanded_args_promises) as string[];
+
+      log.trace(localize('cmake.build.args.are', 'CMake build args are: {0}', JSON.stringify(expanded_args)));
+
+      return {command: this.cmake.path, args: expanded_args, build_env};
     }
+  }
+
+  private async _doCMakeBuild(target?: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
+    const buildcmd = await this.getCMakeBuildCommand(target);
     if (buildcmd) {
       let outputEnc = this.config.outputLogEncoding;
       if (outputEnc == 'auto') {

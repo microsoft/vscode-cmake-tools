@@ -102,6 +102,15 @@ export interface BuildPreset extends Preset {
   __targets?: string | string[]; // This field is translated to build args, so we can overwrite the target arguments.
 }
 
+/**
+ * Should NOT cache anything. Need to make a copy if any fields need to be changed.
+ */
+export const defaultBuildPreset: BuildPreset = {
+  name: '__defaultBuildPreset__',
+  displayName: localize('default.build.preset', '[Default]'),
+  description: localize('default.build.preset.description', 'An empty build preset that does not add any arguments')
+};
+
 export interface OutputOptions {
   shortProgress?: boolean;
   verbosity?: 'default' | 'verbose' | 'extra';
@@ -712,15 +721,17 @@ function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, pre
 export function expandBuildPreset(name: string,
                                   workspaceFolder: string,
                                   sourceDir: string,
-                                  allowUserPreset: boolean = false): Promise<BuildPreset | null> {
+                                  allowUserPreset: boolean = false,
+                                  configurePreset?: string): Promise<BuildPreset | null> {
   referencedBuildPresets.clear();
-  return expandBuildPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset);
+  return expandBuildPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
 }
 
 async function expandBuildPresetImpl(name: string,
                                      workspaceFolder: string,
                                      sourceDir: string,
-                                     allowUserPreset: boolean = false): Promise<BuildPreset | null> {
+                                     allowUserPreset: boolean = false,
+                                     configurePreset?: string): Promise<BuildPreset | null> {
   let preset = getPresetByName(buildPresets(), name);
   if (preset) {
     return expandBuildPresetHelper(preset, workspaceFolder, sourceDir);
@@ -731,6 +742,17 @@ async function expandBuildPresetImpl(name: string,
     if (preset) {
       return expandBuildPresetHelper(preset, workspaceFolder, sourceDir, true);
     }
+  }
+
+  if (name === defaultBuildPreset.name) {
+    // Construct the default build preset every time since it should NOT be cached
+    preset = {
+      name: defaultBuildPreset.name,
+      displayName: defaultBuildPreset.displayName,
+      description: defaultBuildPreset.description,
+      configurePreset
+    };
+    return expandBuildPresetHelper(preset, workspaceFolder, sourceDir, true);
   }
 
   log.error(localize('build.preset.not.found', 'Could not find build preset with name {0}', name));
