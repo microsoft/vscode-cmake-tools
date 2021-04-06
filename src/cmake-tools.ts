@@ -41,7 +41,7 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import {updateFullFeatureSetForFolder, registerTaskProvider, enableFullFeatureSet} from './extension';
+import {updateFullFeatureSetForFolder, registerTaskProvider, enableFullFeatureSet, isActiveFolder} from './extension';
 import { ConfigurationReader } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -499,36 +499,23 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._statusMessage.set(localize('ready.status', 'Ready'));
 
     this.extensionContext.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async td => {
-      const str = td.uri.fsPath;
-      if (str.endsWith("CMakeLists.txt") || str.endsWith(".cmake")) {
+      const str = td.uri.fsPath.toLowerCase();
+      if (str.endsWith("cmakelists.txt") || str.endsWith(".cmake")) {
         telemetry.logEvent("cmakeFileOpen");
       }
     }));
 
     this.extensionContext.subscriptions.push(vscode.workspace.onDidSaveTextDocument(async td => {
-      const str = td.uri.fsPath;
+      const str = td.uri.fsPath.toLowerCase();
       const drv = await this.getCMakeDriverInstance();
 
       // If we detect a change in the CMake cache file, refresh the webview
-      if (this._cacheEditorWebview && drv && lightNormalizePath(str) === drv.cachePath) {
+      if (this._cacheEditorWebview && drv && lightNormalizePath(str) === drv.cachePath.toLowerCase()) {
         await this._cacheEditorWebview.refreshPanel();
       }
 
-      let fileType: string | undefined;
-      if (str.endsWith("CMakeLists.txt")) {
-        fileType = "CMakeLists";
-      } else if (str.endsWith("CMakeCache.txt")) {
-        fileType = "CMakeCache";
-      } else if (str.endsWith(".cmake")) {
-        fileType = ".cmake";
-      }
-
-      if (fileType) {
-        telemetry.logEvent("cmakeFileWrite", {filetype: fileType});
-      }
-
-      const sourceDirectory = await this.sourceDir;
-      if (str === path.join(sourceDirectory, "CMakeLists.txt")) {
+      const sourceDirectory = (await this.sourceDir).toLowerCase();
+      if (str === path.join(sourceDirectory, "cmakelists.txt")) {
         // CMakeLists.txt change event: its creation or deletion are relevant,
         // so update full/partial feature set view for this folder.
         await updateFullFeatureSetForFolder(this.folder);
@@ -541,6 +528,49 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           log.warning(localize('cmakelists.save.could.not.reconfigure',
            'Changes were detected in CMakeLists.txt but we could not reconfigure the project because another operation is already in progress.'));
           log.debug(localize('needs.reconfigure', 'The project needs to be reconfigured so that the changes saved in CMakeLists.txt have effect.'));
+        }
+      }
+
+      // For multi-root, the "onDidSaveTextDocument" will be received once for each project folder.
+      // To avoid misleading telemetry, consider the notification only for the active folder.
+      // There is always one active folder in a workspace and never more than one.
+      if (isActiveFolder(this.folder)) {
+        // "outside" evaluates whether the modified cmake file belongs to the active folder.
+        // Currently, we don't differentiate between outside active folder but inside any of the other
+        // workspace folders versus outside any folder referenced by the current workspace.
+        let outside: boolean = true;
+        let fileType: string | undefined;
+        if (str.endsWith("cmakelists.txt")) {
+          fileType = "CMakeLists";
+
+          // The CMakeLists.txt belongs to the current active folder only if sourceDirectory points to it.
+          if (str === path.join(sourceDirectory, "cmakelists.txt")) {
+            outside = false;
+          }
+        } else if (str.endsWith("cmakecache.txt")) {
+          fileType = "CMakeCache";
+          const binaryDirectory = (await this.binaryDir).toLowerCase();
+
+          // The CMakeCache.txt belongs to the current active folder only if binaryDirectory points to it.
+          if (str === path.join(binaryDirectory, "cmakecache.txt")) {
+            outside = false;
+          }
+        } else if (str.endsWith(".cmake")) {
+          fileType = ".cmake";
+          const binaryDirectory = (await this.binaryDir).toLowerCase();
+
+          // Instead of parsing how and from where a *.cmake file is included or imported
+          // let's consider one inside the active folder if it's in the workspace folder,
+          // sourceDirectory or binaryDirectory.
+          if (str.startsWith(this.folder.uri.fsPath.toLowerCase()) ||
+              str.startsWith(sourceDirectory) ||
+              str.startsWith(binaryDirectory)) {
+            outside = false;
+          }
+        }
+
+        if (fileType) {
+          telemetry.logEvent("cmakeFileWrite", { filetype: fileType, outsideActiveFolder: outside.toString() });
         }
       }
     }));
