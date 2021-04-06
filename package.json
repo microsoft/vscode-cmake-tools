@@ -31,6 +31,7 @@
   },
   "icon": "res/logo.png",
   "activationEvents": [
+    "onCommand:cmake.activeFolder",
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
@@ -79,10 +80,16 @@
     "onCommand:cmake.outline.buildAll",
     "workspaceContains:**/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
-    ],
+  ],
   "main": "./dist/main",
   "contributes": {
     "commands": [
+      {
+        "command": "cmake.activeFolder",
+        "title": "Get active folder",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
       {
         "command": "cmake.viewLog",
         "title": "%cmake-tools.command.cmake.viewLog.title%",
