@@ -19,8 +19,6 @@
 	"edit.setting": "Suchen",
 	"ignore.activation": "Nicht mehr anzeigen",
 	"missing.cmakelists": "CMakeLists.txt wurde im Stamm des Ordners \"{0}\" nicht gefunden. Wie möchten Sie fortfahren?",
-	"reload.window": "Fenster erneut laden",
-	"setting.sourceDirectory.failed.needs.reload.window": "Beim Aktualisieren der cmake.sourceDirectory-Einstellung ist ein Problem aufgetreten. Führen Sie den Befehl \"Fenster erneut laden\" aus, damit die Änderung wirksam wird.",
 	"starting.cmake.driver": "CMake-Treiber wird gestartet.",
 	"bad.cmake.executable": "Ungültige ausführbare CMake-Datei \"{0}\".",
 	"switch.to.serverapi": "Der CMake-Kommunikationsmodus \"file-api\" wird in Versionen vor {0} nicht unterstützt. Es wird zum CMake-Serverkommunikationsmodus gewechselt.",

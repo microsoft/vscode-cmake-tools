@@ -95,6 +95,7 @@
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Optimizar para el tamaño binario más pequeño: excluir información de depuración.",
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Optimizar la velocidad: incluir información de depuración.",
 	"cmake-tools.configuration.cmake.ctestArgs.description": "Argumentos que se pasan a CTest.",
+	"cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
 	"cmake-tools.configuration.cmake.environment.description": "Variables de entorno que se establecen al ejecutar comandos de CMake.",
 	"cmake-tools.configuration.cmake.environment.additionalProperties.description": "Valor de la variable de entorno.",
 	"cmake-tools.configuration.cmake.configureEnvironment.description": "Variables de entorno que se pasan a CMake durante la configuración.",
