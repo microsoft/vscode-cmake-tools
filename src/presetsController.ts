@@ -94,12 +94,7 @@ export class PresetsController {
       if (cmakeTools.configurePreset) {
         await presetsController.setConfigurePreset(cmakeTools.configurePreset.name);
       }
-      if (cmakeTools.buildPreset) {
-        await presetsController.setBuildPreset(cmakeTools.buildPreset.name);
-      }
-      if (cmakeTools.testPreset) {
-        await presetsController.setTestPreset(cmakeTools.testPreset.name);
-      }
+      // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
     };
 
     const watchPresetsChange = async () => {
@@ -213,11 +208,7 @@ export class PresetsController {
       log.debug(localize('user.cancelled.add.config.preset', 'User cancelled adding configure preset'));
       return false;
     } else {
-      const name = await this.showNameInputBox();
-      if (!name) {
-        return false;
-      }
-
+      let newPreset: preset.ConfigurePreset | undefined;
       switch(chosenItem.name) {
         case SpecialOptions.ScanForCompilers: {
           // Check that we have kits
@@ -291,8 +282,8 @@ export class PresetsController {
               return false;
             } else {
               log.debug(localize('user.selected.compiler', 'User selected compiler {0}', JSON.stringify(chosen_kit)));
-              const newPreset: preset.ConfigurePreset = {
-                name,
+              newPreset = {
+                name: '__placeholder__',
                 displayName: chosen_kit.kit.name,
                 description: chosen_kit.description,
                 generator: chosen_kit.kit.preferredGenerator?.name,
@@ -306,7 +297,6 @@ export class PresetsController {
                   CMAKE_CXX_COMPILER: chosen_kit.kit.compilers?.['CXX']!
                 }
               };
-              await this.addPresetAddUpdate(newPreset, 'configurePresets');
             }
           }
           break;
@@ -314,8 +304,7 @@ export class PresetsController {
         case SpecialOptions.InheritConfigurationPreset: {
           const placeHolder = localize('select.one.or.more.config.preset.placeholder', 'Select one or more configure presets');
           const inherits = await this.showPresetSelector(preset.configurePresets(), { placeHolder, canPickMany: true });
-          const newPreset: preset.ConfigurePreset = { name, description: '', displayName: '', inherits };
-          await this.addPresetAddUpdate(newPreset, 'configurePresets');
+          newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
           break;
         }
         case SpecialOptions.ToolchainFile: {
@@ -323,8 +312,8 @@ export class PresetsController {
           if (!toolchain) {
             return false;
           }
-          const newPreset: preset.ConfigurePreset = {
-            name,
+          newPreset = {
+            name: '__placeholder__',
             displayName: `Configure preset using toolchain file`,
             description: 'Sets Ninja generator, build and install directory',
             generator: 'Ninja',
@@ -335,12 +324,11 @@ export class PresetsController {
               CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
             }
           };
-          await this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
         }
         case SpecialOptions.Custom: {
-          const newPreset: preset.ConfigurePreset = {
-            name,
+          newPreset = {
+            name: '__placeholder__',
             displayName: `Custom configure preset`,
             description: 'Sets Ninja generator, build and install directory',
             generator: 'Ninja',
@@ -349,13 +337,23 @@ export class PresetsController {
               CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
             }
           };
-          await this.addPresetAddUpdate(newPreset, 'configurePresets');
           break;
         }
         default:
           // Shouldn't reach here
           break;
       }
+
+      if (newPreset) {
+        const name = await this.showNameInputBox();
+        if (!name) {
+          return false;
+        }
+
+        newPreset.name = name;
+        await this.addPresetAddUpdate(newPreset, 'configurePresets');
+      }
+
       return true;
     }
   }
@@ -413,34 +411,38 @@ export class PresetsController {
       log.debug(localize('user.cancelled.add.build.preset', 'User cancelled adding build preset'));
       return false;
     } else {
-      const name = await this.showNameInputBox();
-      if (!name) {
-        return false;
-      }
-
+      let newPreset: preset.BuildPreset | undefined;
       switch(chosenItem.name) {
         case SpecialOptions.CreateFromConfigurationPreset: {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
           const configurePreset = await this.showPresetSelector(preset.configurePresets(), { placeHolder });
-          const newPreset: preset.BuildPreset = { name, description: '', displayName: '', configurePreset };
-          await this.addPresetAddUpdate(newPreset, 'buildPresets');
+          newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
           break;
         }
         case SpecialOptions.InheritBuildPreset: {
           const placeHolder = localize('select.one.or.more.build.preset.placeholder', 'Select one or more build presets');
           const inherits = await this.showPresetSelector(preset.buildPresets(), { placeHolder, canPickMany: true });
-          const newPreset: preset.BuildPreset = { name, description: '', displayName: '', inherits };
-          await this.addPresetAddUpdate(newPreset, 'buildPresets');
+          newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
           break;
         }
         case SpecialOptions.Custom: {
-          const newPreset: preset.BuildPreset = { name, description: '', displayName: '' };
-          await this.addPresetAddUpdate(newPreset, 'buildPresets');
+          newPreset = { name: '__placeholder__', description: '', displayName: '' };
           break;
         }
         default:
           break;
       }
+
+      if (newPreset) {
+        const name = await this.showNameInputBox();
+        if (!name) {
+          return false;
+        }
+
+        newPreset.name = name;
+        await this.addPresetAddUpdate(newPreset, 'buildPresets');
+      }
+
       return true;
     }
   }
@@ -484,33 +486,39 @@ export class PresetsController {
       log.debug(localize('user.cancelled.add.test.preset', 'User cancelled adding test preset'));
       return false;
     } else {
-      const name = await this.showNameInputBox();
-      if (!name) {
-        return false;
-      }
-
+      let newPreset: preset.TestPreset | undefined;
       switch(chosenItem.name) {
         case SpecialOptions.CreateFromConfigurationPreset: {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
           const configurePreset = await this.showPresetSelector(preset.configurePresets(), { placeHolder });
-          const newPreset: preset.TestPreset = { name, description: '', displayName: '', configurePreset };
+          newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
           await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
         case SpecialOptions.InheritTestPreset: {
           const placeHolder = localize('select.one.or.more.test.preset.placeholder', 'Select one or more test presets');
           const inherits = await this.showPresetSelector(preset.testPresets(), { placeHolder, canPickMany: true });
-          const newPreset: preset.TestPreset = { name, description: '', displayName: '', inherits };
+          newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
           await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
         case SpecialOptions.Custom: {
-          const newPreset: preset.TestPreset = { name, description: '', displayName: '' };
+          newPreset = { name: '__placeholder__', description: '', displayName: '' };
           await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
         default:
           break;
+      }
+
+      if (newPreset) {
+        const name = await this.showNameInputBox();
+        if (!name) {
+          return false;
+        }
+
+        newPreset.name = name;
+        await this.addPresetAddUpdate(newPreset, 'testPresets');
       }
       return true;
     }
