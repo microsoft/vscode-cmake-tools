@@ -17,16 +17,10 @@ const log = logging.createLogger('preset');
 
 export interface PresetsFile {
   version: number;
-  cmakeMinimumRequired?: CmakeMinimumRequired;
+  cmakeMinimumRequired?: util.Version;
   configurePresets?: ConfigurePreset[] | undefined;
   buildPresets?: BuildPreset[] | undefined;
   testPresets?: TestPreset[] | undefined;
-}
-
-export interface CmakeMinimumRequired {
-  major: number;
-  minor: number;
-  patch: number;
 }
 
 export type VendorType = { [key: string]: any };
@@ -209,6 +203,18 @@ export function setPresetsFile(presets: PresetsFile | undefined) {
 export function setUserPresetsFile(presets: PresetsFile | undefined) {
   userPresetsFile = presets;
   userPresetsChangedEmitter.fire();
+}
+
+export function minCMakeVersion() {
+  const min1 = presetsFile?.cmakeMinimumRequired;
+  const min2 = userPresetsFile?.cmakeMinimumRequired;
+  if (!min1) {
+    return min2;
+  }
+  if (!min2) {
+    return min1;
+  }
+  return util.versionLess(min1, min2) ? min1 : min2;
 }
 
 export function configurePresets() { return presetsFile?.configurePresets || []; }

@@ -9,7 +9,7 @@ import diagCollections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
-import {ProgressHandle, versionToString, lightNormalizePath} from '@cmt/util';
+import {ProgressHandle, versionToString, lightNormalizePath, Version, versionLess} from '@cmt/util';
 import {DirectoryContext} from '@cmt/workspace';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -140,6 +140,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get statusMessage() { return this._statusMessage.value; }
   get onStatusMessageChanged() { return this._statusMessage.changeEvent; }
   private readonly _statusMessage = new Property<string>(localize('initializing', 'Initializing'));
+
+  /**
+   * Minimum cmake version supported. Currently only used for presets
+   */
+  get minCMakeVersion() { return this._minCMakeVersion; }
+  set minCMakeVersion(version: Version | undefined) { this._minCMakeVersion = version; }
+  private _minCMakeVersion?: Version;
+
 
   /**
    * Currently selected configure preset
@@ -727,7 +735,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let cmakePath = await this.workspaceContext.getCMakePath(overWriteCMakePathSetting);
     if (!cmakePath)
       cmakePath = '';
-    return getCMakeExecutableInformation(cmakePath);
+    const cmakeExe = await getCMakeExecutableInformation(cmakePath);
+    if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
+      rollbar.error(localize('cmake.version.not.supported',
+                             'CMake version {0} may not be supported. Minimum version required is {1}.',
+                             versionToString(cmakeExe.version),
+                             versionToString(this.minCMakeVersion)));
+    }
+    return cmakeExe;
   }
 
   /**

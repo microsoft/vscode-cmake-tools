@@ -89,6 +89,8 @@ export class PresetsController {
                              preset.setOriginalUserPresetsFile,
                              exists => presetsController._userPresetsFileExists = exists);
 
+      cmakeTools.minCMakeVersion = preset.minCMakeVersion();
+
       if (cmakeTools.configurePreset) {
         await presetsController.setConfigurePreset(cmakeTools.configurePreset.name);
       }
