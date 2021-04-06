@@ -308,10 +308,6 @@ export class PresetsController {
           break;
         }
         case SpecialOptions.ToolchainFile: {
-          const toolchain = await vscode.window.showOpenDialog({ /* Blank */ });
-          if (!toolchain) {
-            return false;
-          }
           newPreset = {
             name: '__placeholder__',
             displayName: `Configure preset using toolchain file`,
@@ -320,7 +316,7 @@ export class PresetsController {
             binaryDir: '${sourceDir}/out/build/${presetName}',
             cacheVariables: {
               CMAKE_BUILD_TYPE: 'Debug',
-              CMAKE_TOOLCHAIN_FILE: toolchain[0].path,
+              CMAKE_TOOLCHAIN_FILE: '',
               CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
             }
           };
@@ -576,6 +572,8 @@ export class PresetsController {
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.config.preset.selection', 'User cancelled configure preset selection'));
       return false;
+    } else if (chosenPreset === this._cmakeTools.configurePreset?.name) {
+      return true;
     } else if (chosenPreset === '__addPreset__') {
       await this.addConfigurePreset();
       return false;
@@ -648,6 +646,8 @@ export class PresetsController {
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
       return false;
+    } else if (chosenPreset === this._cmakeTools.buildPreset?.name) {
+      return true;
     } else if (chosenPreset === '__addPreset__') {
       await this.addBuildPreset();
       return false;
@@ -696,6 +696,8 @@ export class PresetsController {
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
       return false;
+    } else if (chosenPreset === this._cmakeTools.testPreset?.name) {
+      return true;
     } else if (chosenPreset === '__addPreset__') {
       await this.addTestPreset();
       return false;
