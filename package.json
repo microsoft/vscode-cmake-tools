@@ -1260,6 +1260,19 @@
           "default": [],
           "scope": "resource"
         },
+        "cmake.ctestDefaultArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "%cmake-tools.configuration.cmake.ctestDefaultArgs.description%",
+          "default": [
+            "-T",
+            "test",
+            "--output-on-failure"
+          ],
+          "scope": "machine"
+        },
         "cmake.environment": {
           "type": "object",
           "default": {},

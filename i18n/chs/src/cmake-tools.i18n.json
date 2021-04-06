@@ -19,8 +19,6 @@
 	"edit.setting": "查找",
 	"ignore.activation": "不再显示",
 	"missing.cmakelists": "在文件夹“{0}”的根目录中找不到 CMakeLists.txt。你希望如何继续?",
-	"reload.window": "重载窗口",
-	"setting.sourceDirectory.failed.needs.reload.window": "更新 cmake.sourceDirectory 设置时出现问题。要使更改生效，请运行“重载窗口”命令。",
 	"starting.cmake.driver": "正在启动 CMake 驱动程序",
 	"bad.cmake.executable": "CMake 可执行文件“{0}”不正确。",
 	"switch.to.serverapi": "在低于 {0} 的版本中不支持 CMake 文件与 API (file-api)通信模式。正在切换到 CMake 服务器通信模式。",
