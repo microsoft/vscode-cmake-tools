@@ -545,8 +545,9 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
             }
           }
           if (latestVsIndex < 0) {
-            log.error(localize('specified.cl.not.found', 'Configure preset {0}: Specified cl.exe with toolset {1} and architecture {2} are not found',
-                              preset.name, toolsetVsVersion ? `${toolsetVsVersion},${toolsetArch}` : toolsetArch, arch));
+            log.error(localize('specified.cl.not.found',
+                          'Configure preset {0}: Specified cl.exe with toolset {1} and architecture {2} is not found, you may need to run "CMake: Scan for Compilers" if it exists on your computer.',
+                          preset.name, toolsetVsVersion ? `${toolsetVsVersion},${toolsetArch}` : toolsetArch, arch));
           } else {
             clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
             // if ninja isn't on path, try to look for it in a VS install

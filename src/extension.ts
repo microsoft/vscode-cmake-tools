@@ -779,7 +779,8 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async scanForCompilers() {
-    return this.scanForKits();
+    await this.scanForKits();
+    await this._folders.activeFolder?.presetsController.reapplyPresets();
   }
 
   async scanForKits() {

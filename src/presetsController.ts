@@ -21,6 +21,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('presetController');
 
+type SetPresetsFileFunc = (presets: preset.PresetsFile | undefined) => void;
+
 export class PresetsController {
   private _presetsWatcher: chokidar.FSWatcher | undefined;
   private _userPresetsWatcher: chokidar.FSWatcher | undefined;
@@ -59,48 +61,10 @@ export class PresetsController {
 
     presetsController._sourceDir = await expandSourceDir(cmakeTools.workspaceContext.config.sourceDirectory);
 
-    type SetPresetsFileFunc = (presets: preset.PresetsFile | undefined) => void;
-    const resetPresetsFile = async (file: string,
-                                    setPresetsFile: SetPresetsFileFunc,
-                                    setOriginalPresetsFile: SetPresetsFileFunc,
-                                    fileExistCallback: (fileExists: boolean) => void) => {
-      const presetsFileBuffer = await presetsController.readPresetsFile(file);
-
-      // There might be a better location for this, but for now this is the best one...
-      fileExistCallback(Boolean(presetsFileBuffer));
-
-      let presetsFile = await presetsController.parsePresetsFile(presetsFileBuffer, file);
-      presetsFile = await presetsController.validatePresetsFile(presetsFile, file);
-      setPresetsFile(presetsFile);
-      // Parse again so we automatically have a copy by value
-      setOriginalPresetsFile(await presetsController.parsePresetsFile(presetsFileBuffer, file));
-    };
-
-    // Need to reapply presets every time presets changed since the binary dir or cmake path could change
-    // (need to clean or reload driver)
-    const reapplyPresets = async () => {
-      // Reset all changes due to expansion since parents could change
-      await resetPresetsFile(presetsController.presetsPath,
-                             preset.setPresetsFile,
-                             preset.setOriginalPresetsFile,
-                             exists => presetsController._presetsFileExists = exists);
-      await resetPresetsFile(presetsController.userPresetsPath,
-                             preset.setUserPresetsFile,
-                             preset.setOriginalUserPresetsFile,
-                             exists => presetsController._userPresetsFileExists = exists);
-
-      cmakeTools.minCMakeVersion = preset.minCMakeVersion();
-
-      if (cmakeTools.configurePreset) {
-        await presetsController.setConfigurePreset(cmakeTools.configurePreset.name);
-      }
-      // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
-    };
-
     const watchPresetsChange = async () => {
       // We explicitly read presets file here, instead of on the initialization of the file watcher. Otherwise
       // there might be timing issues, since listeners are invoked async.
-      await reapplyPresets();
+      await presetsController.reapplyPresets();
 
       if (presetsController._presetsWatcher) {
         presetsController._presetsWatcher.close().then(() => {}, () => {});
@@ -111,23 +75,23 @@ export class PresetsController {
 
       presetsController._presetsWatcher = chokidar.watch(presetsController.presetsPath, { ignoreInitial: true })
                                     .on('add', async () => {
-                                      await reapplyPresets();
+                                      await presetsController.reapplyPresets();
                                     })
                                     .on('change', async () => {
-                                      await reapplyPresets();
+                                      await presetsController.reapplyPresets();
                                     })
                                     .on('unlink', async () => {
-                                      await reapplyPresets();
+                                      await presetsController.reapplyPresets();
                                     });
       presetsController._userPresetsWatcher = chokidar.watch(presetsController.userPresetsPath, { ignoreInitial: true })
                                         .on('add', async () => {
-                                          await reapplyPresets();
+                                          await presetsController.reapplyPresets();
                                         })
                                         .on('change', async () => {
-                                          await reapplyPresets();
+                                          await presetsController.reapplyPresets();
                                         })
                                         .on('unlink', async () => {
-                                          await reapplyPresets();
+                                          await presetsController.reapplyPresets();
                                         });
     };
 
@@ -154,6 +118,43 @@ export class PresetsController {
   get folder() { return this._cmakeTools.folder; }
 
   get presetsFileExist() { return this._presetsFileExists || this._userPresetsFileExists; }
+
+  private async resetPresetsFile(file: string,
+                                 setPresetsFile: SetPresetsFileFunc,
+                                 setOriginalPresetsFile: SetPresetsFileFunc,
+                                 fileExistCallback: (fileExists: boolean) => void) {
+    const presetsFileBuffer = await this.readPresetsFile(file);
+
+    // There might be a better location for this, but for now this is the best one...
+    fileExistCallback(Boolean(presetsFileBuffer));
+
+    let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
+    presetsFile = await this.validatePresetsFile(presetsFile, file);
+    setPresetsFile(presetsFile);
+    // Parse again so we automatically have a copy by value
+    setOriginalPresetsFile(await this.parsePresetsFile(presetsFileBuffer, file));
+  }
+
+  // Need to reapply presets every time presets changed since the binary dir or cmake path could change
+  // (need to clean or reload driver)
+  async reapplyPresets() {
+    // Reset all changes due to expansion since parents could change
+    await this.resetPresetsFile(this.presetsPath,
+                            preset.setPresetsFile,
+                            preset.setOriginalPresetsFile,
+                            exists => this._presetsFileExists = exists);
+    await this.resetPresetsFile(this.userPresetsPath,
+                            preset.setUserPresetsFile,
+                            preset.setOriginalUserPresetsFile,
+                            exists => this._userPresetsFileExists = exists);
+
+    this._cmakeTools.minCMakeVersion = preset.minCMakeVersion();
+
+    if (this._cmakeTools.configurePreset) {
+      await this.setConfigurePreset(this._cmakeTools.configurePreset.name);
+    }
+    // Don't need to set build/test presets here since they are reapplied in setConfigurePreset
+  }
 
   private showNameInputBox() {
     return vscode.window.showInputBox({ placeHolder: localize('preset.name', 'Preset name') });
