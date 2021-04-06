@@ -715,11 +715,17 @@ export class PresetsController {
     );
   }
 
-  openCMakePresets(): Thenable<vscode.TextEditor> {
+  async openCMakePresets(): Promise<vscode.TextEditor> {
+    if (!await fs.exists(this.presetsPath)) {
+      await this.updatePresetsFile({ version: 2 });
+    }
     return vscode.window.showTextDocument(vscode.Uri.file(this.presetsPath));
   }
 
-  openCMakeUserPresets(): Thenable<vscode.TextEditor> {
+  async openCMakeUserPresets(): Promise<vscode.TextEditor> {
+    if (!await fs.exists(this.userPresetsPath)) {
+      await this.updatePresetsFile({ version: 2 }, true);
+    }
     return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
   }
 
