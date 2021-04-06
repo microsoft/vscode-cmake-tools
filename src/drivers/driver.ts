@@ -1383,7 +1383,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       // Prefer using CMake's build options to set parallelism over tool-specific switches.
       // The feature is not available until version 3.14.
-      if (this.cmake.version && this.cmake.version.major >= 3 && this.cmake.version.minor > 13) {
+      if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
         buildArgs.push('-j');
         if (this.config.numJobs) {
           buildArgs.push(this.config.numJobs.toString());
