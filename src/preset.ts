@@ -171,6 +171,15 @@ export interface TestPreset extends Preset {
   __generator?: string; // Getting this from the config preset
 }
 
+/**
+ * Should NOT cache anything. Need to make a copy if any fields need to be changed.
+ */
+export const defaultTestPreset: TestPreset = {
+  name: '__defaultTestPreset__',
+  displayName: localize('default.test.preset', '[Default]'),
+  description: localize('default.test.preset.description', 'An empty test preset that does not add any arguments')
+};
+
 // original*PresetsFile's are each used to keep a copy by **value**. They are used to update
 // the presets files. non-original's are also used for caching during various expansions.
 let originalPresetsFile: PresetsFile | undefined;
@@ -878,15 +887,17 @@ const referencedTestPresets: Set<string> = new Set();
 export function expandTestPreset(name: string,
                                  workspaceFolder: string,
                                  sourceDir: string,
-                                 allowUserPreset: boolean = false): Promise<TestPreset | null> {
+                                 allowUserPreset: boolean = false,
+                                 configurePreset?: string): Promise<TestPreset | null> {
   referencedTestPresets.clear();
-  return expandTestPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset);
+  return expandTestPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
 }
 
 async function expandTestPresetImpl(name: string,
                                     workspaceFolder: string,
                                     sourceDir: string,
-                                    allowUserPreset: boolean = false): Promise<TestPreset | null> {
+                                    allowUserPreset: boolean = false,
+                                    configurePreset?: string): Promise<TestPreset | null> {
   let preset = getPresetByName(testPresets(), name);
   if (preset) {
     return expandTestPresetHelper(preset, workspaceFolder, sourceDir);
@@ -897,6 +908,17 @@ async function expandTestPresetImpl(name: string,
     if (preset) {
       return expandTestPresetHelper(preset, workspaceFolder, sourceDir, true);
     }
+  }
+
+  if (name === defaultTestPreset.name) {
+    // Construct the default test preset every time since it should NOT be cached
+    preset = {
+      name: defaultTestPreset.name,
+      displayName: defaultTestPreset.displayName,
+      description: defaultTestPreset.description,
+      configurePreset
+    };
+    return expandTestPresetHelper(preset, workspaceFolder, sourceDir, true);
   }
 
   log.error(localize('test.preset.not.found', 'Could not find test preset with name {0}', name));

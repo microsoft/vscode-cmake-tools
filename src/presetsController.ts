@@ -680,6 +680,7 @@ export class PresetsController {
     const presets = preset.testPresets().
                            concat(preset.userTestPresets()).
                            filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
+    presets.push(preset.defaultTestPreset);
 
     log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
     const placeHolder = localize('select.active.test.preset.placeholder', 'Select a test preset for {0}', this.folder.name);
@@ -698,7 +699,7 @@ export class PresetsController {
   }
 
   async setTestPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
-    if (needToCheckConfigurePreset) {
+    if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
       preset.expandConfigurePresetForPresets('test');
       const _preset = preset.getPresetByName(preset.allTestPresets(), presetName);
       if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {

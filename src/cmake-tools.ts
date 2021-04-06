@@ -235,7 +235,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._testPreset = await preset.expandTestPreset(testPreset,
                                                        lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                        await this.sourceDir,
-                                                       true);
+                                                       true,
+                                                       this.configurePreset?.name);
       if (!this._testPreset) {
         log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
         return;
