@@ -215,6 +215,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     return path.join(api_path, 'reply');
   }
 
+  private toolchainWarningProvided: boolean = false;
   private async updateCodeModel(): Promise<boolean> {
     const reply_path = this.getCMakeReplyPath();
     const indexFile = await loadIndexFile(reply_path);
@@ -243,9 +244,12 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       // The "toolchains" object kind wasn't introduced until CMake 3.20, so
       // it's not fatal if it's missing in the response.
       if (!toolchains_obj) {
-        log.warning(localize(
-          'toolchains.object.unsupported',
-          'This version of CMake does not support the "toolchains" object kind. Compiler paths will be determined by reading CMakeCache.txt.'));
+        if (!this.toolchainWarningProvided) {
+          this.toolchainWarningProvided = true;
+          log.info(localize(
+            'toolchains.object.unsupported',
+            'This version of CMake does not support the "toolchains" object kind. Compiler paths will be determined by reading CMakeCache.txt.'));
+        }
       } else {
         this._codeModel.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
       }
