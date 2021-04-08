@@ -71,6 +71,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [Run CMake from the command line or a Continuous Integration (CI) pipeline](cmake-presets.md#run-cmake-from-the-command-line-or-a-continuous-integration-ci-pipeline)
 * [Sourcing the environment when building with command line generators on Windows](cmake-presets.md#sourcing-the-environment-when-building-with-command-line-generators-on-windows)
 * [Example CMakePresets.json file](cmake-presets.md#example-cmakepresetsjson-file)
+
 [Troubleshoot CMake Tools](troubleshoot.md#troubleshoot-cmake-tools)
 * [Common issues and resolutions](troubleshoot.md#common-issues-and-resolutions)
 * [CMake Tools is unable to provide IntelliSense configuration](troubleshoot.md#error-cmake-tools-is-unable-to-provide-intellisense-configuration)
