@@ -31,7 +31,7 @@ A new setting, `cmake.useCMakePresets`, has been added to `settings.json`:
 
 You can configure and build your CMake project with a series of commands. Open the command palette in Visual Studio Code with `Ctrl+Shift+P`:
 
-![Command pallette: Select Configure Preset](images/command-palette.png)
+![Command pallette: Select Configure Preset](images/command-palette.PNG)
 
 ### CMake: Select Configure Preset
 
@@ -71,7 +71,7 @@ Select a Test Preset to make it the active Test Preset. This is the `testPreset`
 
 All Test Presets are required to specify an associated `configurePreset`. CMake Tools will hide Test Presets that don't apply to the active Configure Preset. For more information, see [Test Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#test-preset).
 
-### CMake: Run tests
+### CMake: Run Tests
 
 To invoke CTest, run **CMake: Run Tests from the command palette**. This is the same as running `ctest --preset <testPreset>` from the command line, where `<testPreset>` is the name of the active Test Preset.
 
@@ -94,7 +94,7 @@ To add a new Configure Preset to `CMakePresets.json`, run the **CMake: Add Confi
 
 ![Add a configure preset](images/add-configure-preset-vscode.png)
 
- - Select **Inherit from Configure Preset** to inherit from an existing Configure Preset. For more information about inheritance, see [Configure resets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset).
+ - Select **Inherit from Configure Preset** to inherit from an existing Configure Preset. For more information about inheritance, see [Configure Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset).
  - Select the **Toolchain File** template to configure your CMake project with a CMake toolchain file.
  - Select the **Custom** template to configure an empty Configure Preset.
  - Select **[Scan for Compilers]** to search for C/C++ compilers on your machine.
@@ -133,7 +133,7 @@ You can specify the name of a compiler on your `PATH` or an environment variable
 
 When you build with the Visual C++ toolset, CMake Tools automatically sources the environment from the latest version of the Visual Studio Build Tools installed on your system. You can specify a specific compiler version with the `toolset` option in `CMakePresets.json`. For more information, see [Configure Presets and Toolset Selection](https://cmake.org/cmake/help/latest/manual/cmake-toolchains.7.html).
 
-A preset that builds for 64-bit Windows with cl.exe and a Visual Studio generator might set compilers like this:
+A preset that builds for 64-bit Windows with `cl.exe` and a Visual Studio generator might set compilers like this:
 
 ```json
 "architecture": {
@@ -264,7 +264,7 @@ Other troubleshooting steps include:
 
 - Confirm `cmake.exe` and your generator are installed and on the `PATH`. If you are working on Windows, run the **CMake: Scan for Compilers** command so the extension can detect build tools installed with Visual Studio.
 - Delete the cache and reconfigure the project (**CMake: Delete Cache* and Reconfigure**)
-- Reset the CMake Tools extension state (**CMake: Reset CMake Tool Extension State**)
+- Reset the CMake Tools extension state (**CMake: Reset CMake Tools Extension State**)
 - Increase the logging level (`cmake.loggingLevel` in `settings.json`) and/or check the log file (**CMake: Open the CMake Tools Log File**)
 
 If you have identified a problem, the best way to report it is by submitting an issue to the [CMake Tools extension repository](https://github.com/microsoft/vscode-cmake-tools).
