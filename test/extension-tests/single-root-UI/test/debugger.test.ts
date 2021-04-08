@@ -1,4 +1,4 @@
-import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
+import {DefaultEnvironment, expect, getFirstSystemKit, sleep} from '@test/util';
 // import sinon = require('sinon');
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
@@ -19,6 +19,8 @@ suite('[Debug/Launch interface using Kits and Variants]', async () => {
     cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'false');
+    // Wait for 5 sec since the config listener is async
+    await sleep(5000);
 
     const kit = await getFirstSystemKit(cmakeTools);
     console.log("Using following kit in next test: ", kit);
@@ -31,6 +33,8 @@ suite('[Debug/Launch interface using Kits and Variants]', async () => {
     this.timeout(30000);
 
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'true');
+    // Wait for 5 sec since the config listener is async
+    await sleep(5000);
 
     testEnv.teardown();
   });

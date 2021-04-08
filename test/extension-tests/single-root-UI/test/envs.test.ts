@@ -1,7 +1,7 @@
 
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit, sleep} from '@test/util';
 import {fs} from '@cmt/pr';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -23,6 +23,8 @@ suite('[Environment Variables in Variants]', async () => {
     cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'true');
+    // Wait for 5 sec since the config listener is async
+    await sleep(5000);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -37,6 +39,8 @@ suite('[Environment Variables in Variants]', async () => {
   });
 
   teardown(async function(this: Mocha.Context) {
+    this.timeout(30000);
+
     const variantFileBackup = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
     if (await fs.exists(variantFileBackup)) {
       const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
@@ -44,8 +48,9 @@ suite('[Environment Variables in Variants]', async () => {
     }
 
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'true');
+    // Wait for 5 sec since the config listener is async
+    await sleep(5000);
 
-    this.timeout(30000);
     testEnv.teardown();
   });
 

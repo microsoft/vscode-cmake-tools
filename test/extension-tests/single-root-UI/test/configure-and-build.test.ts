@@ -6,7 +6,8 @@ import {
   DefaultEnvironment,
   expect,
   getFirstSystemKit,
-  getMatchingSystemKit
+  getMatchingSystemKit,
+  sleep
 } from '@test/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -40,6 +41,8 @@ suite('Build using Kits and Variants', async () => {
     cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'false');
+    // Wait for 5 sec since the config listener is async
+    await sleep(5000);
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -73,6 +76,11 @@ suite('Build using Kits and Variants', async () => {
   });
 
   suiteTeardown(async () => {
+    // Recover the setting
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'true');
+    // Wait for 5 sec since the config listener is async
+    await sleep(5000);
+
     if (testEnv) {
       testEnv.teardown();
     }
@@ -228,9 +236,6 @@ suite('Build using Presets', async () => {
     // CMakePresets.json and CMakeUserPresets.json exist so will use presets by default
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
-
-    // Recovering setting in suiteTeardown can't finish in time?
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'true');
 
     await clearExistingKitConfigurationFile();
   });
