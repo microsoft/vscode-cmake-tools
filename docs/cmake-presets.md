@@ -31,7 +31,7 @@ A new setting, `cmake.useCMakePresets`, has been added to `settings.json`:
 
 You can configure and build your CMake project with a series of commands. Open the command palette in Visual Studio Code with `Ctrl+Shift+P`:
 
-![Command pallette: Select Configure Preset](images/command-palette.PNG)
+![Command pallette: Select Configure Preset](images/command-palette.png)
 
 ### CMake: Select Configure Preset
 
