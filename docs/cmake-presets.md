@@ -263,7 +263,7 @@ If you're working on Windows then CMake must be on the `PATH`.
 Other troubleshooting steps include:
 
 - Confirm `cmake.exe` and your generator are installed and on the `PATH`. If you are working on Windows, run the **CMake: Scan for Compilers** command so the extension can detect build tools installed with Visual Studio.
-- Delete the cache and reconfigure the project (**CMake: Delete Cache* and Reconfigure**)
+- Delete the cache and reconfigure the project (**CMake: Delete Cache and Reconfigure**)
 - Reset the CMake Tools extension state (**CMake: Reset CMake Tools Extension State**)
 - Increase the logging level (`cmake.loggingLevel` in `settings.json`) and/or check the log file (**CMake: Open the CMake Tools Log File**)
 
