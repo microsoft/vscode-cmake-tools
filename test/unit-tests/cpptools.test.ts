@@ -83,10 +83,16 @@ suite('CppTools tests', () => {
     expect(mode).to.eql('clang-arm');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'clang', 'x64');
     expect(mode).to.eql('clang-x64');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'clang', 'arm64');
+    expect(mode).to.eql('clang-arm64');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'clang', 'arm');
     expect(mode).to.eql('clang-arm');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'gcc', undefined);
     expect(mode).to.eql('gcc-x64');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'gcc', 'arm64');
+    expect(mode).to.eql('gcc-arm64');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'gcc', 'arm');
+    expect(mode).to.eql('gcc-arm');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'g++', 'x86');
     expect(mode).to.eql('gcc-x86');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'arm-none-eabi-g++', undefined);

@@ -254,6 +254,11 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
       case 'x86':
         return 'gcc-x86';
       case 'x64':
+        return 'gcc-x64';
+      case 'arm64':
+        return can_use_arm ? 'gcc-arm64' : 'gcc-x64';
+      case 'arm':
+        return can_use_arm ? 'gcc-arm' : 'gcc-x86';
       default:
         return 'gcc-x64';
     }
