@@ -219,6 +219,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       }
     }
     const cmake = this.cmake.path;
+    log.debug(`Configuring using ${this.useCMakePresets ? 'preset': 'kit'}`);
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
