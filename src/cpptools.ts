@@ -140,7 +140,6 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const {done, value} = iter.next();
       if (done) {
         // TODO: whitelist architecture values and add telemetry
-        //targetArch = value.toLowerCase();
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
