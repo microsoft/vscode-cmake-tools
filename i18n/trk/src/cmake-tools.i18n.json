@@ -19,8 +19,6 @@
 	"edit.setting": "Bul",
 	"ignore.activation": "Bir daha gösterme",
 	"missing.cmakelists": "CMakeLists.txt, '{0}' klasörünün kökünde bulunamadı. Nasıl devam etmek istersiniz?",
-	"reload.window": "Pencereyi Yeniden Yükle",
-	"setting.sourceDirectory.failed.needs.reload.window": "cmake.sourceDirectory ayarı güncelleştirilirken bir hata oluştu. Değişikliğin etkili olması için lütfen \"Pencereyi yeniden yükle\" komutunu çalıştırın.",
 	"starting.cmake.driver": "CMake sürücüsü başlatılıyor",
 	"bad.cmake.executable": "Hatalı \"{0}\" CMake yürütülebilir dosyası.",
 	"switch.to.serverapi": "CMake file-api iletişim modu, {0} öncesi sürümlerde desteklenmiyor. CMake server iletişimi moduna geçiliyor.",

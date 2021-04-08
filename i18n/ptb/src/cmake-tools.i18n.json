@@ -19,8 +19,6 @@
 	"edit.setting": "Localizar",
 	"ignore.activation": "Não mostrar novamente",
 	"missing.cmakelists": "CMakeLists.txt não foi encontrado na raiz da pasta '{0}'. Como você deseja continuar?",
-	"reload.window": "Recarregar Janela",
-	"setting.sourceDirectory.failed.needs.reload.window": "Algo deu errado ao atualizar a configuração cmake.sourceDirectory. Execute o comando \"Recarregar janela\" para que a alteração entre em vigor.",
 	"starting.cmake.driver": "Iniciando o driver do CMake",
 	"bad.cmake.executable": "Executável CMake \"{0}\" incorreto.",
 	"switch.to.serverapi": "O modo de comunicação entre arquivo e API do CMake não tem suporte em versões anteriores à {0}. Alternando para o modo de comunicação do servidor do CMake.",

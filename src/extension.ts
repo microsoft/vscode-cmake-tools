@@ -198,6 +198,10 @@ class ExtensionManager implements vscode.Disposable {
     return this._folders.get(folder);
   }
 
+  public isActiveFolder(cmt: CMakeToolsFolder): boolean {
+    return this._folders.activeFolder === cmt;
+  }
+
   /**
    * Create a new extension manager instance. There must only be one!
    * @param ctx The extension context
@@ -1367,6 +1371,11 @@ export async function activate(context: vscode.ExtensionContext) {
 export function enableFullFeatureSet(fullFeatureSet: boolean) {
   util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
   _EXT_MANAGER?.showStatusBar(fullFeatureSet);
+}
+
+export function isActiveFolder(folder: vscode.WorkspaceFolder): boolean | undefined {
+  const cmtFolder = _EXT_MANAGER?.getCMTFolder(folder);
+  return cmtFolder && _EXT_MANAGER?.isActiveFolder(cmtFolder);
 }
 
 // This method updates the full/partial view state of the given folder

@@ -19,8 +19,6 @@
 	"edit.setting": "尋找",
 	"ignore.activation": "不要再顯示",
 	"missing.cmakelists": "在資料夾 '{0}' 的根目錄中找不到 CMakeLists.txt。您希望如何繼續?",
-	"reload.window": "重新載入視窗",
-	"setting.sourceDirectory.failed.needs.reload.window": "更新 cmake.sourceDirectory 設定時發生錯誤。請執行 [重新載入視窗] 命令，以讓變更生效。",
 	"starting.cmake.driver": "正在啟動 CMake 驅動程式",
 	"bad.cmake.executable": "錯誤的 CMake 可執行檔 \"{0}\"。",
 	"switch.to.serverapi": "{0} 之前的版本，不支援 CMake 的檔案對 api 通訊模式。正在切換到 CMake 伺服器通訊模式。",

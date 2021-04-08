@@ -19,8 +19,6 @@
 	"edit.setting": "Localiser",
 	"ignore.activation": "Ne plus afficher",
 	"missing.cmakelists": "CMakeLists.txt introuvable à la racine du dossier '{0}'. Comment voulez-vous procéder ?",
-	"reload.window": "Recharger la fenêtre",
-	"setting.sourceDirectory.failed.needs.reload.window": "Nous avons rencontré un problème pendant la mise à jour du paramètre cmake.sourceDirectory. Exécutez la commande « Recharger la fenêtre » pour appliquer le changement.",
 	"starting.cmake.driver": "Démarrage du pilote CMake",
 	"bad.cmake.executable": "Exécutable CMake incorrect \"{0}\".",
 	"switch.to.serverapi": "Le mode de communication d'API de fichier CMake n'est pas pris en charge dans les versions antérieures à {0}. Passage au mode de communication de serveur CMake.",

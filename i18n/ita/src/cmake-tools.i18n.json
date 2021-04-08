@@ -19,8 +19,6 @@
 	"edit.setting": "Individua",
 	"ignore.activation": "Non visualizzare più questo messaggio",
 	"missing.cmakelists": "CMakeLists.txt non è stato trovato nella radice della cartella '{0}'. Come si vuole procedere?",
-	"reload.window": "Ricarica finestra",
-	"setting.sourceDirectory.failed.needs.reload.window": "Si è verificato un errore durante l'aggiornamento dell'impostazione cmake.sourceDirectory. Eseguire il comando \"Ricarica finestra\" per rendere effettiva la modifica.",
 	"starting.cmake.driver": "Avvio del driver di CMake",
 	"bad.cmake.executable": "L'eseguibile di CMake \"{0}\" non è valido.",
 	"switch.to.serverapi": "La modalità di comunicazione file-api di CMake non è supportata in versioni precedenti alla {0}. Verrà effettuato il passaggio alla modalità di comunicazione server di CMake.",

@@ -95,6 +95,7 @@
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "En küçük ikili boyutu için iyileştirin. Hata ayıklama bilgilerini hariç tutun.",
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Hız için iyileştirin. Hata ayıklama bilgilerini dahil edin.",
 	"cmake-tools.configuration.cmake.ctestArgs.description": "CTest'e geçirilecek bağımsız değişkenler.",
+	"cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
 	"cmake-tools.configuration.cmake.environment.description": "CMake komutlarını çalıştırırken ayarlanacak ortam değişkenleri.",
 	"cmake-tools.configuration.cmake.environment.additionalProperties.description": "Ortam değişkeninin değeri.",
 	"cmake-tools.configuration.cmake.configureEnvironment.description": "Yapılandırma sırasında CMake'e geçirilecek ortam değişkenleri.",

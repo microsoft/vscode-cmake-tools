@@ -95,6 +95,7 @@
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Für kleinste binäre Größe optimieren – Debuginformationen ausschließen.",
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Für Geschwindigkeit optimieren – Debuginformationen einschließen.",
 	"cmake-tools.configuration.cmake.ctestArgs.description": "An CTest zu übergebende Argumente.",
+	"cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
 	"cmake-tools.configuration.cmake.environment.description": "Umgebungsvariablen, die beim Ausführen von CMake-Befehlen festgelegt werden sollen.",
 	"cmake-tools.configuration.cmake.environment.additionalProperties.description": "Wert für die Umgebungsvariable.",
 	"cmake-tools.configuration.cmake.configureEnvironment.description": "Umgebungsvariablen, die während der Konfiguration an CMake übergeben werden.",
