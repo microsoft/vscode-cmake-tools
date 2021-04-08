@@ -101,9 +101,15 @@ function parseTargetArch(target: string): Architecture {
     case 'amd64':
     case 'x86_64':
       return 'x64';
+    case 'aarch64':
+    case 'arm64':
+      return 'arm64';
+    case 'arm':
+      return 'arm';
   }
   // Check triple target value
-  if (target.indexOf('aarch64') >= 0 || target.indexOf('armv8-a') >= 0 || target.indexOf('armv8.') >= 0) {
+  if (target.indexOf('aarch64') >= 0 || target.indexOf('arm64') >= 0
+    || target.indexOf('armv8-a') >= 0 || target.indexOf('armv8.') >= 0) {
     return 'arm64';
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
     return 'arm';
@@ -134,6 +140,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const {done, value} = iter.next();
       if (done) {
         // TODO: whitelist architecture values and add telemetry
+        //targetArch = value.toLowerCase();
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());

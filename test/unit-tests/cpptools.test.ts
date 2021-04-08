@@ -38,12 +38,18 @@ suite('CppTools tests', () => {
     // Parse target architecture
     info = parseCompileFlags(cpptoolsVersion4, ['--target=aarch64-arm-none-eabi']);
     expect(info.targetArch).to.eql('arm64');
+    info = parseCompileFlags(cpptoolsVersion4, ['-target', 'arm64-arm-none-eabi']);
+    expect(info.targetArch).to.eql('arm64');
     info = parseCompileFlags(cpptoolsVersion4, ['-target', 'arm-arm-none-eabi']);
     expect(info.targetArch).to.eql('arm');
     info = parseCompileFlags(cpptoolsVersion4, ['-arch=x86_64']);
     expect(info.targetArch).to.eql('x64');
     info = parseCompileFlags(cpptoolsVersion4, ['-arch', 'aarch64']);
     expect(info.targetArch).to.eql('arm64');
+    info = parseCompileFlags(cpptoolsVersion4, ['-arch', 'arm64']);
+    expect(info.targetArch).to.eql('arm64');
+    info = parseCompileFlags(cpptoolsVersion4, ['-arch', 'arm']);
+    expect(info.targetArch).to.eql('arm');
     info = parseCompileFlags(cpptoolsVersion4, ['-arch', 'i686']);
     expect(info.targetArch).to.eql('x86');
     info = parseCompileFlags(cpptoolsVersion4, ['/arch:x86_64']);
