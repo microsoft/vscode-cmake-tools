@@ -905,6 +905,56 @@ class ExtensionManager implements vscode.Disposable {
     }
   }
 
+  /**
+   * Set the current preset used in the specified folder by name of the preset
+   * For backward compatibility, apply preset to all folders if folder is undefined
+   */
+  async setConfigurePreset(presetName: string, folder?: vscode.WorkspaceFolder) {
+    if (folder) {
+      await this._folders.get(folder)?.presetsController.setConfigurePreset(presetName);
+    } else {
+      for (const cmtFolder of this._folders) {
+        await cmtFolder.presetsController.setConfigurePreset(presetName);
+      }
+    }
+    const configurePreset = this._folders.activeFolder?.cmakeTools.configurePreset;
+    if (configurePreset) {
+      this._statusBar.setConfigurePresetName(configurePreset.displayName || configurePreset.name);
+    }
+  }
+
+  async setBuildPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
+    if (folder) {
+      await this._folders.get(folder)?.presetsController.setBuildPreset(presetName);
+    } else {
+      for (const cmtFolder of this._folders) {
+        await cmtFolder.presetsController.setBuildPreset(presetName);
+      }
+    }
+    const buildPreset = this._folders.activeFolder?.cmakeTools.buildPreset;
+    if (buildPreset) {
+      this._statusBar.setBuildPresetName(buildPreset.displayName || buildPreset.name);
+    }
+  }
+
+  async setTestPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
+    if (folder) {
+      await this._folders.get(folder)?.presetsController.setTestPreset(presetName);
+    } else {
+      for (const cmtFolder of this._folders) {
+        await cmtFolder.presetsController.setTestPreset(presetName);
+      }
+    }
+    const testPreset = this._folders.activeFolder?.cmakeTools.testPreset;
+    if (testPreset) {
+      this._statusBar.setTestPresetName(testPreset.displayName || testPreset.name);
+    }
+  }
+
+  useCMakePresets(folder: vscode.WorkspaceFolder) {
+    return this._folders.get(folder)?.useCMakePresets;
+  }
+
   async ensureCppToolsProviderRegistered() {
     if (!this._configProviderRegister) {
       this._configProviderRegister = this._doRegisterCppTools();
@@ -1456,6 +1506,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
+    "useCMakePresets",
     "openCMakePresets",
     'addConfigurePreset',
     'addBuildPreset',
@@ -1469,6 +1520,9 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'scanForCompilers',
     'selectKit',
     'setKitByName',
+    'setConfigurePreset',
+    'setBuildPreset',
+    'setTestPreset',
     'build',
     'buildAll',
     'buildWithTarget',

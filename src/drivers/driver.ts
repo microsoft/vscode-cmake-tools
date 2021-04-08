@@ -587,7 +587,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * This is the value passed to CMAKE_BUILD_TYPE or --config for multiconf
    */
-  get currentBuildType(): string { return this._variantBuildType; }
+  get currentBuildType(): string {
+    if (this.useCMakePresets) {
+      const buildType = this._configurePreset?.cacheVariables?.['CMAKE_BUILD_TYPE'];
+      if (util.isString(buildType)) {
+        return buildType;
+      } else if (buildType && typeof buildType === 'object' && util.isString(buildType.value)) {
+        return buildType.value;
+      }
+      return 'Debug'; // Default to debug
+    } else {
+      return this._variantBuildType;
+    }
+  }
 
   get isMultiConf(): boolean { return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false; }
 
