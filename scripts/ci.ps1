@@ -151,7 +151,7 @@ if (! $NoTest) {
 
     Invoke-SmokeTests
 
-    foreach ($name in @("successful-build"; "single-root-UI"; "single-root-UI-presets" )) {
+    foreach ($name in @("successful-build"; "single-root-UI"; )) {
         Invoke-VSCodeTest "CMake Tools: $name" `
             -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
             -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
