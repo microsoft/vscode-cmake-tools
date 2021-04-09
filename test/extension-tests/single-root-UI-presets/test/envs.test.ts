@@ -2,8 +2,6 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {DefaultEnvironment, expect} from '@test/util';
-import {fs} from '@cmt/pr';
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 // tslint:disable:no-unused-expression
@@ -27,13 +25,7 @@ suite('[Environment Variables in Presets]', async () => {
 
   teardown(async function(this: Mocha.Context) {
     this.timeout(30000);
-
-    const variantFileBackup = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
-    if (await fs.exists(variantFileBackup)) {
-      const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
-      await fs.rename(variantFileBackup, variantFile);
-    }
-
+    testEnv.projectFolder.buildDirectory.clear();
     testEnv.teardown();
   });
 

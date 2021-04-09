@@ -69,6 +69,7 @@ suite('Build using Presets', async () => {
 
   suiteTeardown(async () => {
     if (testEnv) {
+      testEnv.projectFolder.buildDirectory.clear();
       testEnv.teardown();
     }
     if (await fs.exists(compdb_cp_path)) {

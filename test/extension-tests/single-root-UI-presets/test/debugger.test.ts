@@ -25,6 +25,7 @@ suite('[Debug/Launch interface using Presets]', async () => {
 
   teardown(async function(this: Mocha.Context) {
     this.timeout(30000);
+    testEnv.projectFolder.buildDirectory.clear();
     testEnv.teardown();
   });
 
