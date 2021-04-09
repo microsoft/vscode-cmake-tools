@@ -74,7 +74,6 @@ suite('[Environment Variables in Variants]', async () => {
 
 suite('[Environment Variables in Presets]', async () => {
   let testEnv: DefaultEnvironment;
-  let cmakeTools: CMakeTools;
 
   setup(async function(this: Mocha.Context) {
     this.timeout(100000);
@@ -83,28 +82,22 @@ suite('[Environment Variables in Presets]', async () => {
     const exe_res = 'output.txt';
 
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
-    cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-
-    // This test will use all on the same kit.
-    // No rescan of the tools is needed
-    // No new kit selection is needed
-    await clearExistingKitConfigurationFile();
-
-    const kit = await getFirstSystemKit(cmakeTools);
-    console.log("Using following kit in next test: ", kit);
-    await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
-
     testEnv.projectFolder.buildDirectory.clear();
+
+    await vscode.commands.executeCommand('cmake.setConfigurePreset', 'LinuxUser1');
+    await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
+    await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
   });
 
   teardown(async function(this: Mocha.Context) {
+    this.timeout(30000);
+
     const variantFileBackup = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
     if (await fs.exists(variantFileBackup)) {
       const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
       await fs.rename(variantFileBackup, variantFile);
     }
 
-    this.timeout(30000);
     testEnv.teardown();
   });
 

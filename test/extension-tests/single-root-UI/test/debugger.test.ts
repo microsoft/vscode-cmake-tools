@@ -51,7 +51,6 @@ suite('[Debug/Launch interface using Kits and Variants]', async () => {
 
 suite('[Debug/Launch interface using Presets]', async () => {
   let testEnv: DefaultEnvironment;
-  let cmakeTools: CMakeTools;
 
   setup(async function(this: Mocha.Context) {
     this.timeout(100000);
@@ -60,12 +59,12 @@ suite('[Debug/Launch interface using Presets]', async () => {
     const exe_res = 'output.txt';
 
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
-    cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-
-    const kit = await getFirstSystemKit(cmakeTools);
-    console.log("Using following kit in next test: ", kit);
-    await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
     testEnv.projectFolder.buildDirectory.clear();
+
+    await vscode.commands.executeCommand('cmake.setConfigurePreset', 'LinuxUser1');
+    await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
+    await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
+
     expect(await vscode.commands.executeCommand('cmake.build')).to.be.eq(0);
   });
 

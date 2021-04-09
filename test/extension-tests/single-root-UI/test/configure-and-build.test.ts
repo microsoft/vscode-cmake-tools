@@ -75,7 +75,8 @@ suite('Build using Kits and Variants', async () => {
     }
   });
 
-  suiteTeardown(async () => {
+  suiteTeardown(async function (this: Mocha.Context) {
+    this.timeout(30000);
     // Recover the setting
     await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'true');
     // Wait for 5 sec since the config listener is async

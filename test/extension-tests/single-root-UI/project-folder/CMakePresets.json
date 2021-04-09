@@ -12,9 +12,6 @@
             "type": "FILEPATH",
             "value": "${workspaceFolder}/test-toolchain.cmake"
         }
-      },
-      "environment": {
-        "TEST_VARIANT_ENV": "0cbfb6ae-f2ec-4017-8ded-89df8759c502"
       }
     }
   ]
