@@ -129,6 +129,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (drv) {
         log.debug(localize('disposing.driver', 'Disposing CMake driver'));
         await drv.asyncDispose();
+        this._cmakeDriver = Promise.resolve(null);
       }
     }
   }
@@ -152,17 +153,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Currently selected configure preset
    */
-  get configurePreset() { return this._configurePreset; }
-  private _configurePreset: preset.ConfigurePreset | null = null;
+  get configurePreset() { return this._configurePreset.value; }
+  get onActiveConfigurePresetChanged() { return this._configurePreset.changeEvent; }
+  private readonly _configurePreset = new Property<preset.ConfigurePreset | null>(null);
   async setConfigurePreset(configurePreset: string | null) {
     if (configurePreset) {
       log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
-      this._configurePreset = await preset.expandConfigurePreset(configurePreset,
-                                                                 lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                                 await this.sourceDir,
-                                                                 true);
-      if (!this._configurePreset) {
+      const expandedConfigurePreset = await preset.expandConfigurePreset(configurePreset,
+                                                                         lightNormalizePath(this.folder.uri.fsPath || '.'),
+                                                                         await this.sourceDir,
+                                                                         true);
+      this._configurePreset.set(expandedConfigurePreset);
+      if (!expandedConfigurePreset) {
         log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
+        this._configurePreset.set(null);
         return;
       }
       log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
@@ -170,14 +174,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
-          await drv.setConfigurePreset(this._configurePreset);
+          await drv.setConfigurePreset(expandedConfigurePreset);
           this.workspaceContext.state.configurePresetName = configurePreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.config.preset', 'Error on switch of configure preset ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
-          this._configurePreset = null;
+          this._configurePreset.set(null);
         }
       } else {
         // Remember the selected configure preset for the next session.
@@ -189,18 +193,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Currently selected build preset
    */
-  get buildPreset() { return this._buildPreset; }
-  private _buildPreset: preset.BuildPreset | null = null;
+  get buildPreset() { return this._buildPreset.value; }
+  get onActiveBuildPresetChanged() { return this._buildPreset.changeEvent; }
+  private readonly _buildPreset = new Property<preset.BuildPreset | null>(null);
   async setBuildPreset(buildPreset: string | null) {
     if (buildPreset) {
       log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
-      this._buildPreset = await preset.expandBuildPreset(buildPreset,
-                                                         lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                         await this.sourceDir,
-                                                         true,
-                                                         this.configurePreset?.name);
-      if (!this._buildPreset) {
+      const expandedBuildPreset = await preset.expandBuildPreset(buildPreset,
+                                                                 lightNormalizePath(this.folder.uri.fsPath || '.'),
+                                                                 await this.sourceDir,
+                                                                 true,
+                                                                 this.configurePreset?.name);
+      this._buildPreset.set(expandedBuildPreset);
+      if (!expandedBuildPreset) {
         log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
+        this._buildPreset.set(null);
         return;
       }
       log.debug(localize('loading.new.build.preset', 'Loading new build preset into CMake driver'));
@@ -208,37 +215,44 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
-          await drv.setBuildPreset(this._buildPreset);
+          await drv.setBuildPreset(expandedBuildPreset);
+          await this.reRegisterTaskProviderforNewTarget(drv, undefined);
           this.workspaceContext.state.buildPresetName = buildPreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.build.preset', 'Error on switch of build preset ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
-          this._buildPreset = null;
+          this._buildPreset.set(null);
         }
       } else {
         // Remember the selected build preset for the next session.
         this.workspaceContext.state.buildPresetName = buildPreset;
       }
+    } else {
+      this._buildPreset.set(null);
+      this.workspaceContext.state.buildPresetName = buildPreset;
     }
   }
 
   /**
    * Currently selected test preset
    */
-  get testPreset() { return this._testPreset; }
-  private _testPreset: preset.TestPreset | null = null;
+  get testPreset() { return this._testPreset.value; }
+  get onActiveTestPresetChanged() { return this._testPreset.changeEvent; }
+  private readonly _testPreset = new Property<preset.TestPreset | null>(null);
   async setTestPreset(testPreset: string | null) {
     if (testPreset) {
       log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));
-      this._testPreset = await preset.expandTestPreset(testPreset,
-                                                       lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                       await this.sourceDir,
-                                                       true,
-                                                       this.configurePreset?.name);
-      if (!this._testPreset) {
+      const expandedTestPreset = await preset.expandTestPreset(testPreset,
+                                                               lightNormalizePath(this.folder.uri.fsPath || '.'),
+                                                               await this.sourceDir,
+                                                               true,
+                                                               this.configurePreset?.name);
+      this._testPreset.set(expandedTestPreset);
+      if (!expandedTestPreset) {
         log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
+        this._testPreset.set(null);
         return;
       }
       log.debug(localize('loading.new.test.preset', 'Loading new test preset into CMake driver'));
@@ -246,19 +260,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (drv) {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
-          await drv.setTestPreset(this._testPreset);
+          await drv.setTestPreset(expandedTestPreset);
           this.workspaceContext.state.testPresetName = testPreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
           vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.test.preset', 'Error on switch of test preset ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
-          this._testPreset = null;
+          this._testPreset.set(null);
         }
       } else {
         // Remember the selected test preset for the next session.
         this.workspaceContext.state.testPresetName = testPreset;
       }
+    } else {
+      this._testPreset.set(null);
+      this.workspaceContext.state.testPresetName = testPreset;
     }
   }
 
@@ -772,7 +789,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   async getCMakeExecutable() {
-    const overWriteCMakePathSetting = this.useCMakePresets ? this._configurePreset?.cmakeExecutable : undefined;
+    const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
     let cmakePath = await this.workspaceContext.getCMakePath(overWriteCMakePathSetting);
     if (!cmakePath)
       cmakePath = '';
@@ -1132,7 +1149,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   async tasksBuildCommandDrv(drv: CMakeDriver): Promise<string | null> {
-    const target = this.workspaceContext.state.defaultBuildTarget || drv.allTargetName;
+    const target = this.useCMakePresets ? undefined : (this.workspaceContext.state.defaultBuildTarget || drv.allTargetName);
     const buildargs = await drv.getCMakeBuildCommand(target);
     return (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
   }

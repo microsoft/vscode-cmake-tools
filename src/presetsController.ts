@@ -175,7 +175,7 @@ export class PresetsController {
     }
 
     enum SpecialOptions {
-      ScanForCompilers = '__scanForCompilers__',
+      CreateFromCompilers = '__createFromCompilers__',
       InheritConfigurationPreset = '__inheritConfigurationPreset__',
       ToolchainFile = '__toolchainFile__',
       Custom = '__custom__'
@@ -198,9 +198,9 @@ export class PresetsController {
       label: localize('custom.config.preset', 'Custom'),
       description: localize('description.custom.config.preset', 'Add an custom configure preset')
     }, {
-      name: SpecialOptions.ScanForCompilers,
-      label: localize('scan.for.compilers', '[Scan for Compilers]'),
-      description: localize('description.scan.for.compilers', 'Search for compilers on this computer')
+      name: SpecialOptions.CreateFromCompilers,
+      label: localize('create.from.compilers', 'Create from Compilers'),
+      description: localize('description.create.from.compilers', 'Create from a pair of compilers on this computer')
     });
 
     const chosenItem = await vscode.window.showQuickPick(items,
@@ -211,7 +211,7 @@ export class PresetsController {
     } else {
       let newPreset: preset.ConfigurePreset | undefined;
       switch(chosenItem.name) {
-        case SpecialOptions.ScanForCompilers: {
+        case SpecialOptions.CreateFromCompilers: {
           // Check that we have kits
           if (!await this._kitsController.checkHaveKits()) {
             return false;
@@ -489,19 +489,16 @@ export class PresetsController {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
           const configurePreset = await this.showPresetSelector(preset.configurePresets(), { placeHolder });
           newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
-          await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
         case SpecialOptions.InheritTestPreset: {
           const placeHolder = localize('select.one.or.more.test.preset.placeholder', 'Select one or more test presets');
           const inherits = await this.showPresetSelector(preset.testPresets(), { placeHolder, canPickMany: true });
           newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
-          await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
         case SpecialOptions.Custom: {
           newPreset = { name: '__placeholder__', description: '', displayName: '' };
-          await this.addPresetAddUpdate(newPreset, 'testPresets');
           break;
         }
         default:
@@ -664,7 +661,14 @@ export class PresetsController {
       preset.expandConfigurePresetForPresets('build');
       const _preset = preset.getPresetByName(preset.allBuildPresets(), presetName);
       if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
-        log.error(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not mach the selected configure preset', presetName));
+        log.error(localize('build.preset.configure.preset.not.match', 'Build preset {0}: The configure preset does not match the selected configure preset', presetName));
+        await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: localize('unloading.build.preset', 'Unloading build preset'),
+            },
+            () => this._cmakeTools.setBuildPreset(null),
+        );
         return;
       }
     }
@@ -714,7 +718,14 @@ export class PresetsController {
       preset.expandConfigurePresetForPresets('test');
       const _preset = preset.getPresetByName(preset.allTestPresets(), presetName);
       if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
-        log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not mach the selected configure preset', presetName));
+        log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not match the selected configure preset', presetName));
+        await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: localize('unloading.test.preset', 'Unloading test preset'),
+            },
+            () => this._cmakeTools.setTestPreset(null),
+        );
         return;
       }
     }
@@ -728,18 +739,20 @@ export class PresetsController {
     );
   }
 
-  async openCMakePresets(): Promise<vscode.TextEditor> {
+  async openCMakePresets(): Promise<vscode.TextEditor | undefined> {
     if (!await fs.exists(this.presetsPath)) {
-      await this.updatePresetsFile({ version: 2 });
+      return this.updatePresetsFile({ version: 2 });
+    } else {
+      return vscode.window.showTextDocument(vscode.Uri.file(this.presetsPath));
     }
-    return vscode.window.showTextDocument(vscode.Uri.file(this.presetsPath));
   }
 
-  async openCMakeUserPresets(): Promise<vscode.TextEditor> {
+  async openCMakeUserPresets(): Promise<vscode.TextEditor | undefined> {
     if (!await fs.exists(this.userPresetsPath)) {
-      await this.updatePresetsFile({ version: 2 }, true);
+      return this.updatePresetsFile({ version: 2 }, true);
+    } else {
+      return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
     }
-    return vscode.window.showTextDocument(vscode.Uri.file(this.userPresetsPath));
   }
 
   private async readPresetsFile(file: string): Promise<Buffer | undefined> {
@@ -817,17 +830,17 @@ export class PresetsController {
     return { insertSpaces, tabSize };
   }
 
-  async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false): Promise<boolean> {
+  async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false): Promise<vscode.TextEditor | undefined> {
     const presetsFilePath = isUserPresets? this.userPresetsPath : this.presetsPath;
     const indent = this.getIndentationSettings();
     try {
         await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));
     } catch (e) {
       rollbar.exception(localize('failed.writing.to.file', 'Failed writing to file {0}', presetsFilePath), e);
-      return false;
+      return;
     }
 
-    return true;
+    return vscode.window.showTextDocument(vscode.Uri.file(presetsFilePath));
   }
 
   dispose() {

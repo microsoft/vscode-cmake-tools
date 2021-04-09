@@ -23,7 +23,6 @@ const log = createLogger('expand');
  * variables are specified as properties on this interface.
  */
 interface RequiredExpansionContextVars {
-  [key: string]: string;
   generator: string;
   workspaceFolder: string;
   workspaceFolderBasename: string;
@@ -34,6 +33,7 @@ interface RequiredExpansionContextVars {
 }
 
 export interface KitContextVars extends RequiredExpansionContextVars {
+  [key: string]: string;
   buildType: string;
   buildKit: string;
   buildKitVendor: string;
@@ -47,6 +47,7 @@ export interface KitContextVars extends RequiredExpansionContextVars {
 }
 
 export interface PresetContextVars extends RequiredExpansionContextVars {
+  [key: string]: string;
   sourceDir: string;
   sourceParentDir: string;
   sourceDirName: string;
@@ -95,7 +96,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     return tmpl;
   }
 
-  const MAX_RECURSION = 50;
+  const MAX_RECURSION = 10;
   let result = tmpl;
   let didReplacement = false;
 
@@ -227,6 +228,12 @@ export async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
   }
 
   let final_str = tmpl;
-  subs.forEach((value, key) => { final_str = replaceAll(final_str, key, value); });
-  return { result: final_str, didReplacement: subs.size > 0};
+  let didReplacement = false;
+  subs.forEach((value, key) => {
+    if (value !== key) {
+      final_str = replaceAll(final_str, key, value);
+      didReplacement = true;
+    }
+  });
+  return { result: final_str, didReplacement};
 }

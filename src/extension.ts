@@ -236,6 +236,9 @@ class ExtensionManager implements vscode.Disposable {
   private _ctestEnabledSub: vscode.Disposable = new DummyDisposable();
   private _testResultsSub: vscode.Disposable = new DummyDisposable();
   private _isBusySub: vscode.Disposable = new DummyDisposable();
+  private _activeConfigurePresetSub: vscode.Disposable = new DummyDisposable();
+  private _activeBuildPresetSub: vscode.Disposable = new DummyDisposable();
+  private _activeTestPresetSub: vscode.Disposable = new DummyDisposable();
 
   // Watch the code model so that we may update teh tree view
   // <fspath, sub>
@@ -619,14 +622,7 @@ class ExtensionManager implements vscode.Disposable {
     const activeFolder = this._folders.activeFolder;
     const useCMakePresets = activeFolder?.useCMakePresets || false;
     this._statusBar.useCMakePresets(useCMakePresets);
-    if (useCMakePresets) {
-      const configurePreset = activeFolder?.cmakeTools.configurePreset;
-      const buildPreset = activeFolder?.cmakeTools.buildPreset;
-      const testPreset = activeFolder?.cmakeTools.testPreset;
-      this._statusBar.setConfigurePresetName(configurePreset?.displayName || configurePreset?.name || '');
-      this._statusBar.setBuildPresetName(buildPreset?.displayName || buildPreset?.name || '');
-      this._statusBar.setTestPresetName(testPreset?.displayName || testPreset?.name || '');
-    } else {
+    if (!useCMakePresets) {
       this._statusBar.setActiveKitName(activeFolder?.cmakeTools.activeKit?.name || '');
     }
     this._projectOutlineProvider.setActiveFolder(ws);
@@ -641,6 +637,9 @@ class ExtensionManager implements vscode.Disposable {
                        this._ctestEnabledSub,
                        this._testResultsSub,
                        this._isBusySub,
+                       this._activeConfigurePresetSub,
+                       this._activeBuildPresetSub,
+                       this._activeTestPresetSub,
     ]) {
       sub.dispose();
     }
@@ -704,6 +703,9 @@ class ExtensionManager implements vscode.Disposable {
       this._ctestEnabledSub = new DummyDisposable();
       this._testResultsSub = new DummyDisposable();
       this._isBusySub = new DummyDisposable();
+      this._activeConfigurePresetSub = new DummyDisposable();
+      this._activeBuildPresetSub = new DummyDisposable();
+      this._activeTestPresetSub = new DummyDisposable();
       this._statusBar.setActiveKitName('');
       this._statusBar.setConfigurePresetName('');
       this._statusBar.setBuildPresetName('');
@@ -722,9 +724,15 @@ class ExtensionManager implements vscode.Disposable {
       this._testResultsSub = cmt.onTestResultsChanged(FireNow, r => this._statusBar.setTestResults(r));
       this._isBusySub = cmt.onIsBusyChanged(FireNow, b => this._statusBar.setIsBusy(b));
       this._statusBar.setActiveKitName(cmt.activeKit ? cmt.activeKit.name : '');
-      this._statusBar.setConfigurePresetName(cmt.configurePreset?.displayName || cmt.configurePreset?.name || '');
-      this._statusBar.setBuildPresetName(cmt.buildPreset?.displayName || cmt.buildPreset?.name || '');
-      this._statusBar.setTestPresetName(cmt.testPreset?.displayName || cmt.testPreset?.name || '');
+      this._activeConfigurePresetSub = cmt.onActiveConfigurePresetChanged(FireNow, p => {
+        this._statusBar.setConfigurePresetName(p?.displayName || p?.name || '');
+      });
+      this._activeBuildPresetSub = cmt.onActiveBuildPresetChanged(FireNow, p => {
+        this._statusBar.setBuildPresetName(p?.displayName || p?.name || '');
+      });
+      this._activeTestPresetSub = cmt.onActiveTestPresetChanged(FireNow, p => {
+        this._statusBar.setTestPresetName(p?.displayName || p?.name || '');
+      });
     }
   }
 
@@ -921,10 +929,6 @@ class ExtensionManager implements vscode.Disposable {
         await cmtFolder.presetsController.setConfigurePreset(presetName);
       }
     }
-    const configurePreset = this._folders.activeFolder?.cmakeTools.configurePreset;
-    if (configurePreset) {
-      this._statusBar.setConfigurePresetName(configurePreset.displayName || configurePreset.name);
-    }
   }
 
   async setBuildPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
@@ -935,10 +939,6 @@ class ExtensionManager implements vscode.Disposable {
         await cmtFolder.presetsController.setBuildPreset(presetName);
       }
     }
-    const buildPreset = this._folders.activeFolder?.cmakeTools.buildPreset;
-    if (buildPreset) {
-      this._statusBar.setBuildPresetName(buildPreset.displayName || buildPreset.name);
-    }
   }
 
   async setTestPreset(presetName: string, folder?: vscode.WorkspaceFolder) {
@@ -948,10 +948,6 @@ class ExtensionManager implements vscode.Disposable {
       for (const cmtFolder of this._folders) {
         await cmtFolder.presetsController.setTestPreset(presetName);
       }
-    }
-    const testPreset = this._folders.activeFolder?.cmakeTools.testPreset;
-    if (testPreset) {
-      this._statusBar.setTestPresetName(testPreset.displayName || testPreset.name);
     }
   }
 

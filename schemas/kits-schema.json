@@ -47,10 +47,6 @@
                 "type": "string",
                 "description": "Instance ID of the Visual Studio product"
             },
-            "visualStudioVersion": {
-              "type": "string",
-              "description": "Installation version of the Visual Studio product"
-            },
             "visualStudioArchitecture": {
                 "type": "string",
                 "description": "Architecture to target"

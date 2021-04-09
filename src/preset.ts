@@ -8,7 +8,7 @@ import { EnvironmentVariables, execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit } from '@cmt/kit';
-import { compareVersions } from '@cmt/installs/visual-studio';
+import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -34,7 +34,7 @@ export interface Preset {
   environment?: { [key: string]: null | string };
   vendor?: VendorType;
 
-  __expanded?: boolean; // Private field to indicate if we have already expaned thie preset.
+  __expanded?: boolean; // Private field to indicate if we have already expanded thie preset.
 }
 
 export interface ValueStrategy {
@@ -353,7 +353,7 @@ function getVendorForConfigurePresetHelper(preset: ConfigurePreset, allowUserPre
   }
 
   if (referencedConfigurePresets.has(preset.name)) {
-    // Refernced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
+    // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
     log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
     return null;
   }
@@ -418,7 +418,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
   }
 
   if (referencedConfigurePresets.has(preset.name) && !preset.__expanded) {
-    // Refernced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+    // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
     log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
     return null;
   }
@@ -502,17 +502,17 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
           const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using x86 by default', preset.name);
           const noToolsetVsVersionWarning = localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name);
           const matchToolsetArchAndVersion = (toolset: string) => {
-            const tollsetArchMatches = toolset.match(toolsetArchRegex);
-            if (!tollsetArchMatches) {
+            const toolsetArchMatches = toolset.match(toolsetArchRegex);
+            if (!toolsetArchMatches) {
               log.warning(noToolsetArchWarning);
             } else {
-              toolsetArch = tollsetArchMatches[1];
+              toolsetArch = toolsetArchMatches[1];
             }
-            const tollsetVsVersionMatches = toolset.match(toolsetVsVersionRegex);
-            if (!tollsetVsVersionMatches) {
+            const toolsetVsVersionMatches = toolset.match(toolsetVsVersionRegex);
+            if (!toolsetVsVersionMatches) {
               log.warning(noToolsetVsVersionWarning);
             } else {
-              toolsetVsVersion = tollsetVsVersionMatches[1];
+              toolsetVsVersion = toolsetVsVersionMatches[1];
             }
           };
           if (!preset.toolset) {
@@ -524,21 +524,28 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
           } else {
             matchToolsetArchAndVersion(preset.toolset.value);
           }
+          // Get version info for all VS instances. Create a map so we don't need to
+          // iterate through the array every time.
+          const vsVersions = new Map<string, string>();
+          for (const vs of await vsInstallations()) {
+            vsVersions.set(vs.instanceId, vs.installationVersion);
+          }
           let latestVsVersion: string = '';
           let latestVsIndex = -1;
           for (let i = 0; i < kits.length; i++) {
             const kit = kits[i];
-            if (kit.visualStudio && kit.visualStudioVersion && !kit.compilers) {
+            if (kit.visualStudio && !kit.compilers) {
+              const version = vsVersions.get(kit.visualStudio);
               if (kit.preferredGenerator &&
                   (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
                   kit.preferredGenerator.toolset === toolsetArch) {
-                if (toolsetVsVersion && kit.visualStudioVersion.startsWith(toolsetVsVersion)) {
-                  latestVsVersion = kit.visualStudioVersion;
+                if (toolsetVsVersion && version?.startsWith(toolsetVsVersion)) {
+                  latestVsVersion = version;
                   latestVsIndex = i;
                   break;
                 }
-                if (!toolsetVsVersion && compareVersions(latestVsVersion, kit.visualStudioVersion) < 0) {
-                  latestVsVersion = kit.visualStudioVersion;
+                if (!toolsetVsVersion && version && compareVersions(latestVsVersion, version) < 0) {
+                  latestVsVersion = version;
                   latestVsIndex = i;
                 }
               }
@@ -697,7 +704,7 @@ function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, pre
 
   if (presetType === 'build') {
     if (referencedBuildPresets.has(preset.name)) {
-      // Refernced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
+      // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
       log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
       return null;
     }
@@ -778,7 +785,7 @@ async function expandBuildPresetHelper(preset: BuildPreset,
   }
 
   if (referencedBuildPresets.has(preset.name) && !preset.__expanded) {
-    // Refernced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+    // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
     // Notice that we check !preset.__expanded here but not in getConfigurePresetForBuildPresetHelper because
     // multiple parents could all point to the same parent.
     log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
@@ -935,7 +942,7 @@ async function expandTestPresetHelper(preset: TestPreset,
   }
 
   if (referencedTestPresets.has(preset.name) && !preset.__expanded) {
-    // Refernced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
+    // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
     log.error('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name);
     return null;
   }

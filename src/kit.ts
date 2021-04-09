@@ -120,12 +120,6 @@ export interface Kit extends KitDetect {
   visualStudio?: string;
 
   /**
-   * The visual studio name. This corresponds to the major.minor version of
-   * the installation returned by `vswhere`.
-   */
-  visualStudioVersion?: string;
-
-  /**
    * The architecture for the kit. This is used when asking for the architecture
    * from the dev environment batch file.
    */
@@ -872,7 +866,6 @@ async function tryCreateNewVCEnvironment(inst: VSInstallation, hostArch: string,
   const kit: Kit = {
     name,
     visualStudio: kitVSName(inst),
-    visualStudioVersion: inst.installationVersion,
     visualStudioArchitecture: hostArch
   };
 
@@ -976,7 +969,6 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         clangKits.push({
           name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
           visualStudio: kitVSName(vs),
-          visualStudioVersion: vs.installationVersion,
           visualStudioArchitecture: vs_arch,
           compilers: {
             C: binPath,
