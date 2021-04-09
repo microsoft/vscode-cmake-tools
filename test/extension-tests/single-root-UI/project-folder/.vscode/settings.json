@@ -1,4 +1,3 @@
 {
-    "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.useCMakePresets": "true"
+    "cmake.buildDirectory": "${workspaceFolder}/build"
 }

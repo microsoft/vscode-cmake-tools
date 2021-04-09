@@ -166,6 +166,48 @@
             }
         },
         {
+            "name": "Launch Extension Tests (single-root-UI-presets)",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "${workspaceFolder}/test/extension-tests/single-root-UI-presets/project-folder",
+                "--extensionDevelopmentPath=${workspaceFolder}",
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI-presets"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceFolder}/out/*",
+                "${workspaceFolder}/out/src/*",
+                "${workspaceFolder}/out/test/*",
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI-presets/*",
+                "${workspaceFolder}/out/test/extension-tests/single-root-UI-presets/test/*"
+            ],
+            "preLaunchTask": "build-tests-with-tsc-watch",
+            "windows": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "true"
+                }
+            },
+            "linux": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            },
+            "osx": {
+                "env": {
+                    "CMT_TESTING": "1",
+                    "CMT_QUIET_CONSOLE": "1",
+                    "HasVs": "false"
+                }
+            }
+        },
+        {
             "name": "Launch Extension Tests (multi-root-UI)",
             "type": "extensionHost",
             "request": "launch",

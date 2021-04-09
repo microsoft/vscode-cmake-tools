@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "configurePresets": [
+    {
+      "name": "LinuxUser1",
+      "description": "Sets generator, build and install directory, vcpkg",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${workspaceFolder}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "environment": {
+        "TEST_VARIANT_ENV": "0cbfb6ae-f2ec-4017-8ded-89df8759c502"
+      }
+    }
+  ]
+}

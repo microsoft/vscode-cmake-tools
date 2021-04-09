@@ -59,7 +59,3 @@ function getMatchingKit(kits: Kit[], re: RegExp): Kit {
   }
   return kit;
 }
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
