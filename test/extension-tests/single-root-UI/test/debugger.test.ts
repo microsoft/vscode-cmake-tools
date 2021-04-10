@@ -18,7 +18,7 @@ suite('[Debug/Launch interface using Kits and Variants]', async () => {
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'false');
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', false);
 
     const kit = await getFirstSystemKit(cmakeTools);
     console.log("Using following kit in next test: ", kit);
@@ -30,7 +30,7 @@ suite('[Debug/Launch interface using Kits and Variants]', async () => {
   teardown(async function(this: Mocha.Context) {
     this.timeout(30000);
 
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'true');
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', true);
 
     testEnv.teardown();
   });
