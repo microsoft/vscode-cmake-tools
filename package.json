@@ -1808,11 +1808,16 @@
           "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%"
         },
         "cmake.useCMakePresets":  {
-          "type": "string",
-          "enum": [
-            "true",
-            "false",
-            "automatic"
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "enum": [
+                "automatic"
+              ]
+            }
           ],
           "default": "automatic",
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%"

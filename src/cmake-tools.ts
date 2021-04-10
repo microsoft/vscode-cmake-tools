@@ -156,6 +156,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get configurePreset() { return this._configurePreset.value; }
   get onActiveConfigurePresetChanged() { return this._configurePreset.changeEvent; }
   private readonly _configurePreset = new Property<preset.ConfigurePreset | null>(null);
+  private resetPresets() {
+    this.workspaceContext.state.configurePresetName = null;
+    this.workspaceContext.state.buildPresetName = null;
+    this.workspaceContext.state.testPresetName = null;
+    this._configurePreset.set(null);
+    this._buildPreset.set(null);
+    this._testPreset.set(null);
+  }
   async setConfigurePreset(configurePreset: string | null) {
     if (configurePreset) {
       log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
@@ -166,8 +174,19 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._configurePreset.set(expandedConfigurePreset);
       if (!expandedConfigurePreset) {
         log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
-        this._configurePreset.set(null);
+        this.resetPresets();
         return;
+      }
+      if (!expandedConfigurePreset.binaryDir) {
+        log.error(localize('binaryDir.not.set.config.preset', '"binaryDir" is not set in configure preset: {0}', configurePreset));
+        // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
+        this.resetPresets();
+        return;
+      } else {
+        // Resolve binaryDir if it's a relative path
+        if (!path.isAbsolute(expandedConfigurePreset.binaryDir)) {
+          expandedConfigurePreset.binaryDir = this.extensionContext.asAbsolutePath(expandedConfigurePreset.binaryDir);
+        }
       }
       log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
       const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
@@ -181,12 +200,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.config.preset', 'Error on switch of configure preset ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
-          this._configurePreset.set(null);
+          this.resetPresets();
         }
       } else {
         // Remember the selected configure preset for the next session.
         this.workspaceContext.state.configurePresetName = configurePreset;
       }
+    } else {
+      this.resetPresets();
     }
   }
 

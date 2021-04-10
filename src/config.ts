@@ -133,7 +133,7 @@ export interface ExtensionConfigurationSettings {
   additionalKits: string[];
   touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
-  useCMakePresets: string;
+  useCMakePresets: boolean | 'automatic';
 }
 
 type EmittersOf<T> = {
@@ -266,7 +266,7 @@ export class ConfigurationReader implements vscode.Disposable {
   /**
    * Use folder.useCMakePresets() to check the actual decision on if we are using CMake presets.
    */
-  get useCMakePresets(): string { return this.configData.useCMakePresets; }
+  get useCMakePresets(): boolean | 'automatic' { return this.configData.useCMakePresets; }
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
@@ -361,7 +361,7 @@ export class ConfigurationReader implements vscode.Disposable {
     additionalKits: new vscode.EventEmitter<string[]>(),
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
     statusbar: new vscode.EventEmitter<StatusBarConfig>(),
-    useCMakePresets: new vscode.EventEmitter<string>()
+    useCMakePresets: new vscode.EventEmitter<boolean | 'automatic'>()
   };
 
   /**
