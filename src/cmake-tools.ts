@@ -182,11 +182,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
         this.resetPresets();
         return;
-      } else {
-        // Resolve binaryDir if it's a relative path
-        if (!path.isAbsolute(expandedConfigurePreset.binaryDir)) {
-          expandedConfigurePreset.binaryDir = this.extensionContext.asAbsolutePath(expandedConfigurePreset.binaryDir);
-        }
+      } else if (!path.isAbsolute(expandedConfigurePreset.binaryDir)) {
+        expandedConfigurePreset.binaryDir = this.extensionContext.asAbsolutePath(expandedConfigurePreset.binaryDir);
       }
       log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
       const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
