@@ -1903,6 +1903,7 @@
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",
     "translations-import": "gulp translations-import",
+    "package": "vsce package --yarn -o cmake-tools.vsix",
     "pretest": "tsc -p test.tsconfig.json",
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/runTest.js",
