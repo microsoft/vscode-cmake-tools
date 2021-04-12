@@ -38,6 +38,18 @@ export interface TouchBarConfig {
 }
 
 export interface AdvancedStatusBarConfig {
+  configurePreset?: {
+    visibility?: StatusBarButtonVisibility;
+    length?: number;
+  };
+  buildPreset?: {
+    visibility?: StatusBarButtonVisibility;
+    length?: number;
+  };
+  testPreset?: {
+    visibility?: StatusBarButtonVisibility;
+    length?: number;
+  };
   kit?: {
     visibility?: StatusBarButtonVisibility;
     length?: number;
@@ -121,6 +133,7 @@ export interface ExtensionConfigurationSettings {
   additionalKits: string[];
   touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
+  useCMakePresets: boolean | 'automatic';
 }
 
 type EmittersOf<T> = {
@@ -250,6 +263,11 @@ export class ConfigurationReader implements vscode.Disposable {
   get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
   get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
 
+  /**
+   * Use folder.useCMakePresets() to check the actual decision on if we are using CMake presets.
+   */
+  get useCMakePresets(): boolean | 'automatic' { return this.configData.useCMakePresets; }
+
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
     if (communicationMode == "automatic" && this.useCMakeServer) {
@@ -342,7 +360,8 @@ export class ConfigurationReader implements vscode.Disposable {
     loggingLevel: new vscode.EventEmitter<LogLevelKey>(),
     additionalKits: new vscode.EventEmitter<string[]>(),
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
-    statusbar: new vscode.EventEmitter<StatusBarConfig>()
+    statusbar: new vscode.EventEmitter<StatusBarConfig>(),
+    useCMakePresets: new vscode.EventEmitter<boolean | 'automatic'>()
   };
 
   /**

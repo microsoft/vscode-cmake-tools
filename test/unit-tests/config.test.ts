@@ -56,7 +56,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     statusbar: {
       advanced: {},
       visibility: "default"
-    }
+    },
+    useCMakePresets: false
   });
   ret.updatePartial(conf);
   return ret;
