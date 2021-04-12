@@ -61,7 +61,7 @@ export class CMakeToolsFolder {
       // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
       return this.presetsController.presetsFileExist;
     }
-    return this.cmakeTools.workspaceContext.config.useCMakePresets;
+    return this.cmakeTools.workspaceContext.config.useCMakePresets === 'always';
   }
 
   get onUseCMakePresetsChanged() { return this._onUseCMakePresetsChangedEmitter.event; }

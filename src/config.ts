@@ -20,6 +20,7 @@ export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal
 export type CMakeCommunicationMode = 'legacy'|'serverApi'|'fileApi'|'automatic';
 export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
 export type TouchBarButtonVisibility = "default" | "hidden";
+export type UseCMakePresets = 'always' | 'never' | 'automatic';
 
 interface HardEnv {
   [key: string]: string;
@@ -133,7 +134,7 @@ export interface ExtensionConfigurationSettings {
   additionalKits: string[];
   touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
-  useCMakePresets: boolean | 'automatic';
+  useCMakePresets: UseCMakePresets;
 }
 
 type EmittersOf<T> = {
@@ -266,7 +267,7 @@ export class ConfigurationReader implements vscode.Disposable {
   /**
    * Use folder.useCMakePresets() to check the actual decision on if we are using CMake presets.
    */
-  get useCMakePresets(): boolean | 'automatic' { return this.configData.useCMakePresets; }
+  get useCMakePresets(): UseCMakePresets { return this.configData.useCMakePresets; }
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
@@ -361,7 +362,7 @@ export class ConfigurationReader implements vscode.Disposable {
     additionalKits: new vscode.EventEmitter<string[]>(),
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
     statusbar: new vscode.EventEmitter<StatusBarConfig>(),
-    useCMakePresets: new vscode.EventEmitter<boolean | 'automatic'>()
+    useCMakePresets: new vscode.EventEmitter<UseCMakePresets>()
   };
 
   /**

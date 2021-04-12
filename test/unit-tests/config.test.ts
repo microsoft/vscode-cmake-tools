@@ -57,7 +57,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
       advanced: {},
       visibility: "default"
     },
-    useCMakePresets: false
+    useCMakePresets: 'never'
   });
   ret.updatePartial(conf);
   return ret;

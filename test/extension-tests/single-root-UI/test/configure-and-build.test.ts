@@ -39,7 +39,7 @@ suite('Build using Kits and Variants', async () => {
     compdb_cp_path = path.join(testEnv.projectFolder.location, 'compdb_cp.json');
     cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', false);
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -75,7 +75,7 @@ suite('Build using Kits and Variants', async () => {
   suiteTeardown(async function (this: Mocha.Context) {
     this.timeout(30000);
     // Recover the setting
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', true);
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
 
     if (testEnv) {
       testEnv.teardown();
