@@ -22,7 +22,7 @@ suite('[Environment Variables in Variants]', async () => {
     testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
 
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', false);
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'never');
 
     // This test will use all on the same kit.
     // No rescan of the tools is needed
@@ -45,7 +45,7 @@ suite('[Environment Variables in Variants]', async () => {
       await fs.rename(variantFileBackup, variantFile);
     }
 
-    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', true);
+    await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'always');
 
     testEnv.teardown();
   });
