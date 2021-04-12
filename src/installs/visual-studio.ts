@@ -87,3 +87,28 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   };
   return installs;
 }
+
+export function compareVersions(lhs: string, rhs: string): number {
+  const lhsParts = lhs.split('.');
+  const rhsParts = rhs.split('.');
+
+  let index = 0;
+  for (; ; index++) {
+    const lhsp = lhsParts[index];
+    const rhsp = rhsParts[index];
+
+    if (lhsp && rhsp) {
+      if (lhsp === rhsp) {
+        continue;
+      } else {
+        return parseInt(lhsp) - parseInt(rhsp);
+      }
+    } else if (lhsp) {
+      return 1; // lhsp > rhsp
+    } else if (rhsp) {
+      return -1; // lhsp < rhsp
+    } else {
+      return 0; // lhsp === rhsp
+    }
+  }
+}
