@@ -182,8 +182,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
         this.resetPresets();
         return;
-      } else if (!path.isAbsolute(expandedConfigurePreset.binaryDir)) {
-        expandedConfigurePreset.binaryDir = this.extensionContext.asAbsolutePath(expandedConfigurePreset.binaryDir);
+      }
+      if (!expandedConfigurePreset.generator) {
+        log.error(localize('generator.not.set.config.preset', '"generator" is not set in configure preset: {0}', configurePreset));
+        // Set to null so if we won't get wrong selection option when selectbuild/testPreset before a configure preset is selected.
+        this.resetPresets();
+        return;
       }
       log.debug(localize('loading.new.config.preset', 'Loading new configure preset into CMake driver'));
       const drv = await this._cmakeDriver;  // Use only an existing driver, do not create one
@@ -225,6 +229,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._buildPreset.set(expandedBuildPreset);
       if (!expandedBuildPreset) {
         log.error(localize('failed.resolve.build.preset', 'Failed to resolve build preset: {0}', buildPreset));
+        this._buildPreset.set(null);
+        return;
+      }
+      if (!expandedBuildPreset.configurePreset) {
+        log.error(localize('configurePreset.not.set.build.preset', '"configurePreset" is not set in build preset: {0}', buildPreset));
         this._buildPreset.set(null);
         return;
       }
@@ -270,6 +279,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       this._testPreset.set(expandedTestPreset);
       if (!expandedTestPreset) {
         log.error(localize('failed.resolve.test.preset', 'Failed to resolve test preset: {0}', testPreset));
+        this._testPreset.set(null);
+        return;
+      }
+      if (!expandedTestPreset.configurePreset) {
+        log.error(localize('configurePreset.not.set.test.preset', '"configurePreset" is not set in test preset: {0}', testPreset));
         this._testPreset.set(null);
         return;
       }
