@@ -24,6 +24,7 @@ import * as util from '@cmt/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as ext from '@cmt/extension';
+import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
 
 import {NoGeneratorError} from './cms-driver';
 
@@ -46,13 +47,21 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
 
   static async create(cmake: CMakeExecutable,
                       config: ConfigurationReader,
+                      useCMakePresets: boolean,
                       kit: Kit|null,
+                      configurePreset: ConfigurePreset | null,
+                      buildPreset: BuildPreset | null,
+                      testPreset: TestPreset | null,
                       workspaceRootPath: string|null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[]): Promise<CMakeFileApiDriver> {
     log.debug('Creating instance of CMakeFileApiDriver');
     return this.createDerived(new CMakeFileApiDriver(cmake, config, workspaceRootPath, preconditionHandler),
+                              useCMakePresets,
                               kit,
+                              configurePreset,
+                              buildPreset,
+                              testPreset,
                               preferredGenerators);
   }
 
@@ -113,7 +122,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
 
       this._generatorInformation = this.generator;
     }
-    if (!this.generator) {
+    if (!this.generator && !this.useCMakePresets) {
       throw new NoGeneratorError();
     }
 
@@ -161,6 +170,25 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     }
   }
 
+  async doSetConfigurePreset(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
+    this._needsReconfigure = true;
+    if (need_clean) {
+      await this._cleanPriorConfiguration();
+    }
+    await cb();
+    if (!this.generator) {
+      throw new NoGeneratorError();
+    }
+  }
+
+  doSetBuildPreset(cb: () => Promise<void>): Promise<void> {
+    return cb();
+  }
+
+  doSetTestPreset(cb: () => Promise<void>): Promise<void> {
+    return cb();
+  }
+
   async asyncDispose() {
     this._codeModelChanged.dispose();
     this._cacheWatcher.dispose();
@@ -191,6 +219,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       }
     }
     const cmake = this.cmake.path;
+    log.debug(`Configuring using ${this.useCMakePresets ? 'preset': 'kit'}`);
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
