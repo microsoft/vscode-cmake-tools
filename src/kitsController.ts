@@ -225,7 +225,7 @@ export class KitsController {
     return raw_name;
   }
 
-  private async _checkHaveKits(): Promise<boolean> {
+  async checkHaveKits(): Promise<boolean> {
     const avail = this.availableKits;
     if (avail.length > SpecialKitsCount) {
       // We have kits. Okay.
@@ -260,7 +260,7 @@ export class KitsController {
    */
   async selectKit(): Promise<boolean> {
     // Check that we have kits
-    const state = await this._checkHaveKits();
+    const state = await this.checkHaveKits();
     if (!state) {
       return false;
     }

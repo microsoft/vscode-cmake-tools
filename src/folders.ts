@@ -1,30 +1,100 @@
 /**
  * Class for managing workspace folders
  */ /** */
+import * as vscode from 'vscode';
+import * as nls from 'vscode-nls';
 
+import * as util from '@cmt/util';
 import CMakeTools from '@cmt/cmake-tools';
 import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
-import { disposeAll } from '@cmt/util';
-import * as vscode from 'vscode';
-import * as nls from 'vscode-nls';
-import * as util from './util';
+import { disposeAll, setContextValue } from '@cmt/util';
+import { PresetsController } from '@cmt/presetsController';
+import * as preset from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 export class CMakeToolsFolder {
-  private constructor(readonly cmakeTools: CMakeTools, readonly kitsController: KitsController) { }
+  private _wasUsingCMakePresets: boolean | undefined;
+
+  private readonly _onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
+
+  private constructor(readonly cmakeTools: CMakeTools,
+                      readonly kitsController: KitsController,
+                      readonly presetsController: PresetsController) {
+    const useCMakePresetsChangedListener = async () => {
+      const usingCMakePresets = this.useCMakePresets;
+      if (usingCMakePresets !== this._wasUsingCMakePresets) {
+        this._wasUsingCMakePresets = usingCMakePresets;
+        setContextValue('useCMakePresets', usingCMakePresets);
+        await cmakeTools.setUseCMakePresets(usingCMakePresets);
+        await CMakeToolsFolder.initializeKitOrPresetsInCmt(this);
+        this._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
+      }
+    };
+    cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener);
+    preset.onPresetsChanged(useCMakePresetsChangedListener);
+    preset.onUserPresetsChanged(useCMakePresetsChangedListener);
+  }
 
   static async init(cmakeTools: CMakeTools) {
-    return new CMakeToolsFolder(cmakeTools, await KitsController.init(cmakeTools));
+    const kitsController = await KitsController.init(cmakeTools);
+    const cmtFolder = new CMakeToolsFolder(cmakeTools, kitsController, await PresetsController.init(cmakeTools, kitsController));
+    const usingCMakePresets = cmtFolder.useCMakePresets;
+    cmtFolder._wasUsingCMakePresets = usingCMakePresets;
+    setContextValue('useCMakePresets', usingCMakePresets);
+    await cmakeTools.setUseCMakePresets(usingCMakePresets);
+    await CMakeToolsFolder.initializeKitOrPresetsInCmt(cmtFolder);
+    return cmtFolder;
   }
 
   get folder() { return this.cmakeTools.folder; }
 
+  // Go through the decision tree here since there would be dependency issues if we do this in config.ts
+  get useCMakePresets(): boolean {
+    if (this.cmakeTools.workspaceContext.config.useCMakePresets === 'automatic') {
+      // TODO (P1): check if configured with kits + vars
+      // // Always check if configured before since the state could be reset
+      // const state = this.cmakeTools.workspaceContext.state;
+      // const configuredWithKitsVars = !!(state.activeKitName || state.activeVariantSettings?.size);
+      // return !configuredWithKitsVars || (configuredWithKitsVars && (this.presetsController.cmakePresetsExist || this.presetsController.cmakeUserPresetsExist));
+      return this.presetsController.presetsFileExist;
+    }
+    return this.cmakeTools.workspaceContext.config.useCMakePresets;
+  }
+
+  get onUseCMakePresetsChanged() { return this._onUseCMakePresetsChangedEmitter.event; }
+
   dispose() {
     this.cmakeTools.dispose();
     this.kitsController.dispose();
+  }
+
+  private static async initializeKitOrPresetsInCmt(folder: CMakeToolsFolder) {
+    if (folder.useCMakePresets) {
+      const configurePreset = folder.cmakeTools.workspaceContext.state.configurePresetName;
+      if (configurePreset) {
+        await folder.presetsController.setConfigurePreset(configurePreset);
+      }
+      const buildPreset = folder.cmakeTools.workspaceContext.state.buildPresetName;
+      if (buildPreset) {
+        await folder.presetsController.setBuildPreset(buildPreset);
+      }
+      const testPreset = folder.cmakeTools.workspaceContext.state.testPresetName;
+      if (testPreset) {
+        await folder.presetsController.setTestPreset(testPreset);
+      }
+    } else {
+      // Check if the CMakeTools remembers what kit it was last using in this dir:
+      const kit_name = folder.cmakeTools.workspaceContext.state.activeKitName;
+      if (kit_name) {
+        // It remembers a kit. Find it in the kits avail in this dir:
+        const kit = folder.kitsController.availableKits.find(k => k.name == kit_name) || null;
+        // Set the kit: (May do nothing if no kit was found)
+        await folder.cmakeTools.setKit(kit);
+      }
+    }
   }
 }
 
@@ -156,18 +226,6 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     const inst = await CMakeToolsFolder.init(new_cmt);
 
     this._instances.set(folder.uri.fsPath, inst);
-
-    // initialize kits for the cmake tools
-    // Check if the CMakeTools remembers what kit it was last using in this dir:
-    const kit_name = new_cmt.workspaceContext.state.activeKitName;
-    if (!kit_name) {
-      // No prior kit. Done.
-      return inst;
-    }
-    // It remembers a kit. Find it in the kits avail in this dir:
-    const kit = inst.kitsController.availableKits.find(k => k.name == kit_name) || null;
-    // Set the kit: (May do nothing if no kit was found)
-    await new_cmt.setKit(kit);
 
     // Return the newly created instance
     return inst;
