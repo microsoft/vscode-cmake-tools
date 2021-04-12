@@ -5,7 +5,7 @@ CMake supports two files, `CMakePresets.json` and `CMakeUserPresets.json`, that 
 `CMakePresets.json` and `CMakeUserPresets.json` can be used to drive CMake in Visual Studio and Visual Studio Code, in a Continuous Integration (CI) pipeline, and from the command line. `CMakePresets.json` is intended to save project-wide builds, and `CMakeUserPresets.json` is intended for developers to save their own local builds.
 
 This article contains information about `CMakePresets.json` integration in the CMake Tools extension for Visual Studio Code.
-- For more information on the format of `CMakePresets.json`, see the official [CMake documentation](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html). 
+- For more information on the format of `CMakePresets.json`, see the official [CMake documentation](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html).
 - For more information on the Microsoft vendor maps and macro expansion, see [`CMakePresets.json` and `CMakeUserPresets.json` Microsoft vendor maps](https://docs.microsoft.com/cpp/build/cmake-presets-json-reference).
 - For more information on how to use `CMakePresets.json` in Visual Studio, see [Configure and build with CMake Presets in Visual Studio](https://docs.microsoft.com/cpp/build/cmake-presets-vs)
 
@@ -23,9 +23,9 @@ A new setting, `cmake.useCMakePresets`, has been added to `settings.json`:
 
 |Setting  |Description  |Accepted values  | Default value |
 |---------|---------|---------|---------|
-|`cmake.useCMakePresets` | Use `CMakePresets.json` to drive CMake configure, build, and test | `true`, `false`, `auto` | `auto` |
+|`cmake.useCMakePresets` | Use `CMakePresets.json` to drive CMake configure, build, and test | `always`, `never`, `auto` | `auto` |
 
-`auto` : evaluates to `true` if there's a `CMakePresets.json` file in the `cmake.sourceDirectory` of the active folder. It evaluates to `false` if there isn't a `CMakePresets.json` file in the `cmake.sourceDirectory` in the active folder. Set `cmake.useCMakePresets` to `true` or `false` to explicitly enable or disable `CMakePresets.json` integration for all CMake projects.
+`auto` : evaluates to `always` if there's a `CMakePresets.json` file in the `cmake.sourceDirectory` of the active folder. It evaluates to `never` if there isn't a `CMakePresets.json` file in the `cmake.sourceDirectory` in the active folder. Set `cmake.useCMakePresets` to `always` or `never` to explicitly enable or disable `CMakePresets.json` integration for all CMake projects.
 
 ## Configure and build
 
@@ -107,8 +107,8 @@ The selected template will be added to `CMakePresets.json` if `CMakePresets.json
 
 To add a new Build Preset to `CMakePresets.json`, run the **CMake: Add Build Preset** command. This will list several Build Preset templates in the command palette.
 
-- Select **Create from Configure Preset** to display a list of `configurePresets` defined in `CMakePresets.json`. Once you select a Configure Preset, an empty Build Preset associated with the selected Configure Preset will be created. 
-- Select **Inherit from Build Preset** to display a list of `buildPresets` defined in `CMakePresets.json`. Once you select a Build Preset, a new Build Preset that inherits from the selected Build Preset will be created. 
+- Select **Create from Configure Preset** to display a list of `configurePresets` defined in `CMakePresets.json`. Once you select a Configure Preset, an empty Build Preset associated with the selected Configure Preset will be created.
+- Select **Inherit from Build Preset** to display a list of `buildPresets` defined in `CMakePresets.json`. Once you select a Build Preset, a new Build Preset that inherits from the selected Build Preset will be created.
 - Select **Custom** to configure an empty Build Preset.
 
 See [Build Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#build-preset) for more information on editing Build Presets.
@@ -116,7 +116,7 @@ See [Build Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.h
 ### Add new Test Presets
 
 To add a new Test Preset to `CMakePresets.json`, run the **CMake: Add Test Preset** command. This lists several Test Preset templates in the command palette.
-- Select **Create from Configure Preset** to display a list of `configurePresets` defined in `CMakePresets.json`. Once you select a Configure Preset, an empty Test Preset associated with the selected Configure Preset will be created. 
+- Select **Create from Configure Preset** to display a list of `configurePresets` defined in `CMakePresets.json`. Once you select a Configure Preset, an empty Test Preset associated with the selected Configure Preset will be created.
 - Select **Inherit from Test Preset** to display a list of testPresets defined in `CMakePresets.json`. Once you select a Test Preset, a new Test Preset that inherits from the selected Test Preset will be created.
 - Select the **Custom** template to configure an empty Test Preset.
 For more information about editing Test Presets, see [Test Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#test-preset).
@@ -278,7 +278,7 @@ The following commands can be run from the directory where your `CMakePresets.js
 ```DOS
 cmake --list-presets=all .
 cmake --preset <configurePreset-name>
-cmake --build --preset <buildPreset-name> 
+cmake --build --preset <buildPreset-name>
 ctest --preset <testPreset-name>
 ```
 
