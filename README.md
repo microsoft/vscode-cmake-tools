@@ -4,6 +4,7 @@
 
 ## Important doc links
 
+- [Use CMake Presets](docs/cmake-presets.md)
 - [CMake Tools quick start](https://code.visualstudio.com/docs/cpp/CMake-linux)
 - [Configure a project](docs/how-to.md#configure-a-project)
 - [Build a project](docs/how-to.md#build-a-project)
