@@ -53,7 +53,7 @@ export class CMakeToolsFolder {
 
   // Go through the decision tree here since there would be dependency issues if we do this in config.ts
   get useCMakePresets(): boolean {
-    if (this.cmakeTools.workspaceContext.config.useCMakePresets === 'automatic') {
+    if (this.cmakeTools.workspaceContext.config.useCMakePresets === 'auto') {
       // TODO (P1): check if configured with kits + vars
       // // Always check if configured before since the state could be reset
       // const state = this.cmakeTools.workspaceContext.state;

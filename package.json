@@ -1812,9 +1812,9 @@
           "enum": [
             "always",
             "never",
-            "automatic"
+            "auto"
           ],
-          "default": "automatic",
+          "default": "auto",
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%"
         }
       }

@@ -20,7 +20,7 @@ export type LogLevelKey = 'trace'|'debug'|'info'|'note'|'warning'|'error'|'fatal
 export type CMakeCommunicationMode = 'legacy'|'serverApi'|'fileApi'|'automatic';
 export type StatusBarButtonVisibility = "default" | "compact" | "icon" | "hidden";
 export type TouchBarButtonVisibility = "default" | "hidden";
-export type UseCMakePresets = 'always' | 'never' | 'automatic';
+export type UseCMakePresets = 'always' | 'never' | 'auto';
 
 interface HardEnv {
   [key: string]: string;
