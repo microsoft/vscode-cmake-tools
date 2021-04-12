@@ -5,8 +5,9 @@
 ## Important doc links
 
 - [CMake Tools quick start](https://code.visualstudio.com/docs/cpp/CMake-linux)
-- [Configure a project](docs/how-to.md#configure-a-project)
-- [Build a project](docs/how-to.md#build-a-project)
+- [Configure and build a project with CMake Presets](docs/cmake-presets.md)
+- [Configure a project with kits and variants](docs/how-to.md#configure-a-project)
+- [Build a project with kits and variants](docs/how-to.md#build-a-project)
 - [Debug a project](docs/how-to.md#debug-a-project)
 - [Configure CMake Tools settings](docs/cmake-settings.md)
 - [How to](docs/how-to.md)
