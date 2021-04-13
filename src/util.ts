@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import {EnvironmentVariables, execute} from '@cmt/proc';
+import {GeneralEnvironmentType, EnvironmentVariables, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -211,6 +211,110 @@ export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T|
   return undefined;
 }
 
+// Env vars on windows are case insensitive, so compare the
+// keys in lowercase
+function envKeyEqualWin32(key1: string, key2: string): boolean {
+  return key1.toLocaleLowerCase() === key2.toLocaleLowerCase();
+}
+
+/**
+ * Get an environment variable item from the environment map
+ * @param env The environment map to retrieve key
+ * @param expectKey The environment key
+ * @return [key, value] pair of the found environment item or undefined when not found
+ */
+export function envGet(
+  env: GeneralEnvironmentType,
+  expectKey: string
+): [string, string] | undefined {
+  if (process.platform === "win32") {
+    if (env instanceof Map) {
+      return find(env.entries(), ([key, _val]) => envKeyEqualWin32(key, expectKey));
+    } else {
+      for (const key of Object.keys(env)) {
+        if (envKeyEqualWin32(key, expectKey)) {
+          return [key, env[key] as string];
+        }
+      }
+    }
+  } else {
+    if (env instanceof Map) {
+      if (env.has(expectKey)) {
+        return [expectKey, env.get(expectKey) as string];
+      }
+    } else {
+      if (env.hasOwnProperty(expectKey)) {
+        return [expectKey, env[expectKey] as string];
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Delete an environment variable item from the environment map
+ * @param env The environment map to retrieve key
+ * @param key The environment key to delete
+ */
+export function envDelete(env: GeneralEnvironmentType, key: string) {
+  const envItem = envGet(env, key);
+  if (envItem) {
+    if (env instanceof Map) {
+      env.delete(envItem[0]);
+    } else {
+      delete env[envItem[0]];
+    }
+  }
+}
+
+/**
+ * Get an environment variable item from the environment map
+ * @param env The environment map to retrieve key
+ * @param expectKey The environment key
+ * @return The environment value for the expectKey
+ */
+export function envGetValue(
+  env: GeneralEnvironmentType,
+  expectKey: string
+): string | undefined {
+  const envItem = envGet(env, expectKey);
+  if (envItem) {
+    return envItem[1];
+  }
+  return undefined;
+}
+
+function envUpdate(
+  env: GeneralEnvironmentType,
+  insertKey: string,
+  insertValue: string
+) {
+  if (env instanceof Map) {
+    env.set(insertKey, insertValue);
+  } else {
+    env[insertKey] = insertValue;
+  }
+}
+
+/**
+ * Set an environment variable item
+ * @param env The environment map to update
+ * @param insertKey The environment key
+ * @param insertValue The environment value
+ */
+export function envSet(
+  env: GeneralEnvironmentType,
+  insertKey: string,
+  insertValue: string
+) {
+  const existItem = envGet(env, insertKey);
+  if (existItem) {
+    envUpdate(env, existItem[0], insertValue);
+  } else {
+    envUpdate(env, insertKey, insertValue);
+  }
+}
+
 /**
  * Generate a random integral value.
  * @param min Minimum value
@@ -379,24 +483,31 @@ export function splitEnvironmentVars(env: EnvironmentVariables): EnvironmentVari
   return converted_env;
 }
 
-export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
-  return env.reduce((acc, vars) => {
-    if (process.platform === 'win32') {
-      // Env vars on windows are case insensitive, so we take the ones from
-      // active env and overwrite the ones in our current process env
-      const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>((acc2, key: string) => {
-        acc2[normalizeEnvironmentVarname(key)] = vars[key];
-        return acc2;
-      }, {});
-      return {...acc, ...norm_vars};
-    } else {
-      return {...acc, ...vars};
+/**
+ * mergeEnvironment will merge a list of environment map
+ * without expand, it's will merge them in case-insensitive way on Windows,
+ * and in case-sensitive on Posix system.
+ *
+ * @param envs The list of environment variables to merge
+ */
+export function mergeEnvironment(...envs: (EnvironmentVariables | undefined)[]): EnvironmentVariables {
+  return envs.reduce((acc: EnvironmentVariables, vars) => {
+    if (vars) {
+      const env_entries = Object.entries(vars) as [string, null | string][];
+      for (const newEnvItem of env_entries) {
+        const key = newEnvItem[0];
+        const value = newEnvItem[1];
+        // For cmake preset environment variables, value may be null
+        // exclude those variable
+        if (typeof value === 'string') {
+          envSet(acc, key, value);
+        } else {
+          envDelete(acc, key);
+        }
+      }
     }
+    return acc;
   }, {});
-}
-
-export function normalizeEnvironmentVarname(varname: string) {
-  return process.platform === 'win32' ? varname.toUpperCase() : varname;
 }
 
 export function parseCompileDefinition(str: string): [string, string|null] {
@@ -558,8 +669,9 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
 }
 
 export function getLocaleId(): string {
-  if (typeof(process.env.VSCODE_NLS_CONFIG) === "string") {
-      const vscodeNlsConfigJson: any = JSON.parse(process.env.VSCODE_NLS_CONFIG);
+  const vscode_nls_config = envGetValue(process.env, 'VSCODE_NLS_CONFIG');
+  if (typeof(vscode_nls_config) === "string") {
+      const vscodeNlsConfigJson: any = JSON.parse(vscode_nls_config);
       if (typeof(vscodeNlsConfigJson.locale) === "string") {
           return vscodeNlsConfigJson.locale;
       }
@@ -670,7 +782,7 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
 }
 
 export function isCodespaces(): boolean {
-  return !!process.env["CODESPACES"];
+  return !!envGetValue(process.env, 'CODESPACES');
 }
 
 export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {

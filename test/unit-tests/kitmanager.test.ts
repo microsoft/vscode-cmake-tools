@@ -1,5 +1,8 @@
 /* eslint-disable no-unused-expressions */
-import {readKitsFile, getShellScriptEnvironment} from '@cmt/kit';
+import {readKitsFile, baseKitEnvironment} from '@cmt/kit';
+import { computeExpandedEnvironment, emptyExpansionOptions, mergeEnvironmentWithExpand } from '@cmt/expand';
+import { EnvironmentVariables } from '@cmt/proc';
+import * as util from '@cmt/util';
 import {expect} from '@test/util';
 import * as path from 'path';
 import paths from '@cmt/paths';
@@ -43,6 +46,23 @@ suite('Kits test', async () => {
     expect(kits.filter(k => k.name === "ToolchainKit 4")[0].toolchainFile).to.eq("test-project-without-cmakelists/Test/toolchain.cmake");
   });
 
+  test('Test mergeEnvironmentWithExpand', async() => {
+    util.envSet(process.env, "TESTVAR_HOST", "host");
+    const kit_envs = {
+      TESTVAR_SIMPLE: "simple",
+      TESTVAR_COMPOSITE:
+        "prefix_${env.TESTVAR_HOST}__${env.TESTVAR12}__${dollar}_${env.not_found_var}"
+    };
+    const merged_envs = await mergeEnvironmentWithExpand(
+      true,
+      [process.env as EnvironmentVariables, kit_envs],
+      emptyExpansionOptions()
+    );
+    expect(util.envGetValue(merged_envs, "TESTVAR_COMPOSITE")).to.equal(
+      "prefix_host__${env.TESTVAR12}__${dollar}_${env.not_found_var}"
+    );
+  });
+
   test('Test load env vars from shell script', async() => {
     const fname_extension = process.platform === 'win32' ? 'bat' : 'sh';
     const fname = `cmake-kit-test-${Math.random().toString()}.${fname_extension}`;
@@ -54,17 +74,35 @@ suite('Kits test', async () => {
       await fs.writeFile(script_path, `export "TESTVAR12=abc"\nexport "TESTVAR13=cde"`);
     }
 
-    const kit = { name: "Test Kit 1", environmentSetupScript: script_path };
-    const env_vars = await getShellScriptEnvironment(kit);
+    const opts = emptyExpansionOptions();
+    util.envSet(process.env, "TESTVAR_HOST", "host");
+    const kit_envs = {
+      TESTVAR_COMPOSITE:
+        "__${env.TESTVAR_HOST}__${env.TESTVAR12}__${dollar}_${env.not_found_var}",
+      TESTVAR_SIMPLE: "simple"
+    };
+    let env_vars = await baseKitEnvironment(kit_envs, script_path, opts);
     await fs.unlink(script_path);
     expect(env_vars).to.not.be.undefined;
 
     if (env_vars) {
-      const env_vars_arr = Array.from(env_vars);
+      const env_vars_arr = Object.entries(env_vars);
       // must contain all env vars, not only the ones we defined!
-      expect(env_vars_arr.length).to.be.greaterThan(2);
+      expect(env_vars_arr.length).to.be.greaterThan(3);
       expect(env_vars_arr).to.deep.include(['TESTVAR12', 'abc']);
       expect(env_vars_arr).to.deep.include(['TESTVAR13', 'cde']);
+      expect(util.envGetValue(env_vars, "TESTVAR_COMPOSITE")).to.equal(
+        "__host__${env.TESTVAR12}__${dollar}_${env.not_found_var}"
+      );
+      env_vars = await computeExpandedEnvironment(
+        env_vars,
+        env_vars,
+        false,
+        opts
+      );
+      expect(util.envGetValue(env_vars, "TESTVAR_COMPOSITE")).to.equal(
+        "__host__abc__$_"
+      );
     }
   });
 });

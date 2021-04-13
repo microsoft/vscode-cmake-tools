@@ -241,7 +241,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
     log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
-    const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
+    const child = await this.executeCommand(cmake, args, outputConsumer, {environment: env});
+    const res = await child.result;
     log.trace(res.stderr);
     log.trace(res.stdout);
     if (res.retc === 0) {

@@ -310,8 +310,9 @@ export class ConfigurationReader implements vscode.Disposable {
   get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
 
   get loggingLevel(): LogLevelKey {
-    if (process.env['CMT_LOGGING_LEVEL']) {
-      return process.env['CMT_LOGGING_LEVEL']! as LogLevelKey;
+    const cmt_logging_elvel = util.envGetValue(process.env, 'CMT_LOGGING_LEVEL');
+    if (cmt_logging_elvel) {
+      return cmt_logging_elvel as LogLevelKey;
     }
     return this.configData.loggingLevel;
   }

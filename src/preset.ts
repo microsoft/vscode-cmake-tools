@@ -7,7 +7,7 @@ import * as logging from '@cmt/logging';
 import { EnvironmentVariables, execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit } from '@cmt/kit';
+import { effectiveKitEnvironment, Kit } from '@cmt/kit';
 import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -686,7 +686,7 @@ async function expandConfigurePresetHelper(folder: string,
                           'Configure preset {0}: Specified cl.exe with toolset {1} and architecture {2} is not found, you may need to run "CMake: Scan for Compilers" if it exists on your computer.',
                           preset.name, toolset.version ? `${toolset.version},${toolset.host}` : toolset.host, arch));
           } else {
-            clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
+            clEnv = await effectiveKitEnvironment(kits[latestVsIndex]);
             // if ninja isn't on path, try to look for it in a VS install
             const ninjaLoc = await execute('where.exe', ['ninja'], null, { environment: preset.environment as EnvironmentVariables,
                                                                            silent: true,
@@ -696,7 +696,7 @@ async function expandConfigurePresetHelper(folder: string,
               const vsCMakePaths = await paths.vsCMakePaths(kits[latestVsIndex].visualStudio);
               if (vsCMakePaths.ninja) {
                 log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
-                clEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${clEnv['PATH']}`;
+                util.envSet(clEnv, 'PATH', `${path.dirname(vsCMakePaths.ninja)};${util.envGetValue(clEnv, 'PATH')}`);
               }
             }
           }

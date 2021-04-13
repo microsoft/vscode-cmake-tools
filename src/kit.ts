@@ -20,8 +20,9 @@ import {fs} from './pr';
 import * as proc from './proc';
 import {loadSchema} from './schema';
 import { TargetTriple, findTargetTriple, parseTargetTriple, computeTargetTriple } from './triple';
-import {compare, dropNulls, objectPairs, Ordering, versionLess} from './util';
+import {compare, dropNulls, Ordering, versionLess} from './util';
 import * as nls from 'vscode-nls';
+import { GeneralEnvironmentType } from './proc';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -748,10 +749,9 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
 
 /**
  * Gets the environment variables set by a shell script.
- * @param kit The kit to get the environment variables for
+ * @param environmentSetupScript The environmentSetupScript to get the environment variables for the kit
  */
-export async function getShellScriptEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>|undefined> {
-  console.assert(kit.environmentSetupScript);
+export async function getShellScriptEnvironment(environmentSetupScript: string, base_env: proc.EnvironmentVariables, opts: expand.ExpansionOptions): Promise<proc.EnvironmentVariables|undefined> {
   const filename = Math.random().toString() + (process.platform === 'win32' ? '.bat' : '.sh');
   const script_filename = `vs-cmt-${filename}`;
   const environment_filename = script_filename + '.env';
@@ -777,10 +777,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
   let script = '';
   let run_command = '';
 
-  let environmentSetupScript = kit.environmentSetupScript;
-  if (opts) {
-    environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
-  }
+  environmentSetupScript = await expand.expandString(environmentSetupScript!, {...opts, envOverride: base_env});
 
   if (process.platform === 'win32') { // windows
     script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
@@ -797,7 +794,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
   } catch (error) {}
   await fs.writeFile(script_path, script); // write batch file
 
-  const res = await proc.execute(run_command, [], null, {shell: true, silent: true}).result; // run script
+  const res = await proc.execute(run_command, [], null, {shell: true, silent: true, environment: base_env}).result; // run script
   await fs.unlink(script_path); // delete script file
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
@@ -808,22 +805,22 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     await fs.unlink(environment_path);
   } catch (error) { log.error(error); }
   if (!env || env === '') {
-    console.log(`Error running ${kit.environmentSetupScript} with:`, output);
+    console.log(`Error running ${environmentSetupScript} with:`, output);
     return;
   }
 
   // split and trim env vars
   const vars
-      = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<Map<string, string>>((acc, line) => {
+      = env.split('\n').map(l => l.trim()).filter(l => l.length !== 0).reduce<proc.EnvironmentVariables>((acc, line) => {
           const match = /(\w+)=?(.*)/.exec(line);
           if (match) {
-            acc.set(match[1], match[2]);
+            util.envSet(acc, match[1], match[2]);
           } else {
             log.error(localize('error.parsing.environment', 'Error parsing environment variable: {0}', line));
           }
           return acc;
-        }, new Map());
-  log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', kit.environmentSetupScript, JSON.stringify([...vars])));
+        }, {});
+  log.debug(localize('ok.running', 'OK running {0}, env vars: {1}', environmentSetupScript, JSON.stringify(Object.entries(vars))));
   return vars;
 }
 
@@ -887,25 +884,25 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
     // this issue, but this here seems to work. It basically just sets
     // the VS{vs_version_number}COMNTOOLS environment variable to contain
     // the path to the Common7 directory.
-    const vs_version = variables.get('VISUALSTUDIOVERSION');
-    if (vs_version) {variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir); }
+    const vs_version = util.envGetValue(variables, 'VISUALSTUDIOVERSION');
+    if (vs_version) { util.envSet(variables, `VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir); }
 
     // For Ninja and Makefile generators, CMake searches for some compilers
     // before it checks for cl.exe. We can force CMake to check cl.exe first by
     // setting the CC and CXX environment variables when we want to do a
     // configure.
-    variables.set('CC', 'cl.exe');
-    variables.set('CXX', 'cl.exe');
+    util.envSet(variables, 'CC', 'cl.exe');
+    util.envSet(variables, 'CXX', 'cl.exe');
 
     if (paths.ninjaPath) {
-      let envPATH = variables.get('PATH');
+      let envPATH = util.envGetValue(variables, 'PATH');
       if (undefined !== envPATH) {
         const env_paths = envPATH.split(';');
         const ninja_path = path.dirname(paths.ninjaPath!);
         const ninja_base_path = env_paths.find(path_el => path_el === ninja_path);
         if (undefined === ninja_base_path) {
           envPATH = envPATH.concat(';' + ninja_path);
-          variables.set('PATH', envPATH);
+          util.envSet(variables, 'PATH', envPATH);
         }
       }
     }
@@ -1085,32 +1082,30 @@ export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>
   return varsForVSInstallation(requested, kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
 }
 
-export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>> {
-  let host_env;
-  const kit_env = objectPairs(kit.environmentVariables || {});
-  if (opts) {
-    for (const env_var of kit_env) {
-      env_var[1] = await expand.expandString(env_var[1], opts);
-    }
-  }
-  if (kit.environmentSetupScript) {
-    const shell_vars = await getShellScriptEnvironment(kit, opts);
+export async function baseKitEnvironment(
+  environmentVariables?: proc.EnvironmentVariables,
+  environmentSetupScript?: string,
+  opts?: expand.ExpansionOptions
+): Promise<proc.EnvironmentVariables> {
+  const expandOpts = opts ?? expand.emptyExpansionOptions();
+  let base_env = await expand.mergeEnvironmentWithExpand(true, [process.env as proc.EnvironmentVariables, environmentVariables], opts);
+  if (environmentSetupScript) {
+    const shell_vars = await getShellScriptEnvironment(environmentSetupScript, base_env, expandOpts);
     if (shell_vars) {
-      host_env = util.map(shell_vars, ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]) as [string, string][];
+      base_env = shell_vars;
     }
   }
-  if (host_env === undefined) {
-    // get host_env from process if it was not set by shell script before
-    host_env = objectPairs(process.env) as [string, string][];
-  }
+  return base_env;
+}
+
+export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<proc.EnvironmentVariables> {
+  const env = await baseKitEnvironment(kit.environmentVariables, kit.environmentSetupScript, opts);
   if (kit.visualStudio && kit.visualStudioArchitecture) {
     const vs_vars = await getVSKitEnvironment(kit);
     if (vs_vars) {
-      return new Map(
-          util.map(util.chain(host_env, kit_env, vs_vars), ([k, v]): [string, string] => [k.toLocaleUpperCase(), v]));
+      return util.mergeEnvironment(env, getKitEnvironmentVariablesObject(vs_vars));
     }
   }
-  const env = new Map(util.chain(host_env, kit_env));
   const isWin32 = process.platform === 'win32';
   if (isWin32) {
     const path_list: string[] = [];
@@ -1119,35 +1114,28 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     if (cCompiler) {
       path_list.push(path.dirname(cCompiler));
     }
-    const cmt_mingw_path = env.get("CMT_MINGW_PATH");
+    const cmt_mingw_path = util.envGetValue(env, "CMT_MINGW_PATH");
     if (cmt_mingw_path) {
       path_list.push(cmt_mingw_path);
     }
-    let path_key: string | undefined;
-    if (env.has("PATH")) {
-      path_key = "PATH";
-    } else if (env.has("Path")) {
-      path_key = "Path";
+    const env_path = util.envGetValue(env, 'PATH');
+    if (env_path) {
+      path_list.unshift(env_path);
     }
-    if (path_key) {
-      path_list.unshift(env.get(path_key) ?? '');
-      env.set(path_key, path_list.join(';'));
-    }
+    util.envSet(env, 'PATH', path_list.join(';'));
   }
   return env;
 }
 
-export async function findCLCompilerPath(env: Map<string, string>): Promise<string|null> {
-  const path_var = util.find(env.entries(), ([key, _val]) => key.toLocaleLowerCase() === 'path');
-  if (!path_var) {
+export async function findCLCompilerPath(env: GeneralEnvironmentType): Promise<string|null> {
+  const path_val = util.envGetValue(env, 'PATH');
+  if (!path_val) {
     return null;
   }
-  const path_ext_var = util.find(env.entries(), ([key, _val]) => key.toLocaleLowerCase() === 'pathext');
-  if (!path_ext_var) {
+  const path_ext = util.envGetValue(env, 'PATHEXT');
+  if (!path_ext) {
     return null;
   }
-  const path_val = path_var[1];
-  const path_ext = path_ext_var[1];
   for (const dir of path_val.split(';')) {
     for (const ext of path_ext.split(';')) {
       const fname = `cl${ext}`;
@@ -1187,9 +1175,10 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
     const scan_paths = new Set<string>();
 
     // Search directories on `PATH` for compiler binaries
-    if (process.env.hasOwnProperty('PATH')) {
+    const env_path = util.envGetValue(process.env, 'PATH');
+    if (env_path) {
       const sep = isWin32 ? ';' : ':';
-      for (const dir of (process.env.PATH as string).split(sep)) {
+      for (const dir of env_path.split(sep)) {
         scan_paths.add(dir);
       }
     }
@@ -1213,8 +1202,9 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
       const clang_paths = new Set<string>();
 
       // LLVM_ROOT environment variable location
-      if (process.env.hasOwnProperty('LLVM_ROOT')) {
-        const llvm_root = path.normalize(process.env.LLVM_ROOT as string + "\\bin");
+      const env_llvm_root = util.envGetValue(process.env, 'LLVM_ROOT');
+      if (env_llvm_root) {
+        const llvm_root = path.normalize(env_llvm_root + "\\bin");
         clang_paths.add(llvm_root);
       }
 
@@ -1254,8 +1244,9 @@ export async function scanForKitsIfNeeded(cmt: CMakeTools): Promise<boolean> {
   const kitsVersionCurrent = 2;
 
   // Scan also when there is no kits version saved in the state.
+  const env_cmt_testing = util.envGetValue(process.env, 'CMT_TESTING');
   if ((!kitsVersionSaved || kitsVersionSaved !== kitsVersionCurrent) &&
-       process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
+       env_cmt_testing !== '1' && !kitsController.KitsController.isScanningForKits()) {
     log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
     await kitsController.KitsController.scanForKits(cmt);
     await cmt.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
