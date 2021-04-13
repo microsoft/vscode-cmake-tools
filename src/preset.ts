@@ -614,6 +614,9 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
   // Expand other fields
   if (preset.binaryDir) {
     preset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
+    if (!path.isAbsolute(preset.binaryDir)) {
+      preset.binaryDir = util.resolvePath(preset.binaryDir, sourceDir);
+    }
   }
   if (preset.cmakeExecutable) {
     preset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts));
