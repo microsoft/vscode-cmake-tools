@@ -58,6 +58,7 @@ export enum ConfigureType {
   Normal,
   Clean,
   Cache,
+  DryRun
 }
 
 export enum ConfigureTrigger {
@@ -1005,14 +1006,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 } else {
                   switch (type) {
                     case ConfigureType.Normal:
-                        retc = await drv.configure(trigger, extra_args, consumer);
+                      retc = await drv.configure(trigger, extra_args, consumer);
                       break;
                     case ConfigureType.Clean:
-                        retc = await drv.cleanConfigure(trigger, extra_args, consumer);
+                      retc = await drv.cleanConfigure(trigger, extra_args, consumer);
+                      break;
+                    case ConfigureType.DryRun:
+                      retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
                       break;
                     default:
-                        rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
-                        retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
+                      rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
+                      retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
                       break;
                   }
                   await setContextValue(IS_CONFIGURING_KEY, false);
@@ -1185,18 +1189,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async runBuild(target_?: string): Promise<number> {
-    log.info(localize('run.build', 'Building folder: {0}', this.folderName), target_ ? target_ : '');
-    const config_retc = await this.ensureConfigured();
-    if (config_retc === null) {
-      throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
-    } else if (config_retc !== 0) {
-      return config_retc;
-    }
-    const drv = await this.getCMakeDriverInstance();
-    if (!drv) {
-      throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
-    }
+  async runBuild(target_?: string, dryRun?: boolean): Promise<number> {
     let target = target_;
     let targetName: string;
     if (this.useCMakePresets) {
@@ -1205,6 +1198,33 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     } else {
       target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
       targetName = target;
+    }
+
+    let drv: CMakeDriver | null;
+    if (dryRun) {
+      drv = await this.getCMakeDriverInstance();
+      if (!drv) {
+        throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
+      }
+      const buildCmd = await drv.getCMakeBuildCommand();
+      if (buildCmd) {
+        log.info(buildCmdStr(buildCmd.command, buildCmd.args));
+      } else {
+        throw new Error(localize('failed.to.get.build.command', 'Failed to get build command'));
+      }
+      return 0;
+    }
+
+    log.info(localize('run.build', 'Building folder: {0}', this.folderName), target_ ? target_ : '');
+    const config_retc = await this.ensureConfigured();
+    if (config_retc === null) {
+      throw new Error(localize('unable.to.configure', 'Build failed: Unable to configure the project'));
+    } else if (config_retc !== 0) {
+      return config_retc;
+    }
+    drv = await this.getCMakeDriverInstance();
+    if (!drv) {
+      throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
     }
     await this.reRegisterTaskProviderforNewTarget(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
@@ -1231,14 +1251,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           log.showChannel();
           BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
           await setContextValue(IS_BUILDING_KEY, true);
-          const rc = await drv.build(target, consumer);
+          const rc = await drv!.build(target, consumer);
           await setContextValue(IS_BUILDING_KEY, false);
           if (rc === null) {
             BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
           } else {
             BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
           }
-          const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
+          const file_diags = consumer.compileConsumer.resolveDiagnostics(drv!.binaryDir);
           populateCollection(diagCollections.build, file_diags);
           return rc === null ? -1 : rc;
         },
@@ -1253,8 +1273,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async build(target_?: string): Promise<number> {
-    this.m_promise_build = this.runBuild(target_);
+  async build(target_?: string, dryRun?: boolean): Promise<number> {
+    this.m_promise_build = this.runBuild(target_, dryRun);
     return this.m_promise_build;
   }
 

@@ -66,7 +66,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, dryRun?: boolean): Promise<number>;
 
   protected async doPreCleanConfigure(): Promise<void> { return Promise.resolve(); }
 
@@ -1029,7 +1029,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {name: allowedCompilerName, version};
   }
 
-  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
+  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings?: boolean, dryRun?: boolean): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1080,7 +1080,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       await this._refreshExpansions();
 
       const timeStart: number = new Date().getTime();
-      const retc = await this.doConfigure(expanded_flags, consumer);
+      const retc = await this.doConfigure(expanded_flags, consumer, dryRun);
       const timeEnd: number = new Date().getTime();
 
       const cmakeVersion = this.cmake.version;
@@ -1089,8 +1089,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         telemetryProperties = {
           CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
           CMakeGenerator: this.generatorName || '',
-          Preset: this.useCMakePresets? 'true' : 'false',
-          Trigger: trigger
+          Preset: this.useCMakePresets ? 'true' : 'false',
+          Trigger: trigger,
+          DryRun: dryRun ? 'true' : 'false'
         };
       } else {
         telemetryProperties = {
@@ -1098,7 +1099,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
           CMakeGenerator: this.generatorName || '',
           ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
-          Trigger: trigger
+          Trigger: trigger,
+          DryRun: dryRun ? 'true' : 'false'
         };
       }
 

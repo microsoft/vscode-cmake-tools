@@ -1051,7 +1051,14 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
   }
 
-  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, [], ConfigureType.Normal), folder, undefined, true); }
+  configure(folder?: vscode.WorkspaceFolder, dryRun?: boolean) {
+    return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure,
+                                                                 [],
+                                                                 dryRun ? ConfigureType.DryRun : ConfigureType.Normal),
+                                    folder, undefined, true);
+  }
+
+  configureDryRun(folder?: vscode.WorkspaceFolder) { return this.configure(folder, true); }
 
   configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true); }
 
@@ -1060,7 +1067,9 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsFolder(cmt => cmt.editCacheUI());
   }
 
-  build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, this._ensureActiveBuildPreset, true); }
+  build(folder?: vscode.WorkspaceFolder, name?: string, dryRun?: boolean) { return this.mapCMakeToolsFolder(cmt => cmt.build(name, dryRun), folder, this._ensureActiveBuildPreset, true); }
+
+  buildDryRun(folder?: vscode.WorkspaceFolder, name?: string) { return this.build(folder, name, true); }
 
   buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[name.length - 1] : name), this._ensureActiveBuildPreset, true); }
 
@@ -1524,6 +1533,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setBuildPreset',
     'setTestPreset',
     'build',
+    'buildDryRun',
     'buildAll',
     'buildWithTarget',
     'setVariant',
@@ -1538,6 +1548,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'cleanRebuild',
     'cleanRebuildAll',
     'configure',
+    'configureDryRun',
     'configureAll',
     'editCacheUI',
     'ctest',

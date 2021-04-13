@@ -32,6 +32,7 @@
   "icon": "res/logo.png",
   "activationEvents": [
     "onCommand:cmake.build",
+    "onCommand:cmake.buildDryRun",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
     "onCommand:cmake.clean",
@@ -41,6 +42,7 @@
     "onCommand:cmake.cleanRebuild",
     "onCommand:cmake.cleanRebuildAll",
     "onCommand:cmake.configure",
+    "onCommand:cmake.configureDryRun",
     "onCommand:cmake.configureAll",
     "onCommand:cmake.ctest",
     "onCommand:cmake.ctestAll",
@@ -179,6 +181,11 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.configureDryRun",
+        "title": "%cmake-tools.command.cmake.configureDryRun.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.configureAll",
         "title": "%cmake-tools.command.cmake.configureAll.title%",
         "category": "CMake"
@@ -202,6 +209,12 @@
       {
         "command": "cmake.build",
         "title": "%cmake-tools.command.cmake.build.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.buildDryRun",
+        "title": "%cmake-tools.command.cmake.buildDryRun.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
@@ -536,6 +549,9 @@
           "command": "cmake.configure"
         },
         {
+          "command": "cmake.configureDryRun"
+        },
+        {
           "when": "cmake:enableFullFeatureSet && !useCMakePresets",
           "command": "cmake.scanForKits"
         },
@@ -568,6 +584,10 @@
         {
           "when": "cmake:enableFullFeatureSet",
           "command": "cmake.build"
+        },
+        {
+          "when": "cmake:enableFullFeatureSet",
+          "command": "cmake.buildDryRun"
         },
         {
           "command": "cmake.buildAll",
