@@ -422,6 +422,15 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const defines = (fileGroup.defines || target.defines).concat(extraDefinitions);
     const includePath = fileGroup.includePath ? fileGroup.includePath.map(p => p.path) : target.includePath;
     const normalizedIncludePath = includePath.map(p => util.platformNormalizePath(p));
+    let normalizedStandard = standard;
+
+    if (!normalizedStandard) {
+      if (lang === "C") {
+        normalizedStandard = "c17";
+      } else {
+        normalizedStandard = "c++20";
+      }
+    }
 
     const newBrowsePath = this._workspaceBrowseConfiguration.browsePath;
     for (const includePathItem of normalizedIncludePath) {
@@ -436,7 +445,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
     this._workspaceBrowseConfiguration = {
       browsePath: newBrowsePath,
-      standard,
+      standard: normalizedStandard,
       compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
@@ -445,7 +454,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
 
     return {
       defines,
-      standard,
+      standard: normalizedStandard,
       includePath: normalizedIncludePath,
       intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArch),
       compilerPath: normalizedCompilerPath || undefined,
