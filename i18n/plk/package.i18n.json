@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Ustaw element docelowy kompilowania",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Usuń pamięć podręczną i skonfiguruj ponownie",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Usuń pamięć podręczną i skonfiguruj ponownie wszystkie projekty",
-	"cmake-tools.command.cmake.openConfiguration.title": "Edycja pamięci podręcznej narzędzia CMake (interfejs użytkownika)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Edycja pamięci podręcznej narzędzia CMake (interfejs użytkownika)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Wyczyść i skonfiguruj ponownie",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Wyczyść ponowne konfigurowanie wszystkich projektów",
 	"cmake-tools.command.cmake.clean.title": "Wyczyść",
@@ -95,6 +95,7 @@
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Optymalizuj pod kątem najmniejszego rozmiaru pliku binarnego — wyklucz informacje debugowania.",
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Optymalizuj pod kątem szybkości — uwzględnij informacje o debugowaniu.",
 	"cmake-tools.configuration.cmake.ctestArgs.description": "Argumenty do przekazania do narzędzia CTest.",
+	"cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Arguments passed by default to CTest.",
 	"cmake-tools.configuration.cmake.environment.description": "Zmienne środowiskowe do ustawienia podczas uruchamiania poleceń narzędzia CMake.",
 	"cmake-tools.configuration.cmake.environment.additionalProperties.description": "Wartość dla zmiennej środowiskowej.",
 	"cmake-tools.configuration.cmake.configureEnvironment.description": "Zmienne środowiskowe do przekazania do narzędzia CMake podczas konfigurowania.",
@@ -124,5 +125,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Konfiguruje maksymalną długość widocznego tekstu w trybie „kompaktowym”.",
 	"cmake-tools.configuration.views.cmake.folders.description": "Foldery",
 	"cmake-tools.configuration.views.cmake.outline.description": "Konspekt projektu",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Tablica ścieżek do plików zestawów niestandardowych",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umożliwia eksportowanie pliku compile_commands.js."
 }

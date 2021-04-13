@@ -33,6 +33,33 @@ export class StateManager {
   }
 
   /**
+   * The name of the workspace-local active configure preset
+   */
+  get configurePresetName(): string|null {
+    const preset = this._get<string>('configurePresetName');
+    return preset || null;
+  }
+  set configurePresetName(v: string|null) { this._update('configurePresetName', v); }
+
+  /**
+   * The name of the workspace-local active build preset
+   */
+  get buildPresetName(): string|null {
+    const preset = this._get<string>('buildPresetName');
+    return preset || null;
+  }
+  set buildPresetName(v: string|null) { this._update('buildPresetName', v); }
+
+  /**
+   * The name of the workspace-local active test preset
+   */
+  get testPresetName(): string|null {
+    const preset = this._get<string>('testPresetName');
+    return preset || null;
+  }
+  set testPresetName(v: string|null) { this._update('testPresetName', v); }
+
+  /**
    * The name of the workspace-local active kit.
    */
   get activeKitName(): string|null {
@@ -80,6 +107,9 @@ export class StateManager {
    * Rest all current workspace state. Mostly for troubleshooting
    */
   reset() {
+    this.configurePresetName = null;
+    this.buildPresetName = null;
+    this.testPresetName = null;
     this.activeVariantSettings = null;
     this.launchTargetName = null;
     this.defaultBuildTarget = null;

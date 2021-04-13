@@ -6,7 +6,8 @@ import {
   CodeModelContent,
   CodeModelFileGroup,
   CodeModelProject,
-  CodeModelTarget
+  CodeModelTarget,
+  CodeModelToolchain
 } from '@cmt/drivers/codemodel-driver-interface';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
@@ -22,7 +23,7 @@ const log = logging.createLogger('cmakefileapi-parser');
 export async function createQueryFileForApi(api_path: string): Promise<string> {
   const query_path = path.join(api_path, 'query', 'client-vscode');
   const query_file_path = path.join(query_path, 'query.json');
-  const requests = {requests: [{kind: 'cache', version: 2}, {kind: 'codemodel', version: 2}]};
+  const requests = {requests: [{kind: 'cache', version: 2}, {kind: 'codemodel', version: 2}, {kind: 'toolchains', version: 1}]};
   try {
     await fs.mkdir_p(query_path);
     await fs.writeFile(query_file_path, JSON.stringify(requests));
@@ -131,14 +132,10 @@ async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_
   if (targetObject.artifacts) {
     executable_path = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
     if (executable_path) {
-      if (await fs.exists(executable_path.path)) {
-        executable_path = path.normalize(executable_path.path);
-      } else {
-        executable_path = path.normalize(path.join(build_dir, executable_path.path));
-        if (!fs.exists(executable_path)) {
-          // Will be empty after cmake configuration
-          executable_path = "";
-        }
+      executable_path = convertToAbsolutePath(executable_path.path, build_dir);
+      if (!await fs.exists(executable_path)) {
+        // Will be empty after cmake configuration
+        executable_path = "";
       }
     }
   }
@@ -282,4 +279,28 @@ export async function loadExtCodeModelContent(reply_path: string, codeModel_file
                               .map(config_element => loadConfig(codeModelContent.paths, reply_path, config_element)));
 
   return {configurations} as CodeModelContent;
+}
+
+export async function loadToolchains(filename: string): Promise<Map<string, CodeModelToolchain>> {
+  const file_content = await fs.readFile(filename);
+  const toolchains = JSON.parse(file_content.toString()) as index_api.Toolchains.Content;
+
+  const expected_version = {major: 1, minor: 0};
+  const detected_version = toolchains.version;
+  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
+    log.warning(localize(
+        'toolchains.object.version',
+        'Toolchains object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
+        detected_version.major,
+        detected_version.minor,
+        expected_version.major,
+        expected_version.minor));
+  }
+
+  return toolchains.toolchains.reduce((acc, el) => {
+    if (el.compiler.path) {
+      acc.set(el.language, { path: el.compiler.path });
+    }
+    return acc;
+  }, new Map<string, CodeModelToolchain>());
 }

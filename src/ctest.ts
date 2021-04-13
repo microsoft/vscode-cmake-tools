@@ -11,6 +11,7 @@ import {fs} from './pr';
 import {OutputConsumer} from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
+import { testArgs } from './preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -62,7 +63,7 @@ export interface SiteData {
 export interface CTestResults { Site: SiteData; }
 
 interface EncodedMeasurementValue {
-  $: {encoding?: string; compression?: string;};
+  $: {encoding?: BufferEncoding; compression?: string;};
   _: string;
 }
 
@@ -348,20 +349,31 @@ export class CTestDriver implements vscode.Disposable {
     log.showChannel();
     this._decorationManager.clearFailingTestDecorations();
 
-    const ctestpath = await this.ws.ctestPath;
+    const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
     if (ctestpath === null) {
       log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return -2;
     }
 
-    const configuration = driver.currentBuildType;
+    let ctestArgs: string[];
+    if (driver.useCMakePresets) {
+      if (!driver.testPreset) {
+        log.error(localize('test.preset.not.set', 'Test preset is not set'));
+        return -3;
+      }
+      // Add a few more args so we can show the result in status bar
+      ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
+    } else {
+      const configuration = driver.currentBuildType;
+      ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
+        this.ws.config.ctestDefaultArgs, this.ws.config.ctestArgs);
+    }
+
     const child = driver.executeCommand(
         ctestpath,
-        [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
-            this.ws.config.ctestArgs),
+        ctestArgs,
         new CTestOutputLogger(),
-        {environment: this.ws.config.testEnvironment, cwd: driver.binaryDir});
-
+        {environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir});
     const res = await child.result;
     await this.reloadTests(driver);
     if (res.retc === null) {
@@ -385,27 +397,35 @@ export class CTestDriver implements vscode.Disposable {
     this._decorationManager.binaryDir = driver.binaryDir;
     this.testingEnabled = true;
 
-    const ctestpath = await this.ws.ctestPath;
+    const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
     if (ctestpath === null) {
       log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return this.tests = [];
     }
 
-    const build_config = driver.currentBuildType;
+    const buildConfigArgs: string[] = [];
+    if (driver.useCMakePresets) {
+      const buildConfig = driver.testPreset?.configuration;
+      if (buildConfig) {
+        buildConfigArgs.push('-C', buildConfig);
+      }
+    } else {
+      buildConfigArgs.push('-C', driver.currentBuildType);
+    }
     const result
         = await driver
-              .executeCommand(ctestpath, ['-N', '-C', build_config], undefined, {cwd: driver.binaryDir, silent: true})
+              .executeCommand(ctestpath, ['-N', ...buildConfigArgs], undefined, {cwd: driver.binaryDir, silent: true})
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
       log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
       return this.tests = [];
     }
-    const tests = result.stdout.split('\n')
+    const tests = result.stdout?.split('\n')
                       .map(l => l.trim())
                       .filter(l => /^Test\s*#(\d+):\s(.*)/.test(l))
                       .map(l => /^Test\s*#(\d+):\s(.*)/.exec(l)!)
-                      .map(([_, id, tname]) => ({id: parseInt(id!), name: tname!}));
+                      .map(([_, id, tname]) => ({id: parseInt(id!), name: tname!})) ?? [];
     const tagfile = path.join(driver.binaryDir, 'Testing', 'TAG');
     const tag = (await fs.exists(tagfile)) ? (await fs.readFile(tagfile)).toString().split('\n')[0].trim() : null;
     const tagdir = tag ? path.join(driver.binaryDir, 'Testing', tag) : null;

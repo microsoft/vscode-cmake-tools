@@ -31,6 +31,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     debugConfig: {},
     defaultVariants: {},
     ctestArgs: [],
+    ctestDefaultArgs: [],
     environment: {},
     configureEnvironment: {},
     buildEnvironment: {},
@@ -44,6 +45,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     useCMakeServer: true,
     cmakeCommunicationMode: 'automatic',
     ignoreKitEnv: false,
+    additionalKits: [],
     buildTask: false,
     outputLogEncoding: 'auto',
     enableTraceLogging: false,
@@ -54,7 +56,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     statusbar: {
       advanced: {},
       visibility: "default"
-    }
+    },
+    useCMakePresets: 'never'
   });
   ret.updatePartial(conf);
   return ret;

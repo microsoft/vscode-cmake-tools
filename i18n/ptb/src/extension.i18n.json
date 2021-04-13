@@ -36,6 +36,5 @@
 	"loading.extension.commands": "Carregando comandos de extensão",
 	"register.command": "Registrar o comando de extensão de CMakeTools {0}",
 	"uninstall.old.cmaketools": "Desinstale as versões mais antigas da extensão de Ferramentas CMake. Iniciando com a versão 1.2.0, a extensão passou a ser publicada pela Microsoft.",
-	"cmake.tools.initializing": "Ferramentas CMake inicializando...",
 	"deactivate.cmaketools": "Desativar CMakeTools"
 }

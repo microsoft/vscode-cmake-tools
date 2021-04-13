@@ -7,5 +7,6 @@
 	"failed.writing.to.file": "Erro ao gravar no arquivo {0}",
 	"cache.object.version": "A versão do objeto de cache ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta.",
 	"cache.entry.unknowntype": "Tipo de entrada de cache desconhecido: {0}.",
-	"code.model.version": "A versão do modelo de código ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta."
+	"code.model.version": "A versão do modelo de código ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta.",
+	"toolchains.object.version": "A versão do objeto toolchains ({0}.{1}) de cmake-file-api é inesperada. Esperava-se ({2}.{3}). A configuração do IntelliSense pode estar incorreta."
 }

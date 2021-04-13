@@ -19,8 +19,6 @@
 	"edit.setting": "Найти",
 	"ignore.activation": "Больше не показывать",
 	"missing.cmakelists": "Файл CMakeLists.txt не найден в корневом каталоге папки \"{0}\". Что вы хотели бы сделать?",
-	"reload.window": "Перезагрузить окно",
-	"setting.sourceDirectory.failed.needs.reload.window": "При обновлении параметра cmake.sourceDirectory произошла ошибка. Выполните команду \"Перезагрузить окно\", чтобы изменения вступили в силу.",
 	"starting.cmake.driver": "Запуск драйвера CMake.",
 	"bad.cmake.executable": "Неверный исполняемый файл CMake \"{0}\".",
 	"switch.to.serverapi": "Режим взаимодействия file-api CMake не поддерживается в версиях ниже {0}. Переключение на режим взаимодействия сервера CMake.",

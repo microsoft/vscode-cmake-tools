@@ -1,14 +1,16 @@
 import * as child_process from 'child_process';
 import * as chokidar from 'chokidar';
+import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-
-import {EnvironmentVariables, execute} from './proc';
 import * as nls from 'vscode-nls';
+
+import {EnvironmentVariables, execute} from '@cmt/proc';
+import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
 
 /**
  * Escape a string so it can be used as a regular expression
@@ -569,7 +571,7 @@ export function disposeAll(disp: Iterable<vscode.Disposable>) {
   }
 }
 
-export function reportProgress(progress: ProgressHandle|undefined, message: string) {
+export function reportProgress(message: string, progress?: ProgressHandle) {
   if (progress) {
     progress.report({message});
   }
@@ -585,7 +587,14 @@ export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
 }
 
-export function isArray(x: any): x is any[] {
+export function makeHashString(str: string): string {
+    const crypto = require('crypto');
+    const hash = crypto.createHash('sha256');
+    hash.update(str);
+    return hash.digest('hex');
+}
+
+export function isArray<T>(x: any): x is T[] {
   return x instanceof Array;
 }
 
@@ -601,4 +610,20 @@ export function isNullOrUndefined(x?: any): boolean {
 
 export function isWorkspaceFolder(x?: any): boolean {
   return 'uri' in x && 'name' in x && 'index' in x;
+}
+
+export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<string> {
+  let result = lightNormalizePath(sourceDir);
+  if (path.basename(result).toLocaleLowerCase() === "cmakelists.txt") {
+    // Don't fail if CMakeLists.txt was accidentally appended to the sourceDirectory.
+    result = path.dirname(result);
+  }
+  if (!(await checkDirectoryExists(result))) {
+    rollbar.error(localize('sourcedirectory.not.a.directory', '"sourceDirectory" is not a directory'), { sourceDirectory: result });
+  }
+  return result;
+}
+
+export function isCodespaces(): boolean {
+  return !!process.env["CODESPACES"];
 }

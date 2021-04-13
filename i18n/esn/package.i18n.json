@@ -23,7 +23,7 @@
 	"cmake-tools.command.cmake.setDefaultTarget.title": "Establecer el destino de compilación",
 	"cmake-tools.command.cmake.cleanConfigure.title": "Eliminar la memoria caché y volver a configurar",
 	"cmake-tools.command.cmake.cleanConfigureAll.title": "Eliminar la memoria caché y reconfigurar todos los proyectos",
-	"cmake-tools.command.cmake.openConfiguration.title": "Editar la memoria caché de CMake (UI)",
+	"cmake-tools.command.cmake.editCacheUI.title": "Editar la memoria caché de CMake (UI)",
 	"cmake-tools.command.cmake.outline.cleanConfigure.title": "Limpiar reconfiguración",
 	"cmake-tools.command.cmake.outline.cleanConfigureAll.title": "Limpiar reconfigurar todos los proyectos",
 	"cmake-tools.command.cmake.clean.title": "Limpiar",
@@ -95,6 +95,7 @@
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.minsize.long": "Optimizar para el tamaño binario más pequeño: excluir información de depuración.",
 	"cmake-tools.configuration.cmake.defaultVariants.buildType.reldeb.long": "Optimizar la velocidad: incluir información de depuración.",
 	"cmake-tools.configuration.cmake.ctestArgs.description": "Argumentos que se pasan a CTest.",
+	"cmake-tools.configuration.cmake.ctestDefaultArgs.description": "Argumentos que se pasan de forma predeterminada a CTest.",
 	"cmake-tools.configuration.cmake.environment.description": "Variables de entorno que se establecen al ejecutar comandos de CMake.",
 	"cmake-tools.configuration.cmake.environment.additionalProperties.description": "Valor de la variable de entorno.",
 	"cmake-tools.configuration.cmake.configureEnvironment.description": "Variables de entorno que se pasan a CMake durante la configuración.",
@@ -124,5 +125,6 @@
 	"cmake-tools.configuration.cmake.statusbar.advanced.length.description": "Configura la longitud máxima del texto visible en el modo \"compacto\".",
 	"cmake-tools.configuration.views.cmake.folders.description": "Carpetas",
 	"cmake-tools.configuration.views.cmake.outline.description": "Esquema del proyecto",
+	"cmake-tools.configuration.cmake.additionalKits.description": "Matriz de rutas de acceso a los archivos de kit personalizados",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Habilita la exportación de compile_commands.json."
 }
