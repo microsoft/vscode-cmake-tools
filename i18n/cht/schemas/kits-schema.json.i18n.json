@@ -14,7 +14,7 @@
 	"schemas/kits-schema.json.items.properties.keep": "若為 `true`，即使套件已過期，也會予以保留。",
 	"schemas/kits-schema.json.items.properties.compilers.patternProperties.\\w+": "此語言的編譯器路徑",
 	"schemas/kits-schema.json.items.properties.toolchainFile": "工具鏈檔案路徑",
-	"schemas/kits-schema.json.items.properties.visualStudio": "Visual Studio 產品名稱",
+	"schemas/kits-schema.json.items.properties.visualStudio": "Instance ID of the Visual Studio product",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "要設為目標的架構",
 	"schemas/kits-schema.json.items.properties.environmentSetupScript": "修改套件環境的指令碼絕對路徑",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "環境變數的值",
