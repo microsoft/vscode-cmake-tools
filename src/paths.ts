@@ -18,19 +18,19 @@ interface VSCMakePaths {
 
 class WindowsEnvironment {
   get AppData(): string | undefined {
-    return process.env['APPDATA'];
+    return util.envGetValue(process.env, 'APPDATA');
 }
 
   get LocalAppData(): string | undefined {
-    return process.env['LOCALAPPDATA'];
+    return util.envGetValue(process.env, 'LOCALAPPDATA');
   }
 
   get AllUserProfile(): string | undefined {
-    return process.env['ProgramData'];
+    return util.envGetValue(process.env, 'ProgramData');
   }
 
   get ComSpec(): string {
-    let comSpec = process.env['ComSpec'];
+    let comSpec = util.envGetValue(process.env, 'ComSpec');
 
     if (undefined === comSpec) {
       comSpec = this.SystemRoot! + '\\system32\\cmd.exe';
@@ -40,31 +40,31 @@ class WindowsEnvironment {
   }
 
   get HomeDrive(): string | undefined {
-    return process.env['HOMEDRIVE'];
+    return util.envGetValue(process.env, 'HOMEDRIVE');
   }
 
   get HomePath(): string | undefined {
-    return process.env['HOMEPATH'];
+    return util.envGetValue(process.env, 'HOMEPATH');
   }
 
   get ProgramFilesX86(): string | undefined {
-    return process.env['ProgramFiles(x86)'];
+    return util.envGetValue(process.env, 'ProgramFiles(x86)');
   }
 
   get ProgramFiles(): string | undefined {
-    return process.env['ProgramFiles'];
+    return util.envGetValue(process.env, 'ProgramFiles');
   }
 
   get SystemDrive(): string | undefined {
-    return process.env['SystemDrive'];
+    return util.envGetValue(process.env, 'SystemDrive');
   }
 
   get SystemRoot(): string | undefined {
-    return process.env['SystemRoot'];
+    return util.envGetValue(process.env, 'SystemRoot');
   }
 
   get Temp(): string | undefined {
-    return process.env['TEMP'];
+    return util.envGetValue(process.env, 'TEMP');
   }
 }
 
@@ -81,9 +81,9 @@ class Paths {
    */
   get userHome(): string {
     if (process.platform === 'win32') {
-      return path.join(process.env['HOMEDRIVE'] || 'C:', process.env['HOMEPATH'] || 'Users\\Public');
+      return path.join(util.envGetValue(process.env, 'HOMEDRIVE') ?? 'C:', util.envGetValue(process.env, 'HOMEPATH') ?? 'Users\\Public');
     } else {
-      return process.env['HOME'] || process.env['PROFILE']!;
+      return util.envGetValue(process.env, 'HOME') ?? util.envGetValue(process.env, 'PROFILE') ?? '/root';
     }
   }
 
@@ -95,7 +95,7 @@ class Paths {
     if (process.platform === 'win32') {
       return this.windows.LocalAppData!;
     } else {
-      const xdg_dir = process.env['XDG_DATA_HOME'];
+      const xdg_dir = util.envGetValue(process.env, 'XDG_DATA_HOME');
       if (xdg_dir) {
         return xdg_dir;
       }
@@ -108,7 +108,7 @@ class Paths {
     if (process.platform === 'win32') {
       return this.windows.AppData!;
     } else {
-      const xdg_dir = process.env['XDG_CONFIG_HOME'];
+      const xdg_dir = util.envGetValue(process.env, 'XDG_CONFIG_HOME');
       if (xdg_dir) {
         return xdg_dir;
       }

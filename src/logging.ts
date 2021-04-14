@@ -150,7 +150,7 @@ class SingletonLogger {
     case LogLevel.Debug:
     case LogLevel.Info:
     case LogLevel.Note:
-      if (process.env['CMT_QUIET_CONSOLE'] !== '1') {
+      if (util.envGetValue(process.env, 'CMT_QUIET_CONSOLE') !== '1') {
         console.info('[CMakeTools]', raw_message);
       }
       break;

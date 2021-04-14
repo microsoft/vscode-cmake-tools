@@ -6,7 +6,7 @@ import * as path from 'path';
 
 import * as logging from '../logging';
 import * as proc from '../proc';
-import {thisExtensionPath} from '../util';
+import {envGetValue, thisExtensionPath} from '../util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -59,7 +59,7 @@ export async function vsInstallations(): Promise<VSInstallation[]> {
   const installs = [] as VSInstallation[];
   const inst_ids = [] as string[];
   const vswhere_exe = path.join(thisExtensionPath(), 'res', 'vswhere.exe');
-  const sys32_path = path.join(process.env.WINDIR as string, 'System32');
+  const sys32_path = path.join(envGetValue(process.env, 'WINDIR') ?? 'C:\\Windows', 'System32');
 
   const vswhere_args =
       ['/c', `${sys32_path}\\chcp 65001>nul && "${vswhere_exe}" -all -format json -utf8 -products * -legacy -prerelease`];
