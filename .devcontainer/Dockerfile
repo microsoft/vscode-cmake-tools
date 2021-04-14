@@ -14,14 +14,15 @@ RUN apt-get update && \
         file \
         git \
         ninja-build \
+        gcc \
+        gdb \
         net-tools \
-        ninja-build \
         xz-utils && \
     apt-get autoremove -y && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*; \
-    curl -L -O https://github.com/Kitware/CMake/releases/download/v3.14.5/cmake-3.14.5-Linux-x86_64.tar.gz && \
-    tar -xf cmake-3.14.5-Linux-x86_64.tar.gz && \
-    rm cmake-3.14.5-Linux-x86_64.tar.gz;
+    curl -L -O https://github.com/Kitware/CMake/releases/download/v3.20.1/cmake-3.20.1-linux-x86_64.tar.gz && \
+    tar -xf cmake-3.20.1-linux-x86_64.tar.gz && \
+    rm cmake-3.20.1-linux-x86_64.tar.gz;
 
-ENV PATH "$PATH:/:/cmake-3.14.5-Linux-x86_64/bin"
+ENV PATH "$PATH:/:/cmake-3.20.1-linux-x86_64/bin"
