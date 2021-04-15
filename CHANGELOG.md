@@ -1,5 +1,37 @@
 # What's New?
 
+## 1.7.0
+Improvements:
+- Support for CMake Presets.
+- Support for File API "toolchains" object.
+- User defined additional kits. [PR #1701](https://github.com/microsoft/vscode-cmake-tools/pull/1701) [@mjvankampen](https://github.com/mjvankampen)
+- Touchbar extra functionality. [PR #1693](https://github.com/microsoft/vscode-cmake-tools/pull/1693) [@poterba](https://github.com/poterba)
+
+Bug fixes:
+- Can not compile active file if definition has quoted text. [#969](https://github.com/microsoft/vscode-cmake-tools/issues/969)
+- Compiler flags containing spaces not passed correctly to IntelliSense. [#1414](https://github.com/microsoft/vscode-cmake-tools/issues/1414)
+- Gcc/clang version analysis improvements. [#1575](https://github.com/microsoft/vscode-cmake-tools/issues/1575)
+- Disable the extension when no CMakeLists is present. [#1578](https://github.com/microsoft/vscode-cmake-tools/issues/1578)
+- Remove the "CMake Tools initializing" popup message. [#1518](https://github.com/microsoft/vscode-cmake-tools/issues/1518)
+- Allow CppTools to chose a C/Cpp standard default. [#1477](https://github.com/microsoft/vscode-cmake-tools/issues/1477)
+- Added ${workspaceHash} variable. [PR #1055](https://github.com/microsoft/vscode-cmake-tools/pull/1055) [@Zingam](https://github.com/Zingam)
+- Setup CMT_MINGW_PATH properly on win32. [PR #1611](https://github.com/microsoft/vscode-cmake-tools/pull/1611) [@lygstate](https://github.com/lygstate)
+- Codespaces specific changes of configureOnOpen default and popup UI. [#1676](https://github.com/microsoft/vscode-cmake-tools/issues/1676)
+- Fixes environment expanding and document testEnvironment. [PR #1598](https://github.com/microsoft/vscode-cmake-tools/pull/1598) [@lygstate](https://github.com/lygstate)
+- Pass cmake.debugConfig.args to launch target. [PR #1603](https://github.com/microsoft/vscode-cmake-tools/pull/1603) [@jbdamiano](https://github.com/jbdamiano)
+- Dependencies package versions upgrade. [PR #1475](https://github.com/microsoft/vscode-cmake-tools/pull/1475) [@lygstate](https://github.com/lygstate)
+- Add vendor hostOs targetOs targetArch versionMajor versionMinor attributes for kit. [PR #1337](https://github.com/microsoft/vscode-cmake-tools/pull/1337) [@lygstate](https://github.com/lygstate)
+- Always correctly build target executable path. [PR #1674](https://github.com/microsoft/vscode-cmake-tools/pull/1674) [@falbrechtskirchinger](https://github.com/falbrechtskirchinger)
+- Use variables instead of hardcoded values for system path references. [PR #1690](https://github.com/microsoft/vscode-cmake-tools/pull/1690)
+- ctestPath should allow the same substitutions as cmakePath. [#785](https://github.com/microsoft/vscode-cmake-tools/issues/785) [@FakeTruth](https://github.com/FakeTruth)
+- Change the order of available kits such that folder kits come first. [#1736](https://github.com/microsoft/vscode-cmake-tools/issues/1736)
+- Fix "Configuring project" infinite loop when using "Locate" on a project without CMakeLists.txt. [#1704](https://github.com/microsoft/vscode-cmake-tools/issues/1704)
+- Fix problems with using gdb debugger on MAC. [#1691](https://github.com/microsoft/vscode-cmake-tools/issues/1691)
+- Fix parsing of target architecture flags with values that include arm64. [#1735](https://github.com/microsoft/vscode-cmake-tools/issues/1735)
+- Changed ctest --output-on-failure from hardcode to default argument. [PR #1729](https://github.com/microsoft/vscode-cmake-tools/pull/1729) [@PedroLima92](https://github.com/PedroLima92)
+- Update cmake-settings.md document. [PR #1754](https://github.com/microsoft/vscode-cmake-tools/pull/1754) [@lygstate](https://github.com/lygstate)
+
+
 ## 1.6.0
 Bug Fixes:
 - Fix Clang kit detection when version is at end of line. [#1342](https://github.com/microsoft/vscode-cmake-tools/issues/1342) [@falbrechtskirchinger](https://github.com/falbrechtskirchinger)
