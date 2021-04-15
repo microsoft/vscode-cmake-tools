@@ -14,7 +14,7 @@
 	"schemas/kits-schema.json.items.properties.keep": "Se è `true`, il kit verrà mantenuto anche se non è aggiornato.",
 	"schemas/kits-schema.json.items.properties.compilers.patternProperties.\\w+": "Percorso di un compilatore per questo linguaggio",
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Percorso di un file della toolchain",
-	"schemas/kits-schema.json.items.properties.visualStudio": "Nome del prodotto Visual Studio",
+	"schemas/kits-schema.json.items.properties.visualStudio": "Instance ID of the Visual Studio product",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Architettura da usare come destinazione",
 	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Percorso assoluto di uno script che modifica l'ambiente per il kit",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Valore della variabile di ambiente",
