@@ -2,7 +2,7 @@
 
 ## 1.7.0
 Improvements:
-- Support for CMake Presets.
+- Support for CMake Presets. [#529](https://github.com/microsoft/vscode-cmake-tools/issues/529)
 - Support for File API "toolchains" object.
 - User defined additional kits. [PR #1701](https://github.com/microsoft/vscode-cmake-tools/pull/1701) [@mjvankampen](https://github.com/mjvankampen)
 - Touchbar extra functionality. [PR #1693](https://github.com/microsoft/vscode-cmake-tools/pull/1693) [@poterba](https://github.com/poterba)
