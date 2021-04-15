@@ -1774,7 +1774,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    let debug_config;
+    let debug_config: debugger_mod.Configuration | null;
     try {
       const cache = await CMakeCache.fromPath(drv.cachePath);
       debug_config = await debugger_mod.getDebugConfigurationFromCache(cache, targetExecutable, process.platform,
@@ -1816,6 +1816,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!dbg && debug_config.type === "cppvsdbg") {
       dbg = "vsdbg";
     }
+    const env_entries = Object.entries(await drv.getCTestCommandEnvironment());
+    debug_config.environment = env_entries.map(
+      ([key, value]) => ({
+        name: key,
+        value
+      })
+    );
     const telemetryProperties: telemetry.Properties = {
       customSetting: customSetting.toString(),
       debugger: dbg
@@ -1839,6 +1846,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.launchTarget`
    */
   async launchTarget(name?: string) {
+    const drv = await this.getCMakeDriverInstance();
     const executable = await this.prepareLaunchTargetExecutable(name);
     if (!executable) {
       // The user has nothing selected and cancelled the prompt to select
@@ -1848,7 +1856,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const user_config = this.workspaceContext.config.debugConfig;
     const termOptions: vscode.TerminalOptions = {
       name: 'CMake/Launch',
-      cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
+      cwd: (user_config && user_config.cwd) || path.dirname(executable.path),
+      env: await drv?.getCTestCommandEnvironment()
     };
     if (process.platform === 'win32') {
       // Use cmd.exe on Windows
