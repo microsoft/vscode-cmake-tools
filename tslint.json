@@ -34,6 +34,7 @@
 		"no-trailing-whitespace": true,
 		"object-literal-shorthand": true,
 		"object-literal-key-quotes": [true, "as-needed"],
-		"prefer-template": [true, "allow-single-concat"]
+		"prefer-template": [true, "allow-single-concat"],
+    "no-for-in-array": true
 	}
 }
