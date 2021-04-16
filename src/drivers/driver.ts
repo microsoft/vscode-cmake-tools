@@ -1361,11 +1361,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   async getCMakeBuildCommand(target?: string): Promise<proc.BuildCommand|null> {
     if (this.useCMakePresets) {
-      const ok = await this._beforeConfigureOrBuild();
-      if (!ok) {
-        return null;
-      }
-
       if (!this._buildPreset) {
         log.debug(localize('no.build.preset', 'No build preset selected'));
         return null;
