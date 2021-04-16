@@ -878,13 +878,13 @@ async function expandBuildPresetHelper(preset: BuildPreset,
     if (util.isString(preset.targets)) {
       preset.targets = await expandString(preset.targets, expansionOpts);
     } else {
-      for (const index in preset.targets) {
+      for (let index = 0; index < preset.targets?.length; index++) {
         preset.targets[index] = await expandString(preset.targets[index], expansionOpts);
       }
     }
   }
   if (preset.nativeToolOptions) {
-    for (const index in preset.nativeToolOptions) {
+    for (let index = 0; index < preset.nativeToolOptions?.length; index++) {
       preset.nativeToolOptions[index] = await expandString(preset.nativeToolOptions[index], expansionOpts);
     }
   }
@@ -1030,7 +1030,7 @@ async function expandTestPresetHelper(preset: TestPreset,
 
   // Expand other fields
   if (preset.overwriteConfigurationFile) {
-    for (const index in preset.overwriteConfigurationFile) {
+    for (let index = 0; index < preset.overwriteConfigurationFile?.length; index++) {
       preset.overwriteConfigurationFile[index] = await expandString(preset.overwriteConfigurationFile[index], expansionOpts);
     }
   }

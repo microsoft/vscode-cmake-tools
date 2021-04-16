@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import * as vscode from 'vscode';
-import { isString } from 'util';
+import {isString} from './util';
 
 type TaskCommands = Record<string, string | string[] | null>;
 interface CMakeTaskDefinition extends vscode.TaskDefinition {
