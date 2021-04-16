@@ -22,7 +22,7 @@ Bug fixes:
 - Dependencies package versions upgrade. [PR #1475](https://github.com/microsoft/vscode-cmake-tools/pull/1475) [@lygstate](https://github.com/lygstate)
 - Add vendor hostOs targetOs targetArch versionMajor versionMinor attributes for kit. [PR #1337](https://github.com/microsoft/vscode-cmake-tools/pull/1337) [@lygstate](https://github.com/lygstate)
 - Always correctly build target executable path. [PR #1674](https://github.com/microsoft/vscode-cmake-tools/pull/1674) [@falbrechtskirchinger](https://github.com/falbrechtskirchinger)
-- Use variables instead of hardcoded values for system path references. [PR #1690](https://github.com/microsoft/vscode-cmake-tools/pull/1690)
+- Use variables instead of hardcoded values for system path references. [#883](https://github.com/microsoft/vscode-cmake-tools/issues/883)(https://github.com/Zingam)
 - ctestPath should allow the same substitutions as cmakePath. [#785](https://github.com/microsoft/vscode-cmake-tools/issues/785) [@FakeTruth](https://github.com/FakeTruth)
 - Change the order of available kits such that folder kits come first. [#1736](https://github.com/microsoft/vscode-cmake-tools/issues/1736)
 - Fix "Configuring project" infinite loop when using "Locate" on a project without CMakeLists.txt. [#1704](https://github.com/microsoft/vscode-cmake-tools/issues/1704)

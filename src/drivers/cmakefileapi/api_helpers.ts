@@ -133,16 +133,12 @@ async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_
     executable_path = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
     if (executable_path) {
       executable_path = convertToAbsolutePath(executable_path.path, build_dir);
-      if (!await fs.exists(executable_path)) {
-        // Will be empty after cmake configuration
-        executable_path = "";
-      }
     }
   }
 
   return {
     name: targetObject.name,
-    filepath: executable_path ? executable_path : 'Utility target',
+    filepath: executable_path,
     targetType: targetObject.type,
     type: 'rich' as 'rich'
   } as api.RichTarget;
