@@ -6,5 +6,5 @@
 {
 	"invalid.version.string": "La stringa di versione {0} non è valida",
 	"extension.is.null": "L'estensione è Null. Qual è l'effetto?",
-	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory"
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\" non è una directory"
 }

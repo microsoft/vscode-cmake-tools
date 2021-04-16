@@ -38,7 +38,7 @@
 	"silent.kits.rescan": "Bei der Definition von Kits wurde eine Änderung der Version von \"{0}\" in \"{1}\" festgestellt. Es wird automatisch nach Kits gesucht.",
 	"kit.for.toolchain.file": "Kit für Toolkettendatei \"{0}\"",
 	"using.compilers": "Compiler werden verwendet: {0}",
-	"using.compilers.for.VS": "Using compilers for {0} ({1} architecture)",
+	"using.compilers.for.VS": "Compiler für {0} werden verwendet ({1}-Architektur).",
 	"using.compilers.for.VS2": "Using compilers for Visual Studio ({0} architecture)",
 	"search.for.compilers": "Auf diesem Computer nach Compilern suchen",
 	"unspecified.let.cmake.guess": "Nicht angegeben (zu verwendenden Compiler und Umgebung von CMake ermitteln lassen)",

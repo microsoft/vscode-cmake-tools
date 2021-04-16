@@ -24,7 +24,7 @@
 	"no.kits.file.what.to.do": "沒有套件檔案存在。要執行什麼作業?",
 	"scan.for.kits.button": "掃描套件",
 	"cancel.button": "取消",
-	"selecting.kit.in.test.mode": "Running CMakeTools in test mode. selectKit is disabled.",
+	"selecting.kit.in.test.mode": "正在於測試模式中執行 CMakeTools。已停用 selectKit。",
 	"no.active.folder": "非作用中的資料夾。",
 	"invalid.folder": "資料夾無效。",
 	"compilation information.not.found": "找不到此檔案的編譯資訊",

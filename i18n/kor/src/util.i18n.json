@@ -6,5 +6,5 @@
 {
 	"invalid.version.string": "잘못된 버전 문자열 {0}",
 	"extension.is.null": "고유한 확장이 null입니다. 이유는 무엇입니까?",
-	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory"
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\"는 디렉터리가 아닙니다."
 }

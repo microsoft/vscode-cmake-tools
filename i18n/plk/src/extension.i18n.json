@@ -24,7 +24,7 @@
 	"no.kits.file.what.to.do": "Żaden plik zestawów nie jest dostępny. Co chcesz zrobić?",
 	"scan.for.kits.button": "Skanuj w poszukiwaniu zestawów",
 	"cancel.button": "Anuluj",
-	"selecting.kit.in.test.mode": "Running CMakeTools in test mode. selectKit is disabled.",
+	"selecting.kit.in.test.mode": "Uruchamianie rozszerzenia CMakeTools w trybie testowym. Element selectKit jest wyłączony.",
 	"no.active.folder": "Brak aktywnego folderu.",
 	"invalid.folder": "Nieprawidłowy folder.",
 	"compilation information.not.found": "Nie można znaleźć informacji o kompilacji dla tego pliku",

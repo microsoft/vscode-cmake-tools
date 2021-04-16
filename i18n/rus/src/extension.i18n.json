@@ -24,7 +24,7 @@
 	"no.kits.file.what.to.do": "Файл наборов отсутствует. Что вы хотели бы сделать?",
 	"scan.for.kits.button": "Поиск наборов",
 	"cancel.button": "Отмена",
-	"selecting.kit.in.test.mode": "Running CMakeTools in test mode. selectKit is disabled.",
+	"selecting.kit.in.test.mode": "Запуск CMakeTools в тестовом режиме. SelectKit отключен.",
 	"no.active.folder": "Нет активной папки.",
 	"invalid.folder": "Недопустимая рабочая папка.",
 	"compilation information.not.found": "Не удалось найти сведения о компиляции для этого файла.",

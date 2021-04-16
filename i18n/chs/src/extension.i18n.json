@@ -24,7 +24,7 @@
 	"no.kits.file.what.to.do": "不存在任何工具包文件。你要执行什么操作?",
 	"scan.for.kits.button": "扫描工具包",
 	"cancel.button": "取消",
-	"selecting.kit.in.test.mode": "Running CMakeTools in test mode. selectKit is disabled.",
+	"selecting.kit.in.test.mode": "正在以测试模式运行 CMakeTools。已禁用 selectKit。",
 	"no.active.folder": "无活动文件夹。",
 	"invalid.folder": "无效的文件夹。",
 	"compilation information.not.found": "找不到此文件的编译信息",
