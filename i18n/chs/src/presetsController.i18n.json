@@ -18,7 +18,7 @@
 	"start.selection.of.compilers": "Start selection of compilers. Found {0} compilers.",
 	"opening.compiler.selection": "Opening compiler selection QuickPick",
 	"scan.for.compilers.button": "Scan for compilers",
-	"select.a.compiler.placeholder": "Select a Kit for {0}",
+	"select.a.compiler.placeholder": "为 {0} 选择工具包",
 	"user.cancelled.compiler.selection": "User cancelled compiler selection",
 	"user.selected.compiler": "User selected compiler {0}",
 	"select.one.or.more.config.preset.placeholder": "Select one or more configure presets",
@@ -72,11 +72,11 @@
 	"unloading.test.preset": "Unloading test preset",
 	"loading.test.preset": "Loading test preset {0}",
 	"reading.presets.file": "Reading presets file {0}",
-	"failed.to.parse": "Failed to parse {0}: {1}",
-	"invalid.file.error": "Invalid kit contents {0} ({1}):",
+	"failed.to.parse": "无法分析 {0}: {1}",
+	"invalid.file.error": "无效的工具包内容 {0} ({1}):",
 	"successfully.validated.presets": "Successfully validated presets kits in {0}",
 	"use.kits.variants": "Use kits and variants",
 	"edit.presets": "Locate",
 	"presets.version.error": "CMakePresets version 1 is not supported. How would you like to proceed?",
-	"failed.writing.to.file": "Failed writing to file {0}"
+	"failed.writing.to.file": "未能写入文件 {0}"
 }

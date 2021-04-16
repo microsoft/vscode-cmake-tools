@@ -24,7 +24,7 @@
 	"no.kits.file.what.to.do": "Není k dispozici žádný soubor sad. Co byste chtěli udělat?",
 	"scan.for.kits.button": "Vyhledat sady",
 	"cancel.button": "Storno",
-	"selecting.kit.in.test.mode": "Running CMakeTools in test mode. selectKit is disabled.",
+	"selecting.kit.in.test.mode": "Rozšíření CMakeTools běží v testovacím režimu. Element selectKit je zakázaný.",
 	"no.active.folder": "Žádná aktivní složka",
 	"invalid.folder": "Neplatná složka",
 	"compilation information.not.found": "Nepovedlo se najít informace o kompilaci pro tento soubor.",

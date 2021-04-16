@@ -6,5 +6,5 @@
 {
 	"invalid.version.string": "バージョン文字列 {0} が無効です",
 	"extension.is.null": "独自の拡張機能は null です。どうしますか?",
-	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory"
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\" はディレクトリではありません"
 }

@@ -6,5 +6,5 @@
 {
 	"invalid.version.string": "Недопустимая строка версии {0}",
 	"extension.is.null": "Собственное расширение имеет значение NULL. Что происходит?",
-	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory"
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\" не является каталогом."
 }

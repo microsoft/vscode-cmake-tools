@@ -24,7 +24,7 @@
 	"no.kits.file.what.to.do": "Nenhum arquivo de kits está presente. O que você deseja fazer?",
 	"scan.for.kits.button": "Examinar em busca de kits",
 	"cancel.button": "Cancelar",
-	"selecting.kit.in.test.mode": "Running CMakeTools in test mode. selectKit is disabled.",
+	"selecting.kit.in.test.mode": "Executando CMakeTools no modo de teste. selectKit está desabilitado.",
 	"no.active.folder": "Não há nenhuma pasta ativa.",
 	"invalid.folder": "Pasta inválida.",
 	"compilation information.not.found": "Não é possível localizar informações para este arquivo",
