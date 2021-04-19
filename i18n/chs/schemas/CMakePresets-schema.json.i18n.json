@@ -171,7 +171,7 @@
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.showOnly": "一个可选字符串。等效于在命令行上传递 --show-only。值必须为 \"human\" 或 \"json-v1\"。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat": "一个可选对象，指定如何重复测试。等效于在命令行上传递 --repeat。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.mode": "一个必需字符串。必须为以下值之一: \"until-fail\"、\"until-pass\" 或 \"after-timeout\"。",
-	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "A required integer.",
+	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "一个必需的整数。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.interactiveDebugging": "一个可选布尔值。如果为 true，则等效于在命令行上传递 --interactive-debug-mode 1。如果为 false，则等效于在命令行上传递 --interactive-debug-mode 0。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.scheduleRandom": "一个可选布尔值。如果为 true，则等效于在命令行上传递 --schedule-random。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.timeout": "一个可选整数。等效于在命令行上传递 --timeout。",

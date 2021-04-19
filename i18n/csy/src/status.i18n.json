@@ -22,10 +22,10 @@
 	"build.tooltip": "Sestavit vybraný cíl",
 	"build": "Build",
 	"stop": "Zastavit",
-	"click.to.change.configure.preset.tooltip": "Click to change the active configure preset",
-	"no.configure.preset.selected": "No Configure Preset Selected",
-	"click.to.change.build.preset.tooltip": "Click to change the active build preset",
-	"no.build.preset.selected": "No Build Preset Selected",
-	"click.to.change.test.preset.tooltip": "Click to change the active test preset",
-	"no.test.preset.selected": "No Test Preset Selected"
+	"click.to.change.configure.preset.tooltip": "Kliknutím změníte aktivní předvolbu konfigurace.",
+	"no.configure.preset.selected": "Nevybrala se žádná předvolba konfigurace.",
+	"click.to.change.build.preset.tooltip": "Kliknutím změníte aktivní předvolbu sestavení.",
+	"no.build.preset.selected": "Nevybrala se žádná předvolba sestavení.",
+	"click.to.change.test.preset.tooltip": "Kliknutím změníte aktivní předvolbu testování.",
+	"no.test.preset.selected": "Nevybrala se žádná předvolba testování."
 }

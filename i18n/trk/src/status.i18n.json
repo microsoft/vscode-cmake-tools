@@ -22,10 +22,10 @@
 	"build.tooltip": "Seçili hedefi derleyin",
 	"build": "Derleme",
 	"stop": "Durdur",
-	"click.to.change.configure.preset.tooltip": "Click to change the active configure preset",
-	"no.configure.preset.selected": "No Configure Preset Selected",
-	"click.to.change.build.preset.tooltip": "Click to change the active build preset",
-	"no.build.preset.selected": "No Build Preset Selected",
-	"click.to.change.test.preset.tooltip": "Click to change the active test preset",
-	"no.test.preset.selected": "No Test Preset Selected"
+	"click.to.change.configure.preset.tooltip": "Etkin yapılandırma ön ayarını değiştirmek için tıklayın",
+	"no.configure.preset.selected": "Yapılandırma Ön Ayarı Seçilmedi",
+	"click.to.change.build.preset.tooltip": "Etkin derleme ön ayarını değiştirmek için tıklayın",
+	"no.build.preset.selected": "Derleme Ön Ayarı Seçilmedi",
+	"click.to.change.test.preset.tooltip": "Etkin test ön ayarını değiştirmek için tıklayın",
+	"no.test.preset.selected": "Test Ön Ayarı Seçilmedi"
 }

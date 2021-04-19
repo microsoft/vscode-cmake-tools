@@ -171,7 +171,7 @@
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.showOnly": "省略可能な文字列です。コマンド ラインで --show-only を渡すのと同等です。値は \"human\" または \"json-v1\" でなければなりません。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat": "テストを繰り返す方法を指定する、省略可能なオブジェクトです。コマンド ラインで --repeat を渡すのと同等です。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.mode": "必須の文字列です。次のいずれかの値である必要があります: \"until-fail\"、\"until-pass\"、または \"after-timeout\"。",
-	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "A required integer.",
+	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "必須の整数です。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.interactiveDebugging": "省略可能なブール値です。true の場合、コマンド ラインで --interactive-debug-mode 1 を渡すのと同等です。false の場合、コマンド ラインで --interactive-debug-mode 0 を渡すのと同等です。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.scheduleRandom": "省略可能なブール値です。true の場合、コマンド ラインで --schedule-random を渡すのと同等です。",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.timeout": "省略可能な整数です。コマンド ラインで --timeout を渡すのと同等です。",

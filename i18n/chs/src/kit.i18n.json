@@ -39,7 +39,7 @@
 	"kit.for.toolchain.file": "适用于工具链文件 {0} 的工具包",
 	"using.compilers": "使用编译器: {0}",
 	"using.compilers.for.VS": "将编译器用于 {0} ({1} 体系结构)",
-	"using.compilers.for.VS2": "Using compilers for Visual Studio ({0} architecture)",
+	"using.compilers.for.VS2": "正在使用 Visual Studio ({0} 体系结构)的编译器",
 	"search.for.compilers": "在这台计算机上搜索编译器",
 	"unspecified.let.cmake.guess": "未指定(让 CMake 猜测要使用的编译器和环境)",
 	"not.reading.nonexistent.kit": "未读取不存在的工具包文件: {0}",
