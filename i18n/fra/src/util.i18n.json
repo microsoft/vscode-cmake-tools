@@ -6,5 +6,5 @@
 {
 	"invalid.version.string": "Chaîne de version non valide {0}",
 	"extension.is.null": "Notre propre extension a une valeur null ! Que se passe-t-il ?",
-	"sourcedirectory.not.a.directory": "\"sourceDirectory\" is not a directory"
+	"sourcedirectory.not.a.directory": "\"sourceDirectory\" n'est pas un répertoire"
 }

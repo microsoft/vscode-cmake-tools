@@ -366,6 +366,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param configurePreset The new configure preset
    */
   async setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
+    if (!this.useCMakePresets) {
+      log.info(localize('skip.set.config.preset', 'Using kits, skip setting configure preset: {0}', configurePreset.name));
+      return;
+    }
+
     log.info(localize('switching.to.config.preset', 'Switching to configure preset: {0}', configurePreset.name));
 
     const newBinaryDir = configurePreset.binaryDir;
@@ -403,6 +408,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param buildPreset The new build preset
    */
   async setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
+    if (!this.useCMakePresets) {
+      log.info(localize('skip.set.build.preset', 'Using kits, skip setting build preset: {0}', buildPreset.name));
+      return;
+    }
+
     log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset.name));
     await this.doSetBuildPreset(async () => { await this._setBuildPreset(buildPreset); });
   }
@@ -417,6 +427,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param testPreset The new test preset
    */
   async setTestPreset(testPreset: preset.TestPreset): Promise<void> {
+    if (!this.useCMakePresets) {
+      log.info(localize('skip.set.test.preset', 'Using kits, skip setting test preset: {0}', testPreset.name));
+      return;
+    }
+
     log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset.name));
     await this.doSetTestPreset(async () => { await this._setTestPreset(testPreset); });
   }
@@ -431,6 +446,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @param kit The new kit
    */
   async setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
+    if (this.useCMakePresets) {
+      log.info(localize('skip.set.kit', 'Using preset, skip setting kit: {0}', kit.name));
+      return;
+    }
+
     log.info(localize('switching.to.kit', 'Switching to kit: {0}', kit.name));
 
     const opts = this.expansionOptions;
@@ -1361,11 +1381,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   async getCMakeBuildCommand(target?: string): Promise<proc.BuildCommand|null> {
     if (this.useCMakePresets) {
-      const ok = await this._beforeConfigureOrBuild();
-      if (!ok) {
-        return null;
-      }
-
       if (!this._buildPreset) {
         log.debug(localize('no.build.preset', 'No build preset selected'));
         return null;

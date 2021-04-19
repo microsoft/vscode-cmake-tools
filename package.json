@@ -1815,7 +1815,8 @@
             "auto"
           ],
           "default": "auto",
-          "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%"
+          "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%",
+          "scope": "resource"
         }
       }
     },

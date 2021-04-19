@@ -381,7 +381,7 @@ class ExtensionManager implements vscode.Disposable {
       }
       return !!cmt.testPreset;
     }
-    return false;
+    return true;
   }
 
   /**

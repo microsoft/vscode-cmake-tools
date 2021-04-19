@@ -22,10 +22,10 @@
 	"build.tooltip": "Compila la destinazione selezionata",
 	"build": "Compila",
 	"stop": "Arresta",
-	"click.to.change.configure.preset.tooltip": "Click to change the active configure preset",
-	"no.configure.preset.selected": "No Configure Preset Selected",
-	"click.to.change.build.preset.tooltip": "Click to change the active build preset",
-	"no.build.preset.selected": "No Build Preset Selected",
-	"click.to.change.test.preset.tooltip": "Click to change the active test preset",
-	"no.test.preset.selected": "No Test Preset Selected"
+	"click.to.change.configure.preset.tooltip": "Fare clic per modificare il set di impostazioni di configurazione attivo",
+	"no.configure.preset.selected": "Nessun set di impostazioni di configurazione selezionato",
+	"click.to.change.build.preset.tooltip": "Fare clic per modificare il set di impostazioni di compilazione attivo",
+	"no.build.preset.selected": "Nessun set di impostazioni di compilazione selezionato",
+	"click.to.change.test.preset.tooltip": "Fare clic per modificare il set di impostazioni di test attivo",
+	"no.test.preset.selected": "Nessun set di impostazioni di selezionato"
 }

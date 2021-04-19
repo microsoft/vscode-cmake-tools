@@ -22,10 +22,10 @@
 	"build.tooltip": "Générer la cible sélectionnée",
 	"build": "Version",
 	"stop": "Arrêter",
-	"click.to.change.configure.preset.tooltip": "Click to change the active configure preset",
-	"no.configure.preset.selected": "No Configure Preset Selected",
-	"click.to.change.build.preset.tooltip": "Click to change the active build preset",
-	"no.build.preset.selected": "No Build Preset Selected",
-	"click.to.change.test.preset.tooltip": "Click to change the active test preset",
-	"no.test.preset.selected": "No Test Preset Selected"
+	"click.to.change.configure.preset.tooltip": "Cliquez pour modifier la présélection de configuration active",
+	"no.configure.preset.selected": "Aucune présélection de configuration sélectionnée",
+	"click.to.change.build.preset.tooltip": "Cliquez pour changer la présélection de build active",
+	"no.build.preset.selected": "Aucune présélection de build sélectionnée",
+	"click.to.change.test.preset.tooltip": "Cliquez pour modifier la présélection de test active",
+	"no.test.preset.selected": "Aucune présélection de test sélectionnée"
 }
