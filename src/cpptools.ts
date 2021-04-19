@@ -101,9 +101,15 @@ function parseTargetArch(target: string): Architecture {
     case 'amd64':
     case 'x86_64':
       return 'x64';
+    case 'aarch64':
+    case 'arm64':
+      return 'arm64';
+    case 'arm':
+      return 'arm';
   }
   // Check triple target value
-  if (target.indexOf('aarch64') >= 0 || target.indexOf('armv8-a') >= 0 || target.indexOf('armv8.') >= 0) {
+  if (target.indexOf('aarch64') >= 0 || target.indexOf('arm64') >= 0
+    || target.indexOf('armv8-a') >= 0 || target.indexOf('armv8.') >= 0) {
     return 'arm64';
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
     return 'arm';
@@ -247,6 +253,11 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
       case 'x86':
         return 'gcc-x86';
       case 'x64':
+        return 'gcc-x64';
+      case 'arm64':
+        return can_use_arm ? 'gcc-arm64' : 'gcc-x64';
+      case 'arm':
+        return can_use_arm ? 'gcc-arm' : 'gcc-x86';
       default:
         return 'gcc-x64';
     }

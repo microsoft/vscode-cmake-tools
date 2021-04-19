@@ -157,10 +157,10 @@ class Paths {
     });
   }
 
-  async getCTestPath(wsc: DirectoryContext): Promise<string|null> {
+  async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string|null> {
     const ctest_path = await this.expandStringPath(wsc.config.raw_ctestPath, wsc);
     if (!ctest_path || ctest_path == 'auto') {
-      const cmake = await this.getCMakePath(wsc);
+      const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
       if (cmake === null) {
         return null;
       } else {
@@ -183,10 +183,14 @@ class Paths {
     }
   }
 
-  async getCMakePath(wsc: DirectoryContext): Promise<string|null> {
+  async getCMakePath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string|null> {
     this._ninjaPath = undefined;
 
-    const raw = await this.expandStringPath(wsc.config.raw_cmakePath, wsc);
+    let raw = overWriteCMakePathSetting;
+    if (!raw) {
+      raw = await this.expandStringPath(wsc.config.raw_cmakePath, wsc);
+    }
+
     if (raw === 'auto' || raw === 'cmake') {
       // We start by searching $PATH for cmake
       const on_path = await this.which('cmake');
@@ -244,7 +248,7 @@ class Paths {
     });
   }
 
-  async vsCMakePaths(): Promise<VSCMakePaths> {
+  async vsCMakePaths(preferredInstanceId?: string): Promise<VSCMakePaths> {
     const vsCMakePaths: VSCMakePaths = {};
 
     const vs_installations = await vsInstallations();
@@ -256,7 +260,11 @@ class Paths {
           cmake: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe',
           ninja: install.installationPath + '\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe'
         };
-        bundled_tool_paths.push(bundled_tool_path);
+        if (preferredInstanceId === install.instanceId) {
+          bundled_tool_paths.unshift(bundled_tool_path);
+        } else {
+          bundled_tool_paths.push(bundled_tool_path);
+        }
       }
 
       for (const tool_path of bundled_tool_paths) {
