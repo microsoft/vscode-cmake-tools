@@ -171,7 +171,7 @@
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.showOnly": "Stringa facoltativa. Equivale a passare --show-only sulla riga di comando. Il valore deve essere \"human\" o \"json-v1\".",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat": "Oggetto facoltativo che specifica come ripetere i test. Equivale a passare --repeat sulla riga di comando.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.mode": "Stringa obbligatoria. Deve essere uno dei valori seguenti: \"until-fail\", \"until-pass\" o \"after-timeout\".",
-	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "A required integer.",
+	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "Intero obbligatorio.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.interactiveDebugging": "Valore booleano facoltativo. Se è true, equivale a passare --interactive-debug-mode 1 sulla riga di comando. Se è false, equivale a passare --interactive-debug-mode 0 sulla riga di comando.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.scheduleRandom": "Valore booleano facoltativo. Se è true, equivale a passare --schedule-random sulla riga di comando.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.timeout": "Intero facoltativo. Equivale a passare --timeout sulla riga di comando.",

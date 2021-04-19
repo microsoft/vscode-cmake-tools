@@ -22,10 +22,10 @@
 	"build.tooltip": "Utwórz wybrany element docelowy",
 	"build": "Kompilacja",
 	"stop": "Zatrzymaj",
-	"click.to.change.configure.preset.tooltip": "Click to change the active configure preset",
-	"no.configure.preset.selected": "No Configure Preset Selected",
-	"click.to.change.build.preset.tooltip": "Click to change the active build preset",
-	"no.build.preset.selected": "No Build Preset Selected",
-	"click.to.change.test.preset.tooltip": "Click to change the active test preset",
-	"no.test.preset.selected": "No Test Preset Selected"
+	"click.to.change.configure.preset.tooltip": "Kliknij, aby zmienić aktywną predefiniowaną konfigurację",
+	"no.configure.preset.selected": "Nie wybrano predefiniowanej konfiguracji",
+	"click.to.change.build.preset.tooltip": "Kliknij, aby zmienić aktywną predefiniowaną kompilację",
+	"no.build.preset.selected": "Nie wybrano predefiniowanej kompilacji",
+	"click.to.change.test.preset.tooltip": "Kliknij, aby zmienić aktywny predefiniowany test",
+	"no.test.preset.selected": "Nie wybrano predefiniowanego testu"
 }

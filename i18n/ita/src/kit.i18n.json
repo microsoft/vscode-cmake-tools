@@ -39,7 +39,7 @@
 	"kit.for.toolchain.file": "Kit per il file di toolchain {0}",
 	"using.compilers": "Uso dei compilatori: {0}",
 	"using.compilers.for.VS": "Uso dei compilatori per {0} (architettura {1})",
-	"using.compilers.for.VS2": "Using compilers for Visual Studio ({0} architecture)",
+	"using.compilers.for.VS2": "Uso dei compilatori per Visual Studio (architettura {0})",
 	"search.for.compilers": "Cerca compilatori in questo computer",
 	"unspecified.let.cmake.guess": "Non specificato (consenti a CMake di individuare i compilatori e l'ambiente da usare)",
 	"not.reading.nonexistent.kit": "Lettura del file dei kit non esistente non in corso: {0}",

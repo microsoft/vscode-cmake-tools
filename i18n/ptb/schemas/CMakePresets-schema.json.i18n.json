@@ -171,7 +171,7 @@
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.showOnly": "Uma cadeia de caracteres opcional. Equivalente a passar --show-only na linha de comando. O valor precisa ser \"human\" ou \"json-v1\".",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat": "Um objeto opcional que especifica como repetir os testes. Equivalente a passar --repeat na linha de comando.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.mode": "Uma cadeia de caracteres necessária, que precisa ser um dos seguintes valores: \"until-fail\", \"until-pass\" ou \"after-timeout\".",
-	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "A required integer.",
+	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "Um inteiro necessário.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.interactiveDebugging": "Um booliano opcional. Quando é true, equivale a passar --interactive-debug-mode 1 na linha de comando. Quando é false, equivale a passar --interactive-debug-mode 0 na linha de comando.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.scheduleRandom": "Um booliano opcional. Quando é true, equivale a passar --schedule-random na linha de comando.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.timeout": "Um inteiro opcional. Equivalente a passar --timeout na linha de comando.",

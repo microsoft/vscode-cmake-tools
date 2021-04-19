@@ -14,7 +14,7 @@
 	"schemas/kits-schema.json.items.properties.keep": "Jeśli wartość jest równa „true”, ten zestaw będzie przechowywany, nawet jeśli okaże się nieaktualny.",
 	"schemas/kits-schema.json.items.properties.compilers.patternProperties.\\w+": "Ścieżka do kompilatora dla tego języka",
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Ścieżka do pliku łańcucha narzędzi",
-	"schemas/kits-schema.json.items.properties.visualStudio": "Instance ID of the Visual Studio product",
+	"schemas/kits-schema.json.items.properties.visualStudio": "Identyfikator wystąpienia produktu Visual Studio",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Architektura docelowa",
 	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Ścieżka bezwzględna do skryptu, który modyfikuje środowisko zestawu",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Wartość zmiennej środowiskowej",
