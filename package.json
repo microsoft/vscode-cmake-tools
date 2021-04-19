@@ -31,7 +31,8 @@
   },
   "icon": "res/logo.png",
   "activationEvents": [
-    "onCommand:cmake.activeFolder",
+    "onCommand:cmake.activeFolderName",
+    "onCommand:cmake.activeFolderPath",
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
@@ -85,8 +86,13 @@
   "contributes": {
     "commands": [
       {
-        "command": "cmake.activeFolder",
-        "title": "Get active folder",
+        "command": "cmake.activeFolderName",
+        "title": "Get active folder name",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.activeFolderPath",
+        "title": "Get active folder path",
         "category": "CMake"
       },
       {
