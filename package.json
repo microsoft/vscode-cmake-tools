@@ -87,7 +87,6 @@
       {
         "command": "cmake.activeFolder",
         "title": "Get active folder",
-        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {

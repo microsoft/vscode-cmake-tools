@@ -1286,11 +1286,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   activeFolder() : string  {
-    let thisActiveFolder: string = '';
-    if(this._folders.activeFolder){
-      thisActiveFolder = this._folders.activeFolder.folder.name;
-    }
-    return thisActiveFolder;
+    return this._folders.activeFolder?.folder.name || '';
   }
 
   async hideLaunchCommand(shouldHide: boolean = true) {
