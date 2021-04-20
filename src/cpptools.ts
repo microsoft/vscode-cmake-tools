@@ -23,7 +23,7 @@ const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
 type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
-  | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20";
+  | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
 
 export interface CompileFlagInformation {
   extraDefinitions: string[];
@@ -40,7 +40,7 @@ interface TargetDefaults {
   defines: string[];
 }
 
-function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion | undefined {
+function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion {
   const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
@@ -59,7 +59,7 @@ function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion | 
   }
 }
 
-function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion | undefined {
+function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion {
   // GNU options from: https://gcc.gnu.org/onlinedocs/gcc/C-Dialect-Options.html#C-Dialect-Options
   const is_gnu = can_use_gnu && std.startsWith('gnu');
   if (/(c|gnu)(90|89|iso9899:(1990|199409))/.test(std)) {
@@ -119,10 +119,11 @@ function parseTargetArch(target: string): Architecture {
 }
 
 export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?: string): CompileFlagInformation {
+  const require_target = (cptVersion < cpt.Version.v5);
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion | undefined = (cptVersion > cpt.Version.v4) ? undefined : (lang === 'C') ? 'c11' : 'c++17';
+  let standard: StandardVersion = (cptVersion > cpt.Version.v4) ? undefined : (lang === 'C') ? 'c11' : 'c++17';
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
@@ -130,12 +131,12 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       break;
     }
     const lower = value.toLowerCase();
-    if (lower === '-m32' || lower === '-m64') {
+    if (require_target && (lower === '-m32' || lower === '-m64')) {
       targetArch = parseTargetArch(lower);
-    } else if (lower.startsWith('-arch=') || lower.startsWith('/arch:')) {
+    } else if (require_target && (lower.startsWith('-arch=') || lower.startsWith('/arch:'))) {
       const target = lower.substring(6);
       targetArch = parseTargetArch(target);
-    } else if (lower === '-arch') {
+    } else if (require_target && lower === '-arch') {
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
@@ -143,13 +144,13 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
-    } else if (lower.startsWith('-march=')) {
+    } else if (require_target && lower.startsWith('-march=')) {
       const target = lower.substring(7);
       targetArch = parseTargetArch(target);
-    } else if (lower.startsWith('--target=')) {
+    } else if (require_target && lower.startsWith('--target=')) {
       const target = lower.substring(9);
       targetArch = parseTargetArch(target);
-    } else if (lower === '-target') {
+    } else if (require_target && lower === '-target') {
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
@@ -207,6 +208,10 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
  * and target architecture parsed from compiler flags.
  */
 export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: string, target_arch: Architecture) {
+  if (cptVersion >= cpt.Version.v5) {
+    // IntelliSenseMode is optional for CppTools v5+ and is determined by CppTools.
+    return undefined;
+  }
   const can_use_arm = (cptVersion >= cpt.Version.v4);
   const compiler_name = path.basename(compiler_path || "").toLocaleLowerCase();
   if (compiler_name === 'cl.exe') {

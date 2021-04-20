@@ -19,9 +19,14 @@ suite('CppTools tests', () => {
     // Parse definition
     const cpptoolsVersion3 = Version.v3;
     const cpptoolsVersion4 = Version.v4;
+    const cpptoolsVersion5 = Version.v5;
+
+    // Verify CppTools API version 5
+    let info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
+    expect(info.targetArch).to.eql(undefined);
 
     // Verify CppTools API version 4
-    let info = parseCompileFlags(cpptoolsVersion4, ['-DFOO=BAR']);
+    info = parseCompileFlags(cpptoolsVersion4, ['-DFOO=BAR']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
     info = parseCompileFlags(cpptoolsVersion4, ['-D', 'FOO=BAR']);
     expect(info.extraDefinitions).to.eql(['FOO=BAR']);
@@ -79,9 +84,16 @@ suite('CppTools tests', () => {
   test('Get IntelliSenseMode', () => {
     const cpptoolsVersion3 = Version.v3;
     const cpptoolsVersion4 = Version.v4;
+    const cpptoolsVersion5 = Version.v5;
+
+    // Verify CppToolsAPI version 5
+    let mode = getIntelliSenseMode(cpptoolsVersion5, 'cl.exe', undefined);
+    expect(mode).to.eql(undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion5, 'clang', undefined);
+    expect(mode).to.eql(undefined);
 
     // Verify CppTools API version 4
-    let mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', 'arm');
+    mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', 'arm');
     expect(mode).to.eql('clang-arm');
     mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', 'arm64');
     expect(mode).to.eql('clang-arm64');
