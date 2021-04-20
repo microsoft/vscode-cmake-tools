@@ -122,7 +122,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion | undefined;
+  let standard: StandardVersion | undefined = (cptVersion > cpt.Version.v4) ? undefined : (lang === 'C') ? 'c11' : 'c++17';
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
