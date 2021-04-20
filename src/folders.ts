@@ -10,7 +10,6 @@ import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
 import { PresetsController } from '@cmt/presetsController';
-import * as preset from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -34,8 +33,8 @@ export class CMakeToolsFolder {
       }
     };
     cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener);
-    preset.onPresetsChanged(useCMakePresetsChangedListener);
-    preset.onUserPresetsChanged(useCMakePresetsChangedListener);
+    presetsController.onPresetsChanged(useCMakePresetsChangedListener);
+    presetsController.onUserPresetsChanged(useCMakePresetsChangedListener);
   }
 
   static async init(cmakeTools: CMakeTools) {
