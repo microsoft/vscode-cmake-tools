@@ -22,10 +22,10 @@
 	"build.tooltip": "Сборка выбранного целевого объекта",
 	"build": "Сборка",
 	"stop": "Остановка",
-	"click.to.change.configure.preset.tooltip": "Click to change the active configure preset",
-	"no.configure.preset.selected": "No Configure Preset Selected",
-	"click.to.change.build.preset.tooltip": "Click to change the active build preset",
-	"no.build.preset.selected": "No Build Preset Selected",
-	"click.to.change.test.preset.tooltip": "Click to change the active test preset",
-	"no.test.preset.selected": "No Test Preset Selected"
+	"click.to.change.configure.preset.tooltip": "Щелкните, чтобы изменить активную предустановку конфигурации",
+	"no.configure.preset.selected": "Предустановка конфигурации не выбрана",
+	"click.to.change.build.preset.tooltip": "Щелкните, чтобы изменить активную предустановку сборки",
+	"no.build.preset.selected": "Не выбрана ни одна предустановка сборки",
+	"click.to.change.test.preset.tooltip": "Щелкните, чтобы изменить активную предустановку тестирования",
+	"no.test.preset.selected": "Предустановка тестирования не выбрана"
 }

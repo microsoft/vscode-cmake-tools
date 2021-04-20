@@ -14,7 +14,7 @@
 	"schemas/kits-schema.json.items.properties.keep": "Bei TRUE wird dieses Kit auch dann beibehalten, wenn es veraltet erscheint.",
 	"schemas/kits-schema.json.items.properties.compilers.patternProperties.\\w+": "Pfad zu einem Compiler für diese Sprache",
 	"schemas/kits-schema.json.items.properties.toolchainFile": "Pfad zu einer Toolkettendatei",
-	"schemas/kits-schema.json.items.properties.visualStudio": "Instance ID of the Visual Studio product",
+	"schemas/kits-schema.json.items.properties.visualStudio": "Instanz-ID des Visual Studio-Produkts",
 	"schemas/kits-schema.json.items.properties.visualStudioArchitecture": "Als Ziel zu verwendende Architektur",
 	"schemas/kits-schema.json.items.properties.environmentSetupScript": "Der absolute Pfad zu einem Skript, das die Umgebung für das Kit ändert.",
 	"schemas/kits-schema.json.items.properties.environmentVariables.patternProperties..*": "Wert für die Umgebungsvariable",

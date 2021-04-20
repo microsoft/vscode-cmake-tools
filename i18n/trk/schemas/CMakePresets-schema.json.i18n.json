@@ -171,7 +171,7 @@
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.showOnly": "İsteğe bağlı dize. Komut satırında --show-only geçirmekle eşdeğerdir. Değer, \"human\" veya \"json-v1\" olmalıdır.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat": "Testlerin nasıl yineleneceğini belirten isteğe bağlı nesne. Komut satırında --repeat geçirmekle eşdeğerdir.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.mode": "Gerekli bir dize. Şu değerlerden biri olmalıdır: \"until-fail\", \"until-pass\" veya \"after-timeout\".",
-	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "A required integer.",
+	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.repeat.properties.count": "Gerekli bir tamsayı.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.interactiveDebugging": "İsteğe bağlı bool. True ise komut satırında --interactive-debug-mode 1 geçirmekle eşdeğerdir. False ise komut satırında --interactive-debug-mode 0 geçirmekle eşdeğerdir.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.scheduleRandom": "İsteğe bağlı bool. True ise komut satırında --schedule-random geçirmekle eşdeğerdir.",
 	"schemas/CMakePresets-schema.json.properties.testPresets.items.properties.execution.properties.timeout": "İsteğe bağlı tamsayı. Komut satırında --timeout geçirmekle eşdeğerdir.",

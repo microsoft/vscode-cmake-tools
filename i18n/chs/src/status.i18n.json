@@ -22,10 +22,10 @@
 	"build.tooltip": "生成所选目标",
 	"build": "生成",
 	"stop": "停止",
-	"click.to.change.configure.preset.tooltip": "Click to change the active configure preset",
-	"no.configure.preset.selected": "No Configure Preset Selected",
-	"click.to.change.build.preset.tooltip": "Click to change the active build preset",
-	"no.build.preset.selected": "No Build Preset Selected",
-	"click.to.change.test.preset.tooltip": "Click to change the active test preset",
-	"no.test.preset.selected": "No Test Preset Selected"
+	"click.to.change.configure.preset.tooltip": "单击以更改活动的配置预设",
+	"no.configure.preset.selected": "未选择任何配置预设",
+	"click.to.change.build.preset.tooltip": "单击以更改活动的生成预设",
+	"no.build.preset.selected": "未选择生成预设",
+	"click.to.change.test.preset.tooltip": "单击以更改活动的测试预设",
+	"no.test.preset.selected": "未选择任何测试预设"
 }
