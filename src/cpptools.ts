@@ -119,11 +119,11 @@ function parseTargetArch(target: string): Architecture {
 }
 
 export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?: string): CompileFlagInformation {
-  const require_target = (cptVersion < cpt.Version.v5);
+  const require_standard_target = (cptVersion < cpt.Version.v5);
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = (cptVersion > cpt.Version.v4) ? undefined : (lang === 'C') ? 'c11' : 'c++17';
+  let standard: StandardVersion = undefined;
   let targetArch: Architecture = undefined;
   while (1) {
     const {done, value} = iter.next();
@@ -131,12 +131,12 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       break;
     }
     const lower = value.toLowerCase();
-    if (require_target && (lower === '-m32' || lower === '-m64')) {
+    if (require_standard_target && (lower === '-m32' || lower === '-m64')) {
       targetArch = parseTargetArch(lower);
-    } else if (require_target && (lower.startsWith('-arch=') || lower.startsWith('/arch:'))) {
+    } else if (require_standard_target && (lower.startsWith('-arch=') || lower.startsWith('/arch:'))) {
       const target = lower.substring(6);
       targetArch = parseTargetArch(target);
-    } else if (require_target && lower === '-arch') {
+    } else if (require_standard_target && lower === '-arch') {
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
@@ -144,13 +144,13 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
-    } else if (require_target && lower.startsWith('-march=')) {
+    } else if (require_standard_target && lower.startsWith('-march=')) {
       const target = lower.substring(7);
       targetArch = parseTargetArch(target);
-    } else if (require_target && lower.startsWith('--target=')) {
+    } else if (require_standard_target && lower.startsWith('--target=')) {
       const target = lower.substring(9);
       targetArch = parseTargetArch(target);
-    } else if (require_target && lower === '-target') {
+    } else if (require_standard_target && lower === '-target') {
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
@@ -199,6 +199,9 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
         log.warning(localize('unknown language', 'Unknown language: {0}', lang));
       }
     }
+  }
+  if (!standard && require_standard_target) {
+    standard = (lang === 'C') ? 'c11' : 'c++17';
   }
   return {extraDefinitions, standard, targetArch};
 }
