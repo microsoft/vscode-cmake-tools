@@ -1515,7 +1515,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
   const funs: (keyof ExtensionManager)[] = [
     'activeFolderName',
     'activeFolderPath',
-	  "useCMakePresets",
+    "useCMakePresets",
     "openCMakePresets",
     'addConfigurePreset',
     'addBuildPreset',
