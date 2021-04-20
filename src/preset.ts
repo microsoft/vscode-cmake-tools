@@ -135,7 +135,7 @@ export interface IncludeFilter {
 export interface ExcludeFilter {
   name?: string;
   label?: string;
-  fixtures?: { any: string, setup: string, cleanup: string };
+  fixtures?: { any?: string, setup?: string, cleanup?: string };
 }
 
 export interface TestFilter {
@@ -285,16 +285,6 @@ function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof Te
   return key !== 'name' && key !== 'hidden' && key !== 'inherits' && key !== 'description' && key !== 'displayName';
 }
 
-function removeNullEnvVars(preset: Preset) {
-  if (preset.environment) {
-    for (const key in preset.environment) {
-      if (preset.environment[key] === null) {
-        delete preset.environment[key];
-      }
-    }
-  }
-}
-
 let kits: Kit[] = [];
 
 /**
@@ -302,6 +292,18 @@ let kits: Kit[] = [];
  */
 export function setCompilers(_kits: Kit[]) {
   kits = _kits;
+}
+
+/**
+ * Shallow copy if a key in base doesn't exist in target
+ */
+function merge<T extends Object>(target: T, base: T) {
+  Object.keys(base).forEach(key => {
+    const field = key as keyof T;
+    if (!target[field]) {
+      target[field] = base[field] as never;
+    }
+  });
 }
 
 /**
@@ -381,12 +383,84 @@ function getVendorForConfigurePresetHelper(preset: ConfigurePreset, allowUserPre
   return preset.vendor || null;
 }
 
-export function expandConfigurePreset(name: string,
-                                      workspaceFolder: string,
-                                      sourceDir: string,
-                                      allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
+export async function expandConfigurePreset(name: string,
+                                            workspaceFolder: string,
+                                            sourceDir: string,
+                                            allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
   referencedConfigurePresets.clear();
-  return expandConfigurePresetImpl(name, workspaceFolder, sourceDir, allowUserPreset);
+  const preset = await expandConfigurePresetImpl(name, workspaceFolder, sourceDir, allowUserPreset);
+
+  if (!preset) {
+    return null;
+  }
+
+  // Expand strings under the context of current preset
+  const expandedPreset: ConfigurePreset = { name };
+  const expansionOpts: ExpansionOptions = {
+    vars: {
+      generator: preset.generator || 'null',
+      workspaceFolder,
+      workspaceFolderBasename: path.basename(workspaceFolder),
+      workspaceHash: util.makeHashString(workspaceFolder),
+      workspaceRoot: workspaceFolder,
+      workspaceRootFolderName: path.dirname(workspaceFolder),
+      userHome: paths.userHome,
+      sourceDir,
+      sourceParentDir: path.dirname(sourceDir),
+      sourceDirName: path.basename(sourceDir),
+      presetName: preset.name
+    },
+    envOverride: preset.environment as EnvironmentVariables,
+    recursive: true,
+    // Don't support commands since expansion might be called on activation. If there is
+    // an extension depending on us, and there is a command in this extension is invoked,
+    // this would be a deadlock. This could be avoided but at a huge cost.
+    doNotSupportCommands: true
+  };
+
+  // Expand environment vars first since other fields may refer to them
+  if (preset.environment) {
+    expandedPreset.environment = { };
+    for (const key in preset.environment) {
+      if (preset.environment[key]) {
+        expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+      }
+    }
+  }
+
+  expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
+
+  // Expand other fields
+  if (preset.binaryDir) {
+    expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
+    if (!path.isAbsolute(expandedPreset.binaryDir)) {
+      expandedPreset.binaryDir = util.resolvePath(expandedPreset.binaryDir, sourceDir);
+    }
+  }
+  if (preset.cmakeExecutable) {
+    expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts));
+  }
+
+  if (preset.cacheVariables) {
+    expandedPreset.cacheVariables = { };
+    for (const cacheVarName in preset.cacheVariables) {
+      const cacheVar = preset.cacheVariables[cacheVarName];
+      if (cacheVar && typeof cacheVar !== 'boolean') {
+        if (util.isString(cacheVar)) {
+          expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
+        } else if (util.isString(cacheVar.value)) {
+          expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts) };
+        } else {
+          expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
+        }
+      }
+    }
+  }
+
+  // Other fields can be copied by reference for simplicity
+  merge(expandedPreset, preset);
+
+  return expandedPreset;
 }
 
 async function expandConfigurePresetImpl(name: string,
@@ -578,59 +652,6 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
   clEnv = util.mergeEnvironment(inheritedEnv as EnvironmentVariables, clEnv as EnvironmentVariables);
   preset.environment = util.mergeEnvironment(clEnv as EnvironmentVariables, preset.environment as EnvironmentVariables);
 
-  // Expand strings
-  const expansionOpts: ExpansionOptions = {
-    vars: {
-      generator: preset.generator || 'null',
-      workspaceFolder,
-      workspaceFolderBasename: path.basename(workspaceFolder),
-      workspaceHash: util.makeHashString(workspaceFolder),
-      workspaceRoot: workspaceFolder,
-      workspaceRootFolderName: path.dirname(workspaceFolder),
-      userHome: paths.userHome,
-      sourceDir,
-      sourceParentDir: path.dirname(sourceDir),
-      sourceDirName: path.basename(sourceDir),
-      presetName: preset.name
-    },
-    envOverride: preset.environment as EnvironmentVariables,
-    recursive: true,
-    // Don't support commands since expansion might be called on activation. If there is
-    // an extension depending on us, and there is a command in this extension is invoked,
-    // this would be a deadlock. This could be avoided but at a huge cost.
-    doNotSupportCommands: true
-  };
-  // Expand environment vars first since other fields may refer to them
-  if (preset.environment) {
-    for (const key in preset.environment) {
-      if (preset.environment[key]) {
-        preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
-      }
-    }
-  }
-
-  removeNullEnvVars(preset);
-
-  // Expand other fields
-  if (preset.binaryDir) {
-    preset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
-    if (!path.isAbsolute(preset.binaryDir)) {
-      preset.binaryDir = util.resolvePath(preset.binaryDir, sourceDir);
-    }
-  }
-  if (preset.cmakeExecutable) {
-    preset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts));
-  }
-
-  type CacheVarObjType = { type: string, value: string | boolean};
-  for (const cacheVarName in preset.cacheVariables) {
-    if (util.isString(preset.cacheVariables[cacheVarName])) {
-      preset.cacheVariables[cacheVarName] = await expandString(preset.cacheVariables[cacheVarName] as string, expansionOpts);
-    } else if (util.isString((preset.cacheVariables[cacheVarName] as CacheVarObjType).value)) {
-      (preset.cacheVariables[cacheVarName] as CacheVarObjType).value = await expandString((preset.cacheVariables[cacheVarName] as CacheVarObjType).value as string, expansionOpts);
-    }
-  }
-
   preset.__expanded = true;
   return preset;
 }
@@ -738,13 +759,76 @@ function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, pre
   return null;
 }
 
-export function expandBuildPreset(name: string,
-                                  workspaceFolder: string,
-                                  sourceDir: string,
-                                  allowUserPreset: boolean = false,
-                                  configurePreset?: string): Promise<BuildPreset | null> {
+export async function expandBuildPreset(name: string,
+                                        workspaceFolder: string,
+                                        sourceDir: string,
+                                        allowUserPreset: boolean = false,
+                                        configurePreset?: string): Promise<BuildPreset | null> {
   referencedBuildPresets.clear();
-  return expandBuildPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+  const preset = await expandBuildPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+
+  if (!preset) {
+    return null;
+  }
+
+  // Expand strings under the context of current preset
+  const expandedPreset: BuildPreset = { name };
+  const expansionOpts: ExpansionOptions = {
+    vars: {
+      generator: preset.__generator || 'null',
+      workspaceFolder,
+      workspaceFolderBasename: path.basename(workspaceFolder),
+      workspaceHash: util.makeHashString(workspaceFolder),
+      workspaceRoot: workspaceFolder,
+      workspaceRootFolderName: path.dirname(workspaceFolder),
+      userHome: paths.userHome,
+      sourceDir,
+      sourceParentDir: path.dirname(sourceDir),
+      sourceDirName: path.basename(sourceDir),
+      presetName: preset.name
+    },
+    envOverride: preset.environment as EnvironmentVariables,
+    recursive: true,
+    // Don't support commands since expansion might be called on activation. If there is
+    // an extension depending on us, and there is a command in this extension is invoked,
+    // this would be a deadlock. This could be avoided but at a huge cost.
+    doNotSupportCommands: true
+  };
+
+  // Expand environment vars first since other fields may refer to them
+  if (preset.environment) {
+    expandedPreset.environment = { };
+    for (const key in preset.environment) {
+      if (preset.environment[key]) {
+        expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+      }
+    }
+  }
+
+  expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
+
+  // Expand other fields
+  if (preset.targets) {
+    if (util.isString(preset.targets)) {
+      expandedPreset.targets = await expandString(preset.targets, expansionOpts);
+    } else {
+      expandedPreset.targets = [];
+      for (let index = 0; index < preset.targets.length; index++) {
+        expandedPreset.targets[index] = await expandString(preset.targets[index], expansionOpts);
+      }
+    }
+  }
+  if (preset.nativeToolOptions) {
+    expandedPreset.nativeToolOptions = [];
+    for (let index = 0; index < preset.nativeToolOptions.length; index++) {
+      expandedPreset.nativeToolOptions[index] = await expandString(preset.nativeToolOptions[index], expansionOpts);
+    }
+  }
+
+  // Other fields can be copied by reference for simplicity
+  merge(expandedPreset, preset);
+
+  return expandedPreset;
 }
 
 async function expandBuildPresetImpl(name: string,
@@ -840,6 +924,25 @@ async function expandBuildPresetHelper(preset: BuildPreset,
 
   preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
 
+  preset.__expanded = true;
+  return preset;
+}
+
+const referencedTestPresets: Set<string> = new Set();
+
+export async function expandTestPreset(name: string,
+                                       workspaceFolder: string,
+                                       sourceDir: string,
+                                       allowUserPreset: boolean = false,
+                                       configurePreset?: string): Promise<TestPreset | null> {
+  referencedTestPresets.clear();
+  const preset = await expandTestPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+
+  if (!preset) {
+    return null;
+  }
+
+  const expandedPreset: TestPreset = { name };
   const expansionOpts: ExpansionOptions = {
     vars: {
       generator: preset.__generator || 'null',
@@ -864,44 +967,72 @@ async function expandBuildPresetHelper(preset: BuildPreset,
 
   // Expand environment vars first since other fields may refer to them
   if (preset.environment) {
+    expandedPreset.environment = { };
     for (const key in preset.environment) {
       if (preset.environment[key]) {
-        preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
+        expandedPreset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
       }
     }
   }
 
-  removeNullEnvVars(preset);
+  expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
 
   // Expand other fields
-  if (preset.targets) {
-    if (util.isString(preset.targets)) {
-      preset.targets = await expandString(preset.targets, expansionOpts);
-    } else {
-      for (let index = 0; index < preset.targets.length; index++) {
-        preset.targets[index] = await expandString(preset.targets[index], expansionOpts);
+  if (preset.overwriteConfigurationFile) {
+    expandedPreset.overwriteConfigurationFile = [];
+    for (let index = 0; index < preset.overwriteConfigurationFile.length; index++) {
+      expandedPreset.overwriteConfigurationFile[index] = await expandString(preset.overwriteConfigurationFile[index], expansionOpts);
+    }
+  }
+  if (preset.output?.outputLogFile) {
+    expandedPreset.output = { outputLogFile: util.lightNormalizePath(await expandString(preset.output.outputLogFile, expansionOpts)) };
+    merge(expandedPreset.output, preset.output);
+  }
+  if (preset.filter) {
+    expandedPreset.filter = { };
+    if (preset.filter.include) {
+      expandedPreset.filter.include = { };
+      if (preset.filter.include.name) {
+        expandedPreset.filter.include.name = await expandString(preset.filter.include.name, expansionOpts);
       }
+      if (util.isString(preset.filter.include.index)) {
+        expandedPreset.filter.include.index =  await expandString(preset.filter.include.index, expansionOpts);
+      }
+      merge(expandedPreset.filter.include, preset.filter.include);
     }
-  }
-  if (preset.nativeToolOptions) {
-    for (let index = 0; index < preset.nativeToolOptions.length; index++) {
-      preset.nativeToolOptions[index] = await expandString(preset.nativeToolOptions[index], expansionOpts);
+    if (preset.filter.exclude) {
+      expandedPreset.filter.exclude = { };
+      if (preset.filter.exclude.label) {
+        expandedPreset.filter.exclude.label = await expandString(preset.filter.exclude.label, expansionOpts);
+      }
+      if (preset.filter.exclude.name) {
+        expandedPreset.filter.exclude.name = await expandString(preset.filter.exclude.name, expansionOpts);
+      }
+      if (preset.filter.exclude.fixtures) {
+        expandedPreset.filter.exclude.fixtures = { };
+        if (preset.filter.exclude.fixtures.any) {
+          expandedPreset.filter.exclude.fixtures.any = await expandString(preset.filter.exclude.fixtures.any, expansionOpts);
+        }
+        if (preset.filter.exclude.fixtures.setup) {
+          expandedPreset.filter.exclude.fixtures.setup = await expandString(preset.filter.exclude.fixtures.setup, expansionOpts);
+        }
+        if (preset.filter.exclude.fixtures.cleanup) {
+          expandedPreset.filter.exclude.fixtures.cleanup = await expandString(preset.filter.exclude.fixtures.cleanup, expansionOpts);
+        }
+        merge(expandedPreset.filter.exclude.fixtures, preset.filter.exclude.fixtures);
+      }
+      merge(expandedPreset.filter.exclude, preset.filter.exclude);
     }
+    merge(expandedPreset.filter, preset.filter);
+  }
+  if (preset.execution?.resourceSpecFile) {
+    expandedPreset.execution = { resourceSpecFile: util.lightNormalizePath(await expandString(preset.execution.resourceSpecFile, expansionOpts)) };
+    merge(expandedPreset.execution, preset.execution);
   }
 
-  preset.__expanded = true;
-  return preset;
-}
+  merge(expandedPreset, preset);
 
-const referencedTestPresets: Set<string> = new Set();
-
-export function expandTestPreset(name: string,
-                                 workspaceFolder: string,
-                                 sourceDir: string,
-                                 allowUserPreset: boolean = false,
-                                 configurePreset?: string): Promise<TestPreset | null> {
-  referencedTestPresets.clear();
-  return expandTestPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+  return expandedPreset;
 }
 
 async function expandTestPresetImpl(name: string,
@@ -994,73 +1125,6 @@ async function expandTestPresetHelper(preset: TestPreset,
   }
 
   preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
-
-  const expansionOpts: ExpansionOptions = {
-    vars: {
-      generator: preset.__generator || 'null',
-      workspaceFolder,
-      workspaceFolderBasename: path.basename(workspaceFolder),
-      workspaceHash: util.makeHashString(workspaceFolder),
-      workspaceRoot: workspaceFolder,
-      workspaceRootFolderName: path.dirname(workspaceFolder),
-      userHome: paths.userHome,
-      sourceDir,
-      sourceParentDir: path.dirname(sourceDir),
-      sourceDirName: path.basename(sourceDir),
-      presetName: preset.name
-    },
-    envOverride: preset.environment as EnvironmentVariables,
-    recursive: true,
-    // Don't support commands since expansion might be called on activation. If there is
-    // an extension depending on us, and there is a command in this extension is invoked,
-    // this would be a deadlock. This could be avoided but at a huge cost.
-    doNotSupportCommands: true
-  };
-
-  // Expand environment vars first since other fields may refer to them
-  if (preset.environment) {
-    for (const key in preset.environment) {
-      if (preset.environment[key]) {
-        preset.environment[key] = await expandString(preset.environment[key]!, expansionOpts);
-      }
-    }
-  }
-
-  removeNullEnvVars(preset);
-
-  // Expand other fields
-  if (preset.overwriteConfigurationFile) {
-    for (let index = 0; index < preset.overwriteConfigurationFile.length; index++) {
-      preset.overwriteConfigurationFile[index] = await expandString(preset.overwriteConfigurationFile[index], expansionOpts);
-    }
-  }
-  if (preset.output?.outputLogFile) {
-    preset.output.outputLogFile = util.lightNormalizePath(await expandString(preset.output.outputLogFile, expansionOpts));
-  }
-  if (preset.filter?.include?.name) {
-    preset.filter.include.name = await expandString(preset.filter.include.name, expansionOpts);
-  }
-  if (util.isString(preset.filter?.include?.index)) {
-    preset.filter!.include!.index = await expandString(preset.filter!.include!.index, expansionOpts);
-  }
-  if (preset.filter?.exclude?.label) {
-    preset.filter.exclude.label = await expandString(preset.filter.exclude.label, expansionOpts);
-  }
-  if (preset.filter?.exclude?.name) {
-    preset.filter.exclude.name = await expandString(preset.filter.exclude.name, expansionOpts);
-  }
-  if (preset.filter?.exclude?.fixtures?.any) {
-    preset.filter.exclude.fixtures.any = await expandString(preset.filter.exclude.fixtures.any, expansionOpts);
-  }
-  if (preset.filter?.exclude?.fixtures?.setup) {
-    preset.filter.exclude.fixtures.setup = await expandString(preset.filter.exclude.fixtures.setup, expansionOpts);
-  }
-  if (preset.filter?.exclude?.fixtures?.cleanup) {
-    preset.filter.exclude.fixtures.cleanup = await expandString(preset.filter.exclude.fixtures.cleanup, expansionOpts);
-  }
-  if (preset.execution?.resourceSpecFile) {
-    preset.execution.resourceSpecFile = util.lightNormalizePath(await expandString(preset.execution.resourceSpecFile, expansionOpts));
-  }
 
   preset.__expanded = true;
   return preset;
