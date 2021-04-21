@@ -1188,7 +1188,7 @@ export function buildArgs(preset: BuildPreset): string[] {
 
   preset.__binaryDir && result.push('--build', preset.__binaryDir);
   preset.jobs && result.push('--parallel', preset.jobs.toString());
-  preset.configuration && result.push('--config ', preset.configuration);
+  preset.configuration && result.push('--config', preset.configuration);
   preset.cleanFirst && result.push('--clean-first');
   preset.verbose && result.push('--verbose');
 
