@@ -1,5 +1,4 @@
 import * as nls from 'vscode-nls';
-import * as vscode from 'vscode';
 import * as path from 'path';
 
 import * as util from '@cmt/util';
@@ -180,52 +179,52 @@ export const defaultTestPreset: TestPreset = {
   description: localize('default.test.preset.description', 'An empty test preset that does not add any arguments')
 };
 
+// presetsFiles are stored here because expansions require access to other presets.
+// Change event emitters are in presetsController.
+
 // original*PresetsFile's are each used to keep a copy by **value**. They are used to update
 // the presets files. non-original's are also used for caching during various expansions.
-let originalPresetsFile: PresetsFile | undefined;
-let originalUserPresetsFile: PresetsFile | undefined;
-let presetsFile: PresetsFile | undefined;
-let userPresetsFile: PresetsFile | undefined;
-const presetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
-const userPresetsChangedEmitter = new vscode.EventEmitter<PresetsFile>();
+// Map<fsPath, PresetsFile | undefined>
+const originalPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
+const originalUserPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
+const presetsFiles: Map<string, PresetsFile | undefined> = new Map();
+const userPresetsFiles: Map<string, PresetsFile | undefined> = new Map();
 
-export function getOriginalPresetsFile() {
-  return originalPresetsFile;
+export function getOriginalPresetsFile(folder: string) {
+  return originalPresetsFiles.get(folder);
 }
 
-export function getOriginalUserPresetsFile() {
-  return originalUserPresetsFile;
+export function getOriginalUserPresetsFile(folder: string) {
+  return originalUserPresetsFiles.get(folder);
 }
 
-export function setOriginalPresetsFile(presets: PresetsFile | undefined) {
-  originalPresetsFile = presets;
+export function setOriginalPresetsFile(folder: string, presets: PresetsFile | undefined) {
+  originalPresetsFiles.set(folder, presets);
 }
 
-export function setOriginalUserPresetsFile(presets: PresetsFile | undefined) {
-  originalUserPresetsFile = presets;
+export function setOriginalUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
+  originalUserPresetsFiles.set(folder, presets);
 }
 
-export function getPresetsFile() {
-  return presetsFile;
+export function getPresetsFile(folder: string) {
+  return presetsFiles.get(folder);
 }
 
-export function getUserPresetsFile() {
-  return userPresetsFile;
+export function getUserPresetsFile(folder: string) {
+  return userPresetsFiles.get(folder);
 }
 
-export function setPresetsFile(presets: PresetsFile | undefined) {
-  presetsFile = presets;
-  presetsChangedEmitter.fire();
+export function setPresetsFile(folder: string, presets: PresetsFile | undefined) {
+  presetsFiles.set(folder, presets);
 }
 
-export function setUserPresetsFile(presets: PresetsFile | undefined) {
-  userPresetsFile = presets;
-  userPresetsChangedEmitter.fire();
+export function setUserPresetsFile(folder: string, presets: PresetsFile | undefined) {
+  userPresetsFiles.set(folder, presets);
 }
 
-export function minCMakeVersion() {
-  const min1 = presetsFile?.cmakeMinimumRequired;
-  const min2 = userPresetsFile?.cmakeMinimumRequired;
+export function minCMakeVersion(folder: string) {
+  const min1 = presetsFiles.get(folder)?.cmakeMinimumRequired;
+  const min2 = userPresetsFiles.get(folder)?.cmakeMinimumRequired;
   if (!min1) {
     return min2;
   }
@@ -235,42 +234,32 @@ export function minCMakeVersion() {
   return util.versionLess(min1, min2) ? min1 : min2;
 }
 
-export function configurePresets() { return presetsFile?.configurePresets || []; }
+export function configurePresets(folder: string) { return presetsFiles.get(folder)?.configurePresets || []; }
 
-export function userConfigurePresets() { return userPresetsFile?.configurePresets || []; }
-
-/**
- * Don't use this function if you need to keep any changes in the presets
- */
-export function allConfigurePresets() { return configurePresets().concat(userConfigurePresets()); }
-
-export function buildPresets() { return presetsFile?.buildPresets || []; }
-
-export function userBuildPresets() { return userPresetsFile?.buildPresets || []; }
+export function userConfigurePresets(folder: string) { return userPresetsFiles.get(folder)?.configurePresets || []; }
 
 /**
  * Don't use this function if you need to keep any changes in the presets
  */
-export function allBuildPresets() { return buildPresets().concat(userBuildPresets()); }
+export function allConfigurePresets(folder: string) { return configurePresets(folder).concat(userConfigurePresets(folder)); }
 
-export function testPresets() { return presetsFile?.testPresets || []; }
+export function buildPresets(folder: string) { return presetsFiles.get(folder)?.buildPresets || []; }
 
-export function userTestPresets() { return userPresetsFile?.testPresets || []; }
+export function userBuildPresets(folder: string) { return userPresetsFiles.get(folder)?.buildPresets || []; }
 
 /**
  * Don't use this function if you need to keep any changes in the presets
  */
-export function allTestPresets() { return testPresets().concat(userTestPresets()); }
+export function allBuildPresets(folder: string) { return buildPresets(folder).concat(userBuildPresets(folder)); }
+
+export function testPresets(folder: string) { return presetsFiles.get(folder)?.testPresets || []; }
+
+export function userTestPresets(folder: string) { return userPresetsFiles.get(folder)?.testPresets || []; }
 
 /**
- * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
+ * Don't use this function if you need to keep any changes in the presets
  */
-export function onPresetsChanged(listener: () => any) { return presetsChangedEmitter.event(listener); }
-
-/**
- * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
- */
-export function onUserPresetsChanged(listener: () => any) { return userPresetsChangedEmitter.event(listener); }
+export function allTestPresets(folder: string) { return testPresets(folder).concat(userTestPresets(folder)); }
 
 export function getPresetByName<T extends Preset>(presets: T[], name: string): T | null {
   for (const preset of presets) {
@@ -308,8 +297,9 @@ function merge<T extends Object>(target: T, base: T) {
 
 /**
  * Used for both expandConfigurePreset and expandVendorForConfigurePreset
+ * Map<fsPath, Set<referencedPresets>>
  */
-const referencedConfigurePresets: Set<string> = new Set();
+const referencedConfigurePresets: Map<string, Set<string>> = new Map();
 
 /**
  * This is actually a very limited version of expandConfigurePreset.
@@ -319,48 +309,55 @@ const referencedConfigurePresets: Set<string> = new Set();
  * They should NOT be used together.
  * They should Not call each other.
  */
-export function expandVendorForConfigurePresets(): void {
-  for (const preset of configurePresets()) {
-    getVendorForConfigurePreset(preset.name);
+export function expandVendorForConfigurePresets(folder: string): void {
+  for (const preset of configurePresets(folder)) {
+    getVendorForConfigurePreset(folder, preset.name);
   }
-  for (const preset of userConfigurePresets()) {
-    getVendorForConfigurePreset(preset.name);
+  for (const preset of userConfigurePresets(folder)) {
+    getVendorForConfigurePreset(folder, preset.name);
   }
 }
 
-function getVendorForConfigurePreset(name: string): VendorType | Vendor_VsSettings | null {
-  referencedConfigurePresets.clear();
-  return getVendorForConfigurePresetImpl(name);
+function getVendorForConfigurePreset(folder: string, name: string): VendorType | Vendor_VsSettings | null {
+  const refs = referencedConfigurePresets.get(folder);
+  if (!refs) {
+    referencedConfigurePresets.set(folder, new Set());
+  } else {
+    refs.clear();
+  }
+  return getVendorForConfigurePresetImpl(folder, name);
 }
 
-function getVendorForConfigurePresetImpl(name: string, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
-  let preset = getPresetByName(configurePresets(), name);
+function getVendorForConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+  let preset = getPresetByName(configurePresets(folder), name);
   if (preset) {
-    return getVendorForConfigurePresetHelper(preset);
+    return getVendorForConfigurePresetHelper(folder, preset);
   }
 
   if (allowUserPreset) {
-    preset = getPresetByName(userConfigurePresets(), name);
+    preset = getPresetByName(userConfigurePresets(folder), name);
     if (preset) {
-      return getVendorForConfigurePresetHelper(preset, true);
+      return getVendorForConfigurePresetHelper(folder, preset, true);
     }
   }
 
   return null;
 }
 
-function getVendorForConfigurePresetHelper(preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
   if (preset.__expanded) {
     return preset.vendor || null;
   }
 
-  if (referencedConfigurePresets.has(preset.name)) {
+  const refs = referencedConfigurePresets.get(folder)!;
+
+  if (refs.has(preset.name)) {
     // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
     log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
     return null;
   }
 
-  referencedConfigurePresets.add(preset.name);
+  refs.add(preset.name);
 
   preset.vendor = preset.vendor || {};
 
@@ -369,7 +366,7 @@ function getVendorForConfigurePresetHelper(preset: ConfigurePreset, allowUserPre
       preset.inherits = [preset.inherits];
     }
     for (const parent of preset.inherits) {
-      const parentVendor = getVendorForConfigurePresetImpl(parent, allowUserPreset);
+      const parentVendor = getVendorForConfigurePresetImpl(folder, parent, allowUserPreset);
       if (parentVendor) {
         for (const key in parentVendor) {
           if (!preset.vendor[key]) {
@@ -383,13 +380,19 @@ function getVendorForConfigurePresetHelper(preset: ConfigurePreset, allowUserPre
   return preset.vendor || null;
 }
 
-export async function expandConfigurePreset(name: string,
+export async function expandConfigurePreset(folder: string,
+                                            name: string,
                                             workspaceFolder: string,
                                             sourceDir: string,
                                             allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
-  referencedConfigurePresets.clear();
-  const preset = await expandConfigurePresetImpl(name, workspaceFolder, sourceDir, allowUserPreset);
+  const refs = referencedConfigurePresets.get(folder);
+  if (!refs) {
+    referencedConfigurePresets.set(folder, new Set());
+  } else {
+    refs.clear();
+  }
 
+  const preset = await expandConfigurePresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset);
   if (!preset) {
     return null;
   }
@@ -463,19 +466,20 @@ export async function expandConfigurePreset(name: string,
   return expandedPreset;
 }
 
-async function expandConfigurePresetImpl(name: string,
+async function expandConfigurePresetImpl(folder: string,
+                                         name: string,
                                          workspaceFolder: string,
                                          sourceDir: string,
                                          allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
-  let preset = getPresetByName(configurePresets(), name);
+  let preset = getPresetByName(configurePresets(folder), name);
   if (preset) {
-    return expandConfigurePresetHelper(preset, workspaceFolder, sourceDir);
+    return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir);
   }
 
   if (allowUserPreset) {
-    preset = getPresetByName(userConfigurePresets(), name);
+    preset = getPresetByName(userConfigurePresets(folder), name);
     if (preset) {
-      return expandConfigurePresetHelper(preset, workspaceFolder, sourceDir, true);
+      return expandConfigurePresetHelper(folder, preset, workspaceFolder, sourceDir, true);
     }
   }
 
@@ -483,7 +487,8 @@ async function expandConfigurePresetImpl(name: string,
   return null;
 }
 
-async function expandConfigurePresetHelper(preset: ConfigurePreset,
+async function expandConfigurePresetHelper(folder: string,
+                                           preset: ConfigurePreset,
                                            workspaceFolder: string,
                                            sourceDir: string,
                                            allowUserPreset: boolean = false) {
@@ -491,13 +496,15 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
     return preset;
   }
 
-  if (referencedConfigurePresets.has(preset.name) && !preset.__expanded) {
+  const refs = referencedConfigurePresets.get(folder)!;
+
+  if (refs.has(preset.name) && !preset.__expanded) {
     // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
     log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
     return null;
   }
 
-  referencedConfigurePresets.add(preset.name);
+  refs.add(preset.name);
 
   // Init env and cacheVar to empty if not specified to avoid null checks later
   if (!preset.environment) {
@@ -514,7 +521,7 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
       preset.inherits = [preset.inherits];
     }
     for (const parentName of preset.inherits) {
-      const parent = await expandConfigurePresetImpl(parentName, workspaceFolder, sourceDir, allowUserPreset);
+      const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
         // Inherit environment
         inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
@@ -657,7 +664,8 @@ async function expandConfigurePresetHelper(preset: ConfigurePreset,
 }
 
 // Used for both getConfigurePreset and expandBuildPreset.
-const referencedBuildPresets: Set<string> = new Set();
+// Map<fsPath, Set<referencedPresets>>
+const referencedBuildPresets: Map<string, Set<string>> = new Map();
 
 /**
  * This is actually a very limited version of expandBuildPreset/expandTestPreset.
@@ -665,59 +673,69 @@ const referencedBuildPresets: Set<string> = new Set();
  * They should NOT be used together.
  * They should Not call each other.
  */
-export function expandConfigurePresetForPresets(presetType: 'build' | 'test'): void {
+export function expandConfigurePresetForPresets(folder: string, presetType: 'build' | 'test'): void {
   if (presetType === 'build') {
-    for (const preset of buildPresets()) {
-      getConfigurePresetForPreset(preset.name, presetType);
+    for (const preset of buildPresets(folder)) {
+      getConfigurePresetForPreset(folder, preset.name, presetType);
     }
-    for (const preset of userBuildPresets()) {
-      getConfigurePresetForPreset(preset.name, presetType);
+    for (const preset of userBuildPresets(folder)) {
+      getConfigurePresetForPreset(folder, preset.name, presetType);
     }
   } else {
-    for (const preset of testPresets()) {
-      getConfigurePresetForPreset(preset.name, presetType);
+    for (const preset of testPresets(folder)) {
+      getConfigurePresetForPreset(folder, preset.name, presetType);
     }
-    for (const preset of userTestPresets()) {
-      getConfigurePresetForPreset(preset.name, presetType);
+    for (const preset of userTestPresets(folder)) {
+      getConfigurePresetForPreset(folder, preset.name, presetType);
     }
   }
 }
 
-function getConfigurePresetForPreset(name: string, presetType: 'build' | 'test'): string | null {
+function getConfigurePresetForPreset(folder: string, name: string, presetType: 'build' | 'test'): string | null {
   if (presetType === 'build') {
-    referencedBuildPresets.clear();
+    const refs = referencedBuildPresets.get(folder);
+    if (!refs) {
+      referencedBuildPresets.set(folder, new Set());
+    } else {
+      refs.clear();
+    }
   } else {
-    referencedTestPresets.clear();
+    const refs = referencedTestPresets.get(folder);
+    if (!refs) {
+      referencedTestPresets.set(folder, new Set());
+    } else {
+      refs.clear();
+    }
   }
-  return getConfigurePresetForPresetImpl(name, presetType);
+  return getConfigurePresetForPresetImpl(folder, name, presetType);
 }
 
-function getConfigurePresetForPresetImpl(name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
+function getConfigurePresetForPresetImpl(folder: string, name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
   let preset: BuildPreset | TestPreset | null;
   if (presetType === 'build') {
-    preset = getPresetByName(buildPresets(), name);
+    preset = getPresetByName(buildPresets(folder), name);
   } else {
-    preset = getPresetByName(testPresets(), name);
+    preset = getPresetByName(testPresets(folder), name);
   }
   if (preset) {
-    return getConfigurePresetForPresetHelper(preset, presetType);
+    return getConfigurePresetForPresetHelper(folder, preset, presetType);
   }
 
   if (allowUserPreset) {
     if (presetType === 'build') {
-      preset = getPresetByName(userBuildPresets(), name);
+      preset = getPresetByName(userBuildPresets(folder), name);
     } else {
-      preset = getPresetByName(userTestPresets(), name);
+      preset = getPresetByName(userTestPresets(folder), name);
     }
     if (preset) {
-      return getConfigurePresetForPresetHelper(preset, presetType, true);
+      return getConfigurePresetForPresetHelper(folder, preset, presetType, true);
     }
   }
 
   return null;
 }
 
-function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
+function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset | TestPreset, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
   if (preset.configurePreset) {
     return preset.configurePreset;
   }
@@ -727,20 +745,22 @@ function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, pre
   }
 
   if (presetType === 'build') {
-    if (referencedBuildPresets.has(preset.name)) {
+    const refs = referencedBuildPresets.get(folder)!;
+    if (refs.has(preset.name)) {
       // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
       log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
       return null;
     }
 
-    referencedBuildPresets.add(preset.name);
+    refs.add(preset.name);
   } else {
-    if (referencedTestPresets.has(preset.name)) {
+    const refs = referencedTestPresets.get(folder)!;
+    if (refs.has(preset.name)) {
       log.error('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name);
       return null;
     }
 
-    referencedTestPresets.add(preset.name);
+    refs.add(preset.name);
   }
 
   if (preset.inherits) {
@@ -748,7 +768,7 @@ function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, pre
       preset.inherits = [preset.inherits];
     }
     for (const parent of preset.inherits) {
-      const parentConfigurePreset = getConfigurePresetForPresetImpl(parent, presetType, allowUserPreset);
+      const parentConfigurePreset = getConfigurePresetForPresetImpl(folder, parent, presetType, allowUserPreset);
       if (parentConfigurePreset) {
         preset.configurePreset = parentConfigurePreset;
         return parentConfigurePreset;
@@ -759,14 +779,20 @@ function getConfigurePresetForPresetHelper(preset: BuildPreset | TestPreset, pre
   return null;
 }
 
-export async function expandBuildPreset(name: string,
+export async function expandBuildPreset(folder: string,
+                                        name: string,
                                         workspaceFolder: string,
                                         sourceDir: string,
                                         allowUserPreset: boolean = false,
                                         configurePreset?: string): Promise<BuildPreset | null> {
-  referencedBuildPresets.clear();
-  const preset = await expandBuildPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+  const refs = referencedBuildPresets.get(folder);
+  if (!refs) {
+    referencedBuildPresets.set(folder, new Set());
+  } else {
+    refs.clear();
+  }
 
+  const preset = await expandBuildPresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
   if (!preset) {
     return null;
   }
@@ -831,20 +857,21 @@ export async function expandBuildPreset(name: string,
   return expandedPreset;
 }
 
-async function expandBuildPresetImpl(name: string,
+async function expandBuildPresetImpl(folder: string,
+                                     name: string,
                                      workspaceFolder: string,
                                      sourceDir: string,
                                      allowUserPreset: boolean = false,
                                      configurePreset?: string): Promise<BuildPreset | null> {
-  let preset = getPresetByName(buildPresets(), name);
+  let preset = getPresetByName(buildPresets(folder), name);
   if (preset) {
-    return expandBuildPresetHelper(preset, workspaceFolder, sourceDir);
+    return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir);
   }
 
   if (allowUserPreset) {
-    preset = getPresetByName(userBuildPresets(), name);
+    preset = getPresetByName(userBuildPresets(folder), name);
     if (preset) {
-      return expandBuildPresetHelper(preset, workspaceFolder, sourceDir, true);
+      return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
     }
   }
 
@@ -856,14 +883,15 @@ async function expandBuildPresetImpl(name: string,
       description: defaultBuildPreset.description,
       configurePreset
     };
-    return expandBuildPresetHelper(preset, workspaceFolder, sourceDir, true);
+    return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
   }
 
   log.error(localize('build.preset.not.found', 'Could not find build preset with name {0}', name));
   return null;
 }
 
-async function expandBuildPresetHelper(preset: BuildPreset,
+async function expandBuildPresetHelper(folder: string,
+                                       preset: BuildPreset,
                                        workspaceFolder: string,
                                        sourceDir: string,
                                        allowUserPreset: boolean = false) {
@@ -871,7 +899,9 @@ async function expandBuildPresetHelper(preset: BuildPreset,
     return preset;
   }
 
-  if (referencedBuildPresets.has(preset.name) && !preset.__expanded) {
+  const refs = referencedBuildPresets.get(folder)!;
+
+  if (refs.has(preset.name) && !preset.__expanded) {
     // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
     // Notice that we check !preset.__expanded here but not in getConfigurePresetForBuildPresetHelper because
     // multiple parents could all point to the same parent.
@@ -879,7 +909,7 @@ async function expandBuildPresetHelper(preset: BuildPreset,
     return null;
   }
 
-  referencedBuildPresets.add(preset.name);
+  refs.add(preset.name);
 
   // Init env to empty if not specified to avoid null checks later
   if (!preset.environment) {
@@ -893,7 +923,7 @@ async function expandBuildPresetHelper(preset: BuildPreset,
       preset.inherits = [preset.inherits];
     }
     for (const parentName of preset.inherits) {
-      const parent = await expandBuildPresetImpl(parentName, workspaceFolder, sourceDir, allowUserPreset);
+      const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
         // Inherit environment
         inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
@@ -911,7 +941,7 @@ async function expandBuildPresetHelper(preset: BuildPreset,
 
   // Expand configure preset. Evaluate this after inherits since it may come from parents
   if (preset.configurePreset) {
-    const configurePreset = await expandConfigurePreset(preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
+    const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
     if (configurePreset) {
       preset.__binaryDir = configurePreset.binaryDir;
       preset.__generator = configurePreset.generator;
@@ -928,16 +958,23 @@ async function expandBuildPresetHelper(preset: BuildPreset,
   return preset;
 }
 
-const referencedTestPresets: Set<string> = new Set();
+// Map<fsPath, Set<referencedPresets>>
+const referencedTestPresets: Map<string, Set<string>> = new Map();
 
-export async function expandTestPreset(name: string,
+export async function expandTestPreset(folder: string,
+                                       name: string,
                                        workspaceFolder: string,
                                        sourceDir: string,
                                        allowUserPreset: boolean = false,
                                        configurePreset?: string): Promise<TestPreset | null> {
-  referencedTestPresets.clear();
-  const preset = await expandTestPresetImpl(name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+  const refs = referencedTestPresets.get(folder);
+  if (!refs) {
+    referencedTestPresets.set(folder, new Set());
+  } else {
+    refs.clear();
+  }
 
+  const preset = await expandTestPresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
   if (!preset) {
     return null;
   }
@@ -1035,20 +1072,21 @@ export async function expandTestPreset(name: string,
   return expandedPreset;
 }
 
-async function expandTestPresetImpl(name: string,
+async function expandTestPresetImpl(folder: string,
+                                    name: string,
                                     workspaceFolder: string,
                                     sourceDir: string,
                                     allowUserPreset: boolean = false,
                                     configurePreset?: string): Promise<TestPreset | null> {
-  let preset = getPresetByName(testPresets(), name);
+  let preset = getPresetByName(testPresets(folder), name);
   if (preset) {
-    return expandTestPresetHelper(preset, workspaceFolder, sourceDir);
+    return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir);
   }
 
   if (allowUserPreset) {
-    preset = getPresetByName(userTestPresets(), name);
+    preset = getPresetByName(userTestPresets(folder), name);
     if (preset) {
-      return expandTestPresetHelper(preset, workspaceFolder, sourceDir, true);
+      return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
     }
   }
 
@@ -1060,14 +1098,15 @@ async function expandTestPresetImpl(name: string,
       description: defaultTestPreset.description,
       configurePreset
     };
-    return expandTestPresetHelper(preset, workspaceFolder, sourceDir, true);
+    return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
   }
 
   log.error(localize('test.preset.not.found', 'Could not find test preset with name {0}', name));
   return null;
 }
 
-async function expandTestPresetHelper(preset: TestPreset,
+async function expandTestPresetHelper(folder: string,
+                                      preset: TestPreset,
                                       workspaceFolder: string,
                                       sourceDir: string,
                                       allowUserPreset: boolean = false) {
@@ -1075,13 +1114,15 @@ async function expandTestPresetHelper(preset: TestPreset,
     return preset;
   }
 
-  if (referencedTestPresets.has(preset.name) && !preset.__expanded) {
+  const refs = referencedTestPresets.get(folder)!;
+
+  if (refs.has(preset.name) && !preset.__expanded) {
     // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
     log.error('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name);
     return null;
   }
 
-  referencedTestPresets.add(preset.name);
+  refs.add(preset.name);
 
   // Init env to empty if not specified to avoid null checks later
   if (!preset.environment) {
@@ -1095,7 +1136,7 @@ async function expandTestPresetHelper(preset: TestPreset,
       preset.inherits = [preset.inherits];
     }
     for (const parentName of preset.inherits) {
-      const parent = await expandTestPresetImpl(parentName, workspaceFolder, sourceDir, allowUserPreset);
+      const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
         // Inherit environment
         inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
@@ -1113,7 +1154,7 @@ async function expandTestPresetHelper(preset: TestPreset,
 
   // Expand configure preset. Evaluate this after inherits since it may come from parents
   if (preset.configurePreset) {
-    const configurePreset = await expandConfigurePreset(preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
+    const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
     if (configurePreset) {
       preset.__binaryDir = configurePreset.binaryDir;
       preset.__generator = configurePreset.generator;
