@@ -627,3 +627,26 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
 export function isCodespaces(): boolean {
   return !!process.env["CODESPACES"];
 }
+
+export function getAllFilePaths(dir: vscode.Uri, filename: string): string[] | undefined {
+  return recGetAllFilePaths(dir.fsPath, filename, fs.readdirSync(dir.fsPath), []);
+};
+
+function recGetAllFilePaths (dir: string, filename: string, files: string[], result: string[]) {
+
+  for (const item of files) {
+      let file = path.join(dir, item);
+      if (fs.statSync(file).isDirectory()) {
+          try {
+              result = recGetAllFilePaths(file, filename, fs.readdirSync(file), result);
+          } catch (error) {
+              continue;
+          }
+      } else {
+          if (file.endsWith(filename)) {
+              result.push(file);
+          }
+      }
+  }
+  return result;
+}
