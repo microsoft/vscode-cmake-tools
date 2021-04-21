@@ -24,6 +24,10 @@ suite('CppTools tests', () => {
     // Verify CppTools API version 5
     let info = parseCompileFlags(cpptoolsVersion5, ['-target', 'arm-arm-none-eabi']);
     expect(info.targetArch).to.eql(undefined);
+    info = parseCompileFlags(cpptoolsVersion5, ['-std=gnu++14']);
+    expect(info.standard).to.eql('gnu++14');
+    info = parseCompileFlags(cpptoolsVersion5, []);
+    expect(info.standard).to.eql(undefined);
 
     // Verify CppTools API version 4
     info = parseCompileFlags(cpptoolsVersion4, ['-DFOO=BAR']);
@@ -46,6 +50,10 @@ suite('CppTools tests', () => {
     expect(info.standard).to.eql('gnu++14');
     info = parseCompileFlags(cpptoolsVersion4, ['-std=c17']);
     expect(info.standard).to.eql('c17');
+    info = parseCompileFlags(cpptoolsVersion4, ['-std=c++123']);
+    expect(info.standard).to.eql('c++17');
+    info = parseCompileFlags(cpptoolsVersion4, ['-std=c123'], 'C');
+    expect(info.standard).to.eql('c11');
     // Parse target architecture
     info = parseCompileFlags(cpptoolsVersion4, ['--target=aarch64-arm-none-eabi']);
     expect(info.targetArch).to.eql('arm64');
