@@ -1,5 +1,16 @@
 # What's New?
 
+## 1.7.1
+Improvements:
+- CppTools-API v5 integration. [#1624](https://github.com/microsoft/vscode-cmake-tools/issues/1624)
+
+Bug fixes:
+- Correct macros evaluation in inherited presets. [#1787](https://github.com/microsoft/vscode-cmake-tools/issues/1787)
+- Macro expansions should consider environment variables defined in the kit. [#1250](https://github.com/microsoft/vscode-cmake-tools/issues/1250)
+- Fix 1.7.0 IntelliSense regression related to default standard and CppTools provider version. [#1788](https://github.com/microsoft/vscode-cmake-tools/issues/1788)
+- Correct folder information for presets in multi-root projects. [PR #1785](https://github.com/microsoft/vscode-cmake-tools/pull/1785)
+
+
 ## 1.7.0
 Improvements:
 - Support for CMake Presets. [#529](https://github.com/microsoft/vscode-cmake-tools/issues/529)
