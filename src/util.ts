@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import escapeStringRegExp = require('escape-string-regexp');
+
 
 import {EnvironmentVariables, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -629,24 +631,28 @@ export function isCodespaces(): boolean {
 }
 
 export function getAllFilePaths(dir: vscode.Uri, filename: string): string[] | undefined {
-  return recGetAllFilePaths(dir.fsPath, filename, fs.readdirSync(dir.fsPath), []);
-};
+  const regex: RegExp = new RegExp(`(\\/|\\\\)${escapeStringRegExp(filename)}$`);
+  return recGetAllFilePaths(dir.fsPath, filename, regex, fs.readdirSync(dir.fsPath), []);
+}
 
-function recGetAllFilePaths (dir: string, filename: string, files: string[], result: string[]) {
-
+function recGetAllFilePaths(dir: string, filename: string, regex: RegExp, files: string[], result: string[]) {
   for (const item of files) {
-      let file = path.join(dir, item);
-      if (fs.statSync(file).isDirectory()) {
-          try {
-              result = recGetAllFilePaths(file, filename, fs.readdirSync(file), result);
-          } catch (error) {
-              continue;
-          }
-      } else {
-          if (file.endsWith(filename)) {
-              result.push(file);
-          }
-      }
+    const file = path.join(dir, item);
+    if (fs.statSync(file).isDirectory()) {
+      try {
+        result = recGetAllFilePaths(file, filename, regex, fs.readdirSync(file), result);
+      } catch (error) { continue; }
+    } else if (fs.statSync(file).isFile() && regex.test(file)) {
+      result.push(file);
+    }
   }
   return result;
 }
+
+export function getRelativePath(file: string, dir: string): string {
+  const fullPathDir: string = path.parse(file).dir;
+  const relPathDir: string = lightNormalizePath(path.relative(dir, fullPathDir));
+  const joinedPath = "${workspaceFolder}/".concat(relPathDir);
+  return joinedPath;
+}
+
