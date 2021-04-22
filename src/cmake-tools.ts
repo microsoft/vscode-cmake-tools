@@ -500,7 +500,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
           const existingCmakeListsFiles: string[] | undefined = util.getAllFilePaths(this.folder.uri, "CMakeLists.txt");
           const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
-            label: util.getRelativePath(file, this.folder.uri.fsPath),
+            label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
             fullPath: file
           })) : [];
           items.push({ label: localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]") , fullPath: "", description: "Search for CMakeLists.txt on this computer" });
