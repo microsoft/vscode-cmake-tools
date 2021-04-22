@@ -246,7 +246,9 @@ suite('Diagnostics', async () => {
   test('Parsing non-diagnostic', () => {
     const lines = ['/usr/include/c++/10/bits/stl_vector.h:98:47: optimized: basic block part vectorized using 32 byte vectors'];
     feedLines(build_consumer, [], lines);
-    expect(build_consumer.compilers.gcc.diagnostics).to.have.length(0);
+    expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+    const resolved = build_consumer.resolveDiagnostics('dummyPath');
+    expect(resolved.length).to.eq(0);
   });
   test('Parsing linker error', () => {
     const lines = ['/some/path/here:101: undefined reference to `some_function\''];
