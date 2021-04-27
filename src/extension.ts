@@ -658,7 +658,7 @@ class ExtensionManager implements vscode.Disposable {
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
       if (!this._cppToolsAPI) {
-        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v4);
+        this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5);
       }
       if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
         const codeModel = cmt.codeModel;
