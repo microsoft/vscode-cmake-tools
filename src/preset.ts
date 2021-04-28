@@ -78,7 +78,8 @@ export interface ConfigurePreset extends Preset {
   toolset?: string | ValueStrategy;
   binaryDir?: string;
   cmakeExecutable?: string;
-  cacheVariables?: { [key: string]: CacheVarType };
+  // Make the cache value to be possibly undefined for type checking
+  cacheVariables?: { [key: string]: CacheVarType | undefined };
   warnings?: WarningOptions;
   errors?: ErrorOptions;
   debug?: DebugOptions;
@@ -369,7 +370,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
       const parentVendor = getVendorForConfigurePresetImpl(folder, parent, allowUserPreset);
       if (parentVendor) {
         for (const key in parentVendor) {
-          if (!preset.vendor[key]) {
+          if (preset.vendor[key] === undefined) {
             preset.vendor[key] = parentVendor[key];
           }
         }
@@ -448,13 +449,17 @@ export async function expandConfigurePreset(folder: string,
     expandedPreset.cacheVariables = { };
     for (const cacheVarName in preset.cacheVariables) {
       const cacheVar = preset.cacheVariables[cacheVarName];
-      if (cacheVar && typeof cacheVar !== 'boolean') {
-        if (util.isString(cacheVar)) {
-          expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
-        } else if (util.isString(cacheVar.value)) {
-          expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts) };
+      if (cacheVar) {
+        if (typeof cacheVar !== 'boolean') {
+          if (util.isString(cacheVar)) {
+            expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
+          } else if (util.isString(cacheVar.value)) {
+            expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts) };
+          } else {
+            expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
+          }
         } else {
-          expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
+          expandedPreset.cacheVariables[cacheVarName] = cacheVar;
         }
       }
     }
@@ -527,7 +532,7 @@ async function expandConfigurePresetHelper(folder: string,
         inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
         // Inherit cache vars
         for (const name in parent.cacheVariables) {
-          if (!preset.cacheVariables[name]) {
+          if (preset.cacheVariables[name] === undefined) {
             preset.cacheVariables[name] = parent.cacheVariables[name];
           }
         }
@@ -550,7 +555,7 @@ async function expandConfigurePresetHelper(folder: string,
   // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
   // then set the env automatically
   if (process.platform === 'win32') {
-    const getStringValueFromCacheVar = (variable: CacheVarType) => {
+    const getStringValueFromCacheVar = (variable: CacheVarType | undefined) => {
       if (util.isString(variable)) {
         return variable;
       } else if (variable && typeof variable === 'object') {
