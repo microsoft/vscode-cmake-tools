@@ -449,17 +449,15 @@ export async function expandConfigurePreset(folder: string,
     expandedPreset.cacheVariables = { };
     for (const cacheVarName in preset.cacheVariables) {
       const cacheVar = preset.cacheVariables[cacheVarName];
-      if (cacheVar) {
-        if (typeof cacheVar !== 'boolean') {
-          if (util.isString(cacheVar)) {
-            expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
-          } else if (util.isString(cacheVar.value)) {
-            expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts) };
-          } else {
-            expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
-          }
+      if (typeof cacheVar === 'boolean') {
+        expandedPreset.cacheVariables[cacheVarName] = cacheVar;
+      } else if (cacheVar) {
+        if (util.isString(cacheVar)) {
+          expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
+        } else if (util.isString(cacheVar.value)) {
+          expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: await expandString(cacheVar.value, expansionOpts) };
         } else {
-          expandedPreset.cacheVariables[cacheVarName] = cacheVar;
+          expandedPreset.cacheVariables[cacheVarName] = { type: cacheVar.type, value: cacheVar.value };
         }
       }
     }
@@ -555,7 +553,7 @@ async function expandConfigurePresetHelper(folder: string,
   // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
   // then set the env automatically
   if (process.platform === 'win32') {
-    const getStringValueFromCacheVar = (variable: CacheVarType | undefined) => {
+    const getStringValueFromCacheVar = (variable?: CacheVarType) => {
       if (util.isString(variable)) {
         return variable;
       } else if (variable && typeof variable === 'object') {
