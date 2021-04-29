@@ -177,6 +177,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
   let fullVersion: string = "";
   const lines = exec.stderr.trim().split('\n');
   for (const line of lines) {
+    log.debug(`[${vendor}] ${line}`);
     const version_match = version_re.exec(line);
     if (version_match !== null && version === '') {
       version = version_match[version_match_index];
