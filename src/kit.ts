@@ -153,26 +153,22 @@ interface CompilerVersion {
 
 export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string): Promise<CompilerVersion|null> {
   log.debug(localize('testing.compiler.binary', 'Testing {0} binary: {1}', vendor, binPath));
-  const exec = await proc.execute(binPath, ['-v']).result;
+  const environment: proc.EnvironmentVariables = {
+    LANG: "C",
+    LC_ALL: "C"
+  };
+  const exec = await proc.execute(binPath, ['-v'], undefined, { environment }).result;
   if (exec.retc !== 0) {
     log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
     return null;
   }
-  let version_re_loc: RegExp;
-  let version_re_en: RegExp;
-  const versionWord: string = localize("version.word", "version");
+  let version_re: RegExp;
   let version_match_index;
   if (vendor === 'Clang') {
-    const version_re_str_loc: string = `^(?:Apple LLVM|.*clang) ${versionWord} ([^\\s-]+)(?:[\\s-]|$)`;
-    const version_re_str_en: string = `^(?:Apple LLVM|.*clang) version ([^\\s-]+)(?:[\\s-]|$)`;
-    version_re_loc = RegExp(version_re_str_loc, "mgi");
-    version_re_en = RegExp(version_re_str_en, "mgi");
+    version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)(?:[\s-]|$)/mgi;
     version_match_index = 1;
   } else {
-    const version_re_str_loc: string = `^gcc(-| )${versionWord} (.*?) .*`;
-    const version_re_str_en: string = `^gcc(-| )version (.*?) .*`;
-    version_re_loc = RegExp(version_re_str_loc, "mgi");
-    version_re_en = RegExp(version_re_str_en, "mgi");
+    version_re = /^gcc(-| )version (.*?) .*/mgi;
     version_match_index = 2;
   }
 
@@ -181,7 +177,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
   let fullVersion: string = "";
   const lines = exec.stderr.trim().split('\n');
   for (const line of lines) {
-    const version_match = version_re_en.exec(line) || version_re_loc.exec(line);
+    const version_match = version_re.exec(line);
     if (version_match !== null && version === '') {
       version = version_match[version_match_index];
       fullVersion = line;
