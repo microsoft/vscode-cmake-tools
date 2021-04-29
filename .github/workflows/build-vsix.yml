@@ -2,7 +2,9 @@ name: Build VSIX
 
 on:
   push:
-    branches: [ develop ]
+    branches:
+      - develop
+      - bobbrow/gccLocale
 
 jobs:
   build:
