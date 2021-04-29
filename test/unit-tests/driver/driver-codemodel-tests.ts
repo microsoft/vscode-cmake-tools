@@ -42,6 +42,8 @@ export function makeCodeModelDriverTestsuite(
     const root = getTestRootFilePath(workspacePath);
     const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/test_project');
     const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/empty_project');
+    const sourceOutsideOfWorkspace
+        = getTestRootFilePath('test/unit-tests/driver/workspace/source_outside_of_workspace/workspace');
 
     let kitDefault: Kit;
     if (process.platform === 'win32') {
@@ -66,6 +68,11 @@ export function makeCodeModelDriverTestsuite(
       if (!cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
         done('Empty project build folder still exists');
       }
+
+      if (!cleanupBuildDir(path.join(sourceOutsideOfWorkspace, 'build'))) {
+        done('Source-outside-of-workspace project build folder still exists');
+      }
+
       done();
     });
 
@@ -77,12 +84,13 @@ export function makeCodeModelDriverTestsuite(
     });
 
 
-    async function generateCodeModelForConfiguredDriver(args: string[] =
-                                                            []): Promise<null|codemodel_api.CodeModelContent> {
+    async function generateCodeModelForConfiguredDriver(args: string[] = [],
+                                                        workspaceFolder: string = defaultWorkspaceFolder):
+        Promise<null|codemodel_api.CodeModelContent> {
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 
-      driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+      driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
       let code_model: null|codemodel_api.CodeModelContent = null;
       if (driver instanceof codemodel_api.CodeModelDriver) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
@@ -245,6 +253,35 @@ export function makeCodeModelDriverTestsuite(
       const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
       expect(target).to.be.not.undefined;
       expect(target!.sysroot).to.be.eq('/tmp');
+    }).timeout(90000);
+
+    test('Test source files outside of workspace root', async () => {
+      const project_name: string = 'source_outside_of_workspace';
+      const codemodel_data = await generateCodeModelForConfiguredDriver([], sourceOutsideOfWorkspace);
+      expect(codemodel_data).to.be.not.null;
+
+      for (const [target_name, target_subdir, sourcefile_name] of [['root_target', '', '../main.cpp'],
+                                                                   ['subdir_target', 'subdir', '../../main.cpp']] as
+           const) {
+
+        const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE'
+                                                                                      && t.name == target_name);
+        expect(target).to.be.not.undefined;
+
+        // Assert correct target names for node labels
+        const executableName = target_name + (process.platform === 'win32' ? '.exe' : '');
+        expect(target!.fullName).to.be.eq(executableName);
+
+        // Assert correct location of target source directories
+        expect(path.normalize(target!.sourceDirectory!).toLowerCase())
+            .to.eq(path.normalize(path.join(root, project_name, 'workspace', target_subdir)).toLowerCase());
+
+        // Assert correct path to source file
+        expect(target!.fileGroups).to.be.not.undefined;
+        const compile_information = target!.fileGroups!.find(t => !!t.language);
+        expect(compile_information).to.be.not.undefined;
+        expect(compile_information!.sources).to.include(sourcefile_name);
+      }
     }).timeout(90000);
   });
 }
