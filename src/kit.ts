@@ -153,11 +153,7 @@ interface CompilerVersion {
 
 export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string): Promise<CompilerVersion|null> {
   log.debug(localize('testing.compiler.binary', 'Testing {0} binary: {1}', vendor, binPath));
-  const environment: proc.EnvironmentVariables = {
-    LANG: "C",
-    LC_ALL: "C"
-  };
-  const exec = await proc.execute(binPath, ['-v'], undefined, { environment }).result;
+  const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
   if (exec.retc !== 0) {
     log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
     return null;
@@ -177,7 +173,6 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
   let fullVersion: string = "";
   const lines = exec.stderr.trim().split('\n');
   for (const line of lines) {
-    log.debug(`[${vendor}] ${line}`);
     const version_match = version_re.exec(line);
     if (version_match !== null && version === '') {
       version = version_match[version_match_index];
