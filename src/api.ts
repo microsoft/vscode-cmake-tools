@@ -90,6 +90,8 @@ export interface CacheEntryProperties {
   value: any;
   /** Whether this entry is ADVANCED, meaning it hidden from the user. */
   advanced: boolean;
+  /** List of allowed values, as specified by STRINGS property */
+  choices: string[];
 }
 
 /**
