@@ -82,6 +82,7 @@ export interface ExecutionOptions {
   encoding?: BufferEncoding;
   outputEncoding?: string;
   useTask?: boolean;
+  overrideLocale?: boolean;
 }
 
 export function buildCmdStr(command: string, args?: string[]): string {
@@ -114,7 +115,15 @@ export function execute(command: string,
   if (!options) {
     options = {};
   }
-  const final_env = util.mergeEnvironment(process.env as EnvironmentVariables, options.environment || {});
+  const localeOverride: EnvironmentVariables = {
+    LANG: "C",
+    LC_ALL: "C"
+  };
+  const final_env = util.mergeEnvironment(
+    process.env as EnvironmentVariables,
+    options.environment || {},
+    options.overrideLocale ? localeOverride : {});
+
   const spawn_opts: proc.SpawnOptions = {
     env: final_env,
     shell: !!options.shell,
