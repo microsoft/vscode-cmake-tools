@@ -172,10 +172,7 @@ console.log(`pushing to remove branch (git push -f origin ${branchName})`);
 cp.execSync(`git push -f origin ${branchName}`);
 
 console.log("Checking if there is already a pull request...");
-const octokit = new Octokit({auth: {
-    username: authUser,
-    password: authToken}
-});
+const octokit = new Octokit.Octokit({auth: authToken});
 octokit.pulls.list({ owner: repoOwner, repo: repoName }).then(({data}) => {
     let alreadyHasPullRequest = false;
     if (data) {
