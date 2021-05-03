@@ -17,7 +17,7 @@ pool:
 steps:
 - task: CmdLine@2
   inputs:
-    script: 'cd ./Extension && yarn run translations-export && cd ..'
+    script: 'yarn run translations-export'
 
 - task: OneLocBuild@1
   env:

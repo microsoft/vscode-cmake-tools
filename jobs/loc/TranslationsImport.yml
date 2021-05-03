@@ -28,10 +28,10 @@ steps:
 
 - task: CmdLine@2
   inputs:
-    script: 'cd Extension && yarn install'
+    script: 'yarn install'
     workingDirectory: '$(Build.SourcesDirectory)'
 
 - task: CmdLine@2
   inputs:
-    script: 'cd Extension && node ./translations_auto_pr.js microsoft vscode-cmake-tools cmake-tools csigs $(csigsPat) csigs csigs@users.noreply.github.com $(Build.SourcesDirectory)/../VSCodeExt'
+    script: 'node ./translations_auto_pr.js microsoft vscode-cmake-tools cmake-tools csigs $(csigsPat) csigs csigs@users.noreply.github.com $(Build.SourcesDirectory)/../VSCodeExt'
     workingDirectory: '$(Build.SourcesDirectory)'

@@ -75,7 +75,7 @@ let rootSourcePath = `${locRepoPath}\\Src\\VSCodeExt`;
 let directories = fs.readdirSync(rootSourcePath, { withFileTypes: true }).filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
 directories.forEach(folderName => {
     let sourcePath = `${rootSourcePath}\\${folderName}\\vscode-cpptools.xlf`;
-    let destinationPath = `../vscode-translations-import/${folderName}/vscode-extensions/vscode-${locProjectName}.xlf`;
+    let destinationPath = `./vscode-translations-import/${folderName}/vscode-extensions/vscode-${locProjectName}.xlf`;
     console.log(`Copying "${sourcePath}" to "${destinationPath}"`);
     fs.copySync(sourcePath, destinationPath);
 });
@@ -118,7 +118,7 @@ if (!hasAnyChanges()) {
 // Save existing user name and email, in case already set.
 var existingUserName;
 var existingUserEmail;
-var gitConfigPath = path.resolve(process.cwd(), '../.git/config');
+var gitConfigPath = path.resolve(process.cwd(), './.git/config');
 var config = parseGitConfig.sync({ path: gitConfigPath });
 
 if (typeof config === 'object' && config.hasOwnProperty('user')) {
