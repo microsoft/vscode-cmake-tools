@@ -23,7 +23,7 @@ steps:
   env:
     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
   inputs:
-    locProj: 'Build/loc/LocProject.json'
+    locProj: 'jobs/loc/LocProject.json'
     outDir: '$(Build.ArtifactStagingDirectory)'
     isCreatePrSelected: false
     prSourceBranchPrefix: 'locfiles'
