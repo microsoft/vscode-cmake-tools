@@ -115,8 +115,7 @@ export interface Kit extends KitDetect {
   compilers?: {[lang: string]: string};
 
   /**
-   * The visual studio name. This corresponds to the major.minor version of
-   * the installation returned by `vswhere`.
+   * The visual studio name. This corresponds to the installationId returned by `vswhere`.
    */
   visualStudio?: string;
 
@@ -154,26 +153,18 @@ interface CompilerVersion {
 
 export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string): Promise<CompilerVersion|null> {
   log.debug(localize('testing.compiler.binary', 'Testing {0} binary: {1}', vendor, binPath));
-  const exec = await proc.execute(binPath, ['-v']).result;
+  const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
   if (exec.retc !== 0) {
     log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
     return null;
   }
-  let version_re_loc: RegExp;
-  let version_re_en: RegExp;
-  const versionWord: string = localize("version.word", "version");
+  let version_re: RegExp;
   let version_match_index;
   if (vendor === 'Clang') {
-    const version_re_str_loc: string = `^(?:Apple LLVM|.*clang) ${versionWord} ([^\\s-]+)(?:[\\s-]|$)`;
-    const version_re_str_en: string = `^(?:Apple LLVM|.*clang) version ([^\\s-]+)(?:[\\s-]|$)`;
-    version_re_loc = RegExp(version_re_str_loc, "mgi");
-    version_re_en = RegExp(version_re_str_en, "mgi");
+    version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)(?:[\s-]|$)/mgi;
     version_match_index = 1;
   } else {
-    const version_re_str_loc: string = `^gcc(-| )${versionWord} (.*?) .*`;
-    const version_re_str_en: string = `^gcc(-| )version (.*?) .*`;
-    version_re_loc = RegExp(version_re_str_loc, "mgi");
-    version_re_en = RegExp(version_re_str_en, "mgi");
+    version_re = /^gcc(-| )version (.*?) .*/mgi;
     version_match_index = 2;
   }
 
@@ -182,7 +173,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
   let fullVersion: string = "";
   const lines = exec.stderr.trim().split('\n');
   for (const line of lines) {
-    const version_match = version_re_en.exec(line) || version_re_loc.exec(line);
+    const version_match = version_re.exec(line);
     if (version_match !== null && version === '') {
       version = version_match[version_match_index];
       fullVersion = line;
@@ -532,7 +523,7 @@ function vsKitName(inst: VSInstallation, hostArch: string, targetArch?: string):
  * @param targetArch The architecture of the target
  * @param amd64Alias Whether amd64 is preferred over x64.
  */
-function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
+export function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Alias: boolean = false): string {
   // There are cases when we don't want to use the 'x64' alias of the 'amd64' architecture,
   // like for older VS installs, for the VS kit names (for compatibility reasons)
   // or for arm/arm64 specific vcvars scripts.
@@ -941,7 +932,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
     if (isClangGNUCLI) {
       if (undefined === cmakeTools) {
-        log.error("failed.to.scan.for.kits", "Failed to scan for kits:", "cmakeTools is undefined");
+        log.error(localize("failed.to.scan.for.kits", "Failed to scan for kits: cmakeTools is undefined"));
 
         return null;
       } else {
@@ -966,7 +957,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
 
       const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
       if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
-      util.checkFileExists(util.lightNormalizePath(binPath))) {
+          util.checkFileExists(util.lightNormalizePath(binPath))) {
         clangKits.push({
           name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
           visualStudio: kitVSName(vs),
@@ -1203,24 +1194,31 @@ export async function scanForKitsIfNeeded(cmt: CMakeTools) : Promise<boolean> {
  * Generates a string description of a kit. This is shown to the user.
  * @param kit The kit to generate a description for
  */
-export async function descriptionForKit(kit: Kit): Promise<string> {
+export async function descriptionForKit(kit: Kit, shortVsName: boolean = false): Promise<string> {
   if (kit.toolchainFile) {
     return localize('kit.for.toolchain.file', 'Kit for toolchain file {0}', kit.toolchainFile);
   }
   if (kit.visualStudio) {
-    const vs_install = await getVSInstallForKit(kit);
-    if (vs_install) {
-      if (kit.compilers) {
-        // Clang for MSVC
-        const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
-        return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
+    if (kit.compilers) {
+      // Clang for MSVC
+      const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
+      return localize('using.compilers', 'Using compilers: {0}', compilers.join(', '));
+    } else if (shortVsName) {
+      const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+      if (kit.preferredGenerator) {
+        return localize('using.compilers.for.VS', 'Using compilers for {0} ({1} architecture)', kit.preferredGenerator?.name, hostTargetArch);
       } else {
-        // MSVC
-        const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
-        return localize('using.compilers.for', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), hostTargetArch);
+        return localize('using.compilers.for.VS2', 'Using compilers for Visual Studio ({0} architecture)', hostTargetArch);
       }
+    } else {
+      // MSVC
+      const vs_install = await getVSInstallForKit(kit);
+      if (vs_install) {
+        const hostTargetArch = kitHostTargetArch(kit.visualStudioArchitecture!, kit.preferredGenerator?.platform);
+        return localize('using.compilers.for.VS', 'Using compilers for {0} ({1} architecture)', vsVersionName(vs_install), hostTargetArch);
+      }
+      return '';
     }
-    return '';
   }
   if (kit.compilers) {
     const compilers = Object.keys(kit.compilers).map(k => `${k} = ${kit.compilers![k]}`);
@@ -1351,4 +1349,11 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   } else {
     return false;
   }
+}
+
+/**
+ * Get the environment variables required by the current Kit
+ */
+export function getKitEnvironmentVariablesObject(kitEnvVars: Map<string, string>): proc.EnvironmentVariables {
+  return util.reduce(kitEnvVars.entries(), {}, (acc, [key, value]) => ({...acc, [key]: value}));
 }

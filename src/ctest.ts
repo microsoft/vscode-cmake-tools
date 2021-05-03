@@ -11,6 +11,7 @@ import {fs} from './pr';
 import {OutputConsumer} from './proc';
 import * as util from './util';
 import * as nls from 'vscode-nls';
+import { testArgs } from './preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -348,17 +349,29 @@ export class CTestDriver implements vscode.Disposable {
     log.showChannel();
     this._decorationManager.clearFailingTestDecorations();
 
-    const ctestpath = await this.ws.ctestPath;
+    const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
     if (ctestpath === null) {
       log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return -2;
     }
 
-    const configuration = driver.currentBuildType;
+    let ctestArgs: string[];
+    if (driver.useCMakePresets) {
+      if (!driver.testPreset) {
+        log.error(localize('test.preset.not.set', 'Test preset is not set'));
+        return -3;
+      }
+      // Add a few more args so we can show the result in status bar
+      ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
+    } else {
+      const configuration = driver.currentBuildType;
+      ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
+        this.ws.config.ctestDefaultArgs, this.ws.config.ctestArgs);
+    }
+
     const child = driver.executeCommand(
         ctestpath,
-        [`-j${this.ws.config.numCTestJobs}`, '-C', configuration].concat(
-            this.ws.config.ctestDefaultArgs, this.ws.config.ctestArgs),
+        ctestArgs,
         new CTestOutputLogger(),
         {environment: await driver.getCTestCommandEnvironment(), cwd: driver.binaryDir});
     const res = await child.result;
@@ -384,16 +397,24 @@ export class CTestDriver implements vscode.Disposable {
     this._decorationManager.binaryDir = driver.binaryDir;
     this.testingEnabled = true;
 
-    const ctestpath = await this.ws.ctestPath;
+    const ctestpath = await this.ws.getCTestPath(driver.cmakePathFromPreset);
     if (ctestpath === null) {
       log.info(localize('ctest.path.not.set', 'CTest path is not set'));
       return this.tests = [];
     }
 
-    const build_config = driver.currentBuildType;
+    const buildConfigArgs: string[] = [];
+    if (driver.useCMakePresets) {
+      const buildConfig = driver.testPreset?.configuration;
+      if (buildConfig) {
+        buildConfigArgs.push('-C', buildConfig);
+      }
+    } else {
+      buildConfigArgs.push('-C', driver.currentBuildType);
+    }
     const result
         = await driver
-              .executeCommand(ctestpath, ['-N', '-C', build_config], undefined, {cwd: driver.binaryDir, silent: true})
+              .executeCommand(ctestpath, ['-N', ...buildConfigArgs], undefined, {cwd: driver.binaryDir, silent: true})
               .result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...

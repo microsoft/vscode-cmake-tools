@@ -21,5 +21,11 @@
 	"tests.passing": "Тестов пройдено: {0}/{1}.",
 	"build.tooltip": "Сборка выбранного целевого объекта",
 	"build": "Сборка",
-	"stop": "Остановка"
+	"stop": "Остановка",
+	"click.to.change.configure.preset.tooltip": "Щелкните, чтобы изменить активную предустановку конфигурации",
+	"no.configure.preset.selected": "Предустановка конфигурации не выбрана",
+	"click.to.change.build.preset.tooltip": "Щелкните, чтобы изменить активную предустановку сборки",
+	"no.build.preset.selected": "Не выбрана ни одна предустановка сборки",
+	"click.to.change.test.preset.tooltip": "Щелкните, чтобы изменить активную предустановку тестирования",
+	"no.test.preset.selected": "Предустановка тестирования не выбрана"
 }
