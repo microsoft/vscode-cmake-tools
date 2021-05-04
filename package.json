@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -79,7 +79,7 @@
     "onCommand:cmake.outline.buildAll",
     "workspaceContains:**/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
-    ],
+  ],
   "main": "./dist/main",
   "contributes": {
     "commands": [
@@ -1807,7 +1807,7 @@
           "default": true,
           "description": "%cmake-tools.configuration.cmake.exportCompileCommandsFile.description%"
         },
-        "cmake.useCMakePresets":  {
+        "cmake.useCMakePresets": {
           "type": "string",
           "enum": [
             "always",
@@ -1936,6 +1936,7 @@
     "mocha": "^8.3.0",
     "module-alias": "^2.2.2",
     "node-loader": "^1.0.2",
+    "parse-git-config": "^3.0.0",
     "sinon": "~9.2.4",
     "ts-loader": "^8.0.17",
     "ts-node": "^9.1.1",

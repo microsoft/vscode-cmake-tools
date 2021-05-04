@@ -1050,6 +1050,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {name: allowedCompilerName, version};
   }
 
+  private countHiddenPresets(presets: preset.Preset[]): number {
+    let count = 0;
+    for (const p of presets) {
+      if (p.hidden) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
@@ -1152,6 +1162,26 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const telemetryMeasures: telemetry.Measures = {
         Duration: timeEnd - timeStart,
       };
+      if (this.useCMakePresets && this.workspaceFolder) {
+        const configurePresets = preset.configurePresets(this.workspaceFolder);
+        const userConfigurePresets = preset.userConfigurePresets(this.workspaceFolder);
+        const buildPresets = preset.buildPresets(this.workspaceFolder);
+        const userBuildPresets = preset.userBuildPresets(this.workspaceFolder);
+        const testPresets = preset.testPresets(this.workspaceFolder);
+        const userTestPresets = preset.userTestPresets(this.workspaceFolder);
+        telemetryMeasures['ConfigurePresets'] = configurePresets.length;
+        telemetryMeasures['HiddenConfigurePresets'] = this.countHiddenPresets(configurePresets);
+        telemetryMeasures['UserConfigurePresets'] = userConfigurePresets.length;
+        telemetryMeasures['HiddenUserConfigurePresets'] = this.countHiddenPresets(userConfigurePresets);
+        telemetryMeasures['BuildPresets'] = buildPresets.length;
+        telemetryMeasures['HiddenBuildPresets'] = this.countHiddenPresets(buildPresets);
+        telemetryMeasures['UserBuildPresets'] = userBuildPresets.length;
+        telemetryMeasures['HiddenUserBuildPresets'] = this.countHiddenPresets(userBuildPresets);
+        telemetryMeasures['TestPresets'] = testPresets.length;
+        telemetryMeasures['HiddenTestPresets'] = this.countHiddenPresets(testPresets);
+        telemetryMeasures['UserTestPresets'] = userTestPresets.length;
+        telemetryMeasures['HiddenUserTestPresets'] = this.countHiddenPresets(userTestPresets);
+      }
       if (consumer) {
         if (consumer instanceof CMakeOutputConsumer) {
           let errorCount: number = 0;
