@@ -1,21 +1,21 @@
-# Configure and build with CMake Presets in VS Code
+# Configure and build with CMake Presets in Visual Studio Code
 
-CMake supports two files, `CMakePresets.json` and `CMakeUserPresets.json`, that allow users to specify common configure, build, and test options and share them with others. `CMakePresets.json` integration is available in cmake-tools version 1.7 and later.
+CMake supports two files that allow users to specify common configure, build, and test options and share them with others:`CMakePresets.json` and `CMakeUserPresets.json`. You can use these files to drive CMake in Visual Studio and Visual Studio Code, in a continuous integration (CI) pipeline, and from the command line.
 
-`CMakePresets.json` and `CMakeUserPresets.json` can be used to drive CMake in Visual Studio and Visual Studio Code, in a Continuous Integration (CI) pipeline, and from the command line. `CMakePresets.json` is intended to save project-wide builds, and `CMakeUserPresets.json` is intended for developers to save their own local builds.
+`CMakePresets.json` is for saving project-wide builds. Its integration is available in cmake-tools version 1.7 and later. `CMakeUserPresets.json` is for developers to save their own local builds.
 
-This article contains information about `CMakePresets.json` integration in the CMake Tools extension for Visual Studio Code.
+This article contains information about `CMakePresets.json` integration in the CMake Tools extension for Visual Studio Code. Here are helpful links:
 - For more information on the format of `CMakePresets.json`, see the official [CMake documentation](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html).
 - For more information on the Microsoft vendor maps and macro expansion, see [`CMakePresets.json` and `CMakeUserPresets.json` Microsoft vendor maps](https://docs.microsoft.com/cpp/build/cmake-presets-json-reference).
-- For more information on how to use `CMakePresets.json` in Visual Studio, see [Configure and build with CMake Presets in Visual Studio](https://docs.microsoft.com/cpp/build/cmake-presets-vs)
+- For more information on how to use `CMakePresets.json` in Visual Studio, see [Configure and build with CMake Presets in Visual Studio](https://docs.microsoft.com/cpp/build/cmake-presets-vs).
 
-`CMakePresets.json` is a recommended alternative to kits and variants files. See [Enable `CMakePresets.json` in the CMake Tools extension](#enable-cmakepresetsjson-in-the-cmake-tools-extension) to enable or disable `CMakePresets.json` integration in the CMake Tools extension.
+We recommend `CMakePresets.json` as an alternative to kits and variants files. To enable or disable `CMakePresets.json` integration in the CMake Tools extension, see [Enable `CMakePresets.json` in the CMake Tools extension](#enable-cmakepresetsjson-in-the-cmake-tools-extension).
 
 ## Supported CMake and `CMakePresets.json` versions
 
-The CMake Tools extension supports `CMakePresets.json` and `CMakeUserPresets.json` files version 2 or higher. You can update your file version by incrementing the version field in the root object. For an example and more information, see [`CMakePresets.json`](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#format).
+The CMake Tools extension supports version 2 or later for the `CMakePresets.json` and `CMakeUserPresets.json` files. You can update your file version by incrementing the version field in the root object. For an example and more information, see [`CMakePresets.json`](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#format).
 
-CMake version 3.20 or higher is required when invoking CMake with `CMakePresets.json` (version 2 or higher) from the command line. CMake Tools reads and evaluates `CMakePresets.json` and `CMakeUserPresets.json`, and does not invoke CMake directly with the `--preset` option. This means CMake version 3.20 or higher is not strictly required when building with `CMakePresets.json` inside Visual Studio Code. We recommend using at least CMake version 3.14 or higher.
+CMake version 3.20 or later is required when you're invoking CMake with `CMakePresets.json` (version 2 or later) from the command line. CMake Tools reads and evaluates `CMakePresets.json` and `CMakeUserPresets.json`. It doesn't invoke CMake directly with the `--preset` option. So, CMake version 3.20 or later isn't strictly required when you're building with `CMakePresets.json` inside Visual Studio Code. We recommend using CMake version 3.14 or later.
 
 ## Enable `CMakePresets.json` in the CMake Tools extension
 
@@ -25,29 +25,30 @@ A new setting, `cmake.useCMakePresets`, has been added to `settings.json`:
 |---------|---------|---------|---------|
 |`cmake.useCMakePresets` | Use `CMakePresets.json` to drive CMake configure, build, and test | `always`, `never`, `auto` | `auto` |
 
-`auto` : evaluates to `always` if there's a `CMakePresets.json` file in the `cmake.sourceDirectory` of the active folder. It evaluates to `never` if there isn't a `CMakePresets.json` file in the `cmake.sourceDirectory` in the active folder. Set `cmake.useCMakePresets` to `always` or `never` to explicitly enable or disable `CMakePresets.json` integration for all CMake projects.
+The `auto` value evaluates to `always` if there's a `CMakePresets.json` file in `cmake.sourceDirectory` for the active folder. It evaluates to `never` if there's no `CMakePresets.json` file in `cmake.sourceDirectory` for the active folder. Set `cmake.useCMakePresets` to `always` or `never` to explicitly enable or disable `CMakePresets.json` integration for all CMake projects.
 
 ## Configure and build
 
-You can configure and build your CMake project with a series of commands. Open the command palette in Visual Studio Code with `Ctrl+Shift+P`:
+You can configure and build your CMake project by using a series of commands. Open the command palette in Visual Studio Code with `Ctrl+Shift+P`:
 
-![Command pallette: Select Configure Preset](images/command-palette.png)
+![Screenshot that shows the command pallette with a list of commands.](images/command-palette.png)
 
 ### CMake: Select Configure Preset
 
-**CMake: Select Configure Preset** lists the union of non-hidden Configure Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. Select a Configure Preset to make it the active Configure Preset. This is the `configurePreset` used when CMake is invoked to generate the project build system. The active Configure Preset is displayed in the status bar.
+**CMake: Select Configure Preset** lists the union of non-hidden Configure Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. Select a Configure Preset to make it the active Configure Preset. This is the `configurePreset` value that's used when CMake is invoked to generate the project build system. The active Configure Preset appears on the status bar.
 
-CMake Tools uses the value of `hostOS` in the Microsoft Visual Studio Settings vendor map to hide Configure Presets that don't apply to your platform. See the entry for `hostOS` in the table under [Visual Studio Settings vendor map](cmake-presets-json-reference.md#visual-studio-settings-vendor-map) for more information.
+CMake Tools uses the value of `hostOS` in the Microsoft Visual Studio Settings vendor map to hide Configure Presets that don't apply to your platform. For more information, see the entry for `hostOS` in the table under [Visual Studio Settings vendor map](cmake-presets-json-reference.md#visual-studio-settings-vendor-map).
 
 ### CMake: Configure
 
 To configure the project, run **CMake: Configure** from the command palette. This is the same as running `cmake --preset <configurePreset>` from the command line, where `<configurePreset>` is the name of the active Configure Preset.
 
-> Note: Windows developers, you must launch VS Code from a developer command prompt, or run the **CMake: Scan for Compilers** command before the CMake Tools extension can detect build tools (CMake, Ninja) that are installed with Visual Studio.
+> [!NOTE]
+> If you're a windows developer, you must open Visual Studio Code from a developer command prompt. Or, run the **CMake: Scan for Compilers** command before the CMake Tools extension can detect build tools (CMake, Ninja) that are installed with Visual Studio.
 
 ### CMake: Select Build Preset
 
-**CMake: Select Build Preset** lists the Default Build Preset and the union of non-hidden Build Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The Default Build Preset is equivalent to passing `cmake --build` with no additional arguments from the command line. Select a Build Preset to make it the active Build Preset. This is the `buildPreset` used when CMake is invoked to build the project. The active Build Preset is displayed in the status bar.
+**CMake: Select Build Preset** lists the default Build Preset and the union of non-hidden Build Presets defined in `CMakePresets.json` and `CMakeUserPresets.json`. The default Build Preset is equivalent to passing `cmake --build` with no additional arguments from the command line. Select a Build Preset to make it the active Build Preset. This is the `buildPreset` value that's used when CMake is invoked to build the project. The active Build Preset is displayed on the status bar.
 
 All Build Presets are required to specify an associated configurePreset. CMake Tools hides Build Presets that don't apply to the active Configure Preset. For more information, see [Build Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#build-preset).
 
@@ -79,7 +80,7 @@ To invoke CTest, run **CMake: Run Tests from the command palette**. This is the 
 
 The status bar displays the active Configure Preset, Build Preset, and Test Preset:
 
-![VS Code status bar showing the active Configure Preset, Build Preset, and Test Preset](images/status_bar_preset_status.png)
+![Visual Studio Code status bar showing the active Configure Preset, Build Preset, and Test Preset](images/status_bar_preset_status.png)
 
 To show or hide individual status bar icons, you can modify `cmake.statusbar.advanced` in `settings.json`.
 
@@ -127,7 +128,7 @@ The official [CMake documentation](https://cmake.org/cmake/help/latest/manual/cm
 
 ### Select your compilers
 
-C and C++ compilers can be set with `cacheVariables.CMAKE_C_COMPILER` and `cacheVariables.CMAKE_CXX_COMPILER` in a Configure Preset. This is equivalent to passing `-D CMAKE_C_COMPILER=<value> and -D CMAKE_CXX_COMPILER=<value>` to CMake from the command line. For more information, see [CMAKE_<LANG>_COMPILER](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html#cmake-lang-compiler).
+C and C++ compilers can be set with `cacheVariables.CMAKE_C_COMPILER` and `cacheVariables.CMAKE_CXX_COMPILER` in a Configure Preset. This is equivalent to passing `-D CMAKE_C_COMPILER=<value> and -D CMAKE_CXX_COMPILER=<value>` to CMake from the command line. For more information, see [`CMAKE_<LANG>_COMPILER`](https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER.html#cmake-lang-compiler).
 
 You can specify the name of a compiler on your `PATH` or an environment variable that evaluates to the full path of a compiler. Full paths are discouraged so that the file will remain shareable.
 
@@ -165,7 +166,8 @@ You can also set compilers with a CMake toolchain file. Toolchain files can be s
 
 Configure Preset templates default to the Visual Studio generator on Windows, and Ninja on Linux and macOS. You can specify a new generator with the `generator` option in a Configure Preset. This is equivalent to passing `-G` to CMake from the command line. See [CMake generators](https://cmake.org/cmake/help/latest/manual/cmake-generators.7.html#:~:text=A%20CMake%20Generator%20is%20responsible%20for%20writing%20the,what%20native%20build%20system%20is%20to%20be%20used) for more information.
 
-> Note: Windows developers: Make sure to set `architecture.strategy` and `toolset.strategy` to `external` when building with a command-line generator like Ninja, on Windows.
+> [!NOTE]
+> Windows developers: Make sure to set `architecture.strategy` and `toolset.strategy` to `external` when building with a command-line generator like Ninja, on Windows.
 
 ### Set and reference environment variables
 
@@ -185,9 +187,9 @@ The host architecture (x64 or x86) and toolset can be set with `toolset.value`. 
 
 `architecture.strategy` and `toolset.strategy` tell CMake how to handle the architecture and toolset fields. `set` means CMake will set the respective value. `external` means CMake will not set the respective value. `set` should be used with IDE generators like the Visual Studio Generator. `external` should be used with command-line generators like Ninja. This allows vendors like Visual Studio to source the required environment before CMake is invoked. See [Configure Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset) for more information about the `architecture` and `toolset` fields.
 
-For a full list of IDE generators that support the `architecture` field, see [CMAKE_GENERATOR_PLATFORM](https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_PLATFORM.html). For a full list of IDE generators that support the toolset field, see [CMAKE_GENERATOR_TOOLSET](https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html).
+For a full list of IDE generators that support the `architecture` field, see [`CMAKE_GENERATOR_PLATFORM`](https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_PLATFORM.html). For a full list of IDE generators that support the toolset field, see [`CMAKE_GENERATOR_TOOLSET`](https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html).
 
-## Vcpkg integration
+## Enable Vcpkg integration
 
 Vcpkg helps you manage C and C++ libraries on Windows, Linux, and macOS. A vcpkg toolchain file (`vcpkg.cmake`) must be passed to CMake to enable vcpkg integration. See the [vcpkg documentation](https://github.com/microsoft/vcpkg#vcpkg-overview) for more information. Set the path to `vcpkg.cmake` with the `VCPKG_ROOT` environment variable in `CMakePresets.json`:
 
@@ -204,7 +206,7 @@ Vcpkg helps you manage C and C++ libraries on Windows, Linux, and macOS. A vcpkg
 
 If you'ree already using a CMake toolchain file and want to enable vcpkg integration, then see [Using multiple toolchain files](https://github.com/microsoft/vcpkg/blob/master/docs/users/integration.md#using-multiple-toolchain-files) and follow those instructions to use an external toolchain file with a project using vcpkg.
 
-## Command substitution in `launch.json `and `settings.json`
+## Substitute commands in `launch.json` and `settings.json`
 
 CMake Tools supports command substitution for launch commands when `CMakePresets.json` integration is enabled. See [Command substitution](https://github.com/microsoft/vscode-cmake-tools/blob/develop/docs/cmake-settings.md#command-substitution) for more information.
 
@@ -247,11 +249,11 @@ The following commands are not supported when `CMakePresets.json` integration is
 - **CMake: Select a Kit**
 - **CMake: Edit User-Local CMake Kits**
 
-## Troubleshooting
+## Troubleshoot
 
 If things aren’t working as expected, there are a few troubleshooting steps that you can take.
 
-If either `CMakePresets.json` or `CMakeUserPresets.json` is invalid, then none of the presets in the invalid file will be available for selection. CMake Tools IntelliSense can help you catch many of these JSON errors, but it won’t know if you're referencing a preset with `inherits` or `configurePreset` by the wrong name. To check if your preset files are valid, run `cmake --list-presets` from the command line at the root of your project directory (CMake 3.20 or higher is required). If either file is invalid, then you'll see the following error:
+If either `CMakePresets.json` or `CMakeUserPresets.json` is invalid, then none of the presets in the invalid file will be available for selection. CMake Tools IntelliSense can help you catch many of these JSON errors, but it won’t know if you're referencing a preset with `inherits` or `configurePreset` by the wrong name. To check if your preset files are valid, run `cmake --list-presets` from the command line at the root of your project directory (CMake 3.20 or later is required). If either file is invalid, then you'll see the following error:
 
 ```DOS
 CMake Error: Could not read presets from
@@ -269,9 +271,9 @@ Other troubleshooting steps include:
 
 If you have identified a problem, the best way to report it is by submitting an issue to the [CMake Tools extension repository](https://github.com/microsoft/vscode-cmake-tools).
 
-## Run CMake from the command line or a continuous integration (CI) pipeline
+## Run CMake from the command line or a CI pipeline
 
-You can use the same `CMakePresets.json` and `CMakeUserPresets.json` files to invoke CMake in Visual Studio Code, and from the command line. The [CMake](https://cmake.org/cmake/help/latest/manual/cmake.1.html) and [CTest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) documentation are the best resources for invoking CMake and CTest with `--preset`. CMake version 3.20 or higher is required.
+You can use the same `CMakePresets.json` and `CMakeUserPresets.json` files to invoke CMake in Visual Studio Code, and from the command line. The [CMake](https://cmake.org/cmake/help/latest/manual/cmake.1.html) and [CTest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) documentation are the best resources for invoking CMake and CTest with `--preset`. CMake version 3.20 or later is required.
 
 The following commands can be run from the directory where your `CMakePresets.json` is located:
 
@@ -282,9 +284,7 @@ cmake --build --preset <buildPreset-name>
 ctest --preset <testPreset-name>
 ```
 
-### Sourcing the environment when building with command-line generators on Windows
-
-See [Sourcing the environment when building with command-line generators on Windows](https://docs.microsoft.com/cpp/build/cmake-presets-vs#sourcing-the-environment-when-building-with-command-line-generators-on-windows) documentation for more information on building with a command-line generator on Windows.
+For information on building with a command-line generator on Windows, see [Sourcing the environment when building with command-line generators on Windows](https://docs.microsoft.com/cpp/build/cmake-presets-vs#sourcing-the-environment-when-building-with-command-line-generators-on-windows).
 
 ## Example `CMakePresets.json` file
 
@@ -292,5 +292,5 @@ See the `CMakePresets.json` file checked in the [box2d-lite](https://github.com/
 
 ## Next steps
 
-- Review [How CMake Tools builds](build.md#how-cmake-tools-builds)
-- Explore the [CMake Tools documentation](README.md)
+- Review [How CMake Tools builds](build.md#how-cmake-tools-builds).
+- Explore the [CMake Tools documentation](README.md).
