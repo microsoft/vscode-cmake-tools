@@ -7,7 +7,7 @@ Bug fixes:
 - Solve conflict between -DCMAKE_GENERAOR:STRING=Ninja versus -G "Visual Studio 16 2019" -A x64. [PR #1753](https://github.com/microsoft/vscode-cmake-tools/pull/1753) [@lygstate](https://github.com/lygstate)
 - Fix operator precedence when getting code page. [#1615](https://github.com/microsoft/vscode-cmake-tools/issues/1615) [@taoyouh](https://github.com/taoyouh)
 - Override the locale when querying compiler versions. [#1821](https://github.com/microsoft/vscode-cmake-tools/issues/1821)
-- Fix typo in CMakePresets.json schema. [PR #1809](https://github.com/microsoft/vscode-cmake-tools/pull/1809) [@1809]
+- Fix typo in CMakePresets.json schema. [PR #1809](https://github.com/microsoft/vscode-cmake-tools/pull/1809) [@1809] [@bluec0re](https://github.com/bluec0re)
 
 
 ## 1.7.1
