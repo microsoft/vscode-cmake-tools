@@ -660,7 +660,7 @@ class ExtensionManager implements vscode.Disposable {
       if (!this._cppToolsAPI) {
         this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5);
       }
-      if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
+      if (this._cppToolsAPI && cmt.codeModel && (cmt.activeKit || cmt.configurePreset)) {
         const codeModel = cmt.codeModel;
         const kit = cmt.activeKit;
         const cpptools = this._cppToolsAPI;
@@ -673,7 +673,18 @@ class ExtensionManager implements vscode.Disposable {
         }
         const drv = await cmt.getCMakeDriverInstance();
         const opts = drv ? drv.expansionOptions : undefined;
-        const env = await effectiveKitEnvironment(kit, opts);
+        let env: Map<string, string> = new Map<string, string>();
+        if (kit) {
+          env = await effectiveKitEnvironment(kit, opts);
+        } else if (cmt.configurePreset) {
+          for (const key in cmt.configurePreset.environment) {
+            let value = cmt.configurePreset.environment[key];
+            if (value) {
+              env.set(key, value);
+            }
+          }
+        }
+
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
