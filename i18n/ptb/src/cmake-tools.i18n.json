@@ -88,7 +88,7 @@
 	"waiting.on.variant": "Aguardando a seleção da variante",
 	"no.variant.abort": "Nenhuma variante selecionada. Anular configuração",
 	"cannot.configure.no.config.preset": "Não é possível configurar: nenhuma predefinição de configuração está ativa para este CMake Tools",
-	"warn.skip.configure.when.cache.present": "A extensão determinou que uma configuração é necessária neste momento, \\\n                          mas estamos ignorando porque a configuração cmake.skipConfigureWhenCachePresent está ATIVADA. \\\n                          Verifique se o cache do CMake está em sincronia com as alterações de configuração mais recentes.",
+	"warn.skip.configure.when.cache.present": "The extension determined that a configuration is needed at this moment \\\r\n                          but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. \\\r\n                          Make sure the CMake cache is in sync with the latest configuration changes.",
 	"run.build": "Compilando a pasta: {0}",
 	"unable.to.configure": "Falha no build: não é possível configurar o projeto",
 	"driver.died.after.successful.configure": "O driver do CMake foi encerrado imediatamente após o êxito da configuração",

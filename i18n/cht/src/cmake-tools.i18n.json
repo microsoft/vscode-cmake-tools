@@ -88,7 +88,7 @@
 	"waiting.on.variant": "正在等候變化選取項目",
 	"no.variant.abort": "未選取任何變化。中止設定",
 	"cannot.configure.no.config.preset": "無法設定: 此 CMake 工具沒有使用中的設定預設",
-	"warn.skip.configure.when.cache.present": "延伸模組判斷目前需要設定\\\n                          但因為設定 cmake.skipConfigureWhenCachePresent 已開啟，所以正在跳過設定。\\\n                          請確定 CMake 快取與最新的設定變更同步。",
+	"warn.skip.configure.when.cache.present": "The extension determined that a configuration is needed at this moment \\\r\n                          but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. \\\r\n                          Make sure the CMake cache is in sync with the latest configuration changes.",
 	"run.build": "正在建置資料夾: {0}",
 	"unable.to.configure": "建置失敗: 無法設定專案",
 	"driver.died.after.successful.configure": "設定成功後，CMake 驅動程式已隨即終止",

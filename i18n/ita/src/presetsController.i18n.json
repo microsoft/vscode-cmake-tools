@@ -74,7 +74,7 @@
 	"reading.presets.file": "Lettura dei file dei set di impostazioni {0}",
 	"failed.to.parse": "Non è stato possibile analizzare {0}: {1}",
 	"invalid.file.error": "Il contenuto {0} ({1}) del kit non è valido:",
-	"successfully.validated.presets": "I kit di set di impostazioni sono stati convalidati correttamente in {0}",
+	"successfully.validated.presets": "I set di impostazioni sono stati convalidati correttamente in {0}",
 	"use.kits.variants": "Usare kit e varianti",
 	"edit.presets": "Individuare",
 	"presets.version.error": "CMakePresets versione 1 non è supportato. Come si vuole procedere?",

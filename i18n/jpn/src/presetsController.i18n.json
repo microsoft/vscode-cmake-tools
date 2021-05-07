@@ -74,7 +74,7 @@
 	"reading.presets.file": "事前設定ファイル {0} を読み取っています",
 	"failed.to.parse": "{0} を解析できませんでした: {1}",
 	"invalid.file.error": "無効なキットの内容 {0} ({1}):",
-	"successfully.validated.presets": "{0} の事前設定キットが正常に検証されました",
+	"successfully.validated.presets": "{0} の事前設定が正常に検証されました",
 	"use.kits.variants": "キットとバリアントを使用する",
 	"edit.presets": "検索",
 	"presets.version.error": "CMakePresets バージョン 1 はサポートされていません。続行する方法を選択してください。",

@@ -74,7 +74,7 @@
 	"reading.presets.file": "Čte se soubor předvoleb {0}.",
 	"failed.to.parse": "Nepovedlo se parsovat {0}: {1}",
 	"invalid.file.error": "Neplatný obsah sady: {0} ({1}):",
-	"successfully.validated.presets": "Sady sestavení v {0} se úspěšně ověřily.",
+	"successfully.validated.presets": "Předvolby v {0} se úspěšně ověřily.",
 	"use.kits.variants": "Používat sady a varianty",
 	"edit.presets": "Vyhledat",
 	"presets.version.error": "CMakePresets verze 1 se nepodporuje. Jak chcete pokračovat?",

@@ -88,7 +88,7 @@
 	"waiting.on.variant": "Varyant seçimi bekleniyor",
 	"no.variant.abort": "Seçilen varyant yok. Yapılandırmayı durdur",
 	"cannot.configure.no.config.preset": "Yapılandırılamıyor: Bu CMake Araçları için etkin yapılandırma ön ayarı yok",
-	"warn.skip.configure.when.cache.present": "Uzantı, şu anda bir yapılandırmanın gerektiğini belirledi \\\n                          ancak cmake.skipConfigureWhenCachePresent özelliği AÇIK olduğundan atlanıyor. \\\n                          CMake önbelleğinin en son yapılandırma değişiklikleriyle eşitlendiğinden emin olun.",
+	"warn.skip.configure.when.cache.present": "The extension determined that a configuration is needed at this moment \\\r\n                          but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. \\\r\n                          Make sure the CMake cache is in sync with the latest configuration changes.",
 	"run.build": "Yapı klasörü: {0}",
 	"unable.to.configure": "Derleme başarısız oldu: Proje yapılandırılamıyor",
 	"driver.died.after.successful.configure": "CMake sürücüsü, başarılı yapılandırmadan hemen sonra sonlandırıldı",
