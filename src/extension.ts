@@ -678,7 +678,7 @@ class ExtensionManager implements vscode.Disposable {
           env = await effectiveKitEnvironment(kit, opts);
         } else if (cmt.configurePreset) {
           for (const key in cmt.configurePreset.environment) {
-            let value = cmt.configurePreset.environment[key];
+            const value = cmt.configurePreset.environment[key];
             if (value) {
               env.set(key, value);
             }
