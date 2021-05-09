@@ -15,7 +15,7 @@ schedules:
   displayName: Daily 7 AM
   branches:
     include:
-    - main
+    - develop
 
 pool:
   vmImage: 'windows-latest'
