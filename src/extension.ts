@@ -29,7 +29,7 @@ import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StateManager} from './state';
 import {StatusBar} from '@cmt/status';
-import {CMakeTaskProvider} from '@cmt/taskprovider';
+import {CMakeTaskProvider} from '@cmt/cMakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
 import * as util from '@cmt/util';
@@ -1460,7 +1460,7 @@ export async function registerTaskProvider(command: string | null) {
         cmakeTaskProvider.dispose();
       }
 
-      cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({ build: command }));
+      cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, new CMakeTaskProvider({ build: command }));
     });
   }
 }
