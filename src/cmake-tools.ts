@@ -1380,7 +1380,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
         }
       });
-      const sel = await vscode.window.showQuickPick(choices);
+      const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
       return sel ? sel.label : null;
     }
   }
