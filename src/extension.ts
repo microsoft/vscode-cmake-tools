@@ -40,6 +40,8 @@ import paths from '@cmt/paths';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+export const cmakeTaskProvider: CMakeTaskProvider = new CMakeTaskProvider();
+let taskProvider: vscode.Disposable;
 
 const log = logging.createLogger('extension');
 
@@ -47,6 +49,12 @@ const MULTI_ROOT_MODE_KEY = 'cmake:multiRoot';
 const HIDE_LAUNCH_COMMAND_KEY = 'cmake:hideLaunchCommand';
 const HIDE_DEBUG_COMMAND_KEY = 'cmake:hideDebugCommand';
 const HIDE_BUILD_COMMAND_KEY = 'cmake:hideBuildCommand';
+
+/**
+ * The global extension manager. There is only one of these, even if multiple
+ * backends.
+ */
+let _EXT_MANAGER: ExtensionManager|null = null;
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
@@ -1450,8 +1458,11 @@ class ExtensionManager implements vscode.Disposable {
  * The global extension manager. There is only one of these, even if multiple
  * backends.
  */
-let _EXT_MANAGER: ExtensionManager|null = null;
+/*let _EXT_MANAGER: ExtensionManager|null = null;
 let cmakeTaskProvider: vscode.Disposable | undefined;
+export const cmakeTaskProvider: CMakeTaskProvider = new CMakeTaskProvider();
+let taskProvider: vscode.Disposable;
+
 
 export async function registerTaskProvider(command: string | null) {
   if (command) {
@@ -1463,7 +1474,7 @@ export async function registerTaskProvider(command: string | null) {
       cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, new CMakeTaskProvider({ build: command }));
     });
   }
-}
+}*/
 
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle) {
   reportProgress(localize('initial.setup', 'Initial setup'), progress);
@@ -1650,10 +1661,13 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
+  taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
+
   return setup(context);
 
   // TODO: Return the extension API
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
+
 }
 
 // Enable all or part of the CMake Tools palette commands
@@ -1713,7 +1727,7 @@ export async function deactivate() {
   if (_EXT_MANAGER) {
     await _EXT_MANAGER.asyncDispose();
   }
-  if (cmakeTaskProvider) {
-    cmakeTaskProvider.dispose();
+  if (taskProvider) {
+    taskProvider.dispose();
   }
 }

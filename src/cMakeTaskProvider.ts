@@ -3,11 +3,13 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import {
-  TaskDefinition, Task, TaskGroup, ShellExecution, workspace,
-  TaskProvider, TaskScope, ProcessExecution, CustomExecution, WorkspaceFolder, Pseudoterminal, EventEmitter, Event, TerminalDimensions
+  TaskDefinition, Task, TaskGroup, workspace,
+  TaskProvider, TaskScope, CustomExecution, WorkspaceFolder, Pseudoterminal, EventEmitter, Event, TerminalDimensions, window, TextEditor
 } from 'vscode';
 import {isString} from './util';
 import * as cp from "child_process";
+import * as path from 'path';
+
 
 type TaskCommands = Record<string, string | string[] | null>;
 
@@ -25,12 +27,12 @@ export class cMakeTask extends Task {
 
 
 export class CMakeTaskProvider implements TaskProvider {
-  static CMakeScriptType = 'cmake';
-  static CpMakeSourceStr: string = "CMake";
+  static CMakeScriptType: string = 'cmake';
+  static CMakeSourceStr: string = "CMake";
   static target: string | undefined;
   static driver: string | undefined;
 
-  constructor(readonly taskCommands: TaskCommands) {
+  constructor() {
   }
 
   public static setTarget(target: string) {
@@ -39,19 +41,60 @@ export class CMakeTaskProvider implements TaskProvider {
 
   public async provideTasks(): Promise<cMakeTask[]> {
     const emptyTasks: cMakeTask[] = [];
-    return emptyTasks;
+    const editor: TextEditor | undefined = window.activeTextEditor;
+    if (!editor) {
+        return emptyTasks;
+    }
+
+    const fileExt: string = path.extname(editor.document.fileName);
+    if (!fileExt) {
+        return emptyTasks;
+    }
+
+    // Don't offer tasks for header files.
+    const fileExtLower: string = fileExt.toLowerCase();
+    const isHeader: boolean = !fileExt || [".cuh", ".hpp", ".hh", ".hxx", ".h++", ".hp", ".h", ".ii", ".inl", ".idl", ""].some(ext => fileExtLower === ext);
+    if (isHeader) {
+        return emptyTasks;
+    }
+
+    // Don't offer tasks if the active file's extension is not a recognized C/C++ extension.
+    let fileIsCpp: boolean;
+    let fileIsC: boolean;
+    if (fileExt === ".C") { // ".C" file extensions are both C and C++.
+        fileIsCpp = true;
+        fileIsC = true;
+    } else {
+        fileIsCpp = [".cu", ".cpp", ".cc", ".cxx", ".c++", ".cp", ".ino", ".ipp", ".tcc"].some(ext => fileExtLower === ext);
+        fileIsC = fileExtLower === ".c";
+    }
+    if (!(fileIsCpp || fileIsC)) {
+        return emptyTasks;
+    }
+    // Create one CMake build task
+    let result: cMakeTask[] = [];
+    let taskName: string = "CMake build";
+    const definition: CMakeTaskDefinition = {
+      type: CMakeTaskProvider.CMakeScriptType,
+      label: taskName,
+      command: "build",
+      detail: "Cmake build task template"
+    };
+    const task = new Task(definition, TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr);
+    task.group = TaskGroup.Build;
+    result.push(task);
+    return result;
   }
 
   public resolveTask(_task: cMakeTask): cMakeTask | undefined {
-    const execution: ProcessExecution | ShellExecution | CustomExecution | undefined = _task.execution;
+    const execution: any = _task.execution;
     if (!execution) {
         const definition: CMakeTaskDefinition = <any>_task.definition;
         const scope: WorkspaceFolder | TaskScope = TaskScope.Workspace;
-        const task: cMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CpMakeSourceStr,
+        const task: cMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
             new CustomExecution(async (resolvedDefinition: TaskDefinition): Promise<Pseudoterminal> =>
-                // When the task is executed, this callback will run. Here, we setup for running the task.
-                new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.options)
-            )); // TODO: add problem matcher
+              new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.options)
+            ), []); // TODO: add problem matcher
         return task;
     }
     return undefined;
@@ -87,7 +130,7 @@ export class CMakeTaskProvider implements TaskProvider {
       command: taskCommand
     };
     const scope: WorkspaceFolder | TaskScope = TaskScope.Workspace;
-    const task: cMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CpMakeSourceStr,
+    const task: cMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
         new CustomExecution(async (resolvedDefinition: TaskDefinition): Promise<Pseudoterminal> =>
             // When the task is executed, this callback will run. Here, we setup for running the task.
             new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.options)
