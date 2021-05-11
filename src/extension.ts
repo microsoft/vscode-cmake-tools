@@ -670,7 +670,7 @@ class ExtensionManager implements vscode.Disposable {
           return;
         }
         const drv = await cmt.getCMakeDriverInstance();
-        let env: Map<string, string> = new Map<string, string>();
+        const env: Map<string, string> = new Map<string, string>();
         const configureEnv = await drv?.getConfigureEnvironment();
         if (configureEnv) {
           for (const key in configureEnv) {
