@@ -41,9 +41,10 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import {updateFullFeatureSetForFolder, registerTaskProvider, enableFullFeatureSet, isActiveFolder} from './extension';
+import {updateFullFeatureSetForFolder, cmakeTaskProvider, enableFullFeatureSet, isActiveFolder} from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
+import { CMakeTaskProvider } from './cMakeTaskProvider';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -636,8 +637,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
 
-    // Make sure to re-register the task provider when a new driver is created
-    await registerTaskProvider(await this.tasksBuildCommandDrv(drv));
+    // Update the task provider when a new driver is created
+    //await registerTaskProvider(await this.tasksBuildCommandDrv(drv));
+    CMakeTaskProvider.setDriverBuildArgs(await this.tasksBuildCommandDrv(drv));
 
     // All set up. Fulfill the driver promise.
     return drv;

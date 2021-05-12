@@ -30,13 +30,17 @@ export class CMakeTaskProvider implements TaskProvider {
   static CMakeScriptType: string = 'cmake';
   static CMakeSourceStr: string = "CMake";
   static target: string | undefined;
-  static driver: string | undefined;
+  static driverBuildArgs: string | null;
 
   constructor() {
   }
 
   public static setTarget(target: string) {
     this.target = target;
+  }
+
+  public static setDriverBuildArgs(driverBuildArgs: string | null) {
+    this.driverBuildArgs = driverBuildArgs;
   }
 
   public async provideTasks(): Promise<cMakeTask[]> {

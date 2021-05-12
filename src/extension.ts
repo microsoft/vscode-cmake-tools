@@ -29,7 +29,7 @@ import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StateManager} from './state';
 import {StatusBar} from '@cmt/status';
-import {CMakeTaskProvider} from '@cmt/cMakeTaskProvider';
+import {CMakeTaskProvider} from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
 import * as util from '@cmt/util';
@@ -1453,28 +1453,6 @@ class ExtensionManager implements vscode.Disposable {
     return presetSelected;
   }
 }
-
-/**
- * The global extension manager. There is only one of these, even if multiple
- * backends.
- */
-/*let _EXT_MANAGER: ExtensionManager|null = null;
-let cmakeTaskProvider: vscode.Disposable | undefined;
-export const cmakeTaskProvider: CMakeTaskProvider = new CMakeTaskProvider();
-let taskProvider: vscode.Disposable;
-
-
-export async function registerTaskProvider(command: string | null) {
-  if (command) {
-    rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
-      if (cmakeTaskProvider) {
-        cmakeTaskProvider.dispose();
-      }
-
-      cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, new CMakeTaskProvider({ build: command }));
-    });
-  }
-}*/
 
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle) {
   reportProgress(localize('initial.setup', 'Initial setup'), progress);
