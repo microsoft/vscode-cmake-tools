@@ -180,7 +180,8 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
   return path.normalize(absolute_path);
 }
 
-function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject): CodeModelFileGroup[] {
+function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject,
+                                        root_paths: index_api.CodeModelKind.PathInfo): CodeModelFileGroup[] {
   const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
     const compileFlags
         = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
@@ -197,9 +198,10 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
   // Collection all without compilegroup like headers
   const defaultIndex = fileGroup.push({sources: [], isGenerated: false} as CodeModelFileGroup) - 1;
 
-
+  const target_source_root = convertToAbsolutePath(targetObject.paths.source, root_paths.source);
   targetObject.sources.forEach(sourcefile => {
-    const file_path = path.relative(targetObject.paths.source, sourcefile.path).replace('\\', '/');
+    const file_abs_path = convertToAbsolutePath(sourcefile.path, root_paths.source);
+    const file_path = path.relative(target_source_root, file_abs_path).replace('\\', '/');
     if (sourcefile.compileGroupIndex !== undefined) {
       fileGroup[sourcefile.compileGroupIndex].sources.push(file_path);
     } else {
@@ -215,7 +217,7 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
 async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
   const targetObject = await loadTargetObject(jsonfile);
 
-  const fileGroups = convertToExtCodeModelFileGroup(targetObject);
+  const fileGroups = convertToExtCodeModelFileGroup(targetObject, root_paths);
 
   // This implementation expects that there is only one sysroot in a target.
   // The ServerAPI only has provided one sysroot. In the FileAPI,

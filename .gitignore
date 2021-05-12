@@ -6,6 +6,7 @@ out/
 test/fakebin/
 vscode-extensions-localization-export/
 vscode-translations-import/
+jobs/loc/LCL
 .ci-build
 .DS_Store
 debug.log

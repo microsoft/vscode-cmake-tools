@@ -206,7 +206,13 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     const bindir = util.lightNormalizePath(this.binaryDir);
     args.push(`-B${bindir}`);
     const gen = this.generator;
-    if (gen) {
+    let has_gen = false;
+    for (const arg of args) {
+      if (arg.startsWith("-DCMAKE_GENERATOR:STRING=")) {
+        has_gen = true;
+      }
+    }
+    if (!has_gen && gen) {
       args.push('-G');
       args.push(gen.name);
       if (gen.toolset) {

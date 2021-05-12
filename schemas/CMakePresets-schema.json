@@ -455,7 +455,7 @@
                                           "Debug",
                                           "Release",
                                           "RelWithDebInfo",
-                                          "MinSizRel"
+                                          "MinSizeRel"
                                       ]
                                   },
                                   {

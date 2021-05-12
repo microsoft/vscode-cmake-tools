@@ -19,7 +19,6 @@ import {
   Kit,
   USER_KITS_FILEPATH,
   findCLCompilerPath,
-  effectiveKitEnvironment,
   scanForKitsIfNeeded,
 } from '@cmt/kit';
 import {KitsController} from '@cmt/kitsController';
@@ -660,9 +659,8 @@ class ExtensionManager implements vscode.Disposable {
       if (!this._cppToolsAPI) {
         this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5);
       }
-      if (this._cppToolsAPI && cmt.codeModel && cmt.activeKit) {
+      if (this._cppToolsAPI && cmt.codeModel && (cmt.activeKit || cmt.configurePreset)) {
         const codeModel = cmt.codeModel;
-        const kit = cmt.activeKit;
         const cpptools = this._cppToolsAPI;
         let cache: CMakeCache;
         try {
@@ -672,8 +670,17 @@ class ExtensionManager implements vscode.Disposable {
           return;
         }
         const drv = await cmt.getCMakeDriverInstance();
-        const opts = drv ? drv.expansionOptions : undefined;
-        const env = await effectiveKitEnvironment(kit, opts);
+        const env: Map<string, string> = new Map<string, string>();
+        const configureEnv = await drv?.getConfigureEnvironment();
+        if (configureEnv) {
+          for (const key in configureEnv) {
+            const value = configureEnv[key];
+            if (util.isString(value)) {
+              env.set(key, value);
+            }
+          }
+        }
+
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
         this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
