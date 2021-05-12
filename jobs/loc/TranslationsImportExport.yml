@@ -41,6 +41,7 @@ steps:
     patVariable: '$(OneLocBuildPat)'
     LclSource: lclFilesfromPackage
     LclPackageId: 'LCL-JUNO-PROD-VCMAKE'
+    isUseLfLineEndingsSelected: true
 
 - task: CmdLine@2
   inputs:
