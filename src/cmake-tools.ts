@@ -1159,10 +1159,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const skipConfigureIfCachePresent = this.workspaceContext.config.skipConfigureIfCachePresent;
     if (skipConfigureIfCachePresent && needsReconfigure && await fs.exists(drv.cachePath)) {
-      log.info(localize('warn.skip.configure.when.cache.present',
-                          'The extension determined that a configuration is needed at this moment \
-                          but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. \
-                          Make sure the CMake cache is in sync with the latest configuration changes.'));
+      log.info(localize(
+        'warn.skip.configure.when.cache.present',
+        'The extension determined that a configuration is needed at this moment but we are skipping because the setting cmake.skipConfigureWhenCachePresent is ON. Make sure the CMake cache is in sync with the latest configuration changes.'));
       return false;
     }
 
@@ -1382,7 +1381,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
         }
       });
-      const sel = await vscode.window.showQuickPick(choices);
+      const sel = await vscode.window.showQuickPick(choices, { placeHolder: localize('select.active.target.tooltip', 'Select the default build target') });
       return sel ? sel.label : null;
     }
   }

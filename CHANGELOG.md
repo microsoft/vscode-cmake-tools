@@ -1,5 +1,11 @@
 # What's New?
 
+## 1.7.3
+Bug fixes:
+- Make sure CMake Tools configuration provider gets registered with presets on. [#1832](https://github.com/microsoft/vscode-cmake-tools/issues/1832)
+- Add the license field to package.json. [#1823](https://github.com/microsoft/vscode-cmake-tools/issues/1823)
+- Add title to "Select target" quickpick. [#1860](https://github.com/microsoft/vscode-cmake-tools/issues/1860)
+
 ## 1.7.2
 Bug fixes:
 - Fix paths of target sources outside the workspace. [#1504](https://github.com/microsoft/vscode-cmake-tools/issues/1504) [@sleiner](https://github.com/sleiner)

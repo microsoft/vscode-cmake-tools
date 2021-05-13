@@ -271,7 +271,7 @@ class BuildTargetSelectionButton extends Button {
     super(config, priority);
     this.hidden = true;
     this.command = 'cmake.setDefaultTarget';
-    this.tooltip = localize('set.active.target.tooltip', 'Set the active target to build');
+    this.tooltip = localize('set.active.target.tooltip', 'Set the default build target');
   }
 
   protected getTooltipShort(): string|null { return this.prependCMake(this.tooltip); }
