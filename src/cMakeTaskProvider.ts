@@ -3,25 +3,23 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 import {
-  TaskDefinition, Task, TaskGroup, workspace,
-  TaskProvider, TaskScope, CustomExecution, WorkspaceFolder, Pseudoterminal, EventEmitter, Event, TerminalDimensions, window, TextEditor
+  TaskDefinition, Task, TaskGroup, TaskProvider, TaskScope, CustomExecution, WorkspaceFolder, Pseudoterminal, EventEmitter, Event, TerminalDimensions, window, TextEditor
 } from 'vscode';
-import {isString} from './util';
 import * as cp from "child_process";
 import * as path from 'path';
+import { CMakeDriver } from './drivers/driver';
+import { BuildCommand } from './proc';
 
-
-type TaskCommands = Record<string, string | string[] | null>;
 
 interface CMakeTaskDefinition extends TaskDefinition {
   type: string;
   label: string;
   command: string; // command include args
-  //args: string[];
+  args: string[];
   options?: cp.ExecOptions | undefined;
 }
 
-export class cMakeTask extends Task {
+export class cmakeTask extends Task {
   detail?: string;
 }
 
@@ -29,22 +27,23 @@ export class cMakeTask extends Task {
 export class CMakeTaskProvider implements TaskProvider {
   static CMakeScriptType: string = 'cmake';
   static CMakeSourceStr: string = "CMake";
-  static target: string | undefined;
-  static driverBuildArgs: string | null;
+  static defaultTargetStr: string = "all";//"${defaultTarget}";
+  static cmakeDriver: CMakeDriver | undefined;
+  private defaultTarget: string | undefined;
 
   constructor() {
   }
 
-  public static setTarget(target: string) {
-    this.target = target;
+  public static updateCMakeDriver(cmakeDriver: CMakeDriver | undefined) {
+    this.cmakeDriver = cmakeDriver;
   }
 
-  public static setDriverBuildArgs(driverBuildArgs: string | null) {
-    this.driverBuildArgs = driverBuildArgs;
+  public updateDefaultTarget(defaultTarget: string | undefined) {
+    this.defaultTarget = defaultTarget;
   }
 
-  public async provideTasks(): Promise<cMakeTask[]> {
-    const emptyTasks: cMakeTask[] = [];
+  public async provideTasks(): Promise<cmakeTask[]> {
+    const emptyTasks: cmakeTask[] = [];
     const editor: TextEditor | undefined = window.activeTextEditor;
     if (!editor) {
         return emptyTasks;
@@ -75,69 +74,50 @@ export class CMakeTaskProvider implements TaskProvider {
     if (!(fileIsCpp || fileIsC)) {
         return emptyTasks;
     }
-    // Create one CMake build task
-    let result: cMakeTask[] = [];
+    // Create one CMake build task with target set to "all"
+    let result: cmakeTask[] = [];
     let taskName: string = "CMake build";
+    let buildCommand: BuildCommand | null = CMakeTaskProvider.cmakeDriver ? await CMakeTaskProvider.cmakeDriver.getCMakeBuildCommand(CMakeTaskProvider.defaultTargetStr) : null;
+    let args: string[] = (buildCommand && buildCommand.args) ? buildCommand.args : [];
     const definition: CMakeTaskDefinition = {
       type: CMakeTaskProvider.CMakeScriptType,
       label: taskName,
       command: "build",
-      detail: "Cmake build task template"
+      args: args
     };
     const task = new Task(definition, TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr);
     task.group = TaskGroup.Build;
+    task.detail = "Cmake build task template";
     result.push(task);
     return result;
   }
 
-  public resolveTask(_task: cMakeTask): cMakeTask | undefined {
+  public resolveTask(_task: cmakeTask): cmakeTask | undefined {
     const execution: any = _task.execution;
     if (!execution) {
         const definition: CMakeTaskDefinition = <any>_task.definition;
         const scope: WorkspaceFolder | TaskScope = TaskScope.Workspace;
-        const task: cMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+        const task: cmakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
             new CustomExecution(async (resolvedDefinition: TaskDefinition): Promise<Pseudoterminal> =>
-              new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.options)
+              new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.args, resolvedDefinition.options)
             ), []); // TODO: add problem matcher
         return task;
     }
     return undefined;
   }
 
-  private async getTasks(taskCommands: TaskCommands): Promise<cMakeTask[]> {
-    const workspaceFolders = workspace.workspaceFolders;
-    const result: cMakeTask[] = [];
-    if (!workspaceFolders || workspaceFolders.length === 0) {
-      return result;
-    }
-
-    for (const command in taskCommands) {
-      if (isString(command[1])) {
-        const definition: CMakeTaskDefinition = {
-          type: CMakeTaskProvider.CMakeScriptType,
-          label: command[0],
-          command: command[0]
-        };
-        const task = new Task(definition, TaskScope.Workspace, command[0], CMakeTaskProvider.CMakeScriptType);
-        task.group = TaskGroup.Build;
-        result.push(task);
-      }
-    }
-
-    return result;
-  }
-
-  private getTask(taskCommand: string): cMakeTask {
+  private getTask(taskCommand: string): cmakeTask {
     const definition: CMakeTaskDefinition = {
       type: CMakeTaskProvider.CMakeScriptType,
       label: taskCommand,
-      command: taskCommand
+      command: taskCommand,
+      args: []
     };
     const scope: WorkspaceFolder | TaskScope = TaskScope.Workspace;
-    const task: cMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+    const task: cmakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
         new CustomExecution(async (resolvedDefinition: TaskDefinition): Promise<Pseudoterminal> =>
             // When the task is executed, this callback will run. Here, we setup for running the task.
-            new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.options)
+            new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.args, resolvedDefinition.options)
         )); // TODO: add problem matcher
     return task;
   }
@@ -150,7 +130,7 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
   public get onDidClose(): Event<number> { return this.closeEmitter.event; }
   private endOfLine: string = "\r\n";
 
-  constructor(private command: string, private options: cp.ExecOptions | undefined) {
+  constructor(private command: string, private args: string[], private options: cp.ExecOptions | undefined) {
   }
 
   async open(_initialDimensions: TerminalDimensions | undefined): Promise<void> {
@@ -163,6 +143,13 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
   }
 
   private async doBuild(): Promise<any> {
+    let activeCommand: string = this.command;
+    this.args.forEach(value => {
+        if (value.includes(" ")) {
+          value = "\"" + value + "\"";
+        }
+        activeCommand = activeCommand + " " + value;
+    });
       const splitWriteEmitter = (lines: string | Buffer) => {
           for (const line of lines.toString().split(/\r?\n/g)) {
               this.writeEmitter.fire(line + this.endOfLine);

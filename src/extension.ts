@@ -36,6 +36,7 @@ import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
 import {expandString, KitContextVars} from '@cmt/expand';
 import paths from '@cmt/paths';
+import { CMakeDriver } from './drivers/driver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1706,7 +1707,17 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
   enableFullFeatureSet(true);
 }
 
-// this method is called when your extension is deactivated
+// update CMakeDriver in taskProvider
+export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver | undefined) {
+  CMakeTaskProvider.updateCMakeDriver(cmakeDriver);
+}
+
+// update default target in taskProvider
+export function updateDefaultTargetInTaskProvider(defaultTarget: string | undefined) {
+  cmakeTaskProvider.updateDefaultTarget(defaultTarget);
+}
+
+// this method is called when your extension is deactivated.
 export async function deactivate() {
   log.debug(localize('deactivate.cmaketools', 'Deactivate CMakeTools'));
   if (_EXT_MANAGER) {
