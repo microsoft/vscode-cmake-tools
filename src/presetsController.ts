@@ -310,7 +310,7 @@ export class PresetsController {
             // No selection was made
             return false;
           } else {
-            if (chosen_kit.kit.name == SpecialKits.ScanForKits) {
+            if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
               await KitsController.scanForKits(this._cmakeTools);
               preset.setCompilers(this._kitsController.availableKits);
               return false;

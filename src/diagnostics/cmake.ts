@@ -114,9 +114,9 @@ export class CMakeOutputConsumer implements OutputConsumer {
         this._errorState.blankLines = 0;
         break;
       }
-      if (line == '') {
+      if (line === '') {
         // A blank line!
-        if (this._errorState.blankLines == 0) {
+        if (this._errorState.blankLines === 0) {
           // First blank. Okay
           this._errorState.blankLines++;
           this._errorState.diag!.diag.message += '\n';
@@ -138,8 +138,8 @@ export class CMakeOutputConsumer implements OutputConsumer {
     case 'stack': {
       // Meh... vscode doesn't really let us provide call stacks to diagnostics.
       // We can't really do anything...
-      if (line.trim() == '') {
-        if (this._errorState.blankLines == 1) {
+      if (line.trim() === '') {
+        if (this._errorState.blankLines === 1) {
           this._commitDiag();
         } else {
           this._errorState.blankLines++;

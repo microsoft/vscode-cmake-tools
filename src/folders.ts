@@ -89,7 +89,7 @@ export class CMakeToolsFolder {
       const kit_name = folder.cmakeTools.workspaceContext.state.activeKitName;
       if (kit_name) {
         // It remembers a kit. Find it in the kits avail in this dir:
-        const kit = folder.kitsController.availableKits.find(k => k.name == kit_name) || null;
+        const kit = folder.kitsController.availableKits.find(k => k.name === kit_name) || null;
         // Set the kit: (May do nothing if no kit was found)
         await folder.cmakeTools.setKit(kit);
       }

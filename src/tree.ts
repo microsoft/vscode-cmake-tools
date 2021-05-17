@@ -197,7 +197,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
       // We added/removed nodes
       did_update = true;
     }
-    if (new_leaves.size != this._leaves.size) {
+    if (new_leaves.size !== this._leaves.size) {
       // We added/removed leaves
       did_update = true;
     }
@@ -226,7 +226,7 @@ export class SourceFileNode extends BaseNode {
     item.id = this.id;
     item.resourceUri = vscode.Uri.file(this.filePath);
     const name = this.name.toLowerCase();
-    const cml = name == "cmakelists.txt";
+    const cml = name === "cmakelists.txt";
     const is_compilable = ['CXX', 'C'].indexOf(this._language||'')!==-1;
     item.contextValue = ['nodeType=file', `compilable=${is_compilable}`, `cmakelists=${cml}`].join(',');
     item.command = {
@@ -272,7 +272,7 @@ export class TargetNode extends BaseNode {
       if (this._isLaunch) {
         item.label += ' 🚀';
       }
-      if (this._fullName != this.name && this._fullName) {
+      if (this._fullName !== this.name && this._fullName) {
         item.label += ` [${this._fullName}]`;
       }
       if (this._type === 'INTERFACE_LIBRARY') {
@@ -315,8 +315,8 @@ export class TargetNode extends BaseNode {
   }
 
   update(cm: codemodel_api.CodeModelTarget, ctx: TreeUpdateContext) {
-    console.assert(this.name == cm.name);
-    console.assert(this.sourceDir == (cm.sourceDirectory || ''));
+    console.assert(this.name === cm.name);
+    console.assert(this.sourceDir === (cm.sourceDirectory || ''));
 
     let did_update = this._fullName !== (cm.fullName || '');
     this._fullName = cm.fullName || '';

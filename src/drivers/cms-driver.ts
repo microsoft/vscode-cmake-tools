@@ -180,7 +180,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       return;
     }
     const new_env = JSON.stringify(await this.getConfigureEnvironment());
-    if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir || new_env != this._prevConfigureEnv) {
+    if (bindir_before !== this.binaryDir || srcdir_before !== this.sourceDir || new_env !== this._prevConfigureEnv) {
       // Directories changed. We need to restart the driver
       await this._restartClient();
     }
@@ -191,7 +191,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     if (!this._codeModel) {
       return [];
     }
-    const build_config = this._codeModel.configurations.find(conf => conf.name == this.currentBuildType);
+    const build_config = this._codeModel.configurations.find(conf => conf.name === this.currentBuildType);
     if (!build_config) {
       log.error(localize('found.no.matching.code.model', 'Found no matching code model for the current build type. This shouldn\'t be possible'));
       return [];

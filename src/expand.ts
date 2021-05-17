@@ -109,7 +109,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     i++;
   } while (i < MAX_RECURSION && opts.recursive && didReplacement);
 
-  if (i == MAX_RECURSION) {
+  if (i === MAX_RECURSION) {
     log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
   }
 

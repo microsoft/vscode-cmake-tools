@@ -689,11 +689,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     try {
       const result = await child.result;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
-      return result.retc == 0;
+      return result.retc === 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
-      if (e2.code == 'ENOENT') {
+      if (e2.code === 'ENOENT') {
         return false;
       }
       throw e;
@@ -710,19 +710,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
     for (const gen of preferredGenerators) {
       const gen_name = gen.name;
       const generator_present = await (async(): Promise<boolean> => {
-        if (gen_name == 'Ninja') {
+        if (gen_name === 'Ninja') {
           return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
         }
-        if (gen_name == 'MinGW Makefiles') {
+        if (gen_name === 'MinGW Makefiles') {
           return platform === 'win32' && this.testHaveCommand('mingw32-make');
         }
-        if (gen_name == 'NMake Makefiles') {
+        if (gen_name === 'NMake Makefiles') {
           return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
         }
-        if (gen_name == 'Unix Makefiles') {
+        if (gen_name === 'Unix Makefiles') {
           return this.testHaveCommand('make');
         }
-        if (gen_name == 'MSYS Makefiles') {
+        if (gen_name === 'MSYS Makefiles') {
           return platform === 'win32' && this.testHaveCommand('make');
         }
         return false;
@@ -1403,7 +1403,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private _currentBuildProcess: proc.Subprocess|null = null;
 
   private correctAllTargetName(targetname: string) {
-    if (targetname === 'all' || targetname == 'ALL_BUILD') {
+    if (targetname === 'all' || targetname === 'ALL_BUILD') {
       return this.allTargetName;
     } else {
       return targetname;
@@ -1477,7 +1477,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const buildcmd = await this.getCMakeBuildCommand(target);
     if (buildcmd) {
       let outputEnc = this.config.outputLogEncoding;
-      if (outputEnc == 'auto') {
+      if (outputEnc === 'auto') {
         if (process.platform === 'win32') {
           outputEnc = await codepages.getWindowsCodepage();
         } else {

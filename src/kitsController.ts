@@ -231,7 +231,7 @@ export class KitsController {
       // We have kits. Okay.
       return true;
     }
-    if (!avail.find(kit => kit.name == SpecialKits.Unspecified)) {
+    if (!avail.find(kit => kit.name === SpecialKits.Unspecified)) {
       // We should _always_ have the 'UnspecifiedKit'.
       rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
       return false;
@@ -301,7 +301,7 @@ export class KitsController {
       // No selection was made
       return false;
     } else {
-      if (chosen_kit.kit.name == SpecialKits.ScanForKits) {
+      if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
         await KitsController.scanForKits(this.cmakeTools);
         return false;
       } else {
@@ -450,7 +450,7 @@ export class KitsController {
 
     // Sort the kits by name so they always appear in order in the file.
     const sorted_kits = stripped_kits.sort((a, b) => {
-      if (a.name == b.name) {
+      if (a.name === b.name) {
         return 0;
       } else if (a.name < b.name) {
         return -1;

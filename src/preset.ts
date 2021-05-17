@@ -1331,7 +1331,7 @@ export function configurePresetChangeNeedsClean(newPreset: ConfigurePreset, oldP
   });
   const new_imp = important_params(newPreset);
   const old_imp = important_params(oldPreset);
-  if (util.compare(new_imp, old_imp) != util.Ordering.Equivalent) {
+  if (util.compare(new_imp, old_imp) !== util.Ordering.Equivalent) {
     log.debug(localize('clean.needed.config.preset.changed', 'Need clean: configure preset changed'));
     return true;
   } else {

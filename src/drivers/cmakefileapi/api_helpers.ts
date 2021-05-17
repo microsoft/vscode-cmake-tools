@@ -44,7 +44,7 @@ export async function loadIndexFile(reply_path: string): Promise<index_api.Index
   log.debug(`Found index files: ${JSON.stringify(files)}`);
 
   const index_files = files.filter(filename => filename.startsWith('index-')).sort();
-  if (index_files.length == 0) {
+  if (index_files.length === 0) {
     throw Error('No index file found.');
   }
   const index_file_path = path.join(reply_path, index_files[index_files.length - 1]);
@@ -59,7 +59,7 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
 
   const expected_version = {major: 2, minor: 0};
   const detected_version = cache_from_cmake.version;
-  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
+  if (detected_version.major !== expected_version.major || detected_version.minor < expected_version.minor) {
     log.warning(localize(
         'cache.object.version',
         'Cache object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
@@ -73,7 +73,7 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
 }
 
 function findPropertyValue(cacheElement: index_api.Cache.CMakeCacheEntry, name: string): string {
-  const property_element = cacheElement.properties.find(prop => prop.name == name);
+  const property_element = cacheElement.properties.find(prop => prop.name === name);
   return property_element ? property_element.value : '';
 }
 
@@ -107,7 +107,7 @@ export async function loadCodeModelContent(filename: string): Promise<index_api.
   const expected_version = {major: 2, minor: 0};
   const detected_version = codemodel.version;
 
-  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
+  if (detected_version.major !== expected_version.major || detected_version.minor < expected_version.minor) {
     log.warning(localize(
         'code.model.version',
         'Code model version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
@@ -226,7 +226,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
   if (targetObject.compileGroups) {
     const all_sysroots
         = targetObject.compileGroups.map(x => !!x.sysroot ? x.sysroot.path : undefined).filter(x => x !== undefined);
-    sysroot = all_sysroots.length != 0 ? all_sysroots[0] : undefined;
+    sysroot = all_sysroots.length !== 0 ? all_sysroots[0] : undefined;
   }
 
   return {
@@ -285,7 +285,7 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
 
   const expected_version = {major: 1, minor: 0};
   const detected_version = toolchains.version;
-  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
+  if (detected_version.major !== expected_version.major || detected_version.minor < expected_version.minor) {
     log.warning(localize(
         'toolchains.object.version',
         'Toolchains object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',

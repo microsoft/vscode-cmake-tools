@@ -231,7 +231,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
-    if (res.retc == 0) {
+    if (res.retc === 0) {
       this._needsReconfigure = false;
       await this.updateCodeModel();
     }
@@ -347,10 +347,10 @@ function targetReducer(set: api.Target[], t: api.Target): api.Target[] {
 function compareTargets(a: api.Target, b: api.Target): boolean {
   let same = false;
   if (a.type === b.type) {
-    same = a.name == b.name;
+    same = a.name === b.name;
     if (a.type === 'rich' && b.type === 'rich') {
-      same = same && (a.filepath == b.filepath);
-      same = same && (a.targetType == b.targetType);
+      same = same && (a.filepath === b.filepath);
+      same = same && (a.targetType === b.targetType);
     }
   }
 

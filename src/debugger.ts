@@ -161,7 +161,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
     // 1. LLDB-MI
     const clang_compiler_regex = /(clang[\+]{0,2})+(?!-cl)/gi;
     let mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb-mi');
-    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb-mi')) != -1)) {
+    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb-mi')) !== -1)) {
       const cpptoolsExtension = vscode.extensions.getExtension('ms-vscode.cpptools');
       const cpptoolsDebuggerPath = cpptoolsExtension ? path.join(cpptoolsExtension.extensionPath, "debugAdapters", "lldb-mi", "bin", "lldb-mi") : undefined;
         // 1a. lldb-mi in the compiler path
@@ -177,18 +177,18 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 
     // 2. gdb in the compiler path
     mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'gdb');
-    if (modeOverride !== "lldb" && (mi_debugger_path.search(new RegExp('gdb')) != -1) && await checkDebugger(mi_debugger_path)) {
+    if (modeOverride !== "lldb" && (mi_debugger_path.search(new RegExp('gdb')) !== -1) && await checkDebugger(mi_debugger_path)) {
       return createGDBDebugConfiguration(mi_debugger_path, target);
     }
 
     // 3. lldb in the compiler path
     mi_debugger_path = compiler_path.replace(clang_compiler_regex, 'lldb');
-    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb')) != -1) && await checkDebugger(mi_debugger_path)) {
+    if (modeOverride !== "gdb" && (mi_debugger_path.search(new RegExp('lldb')) !== -1) && await checkDebugger(mi_debugger_path)) {
       return createLLDBDebugConfiguration(mi_debugger_path, target);
     }
   }
 
-  const debugger_name = modeOverride || (platform == 'darwin' ? 'lldb' : 'gdb');
+  const debugger_name = modeOverride || (platform === 'darwin' ? 'lldb' : 'gdb');
   const description = DEBUG_GEN[debugger_name];
   const gcc_compiler_regex = /([cg]\+\+|g?cc)(?=[^\/\\]*$)/gi;
   let gdb_debugger_path = debuggerPathOverride || compiler_path.replace(gcc_compiler_regex, description.miMode);
@@ -198,7 +198,7 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
       gdb_debugger_path = gdb_debugger_path + '.exe';
     }
   }
-  if (gdb_debugger_path.search(new RegExp(description.miMode)) != -1) {
+  if (gdb_debugger_path.search(new RegExp(description.miMode)) !== -1) {
     return description.createConfig(gdb_debugger_path, target);
   }
 
@@ -214,5 +214,5 @@ export async function getDebugConfigurationFromCache(cache: CMakeCache, target: 
 
 export async function checkDebugger(debuggerPath: string): Promise<boolean> {
   const res = await proc.execute(debuggerPath, ['--version'], null, {shell: true}).result;
-  return res.retc == 0;
+  return res.retc === 0;
 }

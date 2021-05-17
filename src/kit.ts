@@ -388,7 +388,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     }
   } catch (e) {
     log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
-    if (e.code == 'ENOENT') {
+    if (e.code === 'ENOENT') {
       return [];
     }
     throw e;
@@ -399,7 +399,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
   try {
     bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
   } catch (e) {
-    if (e.code == 'EACCESS' || e.code == 'EPERM') {
+    if (e.code === 'EACCESS' || e.code === 'EPERM') {
       return [];
     }
     throw e;
@@ -421,13 +421,13 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
       return await kitIfCompiler(bin, pr);
     } catch (e) {
       log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
-      if (e.code == 'EACCES') {
+      if (e.code === 'EACCES') {
         // The binary may not be executable by this user...
         return null;
-      } else if (e.code == 'ENOENT') {
+      } else if (e.code === 'ENOENT') {
         // This will happen on Windows if we try to "execute" a directory
         return null;
-      } else if (e.code == 'UNKNOWN' && process.platform == 'win32') {
+      } else if (e.code === 'UNKNOWN' && process.platform === 'win32') {
         // This is when file is not executable (in windows)
         return null;
       }
@@ -675,7 +675,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
  */
 export async function getShellScriptEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>|undefined> {
   console.assert(kit.environmentSetupScript);
-  const filename = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
+  const filename = Math.random().toString() + (process.platform === 'win32' ? '.bat' : '.sh');
   const script_filename = `vs-cmt-${filename}`;
   const environment_filename = script_filename + '.env';
 
@@ -705,7 +705,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
   }
 
-  if (process.platform == 'win32') { // windows
+  if (process.platform === 'win32') { // windows
     script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
     script += `set >> "${environment_path}"`; // write env vars to temp file
     // Quote the script file path before running it, in case there are spaces.
@@ -782,7 +782,7 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
   console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
   let vcvarsScript: string = 'vcvarsall.bat';
-  if (targetArch == "arm" || targetArch == "arm64") {
+  if (targetArch === "arm" || targetArch === "arm64") {
     // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
     vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
   }
@@ -991,7 +991,7 @@ async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
     const installs = await vsInstallations();
     const match = (inst: VSInstallation) =>
         // old Kit format
-        (legacyKitVSName(inst) == kit.visualStudio) ||
+        (legacyKitVSName(inst) === kit.visualStudio) ||
         // new Kit format
         (kitVSName(inst) === kit.visualStudio) ||
         // Clang for VS kit format
@@ -1343,7 +1343,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   });
   const new_imp = important_params(newKit);
   const old_imp = important_params(oldKit);
-  if (compare(new_imp, old_imp) != Ordering.Equivalent) {
+  if (compare(new_imp, old_imp) !== Ordering.Equivalent) {
     log.debug(localize('clean.needed', 'Need clean: Kit changed'));
     return true;
   } else {

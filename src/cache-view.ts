@@ -422,7 +422,7 @@ export class ConfigurationWebview {
           const vscode = acquireVsCodeApi();
           function toggleKey(id) {
             const label = document.getElementById('LABEL_' + id);
-            label.textContent = label.textContent == 'ON' ? 'OFF' : 'ON';
+            label.textContent = label.textContent === 'ON' ? 'OFF' : 'ON';
             const checkbox = document.getElementById(id);
             vscode.postMessage({key: id, type: "Bool", value: checkbox.checked});
             document.getElementById('not-saved').classList.remove('invisible');

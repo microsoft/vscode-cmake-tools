@@ -74,7 +74,7 @@ export function quote(str: string, opt?: ShlexOptions): string {
   opt = opt || {
     mode: process.platform === 'win32' ? 'windows' : 'posix',
   };
-  if (str == '') {
+  if (str === '') {
     return '""';
   }
   if (/[^\w@%\-+=:,./|]/.test(str)) {

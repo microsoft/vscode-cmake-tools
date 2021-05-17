@@ -293,12 +293,12 @@ export class VariantManager implements vscode.Disposable {
     let error: string|undefined = undefined;
     const data = Array.from(keywordSetting.entries()).map(([setting_key, opt_key]): VariantOption => {
       const unknown_choice: VariantOption = {short: 'Unknown', key: '__unknown__'};
-      const found_setting = vars.settings.find(s => s.name == setting_key);
+      const found_setting = vars.settings.find(s => s.name === setting_key);
       if (!found_setting) {
         error = localize('missing.setting.in.variant', 'Missing setting "{0}" in variant definition.', setting_key);
         return unknown_choice;
       }
-      const found_choice = found_setting.choices.find(o => o.key == opt_key);
+      const found_choice = found_setting.choices.find(o => o.key === opt_key);
       if (!found_choice) {
         error = localize('missing.variant.choice', 'Missing variant choice "{0}" on "{1}" in variant definition.', opt_key, setting_key);
         return unknown_choice;

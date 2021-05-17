@@ -150,7 +150,7 @@ abstract class Button {
     if (!this._icon) {
       return text;
     }
-    if (text == '') {
+    if (text === '') {
       return this._icon || '';
     }
     return `${this._icon} ${text}`;
@@ -258,7 +258,7 @@ class KitSelection extends Button {
   }
 
   protected getTooltipShort(): string|null {
-    if (this.getTextNormal() == this.getTextShort()) {
+    if (this.getTextNormal() === this.getTextShort()) {
       return this.prependCMake(this.getTooltipNormal());
     }
     return super.getTooltipShort();
@@ -366,7 +366,7 @@ class CTestButton extends Button {
   update(): void {
     if (this._results) {
       const {passing, total} = this._results;
-      this.icon = passing == total ? 'check' : 'x';
+      this.icon = passing === total ? 'check' : 'x';
     } else {
       this.icon = 'beaker';
     }
@@ -386,7 +386,7 @@ class CTestButton extends Button {
       return localize('run.ctest', 'Run CTest');
     }
     const {passing, total} = this._results;
-    if (total == 1) {
+    if (total === 1) {
       return localize('test.passing', '{0}/{1} test passing', passing, total);
     }
     return localize('tests.passing', '{0}/{1} tests passing', passing, total);
@@ -486,7 +486,7 @@ export class ConfigurePresetSelection extends Button {
   }
 
   protected getTooltipShort(): string|null {
-    if (this.getTextNormal() == this.getTextShort()) {
+    if (this.getTextNormal() === this.getTextShort()) {
       return this.prependCMake(this.getTooltipNormal());
     }
     return super.getTooltipShort();
@@ -529,7 +529,7 @@ export class BuildPresetSelection extends Button {
   }
 
   protected getTooltipShort(): string|null {
-    if (this.getTextNormal() == this.getTextShort()) {
+    if (this.getTextNormal() === this.getTextShort()) {
       return this.prependCMake(this.getTooltipNormal());
     }
     return super.getTooltipShort();
@@ -572,7 +572,7 @@ export class TestPresetSelection extends Button {
   }
 
   protected getTooltipShort(): string|null {
-    if (this.getTextNormal() == this.getTextShort()) {
+    if (this.getTextNormal() === this.getTextShort()) {
       return this.prependCMake(this.getTooltipNormal());
     }
     return super.getTooltipShort();

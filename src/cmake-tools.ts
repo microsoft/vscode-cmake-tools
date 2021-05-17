@@ -1017,7 +1017,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 progress.report({message: localize('configuring.project', 'Configuring project')});
                 let retc: number;
                 await setContextValue(IS_CONFIGURING_KEY, true);
-                if (type == ConfigureType.Cache) {
+                if (type === ConfigureType.Cache) {
                   retc = await drv.configure(trigger, [], consumer, true);
                 } else {
                   switch (type) {
@@ -1523,7 +1523,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!name) {
       chosen = await vscode.window.showQuickPick(choices, {placeHolder: localize('select.a.launch.target', 'Select a launch target for {0}', this.folder.name)});
     } else {
-      chosen = choices.find(choice => choice.label == name);
+      chosen = choices.find(choice => choice.label === name);
     }
     if (!chosen) {
       return null;
@@ -1535,7 +1535,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async getCurrentLaunchTarget(): Promise<api.ExecutableTarget|null> {
     const target_name = this.workspaceContext.state.launchTargetName;
-    const target = (await this.executableTargets).find(e => e.name == target_name);
+    const target = (await this.executableTargets).find(e => e.name === target_name);
 
     if (!target) {
       return null;
@@ -1813,7 +1813,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       name: 'CMake/Launch',
       cwd: (user_config && user_config.cwd) || path.dirname(executable.path),
     };
-    if (process.platform == 'win32') {
+    if (process.platform === 'win32') {
       // Use cmd.exe on Windows
       termOptions.shellPath = paths.windows.ComSpec;
     }
@@ -1879,7 +1879,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       'include(CTest)',
       'enable_testing()',
       '',
-      type == 'Library' ? `add_library(${project_name} ${project_name}.cpp)`
+      type === 'Library' ? `add_library(${project_name} ${project_name}.cpp)`
                         : `add_executable(${project_name} main.cpp)`,
       '',
       'set(CPACK_PROJECT_NAME ${PROJECT_NAME})',
