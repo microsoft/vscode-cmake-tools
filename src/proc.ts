@@ -1,6 +1,8 @@
+/* eslint-disable no-unused-expressions */
+
 /**
  * Wrappers and utilities around the NodeJS `child_process` module.
- */ /** */
+ */
 
 import * as proc from 'child_process';
 import * as iconv from 'iconv-lite';

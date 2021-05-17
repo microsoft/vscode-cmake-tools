@@ -5,7 +5,7 @@ import {CMakeCache} from '@cmt/cache';
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {CompilationDatabase} from '@cmt/compdb';
 import * as debugger_mod from '@cmt/debugger';
-import diagCollections from '@cmt/diagnostics/collections';
+import collections from '@cmt/diagnostics/collections';
 import * as shlex from '@cmt/shlex';
 import {StateManager} from '@cmt/state';
 import {Strand} from '@cmt/strand';
@@ -427,7 +427,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Dispose of the extension asynchronously.
    */
   async asyncDispose() {
-    diagCollections.reset();
+    collections.reset();
     if (this._cmakeDriver) {
       const drv = await this._cmakeDriver;
       if (drv) {
@@ -1119,7 +1119,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.showChannel();
     const consumer = new CMakeOutputConsumer(await this.sourceDir, CMAKE_LOGGER);
     const retc = await cb(consumer);
-    populateCollection(diagCollections.cmake, consumer.diagnostics);
+    populateCollection(collections.cmake, consumer.diagnostics);
     return retc;
   }
 
@@ -1253,7 +1253,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
           }
           const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
-          populateCollection(diagCollections.build, file_diags);
+          populateCollection(collections.build, file_diags);
           return rc === null ? -1 : rc;
         }
       );

@@ -316,11 +316,10 @@ export class KitsController {
    * Set the current kit by name of the kit
    */
   async setKitByName(kitName: string) {
-    let newKit: Kit | undefined;
     if (!kitName) {
         kitName = SpecialKits.Unspecified;
     }
-    newKit = this.availableKits.find(kit => kit.name === kitName);
+    const newKit: Kit | undefined = this.availableKits.find(kit => kit.name === kitName);
     await this.setFolderActiveKit(newKit || null);
     // if we are showing a quickpick menu...
     this._pickKitCancellationTokenSource.cancel();

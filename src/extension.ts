@@ -1,6 +1,7 @@
+/* eslint-disable no-unused-expressions */
 /**
  * Extension startup/teardown
- */ /** */
+ */
 
 'use strict';
 

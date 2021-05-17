@@ -168,6 +168,7 @@ class Paths {
         // Check if CTest is a sibling executable in the same directory
         if (await fs.exists(ctest_sibling)) {
           const stat = await fs.stat(ctest_sibling);
+          // eslint-disable-next-line no-bitwise
           if (stat.isFile() && stat.mode & 0b001001001) {
             return ctest_sibling;
           } else {

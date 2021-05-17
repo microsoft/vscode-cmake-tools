@@ -581,7 +581,7 @@ export class PresetsController {
 
     const presets = preset.configurePresets(this.folderFsPath).concat(preset.userConfigurePresets(this.folderFsPath)).filter(
       _preset => {
-        const supportedHost =  (_preset.vendor as preset.Vendor_VsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
+        const supportedHost =  (_preset.vendor as preset.VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
         const osName = this.getOsName();
         if (supportedHost) {
           if (util.isString(supportedHost)) {

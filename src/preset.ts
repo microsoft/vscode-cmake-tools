@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 
@@ -64,7 +65,7 @@ type CacheVarType = null | boolean | string | { type: string; value: boolean | s
 
 export type OsName = "Windows" | "Linux" | "macOS";
 
-export type Vendor_VsSettings = {
+export type VendorVsSettings = {
   'microsoft.com/VisualStudioSettings/CMake/1.0': {
     hostOS: OsName | OsName[];
     [key: string]: any;
@@ -83,7 +84,7 @@ export interface ConfigurePreset extends Preset {
   warnings?: WarningOptions;
   errors?: ErrorOptions;
   debug?: DebugOptions;
-  vendor?: Vendor_VsSettings | VendorType;
+  vendor?: VendorVsSettings | VendorType;
 }
 
 export interface BuildPreset extends Preset {
@@ -319,7 +320,7 @@ export function expandVendorForConfigurePresets(folder: string): void {
   }
 }
 
-function getVendorForConfigurePreset(folder: string, name: string): VendorType | Vendor_VsSettings | null {
+function getVendorForConfigurePreset(folder: string, name: string): VendorType | VendorVsSettings | null {
   const refs = referencedConfigurePresets.get(folder);
   if (!refs) {
     referencedConfigurePresets.set(folder, new Set());
@@ -329,7 +330,7 @@ function getVendorForConfigurePreset(folder: string, name: string): VendorType |
   return getVendorForConfigurePresetImpl(folder, name);
 }
 
-function getVendorForConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+function getVendorForConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): VendorType | VendorVsSettings | null {
   let preset = getPresetByName(configurePresets(folder), name);
   if (preset) {
     return getVendorForConfigurePresetHelper(folder, preset);
@@ -345,7 +346,7 @@ function getVendorForConfigurePresetImpl(folder: string, name: string, allowUser
   return null;
 }
 
-function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | VendorVsSettings | null {
   if (preset.__expanded) {
     return preset.vendor || null;
   }
@@ -1196,11 +1197,10 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     if (preset.warnings.deprecated !== undefined) {
       result.push(preset.warnings.deprecated ? '-Wdeprecated' : '-Wno-deprecated');
     }
-    /* tslint:disable:no-unused-expression */
+
     preset.warnings.uninitialized && result.push('--warn-uninitialized');
     preset.warnings.unusedCli && result.push('--no-warn-unused-cli');
     preset.warnings.systemVars && result.push('--check-system-vars');
-    /* tslint:enable:no-unused-expression */
   }
 
   // Errors
@@ -1215,11 +1215,9 @@ export function configureArgs(preset: ConfigurePreset): string[] {
 
   // Debug
   if (preset.debug) {
-    /* tslint:disable:no-unused-expression */
     preset.debug.output && result.push('--debug-output');
     preset.debug.tryCompile && result.push('--debug-trycompile');
     preset.debug.find && result.push('--debug-find');
-    /* tslint:enable:no-unused-expression */
   }
 
   return result;
@@ -1227,8 +1225,6 @@ export function configureArgs(preset: ConfigurePreset): string[] {
 
 export function buildArgs(preset: BuildPreset): string[] {
   const result: string[] = [];
-
-  /* tslint:disable:no-unused-expression */
 
   preset.__binaryDir && result.push('--build', preset.__binaryDir);
   preset.jobs && result.push('--parallel', preset.jobs.toString());
@@ -1244,15 +1240,11 @@ export function buildArgs(preset: BuildPreset): string[] {
 
   preset.nativeToolOptions && result.push('--', ...preset.nativeToolOptions);
 
-  /* tslint:enable:no-unused-expression */
-
   return result;
 }
 
 export function testArgs(preset: TestPreset): string[] {
   const result: string[] = [];
-
-  /* tslint:disable:no-unused-expression */
 
   preset.configuration && result.push('--build-config', preset.configuration);
   if (preset.overwriteConfigurationFile) {
@@ -1314,8 +1306,6 @@ export function testArgs(preset: TestPreset): string[] {
     preset.execution.timeout && result.push('--timeout', preset.execution.timeout.toString());
     preset.execution.noTestsAction && preset.execution.noTestsAction !== 'default' && result.push('--no-tests=' + preset.execution.noTestsAction);
   }
-
-  /* tslint:enable:no-unused-expression */
 
   return result;
 }
