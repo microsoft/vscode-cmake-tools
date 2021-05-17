@@ -1,11 +1,11 @@
 import path = require('node:path');
 import * as vscode from 'vscode';
-import {TestMemento, StatetMemento} from './memento';
+import {TestMemento, StateMemento} from './memento';
 const notImplementedErr: string = 'Method not implemented.';
 export class DefaultExtensionContext implements vscode.ExtensionContext {
   get subscriptions(): { dispose(): any; }[] { return ([]); }
   workspaceState: vscode.Memento = new TestMemento();
-  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void; } = new StatetMemento();
+  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void; } = new StateMemento();
   get secrets(): vscode.SecretStorage { throw new Error(notImplementedErr); }
   get extensionUri(): vscode.Uri { throw new Error(notImplementedErr); }
   get extensionPath(): string { throw new Error(notImplementedErr); }
@@ -22,14 +22,14 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
   constructor() { }
   public clean() {
     (this.workspaceState as TestMemento).clear();
-    (this.globalState as StatetMemento).clear();
+    (this.globalState as StateMemento).clear();
   }
 }
 
 export class SmokeTestExtensionContext implements vscode.ExtensionContext {
   get subscriptions(): { dispose(): any; }[] { return ([]); }
   workspaceState: vscode.Memento = new TestMemento();
-  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void; } = new StatetMemento();
+  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void; } = new StateMemento();
   get secrets(): vscode.SecretStorage { throw new Error(notImplementedErr); }
   get extensionUri(): vscode.Uri { throw new Error(notImplementedErr); }
   get environmentVariableCollection(): vscode.EnvironmentVariableCollection { throw new Error(notImplementedErr); }
@@ -45,6 +45,6 @@ export class SmokeTestExtensionContext implements vscode.ExtensionContext {
   constructor(public readonly extensionPath: string) { }
   public clean() {
     (this.workspaceState as TestMemento).clear();
-    (this.globalState as StatetMemento).clear();
+    (this.globalState as StateMemento).clear();
   }
 }

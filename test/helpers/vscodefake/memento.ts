@@ -20,7 +20,7 @@ export class TestMemento implements vscode.Memento {
   public clear() { this.storage.clear(); }
 }
 
-export class StatetMemento implements vscode.Memento {
+export class StateMemento implements vscode.Memento {
   private storage: { [key: string]: any } = {};
 
   public get<T>(key: string): T | undefined;
