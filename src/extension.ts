@@ -19,7 +19,7 @@ import {
   Kit,
   USER_KITS_FILEPATH,
   findCLCompilerPath,
-  scanForKitsIfNeeded,
+  scanForKitsIfNeeded
 } from '@cmt/kit';
 import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
@@ -75,8 +75,7 @@ class ExtensionManager implements vscode.Disposable {
         await this._initActiveFolder();
         await util.setContextValue(MULTI_ROOT_MODE_KEY, true);
         // sub go text edit change event in multiroot mode
-        if (this._workspaceConfig.autoSelectActiveFolder)
-        {
+        if (this._workspaceConfig.autoSelectActiveFolder) {
           this._onDidChangeActiveTextEditorSub.dispose();
           this._onDidChangeActiveTextEditorSub = vscode.window.onDidChangeActiveTextEditor(e => this._onDidChangeActiveTextEditor(e), this);
         }
@@ -122,8 +121,7 @@ class ExtensionManager implements vscode.Disposable {
       this._projectOutlineProvider.removeFolder(folder);
     });
     this._workspaceConfig.onChange('autoSelectActiveFolder', v => {
-      if (this._folders.isMultiRoot)
-      {
+      if (this._folders.isMultiRoot) {
         telemetry.logEvent('configChanged.autoSelectActiveFolder', { autoSelectActiveFolder: `${v}` });
         this._onDidChangeActiveTextEditorSub.dispose();
         if (v) {
@@ -360,7 +358,7 @@ class ExtensionManager implements vscode.Disposable {
       return !!cmt.buildPreset;
     }
     return true;
-  }
+  };
 
   private readonly _ensureActiveTestPreset = async (cmt?: CMakeTools): Promise<boolean> => {
     if (!cmt) {
@@ -381,7 +379,7 @@ class ExtensionManager implements vscode.Disposable {
       return !!cmt.testPreset;
     }
     return true;
-  }
+  };
 
   /**
    * Dispose of the CMake Tools extension.
@@ -447,7 +445,7 @@ class ExtensionManager implements vscode.Disposable {
       buildKitTargetArch: "",
       buildKitVersionMajor: "",
       buildKitVersionMinor: "",
-      workspaceHash: "",
+      workspaceHash: ""
     };
 
     const sourceDirectory: string = cmt.workspaceContext.config.sourceDirectory;
@@ -493,7 +491,7 @@ class ExtensionManager implements vscode.Disposable {
           localize('configure.this.project', 'Would you like to configure project \'{0}\'?', ws.name),
           {},
           {title: localize('yes.button', 'Yes'), doConfigure: true},
-          {title: localize('not.now.button', 'Not now'), doConfigure: false},
+          {title: localize('not.now.button', 'Not now'), doConfigure: false}
       );
       if (!chosen) {
         // Do nothing. User cancelled
@@ -516,7 +514,7 @@ class ExtensionManager implements vscode.Disposable {
                     perist_message,
                     {},
                     {title: button_messages[0], persistMode: 'user'},
-                    {title: button_messages[1], persistMode: 'workspace'},
+                    {title: button_messages[1], persistMode: 'workspace'}
                     )
                 .then(async choice => {
                   if (!choice) {
@@ -638,7 +636,7 @@ class ExtensionManager implements vscode.Disposable {
                        this._isBusySub,
                        this._activeConfigurePresetSub,
                        this._activeBuildPresetSub,
-                       this._activeTestPresetSub,
+                       this._activeTestPresetSub
     ]) {
       sub.dispose();
     }
@@ -652,7 +650,7 @@ class ExtensionManager implements vscode.Disposable {
       cmt.codeModel,
       {
         defaultTarget: cmt.defaultBuildTarget || undefined,
-        launchTargetName: cmt.launchTargetName,
+        launchTargetName: cmt.launchTargetName
       }
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
@@ -751,7 +749,6 @@ class ExtensionManager implements vscode.Disposable {
                                            {ignoreInitial: true}),
                                            _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this._folders.activeFolder?.cmakeTools)));
 
-
   /**
    * Set the current kit for the specified workspace folder
    * @param k The kit
@@ -778,13 +775,13 @@ class ExtensionManager implements vscode.Disposable {
           {modal: true},
           {
             title: localize('scan.for.kits.button', 'Scan for kits'),
-            action: 'scan',
+            action: 'scan'
           },
           {
             title: localize('cancel.button', 'Cancel'),
             isCloseAffordance: true,
-            action: 'cancel',
-          },
+            action: 'cancel'
+          }
       );
       if (!chosen || chosen.action === 'cancel') {
         return null;
@@ -850,7 +847,7 @@ class ExtensionManager implements vscode.Disposable {
       buildKitTargetArch: "",
       buildKitVersionMajor: "",
       buildKitVersionMinor: "",
-      projectName: "",
+      projectName: ""
     };
     const result = new Set<string>();
     for (const dir of this._workspaceConfig.mingwSearchDirs) {
@@ -984,7 +981,7 @@ class ExtensionManager implements vscode.Disposable {
 
   // The below functions are all wrappers around the backend.
   async mapCMakeTools(fn: CMakeToolsMapFn,
-                      cmt = this._folders.activeFolder? this._folders.activeFolder.cmakeTools : undefined,
+                      cmt = this._folders.activeFolder ? this._folders.activeFolder.cmakeTools : undefined,
                       precheck?: (cmt: CMakeTools) => Promise<boolean>): Promise<any> {
     if (!cmt) {
       rollbar.error(localize('no.active.folder', 'No active folder.'));
@@ -1166,7 +1163,7 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async selectWorkspace(folder?: vscode.WorkspaceFolder) {
-    if (!folder) return;
+    if (!folder) {return; }
     await this._setActiveFolder(folder);
   }
 
@@ -1621,7 +1618,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
       vscode.commands.registerCommand('cmake.outline.compileFile',
                                       (what: SourceFileNode) => runCommand('compileFile', what.filePath)),
       vscode.commands.registerCommand('cmake.outline.selectWorkspace',
-                                      (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder)),
+                                      (what: WorkspaceFolderNode) => runCommand('selectWorkspace', what.wsFolder))
   ]);
 }
 

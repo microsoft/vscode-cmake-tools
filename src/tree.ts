@@ -67,7 +67,7 @@ function addToTree<T>(tree: PathedTree<T>, itemPath: string, item: T) {
       subtree = {
         pathPart: el,
         children: [],
-        items: [],
+        items: []
       };
       tree.children.push(subtree);
     }
@@ -88,7 +88,7 @@ function collapseTreeInplace<T>(tree: PathedTree<T>): void {
       child = {
         pathPart: path.join(child.pathPart, subchild.pathPart),
         items: subchild.items,
-        children: subchild.children,
+        children: subchild.children
       };
     }
     collapseTreeInplace(child);
@@ -163,10 +163,10 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
   }
 
   update<InputItem extends NamedItem>(opts: {
-    tree: PathedTree<InputItem>,
-    context: TreeUpdateContext,
-    create(input: InputItem): Node,
-    update(existingNode: Node, input: InputItem): void,
+    tree: PathedTree<InputItem>;
+    context: TreeUpdateContext;
+    create(input: InputItem): Node;
+    update(existingNode: Node, input: InputItem): void;
   }) {
     const new_subdirs = new Map<string, DirectoryNode<Node>>();
     const new_leaves = new Map<string, Node>();
@@ -179,7 +179,7 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
       }
       existing.update({
         ...opts,
-        tree: new_subdir,
+        tree: new_subdir
       });
       new_subdirs.set(new_subdir.pathPart, existing);
     }
@@ -227,12 +227,12 @@ export class SourceFileNode extends BaseNode {
     item.resourceUri = vscode.Uri.file(this.filePath);
     const name = this.name.toLowerCase();
     const cml = name === "cmakelists.txt";
-    const is_compilable = ['CXX', 'C'].indexOf(this._language||'')!==-1;
+    const is_compilable = ['CXX', 'C'].indexOf(this._language || '') !== -1;
     item.contextValue = ['nodeType=file', `compilable=${is_compilable}`, `cmakelists=${cml}`].join(',');
     item.command = {
       title: localize('open.file', 'Open file'),
       command: 'vscode.open',
-      arguments: [item.resourceUri],
+      arguments: [item.resourceUri]
     };
     return item;
   }
@@ -305,7 +305,7 @@ export class TargetNode extends BaseNode {
         `isLaunch=${this._isLaunch}`,
         `type=${this._type}`,
         `canBuild=${canBuild}`,
-        `canRun=${canRun}`,
+        `canRun=${canRun}`
       ].join(',');
       return item;
     } catch (e) {
@@ -343,7 +343,7 @@ export class TargetNode extends BaseNode {
     const tree: PathedTree<SourceFileNode> = {
       pathPart: this.sourceDir,
       items: [],
-      children: [],
+      children: []
     };
 
     for (const grp of cm.fileGroups || []) {
@@ -365,7 +365,7 @@ export class TargetNode extends BaseNode {
       tree,
       context: ctx,
       update: (_src, _cm) => {},
-      create: newNode => newNode,
+      create: newNode => newNode
     });
   }
 
@@ -401,7 +401,7 @@ class ProjectNode extends BaseNode {
     if (this.getChildren().length === 0) {
       item.label += ` — (${localize('empty.project', 'Empty project')})`;
     }
-    item.tooltip=`${this.name}\n${this.sourceDirectory}`;
+    item.tooltip = `${this.name}\n${this.sourceDirectory}`;
     return item;
   }
 
@@ -413,7 +413,7 @@ class ProjectNode extends BaseNode {
     const tree: PathedTree<codemodel_api.CodeModelTarget> = {
       pathPart: '',
       children: [],
-      items: [],
+      items: []
     };
 
     for (const target of pr.targets) {
@@ -431,7 +431,7 @@ class ProjectNode extends BaseNode {
         const node = new TargetNode(this.id, this.name, cm, this.folder);
         node.update(cm, ctx);
         return node;
-      },
+      }
     });
 
     // const target_tree = mapTreeItems(tree, target => TargetNode.fromCodeModel(pr.name, target));
@@ -449,7 +449,7 @@ export class WorkspaceFolderNode extends BaseNode {
   private _children: BaseNode[] = [];
 
   private _active: boolean = false;
-  setActive(active:boolean) {
+  setActive(active: boolean) {
     this._active = active;
   }
 
@@ -459,7 +459,7 @@ export class WorkspaceFolderNode extends BaseNode {
     const item = new vscode.TreeItem(this.wsFolder.uri.fsPath, vscode.TreeItemCollapsibleState.Expanded);
     item.iconPath = vscode.ThemeIcon.Folder;
     item.id = this.wsFolder.uri.fsPath;
-    let description:string;
+    let description: string;
     if (this._active) {
       description = localize('workspace.active', 'Active Workspace');
     } else {
@@ -499,7 +499,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
   get onDidChangeTreeData() { return this._changeEvent.event; }
 
   private readonly _folders = new Map<string, WorkspaceFolderNode>();
-  private _selected_workspace?:WorkspaceFolderNode;
+  private _selected_workspace?: WorkspaceFolderNode;
 
   addAllCurrentFolders() {
     for (const wsf of vscode.workspace.workspaceFolders || []) {
@@ -550,8 +550,8 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
     }
   }
 
-  setActiveFolder(ws: vscode.WorkspaceFolder | undefined):void {
-    if (!ws) return;
+  setActiveFolder(ws: vscode.WorkspaceFolder | undefined): void {
+    if (!ws) {return; }
     const current_node = this._selected_workspace;
     const new_node = this._folders.get(ws.uri.fsPath);
     if (current_node) {

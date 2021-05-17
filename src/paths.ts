@@ -74,7 +74,7 @@ class WindowsEnvironment {
 class Paths {
   private _ninjaPath?: string;
 
-  readonly windows: WindowsEnvironment = new WindowsEnvironment;
+  readonly windows: WindowsEnvironment = new WindowsEnvironment();
 
   /**
    * The current user's home directory
@@ -243,8 +243,8 @@ class Paths {
         workspaceRoot: wsc.folder.uri.fsPath,
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
         workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
-        userHome: this.userHome,
-      },
+        userHome: this.userHome
+      }
     });
   }
 
@@ -253,7 +253,7 @@ class Paths {
 
     const vs_installations = await vsInstallations();
     if (vs_installations.length > 0) {
-      const bundled_tool_paths = [] as {cmake: string, ninja: string}[];
+      const bundled_tool_paths = [] as {cmake: string; ninja: string}[];
 
       for (const install of vs_installations) {
         const bundled_tool_path = {

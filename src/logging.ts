@@ -104,7 +104,7 @@ class OutputChannelManager implements vscode.Disposable {
   dispose() { util.map(this._channels.values(), c => c.dispose()); }
 }
 
-export const channelManager = new OutputChannelManager;
+export const channelManager = new OutputChannelManager();
 
 export interface Stringable {
   toString(): string;

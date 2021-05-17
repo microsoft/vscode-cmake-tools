@@ -4,7 +4,7 @@ export interface ShlexOptions {
 
 export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
   opt = opt || {
-    mode: process.platform === 'win32' ? 'windows' : 'posix',
+    mode: process.platform === 'win32' ? 'windows' : 'posix'
   };
   const quoteChars = opt.mode === 'posix' ? '\'"' : '"';
   const escapeChars = '\\';
@@ -72,7 +72,7 @@ export function* split(str: string, opt?: ShlexOptions): Iterable<string> {
 
 export function quote(str: string, opt?: ShlexOptions): string {
   opt = opt || {
-    mode: process.platform === 'win32' ? 'windows' : 'posix',
+    mode: process.platform === 'win32' ? 'windows' : 'posix'
   };
   if (str === '') {
     return '""';

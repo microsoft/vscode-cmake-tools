@@ -151,7 +151,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
         FILEPATH: api.CacheEntryType.FilePath,
         INTERNAL: api.CacheEntryType.Internal,
         UNINITIALIZED: api.CacheEntryType.Uninitialized,
-        STATIC: api.CacheEntryType.Static,
+        STATIC: api.CacheEntryType.Static
       };
       const type = entry_map[el.type];
       if (type === undefined) {
@@ -200,15 +200,14 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       type: 'rich' as 'rich',
       name: this.allTargetName,
       filepath: localize('build.all.target', 'A special target to build all available targets'),
-      targetType: 'META',
+      targetType: 'META'
     }];
-    if(build_config.projects.some(project => (project.hasInstallRule)? project.hasInstallRule: false))
-    {
+    if (build_config.projects.some(project => (project.hasInstallRule) ? project.hasInstallRule : false)) {
       metaTargets.push({
         type: 'rich' as 'rich',
         name: 'install',
         filepath: localize('install.all.target', 'A special target to install all available targets'),
-        targetType: 'META',
+        targetType: 'META'
       });
     }
     return build_config.projects.reduce<RichTarget[]>((acc, project) => acc.concat(project.targets.map(
@@ -218,7 +217,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                                                             filepath: t.artifacts && t.artifacts.length
                                                                 ? path.normalize(t.artifacts[0])
                                                                 : localize('utility.target', 'Utility target'),
-                                                            targetType: t.type,
+                                                            targetType: t.type
                                                           }))),
                                                       metaTargets);
   }
@@ -256,12 +255,10 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
 
-
   private async _setKitAndRestart(need_clean: boolean, cb: () => Promise<void>) {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
     const client = await this._cmsClient;
-    if (client)
-      await client.shutdown();
+    if (client) {await client.shutdown(); }
     if (need_clean) {
       await this._cleanPriorConfiguration();
     }
@@ -326,7 +323,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       onProgress: async prog => {
         this._progressEmitter.fire(prog);
       },
-      generator: this.generator,
+      generator: this.generator
     });
   }
 
@@ -343,7 +340,6 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   protected async doInit(): Promise<void> {
     await this._restartClient();
-
 
     this.config.onChange('sourceDirectory', async () => {
       // The configure process can determine correctly whether the features set activation

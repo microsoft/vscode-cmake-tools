@@ -1,4 +1,3 @@
-
 /**
  * Module for handling GCC diagnostics
  */ /** */
@@ -6,7 +5,6 @@
 import * as vscode from 'vscode';
 
 import {oneLess, RawDiagnostic, RawDiagnosticParser, RawRelated, FeedLineResult} from './util';
-
 
 export const REGEX = /^(.*):(\d+):(\d+):\s+(?:fatal )?(\w*)(?:\sfatale)?\s?:\s+(.*)/;
 
@@ -26,7 +24,7 @@ export class Parser extends RawDiagnosticParser {
       const [, , message] = mat;
       this._pendingTemplateError = {
         rootInstantiation: message,
-        requiredFrom: [],
+        requiredFrom: []
       };
       return FeedLineResult.Ok;
     }
@@ -39,7 +37,7 @@ export class Parser extends RawDiagnosticParser {
         this._pendingTemplateError.requiredFrom.push({
           file,
           location: new vscode.Range(lineNo, parseInt(column), lineNo, 999),
-          message,
+          message
         });
         return FeedLineResult.Ok;
       }
@@ -52,7 +50,7 @@ export class Parser extends RawDiagnosticParser {
       this._prevDiag.related.push({
         file: prevRelated.file,
         location: prevRelated.location,
-        message: mat[1],
+        message: mat[1]
       });
       return FeedLineResult.Ok;
     }
@@ -71,7 +69,7 @@ export class Parser extends RawDiagnosticParser {
           this._prevDiag.related.push({
             file,
             location: new vscode.Range(lineno, column, lineno, 999),
-            message,
+            message
           });
           return FeedLineResult.Ok;
         } else {
@@ -81,7 +79,7 @@ export class Parser extends RawDiagnosticParser {
             related.push({
               location,
               file,
-              message: this._pendingTemplateError.rootInstantiation,
+              message: this._pendingTemplateError.rootInstantiation
             });
             related.push(...this._pendingTemplateError.requiredFrom);
             this._pendingTemplateError = undefined;
@@ -93,7 +91,7 @@ export class Parser extends RawDiagnosticParser {
             location,
             severity,
             message,
-            related,
+            related
           };
         }
       }

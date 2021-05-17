@@ -15,7 +15,6 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cache');
 
-
 /**
  * Implements access to CMake cache entries. See `api.CacheEntry` for more
  * information. This type is immutable.
@@ -147,8 +146,7 @@ export class CMakeCache {
         }
         const [, , quoted_name, unquoted_name, typename, valuestr] = match;
         const name = quoted_name || unquoted_name;
-        if (!name || !typename)
-          continue;
+        if (!name || !typename) {continue; }
         log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typename, 'valuestr', valuestr));
         if (name.endsWith('-ADVANCED') && valuestr === '1') {
           log.trace(localize('skipping.variable', 'Skipping {0} variable', '*-ADVANCED'));
@@ -162,7 +160,7 @@ export class CMakeCache {
             FILEPATH: api.CacheEntryType.FilePath,
             INTERNAL: api.CacheEntryType.Internal,
             UNINITIALIZED: api.CacheEntryType.Uninitialized,
-            STATIC: api.CacheEntryType.Static,
+            STATIC: api.CacheEntryType.Static
           } as {[type: string]: api.CacheEntryType | undefined};
           const type = typemap[typename];
           const docs = docs_acc.trim();
@@ -216,7 +214,7 @@ export class CMakeCache {
     return '';
   }
 
-  async replaceOptions(options: Array<{key: string, value: string}>): Promise<string> {
+  async replaceOptions(options: {key: string; value: string}[]): Promise<string> {
     const exists = await fs.exists(this.path);
     if (exists) {
       let content = (await fs.readFile(this.path)).toString();
@@ -237,7 +235,7 @@ export class CMakeCache {
     }
   }
 
-  async saveAll(options: Array<{key: string, value: string}>): Promise<void> {
+  async saveAll(options: {key: string; value: string}[]): Promise<void> {
     const content = await this.replaceOptions(options);
     if (content) {
       if (await fs.exists(this.path)) {

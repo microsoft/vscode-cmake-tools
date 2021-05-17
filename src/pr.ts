@@ -23,7 +23,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export namespace fs {
 
 export function exists(fspath: string): Promise<boolean> {
-  return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); });
+  return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, resolve); });
 }
 
 export const readFile = promisify(fs_.readFile);
@@ -91,12 +91,12 @@ export async function mkdir_p(fspath: string): Promise<void> {
 export function copyFile(inpath: string, outpath: string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const reader = fs_.createReadStream(inpath);
-    reader.on('error', e => reject(e));
+    reader.on('error', reject);
     reader.on('open', _fd => {
       const writer = fs_.createWriteStream(outpath);
-      writer.on('error', e => reject(e));
+      writer.on('error', reject);
       writer.on('open', _fd2 => { reader.pipe(writer); });
-      writer.on('close', () => resolve());
+      writer.on('close', resolve);
     });
   });
 }

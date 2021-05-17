@@ -1,4 +1,3 @@
-
 /**
  * Module for handling MSVC diagnostics
  */ /** */
@@ -16,12 +15,11 @@ export class Parser extends RawDiagnosticParser {
     if (!res) {
       return FeedLineResult.NotMine;
     }
-    const [full, /*proc*/, file, location, severity, code, message] = res;
+    const [full, /* proc*/, file, location, severity, code, message] = res;
     const range = (() => {
       const parts = location.split(',');
       const n0 = oneLess(parts[0]);
-      if (parts.length === 1)
-        return new vscode.Range(n0, 0, n0, 999);
+      if (parts.length === 1) {return new vscode.Range(n0, 0, n0, 999); }
       if (parts.length === 2) {
         const n1 = oneLess(parts[1]);
         return new vscode.Range(n0, n1, n0, n1);
@@ -41,7 +39,7 @@ export class Parser extends RawDiagnosticParser {
       severity,
       message,
       code,
-      related: [],
+      related: []
     };
   }
 }

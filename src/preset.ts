@@ -60,7 +60,7 @@ export interface DebugOptions {
   find?: boolean;
 }
 
-type CacheVarType = null | boolean | string | { type: string, value: boolean | string };
+type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
 
 export type OsName = "Windows" | "Linux" | "macOS";
 
@@ -68,7 +68,7 @@ export type Vendor_VsSettings = {
   'microsoft.com/VisualStudioSettings/CMake/1.0': {
     hostOS: OsName | OsName[];
     [key: string]: any;
-  }
+  };
   [key: string]: any;
 };
 
@@ -129,13 +129,13 @@ export interface IncludeFilter {
   name?: string;
   label?: string;
   useUnion?: boolean;
-  index?: string | { start?: number, end?: number, stride?: number, specificTests?: number[] };
+  index?: string | { start?: number; end?: number; stride?: number; specificTests?: number[] };
 }
 
 export interface ExcludeFilter {
   name?: string;
   label?: string;
-  fixtures?: { any?: string, setup?: string, cleanup?: string };
+  fixtures?: { any?: string; setup?: string; cleanup?: string };
 }
 
 export interface TestFilter {
@@ -150,7 +150,7 @@ export interface ExecutionOptions {
   resourceSpecFile?: string;
   testLoad?: number;
   showOnly?: 'human' | 'json-v1';
-  repeat?: { mode: 'until-fail' | 'until-pass' | 'after-timeout', count: number};
+  repeat?: { mode: 'until-fail' | 'until-pass' | 'after-timeout'; count: number};
   interactiveDebugging?: boolean;
   scheduleRandom?: boolean;
   timeout?: number;
@@ -1309,7 +1309,7 @@ export function testArgs(preset: TestPreset): string[] {
     preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
     preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);
     preset.execution.repeat && result.push(`--repeat ${preset.execution.repeat.mode}:${preset.execution.repeat.count}`);
-    result.push(`--interactive-debug-mode ${preset.execution.interactiveDebugging ? 1 : 0}` );
+    result.push(`--interactive-debug-mode ${preset.execution.interactiveDebugging ? 1 : 0}`);
     preset.execution.scheduleRandom && result.push('--schedule-random');
     preset.execution.timeout && result.push('--timeout', preset.execution.timeout.toString());
     preset.execution.noTestsAction && preset.execution.noTestsAction !== 'default' && result.push('--no-tests=' + preset.execution.noTestsAction);

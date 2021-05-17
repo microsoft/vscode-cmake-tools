@@ -16,7 +16,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     path,
     isPresent: false,
     minimalServerModeVersion: util.parseVersion('3.7.1'),
-    minimalFileApiModeVersion: util.parseVersion('3.14.0'),
+    minimalFileApiModeVersion: util.parseVersion('3.14.0')
   };
 
   // The check for 'path' seems unnecessary, but crash logs tell us otherwise. It is not clear

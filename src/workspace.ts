@@ -25,7 +25,7 @@ export class DirectoryContext {
       /**
        * The state management object associated with the directory.
        */
-      public readonly state: StateManager,
+      public readonly state: StateManager
   ) {}
 
   /**

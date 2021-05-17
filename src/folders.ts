@@ -108,7 +108,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     this._beforeAddFolderEmitter,
     this._afterAddFolderEmitter,
     this._beforeRemoveFolderEmitter,
-    this._afterRemoveFolderEmitter,
+    this._afterRemoveFolderEmitter
   ];
 
   get onBeforeAddFolder() { return this._beforeAddFolderEmitter.event; }
@@ -141,7 +141,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   constructor(readonly extensionContext: vscode.ExtensionContext) {
     this._subscriptions = [
       vscode.workspace.onDidChangeWorkspaceFolders(
-        e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this._onChange(e))),
+        e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this._onChange(e)))
     ];
   }
 
@@ -151,7 +151,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * Get the CMakeTools instance associated with the given workspace folder, or undefined
    * @param ws The workspace folder to search, or array of command and workspace path
    */
-  get(ws: vscode.WorkspaceFolder | Array<string> | undefined): CMakeToolsFolder | undefined {
+  get(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeToolsFolder | undefined {
     if (ws) {
       if (util.isArrayOfString(ws)) {
         return this._instances.get(ws[ws.length - 1]);
@@ -216,7 +216,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   private async _addFolder(folder: vscode.WorkspaceFolder) {
     const existing = this.get(folder);
     if (existing) {
-      rollbar.error(localize('same.folder.loaded.twice','The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
+      rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
       return existing;
     }
     // Load for the workspace.

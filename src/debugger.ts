@@ -12,7 +12,6 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('debugger');
 
-
 export enum DebuggerType {
   VisualStudio = 'Visual Studio',
   LLDB = 'LLDB',
@@ -39,7 +38,6 @@ export interface DebuggerConfiguration {
    */
   // launchConfiguration?: string;  // Future
 }
-
 
 export interface Configuration {
   type: string;
@@ -68,8 +66,8 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
       {
         description: localize('enable.pretty.printing', 'Enable pretty-printing for gdb'),
         text: '-enable-pretty-printing',
-        ignoreFailures: true,
-      },
+        ignoreFailures: true
+      }
     ],
     program: target.path
   };
@@ -107,20 +105,20 @@ type DebuggerMIMode = 'gdb'|'lldb';
 
 type DebuggerGenerators = {
   [MIMode in DebuggerMIMode]: {
-    miMode: MIMode,
-    createConfig(debuggerPath: string, target: ExecutableTarget): Promise<Configuration>,
+    miMode: MIMode;
+    createConfig(debuggerPath: string, target: ExecutableTarget): Promise<Configuration>;
   };
 };
 
 const DEBUG_GEN: DebuggerGenerators = {
   gdb: {
     miMode: 'gdb',
-    createConfig: createGDBDebugConfiguration,
+    createConfig: createGDBDebugConfiguration
   },
   lldb: {
     miMode: 'lldb',
-    createConfig: createLLDBDebugConfiguration,
-  },
+    createConfig: createLLDBDebugConfiguration
+  }
 };
 
 function searchForCompilerPathInCache(cache: CMakeCache): string|null {

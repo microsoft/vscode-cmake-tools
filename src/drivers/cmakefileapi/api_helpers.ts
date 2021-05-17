@@ -80,14 +80,14 @@ function findPropertyValue(cacheElement: index_api.Cache.CMakeCacheEntry, name: 
 function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.CacheContent):
     Map<string, api.CacheEntry> {
   return cache_from_cmake.entries.reduce((acc, el) => {
-    const entry_type_translation_map: {[key: string]: api.CacheEntryType|undefined;} = {
+    const entry_type_translation_map: {[key: string]: api.CacheEntryType|undefined} = {
       BOOL: api.CacheEntryType.Bool,
       STRING: api.CacheEntryType.String,
       PATH: api.CacheEntryType.Path,
       FILEPATH: api.CacheEntryType.FilePath,
       INTERNAL: api.CacheEntryType.Internal,
       UNINITIALIZED: api.CacheEntryType.Uninitialized,
-      STATIC: api.CacheEntryType.Static,
+      STATIC: api.CacheEntryType.Static
     };
     const type = entry_type_translation_map[el.type];
     if (type === undefined) {
@@ -128,7 +128,7 @@ export async function loadTargetObject(filename: string): Promise<index_api.Code
 async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_path: string): Promise<api.Target> {
   const targetObject = await loadTargetObject(file_path);
 
-  let executable_path = undefined;
+  let executable_path;
   if (targetObject.artifacts) {
     executable_path = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
     if (executable_path) {
@@ -147,7 +147,7 @@ async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_
 export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string,
                                                               builddir: string,
                                                               configuration: index_api.CodeModelKind.Configuration):
-    Promise<{name: string, targets: api.Target[]}> {
+    Promise<{name: string; targets: api.Target[]}> {
   const metaTargets = [];
   if (configuration.directories[0].hasInstallRule) {
     metaTargets.push({
@@ -253,11 +253,9 @@ export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,
         : root_paths.build,
     source: project.directoryIndexes
         ? path.join(root_paths.source, configuration.directories[project.directoryIndexes[0]].source)
-        : root_paths.source,
+        : root_paths.source
   };
-  const targets = await Promise.all((project.targetIndexes || []).map(targetIndex => {
-    return loadCodeModelTarget(root_paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile));
-  }));
+  const targets = await Promise.all((project.targetIndexes || []).map(targetIndex => loadCodeModelTarget(root_paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile))));
 
   return {name: project.name, targets, sourceDirectory: project_paths.source} as CodeModelProject;
 }

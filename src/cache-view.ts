@@ -19,7 +19,6 @@ export interface IOption {
     dirty: boolean; // if the variable was edited in the UI
 }
 
-
 /**
  * This object manages the webview rendering.
  */

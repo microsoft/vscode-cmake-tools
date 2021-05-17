@@ -7,14 +7,14 @@ import * as nls from 'vscode-nls';
 nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-//---------------------------------------------
-//-------------- Helper Functions -------------
-//---------------------------------------------
+// ---------------------------------------------
+// -------------- Helper Functions -------------
+// ---------------------------------------------
 
 function hasCPPTools(): boolean { return vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined; }
-//---------------------------------------------
-//---------------- Button Class ---------------
-//---------------------------------------------
+// ---------------------------------------------
+// ---------------- Button Class ---------------
+// ---------------------------------------------
 
 abstract class Button {
   readonly settingsName: string|null = null;
@@ -170,7 +170,6 @@ class WorkspaceButton extends Button {
     this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active folder');
   }
 
-
   // private _autoSelect: boolean = false;
   set autoSelect(v: boolean) {
     if (v) {}
@@ -181,7 +180,7 @@ class WorkspaceButton extends Button {
   protected getTooltipNormal(): string|null {
     // if (this._autoSelect) {
     //  return `${this.tooltip} (${WorkspaceButton._autoSelectToolTip})`;
-    //}
+    // }
     return this.tooltip;
   }
   protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
@@ -642,9 +641,9 @@ export class StatusBar implements vscode.Disposable {
   setTestResults(v: BasicTestResults|null): void { this._testButton.results = v; }
   setIsBusy(v: boolean): void { this._buildButton.isBusy = v; }
   setActiveKitName(v: string): void { this._kitSelectionButton.text = v; }
-  setConfigurePresetName(v:string): void { this._configurePresetButton.text = v; }
-  setBuildPresetName(v:string): void { this._buildPresetButton.text = v; }
-  setTestPresetName(v:string): void { this._testPresetButton.text = v; this.setCTestEnabled(true); }
+  setConfigurePresetName(v: string): void { this._configurePresetButton.text = v; }
+  setBuildPresetName(v: string): void { this._buildPresetButton.text = v; }
+  setTestPresetName(v: string): void { this._testPresetButton.text = v; this.setCTestEnabled(true); }
 
   hideLaunchButton(shouldHide: boolean = true): void { this._launchButton.hidden = shouldHide; }
   hideDebugButton(shouldHide: boolean = true): void { this._debugButton.hidden = shouldHide; }
