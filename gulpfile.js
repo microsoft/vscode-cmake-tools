@@ -6,6 +6,7 @@
 'use strict';
 
 const gulp = require('gulp');
+const eslint = require('gulp-eslint');
 const fs = require('fs');
 const nls = require('vscode-nls-dev');
 const path = require('path');
@@ -253,3 +254,16 @@ const generateJsonSchemaLoc = () => {
 };
 
 gulp.task('translations-generate', gulp.series(generatedSrcLocBundle, generatedAdditionalLocFiles, generateJsonSchemaLoc));
+
+const allTypeScript = [
+    'src/**/*.ts',
+    '!**/*.d.ts',
+    '!**/typings**'
+];
+
+gulp.task('lint', function () {
+    return gulp.src(allTypeScript)
+        .pipe(eslint({ configFile: ".eslintrc.js" }))
+        .pipe(eslint.format())
+        .pipe(eslint.failAfterError());
+});
