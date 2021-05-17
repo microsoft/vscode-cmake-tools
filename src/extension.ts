@@ -1709,7 +1709,7 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
 
 // update CMakeDriver in taskProvider
 export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver | undefined) {
-  CMakeTaskProvider.updateCMakeDriver(cmakeDriver);
+  cmakeTaskProvider.updateCMakeDriver(cmakeDriver);
 }
 
 // update default target in taskProvider

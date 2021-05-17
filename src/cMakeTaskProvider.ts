@@ -15,7 +15,7 @@ interface CMakeTaskDefinition extends TaskDefinition {
   type: string;
   label: string;
   command: string; // command include args
-  args: string[];
+  args?: string[];
   options?: cp.ExecOptions | undefined;
 }
 
@@ -27,19 +27,19 @@ export class cmakeTask extends Task {
 export class CMakeTaskProvider implements TaskProvider {
   static CMakeScriptType: string = 'cmake';
   static CMakeSourceStr: string = "CMake";
-  static defaultTargetStr: string = "all";//"${defaultTarget}";
-  static cmakeDriver: CMakeDriver | undefined;
-  private defaultTarget: string | undefined;
+  static allTargetName: string = "all";
+  private cmakeDriver: CMakeDriver | undefined;
+  private defaultBuildTarget: string | undefined;
 
   constructor() {
   }
 
-  public static updateCMakeDriver(cmakeDriver: CMakeDriver | undefined) {
+  public updateCMakeDriver(cmakeDriver: CMakeDriver | undefined) {
     this.cmakeDriver = cmakeDriver;
   }
 
-  public updateDefaultTarget(defaultTarget: string | undefined) {
-    this.defaultTarget = defaultTarget;
+  public updateDefaultTarget(defaultBuildTarget: string | undefined) {
+    this.defaultBuildTarget = defaultBuildTarget;
   }
 
   public async provideTasks(): Promise<cmakeTask[]> {
@@ -77,17 +77,25 @@ export class CMakeTaskProvider implements TaskProvider {
     // Create one CMake build task with target set to "all"
     let result: cmakeTask[] = [];
     let taskName: string = "CMake build";
-    let buildCommand: BuildCommand | null = CMakeTaskProvider.cmakeDriver ? await CMakeTaskProvider.cmakeDriver.getCMakeBuildCommand(CMakeTaskProvider.defaultTargetStr) : null;
-    let args: string[] = (buildCommand && buildCommand.args) ? buildCommand.args : [];
+    let buildCommand: BuildCommand | null;
+    let cmakePath: string = "CMake.EXE";
+    let args: string[] | undefined = [];
+    if (this.cmakeDriver) {
+      buildCommand = await this.cmakeDriver.getCMakeBuildCommand(this.defaultBuildTarget || CMakeTaskProvider.allTargetName);
+      if (buildCommand) {
+        cmakePath = buildCommand.command;
+        args = buildCommand.args;
+      }
+    }
     const definition: CMakeTaskDefinition = {
       type: CMakeTaskProvider.CMakeScriptType,
       label: taskName,
-      command: "build",
+      command: cmakePath,
       args: args
     };
     const task = new Task(definition, TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr);
     task.group = TaskGroup.Build;
-    task.detail = "Cmake build task template";
+    task.detail = "CMake build task template";
     result.push(task);
     return result;
   }
@@ -106,7 +114,7 @@ export class CMakeTaskProvider implements TaskProvider {
     return undefined;
   }
 
-  private getTask(taskCommand: string): cmakeTask {
+  /*private getTask(taskCommand: string): cmakeTask {
     const definition: CMakeTaskDefinition = {
       type: CMakeTaskProvider.CMakeScriptType,
       label: taskCommand,
@@ -120,7 +128,7 @@ export class CMakeTaskProvider implements TaskProvider {
             new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.args, resolvedDefinition.options)
         )); // TODO: add problem matcher
     return task;
-  }
+  }*/
 }
 
 class CustomBuildTaskTerminal implements Pseudoterminal {
@@ -143,7 +151,7 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
   }
 
   private async doBuild(): Promise<any> {
-    let activeCommand: string = this.command;
+    let activeCommand: string = this.command.includes(" ") ? ("\"" + this.command + "\"") : this.command;
     this.args.forEach(value => {
         if (value.includes(" ")) {
           value = "\"" + value + "\"";
@@ -155,10 +163,10 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
               this.writeEmitter.fire(line + this.endOfLine);
           }
       };
-      this.writeEmitter.fire(this.command + this.endOfLine);
+      this.writeEmitter.fire(activeCommand + this.endOfLine);
       try {
           const result: number = await new Promise<number>((resolve) => {
-              cp.exec(this.command, this.options, (_error, stdout, _stderr) => {
+              cp.exec(activeCommand, this.options, (_error, stdout, _stderr) => {
                   splitWriteEmitter(stdout); // linker header info and potentially compiler C warnings
                   if (_error) {
                       splitWriteEmitter(_stderr); // gcc/clang

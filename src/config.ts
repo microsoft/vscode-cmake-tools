@@ -215,7 +215,10 @@ export class ConfigurationReader implements vscode.Disposable {
       if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
         if (fireEvent) {
           const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
-          em.fire(newData[key]);
+          const temp = newData[key];
+          if (temp !== undefined) {
+            em.fire(temp);
+          }
         }
         keys.push(key);
       }
