@@ -1820,7 +1820,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       // Use cmd.exe on Windows
       termOptions.shellPath = paths.windows.ComSpec;
     }
-    if (!this._launchTerminal) {this._launchTerminal = vscode.window.createTerminal(termOptions); }
+    if (!this._launchTerminal) {
+      this._launchTerminal = vscode.window.createTerminal(termOptions);
+    }
     const quoted = shlex.quote(executable.path);
 
     let launchArgs = '';
@@ -1853,11 +1855,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const project_name = await vscode.window.showInputBox({
       prompt: localize('new.project.name', 'Enter a name for the new project'),
       validateInput: (value: string): string => {
-        if (!value.length) {return localize('project.name.required', 'A project name is required'); }
+        if (!value.length) {
+          return localize('project.name.required', 'A project name is required');
+        }
         return '';
       }
     });
-    if (!project_name) {return -1; }
+    if (!project_name) {
+      return -1;
+    }
 
     const target_type = (await vscode.window.showQuickPick([
       {
@@ -1867,7 +1873,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       {label: 'Executable', description: localize('create.executable', 'Create an executable')}
     ]));
 
-    if (!target_type) {return -1; }
+    if (!target_type) {
+      return -1;
+    }
 
     const type = target_type.label;
 
