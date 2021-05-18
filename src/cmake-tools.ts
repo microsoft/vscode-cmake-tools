@@ -825,7 +825,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async getCMakeExecutable() {
     const overWriteCMakePathSetting = this.useCMakePresets ? this.configurePreset?.cmakeExecutable : undefined;
     let cmakePath = await this.workspaceContext.getCMakePath(overWriteCMakePathSetting);
-    if (!cmakePath) {cmakePath = ''; }
+    if (!cmakePath) {
+      cmakePath = '';
+    }
     const cmakeExe = await getCMakeExecutableInformation(cmakePath);
     if (cmakeExe.version && this.minCMakeVersion && versionLess(cmakeExe.version, this.minCMakeVersion)) {
       rollbar.error(localize('cmake.version.not.supported',
@@ -1310,7 +1312,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         localize('project.not.yet.configured', 'This project has not yet been configured'),
         localize('configure.now.button', 'Configure Now')));
       if (do_conf) {
-        if (await this.configureInternal() !== 0) {return; }
+        if (await this.configureInternal() !== 0) {
+          return;
+        }
       } else {
         return;
       }
@@ -1348,7 +1352,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   async buildWithTarget(): Promise<number> {
     const target = await this.showTargetSelector();
-    if (target === null) {return -1; }
+    if (target === null) {
+      return -1;
+    }
     return this.build(target);
   }
 
@@ -1383,7 +1389,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementaiton of `cmake.clean`
    */
-  async clean(): Promise<number> { return this.build('clean'); }
+  async clean(): Promise<number> {
+    return this.build('clean');
+  }
 
   /**
    * Implementation of `cmake.cleanRebuild`

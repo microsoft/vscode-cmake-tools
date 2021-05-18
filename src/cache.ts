@@ -146,7 +146,9 @@ export class CMakeCache {
         }
         const [, , quoted_name, unquoted_name, typename, valuestr] = match;
         const name = quoted_name || unquoted_name;
-        if (!name || !typename) {continue; }
+        if (!name || !typename) {
+          continue;
+        }
         log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typename, 'valuestr', valuestr));
         if (name.endsWith('-ADVANCED') && valuestr === '1') {
           log.trace(localize('skipping.variable', 'Skipping {0} variable', '*-ADVANCED'));

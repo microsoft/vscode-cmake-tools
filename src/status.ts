@@ -7,15 +7,10 @@ import * as nls from 'vscode-nls';
 nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-// ---------------------------------------------
-// -------------- Helper Functions -------------
-// ---------------------------------------------
-
+// Helper functions
 function hasCPPTools(): boolean { return vscode.extensions.getExtension('ms-vscode.cpptools') !== undefined; }
-// ---------------------------------------------
-// ---------------- Button Class ---------------
-// ---------------------------------------------
 
+// Button class
 abstract class Button {
   readonly settingsName: string|null = null;
   protected readonly button: vscode.StatusBarItem;

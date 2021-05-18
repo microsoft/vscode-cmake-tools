@@ -402,7 +402,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     throw e;
   }
 
-  const prs = await Promise.all(bins.map(mapper));
+  const prs = await Promise.all(bins.map(b => mapper(b)));
   return dropNulls(prs);
 }
 

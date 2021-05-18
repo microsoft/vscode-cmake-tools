@@ -100,10 +100,10 @@ module.exports = {
             "error",
             "never"
         ],
-        "spaced-comment": [
+        /*"spaced-comment": [
             "error",
             "always"
-        ],
+        ],*/
         "use-isnan": "error",
         "valid-typeof": "error",
         "yoda": "error",
@@ -121,7 +121,7 @@ module.exports = {
                     "no-boolean-literal-compare": true,
                     "no-mergeable-namespace": true,
                     "no-reference-import": true,
-                    "no-unnecessary-callback-wrapper": true,
+                    "no-unnecessary-callback-wrapper": false,
                     "number-literal-format": true,
                     "one-line": [
                         true,
