@@ -107,8 +107,8 @@ Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-production
 # Now compile test code
 Invoke-ChronicCommand "Compiling Tests" $yarn run pretest
 
-# Run TSLint to check for silly mistakes
-Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
+# Run EsLint to check for silly mistakes
+Invoke-ChronicCommand "Running TSLint" $yarn run lint
 
 # Get the CMake binary that we will use to run our tests
 $cmake_binary = Install-TestCMake -Version "3.16.2"
