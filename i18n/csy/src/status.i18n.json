@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Kliknutím změníte aktivní sadu.",
 	"no.active.kit": "Žádná aktivní sada",
 	"no.kit.selected": "Není vybraná žádná sada.",
-	"set.active.target.tooltip": "Umožní nastavit aktivní cíl k sestavení.",
+	"set.active.target.tooltip": "Set the default build target",
 	"select.target.tooltip": "Umožní vybrat cíl, který se má spustit.",
 	"launch.debugger.tooltip": "Spustí ladicí program pro vybraný cíl.",
 	"launch.tooltip": "Spustit vybraný cíl v okně terminálu",

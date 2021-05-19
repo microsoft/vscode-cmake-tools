@@ -74,7 +74,7 @@
 	"reading.presets.file": "Чтение файла предустановок {0}",
 	"failed.to.parse": "Не удалось проанализировать {0}: {1}",
 	"invalid.file.error": "Недопустимое содержимое комплекта {0} ({1}):",
-	"successfully.validated.presets": "Выполнена проверка наборов предустановок в {0}",
+	"successfully.validated.presets": "Выполнена проверка предустановок в {0}",
 	"use.kits.variants": "Использовать наборы и варианты",
 	"edit.presets": "Найти",
 	"presets.version.error": "CMakePresets версии 1 не поддерживается. Выберите нужное действие.",

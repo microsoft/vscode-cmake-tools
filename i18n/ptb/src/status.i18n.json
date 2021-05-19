@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Clicar para alterar o kit ativo",
 	"no.active.kit": "Nenhum kit ativo",
 	"no.kit.selected": "Nenhum Kit Selecionado",
-	"set.active.target.tooltip": "Definir o destino ativo a ser compilado",
+	"set.active.target.tooltip": "Set the default build target",
 	"select.target.tooltip": "Selecionar o destino a ser iniciado",
 	"launch.debugger.tooltip": "Iniciar o depurador para o destino selecionado",
 	"launch.tooltip": "Iniciar o destino selecionado na janela do terminal",

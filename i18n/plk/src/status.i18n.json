@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Kliknij, aby zmienić aktywny zestaw",
 	"no.active.kit": "Nie ma aktywnego zestawu",
 	"no.kit.selected": "Nie wybrano zestawu",
-	"set.active.target.tooltip": "Skonfiguruj aktywny element docelowy do skompilowania",
+	"set.active.target.tooltip": "Set the default build target",
 	"select.target.tooltip": "Wybierz element docelowy do uruchomienia",
 	"launch.debugger.tooltip": "Uruchom debuger dla wybranego elementu docelowego",
 	"launch.tooltip": "Uruchom wybrany element docelowy w oknie terminalu",

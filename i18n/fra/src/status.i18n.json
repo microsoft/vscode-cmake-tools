@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Cliquer pour changer le kit actif",
 	"no.active.kit": "Aucun kit actif",
 	"no.kit.selected": "Aucun kit sélectionné",
-	"set.active.target.tooltip": "Définir la cible active à générer",
+	"set.active.target.tooltip": "Set the default build target",
 	"select.target.tooltip": "Sélectionner la cible à lancer",
 	"launch.debugger.tooltip": "Lancer le débogueur pour la cible sélectionnée",
 	"launch.tooltip": "Lancer la cible sélectionnée dans la fenêtre de terminal",

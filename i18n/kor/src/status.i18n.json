@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "활성 키트를 변경하려면 클릭하세요.",
 	"no.active.kit": "활성 키트가 없음",
 	"no.kit.selected": "선택된 키트가 없음",
-	"set.active.target.tooltip": "빌드할 활성 대상 설정",
+	"set.active.target.tooltip": "Set the default build target",
 	"select.target.tooltip": "시작할 대상 선택",
 	"launch.debugger.tooltip": "선택된 대상의 디버거 시작",
 	"launch.tooltip": "터미널 창에서 선택한 대상 시작",
