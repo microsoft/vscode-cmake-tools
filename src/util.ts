@@ -283,7 +283,9 @@ async function _killTree(pid: number) {
       children = stdout.split('\n').map(line => Number.parseInt(line));
     }
     for (const other of children) {
-      if (other) {await _killTree(other); }
+      if (other) {
+        await _killTree(other);
+      }
     }
     try {
       process.kill(pid, 'SIGINT');

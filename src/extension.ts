@@ -1164,7 +1164,9 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   async selectWorkspace(folder?: vscode.WorkspaceFolder) {
-    if (!folder) {return; }
+    if (!folder) {
+      return;
+    }
     await this._setActiveFolder(folder);
   }
 

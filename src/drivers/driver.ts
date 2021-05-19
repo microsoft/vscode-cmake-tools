@@ -466,7 +466,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
-    if (kit.preferredGenerator) {preferredGenerators.push(kit.preferredGenerator); }
+    if (kit.preferredGenerator) {
+      preferredGenerators.push(kit.preferredGenerator);
+    }
 
     // If no preferred generator is defined by the current kit or the user settings,
     // it's time to consider the defaults.
@@ -1487,7 +1489,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       await child.result;
       this._currentBuildProcess = null;
       return child;
-    } else {return null; }
+    } else {
+      return null;
+    }
   }
 
   /**
@@ -1505,7 +1509,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const cur = this._currentBuildProcess;
     if (cur) {
-      if (cur.child) {await util.termProc(cur.child); }
+      if (cur.child) {
+        await util.termProc(cur.child);
+      }
     }
 
     await this.onStop();

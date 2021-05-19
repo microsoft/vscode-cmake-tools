@@ -27,7 +27,9 @@ export class ConfigurationWebview {
 
   // The dirty state of the whole webview.
   private _dirty: boolean = false;
-  get dirty(): boolean { return this._dirty; }
+  get dirty(): boolean {
+    return this._dirty;
+  }
   set dirty(d: boolean) {
     this._dirty = d;
 

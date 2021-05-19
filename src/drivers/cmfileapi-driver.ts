@@ -194,7 +194,9 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     this._cacheWatcher.dispose();
   }
 
-  protected async doPreCleanConfigure(): Promise<void> { await this._cleanPriorConfiguration(); }
+  protected async doPreCleanConfigure(): Promise<void> {
+    await this._cleanPriorConfiguration();
+  }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     const api_path = this.getCMakeFileApiPath();

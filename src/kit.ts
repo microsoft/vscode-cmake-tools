@@ -284,7 +284,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
   const clang_res = clang_regex.exec(fname);
   if (gcc_res) {
     log.debug(localize('testing.gcc.binary', 'Testing GCC binary: {0}', bin));
-    if (pr) {pr.report({message: localize('getting.gcc.version', 'Getting GCC version for {0}', bin)}); }
+    if (pr) {
+      pr.report({message: localize('getting.gcc.version', 'Getting GCC version for {0}', bin)});
+    }
     const version = await getCompilerVersion('GCC', bin);
     if (version === null) {
       return null;
@@ -322,7 +324,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
           log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ("-v" returns non-zero): {0}', bin));
         } else {
           let make_version_output = execMake.stdout;
-          if (make_version_output.length === 0) {make_version_output = execMake.stderr; }
+          if (make_version_output.length === 0) {
+            make_version_output = execMake.stderr;
+          }
           const output_line_sep = make_version_output.trim().split('\n');
           const isMake = output_line_sep[0].includes('Make');
           const isMingwTool = output_line_sep[1].includes('mingw32');
@@ -340,7 +344,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
   } else if (clang_res) {
     log.debug(localize('testing.clang.binary', 'Testing Clang binary: {0}', bin));
-    if (pr) {pr.report({message: localize('getting.clang.version', 'Getting Clang version for {0}', bin)}); }
+    if (pr) {
+      pr.report({message: localize('getting.clang.version', 'Getting Clang version for {0}', bin)});
+    }
     const version = await getCompilerVersion('Clang', bin);
     if (version === null) {
       return null;

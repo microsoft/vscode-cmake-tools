@@ -253,12 +253,16 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     return this._cmakeInputFileSet.checkOutOfDate();
   }
 
-  get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
+  get cmakeCacheEntries(): Map<string, CacheEntryProperties> {
+    return this._cacheEntries;
+  }
 
   private async _setKitAndRestart(need_clean: boolean, cb: () => Promise<void>) {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
     const client = await this._cmsClient;
-    if (client) {await client.shutdown(); }
+    if (client) {
+      await client.shutdown();
+    }
     if (need_clean) {
       await this._cleanPriorConfiguration();
     }
@@ -328,7 +332,9 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
   }
 
   private readonly _onMessageEmitter = new vscode.EventEmitter<string>();
-  get onMessage() { return this._onMessageEmitter.event; }
+  get onMessage() {
+    return this._onMessageEmitter.event;
+  }
 
   async onStop(): Promise<void> {
     const client = await this._cmsClient;
