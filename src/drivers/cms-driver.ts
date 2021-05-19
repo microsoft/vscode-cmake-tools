@@ -55,13 +55,17 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   // TODO: Refactor to make this assertion unecessary
   private _codeModel!: null|cms.CodeModelContent;
-  get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
+  get codeModel(): null|cms.CodeModelContent {
+    return this._codeModel;
+  }
   set codeModel(v: null|cms.CodeModelContent) {
     this._codeModel = v;
   }
 
   private readonly _codeModelChanged = new vscode.EventEmitter<null|codemodel.CodeModelContent>();
-  get onCodeModelChanged() { return this._codeModelChanged.event; }
+  get onCodeModelChanged() {
+    return this._codeModelChanged.event;
+  }
 
   async asyncDispose() {
     this._codeModelChanged.dispose();
@@ -124,12 +128,16 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       } else {
         throw e;
       }
-    } finally { sub.dispose(); }
+    } finally {
+      sub.dispose();
+    }
     await this._refreshPostConfigure();
     return 0;
   }
 
-  protected async doPreBuild(): Promise<boolean> { return true; }
+  protected async doPreBuild(): Promise<boolean> {
+    return true;
+  }
 
   protected async doPostBuild(): Promise<boolean> {
     await this._refreshPostConfigure();
@@ -232,7 +240,9 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     return this.targets.reduce(targetReducer, []);
   }
 
-  get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
+  get generatorName(): string|null {
+    return this._globalSettings ? this._globalSettings.generator : null;
+  }
 
   /**
    * Track if the user changes the settings of the configure via settings.json
@@ -323,7 +333,9 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
         // on file changes?
       },
       onOtherOutput: async msg => this._onMessageEmitter.fire(msg),
-      onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
+      onMessage: async msg => {
+        this._onMessageEmitter.fire(msg.message);
+      },
       onProgress: async prog => {
         this._progressEmitter.fire(prog);
       },

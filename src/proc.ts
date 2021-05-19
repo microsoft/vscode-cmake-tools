@@ -89,7 +89,9 @@ export interface ExecutionOptions {
 
 export function buildCmdStr(command: string, args?: string[]): string {
   let cmdarr = [command];
-  if (args) {cmdarr = cmdarr.concat(args); }
+  if (args) {
+    cmdarr = cmdarr.concat(args);
+  }
   return cmdarr.map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a).join(' ');
 }
 
@@ -144,9 +146,8 @@ export function execute(command: string,
 
     vscode.commands.executeCommand("workbench.action.tasks.build");
 
-    result = new Promise<ExecutionResult>((resolve, reject) => {
+    result = new Promise<ExecutionResult>((resolve) => {
       resolve({retc: 0, stdout: '', stderr: ''});
-      if (false) {reject(); }
     });
   } else {
     try {
@@ -164,7 +165,9 @@ export function execute(command: string,
         })
       };
     }
-    if (options.encoding) {child.stdout?.setEncoding(options.encoding); }
+    if (options.encoding) {
+      child.stdout?.setEncoding(options.encoding);
+    }
 
     const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
 

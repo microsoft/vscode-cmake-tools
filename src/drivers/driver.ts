@@ -48,7 +48,9 @@ interface CompilerInfo {
 
 export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<void>;
 
-function nullableValueToString(arg: any|null|undefined): string { return arg === null ? 'empty' : arg; }
+function nullableValueToString(arg: any|null|undefined): string {
+  return arg === null ? 'empty' : arg;
+}
 
 /**
  * Base class for CMake drivers.
@@ -68,11 +70,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
 
-  protected async doPreCleanConfigure(): Promise<void> { return Promise.resolve(); }
+  protected async doPreCleanConfigure(): Promise<void> {
+    return Promise.resolve();
+  }
 
-  protected doPreBuild(): Promise<boolean> { return Promise.resolve(true); }
+  protected doPreBuild(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
 
-  protected doPostBuild(): Promise<boolean> { return Promise.resolve(true); }
+  protected doPostBuild(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
@@ -222,7 +230,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private _useCMakePresets: boolean = true;
 
-  get useCMakePresets(): boolean { return this._useCMakePresets; }
+  get useCMakePresets(): boolean {
+    return this._useCMakePresets;
+  }
 
   private _configurePreset: preset.ConfigurePreset | null = null;
 
@@ -230,7 +240,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private _testPreset: preset.TestPreset | null = null;
 
-  get testPreset(): preset.TestPreset | null { return this._testPreset; }
+  get testPreset(): preset.TestPreset | null {
+    return this._testPreset;
+  }
 
   /**
    * Get the vscode root workspace folder.
@@ -238,7 +250,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
    * `file://` scheme.
    */
-  protected get workspaceFolder() { return this.__workspaceFolder; }
+  protected get workspaceFolder() {
+    return this.__workspaceFolder;
+  }
 
   protected variantKeywordSettings: Map<string, string>|null = null;
 
@@ -374,7 +388,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const newBinaryDir = configurePreset.binaryDir;
     const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
-    await this.doSetConfigurePreset(needs_clean, async () => { await this._setConfigurePreset(configurePreset); });
+    await this.doSetConfigurePreset(needs_clean, async () => {
+      await this._setConfigurePreset(configurePreset);
+    });
   }
 
   private async _setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
@@ -413,7 +429,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset.name));
-    await this.doSetBuildPreset(async () => { await this._setBuildPreset(buildPreset); });
+    await this.doSetBuildPreset(async () => {
+      await this._setBuildPreset(buildPreset);
+    });
   }
 
   private async _setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
@@ -432,7 +450,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset.name));
-    await this.doSetTestPreset(async () => { await this._setTestPreset(testPreset); });
+    await this.doSetTestPreset(async () => {
+      await this._setTestPreset(testPreset);
+    });
   }
 
   private async _setTestPreset(testPreset: preset.TestPreset): Promise<void> {
@@ -457,7 +477,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
     const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
-    await this.doSetKit(needs_clean, async () => { await this._setKit(kit, preferredGenerators); });
+    await this.doSetKit(needs_clean, async () => {
+      await this._setKit(kit, preferredGenerators);
+    });
   }
 
   private async _setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
@@ -496,7 +518,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
-  protected get generator(): CMakeGenerator|null { return this._generator; }
+  protected get generator(): CMakeGenerator|null {
+    return this._generator;
+  }
   protected _generator: CMakeGenerator|null = null;
   /**
    * The CMAKE_BUILD_TYPE to use
@@ -539,10 +563,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @note This is distinct from the config values, since we do variable
    * substitution.
    */
-  get sourceDir(): string { return this._sourceDirectory; }
+  get sourceDir(): string {
+    return this._sourceDirectory;
+  }
   private _sourceDirectory = '';
 
-  protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> { return cb(); }
+  protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
+    return cb();
+  }
 
   private async _refreshExpansions() {
     log.debug('Run _refreshExpansions');
@@ -579,19 +607,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Directory where build output is stored.
    */
-  get binaryDir(): string { return this._binaryDir; }
+  get binaryDir(): string {
+    return this._binaryDir;
+  }
   private _binaryDir = '';
 
   /**
    * Directory where the targets will be installed.
    */
-  private get installDir(): string|null { return this._installDir; }
+  private get installDir(): string|null {
+    return this._installDir;
+  }
   private _installDir: string|null = null;
 
   /**
    * Path to copy compile_commands.json to
    */
-  get copyCompileCommandsPath(): string|null { return this._copyCompileCommandsPath; }
+  get copyCompileCommandsPath(): string|null {
+    return this._copyCompileCommandsPath;
+  }
   private _copyCompileCommandsPath: string|null = null;
 
   /**
@@ -622,7 +656,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  get isMultiConf(): boolean { return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false; }
+  get isMultiConf(): boolean {
+    return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false;
+  }
 
   /**
    * Get the name of the current CMake generator, or `null` if we have not yet
@@ -1205,7 +1241,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     } catch {
       log.info(localize('configure.failed', 'Failed to configure project'));
       return -1;
-    } finally { this.configRunning = false; }
+    } finally {
+      this.configRunning = false;
+    }
   }
 
   private generateInitCacheFlags(): string[] {
