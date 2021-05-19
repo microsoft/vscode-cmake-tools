@@ -56,6 +56,7 @@ module.exports = {
         "@typescript-eslint/type-annotation-spacing": "error",
         //"@typescript-eslint/unified-signatures": "error",
         "arrow-body-style": "error",
+        "brace-style": "error",
         "comma-dangle": "error",
         "constructor-super": "error",
         "curly": "error",
