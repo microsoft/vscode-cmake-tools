@@ -683,7 +683,7 @@ class ExtensionManager implements vscode.Disposable {
 
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
-        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
+        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath});
         await this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
           ++this.cpptoolsNumFoldersReady;

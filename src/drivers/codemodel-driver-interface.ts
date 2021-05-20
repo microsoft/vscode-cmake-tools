@@ -109,6 +109,9 @@ export interface CodeModelProject {
 export interface CodeModelConfiguration {
   /** List of project() from CMakeLists.txt */
   projects: CodeModelProject[];
+
+  /** Name of the current configuration */
+  name : string;
 }
 
 export interface CodeModelToolchain {

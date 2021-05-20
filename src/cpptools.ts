@@ -305,6 +305,10 @@ export interface CodeModelParams {
    */
   activeTarget: string|null;
   /**
+   * The active variant
+   */
+  activeVariant: string|null;
+  /**
    * Workspace folder full path.
    */
   folder: string;
@@ -520,6 +524,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
     for (const config of opts.codeModel.configurations) {
+      if (config.name != opts.activeVariant) {
+        continue;
+      }
+
       for (const project of config.projects) {
         for (const target of project.targets) {
           /// Now some shenanigans since header files don't have config data:
