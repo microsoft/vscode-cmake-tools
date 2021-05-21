@@ -213,8 +213,8 @@ function makeExtensionTestSuite(name: string,
                                                context.buildSystem.excludeKit);
 
       context.pathBackup = process.env.PATH!;
-      if (context.buildSystem.path && context.buildSystem.path.length != 0) {
-        process.env.PATH = context.buildSystem.path.join(process.platform == 'win32' ? ';' : ':');
+      if (context.buildSystem.path && context.buildSystem.path.length !== 0) {
+        process.env.PATH = context.buildSystem.path.join(process.platform === 'win32' ? ';' : ':');
       }
 
       context.cmt = await CMakeTools.create(context.testEnv.vsContext, context.testEnv.wsContext);

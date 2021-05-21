@@ -9,12 +9,10 @@ import * as proc from '../proc';
 import {thisExtensionPath} from '../util';
 import * as nls from 'vscode-nls';
 
-
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('visual-studio');
-
 
 export interface VSCatalog {
   productDisplayVersion: string;

@@ -20,7 +20,7 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function getPathWithoutCompilers() {
-  if (process.arch == 'win32') {
+  if (process.arch === 'win32') {
     return 'C:\\TMP';
   } else {
     return '/tmp';

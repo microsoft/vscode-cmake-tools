@@ -137,7 +137,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE' && t.name == 'TestBuildProcess');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -163,7 +163,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'STATIC_LIBRARY');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -196,7 +196,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'SHARED_LIBRARY');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'SHARED_LIBRARY');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -232,8 +232,8 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'UTILITY'
-                                                                                    && t.name == 'runTestTarget');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'UTILITY'
+                                                                                    && t.name === 'runTestTarget');
       expect(target).to.be.not.undefined;
 
       // maybe could be used to exclude file list from utility targets
@@ -250,7 +250,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE');
       expect(target).to.be.not.undefined;
       expect(target!.sysroot).to.be.eq('/tmp');
     }).timeout(90000);
@@ -264,8 +264,8 @@ export function makeCodeModelDriverTestsuite(
                                                                    ['subdir_target', 'subdir', '../../main.cpp']] as
            const) {
 
-        const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE'
-                                                                                      && t.name == target_name);
+        const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE'
+                                                                                      && t.name === target_name);
         expect(target).to.be.not.undefined;
 
         // Assert correct target names for node labels

@@ -16,7 +16,7 @@ smokeSuite('no-ctest-in-bindir', suite => {
     return ctx.withCMakeTools({
       kit: await smokeTestDefaultKit(),
       async run(cmt) {
-        const cmake_filename = process.platform == 'win32' ? 'cmake.bat' : 'cmake.sh';
+        const cmake_filename = process.platform === 'win32' ? 'cmake.bat' : 'cmake.sh';
         cmt.workspaceContext.config.updatePartial({
           cmakePath: path.join(ctx.projectDir.uri.fsPath, 'bin', cmake_filename),
         });
