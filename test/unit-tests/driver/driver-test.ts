@@ -131,11 +131,11 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       expect(await driver.build(driver.allTargetName)).to.be.eq(0);
 
       expect(driver.executableTargets.length).to.be.eq(2);
-      const targetInTopLevelBuildDir = driver.executableTargets.find(t => t.name == 'TestBuildProcess');
+      const targetInTopLevelBuildDir = driver.executableTargets.find(t => t.name === 'TestBuildProcess');
       expect(targetInTopLevelBuildDir).to.not.undefined;
       expect(fs.existsSync(targetInTopLevelBuildDir!.path)).to.be.true;
 
-      const targetInRuntimeOutputDir = driver.executableTargets.find(t => t.name == 'TestBuildProcessOtherOutputDir');
+      const targetInRuntimeOutputDir = driver.executableTargets.find(t => t.name === 'TestBuildProcessOtherOutputDir');
       expect(targetInRuntimeOutputDir).to.not.undefined;
       expect(fs.existsSync(targetInRuntimeOutputDir!.path)).to.be.true;
     }).timeout(90000);
@@ -255,7 +255,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.BuildIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
           called = true;
         }
       };
@@ -276,7 +276,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
           called = true;
         }
       };
@@ -297,7 +297,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.BuildIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
           called = true;
         }
       };
@@ -318,7 +318,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
           called = true;
         }
       };
@@ -339,7 +339,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.BuildIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
           called = true;
         }
       };

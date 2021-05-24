@@ -28,9 +28,7 @@ export function cleanStack(stack?: string): string {
     return match.replace(fileName, name);
   });
   // Some are direct references to main.js without parenthesis
-  stack = stack.replace(/at( async | )([^\n]+main.js(:\d+(:\d+)?)?)$/gm, (match: string, _unused: string, fileInfo: string, lineColumn: string) => {
-    return match.replace(fileInfo, `main.js${lineColumn}`);
-  });
+  stack = stack.replace(/at( async | )([^\n]+main.js(:\d+(:\d+)?)?)$/gm, (match: string, _unused: string, fileInfo: string, lineColumn: string) => match.replace(fileInfo, `main.js${lineColumn}`));
   // As a last resort, remove anything that looks like it could be a path.
   const strings: string[] = stack.split('\n');
   strings.forEach((value, index, array) => {
@@ -134,7 +132,7 @@ class RollbarController {
   takePromise<T>(what: string, additional: object, pr: Thenable<T>): void {
     pr.then(
         () => {},
-        e => { this.exception(localize('unhandled.promise.rejection', 'Unhandled Promise rejection: {0}', what), e, additional); },
+        e => { this.exception(localize('unhandled.promise.rejection', 'Unhandled Promise rejection: {0}', what), e, additional); }
     );
   }
 }

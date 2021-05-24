@@ -61,7 +61,7 @@ suite('Build', async () => {
     const logPath = logFilePath();
     testEnv.clean();
     if (await fs.exists(logPath)) {
-      if (this.currentTest?.state == "failed") {
+      if (this.currentTest?.state === "failed") {
         const logContent = await fs.readFile(logPath);
         logContent.toString().split('\n').forEach(line => {
           console.log(line);

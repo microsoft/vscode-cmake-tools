@@ -104,7 +104,7 @@ class OutputChannelManager implements vscode.Disposable {
   dispose() { util.map(this._channels.values(), c => c.dispose()); }
 }
 
-export const channelManager = new OutputChannelManager;
+export const channelManager = new OutputChannelManager();
 
 export interface Stringable {
   toString(): string;
@@ -140,7 +140,7 @@ class SingletonLogger {
 
   private _log(level: LogLevel, ...args: Stringable[]) {
     const trace = vscode.workspace.getConfiguration('cmake').get('enableTraceLogging', false);
-    if (level == LogLevel.Trace && !trace) {
+    if (level === LogLevel.Trace && !trace) {
       return;
     }
     const user_message = args.map(a => a.toString()).join(' ');
