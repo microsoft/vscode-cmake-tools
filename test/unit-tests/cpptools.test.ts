@@ -216,7 +216,7 @@ suite('CppTools tests', () => {
       }],
       toolchains: new Map<string, codemodel_api.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
     };
-    provider.updateConfigurationData({cache, codeModel: codeModel2, activeTarget: 'target3', activeVariant : 'Releases', folder: smokeFolder});
+    provider.updateConfigurationData({cache, codeModel: codeModel2, activeTarget: 'target3', activeVariant : 'Release', folder: smokeFolder});
 
     let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile2)]);
     expect(configurations.length).to.eq(1);
@@ -226,13 +226,13 @@ suite('CppTools tests', () => {
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG1');
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target2', activeVariant : 'Releases', folder: here});
+    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target2', activeVariant : 'Release', folder: here});
     configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG2');
     expect(configurations[0].configuration.compilerPath).to.eq('clang++');
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'all', activeVariant : 'Releases', folder: here});
+    provider.updateConfigurationData({cache, codeModel, activeTarget: 'all', activeVariant : 'Release', folder: here});
     configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines.some(def => def === 'FLAG1' || def === 'FLAG2')).to.be.true;
