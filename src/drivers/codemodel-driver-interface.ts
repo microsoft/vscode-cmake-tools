@@ -111,7 +111,7 @@ export interface CodeModelConfiguration {
   projects: CodeModelProject[];
 
   /** Name of the current configuration */
-  name : string;
+  name: string;
 }
 
 export interface CodeModelToolchain {
