@@ -58,18 +58,18 @@ export interface ProtocolVersion {
 /**
  * The base of all messages. Each message has a `type` property.
  */
-export interface MessageBase { type: string; }
+export interface MessageBase { type: string }
 
 /**
  * Cookied messages represent some on-going conversation.
  */
-export interface CookiedMessage extends MessageBase { cookie: string; }
+export interface CookiedMessage extends MessageBase { cookie: string }
 
 /**
  * Reply messages are solicited by some previous request, which comes with a
  * cookie to identify the initiating request.
  */
-export interface ReplyMessage extends CookiedMessage { inReplyTo: string; }
+export interface ReplyMessage extends CookiedMessage { inReplyTo: string }
 
 /**
  * Progress messages are sent regarding some long-running request process before
@@ -88,7 +88,7 @@ export interface SignalMessage extends MessageBase {
   name: string;
 }
 
-export interface DirtyMessage extends SignalMessage { name: 'dirty'; }
+export interface DirtyMessage extends SignalMessage { name: 'dirty' }
 
 export interface FileChangeMessage {
   name: 'fileChange';
@@ -129,28 +129,28 @@ export interface HandshakeParams {
   extraGenerator?: string;
   platform?: string;
   toolset?: string;
-  protocolVersion: {major: number; minor: number;};
+  protocolVersion: {major: number; minor: number};
 }
 
-export interface HandshakeRequest extends CookiedMessage, HandshakeParams { type: 'handshake'; }
+export interface HandshakeRequest extends CookiedMessage, HandshakeParams { type: 'handshake' }
 
 export interface HandshakeContent {}
 
-export interface HandshakeReply extends ReplyMessage, HandshakeContent { inReplyTo: 'handshake'; }
+export interface HandshakeReply extends ReplyMessage, HandshakeContent { inReplyTo: 'handshake' }
 
 /**
  * GlobalSettings request gets some static information about the project setup.
  */
 export interface GlobalSettingsParams {}
 
-export interface GlobalSettingsRequest extends CookiedMessage, GlobalSettingsParams { type: 'globalSettings'; }
+export interface GlobalSettingsRequest extends CookiedMessage, GlobalSettingsParams { type: 'globalSettings' }
 
 export interface GlobalSettingsContent {
   buildDirectory: string;
   capabilities: {
-    generators: {extraGenerators: string[]; name: string; platformSupport: boolean; toolsetSupport: boolean;}[];
+    generators: {extraGenerators: string[]; name: string; platformSupport: boolean; toolsetSupport: boolean}[];
     serverMode: boolean;
-    version: {isDirty: boolean; major: number; minor: number; patch: number; string: string; suffix: string;};
+    version: {isDirty: boolean; major: number; minor: number; patch: number; string: string; suffix: string};
   };
   checkSystemVars: boolean;
   extraGenerator: string;
@@ -164,7 +164,7 @@ export interface GlobalSettingsContent {
   warnUnusedCli: boolean;
 }
 
-export interface GlobalSettingsReply extends ReplyMessage, GlobalSettingsContent { inReplyTo: 'globalSettings'; }
+export interface GlobalSettingsReply extends ReplyMessage, GlobalSettingsContent { inReplyTo: 'globalSettings' }
 
 /**
  * setGlobalSettings changes information about the project setup.
@@ -179,7 +179,7 @@ export interface SetGlobalSettingsParams {
   warnUnusedCli?: boolean;
 }
 
-export interface SetGlobalSettingsRequest extends CookiedMessage, SetGlobalSettingsParams { type: 'setGlobalSettings'; }
+export interface SetGlobalSettingsRequest extends CookiedMessage, SetGlobalSettingsParams { type: 'setGlobalSettings' }
 
 export interface SetGlobalSettingsContent {}
 
@@ -191,23 +191,23 @@ export interface SetGlobalSettingsReply extends ReplyMessage, SetGlobalSettingsC
  * configure will actually do the configuration for the project. Note that
  * this should be followed shortly with a 'compute' request.
  */
-export interface ConfigureParams { cacheArguments: string[]; }
+export interface ConfigureParams { cacheArguments: string[] }
 
-export interface ConfigureRequest extends CookiedMessage, ConfigureParams { type: 'configure'; }
+export interface ConfigureRequest extends CookiedMessage, ConfigureParams { type: 'configure' }
 
 export interface ConfigureContent {}
-export interface ConfigureReply extends ReplyMessage, ConfigureContent { inReplyTo: 'configure'; }
+export interface ConfigureReply extends ReplyMessage, ConfigureContent { inReplyTo: 'configure' }
 
 /**
  * Compute actually generates the build files from the configure step.
  */
 export interface ComputeParams {}
 
-export interface ComputeRequest extends CookiedMessage, ComputeParams { type: 'compute'; }
+export interface ComputeRequest extends CookiedMessage, ComputeParams { type: 'compute' }
 
 export interface ComputeContent {}
 
-export interface ComputeReply extends ReplyMessage, ComputeContent { inReplyTo: 'compute'; }
+export interface ComputeReply extends ReplyMessage, ComputeContent { inReplyTo: 'compute' }
 
 /**
  * codemodel gets information about the project, such as targets, files,
@@ -216,12 +216,12 @@ export interface ComputeReply extends ReplyMessage, ComputeContent { inReplyTo: 
  */
 export interface CodeModelParams {}
 
-export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel'; }
+export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel' }
 
 export interface CodeModelFileGroup {
   language?: string;
   compileFlags?: string;
-  includePath?: {path: string; isSystem?: boolean;}[];
+  includePath?: {path: string; isSystem?: boolean}[];
   defines?: string[];
   sources: string[];
   isGenerated: boolean;
@@ -259,9 +259,9 @@ export interface CodeModelConfiguration {
   projects: CodeModelProject[];
 }
 
-export interface CodeModelContent { configurations: CodeModelConfiguration[]; }
+export interface CodeModelContent { configurations: CodeModelConfiguration[] }
 
-export interface CodeModelReply extends ReplyMessage, CodeModelContent { inReplyTo: 'codemodel'; }
+export interface CodeModelReply extends ReplyMessage, CodeModelContent { inReplyTo: 'codemodel' }
 
 /**
  * cmakeInputs will respond with a list of file paths that can alter a
@@ -270,24 +270,24 @@ export interface CodeModelReply extends ReplyMessage, CodeModelContent { inReply
  */
 export interface CMakeInputsParams {}
 
-export interface CMakeInputsRequest extends CookiedMessage, CMakeInputsParams { type: 'cmakeInputs'; }
+export interface CMakeInputsRequest extends CookiedMessage, CMakeInputsParams { type: 'cmakeInputs' }
 
 export interface CMakeInputsContent {
-  buildFiles: {isCMake: boolean; isTemporary: boolean; sources: string[];}[];
+  buildFiles: {isCMake: boolean; isTemporary: boolean; sources: string[]}[];
   cmakeRootDirectory: string;
   sourceDirectory: string;
 }
 
-export interface CMakeInputsReply extends ReplyMessage, CMakeInputsContent { inReplyTo: 'cmakeInputs'; }
+export interface CMakeInputsReply extends ReplyMessage, CMakeInputsContent { inReplyTo: 'cmakeInputs' }
 
 /**
  * The cache request will respond with the contents of the CMake cache.
  */
 export interface CacheParams {}
 
-export interface CacheRequest extends CookiedMessage, CacheParams { type: 'cache'; }
+export interface CacheRequest extends CookiedMessage, CacheParams { type: 'cache' }
 
-export interface CacheContent { cache: CMakeCacheEntry[]; }
+export interface CacheContent { cache: CMakeCacheEntry[] }
 
 export interface CMakeCacheEntry {
   key: string;
@@ -296,7 +296,7 @@ export interface CMakeCacheEntry {
   value: string;
 }
 
-export interface CacheReply extends ReplyMessage, CacheContent { inReplyTo: 'cache'; }
+export interface CacheReply extends ReplyMessage, CacheContent { inReplyTo: 'cache' }
 
 // Union type that represents any of the request types.
 export type SomeRequestMessage
@@ -317,10 +317,10 @@ export type SomeMessage
  */
 export interface ClientInit {
   cmakePath: string;
-  onMessage: (m: MessageMessage) => Promise<void>;
+  onMessage(m: MessageMessage): Promise<void>;
   onOtherOutput(m: string): Promise<void>;
-  onProgress: (m: ProgressMessage) => Promise<void>;
-  onDirty: () => Promise<void>;
+  onProgress(m: ProgressMessage): Promise<void>;
+  onDirty(): Promise<void>;
   environment: NodeJS.ProcessEnv;
   sourceDir: string;
   binaryDir: string;
@@ -329,8 +329,8 @@ export interface ClientInit {
 }
 
 interface ClientInitPrivate extends ClientInit {
-  onHello: (m: HelloMessage) => Promise<void>;
-  onCrash: (retc: number, signal: string) => Promise<void>;
+  onHello(m: HelloMessage): Promise<void>;
+  onCrash(retc: number, signal: string): Promise<void>;
   onPipeError(e: Error): Promise<void>;
 }
 
@@ -359,14 +359,13 @@ export class BadHomeDirectoryError extends Error {
 }
 
 interface MessageResolutionCallbacks {
-  resolve: (a: SomeReplyMessage) => void;
-  reject: (b: ServerError) => void;
+  resolve(a: SomeReplyMessage): void;
+  reject(b: ServerError): void;
 }
-
 
 export class CMakeServerClient {
   private _accInput: string = '';
-  private readonly _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map;
+  private readonly _promisesResolvers: Map<string, MessageResolutionCallbacks> = new Map();
   private readonly _params: ClientInitPrivate;
   // TODO: Refactor init so these init-assertions are not necessary
   private _endPromise!: Promise<void>;
@@ -667,7 +666,7 @@ export class CMakeServerClient {
             resolved = true;
             reject(e);
           }
-        },
+        }
       });
     });
   }

@@ -163,14 +163,14 @@ export function getCodePageTable(): CodePageTable {
     [57010]: 'x-iscii-gu',
     [57011]: 'x-iscii-pa',
     [65000]: 'utf-7',
-    [65001]: 'utf-8',
+    [65001]: 'utf-8'
   };
 }
 
 /**
  * A promise for idempotent codepage aquisition. @see getWindowsCodepage
  */
-let _CODEPAGE: Promise<string>|undefined = undefined;
+let _CODEPAGE: Promise<string>|undefined;
 
 /**
  * Return the currently active Windows codepage (done by calling chcp in a subprocess');

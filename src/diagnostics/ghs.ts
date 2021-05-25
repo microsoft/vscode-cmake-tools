@@ -2,14 +2,12 @@
  * Module for parsing GHS diagnostics
  */ /** */
 
-
 import * as vscode from 'vscode';
 
 import {oneLess, RawDiagnosticParser, FeedLineResult} from './util';
 
 export const REGEX
     = /^\"(.*)\",\s+(?:(?:line\s+(\d+)\s+\(col\.\s+(\d+)\))|(?:At end of source)):\s+(?:fatal )?(remark|warning|error)\s+(.*)/;
-
 
 export class Parser extends RawDiagnosticParser {
   doHandleLine(line: string) {
@@ -27,7 +25,7 @@ export class Parser extends RawDiagnosticParser {
         location: new vscode.Range(oneLess(lineno), oneLess(column), oneLess(lineno), 999),
         severity,
         message,
-        related: [],
+        related: []
       };
     }
     return FeedLineResult.NotMine;
