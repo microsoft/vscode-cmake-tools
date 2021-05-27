@@ -68,7 +68,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doConfigure(extra_args: string[], autoConfigInternal: boolean, consumer?: proc.OutputConsumer): Promise<number>;
 
   protected async doPreCleanConfigure(): Promise<void> {
     return Promise.resolve();
@@ -808,7 +808,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     await this.doPreCleanConfigure();
     this.configRunning = false;
 
-    return this.configure(trigger, extra_args, consumer);
+    return this.configure(trigger, extra_args, false, consumer);
   }
 
   async testCompilerVersion(program: string, cwd: string, arg: string | undefined,
@@ -1094,7 +1094,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return count;
   }
 
-  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
+  async configure(trigger: ConfigureTrigger, extra_args: string[], autoConfigInternal: boolean = false, consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1115,12 +1115,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return -2;
       }
 
+      // cache flags will construct the command line for cmake
       const init_cache_flags = this.generateInitCacheFlags();
 
       let expanded_flags: string[];
       if (this.useCMakePresets) {
         if (!this._configurePreset) {
-          log.debug(localize('no.config.Preset', 'No configure preset selected'));
+          // Do not log when the extension is running an internal auto-configuration.
+          if (!autoConfigInternal) {
+            log.debug(localize('no.config.Preset', 'No configure preset selected'));
+          }
           return -3;
         }
         // For now, fields in presets are expanded when the preset is selected
@@ -1139,13 +1143,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
             async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
         expanded_flags = await Promise.all(expanded_flags_promises);
       }
-      log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
+      if (!autoConfigInternal) {
+        log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
+      }
 
       // A more complete round of expansions
       await this._refreshExpansions();
 
       const timeStart: number = new Date().getTime();
-      const retc = await this.doConfigure(expanded_flags, consumer);
+      const retc = await this.doConfigure(expanded_flags, autoConfigInternal, consumer);
       const timeEnd: number = new Date().getTime();
 
       const cmakeVersion = this.cmake.version;
@@ -1235,11 +1241,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
           telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
         }
       }
-      telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
+      if (!autoConfigInternal) {
+        telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
+      }
 
       return retc;
     } catch {
-      log.info(localize('configure.failed', 'Failed to configure project'));
+      if (!autoConfigInternal) {
+        log.info(localize('configure.failed', 'Failed to configure project'));
+      }
       return -1;
     } finally {
       this.configRunning = false;
@@ -1567,7 +1577,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
                           configurePreset: preset.ConfigurePreset | null,
                           buildPreset: preset.BuildPreset | null,
                           testPreset: preset.TestPreset | null,
-                          preferredGenerators: CMakeGenerator[]) {
+                          preferredGenerators: CMakeGenerator[],
+                          autoConfigInternal: boolean) {
     this._useCMakePresets = useCMakePresets;
     log.debug(`Initializating base driver using ${useCMakePresets ? 'preset' : 'kit'}`);
     // Load up kit or presets before starting any drivers.
@@ -1585,9 +1596,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       await this._setKit(kit, preferredGenerators);
     }
     await this._refreshExpansions();
-    await this.doInit();
+    await this.doInit(autoConfigInternal);
   }
-  protected abstract doInit(): Promise<void>;
+  protected abstract doInit(autoConfigInternal: boolean): Promise<void>;
 
   /**
    * Asynchronous initialization. Should be called by base classes during
@@ -1599,8 +1610,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
                                                     configurePreset: preset.ConfigurePreset | null,
                                                     buildPreset: preset.BuildPreset | null,
                                                     testPreset: preset.TestPreset | null,
-                                                    preferredGenerators: CMakeGenerator[]): Promise<T> {
-    await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators);
+                                                    preferredGenerators: CMakeGenerator[],
+                                                    autoConfigInternal: boolean): Promise<T> {
+    await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators, autoConfigInternal);
     return inst;
   }
 }

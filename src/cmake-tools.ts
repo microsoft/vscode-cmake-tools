@@ -58,6 +58,7 @@ export enum ConfigureType {
   Normal,
   Clean,
   Cache,
+  Auto
 }
 
 export enum ConfigureTrigger {
@@ -65,6 +66,7 @@ export enum ConfigureTrigger {
   runTests = "runTests",
   badHomeDir = "badHomeDir",
   configureOnOpen = "configureOnOpen",
+  autoConfigureOnOpen = "autoConfigureOnOpen",
   quickStart = "quickStart",
   setVariant = "setVariant",
   cmakeListsChange = "cmakeListsChange",
@@ -545,7 +547,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Start up a new CMake driver and return it. This is so that the initialization
    * of the driver is atomic to those using it
    */
-  private async _startNewCMakeDriver(cmake: CMakeExecutable): Promise<CMakeDriver> {
+  private async _startNewCMakeDriver(cmake: CMakeExecutable, autoConfigInternal: boolean): Promise<CMakeDriver> {
     log.debug(localize('starting.cmake.driver', 'Starting CMake driver'));
     if (!cmake.isPresent) {
       throw new Error(localize('bad.cmake.executable', 'Bad CMake executable "{0}".', cmake.path));
@@ -603,7 +605,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                 this.testPreset,
                                                 workspace,
                                                 preConditionHandler,
-                                                preferredGenerators);
+                                                preferredGenerators,
+                                                autoConfigInternal);
           break;
         case serverApi:
           drv = await CMakeServerClientDriver.create(cmake,
@@ -677,7 +680,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       log.debug(localize('reloading.driver', 'Reloading CMake driver'));
       await drv.asyncDispose();
-      return this._cmakeDriver = this._startNewCMakeDriver(await this.getCMakeExecutable());
+      return this._cmakeDriver = this._startNewCMakeDriver(await this.getCMakeExecutable(), false);
     }
   }
   /**
@@ -734,7 +737,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         if (drv && !drv.configOrBuildInProgress()) {
           if (drv.config.configureOnEdit) {
             log.debug(localize('cmakelists.save.trigger.reconfigure', "Detected saving of CMakeLists.txt, attempting automatic reconfigure..."));
-            await this.configureInternal(ConfigureTrigger.cmakeListsChange, [], ConfigureType.Normal);
+            await this.configureInternal(ConfigureTrigger.cmakeListsChange, false, [], ConfigureType.Normal);
           }
         } else {
           log.warning(localize('cmakelists.save.could.not.reconfigure',
@@ -846,7 +849,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * This ensures that user commands can always be executed, because error criterials like
    * exceptions would assign a null driver and it is possible to create a new driver instance later again.
    */
-  async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
+  async getCMakeDriverInstance(autoConfigInternal: boolean = false): Promise<CMakeDriver|null> {
     return this._driverStrand.execute(async () => {
       if (!this.useCMakePresets && !this.activeKit) {
         log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kits defined'));
@@ -862,7 +865,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
       if ((await this._cmakeDriver) === null) {
         log.debug(localize('starting.new.cmake.driver', 'Starting new CMake driver'));
-        this._cmakeDriver = this._startNewCMakeDriver(cmake);
+        this._cmakeDriver = this._startNewCMakeDriver(cmake, autoConfigInternal);
 
         try {
           await this._cmakeDriver;
@@ -987,10 +990,29 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    *          proper trigger information.
    */
   configure(extra_args: string[] = []): Thenable<number> {
-    return this.configureInternal(ConfigureTrigger.api, extra_args, ConfigureType.Normal);
+    return this.configureInternal(ConfigureTrigger.api, false, extra_args, ConfigureType.Normal);
   }
 
-  configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
+  configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, autoConfigInternal: boolean = false, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
+    // Don't show a progress bar when the extension is running an internal auto-configuration.
+    if (autoConfigInternal || type === ConfigureType.Auto) {
+      // TODO: title: localize('autoconfiguring.project', 'Configuring project')
+      return new Promise(async (resolve) => {
+        const drv = await this.getCMakeDriverInstance(true);
+        if (drv) {
+          let retc: number;
+          retc = await drv.configure(trigger, [], autoConfigInternal);
+          if (retc === 0) {
+            await this._refreshCompileDatabase(drv.expansionOptions);
+          }
+          await this._ctestController.reloadTests(drv);
+          this._onReconfiguredEmitter.fire();
+          resolve(retc);
+        } else {
+          resolve(-1);
+        }
+      });
+    }
     return vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -1018,18 +1040,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 let retc: number;
                 await setContextValue(IS_CONFIGURING_KEY, true);
                 if (type === ConfigureType.Cache) {
-                  retc = await drv.configure(trigger, [], consumer, true);
+                  retc = await drv.configure(trigger, [], autoConfigInternal, consumer, true);
                 } else {
                   switch (type) {
                     case ConfigureType.Normal:
-                        retc = await drv.configure(trigger, extra_args, consumer);
+                        retc = await drv.configure(trigger, extra_args, autoConfigInternal, consumer);
                       break;
                     case ConfigureType.Clean:
                         retc = await drv.cleanConfigure(trigger, extra_args, consumer);
                       break;
                     default:
                         rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
-                        retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
+                        retc = await this.configureInternal(trigger, autoConfigInternal, extra_args, ConfigureType.Normal);
                       break;
                   }
                   await setContextValue(IS_CONFIGURING_KEY, false);
@@ -1063,7 +1085,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    *          All other configure calls in this extension are able to provide
    *          proper trigger information.
    */
-  cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) { return this.configureInternal(trigger, [], ConfigureType.Clean); }
+  cleanConfigure(trigger: ConfigureTrigger = ConfigureTrigger.api) { return this.configureInternal(trigger, false, [], ConfigureType.Clean); }
 
   /**
    * Save all open files. "maybe" because the user may have disabled auto-saving
@@ -1176,7 +1198,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -1;
     }
     if (await this._needsReconfigure()) {
-      return this.configureInternal(ConfigureTrigger.compilation, [], ConfigureType.Normal);
+      return this.configureInternal(ConfigureTrigger.compilation, false, [], ConfigureType.Normal);
     } else {
       return 0;
     }
@@ -1336,7 +1358,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
 
       this._cacheEditorWebview = new ConfigurationWebview(drv.cachePath, async () => {
-        await this.configureInternal(ConfigureTrigger.commandEditCacheUI, [], ConfigureType.Cache);
+        await this.configureInternal(ConfigureTrigger.commandEditCacheUI, false, [], ConfigureType.Cache);
       });
       await this._cacheEditorWebview.initPanel();
 
@@ -1448,7 +1470,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async setVariant(name?: string) {
     // Make this function compatibile with return code style...
     if (await this._variantManager.selectVariant(name)) {
-      await this.configureInternal(ConfigureTrigger.setVariant, [], ConfigureType.Normal);
+      await this.configureInternal(ConfigureTrigger.setVariant, false, [], ConfigureType.Normal);
       return 0; // succeeded
     }
     return 1; // failed
@@ -1504,7 +1526,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async setLaunchTargetByName(name?: string|null) {
     if (await this._needsReconfigure()) {
-      const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
+      const rc = await this.configureInternal(ConfigureTrigger.launch, false, [], ConfigureType.Normal);
       if (rc !== 0) {
         return null;
       }
@@ -1592,7 +1614,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async getLaunchTargetPath(): Promise<string|null> {
     if (await this._needsReconfigure()) {
-      const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
+      const rc = await this.configureInternal(ConfigureTrigger.launch, false, [], ConfigureType.Normal);
       if (rc !== 0) {
         return null;
       }
@@ -1670,7 +1692,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // executable targets and may show an uneccessary prompt to the user
     const isReconfigurationNeeded = await this._needsReconfigure();
     if (isReconfigurationNeeded) {
-      const rc = await this.configureInternal(ConfigureTrigger.launch, [], ConfigureType.Normal);
+      const rc = await this.configureInternal(ConfigureTrigger.launch, false, [], ConfigureType.Normal);
       if (rc !== 0) {
         log.debug(localize('project.configuration.failed', 'Configuration of project failed.'));
         return null;
@@ -1928,7 +1950,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Regardless of the following configure return code,
     // we want full feature set view for the whole workspace.
     enableFullFeatureSet(true);
-    return this.configureInternal(ConfigureTrigger.quickStart, [], ConfigureType.Normal);
+    return this.configureInternal(ConfigureTrigger.quickStart, false, [], ConfigureType.Normal);
   }
 
   /**

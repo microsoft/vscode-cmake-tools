@@ -106,7 +106,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     })();
   }
 
-  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
+  protected async doConfigure(args: string[], _autoConfigInternal: boolean = false, consumer?: proc.OutputConsumer) {
     await this._clientChangeInProgress;
     const cl = await this.getClient();
     const sub = this.onMessage(msg => {
@@ -400,7 +400,8 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                               configurePreset,
                               buildPreset,
                               testPreset,
-                              preferredGenerators);
+                              preferredGenerators,
+                              false);
   }
 }
 

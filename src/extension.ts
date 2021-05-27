@@ -415,12 +415,12 @@ class ExtensionManager implements vscode.Disposable {
     await telemetry.deactivate();
   }
 
-  async configureInternal(trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
+  async configureExtensionInternal(autoConfigInternal: boolean, trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
     if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
       return;
     }
 
-    await cmt.configureInternal(trigger, [], ConfigureType.Normal);
+    await cmt.configureInternal(trigger, autoConfigInternal, [], ConfigureType.Normal);
   }
 
   // This method evaluates whether the given folder represents a CMake project
@@ -495,59 +495,69 @@ class ExtensionManager implements vscode.Disposable {
           {title: localize('not.now.button', 'Not now'), doConfigure: false}
       );
       if (!chosen) {
-        // Do nothing. User cancelled
-        return;
+        // User cancelled.
+        should_configure = null;
+      } else {
+        const perist_message = chosen.doConfigure ?
+              localize('always.configure.on.open', 'Always configure projects upon opening?') :
+              localize('never.configure.on.open', 'Configure projects on opening?');
+        const button_messages = chosen.doConfigure ?
+              [ localize('yes.button', 'Yes'), localize('no.button', 'No') ] :
+              [ localize('never.button', 'Never'), localize('never.for.this.workspace.button', 'Not this workspace') ];
+        interface Choice2 {
+          title: string;
+          persistMode: 'user'|'workspace';
+        }
+        const persist_pr
+            // Try to persist the user's selection to a `settings.json`
+            = vscode.window
+                  .showInformationMessage<Choice2>(
+                      perist_message,
+                      {},
+                      {title: button_messages[0], persistMode: 'user'},
+                      {title: button_messages[1], persistMode: 'workspace'}
+                      )
+                  .then(async choice => {
+                    if (!choice) {
+                      // Use cancelled. Do nothing.
+                      return;
+                    }
+                    const config = vscode.workspace.getConfiguration(undefined, ws.uri);
+                    let config_target = vscode.ConfigurationTarget.Global;
+                    if (choice.persistMode === 'workspace') {
+                      config_target = vscode.ConfigurationTarget.WorkspaceFolder;
+                    }
+                    await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
+                  });
+        rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, persist_pr);
+        should_configure = chosen.doConfigure;
       }
-      const perist_message = chosen.doConfigure ?
-            localize('always.configure.on.open', 'Always configure projects upon opening?') :
-            localize('never.configure.on.open', 'Configure projects on opening?');
-      const button_messages = chosen.doConfigure ?
-            [ localize('yes.button', 'Yes'), localize('no.button', 'No') ] :
-            [ localize('never.button', 'Never'), localize('never.for.this.workspace.button', 'Not this workspace') ];
-      interface Choice2 {
-        title: string;
-        persistMode: 'user'|'workspace';
-      }
-      const persist_pr
-          // Try to persist the user's selection to a `settings.json`
-          = vscode.window
-                .showInformationMessage<Choice2>(
-                    perist_message,
-                    {},
-                    {title: button_messages[0], persistMode: 'user'},
-                    {title: button_messages[1], persistMode: 'workspace'}
-                    )
-                .then(async choice => {
-                  if (!choice) {
-                    // Use cancelled. Do nothing.
-                    return;
-                  }
-                  const config = vscode.workspace.getConfiguration(undefined, ws.uri);
-                  let config_target = vscode.ConfigurationTarget.Global;
-                  if (choice.persistMode === 'workspace') {
-                    config_target = vscode.ConfigurationTarget.WorkspaceFolder;
-                  }
-                  await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
-                });
-      rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, persist_pr);
-      should_configure = chosen.doConfigure;
     }
 
-    if (should_configure) {
+    let autoConfigInternal: boolean = false;
+    if (should_configure === true) {
       // We've opened a new workspace folder, and the user wants us to
       // configure it now.
       log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-      await this.configureInternal(ConfigureTrigger.configureOnOpen, cmt);
-    } else if (silentScanForKitsNeeded) {
-      // This popup will show up the first time after deciding not to configure, if a version change has been detected
-      // in the kits definition. This may happen during a CMake Tools extension upgrade.
-      // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
-      // being tied to a global state variable.
+      await this.configureExtensionInternal(autoConfigInternal, ConfigureTrigger.configureOnOpen, cmt);
+    } else {
       const configureButtonMessage = localize('configure.now.button', 'Configure Now');
-      const result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
-      if (result === configureButtonMessage) {
-        await this.configureInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
+      let result: string | undefined;
+      if (silentScanForKitsNeeded) {
+        // This popup will show up the first time after deciding not to configure, if a version change has been detected
+        // in the kits definition. This may happen during a CMake Tools extension upgrade.
+        // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+        // being tied to a global state variable.
+        result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
       }
+      if (result === configureButtonMessage) {
+        await this.configureExtensionInternal(autoConfigInternal, ConfigureTrigger.buttonNewKitsDefinition, cmt);
+      } else {
+        autoConfigInternal = true;
+        await this.configureExtensionInternal(autoConfigInternal, ConfigureTrigger.autoConfigureOnOpen, cmt);
+        return;
+      }
+
     }
 
     this._updateCodeModel(info);
@@ -1056,9 +1066,9 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
   }
 
-  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, [], ConfigureType.Normal), folder, undefined, true); }
+  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, false, [], ConfigureType.Normal), folder, undefined, true); }
 
-  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true); }
+  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, false, [], ConfigureType.Normal), undefined, true); }
 
   editCacheUI() {
     telemetry.logEvent("editCMakeCache", {command: "editCMakeCacheUI"});
