@@ -14,7 +14,7 @@ import {
   loadToolchains
 } from '@cmt/drivers/cmakefileapi/api_helpers';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
-import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {CMakeGenerator, Kit} from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
@@ -37,7 +37,7 @@ const log = logging.createLogger('cmakefileapi-driver');
 /**
  * The CMake driver with FileApi of CMake >= 3.15.0
  */
-export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
+export class CMakeFileApiDriver extends CMakeDriver {
   private constructor(cmake: CMakeExecutable,
                       readonly config: ConfigurationReader,
                       workspaceRootPath: string|null,

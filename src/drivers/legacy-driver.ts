@@ -165,4 +165,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const gen = this.cmakeCache.get('CMAKE_GENERATOR');
     return gen ? gen.as<string>() : null;
   }
+
+  get onCodeModelChanged() { return new vscode.EventEmitter<null>().event; }
+
 }

@@ -28,6 +28,7 @@ import {ConfigureArguments, VariantOption} from '@cmt/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
+import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -86,6 +87,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Check if we need to reconfigure, such as if an important file has changed
    */
   abstract checkNeedsReconfigure(): Promise<boolean>;
+
+  abstract onCodeModelChanged: vscode.Event<codemodel.CodeModelContent|null>;
 
   /**
    * List of targets known to CMake
