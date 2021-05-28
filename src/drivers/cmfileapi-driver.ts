@@ -285,7 +285,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
         throw Error('No code model object found');
       }
       this._target_map = await loadConfigurationTargetMap(reply_path, codemodel_obj.jsonFile);
-      this._codeModel = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
+      this._codeModelContent = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
 
       // load toolchains
       const toolchains_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'toolchains');
@@ -300,15 +300,15 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
             'This version of CMake does not support the "toolchains" object kind. Compiler paths will be determined by reading CMakeCache.txt.'));
         }
       } else {
-        this._codeModel.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
+        this._codeModelContent.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
       }
 
-      this._codeModelChanged.fire(this._codeModel);
+      this._codeModelChanged.fire(this._codeModelContent);
     }
     return indexFile !== null;
   }
 
-  private _codeModel: codemodel.CodeModelContent|null = null;
+  private _codeModelContent: codemodel.CodeModelContent|null = null;
 
   get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
   get generatorName(): string|null { return this._generatorInformation ? this._generatorInformation.name : null; }

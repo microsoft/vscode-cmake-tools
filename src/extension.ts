@@ -415,12 +415,15 @@ class ExtensionManager implements vscode.Disposable {
     await telemetry.deactivate();
   }
 
-  async configureExtensionInternal(autoConfigInternal: boolean, trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
+  async configureExtensionInternal(trigger: ConfigureTrigger, cmt: CMakeTools): Promise<void> {
     if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
       return;
     }
-
-    await cmt.configureInternal(trigger, autoConfigInternal, [], ConfigureType.Normal);
+    if (trigger !== ConfigureTrigger.autoConfigureOnOpen) {
+      await cmt.configureInternal(trigger, [], ConfigureType.Auto);
+    } else {
+      await cmt.configureInternal(trigger, [], ConfigureType.Normal);
+    }
   }
 
   // This method evaluates whether the given folder represents a CMake project
@@ -534,12 +537,11 @@ class ExtensionManager implements vscode.Disposable {
       }
     }
 
-    let autoConfigInternal: boolean = false;
     if (should_configure === true) {
       // We've opened a new workspace folder, and the user wants us to
       // configure it now.
       log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-      await this.configureExtensionInternal(autoConfigInternal, ConfigureTrigger.configureOnOpen, cmt);
+      await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
     } else {
       const configureButtonMessage = localize('configure.now.button', 'Configure Now');
       let result: string | undefined;
@@ -551,10 +553,9 @@ class ExtensionManager implements vscode.Disposable {
         result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
       }
       if (result === configureButtonMessage) {
-        await this.configureExtensionInternal(autoConfigInternal, ConfigureTrigger.buttonNewKitsDefinition, cmt);
+        await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
       } else {
-        autoConfigInternal = true;
-        await this.configureExtensionInternal(autoConfigInternal, ConfigureTrigger.autoConfigureOnOpen, cmt);
+        await this.configureExtensionInternal(ConfigureTrigger.autoConfigureOnOpen, cmt);
       }
     }
     this._updateCodeModel(info);
@@ -655,7 +656,7 @@ class ExtensionManager implements vscode.Disposable {
     const cmt = folder.cmakeTools;
     this._projectOutlineProvider.updateCodeModel(
       cmt.workspaceContext.folder,
-      cmt.codeModel,
+      cmt.codeModelContent,
       {
         defaultTarget: cmt.defaultBuildTarget || undefined,
         launchTargetName: cmt.launchTargetName
@@ -689,9 +690,9 @@ class ExtensionManager implements vscode.Disposable {
 
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
-        const codeModel = cmt.codeModel ? cmt.codeModel : null;// drv?.getCodeModel();
-        if (codeModel) {
-          this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
+        const codeModelContent = cmt.codeModelContent; //drv?.getCodeModel();
+        if (codeModelContent) {
+          this._configProvider.updateConfigurationData({cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
         }
         await this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
@@ -1066,9 +1067,9 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
   }
 
-  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, false, [], ConfigureType.Normal), folder, undefined, true); }
+  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, [], ConfigureType.Normal), folder, undefined, true); }
 
-  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, false, [], ConfigureType.Normal), undefined, true); }
+  configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true); }
 
   editCacheUI() {
     telemetry.logEvent("editCMakeCache", {command: "editCMakeCacheUI"});

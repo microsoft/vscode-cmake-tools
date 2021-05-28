@@ -288,7 +288,7 @@ export interface CodeModelParams {
   /**
    * The CMake codemodel content. This is the important one.
    */
-  codeModel: codemodel_api.CodeModelContent;
+  codeModelContent: codemodel_api.CodeModelContent;
   /**
    * The contents of the CMakeCache.txt, which also provides supplementary
    * configuration information.
@@ -412,9 +412,9 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
     // First try to get toolchain values directly reported by CMake. Check the
     // group's language compiler, then the C++ compiler, then the C compiler.
-    const comp_toolchains = opts.codeModel.toolchains?.get(lang ?? "")
-        || opts.codeModel.toolchains?.get('CXX')
-        || opts.codeModel.toolchains?.get('C');
+    const comp_toolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
+        || opts.codeModelContent.toolchains?.get('CXX')
+        || opts.codeModelContent.toolchains?.get('C');
     // If none of those work, fall back to the same order, but in the cache.
     const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
         || opts.cache.get('CMAKE_CXX_COMPILER')
@@ -519,7 +519,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
-    for (const config of opts.codeModel.configurations) {
+    for (const config of opts.codeModelContent.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
           // Now some shenanigans since header files don't have config data:
