@@ -55,7 +55,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
                       workspaceRootPath: string|null,
                       preconditionHandler: CMakePreconditionProblemSolver,
                       preferredGenerators: CMakeGenerator[],
-                      autoConfigInternal: boolean): Promise<CMakeFileApiDriver> {
+                      autoConfigInternal: boolean = false): Promise<CMakeFileApiDriver> {
     log.debug('Creating instance of CMakeFileApiDriver');
     return this.createDerived(new CMakeFileApiDriver(cmake, config, workspaceRootPath, preconditionHandler),
                               useCMakePresets,

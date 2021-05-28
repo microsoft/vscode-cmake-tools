@@ -420,7 +420,7 @@ class ExtensionManager implements vscode.Disposable {
     if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
       return;
     }
-    if (trigger !== ConfigureTrigger.autoConfigureOnOpen) {
+    if (trigger === ConfigureTrigger.autoConfigureOnOpen) {
       await cmt.configureInternal(trigger, [], ConfigureType.Auto);
     } else {
       await cmt.configureInternal(trigger, [], ConfigureType.Normal);
@@ -691,9 +691,21 @@ class ExtensionManager implements vscode.Disposable {
 
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
-        const codeModelContent = cmt.codeModelContent ? cmt.codeModelContent : drv?.codeModelContent;
-        if (codeModelContent) {
-          this._configProvider.updateConfigurationData({cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
+        let codeModelContent;
+        if (cmt.codeModelContent) {
+          codeModelContent = cmt.codeModelContent;
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath });
+        } else if (drv && drv.codeModelContent) {
+          codeModelContent = drv.codeModelContent;
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath });
+          this._projectOutlineProvider.updateCodeModel(
+            cmt.workspaceContext.folder,
+            codeModelContent,
+            {
+              defaultTarget: cmt.defaultBuildTarget || undefined,
+              launchTargetName: cmt.launchTargetName
+            }
+          );
         }
         await this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
