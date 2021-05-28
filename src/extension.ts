@@ -555,11 +555,8 @@ class ExtensionManager implements vscode.Disposable {
       } else {
         autoConfigInternal = true;
         await this.configureExtensionInternal(autoConfigInternal, ConfigureTrigger.autoConfigureOnOpen, cmt);
-        return;
       }
-
     }
-
     this._updateCodeModel(info);
   }
 
@@ -668,8 +665,8 @@ class ExtensionManager implements vscode.Disposable {
       if (!this._cppToolsAPI) {
         this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5);
       }
-      if (this._cppToolsAPI && cmt.codeModel && (cmt.activeKit || cmt.configurePreset)) {
-        const codeModel = cmt.codeModel;
+
+      if (this._cppToolsAPI && (cmt.activeKit || cmt.configurePreset)) {
         const cpptools = this._cppToolsAPI;
         let cache: CMakeCache;
         try {
@@ -692,7 +689,10 @@ class ExtensionManager implements vscode.Disposable {
 
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
-        this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
+        const codeModel = cmt.codeModel ? cmt.codeModel : null;// drv?.getCodeModel();
+        if (codeModel) {
+          this._configProvider.updateConfigurationData({cache, codeModel, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
+        }
         await this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
           ++this.cpptoolsNumFoldersReady;
