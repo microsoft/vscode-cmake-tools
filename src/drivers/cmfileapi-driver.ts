@@ -207,7 +207,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
       return 0;
     }
     const api_path = this.getCMakeFileApiPath();
-    // TODO skip., we create the request file here, cmake later creates the response file
     await createQueryFileForApi(api_path);
 
     // Dup args so we can modify them
@@ -238,7 +237,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
     log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
-    // TODO skip
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
@@ -246,11 +244,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
       this._needsReconfigure = false;
       await this.updateCodeModel();
     }
-    // make sure res should be ok, not null
     return res.retc === null ? -1 : res.retc;
-    // return success for auto configure if the file is missing it is not a success
-    // what if  the previous file api response is missing?
-    // what variable tracks the file api response
   }
 
   async doPostBuild(): Promise<boolean> {

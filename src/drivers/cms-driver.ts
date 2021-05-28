@@ -398,7 +398,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
                       testPreset: TestPreset | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
-                      preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
+                      preferredGenerators: CMakeGenerator[],
+                      autoConfigInternal: boolean = false): Promise<CMakeServerClientDriver> {
     return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler),
                               useCMakePresets,
                               kit,
@@ -406,7 +407,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
                               buildPreset,
                               testPreset,
                               preferredGenerators,
-                              false);
+                              autoConfigInternal);
   }
 
 }

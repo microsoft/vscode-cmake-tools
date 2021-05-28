@@ -122,7 +122,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
                       testPreset: TestPreset | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
-                      preferredGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
+                      preferredGenerators: CMakeGenerator[],
+                      autoConfigInternal: boolean = false): Promise<LegacyCMakeDriver> {
     log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
     return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler),
                               useCMakePresets,
@@ -131,7 +132,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
                               buildPreset,
                               testPreset,
                               preferredGenerators,
-                              false);
+                              autoConfigInternal);
   }
 
   get targets() { return []; }
