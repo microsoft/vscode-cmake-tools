@@ -37,6 +37,7 @@ import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
 import {expandString, KitContextVars} from '@cmt/expand';
 import paths from '@cmt/paths';
+import { CMakeDriver } from './drivers/driver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -653,7 +654,7 @@ class ExtensionManager implements vscode.Disposable {
 
   private cpptoolsNumFoldersReady: number = 0;
   private _updateCodeModel(folder: CMakeToolsFolder) {
-    const cmt = folder.cmakeTools;
+    const cmt: CMakeTools = folder.cmakeTools;
     this._projectOutlineProvider.updateCodeModel(
       cmt.workspaceContext.folder,
       cmt.codeModelContent,
@@ -676,7 +677,7 @@ class ExtensionManager implements vscode.Disposable {
           rollbar.exception(localize('filed.to.open.cache.file.on.code.model.update', 'Failed to open CMake cache file on code model update'), e);
           return;
         }
-        const drv = await cmt.getCMakeDriverInstance();
+        const drv: CMakeDriver | null = await cmt.getCMakeDriverInstance();
         const env: Map<string, string> = new Map<string, string>();
         const configureEnv = await drv?.getConfigureEnvironment();
         if (configureEnv) {
@@ -690,7 +691,7 @@ class ExtensionManager implements vscode.Disposable {
 
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
-        const codeModelContent = cmt.codeModelContent; //drv?.getCodeModel();
+        const codeModelContent = cmt.codeModelContent ? cmt.codeModelContent : drv?.codeModelContent;
         if (codeModelContent) {
           this._configProvider.updateConfigurationData({cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, folder: cmt.folder.uri.fsPath});
         }

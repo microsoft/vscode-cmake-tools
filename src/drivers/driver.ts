@@ -95,6 +95,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   abstract get targets(): api.Target[];
 
+  abstract get codeModelContent(): codemodel.CodeModelContent|null;
+
   /**
    * List of executable targets known to CMake
    */
@@ -1618,4 +1620,5 @@ export abstract class CMakeDriver implements vscode.Disposable {
     await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators, autoConfigInternal);
     return inst;
   }
+
 }

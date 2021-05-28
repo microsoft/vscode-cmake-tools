@@ -309,6 +309,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
   }
 
   private _codeModelContent: codemodel.CodeModelContent|null = null;
+  get codeModelContent() { return this._codeModelContent; }
 
   get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
   get generatorName(): string|null { return this._generatorInformation ? this._generatorInformation.name : null; }
