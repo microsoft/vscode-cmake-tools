@@ -16,6 +16,7 @@ schedules:
   branches:
     include:
     - develop
+  always: true
 
 pool:
   vmImage: 'windows-latest'
