@@ -84,7 +84,7 @@ function parseTargetArch(target: string): Architecture {
   // Value of target param is lowercased.
   const is_arm_32: (value: string) => boolean = value => {
     // ARM verions from https://en.wikipedia.org/wiki/ARM_architecture#Cores
-    if (value.indexOf('armv8-r') >=0 || value.indexOf('armv8-m') >=0) {
+    if (value.indexOf('armv8-r') >= 0 || value.indexOf('armv8-m') >= 0) {
       return true;
     } else {
       // Check if ARM version is 7 or earlier.
@@ -93,7 +93,7 @@ function parseTargetArch(target: string): Architecture {
       return verNum <= 7;
     }
   };
-  switch(target) {
+  switch (target) {
     case '-m32':
     case 'i686':
       return 'x86';
@@ -123,8 +123,8 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = undefined;
-  let targetArch: Architecture = undefined;
+  let standard: StandardVersion;
+  let targetArch: Architecture;
   while (1) {
     const {done, value} = iter.next();
     if (done) {
@@ -171,14 +171,14 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA' ) {
+      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
         const s = parseCppStandard(std, can_use_gnu_std);
         if (!s) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
           standard = s;
         }
-      } else if (lang === 'C' || lang === 'OBJC' ) {
+      } else if (lang === 'C' || lang === 'OBJC') {
         const s = parseCStandard(std, can_use_gnu_std);
         if (!s) {
           log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
@@ -486,7 +486,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         const data = new Map<string, cpt.SourceFileConfigurationItem>();
         data.set(target.name, {
           uri: vscode.Uri.file(abs).toString(),
-          configuration,
+          configuration
         });
         this._fileIndex.set(abs_norm, data);
       }
@@ -522,10 +522,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
-          /// Now some shenanigans since header files don't have config data:
-          /// 1. Accumulate some "defaults" based on the set of all options for each file group
-          /// 2. Pass these "defaults" down when rebuilding the config data
-          /// 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+          // Now some shenanigans since header files don't have config data:
+          // 1. Accumulate some "defaults" based on the set of all options for each file group
+          // 2. Pass these "defaults" down when rebuilding the config data
+          // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
           const grps = target.fileGroups || [];
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
           const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
@@ -541,7 +541,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
                     name: target.name,
                     compileFlags,
                     includePath,
-                    defines,
+                    defines
                   },
                   sysroot
               );

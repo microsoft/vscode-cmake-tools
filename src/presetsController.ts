@@ -146,11 +146,11 @@ export class PresetsController {
 
   private readonly _setOriginalPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setOriginalPresetsFile(folder, presetsFile);
-  }
+  };
 
   private readonly _setOriginalUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setOriginalUserPresetsFile(folder, presetsFile);
-  }
+  };
 
   private async resetPresetsFile(file: string,
                                  setPresetsFile: SetPresetsFileFunc,
@@ -197,7 +197,7 @@ export class PresetsController {
     const platmap = {
       win32: 'Windows',
       darwin: 'macOS',
-      linux: 'Linux',
+      linux: 'Linux'
     } as {[k: string]: preset.OsName};
     return platmap[process.platform];
   }
@@ -243,7 +243,7 @@ export class PresetsController {
       return false;
     } else {
       let newPreset: preset.ConfigurePreset | undefined;
-      switch(chosenItem.name) {
+      switch (chosenItem.name) {
         case SpecialOptions.CreateFromCompilers: {
           // Check that we have kits
           if (!await this._kitsController.checkHaveKits()) {
@@ -299,8 +299,8 @@ export class PresetsController {
               async (kit): Promise<KitItem> => ({
                 label: getKitName(kit),
                 description: await descriptionForKit(kit, true),
-                kit,
-              }),
+                kit
+              })
           );
           const quickPickItems = await Promise.all(item_promises);
           const chosen_kit = await vscode.window.showQuickPick(quickPickItems,
@@ -310,7 +310,7 @@ export class PresetsController {
             // No selection was made
             return false;
           } else {
-            if (chosen_kit.kit.name == SpecialKits.ScanForKits) {
+            if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
               await KitsController.scanForKits(this._cmakeTools);
               preset.setCompilers(this._kitsController.availableKits);
               return false;
@@ -442,7 +442,7 @@ export class PresetsController {
       return false;
     } else {
       let newPreset: preset.BuildPreset | undefined;
-      switch(chosenItem.name) {
+      switch (chosenItem.name) {
         case SpecialOptions.CreateFromConfigurationPreset: {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
           const configurePreset = await this.showPresetSelector(preset.configurePresets(this.folderFsPath), { placeHolder });
@@ -517,7 +517,7 @@ export class PresetsController {
       return false;
     } else {
       let newPreset: preset.TestPreset | undefined;
-      switch(chosenItem.name) {
+      switch (chosenItem.name) {
         case SpecialOptions.CreateFromConfigurationPreset: {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
           const configurePreset = await this.showPresetSelector(preset.configurePresets(this.folderFsPath), { placeHolder });
@@ -552,7 +552,7 @@ export class PresetsController {
   }
 
   // Returns the name of the preset selected
-  private async showPresetSelector(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true; }): Promise<string[] | undefined>;
+  private async showPresetSelector(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }): Promise<string[] | undefined>;
   private async showPresetSelector(presets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | undefined>;
   private async showPresetSelector(presets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | string[] | undefined> {
     interface PresetItem extends vscode.QuickPickItem {
@@ -563,7 +563,7 @@ export class PresetsController {
           label: _preset.displayName || _preset.name,
           description: _preset.description,
           preset: _preset.name
-        }),
+        })
     );
     items.push({
       label: localize('add.new.preset', 'Add a New Preset...'),
@@ -581,7 +581,7 @@ export class PresetsController {
 
     const presets = preset.configurePresets(this.folderFsPath).concat(preset.userConfigurePresets(this.folderFsPath)).filter(
       _preset => {
-        const supportedHost =  (_preset.vendor as preset.Vendor_VsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
+        const supportedHost =  (_preset.vendor as preset.VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
         const osName = this.getOsName();
         if (supportedHost) {
           if (util.isString(supportedHost)) {
@@ -620,14 +620,14 @@ export class PresetsController {
     await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: localize('loading.config.preset', 'Loading configure preset {0}', presetName),
+          title: localize('loading.config.preset', 'Loading configure preset {0}', presetName)
         },
-        () => this._cmakeTools.setConfigurePreset(presetName),
+        () => this._cmakeTools.setConfigurePreset(presetName)
     );
     await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: localize('reloading.build.test.preset', 'Reloading build and test presets'),
+          title: localize('reloading.build.test.preset', 'Reloading build and test presets')
         },
         async () => {
           const buildPreset = this._cmakeTools.buildPreset?.name;
@@ -698,9 +698,9 @@ export class PresetsController {
         await vscode.window.withProgress(
             {
               location: vscode.ProgressLocation.Notification,
-              title: localize('unloading.build.preset', 'Unloading build preset'),
+              title: localize('unloading.build.preset', 'Unloading build preset')
             },
-            () => this._cmakeTools.setBuildPreset(null),
+            () => this._cmakeTools.setBuildPreset(null)
         );
         return;
       }
@@ -709,9 +709,9 @@ export class PresetsController {
     await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: localize('loading.build.preset', 'Loading build preset {0}', presetName),
+          title: localize('loading.build.preset', 'Loading build preset {0}', presetName)
         },
-        () => this._cmakeTools.setBuildPreset(presetName),
+        () => this._cmakeTools.setBuildPreset(presetName)
     );
   }
 
@@ -755,9 +755,9 @@ export class PresetsController {
         await vscode.window.withProgress(
             {
               location: vscode.ProgressLocation.Notification,
-              title: localize('unloading.test.preset', 'Unloading test preset'),
+              title: localize('unloading.test.preset', 'Unloading test preset')
             },
-            () => this._cmakeTools.setTestPreset(null),
+            () => this._cmakeTools.setTestPreset(null)
         );
         return;
       }
@@ -766,9 +766,9 @@ export class PresetsController {
     await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: localize('loading.test.preset', 'Loading test preset {0}', presetName),
+          title: localize('loading.test.preset', 'Loading test preset {0}', presetName)
         },
-        () => this._cmakeTools.setTestPreset(presetName),
+        () => this._cmakeTools.setTestPreset(presetName)
     );
   }
 
@@ -864,7 +864,7 @@ export class PresetsController {
   }
 
   async updatePresetsFile(presetsFile: preset.PresetsFile, isUserPresets = false): Promise<vscode.TextEditor | undefined> {
-    const presetsFilePath = isUserPresets? this.userPresetsPath : this.presetsPath;
+    const presetsFilePath = isUserPresets ? this.userPresetsPath : this.presetsPath;
     const indent = this.getIndentationSettings();
     try {
         await fs.writeFile(presetsFilePath, JSON.stringify(presetsFile, null, indent.insertSpaces ? indent.tabSize : '\t'));

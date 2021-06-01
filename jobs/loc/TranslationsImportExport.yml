@@ -16,6 +16,7 @@ schedules:
   branches:
     include:
     - develop
+  always: true
 
 pool:
   vmImage: 'windows-latest'
@@ -42,6 +43,7 @@ steps:
     LclSource: lclFilesfromPackage
     LclPackageId: 'LCL-JUNO-PROD-VCMAKE'
     isUseLfLineEndingsSelected: true
+    lsBuildXLocPackageVersion: '7.0.30510'
 
 - task: CmdLine@2
   inputs:

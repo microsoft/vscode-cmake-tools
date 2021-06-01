@@ -48,7 +48,9 @@ interface CompilerInfo {
 
 export type CMakePreconditionProblemSolver = (e: CMakePreconditionProblems, config?: ConfigurationReader) => Promise<void>;
 
-function nullableValueToString(arg: any|null|undefined): string { return arg === null ? 'empty' : arg; }
+function nullableValueToString(arg: any|null|undefined): string {
+  return arg === null ? 'empty' : arg;
+}
 
 /**
  * Base class for CMake drivers.
@@ -68,11 +70,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
 
-  protected async doPreCleanConfigure(): Promise<void> { return Promise.resolve(); }
+  protected async doPreCleanConfigure(): Promise<void> {
+    return Promise.resolve();
+  }
 
-  protected doPreBuild(): Promise<boolean> { return Promise.resolve(true); }
+  protected doPreBuild(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
 
-  protected doPostBuild(): Promise<boolean> { return Promise.resolve(true); }
+  protected doPostBuild(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
@@ -147,8 +155,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Compute the environment variables that apply with substitutions by expansionOptions
    */
-  async computeExpandedEnvironment(in_env: proc.EnvironmentVariables, expanded_env:proc.EnvironmentVariables): Promise<proc.EnvironmentVariables>
-  {
+  async computeExpandedEnvironment(in_env: proc.EnvironmentVariables, expanded_env: proc.EnvironmentVariables): Promise<proc.EnvironmentVariables> {
     const env = {} as {[key: string]: string};
     const opts = this.expansionOptions;
 
@@ -223,7 +230,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private _useCMakePresets: boolean = true;
 
-  get useCMakePresets(): boolean { return this._useCMakePresets; }
+  get useCMakePresets(): boolean {
+    return this._useCMakePresets;
+  }
 
   private _configurePreset: preset.ConfigurePreset | null = null;
 
@@ -231,7 +240,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private _testPreset: preset.TestPreset | null = null;
 
-  get testPreset(): preset.TestPreset | null { return this._testPreset; }
+  get testPreset(): preset.TestPreset | null {
+    return this._testPreset;
+  }
 
   /**
    * Get the vscode root workspace folder.
@@ -239,7 +250,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns Returns the vscode root workspace folder. Returns `null` if no folder is open or the folder uri is not a
    * `file://` scheme.
    */
-  protected get workspaceFolder() { return this.__workspaceFolder; }
+  protected get workspaceFolder() {
+    return this.__workspaceFolder;
+  }
 
   protected variantKeywordSettings: Map<string, string>|null = null;
 
@@ -271,7 +284,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       buildKitVersionMajor: majorVersionSemver(version),
       buildKitVersionMinor: minorVersionSemver(version),
       // DEPRECATED EXPANSION: Remove this in the future:
-      projectName: 'ProjectName',
+      projectName: 'ProjectName'
     };
 
     // Update Variant replacements
@@ -334,7 +347,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         name: localize('file.compilation', 'File Compilation'),
         cwd: cmd.directory,
         env,
-        shellPath,
+        shellPath
       });
       this._compileTerms.set(key, term);
       existing = term;
@@ -375,7 +388,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const newBinaryDir = configurePreset.binaryDir;
     const needs_clean = this.binaryDir === newBinaryDir && preset.configurePresetChangeNeedsClean(configurePreset, this._configurePreset);
-    await this.doSetConfigurePreset(needs_clean, async () => { await this._setConfigurePreset(configurePreset); });
+    await this.doSetConfigurePreset(needs_clean, async () => {
+      await this._setConfigurePreset(configurePreset);
+    });
   }
 
   private async _setConfigurePreset(configurePreset: preset.ConfigurePreset): Promise<void> {
@@ -396,7 +411,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       this._generator = {
         name: configurePreset.generator,
         platform: configurePreset.architecture ? getValue(configurePreset.architecture) : undefined,
-        toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined,
+        toolset: configurePreset.toolset ? getValue(configurePreset.toolset) : undefined
       };
     } else {
       log.debug(localize('no.generator', 'No generator specified'));
@@ -414,7 +429,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     log.info(localize('switching.to.build.preset', 'Switching to build preset: {0}', buildPreset.name));
-    await this.doSetBuildPreset(async () => { await this._setBuildPreset(buildPreset); });
+    await this.doSetBuildPreset(async () => {
+      await this._setBuildPreset(buildPreset);
+    });
   }
 
   private async _setBuildPreset(buildPreset: preset.BuildPreset): Promise<void> {
@@ -433,7 +450,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     log.info(localize('switching.to.test.preset', 'Switching to test preset: {0}', testPreset.name));
-    await this.doSetTestPreset(async () => { await this._setTestPreset(testPreset); });
+    await this.doSetTestPreset(async () => {
+      await this._setTestPreset(testPreset);
+    });
   }
 
   private async _setTestPreset(testPreset: preset.TestPreset): Promise<void> {
@@ -458,7 +477,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const newBinaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
 
     const needs_clean = this.binaryDir === newBinaryDir && kitChangeNeedsClean(kit, this._kit);
-    await this.doSetKit(needs_clean, async () => { await this._setKit(kit, preferredGenerators); });
+    await this.doSetKit(needs_clean, async () => {
+      await this._setKit(kit, preferredGenerators);
+    });
   }
 
   private async _setKit(kit: Kit, preferredGenerators: CMakeGenerator[]): Promise<void> {
@@ -467,8 +488,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug(localize('cmakedriver.kit.set.to', 'CMakeDriver Kit set to {0}', kit.name));
     this._kitEnvironmentVariables = await effectiveKitEnvironment(kit, this.expansionOptions);
 
-    if (kit.preferredGenerator)
+    if (kit.preferredGenerator) {
       preferredGenerators.push(kit.preferredGenerator);
+    }
 
     // If no preferred generator is defined by the current kit or the user settings,
     // it's time to consider the defaults.
@@ -483,7 +505,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       this._generator = {
         name: this.config.generator,
         platform: this.config.platform || undefined,
-        toolset: this.config.toolset || undefined,
+        toolset: this.config.toolset || undefined
       };
     } else {
       this._generator = await this.findBestGenerator(preferredGenerators);
@@ -496,7 +518,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   protected abstract doSetKit(needsClean: boolean, cb: () => Promise<void>): Promise<void>;
 
-  protected get generator(): CMakeGenerator|null { return this._generator; }
+  protected get generator(): CMakeGenerator|null {
+    return this._generator;
+  }
   protected _generator: CMakeGenerator|null = null;
   /**
    * The CMAKE_BUILD_TYPE to use
@@ -539,10 +563,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @note This is distinct from the config values, since we do variable
    * substitution.
    */
-  get sourceDir(): string { return this._sourceDirectory; }
+  get sourceDir(): string {
+    return this._sourceDirectory;
+  }
   private _sourceDirectory = '';
 
-  protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> { return cb(); }
+  protected doRefreshExpansions(cb: () => Promise<void>): Promise<void> {
+    return cb();
+  }
 
   private async _refreshExpansions() {
     log.debug('Run _refreshExpansions');
@@ -579,19 +607,25 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Directory where build output is stored.
    */
-  get binaryDir(): string { return this._binaryDir; }
+  get binaryDir(): string {
+    return this._binaryDir;
+  }
   private _binaryDir = '';
 
   /**
    * Directory where the targets will be installed.
    */
-  private get installDir(): string|null { return this._installDir; }
+  private get installDir(): string|null {
+    return this._installDir;
+  }
   private _installDir: string|null = null;
 
   /**
    * Path to copy compile_commands.json to
    */
-  get copyCompileCommandsPath(): string|null { return this._copyCompileCommandsPath; }
+  get copyCompileCommandsPath(): string|null {
+    return this._copyCompileCommandsPath;
+  }
   private _copyCompileCommandsPath: string|null = null;
 
   /**
@@ -622,7 +656,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  get isMultiConf(): boolean { return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false; }
+  get isMultiConf(): boolean {
+    return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false;
+  }
 
   /**
    * Get the name of the current CMake generator, or `null` if we have not yet
@@ -689,11 +725,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
     try {
       const result = await child.result;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
-      return result.retc == 0;
+      return result.retc === 0;
     } catch (e) {
       const e2: NodeJS.ErrnoException = e;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
-      if (e2.code == 'ENOENT') {
+      if (e2.code === 'ENOENT') {
         return false;
       }
       throw e;
@@ -710,19 +746,19 @@ export abstract class CMakeDriver implements vscode.Disposable {
     for (const gen of preferredGenerators) {
       const gen_name = gen.name;
       const generator_present = await (async(): Promise<boolean> => {
-        if (gen_name == 'Ninja') {
+        if (gen_name === 'Ninja') {
           return await this.testHaveCommand('ninja') || this.testHaveCommand('ninja-build');
         }
-        if (gen_name == 'MinGW Makefiles') {
+        if (gen_name === 'MinGW Makefiles') {
           return platform === 'win32' && this.testHaveCommand('mingw32-make');
         }
-        if (gen_name == 'NMake Makefiles') {
+        if (gen_name === 'NMake Makefiles') {
           return platform === 'win32' && this.testHaveCommand('nmake', ['/?']);
         }
-        if (gen_name == 'Unix Makefiles') {
+        if (gen_name === 'Unix Makefiles') {
           return this.testHaveCommand('make');
         }
-        if (gen_name == 'MSYS Makefiles') {
+        if (gen_name === 'MSYS Makefiles') {
           return platform === 'win32' && this.testHaveCommand('make');
         }
         return false;
@@ -733,7 +769,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
           return {
             name: vsMatch[1],
             platform: gen.platform || vsMatch[2],
-            toolset: gen.toolset,
+            toolset: gen.toolset
           };
         }
         if (gen.name.toLowerCase().startsWith('xcode') && platform === 'darwin') {
@@ -751,7 +787,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   private buildRunning: boolean = false;
 
-  public configOrBuildInProgress() : boolean {
+  public configOrBuildInProgress(): boolean {
     return this.configRunning || this.buildRunning;
   }
 
@@ -764,7 +800,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
     }
-    if(this.buildRunning) {
+    if (this.buildRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
       return -1;
     }
@@ -1004,7 +1040,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   ];
 
-  async getCompilerVersion(compilerPath: string) : Promise<CompilerInfo> {
+  async getCompilerVersion(compilerPath: string): Promise<CompilerInfo> {
     // Compiler name and path as coming from the kit.
     const compilerName = path.parse(compilerPath).name;
     const compilerDir = path.parse(compilerPath).dir;
@@ -1016,9 +1052,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // The find condition must be "includes" instead of "equals"
     // (which wouldn't otherwise need the sort) to avoid implementing separate handling
     // for compiler file name prefixes and suffixes related to targeted architecture.
-    const sortedCompilerAllowList = this.compilerAllowList.sort((a, b) => {
-      return b.name.length - a.name.length;
-    });
+    const sortedCompilerAllowList = this.compilerAllowList.sort((a, b) => b.name.length - a.name.length);
     const compiler = sortedCompilerAllowList.find(comp => compilerName.includes(comp.name));
 
     // Mask any unrecognized compiler as "other" to hide private information
@@ -1060,12 +1094,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return count;
   }
 
-  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings:boolean = false): Promise<number> {
+  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
     }
-    if(this.buildRunning) {
+    if (this.buildRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.BuildIsAlreadyRunning);
       return -1;
     }
@@ -1120,7 +1154,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         telemetryProperties = {
           CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
           CMakeGenerator: this.generatorName || '',
-          Preset: this.useCMakePresets? 'true' : 'false',
+          Preset: this.useCMakePresets ? 'true' : 'false',
           Trigger: trigger
         };
       } else {
@@ -1160,7 +1194,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
 
       const telemetryMeasures: telemetry.Measures = {
-        Duration: timeEnd - timeStart,
+        Duration: timeEnd - timeStart
       };
       if (this.useCMakePresets && this.workspaceFolder) {
         const configurePresets = preset.configurePresets(this.workspaceFolder);
@@ -1207,7 +1241,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
     } catch {
       log.info(localize('configure.failed', 'Failed to configure project'));
       return -1;
-    } finally { this.configRunning = false; }
+    } finally {
+      this.configRunning = false;
+    }
   }
 
   private generateInitCacheFlags(): string[] {
@@ -1292,7 +1328,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   async build(target?: string, consumer?: proc.OutputConsumer): Promise<number|null> {
     log.debug(localize('start.build', 'Start build'), target || '');
-    if(this.configRunning) {
+    if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
     }
@@ -1311,10 +1347,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const child = await this._doCMakeBuild(target, consumer);
     const timeEnd: number = new Date().getTime();
     const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
-      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || ''
     };
     const telemetryMeasures: telemetry.Measures = {
-      Duration: timeEnd - timeStart,
+      Duration: timeEnd - timeStart
     };
     if (child) {
       if (consumer) {
@@ -1403,7 +1439,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   private _currentBuildProcess: proc.Subprocess|null = null;
 
   private correctAllTargetName(targetname: string) {
-    if (targetname === 'all' || targetname == 'ALL_BUILD') {
+    if (targetname === 'all' || targetname === 'ALL_BUILD') {
       return this.allTargetName;
     } else {
       return targetname;
@@ -1477,7 +1513,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const buildcmd = await this.getCMakeBuildCommand(target);
     if (buildcmd) {
       let outputEnc = this.config.outputLogEncoding;
-      if (outputEnc == 'auto') {
+      if (outputEnc === 'auto') {
         if (process.platform === 'win32') {
           outputEnc = await codepages.getWindowsCodepage();
         } else {
@@ -1491,8 +1527,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
       await child.result;
       this._currentBuildProcess = null;
       return child;
-    } else
+    } else {
       return null;
+    }
   }
 
   /**
@@ -1510,8 +1547,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const cur = this._currentBuildProcess;
     if (cur) {
-      if (cur.child)
+      if (cur.child) {
         await util.termProc(cur.child);
+      }
     }
 
     await this.onStop();
