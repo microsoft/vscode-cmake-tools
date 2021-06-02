@@ -1,4 +1,4 @@
-import path = require('node:path');
+import * as path from 'path';
 import * as vscode from 'vscode';
 import {TestMemento, StateMemento} from './memento';
 const notImplementedErr: string = 'Method not implemented.';
