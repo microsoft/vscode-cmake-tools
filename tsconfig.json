@@ -24,8 +24,9 @@
         "noImplicitThis": true,
         "skipLibCheck": true
     },
-    "exclude": [
-        "node_modules",
-        ".vscode-test"
-    ]
+	"include": [
+		"src/**/*.ts",
+		"./node_modules/vscode/vscode.d.ts",
+		"./node_modules/vscode/lib/*"
+	]
 }

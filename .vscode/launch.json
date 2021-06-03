@@ -22,14 +22,14 @@
             "smartStep": false
         },
         {
-            "name": "Launch Tests",
+            "name": "Launch Unit Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "${workspaceFolder}/test/unit-tests/test-project-without-cmakelists",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/unit-tests"
+                "--extensionTestsPath=${workspaceFolder}/out/test/unit-tests/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -232,7 +232,7 @@
             "args": [
                 "${workspaceFolder}/test/smoke/_project-dir",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/smoke",
+                "--extensionTestsPath=${workspaceFolder}/out/test/smoke/index",
                 "--disable-extensions"
             ],
             "stopOnEntry": false,
