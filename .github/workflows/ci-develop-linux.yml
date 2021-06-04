@@ -24,7 +24,3 @@ jobs:
         with:
           # Command to execute using xvfb
           run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
-          
-      - name: Run Linter
-        run: yarn run lint
-        working-directory: vscode-cmake-tools
