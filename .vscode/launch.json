@@ -44,7 +44,7 @@
                 "CMT_QUIET_CONSOLE": "1",
                 "HasVs": "true"
             },
-            "preLaunchTask": "build-tests-with-tsc-watch"
+            "preLaunchTask": "Pretest"
         },
         {
             "name": "Launch Extension Tests (without-cmakelist-file)",
@@ -65,7 +65,7 @@
                 "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/*",
                 "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/test/*"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -100,7 +100,7 @@
                 "${workspaceFolder}/out/test/extension-tests/successful-build/*",
                 "${workspaceFolder}/out/test/extension-tests/successful-build/test/*"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -142,7 +142,7 @@
                 "${workspaceFolder}/out/test/extension-tests/single-root-UI/*",
                 "${workspaceFolder}/out/test/extension-tests/single-root-UI/test/*"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -184,7 +184,7 @@
                 "${workspaceFolder}/out/test/extension-tests/multi-root-UI/*",
                 "${workspaceFolder}/out/test/extension-tests/multi-root-UI/test/*"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -241,7 +241,7 @@
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/test/**"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",

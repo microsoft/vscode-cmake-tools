@@ -6,13 +6,15 @@ async function main() {
   try {
     // The folder containing the Extension Manifest package.json
     // Passed to `--extensionDevelopmentPath`
-    const extensionDevelopmentPath = path.resolve(__dirname, '../../../');
+    const extensionDevelopmentPath = path.resolve(__dirname, '../../../../');
 
     // The path to the extension test runner script
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './index');
 
-    const launchArgs = [ "--disable-extensions" ];
+    const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/single-root-UI/project-folder');
+
+    const launchArgs = [ "--disable-extensions", testWorkspace ];
     // Download VS Code, unzip it and run the integration test
     await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath });
   } catch (err) {

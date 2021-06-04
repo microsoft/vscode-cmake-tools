@@ -1908,10 +1908,10 @@
     "lint": "gulp lint",
     "unitTests": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
     "extensionTestsNoCMkelistFile": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
-    "extensionTestsSuccessfulBuild": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
-    "extensionTestsSingleRoot": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
-    "extensionTestsMultioot": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
-    "smokeTests": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
+    "extensionTestsSuccessfulBuild": "tsc -p test.tsconfig.json && node ./out/test/extension-tests/successful-build/runTest.js",
+    "extensionTestsSingleRoot": "tsc -p test.tsconfig.json && node ./out/test/extension-tests/single-root-UI/runTest.js",
+    "extensionTestsMultioot": "tsc -p test.tsconfig.json && node ./out/test/extension-tests/multi-root-UI/runTest.js",
+    "smokeTests": "tsc -p test.tsconfig.json && node ./out/test/smoke/runTest.js",
     "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
   "devDependencies": {

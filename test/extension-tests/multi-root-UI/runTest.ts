@@ -12,7 +12,9 @@ async function main() {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './index');
 
-    const launchArgs = [ "--disable-extensions" ];
+    const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/multi-root-UI/project-workspace.code-workspace');
+
+    const launchArgs = [ "--disable-extensions", testWorkspace ];
     // Download VS Code, unzip it and run the integration test
     await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath });
   } catch (err) {
