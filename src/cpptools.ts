@@ -137,7 +137,6 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const target = lower.substring(6);
       targetArch = parseTargetArch(target);
     } else if (require_standard_target && lower === '-arch') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
         // TODO: whitelist architecture values and add telemetry
@@ -151,7 +150,6 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const target = lower.substring(9);
       targetArch = parseTargetArch(target);
     } else if (require_standard_target && lower === '-target') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
         // TODO: whitelist architecture values and add telemetry
@@ -159,7 +157,6 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       }
       targetArch = parseTargetArch(value.toLowerCase());
     } else if (value === '-D' || value === '/D') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
         rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));

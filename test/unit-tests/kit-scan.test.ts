@@ -12,8 +12,6 @@ import {fs} from '../../src/pr';
 import {CMakeTools} from '@cmt/cmake-tools';
 import {clearExistingKitConfigurationFile, DefaultEnvironment,} from '@test/util';
 
-// tslint:disable:no-unused-expression
-
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../..', 'test', filename));

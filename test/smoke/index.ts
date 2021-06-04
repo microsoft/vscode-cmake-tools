@@ -9,7 +9,6 @@ import {SmokeContext, SUITE_REGISTRY, SmokeSuite, SmokeTest} from './smoke';
 import {fs} from '@cmt/pr';
 import * as vscode from 'vscode';
 
-// tslint:disable:no-console
 
 // The TestRunner interface is expected to be available for VSCode to run our tests
 interface TestRunner {

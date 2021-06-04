@@ -12,7 +12,6 @@ import {platformPathEquivalent} from '@cmt/util';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
 import {populateCollection} from '@cmt/diagnostics/util';
 
-// tslint:disable:no-unused-expression
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {

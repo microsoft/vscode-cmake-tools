@@ -137,12 +137,12 @@ export class PresetsController {
   private readonly _setPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setPresetsFile(folder, presetsFile);
     this._presetsChangedEmitter.fire(presetsFile);
-  }
+  };
 
   private readonly _setUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setUserPresetsFile(folder, presetsFile);
     this._presetsChangedEmitter.fire(presetsFile);
-  }
+  };
 
   private readonly _setOriginalPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setOriginalPresetsFile(folder, presetsFile);

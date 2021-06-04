@@ -27,7 +27,6 @@ function cleanupBuildDir(build_dir: string): boolean {
 }
 
 let driver: CMakeDriver|null = null;
-// tslint:disable:no-unused-expression
 
 export function makeCodeModelDriverTestsuite(
     driver_generator: (cmake: CMakeExecutable,
