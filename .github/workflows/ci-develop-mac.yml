@@ -22,7 +22,3 @@ jobs:
 
       - name: Build the extension and run tests
         run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
-        
-      - name: Run Linter
-        run: yarn run lint
-        working-directory: vscode-cmake-tools
