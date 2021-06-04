@@ -6,7 +6,7 @@ import * as chaiAsPromised from 'chai-as-promised';
 
 chai.use(chaiAsPromised);
 
-import {Strand} from '@cmt/strand';
+import {Strand} from '../../../src/strand';
 
 function pause(time: number): Promise<void> {
   return new Promise(resolve => { setTimeout(() => resolve(), time); });

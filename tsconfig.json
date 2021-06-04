@@ -9,7 +9,6 @@
         ],
         "paths": {
             "@cmt/*": ["src/*"],
-            "@test/*": ["test/*"]
         },
         "typeRoots": [
             "node_modules/@types",
@@ -26,7 +25,5 @@
     },
 	"include": [
 		"src/**/*.ts",
-		"./node_modules/vscode/vscode.d.ts",
-		"./node_modules/vscode/lib/*"
 	]
 }

@@ -51,6 +51,31 @@
                 "showReuseMessage": false,
                 "clear": true
             }
-        }
+        },
+        {
+            "label": "Pretest",
+            "group": "build",
+            "isBackground": false,
+            "type": "shell",
+            "command": "yarn",
+            "args": [
+                "run",
+                "pretest"
+            ],
+            "dependsOn": [
+                "Compile"
+            ]
+        },
+        {
+            "label": "Compile",
+            "group": "build",
+            "isBackground": false,
+            "type": "shell",
+            "command": "yarn",
+            "args": [
+                "run",
+                "compile"
+            ]
+        },
     ]
 }

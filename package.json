@@ -1897,7 +1897,8 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile-production",
-    "compile": "yarn install && webpack --mode development --watch --progress",
+    "compile": "yarn install && webpack --mode development",
+    "compile-watch": "yarn install && webpack --mode development --watch --progress",
     "compile-production": "yarn install && yarn run translations-generate && webpack --env BUILD_VSCODE_NLS=true --mode production",
     "translations-export": "gulp translations-export",
     "translations-generate": "gulp translations-generate",
@@ -1906,6 +1907,11 @@
     "pr-check": "gulp pr-check",
     "lint": "gulp lint",
     "unitTests": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
+    "extensionTestsNoCMkelistFile": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
+    "extensionTestsSuccessfulBuild": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
+    "extensionTestsSingleRoot": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
+    "extensionTestsMultioot": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
+    "smokeTests": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
     "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
   "devDependencies": {
@@ -1956,7 +1962,6 @@
     "typescript": "^4.1.5",
     "vscode-nls-dev": "^3.3.2",
     "vscode-test": "^1.5.2",
-    "webpack": "^5.28.0",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
@@ -1973,6 +1978,7 @@
     "vscode-cpptools": "^5.0.0",
     "vscode-extension-telemetry": "^0.1.6",
     "vscode-nls": "^5.0.0",
+    "webpack": "^5.38.1",
     "which": "~2.0.2",
     "xml2js": "^0.4.23"
   },
