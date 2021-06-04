@@ -114,7 +114,7 @@ function parseTargetArch(target: string): Architecture {
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
     return 'arm';
   }
-  // TODO: whitelist architecture values and add telemetry
+  // TODO: add an allow list of architecture values and add telemetry
   return undefined;
 }
 
