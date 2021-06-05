@@ -24,3 +24,39 @@ jobs:
         with:
           # Command to execute using xvfb
           run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
+
+      - name: Run Linter
+        run: yarn run lint
+
+      - name: Compile Test Sources
+        run: yarn run pretest
+
+      - name: Run unit tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          run: yarn run unitTests
+
+      - name: Run NoCMkeListsFile tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          run: yarn run extensionTestsNoCMkeListsFile
+
+      - name: Run successfulBuild tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          run: yarn run extensionTestsSuccessfulBuild
+          
+      - name: Run singleRoot tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          run: yarn run extensionTestsSingleRoot
+          
+      - name: Run multioot tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          run: yarn run extensionTestsMultioot
+          
+      - name: Run smoke tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          run: yarn run smokeTests
