@@ -87,11 +87,6 @@ Invoke-ChronicCommand "yarn install" $yarn install
 # Now do the real compile
 Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-production
 
-# Now compile test code
-Invoke-ChronicCommand "Compiling Tests" $yarn run pretest
-
-# Run EsLint to check for silly mistakes
-Invoke-ChronicCommand "Running esLint" $yarn run lint
 
 # Get the CMake binary that we will use to run our tests
 $cmake_binary = Install-TestCMake -Version "3.16.2"
