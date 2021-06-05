@@ -21,11 +21,6 @@ jobs:
           # Set this option if you want the action to check for the latest available version that satisfies the version spec
           check-latest: true
 
-      - name: Install dependent packages
-        run: |
-          sudo apt update
-          sudo apt install powershell gdb xvfb
-
       - name: Build the extension
         uses: GabrielBB/xvfb-action@v1.4
         with:
