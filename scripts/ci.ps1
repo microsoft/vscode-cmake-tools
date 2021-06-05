@@ -71,9 +71,6 @@ function Invoke-DocsBuild {
     }
 }
 
-if ($Docs) {
-    return Invoke-DocsBuild
-}
 
 $out_dir = Join-Path $REPO_DIR out
 if (Test-Path $out_dir) {
@@ -116,8 +113,6 @@ $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"
 # Add ninja to search path environment variable
 $Env:PATH = (get-item $ninja_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH
 
-
-Invoke-DocsBuild
 
 $vsce = Find-Program vsce
 if (! $vsce) {
