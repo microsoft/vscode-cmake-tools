@@ -121,14 +121,6 @@ $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"
 # Add ninja to search path environment variable
 $Env:PATH = (get-item $ninja_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH
 
-# Run tests
-Invoke-ChronicCommand "Running unit Test" $yarn run unitTests
-Invoke-ChronicCommand "Running noCMakeLists Test" $yarn run extensionTestsNoCMkelistFile
-Invoke-ChronicCommand "Running build Test" $yarn run extensionTestsSuccessfulBuild
-Invoke-ChronicCommand "Running singleroot Test" $yarn run extensionTestsSingleRoot
-Invoke-ChronicCommand "Running multiroot Test" $yarn run extensionTestsMultioot
-Invoke-ChronicCommand "Running smoke Test" $yarn run smokeTests
-
 
 Invoke-DocsBuild
 
