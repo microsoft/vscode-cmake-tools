@@ -37,23 +37,6 @@ Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
 
 $DOC_BUILD_DIR = Join-Path $REPO_DIR "build/docs"
 
-if ($Test) {
-    foreach ($testname in $Test) {
-        Invoke-SmokeTest $testname
-    }
-    return
-}
-
-if ($OnlySmoke) {
-    return Invoke-SmokeTests
-}
-
-if ($OnlyUnit) {
-    return Invoke-VSCodeTest "CMake Tools: Unit tests" `
-        -TestsPath "$REPO_DIR/out/test/unit-tests" `
-        -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
-}
-
 # Sanity check for yarn
 $yarn = Find-Program yarn
 if (! $yarn) {
@@ -138,31 +121,14 @@ $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"
 # Add ninja to search path environment variable
 $Env:PATH = (get-item $ninja_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH
 
-if (! $NoTest) {
-    # Prepare to run our tests
-    Invoke-TestPreparation -CMakePath $cmake_binary
+# Run tests
+Invoke-ChronicCommand "Running unit Test" $yarn run unitTests
+Invoke-ChronicCommand "Running noCMakeLists Test" $yarn run extensionTestsNoCMkelistFile
+Invoke-ChronicCommand "Running build Test" $yarn run extensionTestsSuccessfulBuild
+Invoke-ChronicCommand "Running singleroot Test" $yarn run extensionTestsSingleRoot
+Invoke-ChronicCommand "Running multiroot Test" $yarn run extensionTestsMultioot
+Invoke-ChronicCommand "Running smoke Test" $yarn run smokeTests
 
-    # Running mocha backend tests
-    Invoke-MochaTest "CMake Tools: Backend tests"
-
-    Invoke-VSCodeTest "CMake Tools: Unit tests" `
-        -TestsPath "$REPO_DIR/out/test/unit-tests" `
-        -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
-
-    Invoke-SmokeTests
-
-    foreach ($name in @("successful-build"; "single-root-UI"; )) {
-        Invoke-VSCodeTest "CMake Tools: $name" `
-            -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
-            -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
-    }
-
-    foreach ($name in @("multi-root-UI"; )) {
-        Invoke-VSCodeTest "CMake Tools: $name" `
-            -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
-            -Workspace "$REPO_DIR/test/extension-tests/$name/project-workspace.code-workspace"
-    }
-}
 
 Invoke-DocsBuild
 
