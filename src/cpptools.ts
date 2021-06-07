@@ -139,7 +139,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
     } else if (require_standard_target && lower === '-arch') {
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -152,7 +152,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
     } else if (require_standard_target && lower === '-target') {
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
