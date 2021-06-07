@@ -140,7 +140,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -154,7 +154,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
