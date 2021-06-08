@@ -74,7 +74,7 @@
 	"reading.presets.file": "Ön ayar dosyaları {0} okunuyor",
 	"failed.to.parse": "{0} ayrıştırılamadı: {1}",
 	"invalid.file.error": "Geçersiz kit içeriği {0} ({1}):",
-	"successfully.validated.presets": "{0} içinde ön ayar setleri başarıyla doğrulandı",
+	"successfully.validated.presets": "{0} içinde ön ayarlar başarıyla doğrulandı",
 	"use.kits.variants": "Setleri ve çeşitleri kullanın",
 	"edit.presets": "Bul",
 	"presets.version.error": "CMakePresets sürüm 1 desteklenmiyor. Nasıl devam etmek istersiniz?",

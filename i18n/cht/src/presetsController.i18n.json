@@ -74,7 +74,7 @@
 	"reading.presets.file": "正在讀取預設的檔案{0}",
 	"failed.to.parse": "無法剖析 {0}: {1}",
 	"invalid.file.error": "套件內容 {0} ({1}) 無效:",
-	"successfully.validated.presets": "已成功在 {0} 中驗證預設套件",
+	"successfully.validated.presets": "已成功在 {0} 中驗證預設",
 	"use.kits.variants": "使用套件和變體",
 	"edit.presets": "尋找",
 	"presets.version.error": "不支援 CMakePresets 版本 1。要如何繼續?",
