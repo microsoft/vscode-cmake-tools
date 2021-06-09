@@ -99,6 +99,8 @@ suite('CppTools tests', () => {
     expect(mode).to.eql(undefined);
     mode = getIntelliSenseMode(cpptoolsVersion5, 'clang', undefined);
     expect(mode).to.eql(undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion5, 'clang', 'arm64');
+    expect(mode).to.eql('clang-arm64');
 
     // Verify CppTools API version 4
     mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', 'arm');
