@@ -115,7 +115,7 @@ function parseTargetArch(target: string): Architecture {
     return 'arm';
   } else if (target.indexOf('i686') >= 0) {
     return 'x86';
-  } else if (target.indexOf('amd64') >= 0 || target.indexOf('x86_64')) {
+  } else if (target.indexOf('amd64') >= 0 || target.indexOf('x86_64') >= 0) {
     return 'x64';
   }
   // TODO: whitelist architecture values and add telemetry
