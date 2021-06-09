@@ -118,7 +118,7 @@ function parseTargetArch(target: string): Architecture {
   } else if (target.indexOf('amd64') >= 0 || target.indexOf('x86_64') >= 0) {
     return 'x64';
   }
-  // TODO: whitelist architecture values and add telemetry
+  // TODO: add an allow list of architecture values and add telemetry
   return undefined;
 }
 
@@ -144,7 +144,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -158,7 +158,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());

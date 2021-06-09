@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "单击可更改活动的工具包",
 	"no.active.kit": "无活动工具包",
 	"no.kit.selected": "未选择任何工具包",
-	"set.active.target.tooltip": "设置要生成的活动目标",
+	"set.active.target.tooltip": "设置默认生成目标",
 	"select.target.tooltip": "选择要启动的目标",
 	"launch.debugger.tooltip": "启动所选目标的调试程序",
 	"launch.tooltip": "在终端窗口中启动所选目标",

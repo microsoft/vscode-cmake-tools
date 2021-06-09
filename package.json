@@ -1974,12 +1974,11 @@
   },
   "resolutions": {
     "chokidar": "^3.5.1",
-    "marked": "^0.7.0",
-    "diff": "^3.5.0",
+    "glob-parent": "^5.1.2",
     "https-proxy-agent": "^5.0.0",
+    "postcss": "^8.2.10",
     "**/minimist": "^1.2.5",
     "yargs-parser": "^20.2.4",
-    "node-fetch": "^2.6.1",
     "hosted-git-info": "^3.0.8"
   },
   "extensionPack": [
