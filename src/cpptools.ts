@@ -113,6 +113,10 @@ function parseTargetArch(target: string): Architecture {
     return 'arm64';
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
     return 'arm';
+  } else if (target.indexOf('i686') >= 0) {
+    return 'x86';
+  } else if (target.indexOf('amd64') >= 0 || target.indexOf('x86_64') >= 0) {
+    return 'x64';
   }
   // TODO: add an allow list of architecture values and add telemetry
   return undefined;
@@ -139,7 +143,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
     } else if (require_standard_target && lower === '-arch') {
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -152,7 +156,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
     } else if (require_standard_target && lower === '-target') {
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -208,7 +212,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
  * and target architecture parsed from compiler flags.
  */
 export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: string, target_arch: Architecture) {
-  if (cptVersion >= cpt.Version.v5) {
+  if (cptVersion >= cpt.Version.v5 && target_arch === undefined) {
     // IntelliSenseMode is optional for CppTools v5+ and is determined by CppTools.
     return undefined;
   }
@@ -421,6 +425,11 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     if (!comp_path) {
       throw new MissingCompilerException();
     }
+
+    const targetFromToolchains = comp_toolchains?.target;
+    const targetArchFromToolchains = targetFromToolchains
+      ? parseTargetArch(targetFromToolchains) : undefined;
+
     const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions, targetArch} = parseCompileFlags(this.cpptoolsVersion, flags, lang);
@@ -452,7 +461,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       defines,
       standard,
       includePath: normalizedIncludePath,
-      intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArch),
+      intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArchFromToolchains ?? targetArch),
       compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };

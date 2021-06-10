@@ -6,7 +6,6 @@
 {
 	"testing.compiler.binary": "{0} ikili dosyası test ediliyor: {1}",
 	"bad.compiler.binary": "Hatalı {0} ikili dosyası (\"-v\" sıfırdan farklı bir değer döndürüyor): {1}",
-	"version.word": "sürüm",
 	"bad.compiler.binary.output": "Hatalı {0} ikili dosyası \"{1} -v\" sürüm: {2} çıkış: {3}",
 	"detected.compiler": "{0} derleyicisi algılandı: {1}",
 	"testing.gcc.binary": "GCC ikili dosyası test ediliyor: {0}",
@@ -31,6 +30,7 @@
 	"detected.kit.for.version": "Sürüm için VsKit algılandı",
 	"generator.present": "Mevcut Oluşturucu: {0}",
 	"selected.preferred.generator.name": "Seçili Tercih Edilen Oluşturucu Adı: {0} {1}",
+	"failed.to.scan.for.kits": "Setler taranamadı: cmakeTools değeri tanımsız",
 	"scanning.for.kits.on.system": "Sistemdeki Setler için taranıyor",
 	"scanning.for.kits": "Setler için taranıyor",
 	"scanning.for.cmake.kits": "CMake setleri için taranıyor...",

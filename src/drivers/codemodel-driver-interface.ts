@@ -113,6 +113,7 @@ export interface CodeModelConfiguration {
 
 export interface CodeModelToolchain {
   path: string;
+  target?: string;
 }
 
 /** Describes the cmake model */
