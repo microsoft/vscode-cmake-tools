@@ -1906,11 +1906,11 @@
     "pretest": "tsc -p test.tsconfig.json",
     "pr-check": "gulp pr-check",
     "lint": "gulp lint",
+    "smokeTests": "yarn run pretest && node ./out/test/smoke/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
     "extensionTestsSuccessfulBuild": "yarn run pretest && node ./out/test/extension-tests/successful-build/runTest.js",
     "extensionTestsSingleRoot": "yarn run pretest && node ./out/test/extension-tests/single-root-UI/runTest.js",
     "extensionTestsMultioot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
-    "smokeTests": "yarn run pretest && node ./out/test/smoke/runTest.js",
     "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
   "devDependencies": {

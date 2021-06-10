@@ -54,7 +54,7 @@
             "args": [
                 "${workspaceFolder}/test/extension-tests/successful-build/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/successful-build"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/successful-build/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -96,7 +96,7 @@
             "args": [
                 "${workspaceFolder}/test/extension-tests/single-root-UI/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -138,7 +138,7 @@
             "args": [
                 "${workspaceFolder}/test/extension-tests/multi-root-UI/project-workspace.code-workspace",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/multi-root-UI"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/multi-root-UI/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,

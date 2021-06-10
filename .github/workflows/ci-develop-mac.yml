@@ -54,8 +54,3 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.4
         with:
           run: yarn run extensionTestsMultioot
-
-      - name: Run smoke tests
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: yarn run smokeTests
