@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "アクティブなキットを変更するには、クリックします",
 	"no.active.kit": "アクティブなキットがありません",
 	"no.kit.selected": "キットが選択されていません",
-	"set.active.target.tooltip": "ビルドするアクティブ ターゲットを設定します",
+	"set.active.target.tooltip": "既定のビルド ターゲットの設定",
 	"select.target.tooltip": "起動するターゲットを選択します",
 	"launch.debugger.tooltip": "選択したターゲットのデバッガーを起動します",
 	"launch.tooltip": "選択したターゲットをターミナル ウィンドウで起動します",
