@@ -47,41 +47,6 @@
             "preLaunchTask": "Pretest"
         },
         {
-            "name": "Launch Extension Tests (without-cmakelist-file)",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "${workspaceFolder}/test/extension-tests/without-cmakelist-file/project-folder",
-                "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/without-cmakelist-file"
-            ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
-                "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/*",
-                "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/test/*"
-            ],
-            "preLaunchTask": "Pretest",
-            "windows": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "true"
-                }
-            },
-            "linux": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            }
-        },
-        {
             "name": "Launch Extension Tests (successful-build)",
             "type": "extensionHost",
             "request": "launch",
