@@ -21,39 +21,8 @@ jobs:
           # Set this option if you want the action to check for the latest available version that satisfies the version spec
           check-latest: true
 
-      - name: Build the extension
+      - name: Build the extension and run tests
         uses: GabrielBB/xvfb-action@v1.4
         with:
           # Command to execute using xvfb
           run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
-
-      - name: Run Linter
-        run: yarn run lint
-
-      - name: Compile Test Sources
-        run: yarn run pretest
-
-      - name: Run smoke tests
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: yarn run smokeTests
-
-      - name: Run unit tests
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: yarn run unitTests
-
-      - name: Run successfulBuild tests
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: yarn run extensionTestsSuccessfulBuild
-
-      - name: Run singleRoot tests
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: yarn run extensionTestsSingleRoot
-
-      - name: Run multioot tests
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: yarn run extensionTestsMultioot

@@ -1,4 +1,3 @@
-import * as os from 'os';
 import * as path from 'path';
 
 import { runTests } from 'vscode-test';
@@ -16,10 +15,7 @@ async function main() {
     const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/multi-root-UI/project-workspace.code-workspace');
 
     const launchArgs = ["--disable-extensions", testWorkspace];
-    const extensionTestsEnv: { [key: string]: string | undefined } = {
-      "CMT_TESTING": "1",
-      "HasVs": os.platform().toLowerCase().includes("win") ? "true" : "false"
-    }
+    const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1" };
 
     // Download VS Code, unzip it and run the integration test
     await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
