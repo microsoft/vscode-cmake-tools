@@ -87,7 +87,7 @@ Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-production
 
 # Get the CMake binary that we will use to run our tests
 # The cmake server mode has been removed since CMake 3.20. Clients should use the cmake-file-api(7) instead.
-$cmake_binary = Install-TestCMake -Version "3.19.8"
+$cmake_binary = Install-TestCMake -Version "3.18.2"
 $Env:CMAKE_EXECUTABLE = $cmake_binary
 
 # Add cmake to search path environment variable
