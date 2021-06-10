@@ -16,7 +16,7 @@ async function main() {
 
     const launchArgs = [ "--disable-extensions", testWorkspace ];
 
-    const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1" };
+    const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1", "HasVs": "true" };
 
     // Download VS Code, unzip it and run the integration test
     await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
