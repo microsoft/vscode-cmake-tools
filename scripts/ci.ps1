@@ -114,10 +114,4 @@ $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"
 $Env:PATH = (get-item $ninja_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH
 
 
-$vsce = Find-Program vsce
-if (! $vsce) {
-    Write-Warning "You don't have 'vsce' installed. We won't generate a .vsix package"
-}
-else {
-    Invoke-ChronicCommand "Generating VSIX package" $vsce package
-}
+Invoke-TestPreparation -CMakePath $cmake_binary
