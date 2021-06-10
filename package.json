@@ -1906,12 +1906,12 @@
     "pretest": "tsc -p test.tsconfig.json",
     "pr-check": "gulp pr-check",
     "lint": "gulp lint",
-    "unitTests": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
-    "extensionTestsNoCMkeListsFile": "tsc -p test.tsconfig.json && node ./out/test/unit-tests/runTest.js",
-    "extensionTestsSuccessfulBuild": "tsc -p test.tsconfig.json && node ./out/test/extension-tests/successful-build/runTest.js",
-    "extensionTestsSingleRoot": "tsc -p test.tsconfig.json && node ./out/test/extension-tests/single-root-UI/runTest.js",
-    "extensionTestsMultioot": "tsc -p test.tsconfig.json && node ./out/test/extension-tests/multi-root-UI/runTest.js",
-    "smokeTests": "tsc -p test.tsconfig.json && node ./out/test/smoke/runTest.js",
+    "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
+    "extensionTestsNoCMakeListsFile": "yarn run pretest && node ./out/test/extension-tests/without-cmakelist-file/runTest.js",
+    "extensionTestsSuccessfulBuild": "yarn run pretest && node ./out/test/extension-tests/successful-build/runTest.js",
+    "extensionTestsSingleRoot": "yarn run pretest && node ./out/test/extension-tests/single-root-UI/runTest.js",
+    "extensionTestsMultioot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
+    "smokeTests": "yarn run pretest && node ./out/test/smoke/runTest.js",
     "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
   "devDependencies": {
@@ -1962,6 +1962,7 @@
     "typescript": "^4.1.5",
     "vscode-nls-dev": "^3.3.2",
     "vscode-test": "^1.5.2",
+    "webpack": "^5.38.1",
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
@@ -1978,7 +1979,6 @@
     "vscode-cpptools": "^5.0.0",
     "vscode-extension-telemetry": "^0.1.6",
     "vscode-nls": "^5.0.0",
-    "webpack": "^5.38.1",
     "which": "~2.0.2",
     "xml2js": "^0.4.23"
   },

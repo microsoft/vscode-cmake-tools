@@ -12,7 +12,13 @@
             "@test/*": ["test/*"]
         },
         "sourceMap": true,
-        "rootDir": "."
+        "rootDir": ".",
+        "strict": true,
+        "experimentalDecorators": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitThis": true,
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*.ts",

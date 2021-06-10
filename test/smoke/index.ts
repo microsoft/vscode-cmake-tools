@@ -2,7 +2,7 @@
  * Smoke test module.
  */
 
-require('module-alias/register');
+import 'module-alias/register';
 
 import * as path from 'path';
 import {SmokeContext, SUITE_REGISTRY, SmokeSuite, SmokeTest} from './smoke';

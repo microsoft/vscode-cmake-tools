@@ -15,8 +15,11 @@ async function main() {
     const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/single-root-UI/project-folder');
 
     const launchArgs = [ "--disable-extensions", testWorkspace ];
+
+    const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1", "CMT_QUIET_CONSOLE": "1" };
+
     // Download VS Code, unzip it and run the integration test
-    await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath });
+    await runTests({ launchArgs, extensionDevelopmentPath, extensionTestsPath, extensionTestsEnv });
   } catch (err) {
     console.error(err);
     console.error('Failed to run tests');
