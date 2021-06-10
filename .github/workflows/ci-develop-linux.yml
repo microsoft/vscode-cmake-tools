@@ -38,11 +38,6 @@ jobs:
         with:
           run: yarn run smokeTests
 
-      - name: Run unit tests
-        uses: GabrielBB/xvfb-action@v1.4
-        with:
-          run: yarn run unitTests
-
       - name: Run successfulBuild tests
         uses: GabrielBB/xvfb-action@v1.4
         with:
@@ -57,3 +52,8 @@ jobs:
         uses: GabrielBB/xvfb-action@v1.4
         with:
           run: yarn run extensionTestsMultioot
+
+      - name: Run unit tests
+        uses: GabrielBB/xvfb-action@v1.4
+        with:
+          run: yarn run unitTests
