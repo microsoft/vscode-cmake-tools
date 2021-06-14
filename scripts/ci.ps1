@@ -55,23 +55,6 @@ if (! $yarn) {
     }
 }
 
-function Invoke-DocsBuild {
-    Build-DevDocs
-    Build-UserDocs `
-        -RepoDir $REPO_DIR `
-        -Version $CMakeToolsVersion`
-        -Out $DOC_BUILD_DIR
-
-    if ($DocDestination) {
-        Write-Host "Copying documentation tree to $DocDestination"
-        if (Test-Path $DocDestination) {
-            Remove-Item $DocDestination -Recurse -Force
-        }
-        Copy-Item $DOC_BUILD_DIR -Destination $DocDestination -Recurse
-    }
-}
-
-
 $out_dir = Join-Path $REPO_DIR out
 if (Test-Path $out_dir) {
     Write-Verbose "Removing out/ directory: $out_dir"

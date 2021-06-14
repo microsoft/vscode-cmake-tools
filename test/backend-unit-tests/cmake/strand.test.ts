@@ -6,12 +6,11 @@ import * as chaiAsPromised from 'chai-as-promised';
 
 chai.use(chaiAsPromised);
 
-import {Strand} from '../../../src/strand';
+import {Strand} from '@cmt/strand';
 
 function pause(time: number): Promise<void> {
   return new Promise(resolve => { setTimeout(() => resolve(), time); });
 }
-
 
 suite('Running strands', () => {
   test('Run a thing', async () => {
