@@ -14,6 +14,11 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Install dependent packages
+        run: |
+          sudo apt update
+          sudo apt install powershell gdb xvfb
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v2
         with:
