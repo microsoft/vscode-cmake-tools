@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 import { Version } from 'vscode-cpptools';
 import * as util from '@cmt/util';
 
-// tslint:disable:no-unused-expression
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {

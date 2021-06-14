@@ -12,7 +12,6 @@ import {
 } from '@test/util';
 import * as path from 'path';
 
-// tslint:disable:no-unused-expression
 
 let workername: string = process.platform;
 

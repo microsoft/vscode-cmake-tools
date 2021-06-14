@@ -190,7 +190,6 @@ export class VariantManager implements vscode.Disposable {
   private customVariantsFileExists: boolean = false;
 
   dispose() {
-    // tslint:disable-next-line: no-floating-promises
     this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
@@ -317,7 +316,6 @@ export class VariantManager implements vscode.Disposable {
                             buildType: el.buildType || acc.buildType,
                             linkage: el.linkage || acc.linkage,
                             // TS 2.4 doesn't like using object spread here, for some reason.
-                            // tslint:disable-next-line:prefer-object-spread
                             settings: { ...acc.settings, ...el.settings},
                             short: [acc.short, el.short].join(' ').trim(),
                             long: [acc.long, el.long].join(', '),

@@ -9,7 +9,6 @@ import {smokeSuite, smokeTestDefaultKit} from '../smoke';
  * as the cmake executable
  */
 
-// tslint:disable:no-unused-expression
 
 smokeSuite('no-ctest-in-bindir', suite => {
   suite.smokeTest('configure', async ctx => {

@@ -166,7 +166,6 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
     const res = regex.exec(line);
     if (res) {
       const [_all, file, lineno_] = res;
-      // tslint:disable-next-line
       void _all;  // unused
       const lineno = parseInt(lineno_) - 1;
       let message = '~~~c++\n';

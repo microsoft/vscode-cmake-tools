@@ -31,7 +31,7 @@ export class PresetsController {
   private _presetsFileExists = false;
   private _userPresetsFileExists = false;
 
-  private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile>();
+  private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
   private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile>();
 
   private static readonly _addPreset = '__addPreset__';
@@ -136,12 +136,12 @@ export class PresetsController {
 
   private readonly _setPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setPresetsFile(folder, presetsFile);
-    this._presetsChangedEmitter.fire();
+    this._presetsChangedEmitter.fire(presetsFile);
   };
 
   private readonly _setUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setUserPresetsFile(folder, presetsFile);
-    this._presetsChangedEmitter.fire();
+    this._presetsChangedEmitter.fire(presetsFile);
   };
 
   private readonly _setOriginalPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {

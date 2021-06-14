@@ -1,7 +1,6 @@
 import {ConfigurationReader, ExtensionConfigurationSettings} from '@cmt/config';
 import {expect} from '@test/util';
 
-
 function createConfig(conf: Partial<ExtensionConfigurationSettings>): ConfigurationReader {
   const ret = new ConfigurationReader({
     autoSelectActiveFolder: false,
@@ -24,7 +23,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     parallelJobs: 0,
     ctestPath: '',
     ctest: {
-      parallelJobs: 0,
+      parallelJobs: 0
     },
     parseBuildDiagnostics: true,
     enabledOutputParsers: [],
