@@ -413,7 +413,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
     // First try to get toolchain values directly reported by CMake. Check the
     // group's language compiler, then the C++ compiler, then the C compiler.
-    const comp_toolchains = opts.codeModelContent.toolchains?.get(lang ?? "")
+    const comp_toolchains: codemodel_api.CodeModelToolchain | undefined = opts.codeModelContent.toolchains?.get(lang ?? "")
         || opts.codeModelContent.toolchains?.get('CXX')
         || opts.codeModelContent.toolchains?.get('C');
     // If none of those work, fall back to the same order, but in the cache.
