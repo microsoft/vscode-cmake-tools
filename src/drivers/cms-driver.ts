@@ -107,7 +107,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     })();
   }
 
-  protected async doConfigure(args: string[], _autoConfigInternal: boolean = false, consumer?: proc.OutputConsumer) {
+  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
     await this._clientChangeInProgress;
     const cl = await this.getClient();
     const sub = this.onMessage(msg => {
@@ -398,16 +398,14 @@ export class CMakeServerClientDriver extends CMakeDriver {
                       testPreset: TestPreset | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
-                      preferredGenerators: CMakeGenerator[],
-                      autoConfigInternal: boolean = false): Promise<CMakeServerClientDriver> {
+                      preferredGenerators: CMakeGenerator[]): Promise<CMakeServerClientDriver> {
     return this.createDerived(new CMakeServerClientDriver(cmake, config, workspaceFolder, preconditionHandler),
                               useCMakePresets,
                               kit,
                               configurePreset,
                               buildPreset,
                               testPreset,
-                              preferredGenerators,
-                              autoConfigInternal);
+                              preferredGenerators);
   }
 
 }

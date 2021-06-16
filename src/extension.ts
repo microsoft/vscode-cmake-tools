@@ -420,7 +420,7 @@ class ExtensionManager implements vscode.Disposable {
     if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
       return;
     }
-    if (trigger === ConfigureTrigger.autoConfigureOnOpen) {
+    if (trigger === ConfigureTrigger.configureOnOpen && !cmt.workspaceContext.config.configureOnOpen) {
       await cmt.configureInternal(trigger, [], ConfigureType.Auto);
     } else {
       await cmt.configureInternal(trigger, [], ConfigureType.Normal);
@@ -556,7 +556,8 @@ class ExtensionManager implements vscode.Disposable {
       if (result === configureButtonMessage) {
         await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
       } else {
-        await this.configureExtensionInternal(ConfigureTrigger.autoConfigureOnOpen, cmt);
+        log.debug(localize('auto.configuring.workspace.on.open', 'Automatically configuring workspace on open {0}', ws.uri.toString()));
+        await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
       }
     }
     this._updateCodeModel(info);

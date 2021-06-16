@@ -65,7 +65,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   // Legacy disposal does nothing
   async asyncDispose() { this._cacheWatcher.dispose(); }
 
-  async doConfigure(args_: string[], _autoConfigInternal: boolean = false, outputConsumer?: proc.OutputConsumer): Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     // Dup args so we can modify them
     const args = Array.from(args_);
     args.push('-H' + util.lightNormalizePath(this.sourceDir));
@@ -122,8 +122,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
                       testPreset: TestPreset | null,
                       workspaceFolder: string | null,
                       preconditionHandler: CMakePreconditionProblemSolver,
-                      preferredGenerators: CMakeGenerator[],
-                      autoConfigInternal: boolean = false): Promise<LegacyCMakeDriver> {
+                      preferredGenerators: CMakeGenerator[]): Promise<LegacyCMakeDriver> {
     log.debug(localize('creating.instance.of', 'Creating instance of {0}', "LegacyCMakeDriver"));
     return this.createDerived(new LegacyCMakeDriver(cmake, config, workspaceFolder, preconditionHandler),
                               useCMakePresets,
@@ -131,8 +130,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
                               configurePreset,
                               buildPreset,
                               testPreset,
-                              preferredGenerators,
-                              autoConfigInternal);
+                              preferredGenerators);
   }
 
   get targets() { return []; }

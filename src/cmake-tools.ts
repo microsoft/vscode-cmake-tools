@@ -66,7 +66,6 @@ export enum ConfigureTrigger {
   runTests = "runTests",
   badHomeDir = "badHomeDir",
   configureOnOpen = "configureOnOpen",
-  autoConfigureOnOpen = "autoConfigureOnOpen",
   quickStart = "quickStart",
   setVariant = "setVariant",
   cmakeListsChange = "cmakeListsChange",
@@ -547,7 +546,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Start up a new CMake driver and return it. This is so that the initialization
    * of the driver is atomic to those using it
    */
-  private async _startNewCMakeDriver(cmake: CMakeExecutable, autoConfigInternal: boolean): Promise<CMakeDriver> {
+  private async _startNewCMakeDriver(cmake: CMakeExecutable): Promise<CMakeDriver> {
     log.debug(localize('starting.cmake.driver', 'Starting CMake driver'));
     if (!cmake.isPresent) {
       throw new Error(localize('bad.cmake.executable', 'Bad CMake executable "{0}".', cmake.path));
@@ -605,8 +604,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                 this.testPreset,
                                                 workspace,
                                                 preConditionHandler,
-                                                preferredGenerators,
-                                                autoConfigInternal);
+                                                preferredGenerators);
           break;
         case serverApi:
           drv = await CMakeServerClientDriver.create(cmake,
@@ -680,7 +678,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (drv) {
       log.debug(localize('reloading.driver', 'Reloading CMake driver'));
       await drv.asyncDispose();
-      return this._cmakeDriver = this._startNewCMakeDriver(await this.getCMakeExecutable(), false);
+      return this._cmakeDriver = this._startNewCMakeDriver(await this.getCMakeExecutable());
     }
   }
   /**
@@ -849,7 +847,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * This ensures that user commands can always be executed, because error criterials like
    * exceptions would assign a null driver and it is possible to create a new driver instance later again.
    */
-  async getCMakeDriverInstance(autoConfigInternal: boolean = false): Promise<CMakeDriver|null> {
+  async getCMakeDriverInstance(): Promise<CMakeDriver|null> {
     return this._driverStrand.execute(async () => {
       if (!this.useCMakePresets && !this.activeKit) {
         log.debug(localize('not.starting.no.kits', 'Not starting CMake driver: no kits defined'));
@@ -865,7 +863,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
       if ((await this._cmakeDriver) === null) {
         log.debug(localize('starting.new.cmake.driver', 'Starting new CMake driver'));
-        this._cmakeDriver = this._startNewCMakeDriver(cmake, autoConfigInternal);
+        this._cmakeDriver = this._startNewCMakeDriver(cmake);
 
         try {
           await this._cmakeDriver;
@@ -907,7 +905,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
         const drv = await this._cmakeDriver;
         console.assert(drv !== null, 'Null driver immediately after creation?');
-        if (drv instanceof codemodel_api.CodeModelDriver) {
+        if (drv && !(drv instanceof LegacyCMakeDriver)) {
           this._codeModelDriverSub = drv.onCodeModelChanged(cm => { this._codeModelContent.set(cm); });
         }
       }
@@ -994,15 +992,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   }
 
   configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
-    let autoConfigInternal: boolean = false;
     // Don't show a progress bar when the extension is running an internal auto-configuration.
     if (type === ConfigureType.Auto) {
-      autoConfigInternal = true;
       // TODO: title: localize('autoconfiguring.project', 'Configuring project')
       return new Promise(async (resolve) => {
-        const drv = await this.getCMakeDriverInstance(true);
+        const drv = await this.getCMakeDriverInstance();
         if (drv) {
-          const retc: number = await drv.configure(trigger, [], autoConfigInternal);
+          const retc: number = await drv.configure(trigger, []);
           if (retc === 0) {
             await this._refreshCompileDatabase(drv.expansionOptions);
           }
@@ -1041,11 +1037,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 let retc: number;
                 await setContextValue(IS_CONFIGURING_KEY, true);
                 if (type === ConfigureType.Cache) {
-                  retc = await drv.configure(trigger, [], autoConfigInternal, consumer, true);
+                  retc = await drv.configure(trigger, [], consumer, true);
                 } else {
                   switch (type) {
                     case ConfigureType.Normal:
-                        retc = await drv.configure(trigger, extra_args, autoConfigInternal, consumer);
+                        retc = await drv.configure(trigger, extra_args, consumer);
                       break;
                     case ConfigureType.Clean:
                         retc = await drv.cleanConfigure(trigger, extra_args, consumer);
