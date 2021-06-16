@@ -29,7 +29,6 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
-
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceFolder, preconditionHandler);
   }

@@ -1122,7 +1122,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (!autoConfigInternal) {
         log.debug(localize('start.configure', 'Start configure'), extra_args);
       } else {
-        log.debug(localize('start.auto.configure', 'Start autoconfigure'), extra_args);
+        log.debug(localize('start.auto.configure', 'Start auto configure'), extra_args);
       }
 
       const pre_check_ok = await this._beforeConfigureOrBuild();
@@ -1130,7 +1130,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return -2;
       }
 
-      // cache flags will construct the command line for cmake
+      // Cache flags will construct the command line for cmake.
       const init_cache_flags = this.generateInitCacheFlags();
 
       let expanded_flags: string[];
@@ -1261,6 +1261,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     } catch {
       if (!autoConfigInternal) {
         log.info(localize('configure.failed', 'Failed to configure project'));
+      } else {
+        log.info(localize('auto.configure.failed', 'Failed to auto configure project'));
       }
       return -1;
     } finally {
