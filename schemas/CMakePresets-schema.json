@@ -375,6 +375,18 @@
                                     {
                                         "type": "null",
                                         "description": "Setting a variable to null causes it to not be set, even if a value was inherited from another preset."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "additionalProperties": false
                                     }
                                 ]
                             },
@@ -387,6 +399,18 @@
                                     {
                                         "type": "null",
                                         "description": "Setting a variable to null causes it to not be set, even if a value was inherited from another preset."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "additionalProperties": false
                                     }
                                 ]
                             },
@@ -399,6 +423,18 @@
                                     {
                                         "type": "null",
                                         "description": "Setting a variable to null causes it to not be set, even if a value was inherited from another preset."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "additionalProperties": false
                                     }
                                 ]
                             },
@@ -411,6 +447,18 @@
                                     {
                                         "type": "null",
                                         "description": "Setting a variable to null causes it to not be set, even if a value was inherited from another preset."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "type": {
+                                                "type": "string"
+                                            },
+                                            "value": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "additionalProperties": false
                                     }
                                 ]
                             },
