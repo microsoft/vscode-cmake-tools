@@ -13,8 +13,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-// tslint:disable:no-unused-expression
-
 let workername: string = process.platform;
 
 if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {

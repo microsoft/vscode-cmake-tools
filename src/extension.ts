@@ -402,7 +402,6 @@ class ExtensionManager implements vscode.Disposable {
     );
     this._onDidChangeActiveTextEditorSub.dispose();
     this._onUseCMakePresetsChangedSub.dispose();
-    // tslint:disable-next-line: no-floating-promises
     this._kitsWatcher.close();
     this._projectOutlineTreeView.dispose();
     if (this._cppToolsAPI) {

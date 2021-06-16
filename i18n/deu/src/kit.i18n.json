@@ -6,7 +6,6 @@
 {
 	"testing.compiler.binary": "{0}-Binärdatei wird getestet: {1}",
 	"bad.compiler.binary": "Ungültige {0}-Binärdatei (\"-v\" gibt nicht null zurück): {1}",
-	"version.word": "Version",
 	"bad.compiler.binary.output": "Ungültige {0}-Binärdatei \"{1} -v\", Version: {2}, Ausgabe: {3}",
 	"detected.compiler": "{0}-Compiler wurde erkannt: {1}",
 	"testing.gcc.binary": "GCC-Binärdatei wird getestet: {0}",
@@ -31,6 +30,7 @@
 	"detected.kit.for.version": "Erkanntes VsKit für Version",
 	"generator.present": "Generator vorhanden: {0}",
 	"selected.preferred.generator.name": "Ausgewählter bevorzugter Generatorname: {0} {1}",
+	"failed.to.scan.for.kits": "Fehler bei der Suche nach Kits: cmakeTools ist nicht definiert",
 	"scanning.for.kits.on.system": "Es wird nach Kits auf dem System gesucht.",
 	"scanning.for.kits": "Es wird nach Kits gesucht.",
 	"scanning.for.cmake.kits": "Es wird nach CMake-Kits gesucht...",

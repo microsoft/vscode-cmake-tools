@@ -9,7 +9,6 @@ import * as api from '../../src/api';
 import {CMakeCache} from '../../src/cache';
 import * as util from '../../src/util';
 
-// tslint:disable:no-unused-expression
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {

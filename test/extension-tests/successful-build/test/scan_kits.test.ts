@@ -2,7 +2,6 @@ import {scanForKits} from '@cmt/kit';
 import {fs} from '@cmt/pr';
 import {expect} from '@test/util';
 
-// tslint:disable:no-unused-expression
 
 suite('[MinGW Tests]', async () => {
   const mingw_dirs: string[] = ['C:\\Qt\\Tools\\mingw492_32', 'C:\\mingw-w64\\x86_64-7.2.0-posix-seh-rt_v5-rev1\\mingw64'];
