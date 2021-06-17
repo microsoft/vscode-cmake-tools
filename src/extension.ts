@@ -419,11 +419,7 @@ class ExtensionManager implements vscode.Disposable {
     if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
       return;
     }
-    if (trigger === ConfigureTrigger.configureOnOpen && !cmt.workspaceContext.config.configureOnOpen) {
-      await cmt.configureInternal(trigger, [], ConfigureType.Auto);
-    } else {
-      await cmt.configureInternal(trigger, [], ConfigureType.Normal);
-    }
+    await cmt.configureInternal(trigger, [], ConfigureType.Normal);
   }
 
   // This method evaluates whether the given folder represents a CMake project
@@ -555,7 +551,7 @@ class ExtensionManager implements vscode.Disposable {
       if (result === configureButtonMessage) {
         await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
       } else {
-        log.debug(localize('auto.configuring.workspace.on.open', 'Automatically configuring workspace on open {0}', ws.uri.toString()));
+        log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
         await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
       }
     }

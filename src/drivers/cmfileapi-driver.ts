@@ -200,7 +200,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
   }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
-    if (!this._isConfiguredAtLeastOnce && !this.config.configureOnOpen) { // if configureonopen false update code model, only first time, hasconfiguredyet?
+    if (!this._isConfiguredAtLeastOnce && !this.config.configureOnOpen) {
       this._needsReconfigure = true;
       this._isConfiguredAtLeastOnce = true;
       await this.updateCodeModel();
