@@ -57,8 +57,7 @@ const CMAKE_LOGGER = logging.createLogger('cmake');
 export enum ConfigureType {
   Normal,
   Clean,
-  Cache,
-  Auto
+  Cache
 }
 
 export enum ConfigureTrigger {
