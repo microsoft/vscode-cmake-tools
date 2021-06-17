@@ -1,4 +1,5 @@
 {
     "cmake.buildDirectory": "${workspaceFolder}/build",
-    "cmake.additionalKits": ["${workspaceFolder}/.vscode/cmake-kits-inside.json", "${workspaceFolder}/../OutsideProject/cmake-kits-outside.json"]
+    "cmake.additionalKits": ["${workspaceFolder}/.vscode/cmake-kits-inside.json", "${workspaceFolder}/../OutsideProject/cmake-kits-outside.json"],
+    "cmake.configureOnOpen": true
 }
