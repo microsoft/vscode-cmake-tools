@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Klicken Sie, um das aktive Kit zu ändern.",
 	"no.active.kit": "Kein aktives Kit.",
 	"no.kit.selected": "Kein Kit ausgewählt.",
-	"set.active.target.tooltip": "Aktives Ziel auf Build festlegen",
+	"set.active.target.tooltip": "Standardziel für Build festlegen",
 	"select.target.tooltip": "Zu startendes Ziel auswählen",
 	"launch.debugger.tooltip": "Debugger für das ausgewählte Ziel starten",
 	"launch.tooltip": "Ausgewähltes Ziel im Terminalfenster starten",

@@ -6,7 +6,6 @@
 {
 	"testing.compiler.binary": "Testuje se binární soubor {0}: {1}",
 	"bad.compiler.binary": "Chybný binární soubor {0} (\"-v\" vrací nenulovou hodnotu): {1}",
-	"version.word": "verze",
 	"bad.compiler.binary.output": "Chybná verze \"{1} -v\" binárního souboru {0}: {2}, výstup: {3}",
 	"detected.compiler": "Zjistil se kompilátor {0}: {1}",
 	"testing.gcc.binary": "Testuje se binární soubor GCC: {0}",
@@ -31,6 +30,7 @@
 	"detected.kit.for.version": "Zjištěna sada VsKit pro verzi",
 	"generator.present": "Generátor je přítomen: {0}",
 	"selected.preferred.generator.name": "Název vybraného upřednostňovaného generátoru: {0} {1}",
+	"failed.to.scan.for.kits": "Nepovedlo se vyhledat sady: cmakeTools není definovaný.",
 	"scanning.for.kits.on.system": "Hledají se sady v systému.",
 	"scanning.for.kits": "Hledají se sady.",
 	"scanning.for.cmake.kits": "Hledají se sady CMake...",

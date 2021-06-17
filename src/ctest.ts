@@ -60,30 +60,30 @@ export interface SiteData {
   Testing: TestingData;
 }
 
-export interface CTestResults { Site: SiteData; }
+export interface CTestResults { Site: SiteData }
 
 interface EncodedMeasurementValue {
-  $: {encoding?: BufferEncoding; compression?: string;};
+  $: {encoding?: BufferEncoding; compression?: string};
   _: string;
 }
 
 // clang-format off
 interface MessyResults {
   Site: {
-    $: {},
+    $: {};
     Testing: {
       TestList: {Test: string[]}[]; EndDateTime: string[];
       EndTestTime: string[];
       ElapsedMinutes: string[];
       Test: {
-        $: {Status: TestStatus},
+        $: {Status: TestStatus};
         FullCommandLine: string[];
         FullName: string[];
         Name: string[];
         Path: string[];
         Results: {
           NamedMeasurement:
-              {$: {type: string; name: string;}, Value: string[];}[]
+              {$: {type: string; name: string}; Value: string[]}[];
           Measurement: { Value: [EncodedMeasurementValue|string] }[];
         }[];
       }[];
@@ -125,7 +125,7 @@ function cleanupResultsXML(messy: MessyResults): CTestResults {
         $: messy.Site.$,
         Testing: {
           TestList: [],
-          Test: [],
+          Test: []
         }
       }
     };
@@ -142,7 +142,7 @@ function cleanupResultsXML(messy: MessyResults): CTestResults {
                                       Path: test.Path[0],
                                       Status: test.$.Status,
                                       Measurements: new Map<string, TestMeasurement>(),
-                                      Output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0]),
+                                      Output: decodeOutputMeasurement(test.Results[0].Measurement[0].Value[0])
                                     }))
       }
     }
@@ -156,7 +156,6 @@ export async function readTestResultsFile(test_xml: string) {
   return clean;
 }
 
-
 export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
   const lines_with_ws = output.split('\n');
   const lines = lines_with_ws.map(l => l.trim());
@@ -167,7 +166,6 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
     const res = regex.exec(line);
     if (res) {
       const [_all, file, lineno_] = res;
-      // tslint:disable-next-line
       void _all;  // unused
       const lineno = parseInt(lineno_) - 1;
       let message = '~~~c++\n';
@@ -182,7 +180,7 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
       decorations.push({
         fileName: file,
         lineNumber: lineno,
-        hoverMessage: `${message}\n~~~`,
+        hoverMessage: `${message}\n~~~`
       });
     }
   }
@@ -214,8 +212,8 @@ export class DecorationManager {
     after: {
       contentText: 'Failed',
       backgroundColor: 'darkred',
-      margin: '10px',
-    },
+      margin: '10px'
+    }
   });
 
   private _binaryDir: string = '';
@@ -262,7 +260,7 @@ export class DecorationManager {
                                      file_line.range.end.character);
       fails_acc.push({
         hoverMessage: decor.hoverMessage,
-        range,
+        range
       });
     }
     editor.setDecorations(this._failingTestDecorationType, fails_acc);

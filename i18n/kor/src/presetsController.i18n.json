@@ -74,7 +74,7 @@
 	"reading.presets.file": "사전 설정 파일 {0} 읽기",
 	"failed.to.parse": "{0}을(를) 구문 분석하지 못함: {1}",
 	"invalid.file.error": "잘못된 키트 콘텐츠 {0}({1}):",
-	"successfully.validated.presets": "{0}에서 사전 설정 키트의 유효성 검사 완료",
+	"successfully.validated.presets": "{0}에서 사전 설정의 유효성을 검사했습니다.",
 	"use.kits.variants": "키트 및 변형 사용",
 	"edit.presets": "찾기",
 	"presets.version.error": "CMakePresets 버전 1이 지원되지 않습니다. 계속 진행하시겠습니까?",

@@ -74,7 +74,7 @@
 	"reading.presets.file": "Lendo arquivo de predefinições {0}",
 	"failed.to.parse": "Falha ao analisar {0}: {1}",
 	"invalid.file.error": "Conteúdo do kit {0} ({1}) inválido:",
-	"successfully.validated.presets": "Kits de predefinições validados com sucesso em {0}",
+	"successfully.validated.presets": "Predefinições validadas com êxito no {0}",
 	"use.kits.variants": "Usar kits e variantes",
 	"edit.presets": "Localizar",
 	"presets.version.error": "Não há suporte para a versão 1 do CMakePresets. Como deseja prosseguir?",

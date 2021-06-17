@@ -29,7 +29,7 @@ export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
       });
     }
 
-    if (defaultKit && defaultKit.length != 0) {
+    if (defaultKit && defaultKit.length !== 0) {
       return Promise.resolve(defaultKit[0]);
     } else {
       expect.fail('Unable to find compatible kit');

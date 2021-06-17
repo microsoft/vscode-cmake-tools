@@ -87,7 +87,7 @@ export abstract class RawDiagnosticParser {
   /**
    * Get the diagnostics which have been parsed by this object
    */
-  get diagnostics(): ReadonlyArray<RawDiagnostic> { return this._diagnostics; }
+  get diagnostics(): readonly RawDiagnostic[] { return this._diagnostics; }
   private readonly _diagnostics: RawDiagnostic[] = [];
 
   /**

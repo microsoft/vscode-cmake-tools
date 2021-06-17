@@ -84,7 +84,7 @@ function parseTargetArch(target: string): Architecture {
   // Value of target param is lowercased.
   const is_arm_32: (value: string) => boolean = value => {
     // ARM verions from https://en.wikipedia.org/wiki/ARM_architecture#Cores
-    if (value.indexOf('armv8-r') >=0 || value.indexOf('armv8-m') >=0) {
+    if (value.indexOf('armv8-r') >= 0 || value.indexOf('armv8-m') >= 0) {
       return true;
     } else {
       // Check if ARM version is 7 or earlier.
@@ -93,7 +93,7 @@ function parseTargetArch(target: string): Architecture {
       return verNum <= 7;
     }
   };
-  switch(target) {
+  switch (target) {
     case '-m32':
     case 'i686':
       return 'x86';
@@ -113,8 +113,12 @@ function parseTargetArch(target: string): Architecture {
     return 'arm64';
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
     return 'arm';
+  } else if (target.indexOf('i686') >= 0) {
+    return 'x86';
+  } else if (target.indexOf('amd64') >= 0 || target.indexOf('x86_64') >= 0) {
+    return 'x64';
   }
-  // TODO: whitelist architecture values and add telemetry
+  // TODO: add an allow list of architecture values and add telemetry
   return undefined;
 }
 
@@ -123,8 +127,8 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = undefined;
-  let targetArch: Architecture = undefined;
+  let standard: StandardVersion;
+  let targetArch: Architecture;
   while (1) {
     const {done, value} = iter.next();
     if (done) {
@@ -137,10 +141,9 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const target = lower.substring(6);
       targetArch = parseTargetArch(target);
     } else if (require_standard_target && lower === '-arch') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -151,15 +154,13 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const target = lower.substring(9);
       targetArch = parseTargetArch(target);
     } else if (require_standard_target && lower === '-target') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
     } else if (value === '-D' || value === '/D') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
         rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));
@@ -171,14 +172,14 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA' ) {
+      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
         const s = parseCppStandard(std, can_use_gnu_std);
         if (!s) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
           standard = s;
         }
-      } else if (lang === 'C' || lang === 'OBJC' ) {
+      } else if (lang === 'C' || lang === 'OBJC') {
         const s = parseCStandard(std, can_use_gnu_std);
         if (!s) {
           log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
@@ -211,7 +212,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
  * and target architecture parsed from compiler flags.
  */
 export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: string, target_arch: Architecture) {
-  if (cptVersion >= cpt.Version.v5) {
+  if (cptVersion >= cpt.Version.v5 && target_arch === undefined) {
     // IntelliSenseMode is optional for CppTools v5+ and is determined by CppTools.
     return undefined;
   }
@@ -424,6 +425,11 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     if (!comp_path) {
       throw new MissingCompilerException();
     }
+
+    const targetFromToolchains = comp_toolchains?.target;
+    const targetArchFromToolchains = targetFromToolchains
+      ? parseTargetArch(targetFromToolchains) : undefined;
+
     const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions, targetArch} = parseCompileFlags(this.cpptoolsVersion, flags, lang);
@@ -455,7 +461,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       defines,
       standard,
       includePath: normalizedIncludePath,
-      intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArch),
+      intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArchFromToolchains ?? targetArch),
       compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
@@ -486,7 +492,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         const data = new Map<string, cpt.SourceFileConfigurationItem>();
         data.set(target.name, {
           uri: vscode.Uri.file(abs).toString(),
-          configuration,
+          configuration
         });
         this._fileIndex.set(abs_norm, data);
       }
@@ -522,10 +528,10 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     for (const config of opts.codeModel.configurations) {
       for (const project of config.projects) {
         for (const target of project.targets) {
-          /// Now some shenanigans since header files don't have config data:
-          /// 1. Accumulate some "defaults" based on the set of all options for each file group
-          /// 2. Pass these "defaults" down when rebuilding the config data
-          /// 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+          // Now some shenanigans since header files don't have config data:
+          // 1. Accumulate some "defaults" based on the set of all options for each file group
+          // 2. Pass these "defaults" down when rebuilding the config data
+          // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
           const grps = target.fileGroups || [];
           const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
           const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
@@ -541,7 +547,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
                     name: target.name,
                     compileFlags,
                     includePath,
-                    defines,
+                    defines
                   },
                   sysroot
               );

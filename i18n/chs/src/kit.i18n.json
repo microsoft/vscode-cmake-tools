@@ -6,7 +6,6 @@
 {
 	"testing.compiler.binary": "正在测试 {0} 二进制文件: {1}",
 	"bad.compiler.binary": "{0} 二进制文件不正确(\"-v\" 返回非零值): {1}",
-	"version.word": "版本",
 	"bad.compiler.binary.output": "错误的 {0} 二进制文件 \"{1} -v\" 版本:{2} 输出: {3}",
 	"detected.compiler": "检测到 {0} 编译器: {1}",
 	"testing.gcc.binary": "正在测试 GCC 二进制文件: {0}",
@@ -31,6 +30,7 @@
 	"detected.kit.for.version": "已检测到适用于版本的 VsKit",
 	"generator.present": "存在生成器: {0}",
 	"selected.preferred.generator.name": "已选择首选生成器名称: {0} {1}",
+	"failed.to.scan.for.kits": "无法扫描工具包: cmakeTools 未定义",
 	"scanning.for.kits.on.system": "正在系统上扫描工具包",
 	"scanning.for.kits": "正在扫描工具包",
 	"scanning.for.cmake.kits": "正在扫描 CMake 工具包...",

@@ -30,9 +30,9 @@ export class CompilationDatabase {
           file: cur.file,
           output: cur.output,
           command: cur.command,
-          arguments: cur.arguments ? cur.arguments : [...shlex.split(cur.command)],
+          arguments: cur.arguments ? cur.arguments : [...shlex.split(cur.command)]
         }),
-        new Map<string, ArgsCompileCommand>(),
+        new Map<string, ArgsCompileCommand>()
     );
   }
 

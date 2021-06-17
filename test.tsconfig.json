@@ -11,10 +11,6 @@
             "@cmt/*": ["src/*"],
             "@test/*": ["test/*"]
         },
-        "typeRoots": [
-            "node_modules/@types",
-            "types/"
-        ],
         "sourceMap": true,
         "rootDir": ".",
         "strict": true,

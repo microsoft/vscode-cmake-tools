@@ -11,7 +11,6 @@ import rollbar from '@cmt/rollbar';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-
 /**
  * Escape a string so it can be used as a regular expression
  */
@@ -219,7 +218,6 @@ export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T|
  */
 export function randint(min: number, max: number): number { return Math.floor(Math.random() * (max - min) + min); }
 
-
 export function product<T>(arrays: T[][]): T[][] {
   // clang-format off
   return arrays.reduce((acc, curr) =>
@@ -248,7 +246,7 @@ export interface CMakeValue {
 export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   const ret: CMakeValue = {
     type: 'UNKNOWN',
-    value: '',
+    value: ''
   };
   if (value === true || value === false) {
     ret.type = 'BOOL';
@@ -268,7 +266,6 @@ export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   return ret;
 }
 
-
 export async function termProc(child: child_process.ChildProcess) {
   // Stopping the process isn't as easy as it may seem. cmake --build will
   // spawn child processes, and CMake won't forward signals to its
@@ -286,8 +283,9 @@ async function _killTree(pid: number) {
       children = stdout.split('\n').map(line => Number.parseInt(line));
     }
     for (const other of children) {
-      if (other)
+      if (other) {
         await _killTree(other);
+      }
     }
     try {
       process.kill(pid, 'SIGINT');
@@ -336,7 +334,7 @@ export function parseVersion(str: string): Version {
   return {
     major: parseInt(major),
     minor: parseInt(minor),
-    patch: parseInt(patch),
+    patch: parseInt(patch)
   };
 }
 
@@ -378,7 +376,7 @@ export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVar
 }
 
 export function normalizeEnvironmentVarname(varname: string) {
-  return process.platform == 'win32' ? varname.toUpperCase() : varname;
+  return process.platform === 'win32' ? varname.toUpperCase() : varname;
 }
 
 export function parseCompileDefinition(str: string): [string, string|null] {
@@ -409,7 +407,7 @@ export function thisExtensionPackage(): PackageJSON {
   return {
     name: pkg.name,
     publisher: pkg.publisher,
-    version: pkg.version,
+    version: pkg.version
   };
 }
 
@@ -540,9 +538,9 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
 }
 
 export function getLocaleId(): string {
-  if (typeof(process.env.VSCODE_NLS_CONFIG) == "string") {
+  if (typeof(process.env.VSCODE_NLS_CONFIG) === "string") {
       const vscodeNlsConfigJson: any = JSON.parse(process.env.VSCODE_NLS_CONFIG);
-      if (typeof(vscodeNlsConfigJson.locale) == "string") {
+      if (typeof(vscodeNlsConfigJson.locale) === "string") {
           return vscodeNlsConfigJson.locale;
       }
   }
@@ -605,7 +603,7 @@ export function isArrayOfString(x: any): x is string[] {
 export function isNullOrUndefined(x?: any): boolean {
   // Double equals provides the correct answer for 'null' and 'undefined'
   // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
-  return x == null;
+  return x === null;
 }
 
 export function isWorkspaceFolder(x?: any): boolean {
