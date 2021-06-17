@@ -38,6 +38,11 @@ const log = logging.createLogger('cmakefileapi-driver');
  * The CMake driver with FileApi of CMake >= 3.15.0
  */
 export class CMakeFileApiDriver extends CMakeDriver {
+
+  isCacheConfigSupported(): boolean {
+    return true;
+  }
+
   private constructor(cmake: CMakeExecutable,
                       readonly config: ConfigurationReader,
                       workspaceRootPath: string|null,
@@ -66,8 +71,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
   }
 
   private _needsReconfigure = true;
-  private _isConfiguredAtLeastOnce = false;
-  public isConfiguredAtLeastOnce() { return this._isConfiguredAtLeastOnce; }
+
   /**
    * Watcher for the CMake cache file on disk.
    */
@@ -199,14 +203,14 @@ export class CMakeFileApiDriver extends CMakeDriver {
     await this._cleanPriorConfiguration();
   }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
-    if (!this._isConfiguredAtLeastOnce && !this.config.configureOnOpen) {
-      this._needsReconfigure = true;
-      this._isConfiguredAtLeastOnce = true;
-      await this.updateCodeModel();
-      return 0;
-    }
+  async doCacheConfigure(): Promise<number> {
+    this._needsReconfigure = true;
+    this._isConfiguredAtLeastOnce = true;
+    await this.updateCodeModel();
+    return 0;
+  }
 
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     const api_path = this.getCMakeFileApiPath();
     await createQueryFileForApi(api_path);
 

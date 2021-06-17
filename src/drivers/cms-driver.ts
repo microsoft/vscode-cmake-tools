@@ -31,6 +31,14 @@ export class NoGeneratorError extends Error {
 
 export class CMakeServerClientDriver extends CMakeDriver {
 
+  isCacheConfigSupported(): boolean {
+    return false;
+  }
+
+  async doCacheConfigure(): Promise<number> {
+    throw new Error('Method not implemented.');
+  }
+
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceFolder, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());

@@ -70,6 +70,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns The exit code from CMake
    */
   protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doCacheConfigure(): Promise<number>;
+
+  protected _isConfiguredAtLeastOnce = false;
+  public isConfiguredAtLeastOnce(): boolean {
+    return this._isConfiguredAtLeastOnce;
+  }
 
   protected async doPreCleanConfigure(): Promise<void> {
     return Promise.resolve();
@@ -82,6 +88,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected doPostBuild(): Promise<boolean> {
     return Promise.resolve(true);
   }
+
+  /**
+   * Check if using cached configuration is supported.
+   */
+  public abstract isCacheConfigSupported(): boolean;
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
