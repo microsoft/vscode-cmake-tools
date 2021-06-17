@@ -1122,7 +1122,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (!autoConfigInternal) {
         log.debug(localize('start.configure', 'Start configure'), extra_args);
       } else {
-        log.debug(localize('start.auto.configure', 'Start auto configure'), extra_args);
+        log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
       }
 
       const pre_check_ok = await this._beforeConfigureOrBuild();
@@ -1262,7 +1262,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (!autoConfigInternal) {
         log.info(localize('configure.failed', 'Failed to configure project'));
       } else {
-        log.info(localize('auto.configure.failed', 'Failed to auto configure project'));
+        log.info(localize('use.cached.configuration.failed', 'Failed to use cached configuration'));
       }
       return -1;
     } finally {

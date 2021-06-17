@@ -991,25 +991,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.configureInternal(ConfigureTrigger.api, extra_args, ConfigureType.Normal);
   }
 
-  configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
-    // Don't show a progress bar when the extension is running an internal auto-configuration.
-    if (type === ConfigureType.Auto) {
-      // TODO: title: localize('autoconfiguring.project', 'Configuring project')
-      return new Promise(async (resolve) => {
-        const drv = await this.getCMakeDriverInstance();
-        if (drv) {
-          const retc: number = await drv.configure(trigger, []);
-          if (retc === 0) {
-            await this._refreshCompileDatabase(drv.expansionOptions);
-          }
-          await this._ctestController.reloadTests(drv);
-          this._onReconfiguredEmitter.fire();
-          resolve(retc);
-        } else {
-          resolve(-1);
-        }
-      });
+  async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Promise<number> {
+    const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
+    // Don't show a progress bar when the extension is using Cache for configuration.
+    // Using cache for configuration happens only one time.
+    if (drv && drv instanceof CMakeFileApiDriver && type === ConfigureType.Normal
+      && trigger === ConfigureTrigger.configureOnOpen && !this.workspaceContext.config.configureOnOpen &&
+      !drv.isConfiguredAtLeastOnce()) {
+      const retc: number = await drv.configure(trigger, []);
+      if (retc === 0) {
+        await this._refreshCompileDatabase(drv.expansionOptions);
+      }
+      await this._ctestController.reloadTests(drv);
+      this._onReconfiguredEmitter.fire();
+      return retc;
     }
+
     return vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -1019,7 +1016,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           progress.report({message: localize('preparing.to.configure', 'Preparing to configure')});
           log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
           return this._doConfigure(progress, async consumer => {
-            const drv = await this.getCMakeDriverInstance();
             const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
             if (drv) {
               let old_prog = 0;

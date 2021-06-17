@@ -66,8 +66,8 @@ export class CMakeFileApiDriver extends CMakeDriver {
   }
 
   private _needsReconfigure = true;
-  private _isConfiguredatLeastOnce = false;
-
+  private _isConfiguredAtLeastOnce = false;
+  public isConfiguredAtLeastOnce() { return this._isConfiguredAtLeastOnce; }
   /**
    * Watcher for the CMake cache file on disk.
    */
@@ -200,9 +200,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
   }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
-    if (!this._isConfiguredatLeastOnce && !this.config.configureOnOpen) { // if configureonopen false update code model, only first time, hasconfiguredyet?
+    if (!this._isConfiguredAtLeastOnce && !this.config.configureOnOpen) { // if configureonopen false update code model, only first time, hasconfiguredyet?
       this._needsReconfigure = true;
-      this._isConfiguredatLeastOnce = true;
+      this._isConfiguredAtLeastOnce = true;
       await this.updateCodeModel();
       return 0;
     }
@@ -243,7 +243,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     log.trace(res.stdout);
     if (res.retc === 0) {
       this._needsReconfigure = false;
-      this._isConfiguredatLeastOnce = true;
+      this._isConfiguredAtLeastOnce = true;
       await this.updateCodeModel();
     }
     return res.retc === null ? -1 : res.retc;
