@@ -153,35 +153,27 @@ interface CompilerVersion {
 
 export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string): Promise<CompilerVersion|null> {
   log.debug(localize('testing.compiler.binary', 'Testing {0} binary: {1}', vendor, binPath));
-  const exec = await proc.execute(binPath, ['-v']).result;
+  const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
   if (exec.retc !== 0) {
     log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
     return null;
   }
-  let version_re_loc: RegExp;
-  let version_re_en: RegExp;
-  const versionWord: string = localize("version.word", "version");
+  let version_re: RegExp;
   let version_match_index;
   if (vendor === 'Clang') {
-    const version_re_str_loc: string = `^(?:Apple LLVM|.*clang) ${versionWord} ([^\\s-]+)(?:[\\s-]|$)`;
-    const version_re_str_en: string = `^(?:Apple LLVM|.*clang) version ([^\\s-]+)(?:[\\s-]|$)`;
-    version_re_loc = RegExp(version_re_str_loc, "mgi");
-    version_re_en = RegExp(version_re_str_en, "mgi");
+    version_re = /^(?:Apple LLVM|.*clang) version ([^\s-]+)(?:[\s-]|$)/mgi;
     version_match_index = 1;
   } else {
-    const version_re_str_loc: string = `^gcc(-| )${versionWord} (.*?) .*`;
-    const version_re_str_en: string = `^gcc(-| )version (.*?) .*`;
-    version_re_loc = RegExp(version_re_str_loc, "mgi");
-    version_re_en = RegExp(version_re_str_en, "mgi");
+    version_re = /^gcc(-| )version (.*?) .*/mgi;
     version_match_index = 2;
   }
 
-  let target: TargetTriple | undefined = undefined;
+  let target: TargetTriple | undefined;
   let version: string = "";
   let fullVersion: string = "";
   const lines = exec.stderr.trim().split('\n');
   for (const line of lines) {
-    const version_match = version_re_en.exec(line) || version_re_loc.exec(line);
+    const version_match = version_re.exec(line);
     if (version_match !== null && version === '') {
       version = version_match[version_match_index];
       fullVersion = line;
@@ -214,7 +206,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     version,
     target,
     threadModel,
-    installedDir,
+    installedDir
   };
 }
 
@@ -250,7 +242,7 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
       versionRuntime: vs.installationVersion
     };
   } else {
-    let vendor: CompilerVendorEnum | undefined = undefined;
+    let vendor: CompilerVendorEnum | undefined;
     if (kit.name.startsWith('GCC ')) {
       vendor = 'GCC';
     } else if (kit.name.startsWith('Clang ')) {
@@ -271,7 +263,7 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
       vendor,
       triple: computeTargetTriple(version.target),
       version: version.version,
-      versionRuntime: version.version,
+      versionRuntime: version.version
     };
   }
 }
@@ -292,8 +284,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
   const clang_res = clang_regex.exec(fname);
   if (gcc_res) {
     log.debug(localize('testing.gcc.binary', 'Testing GCC binary: {0}', bin));
-    if (pr)
+    if (pr) {
       pr.report({message: localize('getting.gcc.version', 'Getting GCC version for {0}', bin)});
+    }
     const version = await getCompilerVersion('GCC', bin);
     if (version === null) {
       return null;
@@ -331,8 +324,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
           log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ("-v" returns non-zero): {0}', bin));
         } else {
           let make_version_output = execMake.stdout;
-          if (make_version_output.length === 0)
+          if (make_version_output.length === 0) {
             make_version_output = execMake.stderr;
+          }
           const output_line_sep = make_version_output.trim().split('\n');
           const isMake = output_line_sep[0].includes('Make');
           const isMingwTool = output_line_sep[1].includes('mingw32');
@@ -350,8 +344,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 
   } else if (clang_res) {
     log.debug(localize('testing.clang.binary', 'Testing Clang binary: {0}', bin));
-    if (pr)
+    if (pr) {
       pr.report({message: localize('getting.clang.version', 'Getting Clang version for {0}', bin)});
+    }
     const version = await getCompilerVersion('Clang', bin);
     if (version === null) {
       return null;
@@ -374,7 +369,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     }
     return {
       name: version.detectedName,
-      compilers: clangCompilers,
+      compilers: clangCompilers
     };
   } else {
     return null;
@@ -396,7 +391,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     }
   } catch (e) {
     log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
-    if (e.code == 'ENOENT') {
+    if (e.code === 'ENOENT') {
       return [];
     }
     throw e;
@@ -407,7 +402,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
   try {
     bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
   } catch (e) {
-    if (e.code == 'EACCESS' || e.code == 'EPERM') {
+    if (e.code === 'EACCESS' || e.code === 'EPERM') {
       return [];
     }
     throw e;
@@ -429,13 +424,13 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
       return await kitIfCompiler(bin, pr);
     } catch (e) {
       log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
-      if (e.code == 'EACCES') {
+      if (e.code === 'EACCES') {
         // The binary may not be executable by this user...
         return null;
-      } else if (e.code == 'ENOENT') {
+      } else if (e.code === 'ENOENT') {
         // This will happen on Windows if we try to "execute" a directory
         return null;
-      } else if (e.code == 'UNKNOWN' && process.platform == 'win32') {
+      } else if (e.code === 'UNKNOWN' && process.platform === 'win32') {
         // This is when file is not executable (in windows)
         return null;
       }
@@ -607,7 +602,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
     `set "INCLUDE="`,
     `call "${devbat}" ${args.join(' ')}`,
-    `cd /d "%~dp0"`, /* Switch back to original drive */
+    `cd /d "%~dp0"` /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
     bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
@@ -683,7 +678,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
  */
 export async function getShellScriptEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>|undefined> {
   console.assert(kit.environmentSetupScript);
-  const filename = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
+  const filename = Math.random().toString() + (process.platform === 'win32' ? '.bat' : '.sh');
   const script_filename = `vs-cmt-${filename}`;
   const environment_filename = script_filename + '.env';
 
@@ -713,14 +708,14 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
   }
 
-  if (process.platform == 'win32') { // windows
+  if (process.platform === 'win32') { // windows
     script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
     script += `set >> "${environment_path}"`; // write env vars to temp file
     // Quote the script file path before running it, in case there are spaces.
     run_command = `call "${script_path}"`;
   } else { // non-windows
     script += `source "${environmentSetupScript}"\n`; // run the user shell script
-    script +=`printenv >> ${environment_path}`; // write env vars to temp file
+    script += `printenv >> ${environment_path}`; // write env vars to temp file
     run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
   }
   try {
@@ -790,7 +785,7 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
   console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
   let vcvarsScript: string = 'vcvarsall.bat';
-  if (targetArch == "arm" || targetArch == "arm64") {
+  if (targetArch === "arm" || targetArch === "arm64") {
     // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
     vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
   }
@@ -819,8 +814,7 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
     // the VS{vs_version_number}COMNTOOLS environment variable to contain
     // the path to the Common7 directory.
     const vs_version = variables.get('VISUALSTUDIOVERSION');
-    if (vs_version)
-      variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir);
+    if (vs_version) {variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir); }
 
     // For Ninja and Makefile generators, CMake searches for some compilers
     // before it checks for cl.exe. We can force CMake to check cl.exe first by
@@ -940,7 +934,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     // Clang for MSVC ABI with GNU CLI (command line interface) is supported in CMake 3.15.0+
     if (isClangGNUCLI) {
       if (undefined === cmakeTools) {
-        log.error("failed.to.scan.for.kits", "Failed to scan for kits:", "cmakeTools is undefined");
+        log.error(localize("failed.to.scan.for.kits", "Failed to scan for kits: cmakeTools is undefined"));
 
         return null;
       } else {
@@ -965,14 +959,14 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
 
       const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
       if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
-      util.checkFileExists(util.lightNormalizePath(binPath))) {
+          util.checkFileExists(util.lightNormalizePath(binPath))) {
         clangKits.push({
           name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
           visualStudio: kitVSName(vs),
           visualStudioArchitecture: vs_arch,
           compilers: {
             C: binPath,
-            CXX: binPath,
+            CXX: binPath
           }
         });
       }
@@ -999,13 +993,13 @@ async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
     const installs = await vsInstallations();
     const match = (inst: VSInstallation) =>
         // old Kit format
-        (legacyKitVSName(inst) == kit.visualStudio) ||
+        (legacyKitVSName(inst) === kit.visualStudio) ||
         // new Kit format
         (kitVSName(inst) === kit.visualStudio) ||
         // Clang for VS kit format
         (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
 
-    return installs.find(inst => match(inst));
+    return installs.find(match);
 }
 
 export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
@@ -1044,8 +1038,7 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
   }
   const env = new Map(util.chain(host_env, kit_env));
   const isWin32 = process.platform === 'win32';
-  if (isWin32)
-  {
+  if (isWin32) {
     const path_list: string[] = [];
     const cCompiler = kit.compilers?.C;
     /* Force add the compiler executable dir to the PATH env */
@@ -1056,7 +1049,7 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     if (cmt_mingw_path) {
       path_list.push(cmt_mingw_path);
     }
-    let path_key : string | undefined = undefined;
+    let path_key: string | undefined;
     if (env.has("PATH")) {
       path_key = "PATH";
     } else if (env.has("Path")) {
@@ -1109,7 +1102,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
   log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
   const prog = {
     location: vscode.ProgressLocation.Notification,
-    title: localize('scanning.for.kits', 'Scanning for kits'),
+    title: localize('scanning.for.kits', 'Scanning for kits')
   };
 
   return vscode.window.withProgress(prog, async pr => {
@@ -1164,7 +1157,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
         bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin");
         bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\x64\\bin");
       });
-      bundled_clang_paths.forEach(path_el => {clang_paths.add(path_el);});
+      bundled_clang_paths.forEach(path_el => {clang_paths.add(path_el); });
 
       // Scan for kits
       const vs_kits = scanForVSKits(pr);
@@ -1182,7 +1175,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(cmt: CMakeTools) : Promise<boolean> {
+export async function scanForKitsIfNeeded(cmt: CMakeTools): Promise<boolean> {
   const kitsVersionSaved = cmt.extensionContext.globalState.get<number>('kitsVersionSaved');
   const kitsVersionCurrent = 2;
 
@@ -1351,7 +1344,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   });
   const new_imp = important_params(newKit);
   const old_imp = important_params(oldKit);
-  if (compare(new_imp, old_imp) != Ordering.Equivalent) {
+  if (compare(new_imp, old_imp) !== Ordering.Equivalent) {
     log.debug(localize('clean.needed', 'Need clean: Kit changed'));
     return true;
   } else {

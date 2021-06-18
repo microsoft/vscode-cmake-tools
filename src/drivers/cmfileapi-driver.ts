@@ -194,7 +194,9 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     this._cacheWatcher.dispose();
   }
 
-  protected async doPreCleanConfigure(): Promise<void> { await this._cleanPriorConfiguration(); }
+  protected async doPreCleanConfigure(): Promise<void> {
+    await this._cleanPriorConfiguration();
+  }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     const api_path = this.getCMakeFileApiPath();
@@ -206,7 +208,13 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     const bindir = util.lightNormalizePath(this.binaryDir);
     args.push(`-B${bindir}`);
     const gen = this.generator;
-    if (gen) {
+    let has_gen = false;
+    for (const arg of args) {
+      if (arg.startsWith("-DCMAKE_GENERATOR:STRING=")) {
+        has_gen = true;
+      }
+    }
+    if (!has_gen && gen) {
       args.push('-G');
       args.push(gen.name);
       if (gen.toolset) {
@@ -219,13 +227,13 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       }
     }
     const cmake = this.cmake.path;
-    log.debug(`Configuring using ${this.useCMakePresets ? 'preset': 'kit'}`);
+    log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
-    if (res.retc == 0) {
+    if (res.retc === 0) {
       this._needsReconfigure = false;
       await this.updateCodeModel();
     }
@@ -317,7 +325,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     return this.uniqueTargets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
         .map(t => ({
                name: t.name,
-               path: (t as api.RichTarget).filepath,
+               path: (t as api.RichTarget).filepath
              }));
   }
 
@@ -341,10 +349,10 @@ function targetReducer(set: api.Target[], t: api.Target): api.Target[] {
 function compareTargets(a: api.Target, b: api.Target): boolean {
   let same = false;
   if (a.type === b.type) {
-    same = a.name == b.name;
+    same = a.name === b.name;
     if (a.type === 'rich' && b.type === 'rich') {
-      same = same && (a.filepath == b.filepath);
-      same = same && (a.targetType == b.targetType);
+      same = same && (a.filepath === b.filepath);
+      same = same && (a.targetType === b.targetType);
     }
   }
 

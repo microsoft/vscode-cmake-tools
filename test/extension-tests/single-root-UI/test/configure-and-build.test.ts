@@ -12,7 +12,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-// tslint:disable:no-unused-expression
 
 let workername: string = process.platform;
 
@@ -62,7 +61,7 @@ suite('Build using Kits and Variants', async () => {
     const logPath = logFilePath();
     testEnv.clean();
     if (await fs.exists(logPath)) {
-      if (this.currentTest?.state == "failed") {
+      if (this.currentTest?.state === "failed") {
         const logContent = await fs.readFile(logPath);
         logContent.toString().split('\n').forEach(line => {
           console.log(line);
@@ -250,7 +249,7 @@ suite('Build using Presets', async () => {
     const logPath = logFilePath();
     testEnv.clean();
     if (await fs.exists(logPath)) {
-      if (this.currentTest?.state == "failed") {
+      if (this.currentTest?.state === "failed") {
         const logContent = await fs.readFile(logPath);
         logContent.toString().split('\n').forEach(line => {
           console.log(line);

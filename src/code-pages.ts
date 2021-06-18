@@ -163,14 +163,14 @@ export function getCodePageTable(): CodePageTable {
     [57010]: 'x-iscii-gu',
     [57011]: 'x-iscii-pa',
     [65000]: 'utf-7',
-    [65001]: 'utf-8',
+    [65001]: 'utf-8'
   };
 }
 
 /**
  * A promise for idempotent codepage aquisition. @see getWindowsCodepage
  */
-let _CODEPAGE: Promise<string>|undefined = undefined;
+let _CODEPAGE: Promise<string>|undefined;
 
 /**
  * Return the currently active Windows codepage (done by calling chcp in a subprocess');
@@ -195,7 +195,7 @@ async function _getWindowsCodePage(): Promise<string> {
     log.error(localize('failed.to.execute', 'Failed to execute {0}', "chcp"), chcp_res.stderr);
     return 'utf-8';
   }
-  const numStr = chcp_res.stdout ?? ''.replace(/[^0-9]/ig, '');
+  const numStr = (chcp_res.stdout ?? '').replace(/[^0-9]/ig, '');
   const cpNum = parseInt(numStr);
   return getCodePageTable()[cpNum] || 'utf-8';
 }

@@ -74,7 +74,7 @@
 	"reading.presets.file": "Odczytywanie predefiniowanego pliku {0}",
 	"failed.to.parse": "Nie można przeanalizować elementu {0}: {1}",
 	"invalid.file.error": "Nieprawidłowa zawartość zestawu {0} ({1}):",
-	"successfully.validated.presets": "Pomyślnie zweryfikowano zestawy predefinicji w {0}",
+	"successfully.validated.presets": "Pomyślnie zweryfikowano ustawienia wstępne w {0}",
 	"use.kits.variants": "Użyj zestawów i wariantów",
 	"edit.presets": "Zlokalizuj",
 	"presets.version.error": "Predefinicje programu CMake (wersja 1) nie są obsługiwane. W jaki sposób chcesz kontynuować?",

@@ -19,7 +19,6 @@ export interface IOption {
     dirty: boolean; // if the variable was edited in the UI
 }
 
-
 /**
  * This object manages the webview rendering.
  */
@@ -28,7 +27,9 @@ export class ConfigurationWebview {
 
   // The dirty state of the whole webview.
   private _dirty: boolean = false;
-  get dirty(): boolean { return this._dirty; }
+  get dirty(): boolean {
+    return this._dirty;
+  }
   set dirty(d: boolean) {
     this._dirty = d;
 
@@ -422,7 +423,7 @@ export class ConfigurationWebview {
           const vscode = acquireVsCodeApi();
           function toggleKey(id) {
             const label = document.getElementById('LABEL_' + id);
-            label.textContent = label.textContent == 'ON' ? 'OFF' : 'ON';
+            label.textContent = label.textContent === 'ON' ? 'OFF' : 'ON';
             const checkbox = document.getElementById(id);
             vscode.postMessage({key: id, type: "Bool", value: checkbox.checked});
             document.getElementById('not-saved').classList.remove('invisible');

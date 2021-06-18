@@ -22,14 +22,14 @@
             "smartStep": false
         },
         {
-            "name": "Launch Tests",
+            "name": "Launch Unit Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "${workspaceFolder}/test/unit-tests/test-project-without-cmakelists",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/unit-tests"
+                "--extensionTestsPath=${workspaceFolder}/out/test/unit-tests/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -44,42 +44,7 @@
                 "CMT_QUIET_CONSOLE": "1",
                 "HasVs": "true"
             },
-            "preLaunchTask": "build-tests-with-tsc-watch"
-        },
-        {
-            "name": "Launch Extension Tests (without-cmakelist-file)",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "${workspaceFolder}/test/extension-tests/without-cmakelist-file/project-folder",
-                "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/without-cmakelist-file"
-            ],
-            "stopOnEntry": false,
-            "sourceMaps": true,
-            "outFiles": [
-                "${workspaceFolder}/out/*",
-                "${workspaceFolder}/out/src/*",
-                "${workspaceFolder}/out/test/*",
-                "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/*",
-                "${workspaceFolder}/out/test/extension-tests/without-cmakelist-file/test/*"
-            ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
-            "windows": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "true"
-                }
-            },
-            "linux": {
-                "env": {
-                    "CMT_TESTING": "1",
-                    "CMT_QUIET_CONSOLE": "1",
-                    "HasVs": "false"
-                }
-            }
+            "preLaunchTask": "Pretest"
         },
         {
             "name": "Launch Extension Tests (successful-build)",
@@ -89,7 +54,7 @@
             "args": [
                 "${workspaceFolder}/test/extension-tests/successful-build/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/successful-build"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/successful-build/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -100,7 +65,7 @@
                 "${workspaceFolder}/out/test/extension-tests/successful-build/*",
                 "${workspaceFolder}/out/test/extension-tests/successful-build/test/*"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -131,7 +96,7 @@
             "args": [
                 "${workspaceFolder}/test/extension-tests/single-root-UI/project-folder",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/single-root-UI/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -142,7 +107,7 @@
                 "${workspaceFolder}/out/test/extension-tests/single-root-UI/*",
                 "${workspaceFolder}/out/test/extension-tests/single-root-UI/test/*"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -173,7 +138,7 @@
             "args": [
                 "${workspaceFolder}/test/extension-tests/multi-root-UI/project-workspace.code-workspace",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/multi-root-UI"
+                "--extensionTestsPath=${workspaceFolder}/out/test/extension-tests/multi-root-UI/index"
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
@@ -184,7 +149,7 @@
                 "${workspaceFolder}/out/test/extension-tests/multi-root-UI/*",
                 "${workspaceFolder}/out/test/extension-tests/multi-root-UI/test/*"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "windows": {
                 "env": {
                     "CMT_TESTING": "1",
@@ -232,7 +197,7 @@
             "args": [
                 "${workspaceFolder}/test/smoke/_project-dir",
                 "--extensionDevelopmentPath=${workspaceFolder}",
-                "--extensionTestsPath=${workspaceFolder}/out/test/smoke",
+                "--extensionTestsPath=${workspaceFolder}/out/test/smoke/index",
                 "--disable-extensions"
             ],
             "stopOnEntry": false,
@@ -241,7 +206,7 @@
                 "${workspaceFolder}/out/*",
                 "${workspaceFolder}/out/test/**"
             ],
-            "preLaunchTask": "build-tests-with-tsc-watch",
+            "preLaunchTask": "Pretest",
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",
