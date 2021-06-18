@@ -994,9 +994,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
     // Don't show a progress bar when the extension is using Cache for configuration.
     // Using cache for configuration happens only one time.
-    if (drv && drv.isCacheConfigSupported() && type === ConfigureType.Normal
-      && trigger === ConfigureTrigger.configureOnOpen && !this.workspaceContext.config.configureOnOpen &&
-      !drv.isConfiguredAtLeastOnce()) {
+    if (drv && drv.shouldUseCachedConfiguration(trigger)) {
       const retc: number = await drv.configure(trigger, []);
       if (retc === 0) {
         await this._refreshCompileDatabase(drv.expansionOptions);

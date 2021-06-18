@@ -73,7 +73,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected abstract doCacheConfigure(): Promise<number>;
 
   protected _isConfiguredAtLeastOnce = false;
-  public isConfiguredAtLeastOnce(): boolean {
+  protected isConfiguredAtLeastOnce(): boolean {
     return this._isConfiguredAtLeastOnce;
   }
 
@@ -92,7 +92,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Check if using cached configuration is supported.
    */
-  public abstract isCacheConfigSupported(): boolean;
+  protected abstract isCacheConfigSupported(): boolean;
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
@@ -1114,11 +1114,15 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return count;
   }
 
-  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
-    // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
-    const usingCachedConfiguration: boolean = (this.isCacheConfigSupported() && !this.isConfiguredAtLeastOnce() &&
+  public shouldUseCachedConfiguration(trigger: ConfigureTrigger): boolean {
+    return (this.isCacheConfigSupported() && !this.isConfiguredAtLeastOnce() &&
       trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ?
       true : false;
+  }
+
+  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
+    // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
+    const usingCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
