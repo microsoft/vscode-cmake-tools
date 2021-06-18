@@ -499,20 +499,21 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           // if the setting is not defined.
           interface FileItem extends vscode.QuickPickItem {
             fullPath: string;
-        }
-          const existingCmakeListsFiles: string[] | undefined = util.getAllFilePaths(this.folder.uri, "CMakeLists.txt");
+          }
+          const existingCmakeListsFiles: string[] | undefined = await util.getAllFilePaths(this.folder.uri, "CMakeLists.txt");
           const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
             label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
             fullPath: file
           })) : [];
-          items.push({ label: localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]") , fullPath: "", description: "Search for CMakeLists.txt on this computer" });
+          const browse: string = localize("browse.for.cmakelists", "[Browse for CMakeLists.txt]");
+          items.push({ label: browse, fullPath: "", description: "Search for CMakeLists.txt on this computer" });
           const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
             placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
           });
           let selectedFile: string | undefined;
           if (!selection) {
             break; // User canceled it.
-          } else if (selection.label == "[Scan for CmakeLists.txt]") {
+          } else if (selection.label === browse) {
             const openOpts: vscode.OpenDialogOptions = {
               canSelectMany: false,
               defaultUri: vscode.Uri.file(this.folder.uri.fsPath),
@@ -520,7 +521,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               openLabel: "Load"
             };
             const cmakeListsFile = await vscode.window.showOpenDialog(openOpts);
-            if (cmakeListsFile) { selectedFile = cmakeListsFile[0].fsPath; }
+            if (cmakeListsFile) {
+              selectedFile = cmakeListsFile[0].fsPath;
+            }
           } else {
             selectedFile = selection.fullPath;
           }

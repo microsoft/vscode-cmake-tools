@@ -4,9 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import escapeStringRegExp = require('escape-string-regexp');
-
-
+import escapeStringRegexp from 'escape-string-regexp';
 import {EnvironmentVariables, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
@@ -565,6 +563,28 @@ export function checkDirectoryExists(filePath: string): Promise<boolean> {
   });
 }
 
+// Read the files in a directory.
+export function readDir(dirPath: string): Promise<string[]> {
+  return new Promise((resolve) => {
+    fs.readdir(dirPath, (_err, list) => {
+      resolve(list);
+    });
+  });
+}
+
+// Get the fs.stat using async function.
+export function getStat(filePath: string): Promise<fs.Stats | undefined> {
+  return new Promise((resolve) => {
+    fs.stat(filePath, (_err, stats) => {
+      if (stats) {
+        resolve(stats);
+      } else {
+        resolve(undefined);
+      }
+    });
+  });
+}
+
 export function disposeAll(disp: Iterable<vscode.Disposable>) {
   for (const d of disp) {
     d.dispose();
@@ -628,20 +648,25 @@ export function isCodespaces(): boolean {
   return !!process.env["CODESPACES"];
 }
 
-export function getAllFilePaths(dir: vscode.Uri, filename: string): string[] | undefined {
-  const regex: RegExp = new RegExp(`(\\/|\\\\)${escapeStringRegExp(filename)}$`);
+export async function getAllFilePaths(dir: vscode.Uri, filename: string): Promise<string[] | undefined> {
+  const regex: RegExp = new RegExp(`(\/|\\\\)${escapeStringRegexp(filename)}$`);
   return recGetAllFilePaths(dir.fsPath, filename, regex, fs.readdirSync(dir.fsPath), []);
 }
 
-function recGetAllFilePaths(dir: string, filename: string, regex: RegExp, files: string[], result: string[]) {
+async function recGetAllFilePaths(dir: string, filename: string, regex: RegExp, files: string[], result: string[]) {
   for (const item of files) {
     const file = path.join(dir, item);
-    if (fs.statSync(file).isDirectory()) {
-      try {
-        result = recGetAllFilePaths(file, filename, regex, fs.readdirSync(file), result);
-      } catch (error) { continue; }
-    } else if (fs.statSync(file).isFile() && regex.test(file)) {
-      result.push(file);
+    try {
+      const status = await getStat(file);
+      if (status) {
+        if (status.isDirectory()) {
+          result = await recGetAllFilePaths(file, filename, regex, await readDir(file), result);
+        } else if (status.isFile() && regex.test(file)) {
+          result.push(file);
+        }
+      }
+    } catch (error) {
+      continue;
     }
   }
   return result;
