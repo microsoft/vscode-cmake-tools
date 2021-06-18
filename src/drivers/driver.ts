@@ -1115,8 +1115,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
-    // Check if this is an automatic configuration and adjust the logging messages based on that.
-    const autoConfigInternal: boolean = (trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ? true : false;
+    // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
+    const usingCachedConfiguration: boolean = (this.isCacheConfigSupported() && !this.isConfiguredAtLeastOnce() &&
+      trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ?
+      true : false;
+
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1130,7 +1133,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
       // (example: cmake.sourceDirectory).
       await this._refreshExpansions();
-      if (!autoConfigInternal) {
+      if (!usingCachedConfiguration) {
         log.debug(localize('start.configure', 'Start configure'), extra_args);
       } else {
         log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
@@ -1166,7 +1169,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
         expanded_flags = await Promise.all(expanded_flags_promises);
       }
-      if (!autoConfigInternal) {
+      if (!usingCachedConfiguration) {
         log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
       }
 
@@ -1174,7 +1177,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
       await this._refreshExpansions();
 
       const timeStart: number = new Date().getTime();
-      const retc = await this.doConfigure(expanded_flags, consumer);
+      let retc: number;
+      if (usingCachedConfiguration) {
+        retc = await this.doCacheConfigure();
+        return retc;
+      } else {
+        retc = await this.doConfigure(expanded_flags, consumer);
+      }
       const timeEnd: number = new Date().getTime();
 
       const cmakeVersion = this.cmake.version;
@@ -1264,17 +1273,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
           telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
         }
       }
-      if (!autoConfigInternal) {
-        telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
-      }
+
+      telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
       return retc;
     } catch {
-      if (!autoConfigInternal) {
-        log.info(localize('configure.failed', 'Failed to configure project'));
-      } else {
-        log.info(localize('use.cached.configuration.failed', 'Failed to use cached configuration'));
-      }
+      log.info(localize('configure.failed', 'Failed to configure project'));
       return -1;
     } finally {
       this.configRunning = false;

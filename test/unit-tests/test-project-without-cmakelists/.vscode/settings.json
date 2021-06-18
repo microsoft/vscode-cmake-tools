@@ -1,6 +1,5 @@
 {
     "cmake.configureEnvironment": {
         "HOME": "/home/colby-TEST-APPENDED"
-    },
-    "cmake.configureOnOpen": true
+    }
 }
