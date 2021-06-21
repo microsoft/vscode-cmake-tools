@@ -18,6 +18,7 @@ import * as util from '@cmt/util';
 import { ConfigurationReader } from '@cmt/config';
 import * as nls from 'vscode-nls';
 import { BuildPreset, ConfigurePreset, TestPreset } from '@cmt/preset';
+import { CodeModelContent } from './codemodel-driver-interface';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -28,6 +29,15 @@ const log = logging.createLogger('legacy-driver');
  * The legacy driver.
  */
 export class LegacyCMakeDriver extends CMakeDriver {
+
+  get isCacheConfigSupported(): boolean {
+    return false;
+  }
+
+  async doCacheConfigure(): Promise<number> {
+    throw new Error('Method not implemented.');
+  }
+
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceFolder, preconditionHandler);
   }
@@ -164,4 +174,10 @@ export class LegacyCMakeDriver extends CMakeDriver {
     const gen = this.cmakeCache.get('CMAKE_GENERATOR');
     return gen ? gen.as<string>() : null;
   }
+
+  get codeModelContent(): CodeModelContent | null {
+    return null;
+  }
+  get onCodeModelChanged() { return new vscode.EventEmitter<null>().event; }
+
 }

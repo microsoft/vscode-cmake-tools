@@ -295,7 +295,11 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
 
   return toolchains.toolchains.reduce((acc, el) => {
     if (el.compiler.path) {
-      acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
+      if (el.compiler.target) {
+        acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
+      } else {
+        acc.set(el.language, { path: el.compiler.path });
+      }
     }
     return acc;
   }, new Map<string, CodeModelToolchain>());

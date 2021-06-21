@@ -28,6 +28,7 @@ import {ConfigureArguments, VariantOption} from '@cmt/variant';
 import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
+import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -69,6 +70,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * @returns The exit code from CMake
    */
   protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doCacheConfigure(): Promise<number>;
+
+  private _isConfiguredAtLeastOnce = false;
+  protected get isConfiguredAtLeastOnce(): boolean {
+    return this._isConfiguredAtLeastOnce;
+  }
 
   protected async doPreCleanConfigure(): Promise<void> {
     return Promise.resolve();
@@ -83,14 +90,27 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   /**
+   * Check if using cached configuration is supported.
+   */
+  protected abstract get isCacheConfigSupported(): boolean;
+
+  /**
    * Check if we need to reconfigure, such as if an important file has changed
    */
   abstract checkNeedsReconfigure(): Promise<boolean>;
+  /**
+   * Event registration for code model updates
+   *
+   * This event is fired after update of the code model, like after cmake configuration.
+   */
+  abstract onCodeModelChanged: vscode.Event<codemodel.CodeModelContent|null>;
 
   /**
    * List of targets known to CMake
    */
   abstract get targets(): api.Target[];
+
+  abstract get codeModelContent(): codemodel.CodeModelContent|null;
 
   /**
    * List of executable targets known to CMake
@@ -1094,7 +1114,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return count;
   }
 
+  public shouldUseCachedConfiguration(trigger: ConfigureTrigger): boolean {
+    return (this.isCacheConfigSupported && !this.isConfiguredAtLeastOnce &&
+      trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ?
+      true : false;
+  }
+
   async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
+    // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
+    const usingCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
+
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1108,13 +1137,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
       // (example: cmake.sourceDirectory).
       await this._refreshExpansions();
-      log.debug(localize('start.configure', 'Start configure'), extra_args);
+      if (!usingCachedConfiguration) {
+        log.debug(localize('start.configure', 'Start configure'), extra_args);
+      } else {
+        log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
+      }
 
       const pre_check_ok = await this._beforeConfigureOrBuild();
       if (!pre_check_ok) {
         return -2;
       }
 
+      // Cache flags will construct the command line for cmake.
       const init_cache_flags = this.generateInitCacheFlags();
 
       let expanded_flags: string[];
@@ -1139,13 +1173,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
             async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
         expanded_flags = await Promise.all(expanded_flags_promises);
       }
-      log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
+      if (!usingCachedConfiguration) {
+        log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
+      }
 
       // A more complete round of expansions
       await this._refreshExpansions();
 
       const timeStart: number = new Date().getTime();
-      const retc = await this.doConfigure(expanded_flags, consumer);
+      let retc: number;
+      if (usingCachedConfiguration) {
+        retc = await this.doCacheConfigure();
+        this._isConfiguredAtLeastOnce = true;
+        return retc;
+      } else {
+        retc = await this.doConfigure(expanded_flags, consumer);
+        this._isConfiguredAtLeastOnce = true;
+      }
       const timeEnd: number = new Date().getTime();
 
       const cmakeVersion = this.cmake.version;
@@ -1235,6 +1279,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
           telemetryMeasures['ErrorCount'] = retc ? 1 : 0;
         }
       }
+
       telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
       return retc;
@@ -1603,4 +1648,5 @@ export abstract class CMakeDriver implements vscode.Disposable {
     await inst._baseInit(useCMakePresets, kit, configurePreset, buildPreset, testPreset, preferredGenerators);
     return inst;
   }
+
 }

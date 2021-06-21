@@ -9,7 +9,7 @@ import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cms-client';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
-import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
@@ -29,7 +29,16 @@ export class NoGeneratorError extends Error {
   message: string = localize('no.usable.generator.found', 'No usable generator found.');
 }
 
-export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
+export class CMakeServerClientDriver extends CMakeDriver {
+
+  get isCacheConfigSupported(): boolean {
+    return false;
+  }
+
+  async doCacheConfigure(): Promise<number> {
+    throw new Error('Method not implemented.');
+  }
+
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceFolder, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());
@@ -384,6 +393,10 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     });
   }
 
+  get codeModelContent(): codemodel.CodeModelContent | null {
+    return null;
+  }
+
   static async create(cmake: CMakeExecutable,
                       config: ConfigurationReader,
                       useCMakePresets: boolean,
@@ -402,6 +415,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                               testPreset,
                               preferredGenerators);
   }
+
 }
 
 /**

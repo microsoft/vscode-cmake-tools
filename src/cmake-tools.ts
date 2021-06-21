@@ -58,7 +58,7 @@ const CMAKE_LOGGER = logging.createLogger('cmake');
 export enum ConfigureType {
   Normal,
   Clean,
-  Cache,
+  Cache
 }
 
 export enum ConfigureTrigger {
@@ -359,9 +359,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Event fired when the code model from CMake is updated
    */
-  get codeModel() { return this._codeModel.value; }
-  get onCodeModelChanged() { return this._codeModel.changeEvent; }
-  private readonly _codeModel = new Property<codemodel_api.CodeModelContent|null>(null);
+  get codeModelContent() { return this._codeModelContent.value; }
+  get onCodeModelChanged() { return this._codeModelContent.changeEvent; }
+  private readonly _codeModelContent = new Property<codemodel_api.CodeModelContent|null>(null);
   private _codeModelDriverSub: vscode.Disposable|null = null;
 
   private readonly _communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
@@ -925,8 +925,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
         const drv = await this._cmakeDriver;
         console.assert(drv !== null, 'Null driver immediately after creation?');
-        if (drv instanceof codemodel_api.CodeModelDriver) {
-          this._codeModelDriverSub = drv.onCodeModelChanged(cm => { this._codeModel.set(cm); });
+        if (drv && !(drv instanceof LegacyCMakeDriver)) {
+          this._codeModelDriverSub = drv.onCodeModelChanged(cm => { this._codeModelContent.set(cm); });
         }
       }
 
@@ -1011,7 +1011,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     return this.configureInternal(ConfigureTrigger.api, extra_args, ConfigureType.Normal);
   }
 
-  configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Thenable<number> {
+  async configureInternal(trigger: ConfigureTrigger = ConfigureTrigger.api, extra_args: string[] = [], type: ConfigureType = ConfigureType.Normal): Promise<number> {
+    const drv: CMakeDriver | null = await this.getCMakeDriverInstance();
+    // Don't show a progress bar when the extension is using Cache for configuration.
+    // Using cache for configuration happens only one time.
+    if (drv && drv.shouldUseCachedConfiguration(trigger)) {
+      const retc: number = await drv.configure(trigger, []);
+      if (retc === 0) {
+        await this._refreshCompileDatabase(drv.expansionOptions);
+      }
+      await this._ctestController.reloadTests(drv);
+      this._onReconfiguredEmitter.fire();
+      return retc;
+    }
+
     return vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -1021,7 +1034,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           progress.report({message: localize('preparing.to.configure', 'Preparing to configure')});
           log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
           return this._doConfigure(progress, async consumer => {
-            const drv = await this.getCMakeDriverInstance();
             const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
             if (drv) {
               let old_prog = 0;
