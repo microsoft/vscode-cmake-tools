@@ -92,7 +92,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   /**
    * Check if using cached configuration is supported.
    */
-  protected abstract isCacheConfigSupported(): boolean;
+  protected abstract get isCacheConfigSupported(): boolean;
 
   /**
    * Check if we need to reconfigure, such as if an important file has changed
@@ -1115,7 +1115,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   public shouldUseCachedConfiguration(trigger: ConfigureTrigger): boolean {
-    return (this.isCacheConfigSupported() && !this.isConfiguredAtLeastOnce &&
+    return (this.isCacheConfigSupported && !this.isConfiguredAtLeastOnce &&
       trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ?
       true : false;
   }

@@ -30,7 +30,7 @@ const log = logging.createLogger('legacy-driver');
  */
 export class LegacyCMakeDriver extends CMakeDriver {
 
-  isCacheConfigSupported(): boolean {
+  get isCacheConfigSupported(): boolean {
     return false;
   }
 

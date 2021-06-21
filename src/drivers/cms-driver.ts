@@ -31,7 +31,7 @@ export class NoGeneratorError extends Error {
 
 export class CMakeServerClientDriver extends CMakeDriver {
 
-  isCacheConfigSupported(): boolean {
+  get isCacheConfigSupported(): boolean {
     return false;
   }
 
