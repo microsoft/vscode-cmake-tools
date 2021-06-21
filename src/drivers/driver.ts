@@ -72,8 +72,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
   protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
   protected abstract doCacheConfigure(): Promise<number>;
 
-  protected _isConfiguredAtLeastOnce = false;
-  protected isConfiguredAtLeastOnce(): boolean {
+  private _isConfiguredAtLeastOnce = false;
+  protected get isConfiguredAtLeastOnce(): boolean {
     return this._isConfiguredAtLeastOnce;
   }
 
@@ -1115,7 +1115,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
   }
 
   public shouldUseCachedConfiguration(trigger: ConfigureTrigger): boolean {
-    return (this.isCacheConfigSupported() && !this.isConfiguredAtLeastOnce() &&
+    return (this.isCacheConfigSupported() && !this.isConfiguredAtLeastOnce &&
       trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ?
       true : false;
   }
@@ -1184,9 +1184,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
       let retc: number;
       if (usingCachedConfiguration) {
         retc = await this.doCacheConfigure();
+        this._isConfiguredAtLeastOnce = true;
         return retc;
       } else {
         retc = await this.doConfigure(expanded_flags, consumer);
+        this._isConfiguredAtLeastOnce = true;
       }
       const timeEnd: number = new Date().getTime();
 

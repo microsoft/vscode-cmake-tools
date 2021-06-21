@@ -205,7 +205,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
   async doCacheConfigure(): Promise<number> {
     this._needsReconfigure = true;
-    this._isConfiguredAtLeastOnce = true;
     await this.updateCodeModel();
     return 0;
   }
@@ -247,7 +246,6 @@ export class CMakeFileApiDriver extends CMakeDriver {
     log.trace(res.stdout);
     if (res.retc === 0) {
       this._needsReconfigure = false;
-      this._isConfiguredAtLeastOnce = true;
       await this.updateCodeModel();
     }
     return res.retc === null ? -1 : res.retc;
