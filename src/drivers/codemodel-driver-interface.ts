@@ -1,24 +1,3 @@
-import {CMakeDriver} from '@cmt/drivers/driver';
-import * as vscode from 'vscode';
-
-/**
- * This file contains the API description between IDE parts and the CMake model driver.
- * This API CodeModel contains only the current required CMake code model parts.
- * There is more information provided by CMake than is mapped.
- */
-
-/**
- * Describes all required methods for access to the build code model of the driver
- */
-export abstract class CodeModelDriver extends CMakeDriver {
-  /**
-   * Event registration for code model updates
-   *
-   * This event is fired after update of the code model, like after cmake configuration.
-   */
-  abstract onCodeModelChanged: vscode.Event<CodeModelContent|null>;
-}
-
 export type TargetTypeString
     = ('STATIC_LIBRARY'|'MODULE_LIBRARY'|'SHARED_LIBRARY'|'OBJECT_LIBRARY'|'EXECUTABLE'|'UTILITY'|'INTERFACE_LIBRARY');
 
