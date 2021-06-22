@@ -18,6 +18,7 @@
 	"configuring.workspace.on.open": "正在打开的 {0} 上配置工作区",
 	"configure.now.button": "立即配置",
 	"configure.recommended": "建议在升级到新的工具包定义后重新配置。",
+	"using.cache.to.configure.workspace.on.open": "Using cache to configure workspace on open {0}",
 	"update.code.model.for.cpptools": "更新 cpptools 的代码模型",
 	"filed.to.open.cache.file.on.code.model.update": "未能在代码模型更新时打开 CMake 缓存文件",
 	"opening.text.editor.for": "正在打开适用于 {0} 的文本编辑器",
