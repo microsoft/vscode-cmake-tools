@@ -27,6 +27,7 @@
 	"trying.to.detect.generator": "Próba wykrycia generatora obsługiwanego przez system",
 	"compiler.version.return.code": "Kod powrotny testu wersji kompilatora {0}",
 	"start.configure": "Uruchom konfigurowanie",
+	"use.cached.configuration": "Use cached configuration",
 	"no.config.Preset": "Nie wybrano predefiniowanej konfiguracji",
 	"cmake.flags.are": "Flagi narzędzia Cmake: {0}",
 	"configure.failed": "Nie udało się skonfigurować projektu",

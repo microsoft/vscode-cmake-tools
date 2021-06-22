@@ -27,6 +27,7 @@
 	"trying.to.detect.generator": "Sistem tarafından desteklenen oluşturucu algılanmaya çalışılıyor",
 	"compiler.version.return.code": "{0} derleyici sürümü test dönüşü kodu",
 	"start.configure": "Yapılandırmayı başlat",
+	"use.cached.configuration": "Use cached configuration",
 	"no.config.Preset": "Yapılandırma ön ayarı seçilmedi",
 	"cmake.flags.are": "CMake bayrakları: {0}",
 	"configure.failed": "Proje yapılandırılamadı",
