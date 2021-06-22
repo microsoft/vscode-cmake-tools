@@ -9,7 +9,10 @@ import * as cp from "child_process";
 import * as path from 'path';
 import { CMakeDriver } from './drivers/driver';
 import { BuildCommand } from './proc';
+import * as nls from 'vscode-nls';
 
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
+const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 interface CMakeTaskDefinition extends TaskDefinition {
   type: string;
@@ -19,10 +22,9 @@ interface CMakeTaskDefinition extends TaskDefinition {
   options?: cp.ExecOptions | undefined;
 }
 
-export class cmakeTask extends Task {
+export class CMakeTask extends Task {
   detail?: string;
 }
-
 
 export class CMakeTaskProvider implements TaskProvider {
   static CMakeScriptType: string = 'cmake';
@@ -42,8 +44,8 @@ export class CMakeTaskProvider implements TaskProvider {
     this.defaultBuildTarget = defaultBuildTarget;
   }
 
-  public async provideTasks(): Promise<cmakeTask[]> {
-    const emptyTasks: cmakeTask[] = [];
+  public async provideTasks(): Promise<CMakeTask[]> {
+    const emptyTasks: CMakeTask[] = [];
     const editor: TextEditor | undefined = window.activeTextEditor;
     if (!editor) {
         return emptyTasks;
@@ -75,8 +77,8 @@ export class CMakeTaskProvider implements TaskProvider {
         return emptyTasks;
     }
     // Create one CMake build task with target set to "all"
-    let result: cmakeTask[] = [];
-    let taskName: string = "CMake build";
+    const result: CMakeTask[] = [];
+    const taskName: string = "CMake build";
     let buildCommand: BuildCommand | null;
     let cmakePath: string = "CMake.EXE";
     let args: string[] | undefined = [];
@@ -100,12 +102,12 @@ export class CMakeTaskProvider implements TaskProvider {
     return result;
   }
 
-  public resolveTask(_task: cmakeTask): cmakeTask | undefined {
+  public resolveTask(_task: CMakeTask): CMakeTask | undefined {
     const execution: any = _task.execution;
     if (!execution) {
         const definition: CMakeTaskDefinition = <any>_task.definition;
         const scope: WorkspaceFolder | TaskScope = TaskScope.Workspace;
-        const task: cmakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+        const task: CMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
             new CustomExecution(async (resolvedDefinition: TaskDefinition): Promise<Pseudoterminal> =>
               new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.args, resolvedDefinition.options)
             ), []); // TODO: add problem matcher
@@ -114,21 +116,6 @@ export class CMakeTaskProvider implements TaskProvider {
     return undefined;
   }
 
-  /*private getTask(taskCommand: string): cmakeTask {
-    const definition: CMakeTaskDefinition = {
-      type: CMakeTaskProvider.CMakeScriptType,
-      label: taskCommand,
-      command: taskCommand,
-      args: []
-    };
-    const scope: WorkspaceFolder | TaskScope = TaskScope.Workspace;
-    const task: cmakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
-        new CustomExecution(async (resolvedDefinition: TaskDefinition): Promise<Pseudoterminal> =>
-            // When the task is executed, this callback will run. Here, we setup for running the task.
-            new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.args, resolvedDefinition.options)
-        )); // TODO: add problem matcher
-    return task;
-  }*/
 }
 
 class CustomBuildTaskTerminal implements Pseudoterminal {
@@ -143,6 +130,7 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
 
   async open(_initialDimensions: TerminalDimensions | undefined): Promise<void> {
       // At this point we can start using the terminal.
+      this.writeEmitter.fire(localize("starting_build", "Starting build...") + this.endOfLine);
       await this.doBuild();
   }
 
@@ -167,14 +155,29 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
       try {
           const result: number = await new Promise<number>((resolve) => {
               cp.exec(activeCommand, this.options, (_error, stdout, _stderr) => {
-                  splitWriteEmitter(stdout); // linker header info and potentially compiler C warnings
-                  if (_error) {
-                      splitWriteEmitter(_stderr); // gcc/clang
-                      resolve(-1);
-                  } else if (_stderr && !stdout) {
-                      splitWriteEmitter(_stderr);
-                      resolve(0);
-                  }
+                const dot: string = ".";
+                if (_stderr) {
+                    splitWriteEmitter(_stderr); // compiler header info and command line D warnings (e.g. when /MTd and /MDd are both used)
+                }
+                splitWriteEmitter(stdout); // linker header info and potentially compiler C warnings
+                if (_error) {
+                    if (stdout) {
+                    } else if (_stderr) {
+                        splitWriteEmitter(_stderr);
+                    } else {
+                        splitWriteEmitter(_error.message);
+                    }
+                    this.writeEmitter.fire(localize("build_finished_with_error", "Build finished with error(s)") + dot + this.endOfLine);
+                    resolve(0);
+                } else if (_stderr && !stdout) {
+                    splitWriteEmitter(_stderr);
+                    this.writeEmitter.fire(localize("build_finished_with_warnings", "Build finished with warning(s)") + dot + this.endOfLine);
+                } else if (stdout && stdout.includes("warning")) {
+                    this.writeEmitter.fire(localize("build_finished_with_warnings", "Build finished with warning(s)") + dot + this.endOfLine);
+                } else {
+                    this.writeEmitter.fire(localize("build finished successfully", "Build finished successfully.") + this.endOfLine);
+                }
+                resolve(0);
               });
           });
           this.closeEmitter.fire(result);
@@ -183,5 +186,3 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
       }
   }
 }
-
-
