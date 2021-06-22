@@ -1967,7 +1967,6 @@
   "dependencies": {
     "ajv": "^7.1.0",
     "chokidar": "^3.5.1",
-    "escape-string-regexp": "^5.0.0",
     "handlebars": "^4.7.7",
     "iconv-lite": "^0.6.2",
     "js-yaml": "^4.0.0",

@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-import escapeStringRegexp from 'escape-string-regexp';
 import {EnvironmentVariables, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
@@ -648,9 +647,9 @@ export function isCodespaces(): boolean {
   return !!process.env["CODESPACES"];
 }
 
-export async function getAllFilePaths(dir: vscode.Uri, filename: string): Promise<string[] | undefined> {
-  const regex: RegExp = new RegExp(`(\/|\\\\)${escapeStringRegexp(filename)}$`);
-  return recGetAllFilePaths(dir.fsPath, filename, regex, fs.readdirSync(dir.fsPath), []);
+export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
+  const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
+  return recGetAllFilePaths(dir.fsPath, "CMakeLists.txt", regex, fs.readdirSync(dir.fsPath), []);
 }
 
 async function recGetAllFilePaths(dir: string, filename: string, regex: RegExp, files: string[], result: string[]) {

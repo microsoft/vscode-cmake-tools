@@ -500,7 +500,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           interface FileItem extends vscode.QuickPickItem {
             fullPath: string;
           }
-          const existingCmakeListsFiles: string[] | undefined = await util.getAllFilePaths(this.folder.uri, "CMakeLists.txt");
+          const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
           const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
             label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
             fullPath: file

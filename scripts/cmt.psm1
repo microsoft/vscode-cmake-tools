@@ -389,39 +389,3 @@ function Install-TestNinjaMakeSystem ($Version) {
     return $ninja_bin
 }
 
-function Build-DevDocs() {
-    $ErrorActionPreference = "Stop"
-    $yarn = Find-Program yarn
-    Invoke-ChronicCommand "Generating developer documentation" $yarn run docs
-}
-
-function Build-UserDocs($Out, $RepoDir, $Version) {
-    $ErrorActionPreference = "Stop"
-    $sphinx = Find-Program sphinx-build
-    if (! $sphinx) {
-        Write-Warning "Install Sphinx to generate documentation"
-    }
-    else {
-        $command = @(
-            $sphinx;
-            "-W"; # Warnings are errors
-            "-q"; # Be quiet
-            "-C";
-            "-Dsource_suffix=.rst";
-            "-Dmaster_doc=index";
-            "-Dproject=CMake Tools";
-            "-Dversion=$Version";
-            "-Drelease=$Version";
-            "-Dpygments_style=sphinx";
-            "-Dhtml_theme=nature";
-            "-Dhtml_logo=$RepoDir/res/icon_190.svg";
-            "-Dhtml_favicon=$RepoDir/res/icon_64.png";
-            "-bhtml";
-            "-j10";
-            "-a";
-            "$RepoDir/docs";
-            $Out
-        )
-        Invoke-ChronicCommand "Generating user documentation" @command
-    }
-}
