@@ -18,6 +18,7 @@
 	"configuring.workspace.on.open": "Configuration de l'espace de travail à l'ouverture {0}",
 	"configure.now.button": "Configurer maintenant",
 	"configure.recommended": "Nous vous recommandons d'effectuer une reconfiguration après avoir mis à niveau la définition des kits.",
+	"using.cache.to.configure.workspace.on.open": "Utilisation du cache pour configurer l’espace de travail sur {0} ouvert",
 	"update.code.model.for.cpptools": "Mettre à jour le modèle de code pour cpptools",
 	"filed.to.open.cache.file.on.code.model.update": "Échec de l'ouverture du fichier cache CMake au moment de la mise à jour du modèle de code",
 	"opening.text.editor.for": "Ouverture de l'éditeur de texte pour {0}",

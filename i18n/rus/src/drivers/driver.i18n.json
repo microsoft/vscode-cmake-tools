@@ -27,6 +27,7 @@
 	"trying.to.detect.generator": "Попытка найти генератор, поддерживаемый системой.",
 	"compiler.version.return.code": "Код возврата при проверке версии компилятора: {0}",
 	"start.configure": "Запустить настройку",
+	"use.cached.configuration": "Use cached configuration",
 	"no.config.Preset": "Предустановка конфигурации не выбрана",
 	"cmake.flags.are": "Флаги CMake: {0}",
 	"configure.failed": "Не удалось настроить проект.",
