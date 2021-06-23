@@ -27,6 +27,7 @@
 	"trying.to.detect.generator": "正在嘗試偵測系統支援的產生器",
 	"compiler.version.return.code": "編譯器版本測試傳回碼 {0}",
 	"start.configure": "啟動設定",
+	"use.cached.configuration": "Use cached configuration",
 	"no.config.Preset": "未選取設定預設",
 	"cmake.flags.are": "CMake 旗標為 {0}",
 	"configure.failed": "無法設定專案",

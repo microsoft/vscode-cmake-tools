@@ -18,6 +18,7 @@
 	"configuring.workspace.on.open": "Açık {0} konumunda çalışma alanı yapılandırılıyor",
 	"configure.now.button": "Şimdi Yapılandır",
 	"configure.recommended": "Yeni bir set tanımına yükselttikten sonra yeniden yapılandırmanız önerilir.",
+	"using.cache.to.configure.workspace.on.open": "Using cache to configure workspace on open {0}",
 	"update.code.model.for.cpptools": "cpptools için kod modelini güncelleştir",
 	"filed.to.open.cache.file.on.code.model.update": "Kod modeli güncelleştirmesinde CMake önbellek dosyası açılamadı",
 	"opening.text.editor.for": "{0} için metin düzenleyici açılıyor",

@@ -18,6 +18,7 @@
 	"configuring.workspace.on.open": "Konfiguruje se pracovní prostor při otvírání elementu {0}.",
 	"configure.now.button": "Nakonfigurovat",
 	"configure.recommended": "Po upgradu na novou definici sad se doporučuje změnit konfiguraci.",
+	"using.cache.to.configure.workspace.on.open": "Using cache to configure workspace on open {0}",
 	"update.code.model.for.cpptools": "Aktualizovat model kódu pro cpptools",
 	"filed.to.open.cache.file.on.code.model.update": "Nepovedlo se otevřít soubor mezipaměti CMake při aktualizaci kódu modelu.",
 	"opening.text.editor.for": "Spouští se textový editor pro {0}.",

@@ -18,6 +18,7 @@
 	"configuring.workspace.on.open": "Konfigurowanie obszaru roboczego przy otwieraniu elementu {0}",
 	"configure.now.button": "Skonfiguruj teraz",
 	"configure.recommended": "Zaleca się przeprowadzenie ponownej konfiguracji po uaktualnieniu do nowej definicji zestawów.",
+	"using.cache.to.configure.workspace.on.open": "Używanie pamięci podręcznej do konfigurowania obszaru roboczego przy otwieraniu {0}",
 	"update.code.model.for.cpptools": "Aktualizuj model kodu dla narzędzi cpptools",
 	"filed.to.open.cache.file.on.code.model.update": "Nie można otworzyć pliku pamięci podręcznej narzędzia CMake podczas aktualizacji modelu kodu",
 	"opening.text.editor.for": "Otwieranie edytora tekstu dla pliku {0}",
