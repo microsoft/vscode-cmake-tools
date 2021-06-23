@@ -565,8 +565,13 @@ export function checkDirectoryExists(filePath: string): Promise<boolean> {
 // Read the files in a directory.
 export function readDir(dirPath: string): Promise<string[]> {
   return new Promise((resolve) => {
-    fs.readdir(dirPath, (_err, list) => {
-      resolve(list);
+    fs.readdir(dirPath, (error, list) => {
+      if (error) {
+        resolve([]);
+      } else {
+        resolve(list);
+      }
+
     });
   });
 }
@@ -649,17 +654,17 @@ export function isCodespaces(): boolean {
 
 export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
   const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
-  return recGetAllFilePaths(dir.fsPath, "CMakeLists.txt", regex, fs.readdirSync(dir.fsPath), []);
+  return recGetAllFilePaths(dir.fsPath, regex, await readDir(dir.fsPath), []);
 }
 
-async function recGetAllFilePaths(dir: string, filename: string, regex: RegExp, files: string[], result: string[]) {
+async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], result: string[]) {
   for (const item of files) {
     const file = path.join(dir, item);
     try {
       const status = await getStat(file);
       if (status) {
         if (status.isDirectory()) {
-          result = await recGetAllFilePaths(file, filename, regex, await readDir(file), result);
+          result = await recGetAllFilePaths(file, regex, await readDir(file), result);
         } else if (status.isFile() && regex.test(file)) {
           result.push(file);
         }
