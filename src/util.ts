@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
-
 import {EnvironmentVariables, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
@@ -563,6 +562,33 @@ export function checkDirectoryExists(filePath: string): Promise<boolean> {
   });
 }
 
+// Read the files in a directory.
+export function readDir(dirPath: string): Promise<string[]> {
+  return new Promise((resolve) => {
+    fs.readdir(dirPath, (error, list) => {
+      if (error) {
+        resolve([]);
+      } else {
+        resolve(list);
+      }
+
+    });
+  });
+}
+
+// Get the fs.stat using async function.
+export function getStat(filePath: string): Promise<fs.Stats | undefined> {
+  return new Promise((resolve) => {
+    fs.stat(filePath, (_err, stats) => {
+      if (stats) {
+        resolve(stats);
+      } else {
+        resolve(undefined);
+      }
+    });
+  });
+}
+
 export function disposeAll(disp: Iterable<vscode.Disposable>) {
   for (const d of disp) {
     d.dispose();
@@ -625,3 +651,35 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
 export function isCodespaces(): boolean {
   return !!process.env["CODESPACES"];
 }
+
+export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
+  const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
+  return recGetAllFilePaths(dir.fsPath, regex, await readDir(dir.fsPath), []);
+}
+
+async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], result: string[]) {
+  for (const item of files) {
+    const file = path.join(dir, item);
+    try {
+      const status = await getStat(file);
+      if (status) {
+        if (status.isDirectory()) {
+          result = await recGetAllFilePaths(file, regex, await readDir(file), result);
+        } else if (status.isFile() && regex.test(file)) {
+          result.push(file);
+        }
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+  return result;
+}
+
+export function getRelativePath(file: string, dir: string): string {
+  const fullPathDir: string = path.parse(file).dir;
+  const relPathDir: string = lightNormalizePath(path.relative(dir, fullPathDir));
+  const joinedPath = "${workspaceFolder}/".concat(relPathDir);
+  return joinedPath;
+}
+

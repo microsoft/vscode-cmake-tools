@@ -1904,7 +1904,6 @@
     "translations-generate": "gulp translations-generate",
     "translations-import": "gulp translations-import",
     "pretest": "tsc -p test.tsconfig.json",
-    "pr-check": "gulp pr-check",
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
