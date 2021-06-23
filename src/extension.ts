@@ -1731,10 +1731,10 @@ export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver | undef
   cmakeTaskProvider.updateCMakeDriver(cmakeDriver);
 }
 
-// update default target in taskProvider
+/*// update default target in taskProvider
 export function updateDefaultTargetInTaskProvider(defaultTarget: string | undefined) {
   cmakeTaskProvider.updateDefaultTarget(defaultTarget);
-}
+}*/
 
 // this method is called when your extension is deactivated.
 export async function deactivate() {

@@ -489,8 +489,7 @@
       {
         "type": "cmake",
         "required": [
-          "command",
-          "label"
+          "command"
         ],
         "properties": {
           "label": {
@@ -500,6 +499,10 @@
           "command": {
             "type": "string",
             "description": "CMake build command"
+          },
+          "target": {
+            "type": "string",
+            "description": "The build target"
           },
           "args": {
             "type": "array",
