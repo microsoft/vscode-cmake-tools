@@ -27,7 +27,7 @@
 	"trying.to.detect.generator": "システムでサポートされているジェネレーターを検出しようとしています",
 	"compiler.version.return.code": "コンパイラ バージョン テストのリターン コード {0}",
 	"start.configure": "構成の開始",
-	"use.cached.configuration": "Use cached configuration",
+	"use.cached.configuration": "キャッシュされた構成を使用する",
 	"no.config.Preset": "構成の事前設定が選択されていません",
 	"cmake.flags.are": "CMake フラグ: {0}",
 	"configure.failed": "プロジェクトを構成できませんでした",

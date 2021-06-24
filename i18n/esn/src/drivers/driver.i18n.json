@@ -27,7 +27,7 @@
 	"trying.to.detect.generator": "Intentando detectar el generador que el sistema admite",
 	"compiler.version.return.code": "Código de retorno de la prueba de versión del compilador {0}",
 	"start.configure": "Iniciar la configuración",
-	"use.cached.configuration": "Use cached configuration",
+	"use.cached.configuration": "Usar la configuración en caché",
 	"no.config.Preset": "No hay ninguna configuración preestablecida seleccionada",
 	"cmake.flags.are": "Las marcas de CMake son {0}",
 	"configure.failed": "No se pudo configurar el proyecto.",
