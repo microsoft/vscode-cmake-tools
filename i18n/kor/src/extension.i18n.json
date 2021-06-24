@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "열린 {0}에서 작업 영역을 구성하는 중",
 	"configure.now.button": "지금 구성",
 	"configure.recommended": "새 키트 정의로 업그레이드한 후 다시 구성하는 것이 좋습니다.",
-	"using.cache.to.configure.workspace.on.open": "Using cache to configure workspace on open {0}",
+	"using.cache.to.configure.workspace.on.open": "열린 {0}에서 작업 영역을 구성하기 위해 캐시 사용 중",
 	"update.code.model.for.cpptools": "cpptools에 대한 코드 모델 업데이트",
 	"filed.to.open.cache.file.on.code.model.update": "코드 모델 업데이트에서 CMake 캐시 파일을 열지 못함",
 	"opening.text.editor.for": "{0}의 텍스트 편집기를 여는 중",
