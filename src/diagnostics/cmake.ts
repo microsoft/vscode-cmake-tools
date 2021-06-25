@@ -45,23 +45,23 @@ export class CMakeOutputConsumer implements OutputConsumer {
      * of active parsing. `stack` is parsing the CMake call stack from an error
      * or warning.
      */
-    state: ('init'|'diag'|'stack'),
+    state: ('init'|'diag'|'stack');
 
     /**
      * The diagnostic that is currently being accumulated into
      */
-    diag: FileDiagnostic|null,
+    diag: FileDiagnostic|null;
 
     /**
      * The number of blank lines encountered thus far. CMake signals the end of
      * a warning or error with blank lines
      */
-    blankLines: number,
+    blankLines: number;
   }
   = {
       state: 'init',
       diag: null,
-      blankLines: 0,
+      blankLines: 0
     };
   /**
    * Consume a line of stderr.
@@ -86,11 +86,10 @@ export class CMakeOutputConsumer implements OutputConsumer {
       if (result) {
         // We have encountered and error
         const [full, level, filename, linestr, command] = result;
-        // tslint:disable-next-line
         const lineno = oneLess(linestr);
         const diagmap: {[k: string]: vscode.DiagnosticSeverity} = {
           Warning: vscode.DiagnosticSeverity.Warning,
-          Error: vscode.DiagnosticSeverity.Error,
+          Error: vscode.DiagnosticSeverity.Error
         };
         const vsdiag = new vscode.Diagnostic(new vscode.Range(lineno, 0, lineno, 9999), full, diagmap[level]);
         vsdiag.source = `CMake (${command})`;
@@ -98,7 +97,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
         const filepath = util.resolvePath(filename, this.sourceDir);
         this._errorState.diag = {
           filepath,
-          diag: vsdiag,
+          diag: vsdiag
         };
         this._errorState.state = 'diag';
         this._errorState.blankLines = 0;
@@ -114,9 +113,9 @@ export class CMakeOutputConsumer implements OutputConsumer {
         this._errorState.blankLines = 0;
         break;
       }
-      if (line == '') {
+      if (line === '') {
         // A blank line!
-        if (this._errorState.blankLines == 0) {
+        if (this._errorState.blankLines === 0) {
           // First blank. Okay
           this._errorState.blankLines++;
           this._errorState.diag!.diag.message += '\n';
@@ -138,8 +137,8 @@ export class CMakeOutputConsumer implements OutputConsumer {
     case 'stack': {
       // Meh... vscode doesn't really let us provide call stacks to diagnostics.
       // We can't really do anything...
-      if (line.trim() == '') {
-        if (this._errorState.blankLines == 1) {
+      if (line.trim() === '') {
+        if (this._errorState.blankLines === 1) {
           this._commitDiag();
         } else {
           this._errorState.blankLines++;
@@ -155,7 +154,7 @@ export class CMakeOutputConsumer implements OutputConsumer {
           const lineNo = parseInt(lineNoStr) - 1;
           const related = new vscode.DiagnosticRelatedInformation(
               new vscode.Location(fileUri, new vscode.Range(lineNo, 0, lineNo, 999)),
-              `In call to '${command}' here`,
+              `In call to '${command}' here`
           );
           console.assert(this._errorState.diag);
           this._errorState.diag!.diag.relatedInformation!.push(related);

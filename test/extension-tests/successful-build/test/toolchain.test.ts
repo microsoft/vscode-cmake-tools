@@ -54,7 +54,6 @@ suite('[Toolchain Substitution]', async () => {
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
     const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as api.CacheEntry;
-    // tslint:disable-next-line:no-unused-expression
     expect(cacheEntry).to.not.be.null;
     expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
     expect(platformNormalizePath(cacheEntry.as<string>()))

@@ -3,7 +3,6 @@ import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-// tslint:disable:no-unused-expression
 
 suite('[Debug/Launch interface using Kits and Variants]', async () => {
   let testEnv: DefaultEnvironment;

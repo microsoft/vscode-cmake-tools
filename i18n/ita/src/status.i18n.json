@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Fare clic per cambiare il kit attivo",
 	"no.active.kit": "Non sono presenti kit attivi",
 	"no.kit.selected": "Kit non selezionato",
-	"set.active.target.tooltip": "Imposta la destinazione attiva per la compilazione",
+	"set.active.target.tooltip": "Imposta la destinazione di compilazione predefinita",
 	"select.target.tooltip": "Seleziona la destinazione per l'avvio",
 	"launch.debugger.tooltip": "Avvia il debugger per la destinazione selezionata",
 	"launch.tooltip": "Avvia la destinazione selezionata nella finestra del terminale",

@@ -1,5 +1,21 @@
 # What's New?
 
+## 1.7.3
+Bug fixes:
+- Make sure CMake Tools configuration provider gets registered with presets on. [#1832](https://github.com/microsoft/vscode-cmake-tools/issues/1832)
+- Add the license field to package.json. [#1823](https://github.com/microsoft/vscode-cmake-tools/issues/1823)
+- Add title to "Select target" quickpick. [#1860](https://github.com/microsoft/vscode-cmake-tools/issues/1860)
+
+## 1.7.2
+Bug fixes:
+- Fix paths of target sources outside the workspace. [#1504](https://github.com/microsoft/vscode-cmake-tools/issues/1504) [@sleiner](https://github.com/sleiner)
+- Use stricter type checks in presets expansion. [#1815](https://github.com/microsoft/vscode-cmake-tools/issues/1815)
+- Solve conflict between -DCMAKE_GENERAOR:STRING=Ninja versus -G "Visual Studio 16 2019" -A x64. [PR #1753](https://github.com/microsoft/vscode-cmake-tools/pull/1753) [@lygstate](https://github.com/lygstate)
+- Fix operator precedence when getting code page. [#1615](https://github.com/microsoft/vscode-cmake-tools/issues/1615) [@taoyouh](https://github.com/taoyouh)
+- Override the locale when querying compiler versions. [#1821](https://github.com/microsoft/vscode-cmake-tools/issues/1821)
+- Fix typo in CMakePresets.json schema. [PR #1809](https://github.com/microsoft/vscode-cmake-tools/pull/1809) [@bluec0re](https://github.com/bluec0re)
+
+
 ## 1.7.1
 Improvements:
 - CppTools-API v5 integration. [#1624](https://github.com/microsoft/vscode-cmake-tools/issues/1624)

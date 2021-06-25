@@ -6,7 +6,6 @@ import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstS
 import {fs} from '@cmt/pr';
 import * as path from 'path';
 
-// tslint:disable:no-unused-expression
 
 suite('[Environment Variables in Variants]', async () => {
   let cmt: CMakeTools;

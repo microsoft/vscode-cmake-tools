@@ -6,7 +6,6 @@
 {
 	"testing.compiler.binary": "{0} バイナリのテスト中: {1}",
 	"bad.compiler.binary": "適切ではない {0} バイナリ (\"-v\" によって 0 以外が返される): {1}",
-	"version.word": "バージョン",
 	"bad.compiler.binary.output": "適切ではない {0} バイナリ \"{1} -v\" バージョン:{2} 出力: {3}",
 	"detected.compiler": "検出された {0} コンパイラ: {1}",
 	"testing.gcc.binary": "GCC バイナリをテストしています: {0}",
@@ -31,6 +30,7 @@
 	"detected.kit.for.version": "バージョンの VsKit が検出されました",
 	"generator.present": "ジェネレーターが存在します: {0}",
 	"selected.preferred.generator.name": "選択された優先ジェネレーター名: {0} {1}",
+	"failed.to.scan.for.kits": "キットをスキャンできませんでした: cmakeTools は定義されていません",
 	"scanning.for.kits.on.system": "システムでキットをスキャンしています",
 	"scanning.for.kits": "キットをスキャンしています",
 	"scanning.for.cmake.kits": "CMake キットをスキャンしています...",

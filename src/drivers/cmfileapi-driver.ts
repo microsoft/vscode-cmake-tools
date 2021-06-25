@@ -14,7 +14,7 @@ import {
   loadToolchains
 } from '@cmt/drivers/cmakefileapi/api_helpers';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
-import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {CMakeGenerator, Kit} from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
@@ -37,7 +37,12 @@ const log = logging.createLogger('cmakefileapi-driver');
 /**
  * The CMake driver with FileApi of CMake >= 3.15.0
  */
-export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
+export class CMakeFileApiDriver extends CMakeDriver {
+
+  get isCacheConfigSupported(): boolean {
+    return true;
+  }
+
   private constructor(cmake: CMakeExecutable,
                       readonly config: ConfigurationReader,
                       workspaceRootPath: string|null,
@@ -194,7 +199,15 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     this._cacheWatcher.dispose();
   }
 
-  protected async doPreCleanConfigure(): Promise<void> { await this._cleanPriorConfiguration(); }
+  protected async doPreCleanConfigure(): Promise<void> {
+    await this._cleanPriorConfiguration();
+  }
+
+  async doCacheConfigure(): Promise<number> {
+    this._needsReconfigure = true;
+    await this.updateCodeModel();
+    return 0;
+  }
 
   async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
     const api_path = this.getCMakeFileApiPath();
@@ -206,7 +219,13 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     const bindir = util.lightNormalizePath(this.binaryDir);
     args.push(`-B${bindir}`);
     const gen = this.generator;
-    if (gen) {
+    let has_gen = false;
+    for (const arg of args) {
+      if (arg.startsWith("-DCMAKE_GENERATOR:STRING=")) {
+        has_gen = true;
+      }
+    }
+    if (!has_gen && gen) {
       args.push('-G');
       args.push(gen.name);
       if (gen.toolset) {
@@ -219,17 +238,16 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       }
     }
     const cmake = this.cmake.path;
-    log.debug(`Configuring using ${this.useCMakePresets ? 'preset': 'kit'}`);
+    log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
     log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
     const env = await this.getConfigureEnvironment();
     const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
     log.trace(res.stderr);
     log.trace(res.stdout);
-    if (res.retc == 0) {
+    if (res.retc === 0) {
       this._needsReconfigure = false;
       await this.updateCodeModel();
     }
-
     return res.retc === null ? -1 : res.retc;
   }
 
@@ -265,7 +283,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
         throw Error('No code model object found');
       }
       this._target_map = await loadConfigurationTargetMap(reply_path, codemodel_obj.jsonFile);
-      this._codeModel = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
+      this._codeModelContent = await loadExtCodeModelContent(reply_path, codemodel_obj.jsonFile);
 
       // load toolchains
       const toolchains_obj = indexFile.objects.find((value: index_api.Index.ObjectKind) => value.kind === 'toolchains');
@@ -280,15 +298,16 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
             'This version of CMake does not support the "toolchains" object kind. Compiler paths will be determined by reading CMakeCache.txt.'));
         }
       } else {
-        this._codeModel.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
+        this._codeModelContent.toolchains = await loadToolchains(path.join(reply_path, toolchains_obj.jsonFile));
       }
 
-      this._codeModelChanged.fire(this._codeModel);
+      this._codeModelChanged.fire(this._codeModelContent);
     }
     return indexFile !== null;
   }
 
-  private _codeModel: codemodel.CodeModelContent|null = null;
+  private _codeModelContent: codemodel.CodeModelContent|null = null;
+  get codeModelContent() { return this._codeModelContent; }
 
   get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
   get generatorName(): string|null { return this._generatorInformation ? this._generatorInformation.name : null; }
@@ -317,7 +336,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
     return this.uniqueTargets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
         .map(t => ({
                name: t.name,
-               path: (t as api.RichTarget).filepath,
+               path: (t as api.RichTarget).filepath
              }));
   }
 
@@ -341,10 +360,10 @@ function targetReducer(set: api.Target[], t: api.Target): api.Target[] {
 function compareTargets(a: api.Target, b: api.Target): boolean {
   let same = false;
   if (a.type === b.type) {
-    same = a.name == b.name;
+    same = a.name === b.name;
     if (a.type === 'rich' && b.type === 'rich') {
-      same = same && (a.filepath == b.filepath);
-      same = same && (a.targetType == b.targetType);
+      same = same && (a.filepath === b.filepath);
+      same = same && (a.targetType === b.targetType);
     }
   }
 

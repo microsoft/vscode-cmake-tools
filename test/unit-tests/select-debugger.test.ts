@@ -13,9 +13,6 @@ import * as sinon from 'sinon';
 import { Subprocess } from '@cmt/proc';
 import { ChildProcess } from 'child_process';
 
-// tslint:disable:no-unused-expression
-// tslint:disable:no-floating-promises
-
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit-tests', filename));

@@ -1,8 +1,6 @@
 import {splitPath} from '@cmt/util';
 import {expect} from '@test/util';
 
-// tslint:disable:no-unused-expression
-
 suite('Utils test', async () => {
   test('Split path into elements', () => {
     const elems = splitPath('foo/bar/baz');

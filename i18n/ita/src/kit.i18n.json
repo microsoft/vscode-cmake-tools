@@ -6,7 +6,6 @@
 {
 	"testing.compiler.binary": "Test del file binario {0}: {1}",
 	"bad.compiler.binary": "Il file binario di {0} non è valido (\"-v\" restituisce un valore diverso da zero): {1}",
-	"version.word": "versione",
 	"bad.compiler.binary.output": "Il file binario {0} \"{1} -v\" non è valido. Versione: {2}. Output: {3}",
 	"detected.compiler": "Compilatore {0} rilevato: {1}",
 	"testing.gcc.binary": "Test del file binario GCC: {0}",
@@ -31,6 +30,7 @@
 	"detected.kit.for.version": "Rilevato kit di Visual Studio per la versione",
 	"generator.present": "Generatore presente: {0}",
 	"selected.preferred.generator.name": "Nome del generatore preferito selezionato: {0} {1}",
+	"failed.to.scan.for.kits": "Non è stato possibile eseguire l'analisi per i kit: cmakeTools non è definito",
 	"scanning.for.kits.on.system": "Ricerca dei kit nel sistema",
 	"scanning.for.kits": "Ricerca dei kit",
 	"scanning.for.cmake.kits": "Ricerca dei kit CMake...",
