@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { CMakeDriver } from './drivers/driver';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
-import * as util from './util';
+//import { expandStringHelper } from './expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -45,7 +45,6 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
   }
 
   public async provideTasks(): Promise<CMakeTask[]> {
-
     // Create a CMake build task
     const result: CMakeTask[] = [];
     const taskName: string = "CMake: build";
@@ -61,20 +60,20 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     return result;
   }
 
-  public resolveTask(task: CMakeTask): CMakeTask | undefined {
+  public async resolveTask(task: CMakeTask): Promise<CMakeTask | undefined> {
+
     const execution: any = task.execution;
     if (!execution) {
-        const definition: CMakeTaskDefinition = <any>task.definition;
-        const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
-        const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
-            new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-              new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTarget, resolvedDefinition.options, this.cmakeDriver)
-            ), []); // TODO: add problem matcher
-        return resolvedTask;
+      const definition: CMakeTaskDefinition = <any>task.definition;
+      const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
+      const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+        new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
+          new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTarget, resolvedDefinition.options, this.cmakeDriver)
+        ), []); // TODO: add problem matcher
+      return resolvedTask;
     }
     return undefined;
   }
-
 }
 
 class CustomBuildTaskTerminal implements vscode.Pseudoterminal , proc.OutputConsumer {
@@ -121,9 +120,6 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal , proc.OutputCons
         cmakePath = buildCommand.command;
         args = buildCommand.args ? buildCommand.args : [];
       }
-    }
-    if (this.options?.cwd) {
-      this.options.cwd = util.resolveVariables(this.options.cwd);
     }
 
     this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + this.endOfLine);
