@@ -18,7 +18,7 @@
 	"configuring.workspace.on.open": "正在於開啟的 {0} 上設定工作區",
 	"configure.now.button": "立即設定",
 	"configure.recommended": "建議您在升級為新套件定義後重新設定。",
-	"using.cache.to.configure.workspace.on.open": "Using cache to configure workspace on open {0}",
+	"using.cache.to.configure.workspace.on.open": "使用快取在開放式 {0} 上設定工作區",
 	"update.code.model.for.cpptools": "更新 cpptools 的程式碼模型",
 	"filed.to.open.cache.file.on.code.model.update": "無法在程式碼模型更新時開啟 CMake 快取檔案",
 	"opening.text.editor.for": "正在開啟 {0} 的文字編輯器",

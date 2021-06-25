@@ -32,6 +32,8 @@
   },
   "icon": "res/logo.png",
   "activationEvents": [
+    "onCommand:cmake.activeFolderName",
+    "onCommand:cmake.activeFolderPath",
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
@@ -84,6 +86,16 @@
   "main": "./dist/main",
   "contributes": {
     "commands": [
+      {
+        "command": "cmake.activeFolderName",
+        "title": "Get active folder name",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.activeFolderPath",
+        "title": "Get active folder path",
+        "category": "CMake"
+      },
       {
         "command": "cmake.openCMakePresets",
         "title": "%cmake-tools.command.cmake.openCMakePresets.title%",
@@ -1923,7 +1935,6 @@
     "translations-generate": "gulp translations-generate",
     "translations-import": "gulp translations-import",
     "pretest": "tsc -p test.tsconfig.json",
-    "pr-check": "gulp pr-check",
     "lint": "gulp lint",
     "smokeTests": "yarn run pretest && node ./out/test/smoke/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
