@@ -1727,14 +1727,14 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
 }
 
 // update CMakeDriver in taskProvider
-export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver | undefined) {
+export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
   cmakeTaskProvider.updateCMakeDriver(cmakeDriver);
 }
 
-/*// update default target in taskProvider
-export function updateDefaultTargetInTaskProvider(defaultTarget: string | undefined) {
+// update default target in taskProvider
+export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
   cmakeTaskProvider.updateDefaultTarget(defaultTarget);
-}*/
+}
 
 // this method is called when your extension is deactivated.
 export async function deactivate() {

@@ -498,15 +498,8 @@
           },
           "command": {
             "type": "string",
+            "enum": [ "build" ],
             "description": "CMake build command"
-          },
-          "target": {
-            "type": "string",
-            "description": "The build target"
-          },
-          "args": {
-            "type": "array",
-            "description": "Additional arguments"
           },
           "options": {
             "type": "object",

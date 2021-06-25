@@ -41,7 +41,7 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder } from './extension';
+import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetInTaskProvider } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 
@@ -244,7 +244,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
           await drv.setBuildPreset(expandedBuildPreset);
-          //this.updateDefaultTargetInTaskProvider(drv, undefined);
+          this.updateDriverAndTargetInTaskProvider(drv);
           this.workspaceContext.state.buildPresetName = buildPreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
@@ -1234,7 +1234,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
       targetName = target;
     }
-    //this.updateDefaultTargetInTaskProvider(drv, target);
+    this.updateDriverAndTargetInTaskProvider(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
@@ -1487,16 +1487,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return;
     }
     await this._setDefaultBuildTarget(target);
-    /*const drv = await this._cmakeDriver;
-    this.updateDefaultTargetInTaskProvider(drv, target);*/
+    const drv = await this._cmakeDriver;
+    this.updateDriverAndTargetInTaskProvider(drv, target);
   }
 
-  /*updateDefaultTargetInTaskProvider(drv: CMakeDriver | null, target: string | undefined) {
+  updateDriverAndTargetInTaskProvider(drv: CMakeDriver | null, target?: string) {
     if (drv && (this.useCMakePresets || target)) {
       updateCMakeDriverInTaskProvider(drv);
       updateDefaultTargetInTaskProvider(target);
     }
-  }*/
+  }
 
   /**
    * Implementation of `cmake.getBuildTargetName`

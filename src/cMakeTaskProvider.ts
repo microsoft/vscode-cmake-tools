@@ -2,104 +2,102 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-  TaskDefinition, Task, TaskGroup, TaskProvider, TaskScope, CustomExecution, WorkspaceFolder, Pseudoterminal, EventEmitter, Event, TerminalDimensions, window, TextEditor
-} from 'vscode';
-import * as cp from "child_process";
+import * as vscode from 'vscode';
 import { CMakeDriver } from './drivers/driver';
-import { BuildCommand } from './proc';
+import * as proc from './proc';
 import * as nls from 'vscode-nls';
-import path = require('path');
+import * as util from './util';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-interface CMakeTaskDefinition extends TaskDefinition {
+interface CMakeTaskDefinition extends vscode.TaskDefinition {
   type: string;
   label: string;
-  command: string; // Command is either "build" or "install".
-  args?: string[];
-  options?: cp.ExecOptions | undefined;
+  command: string; // Command is either "build", "install", or "test".
+  options?: { cwd?: string };
 }
 
-export class CMakeTask extends Task {
+export class CMakeTask extends vscode.Task {
   detail?: string;
 }
 
-export class CMakeTaskProvider implements TaskProvider {
+export class CMakeTaskProvider implements vscode.TaskProvider {
   static CMakeScriptType: string = 'cmake';
   static CMakeSourceStr: string = "CMake";
-  private cmakeDriver: CMakeDriver | undefined;
+  static allTargetName: string = "all";
+  private cmakeDriver?: CMakeDriver;
+  private defaultTarget: string = CMakeTaskProvider.allTargetName;
 
   constructor() {
   }
 
-  public updateCMakeDriver(cmakeDriver: CMakeDriver | undefined) {
+  public updateCMakeDriver(cmakeDriver: CMakeDriver) {
     this.cmakeDriver = cmakeDriver;
+    if (CMakeTaskProvider.allTargetName === "all") {
+      CMakeTaskProvider.allTargetName = this.cmakeDriver.allTargetName;
+    }
+  }
+
+  public updateDefaultTarget(defaultTarget: string | undefined) {
+    this.defaultTarget = defaultTarget ? defaultTarget :
+      this.cmakeDriver ? this.cmakeDriver.allTargetName : CMakeTaskProvider.allTargetName;
   }
 
   public async provideTasks(): Promise<CMakeTask[]> {
-    const emptyTasks: CMakeTask[] = [];
-    const editor: TextEditor | undefined = window.activeTextEditor;
-    if (!editor) {
-        return emptyTasks;
-    }
 
-    // Create one CMake build task with target set to "all"
+    // Create a CMake build task
     const result: CMakeTask[] = [];
     const taskName: string = "CMake: build";
-    /*let buildCommand: BuildCommand | null;
-    let cmakePath: string = "CMake.EXE";
-    let args: string[] | undefined = [];
-    if (this.cmakeDriver) {
-      buildCommand = await this.cmakeDriver.getCMakeBuildCommand(this.defaultBuildTarget || CMakeTaskProvider.allTargetName);
-      if (buildCommand) {
-        cmakePath = buildCommand.command;
-        args = buildCommand.args;
-      }
-    }*/
     const definition: CMakeTaskDefinition = {
       type: CMakeTaskProvider.CMakeScriptType,
       label: taskName,
-      command: "build",
-      target: "all"
+      command: "build"
     };
-    const task = new Task(definition, TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr);
-    task.group = TaskGroup.Build;
-    task.detail = "CMake build task, with build target set to \"all\".";
+    const task = new vscode.Task(definition, vscode.TaskScope.Workspace, taskName, CMakeTaskProvider.CMakeSourceStr);
+    task.group = vscode.TaskGroup.Build;
+    task.detail = "CMake template build task";
     result.push(task);
     return result;
   }
 
-  public resolveTask(_task: CMakeTask): CMakeTask | undefined {
-    const execution: any = _task.execution;
+  public resolveTask(task: CMakeTask): CMakeTask | undefined {
+    const execution: any = task.execution;
     if (!execution) {
-        const definition: CMakeTaskDefinition = <any>_task.definition;
-        const scope: WorkspaceFolder | TaskScope = TaskScope.Workspace;
-        const task: CMakeTask = new Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
-            new CustomExecution(async (resolvedDefinition: TaskDefinition): Promise<Pseudoterminal> =>
-              new CustomBuildTaskTerminal(resolvedDefinition.command, resolvedDefinition.target, this.cmakeDriver)
+        const definition: CMakeTaskDefinition = <any>task.definition;
+        const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
+        const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
+            new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
+              new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTarget, resolvedDefinition.options, this.cmakeDriver)
             ), []); // TODO: add problem matcher
-        return task;
+        return resolvedTask;
     }
     return undefined;
   }
 
 }
 
-class CustomBuildTaskTerminal implements Pseudoterminal {
-  private writeEmitter = new EventEmitter<string>();
-  private closeEmitter = new EventEmitter<number>();
-  public get onDidWrite(): Event<string> { return this.writeEmitter.event; }
-  public get onDidClose(): Event<number> { return this.closeEmitter.event; }
+class CustomBuildTaskTerminal implements vscode.Pseudoterminal , proc.OutputConsumer {
+  private writeEmitter = new vscode.EventEmitter<string>();
+  private closeEmitter = new vscode.EventEmitter<number>();
+  public get onDidWrite(): vscode.Event<string> { return this.writeEmitter.event; }
+  public get onDidClose(): vscode.Event<number> { return this.closeEmitter.event; }
   private endOfLine: string = "\r\n";
 
-  constructor(private command: string, private target: string | null, private cmakeDriver: CMakeDriver | undefined) {
+  constructor(private command: string, private defaultTarget: string, private options?: { cwd?: string }, private cmakeDriver?: CMakeDriver) {
   }
 
-  async open(_initialDimensions: TerminalDimensions | undefined): Promise<void> {
+  output(line: string): void {
+    this.writeEmitter.fire(line + this.endOfLine);
+  }
+
+  error(error: string): void {
+    this.writeEmitter.fire(error + this.endOfLine);
+  }
+
+  async open(_initialDimensions: vscode.TerminalDimensions | undefined): Promise<void> {
       // At this point we can start using the terminal.
-      this.writeEmitter.fire(localize("starting_build", "Starting build...") + this.endOfLine);
+      this.writeEmitter.fire(localize("starting.build", "Starting build...") + this.endOfLine);
       await this.doBuild();
   }
 
@@ -109,69 +107,39 @@ class CustomBuildTaskTerminal implements Pseudoterminal {
 
   private async doBuild(): Promise<any> {
     if (this.command !== "build") {
-      this.writeEmitter.fire(localize("not_a_build_command", "Not a recognized build command.") + this.endOfLine);
+      this.writeEmitter.fire(localize("not.a.build.command", "\"{0}\" is not a recognized build command.", this.command) + this.endOfLine);
+      this.closeEmitter.fire(-1);
+      return;
     }
-    let buildCommand: BuildCommand | null;
+    let buildCommand: proc.BuildCommand | null;
     let cmakePath: string = "CMake.EXE";
-    let args: string[] | undefined = [];
+    let args: string[] = [];
 
-    // TODO: change the target from "all" to the default received from cmakedriver.
-    const defaultBuildTarget: string = this.target ? this.target : "all";
     if (this.cmakeDriver) {
-      buildCommand = await this.cmakeDriver.getCMakeBuildCommand(defaultBuildTarget);
+      buildCommand = await this.cmakeDriver.getCMakeBuildCommand(this.defaultTarget);
       if (buildCommand) {
         cmakePath = buildCommand.command;
-        args = buildCommand.args;
+        args = buildCommand.args ? buildCommand.args : [];
       }
     }
-    // TODO: find the correct cwd
-    const cwd: string = path.dirname(cmakePath) ? path.dirname(cmakePath) : path.dirname(defaultBuildTarget);
-    const options: cp.ExecOptions | undefined = { cwd: cwd };
-    let activeCommand: string = cmakePath.includes(" ") ? ("\"" + cmakePath + "\"") : cmakePath;
-    if (args) {
-      args.forEach(value => {
-        if (value.includes(" ")) {
-          value = "\"" + value + "\"";
-        }
-        activeCommand = activeCommand + " " + value;
-      });
+    if (this.options?.cwd) {
+      this.options.cwd = util.resolveVariables(this.options.cwd);
     }
 
-    const splitWriteEmitter = (lines: string | Buffer) => {
-      for (const line of lines.toString().split(/\r?\n/g)) {
-        this.writeEmitter.fire(line + this.endOfLine);
-      }
-    };
-    this.writeEmitter.fire(activeCommand + this.endOfLine);
+    this.writeEmitter.fire(proc.buildCmdStr(cmakePath, args) + this.endOfLine);
     try {
-      const result: number = await new Promise<number>((resolve) => {
-        cp.exec(activeCommand, options, (_error, stdout, _stderr) => {
-          const dot: string = ".";
-          if (_stderr) {
-            splitWriteEmitter(_stderr);
-          }
-          splitWriteEmitter(stdout);
-          if (_error) {
-            if (stdout) {
-            } else if (_stderr) {
-              splitWriteEmitter(_stderr);
-            } else {
-              splitWriteEmitter(_error.message);
-            }
-            this.writeEmitter.fire(localize("build_finished_with_error", "Build finished with error(s)") + dot + this.endOfLine);
-            resolve(0);
-          } else if (_stderr && !stdout) {
-            splitWriteEmitter(_stderr);
-            this.writeEmitter.fire(localize("build_finished_with_warnings", "Build finished with warning(s)") + dot + this.endOfLine);
-          } else if (stdout && stdout.includes("warning")) {
-            this.writeEmitter.fire(localize("build_finished_with_warnings", "Build finished with warning(s)") + dot + this.endOfLine);
-          } else {
-            this.writeEmitter.fire(localize("build finished successfully", "Build finished successfully.") + this.endOfLine);
-          }
-          resolve(0);
-        });
-      });
-      this.closeEmitter.fire(result);
+      const result: proc.ExecutionResult = await proc.execute(cmakePath, args, this, this.options).result;
+      const dot: string = ".";
+      if (result.retc) {
+        this.writeEmitter.fire(localize("build.finished.with.error", "Build finished with error(s)") + dot + this.endOfLine);
+      } else if (result.stderr && !result.stdout) {
+        this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + this.endOfLine);
+      } else if (result.stdout && result.stdout.includes("warning")) {
+        this.writeEmitter.fire(localize("build.finished.with.warnings", "Build finished with warning(s)") + dot + this.endOfLine);
+      } else {
+        this.writeEmitter.fire(localize("build.finished.successfully", "Build finished successfully.") + this.endOfLine);
+      }
+      this.closeEmitter.fire(0);
     } catch {
       this.closeEmitter.fire(-1);
     }
