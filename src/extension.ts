@@ -1320,10 +1320,10 @@ class ExtensionManager implements vscode.Disposable {
     await logging.showLogFile();
   }
 
-  activeFolderName() : string  {
+  activeFolderName(): string  {
     return this._folders.activeFolder?.folder.name || '';
   }
-  activeFolderPath() : string  {
+  activeFolderPath(): string  {
     return this._folders.activeFolder?.folder.uri.fsPath || '';
   }
 
