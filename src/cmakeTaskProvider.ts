@@ -6,7 +6,6 @@ import * as vscode from 'vscode';
 import { CMakeDriver } from './drivers/driver';
 import * as proc from './proc';
 import * as nls from 'vscode-nls';
-//import { expandStringHelper } from './expand';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
