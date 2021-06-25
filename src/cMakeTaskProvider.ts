@@ -61,7 +61,6 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
   }
 
   public async resolveTask(task: CMakeTask): Promise<CMakeTask | undefined> {
-
     const execution: any = task.execution;
     if (!execution) {
       const definition: CMakeTaskDefinition = <any>task.definition;
