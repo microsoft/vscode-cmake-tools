@@ -1312,6 +1312,13 @@ class ExtensionManager implements vscode.Disposable {
     await logging.showLogFile();
   }
 
+  activeFolderName(): string  {
+    return this._folders.activeFolder?.folder.name || '';
+  }
+  activeFolderPath(): string  {
+    return this._folders.activeFolder?.folder.uri.fsPath || '';
+  }
+
   async hideLaunchCommand(shouldHide: boolean = true) {
     // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
     this._statusBar.hideLaunchButton(shouldHide);
@@ -1533,6 +1540,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
+    'activeFolderName',
+    'activeFolderPath',
     "useCMakePresets",
     "openCMakePresets",
     'addConfigurePreset',
