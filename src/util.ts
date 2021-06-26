@@ -325,17 +325,27 @@ export interface Version {
   patch: number;
 }
 export function parseVersion(str: string): Version {
-  const version_re = /(\d+)\.(\d+)\.(\d+)/;
+  const version_re = /(\d+)\.(\d+)\.(\d+)(.*)/;
   const mat = version_re.exec(str);
   if (!mat) {
     throw new InvalidVersionString(localize('invalid.version.string', 'Invalid version string {0}', str));
   }
   const [, major, minor, patch] = mat;
   return {
-    major: parseInt(major),
-    minor: parseInt(minor),
-    patch: parseInt(patch)
+    major: parseInt(major ?? '0'),
+    minor: parseInt(minor ?? '0'),
+    patch: parseInt(patch ?? '0')
   };
+}
+
+export function compareVersion(va: Version, vb: Version) {
+  if (va.major !== vb.major) {
+    return va.major - vb.major;
+  }
+  if (va.minor !== vb.minor) {
+    return va.minor - vb.minor;
+  }
+  return va.patch - vb.patch;
 }
 
 export function versionToString(ver: Version): string {

@@ -552,41 +552,86 @@ export function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Al
 }
 
 /**
+ * Possible msvc host architectures
+ */
+export const MSVC_HOST_ARCHES: string[] = ['x86', 'x64'];
+
+/*
  * List of environment variables required for Visual C++ to run as expected for
  * a VS installation.
+ * The diff of vcvarsall.bat output env and system env:
+    DevEnvDir=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\
+    Framework40Version=v4.0
+    FrameworkDir=C:\Windows\Microsoft.NET\Framework\
+    FrameworkDIR32=C:\Windows\Microsoft.NET\Framework\
+    FrameworkVersion=v4.0.30319
+    FrameworkVersion32=v4.0.30319
+    INCLUDE=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\INCLUDE;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\ucrt;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\shared;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\winrt;
+    LIB=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\ARM;C:\Program Files (x86)\Windows Kits\10\lib\10.0.14393.0\ucrt\ARM;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\lib\um\ARM;C:\Program Files (x86)\Windows Kits\10\lib\10.0.14393.0\um\ARM;
+    LIBPATH=C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\ARM;C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Windows Kits\10\References;\Microsoft.VCLibs\14.0\References\CommonConfiguration\neutral;
+    NETFXSDKDir=C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\
+    Path=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow;C:\Program Files (x86)\MSBuild\14.0\bin;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN\x86_ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools;C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\VCPackages;C:\Program Files (x86)\HTML Help Workshop;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Performance Tools;C:\Program Files (x86)\Windows Kits\10\bin\x86;C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft VS Code\bin;C:\Program Files\CMake\bin;C:\Program Files\Git\cmd;C:\Program Files\TortoiseGit\bin;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\
+    Platform=ARM
+    UCRTVersion=10.0.14393.0
+    UniversalCRTSdkDir=C:\Program Files (x86)\Windows Kits\10\
+    user_inputversion=10.0.14393.0
+    VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\
+    VisualStudioVersion=14.0
+    VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\
+    WindowsLibPath=C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Windows Kits\10\References
+    WindowsSdkDir=C:\Program Files (x86)\Windows Kits\10\
+    WindowsSDKLibVersion=10.0.14393.0\
+    WindowsSDKVersion=10.0.14393.0\
+    WindowsSDK_ExecutablePath_x64=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\x64\
+    WindowsSDK_ExecutablePath_x86=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\
+ *
  */
 const MSVC_ENVIRONMENT_VARIABLES = [
+  /* These is the diff of vcvarsall.bat generated env and original system env */
+  'DevEnvDir',
+  'Framework40Version',
+  'FrameworkDir',
+  'FrameworkDIR32',
+  'FrameworkDIR64',
+  'FrameworkVersion',
+  'FrameworkVersion32',
+  'FrameworkVersion64',
+  'INCLUDE',
+  'LIB',
+  'LIBPATH',
+  'NETFXSDKDir',
+  'Path',
+  'Platform',
+  'UCRTVersion',
+  'UniversalCRTSdkDir',
+  'user_inputversion',
+  'VCINSTALLDIR',
+  'VisualStudioVersion',
+  'VSINSTALLDIR',
+  'WindowsLibPath',
+  'WindowsSdkDir',
+  'WindowsSDKLibVersion',
+  'WindowsSDKVersion',
+  'WindowsSDK_ExecutablePath_x64',
+  'WindowsSDK_ExecutablePath_x86',
+
+  /* These are special also need to be cached */
   'CL',
   '_CL_',
-  'INCLUDE',
-  'LIBPATH',
   'LINK',
   '_LINK_',
-  'LIB',
-  'PATH',
   'TMP',
-  'FRAMEWORKDIR',
-  'FRAMEWORKDIR64',
-  'FRAMEWORKVERSION',
-  'FRAMEWORKVERSION64',
   'UCRTCONTEXTROOT',
-  'UCRTVERSION',
-  'UNIVERSALCRTSDKDIR',
-  'VCINSTALLDIR',
-  'VCTARGETSPATH',
-  'WINDOWSLIBPATH',
-  'WINDOWSSDKDIR',
-  'WINDOWSSDKLIBVERSION',
-  'WINDOWSSDKVERSION',
-  'VISUALSTUDIOVERSION'
+  'VCTARGETSPATH'
 ];
 
 /**
  * Get the environment variables corresponding to a VS dev batch file.
+ * @param hostArch  Host arch used
  * @param devbat Path to a VS environment batch file
  * @param args List of arguments to pass to the batch file
  */
-async function collectDevBatVars(devbat: string, args: string[], major_version: number, common_dir: string):
+async function collectDevBatVars(hostArch: string, devbat: string, args: string[], major_version: number, common_dir: string):
     Promise<Map<string, string>|undefined> {
   const fname = Math.random().toString() + '.bat';
   const batfname = `vs-cmt-${fname}`;
@@ -600,7 +645,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `cd /d "%~dp0"` /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
-    bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
+    bat.push(`if DEFINED ${envvar} echo ${envvar} := %${envvar}% >> ${envfname}`);
   }
 
   // writeFile and unlink don't need quotes (they work just fine with an unquoted path with space)
@@ -640,11 +685,8 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     await fs.unlink(envpath);
   } catch (error) { log.error(error); }
 
-  if (!env || env === '') {
-    log.error(localize('script.run.error',
-        'Error running:{0} with args:{1}\nOutput are:\n{2}\nBat content are:\n{3}',
-        devbat, args.join(' '), output, batContent));
-    return;
+  if (!env) {
+    env = '';
   }
 
   const vars
@@ -657,13 +699,39 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           }
           return acc;
         }, new Map());
-  if (vars.get('INCLUDE') === '') {
+  const include_env = util.envGetValue(vars, 'INCLUDE') ?? '';
+  if (include_env === '') {
     log.error(localize('script.run.error.check',
-        'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}',
-        devbat, args.join(' '), env, batContent));
+        'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}\nExecute output are:\n{4}\n',
+        devbat, args.join(' '), env, batContent, output));
     return;
   }
-  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
+
+  let WindowsSDKVersionParsed: util.Version = {
+    major: 0,
+    minor: 0,
+    patch: 0
+  };
+  const WindowsSDKVersion = util.envGetValue(vars, 'WindowsSDKVersion') ?? '0.0.0';
+  try {
+    WindowsSDKVersionParsed = util.parseVersion(WindowsSDKVersion);
+  } catch (err) {
+    log.error(`Parse '${WindowsSDKVersion}' failed`);
+  }
+  if (util.compareVersion(WindowsSDKVersionParsed, {major: 10, minor: 0, patch: 14393}) >= 0) {
+    const WindowsSdkDir = util.envGetValue(vars, 'WindowsSdkDir') ?? '';
+    const existPath = util.envGetValue(vars, 'PATH') ?? '';
+    const oldWinSdkBinPath = path.join(WindowsSdkDir, 'bin', hostArch);
+    const newWinSdkBinPath = path.join(WindowsSdkDir, 'bin', WindowsSDKVersion, hostArch);
+    if (existPath.toLowerCase().indexOf(oldWinSdkBinPath.toLowerCase()) >= 0
+      && existPath.toLowerCase().indexOf(newWinSdkBinPath.toLowerCase()) < 0) {
+      log.info(localize('windows.sdk.path.patch', 'Patch Windows SDK bin path from {0} to {1} for {2}',
+        oldWinSdkBinPath, newWinSdkBinPath, devbat));
+      util.envSet(vars, 'PATH', `${newWinSdkBinPath};${existPath}`);
+    }
+  }
+  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}',
+    devbat, args.join(' '), JSON.stringify([...vars], null, 2)));
   return vars;
 }
 
@@ -779,25 +847,28 @@ const VsGenerators: {[key: string]: string} = {
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string>|null> {
   console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
-  let vcvarsScript: string = 'vcvarsall.bat';
-  if (targetArch === "arm" || targetArch === "arm64") {
-    // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
-    vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
-  }
-
-  let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', vcvarsScript);
   const majorVersion = parseInt(inst.installationVersion);
+
+  let vcvarsScript: string = 'vcvarsall.bat';
+  if (majorVersion < 14) {
+    if (targetArch === "arm" || targetArch === "arm64") {
+      // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
+      vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
+    }
+  }
+  let devBatFolder = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build');
   if (majorVersion < 15) {
-    devbat = path.join(inst.installationPath, 'VC', vcvarsScript);
+    devBatFolder = path.join(inst.installationPath, 'VC');
   }
 
+  const devbat = path.join(devBatFolder, vcvarsScript);
   // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
   // in the given VS installation.
   if (!await fs.exists(devbat)) {
     return null;
   }
 
-  const variables = await collectDevBatVars(devbat, [kitHostTargetArch(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
+  const variables = await collectDevBatVars(hostArch, devbat, [kitHostTargetArch(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
   if (!variables) {
     return null;
   } else {
@@ -889,11 +960,10 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   const installs = await vsInstallations();
   const prs = installs.map(async(inst): Promise<Kit[]> => {
     const ret = [] as Kit[];
-    const hostArches: string[] = ['x86', 'x64'];
     const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
 
     const sub_prs: Promise<Kit | null>[] = [];
-    hostArches.forEach(hostArch => {
+    MSVC_HOST_ARCHES.forEach(hostArch => {
       targetArches.forEach(targetArch => {
         const kit: Promise<Kit | null> = tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr);
         if (kit) {
