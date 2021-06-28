@@ -92,8 +92,7 @@ export class CompileOutputConsumer implements OutputConsumer {
           filepath,
           diag
         };
-      }).filter(e => e !== undefined) as FileDiagnostic[];
-    });
+      }).filter(e => e !== undefined) as FileDiagnostic[]);
     return ([] as FileDiagnostic[]).concat(...arrs);
   }
 }
