@@ -2,7 +2,6 @@
  * Module for handling build diagnostics (from the compiler/linker)
  */ /** */
 
-
 import {Logger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import {OutputConsumer} from '@cmt/proc';
@@ -66,10 +65,9 @@ export class CompileOutputConsumer implements OutputConsumer {
       MSVC: this.compilers.msvc.diagnostics,
       GHS: this.compilers.ghs.diagnostics,
       DIAB: this.compilers.diab.diagnostics,
-      link: this.compilers.gnuLD.diagnostics,
+      link: this.compilers.gnuLD.diagnostics
     };
-    const arrs = util.objectPairs(by_source).map(([source, diags]) => {
-      return diags.map(raw_diag => {
+    const arrs = util.objectPairs(by_source).map(([source, diags]) => diags.map(raw_diag => {
         const filepath = util.resolvePath(raw_diag.file, basePath);
         const severity = severity_of(raw_diag.severity);
         if (severity === undefined) {
@@ -92,7 +90,7 @@ export class CompileOutputConsumer implements OutputConsumer {
         diags_by_file.get(filepath)!.push(diag);
         return {
           filepath,
-          diag,
+          diag
         };
       }).filter(e => e !== undefined) as FileDiagnostic[];
     });
@@ -138,7 +136,7 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
       this._onProgressEmitter.fire({
         minimum: 0,
         maximum: 100,
-        value: Number.parseInt(percent),
+        value: Number.parseInt(percent)
       });
     }
   }

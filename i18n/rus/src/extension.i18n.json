@@ -18,6 +18,7 @@
 	"configuring.workspace.on.open": "Настройка рабочей области в открытом {0}.",
 	"configure.now.button": "Настроить сейчас",
 	"configure.recommended": "Рекомендуется повторно настроить проект после обновления на новое определение наборов.",
+	"using.cache.to.configure.workspace.on.open": "Использование кэша для настройки рабочей области при открытии {0}",
 	"update.code.model.for.cpptools": "Обновление модели кода для cpptools",
 	"filed.to.open.cache.file.on.code.model.update": "Не удалось открыть файл кэша CMake при обновлении модели кода.",
 	"opening.text.editor.for": "Открытие текстового редактора для {0}.",

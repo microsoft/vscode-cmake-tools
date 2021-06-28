@@ -2,7 +2,6 @@
  * Module for parsing Wind River Diab diagnostics
  */ /** */
 
-
 import * as vscode from 'vscode';
 
 import {oneLess, RawDiagnosticParser, FeedLineResult} from './util';
@@ -28,7 +27,7 @@ export class Parser extends RawDiagnosticParser {
         severity,
         code,
         message,
-        related: [],
+        related: []
       };
     }
     return FeedLineResult.NotMine;

@@ -18,6 +18,7 @@
 	"configuring.workspace.on.open": "開いている {0} 上でワークスペースを構成しています",
 	"configure.now.button": "今すぐ構成",
 	"configure.recommended": "新しいキット定義にアップグレードした後に、再構成することをお勧めします。",
+	"using.cache.to.configure.workspace.on.open": "キャッシュを使って、オープンな {0} でワークスペースを構成します",
 	"update.code.model.for.cpptools": "cpptools のコード モデルの更新",
 	"filed.to.open.cache.file.on.code.model.update": "コード モデルの更新時に CMake キャッシュ ファイルを開くことができませんでした",
 	"opening.text.editor.for": "{0} 用にテキスト エディターを開いています",
