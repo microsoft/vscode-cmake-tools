@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "CMakeTools wird im Testmodus ausgeführt. selectConfigurePreset ist deaktiviert.",
 	"selecting.build.preset.in.test.mode": "CMakeTools wird im Testmodus ausgeführt. selectBuildPreset ist deaktiviert.",
 	"selecting.test.preset.in.test.mode": "CMakeTools wird im Testmodus ausgeführt. selectTestPreset ist deaktiviert.",
-	"registerTaskProvider": "Registrieren Sie den Aufgabenanbieter.",
 	"initial.setup": "Erste Einrichtung",
 	"started": "gestartet",
 	"cmake.finished.returned": "{0} abgeschlossen ({1} zurückgegeben)",
