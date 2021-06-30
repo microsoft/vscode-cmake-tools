@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "在測試模式中執行 CMakeTools。selectConfigurePreset 已停用。",
 	"selecting.build.preset.in.test.mode": "在測試模式中執行 CMakeTools。selectBuildPreset 已停用。",
 	"selecting.test.preset.in.test.mode": "在測試模式中執行 CMakeTools。selectTestPreset 已停用。",
-	"registerTaskProvider": "註冊工作提供者。",
 	"initial.setup": "初始設定",
 	"started": "已啟動",
 	"cmake.finished.returned": "{0} 已完成 (傳回 {1})",
