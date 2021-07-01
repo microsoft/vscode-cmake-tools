@@ -205,7 +205,6 @@ export class ConfigurationReader implements vscode.Disposable {
     const keys: string[] = [];
     const old_values = {...this.configData};
     Object.assign(this.configData, newData);
-    console.log('[config] Configuration changed', JSON.stringify(newData));
     for (const key_ of Object.getOwnPropertyNames(newData)) {
       const key = key_ as keyof ExtensionConfigurationSettings;
       if (!(key in this._emitters)) {
@@ -222,7 +221,6 @@ export class ConfigurationReader implements vscode.Disposable {
             em.fire(temp);
           }
         }
-        console.log('[config] Setting value changed:', key, JSON.stringify(new_value));
         keys.push(key);
       }
     }

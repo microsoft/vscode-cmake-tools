@@ -61,7 +61,6 @@ suite('[Environment Variables in Variants]', async () => {
     await fs.rename(variantFile, variantFileBackup);
     expect(await fs.exists(variantFile)).to.be.false;
 
-    console.log('updating defaultVariants');
     // Set fake settings
     testEnv.config.updatePartial({
       defaultVariants: {
@@ -81,17 +80,15 @@ suite('[Environment Variables in Variants]', async () => {
         }
       }
     });
-    console.log('done updating defaultVariants');
-    const sleep = new Promise<void>(resolve =>{
+
+    // Give enough time for the file watcher to kick in and update the variant manager
+    await new Promise<void>(resolve => {
       setTimeout(() => {
         resolve();
       }, 2000);
     });
 
     try {
-      console.log('sleeping to wait for file watcher to kick in');
-      await sleep;
-      console.log('awake');
       // Configure
       expect(await cmt.configure()).to.be.eq(0, '[variantEnv] configure failed');
       expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
