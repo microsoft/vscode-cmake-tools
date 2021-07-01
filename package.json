@@ -1943,6 +1943,11 @@
     "extensionTestsMultioot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
     "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn run lint"
+    }
+  },
   "devDependencies": {
     "@octokit/rest": "^18.1.1",
     "@types/ajv": "^0.0.5",
@@ -1966,6 +1971,7 @@
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
     "clang-format": "^1.5.0",
+    "husky": "^4.3.8",
     "eslint": "^7.25.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jsdoc": "^33.1.0",
