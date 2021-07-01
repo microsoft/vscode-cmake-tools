@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "테스트 모드에서 CMakeTools를 실행 중입니다. selectConfigurePreset가 사용 중지되었습니다.",
 	"selecting.build.preset.in.test.mode": "테스트 모드에서 CMakeTools를 실행 중입니다. selectBuildPreset가 사용 중지되었습니다.",
 	"selecting.test.preset.in.test.mode": "테스트 모드에서 CMakeTools를 실행 중입니다. selectTestPreset가 사용 중지되었습니다.",
-	"registerTaskProvider": "작업 공급자를 등록하세요.",
 	"initial.setup": "초기 설정",
 	"started": "시작됨",
 	"cmake.finished.returned": "{0} 완료({1}이(가) 반환됨)",
