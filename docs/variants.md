@@ -6,13 +6,13 @@ The main way to create a variant is via a `cmake-variants.json` or `cmake-varian
 
 Variants are a different concept than toolchains or toolsets. Those are handled by [CMake kits](kits.md).
 
-By default, if a variants file isn't present, CMake Tools loads four variants that correspond to default CMake build types: **Release**, **Debug**, **MinRelSize**, and **RelWithDebInfo**. These variants do the following:
+By default, if a variants file isn't present, CMake Tools loads four variants that correspond to default CMake build types: **Release**, **Debug**, **MinSizeRel**, and **RelWithDebInfo**. These variants do the following:
 
 |Option  | Description  |
 |---------|---------|
 |`Debug`  | Disables optimizations and includes debug info.|
 |`Release`| Includes optimizations but no debug info.|
-|`MinRelSize`| Optimizes for size. No debug info.|
+|`MinSizeRel`| Optimizes for size. No debug info.|
 |`RelWithDebInfo` | Optimizes for speed but also includes debug info. |
 
 Selecting one of these variants configures and builds using the corresponding build type.
@@ -27,7 +27,7 @@ Large projects with more complex configuration options can specify additional bu
 The variants file can be placed either in the root of the project directory, or in the project's `.vscode` subdirectory.
 
 > **Note:**
-> CMake Tools provides a YAML validation schema, but it is only checked in the editor when using the **YAML Support by Red Hat** extension. 
+> CMake Tools provides a YAML validation schema, but it is only checked in the editor when using the **YAML Support by Red Hat** extension.
 
 You can use either `cmake-variants.json` or `cmake-variants.yaml` with the same result. The examples here use the YAML format, but can also be defined in JSON.
 
@@ -79,7 +79,7 @@ The options above are only valid under entries in the `choices` map.
 ## How variants are applied
 
 A variant is a specific combination of one option from each setting. When CMake Tools executes the configure step, it uses the values from the currently active variant to determine the values to pass to the CMake process, as follows:
- 
+
 1. Properties from all active options are merged. For `env` and `settings`, the objects themselves are merged. The merge order isn't specified, so conflicting properties in options will result in unspecified behavior.
 
 1. All `settings` from the chosen options are passed as `-D` arguments to the CMake process.
@@ -114,7 +114,7 @@ Given the following variants file:
           short: Tsan
           long: Instrument with Thread Sanitizer
           buildType: Tsan
-    
+
     linkage:
       default: static
       choices:
@@ -126,7 +126,7 @@ Given the following variants file:
           short: Shared
           long: Create shared libraries/DLLs
           linkage: shared
-    
+
     engine:
       default: ogl
       choices:
@@ -150,7 +150,7 @@ Given the following variants file:
           long: Software rendering
           setting:
             ENGINE: Software
-    
+
     network:
       default: boost
       choices:
