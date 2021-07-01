@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "Uruchamianie narzędzi CMake w trybie testowym. Element selectConfigurePreset jest wyłączony.",
 	"selecting.build.preset.in.test.mode": "Uruchamianie narzędzi CMake w trybie testowym. Element selectBuildPreset jest wyłączony.",
 	"selecting.test.preset.in.test.mode": "Uruchamianie narzędzi CMake w trybie testowym. Element selectTestPreset jest wyłączony.",
-	"registerTaskProvider": "Zarejestruj dostawcę zadań.",
 	"initial.setup": "Konfiguracja początkowa",
 	"started": "uruchomiony",
 	"cmake.finished.returned": "Zakończono {0} (zwrócono {1})",

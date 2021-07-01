@@ -32,6 +32,8 @@
   },
   "icon": "res/logo.png",
   "activationEvents": [
+    "onCommand:cmake.activeFolderName",
+    "onCommand:cmake.activeFolderPath",
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
@@ -84,6 +86,16 @@
   "main": "./dist/main",
   "contributes": {
     "commands": [
+      {
+        "command": "cmake.activeFolderName",
+        "title": "Get active folder name",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.activeFolderPath",
+        "title": "Get active folder path",
+        "category": "CMake"
+      },
       {
         "command": "cmake.openCMakePresets",
         "title": "%cmake-tools.command.cmake.openCMakePresets.title%",
@@ -492,9 +504,28 @@
           "command"
         ],
         "properties": {
+          "label": {
+            "type": "string",
+            "description": "The name of the task"
+          },
           "command": {
             "type": "string",
-            "description": "CMake command"
+            "enum": [ "build" ],
+            "description": "CMake build command"
+          },
+          "options": {
+            "type": "object",
+            "description": "Additional command options",
+            "properties": {
+              "cwd": {
+                "type": "string",
+                "description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used."
+              }
+            }
+          },
+          "detail": {
+            "type": "string",
+            "description": "Additional details of the task"
           }
         }
       }

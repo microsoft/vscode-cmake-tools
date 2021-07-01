@@ -85,6 +85,8 @@ Supported commands for substitution:
 |`cmake.buildKit`|Same as `${buildKit}`. The current CMake kit name.|
 |`cmake.buildDirectory`|The full path to the directory where CMake cache files are located.|
 |`cmake.tasksBuildCommand`|The CMake command used to build your project based on the currently selected Kit + Variant + Target. Suitable for use within `tasks.json`.|
+|`cmake.activeFolderName`|The name of the active folder (e.g. in a multi-root workspace)|
+|`cmake.activeFolderPath`|The asolute path of the active folder (e.g. in a multi-root workspace)|
 
 ## Next steps
 

@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+
 import {EnvironmentVariables, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
@@ -682,4 +683,3 @@ export function getRelativePath(file: string, dir: string): string {
   const joinedPath = "${workspaceFolder}/".concat(relPathDir);
   return joinedPath;
 }
-
