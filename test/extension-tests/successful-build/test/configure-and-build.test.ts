@@ -11,6 +11,7 @@ import {
   getMatchingSystemKit
 } from '@test/util';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
 
 let workername: string = process.platform;
@@ -50,8 +51,8 @@ suite('Build', async () => {
 
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
     const kit = await getFirstSystemKit(cmt);
-    console.log("Using following kit in next test: ", kit);
-    await cmt.setKit(kit);
+    console.log("Using following kit in next test: ", kit.name);
+    await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
     testEnv.projectFolder.buildDirectory.clear();
   });
 
