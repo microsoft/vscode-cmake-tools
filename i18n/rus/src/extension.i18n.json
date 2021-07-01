@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "Запуск CMakeTools в тестовом режиме. selectConfigurePreset отключен.",
 	"selecting.build.preset.in.test.mode": "Запуск CMakeTools в тестовом режиме. selectBuildPreset отключен.",
 	"selecting.test.preset.in.test.mode": "Запуск CMakeTools в тестовом режиме. selectTestPreset отключен.",
-	"registerTaskProvider": "Регистрация поставщика задач.",
 	"initial.setup": "Начальная настройка",
 	"started": "запущено",
 	"cmake.finished.returned": "{0} завершено (возвращено {1}).",
