@@ -151,8 +151,11 @@ interface CompilerVersion {
   installedDir?: string;
 }
 
-export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string): Promise<CompilerVersion|null> {
+export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string, pr?: ProgressReporter): Promise<CompilerVersion|null> {
   log.debug(localize('testing.compiler.binary', 'Testing {0} binary: {1}', vendor, binPath));
+  if (pr) {
+    pr.report({message: localize('getting.compiler.version', 'Getting {0} version for {1}', vendor, binPath)});
+  }
   const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
   if (exec.retc !== 0) {
     log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
@@ -283,11 +286,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
   const gcc_res = gcc_regex.exec(fname);
   const clang_res = clang_regex.exec(fname);
   if (gcc_res) {
-    log.debug(localize('testing.gcc.binary', 'Testing GCC binary: {0}', bin));
-    if (pr) {
-      pr.report({message: localize('getting.gcc.version', 'Getting GCC version for {0}', bin)});
-    }
-    const version = await getCompilerVersion('GCC', bin);
+    const version = await getCompilerVersion('GCC', bin, pr);
     if (version === null) {
       return null;
     }
@@ -343,11 +342,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     return gccKit;
 
   } else if (clang_res) {
-    log.debug(localize('testing.clang.binary', 'Testing Clang binary: {0}', bin));
-    if (pr) {
-      pr.report({message: localize('getting.clang.version', 'Getting Clang version for {0}', bin)});
-    }
-    const version = await getCompilerVersion('Clang', bin);
+    const version = await getCompilerVersion('Clang', bin, pr);
     if (version === null) {
       return null;
     }
