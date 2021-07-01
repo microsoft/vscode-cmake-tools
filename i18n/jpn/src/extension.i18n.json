@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "CMakeTools はテスト モードで実行されています。selectConfigurePreset が無効になります。",
 	"selecting.build.preset.in.test.mode": "CMakeTools はテスト モードで実行されています。selectBuildPreset が無効になります。",
 	"selecting.test.preset.in.test.mode": "CMakeTools はテスト モードで実行されています。selectTestPreset が無効になります。",
-	"registerTaskProvider": "タスク プロバイダーを登録します。",
 	"initial.setup": "初期セットアップ",
 	"started": "開始",
 	"cmake.finished.returned": "{0} が完了しました ({1} が返されました)",

@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "CMakeTools test modunda çalıştırılıyor. selectConfigurePreset devre dışı bırakıldı.",
 	"selecting.build.preset.in.test.mode": "CMakeTools test modunda çalıştırılıyor. selectBuildPreset devre dışı bırakıldı.",
 	"selecting.test.preset.in.test.mode": "CMakeTools test modunda çalıştırılıyor. selectTestPreset devre dışı bırakıldı.",
-	"registerTaskProvider": "Görev sağlayıcısını kaydedin.",
 	"initial.setup": "Başlangıç kurulumu",
 	"started": "başlatıldı",
 	"cmake.finished.returned": "{0} tamamlandı ({1} döndürüldü)",

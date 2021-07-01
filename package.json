@@ -504,9 +504,28 @@
           "command"
         ],
         "properties": {
+          "label": {
+            "type": "string",
+            "description": "The name of the task"
+          },
           "command": {
             "type": "string",
-            "description": "CMake command"
+            "enum": [ "build" ],
+            "description": "CMake build command"
+          },
+          "options": {
+            "type": "object",
+            "description": "Additional command options",
+            "properties": {
+              "cwd": {
+                "type": "string",
+                "description": "The current working directory of the executed program or script. If omitted Code's current workspace root is used."
+              }
+            }
+          },
+          "detail": {
+            "type": "string",
+            "description": "Additional details of the task"
           }
         }
       }
