@@ -61,6 +61,7 @@ suite('[Environment Variables in Variants]', async () => {
     await fs.rename(variantFile, variantFileBackup);
     expect(await fs.exists(variantFile)).to.be.false;
 
+    console.log('updating defaultVariants');
     // Set fake settings
     testEnv.config.updatePartial({
       defaultVariants: {
@@ -80,6 +81,7 @@ suite('[Environment Variables in Variants]', async () => {
         }
       }
     });
+    console.log('done updating defaultVariants');
 
     try {
       // Configure
