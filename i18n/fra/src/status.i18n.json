@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Cliquer pour changer le kit actif",
 	"no.active.kit": "Aucun kit actif",
 	"no.kit.selected": "Aucun kit sélectionné",
-	"set.active.target.tooltip": "Définir la cible active à générer",
+	"set.active.target.tooltip": "Définir la cible de build par défaut",
 	"select.target.tooltip": "Sélectionner la cible à lancer",
 	"launch.debugger.tooltip": "Lancer le débogueur pour la cible sélectionnée",
 	"launch.tooltip": "Lancer la cible sélectionnée dans la fenêtre de terminal",
@@ -21,5 +21,11 @@
 	"tests.passing": "Réussite des tests : {0}/{1}",
 	"build.tooltip": "Générer la cible sélectionnée",
 	"build": "Version",
-	"stop": "Arrêter"
+	"stop": "Arrêter",
+	"click.to.change.configure.preset.tooltip": "Cliquez pour modifier la présélection de configuration active",
+	"no.configure.preset.selected": "Aucune présélection de configuration sélectionnée",
+	"click.to.change.build.preset.tooltip": "Cliquez pour changer la présélection de build active",
+	"no.build.preset.selected": "Aucune présélection de build sélectionnée",
+	"click.to.change.test.preset.tooltip": "Cliquez pour modifier la présélection de test active",
+	"no.test.preset.selected": "Aucune présélection de test sélectionnée"
 }

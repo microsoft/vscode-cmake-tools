@@ -107,7 +107,7 @@ export interface ExtensionConfigurationSettings {
   buildToolArgs: string[];
   parallelJobs: number;
   ctestPath: string;
-  ctest: {parallelJobs: number;};
+  ctest: {parallelJobs: number};
   parseBuildDiagnostics: boolean;
   enabledOutputParsers: string[];
   debugConfig: object;
@@ -193,7 +193,7 @@ export class ConfigurationReader implements vscode.Disposable {
     const platmap = {
       win32: 'windows',
       darwin: 'osx',
-      linux: 'linux',
+      linux: 'linux'
     } as {[k: string]: string};
     const platform = platmap[process.platform];
     const for_platform = (data as any)[platform] as ExtensionConfigurationSettings | undefined;
@@ -215,7 +215,11 @@ export class ConfigurationReader implements vscode.Disposable {
       if (util.compare(new_value, old_value) !== util.Ordering.Equivalent) {
         if (fireEvent) {
           const em: vscode.EventEmitter<ExtensionConfigurationSettings[typeof key]> = this._emitters[key];
-          em.fire(newData[key]);
+          // The key is defined by this point.
+          const temp = newData[key];
+          if (temp !== undefined) {
+            em.fire(temp);
+          }
         }
         keys.push(key);
       }
@@ -271,7 +275,7 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
-    if (communicationMode == "automatic" && this.useCMakeServer) {
+    if (communicationMode === "automatic" && this.useCMakeServer) {
       log.warning(localize(
           'please.upgrade.configuration',
           'The setting \'useCMakeServer\' is replaced by \'cmakeCommunicationMode\'. Please upgrade your configuration.'));
@@ -335,7 +339,7 @@ export class ConfigurationReader implements vscode.Disposable {
     buildToolArgs: new vscode.EventEmitter<string[]>(),
     parallelJobs: new vscode.EventEmitter<number>(),
     ctestPath: new vscode.EventEmitter<string>(),
-    ctest: new vscode.EventEmitter<{parallelJobs: number;}>(),
+    ctest: new vscode.EventEmitter<{parallelJobs: number}>(),
     parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
     enabledOutputParsers: new vscode.EventEmitter<string[]>(),
     debugConfig: new vscode.EventEmitter<object>(),

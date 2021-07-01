@@ -13,6 +13,7 @@ chai.use(chaiString);
 
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import { LegacyCMakeDriver } from '@cmt/drivers/legacy-driver';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
@@ -27,7 +28,6 @@ function cleanupBuildDir(build_dir: string): boolean {
 }
 
 let driver: CMakeDriver|null = null;
-// tslint:disable:no-unused-expression
 
 export function makeCodeModelDriverTestsuite(
     driver_generator: (cmake: CMakeExecutable,
@@ -42,6 +42,8 @@ export function makeCodeModelDriverTestsuite(
     const root = getTestRootFilePath(workspacePath);
     const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/test_project');
     const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/empty_project');
+    const sourceOutsideOfWorkspace
+        = getTestRootFilePath('test/unit-tests/driver/workspace/source_outside_of_workspace/workspace');
 
     let kitDefault: Kit;
     if (process.platform === 'win32') {
@@ -66,6 +68,11 @@ export function makeCodeModelDriverTestsuite(
       if (!cleanupBuildDir(path.join(emptyWorkspaceFolder, 'build'))) {
         done('Empty project build folder still exists');
       }
+
+      if (!cleanupBuildDir(path.join(sourceOutsideOfWorkspace, 'build'))) {
+        done('Source-outside-of-workspace project build folder still exists');
+      }
+
       done();
     });
 
@@ -77,14 +84,15 @@ export function makeCodeModelDriverTestsuite(
     });
 
 
-    async function generateCodeModelForConfiguredDriver(args: string[] =
-                                                            []): Promise<null|codemodel_api.CodeModelContent> {
+    async function generateCodeModelForConfiguredDriver(args: string[] = [],
+                                                        workspaceFolder: string = defaultWorkspaceFolder):
+        Promise<null|codemodel_api.CodeModelContent> {
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 
-      driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
+      driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
       let code_model: null|codemodel_api.CodeModelContent = null;
-      if (driver instanceof codemodel_api.CodeModelDriver) {
+      if (driver && !(driver instanceof LegacyCMakeDriver)) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
       }
       expect(await driver.configure(ConfigureTrigger.runTests, args)).to.be.eq(0);
@@ -129,7 +137,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE' && t.name == 'TestBuildProcess');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -155,7 +163,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'STATIC_LIBRARY');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -188,7 +196,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'SHARED_LIBRARY');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'SHARED_LIBRARY');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -224,8 +232,8 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'UTILITY'
-                                                                                    && t.name == 'runTestTarget');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'UTILITY'
+                                                                                    && t.name === 'runTestTarget');
       expect(target).to.be.not.undefined;
 
       // maybe could be used to exclude file list from utility targets
@@ -242,9 +250,38 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE');
       expect(target).to.be.not.undefined;
       expect(target!.sysroot).to.be.eq('/tmp');
+    }).timeout(90000);
+
+    test('Test source files outside of workspace root', async () => {
+      const project_name: string = 'source_outside_of_workspace';
+      const codemodel_data = await generateCodeModelForConfiguredDriver([], sourceOutsideOfWorkspace);
+      expect(codemodel_data).to.be.not.null;
+
+      for (const [target_name, target_subdir, sourcefile_name] of [['root_target', '', '../main.cpp'],
+                                                                   ['subdir_target', 'subdir', '../../main.cpp']] as
+           const) {
+
+        const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE'
+                                                                                      && t.name === target_name);
+        expect(target).to.be.not.undefined;
+
+        // Assert correct target names for node labels
+        const executableName = target_name + (process.platform === 'win32' ? '.exe' : '');
+        expect(target!.fullName).to.be.eq(executableName);
+
+        // Assert correct location of target source directories
+        expect(path.normalize(target!.sourceDirectory!).toLowerCase())
+            .to.eq(path.normalize(path.join(root, project_name, 'workspace', target_subdir)).toLowerCase());
+
+        // Assert correct path to source file
+        expect(target!.fileGroups).to.be.not.undefined;
+        const compile_information = target!.fileGroups!.find(t => !!t.language);
+        expect(compile_information).to.be.not.undefined;
+        expect(compile_information!.sources).to.include(sourcefile_name);
+      }
     }).timeout(90000);
   });
 }

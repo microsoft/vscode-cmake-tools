@@ -74,7 +74,7 @@ class WindowsEnvironment {
 class Paths {
   private _ninjaPath?: string;
 
-  readonly windows: WindowsEnvironment = new WindowsEnvironment;
+  readonly windows: WindowsEnvironment = new WindowsEnvironment();
 
   /**
    * The current user's home directory
@@ -92,7 +92,7 @@ class Paths {
    * application data should be stored.
    */
   get userLocalDir(): string {
-    if (process.platform == 'win32') {
+    if (process.platform === 'win32') {
       return this.windows.LocalAppData!;
     } else {
       const xdg_dir = process.env['XDG_DATA_HOME'];
@@ -105,7 +105,7 @@ class Paths {
   }
 
   get userRoamingDir(): string {
-    if (process.platform == 'win32') {
+    if (process.platform === 'win32') {
       return this.windows.AppData!;
     } else {
       const xdg_dir = process.env['XDG_CONFIG_HOME'];
@@ -133,7 +133,7 @@ class Paths {
    * Get the platform-specific temporary directory
    */
   get tmpDir(): string {
-    if (process.platform == 'win32') {
+    if (process.platform === 'win32') {
       return this.windows.Temp!;
     } else {
       return '/tmp';
@@ -159,7 +159,7 @@ class Paths {
 
   async getCTestPath(wsc: DirectoryContext, overWriteCMakePathSetting?: string): Promise<string|null> {
     const ctest_path = await this.expandStringPath(wsc.config.raw_ctestPath, wsc);
-    if (!ctest_path || ctest_path == 'auto') {
+    if (!ctest_path || ctest_path === 'auto') {
       const cmake = await this.getCMakePath(wsc, overWriteCMakePathSetting);
       if (cmake === null) {
         return null;
@@ -168,6 +168,7 @@ class Paths {
         // Check if CTest is a sibling executable in the same directory
         if (await fs.exists(ctest_sibling)) {
           const stat = await fs.stat(ctest_sibling);
+          // eslint-disable-next-line no-bitwise
           if (stat.isFile() && stat.mode & 0b001001001) {
             return ctest_sibling;
           } else {
@@ -243,8 +244,8 @@ class Paths {
         workspaceRoot: wsc.folder.uri.fsPath,
         workspaceRootFolderName: path.basename(wsc.folder.uri.fsPath),
         workspaceHash: util.makeHashString(wsc.folder.uri.fsPath),
-        userHome: this.userHome,
-      },
+        userHome: this.userHome
+      }
     });
   }
 
@@ -253,7 +254,7 @@ class Paths {
 
     const vs_installations = await vsInstallations();
     if (vs_installations.length > 0) {
-      const bundled_tool_paths = [] as {cmake: string, ninja: string}[];
+      const bundled_tool_paths = [] as {cmake: string; ninja: string}[];
 
       for (const install of vs_installations) {
         const bundled_tool_path = {

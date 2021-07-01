@@ -10,7 +10,6 @@ import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
 import { PresetsController } from '@cmt/presetsController';
-import * as preset from '@cmt/preset';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -34,8 +33,8 @@ export class CMakeToolsFolder {
       }
     };
     cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener);
-    preset.onPresetsChanged(useCMakePresetsChangedListener);
-    preset.onUserPresetsChanged(useCMakePresetsChangedListener);
+    presetsController.onPresetsChanged(useCMakePresetsChangedListener);
+    presetsController.onUserPresetsChanged(useCMakePresetsChangedListener);
   }
 
   static async init(cmakeTools: CMakeTools) {
@@ -90,7 +89,7 @@ export class CMakeToolsFolder {
       const kit_name = folder.cmakeTools.workspaceContext.state.activeKitName;
       if (kit_name) {
         // It remembers a kit. Find it in the kits avail in this dir:
-        const kit = folder.kitsController.availableKits.find(k => k.name == kit_name) || null;
+        const kit = folder.kitsController.availableKits.find(k => k.name === kit_name) || null;
         // Set the kit: (May do nothing if no kit was found)
         await folder.cmakeTools.setKit(kit);
       }
@@ -109,7 +108,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
     this._beforeAddFolderEmitter,
     this._afterAddFolderEmitter,
     this._beforeRemoveFolderEmitter,
-    this._afterRemoveFolderEmitter,
+    this._afterRemoveFolderEmitter
   ];
 
   get onBeforeAddFolder() { return this._beforeAddFolderEmitter.event; }
@@ -142,7 +141,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   constructor(readonly extensionContext: vscode.ExtensionContext) {
     this._subscriptions = [
       vscode.workspace.onDidChangeWorkspaceFolders(
-        e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this._onChange(e))),
+        e => rollbar.invokeAsync(localize('update.workspace.folders', 'Update workspace folders'), () => this._onChange(e)))
     ];
   }
 
@@ -152,7 +151,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
    * Get the CMakeTools instance associated with the given workspace folder, or undefined
    * @param ws The workspace folder to search, or array of command and workspace path
    */
-  get(ws: vscode.WorkspaceFolder | Array<string> | undefined): CMakeToolsFolder | undefined {
+  get(ws: vscode.WorkspaceFolder | string[] | undefined): CMakeToolsFolder | undefined {
     if (ws) {
       if (util.isArrayOfString(ws)) {
         return this._instances.get(ws[ws.length - 1]);
@@ -217,7 +216,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
   private async _addFolder(folder: vscode.WorkspaceFolder) {
     const existing = this.get(folder);
     if (existing) {
-      rollbar.error(localize('same.folder.loaded.twice','The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
+      rollbar.error(localize('same.folder.loaded.twice', 'The same workspace folder was loaded twice'), { wsUri: folder.uri.toString() });
       return existing;
     }
     // Load for the workspace.

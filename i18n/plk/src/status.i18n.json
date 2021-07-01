@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Kliknij, aby zmienić aktywny zestaw",
 	"no.active.kit": "Nie ma aktywnego zestawu",
 	"no.kit.selected": "Nie wybrano zestawu",
-	"set.active.target.tooltip": "Skonfiguruj aktywny element docelowy do skompilowania",
+	"set.active.target.tooltip": "Ustaw domyślny element docelowy kompilowania",
 	"select.target.tooltip": "Wybierz element docelowy do uruchomienia",
 	"launch.debugger.tooltip": "Uruchom debuger dla wybranego elementu docelowego",
 	"launch.tooltip": "Uruchom wybrany element docelowy w oknie terminalu",
@@ -21,5 +21,11 @@
 	"tests.passing": "{0}/{1} testów zakończono powodzeniem",
 	"build.tooltip": "Utwórz wybrany element docelowy",
 	"build": "Kompilacja",
-	"stop": "Zatrzymaj"
+	"stop": "Zatrzymaj",
+	"click.to.change.configure.preset.tooltip": "Kliknij, aby zmienić aktywną predefiniowaną konfigurację",
+	"no.configure.preset.selected": "Nie wybrano predefiniowanej konfiguracji",
+	"click.to.change.build.preset.tooltip": "Kliknij, aby zmienić aktywną predefiniowaną kompilację",
+	"no.build.preset.selected": "Nie wybrano predefiniowanej kompilacji",
+	"click.to.change.test.preset.tooltip": "Kliknij, aby zmienić aktywny predefiniowany test",
+	"no.test.preset.selected": "Nie wybrano predefiniowanego testu"
 }
