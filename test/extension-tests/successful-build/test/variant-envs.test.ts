@@ -82,8 +82,16 @@ suite('[Environment Variables in Variants]', async () => {
       }
     });
     console.log('done updating defaultVariants');
+    const sleep = new Promise<void>(resolve =>{
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
 
     try {
+      console.log('sleeping to wait for file watcher to kick in');
+      await sleep;
+      console.log('awake');
       // Configure
       expect(await cmt.configure()).to.be.eq(0, '[variantEnv] configure failed');
       expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
