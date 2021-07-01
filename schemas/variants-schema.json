@@ -26,6 +26,7 @@
           "minProperties": 1,
           "patternProperties": {
             "^\\w+$": {
+              "type": "object",
               "required": [
                 "short"
               ],
