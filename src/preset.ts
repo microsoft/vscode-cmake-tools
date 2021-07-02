@@ -541,7 +541,7 @@ function parseToolset(toolset: string): Toolset {
           result.VCTargetsPath = keyValue[1];
           break;
         default:
-          log.warning(localize('unknown.toolset.option', "Unrecognized toolset option: {0}", keyValue[0]));
+          log.warning(localize('unknown.toolset.option', "Unrecognized toolset option will be ignored: {0}", option));
           break;
       }
     }
