@@ -554,8 +554,7 @@ export class PresetsController {
 
   // Returns the name of preset selected from the list of non-hidden presets.
   private async selectNonHiddenPreset(presets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | undefined> {
-    const chosenPreset: string | undefined = await this.selectPreset(presets, options, false);
-    return chosenPreset;
+    return this.selectPreset(presets, options, false);
   }
   // Returns the name of preset selected from the list of all hidden/non-hidden presets.
   private async selectAnyPreset(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }): Promise<string[] | undefined> {
