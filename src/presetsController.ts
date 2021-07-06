@@ -364,6 +364,7 @@ export class PresetsController {
             generator: 'Ninja',
             binaryDir: '${sourceDir}/out/build/${presetName}',
             cacheVariables: {
+              CMAKE_BUILD_TYPE: 'Debug',
               CMAKE_INSTALL_PREFIX: '${sourceDir}/out/install/${presetName}'
             }
           };
