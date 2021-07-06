@@ -1946,7 +1946,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn run lint"
+      "pre-push": "yarn run lint"
     }
   },
   "devDependencies": {
@@ -1972,7 +1972,6 @@
     "chai-as-promised": "^7.1.1",
     "chai-string": "^1.5.0",
     "clang-format": "^1.5.0",
-    "husky": "^4.3.8",
     "eslint": "^7.25.0",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-jsdoc": "^33.1.0",
@@ -1985,6 +1984,7 @@
     "gulp-mocha": "^8.0.0",
     "gulp-sourcemaps": "^3.0.0",
     "gulp-typescript": "^5.0.1",
+    "husky": "^4.3.8",
     "jsonc-parser": "^3.0.0",
     "mocha": "^8.3.2",
     "module-alias": "^2.2.2",
