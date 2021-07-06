@@ -81,6 +81,13 @@ suite('[Environment Variables in Variants]', async () => {
       }
     });
 
+    // Give enough time for the file watcher to kick in and update the variant manager
+    await new Promise<void>(resolve => {
+      setTimeout(() => {
+        resolve();
+      }, 2000);
+    });
+
     try {
       // Configure
       expect(await cmt.configure()).to.be.eq(0, '[variantEnv] configure failed');
