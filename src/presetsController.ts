@@ -554,17 +554,16 @@ export class PresetsController {
 
   // Returns the name of preset selected from the list of non-hidden presets.
   private async selectNonHiddenPreset(presets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | undefined> {
-    const chosenPreset: string | string[] | undefined = await this.selectPreset(presets, options, false);
-    if (util.isArray(chosenPreset)) {
-      throw Error ('Only one preset can be chosen.');
-    }
+    const chosenPreset: string | undefined = await this.selectPreset(presets, options, false);
     return chosenPreset;
   }
   // Returns the name of preset selected from the list of all hidden/non-hidden presets.
-  private async selectAnyPreset(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }): Promise<string | string[] | undefined> {
+  private async selectAnyPreset(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }): Promise<string[] | undefined> {
     return this.selectPreset(presets, options, true);
   }
 
+  private async selectPreset(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }, showHiddenPresets: boolean): Promise<string[] | undefined>;
+  private async selectPreset(presets: preset.Preset[], options: vscode.QuickPickOptions, showHiddenPresets: boolean): Promise<string | undefined>;
   private async selectPreset(presets: preset.Preset[], options: vscode.QuickPickOptions, showHiddenPresets: boolean): Promise<string | string[] | undefined> {
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
