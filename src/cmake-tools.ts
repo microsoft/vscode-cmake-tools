@@ -1802,9 +1802,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    // add debug configuration from settings
+    // Add debug configuration from settings.
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
+    // Add environment variables from buildPreset.
+    if (this.buildPreset?.environment) {
+      const build_preset_environment = await drv.getCMakeBuildCommandEnvironment({});
+      const temp = util.convertEnvironmentVars(build_preset_environment);
+      debug_config.environment = debug_config.environment.concat(temp);
+    }
+
     log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
       workspace: this.folder.uri.toString(),
       config: debug_config
@@ -1846,6 +1853,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
     const user_config = this.workspaceContext.config.debugConfig;
+    const drv = await this.getCMakeDriverInstance();
+    // Add environment variables from buildPreset.
+    if (drv && this.buildPreset?.environment) {
+      const build_preset_environment = await drv.getCMakeBuildCommandEnvironment({});
+      const temp = util.splitEnvironmentVars(build_preset_environment);
+      user_config.environment = user_config.environment.concat(temp);
+    }
     const termOptions: vscode.TerminalOptions = {
       name: 'CMake/Launch',
       cwd: (user_config && user_config.cwd) || path.dirname(executable.path)

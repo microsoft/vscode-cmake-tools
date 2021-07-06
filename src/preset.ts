@@ -34,7 +34,7 @@ export interface Preset {
   environment?: { [key: string]: null | string };
   vendor?: VendorType;
 
-  __expanded?: boolean; // Private field to indicate if we have already expanded thie preset.
+  __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
 }
 
 export interface ValueStrategy {
