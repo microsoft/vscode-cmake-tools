@@ -1024,7 +1024,7 @@
         },
         "cmake.installPrefix": {
           "type": "string",
-          "default": null,
+          "default": "",
           "description": "%cmake-tools.configuration.cmake.installPrefix.description%",
           "scope": "resource"
         },
@@ -1083,19 +1083,19 @@
         },
         "cmake.generator": {
           "type": "string",
-          "default": null,
+          "default": "",
           "description": "%cmake-tools.configuration.cmake.generator.description%",
           "scope": "resource"
         },
         "cmake.toolset": {
           "type": "string",
-          "default": null,
+          "default": "",
           "description": "%cmake-tools.configuration.cmake.toolset.description%",
           "scope": "resource"
         },
         "cmake.platform": {
           "type": "string",
-          "default": null,
+          "default": "",
           "description": "%cmake-tools.configuration.cmake.platform.description%",
           "scope": "resource"
         },
@@ -1135,7 +1135,7 @@
         },
         "cmake.ctestPath": {
           "type": "string",
-          "default": null,
+          "default": "",
           "description": "%cmake-tools.configuration.cmake.ctestPath.description%",
           "scope": "resource"
         },
@@ -1442,7 +1442,7 @@
         },
         "cmake.copyCompileCommands": {
           "type": "string",
-          "default": null,
+          "default": "",
           "description": "%cmake-tools.configuration.cmake.copyCompileCommands.description%",
           "scope": "resource"
         },

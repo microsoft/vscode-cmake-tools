@@ -91,7 +91,7 @@ export interface ExtensionConfigurationSettings {
   autoSelectActiveFolder: boolean;
   cmakePath: string;
   buildDirectory: string;
-  installPrefix: string|null;
+  installPrefix: string;
   sourceDirectory: string;
   saveBeforeBuild: boolean;
   buildBeforeRun: boolean;
@@ -99,9 +99,9 @@ export interface ExtensionConfigurationSettings {
   configureSettings: {[key: string]: any};
   cacheInit: string|string[]|null;
   preferredGenerators: string[];
-  generator: string|null;
-  toolset: string|null;
-  platform: string|null;
+  generator: string;
+  toolset: string;
+  platform: string;
   configureArgs: string[];
   buildArgs: string[];
   buildToolArgs: string[];
@@ -120,7 +120,7 @@ export interface ExtensionConfigurationSettings {
   testEnvironment: HardEnv;
   mingwSearchDirs: string[];
   emscriptenSearchDirs: string[];
-  copyCompileCommands: string|null;
+  copyCompileCommands: string;
   configureOnOpen: boolean|null;
   configureOnEdit: boolean;
   skipConfigureIfCachePresent: boolean|null;
@@ -230,7 +230,7 @@ export class ConfigurationReader implements vscode.Disposable {
 
   get autoSelectActiveFolder(): boolean { return this.configData.autoSelectActiveFolder; }
   get buildDirectory(): string { return this.configData.buildDirectory; }
-  get installPrefix(): string|null { return this.configData.installPrefix; }
+  get installPrefix(): string { return this.configData.installPrefix; }
   get sourceDirectory(): string { return this.configData.sourceDirectory as string; }
   get saveBeforeBuild(): boolean { return !!this.configData.saveBeforeBuild; }
   get buildBeforeRun(): boolean { return this.configData.buildBeforeRun; }
@@ -238,9 +238,9 @@ export class ConfigurationReader implements vscode.Disposable {
   get configureSettings(): any { return this.configData.configureSettings; }
   get cacheInit() { return this.configData.cacheInit; }
   get preferredGenerators(): string[] { return this.configData.preferredGenerators; }
-  get generator(): string|null { return this.configData.generator; }
-  get toolset(): string|null { return this.configData.toolset; }
-  get platform(): string|null { return this.configData.platform; }
+  get generator(): string { return this.configData.generator; }
+  get toolset(): string { return this.configData.toolset; }
+  get platform(): string { return this.configData.platform; }
   get configureArgs(): string[] { return this.configData.configureArgs; }
   get buildArgs(): string[] { return this.configData.buildArgs; }
   get buildToolArgs(): string[] { return this.configData.buildToolArgs; }
@@ -303,7 +303,7 @@ export class ConfigurationReader implements vscode.Disposable {
   get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
   get additionalKits(): string[] { return this.configData.additionalKits; }
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
-  get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
+  get copyCompileCommands(): string { return this.configData.copyCompileCommands; }
   get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
   get buildTask(): boolean { return this.configData.buildTask; }
   get outputLogEncoding(): string { return this.configData.outputLogEncoding; }
@@ -323,7 +323,7 @@ export class ConfigurationReader implements vscode.Disposable {
     autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
     cmakePath: new vscode.EventEmitter<string>(),
     buildDirectory: new vscode.EventEmitter<string>(),
-    installPrefix: new vscode.EventEmitter<string|null>(),
+    installPrefix: new vscode.EventEmitter<string>(),
     sourceDirectory: new vscode.EventEmitter<string>(),
     saveBeforeBuild: new vscode.EventEmitter<boolean>(),
     buildBeforeRun: new vscode.EventEmitter<boolean>(),
@@ -331,9 +331,9 @@ export class ConfigurationReader implements vscode.Disposable {
     configureSettings: new vscode.EventEmitter<{[key: string]: any}>(),
     cacheInit: new vscode.EventEmitter<string|string[]|null>(),
     preferredGenerators: new vscode.EventEmitter<string[]>(),
-    generator: new vscode.EventEmitter<string|null>(),
-    toolset: new vscode.EventEmitter<string|null>(),
-    platform: new vscode.EventEmitter<string|null>(),
+    generator: new vscode.EventEmitter<string>(),
+    toolset: new vscode.EventEmitter<string>(),
+    platform: new vscode.EventEmitter<string>(),
     configureArgs: new vscode.EventEmitter<string[]>(),
     buildArgs: new vscode.EventEmitter<string[]>(),
     buildToolArgs: new vscode.EventEmitter<string[]>(),
@@ -352,7 +352,7 @@ export class ConfigurationReader implements vscode.Disposable {
     testEnvironment: new vscode.EventEmitter<HardEnv>(),
     mingwSearchDirs: new vscode.EventEmitter<string[]>(),
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
-    copyCompileCommands: new vscode.EventEmitter<string|null>(),
+    copyCompileCommands: new vscode.EventEmitter<string>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     configureOnEdit: new vscode.EventEmitter<boolean>(),
     skipConfigureIfCachePresent: new vscode.EventEmitter<boolean|null>(),
