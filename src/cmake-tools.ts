@@ -1808,7 +1808,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Add environment variables from buildPreset.
     if (this.buildPreset?.environment) {
       const build_preset_environment = await drv.getCMakeBuildCommandEnvironment({});
-      const temp = util.convertEnvironmentVars(build_preset_environment);
+      const temp = util.splitEnvironmentVars(build_preset_environment);
       debug_config.environment = debug_config.environment.concat(temp);
     }
 
