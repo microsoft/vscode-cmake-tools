@@ -41,7 +41,7 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import {updateFullFeatureSetForFolder, registerTaskProvider, enableFullFeatureSet, isActiveFolder} from './extension';
+import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetInTaskProvider } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -245,7 +245,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
           await drv.setBuildPreset(expandedBuildPreset);
-          await this.reRegisterTaskProviderforNewTarget(drv, undefined);
+          this.updateDriverAndTargetInTaskProvider(drv);
           this.workspaceContext.state.buildPresetName = buildPreset;
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error) {
@@ -656,8 +656,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._targetName.set(this.defaultBuildTarget || drv.allTargetName);
     await this._ctestController.reloadTests(drv);
 
-    // Make sure to re-register the task provider when a new driver is created
-    await registerTaskProvider(await this.tasksBuildCommandDrv(drv));
+    // Update the task provider when a new driver is created
+    updateCMakeDriverInTaskProvider(drv);
 
     // All set up. Fulfill the driver promise.
     return drv;
@@ -1255,7 +1255,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
       targetName = target;
     }
-    await this.reRegisterTaskProviderforNewTarget(drv, target);
+    this.updateDriverAndTargetInTaskProvider(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
@@ -1509,14 +1509,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
     await this._setDefaultBuildTarget(target);
     const drv = await this._cmakeDriver;
-    await this.reRegisterTaskProviderforNewTarget(drv, target);
+    this.updateDriverAndTargetInTaskProvider(drv, target);
   }
 
-  async reRegisterTaskProviderforNewTarget(drv: CMakeDriver | null, target: string | undefined) {
+  updateDriverAndTargetInTaskProvider(drv: CMakeDriver | null, target?: string) {
     if (drv && (this.useCMakePresets || target)) {
-      const buildargs = await drv.getCMakeBuildCommand(target);
-      const command = (buildargs) ? buildCmdStr(buildargs.command, buildargs.args) : null;
-      await registerTaskProvider(command);
+      updateCMakeDriverInTaskProvider(drv);
+      updateDefaultTargetInTaskProvider(target);
     }
   }
 

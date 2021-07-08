@@ -29,7 +29,7 @@ import {FireNow, FireLate} from '@cmt/prop';
 import rollbar from '@cmt/rollbar';
 import {StateManager} from './state';
 import {StatusBar} from '@cmt/status';
-import {CMakeTaskProvider} from '@cmt/taskprovider';
+import {CMakeTaskProvider} from '@cmt/cmakeTaskProvider';
 import * as telemetry from '@cmt/telemetry';
 import {ProjectOutlineProvider, TargetNode, SourceFileNode, WorkspaceFolderNode} from '@cmt/tree';
 import * as util from '@cmt/util';
@@ -41,6 +41,8 @@ import { CMakeDriver } from './drivers/driver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+export const cmakeTaskProvider: CMakeTaskProvider = new CMakeTaskProvider();
+let taskProvider: vscode.Disposable;
 
 const log = logging.createLogger('extension');
 
@@ -48,6 +50,12 @@ const MULTI_ROOT_MODE_KEY = 'cmake:multiRoot';
 const HIDE_LAUNCH_COMMAND_KEY = 'cmake:hideLaunchCommand';
 const HIDE_DEBUG_COMMAND_KEY = 'cmake:hideDebugCommand';
 const HIDE_BUILD_COMMAND_KEY = 'cmake:hideBuildCommand';
+
+/**
+ * The global extension manager. There is only one of these, even if multiple
+ * backends.
+ */
+let _EXT_MANAGER: ExtensionManager|null = null;
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
@@ -1312,6 +1320,13 @@ class ExtensionManager implements vscode.Disposable {
     await logging.showLogFile();
   }
 
+  activeFolderName(): string  {
+    return this._folders.activeFolder?.folder.name || '';
+  }
+  activeFolderPath(): string  {
+    return this._folders.activeFolder?.folder.uri.fsPath || '';
+  }
+
   async hideLaunchCommand(shouldHide: boolean = true) {
     // Don't hide command selectLaunchTarget here since the target can still be useful, one example is ${command:cmake.launchTargetPath} in launch.json
     this._statusBar.hideLaunchButton(shouldHide);
@@ -1473,25 +1488,6 @@ class ExtensionManager implements vscode.Disposable {
   }
 }
 
-/**
- * The global extension manager. There is only one of these, even if multiple
- * backends.
- */
-let _EXT_MANAGER: ExtensionManager|null = null;
-let cmakeTaskProvider: vscode.Disposable | undefined;
-
-export async function registerTaskProvider(command: string | null) {
-  if (command) {
-    rollbar.invokeAsync(localize('registerTaskProvider', 'Register the task provider.'), async () => {
-      if (cmakeTaskProvider) {
-        cmakeTaskProvider.dispose();
-      }
-
-      cmakeTaskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeType, new CMakeTaskProvider({ build: command }));
-    });
-  }
-}
-
 async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle) {
   reportProgress(localize('initial.setup', 'Initial setup'), progress);
 
@@ -1533,6 +1529,8 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
 
   // List of functions that will be bound commands
   const funs: (keyof ExtensionManager)[] = [
+    'activeFolderName',
+    'activeFolderPath',
     "useCMakePresets",
     "openCMakePresets",
     'addConfigurePreset',
@@ -1677,10 +1675,13 @@ export async function activate(context: vscode.ExtensionContext) {
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
   vscode.commands.executeCommand("setContext", "inCMakeProject", true);
 
+  taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
+
   return setup(context);
 
   // TODO: Return the extension API
   // context.subscriptions.push(vscode.commands.registerCommand('cmake._extensionInstance', () => cmt));
+
 }
 
 // Enable all or part of the CMake Tools palette commands
@@ -1734,13 +1735,23 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
   enableFullFeatureSet(true);
 }
 
-// this method is called when your extension is deactivated
+// update CMakeDriver in taskProvider
+export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
+  cmakeTaskProvider.updateCMakeDriver(cmakeDriver);
+}
+
+// update default target in taskProvider
+export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
+  cmakeTaskProvider.updateDefaultTarget(defaultTarget);
+}
+
+// this method is called when your extension is deactivated.
 export async function deactivate() {
   log.debug(localize('deactivate.cmaketools', 'Deactivate CMakeTools'));
   if (_EXT_MANAGER) {
     await _EXT_MANAGER.asyncDispose();
   }
-  if (cmakeTaskProvider) {
-    cmakeTaskProvider.dispose();
+  if (taskProvider) {
+    taskProvider.dispose();
   }
 }

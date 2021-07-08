@@ -89,14 +89,27 @@ const TriplePossibleABI: {[index: string]: RegExp} = {
   eabisim: /^eabisim$/
 };
 
-const TriplePossibleLibC: {[index: string]: RegExp} = {
-  musl: /^musl$/,
-  glibc: /^(gnu|msys|cygwin)$/,
-  msvcrt: /^msvc$/,
-  mingw: /^(mingw32|mingw|mingw64|w64)/
-//  'llvm': /^llvm$/, TODO:https://github.com/llvm/llvm-project/tree/master/libc/src/stdio
-// otherwise system libc
-};
+const TriplePossibleLibC: {key: string; regexp: RegExp}[] = [
+  /* mingw have higher priority than glibc */
+  {
+    key: 'mingw',
+    regexp: /^(mingw32|mingw|mingw64|w64)/
+  },
+  {
+    key: 'musl',
+    regexp: /^musl$/
+  },
+  {
+    key: 'glibc',
+    regexp: /^(gnu|msys|cygwin)$/
+  },
+  {
+    key: 'msvcrt',
+    regexp: /^msvc$/
+  }
+  // TODO llvm-libc :https://github.com/llvm/llvm-project/tree/main/libc
+  // otherwise system libc
+];
 
 export function computeTargetTriple(target: TargetTriple): string {
   let triple = target.targetArch;
@@ -128,8 +141,7 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
         elementToSkip.push(tripleElement);
         if (foundArch === "unknow") {
           foundArch = key;
-        } else if (foundArch !== key) {
-          return undefined;
+          break;
         }
       }
     }
@@ -139,9 +151,9 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
       if (osReg.exec(tripleElement) !== null) {
         elementToSkip.push(tripleElement);
         if (foundOs === "unknow" || foundOs === 'none') {
+          // os other than none have higher priority
+          // so we not break
           foundOs = key;
-        } else if (foundOs !== key && key !== 'none') {
-          return undefined;
         }
       }
     }
@@ -152,20 +164,18 @@ export function parseTargetTriple(triple: string): TargetTriple | undefined {
         elementToSkip.push(tripleElement);
         if (foundAbi === "unknow") {
           foundAbi = key;
-        } else if (foundAbi !== key) {
-          return undefined;
+          break;
         }
       }
     }
 
-    for (const key of Object.keys(TriplePossibleLibC)) {
-      const libcReg = TriplePossibleLibC[key];
+    for (const possibleLibC of TriplePossibleLibC) {
+      const libcReg = possibleLibC.regexp;
       if (libcReg.exec(tripleElement) !== null) {
         elementToSkip.push(tripleElement);
         if (foundLibc === "unknow") {
-          foundLibc = key;
-        } else if (foundLibc !== key) {
-          return undefined;
+          foundLibc = possibleLibC.key;
+          break;
         }
       }
     }

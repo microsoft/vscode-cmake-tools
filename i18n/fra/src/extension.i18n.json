@@ -35,7 +35,6 @@
 	"selecting.config.preset.in.test.mode": "Exécution de CMakeTools en mode test. selectConfigurePreset est désactivé.",
 	"selecting.build.preset.in.test.mode": "Exécution de CMakeTools en mode test. selectBuildPreset est désactivé.",
 	"selecting.test.preset.in.test.mode": "Exécution de CMakeTools en mode test. selectTestPreset est désactivé.",
-	"registerTaskProvider": "Inscrivez le fournisseur de tâches.",
 	"initial.setup": "Configuration initiale",
 	"started": "démarré",
 	"cmake.finished.returned": "{0} a pris fin ({1} retourné)",
