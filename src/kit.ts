@@ -699,7 +699,7 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
           }
           return acc;
         }, new Map());
-  const include_env = util.envGetValue(vars, 'INCLUDE') ?? '';
+  const include_env = vars.get('INCLUDE') ?? '';
   if (include_env === '') {
     log.error(localize('script.run.error.check',
         'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}\nExecute output are:\n{4}\n',
@@ -712,22 +712,22 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
     minor: 0,
     patch: 0
   };
-  const WindowsSDKVersion = util.envGetValue(vars, 'WindowsSDKVersion') ?? '0.0.0';
+  const WindowsSDKVersion = vars.get('WindowsSDKVersion') ?? '0.0.0';
   try {
     WindowsSDKVersionParsed = util.parseVersion(WindowsSDKVersion);
   } catch (err) {
     log.error(`Parse '${WindowsSDKVersion}' failed`);
   }
   if (util.compareVersion(WindowsSDKVersionParsed, {major: 10, minor: 0, patch: 14393}) >= 0) {
-    const WindowsSdkDir = util.envGetValue(vars, 'WindowsSdkDir') ?? '';
-    const existPath = util.envGetValue(vars, 'PATH') ?? '';
+    const WindowsSdkDir = vars.get('WindowsSdkDir') ?? '';
+    const existPath = vars.get('PATH') ?? '';
     const oldWinSdkBinPath = path.join(WindowsSdkDir, 'bin', hostArch);
     const newWinSdkBinPath = path.join(WindowsSdkDir, 'bin', WindowsSDKVersion, hostArch);
     if (existPath.toLowerCase().indexOf(oldWinSdkBinPath.toLowerCase()) >= 0
       && existPath.toLowerCase().indexOf(newWinSdkBinPath.toLowerCase()) < 0) {
       log.info(localize('windows.sdk.path.patch', 'Patch Windows SDK bin path from {0} to {1} for {2}',
         oldWinSdkBinPath, newWinSdkBinPath, devbat));
-      util.envSet(vars, 'PATH', `${newWinSdkBinPath};${existPath}`);
+      vars.set('PATH', `${newWinSdkBinPath};${existPath}`);
     }
   }
   log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}',
