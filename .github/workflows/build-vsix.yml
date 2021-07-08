@@ -31,9 +31,8 @@ jobs:
 
       - name: Build the VSIX
         run:  |
-          npm install
-          npm install -g vsce
-          vsce package --yarn -o cmake-tools.vsix
+          yarn install
+          yarn run package
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v2.1.4

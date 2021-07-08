@@ -11,7 +11,6 @@ import rollbar from '@cmt/rollbar';
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
-
 /**
  * Escape a string so it can be used as a regular expression
  */
@@ -219,7 +218,6 @@ export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T|
  */
 export function randint(min: number, max: number): number { return Math.floor(Math.random() * (max - min) + min); }
 
-
 export function product<T>(arrays: T[][]): T[][] {
   // clang-format off
   return arrays.reduce((acc, curr) =>
@@ -248,7 +246,7 @@ export interface CMakeValue {
 export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   const ret: CMakeValue = {
     type: 'UNKNOWN',
-    value: '',
+    value: ''
   };
   if (value === true || value === false) {
     ret.type = 'BOOL';
@@ -268,7 +266,6 @@ export function cmakeify(value: (string|boolean|number|string[])): CMakeValue {
   return ret;
 }
 
-
 export async function termProc(child: child_process.ChildProcess) {
   // Stopping the process isn't as easy as it may seem. cmake --build will
   // spawn child processes, and CMake won't forward signals to its
@@ -286,8 +283,9 @@ async function _killTree(pid: number) {
       children = stdout.split('\n').map(line => Number.parseInt(line));
     }
     for (const other of children) {
-      if (other)
+      if (other) {
         await _killTree(other);
+      }
     }
     try {
       process.kill(pid, 'SIGINT');
@@ -336,7 +334,7 @@ export function parseVersion(str: string): Version {
   return {
     major: parseInt(major),
     minor: parseInt(minor),
-    patch: parseInt(patch),
+    patch: parseInt(patch)
   };
 }
 
@@ -378,7 +376,7 @@ export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVar
 }
 
 export function normalizeEnvironmentVarname(varname: string) {
-  return process.platform == 'win32' ? varname.toUpperCase() : varname;
+  return process.platform === 'win32' ? varname.toUpperCase() : varname;
 }
 
 export function parseCompileDefinition(str: string): [string, string|null] {
@@ -409,7 +407,7 @@ export function thisExtensionPackage(): PackageJSON {
   return {
     name: pkg.name,
     publisher: pkg.publisher,
-    version: pkg.version,
+    version: pkg.version
   };
 }
 
@@ -540,9 +538,9 @@ export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>)
 }
 
 export function getLocaleId(): string {
-  if (typeof(process.env.VSCODE_NLS_CONFIG) == "string") {
+  if (typeof(process.env.VSCODE_NLS_CONFIG) === "string") {
       const vscodeNlsConfigJson: any = JSON.parse(process.env.VSCODE_NLS_CONFIG);
-      if (typeof(vscodeNlsConfigJson.locale) == "string") {
+      if (typeof(vscodeNlsConfigJson.locale) === "string") {
           return vscodeNlsConfigJson.locale;
       }
   }
@@ -562,6 +560,33 @@ export function checkDirectoryExists(filePath: string): Promise<boolean> {
       fs.stat(filePath, (_err, stats) => {
           resolve(stats && stats.isDirectory());
       });
+  });
+}
+
+// Read the files in a directory.
+export function readDir(dirPath: string): Promise<string[]> {
+  return new Promise((resolve) => {
+    fs.readdir(dirPath, (error, list) => {
+      if (error) {
+        resolve([]);
+      } else {
+        resolve(list);
+      }
+
+    });
+  });
+}
+
+// Get the fs.stat using async function.
+export function getStat(filePath: string): Promise<fs.Stats | undefined> {
+  return new Promise((resolve) => {
+    fs.stat(filePath, (_err, stats) => {
+      if (stats) {
+        resolve(stats);
+      } else {
+        resolve(undefined);
+      }
+    });
   });
 }
 
@@ -605,7 +630,7 @@ export function isArrayOfString(x: any): x is string[] {
 export function isNullOrUndefined(x?: any): boolean {
   // Double equals provides the correct answer for 'null' and 'undefined'
   // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
-  return x == null;
+  return x === null;
 }
 
 export function isWorkspaceFolder(x?: any): boolean {
@@ -626,4 +651,35 @@ export async function normalizeAndVerifySourceDir(sourceDir: string): Promise<st
 
 export function isCodespaces(): boolean {
   return !!process.env["CODESPACES"];
+}
+
+export async function getAllCMakeListsPaths(dir: vscode.Uri): Promise<string[] | undefined> {
+  const regex: RegExp = new RegExp(/(\/|\\)CMakeLists\.txt$/);
+  return recGetAllFilePaths(dir.fsPath, regex, await readDir(dir.fsPath), []);
+}
+
+async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], result: string[]) {
+  for (const item of files) {
+    const file = path.join(dir, item);
+    try {
+      const status = await getStat(file);
+      if (status) {
+        if (status.isDirectory()) {
+          result = await recGetAllFilePaths(file, regex, await readDir(file), result);
+        } else if (status.isFile() && regex.test(file)) {
+          result.push(file);
+        }
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+  return result;
+}
+
+export function getRelativePath(file: string, dir: string): string {
+  const fullPathDir: string = path.parse(file).dir;
+  const relPathDir: string = lightNormalizePath(path.relative(dir, fullPathDir));
+  const joinedPath = "${workspaceFolder}/".concat(relPathDir);
+  return joinedPath;
 }

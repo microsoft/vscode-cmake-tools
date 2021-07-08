@@ -4,9 +4,6 @@ import {expect} from '@test/util';
 import * as path from 'path';
 import { fs } from '@cmt/pr';
 
-// tslint:disable:no-unused-expression
-
-
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit-tests', filename));
