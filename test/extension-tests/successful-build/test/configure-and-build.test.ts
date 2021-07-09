@@ -1,7 +1,7 @@
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import {fs} from '@cmt/pr';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
-import {logFilePath} from '@cmt/logging';
+import {logFilePath, setActiveTest} from '@cmt/logging';
 import {
   clearExistingKitConfigurationFile,
   DefaultEnvironment,
@@ -51,6 +51,7 @@ suite('Build', async () => {
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
     const kit = await getFirstSystemKit(cmt);
     console.log("Using following kit in next test: ", kit.name);
+    setActiveTest(this.currentTest?.title);
     await cmt.setKit(kit);
     testEnv.projectFolder.buildDirectory.clear();
   });
@@ -60,6 +61,7 @@ suite('Build', async () => {
     await cmt.asyncDispose();
     const logPath = logFilePath();
     testEnv.clean();
+    setActiveTest();
     if (await fs.exists(logPath)) {
       if (this.currentTest?.state === "failed") {
         const logContent = await fs.readFile(logPath);

@@ -112,7 +112,9 @@ export interface Stringable {
 
 let _LOGGER: Promise<NodeJS.WritableStream>;
 
-export function logFilePath(): string { return path.join(paths.dataDir, 'log.txt'); }
+export function logFilePath(): string {
+  return path.join(paths.dataDir, 'log.txt');
+}
 
 async function _openLogFile() {
   if (!_LOGGER) {
@@ -196,7 +198,9 @@ class SingletonLogger {
 
 export class Logger {
   constructor(readonly _tag: string) {}
-  get tag() { return `[${this._tag}]`; }
+  get tag() {
+    return activeTest ? `[${activeTest}] [${this._tag}]` :`[${this._tag}]`;
+  }
   trace(...args: Stringable[]) { SingletonLogger.instance().trace(this.tag, ...args); }
   debug(...args: Stringable[]) { SingletonLogger.instance().debug(this.tag, ...args); }
   info(...args: Stringable[]) { SingletonLogger.instance().info(this.tag, ...args); }
@@ -219,7 +223,14 @@ export class Logger {
   }
 }
 
-export function createLogger(tag: string) { return new Logger(tag); }
+export function createLogger(tag: string) {
+  return new Logger(tag);
+}
+
+let activeTest: string | undefined = undefined;
+export function setActiveTest(name?: string) {
+  activeTest = name;
+}
 
 export async function showLogFile(): Promise<void> {
   await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(logFilePath()));
