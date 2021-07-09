@@ -210,7 +210,6 @@ export class KitsController {
       default:
         // Everything else is just loading a kit:
         message = localize('loading.kit', 'Loading kit {0}', raw_name);
-        console.log('setting Kit: ', JSON.stringify(k));
         break;
       }
       // Load the kit into the backend

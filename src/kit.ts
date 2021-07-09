@@ -1163,7 +1163,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
 
     const arrays = await Promise.all(kit_promises);
     const kits = ([] as Kit[]).concat(...arrays);
-    kits.map(k => log.info(localize('found.kit', 'Found Kit: {0}\n{1}', k.name, JSON.stringify(k))));
+    kits.map(k => log.info(localize('found.kit', 'Found Kit: {0}', k.name)));
 
     return kits;
   });
