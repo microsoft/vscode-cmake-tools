@@ -207,15 +207,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * Get the environment variables that should be set at CMake-build time.
    */
   async getCMakeBuildCommandEnvironment(in_env: proc.EnvironmentVariables): Promise<proc.EnvironmentVariables> {
+    let envs: proc.EnvironmentVariables;
     if (this.useCMakePresets) {
-      return this._buildPreset?.environment as proc.EnvironmentVariables;
+      envs =  util.mergeEnvironment(in_env, this._buildPreset?.environment as proc.EnvironmentVariables);
     } else {
-      let envs = util.mergeEnvironment(in_env, getKitEnvironmentVariablesObject(this._kitEnvironmentVariables));
-      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
-      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs));
-      envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
-      return envs;
+      envs = util.mergeEnvironment(in_env, getKitEnvironmentVariablesObject(this._kitEnvironmentVariables));
     }
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.buildEnvironment, envs));
+    envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this._variantEnv, envs));
+    return envs;
   }
 
   /**
@@ -223,7 +224,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   async getCTestCommandEnvironment(): Promise<proc.EnvironmentVariables> {
     if (this.useCMakePresets) {
-      return this._testPreset?.environment as proc.EnvironmentVariables;
+      return (this._testPreset?.environment ? this._testPreset?.environment : {}) as proc.EnvironmentVariables;
     } else {
       let envs = getKitEnvironmentVariablesObject(this._kitEnvironmentVariables);
       envs = util.mergeEnvironment(envs, await this.computeExpandedEnvironment(this.config.environment, envs));
