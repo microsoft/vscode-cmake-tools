@@ -199,7 +199,7 @@ class SingletonLogger {
 export class Logger {
   constructor(readonly _tag: string) {}
   get tag() {
-    return activeTest ? `[${activeTest}] [${this._tag}]` :`[${this._tag}]`;
+    return activeTest ? `[${activeTest}] [${this._tag}]` : `[${this._tag}]`;
   }
   trace(...args: Stringable[]) { SingletonLogger.instance().trace(this.tag, ...args); }
   debug(...args: Stringable[]) { SingletonLogger.instance().debug(this.tag, ...args); }
@@ -227,7 +227,7 @@ export function createLogger(tag: string) {
   return new Logger(tag);
 }
 
-let activeTest: string | undefined = undefined;
+let activeTest: string | undefined;
 export function setActiveTest(name?: string) {
   activeTest = name;
 }
