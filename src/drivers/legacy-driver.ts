@@ -63,7 +63,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   // Legacy disposal does nothing
   async asyncDispose() { this._cacheWatcher.dispose(); }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, dryRun?: boolean): Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, logCommandOnly?: boolean): Promise<number> {
     // Dup args so we can modify them
     const args = Array.from(args_);
     args.push('-H' + util.lightNormalizePath(this.sourceDir));
@@ -80,7 +80,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
       }
     }
     const cmake = this.cmake.path;
-    if (dryRun) {
+    if (logCommandOnly) {
+      log.showChannel();
       log.info(proc.buildCmdStr(this.cmake.path, args));
       return 0;
     } else {

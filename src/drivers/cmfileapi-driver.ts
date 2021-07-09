@@ -196,7 +196,7 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
 
   protected async doPreCleanConfigure(): Promise<void> { await this._cleanPriorConfiguration(); }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, dryRun?: boolean): Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, logCommandOnly?: boolean): Promise<number> {
     const api_path = this.getCMakeFileApiPath();
     await createQueryFileForApi(api_path);
 
@@ -219,7 +219,8 @@ export class CMakeFileApiDriver extends codemodel.CodeModelDriver {
       }
     }
     const cmake = this.cmake.path;
-    if (dryRun) {
+    if (logCommandOnly) {
+      log.showChannel();
       log.info(proc.buildCmdStr(this.cmake.path, args));
       return 0;
     } else {

@@ -58,7 +58,7 @@ export enum ConfigureType {
   Normal,
   Clean,
   Cache,
-  DryRun
+  LogCommandOnly
 }
 
 export enum ConfigureTrigger {
@@ -1011,7 +1011,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     case ConfigureType.Clean:
                       retc = await drv.cleanConfigure(trigger, extra_args, consumer);
                       break;
-                    case ConfigureType.DryRun:
+                    case ConfigureType.LogCommandOnly:
                       retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
                       break;
                     default:
@@ -1189,7 +1189,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async runBuild(target_?: string, dryRun?: boolean): Promise<number> {
+  async runBuild(target_?: string, logCommandOnly?: boolean): Promise<number> {
     let target = target_;
     let targetName: string;
     if (this.useCMakePresets) {
@@ -1201,13 +1201,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver | null;
-    if (dryRun) {
+    if (logCommandOnly) {
       drv = await this.getCMakeDriverInstance();
       if (!drv) {
         throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
       }
       const buildCmd = await drv.getCMakeBuildCommand();
       if (buildCmd) {
+        log.showChannel();
         log.info(buildCmdStr(buildCmd.command, buildCmd.args));
       } else {
         throw new Error(localize('failed.to.get.build.command', 'Failed to get build command'));
@@ -1273,8 +1274,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async build(target_?: string, dryRun?: boolean): Promise<number> {
-    this.m_promise_build = this.runBuild(target_, dryRun);
+  async build(target_?: string, logCommandOnly?: boolean): Promise<number> {
+    this.m_promise_build = this.runBuild(target_, logCommandOnly);
     return this.m_promise_build;
   }
 

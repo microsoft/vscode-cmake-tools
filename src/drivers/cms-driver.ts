@@ -102,7 +102,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     })();
   }
 
-  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, dryRun?: boolean) {
+  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, logCommandOnly?: boolean) {
     await this._clientChangeInProgress;
     const cl = await this.getClient();
     const sub = this.onMessage(msg => {
@@ -113,7 +113,8 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       }
     });
 
-    if (dryRun) {
+    if (logCommandOnly) {
+      log.showChannel();
       log.info(proc.buildCmdStr(this.cmake.path, args));
     } else {
       try {
