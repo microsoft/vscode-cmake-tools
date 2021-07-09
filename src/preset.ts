@@ -172,6 +172,16 @@ export interface TestPreset extends Preset {
   __generator?: string; // Getting this from the config preset
 }
 
+// Interface for toolset options specified here: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html
+// The key names (left of '=') are removed and just the values are stored.
+interface Toolset {
+  name?: string;          // 'toolset', e.g. 'v141'
+  cuda?: string;          // 'cuda=<version>|<path>'
+  host?: string;          // 'host=<arch>'
+  version?: string;       // 'version=<version>'
+  VCTargetsPath?: string; // 'VCTargetsPath=<path>'
+}
+
 /**
  * Should NOT cache anything. Need to make a copy if any fields need to be changed.
  */
@@ -470,6 +480,75 @@ export async function expandConfigurePreset(folder: string,
   return expandedPreset;
 }
 
+function getArchitecture(preset: ConfigurePreset) {
+  if (util.isString(preset.architecture)) {
+    return preset.architecture;
+  } else if (preset.architecture && preset.architecture.value) {
+    return preset.architecture.value;
+  }
+  log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
+  return 'x86';
+}
+
+function getToolset(preset: ConfigurePreset): Toolset {
+  let result: Toolset | undefined;
+  if (util.isString(preset.toolset)) {
+    result = parseToolset(preset.toolset);
+  } else if (preset.toolset && util.isString(preset.toolset.value)) {
+    result = parseToolset(preset.toolset.value);
+  }
+
+  const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using host=x86 by default', preset.name);
+  if (result) {
+    if (result.name === 'x86' || result.name === 'x64') {
+      log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean 'host={1}'?", preset.name, result.name));
+    }
+    if (!result.host) {
+      log.warning(noToolsetArchWarning);
+      result.host = 'x86';
+    }
+    if (!result.version) {
+      log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
+    }
+  } else {
+    log.warning(noToolsetArchWarning);
+    result = { host: 'x86' };
+  }
+  return result;
+}
+
+// We don't support all of these options for Kit lookup right now, but might in the future.
+function parseToolset(toolset: string): Toolset {
+  const toolsetOptions = toolset.split(',');
+
+  const result: Toolset = {};
+  for (const option of toolsetOptions) {
+    if (option.indexOf('=') < 0) {
+      result.name = option;
+    } else {
+      const keyValue = option.split('=');
+      switch (keyValue[0].toLowerCase()) {
+        case 'cuda':
+          result.cuda = keyValue[1];
+          break;
+        case 'host':
+          result.host = keyValue[1];
+          break;
+        case 'version':
+          result.version = keyValue[1];
+          break;
+        case 'vctargetspath':
+          result.VCTargetsPath = keyValue[1];
+          break;
+        default:
+          log.warning(localize('unknown.toolset.option', "Unrecognized toolset option will be ignored: {0}", option));
+          break;
+      }
+    }
+  }
+  return result;
+}
+
 async function expandConfigurePresetImpl(folder: string,
                                          name: string,
                                          workspaceFolder: string,
@@ -572,43 +651,9 @@ async function expandConfigurePresetHelper(folder: string,
                                                                     shell: true }).result;
         if (!clLoc.stdout) {
           // Not on PATH, need to set env
-          let arch = 'x86';
-          let toolsetArch = 'host=x86';
-          let toolsetVsVersion: string | undefined;
-          if (util.isString(preset.architecture)) {
-            arch = preset.architecture;
-          } else if (preset.architecture && preset.architecture.value) {
-            arch = preset.architecture.value;
-          } else {
-            log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
-          }
-          const toolsetArchRegex = /(host=\w+),?/i;
-          const toolsetVsVersionRegex = /version=(\w+),?/i;
-          const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using x86 by default', preset.name);
-          const noToolsetVsVersionWarning = localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name);
-          const matchToolsetArchAndVersion = (toolset: string) => {
-            const toolsetArchMatches = toolset.match(toolsetArchRegex);
-            if (!toolsetArchMatches) {
-              log.warning(noToolsetArchWarning);
-            } else {
-              toolsetArch = toolsetArchMatches[1];
-            }
-            const toolsetVsVersionMatches = toolset.match(toolsetVsVersionRegex);
-            if (!toolsetVsVersionMatches) {
-              log.warning(noToolsetVsVersionWarning);
-            } else {
-              toolsetVsVersion = toolsetVsVersionMatches[1];
-            }
-          };
-          if (!preset.toolset) {
-            log.warning(noToolsetArchWarning);
-          } else if (util.isString(preset.toolset)) {
-            matchToolsetArchAndVersion(preset.toolset);
-          } else if (!preset.toolset.value) {
-            log.warning(noToolsetArchWarning);
-          } else {
-            matchToolsetArchAndVersion(preset.toolset.value);
-          }
+          const arch = getArchitecture(preset);
+          const toolset = getToolset(preset);
+
           // Get version info for all VS instances. Create a map so we don't need to
           // iterate through the array every time.
           const vsVersions = new Map<string, string>();
@@ -623,13 +668,13 @@ async function expandConfigurePresetHelper(folder: string,
               const version = vsVersions.get(kit.visualStudio);
               if (kit.preferredGenerator &&
                   (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
-                  kit.preferredGenerator.toolset === toolsetArch) {
-                if (toolsetVsVersion && version?.startsWith(toolsetVsVersion)) {
+                  kit.preferredGenerator.toolset === ('host=' + toolset.host)) {
+                if (toolset.version && version?.startsWith(toolset.version)) {
                   latestVsVersion = version;
                   latestVsIndex = i;
                   break;
                 }
-                if (!toolsetVsVersion && version && compareVersions(latestVsVersion, version) < 0) {
+                if (!toolset.version && version && compareVersions(latestVsVersion, version) < 0) {
                   latestVsVersion = version;
                   latestVsIndex = i;
                 }
@@ -639,7 +684,7 @@ async function expandConfigurePresetHelper(folder: string,
           if (latestVsIndex < 0) {
             log.error(localize('specified.cl.not.found',
                           'Configure preset {0}: Specified cl.exe with toolset {1} and architecture {2} is not found, you may need to run "CMake: Scan for Compilers" if it exists on your computer.',
-                          preset.name, toolsetVsVersion ? `${toolsetVsVersion},${toolsetArch}` : toolsetArch, arch));
+                          preset.name, toolset.version ? `${toolset.version},${toolset.host}` : toolset.host, arch));
           } else {
             clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
             // if ninja isn't on path, try to look for it in a VS install

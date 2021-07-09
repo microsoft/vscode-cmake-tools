@@ -198,7 +198,7 @@ export function execute(command: string,
         });
         child.stderr?.on('data', (data: Uint8Array) => {
           rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), {data, command, args}, () => {
-            const str = data.toString();
+            const str = iconv.decode(Buffer.from(data), encoding);
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
             while (lines.length > 1) {
               stderr_line_acc += lines[0];

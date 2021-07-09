@@ -177,14 +177,6 @@ export async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     subs.set(full, repl);
   }
 
-  const vendor_re = RegExp(`\\$vendor\\{(${varValueRegexp})\\}`, "g");
-  while ((mat = vendor_re.exec(tmpl))) {
-    const full = mat[0];
-    const varname = mat[1];
-    const repl = fixPaths(process.env[normalizeEnvironmentVarname(varname)] || '') || '';
-    subs.set(full, repl);
-  }
-
   if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
     const folder_re = RegExp(`\\$\\{workspaceFolder:(${varValueRegexp})\\}`, "g");
     mat = folder_re.exec(tmpl);
