@@ -953,10 +953,11 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
       const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
 
       const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
+      const clangKitName = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
       if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
           util.checkFileExists(util.lightNormalizePath(binPath))) {
         clangKits.push({
-          name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
+          name: clangKitName,
           visualStudio: kitVSName(vs),
           visualStudioArchitecture: vs_arch,
           compilers: {
