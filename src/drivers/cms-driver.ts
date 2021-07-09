@@ -9,7 +9,7 @@ import {CacheEntryProperties, ExecutableTarget, RichTarget} from '@cmt/api';
 import * as cache from '@cmt/cache';
 import * as cms from '@cmt/drivers/cms-client';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
-import {CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {createLogger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
@@ -29,7 +29,16 @@ export class NoGeneratorError extends Error {
   message: string = localize('no.usable.generator.found', 'No usable generator found.');
 }
 
-export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
+export class CMakeServerClientDriver extends CMakeDriver {
+
+  get isCacheConfigSupported(): boolean {
+    return false;
+  }
+
+  async doCacheConfigure(): Promise<number> {
+    throw new Error('Method not implemented.');
+  }
+
   private constructor(cmake: CMakeExecutable, readonly config: ConfigurationReader, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver) {
     super(cmake, config, workspaceFolder, preconditionHandler);
     this.config.onChange('environment', () => this._restartClient());
@@ -55,13 +64,17 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   // TODO: Refactor to make this assertion unecessary
   private _codeModel!: null|cms.CodeModelContent;
-  get codeModel(): null|cms.CodeModelContent { return this._codeModel; }
+  get codeModel(): null|cms.CodeModelContent {
+    return this._codeModel;
+  }
   set codeModel(v: null|cms.CodeModelContent) {
     this._codeModel = v;
   }
 
   private readonly _codeModelChanged = new vscode.EventEmitter<null|codemodel.CodeModelContent>();
-  get onCodeModelChanged() { return this._codeModelChanged.event; }
+  get onCodeModelChanged() {
+    return this._codeModelChanged.event;
+  }
 
   async asyncDispose() {
     this._codeModelChanged.dispose();
@@ -128,13 +141,17 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
         } else {
           throw e;
         }
-      } finally { sub.dispose(); }
+      } finally {
+        sub.dispose();
+      }
+      await this._refreshPostConfigure();
     }
-    await this._refreshPostConfigure();
     return 0;
   }
 
-  protected async doPreBuild(): Promise<boolean> { return true; }
+  protected async doPreBuild(): Promise<boolean> {
+    return true;
+  }
 
   protected async doPostBuild(): Promise<boolean> {
     await this._refreshPostConfigure();
@@ -156,7 +173,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
         FILEPATH: api.CacheEntryType.FilePath,
         INTERNAL: api.CacheEntryType.Internal,
         UNINITIALIZED: api.CacheEntryType.Uninitialized,
-        STATIC: api.CacheEntryType.Static,
+        STATIC: api.CacheEntryType.Static
       };
       const type = entry_map[el.type];
       if (type === undefined) {
@@ -185,7 +202,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       return;
     }
     const new_env = JSON.stringify(await this.getConfigureEnvironment());
-    if (bindir_before !== this.binaryDir || srcdir_before != this.sourceDir || new_env != this._prevConfigureEnv) {
+    if (bindir_before !== this.binaryDir || srcdir_before !== this.sourceDir || new_env !== this._prevConfigureEnv) {
       // Directories changed. We need to restart the driver
       await this._restartClient();
     }
@@ -196,7 +213,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     if (!this._codeModel) {
       return [];
     }
-    const build_config = this._codeModel.configurations.find(conf => conf.name == this.currentBuildType);
+    const build_config = this._codeModel.configurations.find(conf => conf.name === this.currentBuildType);
     if (!build_config) {
       log.error(localize('found.no.matching.code.model', 'Found no matching code model for the current build type. This shouldn\'t be possible'));
       return [];
@@ -205,15 +222,14 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
       type: 'rich' as 'rich',
       name: this.allTargetName,
       filepath: localize('build.all.target', 'A special target to build all available targets'),
-      targetType: 'META',
+      targetType: 'META'
     }];
-    if(build_config.projects.some(project => (project.hasInstallRule)? project.hasInstallRule: false))
-    {
+    if (build_config.projects.some(project => (project.hasInstallRule) ? project.hasInstallRule : false)) {
       metaTargets.push({
         type: 'rich' as 'rich',
         name: 'install',
         filepath: localize('install.all.target', 'A special target to install all available targets'),
-        targetType: 'META',
+        targetType: 'META'
       });
     }
     return build_config.projects.reduce<RichTarget[]>((acc, project) => acc.concat(project.targets.map(
@@ -223,7 +239,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                                                             filepath: t.artifacts && t.artifacts.length
                                                                 ? path.normalize(t.artifacts[0])
                                                                 : localize('utility.target', 'Utility target'),
-                                                            targetType: t.type,
+                                                            targetType: t.type
                                                           }))),
                                                       metaTargets);
   }
@@ -238,7 +254,9 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     return this.targets.reduce(targetReducer, []);
   }
 
-  get generatorName(): string|null { return this._globalSettings ? this._globalSettings.generator : null; }
+  get generatorName(): string|null {
+    return this._globalSettings ? this._globalSettings.generator : null;
+  }
 
   /**
    * Track if the user changes the settings of the configure via settings.json
@@ -259,14 +277,16 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     return this._cmakeInputFileSet.checkOutOfDate();
   }
 
-  get cmakeCacheEntries(): Map<string, CacheEntryProperties> { return this._cacheEntries; }
-
+  get cmakeCacheEntries(): Map<string, CacheEntryProperties> {
+    return this._cacheEntries;
+  }
 
   private async _setKitAndRestart(need_clean: boolean, cb: () => Promise<void>) {
     this._cmakeInputFileSet = InputFileSet.createEmpty();
     const client = await this._cmsClient;
-    if (client)
+    if (client) {
       await client.shutdown();
+    }
     if (need_clean) {
       await this._cleanPriorConfiguration();
     }
@@ -327,16 +347,20 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
         // on file changes?
       },
       onOtherOutput: async msg => this._onMessageEmitter.fire(msg),
-      onMessage: async msg => { this._onMessageEmitter.fire(msg.message); },
+      onMessage: async msg => {
+        this._onMessageEmitter.fire(msg.message);
+      },
       onProgress: async prog => {
         this._progressEmitter.fire(prog);
       },
-      generator: this.generator,
+      generator: this.generator
     });
   }
 
   private readonly _onMessageEmitter = new vscode.EventEmitter<string>();
-  get onMessage() { return this._onMessageEmitter.event; }
+  get onMessage() {
+    return this._onMessageEmitter.event;
+  }
 
   async onStop(): Promise<void> {
     const client = await this._cmsClient;
@@ -348,7 +372,6 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
 
   protected async doInit(): Promise<void> {
     await this._restartClient();
-
 
     this.config.onChange('sourceDirectory', async () => {
       // The configure process can determine correctly whether the features set activation
@@ -375,6 +398,10 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
     });
   }
 
+  get codeModelContent(): codemodel.CodeModelContent | null {
+    return null;
+  }
+
   static async create(cmake: CMakeExecutable,
                       config: ConfigurationReader,
                       useCMakePresets: boolean,
@@ -393,6 +420,7 @@ export class CMakeServerClientDriver extends codemodel.CodeModelDriver {
                               testPreset,
                               preferredGenerators);
   }
+
 }
 
 /**

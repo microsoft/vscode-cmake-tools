@@ -4,7 +4,6 @@ import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// tslint:disable:no-unused-expression
 
 suite('[Debug/Launch interface]', async () => {
   let cmt: CMakeTools;

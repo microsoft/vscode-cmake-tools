@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Clicar para alterar o kit ativo",
 	"no.active.kit": "Nenhum kit ativo",
 	"no.kit.selected": "Nenhum Kit Selecionado",
-	"set.active.target.tooltip": "Definir o destino ativo a ser compilado",
+	"set.active.target.tooltip": "Definir o destino de build padrão",
 	"select.target.tooltip": "Selecionar o destino a ser iniciado",
 	"launch.debugger.tooltip": "Iniciar o depurador para o destino selecionado",
 	"launch.tooltip": "Iniciar o destino selecionado na janela do terminal",
@@ -21,5 +21,11 @@
 	"tests.passing": "{0}/{1} aprovações no teste",
 	"build.tooltip": "Criar o destino selecionado",
 	"build": "Compilar",
-	"stop": "Parar"
+	"stop": "Parar",
+	"click.to.change.configure.preset.tooltip": "Clique para alterar a predefinição de configuração ativa",
+	"no.configure.preset.selected": "Nenhuma Predefinição de Configuração Selecionada",
+	"click.to.change.build.preset.tooltip": "Clique para alterar a predefinição de compilação ativa",
+	"no.build.preset.selected": "Nenhuma Predefinição de Compilação Selecionada",
+	"click.to.change.test.preset.tooltip": "Clique para alterar a predefinição de teste ativa",
+	"no.test.preset.selected": "Nenhuma Predefinição de Teste Selecionada"
 }

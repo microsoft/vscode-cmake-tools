@@ -109,7 +109,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
     i++;
   } while (i < MAX_RECURSION && opts.recursive && didReplacement);
 
-  if (i == MAX_RECURSION) {
+  if (i === MAX_RECURSION) {
     log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
   }
 
@@ -187,13 +187,15 @@ export async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
 
   if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
     const folder_re = RegExp(`\\$\\{workspaceFolder:(${varValueRegexp})\\}`, "g");
-    while (mat = folder_re.exec(tmpl)) {
+    mat = folder_re.exec(tmpl);
+    while (mat) {
       const full = mat[0];
       const folderName = mat[1];
       const f = vscode.workspace.workspaceFolders.find(folder => folder.name.toLocaleLowerCase() === folderName.toLocaleLowerCase());
       if (f) {
         subs.set(full, f.uri.fsPath);
       }
+      mat = folder_re.exec(tmpl);
     }
   }
 

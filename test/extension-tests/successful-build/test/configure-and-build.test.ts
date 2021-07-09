@@ -12,7 +12,6 @@ import {
 } from '@test/util';
 import * as path from 'path';
 
-// tslint:disable:no-unused-expression
 
 let workername: string = process.platform;
 
@@ -62,7 +61,7 @@ suite('Build', async () => {
     const logPath = logFilePath();
     testEnv.clean();
     if (await fs.exists(logPath)) {
-      if (this.currentTest?.state == "failed") {
+      if (this.currentTest?.state === "failed") {
         const logContent = await fs.readFile(logPath);
         logContent.toString().split('\n').forEach(line => {
           console.log(line);

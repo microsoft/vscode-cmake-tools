@@ -7,7 +7,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-// tslint:disable:no-unused-expression
 
 suite('[Environment Variables in Variants]', async () => {
   let testEnv: DefaultEnvironment;

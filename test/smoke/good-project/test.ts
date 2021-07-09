@@ -3,7 +3,6 @@ import {expect} from 'chai';
 
 import {smokeSuite, smokeTestDefaultKit} from '../smoke';
 
-// tslint:disable:no-unused-expression
 
 smokeSuite('good-project', suite => {
   let cmt: CMakeTools;

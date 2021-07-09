@@ -44,7 +44,7 @@ export async function loadIndexFile(reply_path: string): Promise<index_api.Index
   log.debug(`Found index files: ${JSON.stringify(files)}`);
 
   const index_files = files.filter(filename => filename.startsWith('index-')).sort();
-  if (index_files.length == 0) {
+  if (index_files.length === 0) {
     throw Error('No index file found.');
   }
   const index_file_path = path.join(reply_path, index_files[index_files.length - 1]);
@@ -59,7 +59,7 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
 
   const expected_version = {major: 2, minor: 0};
   const detected_version = cache_from_cmake.version;
-  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
+  if (detected_version.major !== expected_version.major || detected_version.minor < expected_version.minor) {
     log.warning(localize(
         'cache.object.version',
         'Cache object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
@@ -73,21 +73,21 @@ export async function loadCacheContent(filename: string): Promise<Map<string, ap
 }
 
 function findPropertyValue(cacheElement: index_api.Cache.CMakeCacheEntry, name: string): string {
-  const property_element = cacheElement.properties.find(prop => prop.name == name);
+  const property_element = cacheElement.properties.find(prop => prop.name === name);
   return property_element ? property_element.value : '';
 }
 
 function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.CacheContent):
     Map<string, api.CacheEntry> {
   return cache_from_cmake.entries.reduce((acc, el) => {
-    const entry_type_translation_map: {[key: string]: api.CacheEntryType|undefined;} = {
+    const entry_type_translation_map: {[key: string]: api.CacheEntryType|undefined} = {
       BOOL: api.CacheEntryType.Bool,
       STRING: api.CacheEntryType.String,
       PATH: api.CacheEntryType.Path,
       FILEPATH: api.CacheEntryType.FilePath,
       INTERNAL: api.CacheEntryType.Internal,
       UNINITIALIZED: api.CacheEntryType.Uninitialized,
-      STATIC: api.CacheEntryType.Static,
+      STATIC: api.CacheEntryType.Static
     };
     const type = entry_type_translation_map[el.type];
     if (type === undefined) {
@@ -107,7 +107,7 @@ export async function loadCodeModelContent(filename: string): Promise<index_api.
   const expected_version = {major: 2, minor: 0};
   const detected_version = codemodel.version;
 
-  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
+  if (detected_version.major !== expected_version.major || detected_version.minor < expected_version.minor) {
     log.warning(localize(
         'code.model.version',
         'Code model version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
@@ -128,21 +128,17 @@ export async function loadTargetObject(filename: string): Promise<index_api.Code
 async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_path: string): Promise<api.Target> {
   const targetObject = await loadTargetObject(file_path);
 
-  let executable_path = undefined;
+  let executable_path;
   if (targetObject.artifacts) {
     executable_path = targetObject.artifacts.find(artifact => artifact.path.endsWith(targetObject.nameOnDisk));
     if (executable_path) {
       executable_path = convertToAbsolutePath(executable_path.path, build_dir);
-      if (!await fs.exists(executable_path)) {
-        // Will be empty after cmake configuration
-        executable_path = "";
-      }
     }
   }
 
   return {
     name: targetObject.name,
-    filepath: executable_path ? executable_path : 'Utility target',
+    filepath: executable_path,
     targetType: targetObject.type,
     type: 'rich' as 'rich'
   } as api.RichTarget;
@@ -151,7 +147,7 @@ async function convertTargetObjectFileToExtensionTarget(build_dir: string, file_
 export async function loadAllTargetsForBuildTypeConfiguration(reply_path: string,
                                                               builddir: string,
                                                               configuration: index_api.CodeModelKind.Configuration):
-    Promise<{name: string, targets: api.Target[]}> {
+    Promise<{name: string; targets: api.Target[]}> {
   const metaTargets = [];
   if (configuration.directories[0].hasInstallRule) {
     metaTargets.push({
@@ -184,7 +180,8 @@ function convertToAbsolutePath(input_path: string, base_path: string) {
   return path.normalize(absolute_path);
 }
 
-function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject): CodeModelFileGroup[] {
+function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.TargetObject,
+                                        root_paths: index_api.CodeModelKind.PathInfo): CodeModelFileGroup[] {
   const fileGroup: CodeModelFileGroup[] = !targetObject.compileGroups ? [] : targetObject.compileGroups.map(group => {
     const compileFlags
         = group.compileCommandFragments ? group.compileCommandFragments.map(frag => frag.fragment).join(' ') : '';
@@ -201,9 +198,10 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
   // Collection all without compilegroup like headers
   const defaultIndex = fileGroup.push({sources: [], isGenerated: false} as CodeModelFileGroup) - 1;
 
-
+  const target_source_root = convertToAbsolutePath(targetObject.paths.source, root_paths.source);
   targetObject.sources.forEach(sourcefile => {
-    const file_path = path.relative(targetObject.paths.source, sourcefile.path).replace('\\', '/');
+    const file_abs_path = convertToAbsolutePath(sourcefile.path, root_paths.source);
+    const file_path = path.relative(target_source_root, file_abs_path).replace('\\', '/');
     if (sourcefile.compileGroupIndex !== undefined) {
       fileGroup[sourcefile.compileGroupIndex].sources.push(file_path);
     } else {
@@ -219,7 +217,7 @@ function convertToExtCodeModelFileGroup(targetObject: index_api.CodeModelKind.Ta
 async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo, jsonfile: string) {
   const targetObject = await loadTargetObject(jsonfile);
 
-  const fileGroups = convertToExtCodeModelFileGroup(targetObject);
+  const fileGroups = convertToExtCodeModelFileGroup(targetObject, root_paths);
 
   // This implementation expects that there is only one sysroot in a target.
   // The ServerAPI only has provided one sysroot. In the FileAPI,
@@ -228,7 +226,7 @@ async function loadCodeModelTarget(root_paths: index_api.CodeModelKind.PathInfo,
   if (targetObject.compileGroups) {
     const all_sysroots
         = targetObject.compileGroups.map(x => !!x.sysroot ? x.sysroot.path : undefined).filter(x => x !== undefined);
-    sysroot = all_sysroots.length != 0 ? all_sysroots[0] : undefined;
+    sysroot = all_sysroots.length !== 0 ? all_sysroots[0] : undefined;
   }
 
   return {
@@ -255,11 +253,9 @@ export async function loadProject(root_paths: index_api.CodeModelKind.PathInfo,
         : root_paths.build,
     source: project.directoryIndexes
         ? path.join(root_paths.source, configuration.directories[project.directoryIndexes[0]].source)
-        : root_paths.source,
+        : root_paths.source
   };
-  const targets = await Promise.all((project.targetIndexes || []).map(targetIndex => {
-    return loadCodeModelTarget(root_paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile));
-  }));
+  const targets = await Promise.all((project.targetIndexes || []).map(targetIndex => loadCodeModelTarget(root_paths, path.join(reply_path, configuration.targets[targetIndex].jsonFile))));
 
   return {name: project.name, targets, sourceDirectory: project_paths.source} as CodeModelProject;
 }
@@ -287,7 +283,7 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
 
   const expected_version = {major: 1, minor: 0};
   const detected_version = toolchains.version;
-  if (detected_version.major != expected_version.major || detected_version.minor < expected_version.minor) {
+  if (detected_version.major !== expected_version.major || detected_version.minor < expected_version.minor) {
     log.warning(localize(
         'toolchains.object.version',
         'Toolchains object version ({0}.{1}) of cmake-file-api is unexpected. Expecting ({2}.{3}). IntelliSense configuration may be incorrect.',
@@ -299,7 +295,11 @@ export async function loadToolchains(filename: string): Promise<Map<string, Code
 
   return toolchains.toolchains.reduce((acc, el) => {
     if (el.compiler.path) {
-      acc.set(el.language, { path: el.compiler.path });
+      if (el.compiler.target) {
+        acc.set(el.language, { path: el.compiler.path, target: el.compiler.target });
+      } else {
+        acc.set(el.language, { path: el.compiler.path });
+      }
     }
     return acc;
   }, new Map<string, CodeModelToolchain>());

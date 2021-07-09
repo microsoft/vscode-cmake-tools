@@ -16,12 +16,12 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
     path,
     isPresent: false,
     minimalServerModeVersion: util.parseVersion('3.7.1'),
-    minimalFileApiModeVersion: util.parseVersion('3.14.0'),
+    minimalFileApiModeVersion: util.parseVersion('3.14.0')
   };
 
   // The check for 'path' seems unnecessary, but crash logs tell us otherwise. It is not clear
   // what causes 'path' to be undefined here.
-  if (path && path.length != 0) {
+  if (path && path.length !== 0) {
     try {
       const version_ex = await proc.execute(path, ['--version']).result;
       if (version_ex.retc === 0 && version_ex.stdout) {

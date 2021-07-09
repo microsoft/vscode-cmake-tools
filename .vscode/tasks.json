@@ -38,19 +38,29 @@
             "isBackground": true
         },
         {
-            "label": "build-tests-with-tsc-watch",
-            "type": "npm",
-            "script": "pretest",
-            "problemMatcher": [
-                "$tsc-watch"
+            "label": "Pretest",
+            "group": "build",
+            "isBackground": false,
+            "type": "shell",
+            "command": "yarn",
+            "args": [
+                "run",
+                "pretest"
             ],
-            "isBackground": true,
-            "presentation": {
-                "echo": false,
-                "reveal": "silent",
-                "showReuseMessage": false,
-                "clear": true
-            }
-        }
+            "dependsOn": [
+                "Compile"
+            ]
+        },
+        {
+            "label": "Compile",
+            "group": "build",
+            "isBackground": false,
+            "type": "shell",
+            "command": "yarn",
+            "args": [
+                "run",
+                "compile"
+            ]
+        },
     ]
 }
