@@ -359,7 +359,7 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
   }
 }
 
-export function splitEnvironmentVars(env: EnvironmentVariables): EnvironmentVariables[] {
+export function expandEnvironmentVars(env: EnvironmentVariables): EnvironmentVariables[] {
   const converted_env: EnvironmentVariables[] = Object.entries(env).map(
     ([key, value]) => ({
       name: key,
