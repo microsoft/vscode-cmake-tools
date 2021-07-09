@@ -10,16 +10,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 
-let workername: string = process.platform;
-
-if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {
-  workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
-}
-
-if (process.env.TRAVIS_OS_NAME) {
-  workername = process.env.TRAVIS_OS_NAME;
-}
-
 suite('Build using Presets', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
