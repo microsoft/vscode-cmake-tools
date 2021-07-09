@@ -7,7 +7,6 @@ import * as vscode from 'vscode';
 import { Version } from 'vscode-cpptools';
 import * as util from '@cmt/util';
 
-// tslint:disable:no-unused-expression
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
@@ -99,6 +98,8 @@ suite('CppTools tests', () => {
     expect(mode).to.eql(undefined);
     mode = getIntelliSenseMode(cpptoolsVersion5, 'clang', undefined);
     expect(mode).to.eql(undefined);
+    mode = getIntelliSenseMode(cpptoolsVersion5, 'clang', 'arm64');
+    expect(mode).to.eql('clang-arm64');
 
     // Verify CppTools API version 4
     mode = getIntelliSenseMode(cpptoolsVersion4, 'armclang', 'arm');
@@ -156,7 +157,7 @@ suite('CppTools tests', () => {
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache.txt'));
     const sourceFile = path.join(here, 'main.cpp');
     const uri = vscode.Uri.file(sourceFile);
-    const codeModel: codemodel_api.CodeModelContent = {
+    const codeModelContent: codemodel_api.CodeModelContent = {
       configurations: [{
         name : "Release",
         projects: [{
@@ -189,13 +190,13 @@ suite('CppTools tests', () => {
       toolchains: new Map<string, codemodel_api.CodeModelToolchain>()
     };
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target1', activeVariant : 'Release', folder: here});
+    provider.updateConfigurationData({cache, codeModelContent, activeTarget: 'target1', activeVariant : 'Release', folder: here});
 
     // Update configuration with a 2nd workspace folder.
     const smokeFolder = path.join(here, '../smoke');
     const sourceFile2 = path.join(smokeFolder, 'main.cpp');
     const uri2 = vscode.Uri.file(sourceFile2);
-    const codeModel2: codemodel_api.CodeModelContent = {
+    const codeModelContent2: codemodel_api.CodeModelContent = {
       configurations: [{
         name: 'Release',
         projects: [{
@@ -216,8 +217,8 @@ suite('CppTools tests', () => {
       }],
       toolchains: new Map<string, codemodel_api.CodeModelToolchain>([['CXX', { path: 'path_from_toolchain_object' }]])
     };
-    provider.updateConfigurationData({cache, codeModel: codeModel2, activeTarget: 'target3', activeVariant : 'Release', folder: smokeFolder});
 
+    provider.updateConfigurationData({cache, codeModelContent: codeModelContent2, activeTarget: 'target3', activeVariant : 'Release', folder: smokeFolder});
     let configurations = await provider.provideConfigurations([vscode.Uri.file(sourceFile2)]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.compilerPath).to.eq('path_from_toolchain_object');
@@ -226,13 +227,13 @@ suite('CppTools tests', () => {
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG1');
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'target2', activeVariant : 'Release', folder: here});
+    provider.updateConfigurationData({cache, codeModelContent, activeTarget: 'target2', activeVariant : 'Release', folder: here});
     configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines).to.contain('FLAG2');
     expect(configurations[0].configuration.compilerPath).to.eq('clang++');
 
-    provider.updateConfigurationData({cache, codeModel, activeTarget: 'all', activeVariant : 'Release', folder: here});
+    provider.updateConfigurationData({cache, codeModelContent, activeTarget: 'all', activeVariant : 'Release', folder: here});
     configurations = await provider.provideConfigurations([uri]);
     expect(configurations.length).to.eq(1);
     expect(configurations[0].configuration.defines.some(def => def === 'FLAG1' || def === 'FLAG2')).to.be.true;

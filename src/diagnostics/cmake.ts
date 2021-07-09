@@ -86,7 +86,6 @@ export class CMakeOutputConsumer implements OutputConsumer {
       if (result) {
         // We have encountered and error
         const [full, level, filename, linestr, command] = result;
-        // tslint:disable-next-line
         const lineno = oneLess(linestr);
         const diagmap: {[k: string]: vscode.DiagnosticSeverity} = {
           Warning: vscode.DiagnosticSeverity.Warning,

@@ -12,7 +12,6 @@ import {
 } from '@test/util';
 import * as path from 'path';
 
-// tslint:disable:no-unused-expression
 
 let workername: string = process.platform;
 
@@ -51,7 +50,7 @@ suite('Build', async () => {
 
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
     const kit = await getFirstSystemKit(cmt);
-    console.log("Using following kit in next test: ", kit);
+    console.log("Using following kit in next test: ", kit.name);
     await cmt.setKit(kit);
     testEnv.projectFolder.buildDirectory.clear();
   });

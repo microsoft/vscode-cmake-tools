@@ -27,7 +27,6 @@ function cleanupBuildDir(build_dir: string): boolean {
   return !fs.existsSync(build_dir);
 }
 
-// tslint:disable-next-line: no-unused-expression
 
 export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
                                                        config: ConfigurationReader,
@@ -36,7 +35,6 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
                                                        preconditionHandler: CMakePreconditionProblemSolver,
                                                        preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
   let driver: CMakeDriver|null = null;
-  // tslint:disable:no-unused-expression
 
   suite('CMake-Driver tests', () => {
     const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
@@ -146,7 +144,6 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       const kit = {name: 'GCC', preferredGenerator: {name: 'BlaBla'}} as Kit;
 
-      // tslint:disable-next-line: no-floating-promises
       expect(driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []))
           .to.be.rejectedWith('No usable generator found.');
     }).timeout(60000);

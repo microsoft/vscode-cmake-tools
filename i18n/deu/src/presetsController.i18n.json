@@ -74,7 +74,7 @@
 	"reading.presets.file": "Datei mit Lesevoreinstellungen {0}",
 	"failed.to.parse": "Fehler beim Analysieren von \"{0}\": {1}",
 	"invalid.file.error": "Ungültige Kit-Inhalte \"{0}\" ({1}):",
-	"successfully.validated.presets": "Voreinstellungen-Kits wurden erfolgreich in {0} überprüft",
+	"successfully.validated.presets": "Voreinstellungen wurden erfolgreich in {0} überprüft",
 	"use.kits.variants": "Verwenden von Kits und Varianten",
 	"edit.presets": "Suchen",
 	"presets.version.error": "CMakePresets Version 1 wird nicht unterstützt. Wie möchten Sie fortfahren?",

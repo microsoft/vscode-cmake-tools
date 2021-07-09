@@ -269,3 +269,4 @@ gulp.task('lint', function () {
         //.pipe(gulp.dest(file => file.base))
         .pipe(eslint.failAfterError());
 });
+

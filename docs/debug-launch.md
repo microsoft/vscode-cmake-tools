@@ -59,7 +59,7 @@ Here is a minimal example of a `launch.json` file that uses `cmake.launchTargetP
                     // add the directory where our target was built to the PATHs
                     // it gets resolved by CMake Tools:
                     "name": "PATH",
-                    "value": "$PATH:${command:cmake.getLaunchTargetDirectory}"
+                    "value": "${env:PATH}:${command:cmake.getLaunchTargetDirectory}"
                 },
                 {
                     "name": "OTHER_VALUE",

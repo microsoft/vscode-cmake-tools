@@ -74,7 +74,7 @@
 	"reading.presets.file": "正在读取预设文件 {0}",
 	"failed.to.parse": "无法分析 {0}: {1}",
 	"invalid.file.error": "无效的工具包内容 {0} ({1}):",
-	"successfully.validated.presets": "已成功在 {0} 中验证预设工具包",
+	"successfully.validated.presets": "已在 {0} 中成功验证预设值",
 	"use.kits.variants": "使用工具包和变量",
 	"edit.presets": "定位",
 	"presets.version.error": "CMakePresets 版本 1 不受支持。希望如何继续?",

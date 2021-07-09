@@ -13,6 +13,7 @@ chai.use(chaiString);
 
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import { LegacyCMakeDriver } from '@cmt/drivers/legacy-driver';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
@@ -27,7 +28,6 @@ function cleanupBuildDir(build_dir: string): boolean {
 }
 
 let driver: CMakeDriver|null = null;
-// tslint:disable:no-unused-expression
 
 export function makeCodeModelDriverTestsuite(
     driver_generator: (cmake: CMakeExecutable,
@@ -92,7 +92,7 @@ export function makeCodeModelDriverTestsuite(
 
       driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
       let code_model: null|codemodel_api.CodeModelContent = null;
-      if (driver instanceof codemodel_api.CodeModelDriver) {
+      if (driver && !(driver instanceof LegacyCMakeDriver)) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
       }
       expect(await driver.configure(ConfigureTrigger.runTests, args)).to.be.eq(0);

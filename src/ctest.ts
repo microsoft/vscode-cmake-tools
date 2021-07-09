@@ -166,7 +166,6 @@ export function parseCatchTestOutput(output: string): FailingTestDecoration[] {
     const res = regex.exec(line);
     if (res) {
       const [_all, file, lineno_] = res;
-      // tslint:disable-next-line
       void _all;  // unused
       const lineno = parseInt(lineno_) - 1;
       let message = '~~~c++\n';
@@ -364,7 +363,7 @@ export class CTestDriver implements vscode.Disposable {
       ctestArgs = ['-T', 'test'].concat(testArgs(driver.testPreset));
     } else {
       const configuration = driver.currentBuildType;
-      ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration, '-T', 'test', '--output-on-failure'].concat(
+      ctestArgs = [`-j${this.ws.config.numCTestJobs}`, '-C', configuration].concat(
         this.ws.config.ctestDefaultArgs, this.ws.config.ctestArgs);
     }
 

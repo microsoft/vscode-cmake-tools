@@ -10,9 +10,7 @@ import * as triple from '../../src/triple';
 import {fs} from '../../src/pr';
 
 import {CMakeTools} from '@cmt/cmake-tools';
-import {clearExistingKitConfigurationFile, DefaultEnvironment,} from '@test/util';
-
-// tslint:disable:no-unused-expression
+import {clearExistingKitConfigurationFile, DefaultEnvironment} from '@test/util';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
@@ -68,6 +66,19 @@ suite('Kits scan test', async () => {
       .to.equal('arm-none-linux-gnueabi');
     expect(triple.findTargetTriple('Target: arm-linux-gnueabihf'))
       .to.equal('arm-linux-gnueabihf');
+    expect(triple.findTargetTriple('Target: x86_64-w64-windows-gnu'))
+      .to.equal('x86_64-w64-windows-gnu');
+  });
+
+  test('parse target triple', () => {
+    expect(triple.parseTargetTriple('x86_64-w64-windows-gnu')).to.deep.equal({
+      triple: 'x86_64-w64-windows-gnu',
+      targetOs: 'win32',
+      targetArch: 'x64',
+      vendors: [],
+      abi: 'pe',
+      libc: 'mingw'
+    });
   });
 
   test('Detect system kits never throws',
@@ -127,10 +138,8 @@ suite('Kits scan test', async () => {
     expect(compkit!.name).to.eq('Clang 8.1.0 x86_64-apple-darwin16.7.0');
   });
 
-
   test('Detect an MinGW compiler file on linux', async () => {
-    if (process.platform === 'win32')
-      return;
+    if (process.platform === 'win32') { return; }
 
     await disableMingwMake();
 
@@ -153,8 +162,7 @@ suite('Kits scan test', async () => {
 
   // Test is broken, the use of env path has changed
   test.skip('Detect an MinGW compiler file on windows', async () => {
-    if (process.platform !== 'win32')
-      return;
+    if (process.platform !== 'win32') { return; }
 
     const compiler = path.join(fakebin, 'mingw32-gcc');
     const compkit = await kit.kitIfCompiler(compiler);

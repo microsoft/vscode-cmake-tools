@@ -69,7 +69,6 @@ class RollbarController {
     const callstack = cleanStack(exception.stack);
     const message = cleanString(exception.message);
     logEvent('exception2', {message, callstack});
-    // tslint:disable-next-line
     console.error(exception);
     debugger;
   }

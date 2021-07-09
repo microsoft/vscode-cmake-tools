@@ -1,49 +1,11 @@
 import {Kit, scanForVSKits, SpecialKits, UnspecifiedKit} from '@cmt/kit';
-import * as path from 'path';
+import {SmokeTestExtensionContext} from '../helpers/vscodefake/extensioncontext';
+
 import * as vscode from 'vscode';
 
 import {CMakeTools} from '../../src/cmake-tools';
 
 type Result<T> = Thenable<T>|T;
-
-class SmokeTestMemento implements vscode.Memento {
-  private readonly _date = new Map<string, any>();
-
-  get<T>(key: string): T|undefined;
-  get<T>(key: string, defaultValue: T): T;
-
-  get<T>(key: string, defaultValue?: T): T|undefined {
-    const value = this._date.get(key) as T | undefined;
-    if (value === undefined) {
-      return defaultValue;
-    }
-    return value;
-  }
-
-  update(key: string, value: any): Thenable<void> {
-    this._date.set(key, value);
-    return Promise.resolve();
-  }
-}
-
-class SmokeTestExtensionContext implements vscode.ExtensionContext {
-  constructor(public readonly extensionPath: string) {}
-
-  private readonly _subscriptions: vscode.Disposable[] = [];
-  get subscriptions(): vscode.Disposable[] { return this._subscriptions; }
-
-  private readonly _workspaceState = new SmokeTestMemento();
-  get workspaceState() { return this._workspaceState; }
-
-  private readonly _globalState = new SmokeTestMemento();
-  get globalState() { return this._globalState; }
-
-  asAbsolutePath(sub: string): string { return path.join(this.extensionPath, sub); }
-
-  get storagePath() { return path.join(this.extensionPath, '.smoke-storage'); }
-
-  get logPath() { return path.join(this.extensionPath, '.smoke-logs'); }
-}
 
 type TestResult<T> = Thenable<T>|T;
 

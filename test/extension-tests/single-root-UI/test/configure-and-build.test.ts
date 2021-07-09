@@ -12,7 +12,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-// tslint:disable:no-unused-expression
 
 let workername: string = process.platform;
 
@@ -52,7 +51,7 @@ suite('Build using Kits and Variants', async () => {
     this.timeout(100000);
 
     const kit = await getFirstSystemKit(cmakeTools);
-    console.log("Using following kit in next test: ", kit);
+    console.log("Using following kit in next test: ", kit.name);
     await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
     testEnv.projectFolder.buildDirectory.clear();
   });

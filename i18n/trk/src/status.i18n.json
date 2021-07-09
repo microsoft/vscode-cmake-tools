@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "Etkin seti değiştirmek için tıklayın",
 	"no.active.kit": "Etkin set yok",
 	"no.kit.selected": "Seçili Set Yok",
-	"set.active.target.tooltip": "Derlenecek etkin hedefi ayarlayın",
+	"set.active.target.tooltip": "Varsayılan derleme hedefini ayarla",
 	"select.target.tooltip": "Başlatılacak hedefi seçin",
 	"launch.debugger.tooltip": "Seçili hedef için hata ayıklayıcısını başlat",
 	"launch.tooltip": "Seçili hedefi terminal penceresinde başlatın",

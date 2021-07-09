@@ -1,0 +1,1 @@
+This file is a dummy that is used to let Git keep this directory around.

@@ -65,7 +65,6 @@ function levelEnabled(level: LogLevel): boolean {
   case 'fatal':
     return level >= LogLevel.Fatal;
   default:
-    // tslint:disable-next-line
     console.error('Invalid logging level in settings.json');
     return true;
   }
@@ -152,23 +151,19 @@ class SingletonLogger {
     case LogLevel.Info:
     case LogLevel.Note:
       if (process.env['CMT_QUIET_CONSOLE'] !== '1') {
-        // tslint:disable-next-line
         console.info('[CMakeTools]', raw_message);
       }
       break;
     case LogLevel.Warning:
-      // tslint:disable-next-line
       console.warn('[CMakeTools]', raw_message);
       break;
     case LogLevel.Error:
     case LogLevel.Fatal:
-      // tslint:disable-next-line
       console.error('[CMakeTools]', raw_message);
       break;
     }
     // Write to the logfile asynchronously.
     this._logStream.then(strm => strm.write(raw_message + '\n')).catch(e => {
-      // tslint:disable-next-line
       console.error('Unhandled error while writing CMakeTools log file', e);
     });
     // Write to our output channel

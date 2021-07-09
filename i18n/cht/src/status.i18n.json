@@ -11,7 +11,7 @@
 	"click.to.change.kit.tooltip": "按一下以變更使用中的套件",
 	"no.active.kit": "沒有使用中的套件",
 	"no.kit.selected": "未選取任何套件",
-	"set.active.target.tooltip": "設定要建置的使用中目標",
+	"set.active.target.tooltip": "設定預設建置目標",
 	"select.target.tooltip": "選取要啟動的目標",
 	"launch.debugger.tooltip": "為選取的目標啟動偵錯工具",
 	"launch.tooltip": "在終端視窗中啟動選取的目標",
