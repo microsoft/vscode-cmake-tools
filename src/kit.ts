@@ -850,11 +850,9 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
   const majorVersion = parseInt(inst.installationVersion);
 
   let vcvarsScript: string = 'vcvarsall.bat';
-  if (majorVersion < 14) {
-    if (targetArch === "arm" || targetArch === "arm64") {
-      // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
-      vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
-    }
+  if (targetArch === "arm" || targetArch === "arm64") {
+    // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
+    vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
   }
   let devBatFolder = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build');
   if (majorVersion < 15) {
