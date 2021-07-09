@@ -3,6 +3,8 @@
  */ /** */
 
 import rollbar from '@cmt/rollbar';
+import * as iconv from 'iconv-lite';
+import * as codepages from '@cmt/code-pages';
 import * as util from '@cmt/util';
 import * as json5 from 'json5';
 import * as path from 'path';
@@ -597,6 +599,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
     `set "INCLUDE="`,
     `call "${devbat}" ${args.join(' ')}`,
+    `setlocal enableextensions enabledelayedexpansion`,
     `cd /d "%~dp0"` /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
@@ -628,15 +631,23 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
   const batContent = bat.join('\r\n');
   await fs.writeFile(batpath, batContent);
 
-  // Quote the script file path before running it, in case there are spaces.
-  const res = await proc.execute(`"${batpath}"`, [], null, { shell: true, silent: true }).result;
+  const outputEncoding = await codepages.getWindowsCodepage();
+  const execOption: proc.ExecutionOptions = {
+    shell: false,
+    silent: true,
+    overrideLocale: false,
+    outputEncoding: outputEncoding
+  };
+  // Script file path will be quoted when passed as args
+  const res = await proc.execute('cmd.exe', ['/c', batpath], null, execOption).result;
   await fs.unlink(batpath);
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
   let env = '';
   try {
     /* When the bat running failed, envpath would not exist */
-    env = await fs.readFile(envpath, {encoding: 'utf8'});
+    const env_bin = await fs.readFile(envpath);
+    env = iconv.decode(env_bin, outputEncoding);
     await fs.unlink(envpath);
   } catch (error) { log.error(error); }
 
@@ -953,10 +964,11 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
       const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
 
       const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
+      const clangKitName = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
       if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
           util.checkFileExists(util.lightNormalizePath(binPath))) {
         clangKits.push({
-          name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
+          name: clangKitName,
           visualStudio: kitVSName(vs),
           visualStudioArchitecture: vs_arch,
           compilers: {
