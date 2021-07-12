@@ -698,10 +698,10 @@ class ExtensionManager implements vscode.Disposable {
         let codeModelContent;
         if (cmt.codeModelContent) {
           codeModelContent = cmt.codeModelContent;
-          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
         } else if (drv && drv.codeModelContent) {
           codeModelContent = drv.codeModelContent;
-          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
           this._projectOutlineProvider.updateCodeModel(
             cmt.workspaceContext.folder,
             codeModelContent,

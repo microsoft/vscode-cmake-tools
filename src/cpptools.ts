@@ -5,8 +5,8 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import {CMakeCache} from '@cmt/cache';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
+import { CodeModelParams } from '@cmt/drivers/codemodel-driver-interface';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -283,39 +283,6 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
 }
 
 /**
- * Type given when updating the configuration data stored in the file index.
- */
-export interface CodeModelParams {
-  /**
-   * The CMake codemodel content. This is the important one.
-   */
-  codeModelContent: codemodel_api.CodeModelContent;
-  /**
-   * The contents of the CMakeCache.txt, which also provides supplementary
-   * configuration information.
-   */
-  cache: CMakeCache;
-  /**
-   * The path to `cl.exe`, if necessary. VS generators will need this property
-   * because the compiler path is not available via the `kit` nor `cache`
-   * property.
-   */
-  clCompilerPath?: string|null;
-  /**
-   * The active target
-   */
-  activeTarget: string|null;
-  /**
-   * The active variant
-   */
-  activeVariant: string|null;
-  /**
-   * Workspace folder full path.
-   */
-  folder: string;
-}
-
-/**
  * The actual class that provides information to the cpptools extension. See
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
@@ -530,43 +497,44 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
     for (const config of opts.codeModelContent.configurations) {
-      if (config.name !== opts.activeVariant) {
-        continue;
-      }
-      for (const project of config.projects) {
-        for (const target of project.targets) {
-          // Now some shenanigans since header files don't have config data:
-          // 1. Accumulate some "defaults" based on the set of all options for each file group
-          // 2. Pass these "defaults" down when rebuilding the config data
-          // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
-          const grps = target.fileGroups || [];
-          const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-          const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
-          const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-          const sysroot = target.sysroot || '';
-          for (const grp of target.fileGroups || []) {
-            try {
-              this._updateFileGroup(
-                  target.sourceDirectory || '',
-                  grp,
-                  opts,
-                  {
-                    name: target.name,
-                    compileFlags,
-                    includePath,
-                    defines
-                  },
-                  sysroot
-              );
-            } catch (e) {
-              if (e instanceof MissingCompilerException) {
-                hadMissingCompilers = true;
-              } else {
-                throw e;
+      // Update only the active build type variant.
+      if (config.activeConfigName === opts.activeBuildTypeVariant) {
+        for (const project of config.projects) {
+          for (const target of project.targets) {
+            // Now some shenanigans since header files don't have config data:
+            // 1. Accumulate some "defaults" based on the set of all options for each file group
+            // 2. Pass these "defaults" down when rebuilding the config data
+            // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+            const grps = target.fileGroups || [];
+            const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
+            const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
+            const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
+            const sysroot = target.sysroot || '';
+            for (const grp of target.fileGroups || []) {
+              try {
+                this._updateFileGroup(
+                    target.sourceDirectory || '',
+                    grp,
+                    opts,
+                    {
+                      name: target.name,
+                      compileFlags,
+                      includePath,
+                      defines
+                    },
+                    sysroot
+                );
+              } catch (e) {
+                if (e instanceof MissingCompilerException) {
+                  hadMissingCompilers = true;
+                } else {
+                  throw e;
+                }
               }
             }
           }
         }
+        break;
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
