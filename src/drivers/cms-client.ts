@@ -255,7 +255,7 @@ export interface CodeModelProject {
 }
 
 export interface CodeModelConfiguration {
-  name: string;
+  activeConfigName: string;
   projects: CodeModelProject[];
 }
 

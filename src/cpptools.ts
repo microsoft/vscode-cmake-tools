@@ -6,7 +6,6 @@
  */ /** */
 
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
-import { CodeModelParams } from '@cmt/drivers/codemodel-driver-interface';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
 import * as shlex from '@cmt/shlex';
@@ -378,7 +377,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
+  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: codemodel_api.CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
@@ -447,7 +446,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _updateFileGroup(sourceDir: string,
                            grp: codemodel_api.CodeModelFileGroup,
-                           opts: CodeModelParams,
+                           opts: codemodel_api.CodeModelParams,
                            target: TargetDefaults,
                            sysroot: string) {
     const configuration = this._buildConfigurationData(grp, opts, target, sysroot);
@@ -492,7 +491,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * Update the file index and code model
    * @param opts Update parameters
    */
-  updateConfigurationData(opts: CodeModelParams) {
+  updateConfigurationData(opts: codemodel_api.CodeModelParams) {
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
