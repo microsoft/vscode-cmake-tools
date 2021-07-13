@@ -850,9 +850,9 @@ export class PresetsController {
         localize('presets.version.error', 'CMakePresets version 1 is not supported. How would you like to proceed?'),
         useKitsVars, changePresets);
     if (result === useKitsVars) {
-      vscode.workspace.getConfiguration('cmake', this.folder.uri).update('useCMakePresets', false);
+      void vscode.workspace.getConfiguration('cmake', this.folder.uri).update('useCMakePresets', false);
     } else {
-      vscode.workspace.openTextDocument(vscode.Uri.file(file));
+      await vscode.workspace.openTextDocument(vscode.Uri.file(file));
     }
   }
 

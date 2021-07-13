@@ -69,7 +69,7 @@ export class ConfigurationWebview {
     if (this.dirty) {
       telemetry.logEvent("editCMakeCache", {command: "saveCMakeCacheUI"});
       await this.saveCmakeCache(this._options);
-      vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
+      void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
       // start configure
       this.save();
       this.dirty = false;

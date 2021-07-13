@@ -112,7 +112,7 @@ export class KitsController {
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
-    this._kitsWatcher.close();
+    void this._kitsWatcher.close();
   }
 
   get availableKits() {

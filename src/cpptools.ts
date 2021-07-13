@@ -563,7 +563,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
-      vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
+      void vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
         'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
