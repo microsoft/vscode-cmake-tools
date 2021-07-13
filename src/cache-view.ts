@@ -501,17 +501,14 @@ export class ConfigurationWebview {
     const tableRows = this._options.map(option => {
 
       // HTML attributes may not contain literal double quotes or ambiguous ampersands
-      const escapeAttribute = (text: string) => {
-        return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-      };
+      const escapeAttribute = (text: string) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       // Escape HTML special characters that may not occur literally in any text
-      const escapeHtml = (text: string) => {
-        return escapeAttribute(text)
+      const escapeHtml = (text: string) =>
+        escapeAttribute(text)
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
           .replace(/'/g, "&#039;")
           .replace(/ /g, "&nbsp;"); // we are usually dealing with single line entities - avoid unintential line breaks
-      };
 
       const id = escapeAttribute(option.key);
       let editControls = '';
