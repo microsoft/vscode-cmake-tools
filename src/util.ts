@@ -359,6 +359,16 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
   }
 }
 
+export function splitEnvironmentVars(env: EnvironmentVariables): EnvironmentVariables[] {
+  const converted_env: EnvironmentVariables[] = Object.entries(env).map(
+    ([key, value]) => ({
+      name: key,
+      value
+    })
+  );
+  return converted_env;
+}
+
 export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
   return env.reduce((acc, vars) => {
     if (process.platform === 'win32') {
