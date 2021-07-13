@@ -265,7 +265,7 @@ export async function loadConfig(paths: index_api.CodeModelKind.PathInfo,
                                  configuration: index_api.CodeModelKind.Configuration) {
   const projects = await Promise.all(
       (configuration.projects).map((_, index) => loadProject(paths, reply_path, index, configuration)));
-  return {projects} as CodeModelConfiguration;
+  return {name : configuration.name, projects} as CodeModelConfiguration;
 }
 export async function loadExtCodeModelContent(reply_path: string, codeModel_filename: string) {
   const codeModelContent = await loadCodeModelContent(path.join(reply_path, codeModel_filename));
