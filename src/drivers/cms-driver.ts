@@ -211,6 +211,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     const build_config = this._codeModel.configurations.find(conf => conf.activeConfigName === this.currentBuildType);
     if (!build_config) {
       log.error(localize('found.no.matching.code.model', 'Found no matching code model for the current build type. This shouldn\'t be possible'));
+      log.error('current build type {0}', this.currentBuildType);
       return [];
     }
     const metaTargets = [{
