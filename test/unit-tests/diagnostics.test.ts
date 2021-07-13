@@ -12,7 +12,6 @@ import {platformPathEquivalent} from '@cmt/util';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
 import {populateCollection} from '@cmt/diagnostics/util';
 
-// tslint:disable:no-unused-expression
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
@@ -155,7 +154,7 @@ suite('Diagnostics', async () => {
     expect(diag.message).to.eq('comparison of unsigned expression >= 0 is always true [-Wtautological-compare]');
     expect(diag.location.start.character).to.eq(14);
     const expected = '/Users/ruslan.sorokin/Projects/Other/dpi/core/dpi_histogram.h';
-    expect(platformPathEquivalent(diag.file, expected), `${diag.file} != ${expected}`).to.be.true;
+    expect(platformPathEquivalent(diag.file, expected), `${diag.file} !== ${expected}`).to.be.true;
     expect(diag.severity).to.eq('warning');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
@@ -167,7 +166,7 @@ suite('Diagnostics', async () => {
     expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
     const diag = build_consumer.compilers.gcc.diagnostics[0];
     const expected = '/Users/Tobias/Code/QUIT/Source/qidespot1.cpp';
-    expect(platformPathEquivalent(diag.file, expected), `${diag.file} != ${expected}`).to.be.true;
+    expect(platformPathEquivalent(diag.file, expected), `${diag.file} !== ${expected}`).to.be.true;
     expect(diag.location.start.line).to.eq(302);
     expect(diag.location.start.character).to.eq(48);
     expect(diag.message).to.eq(`expected ';' after expression`);
@@ -242,6 +241,13 @@ suite('Diagnostics', async () => {
     expect(diag.severity).to.eq('attention');
     expect(path.posix.normalize(diag.file)).to.eq(diag.file);
     expect(path.posix.isAbsolute(diag.file)).to.be.true;
+  });
+  test('Parsing non-diagnostic', () => {
+    const lines = ['/usr/include/c++/10/bits/stl_vector.h:98:47: optimized: basic block part vectorized using 32 byte vectors'];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.compilers.gcc.diagnostics).to.have.length(1);
+    const resolved = build_consumer.resolveDiagnostics('dummyPath');
+    expect(resolved.length).to.eq(0);
   });
   test('Parsing linker error', () => {
     const lines = ['/some/path/here:101: undefined reference to `some_function\''];

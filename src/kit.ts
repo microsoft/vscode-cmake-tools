@@ -3,6 +3,8 @@
  */ /** */
 
 import rollbar from '@cmt/rollbar';
+import * as iconv from 'iconv-lite';
+import * as codepages from '@cmt/code-pages';
 import * as util from '@cmt/util';
 import * as json5 from 'json5';
 import * as path from 'path';
@@ -151,8 +153,11 @@ interface CompilerVersion {
   installedDir?: string;
 }
 
-export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string): Promise<CompilerVersion|null> {
+export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: string, pr?: ProgressReporter): Promise<CompilerVersion|null> {
   log.debug(localize('testing.compiler.binary', 'Testing {0} binary: {1}', vendor, binPath));
+  if (pr) {
+    pr.report({message: localize('getting.compiler.version', 'Getting {0} version for {1}', vendor, binPath)});
+  }
   const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
   if (exec.retc !== 0) {
     log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
@@ -168,7 +173,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     version_match_index = 2;
   }
 
-  let target: TargetTriple | undefined = undefined;
+  let target: TargetTriple | undefined;
   let version: string = "";
   let fullVersion: string = "";
   const lines = exec.stderr.trim().split('\n');
@@ -206,7 +211,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     version,
     target,
     threadModel,
-    installedDir,
+    installedDir
   };
 }
 
@@ -242,7 +247,7 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
       versionRuntime: vs.installationVersion
     };
   } else {
-    let vendor: CompilerVendorEnum | undefined = undefined;
+    let vendor: CompilerVendorEnum | undefined;
     if (kit.name.startsWith('GCC ')) {
       vendor = 'GCC';
     } else if (kit.name.startsWith('Clang ')) {
@@ -263,7 +268,7 @@ export async function getKitDetect(kit: Kit): Promise<KitDetect> {
       vendor,
       triple: computeTargetTriple(version.target),
       version: version.version,
-      versionRuntime: version.version,
+      versionRuntime: version.version
     };
   }
 }
@@ -283,10 +288,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
   const gcc_res = gcc_regex.exec(fname);
   const clang_res = clang_regex.exec(fname);
   if (gcc_res) {
-    log.debug(localize('testing.gcc.binary', 'Testing GCC binary: {0}', bin));
-    if (pr)
-      pr.report({message: localize('getting.gcc.version', 'Getting GCC version for {0}', bin)});
-    const version = await getCompilerVersion('GCC', bin);
+    const version = await getCompilerVersion('GCC', bin, pr);
     if (version === null) {
       return null;
     }
@@ -323,8 +325,9 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
           log.debug(localize('bad.mingw32-make.binary', 'Bad mingw32-make binary ("-v" returns non-zero): {0}', bin));
         } else {
           let make_version_output = execMake.stdout;
-          if (make_version_output.length === 0)
+          if (make_version_output.length === 0) {
             make_version_output = execMake.stderr;
+          }
           const output_line_sep = make_version_output.trim().split('\n');
           const isMake = output_line_sep[0].includes('Make');
           const isMingwTool = output_line_sep[1].includes('mingw32');
@@ -341,10 +344,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     return gccKit;
 
   } else if (clang_res) {
-    log.debug(localize('testing.clang.binary', 'Testing Clang binary: {0}', bin));
-    if (pr)
-      pr.report({message: localize('getting.clang.version', 'Getting Clang version for {0}', bin)});
-    const version = await getCompilerVersion('Clang', bin);
+    const version = await getCompilerVersion('Clang', bin, pr);
     if (version === null) {
       return null;
     }
@@ -366,7 +366,7 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
     }
     return {
       name: version.detectedName,
-      compilers: clangCompilers,
+      compilers: clangCompilers
     };
   } else {
     return null;
@@ -388,7 +388,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
     }
   } catch (e) {
     log.warning(localize('failed.to.scan', 'Failed to scan {0} by exception: {1}', dir, util.errorToString(e)));
-    if (e.code == 'ENOENT') {
+    if (e.code === 'ENOENT') {
       return [];
     }
     throw e;
@@ -399,7 +399,7 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
   try {
     bins = (await fs.readdir(dir)).map(f => path.join(dir, f));
   } catch (e) {
-    if (e.code == 'EACCESS' || e.code == 'EPERM') {
+    if (e.code === 'EACCESS' || e.code === 'EPERM') {
       return [];
     }
     throw e;
@@ -421,13 +421,13 @@ export async function scanDirForCompilerKits(dir: string, pr?: ProgressReporter)
       return await kitIfCompiler(bin, pr);
     } catch (e) {
       log.warning(localize('filed.to.check.binary', 'Failed to check binary {0} by exception: {1}', bin, util.errorToString(e)));
-      if (e.code == 'EACCES') {
+      if (e.code === 'EACCES') {
         // The binary may not be executable by this user...
         return null;
-      } else if (e.code == 'ENOENT') {
+      } else if (e.code === 'ENOENT') {
         // This will happen on Windows if we try to "execute" a directory
         return null;
-      } else if (e.code == 'UNKNOWN' && process.platform == 'win32') {
+      } else if (e.code === 'UNKNOWN' && process.platform === 'win32') {
         // This is when file is not executable (in windows)
         return null;
       }
@@ -554,41 +554,86 @@ export function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Al
 }
 
 /**
+ * Possible msvc host architectures
+ */
+export const MSVC_HOST_ARCHES: string[] = ['x86', 'x64'];
+
+/*
  * List of environment variables required for Visual C++ to run as expected for
  * a VS installation.
+ * The diff of vcvarsall.bat output env and system env:
+    DevEnvDir=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\
+    Framework40Version=v4.0
+    FrameworkDir=C:\Windows\Microsoft.NET\Framework\
+    FrameworkDIR32=C:\Windows\Microsoft.NET\Framework\
+    FrameworkVersion=v4.0.30319
+    FrameworkVersion32=v4.0.30319
+    INCLUDE=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\INCLUDE;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\ucrt;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\include\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\shared;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.14393.0\winrt;
+    LIB=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\ARM;C:\Program Files (x86)\Windows Kits\10\lib\10.0.14393.0\ucrt\ARM;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\lib\um\ARM;C:\Program Files (x86)\Windows Kits\10\lib\10.0.14393.0\um\ARM;
+    LIBPATH=C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB\ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\ATLMFC\LIB\ARM;C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Windows Kits\10\References;\Microsoft.VCLibs\14.0\References\CommonConfiguration\neutral;
+    NETFXSDKDir=C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\
+    Path=C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow;C:\Program Files (x86)\MSBuild\14.0\bin;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN\x86_ARM;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\Tools;C:\Windows\Microsoft.NET\Framework\v4.0.30319;C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\VCPackages;C:\Program Files (x86)\HTML Help Workshop;C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Performance Tools;C:\Program Files (x86)\Windows Kits\10\bin\x86;C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft VS Code\bin;C:\Program Files\CMake\bin;C:\Program Files\Git\cmd;C:\Program Files\TortoiseGit\bin;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\
+    Platform=ARM
+    UCRTVersion=10.0.14393.0
+    UniversalCRTSdkDir=C:\Program Files (x86)\Windows Kits\10\
+    user_inputversion=10.0.14393.0
+    VCINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\
+    VisualStudioVersion=14.0
+    VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio 14.0\
+    WindowsLibPath=C:\Program Files (x86)\Windows Kits\10\UnionMetadata;C:\Program Files (x86)\Windows Kits\10\References
+    WindowsSdkDir=C:\Program Files (x86)\Windows Kits\10\
+    WindowsSDKLibVersion=10.0.14393.0\
+    WindowsSDKVersion=10.0.14393.0\
+    WindowsSDK_ExecutablePath_x64=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\x64\
+    WindowsSDK_ExecutablePath_x86=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\
+ *
  */
 const MSVC_ENVIRONMENT_VARIABLES = [
+  /* These is the diff of vcvarsall.bat generated env and original system env */
+  'DevEnvDir',
+  'Framework40Version',
+  'FrameworkDir',
+  'FrameworkDIR32',
+  'FrameworkDIR64',
+  'FrameworkVersion',
+  'FrameworkVersion32',
+  'FrameworkVersion64',
+  'INCLUDE',
+  'LIB',
+  'LIBPATH',
+  'NETFXSDKDir',
+  'Path',
+  'Platform',
+  'UCRTVersion',
+  'UniversalCRTSdkDir',
+  'user_inputversion',
+  'VCINSTALLDIR',
+  'VisualStudioVersion',
+  'VSINSTALLDIR',
+  'WindowsLibPath',
+  'WindowsSdkDir',
+  'WindowsSDKLibVersion',
+  'WindowsSDKVersion',
+  'WindowsSDK_ExecutablePath_x64',
+  'WindowsSDK_ExecutablePath_x86',
+
+  /* These are special also need to be cached */
   'CL',
   '_CL_',
-  'INCLUDE',
-  'LIBPATH',
   'LINK',
   '_LINK_',
-  'LIB',
-  'PATH',
   'TMP',
-  'FRAMEWORKDIR',
-  'FRAMEWORKDIR64',
-  'FRAMEWORKVERSION',
-  'FRAMEWORKVERSION64',
   'UCRTCONTEXTROOT',
-  'UCRTVERSION',
-  'UNIVERSALCRTSDKDIR',
-  'VCINSTALLDIR',
-  'VCTARGETSPATH',
-  'WINDOWSLIBPATH',
-  'WINDOWSSDKDIR',
-  'WINDOWSSDKLIBVERSION',
-  'WINDOWSSDKVERSION',
-  'VISUALSTUDIOVERSION'
+  'VCTARGETSPATH'
 ];
 
 /**
  * Get the environment variables corresponding to a VS dev batch file.
+ * @param hostArch Host arch used to find the proper Windows SDK path
  * @param devbat Path to a VS environment batch file
  * @param args List of arguments to pass to the batch file
  */
-async function collectDevBatVars(devbat: string, args: string[], major_version: number, common_dir: string):
+async function collectDevBatVars(hostArch: string, devbat: string, args: string[], major_version: number, common_dir: string):
     Promise<Map<string, string>|undefined> {
   const fname = Math.random().toString() + '.bat';
   const batfname = `vs-cmt-${fname}`;
@@ -599,10 +644,11 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
     `set "VS${major_version}0COMNTOOLS=${common_dir}"`,
     `set "INCLUDE="`,
     `call "${devbat}" ${args.join(' ')}`,
-    `cd /d "%~dp0"`, /* Switch back to original drive */
+    `setlocal enableextensions enabledelayedexpansion`,
+    `cd /d "%~dp0"` /* Switch back to original drive */
   ];
   for (const envvar of MSVC_ENVIRONMENT_VARIABLES) {
-    bat.push(`echo ${envvar} := %${envvar}% >> ${envfname}`);
+    bat.push(`if DEFINED ${envvar} echo ${envvar} := %${envvar}% >> ${envfname}`);
   }
 
   // writeFile and unlink don't need quotes (they work just fine with an unquoted path with space)
@@ -630,23 +676,28 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
   const batContent = bat.join('\r\n');
   await fs.writeFile(batpath, batContent);
 
-  // Quote the script file path before running it, in case there are spaces.
-  const res = await proc.execute(`"${batpath}"`, [], null, { shell: true, silent: true }).result;
+  const outputEncoding = await codepages.getWindowsCodepage();
+  const execOption: proc.ExecutionOptions = {
+    shell: false,
+    silent: true,
+    overrideLocale: false,
+    outputEncoding: outputEncoding
+  };
+  // Script file path will be quoted when passed as args
+  const res = await proc.execute('cmd.exe', ['/c', batpath], null, execOption).result;
   await fs.unlink(batpath);
   const output = (res.stdout) ? res.stdout + (res.stderr || '') : res.stderr;
 
   let env = '';
   try {
     /* When the bat running failed, envpath would not exist */
-    env = await fs.readFile(envpath, {encoding: 'utf8'});
+    const env_bin = await fs.readFile(envpath);
+    env = iconv.decode(env_bin, outputEncoding);
     await fs.unlink(envpath);
   } catch (error) { log.error(error); }
 
-  if (!env || env === '') {
-    log.error(localize('script.run.error',
-        'Error running:{0} with args:{1}\nOutput are:\n{2}\nBat content are:\n{3}',
-        devbat, args.join(' '), output, batContent));
-    return;
+  if (!env) {
+    env = '';
   }
 
   const vars
@@ -659,13 +710,39 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
           }
           return acc;
         }, new Map());
-  if (vars.get('INCLUDE') === '') {
+  const include_env = vars.get('INCLUDE') ?? '';
+  if (include_env === '') {
     log.error(localize('script.run.error.check',
-        'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}',
-        devbat, args.join(' '), env, batContent));
+        'Error running:{0} with args:{1}\nCannot find INCLUDE within:\n{2}\nBat content are:\n{3}\nExecute output are:\n{4}\n',
+        devbat, args.join(' '), env, batContent, output));
     return;
   }
-  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
+
+  let WindowsSDKVersionParsed: util.Version = {
+    major: 0,
+    minor: 0,
+    patch: 0
+  };
+  const WindowsSDKVersion = vars.get('WindowsSDKVersion') ?? '0.0.0';
+  try {
+    WindowsSDKVersionParsed = util.parseVersion(WindowsSDKVersion);
+  } catch (err) {
+    log.error(`Parse '${WindowsSDKVersion}' failed`);
+  }
+  if (util.compareVersion(WindowsSDKVersionParsed, {major: 10, minor: 0, patch: 14393}) >= 0) {
+    const WindowsSdkDir = vars.get('WindowsSdkDir') ?? '';
+    const existPath = vars.get('PATH') ?? '';
+    const oldWinSdkBinPath = path.join(WindowsSdkDir, 'bin', hostArch);
+    const newWinSdkBinPath = path.join(WindowsSdkDir, 'bin', WindowsSDKVersion, hostArch);
+    if (existPath.toLowerCase().indexOf(oldWinSdkBinPath.toLowerCase()) >= 0
+      && existPath.toLowerCase().indexOf(newWinSdkBinPath.toLowerCase()) < 0) {
+      log.info(localize('windows.sdk.path.patch', 'Patch Windows SDK bin path from {0} to {1} for {2}',
+        oldWinSdkBinPath, newWinSdkBinPath, devbat));
+      vars.set('PATH', `${newWinSdkBinPath};${existPath}`);
+    }
+  }
+  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}',
+    devbat, args.join(' '), JSON.stringify([...vars], null, 2)));
   return vars;
 }
 
@@ -675,7 +752,7 @@ async function collectDevBatVars(devbat: string, args: string[], major_version: 
  */
 export async function getShellScriptEnvironment(kit: Kit, opts?: expand.ExpansionOptions): Promise<Map<string, string>|undefined> {
   console.assert(kit.environmentSetupScript);
-  const filename = Math.random().toString() + (process.platform == 'win32' ? '.bat' : '.sh');
+  const filename = Math.random().toString() + (process.platform === 'win32' ? '.bat' : '.sh');
   const script_filename = `vs-cmt-${filename}`;
   const environment_filename = script_filename + '.env';
 
@@ -705,14 +782,14 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     environmentSetupScript = await expand.expandString(environmentSetupScript!, opts);
   }
 
-  if (process.platform == 'win32') { // windows
+  if (process.platform === 'win32') { // windows
     script += `call "${environmentSetupScript}"\r\n`; // call the user batch script
     script += `set >> "${environment_path}"`; // write env vars to temp file
     // Quote the script file path before running it, in case there are spaces.
     run_command = `call "${script_path}"`;
   } else { // non-windows
     script += `source "${environmentSetupScript}"\n`; // run the user shell script
-    script +=`printenv >> ${environment_path}`; // write env vars to temp file
+    script += `printenv >> ${environment_path}`; // write env vars to temp file
     run_command = `/bin/bash -c "source ${script_path}"`; // run script in bash to enable bash-builtin commands like 'source'
   }
   try {
@@ -781,25 +858,25 @@ const VsGenerators: {[key: string]: string} = {
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string>|null> {
   console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
   const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
+  const majorVersion = parseInt(inst.installationVersion);
   let vcvarsScript: string = 'vcvarsall.bat';
-  if (targetArch == "arm" || targetArch == "arm64") {
+  if (targetArch === "arm" || targetArch === "arm64") {
     // The arm(64) vcvars filename for x64 hosted toolset is using the 'amd64' alias.
     vcvarsScript = `vcvars${kitHostTargetArch(hostArch, targetArch, true)}.bat`;
   }
-
-  let devbat = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build', vcvarsScript);
-  const majorVersion = parseInt(inst.installationVersion);
+  let devBatFolder = path.join(inst.installationPath, 'VC', 'Auxiliary', 'Build');
   if (majorVersion < 15) {
-    devbat = path.join(inst.installationPath, 'VC', vcvarsScript);
+    devBatFolder = path.join(inst.installationPath, 'VC');
   }
 
+  const devbat = path.join(devBatFolder, vcvarsScript);
   // The presence of vcvars[hostArch][targetArch].bat indicates whether targetArch is included
   // in the given VS installation.
   if (!await fs.exists(devbat)) {
     return null;
   }
 
-  const variables = await collectDevBatVars(devbat, [kitHostTargetArch(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
+  const variables = await collectDevBatVars(hostArch, devbat, [kitHostTargetArch(hostArch, targetArch, majorVersion < 15)], majorVersion, common_dir);
   if (!variables) {
     return null;
   } else {
@@ -811,8 +888,7 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
     // the VS{vs_version_number}COMNTOOLS environment variable to contain
     // the path to the Common7 directory.
     const vs_version = variables.get('VISUALSTUDIOVERSION');
-    if (vs_version)
-      variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir);
+    if (vs_version) {variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir); }
 
     // For Ninja and Makefile generators, CMake searches for some compilers
     // before it checks for cl.exe. We can force CMake to check cl.exe first by
@@ -892,11 +968,10 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
   const installs = await vsInstallations();
   const prs = installs.map(async(inst): Promise<Kit[]> => {
     const ret = [] as Kit[];
-    const hostArches: string[] = ['x86', 'x64'];
     const targetArches: string[] = ['x86', 'x64', 'arm', 'arm64'];
 
     const sub_prs: Promise<Kit | null>[] = [];
-    hostArches.forEach(hostArch => {
+    MSVC_HOST_ARCHES.forEach(hostArch => {
       targetArches.forEach(targetArch => {
         const kit: Promise<Kit | null> = tryCreateNewVCEnvironment(inst, hostArch, targetArch, pr);
         if (kit) {
@@ -956,15 +1031,16 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
       const vs_arch = (version.target && version.target.triple.includes('i686-pc')) ? 'x86' : 'amd64';
 
       const clangArch = (vs_arch === "amd64") ? "x64\\" : "";
+      const clangKitName = `Clang ${version.version} ${clang_cli} for MSVC ${vs.installationVersion} (${install_name} - ${vs_arch})`;
       if (binPath.startsWith(`${vs.installationPath}\\VC\\Tools\\Llvm\\${clangArch}bin`) &&
           util.checkFileExists(util.lightNormalizePath(binPath))) {
         clangKits.push({
-          name: `Clang ${version.version} ${clang_cli} (${install_name} - ${vs_arch})`,
+          name: clangKitName,
           visualStudio: kitVSName(vs),
           visualStudioArchitecture: vs_arch,
           compilers: {
             C: binPath,
-            CXX: binPath,
+            CXX: binPath
           }
         });
       }
@@ -991,13 +1067,13 @@ async function getVSInstallForKit(kit: Kit): Promise<VSInstallation|undefined> {
     const installs = await vsInstallations();
     const match = (inst: VSInstallation) =>
         // old Kit format
-        (legacyKitVSName(inst) == kit.visualStudio) ||
+        (legacyKitVSName(inst) === kit.visualStudio) ||
         // new Kit format
         (kitVSName(inst) === kit.visualStudio) ||
         // Clang for VS kit format
         (!!kit.compilers && kit.name.indexOf("Clang") >= 0 && kit.name.indexOf(vsDisplayName(inst)) >= 0);
 
-    return installs.find(inst => match(inst));
+    return installs.find(match);
 }
 
 export async function getVSKitEnvironment(kit: Kit): Promise<Map<string, string>|null> {
@@ -1036,8 +1112,7 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
   }
   const env = new Map(util.chain(host_env, kit_env));
   const isWin32 = process.platform === 'win32';
-  if (isWin32)
-  {
+  if (isWin32) {
     const path_list: string[] = [];
     const cCompiler = kit.compilers?.C;
     /* Force add the compiler executable dir to the PATH env */
@@ -1048,7 +1123,7 @@ export async function effectiveKitEnvironment(kit: Kit, opts?: expand.ExpansionO
     if (cmt_mingw_path) {
       path_list.push(cmt_mingw_path);
     }
-    let path_key : string | undefined = undefined;
+    let path_key: string | undefined;
     if (env.has("PATH")) {
       path_key = "PATH";
     } else if (env.has("Path")) {
@@ -1101,7 +1176,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
   log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));
   const prog = {
     location: vscode.ProgressLocation.Notification,
-    title: localize('scanning.for.kits', 'Scanning for kits'),
+    title: localize('scanning.for.kits', 'Scanning for kits')
   };
 
   return vscode.window.withProgress(prog, async pr => {
@@ -1156,7 +1231,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
         bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin");
         bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\x64\\bin");
       });
-      bundled_clang_paths.forEach(path_el => {clang_paths.add(path_el);});
+      bundled_clang_paths.forEach(path_el => {clang_paths.add(path_el); });
 
       // Scan for kits
       const vs_kits = scanForVSKits(pr);
@@ -1174,7 +1249,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
 }
 
 // Rescan if the kits versions (extension context state var versus value defined for this release) don't match.
-export async function scanForKitsIfNeeded(cmt: CMakeTools) : Promise<boolean> {
+export async function scanForKitsIfNeeded(cmt: CMakeTools): Promise<boolean> {
   const kitsVersionSaved = cmt.extensionContext.globalState.get<number>('kitsVersionSaved');
   const kitsVersionCurrent = 2;
 
@@ -1343,7 +1418,7 @@ export function kitChangeNeedsClean(newKit: Kit, oldKit: Kit|null): boolean {
   });
   const new_imp = important_params(newKit);
   const old_imp = important_params(oldKit);
-  if (compare(new_imp, old_imp) != Ordering.Equivalent) {
+  if (compare(new_imp, old_imp) !== Ordering.Equivalent) {
     log.debug(localize('clean.needed', 'Need clean: Kit changed'));
     return true;
   } else {

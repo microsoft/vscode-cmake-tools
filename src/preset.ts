@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as nls from 'vscode-nls';
 import * as path from 'path';
 
@@ -33,7 +34,7 @@ export interface Preset {
   environment?: { [key: string]: null | string };
   vendor?: VendorType;
 
-  __expanded?: boolean; // Private field to indicate if we have already expanded thie preset.
+  __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
 }
 
 export interface ValueStrategy {
@@ -60,15 +61,15 @@ export interface DebugOptions {
   find?: boolean;
 }
 
-type CacheVarType = null | boolean | string | { type: string, value: boolean | string };
+type CacheVarType = null | boolean | string | { type: string; value: boolean | string };
 
 export type OsName = "Windows" | "Linux" | "macOS";
 
-export type Vendor_VsSettings = {
+export type VendorVsSettings = {
   'microsoft.com/VisualStudioSettings/CMake/1.0': {
     hostOS: OsName | OsName[];
     [key: string]: any;
-  }
+  };
   [key: string]: any;
 };
 
@@ -78,11 +79,12 @@ export interface ConfigurePreset extends Preset {
   toolset?: string | ValueStrategy;
   binaryDir?: string;
   cmakeExecutable?: string;
-  cacheVariables?: { [key: string]: CacheVarType };
+  // Make the cache value to be possibly undefined for type checking
+  cacheVariables?: { [key: string]: CacheVarType | undefined };
   warnings?: WarningOptions;
   errors?: ErrorOptions;
   debug?: DebugOptions;
-  vendor?: Vendor_VsSettings | VendorType;
+  vendor?: VendorVsSettings | VendorType;
 }
 
 export interface BuildPreset extends Preset {
@@ -128,13 +130,13 @@ export interface IncludeFilter {
   name?: string;
   label?: string;
   useUnion?: boolean;
-  index?: string | { start?: number, end?: number, stride?: number, specificTests?: number[] };
+  index?: string | { start?: number; end?: number; stride?: number; specificTests?: number[] };
 }
 
 export interface ExcludeFilter {
   name?: string;
   label?: string;
-  fixtures?: { any?: string, setup?: string, cleanup?: string };
+  fixtures?: { any?: string; setup?: string; cleanup?: string };
 }
 
 export interface TestFilter {
@@ -149,7 +151,7 @@ export interface ExecutionOptions {
   resourceSpecFile?: string;
   testLoad?: number;
   showOnly?: 'human' | 'json-v1';
-  repeat?: { mode: 'until-fail' | 'until-pass' | 'after-timeout', count: number};
+  repeat?: { mode: 'until-fail' | 'until-pass' | 'after-timeout'; count: number};
   interactiveDebugging?: boolean;
   scheduleRandom?: boolean;
   timeout?: number;
@@ -168,6 +170,16 @@ export interface TestPreset extends Preset {
   // Private fields
   __binaryDir?: string; // Getting this from the config preset
   __generator?: string; // Getting this from the config preset
+}
+
+// Interface for toolset options specified here: https://cmake.org/cmake/help/latest/variable/CMAKE_GENERATOR_TOOLSET.html
+// The key names (left of '=') are removed and just the values are stored.
+interface Toolset {
+  name?: string;          // 'toolset', e.g. 'v141'
+  cuda?: string;          // 'cuda=<version>|<path>'
+  host?: string;          // 'host=<arch>'
+  version?: string;       // 'version=<version>'
+  VCTargetsPath?: string; // 'VCTargetsPath=<path>'
 }
 
 /**
@@ -318,7 +330,7 @@ export function expandVendorForConfigurePresets(folder: string): void {
   }
 }
 
-function getVendorForConfigurePreset(folder: string, name: string): VendorType | Vendor_VsSettings | null {
+function getVendorForConfigurePreset(folder: string, name: string): VendorType | VendorVsSettings | null {
   const refs = referencedConfigurePresets.get(folder);
   if (!refs) {
     referencedConfigurePresets.set(folder, new Set());
@@ -328,7 +340,7 @@ function getVendorForConfigurePreset(folder: string, name: string): VendorType |
   return getVendorForConfigurePresetImpl(folder, name);
 }
 
-function getVendorForConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+function getVendorForConfigurePresetImpl(folder: string, name: string, allowUserPreset: boolean = false): VendorType | VendorVsSettings | null {
   let preset = getPresetByName(configurePresets(folder), name);
   if (preset) {
     return getVendorForConfigurePresetHelper(folder, preset);
@@ -344,7 +356,7 @@ function getVendorForConfigurePresetImpl(folder: string, name: string, allowUser
   return null;
 }
 
-function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | Vendor_VsSettings | null {
+function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePreset, allowUserPreset: boolean = false): VendorType | VendorVsSettings | null {
   if (preset.__expanded) {
     return preset.vendor || null;
   }
@@ -369,7 +381,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
       const parentVendor = getVendorForConfigurePresetImpl(folder, parent, allowUserPreset);
       if (parentVendor) {
         for (const key in parentVendor) {
-          if (!preset.vendor[key]) {
+          if (preset.vendor[key] === undefined) {
             preset.vendor[key] = parentVendor[key];
           }
         }
@@ -448,7 +460,9 @@ export async function expandConfigurePreset(folder: string,
     expandedPreset.cacheVariables = { };
     for (const cacheVarName in preset.cacheVariables) {
       const cacheVar = preset.cacheVariables[cacheVarName];
-      if (cacheVar && typeof cacheVar !== 'boolean') {
+      if (typeof cacheVar === 'boolean') {
+        expandedPreset.cacheVariables[cacheVarName] = cacheVar;
+      } else if (cacheVar) {
         if (util.isString(cacheVar)) {
           expandedPreset.cacheVariables[cacheVarName] = await expandString(cacheVar, expansionOpts);
         } else if (util.isString(cacheVar.value)) {
@@ -464,6 +478,75 @@ export async function expandConfigurePreset(folder: string,
   merge(expandedPreset, preset);
 
   return expandedPreset;
+}
+
+function getArchitecture(preset: ConfigurePreset) {
+  if (util.isString(preset.architecture)) {
+    return preset.architecture;
+  } else if (preset.architecture && preset.architecture.value) {
+    return preset.architecture.value;
+  }
+  log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
+  return 'x86';
+}
+
+function getToolset(preset: ConfigurePreset): Toolset {
+  let result: Toolset | undefined;
+  if (util.isString(preset.toolset)) {
+    result = parseToolset(preset.toolset);
+  } else if (preset.toolset && util.isString(preset.toolset.value)) {
+    result = parseToolset(preset.toolset.value);
+  }
+
+  const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using host=x86 by default', preset.name);
+  if (result) {
+    if (result.name === 'x86' || result.name === 'x64') {
+      log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean 'host={1}'?", preset.name, result.name));
+    }
+    if (!result.host) {
+      log.warning(noToolsetArchWarning);
+      result.host = 'x86';
+    }
+    if (!result.version) {
+      log.warning(localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name));
+    }
+  } else {
+    log.warning(noToolsetArchWarning);
+    result = { host: 'x86' };
+  }
+  return result;
+}
+
+// We don't support all of these options for Kit lookup right now, but might in the future.
+function parseToolset(toolset: string): Toolset {
+  const toolsetOptions = toolset.split(',');
+
+  const result: Toolset = {};
+  for (const option of toolsetOptions) {
+    if (option.indexOf('=') < 0) {
+      result.name = option;
+    } else {
+      const keyValue = option.split('=');
+      switch (keyValue[0].toLowerCase()) {
+        case 'cuda':
+          result.cuda = keyValue[1];
+          break;
+        case 'host':
+          result.host = keyValue[1];
+          break;
+        case 'version':
+          result.version = keyValue[1];
+          break;
+        case 'vctargetspath':
+          result.VCTargetsPath = keyValue[1];
+          break;
+        default:
+          log.warning(localize('unknown.toolset.option', "Unrecognized toolset option will be ignored: {0}", option));
+          break;
+      }
+    }
+  }
+  return result;
 }
 
 async function expandConfigurePresetImpl(folder: string,
@@ -527,7 +610,7 @@ async function expandConfigurePresetHelper(folder: string,
         inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
         // Inherit cache vars
         for (const name in parent.cacheVariables) {
-          if (!preset.cacheVariables[name]) {
+          if (preset.cacheVariables[name] === undefined) {
             preset.cacheVariables[name] = parent.cacheVariables[name];
           }
         }
@@ -550,7 +633,7 @@ async function expandConfigurePresetHelper(folder: string,
   // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
   // then set the env automatically
   if (process.platform === 'win32') {
-    const getStringValueFromCacheVar = (variable: CacheVarType) => {
+    const getStringValueFromCacheVar = (variable?: CacheVarType) => {
       if (util.isString(variable)) {
         return variable;
       } else if (variable && typeof variable === 'object') {
@@ -568,43 +651,9 @@ async function expandConfigurePresetHelper(folder: string,
                                                                     shell: true }).result;
         if (!clLoc.stdout) {
           // Not on PATH, need to set env
-          let arch = 'x86';
-          let toolsetArch = 'host=x86';
-          let toolsetVsVersion: string | undefined;
-          if (util.isString(preset.architecture)) {
-            arch = preset.architecture;
-          } else if (preset.architecture && preset.architecture.value) {
-            arch = preset.architecture.value;
-          } else {
-            log.warning(localize('no.cl.arch', 'Configure preset {0}: No architecture specified for cl.exe, using x86 by default', preset.name));
-          }
-          const toolsetArchRegex = /(host=\w+),?/i;
-          const toolsetVsVersionRegex = /version=(\w+),?/i;
-          const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using x86 by default', preset.name);
-          const noToolsetVsVersionWarning = localize('no.cl.toolset.version', 'Configure preset {0}: No toolset version specified for cl.exe, using latest by default', preset.name);
-          const matchToolsetArchAndVersion = (toolset: string) => {
-            const toolsetArchMatches = toolset.match(toolsetArchRegex);
-            if (!toolsetArchMatches) {
-              log.warning(noToolsetArchWarning);
-            } else {
-              toolsetArch = toolsetArchMatches[1];
-            }
-            const toolsetVsVersionMatches = toolset.match(toolsetVsVersionRegex);
-            if (!toolsetVsVersionMatches) {
-              log.warning(noToolsetVsVersionWarning);
-            } else {
-              toolsetVsVersion = toolsetVsVersionMatches[1];
-            }
-          };
-          if (!preset.toolset) {
-            log.warning(noToolsetArchWarning);
-          } else if (util.isString(preset.toolset)) {
-            matchToolsetArchAndVersion(preset.toolset);
-          } else if (!preset.toolset.value) {
-            log.warning(noToolsetArchWarning);
-          } else {
-            matchToolsetArchAndVersion(preset.toolset.value);
-          }
+          const arch = getArchitecture(preset);
+          const toolset = getToolset(preset);
+
           // Get version info for all VS instances. Create a map so we don't need to
           // iterate through the array every time.
           const vsVersions = new Map<string, string>();
@@ -619,13 +668,13 @@ async function expandConfigurePresetHelper(folder: string,
               const version = vsVersions.get(kit.visualStudio);
               if (kit.preferredGenerator &&
                   (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
-                  kit.preferredGenerator.toolset === toolsetArch) {
-                if (toolsetVsVersion && version?.startsWith(toolsetVsVersion)) {
+                  kit.preferredGenerator.toolset === ('host=' + toolset.host)) {
+                if (toolset.version && version?.startsWith(toolset.version)) {
                   latestVsVersion = version;
                   latestVsIndex = i;
                   break;
                 }
-                if (!toolsetVsVersion && version && compareVersions(latestVsVersion, version) < 0) {
+                if (!toolset.version && version && compareVersions(latestVsVersion, version) < 0) {
                   latestVsVersion = version;
                   latestVsIndex = i;
                 }
@@ -635,7 +684,7 @@ async function expandConfigurePresetHelper(folder: string,
           if (latestVsIndex < 0) {
             log.error(localize('specified.cl.not.found',
                           'Configure preset {0}: Specified cl.exe with toolset {1} and architecture {2} is not found, you may need to run "CMake: Scan for Compilers" if it exists on your computer.',
-                          preset.name, toolsetVsVersion ? `${toolsetVsVersion},${toolsetArch}` : toolsetArch, arch));
+                          preset.name, toolset.version ? `${toolset.version},${toolset.host}` : toolset.host, arch));
           } else {
             clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
             // if ninja isn't on path, try to look for it in a VS install
@@ -1193,11 +1242,10 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     if (preset.warnings.deprecated !== undefined) {
       result.push(preset.warnings.deprecated ? '-Wdeprecated' : '-Wno-deprecated');
     }
-    /* tslint:disable:no-unused-expression */
+
     preset.warnings.uninitialized && result.push('--warn-uninitialized');
     preset.warnings.unusedCli && result.push('--no-warn-unused-cli');
     preset.warnings.systemVars && result.push('--check-system-vars');
-    /* tslint:enable:no-unused-expression */
   }
 
   // Errors
@@ -1212,11 +1260,9 @@ export function configureArgs(preset: ConfigurePreset): string[] {
 
   // Debug
   if (preset.debug) {
-    /* tslint:disable:no-unused-expression */
     preset.debug.output && result.push('--debug-output');
     preset.debug.tryCompile && result.push('--debug-trycompile');
     preset.debug.find && result.push('--debug-find');
-    /* tslint:enable:no-unused-expression */
   }
 
   return result;
@@ -1224,8 +1270,6 @@ export function configureArgs(preset: ConfigurePreset): string[] {
 
 export function buildArgs(preset: BuildPreset): string[] {
   const result: string[] = [];
-
-  /* tslint:disable:no-unused-expression */
 
   preset.__binaryDir && result.push('--build', preset.__binaryDir);
   preset.jobs && result.push('--parallel', preset.jobs.toString());
@@ -1241,15 +1285,11 @@ export function buildArgs(preset: BuildPreset): string[] {
 
   preset.nativeToolOptions && result.push('--', ...preset.nativeToolOptions);
 
-  /* tslint:enable:no-unused-expression */
-
   return result;
 }
 
 export function testArgs(preset: TestPreset): string[] {
   const result: string[] = [];
-
-  /* tslint:disable:no-unused-expression */
 
   preset.configuration && result.push('--build-config', preset.configuration);
   if (preset.overwriteConfigurationFile) {
@@ -1306,13 +1346,11 @@ export function testArgs(preset: TestPreset): string[] {
     preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
     preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);
     preset.execution.repeat && result.push(`--repeat ${preset.execution.repeat.mode}:${preset.execution.repeat.count}`);
-    result.push(`--interactive-debug-mode ${preset.execution.interactiveDebugging ? 1 : 0}` );
+    result.push(`--interactive-debug-mode ${preset.execution.interactiveDebugging ? 1 : 0}`);
     preset.execution.scheduleRandom && result.push('--schedule-random');
     preset.execution.timeout && result.push('--timeout', preset.execution.timeout.toString());
     preset.execution.noTestsAction && preset.execution.noTestsAction !== 'default' && result.push('--no-tests=' + preset.execution.noTestsAction);
   }
-
-  /* tslint:enable:no-unused-expression */
 
   return result;
 }
@@ -1328,7 +1366,7 @@ export function configurePresetChangeNeedsClean(newPreset: ConfigurePreset, oldP
   });
   const new_imp = important_params(newPreset);
   const old_imp = important_params(oldPreset);
-  if (util.compare(new_imp, old_imp) != util.Ordering.Equivalent) {
+  if (util.compare(new_imp, old_imp) !== util.Ordering.Equivalent) {
     log.debug(localize('clean.needed.config.preset.changed', 'Need clean: configure preset changed'));
     return true;
   } else {

@@ -1,4 +1,3 @@
-
 /**
  * Module for handling GNU linker diagnostics
  */ /** */
@@ -29,7 +28,7 @@ export class Parser extends RawDiagnosticParser {
         location: new vscode.Range(lineno, 0, lineno, 999),
         severity: 'error',
         message,
-        related: [],
+        related: []
       };
     }
     return FeedLineResult.NotMine;

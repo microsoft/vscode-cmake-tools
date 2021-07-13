@@ -15,7 +15,6 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = logging.createLogger('cache');
 
-
 /**
  * Implements access to CMake cache entries. See `api.CacheEntry` for more
  * information.
@@ -30,15 +29,25 @@ export class Entry implements api.CacheEntry {
 
   serializedKey: string = '';
 
-  get type() { return this._type; }
+  get type() {
+    return this._type;
+  }
 
-  get helpString() { return this._docs; }
+  get helpString() {
+    return this._docs;
+  }
 
-  get key() { return this._key; }
+  get key() {
+    return this._key;
+  }
 
-  get value() { return this._value; }
+  get value() {
+    return this._value;
+  }
 
-  as<T>(): T { return this.value as T; }
+  as<T>(): T {
+    return this.value as T;
+  }
 
   /**
    * Create a new Cache Entry instance. Doesn't modify any files. You probably
@@ -93,7 +102,9 @@ export class CMakeCache {
   }
 
   /** Get a list of all cache entries */
-  get allEntries(): Entry[] { return Array.from(this._entries.values()); }
+  get allEntries(): Entry[] {
+    return Array.from(this._entries.values());
+  }
 
   /**
    * Create a new instance. This is **private**. You may only create an instance
@@ -110,12 +121,16 @@ export class CMakeCache {
    * `true` if the file exists when this instance was created.
    * `false` otherwise.
    */
-  get exists() { return this._exists; }
+  get exists() {
+    return this._exists;
+  }
 
   /**
    * The path to the cache file, which may not exist
    */
-  get path() { return this._path; }
+  get path() {
+    return this._path;
+  }
 
   /**
    * Reload the cache file and return a new instance. This will not modify this
@@ -151,8 +166,9 @@ export class CMakeCache {
         }
         const [, serializedName, quoted_name, unquoted_name, typename, valuestr] = match;
         const name = quoted_name || unquoted_name;
-        if (!name || !typename)
+        if (!name || !typename) {
           continue;
+        }
         log.trace(localize('read.line.in.cache', 'Read line in cache with {0}={1}, {2}={3}, {4}={5}', 'name', name, 'typename', typename, 'valuestr', valuestr));
         if (name.endsWith('-ADVANCED')) {
           if (valuestr === '1') {
@@ -172,7 +188,7 @@ export class CMakeCache {
             FILEPATH: api.CacheEntryType.FilePath,
             INTERNAL: api.CacheEntryType.Internal,
             UNINITIALIZED: api.CacheEntryType.Uninitialized,
-            STATIC: api.CacheEntryType.Static,
+            STATIC: api.CacheEntryType.Static
           } as {[type: string]: api.CacheEntryType | undefined};
           const type = typemap[typename];
           const docs = docs_acc.trim();
@@ -262,7 +278,7 @@ export class CMakeCache {
     return '';
   }
 
-  async replaceOptions(options: Array<{key: string, value: string}>): Promise<string> {
+  async replaceOptions(options: {key: string; value: string}[]): Promise<string> {
     const exists = await fs.exists(this.path);
     if (exists) {
       let content = (await fs.readFile(this.path)).toString();
@@ -283,7 +299,7 @@ export class CMakeCache {
     }
   }
 
-  async saveAll(options: Array<{key: string, value: string}>): Promise<void> {
+  async saveAll(options: {key: string; value: string}[]): Promise<void> {
     const content = await this.replaceOptions(options);
     if (content) {
       if (await fs.exists(this.path)) {

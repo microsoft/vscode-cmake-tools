@@ -74,7 +74,7 @@
 	"reading.presets.file": "Lectura del archivo de valores preestablecidos {0}",
 	"failed.to.parse": "No se pudo analizar {0}: {1}",
 	"invalid.file.error": "Contenido del kit {0} ({1}) no válido:",
-	"successfully.validated.presets": "Los kits de valores preestablecidos se validaron correctamente en {0}",
+	"successfully.validated.presets": "Los valores preestablecidos se validaron correctamente en {0}",
 	"use.kits.variants": "Usar kits y variantes",
 	"edit.presets": "Buscar",
 	"presets.version.error": "CMakePresets versión 1 no es compatible. ¿Qué quiere hacer?",
