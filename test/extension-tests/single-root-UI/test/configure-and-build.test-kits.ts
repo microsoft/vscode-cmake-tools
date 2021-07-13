@@ -12,7 +12,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 
-
 let workername: string = process.platform;
 
 if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {
@@ -116,12 +115,13 @@ suite('Build using Kits and Variants', async () => {
 
   test('Test kit switch after missing preferred generator', async function(this: Mocha.Context) {
     // Select compiler build node dependent
-    const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+    const os_compilers: {[osName: string]: {kitLabel: RegExp; compiler: string}[]} = {
       linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
       win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
     };
-    if (!(workername in os_compilers))
+    if (!(workername in os_compilers)) {
       this.skip();
+    }
     const compiler = os_compilers[workername];
 
     // Run test
@@ -141,12 +141,13 @@ suite('Build using Kits and Variants', async () => {
   test('Test kit switch between different preferred generators and compilers',
        async function(this: Mocha.Context) {
          // Select compiler build node dependent
-         const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+         const os_compilers: {[osName: string]: {kitLabel: RegExp; compiler: string}[]} = {
            linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
            win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
          };
-         if (!(workername in os_compilers))
+         if (!(workername in os_compilers)) {
            this.skip();
+         }
          const compiler = os_compilers[workername];
 
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;

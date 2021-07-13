@@ -9,7 +9,6 @@ import {
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-
 suite('Build using Presets', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
