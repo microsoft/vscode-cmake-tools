@@ -497,7 +497,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     this._activeTarget = opts.activeTarget;
     for (const config of opts.codeModelContent.configurations) {
       // Update only the active build type variant.
-      if (config.activeConfigName === opts.activeBuildTypeVariant) {
+      if (config.name === opts.activeBuildTypeVariant) {
         for (const project of config.projects) {
           for (const target of project.targets) {
             // Now some shenanigans since header files don't have config data:

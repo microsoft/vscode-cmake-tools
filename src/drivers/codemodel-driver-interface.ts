@@ -91,8 +91,8 @@ export interface CodeModelConfiguration {
   /** List of project() from CMakeLists.txt */
   projects: CodeModelProject[];
 
-  /** Name of the active configuration in a multi-configuration build generators.*/
-  activeConfigName: string;
+  /** Name of the active configuration in a multi-configuration generator.*/
+  name: string;
 }
 
 export interface CodeModelToolchain {
