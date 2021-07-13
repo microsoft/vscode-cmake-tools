@@ -158,7 +158,7 @@ suite('CppTools tests', () => {
     const uri = vscode.Uri.file(sourceFile);
     const codeModelContent: codemodel_api.CodeModelContent = {
       configurations: [{
-        activeConfigName : "Debug",
+        name : "Debug",
         projects: [{
           name: 'cpptools-test',
           sourceDirectory: here,
@@ -197,7 +197,7 @@ suite('CppTools tests', () => {
     const uri2 = vscode.Uri.file(sourceFile2);
     const codeModelContent2: codemodel_api.CodeModelContent = {
       configurations: [{
-        activeConfigName: 'Debug',
+        name: 'Debug',
         projects: [{
           name: 'cpptools-test2',
           sourceDirectory: smokeFolder,

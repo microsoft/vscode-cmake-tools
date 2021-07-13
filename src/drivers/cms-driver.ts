@@ -208,12 +208,12 @@ export class CMakeServerClientDriver extends CMakeDriver {
     if (!this._codeModel) {
       return [];
     }
-    const build_config = this._codeModel.configurations.find(conf => conf.activeConfigName === this.currentBuildType);
+    const build_config = this._codeModel.configurations.find(conf => conf.name === this.currentBuildType);
     if (!build_config) {
       log.error(localize('found.no.matching.code.model', 'Found no matching code model for the current build type. This shouldn\'t be possible'));
       log.error('current build type {0}', this.currentBuildType);
       this._codeModel.configurations.forEach(config => {
-        log.error('config name {0}', config.activeConfigName);
+        log.error('config name {0}', config.name);
       });
       return [];
     }

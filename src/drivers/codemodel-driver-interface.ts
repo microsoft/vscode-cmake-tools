@@ -92,7 +92,7 @@ export interface CodeModelConfiguration {
   projects: CodeModelProject[];
 
   /** Name of the active configuration in a multi-configuration build generators.*/
-  activeConfigName: string;
+  name: string;
 }
 
 export interface CodeModelToolchain {
