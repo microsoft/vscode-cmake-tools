@@ -5,7 +5,6 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import {CMakeCache} from '@cmt/cache';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
@@ -283,35 +282,6 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
 }
 
 /**
- * Type given when updating the configuration data stored in the file index.
- */
-export interface CodeModelParams {
-  /**
-   * The CMake codemodel content. This is the important one.
-   */
-  codeModelContent: codemodel_api.CodeModelContent;
-  /**
-   * The contents of the CMakeCache.txt, which also provides supplementary
-   * configuration information.
-   */
-  cache: CMakeCache;
-  /**
-   * The path to `cl.exe`, if necessary. VS generators will need this property
-   * because the compiler path is not available via the `kit` nor `cache`
-   * property.
-   */
-  clCompilerPath?: string|null;
-  /**
-   * The active target
-   */
-  activeTarget: string|null;
-  /**
-   * Workspace folder full path.
-   */
-  folder: string;
-}
-
-/**
  * The actual class that provides information to the cpptools extension. See
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
@@ -407,7 +377,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
+  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: codemodel_api.CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
@@ -476,7 +446,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _updateFileGroup(sourceDir: string,
                            grp: codemodel_api.CodeModelFileGroup,
-                           opts: CodeModelParams,
+                           opts: codemodel_api.CodeModelParams,
                            target: TargetDefaults,
                            sysroot: string) {
     const configuration = this._buildConfigurationData(grp, opts, target, sysroot);
@@ -521,45 +491,49 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * Update the file index and code model
    * @param opts Update parameters
    */
-  updateConfigurationData(opts: CodeModelParams) {
+  updateConfigurationData(opts: codemodel_api.CodeModelParams) {
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
     for (const config of opts.codeModelContent.configurations) {
-      for (const project of config.projects) {
-        for (const target of project.targets) {
-          // Now some shenanigans since header files don't have config data:
-          // 1. Accumulate some "defaults" based on the set of all options for each file group
-          // 2. Pass these "defaults" down when rebuilding the config data
-          // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
-          const grps = target.fileGroups || [];
-          const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-          const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
-          const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-          const sysroot = target.sysroot || '';
-          for (const grp of target.fileGroups || []) {
-            try {
-              this._updateFileGroup(
-                  target.sourceDirectory || '',
-                  grp,
-                  opts,
-                  {
-                    name: target.name,
-                    compileFlags,
-                    includePath,
-                    defines
-                  },
-                  sysroot
-              );
-            } catch (e) {
-              if (e instanceof MissingCompilerException) {
-                hadMissingCompilers = true;
-              } else {
-                throw e;
+      // Update only the active build type variant.
+      if (config.name === opts.activeBuildTypeVariant) {
+        for (const project of config.projects) {
+          for (const target of project.targets) {
+            // Now some shenanigans since header files don't have config data:
+            // 1. Accumulate some "defaults" based on the set of all options for each file group
+            // 2. Pass these "defaults" down when rebuilding the config data
+            // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+            const grps = target.fileGroups || [];
+            const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
+            const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
+            const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
+            const sysroot = target.sysroot || '';
+            for (const grp of target.fileGroups || []) {
+              try {
+                this._updateFileGroup(
+                    target.sourceDirectory || '',
+                    grp,
+                    opts,
+                    {
+                      name: target.name,
+                      compileFlags,
+                      includePath,
+                      defines
+                    },
+                    sysroot
+                );
+              } catch (e) {
+                if (e instanceof MissingCompilerException) {
+                  hadMissingCompilers = true;
+                } else {
+                  throw e;
+                }
               }
             }
           }
         }
+        break;
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
