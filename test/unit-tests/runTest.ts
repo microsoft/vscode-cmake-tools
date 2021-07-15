@@ -12,7 +12,9 @@ async function main() {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './index');
 
-    const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/unit-tests/test-project-without-cmakelists');
+    // The current folder is the default workspace.
+    // The driver tests change the default workspace folder.
+    const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/unit-tests');
 
     const launchArgs = [ "--disable-extensions", testWorkspace ];
 
