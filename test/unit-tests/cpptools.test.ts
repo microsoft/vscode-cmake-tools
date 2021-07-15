@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-expressions */
 import {parseCompileFlags, getIntelliSenseMode, CppConfigurationProvider} from '@cmt/cpptools';
-import {expect} from '@test/util';
+import {expect} from '@test/helpers/util';
 import { CMakeCache } from '@cmt/cache';
 import * as path from 'path';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';

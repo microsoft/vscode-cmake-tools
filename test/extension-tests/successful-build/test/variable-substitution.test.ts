@@ -3,7 +3,7 @@ import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import paths from '@cmt/paths';
 import {objectPairs, platformNormalizePath, makeHashString} from '@cmt/util';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/helpers/util';
 import * as path from 'path';
 
 suite('[Variable Substitution]', async () => {

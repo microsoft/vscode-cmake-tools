@@ -11,7 +11,7 @@ import * as triple from '../../src/triple';
 import {fs} from '../../src/pr';
 
 import {CMakeTools} from '@cmt/cmake-tools';
-import {clearExistingKitConfigurationFile, DefaultEnvironment} from '@test/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment} from '@test/helpers/util';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {

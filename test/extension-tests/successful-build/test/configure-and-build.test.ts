@@ -9,7 +9,7 @@ import {
   getFirstSystemKit,
   getMatchingProjectKit,
   getMatchingSystemKit
-} from '@test/util';
+} from '@test/helpers/util';
 import * as path from 'path';
 
 

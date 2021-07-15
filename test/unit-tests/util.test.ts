@@ -1,5 +1,5 @@
 import {splitPath} from '@cmt/util';
-import {expect} from '@test/util';
+import {expect} from '@test/helpers/util';
 
 suite('Utils test', async () => {
   test('Split path into elements', () => {

@@ -1,6 +1,6 @@
 import { InputFile, InputFileSet } from '@cmt/dirty';
 import * as util from '@cmt/util';
-import {expect} from '@test/util';
+import {expect} from '@test/helpers/util';
 import * as path from 'path';
 import { fs } from '@cmt/pr';
 

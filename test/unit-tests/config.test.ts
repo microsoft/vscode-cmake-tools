@@ -1,5 +1,5 @@
 import {ConfigurationReader, ExtensionConfigurationSettings} from '@cmt/config';
-import {expect} from '@test/util';
+import {expect} from '@test/helpers/util';
 
 function createConfig(conf: Partial<ExtensionConfigurationSettings>): ConfigurationReader {
   const ret = new ConfigurationReader({

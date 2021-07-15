@@ -1,5 +1,5 @@
 import * as shlex from '@cmt/shlex';
-import { expect } from '@test/util';
+import { expect } from '@test/helpers/util';
 
 function splitWin(str: string): string[] { return [...shlex.split(str, { mode: 'windows' })]; }
 

@@ -1,5 +1,5 @@
 import {CMakeTools} from '@cmt/cmake-tools';
-import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
+import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/helpers/util';
 //import sinon = require('sinon');
 import * as fs from 'fs';
 import * as path from 'path';

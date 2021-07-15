@@ -1,6 +1,6 @@
 import {scanForKits} from '@cmt/kit';
 import {fs} from '@cmt/pr';
-import {expect} from '@test/util';
+import {expect} from '@test/helpers/util';
 
 
 suite('[MinGW Tests]', async () => {

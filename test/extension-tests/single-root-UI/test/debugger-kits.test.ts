@@ -1,4 +1,4 @@
-import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
+import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/helpers/util';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';
 

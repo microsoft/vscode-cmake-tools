@@ -1,6 +1,6 @@
 import {CMakeTools} from '@cmt/cmake-tools';
 import {Kit, scanForKits} from '@cmt/kit';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/helpers/util';
 import * as path from 'path';
 
 interface KitEnvironment {

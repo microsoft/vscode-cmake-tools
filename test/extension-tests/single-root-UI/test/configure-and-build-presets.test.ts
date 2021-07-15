@@ -5,7 +5,7 @@ import {
   clearExistingKitConfigurationFile,
   DefaultEnvironment,
   expect
-} from '@test/util';
+} from '@test/helpers/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 

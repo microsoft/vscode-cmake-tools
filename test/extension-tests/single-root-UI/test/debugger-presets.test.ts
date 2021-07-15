@@ -1,4 +1,4 @@
-import {DefaultEnvironment, expect} from '@test/util';
+import {DefaultEnvironment, expect} from '@test/helpers/util';
 import * as vscode from 'vscode';
 
 suite('[Debug/Launch interface using Presets]', async () => {

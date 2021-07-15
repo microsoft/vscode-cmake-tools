@@ -3,7 +3,7 @@ import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import {readKitsFile, kitsForWorkspaceDirectory, getAdditionalKits, USER_KITS_FILEPATH} from '@cmt/kit';
 import {platformNormalizePath} from '@cmt/util';
-import {DefaultEnvironment, expect} from '@test/util';
+import {DefaultEnvironment, expect} from '@test/helpers/util';
 
 suite('[Toolchain Substitution]', async () => {
   let cmt: CMakeTools;

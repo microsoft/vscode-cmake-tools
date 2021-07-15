@@ -7,7 +7,7 @@ import {
   expect,
   getFirstSystemKit,
   getMatchingSystemKit
-} from '@test/util';
+} from '@test/helpers/util';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import CMakeTools from '@cmt/cmake-tools';

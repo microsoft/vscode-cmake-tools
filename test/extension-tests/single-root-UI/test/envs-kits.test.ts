@@ -1,6 +1,6 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
+import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/helpers/util';
 import {fs} from '@cmt/pr';
 import * as path from 'path';
 import * as vscode from 'vscode';
