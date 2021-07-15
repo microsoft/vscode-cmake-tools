@@ -1,9 +1,9 @@
 import {Kit, scanForVSKits, SpecialKits, UnspecifiedKit} from '@cmt/kit';
-import {SmokeTestExtensionContext} from '../helpers/vscodefake/extensioncontext';
+import {SmokeTestExtensionContext} from '@test/helpers/vscodefake/extensioncontext';
 
 import * as vscode from 'vscode';
 
-import {CMakeTools} from '../../src/cmake-tools';
+import {CMakeTools} from '@cmt/cmake-tools';
 
 type Result<T> = Thenable<T>|T;
 
@@ -26,7 +26,7 @@ export class SmokeContext {
     return cmt;
   }
 
-  async withCMakeTools<T>(opts: {kit?: Kit|UnspecifiedKit, run: (cmt: CMakeTools) => TestResult<T>}): Promise<T> {
+  async withCMakeTools<T>(opts: {kit?: Kit|UnspecifiedKit; run(cmt: CMakeTools): TestResult<T>}): Promise<T> {
     const cmt = await this.createCMakeTools(opts);
     try {
       const value = await Promise.resolve(opts.run(cmt));
@@ -56,7 +56,7 @@ export class SmokeSuite {
       readonly name: string,
       readonly setups: SmokeTest[],
       readonly teardowns: SmokeTest[],
-      readonly tests: SmokeTest[],
+      readonly tests: SmokeTest[]
   ) {}
 }
 
@@ -64,7 +64,7 @@ class SmokeSuiteTestRegistry {
   constructor(
       private readonly _setups: SmokeTest[],
       private readonly _teardowns: SmokeTest[],
-      private readonly _array: SmokeTest[],
+      private readonly _array: SmokeTest[]
   ) {}
 
   setup(name: string, fn: SmokeTestFunction) { this._setups.push(new SmokeTest(`[setup ${name}]`, fn)); }
@@ -87,7 +87,7 @@ export class SmokeSuiteInit {
       /**
        * The definer function
        */
-      readonly fn: SmokeSuiteFunction,
+      readonly fn: SmokeSuiteFunction
   ) {}
 
   /**
@@ -143,7 +143,7 @@ export function smokeSuite(name: string, cb: SmokeSuiteFunction): void { SUITE_R
 /**
  * The global definer.
  */
-export const SUITE_REGISTRY = new SmokeSuiteRegistry;
+export const SUITE_REGISTRY = new SmokeSuiteRegistry();
 
 let _VS_KITS_PROMISE: Promise<Kit[]> | null = null;
 
