@@ -2,7 +2,6 @@
 import {readKitsFile, getShellScriptEnvironment} from '@cmt/kit';
 import {expect} from '@test/util';
 import * as path from 'path';
-//import * as vscode from 'vscode';
 import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 
@@ -37,8 +36,6 @@ suite('Kits test', async () => {
 
   test('Test use of env var in toolchain kit specified from test file', async () => {
     process.env.CMAKE_TOOLS_TEST_SOME_ENV_VAR = "Test";
-    //const folderName = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
-    //const folderName = getTestResourceFilePath('test-project-without-cmakelists');
     const kits = await readKitsFile(getTestResourceFilePath('test_kit.json'));
 
     expect(kits.filter(k => k.name === "ToolchainKit 2")[0].toolchainFile).to.eq("Test/toolchain.cmake");
