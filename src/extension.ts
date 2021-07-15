@@ -149,19 +149,19 @@ class ExtensionManager implements vscode.Disposable {
 
   private readonly _workspaceConfig: ConfigurationReader = ConfigurationReader.create();
 
-  private async updateTouchBarVisibility(config: TouchBarConfig) {
+  private updateTouchBarVisibility(config: TouchBarConfig) {
     const touchBarVisible = config.visibility === "default";
-    await util.setContextValue("cmake:enableTouchBar", touchBarVisible);
-    await util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
-    await util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
-    await util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
-    await util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar", touchBarVisible);
+    void util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
   }
   /**
    * Second-phase async init
    */
   private async _init() {
-    await this.updateTouchBarVisibility(this._workspaceConfig.touchbar);
+    this.updateTouchBarVisibility(this._workspaceConfig.touchbar);
     this._workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
     let isMultiRoot = false;
