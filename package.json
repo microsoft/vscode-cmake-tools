@@ -1937,7 +1937,7 @@
     "package": "vsce package --yarn -o cmake-tools.vsix",
     "pretest": "tsc -p test.tsconfig.json",
     "lint": "gulp lint",
-    "smokeTests": "yarn run pretest && node ./out/test/smoke/runTest.js",
+    "smokeTests": "yarn run pretest && node ./out/test/smoke/badProject/runTest.js && node ./out/test/smoke/goodProject/runTest.js && node ./out/test/smoke/noCtest/runTest.js",
     "unitTests": "yarn run pretest && node ./out/test/unit-tests/runTest.js",
     "extensionTestsSuccessfulBuild": "yarn run pretest && node ./out/test/extension-tests/successful-build/runTest.js",
     "extensionTestsSingleRoot": "yarn run pretest && node ./out/test/extension-tests/single-root-UI/runTest.js",

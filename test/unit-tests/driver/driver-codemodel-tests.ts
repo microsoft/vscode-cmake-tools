@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {ConfigurationReader} from '@cmt/config';
 import {ConfigureTrigger} from '@cmt/cmake-tools';
@@ -83,7 +84,6 @@ export function makeCodeModelDriverTestsuite(
       }
     });
 
-
     async function generateCodeModelForConfiguredDriver(args: string[] = [],
                                                         workspaceFolder: string = defaultWorkspaceFolder):
         Promise<null|codemodel_api.CodeModelContent> {
@@ -100,8 +100,9 @@ export function makeCodeModelDriverTestsuite(
     }
 
     test('Test generation of code model with multi configuration like VS', async () => {
-      if (process.platform !== 'win32')
+      if (process.platform !== 'win32') {
         return;
+      }
 
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
@@ -109,8 +110,7 @@ export function makeCodeModelDriverTestsuite(
     }).timeout(90000);
 
     test('Test generation of code model with one configuration like make on linux', async () => {
-      if (process.platform === 'win32')
-        return;
+      if (process.platform === 'win32') { return; }
 
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
@@ -131,7 +131,6 @@ export function makeCodeModelDriverTestsuite(
       expect(path.normalize(project.sourceDirectory).toLowerCase())
           .to.eq(path.normalize(path.join(root, 'test_project')).toLowerCase());
     }).timeout(90000);
-
 
     test('Test executable target information', async () => {
       const codemodel_data = await generateCodeModelForConfiguredDriver();
@@ -244,8 +243,9 @@ export function makeCodeModelDriverTestsuite(
       // This test does not work with VisualStudio.
       // VisualStudio generator does not provide the sysroot in the code model.
       // macOS has separate sysroot variable (see CMAKE_OSX_SYSROOT); this build fails.
-      if (process.platform === 'win32' || process.platform === 'darwin')
+      if (process.platform === 'win32' || process.platform === 'darwin') {
         return;
+      }
 
       const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
       expect(codemodel_data).to.be.not.null;
