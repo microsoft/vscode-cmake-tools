@@ -119,58 +119,6 @@ function Invoke-ChronicCommand {
     Write-Host "$msg - Success [$([math]::round($measurement.TotalSeconds, 1)) seconds]"
 }
 
-function Watch-Directory {
-    [CmdletBinding()]
-    param(
-        # Directory containing files to watch
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]
-        $Path,
-        # Script block to run on file changes
-        [Parameter(Mandatory)]
-        [scriptblock]
-        $ScriptBlock
-    )
-    $ErrorActionPreference = "Stop"
-    $timer = New-Object Timers.Timer -Property @{
-        Interval  = 1000
-        AutoReset = $false
-    }
-    $watcher = New-Object IO.FileSystemWatcher $Path, "*" -Property @{
-        IncludeSubdirectories = $true;
-        EnableRaisingEvents   = $true;
-        NotifyFilter          = [IO.NotifyFilters]::LastWrite;
-    }
-    $sub = Register-ObjectEvent $watcher -EventName "Changed" -MessageData $timer -Action {
-        $ErrorActionPreference = "Stop"
-        $timer = $Event.MessageData
-        try {
-            $timer.Stop()
-            $timer.Start()
-        }
-        catch {
-            Write-Host "There was error $_"
-        }
-    }
-    $timer_sub = Register-ObjectEvent $timer -EventName "Elapsed" -MessageData $ScriptBlock -Action {
-        Write-Host "File changes detected"
-        & $Event.MessageData
-    }
-    $timer.Start()
-    try {
-        while ($true) {
-            Start-Sleep -Milliseconds 500
-        }
-    }
-    finally {
-        Unregister-Event -SubscriptionId $sub.Id
-        Unregister-Event -SubscriptionId $timer_sub.Id
-        $watcher.Dispose()
-        $timer.Dispose()
-    }
-}
-
 function Invoke-TestPreparation {
     param(
         # Path to CMake to use
