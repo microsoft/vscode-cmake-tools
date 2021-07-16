@@ -12,10 +12,9 @@ async function main() {
     // Passed to --extensionTestsPath
     const extensionTestsPath = path.resolve(__dirname, './index');
 
-    //const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/successful-build/project-folder');
+    const testWorkspace = path.resolve(extensionDevelopmentPath, 'test/extension-tests/successful-build/project-folder');
 
-    //const launchArgs = [ "--disable-extensions", testWorkspace ];
-    const launchArgs = [ "--disable-extensions" ];
+    const launchArgs = [ "--disable-extensions", testWorkspace ];
 
     const extensionTestsEnv: { [key: string]: string | undefined } = { "CMT_TESTING": "1" };
 
