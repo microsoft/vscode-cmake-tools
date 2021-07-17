@@ -106,5 +106,5 @@ Invoke-ChronicCommand "yarn pretest" $yarn run pretest
 Invoke-ChronicCommand "yarn smokeTests" $yarn run smokeTests
 Invoke-ChronicCommand "yarn unitTests" $yarn run unitTests
 Invoke-ChronicCommand "yarn extensionTestsSuccessfulBuild" $yarn run extensionTestsSuccessfulBuild
-
+#Invoke-ChronicCommand "yarn extensionTestsSingleRoot" $yarn run extensionTestsSingleRoot
 Invoke-ChronicCommand "yarn extensionTestsMultioot" $yarn run extensionTestsMultioot

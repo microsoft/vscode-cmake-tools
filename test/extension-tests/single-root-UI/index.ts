@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unassigned-import
 import 'module-alias/register';
 
 import * as path from 'path';
