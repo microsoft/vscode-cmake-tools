@@ -19,7 +19,7 @@ suite('shlex testing', () => {
       [`\"'fo o'\" bar`, [`\"'fo o'\"`, 'bar']],
       [`'quote arg'`, [`'quote`, `arg'`]],
       ['"   fail"', ['"   fail"']],
-      [`-DAWESOME=\"\\\"'fo o' bar\\\"\"`, [`-DAWESOME=\"\\\"'fo o' bar\\\"\"`]],
+      [`-DAWESOME=\"\\\"'fo o' bar\\\"\"`, [`-DAWESOME=\"\\\"'fo o' bar\\\"\"`]]
     ];
 
     for (const [cmd, expected] of pairs) {
@@ -40,7 +40,7 @@ suite('shlex testing', () => {
       [`"fo o" bar`, [`"fo o"`, 'bar']],
       [`'quote arg'`, [`'quote arg'`]],
       ['"   fail"', ['"   fail"']],
-      [`-DAWESOME=\"\\\"fo o bar\\\"\"`, [`-DAWESOME=\"\\\"fo o bar\\\"\"`]],
+      [`-DAWESOME=\"\\\"fo o bar\\\"\"`, [`-DAWESOME=\"\\\"fo o bar\\\"\"`]]
     ];
 
     for (const [cmd, expected] of pairs) {

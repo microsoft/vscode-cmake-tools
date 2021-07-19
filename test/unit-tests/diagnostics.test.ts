@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
@@ -11,7 +12,6 @@ import {OutputConsumer} from '../../src/proc';
 import {platformPathEquivalent} from '@cmt/util';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
 import {populateCollection} from '@cmt/diagnostics/util';
-
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
@@ -34,7 +34,7 @@ suite('Diagnostics', async () => {
     const cmake_output = [
       '-- Configuring done',
       '-- Generating done',
-      '-- Build files have been written to /foo/bar',
+      '-- Build files have been written to /foo/bar'
     ];
     feedLines(consumer, cmake_output, []);
   });
@@ -44,7 +44,7 @@ suite('Diagnostics', async () => {
       'CMake Warning at CMakeLists.txt:14 (message):',
       '  I am a warning!',
       '',
-      '',
+      ''
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
@@ -67,7 +67,7 @@ suite('Diagnostics', async () => {
       '  I am an error!',
       '',
       '',
-      '-- Extra suff',
+      '-- Extra suff'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(2);
@@ -91,7 +91,7 @@ suite('Diagnostics', async () => {
       '',
       '',
       '-- Configuring done',
-      '-- Generating done',
+      '-- Generating done'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
@@ -110,7 +110,7 @@ suite('Diagnostics', async () => {
       'This warning is for project developers.  Use -Wno-dev to suppress it.',
       '',
       '-- Configuring done',
-      '-- Generating done',
+      '-- Generating done'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
@@ -132,7 +132,7 @@ suite('Diagnostics', async () => {
       '  I am an error!',
       '',
       '',
-      '-- Extra suff',
+      '-- Extra suff'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(2);

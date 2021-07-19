@@ -104,7 +104,7 @@ function Invoke-ChronicCommand {
     Write-Debug "About to execute $_Command_"
     $closure = @{}
     $measurement = Measure-Command {
-        $result = Invoke-ExternalCommand -HideOutput -PassThruExitCode @_Command_
+        $result = Invoke-ExternalCommand -PassThruExitCode @_Command_
         $closure.Result = $result
     }
     $result = $closure.Result
