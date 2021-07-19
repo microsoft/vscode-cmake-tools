@@ -156,6 +156,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get configurePreset() { return this._configurePreset.value; }
   get onActiveConfigurePresetChanged() { return this._configurePreset.changeEvent; }
   private readonly _configurePreset = new Property<preset.ConfigurePreset | null>(null);
+
   private async resetPresets() {
     await this.workspaceContext.state.setConfigurePresetName(null);
     await this.workspaceContext.state.setBuildPresetName(null);
@@ -164,6 +165,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this._buildPreset.set(null);
     this._testPreset.set(null);
   }
+
+  /**
+   * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+   */
   async setConfigurePreset(configurePreset: string | null) {
     if (configurePreset) {
       log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
@@ -219,6 +224,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get buildPreset() { return this._buildPreset.value; }
   get onActiveBuildPresetChanged() { return this._buildPreset.changeEvent; }
   private readonly _buildPreset = new Property<preset.BuildPreset | null>(null);
+
+  /**
+   * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+   */
   async setBuildPreset(buildPreset: string | null) {
     if (buildPreset) {
       log.debug(localize('resolving.build.preset', 'Resolving the selected build preset'));
@@ -270,6 +279,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   get testPreset() { return this._testPreset.value; }
   get onActiveTestPresetChanged() { return this._testPreset.changeEvent; }
   private readonly _testPreset = new Property<preset.TestPreset | null>(null);
+
+  /**
+   * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
+   */
   async setTestPreset(testPreset: string | null) {
     if (testPreset) {
       log.debug(localize('resolving.test.preset', 'Resolving the selected test preset'));

@@ -30,6 +30,7 @@ export class PresetsController {
   private _sourceDirChangedSub: vscode.Disposable | undefined;
   private _presetsFileExists = false;
   private _userPresetsFileExists = false;
+  private _isChangingPresets = false;
 
   private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
   private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile>();
@@ -626,6 +627,13 @@ export class PresetsController {
   }
 
   async setConfigurePreset(presetName: string): Promise<void> {
+    if (this._isChangingPresets) {
+      log.error(localize('preset.change.in.progress', 'A preset change is already in progress.'));
+      return;
+    }
+
+    this._isChangingPresets = true;
+
     // Load the configure preset into the backend
     await vscode.window.withProgress(
         {
@@ -634,6 +642,7 @@ export class PresetsController {
         },
         () => this._cmakeTools.setConfigurePreset(presetName)
     );
+
     await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -643,13 +652,15 @@ export class PresetsController {
           const buildPreset = this._cmakeTools.buildPreset?.name;
           const testPreset = this._cmakeTools.testPreset?.name;
           if (buildPreset) {
-            await this.setBuildPreset(buildPreset);
+            await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
           }
           if (testPreset) {
-            await this.setTestPreset(testPreset);
+            await this.setTestPreset(testPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
           }
         }
     );
+
+    this._isChangingPresets = false;
   }
 
   private async checkConfigurePreset(): Promise<preset.ConfigurePreset | null> {
@@ -699,7 +710,14 @@ export class PresetsController {
     }
   }
 
-  async setBuildPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
+  async setBuildPreset(presetName: string, needToCheckConfigurePreset: boolean = true, checkChangingPreset: boolean = true): Promise<void> {
+    if (checkChangingPreset) {
+      if (this._isChangingPresets) {
+        return;
+      }
+      this._isChangingPresets = true;
+    }
+
     if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
       preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
       const _preset = preset.getPresetByName(preset.allBuildPresets(this.folderFsPath), presetName);
@@ -712,6 +730,11 @@ export class PresetsController {
             },
             () => this._cmakeTools.setBuildPreset(null)
         );
+
+        if (checkChangingPreset) {
+          this._isChangingPresets = false;
+        }
+
         return;
       }
     }
@@ -723,6 +746,10 @@ export class PresetsController {
         },
         () => this._cmakeTools.setBuildPreset(presetName)
     );
+
+    if (checkChangingPreset) {
+      this._isChangingPresets = false;
+    }
   }
 
   async selectTestPreset(): Promise<boolean> {
@@ -756,7 +783,14 @@ export class PresetsController {
     }
   }
 
-  async setTestPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
+  async setTestPreset(presetName: string, needToCheckConfigurePreset: boolean = true, checkChangingPreset: boolean = true): Promise<void> {
+    if (checkChangingPreset) {
+      if (this._isChangingPresets) {
+        return;
+      }
+      this._isChangingPresets = true;
+    }
+
     if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
       preset.expandConfigurePresetForPresets(this.folderFsPath, 'test');
       const _preset = preset.getPresetByName(preset.allTestPresets(this.folderFsPath), presetName);
@@ -769,6 +803,11 @@ export class PresetsController {
             },
             () => this._cmakeTools.setTestPreset(null)
         );
+
+        if (checkChangingPreset) {
+          this._isChangingPresets = false;
+        }
+
         return;
       }
     }
@@ -780,6 +819,10 @@ export class PresetsController {
         },
         () => this._cmakeTools.setTestPreset(presetName)
     );
+
+    if (checkChangingPreset) {
+      this._isChangingPresets = false;
+    }
   }
 
   async openCMakePresets(): Promise<vscode.TextEditor | undefined> {
