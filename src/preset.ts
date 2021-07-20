@@ -644,8 +644,12 @@ async function expandConfigurePresetHelper(folder: string,
     if (preset.cacheVariables) {
       const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
       const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-      if (cxxCompiler === 'cl' || cxxCompiler === 'cl.exe' || cCompiler === 'cl' || cCompiler === 'cl.exe') {
-        const clLoc = await execute('where.exe', ['cl'], null, { environment: preset.environment as EnvironmentVariables,
+      // The env variables for cl.exe and clang-cl.exe are the same.
+      const isCl: boolean = cxxCompiler === 'cl' || cxxCompiler === 'cl.exe' || cCompiler === 'cl' || cCompiler === 'cl.exe';
+      const isClangCl: boolean= cxxCompiler === 'clang-cl' || cxxCompiler === 'clang-cl.exe' || cCompiler === 'clang-cl' || cCompiler === 'clang-cl.exe';
+      if (isCl || isClangCl) {
+        const compilerName: string = isCl ? 'cl' : isClangCl ? 'clang-cl' : '';
+        const clLoc = await execute('where.exe', [compilerName], null, { environment: preset.environment as EnvironmentVariables,
                                                                     silent: true,
                                                                     encoding: 'utf8',
                                                                     shell: true }).result;
