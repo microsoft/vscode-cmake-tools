@@ -1,5 +1,6 @@
 import * as proc from '../proc';
 import * as util from '../util';
+import * as paths from 'path';
 
 export interface CMakeExecutable {
   path: string;
@@ -23,7 +24,7 @@ export async function getCMakeExecutableInformation(path: string): Promise<CMake
   // what causes 'path' to be undefined here.
   if (path && path.length !== 0) {
     try {
-      const version_ex = await proc.execute(path, ['--version']).result;
+      const version_ex = await proc.execute('cmake.exe', ['--version'], undefined, { "cwd": paths.dirname(path) }).result;
       if (version_ex.retc === 0 && version_ex.stdout) {
         console.assert(version_ex.stdout);
         const version_re = /cmake.* version (.*?)\r?\n/;
