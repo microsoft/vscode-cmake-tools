@@ -1,5 +1,3 @@
-import * as shlex from '@cmt/shlex';
-
 import {createLogger} from './logging';
 import {fs} from './pr';
 import * as util from './util';
@@ -17,8 +15,7 @@ interface BaseCompileCommand {
 }
 
 export interface ArgsCompileCommand extends BaseCompileCommand {
-  command: string;
-  arguments?: string[];
+  command: string; // The command string includes both commands and arguments (if any).
 }
 
 export class CompilationDatabase {
@@ -29,8 +26,7 @@ export class CompilationDatabase {
           directory: cur.directory,
           file: cur.file,
           output: cur.output,
-          command: cur.command,
-          arguments: cur.arguments ? cur.arguments : [...shlex.split(cur.command)]
+          command: cur.command
         }),
         new Map<string, ArgsCompileCommand>()
     );
