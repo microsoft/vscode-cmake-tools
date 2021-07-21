@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
@@ -11,8 +12,7 @@ suite('[Toolchain Substitution]', async () => {
 
   setup(async function(this: Mocha.Context) {
     this.timeout(100000);
-    if (process.platform === 'win32')
-      this.skip();
+    if (process.platform === 'win32') {this.skip(); }
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
