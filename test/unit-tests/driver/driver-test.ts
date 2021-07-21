@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {ConfigureTrigger} from '@cmt/cmake-tools';
 import {ConfigurationReader} from '@cmt/config';
@@ -26,7 +27,6 @@ function cleanupBuildDir(build_dir: string): boolean {
   }
   return !fs.existsSync(build_dir);
 }
-
 
 export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
                                                        config: ConfigurationReader,
@@ -329,7 +329,6 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       expect(called).to.be.true;
     }).timeout(90000);
 
-
     test('No clean configuration parallel to build', async () => {
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
@@ -350,7 +349,6 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       expect(await configure).to.be.equal(-1);
       expect(called).to.be.true;
     }).timeout(90000);
-
 
     test('Test pre-configured workspace', async () => {
       const config = ConfigurationReader.create();
@@ -389,8 +387,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
     }).timeout(90000);
 
     test('Test Visual Studio kit with wrong all target name', async () => {
-      if (process.platform !== 'win32')
-        return;
+      if (process.platform !== 'win32') {return; }
 
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
@@ -401,8 +398,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
     }).timeout(90000);
 
     test('Test Ninja kit with wrong all target name', async () => {
-      if (process.platform !== 'win32')
-        return;
+      if (process.platform !== 'win32') {return; }
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 

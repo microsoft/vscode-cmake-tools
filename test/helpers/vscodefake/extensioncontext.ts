@@ -3,9 +3,9 @@ import * as vscode from 'vscode';
 import {TestMemento, StateMemento} from './memento';
 const notImplementedErr: string = 'Method not implemented.';
 export class DefaultExtensionContext implements vscode.ExtensionContext {
-  get subscriptions(): { dispose(): any; }[] { return ([]); }
+  get subscriptions(): { dispose(): any }[] { return ([]); }
   workspaceState: vscode.Memento = new TestMemento();
-  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void; } = new StateMemento();
+  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void } = new StateMemento();
   get secrets(): vscode.SecretStorage { throw new Error(notImplementedErr); }
   get extensionUri(): vscode.Uri { throw new Error(notImplementedErr); }
   get extensionPath(): string { throw new Error(notImplementedErr); }
@@ -27,9 +27,9 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
 }
 
 export class SmokeTestExtensionContext implements vscode.ExtensionContext {
-  get subscriptions(): { dispose(): any; }[] { return ([]); }
+  get subscriptions(): { dispose(): any }[] { return ([]); }
   workspaceState: vscode.Memento = new TestMemento();
-  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void; } = new StateMemento();
+  globalState: vscode.Memento & { setKeysForSync(keys: string[]): void } = new StateMemento();
   get secrets(): vscode.SecretStorage { throw new Error(notImplementedErr); }
   get extensionUri(): vscode.Uri { throw new Error(notImplementedErr); }
   get environmentVariableCollection(): vscode.EnvironmentVariableCollection { throw new Error(notImplementedErr); }

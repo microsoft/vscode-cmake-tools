@@ -33,8 +33,8 @@ suite('[Environment]', async () => {
     // Set fake settings
     testEnv.config.updatePartial({
       configureEnvironment: {
-        _CONFIGURE_ENV: '${workspaceRootFolderName}',
-      },
+        _CONFIGURE_ENV: '${workspaceRootFolderName}'
+      }
     });
 
     // Configure

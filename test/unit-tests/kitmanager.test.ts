@@ -1,7 +1,7 @@
+/* eslint-disable no-unused-expressions */
 import {readKitsFile, getShellScriptEnvironment} from '@cmt/kit';
 import {expect} from '@test/util';
 import * as path from 'path';
-import * as vscode from 'vscode';
 import paths from '@cmt/paths';
 import {fs} from '@cmt/pr';
 
@@ -30,18 +30,17 @@ suite('Kits test', async () => {
       'ToolchainKit 3',
       'ToolchainKit 4',
       'VSCode Kit 1',
-      'VSCode Kit 2',
+      'VSCode Kit 2'
     ]);
   });
 
   test('Test use of env var in toolchain kit specified from test file', async () => {
     process.env.CMAKE_TOOLS_TEST_SOME_ENV_VAR = "Test";
-    const folderName = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
     const kits = await readKitsFile(getTestResourceFilePath('test_kit.json'));
 
-    expect(kits.filter(k => "ToolchainKit 2" === k.name)[0].toolchainFile).to.eq("Test/toolchain.cmake");
-    expect(kits.filter(k => "ToolchainKit 3" === k.name)[0].toolchainFile).to.eq(`${folderName}/toolchain.cmake`);
-    expect(kits.filter(k => "ToolchainKit 4" === k.name)[0].toolchainFile).to.eq(`${folderName}/Test/toolchain.cmake`);
+    expect(kits.filter(k => k.name === "ToolchainKit 2")[0].toolchainFile).to.eq("Test/toolchain.cmake");
+    expect(kits.filter(k => k.name === "ToolchainKit 3")[0].toolchainFile).to.eq("test-project-without-cmakelists/toolchain.cmake");
+    expect(kits.filter(k => k.name === "ToolchainKit 4")[0].toolchainFile).to.eq("test-project-without-cmakelists/Test/toolchain.cmake");
   });
 
   test('Test load env vars from shell script', async() => {

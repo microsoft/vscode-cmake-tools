@@ -1,14 +1,10 @@
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
-import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
-import {fs} from '@cmt/pr';
-import * as path from 'path';
+import {DefaultEnvironment, expect} from '@test/util';
 import * as vscode from 'vscode';
-import CMakeTools from '@cmt/cmake-tools';
 
-suite('[Environment Variables in Variants]', async () => {
+suite('[Environment Variables in Presets]', async () => {
   let testEnv: DefaultEnvironment;
-  let cmakeTools: CMakeTools;
 
   setup(async function(this: Mocha.Context) {
     this.timeout(100000);
@@ -16,36 +12,25 @@ suite('[Environment Variables in Variants]', async () => {
     const build_loc = 'build';
     const exe_res = 'output.txt';
 
-    testEnv = new DefaultEnvironment('test/extension-tests/multi-root-UI/project-folder2', build_loc, exe_res);
-    cmakeTools = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
-
-    // This test will use all on the same kit.
-    // No rescan of the tools is needed
-    // No new kit selection is needed
-    await clearExistingKitConfigurationFile();
-
-    const kit = await getFirstSystemKit(cmakeTools);
-    console.log("Using following kit in next test: ", kit.name);
-    await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
-
+    testEnv = new DefaultEnvironment('test/extension-tests/single-root-UI/project-folder', build_loc, exe_res);
     testEnv.projectFolder.buildDirectory.clear();
+
+    await vscode.commands.executeCommand('cmake.setConfigurePreset', 'LinuxUser1');
+    await vscode.commands.executeCommand('cmake.setBuildPreset', '__defaultBuildPreset__');
+    await vscode.commands.executeCommand('cmake.setTestPreset', '__defaultTestPreset__');
   });
 
   teardown(async function(this: Mocha.Context) {
-    const variantFileBackup = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
-    if (await fs.exists(variantFileBackup)) {
-      const variantFile = path.join(testEnv.projectFolder.location, '.vscode', 'cmake-variants.json');
-      await fs.rename(variantFileBackup, variantFile);
-    }
-
     this.timeout(30000);
+
+    testEnv.projectFolder.buildDirectory.clear();
     testEnv.teardown();
   });
 
   test('Check for environment variables being passed to configure', async () => {
     // Set fake settings
     // Configure
-    expect(await vscode.commands.executeCommand('cmake.configureAll')).to.be.eq(0, '[variantEnv] configure failed');
+    expect(await vscode.commands.executeCommand('cmake.configure')).to.be.eq(0, '[variantEnv] configure failed');
     expect(testEnv.projectFolder.buildDirectory.isCMakeCachePresent).to.eql(true, 'expected cache not present');
     const cache = await CMakeCache.fromPath(testEnv.projectFolder.buildDirectory.cmakeCachePath);
 
