@@ -58,7 +58,6 @@ module.exports = {
         //"@typescript-eslint/unified-signatures": "error",
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/await-thenable": "error",
-        "no-return-await": "error",
         "arrow-body-style": "error",
         // Note: You can use auto-fix to apply this rule only after making indentation rule available.
         //"brace-style": "error",
