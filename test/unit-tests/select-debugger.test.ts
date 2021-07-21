@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
