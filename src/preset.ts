@@ -628,10 +628,10 @@ async function expandConfigurePresetHelper(folder: string,
 
   inheritedEnv = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
 
-  let clEnv: EnvironmentVariables = {};
+  let compilerEnv: EnvironmentVariables = {};
 
-  // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
-  // then set the env automatically
+  // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as cl, clang, clang-cl, clang-cpp and clang++,
+  // but they are not on PATH, then set the env automatically.
   if (process.platform === 'win32') {
     const getStringValueFromCacheVar = (variable?: CacheVarType) => {
       if (util.isString(variable)) {
@@ -644,16 +644,14 @@ async function expandConfigurePresetHelper(folder: string,
     if (preset.cacheVariables) {
       const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
       const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
-      // The env variables for cl.exe and clang-cl.exe are the same.
-      const isCl: boolean = cxxCompiler === 'cl' || cxxCompiler === 'cl.exe' || cCompiler === 'cl' || cCompiler === 'cl.exe';
-      const isClangCl: boolean= cxxCompiler === 'clang-cl' || cxxCompiler === 'clang-cl.exe' || cCompiler === 'clang-cl' || cCompiler === 'clang-cl.exe';
-      if (isCl || isClangCl) {
-        const compilerName: string = isCl ? 'cl' : isClangCl ? 'clang-cl' : '';
-        const clLoc = await execute('where.exe', [compilerName], null, { environment: preset.environment as EnvironmentVariables,
+      // The env variables for the supported compilers are the same.
+      const compilerName: string | undefined = util.isSupportedCompiler(cxxCompiler) || util.isSupportedCompiler(cCompiler);
+      if (compilerName) {
+        const compilerLocation = await execute('where.exe', [compilerName], null, { environment: preset.environment as EnvironmentVariables,
                                                                     silent: true,
                                                                     encoding: 'utf8',
                                                                     shell: true }).result;
-        if (!clLoc.stdout) {
+        if (!compilerLocation.stdout) {
           // Not on PATH, need to set env
           const arch = getArchitecture(preset);
           const toolset = getToolset(preset);
@@ -687,10 +685,10 @@ async function expandConfigurePresetHelper(folder: string,
           }
           if (latestVsIndex < 0) {
             log.error(localize('specified.cl.not.found',
-                          'Configure preset {0}: Specified cl.exe with toolset {1} and architecture {2} is not found, you may need to run "CMake: Scan for Compilers" if it exists on your computer.',
-                          preset.name, toolset.version ? `${toolset.version},${toolset.host}` : toolset.host, arch));
+                          'Configure preset {0}: Specified {1}.exe with toolset {2} and architecture {3} is not found, you may need to run "CMake: Scan for Compilers" if it exists on your computer.',
+                          preset.name, compilerName, toolset.version ? `${toolset.version},${toolset.host}` : toolset.host, arch));
           } else {
-            clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
+            compilerEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
             // if ninja isn't on path, try to look for it in a VS install
             const ninjaLoc = await execute('where.exe', ['ninja'], null, { environment: preset.environment as EnvironmentVariables,
                                                                            silent: true,
@@ -700,7 +698,7 @@ async function expandConfigurePresetHelper(folder: string,
               const vsCMakePaths = await paths.vsCMakePaths(kits[latestVsIndex].visualStudio);
               if (vsCMakePaths.ninja) {
                 log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
-                clEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${clEnv['PATH']}`;
+                compilerEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${compilerEnv['PATH']}`;
               }
             }
           }
@@ -709,8 +707,8 @@ async function expandConfigurePresetHelper(folder: string,
     }
   }
 
-  clEnv = util.mergeEnvironment(inheritedEnv as EnvironmentVariables, clEnv as EnvironmentVariables);
-  preset.environment = util.mergeEnvironment(clEnv as EnvironmentVariables, preset.environment as EnvironmentVariables);
+  compilerEnv = util.mergeEnvironment(inheritedEnv as EnvironmentVariables, compilerEnv as EnvironmentVariables);
+  preset.environment = util.mergeEnvironment(compilerEnv as EnvironmentVariables, preset.environment as EnvironmentVariables);
 
   preset.__expanded = true;
   return preset;
