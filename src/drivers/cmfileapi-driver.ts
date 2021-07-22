@@ -209,7 +209,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     return 0;
   }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, logCommandOnly?: boolean): Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
     const api_path = this.getCMakeFileApiPath();
     await createQueryFileForApi(api_path);
 
@@ -238,7 +238,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
       }
     }
     const cmake = this.cmake.path;
-    if (logCommandOnly) {
+    if (showCommandOnly) {
       log.showChannel();
       log.info(proc.buildCmdStr(this.cmake.path, args));
       return 0;

@@ -69,7 +69,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, logCommandOnly?: boolean): Promise<number>;
+  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number>;
   protected abstract doCacheConfigure(): Promise<number>;
 
   private _isConfiguredAtLeastOnce = false;
@@ -1121,7 +1121,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       true : false;
   }
 
-  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, logCommandOnly?: boolean): Promise<number> {
+  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
     // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
     const usingCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
@@ -1188,7 +1188,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this._isConfiguredAtLeastOnce = true;
         return retc;
       } else {
-        retc = await this.doConfigure(expanded_flags, consumer, logCommandOnly);
+        retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly);
         this._isConfiguredAtLeastOnce = true;
       }
       const timeEnd: number = new Date().getTime();
@@ -1201,7 +1201,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
           CMakeGenerator: this.generatorName || '',
           Preset: this.useCMakePresets ? 'true' : 'false',
           Trigger: trigger,
-          LogCommandOnly: logCommandOnly ? 'true' : 'false'
+          ShowCommandOnly: showCommandOnly ? 'true' : 'false'
         };
       } else {
         telemetryProperties = {
@@ -1210,7 +1210,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
           ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
           Trigger: trigger,
-          LogCommandOnly: logCommandOnly ? 'true' : 'false'
+          ShowCommandOnly: showCommandOnly ? 'true' : 'false'
         };
       }
 

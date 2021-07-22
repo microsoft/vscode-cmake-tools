@@ -37,7 +37,7 @@
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
-    "onCommand:cmake.logBuildCommand",
+    "onCommand:cmake.showBuildCommand",
     "onCommand:cmake.clean",
     "onCommand:cmake.cleanAll",
     "onCommand:cmake.cleanConfigure",
@@ -46,7 +46,7 @@
     "onCommand:cmake.cleanRebuildAll",
     "onCommand:cmake.configure",
     "onCommand:cmake.configureAll",
-    "onCommand:cmake.logConfigureCommand",
+    "onCommand:cmake.showConfigureCommand",
     "onCommand:cmake.ctest",
     "onCommand:cmake.ctestAll",
     "onCommand:cmake.debugTarget",
@@ -194,8 +194,8 @@
         "category": "CMake"
       },
       {
-        "command": "cmake.logConfigureCommand",
-        "title": "%cmake-tools.command.cmake.logConfigureCommand.title%",
+        "command": "cmake.showConfigureCommand",
+        "title": "%cmake-tools.command.cmake.showConfigureCommand.title%",
         "category": "CMake"
       },
       {
@@ -226,8 +226,8 @@
         "category": "CMake"
       },
       {
-        "command": "cmake.logBuildCommand",
-        "title": "%cmake-tools.command.cmake.logBuildCommand.title%",
+        "command": "cmake.showBuildCommand",
+        "title": "%cmake-tools.command.cmake.showBuildCommand.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
@@ -581,7 +581,7 @@
           "command": "cmake.configure"
         },
         {
-          "command": "cmake.logConfigureCommand"
+          "command": "cmake.showConfigureCommand"
         },
         {
           "when": "cmake:enableFullFeatureSet && !useCMakePresets",
@@ -619,7 +619,7 @@
         },
         {
           "when": "cmake:enableFullFeatureSet",
-          "command": "cmake.logBuildCommand"
+          "command": "cmake.showBuildCommand"
         },
         {
           "command": "cmake.buildAll",

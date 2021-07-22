@@ -59,7 +59,7 @@ export enum ConfigureType {
   Normal,
   Clean,
   Cache,
-  LogCommandOnly
+  ShowCommandOnly
 }
 
 export enum ConfigureTrigger {
@@ -1074,7 +1074,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     case ConfigureType.Clean:
                       retc = await drv.cleanConfigure(trigger, extra_args, consumer);
                       break;
-                    case ConfigureType.LogCommandOnly:
+                    case ConfigureType.ShowCommandOnly:
                       retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
                       break;
                     default:
@@ -1251,7 +1251,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async runBuild(target_?: string, logCommandOnly?: boolean): Promise<number> {
+  async runBuild(target_?: string, showCommandOnly?: boolean): Promise<number> {
     let target = target_;
     let targetName: string;
     if (this.useCMakePresets) {
@@ -1263,7 +1263,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     let drv: CMakeDriver | null;
-    if (logCommandOnly) {
+    if (showCommandOnly) {
       drv = await this.getCMakeDriverInstance();
       if (!drv) {
         throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
@@ -1289,7 +1289,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
     }
-    await this.updateDriverAndTargetInTaskProvider(drv, target);
+    this.updateDriverAndTargetInTaskProvider(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
@@ -1336,8 +1336,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async build(target_?: string, logCommandOnly?: boolean): Promise<number> {
-    this.m_promise_build = this.runBuild(target_, logCommandOnly);
+  async build(target_?: string, showCommandOnly?: boolean): Promise<number> {
+    this.m_promise_build = this.runBuild(target_, showCommandOnly);
     return this.m_promise_build;
   }
 

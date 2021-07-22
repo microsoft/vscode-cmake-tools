@@ -115,7 +115,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     })();
   }
 
-  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, logCommandOnly?: boolean) {
+  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean) {
     await this._clientChangeInProgress;
     const cl = await this.getClient();
     const sub = this.onMessage(msg => {
@@ -126,7 +126,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       }
     });
 
-    if (logCommandOnly) {
+    if (showCommandOnly) {
       log.showChannel();
       log.info(proc.buildCmdStr(this.cmake.path, args));
     } else {

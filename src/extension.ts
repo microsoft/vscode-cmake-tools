@@ -1084,14 +1084,14 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
   }
 
-  configure(folder?: vscode.WorkspaceFolder, logCommandOnly?: boolean) {
+  configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
     return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure,
                                                                  [],
-                                                                 logCommandOnly ? ConfigureType.LogCommandOnly : ConfigureType.Normal),
+                                                                 showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
                                     folder, undefined, true);
   }
 
-  logConfigureCommand(folder?: vscode.WorkspaceFolder) { return this.configure(folder, true); }
+  showConfigureCommand(folder?: vscode.WorkspaceFolder) { return this.configure(folder, true); }
 
   configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true); }
 
@@ -1100,9 +1100,9 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsFolder(cmt => cmt.editCacheUI());
   }
 
-  build(folder?: vscode.WorkspaceFolder, name?: string, logCommandOnly?: boolean) { return this.mapCMakeToolsFolder(cmt => cmt.build(name, logCommandOnly), folder, this._ensureActiveBuildPreset, true); }
+  build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean) { return this.mapCMakeToolsFolder(cmt => cmt.build(name, showCommandOnly), folder, this._ensureActiveBuildPreset, true); }
 
-  logBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) { return this.build(folder, name, true); }
+  showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) { return this.build(folder, name, true); }
 
   buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[name.length - 1] : name), this._ensureActiveBuildPreset, true); }
 
@@ -1558,7 +1558,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setBuildPreset',
     'setTestPreset',
     'build',
-    'logBuildCommand',
+    'showBuildCommand',
     'buildAll',
     'buildWithTarget',
     'setVariant',
@@ -1573,7 +1573,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'cleanRebuild',
     'cleanRebuildAll',
     'configure',
-    'logConfigureCommand',
+    'showConfigureCommand',
     'configureAll',
     'editCacheUI',
     'ctest',
