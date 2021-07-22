@@ -1258,7 +1258,7 @@ export async function scanForKitsIfNeeded(cmt: CMakeTools): Promise<boolean> {
        process.env['CMT_TESTING'] !== '1' && !kitsController.KitsController.isScanningForKits()) {
     log.info(localize('silent.kits.rescan', 'Detected kits definition version change from {0} to {1}. Silently scanning for kits.', kitsVersionSaved, kitsVersionCurrent));
     await kitsController.KitsController.scanForKits(cmt);
-    cmt.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
+    await cmt.extensionContext.globalState.update('kitsVersionSaved', kitsVersionCurrent);
     return true;
   }
 

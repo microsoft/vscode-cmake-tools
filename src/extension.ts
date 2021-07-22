@@ -119,7 +119,7 @@ class ExtensionManager implements vscode.Disposable {
 
         // Update the full/partial view of the workspace by verifying if after the folder removal
         // it still has at least one CMake project.
-        enableFullFeatureSet(await this.workspaceHasCMakeProject());
+        await enableFullFeatureSet(await this.workspaceHasCMakeProject());
       }
 
       this._onDidChangeActiveTextEditorSub.dispose();
@@ -151,11 +151,11 @@ class ExtensionManager implements vscode.Disposable {
 
   private updateTouchBarVisibility(config: TouchBarConfig) {
     const touchBarVisible = config.visibility === "default";
-    util.setContextValue("cmake:enableTouchBar", touchBarVisible);
-    util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
-    util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
-    util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
-    util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar", touchBarVisible);
+    void util.setContextValue("cmake:enableTouchBar.build", touchBarVisible && !(config.advanced?.build === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar.configure", touchBarVisible && !(config.advanced?.configure === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar.debug", touchBarVisible && !(config.advanced?.debug === "hidden"));
+    void util.setContextValue("cmake:enableTouchBar.launch", touchBarVisible && !(config.advanced?.launch === "hidden"));
   }
   /**
    * Second-phase async init
@@ -410,7 +410,7 @@ class ExtensionManager implements vscode.Disposable {
     );
     this._onDidChangeActiveTextEditorSub.dispose();
     this._onUseCMakePresetsChangedSub.dispose();
-    this._kitsWatcher.close();
+    void this._kitsWatcher.close();
     this._projectOutlineTreeView.dispose();
     if (this._cppToolsAPI) {
       this._cppToolsAPI.dispose();
@@ -467,7 +467,7 @@ class ExtensionManager implements vscode.Disposable {
 
     // If we found a valid CMake project, set feature set view to full, otherwise leave the UI as it was.
     if (isCMake) {
-      enableFullFeatureSet(true);
+      await enableFullFeatureSet(true);
     }
 
     return isCMake;
@@ -598,7 +598,7 @@ class ExtensionManager implements vscode.Disposable {
         telemetry.logEvent("selectactivefolder");
         // _folders.activeFolder must be there at this time
         const currentActiveFolderPath = this._folders.activeFolder!.folder.uri.fsPath;
-        this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
+        await this.extensionContext.workspaceState.update('activeFolder', currentActiveFolderPath);
         if (lastActiveFolderPath !== currentActiveFolderPath) {
           rollbar.takePromise('Post-folder-open', {folder: selection}, this._postWorkspaceOpen(this._folders.activeFolder!));
         }
@@ -1188,7 +1188,7 @@ class ExtensionManager implements vscode.Disposable {
         return term;
       }
     }
-    vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
+    void vscode.window.showErrorMessage(localize('compilation information.not.found', 'Unable to find compilation information for this file'));
   }
 
   async selectWorkspace(folder?: vscode.WorkspaceFolder) {
@@ -1312,7 +1312,7 @@ class ExtensionManager implements vscode.Disposable {
       await this.mapCMakeToolsAll(cmt => cmt.resetState());
     }
 
-    vscode.commands.executeCommand('workbench.action.reloadWindow');
+    void vscode.commands.executeCommand('workbench.action.reloadWindow');
   }
 
   async viewLog() {
@@ -1495,7 +1495,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
 
   // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
-  enableFullFeatureSet(false);
+  await enableFullFeatureSet(false);
 
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
@@ -1673,7 +1673,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
-  vscode.commands.executeCommand("setContext", "inCMakeProject", true);
+  await util.setContextValue("inCMakeProject", true);
 
   taskProvider = vscode.tasks.registerTaskProvider(CMakeTaskProvider.CMakeScriptType, cmakeTaskProvider);
 
@@ -1687,8 +1687,8 @@ export async function activate(context: vscode.ExtensionContext) {
 // Enable all or part of the CMake Tools palette commands
 // and show or hide the buttons in the status bar, according to the boolean.
 // The scope of this is the whole workspace.
-export function enableFullFeatureSet(fullFeatureSet: boolean) {
-  util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
+export async function enableFullFeatureSet(fullFeatureSet: boolean) {
+  await util.setContextValue("cmake:enableFullFeatureSet", fullFeatureSet);
   _EXT_MANAGER?.showStatusBar(fullFeatureSet);
 }
 
@@ -1713,7 +1713,7 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
       // Reset ignoreCMakeListsMissing now that we have a valid CMakeLists.txt
       // so that the next time we don't have one the user is notified.
       if (folderFullFeatureSet) {
-        cmt.workspaceContext.state.ignoreCMakeListsMissing = false;
+        await cmt.workspaceContext.state.setIgnoreCMakeListsMissing(false);
       }
 
       // If the given folder is a CMake project, enable full feature set for the whole workspace,
@@ -1723,7 +1723,7 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
         workspaceFullFeatureSet = await _EXT_MANAGER.workspaceHasCMakeProject();
       }
 
-      enableFullFeatureSet(workspaceFullFeatureSet);
+      await enableFullFeatureSet(workspaceFullFeatureSet);
       return;
     }
   }
@@ -1732,7 +1732,7 @@ export async function updateFullFeatureSetForFolder(folder: vscode.WorkspaceFold
   // but just in case, enable full feature set.
   log.info(`Cannot find CMT for folder ${folder.name} or we don't have an extension manager created yet. ` +
            `Setting feature set view to "full".`);
-  enableFullFeatureSet(true);
+  await enableFullFeatureSet(true);
 }
 
 // update CMakeDriver in taskProvider

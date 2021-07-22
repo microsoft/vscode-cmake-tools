@@ -144,7 +144,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       const kit = {name: 'GCC', preferredGenerator: {name: 'BlaBla'}} as Kit;
 
-      expect(driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []))
+      await expect(driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []))
           .to.be.rejectedWith('No usable generator found.');
     }).timeout(60000);
 
