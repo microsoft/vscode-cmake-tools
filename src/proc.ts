@@ -144,7 +144,7 @@ export function execute(command: string,
     // term.show(true);
     // term.sendText(cmdstr);
 
-    vscode.commands.executeCommand("workbench.action.tasks.build");
+    void vscode.commands.executeCommand("workbench.action.tasks.build");
 
     result = new Promise<ExecutionResult>((resolve) => {
       resolve({retc: 0, stdout: '', stderr: ''});
