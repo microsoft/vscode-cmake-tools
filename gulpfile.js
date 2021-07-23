@@ -266,7 +266,7 @@ gulp.task('lint', function () {
     // Un-comment these parts for applying auto-fix.
     return gulp.src(allTypeScript)
         .pipe(eslint({ configFile: ".eslintrc.js" /*, fix: true */}))
-        .pipe(eslint.format())
+        .pipe(eslint.format(undefined, process.stderr))
         //.pipe(gulp.dest(file => file.base))
         .pipe(eslint.failAfterError());
 });
