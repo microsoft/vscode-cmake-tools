@@ -268,7 +268,7 @@ const lintReporter = results => {
 
   results.forEach(result => {
       if (result.errorCount) {
-          const filePath = result.filePath.replace('\\', '/');
+          const filePath = result.filePath.replaceAll('\\', '/');
 
           result.messages.forEach(message => {
               messages.push(`[lint] ${filePath}:${message.line}:${message.column}: ${message.message} [${message.ruleId}]`);
