@@ -265,20 +265,31 @@ const allTypeScript = [
 // Prints file path and line number in the same line. Easier to ctrl + left click in VS Code.
 const lintReporter = results => {
   const messages = [];
+  let errorCount = 0;
+  let warningCount = 0;
+  let fixableErrorCount = 0;
+  let fixableWarningCount = 0;
 
   results.forEach(result => {
-      if (result.errorCount) {
-          const filePath = result.filePath.replaceAll('\\', '/');
+    if (result.errorCount) {
+        const filePath = result.filePath.replaceAll('\\', '/');
+        errorCount += result.errorCount;
+        warningCount += result.warningCount;
+        fixableErrorCount += result.fixableErrorCount;
+        fixableWarningCount += result.fixableWarningCount;
 
-          result.messages.forEach(message => {
-              messages.push(`[lint] ${filePath}:${message.line}:${message.column}: ${message.message} [${message.ruleId}]`);
-          });
+        result.messages.forEach(message => {
+            messages.push(`[lint] ${filePath}:${message.line}:${message.column}: ${message.message} [${message.ruleId}]`);
+        });
 
-          messages.push('');
-      }
+        messages.push('');
+    }
   });
 
-  messages.push('');
+  messages.push('\x1b[31m' + `  ${errorCount + warningCount} Problems (${errorCount} Errors, ${warningCount} Warnings)` + '\x1b[39m');
+  messages.push('\x1b[31m' + `  ${fixableErrorCount} Errors, ${fixableWarningCount} Warnings potentially fixable with \`--fix\` option.` + '\x1b[39m');
+
+  messages.push('', '');
   return messages.join('\n');
 };
 
