@@ -271,7 +271,7 @@ const lintReporter = results => {
   let fixableWarningCount = 0;
 
   results.forEach(result => {
-    if (result.errorCount) {
+    if (result.errorCount || result.warningCount) {
         const filePath = result.filePath.replaceAll('\\', '/');
         errorCount += result.errorCount;
         warningCount += result.warningCount;
@@ -289,9 +289,9 @@ const lintReporter = results => {
   if (errorCount || warningCount) {
     messages.push('\x1b[31m' + `  ${errorCount + warningCount} Problems (${errorCount} Errors, ${warningCount} Warnings)` + '\x1b[39m');
     messages.push('\x1b[31m' + `  ${fixableErrorCount} Errors, ${fixableWarningCount} Warnings potentially fixable with \`--fix\` option.` + '\x1b[39m');
+    messages.push('', '');
   }
 
-  messages.push('', '');
   return messages.join('\n');
 };
 
