@@ -286,8 +286,10 @@ const lintReporter = results => {
     }
   });
 
-  messages.push('\x1b[31m' + `  ${errorCount + warningCount} Problems (${errorCount} Errors, ${warningCount} Warnings)` + '\x1b[39m');
-  messages.push('\x1b[31m' + `  ${fixableErrorCount} Errors, ${fixableWarningCount} Warnings potentially fixable with \`--fix\` option.` + '\x1b[39m');
+  if (errorCount || warningCount) {
+    messages.push('\x1b[31m' + `  ${errorCount + warningCount} Problems (${errorCount} Errors, ${warningCount} Warnings)` + '\x1b[39m');
+    messages.push('\x1b[31m' + `  ${fixableErrorCount} Errors, ${fixableWarningCount} Warnings potentially fixable with \`--fix\` option.` + '\x1b[39m');
+  }
 
   messages.push('', '');
   return messages.join('\n');
