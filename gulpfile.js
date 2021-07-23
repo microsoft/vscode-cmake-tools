@@ -262,11 +262,31 @@ const allTypeScript = [
     '!**/typings**'
 ];
 
+// Prints file path and line number in the same line. Easier to ctrl + left click in VS Code.
+const lintReporter = results => {
+  const messages = [];
+
+  results.forEach(result => {
+      if (result.errorCount) {
+          const filePath = result.filePath.replace('\\', '/');
+
+          result.messages.forEach(message => {
+              messages.push(`[lint] ${filePath}:${message.line}:${message.column}: ${message.message} [${message.ruleId}]`);
+          });
+
+          messages.push('');
+      }
+  });
+
+  messages.push('');
+  return messages.join('\n');
+};
+
 gulp.task('lint', function () {
     // Un-comment these parts for applying auto-fix.
     return gulp.src(allTypeScript)
         .pipe(eslint({ configFile: ".eslintrc.js" /*, fix: true */}))
-        .pipe(eslint.format())
+        .pipe(eslint.format(lintReporter, process.stderr))
         //.pipe(gulp.dest(file => file.base))
         .pipe(eslint.failAfterError());
 });
