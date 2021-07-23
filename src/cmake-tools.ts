@@ -761,7 +761,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
 
       const sourceDirectory = (await this.sourceDir).toLowerCase();
-      if (str === path.join(sourceDirectory, "cmakelists.txt")) {
+      if ((str.includes("cmakelists.txt") || str.includes(".cmake"))) {
         // CMakeLists.txt change event: its creation or deletion are relevant,
         // so update full/partial feature set view for this folder.
         await updateFullFeatureSetForFolder(this.folder);
