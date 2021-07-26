@@ -7,6 +7,7 @@ import * as util from 'util';
 const promisify = util.promisify;
 
 import * as fs_ from 'fs';
+import { walk as walk_ } from '@nodelib/fs.walk';
 import * as path from 'path';
 
 import * as rimraf from 'rimraf';
@@ -39,6 +40,8 @@ export const mkdtemp = promisify(fs_.mkdtemp);
 export const rename = promisify(fs_.rename);
 
 export const stat = promisify(fs_.stat);
+
+export const walk = promisify(walk_);
 
 /**
  * Try and stat() a file. If stat() fails for *any reason*, returns `null`.

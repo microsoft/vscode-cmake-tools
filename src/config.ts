@@ -120,6 +120,7 @@ export interface ExtensionConfigurationSettings {
   testEnvironment: HardEnv;
   mingwSearchDirs: string[];
   emscriptenSearchDirs: string[];
+  collectCompileCommands: boolean;
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   configureOnEdit: boolean;
@@ -303,6 +304,7 @@ export class ConfigurationReader implements vscode.Disposable {
   get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
   get additionalKits(): string[] { return this.configData.additionalKits; }
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
+  get collectCompileCommands(): boolean { return this.configData.collectCompileCommands; }
   get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
   get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
   get buildTask(): boolean { return this.configData.buildTask; }
@@ -352,6 +354,7 @@ export class ConfigurationReader implements vscode.Disposable {
     testEnvironment: new vscode.EventEmitter<HardEnv>(),
     mingwSearchDirs: new vscode.EventEmitter<string[]>(),
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
+    collectCompileCommands: new vscode.EventEmitter<boolean>(),
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     configureOnEdit: new vscode.EventEmitter<boolean>(),

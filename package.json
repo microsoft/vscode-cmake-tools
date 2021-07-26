@@ -1440,6 +1440,12 @@
           "description": "%cmake-tools.configuration.cmake.emscriptenSearchDirs.description%",
           "scope": "window"
         },
+        "cmake.collectCompileCommands": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.collectCompileCommands.description%",
+          "scope": "resource"
+        },
         "cmake.copyCompileCommands": {
           "type": "string",
           "default": null,

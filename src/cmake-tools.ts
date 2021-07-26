@@ -982,12 +982,25 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private _compilationDatabase: CompilationDatabase|null = null;
 
   private async _refreshCompileDatabase(opts: ExpansionOptions): Promise<void> {
-    const compdb_path = path.join(await this.binaryDir, 'compile_commands.json');
-    if (await fs.exists(compdb_path)) {
+    const compdb_paths: string[] = [];
+    if (this.workspaceContext.config.collectCompileCommands) {
+      // search the build directory for all
+      (await fs.walk(await this.binaryDir)).forEach(e => {
+        if (e.name === 'compile_commands.json') {
+          compdb_paths.push(e.path);
+        }
+      });
+    } else {
+      // single file with known path
+      const compdb_path = path.join(await this.binaryDir, 'compile_commands.json');
+      compdb_paths.push(compdb_path);
+    }
+
+    if (compdb_paths.length > 0) {
       // Read the compilation database, and update our db property
-      const new_db = await CompilationDatabase.fromFilePath(compdb_path);
+      const new_db = await CompilationDatabase.fromFilePaths(compdb_paths);
       this._compilationDatabase = new_db;
-      // Now try to copy the compdb to the user-requested path
+      // Now try to dump the compdb to the user-requested path
       const copy_dest = this.workspaceContext.config.copyCompileCommands;
       if (!copy_dest) {
         return;
@@ -998,15 +1011,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await fs.mkdir_p(pardir);
       } catch (e) {
         void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
-          'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
-          compdb_path, expanded_dest, pardir, e.toString()));
+          'Tried to copy compilation database to "{0}", but failed to create the parent directory "{1}": {2}',
+          expanded_dest, pardir, e.toString()));
         return;
       }
       try {
-        await fs.copyFile(compdb_path, expanded_dest);
+        await fs.writeFile(expanded_dest, CompilationDatabase.toJson(new_db));
       } catch (e) {
         // Just display the error. It's the best we can do.
-        void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
+        void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to write compilation database to "{0}": {1}', expanded_dest, e.toString()));
         return;
       }
     }
@@ -1302,6 +1315,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           }
           const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
           populateCollection(collections.build, file_diags);
+          await this._refreshCompileDatabase(drv.expansionOptions);
           return rc === null ? -1 : rc;
         }
       );
