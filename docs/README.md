@@ -89,7 +89,7 @@ CMake Tools is an extension designed to make it easy to work with CMake-based pr
 * [How does CMake Tools work with C and C++ IntelliSense?](faq.md#how-does-cmake-tools-work-with-c-and-c-intellisense)
 * [How do I perform common tasks](faq.md#how-do-i-perform-common-tasks)
 
-[How to contribute](contribute.md)
-* [Developer Reference](contribute.md#developer-reference)
-* [Build the CMake Tools extension](contribute.md#build-the-cmake-tools-extension)
-* [Coding guidelines](contribute.md#coding-guidelines)
+[How to contribute](../CONTRIBUTING.md)
+* [Developer Reference](../CONTRIBUTING.md#developer-reference)
+* [Build the CMake Tools extension](../CONTRIBUTING.md#build-the-cmake-tools-extension)
+* [Coding guidelines](../CONTRIBUTING.md#coding-guidelines)

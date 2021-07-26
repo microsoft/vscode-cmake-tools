@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "{0}에 대한 구성 사전 설정 선택",
 	"user.cancelled.config.preset.selection": "사용자가 설정 구성 선택 취소",
 	"user.selected.config.preset": "사용자가 구성 사전 설정 {0} 선택",
+	"preset.change.in.progress": "미리 설정된 변경이 이미 진행 중입니다.",
 	"loading.config.preset": "구성 사전 설정 {0} 로드 중",
 	"reloading.build.test.preset": "빌드 및 테스트 사전 설정 다시 로드 중",
 	"config.preset.required": "구성 사전 설정을 선택해야 합니다. 계속 진행하시겠습니까?",
