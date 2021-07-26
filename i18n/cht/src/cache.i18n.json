@@ -13,10 +13,12 @@
 	"parsing.cmake.cache.string": "正在剖析 CMake 快取字串",
 	"failed.to.read.line.from.cmake.cache.file": "無法讀取 CMake 快取檔案 {0} 中的程式碼",
 	"read.line.in.cache": "讀取快取中的程式碼，其中 {0}={1}，{2}={3}，{4}={5}",
-	"skipping.variable": "正在跳過 {0} 變數",
 	"cache.entry.unknown": "快取項目 '{0}' 有未知的類型: '{1}'",
 	"constructing.new.cache.entry": "正在從指定的程式碼建構新的快取項目",
+	"nonexisting.advanced.entry": "不存在的快取項目 '{0}' 標示為進階",
+	"ignore.strings.for.nonexisting.entry": "忽略不存在的快取項目 '{0}' 的 'STRINGS' 屬性",
 	"parsed.cache.entries": "已剖析 {0} 個快取項目",
+	"cache.value.truncation.warning": "在快取項目 '{0}' 找到新行。值已截斷為 '{1}'",
 	"get.cache.key": "取得快取金鑰 {0}={1}",
 	"get.cache.key.missing": "取得快取金鑰 {0}=[[遺漏]]"
 }

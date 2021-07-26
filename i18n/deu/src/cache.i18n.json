@@ -13,10 +13,12 @@
 	"parsing.cmake.cache.string": "CMake-Cachezeichenfolge wird analysiert.",
 	"failed.to.read.line.from.cmake.cache.file": "Fehler beim Lesen einer Zeile aus einer CMake-Cachedatei: {0}.",
 	"read.line.in.cache": "Zeile im Cache lesen mit {0}={1}, {2}={3}, {4}={5}",
-	"skipping.variable": "{0}-Variable wird übersprungen.",
 	"cache.entry.unknown": "Der Cacheeintrag \"{0}\" weist einen unbekannten Typ auf: {1}",
 	"constructing.new.cache.entry": "Aus der angegebenen Zeile wird ein neuer Cacheeintrag erstellt.",
+	"nonexisting.advanced.entry": "Der nicht vorhandene Cacheeintrag \"{0}\" wurde als \"erweitert\" gekennzeichnet",
+	"ignore.strings.for.nonexisting.entry": "Die \"Strings\"-Eigenschaft für den nicht vorhandenen Cache-Eintrag \"{0}\" wird ignoriert",
 	"parsed.cache.entries": "{0} Cacheeinträge analysiert",
+	"cache.value.truncation.warning": "Im Cacheeintrag \"{0}\" wurden Zeilenumbrüche gefunden. Der Wert wurde auf \"{1}\" heruntergeschnitten",
 	"get.cache.key": "Cacheschlüssel abrufen: {0}={1}",
 	"get.cache.key.missing": "Cacheschlüssel abrufen: {0}=[[fehlt]]"
 }

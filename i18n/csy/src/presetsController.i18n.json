@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "Vybrat předvolbu konfigurace pro {0}",
 	"user.cancelled.config.preset.selection": "Uživatel zrušil výběr předvolby konfigurace.",
 	"user.selected.config.preset": "Uživatel vybral předvolbu konfigurace {0}.",
+	"preset.change.in.progress": "Přednastavená změna již probíhá.",
 	"loading.config.preset": "Načítá se předvolba konfigurace {0}.",
 	"reloading.build.test.preset": "Znovu se načítají předvolby sestavení a testování.",
 	"config.preset.required": "Musí se vybrat předvolba konfigurace. Jak chcete pokračovat?",

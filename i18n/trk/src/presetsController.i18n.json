@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "{0} için bir yapılandırma ön ayarı seçin",
 	"user.cancelled.config.preset.selection": "Kullanıcı yapılandırma ön ayarı seçimini iptal etti",
 	"user.selected.config.preset": "Kullanıcı yapılandırma ön ayarını {0} seçti",
+	"preset.change.in.progress": "Zaten bir ön ayar değişikliği devam ediyor.",
 	"loading.config.preset": "Yapılandırma ön ayarı {0} yükleniyor",
 	"reloading.build.test.preset": "Derleme ve test ön ayarları yeniden yükleniyor",
 	"config.preset.required": "Bir yapılandırma ön ayarının seçilmesi gerekir. Nasıl devam etmek istersiniz?",
