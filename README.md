@@ -13,7 +13,7 @@
 - [How to](docs/how-to.md)
 - [FAQ](docs/faq.md)
 - [Read the online documentation](docs/README.md)
-- [Contribute](docs/contribute.md)
+- [Contribute](CONTRIBUTING.md)
 
 ## Issues? Questions? Feature requests?
 
