@@ -13,10 +13,12 @@
 	"parsing.cmake.cache.string": "CMake önbellek dizesi ayrıştırılıyor",
 	"failed.to.read.line.from.cmake.cache.file": "{0} CMake önbellek dosyasındaki bir satır okunamadı",
 	"read.line.in.cache": "{0}={1}, {2}={3}, {4}={5} ile önbellekteki satırı oku",
-	"skipping.variable": "{0} değişkeni atlanıyor",
 	"cache.entry.unknown": "'{0}' önbellek girdisi bilinmeyen türe sahip: '{1}'",
 	"constructing.new.cache.entry": "Verilen satırdan yeni bir önbellek girdisi oluşturuluyor",
+	"nonexisting.advanced.entry": "Mevcut olmayan '{0}' önbellek girişi gelişmiş olarak işaretlendi",
+	"ignore.strings.for.nonexisting.entry": "Mevcut olmayan '{0}' önbellek girişinin 'STRINGS' özelliği yok sayılıyor",
 	"parsed.cache.entries": "{0} önbellek girdisi ayrıştırıldı",
+	"cache.value.truncation.warning": "'{0}' önbellek girişinde yeni satırlar bulundu. Değer '{1}' olarak kırpıldı",
 	"get.cache.key": "{0}={1} önbellek anahtarını al",
 	"get.cache.key.missing": "{0}=[[Missing]] önbellek anahtarını al"
 }

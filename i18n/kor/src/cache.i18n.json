@@ -13,10 +13,12 @@
 	"parsing.cmake.cache.string": "CMake 캐시 문자열을 구문 분석하는 중",
 	"failed.to.read.line.from.cmake.cache.file": "CMake 캐시 파일 {0}에서 줄을 읽지 못함",
 	"read.line.in.cache": "캐시에서 {0}={1}, {2}={3}, {4}={5}이(가) 포함된 줄 읽기",
-	"skipping.variable": "{0} 변수를 건너뛰는 중",
 	"cache.entry.unknown": "캐시 항목 '{0}'에 알 수 없는 형식 '{1}'이(가) 사용됨",
 	"constructing.new.cache.entry": "지정된 줄에서 새 캐시 항목을 생성하는 중",
+	"nonexisting.advanced.entry": "존재하지 않는 캐시 항목 '{0}'이(가) 고급으로 표시됨",
+	"ignore.strings.for.nonexisting.entry": "존재하지 않는 캐시 항목 '{0}'에 대한 'STRINGS' 속성을 무시 중",
 	"parsed.cache.entries": "{0}개 캐시 항목을 구문 분석함",
+	"cache.value.truncation.warning": "캐시 항목 '{0}'에 줄바꿈이 있습니다. 값이 '{1}'(으)로 잘림",
 	"get.cache.key": "캐시 키 {0}={1} 가져오기",
 	"get.cache.key.missing": "캐시 키 {0}= [[없음]] 가져오기"
 }
