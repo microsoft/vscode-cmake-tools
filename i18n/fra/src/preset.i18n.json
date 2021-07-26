@@ -10,7 +10,7 @@
 	"default.test.preset.description": "Présélection de test vide qui n’ajoute aucun argument",
 	"no.cl.arch": "Présélection de configuration {0} : aucune architecture spécifiée pour cl.exe, utilisation de x86 par défaut",
 	"no.cl.toolset.arch": "Configurer la présélection{0} : aucune architecture d’ensemble d’outils spécifiée pour cl.exe, à l’aide de host=x86 par défaut",
-	"invalid.cl.toolset.arch": "Configurer la présélection {0}: architecture d’ensemble d’outils inattendue spécifiée «{1}», voulez-vous dire « host ={1}» ?",
+	"invalid.cl.toolset.arch": "Configurer la présélection {0}: architecture d’ensemble d’outils inattendue spécifiée «{1}», voulez-vous dire «host={1}» ?",
 	"no.cl.toolset.version": "Configurer la présélection {0} : aucune version de l’ensemble d’outils spécifiée pour cl.exe, utilisation de la dernière version par défaut",
 	"unknown.toolset.option": "L’option d’ensemble d’outils non reconnu sera ignorée : {0}",
 	"config.preset.not.found": "Présélection de la configuration introuvable avec le nom {0}",
