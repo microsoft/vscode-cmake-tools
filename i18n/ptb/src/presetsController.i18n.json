@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "Selecione uma predefinição de configuração para {0}",
 	"user.cancelled.config.preset.selection": "O usuário cancelou a seleção da predefinição de configuração",
 	"user.selected.config.preset": "O usuário selecionou a predefinição de configuração {0}",
+	"preset.change.in.progress": "Uma alteração predefinida já está em andamento.",
 	"loading.config.preset": "Carregando a predefinição de configuração {0}",
 	"reloading.build.test.preset": "Recarregando predefinições de compilação e de teste",
 	"config.preset.required": "Uma predefinição de configuração precisa ser selecionada. Como deseja proceder?",

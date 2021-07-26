@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "Выберите предустановку конфигурации для {0}",
 	"user.cancelled.config.preset.selection": "Пользователь отменил выбор предустановки конфигурации",
 	"user.selected.config.preset": "Пользователь выбрал предустановку конфигурации {0}",
+	"preset.change.in.progress": "A preset change is already in progress.",
 	"loading.config.preset": "Загрузка предустановки конфигурации {0}",
 	"reloading.build.test.preset": "Перезагрузка предустановок сборки и тестирования",
 	"config.preset.required": "Необходимо выбрать предустановку конфигурации. Какое действие следует выполнить?",
