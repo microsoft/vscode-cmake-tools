@@ -1255,8 +1255,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     let target = target_;
     let targetName: string;
     if (this.useCMakePresets) {
-      target = target;
-      targetName = this.buildPreset?.displayName || this.buildPreset?.name || '';
+      targetName = target || this.buildPreset?.displayName || this.buildPreset?.name || '';
     } else {
       target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
       targetName = target;
@@ -1268,7 +1267,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!drv) {
         throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
       }
-      const buildCmd = await drv.getCMakeBuildCommand();
+      const buildCmd = await drv.getCMakeBuildCommand(target);
       if (buildCmd) {
         log.showChannel();
         log.info(buildCmdStr(buildCmd.command, buildCmd.args));
