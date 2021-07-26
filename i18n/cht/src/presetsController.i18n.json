@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "為 {0} 選取設定預設",
 	"user.cancelled.config.preset.selection": "使用者已取消設定預設選項",
 	"user.selected.config.preset": "使用者選取的設定預設{0}",
+	"preset.change.in.progress": "預設變更已在進行中。",
 	"loading.config.preset": "正在載入設定預設 {0}",
 	"reloading.build.test.preset": "重新載入建置和測試預設",
 	"config.preset.required": "必須選取設定預設。要如何繼續?",

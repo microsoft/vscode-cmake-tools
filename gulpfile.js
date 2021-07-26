@@ -257,6 +257,7 @@ gulp.task('translations-generate', gulp.series(generatedSrcLocBundle, generatedA
 
 const allTypeScript = [
     'src/**/*.ts',
+    'test/**/*.ts',
     '!**/*.d.ts',
     '!**/typings**'
 ];
@@ -264,7 +265,7 @@ const allTypeScript = [
 gulp.task('lint', function () {
     // Un-comment these parts for applying auto-fix.
     return gulp.src(allTypeScript)
-        .pipe(eslint({ configFile: ".eslintrc.js" /*, fix: true*/ }))
+        .pipe(eslint({ configFile: ".eslintrc.js" /*, fix: true */}))
         .pipe(eslint.format())
         //.pipe(gulp.dest(file => file.base))
         .pipe(eslint.failAfterError());
