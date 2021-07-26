@@ -1244,7 +1244,7 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     }
 
     preset.warnings.uninitialized && result.push('--warn-uninitialized');
-    preset.warnings.unusedCli && result.push('--no-warn-unused-cli');
+    !preset.warnings.unusedCli && result.push('--no-warn-unused-cli');
     preset.warnings.systemVars && result.push('--check-system-vars');
   }
 
