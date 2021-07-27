@@ -728,17 +728,8 @@ class ExtensionManager implements vscode.Disposable {
           return;
         }
         const drv: CMakeDriver | null = await cmt.getCMakeDriverInstance();
-        const env: Map<string, string> = new Map<string, string>();
         const configureEnv = await drv?.getConfigureEnvironment();
-        if (configureEnv) {
-          for (const key in configureEnv) {
-            const value = configureEnv[key];
-            if (util.isString(value)) {
-              env.set(key, value);
-            }
-          }
-        }
-
+        const env = configureEnv ?? process.env;
         const isMultiConfig = !!cache.get('CMAKE_CONFIGURATION_TYPES');
         if (drv) {
           drv.isMultiConfig = isMultiConfig;

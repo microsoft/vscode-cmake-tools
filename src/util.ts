@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { platform } from 'os';
 
-import {EnvironmentVariables, DebuggerEnvironmentVariable, execute} from '@cmt/proc';
+import {GeneralEnvironmentType, EnvironmentVariables, DebuggerEnvironmentVariable, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -383,24 +383,31 @@ export function makeDebuggerEnvironmentVars(env: EnvironmentVariables): Debugger
   return converted_env;
 }
 
-export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
-  return env.reduce((acc, vars) => {
-    if (process.platform === 'win32') {
-      // Env vars on windows are case insensitive, so we take the ones from
-      // active env and overwrite the ones in our current process env
-      const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>((acc2, key: string) => {
-        acc2[normalizeEnvironmentVarname(key)] = vars[key];
-        return acc2;
-      }, {});
-      return {...acc, ...norm_vars};
-    } else {
-      return {...acc, ...vars};
+/**
+ * mergeEnvironment will merge a list of environment map
+ * without expand, it's will merge them in case-insensitive way on Windows,
+ * and in case-sensitive on Posix system.
+ *
+ * @param envs The list of environment variables to merge
+ */
+export function mergeEnvironment(...envs: (EnvironmentVariables | undefined)[]): EnvironmentVariables {
+  return envs.reduce((acc: EnvironmentVariables, vars) => {
+    if (vars) {
+      const env_entries = Object.entries(vars) as [string, null | string][];
+      for (const newEnvItem of env_entries) {
+        const key = newEnvItem[0];
+        const value = newEnvItem[1];
+        // For cmake preset environment variables, value may be null
+        // exclude those variable
+        if (typeof value === 'string') {
+          envSet(acc, key, value);
+        } else {
+          envDelete(acc, key);
+        }
+      }
     }
+    return acc;
   }, {});
-}
-
-export function normalizeEnvironmentVarname(varname: string) {
-  return process.platform === 'win32' ? varname.toUpperCase() : varname;
 }
 
 export function parseCompileDefinition(str: string): [string, string|null] {

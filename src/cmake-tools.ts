@@ -765,7 +765,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async executeCMakeCommand(args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
     if (drv) {
-      return drv.executeCommand(drv.cmake.path, args, undefined, options).result;
+      return (await drv.executeCommand(drv.cmake.path, args, undefined, options)).result;
     } else {
       throw new Error(localize('unable.to.execute.cmake.command', 'Unable to execute cmake command, there is no valid cmake driver instance.'));
     }
@@ -774,7 +774,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   async execute(program: string, args: string[], options?: ExecutionOptions): Promise<ExecutionResult> {
     const drv = await this.getCMakeDriverInstance();
     if (drv) {
-      return drv.executeCommand(program, args, undefined, options).result;
+      return (await drv.executeCommand(program, args, undefined, options)).result;
     } else {
       throw new Error(localize('unable.to.execute.program', 'Unable to execute program, there is no valid cmake driver instance.'));
     }

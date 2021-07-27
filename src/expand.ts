@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 
 import {createLogger} from './logging';
 import {EnvironmentVariables} from './proc';
-import {mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths, errorToString} from './util';
+import {mergeEnvironment, replaceAll, fixPaths, errorToString, envGetValue, envSet} from './util';
 import * as nls from 'vscode-nls';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -88,14 +88,95 @@ export interface ExpansionOptions {
   doNotSupportCommands?: boolean;
 }
 
+export function emptyExpansionOptions() {
+  return ({ vars: {}, recursive: true } as ExpansionOptions);
+}
+
+/**
+ * Compute the environment variables that apply with substitutions by opts and expanded_env
+ * @param in_env the base environment to be expaned
+ * @param expanded_env the environment map provided to expand string `${env:var}`
+ *   it's will override the envOverride member of opts
+ * @param intermediateExpand If this is the intermediate expanding
+ * procedure or the final expanding procedure, if it's the
+ * intermediate expanding procedure, the variable that not found
+ * won't not expaned, if it's the final expanding procedure, the variable
+ * that not found would expand to ''.
+ * @param opts Environment expand options
+ */
+export async function computeExpandedEnvironment(
+  in_env: EnvironmentVariables,
+  expanded_env: EnvironmentVariables,
+  intermediateExpand: boolean,
+  opts?: ExpansionOptions
+): Promise<EnvironmentVariables> {
+  const env = {} as { [key: string]: string };
+  let expandOpts = opts ?? emptyExpansionOptions();
+  expandOpts = {
+    ...expandOpts,
+    envOverride: expanded_env
+  };
+
+  const promises: Promise<void>[] = [];
+  async function expandSingle(key: string, value: string) {
+    const expandedValue = await expandString(value, expandOpts, intermediateExpand);
+    if (typeof expandedValue !== typeof value) {
+      log.error(`failed to expand value:${value} result:${expandedValue}`);
+    }
+    envSet(env, key, expandedValue);
+  }
+  for (const [key, value] of Object.entries(in_env)) {
+    promises.push(expandSingle(key, value));
+  }
+  await Promise.all(promises);
+  return env;
+}
+
+/**
+ * mergeEnvironmentWithExpand will merge new env variable and
+ * expand it one by one, so that the environment like this
+ * will expand properly:
+ * config.environment
+ * { PATH:`${env.PATH};C:\\MinGW\\bin` }
+ * config.configureEnvironment
+ * { PATH:`${env.PATH};C:\\OtherPath\\bin` }
+ *
+ * @param intermediateExpand If this is the intermediate expanding
+ * procedure or the final expanding procedure, if it's the
+ * intermediate expanding procedure, the variable that not found
+ * won't not expaned, if it's the final expanding procedure, the variable
+ * that not found would expand to ''.
+ * @param envs The list of environment variables to expand
+ * @param opts Environment expand options
+ *
+ * NOTE: By mergeEnvironment one by one to enable expanding self
+ * containd variable such as PATH properly. If configureEnvironment
+ * and environment both configured different PATH, doing this will
+ * preserve them all
+ */
+export async function mergeEnvironmentWithExpand(
+  intermediateExpand: boolean,
+  envs: (EnvironmentVariables | undefined)[],
+  opts?: ExpansionOptions): Promise<EnvironmentVariables> {
+  let merged_envs: EnvironmentVariables = {};
+  for (const env of envs) {
+    let new_env = env ?? {};
+    new_env = await computeExpandedEnvironment(new_env, merged_envs, true, opts);
+    merged_envs = mergeEnvironment(merged_envs, new_env);
+  }
+  merged_envs = await computeExpandedEnvironment(merged_envs, merged_envs, intermediateExpand, opts);
+  return merged_envs;
+}
+
 /**
  * Replace ${variable} references in the given string with their corresponding
  * values.
  * @param instr The input string
  * @param opts Options for the expansion process
+ * @param intermediateExpand Not the final expandString calling
  * @returns A string with the variable references replaced
  */
-export async function expandString(tmpl: string, opts: ExpansionOptions) {
+export async function expandString(tmpl: string, opts: ExpansionOptions, intermediateExpand?: boolean) {
   if (!tmpl) {
     return tmpl;
   }
@@ -107,7 +188,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   let i = 0;
   do {
     // TODO: consider a full circular reference check?
-    const expansion = await expandStringHelper(result, opts);
+    const expansion = await expandStringHelper(result, opts, intermediateExpand);
     result = expansion.result;
     didReplacement = expansion.didReplacement;
     i++;
@@ -116,11 +197,14 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   if (i === MAX_RECURSION) {
     log.error(localize('reached.max.recursion', 'Reached max string expansion recursion. Possible circular reference.'));
   }
-
-  return replaceAll(result, '${dollar}', '$');
+  if (intermediateExpand) {
+    return result;
+  } else {
+    return replaceAll(result, '${dollar}', '$');
+  }
 }
 
-async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
+export async function expandStringHelper(tmpl: string, opts: ExpansionOptions, intermediateExpand?: boolean) {
   const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
   const env = mergeEnvironment(envPreNormalize);
   const repls = opts.vars;
@@ -145,6 +229,15 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     }
   }
 
+  function updateSubs(current_env: EnvironmentVariables, full: string, varname: string) {
+    const repl = envGetValue(current_env, varname);
+    if (repl) {
+      subs.set(full, fixPaths(repl));
+    } else if (!intermediateExpand) {
+      subs.set(full, '');
+    }
+  }
+
   // Regular expression for variable value (between the variable suffix and the next ending curly bracket):
   // .+? matches any character (except line terminators) between one and unlimited times,
   // as few times as possible, expanding as needed (lazy)
@@ -153,32 +246,36 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
   while ((mat = env_re.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
-    subs.set(full, repl);
+    updateSubs(env, full, varname);
   }
 
   const env_re2 = RegExp(`\\$\\{env\\.(${varValueRegexp})\\}`, "g");
   while ((mat = env_re2.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
-    subs.set(full, repl);
+    updateSubs(env, full, varname);
   }
 
+  // $env{} $penv{} and $vendor{} comes from cmake preset
   const env_re3 = RegExp(`\\$env\\{(${varValueRegexp})\\}`, "g");
   while ((mat = env_re3.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
-    subs.set(full, repl);
+    updateSubs(env, full, varname);
   }
 
+  /*
+   * Similar to $env{<variable-name>}, except that the value only comes from the parent environment,
+   * and never from the environment field. This allows you to prepend or append values to existing
+   * environment variables. For example, setting PATH to /path/to/ninja/bin:$penv{PATH} will prepend
+   * /path/to/ninja/bin to the PATH environment variable. This is needed because $env{<variable-name>}
+   * does not allow circular references.
+   */
   const penv_re = RegExp(`\\$penv\\{(${varValueRegexp})\\}`, "g");
   while ((mat = penv_re.exec(tmpl))) {
     const full = mat[0];
     const varname = mat[1];
-    const repl = fixPaths(process.env[normalizeEnvironmentVarname(varname)] || '') || '';
-    subs.set(full, repl);
+    updateSubs(env, full, varname);
   }
 
   if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {

@@ -77,6 +77,8 @@ export interface BuildCommand {
 export interface EnvironmentVariables { [key: string]: string }
 export interface DebuggerEnvironmentVariable { name: string; value: string }
 
+export type GeneralEnvironmentType = EnvironmentVariables | Map<string, string> | NodeJS.ProcessEnv;
+
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
   shell?: boolean;

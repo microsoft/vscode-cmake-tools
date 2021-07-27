@@ -367,7 +367,7 @@ export class CTestDriver implements vscode.Disposable {
         this.ws.config.ctestDefaultArgs, this.ws.config.ctestArgs);
     }
 
-    const child = driver.executeCommand(
+    const child = await driver.executeCommand(
         ctestpath,
         ctestArgs,
         new CTestOutputLogger(),
@@ -410,10 +410,17 @@ export class CTestDriver implements vscode.Disposable {
     } else {
       buildConfigArgs.push('-C', driver.currentBuildType);
     }
-    const result
-        = await driver
-              .executeCommand(ctestpath, ['-N', ...buildConfigArgs], undefined, {cwd: driver.binaryDir, silent: true})
-              .result;
+    const child = await driver.executeCommand(
+      ctestpath,
+      ["-N", ...buildConfigArgs],
+      undefined,
+      {
+        cwd: driver.binaryDir,
+        silent: true,
+        environment: await driver.getCTestCommandEnvironment()
+      }
+    );
+    const result = await child.result;
     if (result.retc !== 0) {
       // There was an error running CTest. Odd...
       log.error(localize('ctest.error', 'There was an error running ctest to determine available test executables'));
