@@ -498,10 +498,10 @@ function getToolset(preset: ConfigurePreset): Toolset {
     result = parseToolset(preset.toolset.value);
   }
 
-  const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using host=x86 by default', preset.name);
+  const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using '{1}' by default", preset.name, 'host=x86');
   if (result) {
     if (result.name === 'x86' || result.name === 'x64') {
-      log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean 'host={1}'?", preset.name, result.name));
+      log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean '{2}'?", preset.name, result.name, `host=${result.name}`));
     }
     if (!result.host) {
       log.warning(noToolsetArchWarning);
