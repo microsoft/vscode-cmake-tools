@@ -4,6 +4,7 @@ import * as path from 'path';
 
 import * as util from '@cmt/util';
 import * as logging from '@cmt/logging';
+import * as proc from '@cmt/proc';
 import { EnvironmentVariables, execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
@@ -598,7 +599,7 @@ async function expandConfigurePresetHelper(folder: string,
   }
 
   // Expand inherits
-  let inheritedEnv = {};
+  let inheritedEnv = new EnvironmentVariables();
   if (preset.inherits) {
     if (util.isString(preset.inherits)) {
       preset.inherits = [preset.inherits];
@@ -607,7 +608,9 @@ async function expandConfigurePresetHelper(folder: string,
       const parent = await expandConfigurePresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
         // Inherit environment
-        inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
+        const env = EnvironmentVariables.create(parent.environment);
+        env.merge(inheritedEnv);
+        inheritedEnv = env;
         // Inherit cache vars
         for (const name in parent.cacheVariables) {
           if (preset.cacheVariables[name] === undefined) {
@@ -628,7 +631,7 @@ async function expandConfigurePresetHelper(folder: string,
 
   inheritedEnv = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv as EnvironmentVariables);
 
-  let clEnv: EnvironmentVariables = {};
+  let clEnv = new EnvironmentVariables();
 
   // [Windows Only] If CMAKE_CXX_COMPILER or CMAKE_C_COMPILER is set as 'cl' or 'cl.exe', but they are not on PATH,
   // then set the env automatically
@@ -645,10 +648,13 @@ async function expandConfigurePresetHelper(folder: string,
       const cxxCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_CXX_COMPILER'])?.toLowerCase();
       const cCompiler = getStringValueFromCacheVar(preset.cacheVariables['CMAKE_C_COMPILER'])?.toLowerCase();
       if (cxxCompiler === 'cl' || cxxCompiler === 'cl.exe' || cCompiler === 'cl' || cCompiler === 'cl.exe') {
-        const clLoc = await execute('where.exe', ['cl'], null, { environment: preset.environment as EnvironmentVariables,
-                                                                    silent: true,
-                                                                    encoding: 'utf8',
-                                                                    shell: true }).result;
+        const executeOptions: proc.ExecutionOptions = {
+          environment: EnvironmentVariables.create(preset.environment),
+          silent: true,
+          encoding: 'utf8',
+          shell: true
+        };
+        const clLoc = await execute('where.exe', ['cl'], null, executeOptions).result;
         if (!clLoc.stdout) {
           // Not on PATH, need to set env
           const arch = getArchitecture(preset);
@@ -688,15 +694,18 @@ async function expandConfigurePresetHelper(folder: string,
           } else {
             clEnv = getKitEnvironmentVariablesObject(await effectiveKitEnvironment(kits[latestVsIndex]));
             // if ninja isn't on path, try to look for it in a VS install
-            const ninjaLoc = await execute('where.exe', ['ninja'], null, { environment: preset.environment as EnvironmentVariables,
-                                                                           silent: true,
-                                                                           encoding: 'utf8',
-                                                                           shell: true }).result;
+            const executeOptions: proc.ExecutionOptions = {
+              environment: EnvironmentVariables.create(preset.environment),
+              silent: true,
+              encoding: 'utf8',
+              shell: true
+            };
+            const ninjaLoc = await execute('where.exe', ['ninja'], null, executeOptions).result;
             if (!ninjaLoc.stdout) {
               const vsCMakePaths = await paths.vsCMakePaths(kits[latestVsIndex].visualStudio);
               if (vsCMakePaths.ninja) {
                 log.warning(localize('ninja.not.set', 'Ninja is not set on PATH, trying to use {0}', vsCMakePaths.ninja));
-                clEnv['PATH'] = `${path.dirname(vsCMakePaths.ninja)};${clEnv['PATH']}`;
+                clEnv.set('PATH', `${path.dirname(vsCMakePaths.ninja)};${clEnv.get('PATH')}`);
               }
             }
           }
@@ -705,8 +714,9 @@ async function expandConfigurePresetHelper(folder: string,
     }
   }
 
-  clEnv = util.mergeEnvironment(inheritedEnv as EnvironmentVariables, clEnv as EnvironmentVariables);
-  preset.environment = util.mergeEnvironment(clEnv as EnvironmentVariables, preset.environment as EnvironmentVariables);
+  const finalEnvironment = new EnvironmentVariables();
+  finalEnvironment.merge(inheritedEnv, clEnv, preset.environment);
+  preset.environment = finalEnvironment.fullEnvironment;
 
   preset.__expanded = true;
   return preset;
@@ -862,7 +872,7 @@ export async function expandBuildPreset(folder: string,
       sourceDirName: path.basename(sourceDir),
       presetName: preset.name
     },
-    envOverride: preset.environment as EnvironmentVariables,
+    envOverride: EnvironmentVariables.create(preset.environment),
     recursive: true,
     // Don't support commands since expansion might be called on activation. If there is
     // an extension depending on us, and there is a command in this extension is invoked,
@@ -880,7 +890,7 @@ export async function expandBuildPreset(folder: string,
     }
   }
 
-  expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
+  expansionOpts.envOverride = EnvironmentVariables.create(expandedPreset.environment);
 
   // Expand other fields
   if (preset.targets) {
@@ -964,7 +974,7 @@ async function expandBuildPresetHelper(folder: string,
   if (!preset.environment) {
     preset.environment = {};
   }
-  let inheritedEnv = {};
+  let inheritedEnv = new EnvironmentVariables();
 
   // Expand inherits
   if (preset.inherits) {
@@ -975,7 +985,9 @@ async function expandBuildPresetHelper(folder: string,
       const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
         // Inherit environment
-        inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
+        const parentEnv = EnvironmentVariables.create(parent.environment);  // TODO: this is wrong. null's need to delete parent env values, but won't survive the merge.
+        parentEnv.merge(inheritedEnv);
+        inheritedEnv = parentEnv;
         // Inherit other fields
         let key: keyof BuildPreset;
         for (key in parent) {
@@ -996,12 +1008,14 @@ async function expandBuildPresetHelper(folder: string,
       preset.__generator = configurePreset.generator;
 
       if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
-        inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
+        inheritedEnv.merge(configurePreset.environment);
       }
     }
   }
 
-  preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
+  const finalEnvironment = EnvironmentVariables.create(process.env);
+  finalEnvironment.merge(inheritedEnv, preset.environment);
+  preset.environment = finalEnvironment.fullEnvironment;
 
   preset.__expanded = true;
   return preset;
@@ -1043,7 +1057,7 @@ export async function expandTestPreset(folder: string,
       sourceDirName: path.basename(sourceDir),
       presetName: preset.name
     },
-    envOverride: preset.environment as EnvironmentVariables,
+    envOverride: EnvironmentVariables.create(preset.environment),
     recursive: true,
     // Don't support commands since expansion might be called on activation. If there is
     // an extension depending on us, and there is a command in this extension is invoked,
@@ -1061,7 +1075,7 @@ export async function expandTestPreset(folder: string,
     }
   }
 
-  expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
+  expansionOpts.envOverride = EnvironmentVariables.create(expandedPreset.environment);
 
   // Expand other fields
   if (preset.overwriteConfigurationFile) {
@@ -1177,7 +1191,7 @@ async function expandTestPresetHelper(folder: string,
   if (!preset.environment) {
     preset.environment = {};
   }
-  let inheritedEnv = {};
+  const inheritedEnv = new EnvironmentVariables();
 
   // Expand inherits
   if (preset.inherits) {
@@ -1188,7 +1202,7 @@ async function expandTestPresetHelper(folder: string,
       const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
       if (parent) {
         // Inherit environment
-        inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
+        inheritedEnv.merge(parent.environment);
         // Inherit other fields
         let key: keyof TestPreset;
         for (key in parent) {
@@ -1209,12 +1223,14 @@ async function expandTestPresetHelper(folder: string,
       preset.__generator = configurePreset.generator;
 
       if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
-        inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
+        inheritedEnv.merge(configurePreset.environment);
       }
     }
   }
 
-  preset.environment = util.mergeEnvironment(process.env as EnvironmentVariables, inheritedEnv, preset.environment as EnvironmentVariables);
+  const finalEnvironment = EnvironmentVariables.create(process.env);
+  finalEnvironment.merge(inheritedEnv, preset.environment);
+  preset.environment = finalEnvironment.fullEnvironment;
 
   preset.__expanded = true;
   return preset;

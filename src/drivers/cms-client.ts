@@ -542,11 +542,11 @@ export class CMakeServerClient {
       pipe_file = `/tmp/cmake-server-${Math.random()}`;
     }
     this._pipeFilePath = pipe_file;
-    const final_env = util.mergeEnvironment(process.env as proc.EnvironmentVariables,
-      params.environment as proc.EnvironmentVariables);
+    const final_env = new proc.EnvironmentVariables();
+    final_env.merge(process.env, params.environment);
     const child
       = child_proc.spawn(params.cmakePath, ['-E', 'server', '--experimental', `--pipe=${pipe_file}`], {
-        env: final_env, cwd: params.binaryDir
+        env: final_env.fullEnvironment, cwd: params.binaryDir
       });
     log.debug(localize('started.new.cmake.server.instance', 'Started new CMake Server instance with PID {0}', child.pid));
     child.stdout.on('data', data => this._params.onOtherOutput(data.toLocaleString()));

@@ -11,6 +11,7 @@ import {createLogger} from './logging';
 import rollbar from './rollbar';
 import * as util from './util';
 
+import * as os from 'os';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { ExecutionResult } from './api';
@@ -71,10 +72,70 @@ export interface Subprocess {
 export interface BuildCommand {
   command: string;
   args?: string[];
-  build_env?: {[key: string]: string};
+  build_env?: EnvironmentVariables;
 }
 
-export interface EnvironmentVariables { [key: string]: string }
+export class EnvironmentVariables {
+  private env: {[key: string]: string } = {};
+
+  static create(env?: {[key: string]: string|null}): EnvironmentVariables;
+  static create(env?: {[key: string]: string|undefined}): EnvironmentVariables;
+  static create(env?: {[key: string]: string|null|undefined}): EnvironmentVariables {
+    const result = new EnvironmentVariables();
+    result.merge(env);
+    return result;
+  }
+
+  public get fullEnvironment() {
+    return this.env;
+  }
+
+  public get debugConfigEnvironment() {
+    return Object.entries(this.env).map(
+      ([key, value]) => ({
+        name: key,
+        value
+      })
+    );
+  }
+
+  public get(key: string): string | undefined {
+    return this.env[util.normalizeEnvironmentVarname(key)];
+  }
+
+  public set(key: string, value?: string|null): void {
+    if (value !== undefined && value !== null) {
+      this.env[util.normalizeEnvironmentVarname(key)] = value;
+    } else {
+      this.delete(key);
+    }
+  }
+
+  public has(key: string): boolean {
+    return this.env[util.normalizeEnvironmentVarname(key)] !== undefined;
+  }
+
+  public delete(key: string): void {
+    delete this.env[util.normalizeEnvironmentVarname(key)];
+  }
+
+  public merge(...envs: (EnvironmentVariables | {[key: string]: string|null|undefined} | undefined)[]): void {
+    for (const env of envs) {
+      if (env === undefined) {
+        continue;
+      }
+      if (env instanceof EnvironmentVariables) {
+        Object.assign(this.env, env.env);
+      } else if (os.platform() !== 'win32') {
+        Object.assign(this.env, env);
+      } else {
+        for (const key of Object.getOwnPropertyNames(env)) {
+          this.set(key, env[key]);
+        }
+      }
+    }
+  }
+}
 
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
@@ -119,17 +180,18 @@ export function execute(command: string,
   if (!options) {
     options = {};
   }
-  const localeOverride: EnvironmentVariables = {
+  const localeOverride = {
     LANG: "C",
     LC_ALL: "C"
   };
-  const final_env = util.mergeEnvironment(
-    process.env as EnvironmentVariables,
+  const final_env = new EnvironmentVariables();
+  final_env.merge(
+    process.env,
     options.environment || {},
     options.overrideLocale ? localeOverride : {});
 
   const spawn_opts: proc.SpawnOptions = {
-    env: final_env,
+    env: final_env.fullEnvironment,
     shell: !!options.shell
   };
   if (options && options.cwd) {

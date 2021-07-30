@@ -174,7 +174,7 @@ suite('Kits scan test', async () => {
 
     expect(compkit!.name).to.eq('GCC 6.3.0 x86_64-w64-mingw32');
     expect(compkit!.preferredGenerator!.name).to.eq('MinGW Makefiles');
-    expect(compkit!.environmentVariables!.PATH).include('fakebin');
+    expect(compkit!.environmentVariables?.fullEnvironment!.PATH).include('fakebin');
   });
 
   test('Detect non-compiler program', async () => {

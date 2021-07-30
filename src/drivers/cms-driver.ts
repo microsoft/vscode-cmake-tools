@@ -335,7 +335,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
       binaryDir: this.binaryDir,
       sourceDir: this.sourceDir,
       cmakePath: this.cmake.path,
-      environment: await this.getConfigureEnvironment(),
+      environment: (await this.getConfigureEnvironment()).fullEnvironment,
       onDirty: async () => {
         // cmake-server has dirty check issues, so we implement our own dirty
         // checking. Maybe in the future this can be useful for auto-configuring

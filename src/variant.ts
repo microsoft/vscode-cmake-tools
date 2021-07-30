@@ -310,18 +310,20 @@ export class VariantManager implements vscode.Disposable {
   }
 
   mergeVariantConfigurations(options: VariantOption[]): VariantOption {
-    const init = {short: '', long: '', settings: {}} as any as VariantOption;
-    return options.reduce((acc, el) => ({
-                            key: '__merged__',
-                            buildType: el.buildType || acc.buildType,
-                            linkage: el.linkage || acc.linkage,
-                            // TS 2.4 doesn't like using object spread here, for some reason.
-                            settings: { ...acc.settings, ...el.settings},
-                            short: [acc.short, el.short].join(' ').trim(),
-                            long: [acc.long, el.long].join(', '),
-                            env: util.mergeEnvironment(acc.env || {}, el.env || {})
-                          }),
-                          init);
+    const init = {short: '', long: '', settings: {}, env: new EnvironmentVariables()} as any as VariantOption;
+    return options.reduce((acc, el) => {
+      acc.env?.merge(el.env);
+      return {
+          key: '__merged__',
+          buildType: el.buildType || acc.buildType,
+          linkage: el.linkage || acc.linkage,
+          settings: { ...acc.settings, ...el.settings},
+          short: [acc.short, el.short].join(' ').trim(),
+          long: [acc.long, el.long].join(', '),
+          env: acc.env
+        };
+      },
+      init);
   }
 
   get activeVariantOptions(): VariantOption {

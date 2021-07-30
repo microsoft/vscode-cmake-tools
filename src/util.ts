@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-import {EnvironmentVariables, execute} from '@cmt/proc';
+import {execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -15,6 +15,10 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
  * Escape a string so it can be used as a regular expression
  */
 export function escapeStringForRegex(str: string): string { return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1'); }
+
+export interface Dictionary<T> {
+  [key: string]: T;
+}
 
 /**
  * Replace all occurrences of `needle` in `str` with `what`
@@ -34,7 +38,10 @@ export function replaceAll(str: string, needle: string, what: string) {
  * @param str The input string
  * @returns The modified string with fixed paths
  */
-export function fixPaths(str: string) {
+export function fixPaths(str?: string) {
+  if (str === undefined) {
+    return undefined;
+  }
   const fix_paths = /[A-Z]:(\\((?![<>:\"\/\\|\?\*]).)+)*\\?(?!\\)/gi;
   let pathmatch: RegExpMatchArray|null = null;
   let newstr = str;
@@ -367,32 +374,6 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
       yield other_elem;
     }
   }
-}
-
-export function splitEnvironmentVars(env: EnvironmentVariables): EnvironmentVariables[] {
-  const converted_env: EnvironmentVariables[] = Object.entries(env).map(
-    ([key, value]) => ({
-      name: key,
-      value
-    })
-  );
-  return converted_env;
-}
-
-export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
-  return env.reduce((acc, vars) => {
-    if (process.platform === 'win32') {
-      // Env vars on windows are case insensitive, so we take the ones from
-      // active env and overwrite the ones in our current process env
-      const norm_vars = Object.getOwnPropertyNames(vars).reduce<EnvironmentVariables>((acc2, key: string) => {
-        acc2[normalizeEnvironmentVarname(key)] = vars[key];
-        return acc2;
-      }, {});
-      return {...acc, ...norm_vars};
-    } else {
-      return {...acc, ...vars};
-    }
-  }, {});
 }
 
 export function normalizeEnvironmentVarname(varname: string) {
