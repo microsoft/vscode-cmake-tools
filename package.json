@@ -1944,11 +1944,6 @@
     "extensionTestsMultioot": "yarn run pretest && node ./out/test/extension-tests/multi-root-UI/runTest.js",
     "docs": "node ./node_modules/typedoc/bin/typedoc --excludeExternals --out build/docs/dev --readme none src/ types/"
   },
-  "husky": {
-    "hooks": {
-      "pre-push": "yarn run lint"
-    }
-  },
   "devDependencies": {
     "@octokit/rest": "^18.1.1",
     "@types/ajv": "^0.0.5",
