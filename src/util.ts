@@ -376,10 +376,6 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
   }
 }
 
-export function normalizeEnvironmentVarname(varname: string) {
-  return process.platform === 'win32' ? varname.toUpperCase() : varname;
-}
-
 export function parseCompileDefinition(str: string): [string, string|null] {
   if (/^\w+$/.test(str)) {
     return [str, null];

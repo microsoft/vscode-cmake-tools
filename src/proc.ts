@@ -78,6 +78,15 @@ export interface BuildCommand {
 export class EnvironmentVariables {
   private env: {[key: string]: string } = {};
 
+  /**
+   * On Windows we normalize the environment variable names because they are case-insensitve and
+   * can be accessed that way. To get the original casing, we create a mapping from the normalized
+   * form to the original case. On linux/macOS, this mapping is not used.
+   * The 'key' is the normalized form. The 'value' is the original casing. `this.env` uses the
+   * original casing for its 'key's.
+   */
+  private keyMapping: {[key: string]: string } = {};
+
   static create(env?: {[key: string]: string|null}): EnvironmentVariables;
   static create(env?: {[key: string]: string|undefined}): EnvironmentVariables;
   static create(env?: {[key: string]: string|null|undefined}): EnvironmentVariables {
@@ -99,24 +108,36 @@ export class EnvironmentVariables {
     );
   }
 
+  private getKey(key: string): string {
+    if (os.platform() === 'win32') {
+      const normalizedKey = key.toUpperCase();
+      if (this.keyMapping[normalizedKey]) {
+        return this.keyMapping[normalizedKey];
+      } else {
+        this.keyMapping[normalizedKey] = key;
+      }
+    }
+    return key;
+  }
+
   public get(key: string): string | undefined {
-    return this.env[util.normalizeEnvironmentVarname(key)];
+    return this.env[this.getKey(key)];
   }
 
   public set(key: string, value?: string|null): void {
     if (value !== undefined && value !== null) {
-      this.env[util.normalizeEnvironmentVarname(key)] = value;
+      this.env[this.getKey(key)] = value;
     } else {
       this.delete(key);
     }
   }
 
   public has(key: string): boolean {
-    return this.env[util.normalizeEnvironmentVarname(key)] !== undefined;
+    return this.env[this.getKey(key)] !== undefined;
   }
 
   public delete(key: string): void {
-    delete this.env[util.normalizeEnvironmentVarname(key)];
+    delete this.env[this.getKey(key)];
   }
 
   public merge(...envs: (EnvironmentVariables | {[key: string]: string|null|undefined} | undefined)[]): void {
@@ -126,10 +147,14 @@ export class EnvironmentVariables {
       }
       if (env instanceof EnvironmentVariables) {
         Object.assign(this.env, env.env);
+        Object.assign(this.keyMapping, env.keyMapping);
       } else if (os.platform() !== 'win32') {
         Object.assign(this.env, env);
+        // Non-Windows OS'es do not use the keyMapping.
       } else {
         for (const key of Object.getOwnPropertyNames(env)) {
+          // It is important to call `this.set` here instead of accessing `this.env` directly
+          // because it will cause the key mapping to be updated.
           this.set(key, env[key]);
         }
       }
