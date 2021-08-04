@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "Sélectionner une présélection de configuration pour {0}",
 	"user.cancelled.config.preset.selection": "L’utilisateur a annulé la sélection de présélection de configuration",
 	"user.selected.config.preset": "L’utilisateur a sélectionné la présélection de configuration {0}",
+	"preset.change.in.progress": "Une modification de la présélection est déjà en cours.",
 	"loading.config.preset": "Chargement de la présélection de configuration {0}",
 	"reloading.build.test.preset": "Rechargement des présélections de build et de test",
 	"config.preset.required": "Une présélection de configuration doit être sélectionnée. Comment voulez-vous procéder ?",

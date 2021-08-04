@@ -498,10 +498,10 @@ function getToolset(preset: ConfigurePreset): Toolset {
     result = parseToolset(preset.toolset.value);
   }
 
-  const noToolsetArchWarning = localize('no.cl.toolset.arch', 'Configure preset {0}: No toolset architecture specified for cl.exe, using host=x86 by default', preset.name);
+  const noToolsetArchWarning = localize('no.cl.toolset.arch', "Configure preset {0}: No toolset architecture specified for cl.exe, using '{1}' by default", preset.name, 'host=x86');
   if (result) {
     if (result.name === 'x86' || result.name === 'x64') {
-      log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean 'host={1}'?", preset.name, result.name));
+      log.warning(localize('invalid.cl.toolset.arch', "Configure preset {0}: Unexpected toolset architecture specified '{1}', did you mean '{2}'?", preset.name, result.name, `host=${result.name}`));
     }
     if (!result.host) {
       log.warning(noToolsetArchWarning);
@@ -1244,7 +1244,7 @@ export function configureArgs(preset: ConfigurePreset): string[] {
     }
 
     preset.warnings.uninitialized && result.push('--warn-uninitialized');
-    preset.warnings.unusedCli && result.push('--no-warn-unused-cli');
+    preset.warnings.unusedCli === false && result.push('--no-warn-unused-cli');
     preset.warnings.systemVars && result.push('--check-system-vars');
   }
 
@@ -1307,8 +1307,8 @@ export function testArgs(preset: TestPreset): string[] {
     preset.output.outputOnFailure && result.push('--output-on-failure');
     preset.output.quiet && result.push('--quiet');
     preset.output.outputLogFile && result.push('--output-log', preset.output.outputLogFile);
-    !preset.output.labelSummary && result.push('--no-label-summary');
-    !preset.output.subprojectSummary && result.push('--no-subproject-summary');
+    preset.output.labelSummary === false && result.push('--no-label-summary');
+    preset.output.subprojectSummary === false && result.push('--no-subproject-summary');
     preset.output.maxPassedTestOutputSize && result.push('--test-output-size-passed', preset.output.maxPassedTestOutputSize.toString());
     preset.output.maxFailedTestOutputSize && result.push('--test-output-size-failed', preset.output.maxFailedTestOutputSize.toString());
     preset.output.maxTestNameWidth && result.push('--max-width', preset.output.maxTestNameWidth.toString());
@@ -1346,7 +1346,8 @@ export function testArgs(preset: TestPreset): string[] {
     preset.execution.testLoad && result.push('--test-load', preset.execution.testLoad.toString());
     preset.execution.showOnly && result.push('--show-only', preset.execution.showOnly);
     preset.execution.repeat && result.push(`--repeat ${preset.execution.repeat.mode}:${preset.execution.repeat.count}`);
-    result.push(`--interactive-debug-mode ${preset.execution.interactiveDebugging ? 1 : 0}`);
+    preset.execution.interactiveDebugging && result.push('--interactive-debug-mode 1');
+    preset.execution.interactiveDebugging === false && result.push('--interactive-debug-mode 0');
     preset.execution.scheduleRandom && result.push('--schedule-random');
     preset.execution.timeout && result.push('--timeout', preset.execution.timeout.toString());
     preset.execution.noTestsAction && preset.execution.noTestsAction !== 'default' && result.push('--no-tests=' + preset.execution.noTestsAction);
