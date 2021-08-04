@@ -230,8 +230,8 @@ class ExtensionManager implements vscode.Disposable {
   }
 
   private showToast: Promise<boolean | undefined> | undefined;
-  public async expShowToast() : Promise<boolean | undefined> {
-    return await this.showToast;
+  public async expShowToast(): Promise<boolean | undefined> {
+    return this.showToast;
   }
 
   /**
@@ -1782,7 +1782,7 @@ export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
 // for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace
 // in a quickPick.)
 export async function expShowToast(): Promise<boolean | undefined> {
-  return await _EXT_MANAGER?.expShowToast();
+  return _EXT_MANAGER?.expShowToast();
 }
 
 // this method is called when your extension is deactivated.
