@@ -22,6 +22,7 @@ import {
   findCLCompilerPath,
   scanForKitsIfNeeded
 } from '@cmt/kit';
+import { IExperimentationService } from 'vscode-tas-client';
 import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
@@ -37,7 +38,7 @@ import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
 import {expandString, KitContextVars} from '@cmt/expand';
 import paths from '@cmt/paths';
-import { CMakeDriver } from './drivers/driver';
+import { CMakeDriver, CMakePreconditionProblems } from './drivers/driver';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -72,7 +73,8 @@ type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | nu
  */
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
-    telemetry.activate();
+    telemetry.activate(extensionContext);
+
     this._statusBar.setBuildTargetName('all');
     this._folders.onAfterAddFolder(async cmtFolder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
@@ -161,6 +163,11 @@ class ExtensionManager implements vscode.Disposable {
    * Second-phase async init
    */
   private async _init() {
+    const experimentationService: IExperimentationService | undefined = await telemetry.getExperimentationService();
+    if (experimentationService) {
+      this.showToast = experimentationService.getTreatmentVariableAsync<boolean>("vscode", "partialActivation_showToast");
+    }
+
     this.updateTouchBarVisibility(this._workspaceConfig.touchbar);
     this._workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
 
@@ -187,7 +194,8 @@ class ExtensionManager implements vscode.Disposable {
       }
     }
     const telemetryProperties: telemetry.Properties = {
-      isMultiRoot: `${isMultiRoot}`
+      isMultiRoot: `${isMultiRoot}`,
+      isFullyActivated: `await ${this.workspaceHasCMakeProject()}`
     };
     if (isMultiRoot) {
       telemetryProperties['autoSelectActiveFolder'] = `${this._workspaceConfig.autoSelectActiveFolder}`;
@@ -219,6 +227,11 @@ class ExtensionManager implements vscode.Disposable {
     const inst = new ExtensionManager(ctx);
     await inst._init();
     return inst;
+  }
+
+  private showToast: Promise<boolean | undefined> | undefined;
+  public async expShowToast() : Promise<boolean | undefined> {
+    return await this.showToast;
   }
 
   /**
@@ -317,6 +330,25 @@ class ExtensionManager implements vscode.Disposable {
       // No CMakeTools. Probably no workspace open.
       return false;
     }
+
+    // // For a project that is not CMake based (no CMakeLists.txt is present under "cmake.sourceDirectory")
+    // // let's set the "unspecified" kit, so that the configure process (which is implemented relying on having
+    // // a non null kit) works without a major source code refactoring, up to the point where it will handle
+    // // the missingCMakeLists situation ("Create/Locate/Ignore" toast message versus "quickPick" from all the
+    // // CMakeLists.txt files available in the workspace).
+    // const isCMakeProject: boolean =  await this.folderIsCMakeProject(cmt);
+    // if (!isCMakeProject) {
+    //   if (cmt.useCMakePresets) {
+    //     cmt.setConfigurePreset(null);
+    //     //this.setConfigurePreset("Default");
+    //     // this.addConfigurePreset(cmt.folder);
+    //   } else {
+    //     this.setKitByName("__unspec__");
+    //   }
+
+    //   return true;
+    // }
+
     if (cmt.useCMakePresets) {
       if (cmt.configurePreset) {
         return true;
@@ -427,6 +459,7 @@ class ExtensionManager implements vscode.Disposable {
     if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
       return;
     }
+
     await cmt.configureInternal(trigger, [], ConfigureType.Normal);
   }
 
@@ -476,11 +509,6 @@ class ExtensionManager implements vscode.Disposable {
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
     const ws = info.folder;
     const cmt = info.cmakeTools;
-
-    // Don't configure if the current project is not CMake based.
-    if (!await this.folderIsCMakeProject(cmt)) {
-      return;
-    }
 
     // Scan for kits even under presets mode, so we can create presets from compilers.
     // Silent re-scan when detecting a breaking change in the kits definition.
@@ -541,28 +569,33 @@ class ExtensionManager implements vscode.Disposable {
       }
     }
 
-    if (should_configure === true) {
-      // We've opened a new workspace folder, and the user wants us to
-      // configure it now.
-      log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-      await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
+    if (!await this.folderIsCMakeProject(cmt)) {
+      await cmt.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this._workspaceConfig);
     } else {
-      const configureButtonMessage = localize('configure.now.button', 'Configure Now');
-      let result: string | undefined;
-      if (silentScanForKitsNeeded) {
-        // This popup will show up the first time after deciding not to configure, if a version change has been detected
-        // in the kits definition. This may happen during a CMake Tools extension upgrade.
-        // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
-        // being tied to a global state variable.
-        result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
-      }
-      if (result === configureButtonMessage) {
-        await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
-      } else {
-        log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
+      if (should_configure === true) {
+        // We've opened a new workspace folder, and the user wants us to
+        // configure it now.
+        log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
         await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
+      } else {
+        const configureButtonMessage = localize('configure.now.button', 'Configure Now');
+        let result: string | undefined;
+        if (silentScanForKitsNeeded) {
+          // This popup will show up the first time after deciding not to configure, if a version change has been detected
+          // in the kits definition. This may happen during a CMake Tools extension upgrade.
+          // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+          // being tied to a global state variable.
+          result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
+        }
+        if (result === configureButtonMessage) {
+          await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
+        } else {
+          log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
+          await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
+        }
       }
     }
+
     this._updateCodeModel(info);
   }
 
@@ -1743,6 +1776,13 @@ export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
 // update default target in taskProvider
 export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
   cmakeTaskProvider.updateDefaultTarget(defaultTarget);
+}
+
+// Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
+// for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace
+// in a quickPick.)
+export async function expShowToast(): Promise<boolean | undefined> {
+  return await _EXT_MANAGER?.expShowToast();
 }
 
 // this method is called when your extension is deactivated.
