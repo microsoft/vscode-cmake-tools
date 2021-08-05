@@ -494,7 +494,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         const changeSetting = localize('edit.setting', changeSettingTxt);
         const ignoreCMakeListsMissingTxt = "Don't show again";
         const ignoreCMakeListsMissing = localize('ignore.activation', ignoreCMakeListsMissingTxt);
-        let showCMakeLists: boolean | undefined = await expShowCMakeLists();
+        const showCMakeLists: boolean | undefined = await expShowCMakeLists();
 
         telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
 
