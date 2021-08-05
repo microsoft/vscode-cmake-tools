@@ -41,7 +41,7 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetInTaskProvider, expShowToast } from './extension';
+import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetInTaskProvider, expShowCMakeLists } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -488,29 +488,31 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       telemetryProperties["ignoreCMakeListsMissing"] = this.workspaceContext.state.ignoreCMakeListsMissing.toString();
 
       if (!this.workspaceContext.state.ignoreCMakeListsMissing) {
-        const quickStart = localize('quickstart.cmake.project', 'Create');
-        const changeSetting = localize('edit.setting', 'Locate');
-        const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
-        const showToast: boolean | undefined = await expShowToast();
+        const quickStartTxt = "Create";
+        const quickStart = localize('quickstart.cmake.project', quickStartTxt);
+        const changeSettingTxt = "Locate";
+        const changeSetting = localize('edit.setting', changeSettingTxt);
+        const ignoreCMakeListsMissingTxt = "Don't show again";
+        const ignoreCMakeListsMissing = localize('ignore.activation', ignoreCMakeListsMissingTxt);
+        let showCMakeLists: boolean | undefined = await expShowCMakeLists();
 
-        telemetryProperties["missingCMakeListsPopupType"] = showToast ? "toastCreateLocateIgnore" : "selectFromAllCMakeLists";
+        telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
 
-        const result = showToast ? await vscode.window.showErrorMessage(
+        const result = showCMakeLists ? changeSetting : await vscode.window.showErrorMessage(
             localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
-            quickStart, changeSetting, ignoreCMakeListsMissing) : changeSetting;
-
-        if (showToast) {
-          telemetryProperties["missingCMakeListsUserAction"] = result || "dismissed";
-        }
+            quickStart, changeSetting, ignoreCMakeListsMissing);
 
         if (result === quickStart) {
           // Return here, since the updateFolderFullFeature set below (after the "switch")
           // will set unnecessarily a partial feature set view for this folder
           // if quickStart doesn't finish early enough.
           // quickStart will update correctly the full/partial view state at the end.
+          telemetryProperties["missingCMakeListsUserAction"] = quickStartTxt;
           telemetry.logEvent(telemetryEvent, telemetryProperties);
           return vscode.commands.executeCommand('cmake.quickStart');
         } else if (result === changeSetting) {
+          telemetryProperties["missingCMakeListsUserAction"] = changeSettingTxt;
+
           // Open the search file dialog from the path set by cmake.sourceDirectory or from the current workspace folder
           // if the setting is not defined.
           interface FileItem extends vscode.QuickPickItem {
@@ -527,8 +529,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
           });
 
-          if (!showToast) {
-            telemetryProperties["missingCMakeListsUserAction"] = selection ? "selected" : "dismissed";
+          if (showCMakeLists) {
+            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "dismissed" : (selection.label === browse) ? "browse" : "pick";
           }
 
           let selectedFile: string | undefined;
@@ -574,7 +576,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           // or to the CMakeLists.txt file, a successful configure or a configure failing with anything but CMakePreconditionProblems.MissingCMakeListsFile.
           // After that switch (back to a full activation), another occurrence of missing CMakeLists.txt
           // would trigger this popup again.
+          telemetryProperties["missingCMakeListsUserAction"] = ignoreCMakeListsMissingTxt;
           this.workspaceContext.state.ignoreCMakeListsMissing = true;
+        } else {
+          // "invalid" normally shouldn't happen since the popup can be closed by either dismissing it or clicking any of the three buttons.
+          telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "dismissed" : "invalid";
         }
       }
 

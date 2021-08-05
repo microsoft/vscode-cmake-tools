@@ -163,10 +163,10 @@ class ExtensionManager implements vscode.Disposable {
    * Second-phase async init
    */
   private async _init() {
-    const experimentationService: IExperimentationService | undefined = await telemetry.getExperimentationService();
-    if (experimentationService) {
-      this.showToast = experimentationService.getTreatmentVariableAsync<boolean>("vscode", "partialActivation_showToast");
-    }
+    const experimentationService: Promise<IExperimentationService | undefined> = telemetry.getExperimentationService();
+    experimentationService.then(expSrv => {
+      this.showCMakeLists = expSrv?.getTreatmentVariableAsync<boolean>("vscode", "partialActivation_showCMakeLists");
+    });
 
     this.updateTouchBarVisibility(this._workspaceConfig.touchbar);
     this._workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
@@ -193,9 +193,11 @@ class ExtensionManager implements vscode.Disposable {
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
     }
+
+    const isFullyActivated: boolean = await this.workspaceHasCMakeProject();
     const telemetryProperties: telemetry.Properties = {
       isMultiRoot: `${isMultiRoot}`,
-      isFullyActivated: `await ${this.workspaceHasCMakeProject()}`
+      isFullyActivated: `${isFullyActivated}`
     };
     if (isMultiRoot) {
       telemetryProperties['autoSelectActiveFolder'] = `${this._workspaceConfig.autoSelectActiveFolder}`;
@@ -229,9 +231,11 @@ class ExtensionManager implements vscode.Disposable {
     return inst;
   }
 
-  private showToast: Promise<boolean | undefined> | undefined;
-  public async expShowToast(): Promise<boolean | undefined> {
-    return this.showToast;
+  private showCMakeLists: Promise<boolean | undefined> | undefined;
+  public async expShowCMakeLists(): Promise<boolean | undefined> {
+    // This is the place to await for the experimentation service, when we need a value for showCMakeLists.
+    await telemetry.getExperimentationService();
+    return this.showCMakeLists;
   }
 
   /**
@@ -330,24 +334,6 @@ class ExtensionManager implements vscode.Disposable {
       // No CMakeTools. Probably no workspace open.
       return false;
     }
-
-    // // For a project that is not CMake based (no CMakeLists.txt is present under "cmake.sourceDirectory")
-    // // let's set the "unspecified" kit, so that the configure process (which is implemented relying on having
-    // // a non null kit) works without a major source code refactoring, up to the point where it will handle
-    // // the missingCMakeLists situation ("Create/Locate/Ignore" toast message versus "quickPick" from all the
-    // // CMakeLists.txt files available in the workspace).
-    // const isCMakeProject: boolean =  await this.folderIsCMakeProject(cmt);
-    // if (!isCMakeProject) {
-    //   if (cmt.useCMakePresets) {
-    //     cmt.setConfigurePreset(null);
-    //     //this.setConfigurePreset("Default");
-    //     // this.addConfigurePreset(cmt.folder);
-    //   } else {
-    //     this.setKitByName("__unspec__");
-    //   }
-
-    //   return true;
-    // }
 
     if (cmt.useCMakePresets) {
       if (cmt.configurePreset) {
@@ -1781,8 +1767,8 @@ export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
 // for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace
 // in a quickPick.)
-export async function expShowToast(): Promise<boolean | undefined> {
-  return _EXT_MANAGER?.expShowToast();
+export async function expShowCMakeLists(): Promise<boolean | undefined> {
+  return _EXT_MANAGER?.expShowCMakeLists();
 }
 
 // this method is called when your extension is deactivated.

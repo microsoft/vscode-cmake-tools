@@ -95,14 +95,16 @@ export async function deactivate(): Promise<void> {
 }
 
 export async function logEvent(eventName: string, properties?: Properties, measures?: Measures): Promise<void> {
-  try {
-    await initializationPromise;
-  } catch (e) {
-    // Continue even if we were not able to initialize the experimentation platform.
-  }
+  if (initializationPromise) {
+    try {
+      await initializationPromise;
+    } catch (e) {
+      // Continue even if we were not able to initialize the experimentation platform.
+    }
 
-  if (experimentationTelemetry) {
-    experimentationTelemetry.sendTelemetryEvent(eventName, properties, measures);
+    if (experimentationTelemetry) {
+      experimentationTelemetry.sendTelemetryEvent(eventName, properties, measures);
+    }
   }
 }
 
