@@ -65,7 +65,6 @@ suite('[Variable Substitution]', async () => {
     expect(typeof cacheEntry.value).to.eq('string', '[workspaceFolder] unexpected cache entry value type');
   }).timeout(100000);
 
-
   test('Check substitution for "workspaceHash"', async () => {
     // Set fake settings
     testEnv.config.updatePartial({configureSettings: {workspaceHash: '${workspaceHash}'}});

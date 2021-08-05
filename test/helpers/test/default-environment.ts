@@ -24,12 +24,10 @@ export class DefaultEnvironment {
       return Promise.resolve(undefined);
     };
     this.sandbox.stub(vscode.window, 'showErrorMessage').callsFake(fakeShowErrorMessage);
-    const fakeShowInformationMessage = <T>(_message: string, _options: vscode.MessageOptions, ..._items: T[]): Thenable<T | undefined> => {
-      return Promise.resolve(undefined);
-    };
+    const fakeShowInformationMessage = <T>(_message: string, _options: vscode.MessageOptions, ..._items: T[]): Thenable<T | undefined> => Promise.resolve(undefined);
     this.sandbox.stub(vscode.window, 'showInformationMessage').callsFake(fakeShowInformationMessage);
     if (process.env.CMAKE_EXECUTABLE) {
-      this.config.updatePartial( {cmakePath: process.env.CMAKE_EXECUTABLE});
+      this.config.updatePartial({cmakePath: process.env.CMAKE_EXECUTABLE});
     }
   }
 

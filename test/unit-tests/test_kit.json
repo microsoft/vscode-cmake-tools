@@ -30,11 +30,11 @@
     },
     {
         "name": "ToolchainKit 3",
-        "toolchainFile": "${workspaceFolder:test-project-without-cmakelists}/toolchain.cmake"
+        "toolchainFile": "test-project-without-cmakelists/toolchain.cmake"
     },
     {
       "name": "ToolchainKit 4",
-      "toolchainFile": "${workspaceFolder:test-project-without-cmakelists}/${env:CMAKE_TOOLS_TEST_SOME_ENV_VAR}/toolchain.cmake"
+      "toolchainFile": "test-project-without-cmakelists/${env:CMAKE_TOOLS_TEST_SOME_ENV_VAR}/toolchain.cmake"
     },
     {
         "name": "VSCode Kit 1",

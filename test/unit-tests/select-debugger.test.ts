@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
@@ -93,7 +94,7 @@ suite('Select debugger', async () => {
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
-    expect(Debugger.getDebugConfigurationFromCache(cache, target, 'linux')).to.be.rejectedWith(Error);
+    await expect(Debugger.getDebugConfigurationFromCache(cache, target, 'linux')).to.be.rejectedWith(Error);
   });
 
   test('Create debug config from cache - GCC 5 fallback test', async () => {

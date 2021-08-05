@@ -257,15 +257,49 @@ gulp.task('translations-generate', gulp.series(generatedSrcLocBundle, generatedA
 
 const allTypeScript = [
     'src/**/*.ts',
+    'test/**/*.ts',
     '!**/*.d.ts',
     '!**/typings**'
 ];
 
+// Prints file path and line number in the same line. Easier to ctrl + left click in VS Code.
+const lintReporter = results => {
+  const messages = [];
+  let errorCount = 0;
+  let warningCount = 0;
+  let fixableErrorCount = 0;
+  let fixableWarningCount = 0;
+
+  results.forEach(result => {
+    if (result.errorCount || result.warningCount) {
+        const filePath = result.filePath.replaceAll('\\', '/');
+        errorCount += result.errorCount;
+        warningCount += result.warningCount;
+        fixableErrorCount += result.fixableErrorCount;
+        fixableWarningCount += result.fixableWarningCount;
+
+        result.messages.forEach(message => {
+            messages.push(`[lint] ${filePath}:${message.line}:${message.column}: ${message.message} [${message.ruleId}]`);
+        });
+
+        messages.push('');
+    }
+  });
+
+  if (errorCount || warningCount) {
+    messages.push('\x1b[31m' + `  ${errorCount + warningCount} Problems (${errorCount} Errors, ${warningCount} Warnings)` + '\x1b[39m');
+    messages.push('\x1b[31m' + `  ${fixableErrorCount} Errors, ${fixableWarningCount} Warnings potentially fixable with \`--fix\` option.` + '\x1b[39m');
+    messages.push('', '');
+  }
+
+  return messages.join('\n');
+};
+
 gulp.task('lint', function () {
     // Un-comment these parts for applying auto-fix.
     return gulp.src(allTypeScript)
-        .pipe(eslint({ configFile: ".eslintrc.js" /*, fix: true*/ }))
-        .pipe(eslint.format())
+        .pipe(eslint({ configFile: ".eslintrc.js" /*, fix: true */}))
+        .pipe(eslint.format(lintReporter, process.stderr))
         //.pipe(gulp.dest(file => file.base))
         .pipe(eslint.failAfterError());
 });

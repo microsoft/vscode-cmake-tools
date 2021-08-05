@@ -51,6 +51,7 @@
 	"select.active.config.preset.placeholder": "{0} の構成の事前設定を選択してください",
 	"user.cancelled.config.preset.selection": "ユーザーが構成の事前設定の選択を取り消しました",
 	"user.selected.config.preset": "ユーザーが構成の事前設定 {0} を選択しました",
+	"preset.change.in.progress": "プリセットの変更は既に処理中です。",
 	"loading.config.preset": "構成の事前設定 {0} を読み込んでいます",
 	"reloading.build.test.preset": "ビルドとテストの事前設定を再度読み込んでいます",
 	"config.preset.required": "構成の事前設定を選択する必要があります。続行する方法を選択してください。",

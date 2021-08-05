@@ -28,8 +28,9 @@ export class StateManager {
   get ignoreCMakeListsMissing(): boolean {
     return this._get<boolean>('ignoreCMakeListsMissing') || false;
   }
-  set ignoreCMakeListsMissing(v: boolean) {
-    this._update('ignoreCMakeListsMissing', v);
+
+  async setIgnoreCMakeListsMissing(v: boolean) {
+    await this._update('ignoreCMakeListsMissing', v);
   }
 
   /**
@@ -39,7 +40,8 @@ export class StateManager {
     const preset = this._get<string>('configurePresetName');
     return preset || null;
   }
-  set configurePresetName(v: string|null) { this._update('configurePresetName', v); }
+
+  async setConfigurePresetName(v: string|null) { await this._update('configurePresetName', v); }
 
   /**
    * The name of the workspace-local active build preset
@@ -48,7 +50,8 @@ export class StateManager {
     const preset = this._get<string>('buildPresetName');
     return preset || null;
   }
-  set buildPresetName(v: string|null) { this._update('buildPresetName', v); }
+
+  async setBuildPresetName(v: string|null) { await this._update('buildPresetName', v); }
 
   /**
    * The name of the workspace-local active test preset
@@ -57,7 +60,8 @@ export class StateManager {
     const preset = this._get<string>('testPresetName');
     return preset || null;
   }
-  set testPresetName(v: string|null) { this._update('testPresetName', v); }
+
+  async setTestPresetName(v: string|null) { await this._update('testPresetName', v); }
 
   /**
    * The name of the workspace-local active kit.
@@ -66,7 +70,8 @@ export class StateManager {
     const kit = this._get<string>('activeKitName');
     return kit || null;
   }
-  set activeKitName(v: string|null) { this._update('activeKitName', v); }
+
+  async setActiveKitName(v: string|null) { await this._update('activeKitName', v); }
 
   /**
    * The currently select build target
@@ -75,13 +80,15 @@ export class StateManager {
     const target = this._get<string>('activeBuildTarget');
     return target || null;
   }
-  set defaultBuildTarget(s: string|null) { this._update('activeBuildTarget', s); }
+
+  async setDefaultBuildTarget(s: string|null) { await this._update('activeBuildTarget', s); }
 
   get launchTargetName(): string|null {
     const name = this._get<string>('launchTargetName');
     return name || null;
   }
-  set launchTargetName(t: string|null) { this._update('launchTargetName', t); }
+
+  async setLaunchTargetName(t: string|null) { await this._update('launchTargetName', t); }
 
   /**
    * The keyword settings for the build variant
@@ -94,26 +101,27 @@ export class StateManager {
       return null;
     }
   }
-  set activeVariantSettings(settings: Map<string, string>|null) {
+
+  async setActiveVariantSettings(settings: Map<string, string>|null) {
     if (settings) {
       const pairs: [string, string][] = Array.from(settings.entries());
-      this._update('activeVariantSettings', pairs);
+      await this._update('activeVariantSettings', pairs);
     } else {
-      this._update('activeVariantSettings', null);
+      await this._update('activeVariantSettings', null);
     }
   }
 
   /**
    * Rest all current workspace state. Mostly for troubleshooting
    */
-  reset() {
-    this.configurePresetName = null;
-    this.buildPresetName = null;
-    this.testPresetName = null;
-    this.activeVariantSettings = null;
-    this.launchTargetName = null;
-    this.defaultBuildTarget = null;
-    this.activeKitName = null;
-    this.ignoreCMakeListsMissing = false;
+  async reset() {
+    await this.setConfigurePresetName(null);
+    await this.setBuildPresetName(null);
+    await this.setTestPresetName(null);
+    await this.setActiveVariantSettings(null);
+    await this.setLaunchTargetName(null);
+    await this.setDefaultBuildTarget(null);
+    await this.setActiveKitName(null);
+    await this.setIgnoreCMakeListsMissing(false);
   }
 }
