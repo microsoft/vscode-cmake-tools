@@ -180,7 +180,7 @@ export class ConfigurationReader implements vscode.Disposable {
             isSet: updatedKeys.join(";")
           };
 
-          telemetry.logEvent("settings", telemetryProperties);
+          void telemetry.logEvent("settings", telemetryProperties);
         }
       }
     });
