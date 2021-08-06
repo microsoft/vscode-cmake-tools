@@ -597,13 +597,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       break;
     }
 
-    // This CMT folder can go through various changes while executing this function
-    // that could be relevant to the partial/full feature set view.
-    // This is a good place for an update.
     if (telemetryEvent) {
       telemetry.logEvent(telemetryEvent, telemetryProperties);
     }
 
+    // This CMT folder can go through various changes while executing this function
+    // that could be relevant to the partial/full feature set view.
+    // This is a good place for an update.
     return updateFullFeatureSetForFolder(this.folder);
   }
 

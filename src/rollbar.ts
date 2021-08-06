@@ -68,7 +68,7 @@ class RollbarController {
     log.fatal(localize('unhandled.exception', 'Unhandled exception: {0}', what), exception, JSON.stringify(additional));
     const callstack = cleanStack(exception.stack);
     const message = cleanString(exception.message);
-    void logEvent('exception2', {message, callstack});
+    logEvent('exception2', {message, callstack});
     console.error(exception);
     debugger;
   }

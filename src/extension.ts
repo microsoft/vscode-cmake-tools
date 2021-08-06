@@ -86,6 +86,8 @@ class ExtensionManager implements vscode.Disposable {
                   resolve(false);
                 }
               });
+      } else {
+        resolve(false);
       }
     });
 
