@@ -103,11 +103,12 @@ export function logEvent(eventName: string, properties?: Properties, measures?: 
   if (initializationPromise) {
     try {
       void initializationPromise.then(sendTelemetry);
+      return;
     } catch (e) {
       // Send telemetry even if we were not able to initialize the experimentation platform.
-      sendTelemetry();
     }
   }
+  sendTelemetry();
 }
 
 const appInsightsKey: string = "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217";
