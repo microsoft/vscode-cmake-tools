@@ -1281,7 +1281,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
       }
 
-      await telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
+      telemetry.logEvent('configure', telemetryProperties, telemetryMeasures);
 
       return retc;
     } catch {
@@ -1422,11 +1422,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
           telemetryMeasures['ErrorCount'] = (await child.result).retc ? 1 : 0;
         }
       }
-      await telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
     } else {
       // Not sure what happened but there's an error...
       telemetryMeasures['ErrorCount'] = 1;
-      await telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
+      telemetry.logEvent('build', telemetryProperties, telemetryMeasures);
       this.buildRunning = false;
       return -1;
     }

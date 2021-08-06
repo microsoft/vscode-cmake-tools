@@ -392,7 +392,7 @@ export class VariantManager implements vscode.Disposable {
                         cfg?.workspaceFolderValue !== undefined).toString()
       };
 
-      await telemetry.logEvent('variantSelection', telemetryProperties);
+      telemetry.logEvent('variantSelection', telemetryProperties);
 
       await this.publishActiveKeywordSettings(chosen.keywordSettings);
       return true;

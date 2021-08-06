@@ -504,7 +504,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         const quickStart = localize('quickstart.cmake.project', "Create");
         const changeSourceDirectory = localize('edit.setting', "Locate");
         const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
-        const showCMakeLists: boolean | undefined = await expShowCMakeLists();
+        const showCMakeLists: boolean = await expShowCMakeLists();
 
         telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
 
@@ -518,11 +518,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           // if quickStart doesn't finish early enough.
           // quickStart will update correctly the full/partial view state at the end.
           telemetryProperties["missingCMakeListsUserAction"] = "quickStart";
-          await telemetry.logEvent(telemetryEvent, telemetryProperties);
+          telemetry.logEvent(telemetryEvent, telemetryProperties);
           return vscode.commands.executeCommand('cmake.quickStart');
         } else if (result === changeSourceDirectory) {
-          telemetryProperties["missingCMakeListsUserAction"] = "changeSourceDirectory";
-
           // Open the search file dialog from the path set by cmake.sourceDirectory or from the current workspace folder
           // if the setting is not defined.
           interface FileItem extends vscode.QuickPickItem {
@@ -541,6 +539,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
           if (showCMakeLists) {
             telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "dismissed" : (selection.label === browse) ? "browse" : "pick";
+          } else {
+            telemetryProperties["missingCMakeListsUserAction"] = "changeSourceDirectory";
           }
 
           let selectedFile: string | undefined;
@@ -569,7 +569,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               // another immediate configure, which will be blocked anyway).
               config.updatePartial({ sourceDirectory: relPath }, false);
               if (!isConfiguring) {
-                await telemetry.logEvent(telemetryEvent, telemetryProperties);
+                telemetry.logEvent(telemetryEvent, telemetryProperties);
                 return vscode.commands.executeCommand('cmake.configure');
               }
 
@@ -601,7 +601,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // that could be relevant to the partial/full feature set view.
     // This is a good place for an update.
     if (telemetryEvent) {
-      await telemetry.logEvent(telemetryEvent, telemetryProperties);
+      telemetry.logEvent(telemetryEvent, telemetryProperties);
     }
 
     return updateFullFeatureSetForFolder(this.folder);
@@ -779,7 +779,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     this.extensionContext.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async td => {
       const str = td.uri.fsPath.toLowerCase();
       if (str.endsWith("cmakelists.txt") || str.endsWith(".cmake")) {
-        await telemetry.logEvent("cmakeFileOpen");
+        telemetry.logEvent("cmakeFileOpen");
       }
     }));
 
@@ -848,7 +848,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
 
         if (fileType) {
-          await telemetry.logEvent("cmakeFileWrite", { filetype: fileType, outsideActiveFolder: outside.toString() });
+          telemetry.logEvent("cmakeFileWrite", { filetype: fileType, outsideActiveFolder: outside.toString() });
         }
       }
     }));
@@ -922,7 +922,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const cmake = await this.getCMakeExecutable();
       if (!cmake.isPresent) {
         void vscode.window.showErrorMessage(localize('bad.executable', 'Bad CMake executable "{0}". Is it installed or settings contain the correct path (cmake.cmakePath)?', cmake.path));
-        await telemetry.logEvent('CMakeExecutableNotFound');
+        telemetry.logEvent('CMakeExecutableNotFound');
         return null;
       }
 
@@ -1872,7 +1872,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       debugger: dbg
     };
 
-    await telemetry.logEvent('debug', telemetryProperties);
+    telemetry.logEvent('debug', telemetryProperties);
 
     await vscode.debug.startDebugging(this.folder, debug_config);
     return vscode.debug.activeDebugSession!;

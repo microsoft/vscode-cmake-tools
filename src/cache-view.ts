@@ -69,7 +69,7 @@ export class ConfigurationWebview {
   // Save from the UI table into the CMake cache file if there are any unsaved edits.
   async persistCacheEntries() {
     if (this.dirty) {
-      await telemetry.logEvent("editCMakeCache", {command: "saveCMakeCacheUI"});
+      telemetry.logEvent("editCMakeCache", {command: "saveCMakeCacheUI"});
       await this.saveCmakeCache(this._options);
       void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
       // start configure
