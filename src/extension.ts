@@ -163,10 +163,12 @@ class ExtensionManager implements vscode.Disposable {
    * Second-phase async init
    */
   private async _init() {
-    const experimentationService: Promise<IExperimentationService | undefined> = telemetry.getExperimentationService();
-    void experimentationService.then(expSrv => {
-      this.showCMakeLists = expSrv?.getTreatmentVariableAsync<boolean>("vscode", "partialActivation_showCMakeLists");
-    });
+    const experimentationService: Promise<IExperimentationService | undefined> | undefined = telemetry.getExperimentationService();
+    if (experimentationService) {
+      void experimentationService.then(expSrv => {
+        this.showCMakeLists = expSrv?.getTreatmentVariableAsync<boolean>("vscode", "partialActivation_showCMakeLists");
+      });
+    }
 
     this.updateTouchBarVisibility(this._workspaceConfig.touchbar);
     this._workspaceConfig.onChange('touchbar', config => this.updateTouchBarVisibility(config));
@@ -234,7 +236,11 @@ class ExtensionManager implements vscode.Disposable {
   private showCMakeLists: Promise<boolean | undefined> | undefined;
   public async expShowCMakeLists(): Promise<boolean | undefined> {
     // This is the place to await for the experimentation service, when we need a value for showCMakeLists.
-    await telemetry.getExperimentationService();
+    const experimentationService = telemetry.getExperimentationService();
+    if (experimentationService) {
+      await experimentationService;
+    }
+
     return this.showCMakeLists;
   }
 

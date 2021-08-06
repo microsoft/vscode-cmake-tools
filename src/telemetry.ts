@@ -76,7 +76,7 @@ export function activate(extensionContext: vscode.ExtensionContext): void {
   }
 }
 
-export async function getExperimentationService(): Promise<IExperimentationService | undefined> {
+export function getExperimentationService(): Promise<IExperimentationService | undefined> | undefined {
   return initializationPromise;
 }
 
