@@ -13,9 +13,9 @@ export type Properties = { [key: string]: string };
 export type Measures = { [key: string]: number };
 
 interface IPackageInfo {
-    name: string;
-    version: string;
-    aiKey: string;
+  name: string;
+  version: string;
+  aiKey: string;
 }
 
 export class ExperimentationTelemetry implements IExperimentationTelemetry {
@@ -24,37 +24,37 @@ export class ExperimentationTelemetry implements IExperimentationTelemetry {
   constructor(private baseReporter: TelemetryReporter) { }
 
   sendTelemetryEvent(eventName: string, properties?: Record<string, string>, measurements?: Record<string, number>): void {
-      this.baseReporter.sendTelemetryEvent(
-          eventName,
-          {
-              ...this.sharedProperties,
-              ...properties
-          },
-          measurements
-      );
+    this.baseReporter.sendTelemetryEvent(
+      eventName,
+      {
+        ...this.sharedProperties,
+        ...properties
+      },
+      measurements
+    );
   }
 
   sendTelemetryErrorEvent(eventName: string, properties?: Record<string, string>, _measurements?: Record<string, number>): void {
-      this.baseReporter.sendTelemetryErrorEvent(eventName, {
-          ...this.sharedProperties,
-          ...properties
-      });
+    this.baseReporter.sendTelemetryErrorEvent(eventName, {
+      ...this.sharedProperties,
+      ...properties
+    });
   }
 
   setSharedProperty(name: string, value: string): void {
-      this.sharedProperties[name] = value;
+    this.sharedProperties[name] = value;
   }
 
   postEvent(eventName: string, props: Map<string, string>): void {
-      const event: Record<string, string> = {};
-      for (const [key, value] of props) {
-          event[key] = value;
-      }
-      this.sendTelemetryEvent(eventName, event);
+    const event: Record<string, string> = {};
+    for (const [key, value] of props) {
+      event[key] = value;
+    }
+    this.sendTelemetryEvent(eventName, event);
   }
 
   dispose(): Promise<any> {
-      return this.baseReporter.dispose();
+    return this.baseReporter.dispose();
   }
 }
 
@@ -82,36 +82,40 @@ export function getExperimentationService(): Promise<IExperimentationService | u
 
 export async function deactivate(): Promise<void> {
   if (initializationPromise) {
-      try {
-          await initializationPromise;
-      } catch (e) {
-          // Continue even if we were not able to initialize the experimentation platform.
-      }
-
-      if (experimentationTelemetry) {
-          await experimentationTelemetry.dispose();
-      }
+    try {
+      await initializationPromise;
+    } catch (e) {
+      // Continue even if we were not able to initialize the experimentation platform.
+    }
+  }
+  if (experimentationTelemetry) {
+    await experimentationTelemetry.dispose();
   }
 }
 
-export async function logEvent(eventName: string, properties?: Properties, measures?: Measures): Promise<void> {
-  try {
-    await initializationPromise;
-  } catch (e) {
-    // Continue even if we were not able to initialize the experimentation platform.
-  }
+export function logEvent(eventName: string, properties?: Properties, measures?: Measures): void {
+  const sendTelemetry = () => {
+    if (experimentationTelemetry) {
+      experimentationTelemetry.sendTelemetryEvent(eventName, properties, measures);
+    }
+  };
 
-  if (experimentationTelemetry) {
-    experimentationTelemetry.sendTelemetryEvent(eventName, properties, measures);
+  if (initializationPromise) {
+    try {
+      void initializationPromise.then(sendTelemetry);
+    } catch (e) {
+      // Send telemetry even if we were not able to initialize the experimentation platform.
+      sendTelemetry();
+    }
   }
 }
 
 const appInsightsKey: string = "AIF-d9b70cd4-b9f9-4d70-929b-a071c400b217";
 function getPackageInfo(): IPackageInfo {
-    const packageJSON: util.PackageJSON = util.thisExtensionPackage();
-    return {
-        name: `${packageJSON.publisher}.${packageJSON.name}`,
-        version: packageJSON.version,
-        aiKey: appInsightsKey
-    };
+  const packageJSON: util.PackageJSON = util.thisExtensionPackage();
+  return {
+    name: `${packageJSON.publisher}.${packageJSON.name}`,
+    version: packageJSON.version,
+    aiKey: appInsightsKey
+  };
 }
