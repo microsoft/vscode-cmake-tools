@@ -40,24 +40,20 @@ export class CMakeToolsFolder {
         await CMakeToolsFolder.initializeKitOrPresetsInCmt(cmtFolder);
 
         if (usingCMakePresets) {
-          const presetsFileHasWrongLanguageId = (document: vscode.TextDocument) => {
+          const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
             const fileName = path.basename(document.uri.fsPath);
-            return (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') &&
-                document.languageId !== 'json';
-          };
-
-          cmtFolder._onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document => {
-            if (presetsFileHasWrongLanguageId(document)) {
+            if ((fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') &&
+                document.languageId !== 'json') {
               // setTextDocumentLanguage will trigger onDidOpenTextDocument
               void vscode.languages.setTextDocumentLanguage(document, 'json');
             }
-          });
+          };
 
-          vscode.workspace.textDocuments.forEach(document => {
-            if (presetsFileHasWrongLanguageId(document)) {
-              void vscode.languages.setTextDocumentLanguage(document, 'json');
-            }
-          });
+          cmtFolder._onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
+            setPresetsFileLanguageMode(document)
+          );
+
+          vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
         } else {
           if (cmtFolder._onDidOpenTextDocumentListener) {
             cmtFolder._onDidOpenTextDocumentListener.dispose();
