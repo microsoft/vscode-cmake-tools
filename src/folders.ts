@@ -59,8 +59,10 @@ export class CMakeToolsFolder {
             }
           });
         } else {
-          cmtFolder._onDidOpenTextDocumentListener?.dispose();
-          cmtFolder._onDidOpenTextDocumentListener = undefined;
+          if (cmtFolder._onDidOpenTextDocumentListener) {
+            cmtFolder._onDidOpenTextDocumentListener.dispose();
+            cmtFolder._onDidOpenTextDocumentListener = undefined;
+          }
         }
 
         cmtFolder._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
@@ -94,7 +96,9 @@ export class CMakeToolsFolder {
   get onUseCMakePresetsChanged() { return this._onUseCMakePresetsChangedEmitter.event; }
 
   dispose() {
-    this._onDidOpenTextDocumentListener?.dispose();
+    if (this._onDidOpenTextDocumentListener) {
+      this._onDidOpenTextDocumentListener.dispose();
+    }
     this.cmakeTools.dispose();
     this.kitsController.dispose();
   }
