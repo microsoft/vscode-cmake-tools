@@ -29,6 +29,8 @@ Bug fixes:
 - Fix msvc2015 detection when only vs2019 is installed. [#1905](https://github.com/microsoft/vscode-cmake-tools/issues/1905) [@lygstate](https://github.com/lygstate)
 - Prevent file index overwritting in multi-config generators. [#1800](https://github.com/microsoft/vscode-cmake-tools/issues/1800) [@andredsm](https://github.com/andredsm)
 - Various cache variables edit/save fixes. [PR #1826](https://github.com/microsoft/vscode-cmake-tools/pull/1826) [@aemseemann](https://github.com/aemseemann)
+- Use JSON as the language mode of preset files. [#2035](https://github.com/microsoft/vscode-cmake-tools/issues/2035)
+- Fix broken links to contributing file. [PR #2016](https://github.com/microsoft/vscode-cmake-tools/pull/2016) [@andredsm](https://github.com/andredsm)
 
 
 ## 1.7.3
