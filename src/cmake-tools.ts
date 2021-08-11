@@ -41,7 +41,7 @@ import * as nls from 'vscode-nls';
 import paths from './paths';
 import {CMakeToolsFolder} from './folders';
 import {ConfigurationWebview} from './cache-view';
-import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetInTaskProvider } from './extension';
+import { updateFullFeatureSetForFolder, updateCMakeDriverInTaskProvider, enableFullFeatureSet, isActiveFolder, updateDefaultTargetInTaskProvider, expShowCMakeLists } from './extension';
 import { ConfigurationReader } from './config';
 import * as preset from '@cmt/preset';
 import * as util from '@cmt/util';
@@ -482,7 +482,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, config?: ConfigurationReader): Promise<void> {
+  public async cmakePreConditionProblemHandler(e: CMakePreconditionProblems, isConfiguring: boolean, config?: ConfigurationReader): Promise<void> {
+    let telemetryEvent: string | undefined;
+    const telemetryProperties: telemetry.Properties = {};
+
     switch (e) {
     case CMakePreconditionProblems.ConfigureIsAlreadyRunning:
       void vscode.window.showErrorMessage(localize('configuration.already.in.progress', 'Configuration is already in progress.'));
@@ -494,26 +497,41 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       void vscode.window.showErrorMessage(localize('no.source.directory.found', 'You do not have a source directory open'));
       break;
     case CMakePreconditionProblems.MissingCMakeListsFile:
+      telemetryEvent = "partialActivation";
+      telemetryProperties["ignoreCMakeListsMissing"] = this.workspaceContext.state.ignoreCMakeListsMissing.toString();
+
       if (!this.workspaceContext.state.ignoreCMakeListsMissing) {
-        const quickStart = localize('quickstart.cmake.project', 'Create');
-        const changeSetting = localize('edit.setting', 'Locate');
+        const quickStart = localize('quickstart.cmake.project', "Create");
+        const changeSourceDirectory = localize('edit.setting', "Locate");
         const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
-        const result = await vscode.window.showErrorMessage(
+
+        let showCMakeLists: boolean = await expShowCMakeLists();
+        const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+        if (showCMakeLists) {
+          showCMakeLists = existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0;
+          telemetryProperties["ignoreExperiment"] = (!showCMakeLists).toString();
+        }
+
+        telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
+
+        const result = showCMakeLists ? changeSourceDirectory : await vscode.window.showErrorMessage(
             localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
-            quickStart, changeSetting, ignoreCMakeListsMissing);
+            quickStart, changeSourceDirectory, ignoreCMakeListsMissing);
+
         if (result === quickStart) {
           // Return here, since the updateFolderFullFeature set below (after the "switch")
           // will set unnecessarily a partial feature set view for this folder
           // if quickStart doesn't finish early enough.
           // quickStart will update correctly the full/partial view state at the end.
+          telemetryProperties["missingCMakeListsUserAction"] = "quickStart";
+          telemetry.logEvent(telemetryEvent, telemetryProperties);
           return vscode.commands.executeCommand('cmake.quickStart');
-        } else if (result === changeSetting) {
+        } else if (result === changeSourceDirectory) {
           // Open the search file dialog from the path set by cmake.sourceDirectory or from the current workspace folder
           // if the setting is not defined.
           interface FileItem extends vscode.QuickPickItem {
             fullPath: string;
           }
-          const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
           const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
             label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
             fullPath: file
@@ -523,6 +541,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           const selection: FileItem | undefined = await vscode.window.showQuickPick(items, {
             placeHolder: (items.length === 1 ? localize("cmakelists.not.found", "No CMakeLists.txt was found.") : localize("select.cmakelists", "Select CMakeLists.txt"))
           });
+
+          if (showCMakeLists) {
+            telemetryProperties["missingCMakeListsUserAction"] = (selection === undefined) ? "dismissed" : (selection.label === browse) ? "browse" : "pick";
+          } else {
+            telemetryProperties["missingCMakeListsUserAction"] = "changeSourceDirectory";
+          }
+
           let selectedFile: string | undefined;
           if (!selection) {
             break; // User canceled it.
@@ -548,6 +573,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               // doesn't need to fire the settings change event (which would trigger unnecessarily
               // another immediate configure, which will be blocked anyway).
               config.updatePartial({ sourceDirectory: relPath }, false);
+              if (!isConfiguring) {
+                telemetry.logEvent(telemetryEvent, telemetryProperties);
+                return vscode.commands.executeCommand('cmake.configure');
+              }
 
               // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
               // we know that it exists and we don't need any other additional checks on its value,
@@ -562,11 +591,19 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           // or to the CMakeLists.txt file, a successful configure or a configure failing with anything but CMakePreconditionProblems.MissingCMakeListsFile.
           // After that switch (back to a full activation), another occurrence of missing CMakeLists.txt
           // would trigger this popup again.
+          telemetryProperties["missingCMakeListsUserAction"] = "ignore";
           await this.workspaceContext.state.setIgnoreCMakeListsMissing(true);
+        } else {
+          // "invalid" normally shouldn't happen since the popup can be closed by either dismissing it or clicking any of the three buttons.
+          telemetryProperties["missingCMakeListsUserAction"] = (result === undefined) ? "dismissed" : "invalid";
         }
       }
 
       break;
+    }
+
+    if (telemetryEvent) {
+      telemetry.logEvent(telemetryEvent, telemetryProperties);
     }
 
     // This CMT folder can go through various changes while executing this function
@@ -588,7 +625,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const workspace = this.folder.uri.fsPath;
     let drv: CMakeDriver;
     const preferredGenerators = this.getPreferredGenerators();
-    const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, config);
+    const preConditionHandler = async (e: CMakePreconditionProblems, config?: ConfigurationReader) => this.cmakePreConditionProblemHandler(e, true, config);
     let communicationMode = this.workspaceContext.config.cmakeCommunicationMode.toLowerCase();
     const fileApi = 'fileapi';
     const serverApi = 'serverapi';
