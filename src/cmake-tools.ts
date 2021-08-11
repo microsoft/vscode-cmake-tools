@@ -504,9 +504,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         const quickStart = localize('quickstart.cmake.project', "Create");
         const changeSourceDirectory = localize('edit.setting', "Locate");
         const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
-        const showCMakeLists: boolean = await expShowCMakeLists();
 
-        telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
+        const showCMakeLists: boolean = await expShowCMakeLists();
+        const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+        telemetryProperties["missingCMakeListsPopupType"] = (showCMakeLists && existingCmakeListsFiles && existingCmakeListsFiles.length > 0) ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
+        if (showCMakeLists) {
+          telemetryProperties["ignoreExperiment"] = (!existingCmakeListsFiles || existingCmakeListsFiles.length === 0).toString();
+        }
 
         const result = showCMakeLists ? changeSourceDirectory : await vscode.window.showErrorMessage(
             localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
@@ -526,7 +530,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           interface FileItem extends vscode.QuickPickItem {
             fullPath: string;
           }
-          const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
           const items: FileItem[] = existingCmakeListsFiles ? existingCmakeListsFiles.map<FileItem>(file => ({
             label: util.getRelativePath(file, this.folder.uri.fsPath) + "/CMakeLists.txt",
             fullPath: file
