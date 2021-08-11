@@ -1014,13 +1014,13 @@
           "type": "string",
           "default": "cmake",
           "description": "%cmake-tools.configuration.cmake.cmakePath.description%",
-          "scope": "resource"
+          "scope": "machine-overridable"
         },
         "cmake.buildDirectory": {
           "type": "string",
           "default": "${workspaceFolder}/build",
           "description": "%cmake-tools.configuration.cmake.buildDirectory.description%",
-          "scope": "resource"
+          "scope": "machine-overridable"
         },
         "cmake.installPrefix": {
           "type": "string",
@@ -1032,7 +1032,7 @@
           "type": "string",
           "default": "${workspaceFolder}",
           "description": "%cmake-tools.configuration.cmake.sourceDirectory.description%",
-          "scope": "resource"
+          "scope": "machine-overridable"
         },
         "cmake.saveBeforeBuild": {
           "type": "boolean",
@@ -1137,7 +1137,7 @@
           "type": "string",
           "default": null,
           "description": "%cmake-tools.configuration.cmake.ctestPath.description%",
-          "scope": "resource"
+          "scope": "machine-overridable"
         },
         "cmake.ctest.parallelJobs": {
           "type": "number",
