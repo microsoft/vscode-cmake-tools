@@ -1,23 +1,4 @@
-import {CMakeDriver} from '@cmt/drivers/driver';
-import * as vscode from 'vscode';
-
-/**
- * This file contains the API description between IDE parts and the CMake model driver.
- * This API CodeModel contains only the current required CMake code model parts.
- * There is more information provided by CMake than is mapped.
- */
-
-/**
- * Describes all required methods for access to the build code model of the driver
- */
-export abstract class CodeModelDriver extends CMakeDriver {
-  /**
-   * Event registration for code model updates
-   *
-   * This event is fired after update of the code model, like after cmake configuration.
-   */
-  abstract onCodeModelChanged: vscode.Event<CodeModelContent|null>;
-}
+import { CMakeCache } from "@cmt/cache";
 
 export type TargetTypeString
     = ('STATIC_LIBRARY'|'MODULE_LIBRARY'|'SHARED_LIBRARY'|'OBJECT_LIBRARY'|'EXECUTABLE'|'UTILITY'|'INTERFACE_LIBRARY');
@@ -109,10 +90,14 @@ export interface CodeModelProject {
 export interface CodeModelConfiguration {
   /** List of project() from CMakeLists.txt */
   projects: CodeModelProject[];
+
+  /** Name of the active configuration in a multi-configuration generator.*/
+  name: string;
 }
 
 export interface CodeModelToolchain {
   path: string;
+  target?: string;
 }
 
 /** Describes the cmake model */
@@ -121,4 +106,37 @@ export interface CodeModelContent {
   configurations: CodeModelConfiguration[];
 
   toolchains: Map<string, CodeModelToolchain>;
+}
+
+/**
+ * Type given when updating the configuration data stored in the file index.
+ */
+ export interface CodeModelParams {
+  /**
+   * The CMake codemodel content. This is the important one.
+   */
+  codeModelContent: CodeModelContent;
+  /**
+   * The contents of the CMakeCache.txt, which also provides supplementary
+   * configuration information.
+   */
+  cache: CMakeCache;
+  /**
+   * The path to `cl.exe`, if necessary. VS generators will need this property
+   * because the compiler path is not available via the `kit` nor `cache`
+   * property.
+   */
+  clCompilerPath?: string|null;
+  /**
+   * The active target
+   */
+  activeTarget: string|null;
+  /**
+   * The active build_type variant
+   */
+  activeBuildTypeVariant: string|null;
+  /**
+   * Workspace folder full path.
+   */
+  folder: string;
 }

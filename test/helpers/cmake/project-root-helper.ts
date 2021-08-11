@@ -1,7 +1,6 @@
 import * as path from 'path';
 import {BuildDirectoryHelper} from './build-directory-helper';
 
-
 export class ProjectRootHelper {
   private readonly _locationOfThisClassFile: string = __dirname;
   private readonly _buildFolder: BuildDirectoryHelper;

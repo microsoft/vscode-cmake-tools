@@ -4,6 +4,7 @@ dist/
 node_modules/
 out/
 test/fakebin/
+test/unit-tests/driver/workspace/test_project/bin/
 vscode-extensions-localization-export/
 vscode-translations-import/
 jobs/loc/LCL
@@ -13,6 +14,7 @@ debug.log
 npm-debug.log
 package-lock.json
 test.txt
+*.backup
 *.db*
 *.vsix
 **/nls.*.json

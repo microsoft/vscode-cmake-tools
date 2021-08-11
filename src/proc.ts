@@ -1,6 +1,8 @@
+/* eslint-disable no-unused-expressions */
+
 /**
  * Wrappers and utilities around the NodeJS `child_process` module.
- */ /** */
+ */
 
 import * as proc from 'child_process';
 import * as iconv from 'iconv-lite';
@@ -72,7 +74,7 @@ export interface BuildCommand {
   build_env?: {[key: string]: string};
 }
 
-export interface EnvironmentVariables { [key: string]: string; }
+export interface EnvironmentVariables { [key: string]: string }
 
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
@@ -87,7 +89,9 @@ export interface ExecutionOptions {
 
 export function buildCmdStr(command: string, args?: string[]): string {
   let cmdarr = [command];
-  if (args) cmdarr = cmdarr.concat(args);
+  if (args) {
+    cmdarr = cmdarr.concat(args);
+  }
   return cmdarr.map(a => /[ \n\r\f;\t]/.test(a) ? `"${a}"` : a).join(' ');
 }
 
@@ -126,7 +130,7 @@ export function execute(command: string,
 
   const spawn_opts: proc.SpawnOptions = {
     env: final_env,
-    shell: !!options.shell,
+    shell: !!options.shell
   };
   if (options && options.cwd) {
     spawn_opts.cwd = options.cwd;
@@ -134,29 +138,24 @@ export function execute(command: string,
   let child: proc.ChildProcess|undefined;
   let result: Promise<ExecutionResult>;
   const useTask = (options && options.useTask) ? options.useTask : false;
-  if (useTask)
-  {
+  if (useTask) {
     // child = undefined;
     // const term = vscode.window.createTerminal("Cmake Build");
     // term.show(true);
     // term.sendText(cmdstr);
 
-    vscode.commands.executeCommand("workbench.action.tasks.build");
+    void vscode.commands.executeCommand("workbench.action.tasks.build");
 
-    result = new Promise<ExecutionResult>((resolve, reject) => {
+    result = new Promise<ExecutionResult>((resolve) => {
       resolve({retc: 0, stdout: '', stderr: ''});
-      if (false) reject();
     });
-  }
-  else
-  {
+  } else {
     try {
       child = proc.spawn(command, args ?? [], spawn_opts);
     } catch {
       child = undefined;
     }
-    if (child === undefined)
-    {
+    if (child === undefined) {
       return {
         child: undefined,
         result: Promise.resolve({
@@ -166,8 +165,9 @@ export function execute(command: string,
         })
       };
     }
-    if (options.encoding)
+    if (options.encoding) {
       child.stdout?.setEncoding(options.encoding);
+    }
 
     const encoding = options.outputEncoding && iconv.encodingExists(options.outputEncoding) ? options.outputEncoding : 'utf8';
 
@@ -198,7 +198,7 @@ export function execute(command: string,
         });
         child.stderr?.on('data', (data: Uint8Array) => {
           rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), {data, command, args}, () => {
-            const str = data.toString();
+            const str = iconv.decode(Buffer.from(data), encoding);
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
             while (lines.length > 1) {
               stderr_line_acc += lines[0];

@@ -16,8 +16,8 @@ export class Strand {
 
   private _enqueue(fn: () => Promise<void>) {
     this._tailPromise = this._tailPromise.then(
-        () => fn(),
-        () => fn(),
+        fn,
+        fn
     );
   }
 

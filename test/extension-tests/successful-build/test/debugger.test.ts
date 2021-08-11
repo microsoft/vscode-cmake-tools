@@ -1,10 +1,9 @@
+/* eslint-disable no-unused-expressions */
 import {CMakeTools} from '@cmt/cmake-tools';
 import {DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 //import sinon = require('sinon');
 import * as fs from 'fs';
 import * as path from 'path';
-
-// tslint:disable:no-unused-expression
 
 suite('[Debug/Launch interface]', async () => {
   let cmt: CMakeTools;

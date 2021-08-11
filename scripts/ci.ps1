@@ -37,23 +37,6 @@ Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
 
 $DOC_BUILD_DIR = Join-Path $REPO_DIR "build/docs"
 
-if ($Test) {
-    foreach ($testname in $Test) {
-        Invoke-SmokeTest $testname
-    }
-    return
-}
-
-if ($OnlySmoke) {
-    return Invoke-SmokeTests
-}
-
-if ($OnlyUnit) {
-    return Invoke-VSCodeTest "CMake Tools: Unit tests" `
-        -TestsPath "$REPO_DIR/out/test/unit-tests" `
-        -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
-}
-
 # Sanity check for yarn
 $yarn = Find-Program yarn
 if (! $yarn) {
@@ -72,26 +55,6 @@ if (! $yarn) {
     }
 }
 
-function Invoke-DocsBuild {
-    Build-DevDocs
-    Build-UserDocs `
-        -RepoDir $REPO_DIR `
-        -Version $CMakeToolsVersion`
-        -Out $DOC_BUILD_DIR
-
-    if ($DocDestination) {
-        Write-Host "Copying documentation tree to $DocDestination"
-        if (Test-Path $DocDestination) {
-            Remove-Item $DocDestination -Recurse -Force
-        }
-        Copy-Item $DOC_BUILD_DIR -Destination $DocDestination -Recurse
-    }
-}
-
-if ($Docs) {
-    return Invoke-DocsBuild
-}
-
 $out_dir = Join-Path $REPO_DIR out
 if (Test-Path $out_dir) {
     Write-Verbose "Removing out/ directory: $out_dir"
@@ -104,14 +67,10 @@ Invoke-ChronicCommand "yarn install" $yarn install
 # Now do the real compile
 Invoke-ChronicCommand "Compiling TypeScript" $yarn run compile-production
 
-# Now compile test code
-Invoke-ChronicCommand "Compiling Tests" $yarn run pretest
-
-# Run TSLint to check for silly mistakes
-Invoke-ChronicCommand "Running TSLint" $yarn run lint:nofix
 
 # Get the CMake binary that we will use to run our tests
-$cmake_binary = Install-TestCMake -Version "3.16.2"
+# The cmake server mode has been removed since CMake 3.20. Clients should use the cmake-file-api(7) instead.
+$cmake_binary = Install-TestCMake -Version "3.18.2"
 $Env:CMAKE_EXECUTABLE = $cmake_binary
 
 # Add cmake to search path environment variable
@@ -138,38 +97,14 @@ $ninja_binary = Install-TestNinjaMakeSystem -Version "1.8.2"
 # Add ninja to search path environment variable
 $Env:PATH = (get-item $ninja_binary).Directory.FullName + [System.IO.Path]::PathSeparator + $Env:PATH
 
-if (! $NoTest) {
-    # Prepare to run our tests
-    Invoke-TestPreparation -CMakePath $cmake_binary
+Invoke-ChronicCommand "yarn lint" $yarn run lint
 
-    # Running mocha backend tests
-    Invoke-MochaTest "CMake Tools: Backend tests"
+# Run tests
+Invoke-TestPreparation -CMakePath $cmake_binary
 
-    Invoke-VSCodeTest "CMake Tools: Unit tests" `
-        -TestsPath "$REPO_DIR/out/test/unit-tests" `
-        -Workspace "$REPO_DIR/test/unit-tests/test-project-without-cmakelists"
-
-    Invoke-SmokeTests
-
-    foreach ($name in @("successful-build"; "single-root-UI"; )) {
-        Invoke-VSCodeTest "CMake Tools: $name" `
-            -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
-            -Workspace "$REPO_DIR/test/extension-tests/$name/project-folder"
-    }
-
-    foreach ($name in @("multi-root-UI"; )) {
-        Invoke-VSCodeTest "CMake Tools: $name" `
-            -TestsPath "$REPO_DIR/out/test/extension-tests/$name" `
-            -Workspace "$REPO_DIR/test/extension-tests/$name/project-workspace.code-workspace"
-    }
-}
-
-Invoke-DocsBuild
-
-$vsce = Find-Program vsce
-if (! $vsce) {
-    Write-Warning "You don't have 'vsce' installed. We won't generate a .vsix package"
-}
-else {
-    Invoke-ChronicCommand "Generating VSIX package" $vsce package
-}
+Invoke-ChronicCommand "yarn pretest" $yarn run pretest
+Invoke-ChronicCommand "yarn smokeTests" $yarn run smokeTests
+Invoke-ChronicCommand "yarn unitTests" $yarn run unitTests
+Invoke-ChronicCommand "yarn extensionTestsSuccessfulBuild" $yarn run extensionTestsSuccessfulBuild
+#Invoke-ChronicCommand "yarn extensionTestsSingleRoot" $yarn run extensionTestsSingleRoot
+Invoke-ChronicCommand "yarn extensionTestsMultioot" $yarn run extensionTestsMultioot

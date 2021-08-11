@@ -1,5 +1,38 @@
 # What's New?
 
+## 1.8.0
+Improvements:
+- Last selected target isn't read on start up. [#1148](https://github.com/microsoft/vscode-cmake-tools/issues/1148)
+- Use cached cmake-file-api response to configure IntelliSense on startup. [#1149](https://github.com/microsoft/vscode-cmake-tools/issues/1149)
+- Show a quickPick of all the CMakeLists.txt inside the project (if none exists where "cmake.sourceDirectory" points at). [#533](https://github.com/microsoft/vscode-cmake-tools/issues/533)
+- Add command to get the active folder of a workspace. [#1715](https://github.com/microsoft/vscode-cmake-tools/issues/1715) [@guestieng](https://github.com/guestieng)
+- Task provider refactoring to best utilize latest updates from VSCode. [PR #1880](https://github.com/microsoft/vscode-cmake-tools/pull/1880)
+- Add docker container definition. [PR #1758](https://github.com/microsoft/vscode-cmake-tools/pull/1758)
+- Enhance the vsix build with package scripts in package.json. [PR #1752](https://github.com/microsoft/vscode-cmake-tools/pull/1752) [@lygstate](https://github.com/lygstate)
+
+Bug fixes:
+- Fix various presets field settings to be passed correctly on to CMake. [#2009](https://github.com/microsoft/vscode-cmake-tools/issues/2009)
+- Check for target architecture when reading toolchain FileAPI. [#1879](https://github.com/microsoft/vscode-cmake-tools/issues/1879)
+- Fix environment variable in debugging docs. [PR #1874](https://github.com/microsoft/vscode-cmake-tools/pull/1874) [@zariiii9003](https://github.com/zariiii9003)
+- Fix typo in variant docs. [PR #1970](https://github.com/microsoft/vscode-cmake-tools/pull/1970) [@melak47](https://github.com/melak47)
+- Update schema for preset cache variable CMAKE_BUILD_TYPE. [#1934](https://github.com/microsoft/vscode-cmake-tools/issues/1934)
+- Fix regression in ctestDefaultArgs (ctest hardcoded directives: -T, test, --output-on-failure). [#1956](https://github.com/microsoft/vscode-cmake-tools/issues/1956)
+- Don't throw when unknown diagnostics apepar. [#1796](https://github.com/microsoft/vscode-cmake-tools/issues/1796)
+- Add parse target triple to fix "bad clang binary" error. [#1916](https://github.com/microsoft/vscode-cmake-tools/issues/1916) [@lygstate](https://github.com/lygstate)
+- Include CMAKE_BUILD_TYPE in the generated text of configure preset. [#1847](https://github.com/microsoft/vscode-cmake-tools/issues/1847)
+- Show also the "hidden" presets in the "Inherit from configure presets" quick pick. [#1923](https://github.com/microsoft/vscode-cmake-tools/issues/1923)
+- Clang-cl diagnostics don't appear in Problems view. [#517](https://github.com/microsoft/vscode-cmake-tools/issues/517) [@ki-bo](https://github.com/ki-bo)
+- Fix duplication in name of MSVC versus LLVM Clang kit. [PR #1951](https://github.com/microsoft/vscode-cmake-tools/pull/1951) [@lygstate](https://github.com/lygstate)
+- Fixes output encoding in the vcvars setup process. [PR #1985](https://github.com/microsoft/vscode-cmake-tools/pull/1985) [@lygstate](https://github.com/lygstate)
+- Remove vendor support since the string expansion is wrong for it. [#1966](https://github.com/microsoft/vscode-cmake-tools/issues/1966)
+- Add configure preset environment to debug/launch. [#1884](https://github.com/microsoft/vscode-cmake-tools/issues/1884)
+- Fix msvc2015 detection when only vs2019 is installed. [#1905](https://github.com/microsoft/vscode-cmake-tools/issues/1905) [@lygstate](https://github.com/lygstate)
+- Prevent file index overwritting in multi-config generators. [#1800](https://github.com/microsoft/vscode-cmake-tools/issues/1800) [@andredsm](https://github.com/andredsm)
+- Various cache variables edit/save fixes. [PR #1826](https://github.com/microsoft/vscode-cmake-tools/pull/1826) [@aemseemann](https://github.com/aemseemann)
+- Use JSON as the language mode of preset files. [#2035](https://github.com/microsoft/vscode-cmake-tools/issues/2035)
+- Fix broken links to contributing file. [PR #2016](https://github.com/microsoft/vscode-cmake-tools/pull/2016) [@andredsm](https://github.com/andredsm)
+
+
 ## 1.7.3
 Bug fixes:
 - Make sure CMake Tools configuration provider gets registered with presets on. [#1832](https://github.com/microsoft/vscode-cmake-tools/issues/1832)

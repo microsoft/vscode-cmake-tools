@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {ConfigureTrigger} from '@cmt/cmake-tools';
 import {ConfigurationReader} from '@cmt/config';
@@ -27,8 +28,6 @@ function cleanupBuildDir(build_dir: string): boolean {
   return !fs.existsSync(build_dir);
 }
 
-// tslint:disable-next-line: no-unused-expression
-
 export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
                                                        config: ConfigurationReader,
                                                        kit: Kit|null,
@@ -36,7 +35,6 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
                                                        preconditionHandler: CMakePreconditionProblemSolver,
                                                        preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
   let driver: CMakeDriver|null = null;
-  // tslint:disable:no-unused-expression
 
   suite('CMake-Driver tests', () => {
     const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
@@ -131,11 +129,11 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       expect(await driver.build(driver.allTargetName)).to.be.eq(0);
 
       expect(driver.executableTargets.length).to.be.eq(2);
-      const targetInTopLevelBuildDir = driver.executableTargets.find(t => t.name == 'TestBuildProcess');
+      const targetInTopLevelBuildDir = driver.executableTargets.find(t => t.name === 'TestBuildProcess');
       expect(targetInTopLevelBuildDir).to.not.undefined;
       expect(fs.existsSync(targetInTopLevelBuildDir!.path)).to.be.true;
 
-      const targetInRuntimeOutputDir = driver.executableTargets.find(t => t.name == 'TestBuildProcessOtherOutputDir');
+      const targetInRuntimeOutputDir = driver.executableTargets.find(t => t.name === 'TestBuildProcessOtherOutputDir');
       expect(targetInRuntimeOutputDir).to.not.undefined;
       expect(fs.existsSync(targetInRuntimeOutputDir!.path)).to.be.true;
     }).timeout(90000);
@@ -146,8 +144,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       const kit = {name: 'GCC', preferredGenerator: {name: 'BlaBla'}} as Kit;
 
-      // tslint:disable-next-line: no-floating-promises
-      expect(driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []))
+      await expect(driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []))
           .to.be.rejectedWith('No usable generator found.');
     }).timeout(60000);
 
@@ -255,7 +252,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.BuildIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
           called = true;
         }
       };
@@ -276,7 +273,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
           called = true;
         }
       };
@@ -297,7 +294,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.BuildIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
           called = true;
         }
       };
@@ -318,7 +315,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.ConfigureIsAlreadyRunning) {
           called = true;
         }
       };
@@ -332,14 +329,13 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       expect(called).to.be.true;
     }).timeout(90000);
 
-
     test('No clean configuration parallel to build', async () => {
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 
       let called = false;
       const checkPreconditionHelper = async (e: CMakePreconditionProblems) => {
-        if (e == CMakePreconditionProblems.BuildIsAlreadyRunning) {
+        if (e === CMakePreconditionProblems.BuildIsAlreadyRunning) {
           called = true;
         }
       };
@@ -353,7 +349,6 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
       expect(await configure).to.be.equal(-1);
       expect(called).to.be.true;
     }).timeout(90000);
-
 
     test('Test pre-configured workspace', async () => {
       const config = ConfigurationReader.create();
@@ -392,8 +387,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
     }).timeout(90000);
 
     test('Test Visual Studio kit with wrong all target name', async () => {
-      if (process.platform !== 'win32')
-        return;
+      if (process.platform !== 'win32') {return; }
 
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
@@ -404,8 +398,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
     }).timeout(90000);
 
     test('Test Ninja kit with wrong all target name', async () => {
-      if (process.platform !== 'win32')
-        return;
+      if (process.platform !== 'win32') {return; }
       const config = ConfigurationReader.create();
       const executable = await getCMakeExecutableInformation(cmakePath);
 

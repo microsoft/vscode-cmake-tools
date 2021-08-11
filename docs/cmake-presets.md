@@ -56,10 +56,7 @@ All Build Presets must specify an associated `configurePreset` value. CMake Tool
 
 Run **CMake: Build** from the command palette to build the entire project. This is the same as running `cmake --build --preset <buildPreset>` from the command line, where `<buildPreset>` should be replaced by the name of the active Build Preset.
 
-Run **CMake: Build Target** from the command palette to build a single target. You can switch the active build target by running **CMake: Set Build Target**.
-
-> [!Note]
-> CMake Tools doesn't yet support the **buildPresets.targets** option to build a subset of targets specified in `CMakePresets.json`.
+Run **CMake: Build Target** from the command palette to build a single target with the instructions encoded in the active Build Preset.
 
 ## Test
 
@@ -173,7 +170,7 @@ Configure Preset templates default to the Visual Studio Generator on Windows, an
 
 ### Set and reference environment variables
 
-You can set environment variables by using the environment map. Environment variables are inherited through the `inherits` field, but you can override them as desired. A preset's environment will be the union of its own environment and the environment from all its parents. 
+You can set environment variables by using the environment map. Environment variables are inherited through the `inherits` field, but you can override them as desired. A preset's environment will be the union of its own environment and the environment from all its parents.
 
 If multiple `inherits` presets provide conflicting values for the same variable, the earlier preset in the `inherits` list will be preferred. You can unset a variable inherited from another preset by setting it to `null`.
 
@@ -193,7 +190,7 @@ You can set the host architecture (x64 or x86) and toolset by using `toolset.val
 `architecture.strategy` and `toolset.strategy` tell CMake how to handle the `architecture` and `toolset` fields:
 
 - `set` means CMake will set the respective value. It should be used with IDE generators like the Visual Studio Generator.
-- `external` means CMake will not set the respective value. It should be used with command-line generators like Ninja. 
+- `external` means CMake will not set the respective value. It should be used with command-line generators like Ninja.
 
 Vendors like Visual Studio can then source the required environment before CMake is invoked. For more information about the `architecture` and `toolset` fields, see the [list of Configure Presets](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html#configure-preset).
 
@@ -201,7 +198,7 @@ For a full list of IDE generators that support the `architecture` field, see [`C
 
 ## Enable Vcpkg integration
 
-Vcpkg helps you manage C and C++ libraries on Windows, Linux, and macOS. A vcpkg toolchain file (`vcpkg.cmake`) must be passed to CMake to enable vcpkg integration. For more information, see the [vcpkg documentation](https://github.com/microsoft/vcpkg#vcpkg-overview). 
+Vcpkg helps you manage C and C++ libraries on Windows, Linux, and macOS. A vcpkg toolchain file (`vcpkg.cmake`) must be passed to CMake to enable vcpkg integration. For more information, see the [vcpkg documentation](https://github.com/microsoft/vcpkg#vcpkg-overview).
 
 Set the path to `vcpkg.cmake` with the `VCPKG_ROOT` environment variable in `CMakePresets.json`:
 
@@ -224,7 +221,7 @@ CMake Tools supports command substitution for launch commands when `CMakePresets
 
 ## Ignored settings
 
-`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test. This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line. 
+`CMakePresets.json` should be the source of truth for all settings related to configure, build, and test. This eliminates behavior specific to Visual Studio Code and ensures that your CMake and CTest invocations can be reproduced from the command line.
 
 The following settings in `settings.json` either duplicate options in `CMakePresets.json` or no longer apply. These settings will be ignored when `CMakePresets.json` integration is enabled. Ignored settings will be logged to the Output Window when you run **CMake: Configure**.
 
@@ -265,7 +262,7 @@ The following commands are not supported when `CMakePresets.json` integration is
 
 If things aren't working as expected, you can try a few troubleshooting steps.
 
-If either `CMakePresets.json` or `CMakeUserPresets.json` is invalid, none of the presets in the invalid file will be available for selection. CMake Tools IntelliSense can help you catch many of these JSON errors, but it won't know if you're referencing a preset with `inherits` or `configurePreset` by the wrong name. 
+If either `CMakePresets.json` or `CMakeUserPresets.json` is invalid, none of the presets in the invalid file will be available for selection. CMake Tools IntelliSense can help you catch many of these JSON errors, but it won't know if you're referencing a preset with `inherits` or `configurePreset` by the wrong name.
 
 To check if your preset files are valid, run `cmake --list-presets` from the command line at the root of your project directory. (CMake 3.20 or later is required.) If either file is invalid, you'll see the following error:
 

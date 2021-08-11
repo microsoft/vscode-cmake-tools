@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import {fs} from '@cmt/pr';
 import {TestProgramResult} from '@test/helpers/testprogram/test-program-result';
@@ -11,8 +12,6 @@ import {
   getMatchingSystemKit
 } from '@test/util';
 import * as path from 'path';
-
-// tslint:disable:no-unused-expression
 
 let workername: string = process.platform;
 
@@ -51,7 +50,7 @@ suite('Build', async () => {
 
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
     const kit = await getFirstSystemKit(cmt);
-    console.log("Using following kit in next test: ", kit);
+    console.log("Using following kit in next test: ", kit.name);
     await cmt.setKit(kit);
     testEnv.projectFolder.buildDirectory.clear();
   });
@@ -62,7 +61,7 @@ suite('Build', async () => {
     const logPath = logFilePath();
     testEnv.clean();
     if (await fs.exists(logPath)) {
-      if (this.currentTest?.state == "failed") {
+      if (this.currentTest?.state === "failed") {
         const logContent = await fs.readFile(logPath);
         logContent.toString().split('\n').forEach(line => {
           console.log(line);
@@ -93,7 +92,6 @@ suite('Build', async () => {
     const result = await testEnv.result.getResultAsJson();
     expect(result['cookie']).to.eq('passed-cookie');
   }).timeout(100000);
-
 
   test('Configure and Build', async () => {
     expect(await cmt.configureInternal(ConfigureTrigger.runTests)).to.be.eq(0);
@@ -130,12 +128,11 @@ suite('Build', async () => {
 
   test('Test kit switch after missing preferred generator', async function(this: Mocha.Context) {
     // Select compiler build node dependent
-    const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+    const os_compilers: {[osName: string]: {kitLabel: RegExp; compiler: string}[]} = {
       linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
       win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
     };
-    if (!(workername in os_compilers))
-      this.skip();
+    if (!(workername in os_compilers)) {this.skip(); }
     const compiler = os_compilers[workername];
 
     // Run test
@@ -154,7 +151,7 @@ suite('Build', async () => {
 
   test('Test kit switch after missing preferred generator #512', async function(this: Mocha.Context) {
     // Select compiler build node dependent
-    const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
+    const os_compilers: {[osName: string]: {kitLabel: RegExp; generator: string}[]} = {
       linux: [
         {kitLabel: /^Generator switch test GCC Make$/, generator: 'Unix Makefiles'},
         {kitLabel: /^Generator switch test GCC no generator$/, generator: ''}
@@ -164,8 +161,7 @@ suite('Build', async () => {
         {kitLabel: /^Generator switch test GCC no generator - Win/, generator: ''}
       ]
     };
-    if (!(workername in os_compilers))
-      this.skip();
+    if (!(workername in os_compilers)) {this.skip(); }
     // Remove all preferred generator (Remove config dependenies, auto detection)
     testEnv.config.updatePartial({preferredGenerators: []});
     const compiler = os_compilers[workername];
@@ -206,12 +202,11 @@ suite('Build', async () => {
   test('Test kit switch between different preferred generators and compilers',
        async function(this: Mocha.Context) {
          // Select compiler build node dependent
-         const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+         const os_compilers: {[osName: string]: {kitLabel: RegExp; compiler: string}[]} = {
            linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
            win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
          };
-         if (!(workername in os_compilers))
-           this.skip();
+         if (!(workername in os_compilers)) {this.skip(); }
          const compiler = os_compilers[workername];
 
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
@@ -230,7 +225,7 @@ suite('Build', async () => {
   test('Test kit switch between different preferred generators and same compiler',
        async function(this: Mocha.Context) {
          // Select compiler build node dependent
-         const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
+         const os_compilers: {[osName: string]: {kitLabel: RegExp; generator: string}[]} = {
            linux: [
              {kitLabel: /^Generator switch test GCC Make$/, generator: 'Unix Makefiles'},
              {kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja'}
@@ -240,8 +235,7 @@ suite('Build', async () => {
              {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja'}
            ]
          };
-         if (!(workername in os_compilers))
-           this.skip();
+         if (!(workername in os_compilers)) {this.skip(); }
          const compiler = os_compilers[workername];
 
          testEnv.config.updatePartial({preferredGenerators: []});
@@ -263,7 +257,7 @@ suite('Build', async () => {
 
   test('Test kit switch kits after configure', async function(this: Mocha.Context) {
     // Select compiler build node dependent
-    const os_compilers: {[osName: string]: {kitLabel: RegExp, generator: string}[]} = {
+    const os_compilers: {[osName: string]: {kitLabel: RegExp; generator: string}[]} = {
       linux: [
         {kitLabel: /^Generator switch test GCC Make$/, generator: 'Unix Makefiles'},
         {kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja'}
@@ -273,8 +267,7 @@ suite('Build', async () => {
         {kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja'}
       ]
     };
-    if (!(workername in os_compilers))
-      this.skip();
+    if (!(workername in os_compilers)) {this.skip(); }
     const compiler = os_compilers[workername];
 
     testEnv.config.updatePartial({preferredGenerators: []});

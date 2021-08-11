@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
@@ -5,8 +6,6 @@ import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
 import {fs} from '@cmt/pr';
 import * as path from 'path';
-
-// tslint:disable:no-unused-expression
 
 suite('[Environment Variables in Variants]', async () => {
   let cmt: CMakeTools;
@@ -80,6 +79,13 @@ suite('[Environment Variables in Variants]', async () => {
           }
         }
       }
+    });
+
+    // Give enough time for the file watcher to kick in and update the variant manager
+    await new Promise<void>(resolve => {
+      setTimeout(() => {
+        resolve();
+      }, 2000);
     });
 
     try {

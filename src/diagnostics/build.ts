@@ -2,7 +2,6 @@
  * Module for handling build diagnostics (from the compiler/linker)
  */ /** */
 
-
 import {Logger} from '@cmt/logging';
 import * as proc from '@cmt/proc';
 import {OutputConsumer} from '@cmt/proc';
@@ -56,7 +55,9 @@ export class CompileOutputConsumer implements OutputConsumer {
       case 'remark':
         return vscode.DiagnosticSeverity.Information;
       }
-      throw new Error('Unknown diagnostic severity level: ' + p);
+      // tslint:disable-next-line
+      console.warn('Unknown diagnostic severity level: ' + p);
+      return undefined;
     };
 
     const by_source = {
@@ -64,12 +65,15 @@ export class CompileOutputConsumer implements OutputConsumer {
       MSVC: this.compilers.msvc.diagnostics,
       GHS: this.compilers.ghs.diagnostics,
       DIAB: this.compilers.diab.diagnostics,
-      link: this.compilers.gnuLD.diagnostics,
+      link: this.compilers.gnuLD.diagnostics
     };
-    const arrs = util.objectPairs(by_source).map(([source, diags]) => {
-      return diags.map(raw_diag => {
+    const arrs = util.objectPairs(by_source).map(([source, diags]) => diags.map(raw_diag => {
         const filepath = util.resolvePath(raw_diag.file, basePath);
-        const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity_of(raw_diag.severity));
+        const severity = severity_of(raw_diag.severity);
+        if (severity === undefined) {
+          return undefined;
+        }
+        const diag = new vscode.Diagnostic(raw_diag.location, raw_diag.message, severity);
         diag.source = source;
         if (raw_diag.code) {
           diag.code = raw_diag.code;
@@ -86,10 +90,9 @@ export class CompileOutputConsumer implements OutputConsumer {
         diags_by_file.get(filepath)!.push(diag);
         return {
           filepath,
-          diag,
+          diag
         };
-      });
-    });
+      }).filter(e => e !== undefined) as FileDiagnostic[]);
     return ([] as FileDiagnostic[]).concat(...arrs);
   }
 }
@@ -132,7 +135,7 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
       this._onProgressEmitter.fire({
         minimum: 0,
         maximum: 100,
-        value: Number.parseInt(percent),
+        value: Number.parseInt(percent)
       });
     }
   }

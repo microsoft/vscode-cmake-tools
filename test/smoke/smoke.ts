@@ -1,49 +1,11 @@
 import {Kit, scanForVSKits, SpecialKits, UnspecifiedKit} from '@cmt/kit';
-import * as path from 'path';
+import {SmokeTestExtensionContext} from '@test/helpers/vscodefake/extensioncontext';
+
 import * as vscode from 'vscode';
 
-import {CMakeTools} from '../../src/cmake-tools';
+import {CMakeTools} from '@cmt/cmake-tools';
 
 type Result<T> = Thenable<T>|T;
-
-class SmokeTestMemento implements vscode.Memento {
-  private readonly _date = new Map<string, any>();
-
-  get<T>(key: string): T|undefined;
-  get<T>(key: string, defaultValue: T): T;
-
-  get<T>(key: string, defaultValue?: T): T|undefined {
-    const value = this._date.get(key) as T | undefined;
-    if (value === undefined) {
-      return defaultValue;
-    }
-    return value;
-  }
-
-  update(key: string, value: any): Thenable<void> {
-    this._date.set(key, value);
-    return Promise.resolve();
-  }
-}
-
-class SmokeTestExtensionContext implements vscode.ExtensionContext {
-  constructor(public readonly extensionPath: string) {}
-
-  private readonly _subscriptions: vscode.Disposable[] = [];
-  get subscriptions(): vscode.Disposable[] { return this._subscriptions; }
-
-  private readonly _workspaceState = new SmokeTestMemento();
-  get workspaceState() { return this._workspaceState; }
-
-  private readonly _globalState = new SmokeTestMemento();
-  get globalState() { return this._globalState; }
-
-  asAbsolutePath(sub: string): string { return path.join(this.extensionPath, sub); }
-
-  get storagePath() { return path.join(this.extensionPath, '.smoke-storage'); }
-
-  get logPath() { return path.join(this.extensionPath, '.smoke-logs'); }
-}
 
 type TestResult<T> = Thenable<T>|T;
 
@@ -64,7 +26,7 @@ export class SmokeContext {
     return cmt;
   }
 
-  async withCMakeTools<T>(opts: {kit?: Kit|UnspecifiedKit, run: (cmt: CMakeTools) => TestResult<T>}): Promise<T> {
+  async withCMakeTools<T>(opts: {kit?: Kit|UnspecifiedKit; run(cmt: CMakeTools): TestResult<T>}): Promise<T> {
     const cmt = await this.createCMakeTools(opts);
     try {
       const value = await Promise.resolve(opts.run(cmt));
@@ -94,7 +56,7 @@ export class SmokeSuite {
       readonly name: string,
       readonly setups: SmokeTest[],
       readonly teardowns: SmokeTest[],
-      readonly tests: SmokeTest[],
+      readonly tests: SmokeTest[]
   ) {}
 }
 
@@ -102,7 +64,7 @@ class SmokeSuiteTestRegistry {
   constructor(
       private readonly _setups: SmokeTest[],
       private readonly _teardowns: SmokeTest[],
-      private readonly _array: SmokeTest[],
+      private readonly _array: SmokeTest[]
   ) {}
 
   setup(name: string, fn: SmokeTestFunction) { this._setups.push(new SmokeTest(`[setup ${name}]`, fn)); }
@@ -125,7 +87,7 @@ export class SmokeSuiteInit {
       /**
        * The definer function
        */
-      readonly fn: SmokeSuiteFunction,
+      readonly fn: SmokeSuiteFunction
   ) {}
 
   /**
@@ -181,7 +143,7 @@ export function smokeSuite(name: string, cb: SmokeSuiteFunction): void { SUITE_R
 /**
  * The global definer.
  */
-export const SUITE_REGISTRY = new SmokeSuiteRegistry;
+export const SUITE_REGISTRY = new SmokeSuiteRegistry();
 
 let _VS_KITS_PROMISE: Promise<Kit[]> | null = null;
 

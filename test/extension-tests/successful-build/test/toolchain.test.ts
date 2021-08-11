@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureTrigger} from '@cmt/cmake-tools';
@@ -11,8 +12,7 @@ suite('[Toolchain Substitution]', async () => {
 
   setup(async function(this: Mocha.Context) {
     this.timeout(100000);
-    if (process.platform === 'win32')
-      this.skip();
+    if (process.platform === 'win32') {this.skip(); }
 
     testEnv = new DefaultEnvironment('test/extension-tests/successful-build/project-folder', 'build', 'output.txt');
     cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
@@ -54,7 +54,6 @@ suite('[Toolchain Substitution]', async () => {
     const cache = await CMakeCache.fromPath(await cmt.cachePath);
 
     const cacheEntry = cache.get('CMAKE_TOOLCHAIN_FILE') as api.CacheEntry;
-    // tslint:disable-next-line:no-unused-expression
     expect(cacheEntry).to.not.be.null;
     expect(cacheEntry.key).to.eq('CMAKE_TOOLCHAIN_FILE', '[toolchain] unexpected cache entry key name');
     expect(platformNormalizePath(cacheEntry.as<string>()))

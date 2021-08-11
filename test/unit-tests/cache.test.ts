@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
@@ -8,8 +9,6 @@ import {expect} from 'chai';
 import * as api from '../../src/api';
 import {CMakeCache} from '../../src/cache';
 import * as util from '../../src/util';
-
-// tslint:disable:no-unused-expression
 
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
@@ -71,7 +70,7 @@ suite('Cache test', async () => {
       'N',
       'SOMETHING-NOTFOUND',
       null,
-      false,
+      false
     ];
     for (const thing of false_things) {
       expect(util.isTruthy(thing), `Check false-iness of ${thing}`).to.be.false;

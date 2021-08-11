@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import {CMakeExecutable, getCMakeExecutableInformation} from '@cmt/cmake/cmake-executable';
 import {ConfigurationReader} from '@cmt/config';
 import {ConfigureTrigger} from '@cmt/cmake-tools';
@@ -13,6 +14,7 @@ chai.use(chaiString);
 
 import {Kit, CMakeGenerator} from '@cmt/kit';
 import {CMakeDriver, CMakePreconditionProblemSolver} from '@cmt/drivers/driver';
+import { LegacyCMakeDriver } from '@cmt/drivers/legacy-driver';
 
 const here = __dirname;
 function getTestRootFilePath(filename: string): string {
@@ -27,7 +29,6 @@ function cleanupBuildDir(build_dir: string): boolean {
 }
 
 let driver: CMakeDriver|null = null;
-// tslint:disable:no-unused-expression
 
 export function makeCodeModelDriverTestsuite(
     driver_generator: (cmake: CMakeExecutable,
@@ -83,7 +84,6 @@ export function makeCodeModelDriverTestsuite(
       }
     });
 
-
     async function generateCodeModelForConfiguredDriver(args: string[] = [],
                                                         workspaceFolder: string = defaultWorkspaceFolder):
         Promise<null|codemodel_api.CodeModelContent> {
@@ -92,7 +92,7 @@ export function makeCodeModelDriverTestsuite(
 
       driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
       let code_model: null|codemodel_api.CodeModelContent = null;
-      if (driver instanceof codemodel_api.CodeModelDriver) {
+      if (driver && !(driver instanceof LegacyCMakeDriver)) {
         driver.onCodeModelChanged(cm => { code_model = cm; });
       }
       expect(await driver.configure(ConfigureTrigger.runTests, args)).to.be.eq(0);
@@ -100,8 +100,9 @@ export function makeCodeModelDriverTestsuite(
     }
 
     test('Test generation of code model with multi configuration like VS', async () => {
-      if (process.platform !== 'win32')
+      if (process.platform !== 'win32') {
         return;
+      }
 
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
@@ -109,8 +110,7 @@ export function makeCodeModelDriverTestsuite(
     }).timeout(90000);
 
     test('Test generation of code model with one configuration like make on linux', async () => {
-      if (process.platform === 'win32')
-        return;
+      if (process.platform === 'win32') { return; }
 
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
@@ -132,12 +132,11 @@ export function makeCodeModelDriverTestsuite(
           .to.eq(path.normalize(path.join(root, 'test_project')).toLowerCase());
     }).timeout(90000);
 
-
     test('Test executable target information', async () => {
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE' && t.name == 'TestBuildProcess');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE' && t.name === 'TestBuildProcess');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -163,7 +162,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'STATIC_LIBRARY');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'STATIC_LIBRARY');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -196,7 +195,7 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'SHARED_LIBRARY');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'SHARED_LIBRARY');
       expect(target).to.be.not.undefined;
 
       // Test target name used for node label
@@ -232,8 +231,8 @@ export function makeCodeModelDriverTestsuite(
       const codemodel_data = await generateCodeModelForConfiguredDriver();
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'UTILITY'
-                                                                                    && t.name == 'runTestTarget');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'UTILITY'
+                                                                                    && t.name === 'runTestTarget');
       expect(target).to.be.not.undefined;
 
       // maybe could be used to exclude file list from utility targets
@@ -244,13 +243,14 @@ export function makeCodeModelDriverTestsuite(
       // This test does not work with VisualStudio.
       // VisualStudio generator does not provide the sysroot in the code model.
       // macOS has separate sysroot variable (see CMAKE_OSX_SYSROOT); this build fails.
-      if (process.platform === 'win32' || process.platform === 'darwin')
+      if (process.platform === 'win32' || process.platform === 'darwin') {
         return;
+      }
 
       const codemodel_data = await generateCodeModelForConfiguredDriver(['-DCMAKE_SYSROOT=/tmp']);
       expect(codemodel_data).to.be.not.null;
 
-      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE');
+      const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE');
       expect(target).to.be.not.undefined;
       expect(target!.sysroot).to.be.eq('/tmp');
     }).timeout(90000);
@@ -264,8 +264,8 @@ export function makeCodeModelDriverTestsuite(
                                                                    ['subdir_target', 'subdir', '../../main.cpp']] as
            const) {
 
-        const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type == 'EXECUTABLE'
-                                                                                      && t.name == target_name);
+        const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE'
+                                                                                      && t.name === target_name);
         expect(target).to.be.not.undefined;
 
         // Assert correct target names for node labels

@@ -1,4 +1,5 @@
-require('module-alias/register');
+// eslint-disable-next-line import/no-unassigned-import
+import 'module-alias/register';
 
 import * as chai from 'chai';
 import {expect} from 'chai';
@@ -11,8 +12,6 @@ import {Strand} from '@cmt/strand';
 function pause(time: number): Promise<void> {
   return new Promise(resolve => { setTimeout(() => resolve(), time); });
 }
-
-// tslint:disable:no-unused-expression
 
 suite('Running strands', () => {
   test('Run a thing', async () => {

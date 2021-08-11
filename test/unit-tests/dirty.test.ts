@@ -4,9 +4,6 @@ import {expect} from '@test/util';
 import * as path from 'path';
 import { fs } from '@cmt/pr';
 
-// tslint:disable:no-unused-expression
-
-
 const here = __dirname;
 function getTestResourceFilePath(filename: string): string {
   return path.normalize(path.join(here, '../../../test/unit-tests', filename));
@@ -73,11 +70,11 @@ suite('Dirty file checking', async () => {
         isTemporary: false,
         sources: [
           'dummy_file',
-          foo_subdir,
-        ],
+          foo_subdir
+        ]
       }],
       cmakeRootDirectory: '', // unused
-      sourceDirectory: foo_subdir,
+      sourceDirectory: foo_subdir
     });
     expect(fileset.inputFiles).to.have.lengthOf(2, 'Wrong file count');
     // The relative path 'dummy_file' should have mapped to the full path to the correct file

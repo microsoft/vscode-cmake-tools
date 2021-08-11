@@ -1,0 +1,3 @@
+*.js
+test/extension-tests/successful-build/project-folder/build
+tools/prepublish.js

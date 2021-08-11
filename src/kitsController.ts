@@ -78,7 +78,7 @@ export class KitsController {
         workspaceFolderBasename: path.basename(cmakeTools.workspaceContext.folder.uri.fsPath),
         workspaceHash: "",
         workspaceRoot: cmakeTools.workspaceContext.folder.uri.fsPath,
-        workspaceRootFolderName: path.basename(cmakeTools.workspaceContext.folder.uri.fsPath),
+        workspaceRootFolderName: path.basename(cmakeTools.workspaceContext.folder.uri.fsPath)
       }
     };
 
@@ -112,8 +112,7 @@ export class KitsController {
     if (this._pickKitCancellationTokenSource) {
       this._pickKitCancellationTokenSource.dispose();
     }
-    // tslint:disable-next-line: no-floating-promises
-    this._kitsWatcher.close();
+    void this._kitsWatcher.close();
   }
 
   get availableKits() {
@@ -217,9 +216,9 @@ export class KitsController {
       await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: message,
+            title: message
           },
-          () => inst.setKit(k),
+          () => inst.setKit(k)
       );
     }
     return raw_name;
@@ -231,7 +230,7 @@ export class KitsController {
       // We have kits. Okay.
       return true;
     }
-    if (!avail.find(kit => kit.name == SpecialKits.Unspecified)) {
+    if (!avail.find(kit => kit.name === SpecialKits.Unspecified)) {
       // We should _always_ have the 'UnspecifiedKit'.
       rollbar.error(localize('invalid.only.kit', 'Invalid only kit. Expected to find `{0}`', SpecialKits.Unspecified));
       return false;
@@ -287,8 +286,8 @@ export class KitsController {
         async (kit): Promise<KitItem> => ({
           label: getKitName(kit),
           description: await descriptionForKit(kit),
-          kit,
-        }),
+          kit
+        })
     );
     const items = await Promise.all(item_promises);
     const chosen_kit = await vscode.window.showQuickPick(items,
@@ -301,7 +300,7 @@ export class KitsController {
       // No selection was made
       return false;
     } else {
-      if (chosen_kit.kit.name == SpecialKits.ScanForKits) {
+      if (chosen_kit.kit.name === SpecialKits.ScanForKits) {
         await KitsController.scanForKits(this.cmakeTools);
         return false;
       } else {
@@ -316,11 +315,10 @@ export class KitsController {
    * Set the current kit by name of the kit
    */
   async setKitByName(kitName: string) {
-    let newKit: Kit | undefined;
     if (!kitName) {
         kitName = SpecialKits.Unspecified;
     }
-    newKit = this.availableKits.find(kit => kit.name === kitName);
+    const newKit: Kit | undefined = this.availableKits.find(kit => kit.name === kitName);
     await this.setFolderActiveKit(newKit || null);
     // if we are showing a quickpick menu...
     this._pickKitCancellationTokenSource.cancel();
@@ -387,12 +385,12 @@ export class KitsController {
             {},
             {
               action: 'remove',
-              title: localize('remove.it.button', 'Remove it'),
+              title: localize('remove.it.button', 'Remove it')
             },
             {
               action: 'keep',
-              title: localize('keep.it.button', 'Keep it'),
-            },
+              title: localize('keep.it.button', 'Keep it')
+            }
         );
         if (chosen === undefined) {
           return;
@@ -443,14 +441,12 @@ export class KitsController {
     log.debug(localize('saving.kits.to', 'Saving kits to {0}', USER_KITS_FILEPATH));
 
     // Remove the special kits
-    const stripped_kits = kits.filter(kit => {
-      return ((kit.name !== SpecialKits.ScanForKits) &&
-              (kit.name !== SpecialKits.Unspecified));
-    });
+    const stripped_kits = kits.filter(kit => ((kit.name !== SpecialKits.ScanForKits) &&
+              (kit.name !== SpecialKits.Unspecified)));
 
     // Sort the kits by name so they always appear in order in the file.
     const sorted_kits = stripped_kits.sort((a, b) => {
-      if (a.name == b.name) {
+      if (a.name === b.name) {
         return 0;
       } else if (a.name < b.name) {
         return -1;
@@ -475,12 +471,12 @@ export class KitsController {
                          `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
                          {
                            title: localize('retry.button', 'Retry'),
-                           do: 'retry',
+                           do: 'retry'
                          },
                          {
                            title: localize('cancel.button', 'Cancel'),
-                           do: 'cancel',
-                         },
+                           do: 'cancel'
+                         }
                          )
                      .then(choice => {
                        if (!choice) {
@@ -546,11 +542,11 @@ export class KitsController {
         localize('delete.duplicate.kits', 'Would you like to delete the duplicate Visual Studio kits from cmake-tools-kits.json?'),
         {
           title: yesButtonTitle,
-          isCloseAffordance: true,
+          isCloseAffordance: true
         },
         {
           title: localize('no.button', 'No'),
-          isCloseAffordance: true,
+          isCloseAffordance: true
         });
 
       if (chosen !== undefined && (chosen.title === yesButtonTitle)) {
@@ -565,13 +561,13 @@ export class KitsController {
     // in the user kits file.
     const old_kits_by_name = KitsController.userKits.reduce(
       (acc, kit) => ({...acc, [kit.name]: kit}),
-      {} as {[kit: string]: Kit},
+      {} as {[kit: string]: Kit}
     );
 
     // Update the new kits we know about.
     const new_kits_by_name = discovered_kits.reduce(
       (acc, kit) => ({...acc, [kit.name]: kit}),
-      old_kits_by_name,
+      old_kits_by_name
     );
 
     const new_kits = Object.keys(new_kits_by_name).map(k => new_kits_by_name[k]);

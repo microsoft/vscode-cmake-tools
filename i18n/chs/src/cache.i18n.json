@@ -13,10 +13,12 @@
 	"parsing.cmake.cache.string": "正在分析 CMake 缓存字符串",
 	"failed.to.read.line.from.cmake.cache.file": "无法从 CMake 缓存文件 {0} 读取行",
 	"read.line.in.cache": "读取缓存中的行，其中 {0}={1},{2}={3},{4}={5}",
-	"skipping.variable": "正在跳过 {0} 变量",
 	"cache.entry.unknown": "缓存条目“{0}”具有未知类型:“{1}”",
 	"constructing.new.cache.entry": "从给定行构造新的缓存条目",
+	"nonexisting.advanced.entry": "不存在的缓存条目“{0}”被标记为高级",
+	"ignore.strings.for.nonexisting.entry": "忽略不存在的缓存条目“{0}”的“STRINGS”属性",
 	"parsed.cache.entries": "已分析 {0} 个缓存条目",
+	"cache.value.truncation.warning": "在缓存条目“{0}”中找到了换行符。值已被截断为“{1}”",
 	"get.cache.key": "获取缓存键 {0}={1}",
 	"get.cache.key.missing": "获取缓存键 {0}=[[Missing]]"
 }

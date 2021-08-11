@@ -73,7 +73,7 @@ export interface VarFileSetting {
   /**
    * The possible options for this setting.
    */
-  choices: {[key: string]: VarFileOption|undefined;};
+  choices: {[key: string]: VarFileOption|undefined};
 }
 /**
  * The root of a `cmake-variants.(yaml|json)`
@@ -131,16 +131,14 @@ export interface VariantCombination extends vscode.QuickPickItem {
 
 export function processVariantFileData(root: VarFileRoot): VariantCollection {
   const settings = util.objectPairs(root).map(([setting_name, setting_def]): VariantSetting => {
-    const choices = util.objectPairs(setting_def!.choices).map(([opt_key, opt_def]): VariantOption => {
-      return {
+    const choices = util.objectPairs(setting_def!.choices).map(([opt_key, opt_def]): VariantOption => ({
         ...opt_def!,
-        key: opt_key,
-      };
-    });
+        key: opt_key
+      }));
     return {
       name: setting_name,
       default: setting_def!.default,
-      choices,
+      choices
     };
   });
   return {settings};
@@ -154,22 +152,22 @@ export const DEFAULT_VARIANTS: VarFileRoot = {
       debug: {
         short: 'Debug',
         long: localize('emit.debug.without.optimizations', 'Emit debug information without performing optimizations'),
-        buildType: 'Debug',
+        buildType: 'Debug'
       },
       release: {
         short: 'Release',
         long: localize('enable.optimizations.omit.debug', 'Enable optimizations, omit debug info'),
-        buildType: 'Release',
+        buildType: 'Release'
       },
       minsize: {
         short: 'MinSizeRel',
         long: localize('optimize.for.smallest', 'Optimize for smallest binary size'),
-        buildType: 'MinSizeRel',
+        buildType: 'MinSizeRel'
       },
       reldeb: {
         short: 'RelWithDebInfo',
         long: localize('optimize.and.debug', 'Perform optimizations AND include debugging information'),
-        buildType: 'RelWithDebInfo',
+        buildType: 'RelWithDebInfo'
       }
     }
   }
@@ -191,10 +189,8 @@ export class VariantManager implements vscode.Disposable {
 
   private customVariantsFileExists: boolean = false;
 
-
   dispose() {
-    // tslint:disable-next-line: no-floating-promises
-    this._variantFileWatcher.close();
+    void this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
 
@@ -244,7 +240,7 @@ export class VariantManager implements vscode.Disposable {
         path.join(workdir, 'cmake-variants.json'),
         path.join(workdir, 'cmake-variants.yaml'),
         path.join(workdir, '.vscode/cmake-variants.json'),
-        path.join(workdir, '.vscode/cmake-variants.yaml'),
+        path.join(workdir, '.vscode/cmake-variants.yaml')
       ];
       for (const testpath of candidates) {
         if (await fs.exists(testpath)) {
@@ -290,15 +286,15 @@ export class VariantManager implements vscode.Disposable {
 
   variantConfigurationOptionsForKWs(keywordSetting: Map<string, string>): VariantOption[]|string {
     const vars = this._variants;
-    let error: string|undefined = undefined;
+    let error: string|undefined;
     const data = Array.from(keywordSetting.entries()).map(([setting_key, opt_key]): VariantOption => {
       const unknown_choice: VariantOption = {short: 'Unknown', key: '__unknown__'};
-      const found_setting = vars.settings.find(s => s.name == setting_key);
+      const found_setting = vars.settings.find(s => s.name === setting_key);
       if (!found_setting) {
         error = localize('missing.setting.in.variant', 'Missing setting "{0}" in variant definition.', setting_key);
         return unknown_choice;
       }
-      const found_choice = found_setting.choices.find(o => o.key == opt_key);
+      const found_choice = found_setting.choices.find(o => o.key === opt_key);
       if (!found_choice) {
         error = localize('missing.variant.choice', 'Missing variant choice "{0}" on "{1}" in variant definition.', opt_key, setting_key);
         return unknown_choice;
@@ -320,11 +316,10 @@ export class VariantManager implements vscode.Disposable {
                             buildType: el.buildType || acc.buildType,
                             linkage: el.linkage || acc.linkage,
                             // TS 2.4 doesn't like using object spread here, for some reason.
-                            // tslint:disable-next-line:prefer-object-spread
-                            settings: Object.assign({}, acc.settings, el.settings),
+                            settings: { ...acc.settings, ...el.settings},
                             short: [acc.short, el.short].join(' ').trim(),
                             long: [acc.long, el.long].join(', '),
-                            env: util.mergeEnvironment(acc.env || {}, el.env || {}),
+                            env: util.mergeEnvironment(acc.env || {}, el.env || {})
                           }),
                           init);
   }
@@ -333,7 +328,7 @@ export class VariantManager implements vscode.Disposable {
     const invalid_variant = {
       key: '__invalid__',
       short: 'Unknown',
-      long: 'Unknwon',
+      long: 'Unknwon'
     };
     const kws = this.stateManager.activeVariantSettings;
     if (!kws) {
@@ -366,19 +361,19 @@ export class VariantManager implements vscode.Disposable {
     const variants = this._variants.settings.map(setting => setting.choices.map(opt => ({
                                                                                   settingKey: setting.name,
                                                                                   settingValue: opt.key,
-                                                                                  settings: opt,
+                                                                                  settings: opt
                                                                                 })));
     const product = util.product(variants);
     const items: VariantCombination[]
         = product.map(optionset => ({
                         label: optionset.map(o => o.settings.short).join(' + '),
                         keywordSettings: this.transformChoiceCombinationToKeywordSettings(optionset),
-                        description: optionset.map(o => o.settings.long).join(' + '),
+                        description: optionset.map(o => o.settings.long).join(' + ')
                       }));
     if (name) {
       for (const item of items) {
         if (name === item.label) {
-          this.publishActiveKeywordSettings(item.keywordSettings);
+          await this.publishActiveKeywordSettings(item.keywordSettings);
           return true;
         }
       }
@@ -399,13 +394,13 @@ export class VariantManager implements vscode.Disposable {
 
       telemetry.logEvent('variantSelection', telemetryProperties);
 
-      this.publishActiveKeywordSettings(chosen.keywordSettings);
+      await this.publishActiveKeywordSettings(chosen.keywordSettings);
       return true;
     }
   }
 
-  publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
-    this.stateManager.activeVariantSettings = keywordSettings;
+  async publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
+    await this.stateManager.setActiveVariantSettings(keywordSettings);
     this._activeVariantChanged.fire();
   }
 
@@ -413,7 +408,7 @@ export class VariantManager implements vscode.Disposable {
     return this.stateManager.activeVariantSettings;
   }
 
-  transformChoiceCombinationToKeywordSettings(choiceCombination: {settingKey: string, settingValue: string}[]):
+  transformChoiceCombinationToKeywordSettings(choiceCombination: {settingKey: string; settingValue: string}[]):
       Map<string, string> {
     const keywords = new Map<string, string>();
     choiceCombination.forEach(kv => keywords.set(kv.settingKey, kv.settingValue));
@@ -423,7 +418,7 @@ export class VariantManager implements vscode.Disposable {
   findDefaultChoiceCombination(): Map<string, string> {
     const defaults = this._variants.settings.map(setting => ({
                                                    settingKey: setting.name,
-                                                   settingValue: setting.default,
+                                                   settingValue: setting.default
                                                  }));
     return this.transformChoiceCombinationToKeywordSettings(Array.from(defaults));
   }
@@ -433,7 +428,7 @@ export class VariantManager implements vscode.Disposable {
 
     if (this.stateManager.activeVariantSettings === null) {
       const defaultChoices = this.findDefaultChoiceCombination();
-      this.publishActiveKeywordSettings(defaultChoices);
+      await this.publishActiveKeywordSettings(defaultChoices);
     }
   }
 }

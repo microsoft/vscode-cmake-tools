@@ -5,7 +5,6 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import {CMakeCache} from '@cmt/cache';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
@@ -84,7 +83,7 @@ function parseTargetArch(target: string): Architecture {
   // Value of target param is lowercased.
   const is_arm_32: (value: string) => boolean = value => {
     // ARM verions from https://en.wikipedia.org/wiki/ARM_architecture#Cores
-    if (value.indexOf('armv8-r') >=0 || value.indexOf('armv8-m') >=0) {
+    if (value.indexOf('armv8-r') >= 0 || value.indexOf('armv8-m') >= 0) {
       return true;
     } else {
       // Check if ARM version is 7 or earlier.
@@ -93,7 +92,7 @@ function parseTargetArch(target: string): Architecture {
       return verNum <= 7;
     }
   };
-  switch(target) {
+  switch (target) {
     case '-m32':
     case 'i686':
       return 'x86';
@@ -113,8 +112,12 @@ function parseTargetArch(target: string): Architecture {
     return 'arm64';
   } else if (target.indexOf('arm') >= 0 || is_arm_32(target)) {
     return 'arm';
+  } else if (target.indexOf('i686') >= 0) {
+    return 'x86';
+  } else if (target.indexOf('amd64') >= 0 || target.indexOf('x86_64') >= 0) {
+    return 'x64';
   }
-  // TODO: whitelist architecture values and add telemetry
+  // TODO: add an allow list of architecture values and add telemetry
   return undefined;
 }
 
@@ -123,8 +126,8 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
   const can_use_gnu_std = (cptVersion >= cpt.Version.v4);
   const iter = args[Symbol.iterator]();
   const extraDefinitions: string[] = [];
-  let standard: StandardVersion = undefined;
-  let targetArch: Architecture = undefined;
+  let standard: StandardVersion;
+  let targetArch: Architecture;
   while (1) {
     const {done, value} = iter.next();
     if (done) {
@@ -137,10 +140,9 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const target = lower.substring(6);
       targetArch = parseTargetArch(target);
     } else if (require_standard_target && lower === '-arch') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
@@ -151,15 +153,13 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       const target = lower.substring(9);
       targetArch = parseTargetArch(target);
     } else if (require_standard_target && lower === '-target') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
-        // TODO: whitelist architecture values and add telemetry
+        // TODO: add an allow list of architecture values and add telemetry
         continue;
       }
       targetArch = parseTargetArch(value.toLowerCase());
     } else if (value === '-D' || value === '/D') {
-      // tslint:disable-next-line:no-shadowed-variable
       const {done, value} = iter.next();
       if (done) {
         rollbar.error(localize('unexpected.end.of.arguments', 'Unexpected end of parsing command line arguments'));
@@ -171,14 +171,14 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
       extraDefinitions.push(def);
     } else if (value.startsWith('-std=') || lower.startsWith('-std:') || lower.startsWith('/std:')) {
       const std = value.substring(5);
-      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA' ) {
+      if (lang === 'CXX' || lang === 'OBJCXX' || lang === 'CUDA') {
         const s = parseCppStandard(std, can_use_gnu_std);
         if (!s) {
           log.warning(localize('unknown.control.gflag.cpp', 'Unknown C++ standard control flag: {0}', value));
         } else {
           standard = s;
         }
-      } else if (lang === 'C' || lang === 'OBJC' ) {
+      } else if (lang === 'C' || lang === 'OBJC') {
         const s = parseCStandard(std, can_use_gnu_std);
         if (!s) {
           log.warning(localize('unknown.control.gflag.c', 'Unknown C standard control flag: {0}', value));
@@ -211,7 +211,7 @@ export function parseCompileFlags(cptVersion: cpt.Version, args: string[], lang?
  * and target architecture parsed from compiler flags.
  */
 export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: string, target_arch: Architecture) {
-  if (cptVersion >= cpt.Version.v5) {
+  if (cptVersion >= cpt.Version.v5 && target_arch === undefined) {
     // IntelliSenseMode is optional for CppTools v5+ and is determined by CppTools.
     return undefined;
   }
@@ -279,35 +279,6 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
       return 'gcc-x64';
     }
   }
-}
-
-/**
- * Type given when updating the configuration data stored in the file index.
- */
-export interface CodeModelParams {
-  /**
-   * The CMake codemodel content. This is the important one.
-   */
-  codeModel: codemodel_api.CodeModelContent;
-  /**
-   * The contents of the CMakeCache.txt, which also provides supplementary
-   * configuration information.
-   */
-  cache: CMakeCache;
-  /**
-   * The path to `cl.exe`, if necessary. VS generators will need this property
-   * because the compiler path is not available via the `kit` nor `cache`
-   * property.
-   */
-  clCompilerPath?: string|null;
-  /**
-   * The active target
-   */
-  activeTarget: string|null;
-  /**
-   * Workspace folder full path.
-   */
-  folder: string;
 }
 
 /**
@@ -406,15 +377,15 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
+  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: codemodel_api.CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
     // First try to get toolchain values directly reported by CMake. Check the
     // group's language compiler, then the C++ compiler, then the C compiler.
-    const comp_toolchains = opts.codeModel.toolchains?.get(lang ?? "")
-        || opts.codeModel.toolchains?.get('CXX')
-        || opts.codeModel.toolchains?.get('C');
+    const comp_toolchains: codemodel_api.CodeModelToolchain | undefined = opts.codeModelContent.toolchains?.get(lang ?? "")
+        || opts.codeModelContent.toolchains?.get('CXX')
+        || opts.codeModelContent.toolchains?.get('C');
     // If none of those work, fall back to the same order, but in the cache.
     const comp_cache = opts.cache.get(`CMAKE_${lang}_COMPILER`)
         || opts.cache.get('CMAKE_CXX_COMPILER')
@@ -424,6 +395,11 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     if (!comp_path) {
       throw new MissingCompilerException();
     }
+
+    const targetFromToolchains = comp_toolchains?.target;
+    const targetArchFromToolchains = targetFromToolchains
+      ? parseTargetArch(targetFromToolchains) : undefined;
+
     const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
     const {standard, extraDefinitions, targetArch} = parseCompileFlags(this.cpptoolsVersion, flags, lang);
@@ -455,7 +431,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       defines,
       standard,
       includePath: normalizedIncludePath,
-      intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArch),
+      intelliSenseMode: getIntelliSenseMode(this.cpptoolsVersion, comp_path, targetArchFromToolchains ?? targetArch),
       compilerPath: normalizedCompilerPath || undefined,
       compilerArgs: flags || undefined
     };
@@ -470,7 +446,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _updateFileGroup(sourceDir: string,
                            grp: codemodel_api.CodeModelFileGroup,
-                           opts: CodeModelParams,
+                           opts: codemodel_api.CodeModelParams,
                            target: TargetDefaults,
                            sysroot: string) {
     const configuration = this._buildConfigurationData(grp, opts, target, sysroot);
@@ -486,7 +462,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         const data = new Map<string, cpt.SourceFileConfigurationItem>();
         data.set(target.name, {
           uri: vscode.Uri.file(abs).toString(),
-          configuration,
+          configuration
         });
         this._fileIndex.set(abs_norm, data);
       }
@@ -515,49 +491,53 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * Update the file index and code model
    * @param opts Update parameters
    */
-  updateConfigurationData(opts: CodeModelParams) {
+  updateConfigurationData(opts: codemodel_api.CodeModelParams) {
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
-    for (const config of opts.codeModel.configurations) {
-      for (const project of config.projects) {
-        for (const target of project.targets) {
-          /// Now some shenanigans since header files don't have config data:
-          /// 1. Accumulate some "defaults" based on the set of all options for each file group
-          /// 2. Pass these "defaults" down when rebuilding the config data
-          /// 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
-          const grps = target.fileGroups || [];
-          const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-          const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
-          const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-          const sysroot = target.sysroot || '';
-          for (const grp of target.fileGroups || []) {
-            try {
-              this._updateFileGroup(
-                  target.sourceDirectory || '',
-                  grp,
-                  opts,
-                  {
-                    name: target.name,
-                    compileFlags,
-                    includePath,
-                    defines,
-                  },
-                  sysroot
-              );
-            } catch (e) {
-              if (e instanceof MissingCompilerException) {
-                hadMissingCompilers = true;
-              } else {
-                throw e;
+    for (const config of opts.codeModelContent.configurations) {
+      // Update only the active build type variant.
+      if (config.name === opts.activeBuildTypeVariant) {
+        for (const project of config.projects) {
+          for (const target of project.targets) {
+            // Now some shenanigans since header files don't have config data:
+            // 1. Accumulate some "defaults" based on the set of all options for each file group
+            // 2. Pass these "defaults" down when rebuilding the config data
+            // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+            const grps = target.fileGroups || [];
+            const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
+            const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
+            const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
+            const sysroot = target.sysroot || '';
+            for (const grp of target.fileGroups || []) {
+              try {
+                this._updateFileGroup(
+                    target.sourceDirectory || '',
+                    grp,
+                    opts,
+                    {
+                      name: target.name,
+                      compileFlags,
+                      includePath,
+                      defines
+                    },
+                    sysroot
+                );
+              } catch (e) {
+                if (e instanceof MissingCompilerException) {
+                  hadMissingCompilers = true;
+                } else {
+                  throw e;
+                }
               }
             }
           }
         }
+        break;
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
-      vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
+      void vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
         'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
