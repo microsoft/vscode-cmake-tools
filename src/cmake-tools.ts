@@ -508,12 +508,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         let showCMakeLists: boolean = await expShowCMakeLists();
         const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
         if (showCMakeLists) {
-          if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
-            telemetryProperties["ignoreExperiment"] = "false";
-          } else {
-            telemetryProperties["ignoreExperiment"] = "true";
-            showCMakeLists = false;
-          }
+          showCMakeLists = existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0;
+          telemetryProperties["ignoreExperiment"] = (!showCMakeLists).toString();
         }
 
         telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
