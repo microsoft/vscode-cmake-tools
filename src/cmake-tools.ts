@@ -505,12 +505,18 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         const changeSourceDirectory = localize('edit.setting', "Locate");
         const ignoreCMakeListsMissing = localize('ignore.activation', "Don't show again");
 
-        const showCMakeLists: boolean = await expShowCMakeLists();
+        let showCMakeLists: boolean = await expShowCMakeLists();
         const existingCmakeListsFiles: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
-        telemetryProperties["missingCMakeListsPopupType"] = (showCMakeLists && existingCmakeListsFiles && existingCmakeListsFiles.length > 0) ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
         if (showCMakeLists) {
-          telemetryProperties["ignoreExperiment"] = (!existingCmakeListsFiles || existingCmakeListsFiles.length === 0).toString();
+          if (existingCmakeListsFiles !== undefined && existingCmakeListsFiles.length > 0) {
+            telemetryProperties["ignoreExperiment"] = "false";
+          } else {
+            telemetryProperties["ignoreExperiment"] = "true";
+            showCMakeLists = false;
+          }
         }
+
+        telemetryProperties["missingCMakeListsPopupType"] = showCMakeLists ? "selectFromAllCMakeLists" : "toastCreateLocateIgnore";
 
         const result = showCMakeLists ? changeSourceDirectory : await vscode.window.showErrorMessage(
             localize('missing.cmakelists', 'CMakeLists.txt was not found in the root of the folder \'{0}\'. How would you like to proceed?', this.folderName),
