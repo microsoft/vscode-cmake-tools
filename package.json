@@ -1026,7 +1026,7 @@
           "type": "string",
           "default": null,
           "description": "%cmake-tools.configuration.cmake.installPrefix.description%",
-          "scope": "resource"
+          "scope": "machine-overridable"
         },
         "cmake.sourceDirectory": {
           "type": "string",
