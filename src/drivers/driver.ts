@@ -318,6 +318,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {vars, variantVars};
   }
 
+  static sourceDirDxpansionOptions(workspaceFolderFspath: string | null): expand.ExpansionOptions {
+    const ws_root = util.lightNormalizePath(workspaceFolderFspath || '.');
+
+    // Fill in default replacements
+    const vars: expand.MinimalPresetContextVars = {
+      generator: 'generator',
+      workspaceFolder: ws_root,
+      workspaceFolderBasename: path.basename(ws_root),
+      workspaceHash: util.makeHashString(ws_root),
+      workspaceRoot: ws_root,
+      workspaceRootFolderName: path.basename(ws_root),
+      userHome: paths.userHome
+    };
+
+    return { vars };
+  }
+
   getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {
     const cur_env = process.env as proc.EnvironmentVariables;
     const kit_env = (this.config.ignoreKitEnv) ? {} : getKitEnvironmentVariablesObject(this._kitEnvironmentVariables);
@@ -597,9 +614,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug('Run _refreshExpansions');
     return this.doRefreshExpansions(async () => {
       log.debug('Run _refreshExpansions cb');
+      this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirDxpansionOptions(this.workspaceFolder)));
+
       const opts = this.expansionOptions;
       opts.envOverride = await this.getConfigureEnvironment();
-      this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, opts));
 
       if (!this.useCMakePresets) {
         this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
@@ -1619,13 +1637,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Load up kit or presets before starting any drivers.
     if (useCMakePresets) {
       if (configurePreset) {
-        await this.setConfigurePreset(configurePreset);
+        await this._setConfigurePreset(configurePreset);
       }
       if (buildPreset) {
-        await this.setBuildPreset(buildPreset);
+        await this._setBuildPreset(buildPreset);
       }
       if (testPreset) {
-        await this.setTestPreset(testPreset);
+        await this._setTestPreset(testPreset);
       }
     } else if (kit) {
       await this._setKit(kit, preferredGenerators);
