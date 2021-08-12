@@ -741,8 +741,7 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
       vars.set('PATH', `${newWinSdkBinPath};${existPath}`);
     }
   }
-  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}',
-    devbat, args.join(' '), JSON.stringify([...vars], null, 2)));
+  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
   return vars;
 }
 
