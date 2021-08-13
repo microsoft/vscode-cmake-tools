@@ -1902,13 +1902,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return null;
     }
 
-    let user_config = this.workspaceContext.config.debugConfig;
+    const user_config = this.workspaceContext.config.debugConfig;
     let launchEnv: EnvironmentVariables = {};
 
     // Add environment variables from buildPreset.
     const drv = await this.getCMakeDriverInstance();
     if (user_config.environment) {
-      let debugConfigEnvironment: [{name: string, value: string}] = user_config.environment;
+      const debugConfigEnvironment: [{name: string; value: string}] = user_config.environment;
       debugConfigEnvironment.forEach (envVar => {
         launchEnv[envVar.name] = envVar.value;
       });
