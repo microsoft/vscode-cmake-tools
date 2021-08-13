@@ -9,6 +9,9 @@ import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit } from '@cmt/kit';
 import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
+import { platform } from 'os';
+import { promisify } from 'util';
+import { exec } from 'child_process';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -392,6 +395,72 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
   return preset.vendor || null;
 }
 
+async function getHostSystemName(): Promise<string> {
+  if (platform() === "win32") {
+    return "Windows";
+  }
+  else
+  {
+    return promisify(exec)('uname -s').then(
+      (result: any) => result.stdout.trim(),
+      (_: any) => 'unknown'
+    );
+  }
+}
+
+function memoize<T>(fn: () => T) {
+  var result: T;
+
+  return () => {
+    if (result) {
+      return result;
+    }
+    else {
+      return result = fn();
+    }
+  }
+}
+
+let getHostSystemNameMemo = memoize(getHostSystemName);
+
+async function getExpansionOptions(folder: string,
+                                   workspaceFolder: string,
+                                   sourceDir: string,
+                                   preset: ConfigurePreset | BuildPreset | TestPreset) {
+  const generator = 'generator' in preset
+    ? preset.generator
+    : ('__generator' in preset ? preset.__generator : undefined);
+
+  const expansionOpts: ExpansionOptions = {
+    vars: {
+      generator: generator || 'null',
+      workspaceFolder,
+      workspaceFolderBasename: path.basename(workspaceFolder),
+      workspaceHash: util.makeHashString(workspaceFolder),
+      workspaceRoot: workspaceFolder,
+      workspaceRootFolderName: path.dirname(workspaceFolder),
+      userHome: paths.userHome,
+      sourceDir,
+      sourceParentDir: path.dirname(sourceDir),
+      sourceDirName: path.basename(sourceDir),
+      presetName: preset.name
+    },
+    envOverride: preset.environment as EnvironmentVariables,
+    recursive: true,
+    // Don't support commands since expansion might be called on activation. If there is
+    // an extension depending on us, and there is a command in this extension is invoked,
+    // this would be a deadlock. This could be avoided but at a huge cost.
+    doNotSupportCommands: true
+  };
+
+  const presetsFile = getPresetsFile(folder);
+  if (presetsFile && presetsFile.version >= 3) {
+    expansionOpts.vars['hostSystemName'] = await getHostSystemNameMemo();
+  }
+
+  return expansionOpts;
+}
+
 export async function expandConfigurePreset(folder: string,
                                             name: string,
                                             workspaceFolder: string,
@@ -411,27 +480,7 @@ export async function expandConfigurePreset(folder: string,
 
   // Expand strings under the context of current preset
   const expandedPreset: ConfigurePreset = { name };
-  const expansionOpts: ExpansionOptions = {
-    vars: {
-      generator: preset.generator || 'null',
-      workspaceFolder,
-      workspaceFolderBasename: path.basename(workspaceFolder),
-      workspaceHash: util.makeHashString(workspaceFolder),
-      workspaceRoot: workspaceFolder,
-      workspaceRootFolderName: path.dirname(workspaceFolder),
-      userHome: paths.userHome,
-      sourceDir,
-      sourceParentDir: path.dirname(sourceDir),
-      sourceDirName: path.basename(sourceDir),
-      presetName: preset.name
-    },
-    envOverride: preset.environment as EnvironmentVariables,
-    recursive: true,
-    // Don't support commands since expansion might be called on activation. If there is
-    // an extension depending on us, and there is a command in this extension is invoked,
-    // this would be a deadlock. This could be avoided but at a huge cost.
-    doNotSupportCommands: true
-  };
+  const expansionOpts: ExpansionOptions = await getExpansionOptions(folder, workspaceFolder, sourceDir, preset);
 
   // Expand environment vars first since other fields may refer to them
   if (preset.environment) {
@@ -848,27 +897,7 @@ export async function expandBuildPreset(folder: string,
 
   // Expand strings under the context of current preset
   const expandedPreset: BuildPreset = { name };
-  const expansionOpts: ExpansionOptions = {
-    vars: {
-      generator: preset.__generator || 'null',
-      workspaceFolder,
-      workspaceFolderBasename: path.basename(workspaceFolder),
-      workspaceHash: util.makeHashString(workspaceFolder),
-      workspaceRoot: workspaceFolder,
-      workspaceRootFolderName: path.dirname(workspaceFolder),
-      userHome: paths.userHome,
-      sourceDir,
-      sourceParentDir: path.dirname(sourceDir),
-      sourceDirName: path.basename(sourceDir),
-      presetName: preset.name
-    },
-    envOverride: preset.environment as EnvironmentVariables,
-    recursive: true,
-    // Don't support commands since expansion might be called on activation. If there is
-    // an extension depending on us, and there is a command in this extension is invoked,
-    // this would be a deadlock. This could be avoided but at a huge cost.
-    doNotSupportCommands: true
-  };
+  const expansionOpts: ExpansionOptions = await getExpansionOptions(folder, workspaceFolder, sourceDir, preset);
 
   // Expand environment vars first since other fields may refer to them
   if (preset.environment) {
@@ -1029,27 +1058,7 @@ export async function expandTestPreset(folder: string,
   }
 
   const expandedPreset: TestPreset = { name };
-  const expansionOpts: ExpansionOptions = {
-    vars: {
-      generator: preset.__generator || 'null',
-      workspaceFolder,
-      workspaceFolderBasename: path.basename(workspaceFolder),
-      workspaceHash: util.makeHashString(workspaceFolder),
-      workspaceRoot: workspaceFolder,
-      workspaceRootFolderName: path.dirname(workspaceFolder),
-      userHome: paths.userHome,
-      sourceDir,
-      sourceParentDir: path.dirname(sourceDir),
-      sourceDirName: path.basename(sourceDir),
-      presetName: preset.name
-    },
-    envOverride: preset.environment as EnvironmentVariables,
-    recursive: true,
-    // Don't support commands since expansion might be called on activation. If there is
-    // an extension depending on us, and there is a command in this extension is invoked,
-    // this would be a deadlock. This could be avoided but at a huge cost.
-    doNotSupportCommands: true
-  };
+  const expansionOpts: ExpansionOptions = await getExpansionOptions(folder, workspaceFolder, sourceDir, preset);
 
   // Expand environment vars first since other fields may refer to them
   if (preset.environment) {
