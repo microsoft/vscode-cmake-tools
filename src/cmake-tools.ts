@@ -1855,7 +1855,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Add debug configuration from settings.
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
-    // Add environment variables from buildPreset.
+    // Add environment variables from configurePreset.
     if (this.configurePreset?.environment) {
       const configure_preset_environment = await drv.getConfigureEnvironment();
       debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.splitEnvironmentVars(configure_preset_environment)) : {};
@@ -1905,7 +1905,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     const user_config = this.workspaceContext.config.debugConfig;
     let launchEnv: EnvironmentVariables = {};
 
-    // Add environment variables from buildPreset.
     const drv = await this.getCMakeDriverInstance();
     if (user_config.environment) {
       const debugConfigEnvironment: [{name: string; value: string}] = user_config.environment;
@@ -1914,6 +1913,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       });
     }
 
+    // Add environment variables from configurePreset.
     if (drv && this.configurePreset?.environment) {
       const configure_preset_environment = await drv.getConfigureEnvironment();
       launchEnv = util.mergeEnvironment(launchEnv, configure_preset_environment);
