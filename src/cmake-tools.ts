@@ -30,7 +30,7 @@ import {CMakeGenerator, Kit} from './kit';
 import {LegacyCMakeDriver} from '@cmt/drivers/legacy-driver';
 import * as logging from './logging';
 import {fs} from './pr';
-import {buildCmdStr} from './proc';
+import {buildCmdStr, EnvironmentVariables} from './proc';
 import {Property} from './prop';
 import rollbar from './rollbar';
 import * as telemetry from './telemetry';
@@ -1855,10 +1855,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Add debug configuration from settings.
     const user_config = this.workspaceContext.config.debugConfig;
     Object.assign(debug_config, user_config);
-    // Add environment variables from buildPreset.
-    if (this.buildPreset?.environment) {
-      const build_preset_environment = await drv.getConfigureEnvironment();
-      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.splitEnvironmentVars(build_preset_environment)) : {};
+    // Add environment variables from configurePreset.
+    if (this.configurePreset?.environment) {
+      const configure_preset_environment = await drv.getConfigureEnvironment();
+      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.splitEnvironmentVars(configure_preset_environment)) : {};
     }
 
     log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
@@ -1901,31 +1901,45 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       // a target.
       return null;
     }
+
     const user_config = this.workspaceContext.config.debugConfig;
+    let launchEnv: EnvironmentVariables = {};
+
     const drv = await this.getCMakeDriverInstance();
-    // Add environment variables from buildPreset.
-    if (drv && this.buildPreset?.environment) {
-      const build_preset_environment = await drv.getConfigureEnvironment();
-      user_config.environment = user_config.environment ? user_config.environment.concat(util.splitEnvironmentVars(build_preset_environment)) : {};
+    if (user_config.environment) {
+      const debugConfigEnvironment: [{name: string; value: string}] = user_config.environment;
+      debugConfigEnvironment.forEach (envVar => {
+        launchEnv[envVar.name] = envVar.value;
+      });
     }
+
+    // Add environment variables from configurePreset.
+    if (drv && this.configurePreset?.environment) {
+      const configure_preset_environment = await drv.getConfigureEnvironment();
+      launchEnv = util.mergeEnvironment(launchEnv, configure_preset_environment);
+    }
+
     const termOptions: vscode.TerminalOptions = {
       name: 'CMake/Launch',
+      env: launchEnv,
       cwd: (user_config && user_config.cwd) || path.dirname(executable.path)
     };
+
     if (process.platform === 'win32') {
       // Use cmd.exe on Windows
       termOptions.shellPath = paths.windows.ComSpec;
     }
+
     if (!this._launchTerminal) {
       this._launchTerminal = vscode.window.createTerminal(termOptions);
     }
-    const quoted = shlex.quote(executable.path);
 
     let launchArgs = '';
     if (user_config && user_config.args) {
         launchArgs = user_config.args.join(" ");
     }
 
+    const quoted = shlex.quote(executable.path);
     this._launchTerminal.sendText(`${quoted} ${launchArgs}`);
     this._launchTerminal.show(true);
     return this._launchTerminal;
