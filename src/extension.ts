@@ -462,6 +462,10 @@ class ExtensionManager implements vscode.Disposable {
   // (does have a valid CMakeLists.txt at the location pointed to by the "cmake.sourceDirectory" setting)
   // and also stores the answer in a map for later use.
   async folderIsCMakeProject(cmt: CMakeTools): Promise<boolean> {
+    if (this._foldersAreCMake.get(cmt.folderName)) {
+      return true;
+    }
+
     const optsVars: KitContextVars = {
       userHome: paths.userHome,
       workspaceFolder: cmt.workspaceContext.folder.uri.fsPath,
@@ -1376,7 +1380,7 @@ class ExtensionManager implements vscode.Disposable {
   // without recalculating the valid states of CMakeLists.txt.
   async workspaceHasCMakeProject(): Promise<boolean> {
     for (const cmtFolder of this._folders) {
-      if (this._foldersAreCMake.get(cmtFolder.cmakeTools.folderName)) {
+      if (await this.folderIsCMakeProject(cmtFolder.cmakeTools)) {
         return true;
       }
     }
