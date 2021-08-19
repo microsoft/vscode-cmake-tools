@@ -215,7 +215,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
 
     // Dup args so we can modify them
     const args = Array.from(args_);
-    args.push(`-S${util.lightNormalizePath(this.sourceDir)}`);
+    args.push(`-H${util.lightNormalizePath(this.sourceDir)}`);
     const bindir = util.lightNormalizePath(this.binaryDir);
     args.push(`-B${bindir}`);
     const gen = this.generator;
