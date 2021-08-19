@@ -573,15 +573,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
               // doesn't need to fire the settings change event (which would trigger unnecessarily
               // another immediate configure, which will be blocked anyway).
               config.updatePartial({ sourceDirectory: relPath }, false);
-              if (!isConfiguring) {
-                telemetry.logEvent(telemetryEvent, telemetryProperties);
-                return vscode.commands.executeCommand('cmake.configure');
-              }
 
               // Since the source directory is set via a file open dialog tuned to CMakeLists.txt,
               // we know that it exists and we don't need any other additional checks on its value,
               // so simply enable full feature set.
               await enableFullFeatureSet(true);
+
+              if (!isConfiguring) {
+                telemetry.logEvent(telemetryEvent, telemetryProperties);
+                return vscode.commands.executeCommand('cmake.configure');
+              }
             }
           }
         } else if (result === ignoreCMakeListsMissing) {
