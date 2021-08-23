@@ -603,7 +603,6 @@ const MSVC_ENVIRONMENT_VARIABLES = [
   'LIBPATH',
   'NETFXSDKDir',
   'Path',
-  'Platform',
   'UCRTVersion',
   'UniversalCRTSdkDir',
   'user_inputversion',
