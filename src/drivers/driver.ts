@@ -318,7 +318,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {vars, variantVars};
   }
 
-  static sourceDirDxpansionOptions(workspaceFolderFspath: string | null): expand.ExpansionOptions {
+  static sourceDirExpansionOptions(workspaceFolderFspath: string | null): expand.ExpansionOptions {
     const ws_root = util.lightNormalizePath(workspaceFolderFspath || '.');
 
     // Fill in default replacements
@@ -614,7 +614,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     log.debug('Run _refreshExpansions');
     return this.doRefreshExpansions(async () => {
       log.debug('Run _refreshExpansions cb');
-      this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirDxpansionOptions(this.workspaceFolder)));
+      this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
 
       const opts = this.expansionOptions;
       opts.envOverride = await this.getConfigureEnvironment();

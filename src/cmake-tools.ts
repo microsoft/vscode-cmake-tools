@@ -177,7 +177,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
                                                                          configurePreset,
                                                                          lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                                         await this.sourceDir,
+                                                                         this.sourceDir,
                                                                          true);
       this._configurePreset.set(expandedConfigurePreset);
       if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
@@ -240,7 +240,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const expandedBuildPreset = await preset.expandBuildPreset(this.folder.uri.fsPath,
                                                                  buildPreset,
                                                                  lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                                 await this.sourceDir,
+                                                                 this.sourceDir,
                                                                  true,
                                                                  this.configurePreset?.name);
       this._buildPreset.set(expandedBuildPreset);
@@ -295,7 +295,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const expandedTestPreset = await preset.expandTestPreset(this.folder.uri.fsPath,
                                                                testPreset,
                                                                lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                               await this.sourceDir,
+                                                               this.sourceDir,
                                                                true,
                                                                this.configurePreset?.name);
       this._testPreset.set(expandedTestPreset);
@@ -399,10 +399,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   });
 
   private readonly _sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () =>
-    this._sourceDir = Promise.resolve(
-      await util.normalizeAndVerifySourceDir(
-        await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirDxpansionOptions(this.folder.uri.fsPath))
-      )
+    this._sourceDir = await util.normalizeAndVerifySourceDir(
+      await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
     )
   );
 
@@ -781,10 +779,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   private async _init() {
     log.debug(localize('second.phase.init', 'Starting CMakeTools second-phase init'));
 
-    this._sourceDir = Promise.resolve(
-      await util.normalizeAndVerifySourceDir(
-        await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirDxpansionOptions(this.folder.uri.fsPath))
-      )
+    this._sourceDir = await util.normalizeAndVerifySourceDir(
+      await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
     );
 
     // Start up the variant manager
@@ -828,7 +824,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await this._cacheEditorWebview.refreshPanel();
       }
 
-      const sourceDirectory = (await this.sourceDir).toLowerCase();
+      const sourceDirectory = this.sourceDir.toLowerCase();
       if (str === path.join(sourceDirectory, "cmakelists.txt")) {
         // CMakeLists.txt change event: its creation or deletion are relevant,
         // so update full/partial feature set view for this folder.
@@ -1233,7 +1229,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake Tools'));
     }
     log.showChannel();
-    const consumer = new CMakeOutputConsumer(await this.sourceDir, CMAKE_LOGGER);
+    const consumer = new CMakeOutputConsumer(this.sourceDir, CMAKE_LOGGER);
     const retc = await cb(consumer);
     populateCollection(collections.cmake, consumer.diagnostics);
     return retc;
@@ -1971,8 +1967,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -2;
     }
 
-    const sourceDir = await this.sourceDir;
-    const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
+    const mainListFile = path.join(this.sourceDir, 'CMakeLists.txt');
 
     if (await fs.exists(mainListFile)) {
       void vscode.window.showErrorMessage(localize('cmakelists.already.configured', 'A CMakeLists.txt is already configured!'));
@@ -2023,8 +2018,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     ].join('\n');
 
     if (type === 'Library') {
-      if (!(await fs.exists(path.join(sourceDir, project_name + '.cpp')))) {
-        await fs.writeFile(path.join(sourceDir, project_name + '.cpp'), [
+      if (!(await fs.exists(path.join(this.sourceDir, project_name + '.cpp')))) {
+        await fs.writeFile(path.join(this.sourceDir, project_name + '.cpp'), [
           '#include <iostream>',
           '',
           'void say_hello(){',
@@ -2034,8 +2029,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         ].join('\n'));
       }
     } else {
-      if (!(await fs.exists(path.join(sourceDir, 'main.cpp')))) {
-        await fs.writeFile(path.join(sourceDir, 'main.cpp'), [
+      if (!(await fs.exists(path.join(this.sourceDir, 'main.cpp')))) {
+        await fs.writeFile(path.join(this.sourceDir, 'main.cpp'), [
           '#include <iostream>',
           '',
           'int main(int, char**) {',
@@ -2063,7 +2058,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await this.workspaceContext.state.reset();
   }
 
-  private _sourceDir = Promise.resolve('');
+  private _sourceDir = '';
   get sourceDir() {
     // Don't get this from the driver. Source dir is required to evaluate presets.
     // Presets contain generator info. Generator info is required for server api.
