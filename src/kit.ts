@@ -603,7 +603,6 @@ const MSVC_ENVIRONMENT_VARIABLES = [
   'LIBPATH',
   'NETFXSDKDir',
   'Path',
-  'Platform',
   'UCRTVersion',
   'UniversalCRTSdkDir',
   'user_inputversion',
@@ -851,7 +850,8 @@ const VsGenerators: {[key: string]: string} = {
   VS140COMNTOOLS: 'Visual Studio 14 2015',
   14: 'Visual Studio 14 2015',
   15: 'Visual Studio 15 2017',
-  16: 'Visual Studio 16 2019'
+  16: 'Visual Studio 16 2019',
+  17: 'Visual Studio 17 2022'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string>|null> {
