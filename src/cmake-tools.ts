@@ -1119,6 +1119,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                   await setContextValue(IS_CONFIGURING_KEY, false);
                 }
                 if (retc === 0) {
+                  await enableFullFeatureSet(true);
                   await this._refreshCompileDatabase(drv.expansionOptions);
                 }
 

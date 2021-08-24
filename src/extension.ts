@@ -206,6 +206,10 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     const isFullyActivated: boolean = await this.workspaceHasCMakeProject();
+    if (isFullyActivated) {
+      await enableFullFeatureSet(true);
+    }
+
     const telemetryProperties: telemetry.Properties = {
       isMultiRoot: `${isMultiRoot}`,
       isFullyActivated: `${isFullyActivated}`
@@ -496,11 +500,6 @@ class ExtensionManager implements vscode.Disposable {
 
     const isCMake = await fs.exists(expandedSourceDirectory);
     this._foldersAreCMake.set(cmt.folderName, isCMake);
-
-    // If we found a valid CMake project, set feature set view to full, otherwise leave the UI as it was.
-    if (isCMake) {
-      await enableFullFeatureSet(true);
-    }
 
     return isCMake;
   }
@@ -1526,9 +1525,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
 
-  // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
-  await enableFullFeatureSet(false);
-
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
     return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {
@@ -1695,13 +1691,16 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
-    // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
-    // because the publisher changed (from vector-of-bool into ms-vscode),
-    // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
-    const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
-    if (oldCMakeToolsExtension) {
-        await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
-    }
+  // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
+  // because the publisher changed (from vector-of-bool into ms-vscode),
+  // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
+  const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+  if (oldCMakeToolsExtension) {
+      await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
+  }
+
+  // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
+  await enableFullFeatureSet(false);
 
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
