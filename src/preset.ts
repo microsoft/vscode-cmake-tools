@@ -494,6 +494,23 @@ export async function expandConfigurePreset(folder: string,
 
   expansionOpts.envOverride = expandedPreset.environment as EnvironmentVariables;
 
+  const presetsFile = getPresetsFile(folder);
+  if (presetsFile && presetsFile.version >= 3) {
+    // For presets v3+ binaryDir and generator are optional, but cmake-tools needs a value. Default to something reasonable.
+    if (!preset.binaryDir) {
+      let defaultValue =  '${sourceDir}/out/build/${presetName}';
+
+      log.warning(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value "{1}"', preset.name, defaultValue));
+      preset.binaryDir = defaultValue;
+    }
+    if (!preset.generator) {
+      let defaultValue = 'Ninja';
+
+      log.warning(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value "{1}"', preset.name, defaultValue));
+      preset.generator = defaultValue;
+    }
+  }
+
   // Expand other fields
   if (preset.binaryDir) {
     expandedPreset.binaryDir = util.lightNormalizePath(await expandString(preset.binaryDir, expansionOpts));
@@ -501,6 +518,7 @@ export async function expandConfigurePreset(folder: string,
       expandedPreset.binaryDir = util.resolvePath(expandedPreset.binaryDir, sourceDir);
     }
   }
+
   if (preset.cmakeExecutable) {
     expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts));
   }
