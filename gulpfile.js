@@ -272,7 +272,7 @@ const lintReporter = results => {
 
   results.forEach(result => {
     if (result.errorCount || result.warningCount) {
-        const filePath = result.filePath.replaceAll('\\', '/');
+        const filePath = result.filePath.replace(/\\/g, '/');
         errorCount += result.errorCount;
         warningCount += result.warningCount;
         fixableErrorCount += result.fixableErrorCount;

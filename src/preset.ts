@@ -7,7 +7,7 @@ import * as logging from '@cmt/logging';
 import { EnvironmentVariables, execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit } from '@cmt/kit';
+import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit, targetArchFromGeneratorPlatform } from '@cmt/kit';
 import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -666,9 +666,8 @@ async function expandConfigurePresetHelper(folder: string,
             const kit = kits[i];
             if (kit.visualStudio && !kit.compilers) {
               const version = vsVersions.get(kit.visualStudio);
-              if (kit.preferredGenerator &&
-                  (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
-                  kit.preferredGenerator.toolset === ('host=' + toolset.host)) {
+              if (kit.preferredGenerator && targetArchFromGeneratorPlatform(kit.preferredGenerator.platform) === arch &&
+                  (kit.visualStudioArchitecture === toolset.host || kit.preferredGenerator.toolset === ('host=' + toolset.host))) {
                 if (toolset.version && version?.startsWith(toolset.version)) {
                   latestVsVersion = version;
                   latestVsIndex = i;
