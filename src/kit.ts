@@ -548,7 +548,7 @@ export function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Al
   // instead of hard coding for win32 and x86.
   // Currently, there is no need of a similar overwrite operation on hostArch,
   // because CMake host target does not have the same name mismatch with VS.
-  targetArch = vsArchFromGeneratorPlatform[targetArch] || targetArch;
+  targetArch = targetArchFromGeneratorPlatform(targetArch);
 
   return (hostArch === targetArch) ? hostArch : `${hostArch}_${targetArch}`;
 }
@@ -838,6 +838,16 @@ const generatorPlatformFromVSArch: {[key: string]: string} = {
 const vsArchFromGeneratorPlatform: {[key: string]: string} = {
   win32: 'x86'
 };
+
+/**
+ * Turns 'win32' into 'x86' for target architecture.
+ */
+export function targetArchFromGeneratorPlatform(generatorPlatform?: string) {
+  if (!generatorPlatform) {
+    return undefined;
+  }
+  return vsArchFromGeneratorPlatform[generatorPlatform] || generatorPlatform;
+}
 
 /**
  * Preferred CMake VS generators by VS version
