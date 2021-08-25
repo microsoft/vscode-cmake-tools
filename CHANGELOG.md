@@ -31,7 +31,8 @@ Bug fixes:
 - Various cache variables edit/save fixes. [PR #1826](https://github.com/microsoft/vscode-cmake-tools/pull/1826) [@aemseemann](https://github.com/aemseemann)
 - Use JSON as the language mode of preset files. [#2035](https://github.com/microsoft/vscode-cmake-tools/issues/2035)
 - Fix broken links to contributing file. [PR #2016](https://github.com/microsoft/vscode-cmake-tools/pull/2016) [@andredsm](https://github.com/andredsm)
-
+- Kit scan generates incorrect kits for VS 2022 [#2054](https://github.com/microsoft/vscode-cmake-tools/issues/2054)
+- Fix presets for msvc compilers with x86 outputs [PR #2072](https://github.com/microsoft/vscode-cmake-tools/pull/2072)
 
 ## 1.7.3
 Bug fixes:
