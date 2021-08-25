@@ -88,6 +88,8 @@ export interface ConfigurePreset extends Preset {
   errors?: ErrorOptions;
   debug?: DebugOptions;
   vendor?: VendorVsSettings | VendorType;
+  toolchainFile?: string;
+  installDir?: string;
 }
 
 export interface BuildPreset extends Preset {
@@ -510,6 +512,17 @@ export async function expandConfigurePreset(folder: string,
       preset.generator = defaultValue;
     }
   }
+  else {
+    // toolchainFile and installDir added in presets v3
+    if (preset.toolchainFile) {
+      log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property "{1}" is unsupported in presets v2', preset.name, 'toolchainFile'));
+      return null;
+    }
+    if (preset.installDir) {
+      log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property "{1}" is unsupported in presets v2', preset.name, 'installDir'));
+      return null;
+    }
+  }
 
   // Expand other fields
   if (preset.binaryDir) {
@@ -521,6 +534,14 @@ export async function expandConfigurePreset(folder: string,
 
   if (preset.cmakeExecutable) {
     expandedPreset.cmakeExecutable = util.lightNormalizePath(await expandString(preset.cmakeExecutable, expansionOpts));
+  }
+
+  if (preset.installDir) {
+    expandedPreset.installDir = util.lightNormalizePath(await expandString(preset.installDir, expansionOpts));
+  }
+
+  if (preset.toolchainFile) {
+    expandedPreset.toolchainFile = util.lightNormalizePath(await expandString(preset.toolchainFile, expansionOpts));
   }
 
   if (preset.cacheVariables) {
@@ -1259,6 +1280,13 @@ export function configureArgs(preset: ConfigurePreset): string[] {
         result.push(`-D${key}:${value.type}=${value.value}`);
       }
     });
+  }
+
+  if (preset.toolchainFile) {
+    result.push(`-DCMAKE_TOOLCHAIN_FILE="${preset.toolchainFile}"`);
+  }
+  if (preset.installDir) {
+    result.push(`-DCMAKE_INSTALL_PREFIX="${preset.installDir}"`);
   }
 
   // Warnings

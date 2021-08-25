@@ -872,7 +872,11 @@ export class PresetsController {
       await this.showPresetsFileVersionError(file);
       return undefined;
     }
-    const validator = await loadSchema('schemas/CMakePresets-schema.json');
+    let schemaFile = 'schemas/CMakePresets-schema.json';
+    if (presetsFile.version === 3) {
+      schemaFile = 'schemas/CMakePresets-schema-v3.json';
+    }
+    const validator = await loadSchema(schemaFile);
     const is_valid = validator(presetsFile);
     if (!is_valid) {
       const errors = validator.errors!;
