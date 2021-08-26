@@ -727,19 +727,19 @@ export function expandConfigurePresetForPresets(folder: string, presetType: 'bui
       getConfigurePresetForPreset(folder, preset.name, presetType);
     }
     for (const preset of userBuildPresets(folder)) {
-      getConfigurePresetForPreset(folder, preset.name, presetType);
+      getConfigurePresetForPreset(folder, preset.name, presetType, true);
     }
   } else {
     for (const preset of testPresets(folder)) {
       getConfigurePresetForPreset(folder, preset.name, presetType);
     }
     for (const preset of userTestPresets(folder)) {
-      getConfigurePresetForPreset(folder, preset.name, presetType);
+      getConfigurePresetForPreset(folder, preset.name, presetType, true);
     }
   }
 }
 
-function getConfigurePresetForPreset(folder: string, name: string, presetType: 'build' | 'test'): string | null {
+function getConfigurePresetForPreset(folder: string, name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
   if (presetType === 'build') {
     const refs = referencedBuildPresets.get(folder);
     if (!refs) {
@@ -755,7 +755,7 @@ function getConfigurePresetForPreset(folder: string, name: string, presetType: '
       refs.clear();
     }
   }
-  return getConfigurePresetForPresetImpl(folder, name, presetType);
+  return getConfigurePresetForPresetImpl(folder, name, presetType, allowUserPreset);
 }
 
 function getConfigurePresetForPresetImpl(folder: string, name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
