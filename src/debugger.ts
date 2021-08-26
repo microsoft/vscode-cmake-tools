@@ -14,12 +14,14 @@ const log = createLogger('debugger');
 
 /**
  * Basically the same interface as vscode.DebugConfiguration, but we want
- * strong typing on the optional properties, so we need to redefine it.
+ * strong typing on the optional properties so we need to redefine it so
+ * it can inherit those properties.
  */
 export interface VSCodeDebugConfiguration extends CppDebugConfiguration {
   type: string;
   name: string;
   request: string;
+  program: string;
   [key: string]: any;
 }
 
@@ -27,7 +29,6 @@ export interface VSCodeDebugConfiguration extends CppDebugConfiguration {
  * interface that maps to cmake.debugConfig.
  */
 export interface CppDebugConfiguration {
-  program: string;
   symbolSearchPath?: string;
   additionalSOLibSearchPath?: string;
   externalConsole?: boolean;
@@ -35,15 +36,12 @@ export interface CppDebugConfiguration {
   visualizerFile?: string;
   args?: string[];
   cwd?: string;
-  environment?: {
-    name: string;
-    value: string;
-  }[];
+  environment?: proc.DebuggerEnvironmentVariable[];
   MIMode?: MIModes;
   miDebuggerPath?: string;
   stopAtEntry?: boolean;
-  setupCommands?: SetupCommands[];
-  customLaunchSetupCommands?: SetupCommands[];
+  setupCommands?: SetupCommand[];
+  customLaunchSetupCommands?: SetupCommand[];
   launchCompleteCommand?: string;
   dumpPath?: string;
   coreDumpPath?: string;
@@ -58,7 +56,7 @@ export interface DebuggerLogging {
   traceResponse?: boolean;
 }
 
-export interface SetupCommands {
+export interface SetupCommand {
   text?: string;
   description?: string;
   ignoreFailures?: boolean;
