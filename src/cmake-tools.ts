@@ -1860,7 +1860,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Add environment variables from configurePreset.
     if (this.configurePreset?.environment) {
       const configure_preset_environment = await drv.getConfigureEnvironment();
-      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.splitEnvironmentVars(configure_preset_environment)) : {};
+      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.splitEnvironmentVars(configure_preset_environment)) : [];
     }
 
     log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
