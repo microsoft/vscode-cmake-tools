@@ -51,6 +51,7 @@
 	"starting.cmake.driver.status": "CMake Sunucusu başlatılıyor...",
 	"unable.to.execute.cmake.command": "Geçerli CMake sürücüsü örneği olmadığından cmake komutu yürütülemiyor.",
 	"unable.to.execute.program": "Geçerli CMake sürücüsü örneği olmadığından program yürütülemiyor.",
+	"shutting.down.driver": "Shutting down CMake driver",
 	"reloading.driver": "CMake sürücüsü yeniden yükleniyor",
 	"second.phase.init": "CMake Araçları ikinci aşama başlatması başlatılıyor",
 	"active.build.variant.changed": "Etkin derleme varyantı değiştirildi",

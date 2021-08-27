@@ -51,6 +51,7 @@
 	"starting.cmake.driver.status": "Der CMake-Server wird gestartet...",
 	"unable.to.execute.cmake.command": "Der CMake-Befehl kann nicht ausgeführt werden, es ist keine gültige CMake-Treiberinstanz vorhanden.",
 	"unable.to.execute.program": "Das Programm kann nicht ausgeführt werden, es ist keine gültige CMake-Treiberinstanz vorhanden.",
+	"shutting.down.driver": "Shutting down CMake driver",
 	"reloading.driver": "Der CMake-Treiber wird neu geladen.",
 	"second.phase.init": "Die CMakeTools-Initialisierung der zweiten Phase wird gestartet.",
 	"active.build.variant.changed": "Aktive Buildvariante geändert",

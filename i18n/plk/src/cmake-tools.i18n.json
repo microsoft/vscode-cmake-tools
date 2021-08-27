@@ -51,6 +51,7 @@
 	"starting.cmake.driver.status": "Trwa uruchamianie serwera narzędzia CMake...",
 	"unable.to.execute.cmake.command": "Nie można wykonać polecenia cmake, nie ma prawidłowego wystąpienia sterownika narzędzia CMake.",
 	"unable.to.execute.program": "Nie można wykonać programu, nie ma prawidłowego wystąpienia sterownika narzędzia CMake.",
+	"shutting.down.driver": "Zamykanie sterownika narzędzia CMake",
 	"reloading.driver": "Ponowne ładowanie sterownika narzędzia CMake",
 	"second.phase.init": "Rozpoczynanie inicjowania drugiej fazy rozszerzenia CMakeTools",
 	"active.build.variant.changed": "Zmieniono wariant aktywnej kompilacji",
