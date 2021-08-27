@@ -51,6 +51,7 @@
 	"starting.cmake.driver.status": "Démarrage du serveur CMake...",
 	"unable.to.execute.cmake.command": "Impossible d'exécuter la commande cmake, car il n'existe aucune instance de pilote cmake valide.",
 	"unable.to.execute.program": "Impossible d'exécuter le programme, car il n'existe aucune instance de pilote cmake valide.",
+	"shutting.down.driver": "Shutting down CMake driver",
 	"reloading.driver": "Rechargement du pilote de CMake",
 	"second.phase.init": "Démarrage de l'initialisation de la deuxième phase de CMakeTools",
 	"active.build.variant.changed": "Variante de build active changée",
