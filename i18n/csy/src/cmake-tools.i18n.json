@@ -51,7 +51,7 @@
 	"starting.cmake.driver.status": "Spouští se server CMake...",
 	"unable.to.execute.cmake.command": "Nejde spustit příkaz cmake, neexistuje platná instance ovladače cmake.",
 	"unable.to.execute.program": "Nejde spustit program, neexistuje platná instance ovladače cmake.",
-	"shutting.down.driver": "Shutting down CMake driver",
+	"shutting.down.driver": "Vypínání ovladače CMake",
 	"reloading.driver": "Ovladač CMake se znovu načítá.",
 	"second.phase.init": "Spouští se inicializace druhé fáze CMakeTools.",
 	"active.build.variant.changed": "Změnila se aktivní varianta sestavení.",
