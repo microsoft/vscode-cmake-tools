@@ -51,7 +51,7 @@
 	"starting.cmake.driver.status": "CMake サーバーを開始しています...",
 	"unable.to.execute.cmake.command": "CMake コマンドを実行できません。有効な CMake ドライバー インスタンスがありません。",
 	"unable.to.execute.program": "プログラムを実行できません。有効な CMake ドライバー インスタンスがありません。",
-	"shutting.down.driver": "Shutting down CMake driver",
+	"shutting.down.driver": "CMake ドライバーをシャットダウンしています",
 	"reloading.driver": "CMake ドライバーを再度読み込んでいます",
 	"second.phase.init": "CMakeTools の第 2 フェーズの初期化を開始しています",
 	"active.build.variant.changed": "アクティブなビルドのバリアントが変更されました",
