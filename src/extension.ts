@@ -1099,6 +1099,9 @@ class ExtensionManager implements vscode.Disposable {
       if (cmtFolder) {
         return fn(cmtFolder.cmakeTools);
       }
+      else {
+        rollbar.error(localize('no.active.folder', 'No active folder.'));
+      }
     } else {
       rollbar.error(localize('invalid.folder', 'Invalid folder.'));
     }
