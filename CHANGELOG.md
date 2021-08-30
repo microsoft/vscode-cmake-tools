@@ -1,5 +1,10 @@
 # What's New?
 
+## 1.8.1
+Bug fixes:
+- `cmake.configureOnOpen` setting is ignored. [#2088](https://github.com/microsoft/vscode-cmake-tools/issues/2088)
+- User-defined preset not shown when inheriting from `CMakePresets.json`. [#2082](https://github.com/microsoft/vscode-cmake-tools/issues/2082)
+
 ## 1.8.0
 Improvements:
 - Last selected target isn't read on start up. [#1148](https://github.com/microsoft/vscode-cmake-tools/issues/1148)

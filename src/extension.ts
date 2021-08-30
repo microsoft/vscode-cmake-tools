@@ -589,7 +589,7 @@ class ExtensionManager implements vscode.Disposable {
           await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
         } else {
           log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
-          await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
+          await this.configureExtensionInternal(ConfigureTrigger.configureWithCache, cmt);
         }
       }
     }
