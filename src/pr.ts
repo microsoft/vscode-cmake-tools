@@ -26,6 +26,10 @@ export function exists(fspath: string): Promise<boolean> {
   return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); });
 }
 
+export function existsSync(fspath: string): boolean {
+  return fs_.existsSync(fspath);
+}
+
 export const readFile = promisify(fs_.readFile);
 
 export const writeFile = promisify(fs_.writeFile);
