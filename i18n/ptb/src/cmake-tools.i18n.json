@@ -51,7 +51,7 @@
 	"starting.cmake.driver.status": "Iniciando o Servidor do CMake...",
 	"unable.to.execute.cmake.command": "Não é possível executar o comando do CMake. Não há nenhuma instância de driver do CMake válida.",
 	"unable.to.execute.program": "Não é possível executar o programa, não há nenhuma instância de driver do CMake válida.",
-	"shutting.down.driver": "Shutting down CMake driver",
+	"shutting.down.driver": "Desligamento do driver CMake",
 	"reloading.driver": "Recarregando o driver do CMake",
 	"second.phase.init": "Começando a inicialização da segunda fase do CMakeTools",
 	"active.build.variant.changed": "Variante de build ativa alterada",

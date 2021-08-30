@@ -51,7 +51,7 @@
 	"starting.cmake.driver.status": "CMake 서버를 시작하는 중...",
 	"unable.to.execute.cmake.command": "CMake 명령을 실행할 수 없습니다. 유효한 CMake 드라이버 인스턴스가 없습니다.",
 	"unable.to.execute.program": "프로그램을 실행할 수 없습니다. 유효한 CMake 드라이버 인스턴스가 없습니다.",
-	"shutting.down.driver": "Shutting down CMake driver",
+	"shutting.down.driver": "CMake 드라이버 종료 중",
 	"reloading.driver": "CMake 드라이버를 다시 로드하는 중",
 	"second.phase.init": "CMakeTools 2단계 초기화를 시작하는 중",
 	"active.build.variant.changed": "활성 빌드 variant가 변경됨",

@@ -51,7 +51,7 @@
 	"starting.cmake.driver.status": "正在啟動 CMake 伺服器...",
 	"unable.to.execute.cmake.command": "無法執行 cmake 命令，沒有有效的 cmake 驅動程式執行個體。",
 	"unable.to.execute.program": "無法執行程式，沒有有效的 cmake 驅動程式執行個體。",
-	"shutting.down.driver": "Shutting down CMake driver",
+	"shutting.down.driver": "正在關閉 CMake 驅動程式",
 	"reloading.driver": "正在重新載入 CMake 驅動程式",
 	"second.phase.init": "正在啟動 CMakeTools 第二階段初始化",
 	"active.build.variant.changed": "已變更使用中的建置變化",
