@@ -17,7 +17,7 @@ suite('Preset tests', () => {
 
     condition = { type: 'allOf', conditions: [
       { type: 'const', value: true },
-      { type: 'equals', lhs: 'foo', rhs: 'foo' },
+      { type: 'equals', lhs: 'foo', rhs: 'foo' }
     ]};
     expect(evaluateCondition(condition)).to.eql(true);
 
@@ -26,11 +26,11 @@ suite('Preset tests', () => {
 
     condition = { type: 'allOf', conditions: [
       { type: 'const', value: false },
-      { type: 'equals', lhs: 'foo', rhs: 'foo' },
+      { type: 'equals', lhs: 'foo', rhs: 'foo' }
     ]};
     expect(evaluateCondition(condition)).to.eql(false);
 
     condition.type = 'anyOf';
     expect(evaluateCondition(condition)).to.eql(true);
-  })
-})
+  });
+});

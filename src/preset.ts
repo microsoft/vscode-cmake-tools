@@ -81,7 +81,7 @@ class MissingConditionPropertyError extends Error {
   propertyName: string;
 
   constructor(propertyName: string, ...params: any[]) {
-    super(...params)
+    super(...params);
 
     this.propertyName = propertyName;
   }
@@ -91,14 +91,14 @@ class InvalidConditionTypeError extends Error {
   type: string;
 
   constructor(type: string, ...params: any[]) {
-    super(...params)
+    super(...params);
 
     this.type = type;
   }
 }
 
 function validateConditionProperty(condition: Condition, propertyName: keyof Condition) {
-  let property: any = condition[propertyName];
+  const property: any = condition[propertyName];
   if (property === undefined || property === null) {
     throw new MissingConditionPropertyError(propertyName);
   }
@@ -115,20 +115,20 @@ export function evaluateCondition(condition: Condition): boolean {
     case 'notEquals':
       validateConditionProperty(condition, 'lhs');
       validateConditionProperty(condition, 'rhs');
-      let equals = condition.lhs === condition.rhs;
+      const equals = condition.lhs === condition.rhs;
       return condition.type === 'equals' ? equals : !equals;
     case 'inList':
     case 'notInList':
       validateConditionProperty(condition, 'string');
       validateConditionProperty(condition, 'list');
-      let inList = condition.list!.includes(condition.string!);
+      const inList = condition.list!.includes(condition.string!);
       return condition.type === 'inList' ? inList : !inList;
     case 'matches':
     case 'notMatches':
       validateConditionProperty(condition, 'string');
       validateConditionProperty(condition, 'regex');
-      let regex = new RegExp(condition.regex!);
-      let matches = regex.test(condition.string!);
+      const regex = new RegExp(condition.regex!);
+      const matches = regex.test(condition.string!);
       return condition.type === 'matches' ? matches : !matches;
     case 'allOf':
       validateConditionProperty(condition, 'conditions');
@@ -145,25 +145,20 @@ export function evaluateCondition(condition: Condition): boolean {
 }
 
 export function evaluatePresetCondition(preset: Preset): boolean | undefined {
-  let condition = preset.condition;
+  const condition = preset.condition;
   if (condition === undefined || condition === null) {
     return true;
-  }
-  else if (typeof condition === 'boolean') {
+  } else if (typeof condition === 'boolean') {
     return condition;
-  }
-  else if (typeof condition === 'object') {
+  } else if (typeof condition === 'object') {
     try {
       return evaluateCondition(condition);
-    }
-    catch (e) {
+    } catch (e) {
       if (e instanceof MissingConditionPropertyError) {
         log.error(localize('missing.condition.property', 'Preset {0}: Missing required property "{1}" on condition object', preset.name, e.propertyName));
-      }
-      else if (e instanceof InvalidConditionTypeError) {
+      } else if (e instanceof InvalidConditionTypeError) {
         log.error(localize('invalid.condition.type', 'Preset {0}: Invalid condition type "{1}"', preset.name, e.type));
-      }
-      else {
+      } else {
         // unexpected error
         throw e;
       }
@@ -512,9 +507,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
 async function getHostSystemName(): Promise<string> {
   if (platform() === "win32") {
     return "Windows";
-  }
-  else
-  {
+  } else {
     return promisify(exec)('uname -s').then(
       (result: any) => result.stdout.trim(),
       (_: any) => 'unknown'
@@ -523,19 +516,18 @@ async function getHostSystemName(): Promise<string> {
 }
 
 function memoize<T>(fn: () => T) {
-  var result: T;
+  let result: T;
 
   return () => {
     if (result) {
       return result;
-    }
-    else {
+    } else {
       return result = fn();
     }
-  }
+  };
 }
 
-let getHostSystemNameMemo = memoize(getHostSystemName);
+const getHostSystemNameMemo = memoize(getHostSystemName);
 
 async function getExpansionOptions(folder: string,
                                    workspaceFolder: string,
@@ -612,19 +604,18 @@ export async function expandConfigurePreset(folder: string,
   if (presetsFile && presetsFile.version >= 3) {
     // For presets v3+ binaryDir and generator are optional, but cmake-tools needs a value. Default to something reasonable.
     if (!preset.binaryDir) {
-      let defaultValue =  '${sourceDir}/out/build/${presetName}';
+      const defaultValue =  '${sourceDir}/out/build/${presetName}';
 
       log.warning(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value "{1}"', preset.name, defaultValue));
       preset.binaryDir = defaultValue;
     }
     if (!preset.generator) {
-      let defaultValue = 'Ninja';
+      const defaultValue = 'Ninja';
 
       log.warning(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value "{1}"', preset.name, defaultValue));
       preset.generator = defaultValue;
     }
-  }
-  else {
+  } else {
     // toolchainFile and installDir added in presets v3
     if (preset.toolchainFile) {
       log.error(localize('property.unsupported.v2', 'Configure preset {0}: Property "{1}" is unsupported in presets v2', preset.name, 'toolchainFile'));
