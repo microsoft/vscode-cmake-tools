@@ -36,6 +36,7 @@ export interface Preset {
   inherits?: string | string[];
   environment?: { [key: string]: null | string };
   vendor?: VendorType;
+  condition?: Condition | boolean | null;
 
   __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
 }
@@ -62,6 +63,117 @@ export interface DebugOptions {
   output?: boolean;
   tryCompile?: boolean;
   find?: boolean;
+}
+
+export interface Condition {
+  type: 'const' | 'equals' | 'notEquals' | 'inList' | 'notInList' | 'matches' | 'notMatches' | 'anyOf' | 'allOf' | 'not';
+  value?: boolean;
+  lhs?: string;
+  rhs?: string;
+  string?: string;
+  list?: string[];
+  regex?: string;
+  conditions?: Condition[];
+  condition?: Condition;
+}
+
+class MissingConditionPropertyError extends Error {
+  propertyName: string;
+
+  constructor(propertyName: string, ...params: any[]) {
+    super(...params)
+
+    this.propertyName = propertyName;
+  }
+}
+
+class InvalidConditionTypeError extends Error {
+  type: string;
+
+  constructor(type: string, ...params: any[]) {
+    super(...params)
+
+    this.type = type;
+  }
+}
+
+function validateConditionProperty(condition: Condition, propertyName: keyof Condition) {
+  let property: any = condition[propertyName];
+  if (property === undefined || property === null) {
+    throw new MissingConditionPropertyError(propertyName);
+  }
+}
+
+export function evaluateCondition(condition: Condition): boolean {
+  validateConditionProperty(condition, 'type');
+
+  switch (condition.type) {
+    case 'const':
+      validateConditionProperty(condition, 'value');
+      return condition.value!;
+    case 'equals':
+    case 'notEquals':
+      validateConditionProperty(condition, 'lhs');
+      validateConditionProperty(condition, 'rhs');
+      let equals = condition.lhs === condition.rhs;
+      return condition.type === 'equals' ? equals : !equals;
+    case 'inList':
+    case 'notInList':
+      validateConditionProperty(condition, 'string');
+      validateConditionProperty(condition, 'list');
+      let inList = condition.list!.includes(condition.string!);
+      return condition.type === 'inList' ? inList : !inList;
+    case 'matches':
+    case 'notMatches':
+      validateConditionProperty(condition, 'string');
+      validateConditionProperty(condition, 'regex');
+      let regex = new RegExp(condition.regex!);
+      let matches = regex.test(condition.string!);
+      return condition.type === 'matches' ? matches : !matches;
+    case 'allOf':
+      validateConditionProperty(condition, 'conditions');
+      return condition.conditions!.map((c) => evaluateCondition(c)).reduce((prev, current) => prev && current);
+    case 'anyOf':
+      validateConditionProperty(condition, 'conditions');
+      return condition.conditions!.map((c) => evaluateCondition(c)).reduce((prev, current) => prev || current);
+    case 'not':
+      validateConditionProperty(condition, 'condition');
+      return !evaluateCondition(condition.condition!);
+    default:
+      throw new InvalidConditionTypeError(condition.type);
+  }
+}
+
+export function evaluatePresetCondition(preset: Preset): boolean | undefined {
+  let condition = preset.condition;
+  if (condition === undefined || condition === null) {
+    return true;
+  }
+  else if (typeof condition === 'boolean') {
+    return condition;
+  }
+  else if (typeof condition === 'object') {
+    try {
+      return evaluateCondition(condition);
+    }
+    catch (e) {
+      if (e instanceof MissingConditionPropertyError) {
+        log.error(localize('missing.condition.property', 'Preset {0}: Missing required property "{1}" on condition object', preset.name, e.propertyName));
+      }
+      else if (e instanceof InvalidConditionTypeError) {
+        log.error(localize('invalid.condition.type', 'Preset {0}: Invalid condition type "{1}"', preset.name, e.type));
+      }
+      else {
+        // unexpected error
+        throw e;
+      }
+
+      return undefined;
+    }
+  }
+
+  log.error(localize('invalid.condition', 'Preset {0}: Condition must be null, boolean, or an object.', preset.name));
+  return undefined;
 }
 
 type CacheVarType = null | boolean | string | { type: string; value: boolean | string };

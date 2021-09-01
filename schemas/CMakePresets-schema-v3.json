@@ -630,7 +630,8 @@
                     "toolchainFile": {
                         "type": "string",
                         "description": "An optional string representing the path to the toolchain file. This field supports macro expansion. If a relative path is specified, it is calculated relative to the build directory, and if not found, relative to the source directory. Supported in version 3."
-                    }
+                    },
+                    "condition": { "$ref": "#/definitions/topCondition" }
                 },
                 "required": [
                     "name"
@@ -752,7 +753,8 @@
                             "type": "string",
                             "description": "An optional string representing an option to pass after -- on the command line."
                         }
-                    }
+                    },
+                    "condition": { "$ref": "#/definitions/topCondition" }
                 },
                 "required": [
                     "name"
@@ -1076,7 +1078,8 @@
                             }
                         },
                         "additionalProperties": false
-                    }
+                    },
+                    "condition": { "$ref": "#/definitions/topCondition" }
                 },
                 "required": [
                     "name"
@@ -1090,5 +1093,250 @@
             "properties": {}
         }
     },
-    "additionalProperties": false
+    "additionalProperties": false,
+    "definitions": {
+        "condition": {
+            "anyOf": [
+                {
+                    "type": "boolean",
+                    "description": "A boolean which provides a constant value for the condition's evaluation."
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "const"
+                        },
+                        "value": {
+                            "type": "boolean",
+                            "description": "A required boolean which provides a constant value for the condition's evaluation."
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "value"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "equals"
+                        },
+                        "lhs": {
+                            "type": "string",
+                            "description": "First string to compare. This field supports macro expansion."
+                        },
+                        "rhs": {
+                            "type": "string",
+                            "description": "Second string to compare. This field supports macro expansion."
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "lhs",
+                        "rhs"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "notEquals"
+                        },
+                        "lhs": {
+                            "type": "string",
+                            "description": "First string to compare. This field supports macro expansion."
+                        },
+                        "rhs": {
+                            "type": "string",
+                            "description": "Second string to compare. This field supports macro expansion."
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "lhs",
+                        "rhs"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "inList"
+                        },
+                        "string": {
+                            "type": "string",
+                            "description": "A required string to search for. This field supports macro expansion."
+                        },
+                        "list": {
+                            "type": "array",
+                            "description": "A required list of strings to search. This field supports macro expansion, and uses short-circuit evaluation.",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "string",
+                        "list"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "notInList"
+                        },
+                        "string": {
+                            "type": "string",
+                            "description": "A required string to search for. This field supports macro expansion."
+                        },
+                        "list": {
+                            "type": "array",
+                            "description": "A required list of strings to search. This field supports macro expansion, and uses short-circuit evaluation.",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "string",
+                        "list"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "matches"
+                        },
+                        "string": {
+                            "type": "string",
+                            "description": "A required string to search. This field supports macro expansion."
+                        },
+                        "regex": {
+                            "type": "string",
+                            "description": "A required regular expression to search for. This field supports macro expansion."
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "string",
+                        "regex"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "notMatches"
+                        },
+                        "string": {
+                            "type": "string",
+                            "description": "A required string to search. This field supports macro expansion."
+                        },
+                        "regex": {
+                            "type": "string",
+                            "description": "A required regular expression to search for. This field supports macro expansion."
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "string",
+                        "regex"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "anyOf"
+                        },
+                        "conditions": {
+                            "type": "array",
+                            "description": "A required array of condition objects. These conditions use short-circuit evaluation.",
+                            "items": { "$ref": "#/definitions/condition" }
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "conditions"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "allOf"
+                        },
+                        "conditions": {
+                            "type": "array",
+                            "description": "A required array of condition objects. These conditions use short-circuit evaluation.",
+                            "items": { "$ref": "#/definitions/condition" }
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "conditions"
+                    ],
+                    "additionalProperties": false
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "description": "A required string specifying the type of the condition.",
+                            "const": "not"
+                        },
+                        "condition": { "$ref": "#/definitions/condition" }
+                    },
+                    "required": [
+                        "type",
+                        "condition"
+                    ],
+                    "additionalProperties": false
+                }
+            ]
+        },
+        "topCondition": {
+            "description": "An optional field used to determine whether or not a preset is enabled. Supported in version 3.",
+            "anyOf": [
+                { "$ref": "#/definitions/condition" },
+                {
+                    "type": "null",
+                    "description": "Null indicates that the condition always evaluates to true and is not inherited."
+                }
+            ]
+        }
+    }
 }
