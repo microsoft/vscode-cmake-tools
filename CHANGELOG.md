@@ -2,6 +2,7 @@
 
 ## 1.8.1
 Bug fixes:
+- Command substitutions in launch.json are broken. [#2091](https://github.com/microsoft/vscode-cmake-tools/issues/2091)
 - `cmake.configureOnOpen` setting is ignored. [#2088](https://github.com/microsoft/vscode-cmake-tools/issues/2088)
 - User-defined preset not shown when inheriting from `CMakePresets.json`. [#2082](https://github.com/microsoft/vscode-cmake-tools/issues/2082)
 
