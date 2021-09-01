@@ -26,6 +26,7 @@
 	"command.version.test.return.code": "命令版本测试返回代码 {0}",
 	"trying.to.detect.generator": "正在尝试检测系统支持的生成器",
 	"compiler.version.return.code": "编译器版本测试返回代码 {0}",
+	"no.cached.config": "No cached config could be used for IntelliSense",
 	"start.configure": "开始配置",
 	"use.cached.configuration": "使用缓存配置",
 	"no.config.Preset": "未选择任何配置预设",
