@@ -66,6 +66,7 @@ export enum ConfigureTrigger {
   runTests = "runTests",
   badHomeDir = "badHomeDir",
   configureOnOpen = "configureOnOpen",
+  configureWithCache = "configureWithCache",
   quickStart = "quickStart",
   setVariant = "setVariant",
   cmakeListsChange = "cmakeListsChange",
@@ -170,14 +171,20 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Presets are loaded by PresetsController, so this function should only be called by PresetsController.
    */
   async setConfigurePreset(configurePreset: string | null) {
+    const previousGenerator = this.configurePreset?.generator;
+
     if (configurePreset) {
       log.debug(localize('resolving.config.preset', 'Resolving the selected configure preset'));
       const expandedConfigurePreset = await preset.expandConfigurePreset(this.folder.uri.fsPath,
                                                                          configurePreset,
                                                                          lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                                         await this.sourceDir,
+                                                                         this.sourceDir,
                                                                          true);
       this._configurePreset.set(expandedConfigurePreset);
+      if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
+        await this._shutDownCMakeDriver();
+      }
+
       if (!expandedConfigurePreset) {
         log.error(localize('failed.resolve.config.preset', 'Failed to resolve configure preset: {0}', configurePreset));
         await this.resetPresets();
@@ -234,7 +241,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const expandedBuildPreset = await preset.expandBuildPreset(this.folder.uri.fsPath,
                                                                  buildPreset,
                                                                  lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                                 await this.sourceDir,
+                                                                 this.sourceDir,
                                                                  true,
                                                                  this.configurePreset?.name);
       this._buildPreset.set(expandedBuildPreset);
@@ -289,7 +296,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const expandedTestPreset = await preset.expandTestPreset(this.folder.uri.fsPath,
                                                                testPreset,
                                                                lightNormalizePath(this.folder.uri.fsPath || '.'),
-                                                               await this.sourceDir,
+                                                               this.sourceDir,
                                                                true,
                                                                this.configurePreset?.name);
       this._testPreset.set(expandedTestPreset);
@@ -379,7 +386,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   private readonly _communicationModeSub = this.workspaceContext.config.onChange('cmakeCommunicationMode', () => {
     log.info(localize('communication.changed.restart.driver', "Restarting the CMake driver after a communication mode change."));
-    return this._reloadCMakeDriver();
+    return this._shutDownCMakeDriver();
   });
 
   private readonly _generatorSub = this.workspaceContext.config.onChange('generator', () => {
@@ -391,6 +398,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     log.info(localize('preferredGenerator.changed.restart.driver', "Restarting the CMake driver after a preferredGenerators change."));
     return this._reloadCMakeDriver();
   });
+
+  private readonly _sourceDirSub = this.workspaceContext.config.onChange('sourceDirectory', async () =>
+    this._sourceDir = await util.normalizeAndVerifySourceDir(
+      await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
+    )
+  );
 
   /**
    * The variant manager keeps track of build variants. Has two-phase init.
@@ -431,7 +444,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     if (this._launchTerminal) {
       this._launchTerminal.dispose();
     }
-    for (const sub of [this._generatorSub, this._preferredGeneratorsSub, this._communicationModeSub]) {
+    for (const sub of [this._generatorSub, this._preferredGeneratorsSub, this._communicationModeSub, this._sourceDirSub]) {
       sub.dispose();
     }
     rollbar.invokeAsync(localize('extension.dispose', 'Extension dispose'), () => this.asyncDispose());
@@ -741,6 +754,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
   }
 
+  private async _shutDownCMakeDriver() {
+    const drv = await this._cmakeDriver;
+    if (drv) {
+      log.debug(localize('shutting.down.driver', 'Shutting down CMake driver'));
+      await drv.asyncDispose();
+      this._cmakeDriver = Promise.resolve(null);
+    }
+  }
+
   /**
    * Reload/restarts the CMake Driver
    */
@@ -752,11 +774,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return this._cmakeDriver = this._startNewCMakeDriver(await this.getCMakeExecutable());
     }
   }
+
   /**
    * Second phase of two-phase init. Called by `create`.
    */
   private async _init() {
     log.debug(localize('second.phase.init', 'Starting CMakeTools second-phase init'));
+
+    this._sourceDir = await util.normalizeAndVerifySourceDir(
+      await expandString(this.workspaceContext.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.folder.uri.fsPath))
+    );
+
     // Start up the variant manager
     await this._variantManager.initialize();
     // Set the status bar message
@@ -798,7 +826,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await this._cacheEditorWebview.refreshPanel();
       }
 
-      const sourceDirectory = (await this.sourceDir).toLowerCase();
+      const sourceDirectory = this.sourceDir.toLowerCase();
       if (str === path.join(sourceDirectory, "cmakelists.txt")) {
         // CMakeLists.txt change event: its creation or deletion are relevant,
         // so update full/partial feature set view for this folder.
@@ -1204,7 +1232,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       throw new Error(localize('cannot.configure.no.config.preset', 'Cannot configure: No configure preset is active for this CMake Tools'));
     }
     log.showChannel();
-    const consumer = new CMakeOutputConsumer(await this.sourceDir, CMAKE_LOGGER);
+    const consumer = new CMakeOutputConsumer(this.sourceDir, CMAKE_LOGGER);
     const retc = await cb(consumer);
     populateCollection(collections.cmake, consumer.diagnostics);
     return retc;
@@ -1956,8 +1984,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return -2;
     }
 
-    const sourceDir = await this.sourceDir;
-    const mainListFile = path.join(sourceDir, 'CMakeLists.txt');
+    const mainListFile = path.join(this.sourceDir, 'CMakeLists.txt');
 
     if (await fs.exists(mainListFile)) {
       void vscode.window.showErrorMessage(localize('cmakelists.already.configured', 'A CMakeLists.txt is already configured!'));
@@ -2008,8 +2035,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     ].join('\n');
 
     if (type === 'Library') {
-      if (!(await fs.exists(path.join(sourceDir, project_name + '.cpp')))) {
-        await fs.writeFile(path.join(sourceDir, project_name + '.cpp'), [
+      if (!(await fs.exists(path.join(this.sourceDir, project_name + '.cpp')))) {
+        await fs.writeFile(path.join(this.sourceDir, project_name + '.cpp'), [
           '#include <iostream>',
           '',
           'void say_hello(){',
@@ -2019,8 +2046,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         ].join('\n'));
       }
     } else {
-      if (!(await fs.exists(path.join(sourceDir, 'main.cpp')))) {
-        await fs.writeFile(path.join(sourceDir, 'main.cpp'), [
+      if (!(await fs.exists(path.join(this.sourceDir, 'main.cpp')))) {
+        await fs.writeFile(path.join(this.sourceDir, 'main.cpp'), [
           '#include <iostream>',
           '',
           'int main(int, char**) {',
@@ -2048,15 +2075,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     await this.workspaceContext.state.reset();
   }
 
+  private _sourceDir = '';
   get sourceDir() {
-    const drv = this.getCMakeDriverInstance();
-
-    return drv.then(d => {
-      if (!d) {
-        return '';
-      }
-      return d.sourceDir;
-    });
+    // Don't get this from the driver. Source dir is required to evaluate presets.
+    // Presets contain generator info. Generator info is required for server api.
+    return this._sourceDir;
   }
 
   get mainListFile() {

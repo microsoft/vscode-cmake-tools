@@ -26,6 +26,7 @@
 	"command.version.test.return.code": "コマンド バージョン テストのリターン コード {0}",
 	"trying.to.detect.generator": "システムでサポートされているジェネレーターを検出しようとしています",
 	"compiler.version.return.code": "コンパイラ バージョン テストのリターン コード {0}",
+	"no.cached.config": "IntelliSense に使用できるキャッシュ済みの構成はありませんでした",
 	"start.configure": "構成の開始",
 	"use.cached.configuration": "キャッシュされた構成を使用する",
 	"no.config.Preset": "構成の事前設定が選択されていません",
