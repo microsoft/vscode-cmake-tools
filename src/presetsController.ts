@@ -882,7 +882,12 @@ export class PresetsController {
       const errors = validator.errors!;
       log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
       for (const err of errors) {
-        log.error(` >> ${err.dataPath}: ${err.message}`);
+        if (err.params && 'additionalProperty' in err.params) {
+          log.error(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`)
+        }
+        else {
+          log.error(` >> ${err.dataPath}: ${err.message}`);
+        }
       }
       return undefined;
     }
