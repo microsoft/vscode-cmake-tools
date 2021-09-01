@@ -26,6 +26,7 @@
 	"command.version.test.return.code": "Návratový kód testovací verze příkazu {0}",
 	"trying.to.detect.generator": "Probíhá pokus o zjištění generátoru podporovaného systémem.",
 	"compiler.version.return.code": "Návratový kód testu verze kompilátoru {0}",
+	"no.cached.config": "Pro IntelliSense se nedá použít žádná konfigurace zapsaná v mezipaměti.",
 	"start.configure": "Spustit konfiguraci",
 	"use.cached.configuration": "Použít konfiguraci uloženou v mezipaměti",
 	"no.config.Preset": "Nevybrala se žádná předvolba konfigurace.",

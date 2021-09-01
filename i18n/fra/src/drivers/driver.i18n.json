@@ -26,6 +26,7 @@
 	"command.version.test.return.code": "Code de retour du test de version de commande : {0}",
 	"trying.to.detect.generator": "Tentative de détection du générateur pris en charge par le système",
 	"compiler.version.return.code": "Code de retour du test de version de compilateur : {0}",
+	"no.cached.config": "No cached config could be used for IntelliSense",
 	"start.configure": "Démarrer la configuration",
 	"use.cached.configuration": "Utiliser la configuration mise en cache",
 	"no.config.Preset": "Aucune présélection de configuration sélectionnée",
