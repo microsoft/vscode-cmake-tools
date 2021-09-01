@@ -418,7 +418,7 @@
                                 "anyOf": [
                                     {
                                         "type": "string",
-                                        "description": "Install directory used by CMake."
+                                        "description": "Install directory used by CMake. Use \"installDir\" property instead when using presets version 3 or higher."
                                     },
                                     {
                                         "type": "null",
@@ -442,7 +442,7 @@
                                 "anyOf": [
                                     {
                                         "type": "string",
-                                        "description": "The toolchain file passed to CMake."
+                                        "description": "The toolchain file passed to CMake. Use \"toolchainFile\" property instead when using presets version 3 or higher."
                                     },
                                     {
                                         "type": "null",
