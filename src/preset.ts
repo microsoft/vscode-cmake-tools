@@ -578,13 +578,13 @@ export async function expandConfigurePreset(folder: string,
     if (!preset.binaryDir) {
       const defaultValue =  '${sourceDir}/out/build/${presetName}';
 
-      log.warning(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value "{1}"', preset.name, defaultValue));
+      log.debug(localize('binaryDir.undefined', 'Configure preset {0}: No binaryDir specified, using default value "{1}"', preset.name, defaultValue));
       preset.binaryDir = defaultValue;
     }
     if (!preset.generator) {
       const defaultValue = 'Ninja';
 
-      log.warning(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value "{1}"', preset.name, defaultValue));
+      log.debug(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value "{1}"', preset.name, defaultValue));
       preset.generator = defaultValue;
     }
   } else {
