@@ -9,9 +9,6 @@ import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
 import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit } from '@cmt/kit';
 import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
-import { platform } from 'os';
-import { promisify } from 'util';
-import { exec } from 'child_process';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -504,31 +501,6 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
   return preset.vendor || null;
 }
 
-async function getHostSystemName(): Promise<string> {
-  if (platform() === "win32") {
-    return "Windows";
-  } else {
-    return promisify(exec)('uname -s').then(
-      (result: any) => result.stdout.trim(),
-      (_: any) => 'unknown'
-    );
-  }
-}
-
-function memoize<T>(fn: () => T) {
-  let result: T;
-
-  return () => {
-    if (result) {
-      return result;
-    } else {
-      return result = fn();
-    }
-  };
-}
-
-const getHostSystemNameMemo = memoize(getHostSystemName);
-
 async function getExpansionOptions(folder: string,
                                    workspaceFolder: string,
                                    sourceDir: string,
@@ -561,7 +533,7 @@ async function getExpansionOptions(folder: string,
 
   const presetsFile = getPresetsFile(folder);
   if (presetsFile && presetsFile.version >= 3) {
-    expansionOpts.vars['hostSystemName'] = await getHostSystemNameMemo();
+    expansionOpts.vars['hostSystemName'] = await util.getHostSystemNameMemo();
   }
 
   return expansionOpts;
