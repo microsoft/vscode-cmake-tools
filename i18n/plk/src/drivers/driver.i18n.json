@@ -26,7 +26,7 @@
 	"command.version.test.return.code": "Kod powrotny testu wersji polecenia {0}",
 	"trying.to.detect.generator": "Próba wykrycia generatora obsługiwanego przez system",
 	"compiler.version.return.code": "Kod powrotny testu wersji kompilatora {0}",
-	"no.cached.config": "No cached config could be used for IntelliSense",
+	"no.cached.config": "Nie można użyć konfiguracji zapisanej w pamięci podręcznej w przypadku funkcji IntelliSense",
 	"start.configure": "Uruchom konfigurowanie",
 	"use.cached.configuration": "Użyj buforowanej konfiguracji",
 	"no.config.Preset": "Nie wybrano predefiniowanej konfiguracji",
