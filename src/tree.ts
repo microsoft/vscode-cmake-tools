@@ -240,7 +240,7 @@ export class SourceFileNode extends BaseNode {
 
 export class TargetNode extends BaseNode {
   constructor(readonly prefix: string, readonly projectName: string, cm: codemodel_api.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
-    // id: {prefix}::target_name:target_path
+    // id: {prefix}::target_name:artifact_name:target_path
     super(`${prefix}::${cm.name || ''}:${cm.fullName || ''}:${cm.sourceDirectory || ''}`);
     this.name = cm.name;
     this.sourceDir = cm.sourceDirectory || '';
