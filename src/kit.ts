@@ -603,6 +603,7 @@ const MSVC_ENVIRONMENT_VARIABLES = [
   'LIBPATH',
   'NETFXSDKDir',
   'Path',
+  //'Platform', - disabled at the request of @bobbrow as this causes some of MS internal projects to fail to build
   'UCRTVersion',
   'UniversalCRTSdkDir',
   'user_inputversion',
