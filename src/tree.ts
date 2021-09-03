@@ -241,7 +241,7 @@ export class SourceFileNode extends BaseNode {
 export class TargetNode extends BaseNode {
   constructor(readonly prefix: string, readonly projectName: string, cm: codemodel_api.CodeModelTarget, readonly folder: vscode.WorkspaceFolder) {
     // id: {prefix}::target_name:target_path
-    super(`${prefix}::${cm.fullName || cm.name}:${cm.sourceDirectory || ''}`);
+    super(`${prefix}::${cm.name || ''}:${cm.fullName || ''}:${cm.sourceDirectory || ''}`);
     this.name = cm.name;
     this.sourceDir = cm.sourceDirectory || '';
     this._rootDir = new DirectoryNode<SourceFileNode>(this.id, this.sourceDir, '');
@@ -445,7 +445,9 @@ interface ExternalUpdateContext {
 }
 
 export class WorkspaceFolderNode extends BaseNode {
-  constructor(readonly wsFolder: vscode.WorkspaceFolder) { super(`wsf/${wsFolder.uri.fsPath}`); }
+  constructor(readonly wsFolder: vscode.WorkspaceFolder) {
+    super(`wsf/${wsFolder.uri.fsPath}`);
+  }
   private _children: BaseNode[] = [];
 
   private _active: boolean = false;
