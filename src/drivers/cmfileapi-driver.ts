@@ -40,7 +40,7 @@ const log = logging.createLogger('cmakefileapi-driver');
 export class CMakeFileApiDriver extends CMakeDriver {
 
   get isCacheConfigSupported(): boolean {
-    return true;
+    return fs.existsSync(this.getCMakeFileApiPath());
   }
 
   private constructor(cmake: CMakeExecutable,

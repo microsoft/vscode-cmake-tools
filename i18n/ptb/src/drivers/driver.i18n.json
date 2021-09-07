@@ -26,6 +26,7 @@
 	"command.version.test.return.code": "Código de retorno do teste de versão do comando {0}",
 	"trying.to.detect.generator": "Tentando detectar o gerador compatível com o sistema",
 	"compiler.version.return.code": "Código de retorno do teste de versão do compilador {0}",
+	"no.cached.config": "Nenhuma configuração armazenada em cache pôde ser usada para o IntelliSense",
 	"start.configure": "Iniciar a configuração",
 	"use.cached.configuration": "Usar a configuração em cache",
 	"no.config.Preset": "Nenhuma predefinição de configuração selecionada",

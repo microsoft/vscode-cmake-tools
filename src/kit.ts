@@ -548,7 +548,7 @@ export function kitHostTargetArch(hostArch: string, targetArch?: string, amd64Al
   // instead of hard coding for win32 and x86.
   // Currently, there is no need of a similar overwrite operation on hostArch,
   // because CMake host target does not have the same name mismatch with VS.
-  targetArch = vsArchFromGeneratorPlatform[targetArch] || targetArch;
+  targetArch = targetArchFromGeneratorPlatform(targetArch);
 
   return (hostArch === targetArch) ? hostArch : `${hostArch}_${targetArch}`;
 }
@@ -603,14 +603,19 @@ const MSVC_ENVIRONMENT_VARIABLES = [
   'LIBPATH',
   'NETFXSDKDir',
   'Path',
-  'Platform',
+  //'Platform', - disabled as it's currently unnecessary and causes some projects to fail to build
   'UCRTVersion',
   'UniversalCRTSdkDir',
   'user_inputversion',
+  'VCIDEInstallDir',
   'VCINSTALLDIR',
+  'VCToolsInstallDir',
+  'VCToolsRedistDir',
+  'VCToolsVersion',
   'VisualStudioVersion',
   'VSINSTALLDIR',
   'WindowsLibPath',
+  'WindowsSdkBinPath',
   'WindowsSdkDir',
   'WindowsSDKLibVersion',
   'WindowsSDKVersion',
@@ -741,8 +746,7 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
       vars.set('PATH', `${newWinSdkBinPath};${existPath}`);
     }
   }
-  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}',
-    devbat, args.join(' '), JSON.stringify([...vars], null, 2)));
+  log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));
   return vars;
 }
 
@@ -842,6 +846,16 @@ const vsArchFromGeneratorPlatform: {[key: string]: string} = {
 };
 
 /**
+ * Turns 'win32' into 'x86' for target architecture.
+ */
+export function targetArchFromGeneratorPlatform(generatorPlatform?: string) {
+  if (!generatorPlatform) {
+    return undefined;
+  }
+  return vsArchFromGeneratorPlatform[generatorPlatform] || generatorPlatform;
+}
+
+/**
  * Preferred CMake VS generators by VS version
  */
 const VsGenerators: {[key: string]: string} = {
@@ -852,7 +866,8 @@ const VsGenerators: {[key: string]: string} = {
   VS140COMNTOOLS: 'Visual Studio 14 2015',
   14: 'Visual Studio 14 2015',
   15: 'Visual Studio 15 2017',
-  16: 'Visual Studio 16 2019'
+  16: 'Visual Studio 16 2019',
+  17: 'Visual Studio 17 2022'
 };
 
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string>|null> {

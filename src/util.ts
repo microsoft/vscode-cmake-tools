@@ -649,9 +649,7 @@ export function isArrayOfString(x: any): x is string[] {
 }
 
 export function isNullOrUndefined(x?: any): boolean {
-  // Double equals provides the correct answer for 'null' and 'undefined'
-  // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
-  return x === null;
+  return (x === null || x === undefined);
 }
 
 export function isWorkspaceFolder(x?: any): boolean {

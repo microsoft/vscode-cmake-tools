@@ -7,7 +7,7 @@ import * as logging from '@cmt/logging';
 import { EnvironmentVariables, execute } from '@cmt/proc';
 import { expandString, ExpansionOptions } from '@cmt/expand';
 import paths from '@cmt/paths';
-import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit } from '@cmt/kit';
+import { effectiveKitEnvironment, getKitEnvironmentVariablesObject, Kit, targetArchFromGeneratorPlatform } from '@cmt/kit';
 import { compareVersions, vsInstallations } from '@cmt/installs/visual-studio';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -830,9 +830,8 @@ async function expandConfigurePresetHelper(folder: string,
             const kit = kits[i];
             if (kit.visualStudio && !kit.compilers) {
               const version = vsVersions.get(kit.visualStudio);
-              if (kit.preferredGenerator &&
-                  (kit.visualStudioArchitecture === arch || kit.preferredGenerator.platform === arch) &&
-                  kit.preferredGenerator.toolset === ('host=' + toolset.host)) {
+              if (kit.preferredGenerator && targetArchFromGeneratorPlatform(kit.preferredGenerator.platform) === arch &&
+                  (kit.visualStudioArchitecture === toolset.host || kit.preferredGenerator.toolset === ('host=' + toolset.host))) {
                 if (toolset.version && version?.startsWith(toolset.version)) {
                   latestVsVersion = version;
                   latestVsIndex = i;
@@ -892,19 +891,19 @@ export function expandConfigurePresetForPresets(folder: string, presetType: 'bui
       getConfigurePresetForPreset(folder, preset.name, presetType);
     }
     for (const preset of userBuildPresets(folder)) {
-      getConfigurePresetForPreset(folder, preset.name, presetType);
+      getConfigurePresetForPreset(folder, preset.name, presetType, true);
     }
   } else {
     for (const preset of testPresets(folder)) {
       getConfigurePresetForPreset(folder, preset.name, presetType);
     }
     for (const preset of userTestPresets(folder)) {
-      getConfigurePresetForPreset(folder, preset.name, presetType);
+      getConfigurePresetForPreset(folder, preset.name, presetType, true);
     }
   }
 }
 
-function getConfigurePresetForPreset(folder: string, name: string, presetType: 'build' | 'test'): string | null {
+function getConfigurePresetForPreset(folder: string, name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {
   if (presetType === 'build') {
     const refs = referencedBuildPresets.get(folder);
     if (!refs) {
@@ -920,7 +919,7 @@ function getConfigurePresetForPreset(folder: string, name: string, presetType: '
       refs.clear();
     }
   }
-  return getConfigurePresetForPresetImpl(folder, name, presetType);
+  return getConfigurePresetForPresetImpl(folder, name, presetType, allowUserPreset);
 }
 
 function getConfigurePresetForPresetImpl(folder: string, name: string, presetType: 'build' | 'test', allowUserPreset: boolean = false): string | null {

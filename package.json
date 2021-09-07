@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.8.0",
+  "version": "1.8.2",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -2014,7 +2014,8 @@
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^5.0.0",
-    "vscode-extension-telemetry": "^0.1.6",
+    "vscode-extension-telemetry": "^0.1.7",
+    "vscode-tas-client": "^0.1.22",
     "vscode-nls": "^5.0.0",
     "which": "~2.0.2",
     "xml2js": "^0.4.23"
