@@ -747,7 +747,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const result = await child.result;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
       return result.retc === 0;
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
       if (e2.code === 'ENOENT') {
@@ -850,7 +850,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // Make sure that all the regexp in compilerAllowList are written in a way that match[2] is the indeed the version.
       // This number may change in future as we add more cases and index 2 might be difficult to ensure for all of them.
       return match ? match[captureGroup] : "error";
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
       return "error";

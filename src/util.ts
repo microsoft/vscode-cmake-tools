@@ -290,7 +290,7 @@ async function _killTree(pid: number) {
     }
     try {
       process.kill(pid, 'SIGINT');
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === 'ESRCH') {
         // Do nothing. We're okay.
       } else {
