@@ -179,6 +179,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                                          configurePreset,
                                                                          lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                                          this.sourceDir,
+                                                                         this.getPreferredGeneratorName(),
                                                                          true);
       this._configurePreset.set(expandedConfigurePreset);
       if (previousGenerator && previousGenerator !== expandedConfigurePreset?.generator) {
@@ -210,7 +211,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           await drv.setConfigurePreset(expandedConfigurePreset);
           await this.workspaceContext.state.setConfigurePresetName(configurePreset);
           this._statusMessage.set(localize('ready.status', 'Ready'));
-        } catch (error) {
+        } catch (error: any) {
           void vscode.window.showErrorMessage(localize('unable.to.set.config.preset', 'Unable to set configure preset "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.config.preset', 'Error on switch of configure preset ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
@@ -242,6 +243,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                                  buildPreset,
                                                                  lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                                  this.sourceDir,
+                                                                 this.getPreferredGeneratorName(),
                                                                  true,
                                                                  this.configurePreset?.name);
       this._buildPreset.set(expandedBuildPreset);
@@ -264,7 +266,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this.updateDriverAndTargetInTaskProvider(drv);
           await this.workspaceContext.state.setBuildPresetName(buildPreset);
           this._statusMessage.set(localize('ready.status', 'Ready'));
-        } catch (error) {
+        } catch (error: any) {
           void vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.build.preset', 'Error on switch of build preset ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
@@ -297,6 +299,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                                testPreset,
                                                                lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                                this.sourceDir,
+                                                               this.getPreferredGeneratorName(),
                                                                true,
                                                                this.configurePreset?.name);
       this._testPreset.set(expandedTestPreset);
@@ -318,7 +321,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           await drv.setTestPreset(expandedTestPreset);
           await this.workspaceContext.state.setTestPresetName(testPreset);
           this._statusMessage.set(localize('ready.status', 'Ready'));
-        } catch (error) {
+        } catch (error: any) {
           void vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.test.preset', 'Error on switch of test preset ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
@@ -488,6 +491,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
     return user_preferred;
+  }
+
+  private getPreferredGeneratorName(): string | undefined {
+    const generators = this.getPreferredGenerators();
+    return generators[0]?.name;
   }
 
   /**
@@ -909,7 +917,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           await drv.setKit(kit, this.getPreferredGenerators());
           await this.workspaceContext.state.setActiveKitName(kit.name);
           this._statusMessage.set(localize('ready.status', 'Ready'));
-        } catch (error) {
+        } catch (error: any) {
           void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit "{0}".', error));
           this._statusMessage.set(localize('error.on.switch.status', 'Error on switch of kit ({0})', error.message));
           this._cmakeDriver = Promise.resolve(null);
@@ -966,7 +974,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
         try {
           await this._cmakeDriver;
-        } catch (e) {
+        } catch (e: any) {
           this._cmakeDriver = Promise.resolve(null);
           if (e instanceof BadHomeDirectoryError) {
             void vscode.window
@@ -981,10 +989,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     rollbar.invokeAsync(localize('clean.reconfigure.after.bad.home.dir', 'Clean reconfigure after bad home dir'), async () => {
                       try {
                         await fs.unlink(e.badCachePath);
-                      } catch (e2) { log.error(localize('failed.to.remove.bad.cache.file', 'Failed to remove bad cache file: {0} {1}', e.badCachePath, e2)); }
+                      } catch (e2: any) { log.error(localize('failed.to.remove.bad.cache.file', 'Failed to remove bad cache file: {0} {1}', e.badCachePath, e2)); }
                       try {
                         await fs.rmdir(path.join(path.dirname(e.badCachePath), 'CMakeFiles'));
-                      } catch (e2) { log.error(localize('failed.to.remove.cmakefiles.for.cache', 'Failed to remove CMakeFiles for cache: {0} {1}', e.badCachePath, e2)); }
+                      } catch (e2: any) { log.error(localize('failed.to.remove.cmakefiles.for.cache', 'Failed to remove CMakeFiles for cache: {0} {1}', e.badCachePath, e2)); }
                         await this.cleanConfigure(ConfigureTrigger.badHomeDir);
                       });
                   }
@@ -1062,7 +1070,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const pardir = path.dirname(expanded_dest);
       try {
         await fs.mkdir_p(pardir);
-      } catch (e) {
+      } catch (e: any) {
         void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
           'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
           compdb_path, expanded_dest, pardir, e.toString()));
@@ -1070,7 +1078,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       }
       try {
         await fs.copyFile(compdb_path, expanded_dest);
-      } catch (e) {
+      } catch (e: any) {
         // Just display the error. It's the best we can do.
         void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
         return;
@@ -1861,7 +1869,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                                        this.workspaceContext.config.debugConfig?.MIMode,
                                                                        this.workspaceContext.config.debugConfig?.miDebuggerPath);
       log.debug(localize('debug.configuration.from.cache', 'Debug configuration from cache: {0}', JSON.stringify(debug_config)));
-    } catch (error) {
+    } catch (error: any) {
       void vscode.window
           .showErrorMessage(error.message, {
             title: localize('debugging.documentation.button', 'Debugging documentation'),
