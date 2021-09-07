@@ -543,6 +543,7 @@ export async function expandConfigurePreset(folder: string,
                                             name: string,
                                             workspaceFolder: string,
                                             sourceDir: string,
+                                            preferredGeneratorName: string | undefined,
                                             allowUserPreset: boolean = false): Promise<ConfigurePreset | null> {
   const refs = referencedConfigurePresets.get(folder);
   if (!refs) {
@@ -582,7 +583,7 @@ export async function expandConfigurePreset(folder: string,
       preset.binaryDir = defaultValue;
     }
     if (!preset.generator) {
-      const defaultValue = 'Ninja';
+      const defaultValue = preferredGeneratorName ?? 'Ninja';
 
       log.debug(localize('generator.undefined', 'Configure preset {0}: No generator specified, using default value "{1}"', preset.name, defaultValue));
       preset.generator = defaultValue;
@@ -995,6 +996,7 @@ export async function expandBuildPreset(folder: string,
                                         name: string,
                                         workspaceFolder: string,
                                         sourceDir: string,
+                                        preferredGeneratorName: string | undefined,
                                         allowUserPreset: boolean = false,
                                         configurePreset?: string): Promise<BuildPreset | null> {
   const refs = referencedBuildPresets.get(folder);
@@ -1004,7 +1006,7 @@ export async function expandBuildPreset(folder: string,
     refs.clear();
   }
 
-  const preset = await expandBuildPresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+  const preset = await expandBuildPresetImpl(folder, name, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, configurePreset);
   if (!preset) {
     return null;
   }
@@ -1053,17 +1055,18 @@ async function expandBuildPresetImpl(folder: string,
                                      name: string,
                                      workspaceFolder: string,
                                      sourceDir: string,
+                                     preferredGeneratorName: string | undefined,
                                      allowUserPreset: boolean = false,
                                      configurePreset?: string): Promise<BuildPreset | null> {
   let preset = getPresetByName(buildPresets(folder), name);
   if (preset) {
-    return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir);
+    return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
   }
 
   if (allowUserPreset) {
     preset = getPresetByName(userBuildPresets(folder), name);
     if (preset) {
-      return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
+      return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
     }
   }
 
@@ -1075,7 +1078,7 @@ async function expandBuildPresetImpl(folder: string,
       description: defaultBuildPreset.description,
       configurePreset
     };
-    return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
+    return expandBuildPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
   }
 
   log.error(localize('build.preset.not.found', 'Could not find build preset with name {0}', name));
@@ -1086,6 +1089,7 @@ async function expandBuildPresetHelper(folder: string,
                                        preset: BuildPreset,
                                        workspaceFolder: string,
                                        sourceDir: string,
+                                       preferredGeneratorName: string | undefined,
                                        allowUserPreset: boolean = false) {
   if (preset.__expanded) {
     return preset;
@@ -1115,7 +1119,7 @@ async function expandBuildPresetHelper(folder: string,
       preset.inherits = [preset.inherits];
     }
     for (const parentName of preset.inherits) {
-      const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
+      const parent = await expandBuildPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
       if (parent) {
         // Inherit environment
         inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
@@ -1133,7 +1137,7 @@ async function expandBuildPresetHelper(folder: string,
 
   // Expand configure preset. Evaluate this after inherits since it may come from parents
   if (preset.configurePreset) {
-    const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
+    const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
     if (configurePreset) {
       preset.__binaryDir = configurePreset.binaryDir;
       preset.__generator = configurePreset.generator;
@@ -1157,6 +1161,7 @@ export async function expandTestPreset(folder: string,
                                        name: string,
                                        workspaceFolder: string,
                                        sourceDir: string,
+                                       preferredGeneratorName: string | undefined,
                                        allowUserPreset: boolean = false,
                                        configurePreset?: string): Promise<TestPreset | null> {
   const refs = referencedTestPresets.get(folder);
@@ -1166,7 +1171,7 @@ export async function expandTestPreset(folder: string,
     refs.clear();
   }
 
-  const preset = await expandTestPresetImpl(folder, name, workspaceFolder, sourceDir, allowUserPreset, configurePreset);
+  const preset = await expandTestPresetImpl(folder, name, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset, configurePreset);
   if (!preset) {
     return null;
   }
@@ -1248,17 +1253,18 @@ async function expandTestPresetImpl(folder: string,
                                     name: string,
                                     workspaceFolder: string,
                                     sourceDir: string,
+                                    preferredGeneratorName: string | undefined,
                                     allowUserPreset: boolean = false,
                                     configurePreset?: string): Promise<TestPreset | null> {
   let preset = getPresetByName(testPresets(folder), name);
   if (preset) {
-    return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir);
+    return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName);
   }
 
   if (allowUserPreset) {
     preset = getPresetByName(userTestPresets(folder), name);
     if (preset) {
-      return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
+      return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
     }
   }
 
@@ -1270,7 +1276,7 @@ async function expandTestPresetImpl(folder: string,
       description: defaultTestPreset.description,
       configurePreset
     };
-    return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, true);
+    return expandTestPresetHelper(folder, preset, workspaceFolder, sourceDir, preferredGeneratorName, true);
   }
 
   log.error(localize('test.preset.not.found', 'Could not find test preset with name {0}', name));
@@ -1281,6 +1287,7 @@ async function expandTestPresetHelper(folder: string,
                                       preset: TestPreset,
                                       workspaceFolder: string,
                                       sourceDir: string,
+                                      preferredGeneratorName: string | undefined,
                                       allowUserPreset: boolean = false) {
   if (preset.__expanded) {
     return preset;
@@ -1308,7 +1315,7 @@ async function expandTestPresetHelper(folder: string,
       preset.inherits = [preset.inherits];
     }
     for (const parentName of preset.inherits) {
-      const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, allowUserPreset);
+      const parent = await expandTestPresetImpl(folder, parentName, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
       if (parent) {
         // Inherit environment
         inheritedEnv = util.mergeEnvironment(parent.environment! as EnvironmentVariables, inheritedEnv);
@@ -1326,7 +1333,7 @@ async function expandTestPresetHelper(folder: string,
 
   // Expand configure preset. Evaluate this after inherits since it may come from parents
   if (preset.configurePreset) {
-    const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, allowUserPreset);
+    const configurePreset = await expandConfigurePreset(folder, preset.configurePreset, workspaceFolder, sourceDir, preferredGeneratorName, allowUserPreset);
     if (configurePreset) {
       preset.__binaryDir = configurePreset.binaryDir;
       preset.__generator = configurePreset.generator;

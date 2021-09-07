@@ -176,6 +176,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                                          configurePreset,
                                                                          lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                                          await this.sourceDir,
+                                                                         this.getPreferredGeneratorName(),
                                                                          true);
       this._configurePreset.set(expandedConfigurePreset);
       if (!expandedConfigurePreset) {
@@ -235,6 +236,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                                  buildPreset,
                                                                  lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                                  await this.sourceDir,
+                                                                 this.getPreferredGeneratorName(),
                                                                  true,
                                                                  this.configurePreset?.name);
       this._buildPreset.set(expandedBuildPreset);
@@ -290,6 +292,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                                                                testPreset,
                                                                lightNormalizePath(this.folder.uri.fsPath || '.'),
                                                                await this.sourceDir,
+                                                               this.getPreferredGeneratorName(),
                                                                true,
                                                                this.configurePreset?.name);
       this._testPreset.set(expandedTestPreset);
@@ -475,6 +478,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const user_preferred = this.workspaceContext.config.preferredGenerators.map(g => ({name: g}));
     return user_preferred;
+  }
+
+  private getPreferredGeneratorName(): string | undefined {
+    const generators = this.getPreferredGenerators();
+    return generators[0]?.name;
   }
 
   /**
