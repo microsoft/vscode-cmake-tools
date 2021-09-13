@@ -174,8 +174,9 @@ suite('Select debugger', async () => {
 
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+    const debuggerPath = getTestResourceFilePath('../fakebin/gdb');
 
-    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.MIModes.gdb, "../../fakebin/gdb");
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.MIModes.gdb, debuggerPath);
     expect(config).to.not.be.null;
     if (!config) {
       throw new Error();
@@ -183,7 +184,7 @@ suite('Select debugger', async () => {
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
-    expect(config['miDebuggerPath']).to.be.eq('../../fakebin/gdb');
+    expect(config['miDebuggerPath']).to.be.eq(debuggerPath);
   });
 
   test('Create debug config from cache - debugger override', async () => {
@@ -210,8 +211,9 @@ suite('Select debugger', async () => {
 
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+    const debuggerPath = getTestResourceFilePath('../fakebin/lldb-mi');
 
-    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', undefined, "../../fakebin/lldb-mi");
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', undefined, debuggerPath);
     expect(config).to.not.be.null;
     if (!config) {
       throw new Error();
@@ -219,6 +221,6 @@ suite('Select debugger', async () => {
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('lldb');
     expect(config.type).to.be.eq('cppdbg');
-    expect(config['miDebuggerPath']).to.be.eq('../../fakebin/lldb-mi');
+    expect(config['miDebuggerPath']).to.be.eq(debuggerPath);
   });
 });
