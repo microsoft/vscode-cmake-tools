@@ -474,7 +474,7 @@ function getVendorForConfigurePresetHelper(folder: string, preset: ConfigurePres
 
   if (refs.has(preset.name)) {
     // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
-    log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
+    log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
     return null;
   }
 
@@ -747,7 +747,7 @@ async function expandConfigurePresetHelper(folder: string,
 
   if (refs.has(preset.name) && !preset.__expanded) {
     // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
-    log.error('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name);
+    log.error(localize('circular.inherits.in.config.preset', 'Circular inherits in configure preset {0}', preset.name));
     return null;
   }
 
@@ -960,7 +960,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
     const refs = referencedBuildPresets.get(folder)!;
     if (refs.has(preset.name)) {
       // Referenced this preset before, but it doesn't have a configure preset. This is a circular inheritance.
-      log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
+      log.error(localize('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name));
       return null;
     }
 
@@ -968,7 +968,7 @@ function getConfigurePresetForPresetHelper(folder: string, preset: BuildPreset |
   } else {
     const refs = referencedTestPresets.get(folder)!;
     if (refs.has(preset.name)) {
-      log.error('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name);
+      log.error(localize('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name));
       return null;
     }
 
@@ -1100,7 +1100,7 @@ async function expandBuildPresetHelper(folder: string,
     // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
     // Notice that we check !preset.__expanded here but not in getConfigurePresetForBuildPresetHelper because
     // multiple parents could all point to the same parent.
-    log.error('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name);
+    log.error(localize('circular.inherits.in.build.preset', 'Circular inherits in build preset {0}', preset.name));
     return null;
   }
 
@@ -1296,7 +1296,7 @@ async function expandTestPresetHelper(folder: string,
 
   if (refs.has(preset.name) && !preset.__expanded) {
     // Referenced this preset before, but it still hasn't been expanded. So this is a circular inheritance.
-    log.error('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name);
+    log.error(localize('circular.inherits.in.test.preset', 'Circular inherits in test preset {0}', preset.name));
     return null;
   }
 
