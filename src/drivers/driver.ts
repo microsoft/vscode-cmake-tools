@@ -29,6 +29,7 @@ import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import {DiagnosticsConfiguration} from '@cmt/folders';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -1219,14 +1220,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
       let telemetryProperties: telemetry.Properties;
       if (this.useCMakePresets) {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
           Preset: this.useCMakePresets ? 'true' : 'false',
           Trigger: trigger
         };
       } else {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
           ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
@@ -1672,4 +1673,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return inst;
   }
 
+  public getDiagnostics(): DiagnosticsConfiguration {
+    return {
+      folder: this.workspaceFolder || '',
+      cmakeVersion: this.cmake.version ? util.versionToString(this.cmake.version) : '',
+      configured: this._isConfiguredAtLeastOnce,
+      generator: this.generatorName || '',
+      usesPresets: this.useCMakePresets,
+      compilers: {
+        C: this.cmakeCacheEntries.get('CMAKE_C_COMPILER')?.value,
+        CXX: this.cmakeCacheEntries.get('CMAKE_CXX_COMPILER')?.value
+      }
+    };
+  }
 }

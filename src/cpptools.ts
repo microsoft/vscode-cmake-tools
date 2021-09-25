@@ -24,6 +24,20 @@ type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
 type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
   | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
 
+export interface DiagnosticsCpptools {
+  isRegistered: boolean;
+  targetCount: number;
+  executablesCount: number;
+  librariesCount: number;
+  targets: DiagnosticsTarget[];
+  responses: cpt.SourceFileConfigurationItem[];
+}
+
+export interface DiagnosticsTarget {
+  name: string;
+  type: string;
+}
+
 export interface CompileFlagInformation {
   extraDefinitions: string[];
   standard?: StandardVersion;
@@ -541,5 +555,9 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
         'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
+  }
+
+  getDiagnostics(): DiagnosticsCpptools {
+    throw new Error('Method not implemented.');
   }
 }

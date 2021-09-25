@@ -11,9 +11,24 @@ import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
 import { PresetsController } from '@cmt/presetsController';
+import { CMakeCommunicationMode, UseCMakePresets } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
+
+export interface DiagnosticsConfiguration {
+  folder: string;
+  cmakeVersion: string;
+  compilers: {C?: string; CXX?: string};
+  usesPresets: boolean;
+  generator: string;
+  configured: boolean;
+}
+
+export interface DiagnosticsSettings {
+  communicationMode: CMakeCommunicationMode;
+  useCMakePresets: UseCMakePresets;
+}
 
 export class CMakeToolsFolder {
   private _wasUsingCMakePresets: boolean | undefined;
@@ -74,7 +89,9 @@ export class CMakeToolsFolder {
     return cmtFolder;
   }
 
-  get folder() { return this.cmakeTools.folder; }
+  get folder() {
+    return this.cmakeTools.folder;
+  }
 
   // Go through the decision tree here since there would be dependency issues if we do this in config.ts
   get useCMakePresets(): boolean {
@@ -89,7 +106,44 @@ export class CMakeToolsFolder {
     return this.cmakeTools.workspaceContext.config.useCMakePresets === 'always';
   }
 
-  get onUseCMakePresetsChanged() { return this._onUseCMakePresetsChangedEmitter.event; }
+  async getDiagnostics(): Promise<DiagnosticsConfiguration> {
+    try {
+      const drv = await this.cmakeTools.getCMakeDriverInstance();
+      if (drv) {
+        return drv.getDiagnostics();
+      }
+    } catch {
+    }
+    return {
+      folder: this.folder.name,
+      cmakeVersion: "unknown",
+      configured: false,
+      generator: "unknown",
+      usesPresets: false,
+      compilers: {}
+    };
+  }
+
+  async getSettingsDiagnostics(): Promise<DiagnosticsSettings> {
+    try {
+      const drv = await this.cmakeTools.getCMakeDriverInstance();
+      if (drv) {
+        return {
+          communicationMode: drv.config.cmakeCommunicationMode,
+          useCMakePresets: drv.config.useCMakePresets
+        };
+      }
+    } catch {
+    }
+    return {
+      communicationMode: 'automatic',
+      useCMakePresets: 'auto'
+    };
+  }
+
+  get onUseCMakePresetsChanged() {
+    return this._onUseCMakePresetsChangedEmitter.event;
+  }
 
   dispose() {
     if (this._onDidOpenTextDocumentListener) {
@@ -190,6 +244,10 @@ export class CMakeToolsFolderController implements vscode.Disposable {
       }
     }
     return undefined;
+  }
+
+  getAll(): CMakeToolsFolder[] {
+    return [...this._instances.values()];
   }
 
   /**
