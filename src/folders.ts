@@ -28,6 +28,7 @@ export interface DiagnosticsConfiguration {
 export interface DiagnosticsSettings {
   communicationMode: CMakeCommunicationMode;
   useCMakePresets: UseCMakePresets;
+  configureOnOpen: boolean | null;
 }
 
 export class CMakeToolsFolder {
@@ -130,14 +131,16 @@ export class CMakeToolsFolder {
       if (drv) {
         return {
           communicationMode: drv.config.cmakeCommunicationMode,
-          useCMakePresets: drv.config.useCMakePresets
+          useCMakePresets: drv.config.useCMakePresets,
+          configureOnOpen: drv.config.configureOnOpen
         };
       }
     } catch {
     }
     return {
       communicationMode: 'automatic',
-      useCMakePresets: 'auto'
+      useCMakePresets: 'auto',
+      configureOnOpen: null
     };
   }
 

@@ -757,9 +757,11 @@ class ExtensionManager implements vscode.Disposable {
           ++this.cpptoolsNumFoldersReady;
           if (this.cpptoolsNumFoldersReady === this._folders.size) {
             cpptools.notifyReady(this._configProvider);
+            this._configProvider.markAsReady();
           }
         } else {
           cpptools.didChangeCustomConfiguration(this._configProvider);
+          this._configProvider.markAsReady();
         }
       }
     });
@@ -1366,7 +1368,7 @@ class ExtensionManager implements vscode.Disposable {
     const settings: DiagnosticsSettings[] = [];
     for (const folder of this._folders.getAll()) {
         configurations.push(await folder.getDiagnostics());
-        settings.push(folder.getSettingsDiagnostics());
+        settings.push(await folder.getSettingsDiagnostics());
     }
 
     const result: Diagnostics = {
@@ -1378,7 +1380,9 @@ class ExtensionManager implements vscode.Disposable {
       settings
     };
     const output = logging.channelManager.get("CMake Diagnostics");
+    output.clear();
     output.appendLine(JSON.stringify(result, null, 2));
+    output.show();
   }
 
   activeFolderName(): string  {
@@ -1647,6 +1651,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setDefaultTarget',
     'resetState',
     'viewLog',
+    'logDiagnostics',
     'compileFile',
     'selectWorkspace',
     'tasksBuildCommand',
