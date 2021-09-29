@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import {oneLess, RawDiagnosticParser, FeedLineResult, RawDiagnostic} from './util';
 
 const CODE_REGEX
-    = /^\"(?<file>.*)\",(?<line>\d+)\s+(?<severity>[A-Za-z]+)\[(?<code>[A-Za-z]+[0-9]+)\]:/;
+    = /^\"(?<file>.*)\",(?<line>\d+)\s+(?<severity>[A-Za-z ]+)\[(?<code>[A-Za-z]+[0-9]+)\]:(?<message_start>.*)$/;
 
 const POINTER_REGEX = /^( +)\^$/;
 
@@ -24,6 +24,7 @@ export class Parser extends RawDiagnosticParser {
   private translateSeverity(iar_severity: string): string {
     switch (iar_severity) {
       case 'Error':
+      case 'Fatal error':
         return 'error';
       case 'Warning':
         return 'warning';
@@ -58,14 +59,14 @@ export class Parser extends RawDiagnosticParser {
           return FeedLineResult.NotMine;
         }
 
-        const [full, file, lineno = '1', severity, code] = mat;
+        const [full, file, lineno = '1', severity, code, message_start] = mat;
         if (file && severity) {
           this.pending_diagnostic = {
             full: full,
             file: file,
             location : new vscode.Range(oneLess(lineno), this.pending_column ?? 0, oneLess(lineno), 999),
             severity: this.translateSeverity(severity),
-            message: "",
+            message: message_start ? message_start + ' ' : '', // Add space ready for the next line of the message. It'll be trimmed if there isn't an additional part to the message.
             code: code,
             related : []
           };
@@ -79,15 +80,12 @@ export class Parser extends RawDiagnosticParser {
         const diagnostic = this.pending_diagnostic!;
 
         if (line === '' || line[0] !== ' ') {
+          diagnostic.message = diagnostic.message.trim();
           this.reset();
           return diagnostic;
         }
 
-        if (diagnostic.message !== '') {
-          diagnostic.message += '\n';
-        }
-
-        diagnostic.message += line.trim();
+        diagnostic.message += line.trim() + '\n';
         diagnostic.full += `\n${line}`;
         return FeedLineResult.Ok;
       }

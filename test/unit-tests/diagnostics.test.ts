@@ -432,4 +432,27 @@ suite('Diagnostics', async () => {
     expect(diagnostic.message).to.eq('identifier "kjfdlkj" is undefined');
     expect(diagnostic.severity).to.eq('error');
   });
+
+  test('Parse IAR fatal error', () => {
+    const lines = [
+      '  #include <kjlkjl>',
+      '                   ^',
+      '"C:\\foo\\bar\\test.c",1  Fatal error[Pe1696]: cannot open source',
+      '          file "kjlkjl"',
+      '            searched: "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench',
+      '                      8.0\\arm\\inc\\"',
+      '            current directory: "C:\\Users\\user\\Documents"',
+      'Fatal error detected, aborting.'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.compilers.iar.diagnostics).to.have.length(1);
+    const diagnostic = build_consumer.compilers.iar.diagnostics[0];
+
+    expect(diagnostic.file).to.eq('C:\\foo\\bar\\test.c');
+    expect(diagnostic.location.start.line).to.eq(0);
+    expect(diagnostic.location.start.character).to.eq(17);
+    expect(diagnostic.code).to.eq('Pe1696');
+    expect(diagnostic.message).to.eq('cannot open source file "kjlkjl"\nsearched: "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench\n8.0\\arm\\inc\\"\ncurrent directory: "C:\\Users\\user\\Documents"');
+    expect(diagnostic.severity).to.eq('error');
+  });
 });
