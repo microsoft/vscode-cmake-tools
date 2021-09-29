@@ -1914,11 +1914,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-schema-v3.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-schema-v3.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
       }
     ]
   },
