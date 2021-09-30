@@ -1066,7 +1066,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!copy_dest) {
         return;
       }
-      const expanded_dest = await expandString(copy_dest, opts);
+      let expanded_dest = await expandString(copy_dest, opts);
       const pardir = path.dirname(expanded_dest);
       try {
         await fs.mkdir_p(pardir);
@@ -1075,6 +1075,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
           compdb_path, expanded_dest, pardir, e.toString()));
         return;
+      }
+      if (await fs.exists(expanded_dest) && (await fs.stat(expanded_dest)).isDirectory()) {
+        expanded_dest = path.join(expanded_dest, "compile_commands.json");
       }
       try {
         await fs.copyFile(compdb_path, expanded_dest);
