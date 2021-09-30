@@ -145,6 +145,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.logDiagnostics",
+        "title": "%cmake-tools.command.cmake.logDiagnostics.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.selectActiveFolder",
         "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -1915,11 +1921,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-schema-v3.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-schema-v3.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
       }
     ]
   },
