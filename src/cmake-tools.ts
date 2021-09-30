@@ -1344,7 +1344,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       targetName = target;
     }
     this.updateDriverAndTargetInTaskProvider(drv, target);
-    const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
+    const consumer = new CMakeBuildConsumer(BUILD_LOGGER, drv.config);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
       this._statusMessage.set(localize('building.status', 'Building'));

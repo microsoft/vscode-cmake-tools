@@ -1168,7 +1168,8 @@
               "gnuld",
               "msvc",
               "ghs",
-              "diab"
+              "diab",
+              "iar"
             ]
           },
           "default": [
