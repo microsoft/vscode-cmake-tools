@@ -127,6 +127,7 @@ class ExtensionManager implements vscode.Disposable {
         subs.push(new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
         subs.push(new_cmt.onTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
         subs.push(new_cmt.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
+        subs.push(new_cmt.onActiveBuildPresetChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
         this._codeModelUpdateSubs.set(new_cmt.folder.uri.fsPath, subs);
       }
       rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
@@ -209,7 +210,8 @@ class ExtensionManager implements vscode.Disposable {
         this._codeModelUpdateSubs.set(cmtFolder.folder.uri.fsPath, [
           cmtFolder.cmakeTools.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
           cmtFolder.cmakeTools.onTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
-          cmtFolder.cmakeTools.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder))
+          cmtFolder.cmakeTools.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
+          cmtFolder.cmakeTools.onActiveBuildPresetChanged(FireLate, () => this._updateCodeModel(cmtFolder))
         ]);
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
@@ -734,15 +736,20 @@ class ExtensionManager implements vscode.Disposable {
           }
         }
 
+        const isMultiConfig = !!cache.get('CMAKE_CONFIGURATION_TYPES');
+        if (drv) {
+          drv.isMultiConfig = isMultiConfig;
+        }
+        const actualBuildType = isMultiConfig && cmt.useCMakePresets ? cmt.buildPreset?.configuration || null : cmt.activeVariant;
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
         let codeModelContent;
         if (cmt.codeModelContent) {
           codeModelContent = cmt.codeModelContent;
-          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmt.folder.uri.fsPath });
         } else if (drv && drv.codeModelContent) {
           codeModelContent = drv.codeModelContent;
-          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmt.folder.uri.fsPath });
           this._projectOutlineProvider.updateCodeModel(
             cmt.workspaceContext.folder,
             codeModelContent,
