@@ -14,14 +14,15 @@ import * as nls from 'vscode-nls';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
 import {ConfigurationReader, TouchBarConfig} from '@cmt/config';
-import {CppConfigurationProvider} from '@cmt/cpptools';
-import {CMakeToolsFolderController, CMakeToolsFolder} from '@cmt/folders';
+import {CppConfigurationProvider, DiagnosticsCpptools} from '@cmt/cpptools';
+import {CMakeToolsFolderController, CMakeToolsFolder, DiagnosticsConfiguration, DiagnosticsSettings} from '@cmt/folders';
 import {
   Kit,
   USER_KITS_FILEPATH,
   findCLCompilerPath,
   scanForKitsIfNeeded
 } from '@cmt/kit';
+import { IExperimentationService } from 'vscode-tas-client';
 import {KitsController} from '@cmt/kitsController';
 import * as logging from '@cmt/logging';
 import {fs} from '@cmt/pr';
@@ -37,7 +38,8 @@ import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
 import {expandString, KitContextVars} from '@cmt/expand';
 import paths from '@cmt/paths';
-import { CMakeDriver } from './drivers/driver';
+import {CMakeDriver, CMakePreconditionProblems} from './drivers/driver';
+import {platform} from 'os';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -60,6 +62,15 @@ let _EXT_MANAGER: ExtensionManager|null = null;
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
 
+interface Diagnostics {
+  os: string;
+  vscodeVersion: string;
+  cmtVersion: string;
+  configurations: DiagnosticsConfiguration[];
+  settings: DiagnosticsSettings[];
+  cpptoolsIntegration: DiagnosticsCpptools;
+}
+
 /**
  * A class to manage the extension.
  *
@@ -72,7 +83,24 @@ type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | nu
  */
 class ExtensionManager implements vscode.Disposable {
   constructor(public readonly extensionContext: vscode.ExtensionContext) {
-    telemetry.activate();
+    telemetry.activate(extensionContext);
+    this.showCMakeLists = new Promise<boolean>(resolve => {
+      const experimentationService: Promise<IExperimentationService | undefined> | undefined = telemetry.getExperimentationService();
+      if (experimentationService) {
+        void experimentationService
+              .then(expSrv => expSrv!.getTreatmentVariableAsync<boolean>("vscode", "partialActivation_showCMakeLists"))
+              .then(showCMakeLists => {
+                if (showCMakeLists !== undefined) {
+                  resolve(showCMakeLists);
+                } else {
+                  resolve(false);
+                }
+              });
+      } else {
+        resolve(false);
+      }
+    });
+
     this._statusBar.setBuildTargetName('all');
     this._folders.onAfterAddFolder(async cmtFolder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
@@ -186,8 +214,15 @@ class ExtensionManager implements vscode.Disposable {
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
     }
+
+    const isFullyActivated: boolean = await this.workspaceHasCMakeProject();
+    if (isFullyActivated) {
+      await enableFullFeatureSet(true);
+    }
+
     const telemetryProperties: telemetry.Properties = {
-      isMultiRoot: `${isMultiRoot}`
+      isMultiRoot: `${isMultiRoot}`,
+      isFullyActivated: `${isFullyActivated}`
     };
     if (isMultiRoot) {
       telemetryProperties['autoSelectActiveFolder'] = `${this._workspaceConfig.autoSelectActiveFolder}`;
@@ -219,6 +254,11 @@ class ExtensionManager implements vscode.Disposable {
     const inst = new ExtensionManager(ctx);
     await inst._init();
     return inst;
+  }
+
+  private showCMakeLists: Promise<boolean>;
+  public expShowCMakeLists(): Promise<boolean> {
+    return this.showCMakeLists;
   }
 
   /**
@@ -266,7 +306,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
-  private _configProviderRegister?: Promise<void>;
+  private _configProviderRegistered?: boolean = false;
 
   private _checkFolderArgs(folder?: vscode.WorkspaceFolder): CMakeToolsFolder | undefined {
     let cmtFolder: CMakeToolsFolder | undefined;
@@ -317,6 +357,7 @@ class ExtensionManager implements vscode.Disposable {
       // No CMakeTools. Probably no workspace open.
       return false;
     }
+
     if (cmt.useCMakePresets) {
       if (cmt.configurePreset) {
         return true;
@@ -427,6 +468,7 @@ class ExtensionManager implements vscode.Disposable {
     if (!await this._ensureActiveConfigurePresetOrKit(cmt)) {
       return;
     }
+
     await cmt.configureInternal(trigger, [], ConfigureType.Normal);
   }
 
@@ -434,6 +476,10 @@ class ExtensionManager implements vscode.Disposable {
   // (does have a valid CMakeLists.txt at the location pointed to by the "cmake.sourceDirectory" setting)
   // and also stores the answer in a map for later use.
   async folderIsCMakeProject(cmt: CMakeTools): Promise<boolean> {
+    if (this._foldersAreCMake.get(cmt.folderName)) {
+      return true;
+    }
+
     const optsVars: KitContextVars = {
       userHome: paths.userHome,
       workspaceFolder: cmt.workspaceContext.folder.uri.fsPath,
@@ -465,22 +511,12 @@ class ExtensionManager implements vscode.Disposable {
     const isCMake = await fs.exists(expandedSourceDirectory);
     this._foldersAreCMake.set(cmt.folderName, isCMake);
 
-    // If we found a valid CMake project, set feature set view to full, otherwise leave the UI as it was.
-    if (isCMake) {
-      await enableFullFeatureSet(true);
-    }
-
     return isCMake;
   }
 
   async _postWorkspaceOpen(info: CMakeToolsFolder) {
     const ws = info.folder;
     const cmt = info.cmakeTools;
-
-    // Don't configure if the current project is not CMake based.
-    if (!await this.folderIsCMakeProject(cmt)) {
-      return;
-    }
 
     // Scan for kits even under presets mode, so we can create presets from compilers.
     // Silent re-scan when detecting a breaking change in the kits definition.
@@ -541,28 +577,33 @@ class ExtensionManager implements vscode.Disposable {
       }
     }
 
-    if (should_configure === true) {
-      // We've opened a new workspace folder, and the user wants us to
-      // configure it now.
-      log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
-      await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
+    if (!await this.folderIsCMakeProject(cmt)) {
+      await cmt.cmakePreConditionProblemHandler(CMakePreconditionProblems.MissingCMakeListsFile, false, this._workspaceConfig);
     } else {
-      const configureButtonMessage = localize('configure.now.button', 'Configure Now');
-      let result: string | undefined;
-      if (silentScanForKitsNeeded) {
-        // This popup will show up the first time after deciding not to configure, if a version change has been detected
-        // in the kits definition. This may happen during a CMake Tools extension upgrade.
-        // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
-        // being tied to a global state variable.
-        result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
-      }
-      if (result === configureButtonMessage) {
-        await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
-      } else {
-        log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
+      if (should_configure === true) {
+        // We've opened a new workspace folder, and the user wants us to
+        // configure it now.
+        log.debug(localize('configuring.workspace.on.open', 'Configuring workspace on open {0}', ws.uri.toString()));
         await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
+      } else {
+        const configureButtonMessage = localize('configure.now.button', 'Configure Now');
+        let result: string | undefined;
+        if (silentScanForKitsNeeded) {
+          // This popup will show up the first time after deciding not to configure, if a version change has been detected
+          // in the kits definition. This may happen during a CMake Tools extension upgrade.
+          // The warning is emitted only once because scanForKitsIfNeeded returns true only once after such change,
+          // being tied to a global state variable.
+          result = await vscode.window.showWarningMessage(localize('configure.recommended', 'It is recommended to reconfigure after upgrading to a new kits definition.'), configureButtonMessage);
+        }
+        if (result === configureButtonMessage) {
+          await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
+        } else {
+          log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
+          await this.configureExtensionInternal(ConfigureTrigger.configureWithCache, cmt);
+        }
       }
     }
+
     this._updateCodeModel(info);
   }
 
@@ -711,14 +752,16 @@ class ExtensionManager implements vscode.Disposable {
             }
           );
         }
-        await this.ensureCppToolsProviderRegistered();
+        this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
           ++this.cpptoolsNumFoldersReady;
           if (this.cpptoolsNumFoldersReady === this._folders.size) {
             cpptools.notifyReady(this._configProvider);
+            this._configProvider.markAsReady();
           }
         } else {
           cpptools.didChangeCustomConfiguration(this._configProvider);
+          this._configProvider.markAsReady();
         }
       }
     });
@@ -988,18 +1031,17 @@ class ExtensionManager implements vscode.Disposable {
     return this._folders.get(folder)?.useCMakePresets;
   }
 
-  async ensureCppToolsProviderRegistered() {
-    if (!this._configProviderRegister) {
-      this._configProviderRegister = this._doRegisterCppTools();
+  ensureCppToolsProviderRegistered() {
+    if (!this._configProviderRegistered) {
+      this._doRegisterCppTools();
+      this._configProviderRegistered = true;
     }
-    return this._configProviderRegister;
   }
 
-  async _doRegisterCppTools() {
-    if (!this._cppToolsAPI) {
-      return;
+  _doRegisterCppTools() {
+    if (this._cppToolsAPI) {
+      this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
     }
-    this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
   }
 
   private _cleanOutputChannel() {
@@ -1273,12 +1315,12 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapQueryCMakeTools(async cmt => (await cmt.executableTargets).map(target => target.name), folder);
   }
 
-  async tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
+  tasksBuildCommand(folder?: vscode.WorkspaceFolder | string) {
     telemetry.logEvent("substitution", {command: "tasksBuildCommand"});
     return this.mapQueryCMakeTools(cmt => cmt.tasksBuildCommand(), folder);
   }
 
-  async debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> { return this.mapCMakeToolsFolder(cmt => cmt.debugTarget(name), folder); }
+  debugTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.DebugSession | null> { return this.mapCMakeToolsFolder(cmt => cmt.debugTarget(name), folder); }
 
   async debugTargetAll(): Promise<(vscode.DebugSession | null)[]> {
     const debugSessions: (vscode.DebugSession | null)[] = [];
@@ -1290,7 +1332,7 @@ class ExtensionManager implements vscode.Disposable {
     return debugSessions;
   }
 
-  async launchTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.Terminal | null> { return this.mapCMakeToolsFolder(cmt => cmt.launchTarget(name), folder); }
+  launchTarget(folder?: vscode.WorkspaceFolder, name?: string): Promise<vscode.Terminal | null> { return this.mapCMakeToolsFolder(cmt => cmt.launchTarget(name), folder); }
 
   async launchTargetAll(): Promise<(vscode.Terminal | null)[]> {
     const terminals: (vscode.Terminal | null)[] = [];
@@ -1318,6 +1360,29 @@ class ExtensionManager implements vscode.Disposable {
   async viewLog() {
     telemetry.logEvent("openLogFile");
     await logging.showLogFile();
+  }
+
+  async logDiagnostics() {
+    telemetry.logEvent("logDiagnostics");
+    const configurations: DiagnosticsConfiguration[] = [];
+    const settings: DiagnosticsSettings[] = [];
+    for (const folder of this._folders.getAll()) {
+        configurations.push(await folder.getDiagnostics());
+        settings.push(await folder.getSettingsDiagnostics());
+    }
+
+    const result: Diagnostics = {
+      os: platform(),
+      vscodeVersion: vscode.version,
+      cmtVersion: util.thisExtensionPackage().version,
+      configurations,
+      cpptoolsIntegration: this._configProvider.getDiagnostics(),
+      settings
+    };
+    const output = logging.channelManager.get("CMake Diagnostics");
+    output.clear();
+    output.appendLine(JSON.stringify(result, null, 2));
+    output.show();
   }
 
   activeFolderName(): string  {
@@ -1348,7 +1413,7 @@ class ExtensionManager implements vscode.Disposable {
   // without recalculating the valid states of CMakeLists.txt.
   async workspaceHasCMakeProject(): Promise<boolean> {
     for (const cmtFolder of this._folders) {
-      if (this._foldersAreCMake.get(cmtFolder.cmakeTools.folderName)) {
+      if (await this.folderIsCMakeProject(cmtFolder.cmakeTools)) {
         return true;
       }
     }
@@ -1494,9 +1559,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
 
-  // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
-  await enableFullFeatureSet(false);
-
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
     return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {
@@ -1589,6 +1651,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setDefaultTarget',
     'resetState',
     'viewLog',
+    'logDiagnostics',
     'compileFile',
     'selectWorkspace',
     'tasksBuildCommand',
@@ -1663,13 +1726,16 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
-    // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
-    // because the publisher changed (from vector-of-bool into ms-vscode),
-    // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
-    const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
-    if (oldCMakeToolsExtension) {
-        await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
-    }
+  // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
+  // because the publisher changed (from vector-of-bool into ms-vscode),
+  // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
+  const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+  if (oldCMakeToolsExtension) {
+      await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
+  }
+
+  // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
+  await enableFullFeatureSet(false);
 
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
@@ -1743,6 +1809,13 @@ export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
 // update default target in taskProvider
 export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
   cmakeTaskProvider.updateDefaultTarget(defaultTarget);
+}
+
+// Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
+// for a non CMake project (as opposed to listing all existing CMakeLists.txt in the workspace
+// in a quickPick.)
+export function expShowCMakeLists(): Promise<boolean> {
+  return _EXT_MANAGER?.expShowCMakeLists() || Promise.resolve(false);
 }
 
 // this method is called when your extension is deactivated.

@@ -51,6 +51,7 @@
 	"starting.cmake.driver.status": "正在启动 CMake 服务器...",
 	"unable.to.execute.cmake.command": "无法执行 cmake 命令，不存在有效的 cmake 驱动程序实例。",
 	"unable.to.execute.program": "无法执行程序，不存在有效的 cmake 驱动程序实例。",
+	"shutting.down.driver": "正在关闭 CMake 驱动程序",
 	"reloading.driver": "正在重新加载 CMake 驱动程序",
 	"second.phase.init": "正在启动 CMakeTools 第二阶段初始化",
 	"active.build.variant.changed": "活动的生成变量已更改",
