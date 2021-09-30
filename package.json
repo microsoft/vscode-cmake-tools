@@ -145,6 +145,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.logDiagnostics",
+        "title": "%cmake-tools.command.cmake.logDiagnostics.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.selectActiveFolder",
         "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
         "when": "cmake:enableFullFeatureSet",
