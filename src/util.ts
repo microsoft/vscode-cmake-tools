@@ -314,8 +314,11 @@ export function splitCommandLine(cmd: string): string[] {
   return quoted_args!.map(arg => arg.replace(/\\(")/g, '$1').replace(/^"(.*)"$/g, '$1'));
 }
 
-export function isMultiConfGenerator(gen: string): boolean {
-  return gen.includes('Visual Studio') || gen.includes('Xcode');
+/**
+ * This is an initial check without atually configuring. It may or may not be accurate.
+ */
+export function isMultiConfGeneratorFast(gen: string): boolean {
+  return gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config');
 }
 
 export class InvalidVersionString extends Error {}

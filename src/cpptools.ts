@@ -431,6 +431,11 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       throw new MissingCompilerException();
     }
 
+    const buildType = opts.cache.get('CMAKE_BUILD_TYPE');
+    if (buildType) {
+      opts.activeBuildTypeVariant = buildType.as<string>();
+    }
+
     const targetFromToolchains = comp_toolchains?.target;
     const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
