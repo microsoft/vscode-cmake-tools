@@ -14,8 +14,8 @@ import * as nls from 'vscode-nls';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
 import {ConfigurationReader, TouchBarConfig} from '@cmt/config';
-import {CppConfigurationProvider} from '@cmt/cpptools';
-import {CMakeToolsFolderController, CMakeToolsFolder} from '@cmt/folders';
+import {CppConfigurationProvider, DiagnosticsCpptools} from '@cmt/cpptools';
+import {CMakeToolsFolderController, CMakeToolsFolder, DiagnosticsConfiguration, DiagnosticsSettings} from '@cmt/folders';
 import {
   Kit,
   USER_KITS_FILEPATH,
@@ -38,7 +38,8 @@ import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
 import {expandString, KitContextVars} from '@cmt/expand';
 import paths from '@cmt/paths';
-import { CMakeDriver, CMakePreconditionProblems } from './drivers/driver';
+import {CMakeDriver, CMakePreconditionProblems} from './drivers/driver';
+import {platform} from 'os';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -60,6 +61,15 @@ let _EXT_MANAGER: ExtensionManager|null = null;
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
+
+interface Diagnostics {
+  os: string;
+  vscodeVersion: string;
+  cmtVersion: string;
+  configurations: DiagnosticsConfiguration[];
+  settings: DiagnosticsSettings[];
+  cpptoolsIntegration: DiagnosticsCpptools;
+}
 
 /**
  * A class to manage the extension.
@@ -296,7 +306,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
-  private _configProviderRegister?: Promise<void>;
+  private _configProviderRegistered?: boolean = false;
 
   private _checkFolderArgs(folder?: vscode.WorkspaceFolder): CMakeToolsFolder | undefined {
     let cmtFolder: CMakeToolsFolder | undefined;
@@ -742,14 +752,16 @@ class ExtensionManager implements vscode.Disposable {
             }
           );
         }
-        await this.ensureCppToolsProviderRegistered();
+        this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
           ++this.cpptoolsNumFoldersReady;
           if (this.cpptoolsNumFoldersReady === this._folders.size) {
             cpptools.notifyReady(this._configProvider);
+            this._configProvider.markAsReady();
           }
         } else {
           cpptools.didChangeCustomConfiguration(this._configProvider);
+          this._configProvider.markAsReady();
         }
       }
     });
@@ -1019,18 +1031,17 @@ class ExtensionManager implements vscode.Disposable {
     return this._folders.get(folder)?.useCMakePresets;
   }
 
-  async ensureCppToolsProviderRegistered() {
-    if (!this._configProviderRegister) {
-      this._configProviderRegister = this._doRegisterCppTools();
+  ensureCppToolsProviderRegistered() {
+    if (!this._configProviderRegistered) {
+      this._doRegisterCppTools();
+      this._configProviderRegistered = true;
     }
-    return this._configProviderRegister;
   }
 
-  async _doRegisterCppTools() {
-    if (!this._cppToolsAPI) {
-      return;
+  _doRegisterCppTools() {
+    if (this._cppToolsAPI) {
+      this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
     }
-    this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
   }
 
   private _cleanOutputChannel() {
@@ -1351,6 +1362,29 @@ class ExtensionManager implements vscode.Disposable {
     await logging.showLogFile();
   }
 
+  async logDiagnostics() {
+    telemetry.logEvent("logDiagnostics");
+    const configurations: DiagnosticsConfiguration[] = [];
+    const settings: DiagnosticsSettings[] = [];
+    for (const folder of this._folders.getAll()) {
+        configurations.push(await folder.getDiagnostics());
+        settings.push(await folder.getSettingsDiagnostics());
+    }
+
+    const result: Diagnostics = {
+      os: platform(),
+      vscodeVersion: vscode.version,
+      cmtVersion: util.thisExtensionPackage().version,
+      configurations,
+      cpptoolsIntegration: this._configProvider.getDiagnostics(),
+      settings
+    };
+    const output = logging.channelManager.get("CMake Diagnostics");
+    output.clear();
+    output.appendLine(JSON.stringify(result, null, 2));
+    output.show();
+  }
+
   activeFolderName(): string  {
     return this._folders.activeFolder?.folder.name || '';
   }
@@ -1617,6 +1651,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setDefaultTarget',
     'resetState',
     'viewLog',
+    'logDiagnostics',
     'compileFile',
     'selectWorkspace',
     'tasksBuildCommand',

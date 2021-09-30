@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import { platform } from 'os';
 
 import {EnvironmentVariables, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
@@ -289,7 +290,7 @@ async function _killTree(pid: number) {
     }
     try {
       process.kill(pid, 'SIGINT');
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === 'ESRCH') {
         // Do nothing. We're okay.
       } else {
@@ -701,3 +702,30 @@ export function getRelativePath(file: string, dir: string): string {
   const joinedPath = "${workspaceFolder}/".concat(relPathDir);
   return joinedPath;
 }
+
+async function getHostSystemName(): Promise<string> {
+  if (platform() === "win32") {
+    return "Windows";
+  } else {
+    const result = await execute('uname', ['-s']).result;
+    if (result.retc === 0) {
+      return result.stdout.trim();
+    } else {
+      return 'unknown';
+    }
+  }
+}
+
+function memoize<T>(fn: () => T) {
+  let result: T;
+
+  return () => {
+    if (result) {
+      return result;
+    } else {
+      return result = fn();
+    }
+  };
+}
+
+export const getHostSystemNameMemo = memoize(getHostSystemName);

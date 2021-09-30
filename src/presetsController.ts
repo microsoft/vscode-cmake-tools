@@ -571,7 +571,7 @@ export class PresetsController {
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
     }
-    const presetsPool: preset.Preset[] = showHiddenPresets ? presets : presets.filter(_preset => !_preset.hidden);
+    const presetsPool: preset.Preset[] = showHiddenPresets ? presets : presets.filter(_preset => !_preset.hidden && preset.evaluatePresetCondition(_preset));
     const items: PresetItem[] = presetsPool.map(
         _preset => ({
           label: _preset.displayName || _preset.name,
@@ -875,13 +875,21 @@ export class PresetsController {
       await this.showPresetsFileVersionError(file);
       return undefined;
     }
-    const validator = await loadSchema('schemas/CMakePresets-schema.json');
+    let schemaFile = 'schemas/CMakePresets-schema.json';
+    if (presetsFile.version === 3) {
+      schemaFile = 'schemas/CMakePresets-v3-schema.json';
+    }
+    const validator = await loadSchema(schemaFile);
     const is_valid = validator(presetsFile);
     if (!is_valid) {
       const errors = validator.errors!;
       log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
       for (const err of errors) {
-        log.error(` >> ${err.dataPath}: ${err.message}`);
+        if (err.params && 'additionalProperty' in err.params) {
+          log.error(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
+        } else {
+          log.error(` >> ${err.dataPath}: ${err.message}`);
+        }
       }
       return undefined;
     }

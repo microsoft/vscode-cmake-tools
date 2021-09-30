@@ -29,6 +29,7 @@ import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import {DiagnosticsConfiguration} from '@cmt/folders';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -765,7 +766,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const result = await child.result;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
       return result.retc === 0;
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
       if (e2.code === 'ENOENT') {
@@ -868,7 +869,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // Make sure that all the regexp in compilerAllowList are written in a way that match[2] is the indeed the version.
       // This number may change in future as we add more cases and index 2 might be difficult to ensure for all of them.
       return match ? match[captureGroup] : "error";
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
       return "error";
@@ -1219,14 +1220,14 @@ export abstract class CMakeDriver implements vscode.Disposable {
       let telemetryProperties: telemetry.Properties;
       if (this.useCMakePresets) {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
           Preset: this.useCMakePresets ? 'true' : 'false',
           Trigger: trigger
         };
       } else {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
           ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
@@ -1672,4 +1673,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return inst;
   }
 
+  public getDiagnostics(): DiagnosticsConfiguration {
+    return {
+      folder: this.workspaceFolder || '',
+      cmakeVersion: this.cmake.version ? util.versionToString(this.cmake.version) : '',
+      configured: this._isConfiguredAtLeastOnce,
+      generator: this.generatorName || '',
+      usesPresets: this.useCMakePresets,
+      compilers: {
+        C: this.cmakeCacheEntries.get('CMAKE_C_COMPILER')?.value,
+        CXX: this.cmakeCacheEntries.get('CMAKE_CXX_COMPILER')?.value
+      }
+    };
+  }
 }
