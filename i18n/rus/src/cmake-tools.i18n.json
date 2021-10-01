@@ -51,6 +51,7 @@
 	"starting.cmake.driver.status": "Запуск сервера CMake…",
 	"unable.to.execute.cmake.command": "Не удалось выполнить команду CMake, отсутствует допустимый экземпляр драйвера CMake.",
 	"unable.to.execute.program": "Не удалось выполнить программу; отсутствует допустимый экземпляр драйвера CMake.",
+	"shutting.down.driver": "Идет завершение работы драйвера CMake",
 	"reloading.driver": "Перезагрузка драйвера CMake",
 	"second.phase.init": "Запуск второго этапа инициализации CMakeTools.",
 	"active.build.variant.changed": "Изменен активный вариант сборки.",
