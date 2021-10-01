@@ -1066,7 +1066,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!copy_dest) {
         return;
       }
-      const expanded_dest = await expandString(copy_dest, opts);
+      let expanded_dest = await expandString(copy_dest, opts);
       const pardir = path.dirname(expanded_dest);
       try {
         await fs.mkdir_p(pardir);
@@ -1075,6 +1075,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
           compdb_path, expanded_dest, pardir, e.toString()));
         return;
+      }
+      if (await fs.exists(expanded_dest) && (await fs.stat(expanded_dest)).isDirectory()) {
+        expanded_dest = path.join(expanded_dest, "compile_commands.json");
       }
       try {
         await fs.copyFile(compdb_path, expanded_dest);
@@ -1274,7 +1277,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return true;
     }
 
-    const needsReconfigure: boolean = await drv.checkNeedsReconfigure();
+    let needsReconfigure: boolean = await drv.checkNeedsReconfigure();
+    if (!needsReconfigure && !await fs.exists(drv.binaryDir)) {
+      needsReconfigure = true;
+      log.info(localize('cmake.cache.dir.missing', 'The folder containing the CMake cache is missing. The cache will be regenerated.'));
+    }
 
     const skipConfigureIfCachePresent = this.workspaceContext.config.skipConfigureIfCachePresent;
     if (skipConfigureIfCachePresent && needsReconfigure && await fs.exists(drv.cachePath)) {
@@ -1344,7 +1351,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       targetName = target;
     }
     this.updateDriverAndTargetInTaskProvider(drv, target);
-    const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
+    const consumer = new CMakeBuildConsumer(BUILD_LOGGER, drv.config);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
       this._statusMessage.set(localize('building.status', 'Building'));

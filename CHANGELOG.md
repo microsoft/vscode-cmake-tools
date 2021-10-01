@@ -1,5 +1,13 @@
 # What's New?
 
+## 1.9.0
+Improvements:
+- Add support for CMakePresets version 3. [#1904](https://github.com/microsoft/vscode-cmake-tools/issues/1904)
+
+Bug fixes:
+- MSVC_VERSION is incorrect when cmake configures with clang-cl. [#1053](https://github.com/microsoft/vscode-cmake-tools/issues/1053) [@tklajnscek](https://github.com/tklajnscek)
+- Build error because `binaryDir` removed after configure. [#2128](https://github.com/microsoft/vscode-cmake-tools/issues/2128)
+
 ## 1.8.1
 Bug fixes:
 - Command substitutions in launch.json are broken. [#2091](https://github.com/microsoft/vscode-cmake-tools/issues/2091)
