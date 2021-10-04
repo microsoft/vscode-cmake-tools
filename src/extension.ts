@@ -14,8 +14,8 @@ import * as nls from 'vscode-nls';
 import {CMakeCache} from '@cmt/cache';
 import {CMakeTools, ConfigureType, ConfigureTrigger} from '@cmt/cmake-tools';
 import {ConfigurationReader, TouchBarConfig} from '@cmt/config';
-import {CppConfigurationProvider} from '@cmt/cpptools';
-import {CMakeToolsFolderController, CMakeToolsFolder} from '@cmt/folders';
+import {CppConfigurationProvider, DiagnosticsCpptools} from '@cmt/cpptools';
+import {CMakeToolsFolderController, CMakeToolsFolder, DiagnosticsConfiguration, DiagnosticsSettings} from '@cmt/folders';
 import {
   Kit,
   USER_KITS_FILEPATH,
@@ -38,7 +38,8 @@ import {ProgressHandle, DummyDisposable, reportProgress} from '@cmt/util';
 import {DEFAULT_VARIANTS} from '@cmt/variant';
 import {expandString, KitContextVars} from '@cmt/expand';
 import paths from '@cmt/paths';
-import { CMakeDriver, CMakePreconditionProblems } from './drivers/driver';
+import {CMakeDriver, CMakePreconditionProblems} from './drivers/driver';
+import {platform} from 'os';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -60,6 +61,15 @@ let _EXT_MANAGER: ExtensionManager|null = null;
 
 type CMakeToolsMapFn = (cmt: CMakeTools) => Thenable<any>;
 type CMakeToolsQueryMapFn = (cmt: CMakeTools) => Thenable<string | string[] | null>;
+
+interface Diagnostics {
+  os: string;
+  vscodeVersion: string;
+  cmtVersion: string;
+  configurations: DiagnosticsConfiguration[];
+  settings: DiagnosticsSettings[];
+  cpptoolsIntegration: DiagnosticsCpptools;
+}
 
 /**
  * A class to manage the extension.
@@ -117,6 +127,7 @@ class ExtensionManager implements vscode.Disposable {
         subs.push(new_cmt.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
         subs.push(new_cmt.onTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
         subs.push(new_cmt.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
+        subs.push(new_cmt.onActiveBuildPresetChanged(FireLate, () => this._updateCodeModel(cmtFolder)));
         this._codeModelUpdateSubs.set(new_cmt.folder.uri.fsPath, subs);
       }
       rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
@@ -199,13 +210,18 @@ class ExtensionManager implements vscode.Disposable {
         this._codeModelUpdateSubs.set(cmtFolder.folder.uri.fsPath, [
           cmtFolder.cmakeTools.onCodeModelChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
           cmtFolder.cmakeTools.onTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
-          cmtFolder.cmakeTools.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder))
+          cmtFolder.cmakeTools.onLaunchTargetNameChanged(FireLate, () => this._updateCodeModel(cmtFolder)),
+          cmtFolder.cmakeTools.onActiveBuildPresetChanged(FireLate, () => this._updateCodeModel(cmtFolder))
         ]);
         rollbar.takePromise('Post-folder-open', {folder: cmtFolder.folder}, this._postWorkspaceOpen(cmtFolder));
       }
     }
 
     const isFullyActivated: boolean = await this.workspaceHasCMakeProject();
+    if (isFullyActivated) {
+      await enableFullFeatureSet(true);
+    }
+
     const telemetryProperties: telemetry.Properties = {
       isMultiRoot: `${isMultiRoot}`,
       isFullyActivated: `${isFullyActivated}`
@@ -292,7 +308,7 @@ class ExtensionManager implements vscode.Disposable {
    */
   private readonly _configProvider = new CppConfigurationProvider();
   private _cppToolsAPI?: cpt.CppToolsApi;
-  private _configProviderRegister?: Promise<void>;
+  private _configProviderRegistered?: boolean = false;
 
   private _checkFolderArgs(folder?: vscode.WorkspaceFolder): CMakeToolsFolder | undefined {
     let cmtFolder: CMakeToolsFolder | undefined;
@@ -462,6 +478,10 @@ class ExtensionManager implements vscode.Disposable {
   // (does have a valid CMakeLists.txt at the location pointed to by the "cmake.sourceDirectory" setting)
   // and also stores the answer in a map for later use.
   async folderIsCMakeProject(cmt: CMakeTools): Promise<boolean> {
+    if (this._foldersAreCMake.get(cmt.folderName)) {
+      return true;
+    }
+
     const optsVars: KitContextVars = {
       userHome: paths.userHome,
       workspaceFolder: cmt.workspaceContext.folder.uri.fsPath,
@@ -492,11 +512,6 @@ class ExtensionManager implements vscode.Disposable {
 
     const isCMake = await fs.exists(expandedSourceDirectory);
     this._foldersAreCMake.set(cmt.folderName, isCMake);
-
-    // If we found a valid CMake project, set feature set view to full, otherwise leave the UI as it was.
-    if (isCMake) {
-      await enableFullFeatureSet(true);
-    }
 
     return isCMake;
   }
@@ -586,7 +601,7 @@ class ExtensionManager implements vscode.Disposable {
           await this.configureExtensionInternal(ConfigureTrigger.buttonNewKitsDefinition, cmt);
         } else {
           log.debug(localize('using.cache.to.configure.workspace.on.open', 'Using cache to configure workspace on open {0}', ws.uri.toString()));
-          await this.configureExtensionInternal(ConfigureTrigger.configureOnOpen, cmt);
+          await this.configureExtensionInternal(ConfigureTrigger.configureWithCache, cmt);
         }
       }
     }
@@ -721,15 +736,20 @@ class ExtensionManager implements vscode.Disposable {
           }
         }
 
+        const isMultiConfig = !!cache.get('CMAKE_CONFIGURATION_TYPES');
+        if (drv) {
+          drv.isMultiConfig = isMultiConfig;
+        }
+        const actualBuildType = isMultiConfig && cmt.useCMakePresets ? cmt.buildPreset?.configuration || null : cmt.activeVariant;
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
         let codeModelContent;
         if (cmt.codeModelContent) {
           codeModelContent = cmt.codeModelContent;
-          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmt.folder.uri.fsPath });
         } else if (drv && drv.codeModelContent) {
           codeModelContent = drv.codeModelContent;
-          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: cmt.activeVariant, folder: cmt.folder.uri.fsPath });
+          this._configProvider.updateConfigurationData({ cache, codeModelContent, clCompilerPath, activeTarget: cmt.defaultBuildTarget, activeBuildTypeVariant: actualBuildType, folder: cmt.folder.uri.fsPath });
           this._projectOutlineProvider.updateCodeModel(
             cmt.workspaceContext.folder,
             codeModelContent,
@@ -739,14 +759,16 @@ class ExtensionManager implements vscode.Disposable {
             }
           );
         }
-        await this.ensureCppToolsProviderRegistered();
+        this.ensureCppToolsProviderRegistered();
         if (cpptools.notifyReady && this.cpptoolsNumFoldersReady < this._folders.size) {
           ++this.cpptoolsNumFoldersReady;
           if (this.cpptoolsNumFoldersReady === this._folders.size) {
             cpptools.notifyReady(this._configProvider);
+            this._configProvider.markAsReady();
           }
         } else {
           cpptools.didChangeCustomConfiguration(this._configProvider);
+          this._configProvider.markAsReady();
         }
       }
     });
@@ -1016,18 +1038,17 @@ class ExtensionManager implements vscode.Disposable {
     return this._folders.get(folder)?.useCMakePresets;
   }
 
-  async ensureCppToolsProviderRegistered() {
-    if (!this._configProviderRegister) {
-      this._configProviderRegister = this._doRegisterCppTools();
+  ensureCppToolsProviderRegistered() {
+    if (!this._configProviderRegistered) {
+      this._doRegisterCppTools();
+      this._configProviderRegistered = true;
     }
-    return this._configProviderRegister;
   }
 
-  async _doRegisterCppTools() {
-    if (!this._cppToolsAPI) {
-      return;
+  _doRegisterCppTools() {
+    if (this._cppToolsAPI) {
+      this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
     }
-    this._cppToolsAPI.registerCustomConfigurationProvider(this._configProvider);
   }
 
   private _cleanOutputChannel() {
@@ -1348,6 +1369,29 @@ class ExtensionManager implements vscode.Disposable {
     await logging.showLogFile();
   }
 
+  async logDiagnostics() {
+    telemetry.logEvent("logDiagnostics");
+    const configurations: DiagnosticsConfiguration[] = [];
+    const settings: DiagnosticsSettings[] = [];
+    for (const folder of this._folders.getAll()) {
+        configurations.push(await folder.getDiagnostics());
+        settings.push(await folder.getSettingsDiagnostics());
+    }
+
+    const result: Diagnostics = {
+      os: platform(),
+      vscodeVersion: vscode.version,
+      cmtVersion: util.thisExtensionPackage().version,
+      configurations,
+      cpptoolsIntegration: this._configProvider.getDiagnostics(),
+      settings
+    };
+    const output = logging.channelManager.get("CMake Diagnostics");
+    output.clear();
+    output.appendLine(JSON.stringify(result, null, 2));
+    output.show();
+  }
+
   activeFolderName(): string  {
     return this._folders.activeFolder?.folder.name || '';
   }
@@ -1376,7 +1420,7 @@ class ExtensionManager implements vscode.Disposable {
   // without recalculating the valid states of CMakeLists.txt.
   async workspaceHasCMakeProject(): Promise<boolean> {
     for (const cmtFolder of this._folders) {
-      if (this._foldersAreCMake.get(cmtFolder.cmakeTools.folderName)) {
+      if (await this.folderIsCMakeProject(cmtFolder.cmakeTools)) {
         return true;
       }
     }
@@ -1522,9 +1566,6 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
   // Load a new extension manager
   const ext = _EXT_MANAGER = await ExtensionManager.create(context);
 
-  // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
-  await enableFullFeatureSet(false);
-
   // A register function that helps us bind the commands to the extension
   function register<K extends keyof ExtensionManager>(name: K) {
     return vscode.commands.registerCommand(`cmake.${name}`, (...args: any[]) => {
@@ -1617,6 +1658,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setDefaultTarget',
     'resetState',
     'viewLog',
+    'logDiagnostics',
     'compileFile',
     'selectWorkspace',
     'tasksBuildCommand',
@@ -1691,13 +1733,16 @@ class SchemaProvider implements vscode.TextDocumentContentProvider {
  * @returns A promise that will resolve when the extension is ready for use
  */
 export async function activate(context: vscode.ExtensionContext) {
-    // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
-    // because the publisher changed (from vector-of-bool into ms-vscode),
-    // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
-    const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
-    if (oldCMakeToolsExtension) {
-        await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
-    }
+  // CMakeTools versions newer or equal to #1.2 should not coexist with older versions
+  // because the publisher changed (from vector-of-bool into ms-vscode),
+  // causing many undesired behaviors (duplicate operations, registrations for UI elements, etc...)
+  const oldCMakeToolsExtension = vscode.extensions.getExtension('vector-of-bool.cmake-tools');
+  if (oldCMakeToolsExtension) {
+      await vscode.window.showWarningMessage(localize('uninstall.old.cmaketools', 'Please uninstall any older versions of the CMake Tools extension. It is now published by Microsoft starting with version 1.2.0.'));
+  }
+
+  // Start with a partial feature set view. The first valid CMake project will cause a switch to full feature set.
+  await enableFullFeatureSet(false);
 
   // Register a protocol handler to serve localized schemas
   vscode.workspace.registerTextDocumentContentProvider('cmake-tools-schema', new SchemaProvider());
