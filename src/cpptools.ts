@@ -14,6 +14,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
+import { TargetTypeString } from './drivers/cms-client';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -23,6 +24,22 @@ const log = createLogger('cpptools');
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
 type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
   | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
+
+export interface DiagnosticsCpptools {
+  isReady: boolean;
+  hasCodeModel: boolean;
+  targetCount: number;
+  executablesCount: number;
+  librariesCount: number;
+  targets: DiagnosticsTarget[];
+  requests: string[];
+  responses: cpt.SourceFileConfigurationItem[];
+}
+
+export interface DiagnosticsTarget {
+  name: string;
+  type: TargetTypeString;
+}
 
 export interface CompileFlagInformation {
   extraDefinitions: string[];
@@ -324,30 +341,48 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * Test if we are able to provide a configuration for the given URI
    * @param uri The URI to look up
    */
-  async canProvideConfiguration(uri: vscode.Uri) { return !!this._getConfiguration(uri); }
+  async canProvideConfiguration(uri: vscode.Uri) {
+    this.requests.add(uri.toString());
+    return !!this._getConfiguration(uri);
+  }
+
+  private requests = new Set<string>();
+  private responses = new Map<string, cpt.SourceFileConfigurationItem>();
 
   /**
    * Get the configurations for the given URIs. URIs for which we have no
    * configuration are simply ignored.
    * @param uris The file URIs to look up
    */
-  async provideConfigurations(uris: vscode.Uri[]) { return util.dropNulls(uris.map(u => this._getConfiguration(u))); }
+  async provideConfigurations(uris: vscode.Uri[]) {
+    const configs = util.dropNulls(uris.map(u => this._getConfiguration(u)));
+    configs.forEach(config => {
+      this.responses.set(config.uri.toString(), config);
+    });
+    return configs;
+  }
 
   /**
    * A request to determine whether this provider can provide a code browsing configuration for the workspace folder.
    * @param token (optional) The cancellation token.
    * @returns 'true' if this provider can provider a code browsing configuration for the workspace folder.
    */
-  async canProvideBrowseConfiguration() { return true; }
+  async canProvideBrowseConfiguration() {
+    return true;
+  }
 
   /**
    * A request to get the code browsing configuration for the workspace folder.
    * @returns A [WorkspaceBrowseConfiguration](#WorkspaceBrowseConfiguration) with the information required to
    * construct the equivalent of `browse.path` from `c_cpp_properties.json`.
    */
-  async provideBrowseConfiguration() { return this._workspaceBrowseConfiguration; }
+  async provideBrowseConfiguration() {
+    return this._workspaceBrowseConfiguration;
+  }
 
-  async canProvideBrowseConfigurationsPerFolder() { return true; }
+  async canProvideBrowseConfigurationsPerFolder() {
+    return true;
+  }
 
   async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
     return this._workspaceBrowseConfigurations.get(util.platformNormalizePath(_uri.fsPath)) ?? this._workspaceBrowseConfiguration;
@@ -396,9 +431,13 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       throw new MissingCompilerException();
     }
 
+    const buildType = opts.cache.get('CMAKE_BUILD_TYPE');
+    if (buildType) {
+      opts.activeBuildTypeVariant = buildType.as<string>();
+    }
+
     const targetFromToolchains = comp_toolchains?.target;
-    const targetArchFromToolchains = targetFromToolchains
-      ? parseTargetArch(targetFromToolchains) : undefined;
+    const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
     const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
@@ -487,11 +526,18 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     this._cpptoolsVersion = value;
   }
 
+  private targets: DiagnosticsTarget[] = [];
+
   /**
    * Update the file index and code model
    * @param opts Update parameters
    */
   updateConfigurationData(opts: codemodel_api.CodeModelParams) {
+    // Reset the counters for diagnostics
+    this.requests.clear();
+    this.responses.clear();
+    this.targets = [];
+
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
@@ -509,6 +555,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
             const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
             const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
             const sysroot = target.sysroot || '';
+            this.targets.push({ name: target.name, type: target.type });
             for (const grp of target.fileGroups || []) {
               try {
                 this._updateFileGroup(
@@ -537,9 +584,27 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
-      vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
+      void vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
         'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
+  }
+
+  private ready: boolean = false;
+  markAsReady() {
+    this.ready = true;
+  }
+
+  getDiagnostics(): DiagnosticsCpptools {
+    return {
+      isReady: this.ready,
+      hasCodeModel: this._fileIndex.size > 0,
+      requests: [...this.requests.values() ],
+      responses: [...this.responses.values()],
+      targetCount: this.targets.length,
+      executablesCount: this.targets.reduce<number>((acc, target) => target.type === 'EXECUTABLE' ? acc + 1 : acc, 0),
+      librariesCount: this.targets.reduce<number>((acc, target) => target.type.endsWith('LIBRARY') ? acc + 1 : acc, 0),
+      targets: this.targets.length < 20 ? this.targets : []
+    };
   }
 }

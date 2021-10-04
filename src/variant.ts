@@ -190,7 +190,7 @@ export class VariantManager implements vscode.Disposable {
   private customVariantsFileExists: boolean = false;
 
   dispose() {
-    this._variantFileWatcher.close();
+    void this._variantFileWatcher.close();
     this._activeVariantChanged.dispose();
   }
 
@@ -373,7 +373,7 @@ export class VariantManager implements vscode.Disposable {
     if (name) {
       for (const item of items) {
         if (name === item.label) {
-          this.publishActiveKeywordSettings(item.keywordSettings);
+          await this.publishActiveKeywordSettings(item.keywordSettings);
           return true;
         }
       }
@@ -394,13 +394,13 @@ export class VariantManager implements vscode.Disposable {
 
       telemetry.logEvent('variantSelection', telemetryProperties);
 
-      this.publishActiveKeywordSettings(chosen.keywordSettings);
+      await this.publishActiveKeywordSettings(chosen.keywordSettings);
       return true;
     }
   }
 
-  publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
-    this.stateManager.activeVariantSettings = keywordSettings;
+  async publishActiveKeywordSettings(keywordSettings: Map<string, string>) {
+    await this.stateManager.setActiveVariantSettings(keywordSettings);
     this._activeVariantChanged.fire();
   }
 
@@ -428,7 +428,7 @@ export class VariantManager implements vscode.Disposable {
 
     if (this.stateManager.activeVariantSettings === null) {
       const defaultChoices = this.findDefaultChoiceCombination();
-      this.publishActiveKeywordSettings(defaultChoices);
+      await this.publishActiveKeywordSettings(defaultChoices);
     }
   }
 }

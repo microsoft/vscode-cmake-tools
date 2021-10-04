@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Wybierz ustawienie wstępne kompilowania",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Wybierz ustawienie wstępne testu",
 	"cmake-tools.command.cmake.viewLog.title": "Otwórz plik dziennika narzędzi CMake Tools",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Rejestruj diagnostykę",
 	"cmake-tools.command.cmake.editKits.title": "Edytuj lokalne zestawy narzędzia CMake użytkownika",
 	"cmake-tools.command.cmake.scanForKits.title": "Skanuj w poszukiwaniu zestawów",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Skanuj w poszukiwaniu kompilatorów",

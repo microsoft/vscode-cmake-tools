@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "ビルドの事前設定を選択してください",
 	"cmake-tools.command.cmake.selectTestPreset.title": "テストの事前設定を選択してください",
 	"cmake-tools.command.cmake.viewLog.title": "CMake Tools ログ ファイルを開く",
+	"cmake-tools.command.cmake.logDiagnostics.title": "診断のログ記録",
 	"cmake-tools.command.cmake.editKits.title": "ユーザー ローカル CMake キットの編集",
 	"cmake-tools.command.cmake.scanForKits.title": "キットのスキャン",
 	"cmake-tools.command.cmake.scanForCompilers.title": "コンパイラのスキャン",

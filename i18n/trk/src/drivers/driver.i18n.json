@@ -26,6 +26,7 @@
 	"command.version.test.return.code": "Komut sürümü test dönüş kodu: {0}",
 	"trying.to.detect.generator": "Sistem tarafından desteklenen oluşturucu algılanmaya çalışılıyor",
 	"compiler.version.return.code": "{0} derleyici sürümü test dönüşü kodu",
+	"no.cached.config": "Önbelleğe alınmış yapılandırma IntelliSense için kullanılamadı",
 	"start.configure": "Yapılandırmayı başlat",
 	"use.cached.configuration": "Önbelleğe alınmış yapılandırmayı kullan",
 	"no.config.Preset": "Yapılandırma ön ayarı seçilmedi",

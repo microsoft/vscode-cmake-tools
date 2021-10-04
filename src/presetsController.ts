@@ -1,5 +1,4 @@
 import * as chokidar from 'chokidar';
-import * as json5 from 'json5';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
@@ -30,9 +29,10 @@ export class PresetsController {
   private _sourceDirChangedSub: vscode.Disposable | undefined;
   private _presetsFileExists = false;
   private _userPresetsFileExists = false;
+  private _isChangingPresets = false;
 
   private readonly _presetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
-  private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile>();
+  private readonly _userPresetsChangedEmitter = new vscode.EventEmitter<preset.PresetsFile | undefined>();
 
   private static readonly _addPreset = '__addPreset__';
 
@@ -141,7 +141,7 @@ export class PresetsController {
 
   private readonly _setUserPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
     preset.setUserPresetsFile(folder, presetsFile);
-    this._presetsChangedEmitter.fire(presetsFile);
+    this._userPresetsChangedEmitter.fire(presetsFile);
   };
 
   private readonly _setOriginalPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
@@ -162,10 +162,14 @@ export class PresetsController {
     fileExistCallback(Boolean(presetsFileBuffer));
 
     let presetsFile = await this.parsePresetsFile(presetsFileBuffer, file);
+    if (presetsFile) {
+      // Parse again so we automatically have a copy by value
+      setOriginalPresetsFile(this.folder.uri.fsPath, await this.parsePresetsFile(presetsFileBuffer, file));
+    } else {
+      setOriginalPresetsFile(this.folder.uri.fsPath, undefined);
+    }
     presetsFile = await this.validatePresetsFile(presetsFile, file);
     setPresetsFile(this.folder.uri.fsPath, presetsFile);
-    // Parse again so we automatically have a copy by value
-    setOriginalPresetsFile(this.folder.uri.fsPath, await this.parsePresetsFile(presetsFileBuffer, file));
   }
 
   // Need to reapply presets every time presets changed since the binary dir or cmake path could change
@@ -567,7 +571,7 @@ export class PresetsController {
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
     }
-    const presetsPool: preset.Preset[] = showHiddenPresets ? presets : presets.filter(_preset => !_preset.hidden);
+    const presetsPool: preset.Preset[] = showHiddenPresets ? presets : presets.filter(_preset => !_preset.hidden && preset.evaluatePresetCondition(_preset));
     const items: PresetItem[] = presetsPool.map(
         _preset => ({
           label: _preset.displayName || _preset.name,
@@ -626,6 +630,13 @@ export class PresetsController {
   }
 
   async setConfigurePreset(presetName: string): Promise<void> {
+    if (this._isChangingPresets) {
+      log.error(localize('preset.change.in.progress', 'A preset change is already in progress.'));
+      return;
+    }
+
+    this._isChangingPresets = true;
+
     // Load the configure preset into the backend
     await vscode.window.withProgress(
         {
@@ -634,6 +645,7 @@ export class PresetsController {
         },
         () => this._cmakeTools.setConfigurePreset(presetName)
     );
+
     await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -643,13 +655,15 @@ export class PresetsController {
           const buildPreset = this._cmakeTools.buildPreset?.name;
           const testPreset = this._cmakeTools.testPreset?.name;
           if (buildPreset) {
-            await this.setBuildPreset(buildPreset);
+            await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
           }
           if (testPreset) {
-            await this.setTestPreset(testPreset);
+            await this.setTestPreset(testPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
           }
         }
     );
+
+    this._isChangingPresets = false;
   }
 
   private async checkConfigurePreset(): Promise<preset.ConfigurePreset | null> {
@@ -699,7 +713,14 @@ export class PresetsController {
     }
   }
 
-  async setBuildPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
+  async setBuildPreset(presetName: string, needToCheckConfigurePreset: boolean = true, checkChangingPreset: boolean = true): Promise<void> {
+    if (checkChangingPreset) {
+      if (this._isChangingPresets) {
+        return;
+      }
+      this._isChangingPresets = true;
+    }
+
     if (needToCheckConfigurePreset && presetName !== preset.defaultBuildPreset.name) {
       preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
       const _preset = preset.getPresetByName(preset.allBuildPresets(this.folderFsPath), presetName);
@@ -712,6 +733,11 @@ export class PresetsController {
             },
             () => this._cmakeTools.setBuildPreset(null)
         );
+
+        if (checkChangingPreset) {
+          this._isChangingPresets = false;
+        }
+
         return;
       }
     }
@@ -723,6 +749,10 @@ export class PresetsController {
         },
         () => this._cmakeTools.setBuildPreset(presetName)
     );
+
+    if (checkChangingPreset) {
+      this._isChangingPresets = false;
+    }
   }
 
   async selectTestPreset(): Promise<boolean> {
@@ -756,7 +786,14 @@ export class PresetsController {
     }
   }
 
-  async setTestPreset(presetName: string, needToCheckConfigurePreset: boolean = true): Promise<void> {
+  async setTestPreset(presetName: string, needToCheckConfigurePreset: boolean = true, checkChangingPreset: boolean = true): Promise<void> {
+    if (checkChangingPreset) {
+      if (this._isChangingPresets) {
+        return;
+      }
+      this._isChangingPresets = true;
+    }
+
     if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
       preset.expandConfigurePresetForPresets(this.folderFsPath, 'test');
       const _preset = preset.getPresetByName(preset.allTestPresets(this.folderFsPath), presetName);
@@ -769,6 +806,11 @@ export class PresetsController {
             },
             () => this._cmakeTools.setTestPreset(null)
         );
+
+        if (checkChangingPreset) {
+          this._isChangingPresets = false;
+        }
+
         return;
       }
     }
@@ -780,6 +822,10 @@ export class PresetsController {
         },
         () => this._cmakeTools.setTestPreset(presetName)
     );
+
+    if (checkChangingPreset) {
+      this._isChangingPresets = false;
+    }
   }
 
   async openCMakePresets(): Promise<vscode.TextEditor | undefined> {
@@ -813,7 +859,7 @@ export class PresetsController {
 
     let presetsFile: preset.PresetsFile;
     try {
-      presetsFile = json5.parse(fileContent.toLocaleString());
+      presetsFile = JSON.parse(fileContent.toLocaleString());
     } catch (e) {
       log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(file), util.errorToString(e)));
       return undefined;
@@ -829,13 +875,21 @@ export class PresetsController {
       await this.showPresetsFileVersionError(file);
       return undefined;
     }
-    const validator = await loadSchema('schemas/CMakePresets-schema.json');
+    let schemaFile = 'schemas/CMakePresets-schema.json';
+    if (presetsFile.version === 3) {
+      schemaFile = 'schemas/CMakePresets-v3-schema.json';
+    }
+    const validator = await loadSchema(schemaFile);
     const is_valid = validator(presetsFile);
     if (!is_valid) {
       const errors = validator.errors!;
       log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
       for (const err of errors) {
-        log.error(` >> ${err.dataPath}: ${err.message}`);
+        if (err.params && 'additionalProperty' in err.params) {
+          log.error(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
+        } else {
+          log.error(` >> ${err.dataPath}: ${err.message}`);
+        }
       }
       return undefined;
     }
@@ -850,9 +904,9 @@ export class PresetsController {
         localize('presets.version.error', 'CMakePresets version 1 is not supported. How would you like to proceed?'),
         useKitsVars, changePresets);
     if (result === useKitsVars) {
-      vscode.workspace.getConfiguration('cmake', this.folder.uri).update('useCMakePresets', false);
+      void vscode.workspace.getConfiguration('cmake', this.folder.uri).update('useCMakePresets', false);
     } else {
-      vscode.workspace.openTextDocument(vscode.Uri.file(file));
+      await vscode.workspace.openTextDocument(vscode.Uri.file(file));
     }
   }
 
