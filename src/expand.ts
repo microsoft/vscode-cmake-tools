@@ -54,6 +54,10 @@ export interface PresetContextVars extends RequiredExpansionContextVars {
   presetName: string;
 }
 
+export interface MinimalPresetContextVars extends RequiredExpansionContextVars {
+  [key: string]: string;
+}
+
 /**
  * Options to control the behavior of `expandString`.
  */
@@ -61,7 +65,7 @@ export interface ExpansionOptions {
   /**
    * Plain `${variable}` style expansions.
    */
-  vars: KitContextVars | PresetContextVars;
+  vars: KitContextVars | PresetContextVars | MinimalPresetContextVars;
   /**
    * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
    *

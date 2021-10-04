@@ -26,6 +26,7 @@
 	"command.version.test.return.code": "Rückgabecode von Befehlsversionstest: {0}",
 	"trying.to.detect.generator": "Es wird versucht, einen vom System unterstützten Generator zu ermitteln.",
 	"compiler.version.return.code": "Rückgabecode von Compilerversionstest: {0}",
+	"no.cached.config": "Für IntelliSense konnte keine zwischengespeicherte Konfiguration verwendet werden.",
 	"start.configure": "Konfiguration starten",
 	"use.cached.configuration": "Zwischengespeicherte Konfiguration verwenden",
 	"no.config.Preset": "Keine Konfigurationsvoreinstellung ausgewählt",

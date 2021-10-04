@@ -132,7 +132,7 @@ export interface CodeModelContent {
    */
   activeTarget: string|null;
   /**
-   * The active build_type variant
+   * CMAKE_BUILD_TYPE for single config generators, and build config for multi config ones.
    */
   activeBuildTypeVariant: string|null;
   /**
