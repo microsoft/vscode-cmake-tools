@@ -29,6 +29,7 @@ import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import {DiagnosticsConfiguration} from '@cmt/folders';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -683,6 +684,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get currentBuildType(): string {
     if (this.useCMakePresets) {
+      if ((this.isMultiConfig || this.isMultiConfFast) && this._buildPreset?.configuration) {
+        return this._buildPreset.configuration;
+      }
       const buildType = this._configurePreset?.cacheVariables?.['CMAKE_BUILD_TYPE'];
       if (util.isString(buildType)) {
         return buildType;
@@ -695,8 +699,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  get isMultiConf(): boolean {
-    return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false;
+  private _isMultiConfig: boolean = false;
+  get isMultiConfig(): boolean { return this._isMultiConfig; }
+  set isMultiConfig(v: boolean) { this._isMultiConfig = v; }
+
+  get isMultiConfFast(): boolean {
+    return this.generatorName ? util.isMultiConfGeneratorFast(this.generatorName) : false;
   }
 
   /**
@@ -765,7 +773,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const result = await child.result;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
       return result.retc === 0;
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
       if (e2.code === 'ENOENT') {
@@ -868,7 +876,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // Make sure that all the regexp in compilerAllowList are written in a way that match[2] is the indeed the version.
       // This number may change in future as we add more cases and index 2 might be difficult to ensure for all of them.
       return match ? match[captureGroup] : "error";
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
       return "error";
@@ -1135,14 +1143,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   public shouldUseCachedConfiguration(trigger: ConfigureTrigger): boolean {
     return (this.isCacheConfigSupported && !this.isConfiguredAtLeastOnce &&
-      trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ?
+      trigger === ConfigureTrigger.configureWithCache && !this.config.configureOnOpen) ?
       true : false;
   }
 
   async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
     // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
-    const usingCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
+    const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
+    if (trigger === ConfigureTrigger.configureWithCache && !shouldUseCachedConfiguration) {
+      log.debug(localize('no.cached.config', "No cached config could be used for IntelliSense"));
+      return -2;
+    }
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1156,7 +1168,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
       // (example: cmake.sourceDirectory).
       await this._refreshExpansions();
-      if (!usingCachedConfiguration) {
+      if (!shouldUseCachedConfiguration) {
         log.debug(localize('start.configure', 'Start configure'), extra_args);
       } else {
         log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
@@ -1192,7 +1204,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
         expanded_flags = await Promise.all(expanded_flags_promises);
       }
-      if (!usingCachedConfiguration) {
+      if (!shouldUseCachedConfiguration) {
         log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
       }
 
@@ -1201,7 +1213,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       const timeStart: number = new Date().getTime();
       let retc: number;
-      if (usingCachedConfiguration) {
+      if (shouldUseCachedConfiguration) {
         retc = await this.doCacheConfigure();
         this._isConfiguredAtLeastOnce = true;
         return retc;
@@ -1215,16 +1227,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
       let telemetryProperties: telemetry.Properties;
       if (this.useCMakePresets) {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
           Preset: this.useCMakePresets ? 'true' : 'false',
           Trigger: trigger
         };
       } else {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
-          ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+          ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
           Trigger: trigger
         };
@@ -1349,7 +1361,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const allowBuildTypeOnMultiConfig = config.get("cmake.setBuildTypeOnMultiConfig") || false;
 
-    if (!this.isMultiConf || (this.isMultiConf && allowBuildTypeOnMultiConfig)) {
+    if (!this.isMultiConfFast || (this.isMultiConfFast && allowBuildTypeOnMultiConfig)) {
       // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
       settingMap.CMAKE_BUILD_TYPE = util.cmakeify(this.currentBuildType);
     }
@@ -1411,7 +1423,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const child = await this._doCMakeBuild(target, consumer);
     const timeEnd: number = new Date().getTime();
     const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
-      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || ''
+      ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
     };
     const telemetryMeasures: telemetry.Measures = {
       Duration: timeEnd - timeStart
@@ -1668,4 +1680,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return inst;
   }
 
+  public getDiagnostics(): DiagnosticsConfiguration {
+    return {
+      folder: this.workspaceFolder || '',
+      cmakeVersion: this.cmake.version ? util.versionToString(this.cmake.version) : '',
+      configured: this._isConfiguredAtLeastOnce,
+      generator: this.generatorName || '',
+      usesPresets: this.useCMakePresets,
+      compilers: {
+        C: this.cmakeCacheEntries.get('CMAKE_C_COMPILER')?.value,
+        CXX: this.cmakeCacheEntries.get('CMAKE_CXX_COMPILER')?.value
+      }
+    };
+  }
 }
