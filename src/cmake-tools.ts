@@ -1910,7 +1910,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Add environment variables from configurePreset.
     if (this.configurePreset?.environment) {
       const configure_preset_environment = await drv.getConfigureEnvironment();
-      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.splitEnvironmentVars(configure_preset_environment)) : [];
+      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.makeDebuggerEnvironmentVars(configure_preset_environment)) : [];
     }
 
     log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
@@ -1920,9 +1920,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('debugConfig');
     const customSetting = (cfg?.globalValue !== undefined || cfg?.workspaceValue !== undefined || cfg?.workspaceFolderValue !== undefined);
-    let dbg = debug_config.MIMode;
+    let dbg = debug_config.MIMode?.toString();
     if (!dbg && debug_config.type === "cppvsdbg") {
       dbg = "vsdbg";
+    } else {
+      dbg = "(unset)";
     }
     const telemetryProperties: telemetry.Properties = {
       customSetting: customSetting.toString(),
@@ -1959,7 +1961,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const drv = await this.getCMakeDriverInstance();
     if (user_config.environment) {
-      const debugConfigEnvironment: [{name: string; value: string}] = user_config.environment;
+      const debugConfigEnvironment: {name: string; value: string}[] = user_config.environment;
       debugConfigEnvironment.forEach (envVar => {
         launchEnv[envVar.name] = envVar.value;
       });

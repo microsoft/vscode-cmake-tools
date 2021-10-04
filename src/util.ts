@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { platform } from 'os';
 
-import {EnvironmentVariables, execute} from '@cmt/proc';
+import {EnvironmentVariables, DebuggerEnvironmentVariable, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -373,8 +373,8 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
   }
 }
 
-export function splitEnvironmentVars(env: EnvironmentVariables): EnvironmentVariables[] {
-  const converted_env: EnvironmentVariables[] = Object.entries(env).map(
+export function makeDebuggerEnvironmentVars(env: EnvironmentVariables): DebuggerEnvironmentVariable[] {
+  const converted_env: DebuggerEnvironmentVariable[] = Object.entries(env).map(
     ([key, value]) => ({
       name: key,
       value
