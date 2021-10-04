@@ -12,7 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Vybrat předvolbu sestavení",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Vybrat předvolbu testování",
 	"cmake-tools.command.cmake.viewLog.title": "Otevřít soubor protokolu nástrojů CMake Tools",
-	"cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Protokolovat diagnostiku",
 	"cmake-tools.command.cmake.editKits.title": "Upravit sady CMake pro místní uživatele",
 	"cmake-tools.command.cmake.scanForKits.title": "Vyhledat sady",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Vyhledat kompilátory",

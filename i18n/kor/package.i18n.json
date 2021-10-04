@@ -12,7 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "빌드 사전 설정 선택",
 	"cmake-tools.command.cmake.selectTestPreset.title": "테스트 사전 설정 선택",
 	"cmake-tools.command.cmake.viewLog.title": "CMake 도구 로그 파일 열기",
-	"cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
+	"cmake-tools.command.cmake.logDiagnostics.title": "진단 정보 로그",
 	"cmake-tools.command.cmake.editKits.title": "user-local CMake 키트 편집",
 	"cmake-tools.command.cmake.scanForKits.title": "키트 검색",
 	"cmake-tools.command.cmake.scanForCompilers.title": "컴파일러 검색",

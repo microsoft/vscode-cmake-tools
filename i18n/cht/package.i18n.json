@@ -12,7 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "選取建置預設",
 	"cmake-tools.command.cmake.selectTestPreset.title": "選取測試預設",
 	"cmake-tools.command.cmake.viewLog.title": "開啟 CMake 工具記錄檔",
-	"cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
+	"cmake-tools.command.cmake.logDiagnostics.title": "記錄診斷",
 	"cmake-tools.command.cmake.editKits.title": "編輯使用者本機 CMake 套件",
 	"cmake-tools.command.cmake.scanForKits.title": "掃描套件",
 	"cmake-tools.command.cmake.scanForCompilers.title": "掃描編譯器",

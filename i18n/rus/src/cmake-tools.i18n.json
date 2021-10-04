@@ -92,7 +92,7 @@
 	"waiting.on.variant": "Ожидание выбора варианта.",
 	"no.variant.abort": "Вариант не выбран. Прервите настройку.",
 	"cannot.configure.no.config.preset": "Не удается выполнить настройку: отсутствуют активные предустановки конфигурации для этих средств CMake.",
-	"cmake.cache.dir.missing": "The folder containing the CMake cache is missing. The cache will be regenerated.",
+	"cmake.cache.dir.missing": "Отсутствует папка, содержащая кэш CMake. Кэш будет создан повторно.",
 	"warn.skip.configure.when.cache.present": "Расширение определило, что сейчас требуется выполнить настройку, но настройка будет пропущена, так как включен параметр cmake.skipConfigureWhenCachePresent. Убедитесь, что кэш CMake синхронизирован с последними изменениями конфигурации.",
 	"run.build": "Сборка папки: {0}",
 	"unable.to.configure": "Сборка не выполнена: невозможно настроить проект.",
