@@ -834,7 +834,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await this._cacheEditorWebview.refreshPanel();
       }
 
-      const sourceDirectory = (await this.sourceDir).toLowerCase();
+      const sourceDirectory = (this.sourceDir).toLowerCase();
       let isCmakeListsFile: boolean = false;
       if (str.endsWith("cmakelists.txt")) {
         const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
