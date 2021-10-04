@@ -834,8 +834,15 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         await this._cacheEditorWebview.refreshPanel();
       }
 
-      const sourceDirectory = this.sourceDir.toLowerCase();
-      if (str === path.join(sourceDirectory, "cmakelists.txt")) {
+      const sourceDirectory = (this.sourceDir).toLowerCase();
+      let isCmakeListsFile: boolean = false;
+      if (str.endsWith("cmakelists.txt")) {
+        const allcmakelists: string[] | undefined = await util.getAllCMakeListsPaths(this.folder.uri);
+        // Look for the CMakeLists.txt files that are in the workspace or the sourceDirectory root.
+        isCmakeListsFile = (str === path.join(sourceDirectory, "cmakelists.txt")) ||
+                              (allcmakelists?.find(file => str === file.toLocaleLowerCase()) !== undefined);
+      }
+      if (isCmakeListsFile) {
         // CMakeLists.txt change event: its creation or deletion are relevant,
         // so update full/partial feature set view for this folder.
         await updateFullFeatureSetForFolder(this.folder);
@@ -1066,7 +1073,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!copy_dest) {
         return;
       }
-      const expanded_dest = await expandString(copy_dest, opts);
+      let expanded_dest = await expandString(copy_dest, opts);
       const pardir = path.dirname(expanded_dest);
       try {
         await fs.mkdir_p(pardir);
@@ -1075,6 +1082,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
           compdb_path, expanded_dest, pardir, e.toString()));
         return;
+      }
+      if (await fs.exists(expanded_dest) && (await fs.stat(expanded_dest)).isDirectory()) {
+        expanded_dest = path.join(expanded_dest, "compile_commands.json");
       }
       try {
         await fs.copyFile(compdb_path, expanded_dest);
@@ -1274,7 +1284,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       return true;
     }
 
-    const needsReconfigure: boolean = await drv.checkNeedsReconfigure();
+    let needsReconfigure: boolean = await drv.checkNeedsReconfigure();
+    if (!needsReconfigure && !await fs.exists(drv.binaryDir)) {
+      needsReconfigure = true;
+      log.info(localize('cmake.cache.dir.missing', 'The folder containing the CMake cache is missing. The cache will be regenerated.'));
+    }
 
     const skipConfigureIfCachePresent = this.workspaceContext.config.skipConfigureIfCachePresent;
     if (skipConfigureIfCachePresent && needsReconfigure && await fs.exists(drv.cachePath)) {
@@ -1344,7 +1358,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       targetName = target;
     }
     this.updateDriverAndTargetInTaskProvider(drv, target);
-    const consumer = new CMakeBuildConsumer(BUILD_LOGGER);
+    const consumer = new CMakeBuildConsumer(BUILD_LOGGER, drv.config);
     const IS_BUILDING_KEY = 'cmake:isBuilding';
     try {
       this._statusMessage.set(localize('building.status', 'Building'));
@@ -1896,7 +1910,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     // Add environment variables from configurePreset.
     if (this.configurePreset?.environment) {
       const configure_preset_environment = await drv.getConfigureEnvironment();
-      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.splitEnvironmentVars(configure_preset_environment)) : [];
+      debug_config.environment = debug_config.environment ? debug_config.environment.concat(util.makeDebuggerEnvironmentVars(configure_preset_environment)) : [];
     }
 
     log.debug(localize('starting.debugger.with', 'Starting debugger with following configuration.'), JSON.stringify({
@@ -1906,9 +1920,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const cfg = vscode.workspace.getConfiguration('cmake', this.folder.uri).inspect<object>('debugConfig');
     const customSetting = (cfg?.globalValue !== undefined || cfg?.workspaceValue !== undefined || cfg?.workspaceFolderValue !== undefined);
-    let dbg = debug_config.MIMode;
+    let dbg = debug_config.MIMode?.toString();
     if (!dbg && debug_config.type === "cppvsdbg") {
       dbg = "vsdbg";
+    } else {
+      dbg = "(unset)";
     }
     const telemetryProperties: telemetry.Properties = {
       customSetting: customSetting.toString(),
@@ -1945,7 +1961,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
     const drv = await this.getCMakeDriverInstance();
     if (user_config.environment) {
-      const debugConfigEnvironment: [{name: string; value: string}] = user_config.environment;
+      const debugConfigEnvironment: {name: string; value: string}[] = user_config.environment;
       debugConfigEnvironment.forEach (envVar => {
         launchEnv[envVar.name] = envVar.value;
       });
