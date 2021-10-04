@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Derleme Ön Ayarı Seçin",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Test Ön Ayarı Seçin",
 	"cmake-tools.command.cmake.viewLog.title": "CMake Araçları Günlük Dosyasını Aç",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
 	"cmake-tools.command.cmake.editKits.title": "Kullanıcı için Yerel CMake Setlerini Düzenle",
 	"cmake-tools.command.cmake.scanForKits.title": "Setler için Tara",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Derleyicileri Tara",

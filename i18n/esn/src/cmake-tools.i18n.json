@@ -92,6 +92,7 @@
 	"waiting.on.variant": "Esperando a la selección de la variante",
 	"no.variant.abort": "No se ha seleccionado ninguna variante. Anular la configuración",
 	"cannot.configure.no.config.preset": "No se puede configurar: no hay ninguna configuración preestablecida para estas herramientas de CMake.",
+	"cmake.cache.dir.missing": "The folder containing the CMake cache is missing. The cache will be regenerated.",
 	"warn.skip.configure.when.cache.present": "La extensión ha determinado que se necesita una configuración en este momento, pero lo hemos omitido porque la configuración cmake.skipConfigureWhenCachePresent está ACTIVADA. Asegúrese de que la caché de CMake esté sincronizada con los últimos cambios de configuración.",
 	"run.build": "Compilando la carpeta: {0}",
 	"unable.to.configure": "Error de compilación: no se puede configurar el proyecto",
