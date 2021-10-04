@@ -12,41 +12,57 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 const log = createLogger('debugger');
 
-export enum DebuggerType {
-  VisualStudio = 'Visual Studio',
-  LLDB = 'LLDB',
-  GDB = 'GDB',
-  // LAUNCH // Future
-}
-
 /**
- * Describes configuration options for debugger in kit
+ * Basically the same interface as vscode.DebugConfiguration, but we want
+ * strong typing on the optional properties so we need to redefine it so
+ * it can inherit those properties.
  */
-export interface DebuggerConfiguration {
-  /**
-   * Identifier of the type to launch
-   */
-  type: DebuggerType;
-
-  /**
-   * Path to gdb or lldb executable.
-   */
-  debuggerPath?: string;
-
-  /**
-   * Name of a existing launch configuration
-   */
-  // launchConfiguration?: string;  // Future
-}
-
-export interface Configuration {
+export interface VSCodeDebugConfiguration extends CppDebugConfiguration {
   type: string;
   name: string;
   request: string;
+  program: string;
   [key: string]: any;
 }
 
-async function createGDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<Configuration> {
+/**
+ * interface that maps to cmake.debugConfig.
+ */
+export interface CppDebugConfiguration {
+  symbolSearchPath?: string;
+  additionalSOLibSearchPath?: string;
+  externalConsole?: boolean;
+  logging?: DebuggerLogging;
+  visualizerFile?: string;
+  args?: string[];
+  cwd?: string;
+  environment?: proc.DebuggerEnvironmentVariable[];
+  MIMode?: MIModes;
+  miDebuggerPath?: string;
+  stopAtEntry?: boolean;
+  setupCommands?: SetupCommand[];
+  customLaunchSetupCommands?: SetupCommand[];
+  launchCompleteCommand?: string;
+  dumpPath?: string;
+  coreDumpPath?: string;
+}
+
+export interface DebuggerLogging {
+  exceptions?: boolean;
+  moduleLoad?: boolean;
+  programOutput?: boolean;
+  engineLogging?: boolean;
+  trace?: boolean;
+  traceResponse?: boolean;
+}
+
+export interface SetupCommand {
+  text?: string;
+  description?: string;
+  ignoreFailures?: boolean;
+}
+
+async function createGDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<VSCodeDebugConfiguration> {
   if (!await checkDebugger(debuggerPath)) {
     debuggerPath = 'gdb';
     if (!await checkDebugger(debuggerPath)) {
@@ -60,7 +76,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
     request: 'launch',
     cwd: path.dirname(target.path),
     args: [],
-    MIMode: 'gdb',
+    MIMode: MIModes.gdb,
     miDebuggerPath: debuggerPath,
     setupCommands: [
       {
@@ -73,7 +89,7 @@ async function createGDBDebugConfiguration(debuggerPath: string, target: Executa
   };
 }
 
-async function createLLDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<Configuration> {
+async function createLLDBDebugConfiguration(debuggerPath: string, target: ExecutableTarget): Promise<VSCodeDebugConfiguration> {
   if (!await checkDebugger(debuggerPath)) {
     throw new Error(localize('gdb.not.found', 'Unable to find GDB in default search path and {0}.', debuggerPath));
   }
@@ -84,13 +100,13 @@ async function createLLDBDebugConfiguration(debuggerPath: string, target: Execut
     request: 'launch',
     cwd: path.dirname(target.path),
     args: [],
-    MIMode: 'lldb',
+    MIMode: MIModes.lldb,
     miDebuggerPath: debuggerPath,
     program: target.path
   };
 }
 
-function createMSVCDebugConfiguration(target: ExecutableTarget): Configuration {
+function createMSVCDebugConfiguration(target: ExecutableTarget): VSCodeDebugConfiguration {
   return {
     type: 'cppvsdbg',
     name: `Debug ${target.name}`,
@@ -106,7 +122,7 @@ type DebuggerMIMode = 'gdb'|'lldb';
 type DebuggerGenerators = {
   [MIMode in DebuggerMIMode]: {
     miMode: MIMode;
-    createConfig(debuggerPath: string, target: ExecutableTarget): Promise<Configuration>;
+    createConfig(debuggerPath: string, target: ExecutableTarget): Promise<VSCodeDebugConfiguration>;
   };
 };
 
@@ -139,7 +155,7 @@ export enum MIModes {
 }
 export async function getDebugConfigurationFromCache(cache: CMakeCache, target: ExecutableTarget, platform: string,
                                                      modeOverride?: MIModes, debuggerPathOverride?: string):
-    Promise<Configuration|null> {
+    Promise<VSCodeDebugConfiguration|null> {
   const entry = cache.get('CMAKE_LINKER');
   if (entry !== null) {
     const linker = entry.value as string;
