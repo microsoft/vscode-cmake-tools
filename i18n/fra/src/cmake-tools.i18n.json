@@ -92,7 +92,7 @@
 	"waiting.on.variant": "En attente de la sélection de variante",
 	"no.variant.abort": "Aucune variante sélectionnée. Abandon de la configuration",
 	"cannot.configure.no.config.preset": "Impossible d'effectuer la configuration : aucune présélection de configuration n’est active pour cette version de CMake Tools",
-	"cmake.cache.dir.missing": "The folder containing the CMake cache is missing. The cache will be regenerated.",
+	"cmake.cache.dir.missing": "Le dossier contenant le cache CMake est manquant. Le cache est régénéré.",
 	"warn.skip.configure.when.cache.present": "L'extension a déterminé qu'une configuration était actuellement nécessaire, mais nous l'ignorons, car le paramètre cmake.skipConfigureWhenCachePresent est activé. Vérifiez que le cache CMake est synchronisé avec les derniers changements de configuration.",
 	"run.build": "Génération du dossier : {0}",
 	"unable.to.configure": "Échec de la build : impossible de configurer le projet",

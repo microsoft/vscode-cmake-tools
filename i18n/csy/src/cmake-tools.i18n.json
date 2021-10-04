@@ -92,7 +92,7 @@
 	"waiting.on.variant": "Čeká se na výběr varianty.",
 	"no.variant.abort": "Není vybraná žádná varianta. Přerušte příkaz configure.",
 	"cannot.configure.no.config.preset": "Nejde nakonfigurovat: Pro tyto nástroje CMake Tools není aktivní žádná předvolba konfigurace.",
-	"cmake.cache.dir.missing": "The folder containing the CMake cache is missing. The cache will be regenerated.",
+	"cmake.cache.dir.missing": "Chybí složka obsahující mezipaměť CMake. Mezipaměť se znovu vygeneruje.",
 	"warn.skip.configure.when.cache.present": "Rozšíření zjistilo, že se momentálně vyžaduje konfigurace, ale přeskakujeme ji, protože je zapnuté nastavení cmake.skipConfigureWhenCachePresent. Zkontrolujte, jestli je mezipaměť CMake synchronizovaná s posledními změnami konfigurace.",
 	"run.build": "Sestavuje se složka: {0}",
 	"unable.to.configure": "Sestavení se nepovedlo: projekt nejde nakonfigurovat",
