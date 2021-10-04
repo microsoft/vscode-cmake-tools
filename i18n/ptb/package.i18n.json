@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Selecionar a Predefinição de Compilação",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Selecione a Predefinição de Teste",
 	"cmake-tools.command.cmake.viewLog.title": "Abrir o Arquivo de Log das Ferramentas do CMake",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
 	"cmake-tools.command.cmake.editKits.title": "Editar os Kits do CMake Locais do Usuário",
 	"cmake-tools.command.cmake.scanForKits.title": "Examinar em busca de Kits",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Verificar se há compiladores",
