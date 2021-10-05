@@ -92,6 +92,7 @@
 	"waiting.on.variant": "In attesa della selezione della variante",
 	"no.variant.abort": "Non è stata selezionata alcuna variante. Interrompere la configurazione",
 	"cannot.configure.no.config.preset": "Non è possibile eseguire la configurazione: nessun set di impostazioni di configurazione è attivo per questo CMakeTools",
+	"cmake.cache.dir.missing": "Manca la cartella contenente la cache di CMake. La cache verrà rigenerata.",
 	"warn.skip.configure.when.cache.present": "L'estensione ha determinato che in questo momento è necessaria una configurazione, ma questo requisito verrà ignorato perché cmake.skipConfigureWhenCachePresent è impostato su ON. Assicurarsi che la cache CMake sia sincronizzata con le ultime modifiche apportate alla configurazione.",
 	"run.build": "Compilazione della cartella: {0}",
 	"unable.to.configure": "Compilazione non riuscita: non è possibile configurare il progetto",

@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 import { platform } from 'os';
 
-import {EnvironmentVariables, execute} from '@cmt/proc';
+import {EnvironmentVariables, DebuggerEnvironmentVariable, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -373,8 +373,8 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
   }
 }
 
-export function splitEnvironmentVars(env: EnvironmentVariables): EnvironmentVariables[] {
-  const converted_env: EnvironmentVariables[] = Object.entries(env).map(
+export function makeDebuggerEnvironmentVars(env: EnvironmentVariables): DebuggerEnvironmentVariable[] {
+  const converted_env: DebuggerEnvironmentVariable[] = Object.entries(env).map(
     ([key, value]) => ({
       name: key,
       value
@@ -704,6 +704,16 @@ export function getRelativePath(file: string, dir: string): string {
   const relPathDir: string = lightNormalizePath(path.relative(dir, fullPathDir));
   const joinedPath = "${workspaceFolder}/".concat(relPathDir);
   return joinedPath;
+}
+
+// cl, clang, clang-cl, clang-cpp and clang++ are supported compilers.
+export function isSupportedCompiler(compilerName: string | undefined): string | undefined {
+  return  (compilerName === 'cl' || compilerName === 'cl.exe') ? 'cl' :
+          (compilerName === 'clang' || compilerName === 'clang.exe') ? 'clang' :
+          (compilerName === 'clang-cl' || compilerName === 'clang-cl.exe') ? 'clang-cl' :
+          (compilerName === 'clang-cpp' || compilerName === 'clang-cpp.exe') ? 'clang-cpp' :
+          (compilerName === 'clang++' || compilerName === 'clang++.exe') ? 'clang++' :
+          undefined;
 }
 
 async function getHostSystemName(): Promise<string> {

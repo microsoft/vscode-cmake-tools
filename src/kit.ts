@@ -736,14 +736,17 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
   }
   if (util.compareVersion(WindowsSDKVersionParsed, {major: 10, minor: 0, patch: 14393}) >= 0) {
     const WindowsSdkDir = vars.get('WindowsSdkDir') ?? '';
-    const existPath = vars.get('PATH') ?? '';
+    const pathKey = vars.has('Path') ? 'Path' : 'PATH';
+    const existPath = vars.get(pathKey) ?? '';
     const oldWinSdkBinPath = path.join(WindowsSdkDir, 'bin', hostArch);
     const newWinSdkBinPath = path.join(WindowsSdkDir, 'bin', WindowsSDKVersion, hostArch);
-    if (existPath.toLowerCase().indexOf(oldWinSdkBinPath.toLowerCase()) >= 0
-      && existPath.toLowerCase().indexOf(newWinSdkBinPath.toLowerCase()) < 0) {
+    const newWinSdkBinPathExist = await fs.exists(newWinSdkBinPath);
+    if (newWinSdkBinPathExist &&
+        existPath !== '' &&
+        existPath.toLowerCase().indexOf(newWinSdkBinPath.toLowerCase()) < 0) {
       log.info(localize('windows.sdk.path.patch', 'Patch Windows SDK bin path from {0} to {1} for {2}',
         oldWinSdkBinPath, newWinSdkBinPath, devbat));
-      vars.set('PATH', `${newWinSdkBinPath};${existPath}`);
+      vars.set(pathKey, `${newWinSdkBinPath};${existPath}`);
     }
   }
   log.debug(localize('ok.running', 'OK running {0} {1}, env vars: {2}', devbat, args.join(' '), JSON.stringify([...vars])));

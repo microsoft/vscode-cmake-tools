@@ -92,6 +92,7 @@
 	"waiting.on.variant": "正在等候變化選取項目",
 	"no.variant.abort": "未選取任何變化。中止設定",
 	"cannot.configure.no.config.preset": "無法設定: 此 CMake 工具沒有使用中的設定預設",
+	"cmake.cache.dir.missing": "缺少包含 CMake 快取的資料夾。快取將會重新產生。",
 	"warn.skip.configure.when.cache.present": "延伸模組判斷目前需要設定，但由於設定 cmake.skipConfigureWhenCachePresent 已開啟，我們即將跳過設定。請確定 CMake 快取與最新的設定變更同步。",
 	"run.build": "正在建置資料夾: {0}",
 	"unable.to.configure": "建置失敗: 無法設定專案",
