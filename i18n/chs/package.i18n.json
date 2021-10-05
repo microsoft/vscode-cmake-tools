@@ -12,7 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "选择“生成预设”",
 	"cmake-tools.command.cmake.selectTestPreset.title": "选择“测试预设”",
 	"cmake-tools.command.cmake.viewLog.title": "打开 CMake Tools 日志文件",
-	"cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
+	"cmake-tools.command.cmake.logDiagnostics.title": "日志诊断",
 	"cmake-tools.command.cmake.editKits.title": "编辑用户本地 CMake 工具包",
 	"cmake-tools.command.cmake.scanForKits.title": "扫描工具包",
 	"cmake-tools.command.cmake.scanForCompilers.title": "扫描编译器",

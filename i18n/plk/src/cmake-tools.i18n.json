@@ -92,7 +92,7 @@
 	"waiting.on.variant": "Oczekiwanie przy wyborze wariantu",
 	"no.variant.abort": "Nie wybrano wariantu. Przerwij konfigurowanie.",
 	"cannot.configure.no.config.preset": "Nie można skonfigurować: żadna predefiniowana konfiguracja nie jest aktywna dla tych narzędzi CMake",
-	"cmake.cache.dir.missing": "The folder containing the CMake cache is missing. The cache will be regenerated.",
+	"cmake.cache.dir.missing": "Brak folderu zawierającego pamięć podręczną narzędzia CMake. Pamięć podręczna zostanie ponownie wygenerowana.",
 	"warn.skip.configure.when.cache.present": "Rozszerzenie określiło, że w tym momencie jest wymagana konfiguracja, ale pominiemy ją, ponieważ ustawienie cmake.skipConfigureWhenCachePresent jest WŁĄCZONE. Upewnij się, że pamięć podręczna narzędzia CMake jest zsynchronizowana z najnowszymi zmianami konfiguracji.",
 	"run.build": "Kompilowanie folderu: {0}",
 	"unable.to.configure": "Kompilacja nie powiodła się: nie można skonfigurować projektu",
