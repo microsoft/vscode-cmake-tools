@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Выбор предустановки сборки",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Выбор предустановки тестирования",
 	"cmake-tools.command.cmake.viewLog.title": "Открытие файла журнала средств CMake",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Журнал диагностики",
 	"cmake-tools.command.cmake.editKits.title": "Изменение локальных пользовательских пакетов CMake",
 	"cmake-tools.command.cmake.scanForKits.title": "Поиск наборов",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Поиск компиляторов",
