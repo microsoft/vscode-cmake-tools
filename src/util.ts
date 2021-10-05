@@ -706,6 +706,16 @@ export function getRelativePath(file: string, dir: string): string {
   return joinedPath;
 }
 
+// cl, clang, clang-cl, clang-cpp and clang++ are supported compilers.
+export function isSupportedCompiler(compilerName: string | undefined): string | undefined {
+  return  (compilerName === 'cl' || compilerName === 'cl.exe') ? 'cl' :
+          (compilerName === 'clang' || compilerName === 'clang.exe') ? 'clang' :
+          (compilerName === 'clang-cl' || compilerName === 'clang-cl.exe') ? 'clang-cl' :
+          (compilerName === 'clang-cpp' || compilerName === 'clang-cpp.exe') ? 'clang-cpp' :
+          (compilerName === 'clang++' || compilerName === 'clang++.exe') ? 'clang++' :
+          undefined;
+}
+
 async function getHostSystemName(): Promise<string> {
   if (platform() === "win32") {
     return "Windows";
