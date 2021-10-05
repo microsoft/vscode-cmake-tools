@@ -7,6 +7,7 @@
     "cmake-tools.command.cmake.selectBuildPreset.title": "Select Build Preset",
     "cmake-tools.command.cmake.selectTestPreset.title": "Select Test Preset",
     "cmake-tools.command.cmake.viewLog.title": "Open the CMake Tools Log File",
+    "cmake-tools.command.cmake.logDiagnostics.title": "Log Diagnostics",
     "cmake-tools.command.cmake.editKits.title": "Edit User-Local CMake Kits",
     "cmake-tools.command.cmake.scanForKits.title": "Scan for Kits",
     "cmake-tools.command.cmake.scanForCompilers.title": "Scan for Compilers",
