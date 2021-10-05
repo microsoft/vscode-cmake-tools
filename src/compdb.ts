@@ -1,5 +1,4 @@
 import * as shlex from '@cmt/shlex';
-
 import {createLogger} from './logging';
 import {fs} from './pr';
 import * as util from './util';
@@ -17,7 +16,7 @@ interface BaseCompileCommand {
 }
 
 export interface ArgsCompileCommand extends BaseCompileCommand {
-  command: string;
+  command: string; // The command string includes both commands and arguments (if any).
   arguments?: string[];
 }
 
