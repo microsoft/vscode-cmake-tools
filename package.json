@@ -80,7 +80,10 @@
     "onCommand:cmake.stopAll",
     "onCommand:cmake.outline.configureAll",
     "onCommand:cmake.outline.buildAll",
-    "workspaceContains:**/CMakeLists.txt",
+    "workspaceContains:CMakeLists.txt",
+    "workspaceContains:*/CMakeLists.txt",
+    "workspaceContains:*/*/CMakeLists.txt",
+    "workspaceContains:*/*/*/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
   "main": "./dist/main",
