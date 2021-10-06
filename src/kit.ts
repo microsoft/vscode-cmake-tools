@@ -609,9 +609,9 @@ const MSVC_ENVIRONMENT_VARIABLES = [
   'user_inputversion',
   'VCIDEInstallDir',
   'VCINSTALLDIR',
-  'VCToolsInstallDir',
+  //'VCToolsInstallDir', - disabled temporarily as it breaks downlevel toolset selection
   'VCToolsRedistDir',
-  'VCToolsVersion',
+  //'VCToolsVersion', - disabled temporarily as it breaks downlevel toolset selection
   'VisualStudioVersion',
   'VSINSTALLDIR',
   'WindowsLibPath',
