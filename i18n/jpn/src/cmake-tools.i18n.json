@@ -92,7 +92,7 @@
 	"waiting.on.variant": "バリアントの選択を待機しています",
 	"no.variant.abort": "バリアントが選択されていません。構成を中止します",
 	"cannot.configure.no.config.preset": "構成できません: この CMakeTools ではどの構成の事前設定もアクティブではありません",
-	"cmake.cache.dir.missing": "The folder containing the CMake cache is missing. The cache will be regenerated.",
+	"cmake.cache.dir.missing": "CMake キャッシュを含むフォルダーが見つかりません。キャッシュは再生成されます。",
 	"warn.skip.configure.when.cache.present": "拡張機能によって、現時点で構成が必要であると判断されましたが、設定 cmake.skipConfigureWhenCachePresent がオンになっているため、スキップしています。CMake キャッシュが最新の構成変更と同期していることをご確認ください。",
 	"run.build": "フォルダーのビルド中: {0}",
 	"unable.to.configure": "ビルドに失敗しました。プロジェクトを構成できません",
