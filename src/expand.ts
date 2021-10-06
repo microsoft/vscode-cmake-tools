@@ -54,6 +54,10 @@ export interface PresetContextVars extends RequiredExpansionContextVars {
   presetName: string;
 }
 
+export interface MinimalPresetContextVars extends RequiredExpansionContextVars {
+  [key: string]: string;
+}
+
 /**
  * Options to control the behavior of `expandString`.
  */
@@ -61,7 +65,7 @@ export interface ExpansionOptions {
   /**
    * Plain `${variable}` style expansions.
    */
-  vars: KitContextVars | PresetContextVars;
+  vars: KitContextVars | PresetContextVars | MinimalPresetContextVars;
   /**
    * Override the values used in `${env:var}`-style and `${env.var}`-style expansions.
    *
@@ -116,7 +120,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   return replaceAll(result, '${dollar}', '$');
 }
 
-export async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
+async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
   const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
   const env = mergeEnvironment(envPreNormalize);
   const repls = opts.vars;
