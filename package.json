@@ -1011,7 +1011,7 @@
     },
     "configuration": {
       "type": "object",
-      "title": "CMake Tools configuration",
+      "title": "CMake Tools",
       "properties": {
         "cmake.autoSelectActiveFolder": {
           "type": "boolean",
