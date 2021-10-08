@@ -58,7 +58,7 @@ interface TargetDefaults {
 
 function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion {
   const is_gnu = can_use_gnu && std.startsWith('gnu');
-  if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
+  if (std.endsWith('++2a') || std.endsWith('++2b') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
   } else if (std.endsWith('++17') || std.endsWith('++1z')) {
     return is_gnu ? 'gnu++17' : 'c++17';
