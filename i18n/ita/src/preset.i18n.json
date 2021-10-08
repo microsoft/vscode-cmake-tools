@@ -21,7 +21,7 @@
 	"no.cl.toolset.version": "Preset di configurazione {0}: nessuna versione del set di strumenti specificata per cl.exe con l’ultima versione per impostazione predefinita",
 	"unknown.toolset.option": "L'opzione del set di strumenti non riconosciuta verrà ignorata: {0}",
 	"config.preset.not.found": "Non è stato possibile trovare il set di impostazioni di configurazione denominato {0}",
-	"specified.cl.not.found": "Preset di configurazione {0}: il cl.exe con set di strumenti {1} e architettura {2} specificato non è stato trovato, potrebbe essere necessario eseguire \"CMake: ricerca compilatori\" se è presente nel computer.",
+	"specified.cl.not.found": "Preset di configurazione {0}: il file {1}.exe con set di strumenti {2} e architettura {3} specificato non è stato trovato. Potrebbe essere necessario eseguire \"CMake: Ricerca compilatori\" se è presente nel computer.",
 	"ninja.not.set": "Ninja non è impostato su PATH, provare a usare {0}",
 	"circular.inherits.in.build.preset": "Istruzione inherits circolare nel set di impostazioni di compilazione {0}",
 	"circular.inherits.in.test.preset": "Istruzione inherits circolare nel set di impostazioni di test {0}",
