@@ -21,7 +21,7 @@
 	"no.cl.toolset.version": "Yapılandırma ön ayarı {0}: cl.exe için varsayılan olarak en son kullanılan araç takımı sürümü belirtilmemiş",
 	"unknown.toolset.option": "Tanınmayan araç takımı seçeneği yoksayılır: {0}",
 	"config.preset.not.found": "Adı {0} olan yapılandırma ön ayarı bulunamadı",
-	"specified.cl.not.found": "Yapılandırma ön ayarı {0}: Araç takımı {1} ve mimari {2} ile belirtilen cl.exe bulunamadı, bilgisayarınızda varsa \"CMake: Derleyicileri Tara\" öğesini çalıştırmanız gerekebilir.",
+	"specified.cl.not.found": "{0} yapılandırma ön ayarı: {2} araç takımı ve {3} mimarisiyle belirtilen {1}.exe bulunamadı. Bilgisayarınızda varsa \"CMake: Derleyicileri Tara\" komutunu çalıştırmanız gerekebilir.",
 	"ninja.not.set": "Ninja YOL’a ayarlanmadı, {0} kullanmaya çalışıyor",
 	"circular.inherits.in.build.preset": "{0} derleme ön ayarındaki döngüsel devralmalar",
 	"circular.inherits.in.test.preset": "{0} test ön ayarındaki döngüsel devralmalar",

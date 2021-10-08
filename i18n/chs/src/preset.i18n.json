@@ -21,7 +21,7 @@
 	"no.cl.toolset.version": "配置预设 {0}: 没有为 cl.exe 指定工具集版本，默认情况下使用最新版本",
 	"unknown.toolset.option": "将忽略未识别的工具集选项: {0}",
 	"config.preset.not.found": "找不到名为 {0} 的配置预设",
-	"specified.cl.not.found": "配置预设 {0}: 未找到具有工具集 {1} 和体系结构 {2} 的指定 cl.exe，如果计算机上存在“CMake: 扫描编译器”，则可能需要运行它。",
+	"specified.cl.not.found": "配置预设 {0}: 未找到指定的 {1}.exe (具有工具集 {2} 和体系结构 {3})，如果计算机上存在“CMake: 扫描编译器”，则可能需要运行它。",
 	"ninja.not.set": "未在 PATH 上设置 Ninja，正在尝试使用 {0}",
 	"circular.inherits.in.build.preset": "生成预设 {0} 中的循环继承",
 	"circular.inherits.in.test.preset": "测试预设 {0} 中的循环继承",
