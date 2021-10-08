@@ -1064,17 +1064,39 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   private async _refreshCompileDatabase(opts: ExpansionOptions): Promise<void> {
     const compdb_paths: string[] = [];
-    if (this.workspaceContext.config.collectCompileCommands) {
-      // search the build directory for all
-      (await fs.walk(await this.binaryDir)).forEach(e => {
-        if (e.name === 'compile_commands.json') {
-          compdb_paths.push(e.path);
-        }
-      });
-    } else {
+    if (this.workspaceContext.config.mergedCompileCommands) {
+      // recursively search the build directory for all
+      const searchRoot = await this.binaryDir;
+      if (await fs.exists(searchRoot)) {
+        (await fs.walk(searchRoot)).forEach(e => {
+          if (e.name === 'compile_commands.json') {
+            compdb_paths.push(e.path);
+          }
+        });
+      }
+    } else if (this.workspaceContext.config.copyCompileCommands) {
       // single file with known path
       const compdb_path = path.join(await this.binaryDir, 'compile_commands.json');
-      compdb_paths.push(compdb_path);
+      if (await fs.exists(compdb_path)) {
+        compdb_paths.push(compdb_path);
+        // Now try to copy the compdb to the user-requested path
+        const copy_dest = this.workspaceContext.config.copyCompileCommands;
+        const expanded_dest = await expandString(copy_dest, opts);
+        const pardir = path.dirname(expanded_dest);
+        try {
+          await fs.mkdir_p(pardir);
+          try {
+            await fs.copyFile(compdb_path, expanded_dest);
+          } catch (e: any) {
+            // Just display the error. It's the best we can do.
+            void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to copy "{0}" to "{1}": {2}', compdb_path, expanded_dest, e.toString()));
+          }
+        } catch (e: any) {
+          void vscode.window.showErrorMessage(localize('failed.to.create.parent.directory',
+            'Tried to copy "{0}" to "{1}", but failed to create the parent directory "{2}": {3}',
+            compdb_path, expanded_dest, pardir, e.toString()));
+        }
+      }
     }
 
     if (compdb_paths.length > 0) {
@@ -1082,11 +1104,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       const new_db = await CompilationDatabase.fromFilePaths(compdb_paths);
       this._compilationDatabase = new_db;
       // Now try to dump the compdb to the user-requested path
-      const copy_dest = this.workspaceContext.config.copyCompileCommands;
-      if (!copy_dest) {
+      const merge_dest = this.workspaceContext.config.mergedCompileCommands;
+      if (!merge_dest) {
         return;
       }
-      let expanded_dest = await expandString(copy_dest, opts);
+      let expanded_dest = await expandString(merge_dest, opts);
       const pardir = path.dirname(expanded_dest);
       try {
         await fs.mkdir_p(pardir);
@@ -1097,13 +1119,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return;
       }
       if (await fs.exists(expanded_dest) && (await fs.stat(expanded_dest)).isDirectory()) {
-        expanded_dest = path.join(expanded_dest, "compile_commands.json");
+        // Emulate the behavior of copyFile() with writeFile() so that
+        // mergedCompileCommands works like copyCompileCommands for
+        // target paths which lead to existing directories.
+        expanded_dest = path.join(expanded_dest, "merged_compile_commands.json");
       }
       try {
         await fs.writeFile(expanded_dest, CompilationDatabase.toJson(new_db));
       } catch (e: any) {
         // Just display the error. It's the best we can do.
-        void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to write compilation database to "{0}": {1}', expanded_dest, e.toString()));
+        void vscode.window.showErrorMessage(localize('failed.to.copy', 'Failed to write merged compilation database to "{0}": {1}', expanded_dest, e.toString()));
         return;
       }
     }

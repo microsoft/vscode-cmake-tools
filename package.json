@@ -1450,10 +1450,10 @@
           "description": "%cmake-tools.configuration.cmake.emscriptenSearchDirs.description%",
           "scope": "window"
         },
-        "cmake.collectCompileCommands": {
-          "type": "boolean",
-          "default": false,
-          "description": "%cmake-tools.configuration.cmake.collectCompileCommands.description%",
+        "cmake.mergedCompileCommands": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.mergedCompileCommands.description%",
           "scope": "resource"
         },
         "cmake.copyCompileCommands": {
