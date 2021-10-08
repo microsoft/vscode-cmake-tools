@@ -263,7 +263,7 @@ class BuildTargetSelectionButton extends Button {
   settingsName = 'buildTarget';
   constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
     super(config, priority);
-    this.hidden = true;
+    this.hidden = false;
     this.command = 'cmake.setDefaultTarget';
     this.tooltip = localize('set.active.target.tooltip', 'Set the default build target');
   }
@@ -647,7 +647,6 @@ export class StatusBar implements vscode.Disposable {
   useCMakePresets(isUsing: boolean = true): void {
     this._cmakeToolsStatusItem.hidden = isUsing;
     this._kitSelectionButton.hidden = isUsing;
-    this._buildTargetNameButton.hidden = isUsing;
     this._configurePresetButton.hidden = !isUsing;
     this._buildPresetButton.hidden = !isUsing;
     this._testPresetButton.hidden = !isUsing;

@@ -1402,8 +1402,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     });
   }
 
-  async build(target?: string, consumer?: proc.OutputConsumer): Promise<number|null> {
-    log.debug(localize('start.build', 'Start build'), target || '');
+  async build(targets?: string[], consumer?: proc.OutputConsumer): Promise<number|null> {
+    log.debug(localize('start.build', 'Start build'), targets?.join(', ') || '');
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1420,7 +1420,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       return -1;
     }
     const timeStart: number = new Date().getTime();
-    const child = await this._doCMakeBuild(target, consumer);
+    const child = await this._doCMakeBuild(targets, consumer);
     const timeEnd: number = new Date().getTime();
     const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
       ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
@@ -1514,23 +1514,24 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private _currentBuildProcess: proc.Subprocess|null = null;
 
-  private correctAllTargetName(targetname: string) {
-    if (targetname === 'all' || targetname === 'ALL_BUILD') {
-      return this.allTargetName;
-    } else {
-      return targetname;
+  private correctAllTargetName(targetnames: string[]) {
+    for (let i = 0; i < targetnames.length; i++) {
+      if (targetnames[i] === 'all' || targetnames[i] === 'ALL_BUILD') {
+        targetnames[i] = this.allTargetName;
+      }
     }
+    return targetnames;
   }
 
-  async getCMakeBuildCommand(target?: string): Promise<proc.BuildCommand|null> {
+  async getCMakeBuildCommand(targets?: string[]): Promise<proc.BuildCommand|null> {
     if (this.useCMakePresets) {
       if (!this._buildPreset) {
         log.debug(localize('no.build.preset', 'No build preset selected'));
         return null;
       }
 
-      if (target) {
-        this._buildPreset.__targets = target;
+      if (targets && targets.length > 0) {
+        this._buildPreset.__targets = targets;
       } else {
         this._buildPreset.__targets = this._buildPreset.targets;
       }
@@ -1541,12 +1542,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       return {command: this.cmake.path, args, build_env: this._buildPreset.environment as proc.EnvironmentVariables};
     } else {
-      if (!target) {
+      if (!targets || targets.length === 0) {
         return null;
       }
 
       const gen = this.generatorName;
-      target = this.correctAllTargetName(target);
+      targets = this.correctAllTargetName(targets);
 
       const buildArgs: string[] = this.config.buildArgs.slice(0);
       const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
@@ -1560,9 +1561,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
         }
       } else {
         if (gen) {
-          if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean') {
+          if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets.indexOf('clean') > 0) {
             buildToolArgs.push('-j', this.config.numJobs.toString());
-          } else if (/Visual Studio/.test(gen) && target !== 'clean') {
+          } else if (/Visual Studio/.test(gen) &&  targets.indexOf('clean') > 0) {
             buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
           }
         }
@@ -1572,7 +1573,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
       const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
 
-      const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
+      const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', ...targets]
                       .concat(buildArgs, buildToolArgs);
       const opts = this.expansionOptions;
       const expanded_args_promises
@@ -1585,8 +1586,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  private async _doCMakeBuild(target?: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
-    const buildcmd = await this.getCMakeBuildCommand(target);
+  private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
+    const buildcmd = await this.getCMakeBuildCommand(targets);
     if (buildcmd) {
       let outputEnc = this.config.outputLogEncoding;
       if (outputEnc === 'auto') {

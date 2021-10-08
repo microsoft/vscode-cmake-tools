@@ -299,7 +299,7 @@
       {
         "command": "cmake.setDefaultTarget",
         "title": "%cmake-tools.command.cmake.setDefaultTarget.title%",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -489,7 +489,7 @@
       },
       {
         "command": "cmake.outline.setDefaultTarget",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.setDefaultTarget.title%"
       },
       {
@@ -636,7 +636,7 @@
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
-          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+          "when": "cmake:enableFullFeatureSet",
           "command": "cmake.setDefaultTarget"
         },
         {
@@ -865,7 +865,7 @@
         },
         {
           "command": "cmake.outline.setDefaultTarget",
-          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canRun=true|canBuild=true/ && viewItem =~ /isDefault=false/ && !useCMakePresets",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canRun=true|canBuild=true/ && viewItem =~ /isDefault=false/",
           "group": "2_targetState@1"
         },
         {
