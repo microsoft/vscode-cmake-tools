@@ -21,7 +21,7 @@
 	"no.cl.toolset.version": "Predefiniowana konfiguracja {0}: nie określono wersji zestawu narzędzi dla cl.exe, domyślnie używając najnowszej",
 	"unknown.toolset.option": "Nierozpoznana opcja zestawu narzędzi zostanie zignorowana: {0}",
 	"config.preset.not.found": "Nie można odnaleźć predefiniowanej konfiguracji o nazwie {0}",
-	"specified.cl.not.found": "Predefiniowana konfiguracja {0}: Określony element cl.exe z zestawem narzędzi {1} i architekturą {2} nie został znaleziony. Może być konieczne uruchomienie elementu „CMake: Skanuj w poszukiwaniu KOMPILATORÓW”, jeśli istnieje on na komputerze.",
+	"specified.cl.not.found": "Predefiniowana konfiguracja {0}: Określony element {1}.exe z zestawem narzędzi {2} i architekturą {3} nie został znaleziony. Może być konieczne uruchomienie elementu „CMake: Skanuj w poszukiwaniu kompilatorów”, jeśli istnieje on na komputerze.",
 	"ninja.not.set": "Ninja nie jest ustawiony na ŚCIEŻCE, spróbuj użyć {0}.",
 	"circular.inherits.in.build.preset": "Dziedziczenie cykliczne we wstępnie zdefiniowanej kompilacji {0}",
 	"circular.inherits.in.test.preset": "Dziedziczenie cykliczne we wstępnie zdefiniowanym teście {0}",
