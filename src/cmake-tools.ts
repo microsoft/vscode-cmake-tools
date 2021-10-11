@@ -1242,7 +1242,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                              progress: ProgressHandle,
                              cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
     progress.report({message: localize('saving.open.files', 'Saving open files')});
-    if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly ? true : false)) {
+    if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
       return -1;
     }
     if (!this.useCMakePresets) {
