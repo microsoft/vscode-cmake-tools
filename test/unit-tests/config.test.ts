@@ -37,6 +37,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     testEnvironment: {},
     mingwSearchDirs: [],
     emscriptenSearchDirs: [],
+    mergedCompileCommands: null,
     copyCompileCommands: null,
     configureOnOpen: null,
     configureOnEdit: true,

@@ -1470,6 +1470,12 @@
           "description": "%cmake-tools.configuration.cmake.emscriptenSearchDirs.description%",
           "scope": "window"
         },
+        "cmake.mergedCompileCommands": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.mergedCompileCommands.description%",
+          "scope": "resource"
+        },
         "cmake.copyCompileCommands": {
           "type": "string",
           "default": null,
