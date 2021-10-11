@@ -58,7 +58,8 @@ const CMAKE_LOGGER = logging.createLogger('cmake');
 export enum ConfigureType {
   Normal,
   Clean,
-  Cache
+  Cache,
+  ShowCommandOnly
 }
 
 export enum ConfigureTrigger {
@@ -1167,8 +1168,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         },
         async progress => {
           progress.report({message: localize('preparing.to.configure', 'Preparing to configure')});
-          log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
-          return this._doConfigure(progress, async consumer => {
+          if (type !== ConfigureType.ShowCommandOnly) {
+            log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
+          }
+
+          return this._doConfigure(type, progress, async consumer => {
             const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
             if (drv) {
               let old_prog = 0;
@@ -1190,14 +1194,17 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 } else {
                   switch (type) {
                     case ConfigureType.Normal:
-                        retc = await drv.configure(trigger, extra_args, consumer);
+                      retc = await drv.configure(trigger, extra_args, consumer);
                       break;
                     case ConfigureType.Clean:
-                        retc = await drv.cleanConfigure(trigger, extra_args, consumer);
+                      retc = await drv.cleanConfigure(trigger, extra_args, consumer);
+                      break;
+                    case ConfigureType.ShowCommandOnly:
+                      retc = await drv.configure(trigger, extra_args, consumer, undefined, true);
                       break;
                     default:
-                        rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
-                        retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
+                      rollbar.error(localize('unexpected.configure.type', 'Unexpected configure type'), {type});
+                      retc = await this.configureInternal(trigger, extra_args, ConfigureType.Normal);
                       break;
                   }
                   await setContextValue(IS_CONFIGURING_KEY, false);
@@ -1238,10 +1245,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Save all open files. "maybe" because the user may have disabled auto-saving
    * with `config.saveBeforeBuild`.
    */
-  async maybeAutoSaveAll(): Promise<boolean> {
+  async maybeAutoSaveAll(showCommandOnly?: boolean): Promise<boolean> {
     // Save open files before we configure/build
     if (this.workspaceContext.config.saveBeforeBuild) {
-      log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+      if (!showCommandOnly) {
+        log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+      }
+
       const save_good = await vscode.workspace.saveAll();
       if (!save_good) {
         log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
@@ -1266,10 +1276,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
-  private async _doConfigure(progress: ProgressHandle,
+  private async _doConfigure(type: ConfigureType,
+                             progress: ProgressHandle,
                              cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
     progress.report({message: localize('saving.open.files', 'Saving open files')});
-    if (!await this.maybeAutoSaveAll()) {
+    if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
       return -1;
     }
     if (!this.useCMakePresets) {
@@ -1374,7 +1385,32 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async runBuild(target_?: string): Promise<number> {
+  async runBuild(target_?: string, showCommandOnly?: boolean): Promise<number> {
+    let target = target_;
+    let targetName: string;
+    if (this.useCMakePresets) {
+      targetName = target || this.buildPreset?.displayName || this.buildPreset?.name || '';
+    } else {
+      target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
+      targetName = target;
+    }
+
+    let drv: CMakeDriver | null;
+    if (showCommandOnly) {
+      drv = await this.getCMakeDriverInstance();
+      if (!drv) {
+        throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
+      }
+      const buildCmd = await drv.getCMakeBuildCommand(target);
+      if (buildCmd) {
+        log.showChannel();
+        log.info(buildCmdStr(buildCmd.command, buildCmd.args));
+      } else {
+        throw new Error(localize('failed.to.get.build.command', 'Failed to get build command'));
+      }
+      return 0;
+    }
+
     log.info(localize('run.build', 'Building folder: {0}', this.folderName), target_ ? target_ : '');
     const config_retc = await this.ensureConfigured();
     if (config_retc === null) {
@@ -1382,18 +1418,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     } else if (config_retc !== 0) {
       return config_retc;
     }
-    const drv = await this.getCMakeDriverInstance();
+    drv = await this.getCMakeDriverInstance();
     if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
-    }
-    let target = target_;
-    let targetName: string;
-    if (this.useCMakePresets) {
-      target = target;
-      targetName = this.buildPreset?.displayName || this.buildPreset?.name || '';
-    } else {
-      target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
-      targetName = target;
     }
     this.updateDriverAndTargetInTaskProvider(drv, target);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER, drv.config);
@@ -1420,14 +1447,14 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           log.showChannel();
           BUILD_LOGGER.info(localize('starting.build', 'Starting build'));
           await setContextValue(IS_BUILDING_KEY, true);
-          const rc = await drv.build(target, consumer);
+          const rc = await drv!.build(target, consumer);
           await setContextValue(IS_BUILDING_KEY, false);
           if (rc === null) {
             BUILD_LOGGER.info(localize('build.was.terminated', 'Build was terminated'));
           } else {
             BUILD_LOGGER.info(localize('build.finished.with.code', 'Build finished with exit code {0}', rc));
           }
-          const file_diags = consumer.compileConsumer.resolveDiagnostics(drv.binaryDir);
+          const file_diags = consumer.compileConsumer.resolveDiagnostics(drv!.binaryDir);
           populateCollection(collections.build, file_diags);
           await this._refreshCompileDatabase(drv.expansionOptions);
           return rc === null ? -1 : rc;
@@ -1443,8 +1470,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
   /**
    * Implementation of `cmake.build`
    */
-  async build(target_?: string): Promise<number> {
-    this.m_promise_build = this.runBuild(target_);
+  async build(target_?: string, showCommandOnly?: boolean): Promise<number> {
+    this.m_promise_build = this.runBuild(target_, showCommandOnly);
     return this.m_promise_build;
   }
 
