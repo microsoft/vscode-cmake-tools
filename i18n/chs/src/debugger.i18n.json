@@ -6,7 +6,7 @@
 {
 	"gdb.not.found": "在默认搜索路径和 {0} 中找不到 GDB。",
 	"enable.pretty.printing": "为 gdb 启用整齐打印",
-	"invalid.miDebuggerPath.override": "'{0}' in '{1}' must be an absolute path to a debugger (variable expansion is not currently supported). Got: '{2}'",
+	"invalid.miDebuggerPath.override": "“{0}”(在“{1}”)必须是调试器的绝对路径(当前不支持变量扩展)。已获取:“{2}”",
 	"no.compiler.found.in.cache": "在缓存文件中找不到编译器。",
 	"unable.to.determine.debugger.for.compiler": "无法自动确定与编译器对应的调试程序: {0}"
 }
