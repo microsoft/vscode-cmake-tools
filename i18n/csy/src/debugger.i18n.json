@@ -6,7 +6,7 @@
 {
 	"gdb.not.found": "Nepovedlo se najít GDB ve výchozí cestě pro vyhledávání a místě {0}.",
 	"enable.pretty.printing": "Povolit přehledný výpis pro gdb",
-	"invalid.miDebuggerPath.override": "'{0}' in '{1}' must be an absolute path to a debugger (variable expansion is not currently supported). Got: '{2}'",
+	"invalid.miDebuggerPath.override": "„{0}“ v „{1}“ musí být absolutní cesta k ladicímu programu (rozbalování proměnných není aktuálně podporováno). Získáte: „{2}“",
 	"no.compiler.found.in.cache": "V souboru mezipaměti nebyl nalezen žádný kompilátor.",
 	"unable.to.determine.debugger.for.compiler": "Ladicí program, který odpovídá kompilátoru, se nedá automaticky určit: {0}"
 }
