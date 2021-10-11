@@ -1130,8 +1130,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         },
         async progress => {
           progress.report({message: localize('preparing.to.configure', 'Preparing to configure')});
-          log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
-          return this._doConfigure(progress, async consumer => {
+          if (type !== ConfigureType.ShowCommandOnly) {
+            log.info(localize('run.configure', 'Configuring folder: {0}', this.folderName), extra_args);
+          }
+
+          return this._doConfigure(type, progress, async consumer => {
             const IS_CONFIGURING_KEY = 'cmake:isConfiguring';
             if (drv) {
               let old_prog = 0;
@@ -1204,10 +1207,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Save all open files. "maybe" because the user may have disabled auto-saving
    * with `config.saveBeforeBuild`.
    */
-  async maybeAutoSaveAll(): Promise<boolean> {
+  async maybeAutoSaveAll(showCommandOnly?: boolean): Promise<boolean> {
     // Save open files before we configure/build
     if (this.workspaceContext.config.saveBeforeBuild) {
-      log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+      if (!showCommandOnly) {
+        log.debug(localize('saving.open.files.before', 'Saving open files before configure/build'));
+      }
+
       const save_good = await vscode.workspace.saveAll();
       if (!save_good) {
         log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
@@ -1232,10 +1238,11 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Wraps pre/post configure logic around an actual configure function
    * @param cb The actual configure callback. Called to do the configure
    */
-  private async _doConfigure(progress: ProgressHandle,
+  private async _doConfigure(type: ConfigureType,
+                             progress: ProgressHandle,
                              cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
     progress.report({message: localize('saving.open.files', 'Saving open files')});
-    if (!await this.maybeAutoSaveAll()) {
+    if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly ? true : false)) {
       return -1;
     }
     if (!this.useCMakePresets) {

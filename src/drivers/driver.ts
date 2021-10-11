@@ -611,10 +611,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return cb();
   }
 
-  private async _refreshExpansions() {
-    log.debug('Run _refreshExpansions');
+  private async _refreshExpansions(showCommandOnly?: boolean) {
+    if (!showCommandOnly) {
+      log.debug('Run _refreshExpansions');
+    }
+
     return this.doRefreshExpansions(async () => {
-      log.debug('Run _refreshExpansions cb');
+      if (!showCommandOnly) {
+        log.debug('Run _refreshExpansions cb');
+      }
+
       this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
 
       const opts = this.expansionOptions;
@@ -1167,14 +1173,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     try {
       // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
       // (example: cmake.sourceDirectory).
-      await this._refreshExpansions();
-      if (!shouldUseCachedConfiguration) {
-        log.debug(localize('start.configure', 'Start configure'), extra_args);
-      } else {
-        log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
+      await this._refreshExpansions(showCommandOnly);
+      if (!showCommandOnly) {
+        if (!shouldUseCachedConfiguration) {
+          log.debug(localize('start.configure', 'Start configure'), extra_args);
+        } else {
+          log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
+        }
       }
 
-      const pre_check_ok = await this._beforeConfigureOrBuild();
+      const pre_check_ok = await this._beforeConfigureOrBuild(showCommandOnly);
       if (!pre_check_ok) {
         return -2;
       }
@@ -1209,7 +1217,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
 
       // A more complete round of expansions
-      await this._refreshExpansions();
+      await this._refreshExpansions(showCommandOnly);
 
       const timeStart: number = new Date().getTime();
       let retc: number;
@@ -1482,8 +1490,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async _beforeConfigureOrBuild(): Promise<boolean> {
-    log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+  private async _beforeConfigureOrBuild(showCommandOnly?: boolean): Promise<boolean> {
+    if (!showCommandOnly) {
+      log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+    }
 
     if (!this.sourceDir) {
       log.debug(localize('source.directory.not.set', 'Source directory not set'), this.sourceDir);
