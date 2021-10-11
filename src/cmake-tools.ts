@@ -1460,7 +1460,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           }
           const file_diags = consumer.compileConsumer.resolveDiagnostics(drv!.binaryDir);
           populateCollection(collections.build, file_diags);
-          await this._refreshCompileDatabase(drv.expansionOptions);
+          await this._refreshCompileDatabase(drv!.expansionOptions);
           return rc === null ? -1 : rc;
         }
       );
