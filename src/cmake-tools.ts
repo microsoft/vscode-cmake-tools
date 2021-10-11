@@ -1065,6 +1065,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   private async _refreshCompileDatabase(opts: ExpansionOptions): Promise<void> {
     const compdb_paths: string[] = [];
+    if (this.workspaceContext.config.mergedCompileCommands && this.workspaceContext.config.copyCompileCommands) {
+      log.warning(localize('merge.and.copy.compile.commands', "Setting cmake.copyCompileCommands is ignored while cmake.mergedCompileCommands is defined."));
+    }
+
     if (this.workspaceContext.config.mergedCompileCommands) {
       // recursively search the build directory for all
       const searchRoot = await this.binaryDir;
