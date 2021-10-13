@@ -223,7 +223,7 @@ export interface CMakeToolsAPI extends Disposable {
    * active build target.
    * @returns the exit code of the build command
    */
-  build(target?: string): Thenable<number>;
+  build(targets?: string[]): Thenable<number>;
 
   /**
    * Installs the project
