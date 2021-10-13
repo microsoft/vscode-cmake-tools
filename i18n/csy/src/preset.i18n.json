@@ -21,7 +21,7 @@
 	"no.cl.toolset.version": "Předvolba konfigurace {0}: Pro cl.exe se nezadala žádná verze sady nástrojů, jako výchozí nastavení se používá ta nejnovější.",
 	"unknown.toolset.option": "Nerozpoznaná možnost sady nástrojů bude ignorována: {0}",
 	"config.preset.not.found": "Nepovedlo se najít předvolbu konfigurace s názvem {0}.",
-	"specified.cl.not.found": "Předvolba konfigurace {0}: zadané cl.exe se sadou nástrojů {1} a architekturou {2} se nenašlo, možná budete muset spustit CMake: Hledat kompilátory, pokud v počítači existuje.",
+	"specified.cl.not.found": "Předvolba konfigurace {0}: Zadaný soubor {1}.exe se sadou nástrojů {2} a architekturou {3} se nenašel, možná budete muset spustit CMake: Hledat kompilátory, pokud v počítači existuje.",
 	"ninja.not.set": "V proměnné PATH není nastavený nástroj Ninja, probíhá pokus použít {0}.",
 	"circular.inherits.in.build.preset": "Cyklická dědění v předvolbě buildu {0}",
 	"circular.inherits.in.test.preset": "Cyklická dědění v předvolbě testu {0}",

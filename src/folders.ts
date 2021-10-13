@@ -162,14 +162,6 @@ export class CMakeToolsFolder {
       if (configurePreset) {
         await folder.presetsController.setConfigurePreset(configurePreset);
       }
-      const buildPreset = folder.cmakeTools.workspaceContext.state.buildPresetName;
-      if (buildPreset) {
-        await folder.presetsController.setBuildPreset(buildPreset);
-      }
-      const testPreset = folder.cmakeTools.workspaceContext.state.testPresetName;
-      if (testPreset) {
-        await folder.presetsController.setTestPreset(testPreset);
-      }
     } else {
       // Check if the CMakeTools remembers what kit it was last using in this dir:
       const kit_name = folder.cmakeTools.workspaceContext.state.activeKitName;

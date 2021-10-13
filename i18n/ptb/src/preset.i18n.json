@@ -21,7 +21,7 @@
 	"no.cl.toolset.version": "Predefinição de configuração {0}: nenhuma versão do conjunto de ferramentas especificada para o cl.exe. Usando a última versão por padrão",
 	"unknown.toolset.option": "A opção de conjunto de ferramentas não reconhecida será ignorada: {0}",
 	"config.preset.not.found": "Não foi possível encontrar a predefinição de configuração com o nome {0}",
-	"specified.cl.not.found": "Predefinição de configuração {0}: o cl.exe especificado com o conjunto de ferramentas {1} e a arquitetura {2} não foi encontrado, pode ser necessário executar \"CMake: exame de compiladores\" se houver em seu computador.",
+	"specified.cl.not.found": "Configurar predefinição {0}: especificado {1}.exe com conjunto de ferramentas {2} e arquitetura {3} não foi encontrado, você pode precisar executar \"CMake: Scan for Compilers\" se existir em seu computador.",
 	"ninja.not.set": "Ninja não está definido no PATH. Tentando usar {0}",
 	"circular.inherits.in.build.preset": "Circular herda na predefinição de construção {0}",
 	"circular.inherits.in.test.preset": "Circular herda na predefinição de teste {0}",

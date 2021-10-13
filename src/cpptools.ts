@@ -58,7 +58,7 @@ interface TargetDefaults {
 
 function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion {
   const is_gnu = can_use_gnu && std.startsWith('gnu');
-  if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
+  if (std.endsWith('++2a') || std.endsWith('++2b') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
   } else if (std.endsWith('++17') || std.endsWith('++1z')) {
     return is_gnu ? 'gnu++17' : 'c++17';
@@ -454,7 +454,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
 
     if (sysroot) {
-      flags.push(`--sysroot=${sysroot}`);
+      flags.push('--sysroot=' + sysroot);
     }
 
     this._workspaceBrowseConfiguration = {
@@ -554,7 +554,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
             const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
             const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
             const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-            const sysroot = target.sysroot || '';
+            const sysroot = target.sysroot ? shlex.quote(target.sysroot) : '';
             this.targets.push({ name: target.name, type: target.type });
             for (const grp of target.fileGroups || []) {
               try {

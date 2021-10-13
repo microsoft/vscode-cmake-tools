@@ -1132,7 +1132,14 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
   }
 
-  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, [], ConfigureType.Normal), folder, undefined, true); }
+  configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
+    return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure,
+                                                                 [],
+                                                                 showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
+                                    folder, undefined, true);
+  }
+
+  showConfigureCommand(folder?: vscode.WorkspaceFolder) { return this.configure(folder, true); }
 
   configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true); }
 
@@ -1141,7 +1148,8 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsFolder(cmt => cmt.editCacheUI());
   }
 
-  build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name ? [name] : undefined), folder, this._ensureActiveBuildPreset, true); }
+  build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean) { return this.mapCMakeToolsFolder(cmt => cmt.build(name ? [name] : undefined, showCommandOnly), folder, this._ensureActiveBuildPreset, true); }
+  showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) { return this.build(folder, name, true); }
 
   buildAll(name?: string | string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isString(name) ? [name] : undefined), this._ensureActiveBuildPreset, true); }
 
@@ -1617,6 +1625,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setBuildPreset',
     'setTestPreset',
     'build',
+    'showBuildCommand',
     'buildAll',
     'buildWithTarget',
     'setVariant',
@@ -1631,6 +1640,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'cleanRebuild',
     'cleanRebuildAll',
     'configure',
+    'showConfigureCommand',
     'configureAll',
     'editCacheUI',
     'ctest',
