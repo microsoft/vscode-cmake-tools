@@ -101,7 +101,6 @@ class ExtensionManager implements vscode.Disposable {
       }
     });
 
-    this._statusBar.setBuildTargetName('all');
     this._folders.onAfterAddFolder(async cmtFolder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
       if (this._folders.size === 1) {
@@ -1149,11 +1148,10 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsFolder(cmt => cmt.editCacheUI());
   }
 
-  build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean) { return this.mapCMakeToolsFolder(cmt => cmt.build(name, showCommandOnly), folder, this._ensureActiveBuildPreset, true); }
-
+  build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean) { return this.mapCMakeToolsFolder(cmt => cmt.build(name ? [name] : undefined, showCommandOnly), folder, this._ensureActiveBuildPreset, true); }
   showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) { return this.build(folder, name, true); }
 
-  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[name.length - 1] : name), this._ensureActiveBuildPreset, true); }
+  buildAll(name?: string | string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isString(name) ? [name] : undefined), this._ensureActiveBuildPreset, true); }
 
   setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.setDefaultTarget(name), folder); }
 
@@ -1825,8 +1823,8 @@ export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
 }
 
 // update default target in taskProvider
-export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
-  cmakeTaskProvider.updateDefaultTarget(defaultTarget);
+export function updateDefaultTargetsInTaskProvider(defaultTargets?: string[]) {
+  cmakeTaskProvider.updateDefaultTargets(defaultTargets);
 }
 
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup
