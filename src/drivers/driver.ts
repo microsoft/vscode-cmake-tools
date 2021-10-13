@@ -29,6 +29,7 @@ import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import {DiagnosticsConfiguration} from '@cmt/folders';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -69,7 +70,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number>;
   protected abstract doCacheConfigure(): Promise<number>;
 
   private _isConfiguredAtLeastOnce = false;
@@ -610,10 +611,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return cb();
   }
 
-  private async _refreshExpansions() {
-    log.debug('Run _refreshExpansions');
+  private async _refreshExpansions(showCommandOnly?: boolean) {
+    if (!showCommandOnly) {
+      log.debug('Run _refreshExpansions');
+    }
+
     return this.doRefreshExpansions(async () => {
-      log.debug('Run _refreshExpansions cb');
+      if (!showCommandOnly) {
+        log.debug('Run _refreshExpansions cb');
+      }
+
       this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
 
       const opts = this.expansionOptions;
@@ -683,6 +690,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get currentBuildType(): string {
     if (this.useCMakePresets) {
+      if ((this.isMultiConfig || this.isMultiConfFast) && this._buildPreset?.configuration) {
+        return this._buildPreset.configuration;
+      }
       const buildType = this._configurePreset?.cacheVariables?.['CMAKE_BUILD_TYPE'];
       if (util.isString(buildType)) {
         return buildType;
@@ -695,8 +705,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  get isMultiConf(): boolean {
-    return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false;
+  private _isMultiConfig: boolean = false;
+  get isMultiConfig(): boolean { return this._isMultiConfig; }
+  set isMultiConfig(v: boolean) { this._isMultiConfig = v; }
+
+  get isMultiConfFast(): boolean {
+    return this.generatorName ? util.isMultiConfGeneratorFast(this.generatorName) : false;
   }
 
   /**
@@ -1139,7 +1153,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       true : false;
   }
 
-  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
+  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
     // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
     const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
@@ -1159,14 +1173,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     try {
       // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
       // (example: cmake.sourceDirectory).
-      await this._refreshExpansions();
-      if (!shouldUseCachedConfiguration) {
-        log.debug(localize('start.configure', 'Start configure'), extra_args);
-      } else {
-        log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
+      await this._refreshExpansions(showCommandOnly);
+      if (!showCommandOnly) {
+        if (!shouldUseCachedConfiguration) {
+          log.debug(localize('start.configure', 'Start configure'), extra_args);
+        } else {
+          log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
+        }
       }
 
-      const pre_check_ok = await this._beforeConfigureOrBuild();
+      const pre_check_ok = await this._beforeConfigureOrBuild(showCommandOnly);
       if (!pre_check_ok) {
         return -2;
       }
@@ -1201,7 +1217,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       }
 
       // A more complete round of expansions
-      await this._refreshExpansions();
+      await this._refreshExpansions(showCommandOnly);
 
       const timeStart: number = new Date().getTime();
       let retc: number;
@@ -1210,7 +1226,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         this._isConfiguredAtLeastOnce = true;
         return retc;
       } else {
-        retc = await this.doConfigure(expanded_flags, consumer);
+        retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly);
         this._isConfiguredAtLeastOnce = true;
       }
       const timeEnd: number = new Date().getTime();
@@ -1219,18 +1235,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
       let telemetryProperties: telemetry.Properties;
       if (this.useCMakePresets) {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
           Preset: this.useCMakePresets ? 'true' : 'false',
-          Trigger: trigger
+          Trigger: trigger,
+          ShowCommandOnly: showCommandOnly ? 'true' : 'false'
         };
       } else {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
-          ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+          ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
-          Trigger: trigger
+          Trigger: trigger,
+          ShowCommandOnly: showCommandOnly ? 'true' : 'false'
         };
       }
 
@@ -1353,7 +1371,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const allowBuildTypeOnMultiConfig = config.get("cmake.setBuildTypeOnMultiConfig") || false;
 
-    if (!this.isMultiConf || (this.isMultiConf && allowBuildTypeOnMultiConfig)) {
+    if (!this.isMultiConfFast || (this.isMultiConfFast && allowBuildTypeOnMultiConfig)) {
       // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
       settingMap.CMAKE_BUILD_TYPE = util.cmakeify(this.currentBuildType);
     }
@@ -1415,7 +1433,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
     const child = await this._doCMakeBuild(target, consumer);
     const timeEnd: number = new Date().getTime();
     const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
-      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || ''
+      ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
     };
     const telemetryMeasures: telemetry.Measures = {
       Duration: timeEnd - timeStart
@@ -1472,8 +1490,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async _beforeConfigureOrBuild(): Promise<boolean> {
-    log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+  private async _beforeConfigureOrBuild(showCommandOnly?: boolean): Promise<boolean> {
+    if (!showCommandOnly) {
+      log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+    }
 
     if (!this.sourceDir) {
       log.debug(localize('source.directory.not.set', 'Source directory not set'), this.sourceDir);
@@ -1672,4 +1692,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return inst;
   }
 
+  public getDiagnostics(): DiagnosticsConfiguration {
+    return {
+      folder: this.workspaceFolder || '',
+      cmakeVersion: this.cmake.version ? util.versionToString(this.cmake.version) : '',
+      configured: this._isConfiguredAtLeastOnce,
+      generator: this.generatorName || '',
+      usesPresets: this.useCMakePresets,
+      compilers: {
+        C: this.cmakeCacheEntries.get('CMAKE_C_COMPILER')?.value,
+        CXX: this.cmakeCacheEntries.get('CMAKE_CXX_COMPILER')?.value
+      }
+    };
+  }
 }

@@ -75,6 +75,7 @@ export interface BuildCommand {
 }
 
 export interface EnvironmentVariables { [key: string]: string }
+export interface DebuggerEnvironmentVariable { name: string; value: string }
 
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;

@@ -1,5 +1,4 @@
 import * as shlex from '@cmt/shlex';
-
 import {createLogger} from './logging';
 import {fs} from './pr';
 import * as util from './util';
@@ -17,7 +16,7 @@ interface BaseCompileCommand {
 }
 
 export interface ArgsCompileCommand extends BaseCompileCommand {
-  command: string;
+  command: string; // The command string includes both commands and arguments (if any).
   arguments?: string[];
 }
 
@@ -38,17 +37,36 @@ export class CompilationDatabase {
 
   get(fspath: string) { return this._infoByFilePath.get(util.platformNormalizePath(fspath)); }
 
-  public static async fromFilePath(dbpath: string): Promise<CompilationDatabase|null> {
-    if (!await fs.exists(dbpath)) {
-      return null;
+  public static async fromFilePaths(dbpaths: string[]): Promise<CompilationDatabase|null> {
+    const db: ArgsCompileCommand[] = [];
+
+    for (const dbpath of dbpaths) {
+      if (!await fs.exists(dbpath)) {
+        continue;
+      }
+
+      const data = await fs.readFile(dbpath);
+      try {
+        const content = JSON.parse(data.toString()) as ArgsCompileCommand[];
+        db.push(...content);
+      } catch (e) {
+        log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database "{0}": {1}', dbpath, util.errorToString(e)));
+        return null;
+      }
     }
-    const data = await fs.readFile(dbpath);
-    try {
-      const content = JSON.parse(data.toString()) as ArgsCompileCommand[];
-      return new CompilationDatabase(content);
-    } catch (e) {
-      log.warning(localize('error.parsing.compilation.database', 'Error parsing compilation database "{0}": {1}', dbpath, util.errorToString(e)));
-      return null;
+
+    if (db.length > 0) {
+      return new CompilationDatabase(db);
     }
+
+    return null;
+  }
+
+  public static toJson(db: CompilationDatabase|null): string {
+    if (db === null) {
+      return '[]';
+    }
+
+    return JSON.stringify([...db._infoByFilePath.values()].map(({file, command, directory}) => ({file, command, directory})));
   }
 }

@@ -73,7 +73,7 @@ export class LegacyCMakeDriver extends CMakeDriver {
   // Legacy disposal does nothing
   async asyncDispose() { this._cacheWatcher.dispose(); }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
     // Dup args so we can modify them
     const args = Array.from(args_);
     args.push('-H' + util.lightNormalizePath(this.sourceDir));
@@ -90,16 +90,22 @@ export class LegacyCMakeDriver extends CMakeDriver {
       }
     }
     const cmake = this.cmake.path;
-    log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
-    const env = await this.getConfigureEnvironment();
-    const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
-    log.trace(res.stderr);
-    log.trace(res.stdout);
-    if (res.retc === 0) {
-      this._needsReconfigure = false;
+    if (showCommandOnly) {
+      log.showChannel();
+      log.info(proc.buildCmdStr(this.cmake.path, args));
+      return 0;
+    } else {
+      log.debug(localize('invoking.cmake.with.arguments', 'Invoking CMake {0} with arguments {1}', cmake, JSON.stringify(args)));
+      const env = await this.getConfigureEnvironment();
+      const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
+      log.trace(res.stderr);
+      log.trace(res.stdout);
+      if (res.retc === 0) {
+        this._needsReconfigure = false;
+      }
+      await this._reloadPostConfigure();
+      return res.retc === null ? -1 : res.retc;
     }
-    await this._reloadPostConfigure();
-    return res.retc === null ? -1 : res.retc;
   }
 
   protected async doPreCleanConfigure(): Promise<void> {

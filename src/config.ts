@@ -10,6 +10,7 @@ import * as os from 'os';
 import * as telemetry from '@cmt/telemetry';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import { CppDebugConfiguration } from './debugger';
 
 nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -110,7 +111,7 @@ export interface ExtensionConfigurationSettings {
   ctest: {parallelJobs: number};
   parseBuildDiagnostics: boolean;
   enabledOutputParsers: string[];
-  debugConfig: object;
+  debugConfig: CppDebugConfiguration;
   defaultVariants: object;
   ctestArgs: string[];
   ctestDefaultArgs: string[];
@@ -120,6 +121,7 @@ export interface ExtensionConfigurationSettings {
   testEnvironment: HardEnv;
   mingwSearchDirs: string[];
   emscriptenSearchDirs: string[];
+  mergedCompileCommands: string|null;
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   configureOnEdit: boolean;
@@ -250,7 +252,7 @@ export class ConfigurationReader implements vscode.Disposable {
   get enableOutputParsers(): string[]|null { return this.configData.enabledOutputParsers; }
   get raw_cmakePath(): string { return this.configData.cmakePath; }
   get raw_ctestPath(): string { return this.configData.ctestPath; }
-  get debugConfig(): any { return this.configData.debugConfig; }
+  get debugConfig(): CppDebugConfiguration { return this.configData.debugConfig; }
   get environment() { return this.configData.environment; }
   get configureEnvironment() { return this.configData.configureEnvironment; }
   get buildEnvironment() { return this.configData.buildEnvironment; }
@@ -303,6 +305,7 @@ export class ConfigurationReader implements vscode.Disposable {
   get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
   get additionalKits(): string[] { return this.configData.additionalKits; }
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
+  get mergedCompileCommands(): string|null { return this.configData.mergedCompileCommands; }
   get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
   get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
   get buildTask(): boolean { return this.configData.buildTask; }
@@ -342,7 +345,7 @@ export class ConfigurationReader implements vscode.Disposable {
     ctest: new vscode.EventEmitter<{parallelJobs: number}>(),
     parseBuildDiagnostics: new vscode.EventEmitter<boolean>(),
     enabledOutputParsers: new vscode.EventEmitter<string[]>(),
-    debugConfig: new vscode.EventEmitter<object>(),
+    debugConfig: new vscode.EventEmitter<CppDebugConfiguration>(),
     defaultVariants: new vscode.EventEmitter<object>(),
     ctestArgs: new vscode.EventEmitter<string[]>(),
     ctestDefaultArgs: new vscode.EventEmitter<string[]>(),
@@ -352,6 +355,7 @@ export class ConfigurationReader implements vscode.Disposable {
     testEnvironment: new vscode.EventEmitter<HardEnv>(),
     mingwSearchDirs: new vscode.EventEmitter<string[]>(),
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
+    mergedCompileCommands: new vscode.EventEmitter<string|null>(),
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     configureOnEdit: new vscode.EventEmitter<boolean>(),
