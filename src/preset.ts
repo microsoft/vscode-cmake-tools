@@ -1146,6 +1146,8 @@ async function expandBuildPresetHelper(folder: string,
       if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
         inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
       }
+    } else {
+      return null;
     }
   }
 
@@ -1342,6 +1344,8 @@ async function expandTestPresetHelper(folder: string,
       if (preset.inheritConfigureEnvironment !== false) { // Check false explicitly since defaults to true
         inheritedEnv = util.mergeEnvironment(inheritedEnv, configurePreset.environment! as EnvironmentVariables);
       }
+    } else {
+      return null;
     }
   }
 

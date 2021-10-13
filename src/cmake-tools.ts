@@ -161,8 +161,10 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
 
   private async resetPresets() {
     await this.workspaceContext.state.setConfigurePresetName(null);
-    await this.workspaceContext.state.setBuildPresetName(null);
-    await this.workspaceContext.state.setTestPresetName(null);
+    if (this.configurePreset) {
+      await this.workspaceContext.state.setBuildPresetName(this.configurePreset.name, null);
+      await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
+    }
     this._configurePreset.set(null);
     this._buildPreset.set(null);
     this._testPreset.set(null);
@@ -265,7 +267,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
           await drv.setBuildPreset(expandedBuildPreset);
           this.updateDriverAndTargetInTaskProvider(drv);
-          await this.workspaceContext.state.setBuildPresetName(buildPreset);
+          await this.workspaceContext.state.setBuildPresetName(expandedBuildPreset.configurePreset, buildPreset);
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error: any) {
           void vscode.window.showErrorMessage(localize('unable.to.set.build.preset', 'Unable to set build preset "{0}".', error));
@@ -275,11 +277,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       } else {
         // Remember the selected build preset for the next session.
-        await this.workspaceContext.state.setBuildPresetName(buildPreset);
+        await this.workspaceContext.state.setBuildPresetName(expandedBuildPreset.configurePreset, buildPreset);
       }
     } else {
       this._buildPreset.set(null);
-      await this.workspaceContext.state.setBuildPresetName(buildPreset);
+      if (this.configurePreset) {
+        await this.workspaceContext.state.setBuildPresetName(this.configurePreset.name, null);
+      }
     }
   }
 
@@ -320,7 +324,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         try {
           this._statusMessage.set(localize('reloading.status', 'Reloading...'));
           await drv.setTestPreset(expandedTestPreset);
-          await this.workspaceContext.state.setTestPresetName(testPreset);
+          await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
           this._statusMessage.set(localize('ready.status', 'Ready'));
         } catch (error: any) {
           void vscode.window.showErrorMessage(localize('unable.to.set.test.preset', 'Unable to set test preset "{0}".', error));
@@ -330,11 +334,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
       } else {
         // Remember the selected test preset for the next session.
-        await this.workspaceContext.state.setTestPresetName(testPreset);
+        await this.workspaceContext.state.setTestPresetName(expandedTestPreset.configurePreset, testPreset);
       }
     } else {
       this._testPreset.set(null);
-      await this.workspaceContext.state.setTestPresetName(testPreset);
+      if (this.configurePreset) {
+        await this.workspaceContext.state.setTestPresetName(this.configurePreset.name, null);
+      }
     }
   }
 
