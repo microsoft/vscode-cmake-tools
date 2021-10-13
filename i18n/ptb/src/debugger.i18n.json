@@ -6,6 +6,7 @@
 {
 	"gdb.not.found": "Não é possível localizar o GDB no caminho de pesquisa padrão e {0}.",
 	"enable.pretty.printing": "Habilitar a reformatação automática para gdb",
+	"invalid.miDebuggerPath.override": "'{0}' em '{1}' deve ser um caminho absoluto para um depurador (no momento, não há suporte para expansão de variável). Obtido: '{2}'",
 	"no.compiler.found.in.cache": "Nenhum compilador localizado no arquivo de cache.",
 	"unable.to.determine.debugger.for.compiler": "Não é possível determinar automaticamente o depurador correspondente ao compilador: {0}"
 }

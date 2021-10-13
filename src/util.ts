@@ -4,8 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import { platform } from 'os';
 
-import {EnvironmentVariables, execute} from '@cmt/proc';
+import {EnvironmentVariables, DebuggerEnvironmentVariable, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -289,7 +290,7 @@ async function _killTree(pid: number) {
     }
     try {
       process.kill(pid, 'SIGINT');
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === 'ESRCH') {
         // Do nothing. We're okay.
       } else {
@@ -313,8 +314,11 @@ export function splitCommandLine(cmd: string): string[] {
   return quoted_args!.map(arg => arg.replace(/\\(")/g, '$1').replace(/^"(.*)"$/g, '$1'));
 }
 
-export function isMultiConfGenerator(gen: string): boolean {
-  return gen.includes('Visual Studio') || gen.includes('Xcode');
+/**
+ * This is an initial check without atually configuring. It may or may not be accurate.
+ */
+export function isMultiConfGeneratorFast(gen: string): boolean {
+  return gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config');
 }
 
 export class InvalidVersionString extends Error {}
@@ -369,8 +373,8 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
   }
 }
 
-export function splitEnvironmentVars(env: EnvironmentVariables): EnvironmentVariables[] {
-  const converted_env: EnvironmentVariables[] = Object.entries(env).map(
+export function makeDebuggerEnvironmentVars(env: EnvironmentVariables): DebuggerEnvironmentVariable[] {
+  const converted_env: DebuggerEnvironmentVariable[] = Object.entries(env).map(
     ([key, value]) => ({
       name: key,
       value
@@ -701,3 +705,40 @@ export function getRelativePath(file: string, dir: string): string {
   const joinedPath = "${workspaceFolder}/".concat(relPathDir);
   return joinedPath;
 }
+
+// cl, clang, clang-cl, clang-cpp and clang++ are supported compilers.
+export function isSupportedCompiler(compilerName: string | undefined): string | undefined {
+  return  (compilerName === 'cl' || compilerName === 'cl.exe') ? 'cl' :
+          (compilerName === 'clang' || compilerName === 'clang.exe') ? 'clang' :
+          (compilerName === 'clang-cl' || compilerName === 'clang-cl.exe') ? 'clang-cl' :
+          (compilerName === 'clang-cpp' || compilerName === 'clang-cpp.exe') ? 'clang-cpp' :
+          (compilerName === 'clang++' || compilerName === 'clang++.exe') ? 'clang++' :
+          undefined;
+}
+
+async function getHostSystemName(): Promise<string> {
+  if (platform() === "win32") {
+    return "Windows";
+  } else {
+    const result = await execute('uname', ['-s']).result;
+    if (result.retc === 0) {
+      return result.stdout.trim();
+    } else {
+      return 'unknown';
+    }
+  }
+}
+
+function memoize<T>(fn: () => T) {
+  let result: T;
+
+  return () => {
+    if (result) {
+      return result;
+    } else {
+      return result = fn();
+    }
+  };
+}
+
+export const getHostSystemNameMemo = memoize(getHostSystemName);

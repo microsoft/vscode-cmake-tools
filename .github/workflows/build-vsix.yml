@@ -31,6 +31,7 @@ jobs:
           find: "\"version\": \"(\\d+\\.\\d+\\.\\d+)\""
           replace: "\"version\": \"$1-${{ steps.get-short-sha.outputs.sha }}\""
           include: "package.json"
+          exclude: ".git"
 
       - name: Build the VSIX
         run:  |

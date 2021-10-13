@@ -571,7 +571,7 @@ export class PresetsController {
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
     }
-    const presetsPool: preset.Preset[] = showHiddenPresets ? presets : presets.filter(_preset => !_preset.hidden);
+    const presetsPool: preset.Preset[] = showHiddenPresets ? presets : presets.filter(_preset => !_preset.hidden && preset.evaluatePresetCondition(_preset));
     const items: PresetItem[] = presetsPool.map(
         _preset => ({
           label: _preset.displayName || _preset.name,
@@ -652,18 +652,49 @@ export class PresetsController {
           title: localize('reloading.build.test.preset', 'Reloading build and test presets')
         },
         async () => {
-          const buildPreset = this._cmakeTools.buildPreset?.name;
-          const testPreset = this._cmakeTools.testPreset?.name;
+          const configurePreset = this._cmakeTools.configurePreset?.name;
+          const buildPreset = configurePreset ? this._cmakeTools.workspaceContext.state.getBuildPresetName(configurePreset) : undefined;
+          const testPreset = configurePreset ? this._cmakeTools.workspaceContext.state.getTestPresetName(configurePreset) : undefined;
           if (buildPreset) {
             await this.setBuildPreset(buildPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
           }
+          if (!buildPreset || !this._cmakeTools.buildPreset) {
+            await this.guessBuildPreset();
+          }
+
           if (testPreset) {
             await this.setTestPreset(testPreset, true/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+          } else {
+            await this.setTestPreset(null, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
           }
         }
     );
 
     this._isChangingPresets = false;
+  }
+
+  private async guessBuildPreset(): Promise<void> {
+    const selectedConfigurePreset = this._cmakeTools.configurePreset?.name;
+    let currentBuildPreset: string | undefined;
+    if (selectedConfigurePreset) {
+      preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
+      const buildPresets = preset.allBuildPresets(this.folderFsPath);
+      for (const buildPreset of buildPresets) {
+        // Set active build preset as the first valid build preset matches the selected configure preset
+        if (buildPreset.configurePreset === selectedConfigurePreset) {
+          await this.setBuildPreset(buildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+          currentBuildPreset = this._cmakeTools.buildPreset?.name;
+        }
+        if (currentBuildPreset) {
+          break;
+        }
+      }
+    }
+
+    if (!currentBuildPreset) {
+      // No valid buid preset matches the selected configure preset
+      await this.setBuildPreset(preset.defaultBuildPreset.name, false/*needToCheckConfigurePreset*/, false/*checkChangingPreset*/);
+    }
   }
 
   private async checkConfigurePreset(): Promise<preset.ConfigurePreset | null> {
@@ -786,45 +817,55 @@ export class PresetsController {
     }
   }
 
-  async setTestPreset(presetName: string, needToCheckConfigurePreset: boolean = true, checkChangingPreset: boolean = true): Promise<void> {
-    if (checkChangingPreset) {
-      if (this._isChangingPresets) {
-        return;
-      }
-      this._isChangingPresets = true;
-    }
-
-    if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
-      preset.expandConfigurePresetForPresets(this.folderFsPath, 'test');
-      const _preset = preset.getPresetByName(preset.allTestPresets(this.folderFsPath), presetName);
-      if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
-        log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not match the selected configure preset', presetName));
-        await vscode.window.withProgress(
-            {
-              location: vscode.ProgressLocation.Notification,
-              title: localize('unloading.test.preset', 'Unloading test preset')
-            },
-            () => this._cmakeTools.setTestPreset(null)
-        );
-
-        if (checkChangingPreset) {
-          this._isChangingPresets = false;
+  async setTestPreset(presetName: string | null, needToCheckConfigurePreset: boolean = true, checkChangingPreset: boolean = true): Promise<void> {
+    if (presetName) {
+      if (checkChangingPreset) {
+        if (this._isChangingPresets) {
+          return;
         }
-
-        return;
+        this._isChangingPresets = true;
       }
-    }
-    // Load the test preset into the backend
-    await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: localize('loading.test.preset', 'Loading test preset {0}', presetName)
-        },
-        () => this._cmakeTools.setTestPreset(presetName)
-    );
 
-    if (checkChangingPreset) {
-      this._isChangingPresets = false;
+      if (needToCheckConfigurePreset && presetName !== preset.defaultTestPreset.name) {
+        preset.expandConfigurePresetForPresets(this.folderFsPath, 'test');
+        const _preset = preset.getPresetByName(preset.allTestPresets(this.folderFsPath), presetName);
+        if (_preset?.configurePreset !== this._cmakeTools.configurePreset?.name) {
+          log.error(localize('test.preset.configure.preset.not.match', 'Test preset {0}: The configure preset does not match the selected configure preset', presetName));
+          await vscode.window.withProgress(
+              {
+                location: vscode.ProgressLocation.Notification,
+                title: localize('unloading.test.preset', 'Unloading test preset')
+              },
+              () => this._cmakeTools.setTestPreset(null)
+          );
+
+          if (checkChangingPreset) {
+            this._isChangingPresets = false;
+          }
+
+          return;
+        }
+      }
+      // Load the test preset into the backend
+      await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: localize('loading.test.preset', 'Loading test preset {0}', presetName)
+          },
+          () => this._cmakeTools.setTestPreset(presetName)
+      );
+
+      if (checkChangingPreset) {
+        this._isChangingPresets = false;
+      }
+    } else {
+      await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: localize('unloading.test.preset', 'Unloading test preset.')
+          },
+          () => this._cmakeTools.setTestPreset(null)
+      );
     }
   }
 
@@ -875,13 +916,21 @@ export class PresetsController {
       await this.showPresetsFileVersionError(file);
       return undefined;
     }
-    const validator = await loadSchema('schemas/CMakePresets-schema.json');
+    let schemaFile = 'schemas/CMakePresets-schema.json';
+    if (presetsFile.version === 3) {
+      schemaFile = 'schemas/CMakePresets-v3-schema.json';
+    }
+    const validator = await loadSchema(schemaFile);
     const is_valid = validator(presetsFile);
     if (!is_valid) {
       const errors = validator.errors!;
       log.error(localize('invalid.file.error', 'Invalid kit contents {0} ({1}):', path.basename(file), file));
       for (const err of errors) {
-        log.error(` >> ${err.dataPath}: ${err.message}`);
+        if (err.params && 'additionalProperty' in err.params) {
+          log.error(` >> ${err.dataPath}: ${err.message}: ${err.params.additionalProperty}`);
+        } else {
+          log.error(` >> ${err.dataPath}: ${err.message}`);
+        }
       }
       return undefined;
     }

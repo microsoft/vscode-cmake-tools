@@ -120,7 +120,7 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
   return replaceAll(result, '${dollar}', '$');
 }
 
-export async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
+async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
   const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
   const env = mergeEnvironment(envPreNormalize);
   const repls = opts.vars;

@@ -119,7 +119,12 @@ export class CMakeFileApiDriver extends CMakeDriver {
         await this.doConfigure([], undefined);
       }
     } else {
-      if (cacheExists) {
+      // Do not delete the cache if configureOnOpen is false, which signals a project that may be
+      // expected to be configured from outside VSCode and deleting the cache breaks that scenario.
+      // Since this setting will prevent configure anyway (until a configure command is invoked
+      // or build/test will trigger automatic configuring), there is no need to delete the cache now
+      // even if this is not a project configured from outside VSCode.
+      if (cacheExists && this.config.configureOnOpen !== false) {
         // No need to remove the other CMake files for the generator change to work properly
         log.info(localize('removing', 'Removing {0}', this.cachePath));
         await fs.unlink(this.cachePath);
@@ -209,7 +214,7 @@ export class CMakeFileApiDriver extends CMakeDriver {
     return 0;
   }
 
-  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer): Promise<number> {
+  async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
     const api_path = this.getCMakeFileApiPath();
     await createQueryFileForApi(api_path);
 
@@ -238,17 +243,23 @@ export class CMakeFileApiDriver extends CMakeDriver {
       }
     }
     const cmake = this.cmake.path;
-    log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
-    log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
-    const env = await this.getConfigureEnvironment();
-    const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
-    log.trace(res.stderr);
-    log.trace(res.stdout);
-    if (res.retc === 0) {
-      this._needsReconfigure = false;
-      await this.updateCodeModel();
+    if (showCommandOnly) {
+      log.showChannel();
+      log.info(proc.buildCmdStr(this.cmake.path, args));
+      return 0;
+    } else {
+      log.debug(`Configuring using ${this.useCMakePresets ? 'preset' : 'kit'}`);
+      log.debug('Invoking CMake', cmake, 'with arguments', JSON.stringify(args));
+      const env = await this.getConfigureEnvironment();
+      const res = await this.executeCommand(cmake, args, outputConsumer, {environment: env}).result;
+      log.trace(res.stderr);
+      log.trace(res.stdout);
+      if (res.retc === 0) {
+        this._needsReconfigure = false;
+        await this.updateCodeModel();
+      }
+      return res.retc === null ? -1 : res.retc;
     }
-    return res.retc === null ? -1 : res.retc;
   }
 
   async doPostBuild(): Promise<boolean> {
