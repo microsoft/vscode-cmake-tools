@@ -1408,13 +1408,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    */
   async runBuild(targets_?: string[], showCommandOnly?: boolean): Promise<number> {
     log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets_ && targets_.length > 0) ? targets_.join(', ') : '');
-    let target = target_;
+    let targets = targets_;
     let targetName: string;
+    const defaultBuildTargets = await this.getDefaultBuildTargets();
     if (this.useCMakePresets) {
-      targetName = target || this.buildPreset?.displayName || this.buildPreset?.name || '';
+      targets = (targets && targets.length > 0) ? targets : defaultBuildTargets;
+      targetName = `${this.buildPreset?.displayName || this.buildPreset?.name || ''}${targets ? (': ' + targets.join(', ')) : ''}`;
+      targetName = targetName || this.buildPreset?.displayName || this.buildPreset?.name || '';
     } else {
-      target = target || this.workspaceContext.state.defaultBuildTarget || await this.allTargetName;
-      targetName = target;
+      targets = (targets && targets.length > 0) ? targets : defaultBuildTargets!;
+      targetName = targets.join(', ');
     }
 
     let drv: CMakeDriver | null;
@@ -1423,7 +1426,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!drv) {
         throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
       }
-      const buildCmd = await drv.getCMakeBuildCommand(target);
+      const buildCmd = await drv.getCMakeBuildCommand(targets);
       if (buildCmd) {
         log.showChannel();
         log.info(buildCmdStr(buildCmd.command, buildCmd.args));
@@ -1442,16 +1445,6 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     drv = await this.getCMakeDriverInstance();
     if (!drv) {
       throw new Error(localize('driver.died.after.successful.configure', 'CMake driver died immediately after successful configure'));
-    }
-    let targets = targets_;
-    let targetName: string;
-    const defaultBuildTargets = await this.getDefaultBuildTargets();
-    if (this.useCMakePresets) {
-      targets = (targets && targets.length > 0) ? targets : defaultBuildTargets;
-      targetName = `${this.buildPreset?.displayName || this.buildPreset?.name || ''}${targets ? (': ' + targets.join(', ')) : ''}`;
-    } else {
-      targets = (targets && targets.length > 0) ? targets : defaultBuildTargets!;
-      targetName = targets.join(', ');
     }
     this.updateDriverAndTargetsInTaskProvider(drv, targets);
     const consumer = new CMakeBuildConsumer(BUILD_LOGGER, drv.config);
