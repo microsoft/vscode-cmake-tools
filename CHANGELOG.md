@@ -6,7 +6,7 @@ Improvements:
 - Add diagnostic support for parsing IAR compiler output. [PR #2131](https://github.com/microsoft/vscode-cmake-tools/pull/2131) [@willson556](https://github.com/willson556)
 - Add "Log Diagnostics" command. [PR #2141](https://github.com/microsoft/vscode-cmake-tools/pull/2141)
 - Add build and configure commands to show cmake commands without running them. [PR #1767](https://github.com/microsoft/vscode-cmake-tools/pull/1767)
-- xx. [PR #2029](https://github.com/microsoft/vscode-cmake-tools/pull/2029) [@Felix-El](https://github.com/Felix-El)
+- Implement support for merging multiple compile_commands in super-builds sub-folders of the build directory. [PR #2029](https://github.com/microsoft/vscode-cmake-tools/pull/2029) [@Felix-El](https://github.com/Felix-El)
 
 Bug fixes:
 - MSVC_VERSION is incorrect when cmake configures with clang-cl. [#1053](https://github.com/microsoft/vscode-cmake-tools/issues/1053) [@tklajnscek](https://github.com/tklajnscek)
@@ -15,7 +15,6 @@ Bug fixes:
 - Extra {0} output message when having preset with circular inherits. [#2118](https://github.com/microsoft/vscode-cmake-tools/issues/2118)
 - CMake-Tools does not reconfigure after a change of CMakeLists.txt in a subdirectory of root. [#1911](https://github.com/microsoft/vscode-cmake-tools/issues/1911) [@AbdullahAmrSobh](https://github.com/AbdullahAmrSobh)
 - Fixes msvc2015 detection when only vs2019 are installed. [#1955](https://github.com/microsoft/vscode-cmake-tools/issues/1955) [@lygstate](https://github.com/lygstate)
-- Add strong typing for cmake.debugConfig. [#2077](https://github.com/microsoft/vscode-cmake-tools/issues/2077)
 - Allow for clang compilers to be set in presets without full path. [#1922](https://github.com/microsoft/vscode-cmake-tools/issues/1922)
 - Compiler flags containing spaces not passed correctly to IntelliSense. [#1414](https://github.com/microsoft/vscode-cmake-tools/issues/1414)
 - Don't scan the whole workspace for CMakeLists.txt, just a few folders. [#2127](https://github.com/microsoft/vscode-cmake-tools/issues/2127)
