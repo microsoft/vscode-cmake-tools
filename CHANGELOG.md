@@ -7,6 +7,7 @@ Improvements:
 - Add "Log Diagnostics" command. [PR #2141](https://github.com/microsoft/vscode-cmake-tools/pull/2141)
 - Add build and configure commands to show cmake commands without running them. [PR #1767](https://github.com/microsoft/vscode-cmake-tools/pull/1767)
 - Implement support for merging multiple compile_commands in super-builds sub-folders of the build directory. [PR #2029](https://github.com/microsoft/vscode-cmake-tools/pull/2029) [@Felix-El](https://github.com/Felix-El)
+- Add `cmake.allowCommentsInPresetsFile` setting to allow JS style comments in CMakePresets files. [#2169](https://github.com/microsoft/vscode-cmake-tools/issues/2169)
 
 Bug fixes:
 - MSVC_VERSION is incorrect when cmake configures with clang-cl. [#1053](https://github.com/microsoft/vscode-cmake-tools/issues/1053) [@tklajnscek](https://github.com/tklajnscek)
