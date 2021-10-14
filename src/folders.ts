@@ -57,11 +57,15 @@ export class CMakeToolsFolder {
 
         if (usingCMakePresets) {
           const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
+            const config = cmtFolder.cmakeTools.workspaceContext.config;
             const fileName = path.basename(document.uri.fsPath);
-            if ((fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') &&
-                document.languageId !== 'json') {
-              // setTextDocumentLanguage will trigger onDidOpenTextDocument
-              void vscode.languages.setTextDocumentLanguage(document, 'json');
+            if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+              if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
+                // setTextDocumentLanguage will trigger onDidOpenTextDocument
+                void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
+              } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
+                void vscode.languages.setTextDocumentLanguage(document, 'json');
+              }
             }
           };
 

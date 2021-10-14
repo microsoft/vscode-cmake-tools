@@ -14,6 +14,7 @@ import paths from '@cmt/paths';
 import { KitsController } from '@cmt/kitsController';
 import { descriptionForKit, Kit, SpecialKits, kitHostTargetArch } from '@cmt/kit';
 import { loadSchema } from '@cmt/schema';
+import json5 = require('json5');
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -99,6 +100,20 @@ export class PresetsController {
     };
 
     await watchPresetsChange();
+
+    cmakeTools.workspaceContext.config.onChange('allowCommentsInPresetsFile', async () => {
+      await presetsController.reapplyPresets();
+      vscode.workspace.textDocuments.forEach(doc => {
+        const fileName = path.basename(doc.uri.fsPath);
+        if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+          if (cmakeTools.workspaceContext.config.allowCommentsInPresetsFile) {
+            void vscode.languages.setTextDocumentLanguage(doc, 'jsonc');
+          } else {
+            void vscode.languages.setTextDocumentLanguage(doc, 'json');
+          }
+        }
+      });
+    });
 
     presetsController._sourceDirChangedSub = cmakeTools.workspaceContext.config.onChange('sourceDirectory', async value => {
       const oldSourceDir = presetsController._sourceDir;
@@ -900,7 +915,11 @@ export class PresetsController {
 
     let presetsFile: preset.PresetsFile;
     try {
-      presetsFile = JSON.parse(fileContent.toLocaleString());
+      if (this._cmakeTools.workspaceContext.config.allowCommentsInPresetsFile) {
+        presetsFile = json5.parse(fileContent.toLocaleString());
+      } else {
+        presetsFile = JSON.parse(fileContent.toLocaleString());
+      }
     } catch (e) {
       log.error(localize('failed.to.parse', 'Failed to parse {0}: {1}', path.basename(file), util.errorToString(e)));
       return undefined;
