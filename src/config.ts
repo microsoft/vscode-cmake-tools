@@ -373,7 +373,7 @@ export class ConfigurationReader implements vscode.Disposable {
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
     statusbar: new vscode.EventEmitter<StatusBarConfig>(),
     useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
-    allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
+    allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>()
   };
 
   /**
