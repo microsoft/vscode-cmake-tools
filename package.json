@@ -1885,6 +1885,12 @@
           "default": "auto",
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%",
           "scope": "resource"
+        },
+        "cmake.allowCommentsInPresetsFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description%",
+          "scope": "resource"
         }
       }
     },
