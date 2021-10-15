@@ -1370,10 +1370,10 @@ export function configureArgs(preset: ConfigurePreset): string[] {
   }
 
   if (preset.toolchainFile) {
-    result.push(`-DCMAKE_TOOLCHAIN_FILE="${preset.toolchainFile}"`);
+    result.push(`-DCMAKE_TOOLCHAIN_FILE=${preset.toolchainFile}`);
   }
   if (preset.installDir) {
-    result.push(`-DCMAKE_INSTALL_PREFIX="${preset.installDir}"`);
+    result.push(`-DCMAKE_INSTALL_PREFIX=${preset.installDir}`);
   }
 
   // Warnings
