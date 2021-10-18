@@ -1564,19 +1564,22 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const buildArgs: string[] = this.config.buildArgs.slice(0);
       const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
 
-      // Prefer using CMake's build options to set parallelism over tool-specific switches.
-      // The feature is not available until version 3.14.
-      if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
-        buildArgs.push('-j');
-        if (this.config.numJobs) {
-          buildArgs.push(this.config.numJobs.toString());
-        }
-      } else {
-        if (gen) {
-          if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets.indexOf('clean') > 0) {
-            buildToolArgs.push('-j', this.config.numJobs.toString());
-          } else if (/Visual Studio/.test(gen) &&  targets.indexOf('clean') > 0) {
-            buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
+      // Only add '-j' argument if parallelJobs > 1
+      if (this.config.numJobs > 1) {
+        // Prefer using CMake's build options to set parallelism over tool-specific switches.
+        // The feature is not available until version 3.14.
+        if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
+          buildArgs.push('-j');
+          if (this.config.numJobs) {
+            buildArgs.push(this.config.numJobs.toString());
+          }
+        } else {
+          if (gen) {
+            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets.indexOf('clean') > 0) {
+              buildToolArgs.push('-j', this.config.numJobs.toString());
+            } else if (/Visual Studio/.test(gen) &&  targets.indexOf('clean') > 0) {
+              buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
+            }
           }
         }
       }
