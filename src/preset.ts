@@ -141,7 +141,30 @@ export function evaluateCondition(condition: Condition): boolean {
   }
 }
 
-export function evaluatePresetCondition(preset: Preset): boolean | undefined {
+function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[]): boolean | undefined {
+  if (preset.inherits) {
+    // When looking up inherited presets, default to false if the preset does not exist since this wouldn't
+    // be a valid preset to use.
+    if (util.isString(preset.inherits)) {
+      const parent = getPresetByName(allPresets, preset.inherits);
+      return parent ? evaluatePresetCondition(parent, allPresets) : false;
+    } else if (util.isArrayOfString(preset.inherits)) {
+      return preset.inherits.every(parentName => {
+        const parent = getPresetByName(allPresets, parentName);
+        return parent ? evaluatePresetCondition(parent, allPresets) : false;
+      });
+    }
+    log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits "{1}"', preset.name, preset.inherits));
+    return false;
+  }
+  return true;
+}
+
+export function evaluatePresetCondition(preset: Preset, allPresets: Preset[]): boolean | undefined {
+  if (!evaluateInheritedPresetConditions(preset, allPresets)) {
+    return false;
+  }
+
   const condition = preset.condition;
   if (condition === undefined || condition === null) {
     return true;
@@ -383,12 +406,7 @@ export function userTestPresets(folder: string) { return userPresetsFiles.get(fo
 export function allTestPresets(folder: string) { return testPresets(folder).concat(userTestPresets(folder)); }
 
 export function getPresetByName<T extends Preset>(presets: T[], name: string): T | null {
-  for (const preset of presets) {
-    if (preset.name === name) {
-      return preset;
-    }
-  }
-  return null;
+  return presets.find(preset => preset.name === name) ?? null;
 }
 
 function isInheritable(key: keyof ConfigurePreset | keyof BuildPreset | keyof TestPreset) {
@@ -539,6 +557,63 @@ async function getExpansionOptions(folder: string,
   return expansionOpts;
 }
 
+async function expandCondition(condition: boolean | Condition | null | undefined, expansionOpts: ExpansionOptions) {
+  if (condition && !util.isBoolean(condition) && condition.type) {
+    const result: Condition = { type: condition.type };
+    if (condition.lhs) {
+      result.lhs = await expandString(condition.lhs, expansionOpts);
+    }
+    if (condition.rhs) {
+      result.rhs = await expandString(condition.rhs, expansionOpts);
+    }
+    if (condition.string) {
+      result.string = await expandString(condition.string, expansionOpts);
+    }
+    if (condition.list) {
+      result.list = [];
+      for (const value of condition.list) {
+        result.list.push(await expandString(value, expansionOpts));
+      }
+    }
+    if (condition.condition) {
+      result.condition = await expandCondition(condition.condition, expansionOpts);
+    }
+    if (condition.conditions) {
+      result.conditions = [];
+      for (const value of condition.conditions) {
+        const expanded = await expandCondition(value, expansionOpts);
+        if (expanded) {
+          result.conditions.push(expanded);
+        }
+      }
+    }
+    merge(result, condition); // Copy the remaining fields;
+    return result;
+  }
+  return undefined;
+}
+
+export async function expandConditionsForPresets(folder: string, sourceDir: string) {
+  for (const preset of configurePresets(folder)) {
+    const opts = await getExpansionOptions(folder, '${workspaceFolder}', sourceDir, preset);
+    if (preset.condition) {
+      preset.condition = await expandCondition(preset.condition, opts);
+    }
+  }
+  for (const preset of buildPresets(folder)) {
+    const opts = await getExpansionOptions(folder, '${workspaceFolder}', sourceDir, preset);
+    if (preset.condition) {
+      preset.condition = await expandCondition(preset.condition, opts);
+    }
+  }
+  for (const preset of testPresets(folder)) {
+    const opts = await getExpansionOptions(folder, '${workspaceFolder}', sourceDir, preset);
+    if (preset.condition) {
+      preset.condition = await expandCondition(preset.condition, opts);
+    }
+  }
+}
+
 export async function expandConfigurePreset(folder: string,
                                             name: string,
                                             workspaceFolder: string,
@@ -636,6 +711,10 @@ export async function expandConfigurePreset(folder: string,
         }
       }
     }
+  }
+
+  if (preset.condition) {
+    expandedPreset.condition = await expandCondition(expandedPreset.condition, expansionOpts);
   }
 
   // Other fields can be copied by reference for simplicity
