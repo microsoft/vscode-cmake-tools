@@ -655,7 +655,7 @@ export function isArrayOfString(x: any): x is string[] {
   return isArray(x) && x.every(isString);
 }
 
-export function isNullOrUndefined(x?: any): boolean {
+export function isNullOrUndefined(x?: any): x is null | undefined {
   return (x === null || x === undefined);
 }
 
