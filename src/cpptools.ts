@@ -34,6 +34,7 @@ export interface DiagnosticsCpptools {
   targets: DiagnosticsTarget[];
   requests: string[];
   responses: cpt.SourceFileConfigurationItem[];
+  partialMatches: [string, string[]][];
 }
 
 export interface DiagnosticsTarget {
@@ -343,11 +344,24 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   async canProvideConfiguration(uri: vscode.Uri) {
     this.requests.add(uri.toString());
-    return !!this._getConfiguration(uri);
+    const configuration = this._getConfiguration(uri);
+    if (configuration) {
+      return true;
+    }
+    const fileName = path.basename(uri.fsPath);
+    const matches = [];
+    for (const [key, _] of this._fileIndex) {
+      if (path.basename(key) === fileName) {
+        matches.push(key);
+      }
+    }
+    this.partialMatches.set(uri.toString(), matches);
+    return false;
   }
 
   private requests = new Set<string>();
   private responses = new Map<string, cpt.SourceFileConfigurationItem>();
+  private partialMatches = new Map<string, string[]>();
 
   /**
    * Get the configurations for the given URIs. URIs for which we have no
@@ -536,6 +550,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     // Reset the counters for diagnostics
     this.requests.clear();
     this.responses.clear();
+    this.partialMatches.clear();
     this.targets = [];
 
     let hadMissingCompilers = false;
@@ -601,6 +616,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
       hasCodeModel: this._fileIndex.size > 0,
       requests: [...this.requests.values() ],
       responses: [...this.responses.values()],
+      partialMatches: [...this.partialMatches.entries()],
       targetCount: this.targets.length,
       executablesCount: this.targets.reduce<number>((acc, target) => target.type === 'EXECUTABLE' ? acc + 1 : acc, 0),
       librariesCount: this.targets.reduce<number>((acc, target) => target.type.endsWith('LIBRARY') ? acc + 1 : acc, 0),
