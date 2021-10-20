@@ -36,6 +36,8 @@ export interface Preset {
   condition?: Condition | boolean | null;
 
   __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
+  __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
+  __inheritedPresetConditionEvaluationStarted?: boolean; // Private field to indicate if we started to evaluate the inherited preset conditions.
 }
 
 export interface ValueStrategy {
@@ -151,7 +153,12 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[])
     } else if (util.isArrayOfString(preset.inherits)) {
       return preset.inherits.every(parentName => {
         const parent = getPresetByName(allPresets, parentName);
-        return parent ? evaluatePresetCondition(parent, allPresets) : false;
+        if (parent && !parent.__inheritedPresetConditionEvaluationStarted) {
+          parent.__inheritedPresetConditionEvaluationStarted = true;
+          parent.__inheritedPresetCondition = evaluatePresetCondition(parent, allPresets);
+        }
+
+        return parent ? parent.__inheritedPresetCondition : false;
       });
     }
     log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits "{1}"', preset.name, preset.inherits));
