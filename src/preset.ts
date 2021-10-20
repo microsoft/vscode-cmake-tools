@@ -558,7 +558,13 @@ async function getExpansionOptions(folder: string,
 }
 
 async function expandCondition(condition: boolean | Condition | null | undefined, expansionOpts: ExpansionOptions) {
-  if (condition && !util.isBoolean(condition) && condition.type) {
+  if (!condition) {
+    return undefined;
+  }
+  if (util.isBoolean(condition)) {
+    return condition;
+  }
+  if (condition.type) {
     const result: Condition = { type: condition.type };
     if (condition.lhs) {
       result.lhs = await expandString(condition.lhs, expansionOpts);
@@ -576,13 +582,16 @@ async function expandCondition(condition: boolean | Condition | null | undefined
       }
     }
     if (condition.condition) {
-      result.condition = await expandCondition(condition.condition, expansionOpts);
+      const expanded = await expandCondition(condition.condition, expansionOpts);
+      if (!util.isBoolean(expanded)) {
+        result.condition = expanded;
+      }
     }
     if (condition.conditions) {
       result.conditions = [];
       for (const value of condition.conditions) {
         const expanded = await expandCondition(value, expansionOpts);
-        if (expanded) {
+        if (expanded && !util.isBoolean(expanded)) {
           result.conditions.push(expanded);
         }
       }
