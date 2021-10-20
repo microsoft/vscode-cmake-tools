@@ -558,7 +558,7 @@ async function getExpansionOptions(folder: string,
 }
 
 async function expandCondition(condition: boolean | Condition | null | undefined, expansionOpts: ExpansionOptions) {
-  if (!condition) {
+  if (util.isNullOrUndefined(condition)) {
     return undefined;
   }
   if (util.isBoolean(condition)) {
