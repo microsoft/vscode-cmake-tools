@@ -1,5 +1,9 @@
 # What's New?
 
+## 1.9.1
+Bug fixes:
+- Fix presets using conditions with macros and inheritance. [#2185](https://github.com/microsoft/vscode-cmake-tools/issues/2185)
+
 ## 1.9.0
 Improvements:
 - Add support for CMakePresets version 3. [#1904](https://github.com/microsoft/vscode-cmake-tools/issues/1904)
