@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
