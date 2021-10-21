@@ -7,6 +7,7 @@ Bug fixes:
 - `CMake: Compile Active File` command stopped working in v1.9.0. [#2180](https://github.com/microsoft/vscode-cmake-tools/issues/2180)
 - Exception after successful build when cpptools IntelliSense is disabled. [#2188](https://github.com/microsoft/vscode-cmake-tools/issues/2188)
 - Fix issue with presets (v3) and "toolchainFile". [#2179](https://github.com/microsoft/vscode-cmake-tools/issues/2179)
+- Don't add `-j` argument when `cmake.parallelJobs` is set to `1`. [#2187](https://github.com/microsoft/vscode-cmake-tools/issues/2187) [@mark-ulrich](https://github.com/mark-ulrich)
 
 ## 1.9.0
 Improvements:
