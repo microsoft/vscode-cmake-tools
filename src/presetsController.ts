@@ -356,7 +356,8 @@ export class PresetsController {
         }
         case SpecialOptions.InheritConfigurationPreset: {
           const placeHolder = localize('select.one.or.more.config.preset.placeholder', 'Select one or more configure presets');
-          const inherits = await this.selectAnyPreset(preset.configurePresets(this.folderFsPath), { placeHolder, canPickMany: true });
+          const presets = preset.configurePresets(this.folderFsPath);
+          const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
           newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
           break;
         }
@@ -465,13 +466,15 @@ export class PresetsController {
       switch (chosenItem.name) {
         case SpecialOptions.CreateFromConfigurationPreset: {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
-          const configurePreset = await this.selectNonHiddenPreset(preset.configurePresets(this.folderFsPath), { placeHolder });
+          const presets = preset.configurePresets(this.folderFsPath);
+          const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
           newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
           break;
         }
         case SpecialOptions.InheritBuildPreset: {
           const placeHolder = localize('select.one.or.more.build.preset.placeholder', 'Select one or more build presets');
-          const inherits = await this.selectAnyPreset(preset.buildPresets(this.folderFsPath), { placeHolder, canPickMany: true });
+          const presets = preset.buildPresets(this.folderFsPath);
+          const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
           newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
           break;
         }
@@ -540,13 +543,15 @@ export class PresetsController {
       switch (chosenItem.name) {
         case SpecialOptions.CreateFromConfigurationPreset: {
           const placeHolder = localize('select.a.config.preset.placeholder', 'Select a configure preset');
-          const configurePreset = await this.selectNonHiddenPreset(preset.configurePresets(this.folderFsPath), { placeHolder });
+          const presets = preset.configurePresets(this.folderFsPath);
+          const configurePreset = await this.selectNonHiddenPreset(presets, presets, { placeHolder });
           newPreset = { name: '__placeholder__', description: '', displayName: '', configurePreset };
           break;
         }
         case SpecialOptions.InheritTestPreset: {
           const placeHolder = localize('select.one.or.more.test.preset.placeholder', 'Select one or more test presets');
-          const inherits = await this.selectAnyPreset(preset.testPresets(this.folderFsPath), { placeHolder, canPickMany: true });
+          const presets = preset.testPresets(this.folderFsPath);
+          const inherits = await this.selectAnyPreset(presets, presets, { placeHolder, canPickMany: true });
           newPreset = { name: '__placeholder__', description: '', displayName: '', inherits };
           break;
         }
@@ -572,21 +577,21 @@ export class PresetsController {
   }
 
   // Returns the name of preset selected from the list of non-hidden presets.
-  private async selectNonHiddenPreset(presets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | undefined> {
-    return this.selectPreset(presets, options, false);
+  private async selectNonHiddenPreset(candidates: preset.Preset[], allPresets: preset.Preset[], options: vscode.QuickPickOptions): Promise<string | undefined> {
+    return this.selectPreset(candidates, allPresets, options, false);
   }
   // Returns the name of preset selected from the list of all hidden/non-hidden presets.
-  private async selectAnyPreset(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }): Promise<string[] | undefined> {
-    return this.selectPreset(presets, options, true);
+  private async selectAnyPreset(candidates: preset.Preset[], allPresets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }): Promise<string[] | undefined> {
+    return this.selectPreset(candidates, allPresets, options, true);
   }
 
-  private async selectPreset(presets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }, showHiddenPresets: boolean): Promise<string[] | undefined>;
-  private async selectPreset(presets: preset.Preset[], options: vscode.QuickPickOptions, showHiddenPresets: boolean): Promise<string | undefined>;
-  private async selectPreset(presets: preset.Preset[], options: vscode.QuickPickOptions, showHiddenPresets: boolean): Promise<string | string[] | undefined> {
+  private async selectPreset(candidates: preset.Preset[], allPresets: preset.Preset[], options: vscode.QuickPickOptions & { canPickMany: true }, showHiddenPresets: boolean): Promise<string[] | undefined>;
+  private async selectPreset(candidates: preset.Preset[], allPresets: preset.Preset[], options: vscode.QuickPickOptions, showHiddenPresets: boolean): Promise<string | undefined>;
+  private async selectPreset(candidates: preset.Preset[], allPresets: preset.Preset[], options: vscode.QuickPickOptions, showHiddenPresets: boolean): Promise<string | string[] | undefined> {
     interface PresetItem extends vscode.QuickPickItem {
       preset: string;
     }
-    const presetsPool: preset.Preset[] = showHiddenPresets ? presets : presets.filter(_preset => !_preset.hidden && preset.evaluatePresetCondition(_preset));
+    const presetsPool: preset.Preset[] = showHiddenPresets ? candidates : candidates.filter(_preset => !_preset.hidden && preset.evaluatePresetCondition(_preset, allPresets));
     const items: PresetItem[] = presetsPool.map(
         _preset => ({
           label: _preset.displayName || _preset.name,
@@ -607,8 +612,10 @@ export class PresetsController {
 
   async selectConfigurePreset(): Promise<boolean> {
     preset.expandVendorForConfigurePresets(this.folderFsPath);
+    await preset.expandConditionsForPresets(this.folderFsPath, this._sourceDir);
 
-    const presets = preset.configurePresets(this.folderFsPath).concat(preset.userConfigurePresets(this.folderFsPath)).filter(
+    const allPresets = preset.configurePresets(this.folderFsPath).concat(preset.userConfigurePresets(this.folderFsPath));
+    const presets = allPresets.filter(
       _preset => {
         const supportedHost =  (_preset.vendor as preset.VendorVsSettings)?.['microsoft.com/VisualStudioSettings/CMake/1.0']?.hostOS;
         const osName = this.getOsName();
@@ -628,7 +635,7 @@ export class PresetsController {
 
     log.debug(localize('opening.config.preset.selection', 'Opening configure preset selection QuickPick'));
     const placeHolder = localize('select.active.config.preset.placeholder', 'Select a configure preset for {0}', this.folder.name);
-    const chosenPreset = await this.selectNonHiddenPreset(presets, { placeHolder });
+    const chosenPreset = await this.selectNonHiddenPreset(presets, allPresets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.config.preset.selection', 'User cancelled configure preset selection'));
       return false;
@@ -734,16 +741,17 @@ export class PresetsController {
     }
 
     preset.expandConfigurePresetForPresets(this.folderFsPath, 'build');
-    const presets = preset.buildPresets(this.folderFsPath).
-                           concat(preset.userBuildPresets(this.folderFsPath)).
-                           filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
+    await preset.expandConditionsForPresets(this.folderFsPath, this._sourceDir);
+
+    const allPresets = preset.buildPresets(this.folderFsPath).concat(preset.userBuildPresets(this.folderFsPath));
+    const presets = allPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
     presets.push(preset.defaultBuildPreset);
 
     log.debug(localize('start.selection.of.build.presets', 'Start selection of build presets. Found {0} presets.', presets.length));
 
     log.debug(localize('opening.build.preset.selection', 'Opening build preset selection QuickPick'));
     const placeHolder = localize('select.active.build.preset.placeholder', 'Select a build preset for {0}', this.folder.name);
-    const chosenPreset = await this.selectNonHiddenPreset(presets, { placeHolder });
+    const chosenPreset = await this.selectNonHiddenPreset(presets, allPresets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.build.preset.selection', 'User cancelled build preset selection'));
       return false;
@@ -809,14 +817,15 @@ export class PresetsController {
     }
 
     preset.expandConfigurePresetForPresets(this.folderFsPath, 'test');
-    const presets = preset.testPresets(this.folderFsPath).
-                           concat(preset.userTestPresets(this.folderFsPath)).
-                           filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
+    await preset.expandConditionsForPresets(this.folderFsPath, this._sourceDir);
+
+    const allPresets = preset.testPresets(this.folderFsPath).concat(preset.userTestPresets(this.folderFsPath));
+    const presets = allPresets.filter(_preset => _preset.configurePreset === selectedConfigurePreset.name);
     presets.push(preset.defaultTestPreset);
 
     log.debug(localize('start.selection.of.test.presets', 'Start selection of test presets. Found {0} presets.', presets.length));
     const placeHolder = localize('select.active.test.preset.placeholder', 'Select a test preset for {0}', this.folder.name);
-    const chosenPreset = await this.selectNonHiddenPreset(presets, { placeHolder });
+    const chosenPreset = await this.selectNonHiddenPreset(presets, allPresets, { placeHolder });
     if (!chosenPreset) {
       log.debug(localize('user.cancelled.test.preset.selection', 'User cancelled test preset selection'));
       return false;

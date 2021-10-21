@@ -636,6 +636,10 @@ export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
 }
 
+export function isBoolean(x: any): x is boolean {
+  return x === true || x === false;
+}
+
 export function makeHashString(str: string): string {
     const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
@@ -651,7 +655,7 @@ export function isArrayOfString(x: any): x is string[] {
   return isArray(x) && x.every(isString);
 }
 
-export function isNullOrUndefined(x?: any): boolean {
+export function isNullOrUndefined(x?: any): x is null | undefined {
   return (x === null || x === undefined);
 }
 
