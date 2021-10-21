@@ -36,7 +36,6 @@ export interface Preset {
   condition?: Condition | boolean | null;
 
   __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
-  __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
 }
 
 export interface ValueStrategy {
@@ -143,22 +142,22 @@ export function evaluateCondition(condition: Condition): boolean {
 }
 
 function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[], references: Set<string>): boolean | undefined {
+  const evaluateParent = (parentName: string) => {
+    const parent = getPresetByName(allPresets, parentName);
+    if (parent && !references.has(parent.name)) {
+      return evaluatePresetCondition(parent, allPresets, references);
+    }
+    return false;
+  };
+
+  references.add(preset.name);
   if (preset.inherits) {
     // When looking up inherited presets, default to false if the preset does not exist since this wouldn't
     // be a valid preset to use.
     if (util.isString(preset.inherits)) {
-      const parent = getPresetByName(allPresets, preset.inherits);
-      return parent ? evaluatePresetCondition(parent, allPresets) : false;
+      return evaluateParent(preset.inherits);
     } else if (util.isArrayOfString(preset.inherits)) {
-      return preset.inherits.every(parentName => {
-        const parent = getPresetByName(allPresets, parentName);
-        if (parent && !references.has(parentName)) {
-          references.add(parentName);
-          parent.__inheritedPresetCondition = evaluatePresetCondition(parent, allPresets, references);
-        }
-
-        return parent ? parent.__inheritedPresetCondition : false;
-      });
+      return preset.inherits.every(parentName => evaluateParent(parentName));
     }
     log.error(localize('invalid.inherits.type', 'Preset {0}: Invalid value for inherits "{1}"', preset.name, preset.inherits));
     return false;
