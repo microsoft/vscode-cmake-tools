@@ -37,7 +37,6 @@ export interface Preset {
 
   __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
   __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
-  __inheritedPresetConditionEvaluationStarted?: boolean; // Private field to indicate if we started to evaluate the inherited preset conditions.
 }
 
 export interface ValueStrategy {
@@ -143,7 +142,7 @@ export function evaluateCondition(condition: Condition): boolean {
   }
 }
 
-function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[]): boolean | undefined {
+function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[], references: Set<string>): boolean | undefined {
   if (preset.inherits) {
     // When looking up inherited presets, default to false if the preset does not exist since this wouldn't
     // be a valid preset to use.
@@ -153,9 +152,9 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[])
     } else if (util.isArrayOfString(preset.inherits)) {
       return preset.inherits.every(parentName => {
         const parent = getPresetByName(allPresets, parentName);
-        if (parent && !parent.__inheritedPresetConditionEvaluationStarted) {
-          parent.__inheritedPresetConditionEvaluationStarted = true;
-          parent.__inheritedPresetCondition = evaluatePresetCondition(parent, allPresets);
+        if (parent && !references.has(parentName)) {
+          references.add(parentName);
+          parent.__inheritedPresetCondition = evaluatePresetCondition(parent, allPresets, references);
         }
 
         return parent ? parent.__inheritedPresetCondition : false;
@@ -167,8 +166,8 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[])
   return true;
 }
 
-export function evaluatePresetCondition(preset: Preset, allPresets: Preset[]): boolean | undefined {
-  if (!evaluateInheritedPresetConditions(preset, allPresets)) {
+export function evaluatePresetCondition(preset: Preset, allPresets: Preset[], references?: Set<string>): boolean | undefined {
+  if (!evaluateInheritedPresetConditions(preset, allPresets, references || new Set<string>())) {
     return false;
   }
 
