@@ -1,5 +1,14 @@
 # What's New?
 
+## 1.9.1
+Bug fixes:
+- Fix presets using conditions with macros and inheritance. [#2185](https://github.com/microsoft/vscode-cmake-tools/issues/2185)
+- Parallelism no longer working in 1.9.0 for CMake < 3.14.0. [#2181](https://github.com/microsoft/vscode-cmake-tools/issues/2181)
+- `CMake: Compile Active File` command stopped working in v1.9.0. [#2180](https://github.com/microsoft/vscode-cmake-tools/issues/2180)
+- Exception after successful build when cpptools IntelliSense is disabled. [#2188](https://github.com/microsoft/vscode-cmake-tools/issues/2188)
+- Fix issue with presets (v3) and "toolchainFile". [#2179](https://github.com/microsoft/vscode-cmake-tools/issues/2179)
+- Don't add `-j` argument when `cmake.parallelJobs` is set to `1`. [#2187](https://github.com/microsoft/vscode-cmake-tools/issues/2187) [@mark-ulrich](https://github.com/mark-ulrich)
+
 ## 1.9.0
 Improvements:
 - Add support for CMakePresets version 3. [#1904](https://github.com/microsoft/vscode-cmake-tools/issues/1904)

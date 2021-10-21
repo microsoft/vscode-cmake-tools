@@ -75,7 +75,7 @@
     "cmake-tools.configuration.cmake.configureArgs.description": "Additional arguments to pass to CMake when configuring.",
     "cmake-tools.configuration.cmake.buildArgs.description": "Additional arguments to pass to CMake when building.",
     "cmake-tools.configuration.cmake.buildToolArgs.description": "Additional arguments to pass to the underlying build tool when building.",
-    "cmake-tools.configuration.cmake.parallelJobs.description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs.",
+    "cmake-tools.configuration.cmake.parallelJobs.description": "The number of parallel build jobs. Use zero to automatically detect the number of CPUs. Setting this to 1 will disable build parallelism.",
     "cmake-tools.configuration.cmake.ctestPath.description": "Path to CTest executable. If null, will be inferred from cmake.cmakePath (recommended to leave null).",
     "cmake-tools.configuration.cmake.ctest.parallelJobs.description": "The number of parallel test jobs. Use zero to use the value of cmake.parallelJobs.",
     "cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Parse compiler output for warnings and errors.",
