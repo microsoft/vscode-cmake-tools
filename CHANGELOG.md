@@ -3,6 +3,7 @@
 ## 1.9.1
 Bug fixes:
 - Fix presets using conditions with macros and inheritance. [#2185](https://github.com/microsoft/vscode-cmake-tools/issues/2185)
+- Don't add `-j` argument when `cmake.parallelJobs` is set to `1`. [#2187](https://github.com/microsoft/vscode-cmake-tools/issues/2187) [@mark-ulrich](https://github.com/mark-ulrich)
 
 ## 1.9.0
 Improvements:
