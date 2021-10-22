@@ -28,18 +28,25 @@ type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++1
 export interface DiagnosticsCpptools {
   isReady: boolean;
   hasCodeModel: boolean;
+  activeBuildType: string;
+  buildTypesSeen: string[];
   targetCount: number;
   executablesCount: number;
   librariesCount: number;
   targets: DiagnosticsTarget[];
   requests: string[];
   responses: cpt.SourceFileConfigurationItem[];
-  partialMatches: [string, string[]][];
+  partialMatches: DiagnosticsPartialMatch[];
 }
 
 export interface DiagnosticsTarget {
   name: string;
   type: TargetTypeString;
+}
+
+export interface DiagnosticsPartialMatch {
+  request: string;
+  matches: string | string[];
 }
 
 export interface CompileFlagInformation {
@@ -344,24 +351,11 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   async canProvideConfiguration(uri: vscode.Uri) {
     this.requests.add(uri.toString());
-    const configuration = this._getConfiguration(uri);
-    if (configuration) {
-      return true;
-    }
-    const fileName = path.basename(uri.fsPath);
-    const matches = [];
-    for (const [key, _] of this._fileIndex) {
-      if (path.basename(key) === fileName) {
-        matches.push(key);
-      }
-    }
-    this.partialMatches.set(uri.toString(), matches);
-    return false;
+    return !!this._getConfiguration(uri);
   }
 
   private requests = new Set<string>();
   private responses = new Map<string, cpt.SourceFileConfigurationItem>();
-  private partialMatches = new Map<string, string[]>();
 
   /**
    * Get the configurations for the given URIs. URIs for which we have no
@@ -421,6 +415,9 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _activeTarget: string|null = null;
 
+  private activeBuildType: string|null = null;
+  private buildTypesSeen = new Set<string>();
+
   /**
    * Create a source file configuration for the given file group.
    * @param fileGroup The file group from the code model to create config data for
@@ -443,11 +440,6 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     const comp_path = comp_toolchains ? comp_toolchains.path : (comp_cache ? comp_cache.as<string>() : opts.clCompilerPath);
     if (!comp_path) {
       throw new MissingCompilerException();
-    }
-
-    const buildType = opts.cache.get('CMAKE_BUILD_TYPE');
-    if (buildType) {
-      opts.activeBuildTypeVariant = buildType.as<string>();
     }
 
     const targetFromToolchains = comp_toolchains?.target;
@@ -550,12 +542,23 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     // Reset the counters for diagnostics
     this.requests.clear();
     this.responses.clear();
-    this.partialMatches.clear();
+    this.buildTypesSeen.clear();
     this.targets = [];
 
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
+    this.activeBuildType = opts.activeBuildTypeVariant;
+    for (const config of opts.codeModelContent.configurations) {
+      this.buildTypesSeen.add(config.name);
+    }
+    if (!this.buildTypesSeen.has(opts.activeBuildTypeVariant || "")) {
+      const configName = opts.codeModelContent.configurations[0].name;
+      log.warning(localize('build.type.out.of.sync',
+        'The build configurations generated do not contain the active build configuration. Using {0} for CMAKE_BUILD_TYPE instead of {1} to ensure that IntelliSense configurations can be found',
+        configName, opts.activeBuildTypeVariant));
+      opts.activeBuildTypeVariant = configName;
+    }
     for (const config of opts.codeModelContent.configurations) {
       // Update only the active build type variant.
       if (config.name === opts.activeBuildTypeVariant) {
@@ -611,12 +614,34 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
   }
 
   getDiagnostics(): DiagnosticsCpptools {
+    const partialMatches: DiagnosticsPartialMatch[] = [];
+    for (const request of this.requests) {
+      const uri = vscode.Uri.parse(request);
+      const configuration = this._getConfiguration(uri);
+      if (!configuration) {
+        const fileName = path.basename(uri.fsPath);
+        const matches = [];
+        for (const [key, _] of this._fileIndex) {
+          if (path.basename(key) === fileName) {
+            matches.push(key);
+          }
+        }
+        if (matches.length === 1) {
+          partialMatches.push({ request, matches: matches.toString() });
+        } else if (matches.length > 1) {
+          partialMatches.push({request, matches});
+        }
+      }
+    }
+
     return {
       isReady: this.ready,
       hasCodeModel: this._fileIndex.size > 0,
+      activeBuildType: this.activeBuildType || "",
+      buildTypesSeen: [...this.buildTypesSeen.values()],
       requests: [...this.requests.values() ],
       responses: [...this.responses.values()],
-      partialMatches: [...this.partialMatches.entries()],
+      partialMatches,
       targetCount: this.targets.length,
       executablesCount: this.targets.reduce<number>((acc, target) => target.type === 'EXECUTABLE' ? acc + 1 : acc, 0),
       librariesCount: this.targets.reduce<number>((acc, target) => target.type.endsWith('LIBRARY') ? acc + 1 : acc, 0),
