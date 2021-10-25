@@ -21,8 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "为所有项目选择变量",
 	"cmake-tools.command.cmake.configure.title": "配置",
 	"cmake-tools.command.cmake.configureAll.title": "配置所有项目",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "显示配置命令",
 	"cmake-tools.command.cmake.build.title": "生成",
 	"cmake-tools.command.cmake.buildAll.title": "生成所有项目",
+	"cmake-tools.command.cmake.showBuildCommand.title": "显示生成命令",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(内部)按名称生成目标",
 	"cmake-tools.command.cmake.compileFile.title": "编译活动文件",
 	"cmake-tools.command.cmake.outline.compileFile.title": "编译文件",
@@ -78,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "要在配置时传递给 CMake 的其他参数。",
 	"cmake-tools.configuration.cmake.buildArgs.description": "要在生成时传递给 CMake 的其他参数。",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "要在生成时传递给基础生成工具的其他参数。",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "并行生成作业的数量。使用零，以自动检测 CPU 的数量。",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "并行生成作业的数目。使用零来自动检测 CPU 数。将此值设为 1 则将禁用生成并行度。",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可执行文件的路径。如果为 null，则从 cmake.cmakePath 推理(建议保留为 null)。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "并行测试作业的数量。使用零即可利用 cmake.parallelJobs 的值。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "分析编译器输出以查找警告和错误。",
@@ -113,6 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "可在其中安装 MinGW 的目录。",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "目录路径。",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "可在其中安装 Emscripten 的目录。",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "以递归方式收集和合并在 cmake.buildDirectory 中找到的所有compile_commands.json。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "成功配置后将 compile_commands.json 复制到此位置。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "在 CMake 项目目录打开时自动对其进行配置。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "保存 cmake.sourceDirectory 或 CMakeLists.txt 内容时，自动配置 CMake 项目目录。",
@@ -136,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "项目大纲",
 	"cmake-tools.configuration.cmake.additionalKits.description": "自定义工具包文件的路径数组",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "启用导出 compile_commands.json。",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakepresets.json 配置驱动器 CMake 配置、生成和测试。使用 CMakepresets.json 时，将忽略工具包、变量和 settings.json 中的某些设置。"
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakepresets.json 配置驱动器 CMake 配置、生成和测试。使用 CMakepresets.json 时，将忽略工具包、变量和 settings.json 中的某些设置。",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "允许使用 JSON 扩展，如 CMakePresets.json 中的注释。请注意，如果使用非标准 JSON，则其他 IDE 或命令行可能认为 CMakePresets.json 文件无效。"
 }

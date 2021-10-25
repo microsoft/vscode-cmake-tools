@@ -57,11 +57,15 @@ export class CMakeToolsFolder {
 
         if (usingCMakePresets) {
           const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
+            const config = cmtFolder.cmakeTools.workspaceContext.config;
             const fileName = path.basename(document.uri.fsPath);
-            if ((fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') &&
-                document.languageId !== 'json') {
-              // setTextDocumentLanguage will trigger onDidOpenTextDocument
-              void vscode.languages.setTextDocumentLanguage(document, 'json');
+            if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+              if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
+                // setTextDocumentLanguage will trigger onDidOpenTextDocument
+                void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
+              } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
+                void vscode.languages.setTextDocumentLanguage(document, 'json');
+              }
             }
           };
 
@@ -161,14 +165,6 @@ export class CMakeToolsFolder {
       const configurePreset = folder.cmakeTools.workspaceContext.state.configurePresetName;
       if (configurePreset) {
         await folder.presetsController.setConfigurePreset(configurePreset);
-      }
-      const buildPreset = folder.cmakeTools.workspaceContext.state.buildPresetName;
-      if (buildPreset) {
-        await folder.presetsController.setBuildPreset(buildPreset);
-      }
-      const testPreset = folder.cmakeTools.workspaceContext.state.testPresetName;
-      if (testPreset) {
-        await folder.presetsController.setTestPreset(testPreset);
       }
     } else {
       // Check if the CMakeTools remembers what kit it was last using in this dir:

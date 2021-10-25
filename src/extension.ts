@@ -101,7 +101,6 @@ class ExtensionManager implements vscode.Disposable {
       }
     });
 
-    this._statusBar.setBuildTargetName('all');
     this._folders.onAfterAddFolder(async cmtFolder => {
       console.assert(this._folders.size === vscode.workspace.workspaceFolders?.length);
       if (this._folders.size === 1) {
@@ -711,6 +710,10 @@ class ExtensionManager implements vscode.Disposable {
       }
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
+      if (vscode.workspace.getConfiguration('C_Cpp').get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
+        log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because C_Cpp.intelliSenseEngine is set to \'Disabled\''));
+        return;
+      }
       if (!this._cppToolsAPI) {
         this._cppToolsAPI = await cpt.getCppToolsApi(cpt.Version.v5);
       }
@@ -1133,7 +1136,14 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsAll(cmt => cmt.cleanConfigure(ConfigureTrigger.commandCleanConfigureAll), undefined, true);
   }
 
-  configure(folder?: vscode.WorkspaceFolder) { return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, [], ConfigureType.Normal), folder, undefined, true); }
+  configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
+    return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure,
+                                                                 [],
+                                                                 showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
+                                    folder, undefined, true);
+  }
+
+  showConfigureCommand(folder?: vscode.WorkspaceFolder) { return this.configure(folder, true); }
 
   configureAll() { return this.mapCMakeToolsAll(cmt => cmt.configureInternal(ConfigureTrigger.commandCleanConfigureAll, [], ConfigureType.Normal), undefined, true); }
 
@@ -1142,9 +1152,10 @@ class ExtensionManager implements vscode.Disposable {
     return this.mapCMakeToolsFolder(cmt => cmt.editCacheUI());
   }
 
-  build(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.build(name), folder, this._ensureActiveBuildPreset, true); }
+  build(folder?: vscode.WorkspaceFolder, name?: string, showCommandOnly?: boolean) { return this.mapCMakeToolsFolder(cmt => cmt.build(name ? [name] : undefined, showCommandOnly), folder, this._ensureActiveBuildPreset, true); }
+  showBuildCommand(folder?: vscode.WorkspaceFolder, name?: string) { return this.build(folder, name, true); }
 
-  buildAll(name: string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isArrayOfString(name) ? name[name.length - 1] : name), this._ensureActiveBuildPreset, true); }
+  buildAll(name?: string | string[]) { return this.mapCMakeToolsAll(cmt => cmt.build(util.isString(name) ? [name] : undefined), this._ensureActiveBuildPreset, true); }
 
   setDefaultTarget(folder?: vscode.WorkspaceFolder, name?: string) { return this.mapCMakeToolsFolder(cmt => cmt.setDefaultTarget(name), folder); }
 
@@ -1618,6 +1629,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'setBuildPreset',
     'setTestPreset',
     'build',
+    'showBuildCommand',
     'buildAll',
     'buildWithTarget',
     'setVariant',
@@ -1632,6 +1644,7 @@ async function setup(context: vscode.ExtensionContext, progress?: ProgressHandle
     'cleanRebuild',
     'cleanRebuildAll',
     'configure',
+    'showConfigureCommand',
     'configureAll',
     'editCacheUI',
     'ctest',
@@ -1814,8 +1827,8 @@ export function updateCMakeDriverInTaskProvider(cmakeDriver: CMakeDriver) {
 }
 
 // update default target in taskProvider
-export function updateDefaultTargetInTaskProvider(defaultTarget?: string) {
-  cmakeTaskProvider.updateDefaultTarget(defaultTarget);
+export function updateDefaultTargetsInTaskProvider(defaultTargets?: string[]) {
+  cmakeTaskProvider.updateDefaultTargets(defaultTargets);
 }
 
 // Whether this CMake Tools extension instance will show the "Create/Locate/Ignore" toast popup

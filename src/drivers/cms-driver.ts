@@ -115,7 +115,7 @@ export class CMakeServerClientDriver extends CMakeDriver {
     })();
   }
 
-  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer) {
+  protected async doConfigure(args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean) {
     await this._clientChangeInProgress;
     const cl = await this.getClient();
     const sub = this.onMessage(msg => {
@@ -126,21 +126,26 @@ export class CMakeServerClientDriver extends CMakeDriver {
       }
     });
 
-    try {
-      this._hadConfigurationChanged = false;
-      await cl.configure({cacheArguments: args});
-      await cl.compute();
-    } catch (e) {
-      if (e instanceof cms.ServerError) {
-        log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', errorToString(e)));
-        return 1;
-      } else {
-        throw e;
+    if (showCommandOnly) {
+      log.showChannel();
+      log.info(proc.buildCmdStr(this.cmake.path, args));
+    } else {
+      try {
+        this._hadConfigurationChanged = false;
+        await cl.configure({cacheArguments: args});
+        await cl.compute();
+      } catch (e) {
+        if (e instanceof cms.ServerError) {
+          log.error(localize('cmake.configure.error', 'Error during CMake configure: {0}', errorToString(e)));
+          return 1;
+        } else {
+          throw e;
+        }
+      } finally {
+        sub.dispose();
       }
-    } finally {
-      sub.dispose();
+      await this._refreshPostConfigure();
     }
-    await this._refreshPostConfigure();
     return 0;
   }
 

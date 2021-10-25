@@ -121,6 +121,7 @@ export interface ExtensionConfigurationSettings {
   testEnvironment: HardEnv;
   mingwSearchDirs: string[];
   emscriptenSearchDirs: string[];
+  mergedCompileCommands: string|null;
   copyCompileCommands: string|null;
   configureOnOpen: boolean|null;
   configureOnEdit: boolean;
@@ -136,6 +137,7 @@ export interface ExtensionConfigurationSettings {
   touchbar: TouchBarConfig;
   statusbar: StatusBarConfig;
   useCMakePresets: UseCMakePresets;
+  allowCommentsInPresetsFile: boolean;
 }
 
 type EmittersOf<T> = {
@@ -273,6 +275,7 @@ export class ConfigurationReader implements vscode.Disposable {
    * Use folder.useCMakePresets() to check the actual decision on if we are using CMake presets.
    */
   get useCMakePresets(): UseCMakePresets { return this.configData.useCMakePresets; }
+  get allowCommentsInPresetsFile(): boolean { return this.configData.allowCommentsInPresetsFile; }
 
   get cmakeCommunicationMode(): CMakeCommunicationMode {
     let communicationMode = this.configData.cmakeCommunicationMode;
@@ -304,6 +307,7 @@ export class ConfigurationReader implements vscode.Disposable {
   get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
   get additionalKits(): string[] { return this.configData.additionalKits; }
   get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
+  get mergedCompileCommands(): string|null { return this.configData.mergedCompileCommands; }
   get copyCompileCommands(): string|null { return this.configData.copyCompileCommands; }
   get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
   get buildTask(): boolean { return this.configData.buildTask; }
@@ -353,6 +357,7 @@ export class ConfigurationReader implements vscode.Disposable {
     testEnvironment: new vscode.EventEmitter<HardEnv>(),
     mingwSearchDirs: new vscode.EventEmitter<string[]>(),
     emscriptenSearchDirs: new vscode.EventEmitter<string[]>(),
+    mergedCompileCommands: new vscode.EventEmitter<string|null>(),
     copyCompileCommands: new vscode.EventEmitter<string|null>(),
     configureOnOpen: new vscode.EventEmitter<boolean|null>(),
     configureOnEdit: new vscode.EventEmitter<boolean>(),
@@ -367,7 +372,8 @@ export class ConfigurationReader implements vscode.Disposable {
     additionalKits: new vscode.EventEmitter<string[]>(),
     touchbar: new vscode.EventEmitter<TouchBarConfig>(),
     statusbar: new vscode.EventEmitter<StatusBarConfig>(),
-    useCMakePresets: new vscode.EventEmitter<UseCMakePresets>()
+    useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
+    allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>()
   };
 
   /**

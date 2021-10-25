@@ -21,8 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "選取所有專案的變化",
 	"cmake-tools.command.cmake.configure.title": "設定",
 	"cmake-tools.command.cmake.configureAll.title": "設定所有專案",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "顯示設定命令",
 	"cmake-tools.command.cmake.build.title": "建置",
 	"cmake-tools.command.cmake.buildAll.title": "建置所有專案",
+	"cmake-tools.command.cmake.showBuildCommand.title": "顯示組建命令",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(內部) 依名稱建置目標",
 	"cmake-tools.command.cmake.compileFile.title": "編譯使用中的檔案",
 	"cmake-tools.command.cmake.outline.compileFile.title": "編譯檔案",
@@ -78,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "進行組態時會傳遞到 CMake 的其他引數。",
 	"cmake-tools.configuration.cmake.buildArgs.description": "建置時會傳遞到 CMake 的其他引數。",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "建置時會傳遞到基礎建置工具的其他引數。",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "平行建置作業的數目。使用零可自動偵測 CPU 數目。",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "平行建置工作的數目。使用零自動偵測 CPU 數目。將此設定為 1 將會停用建置平行處理原則。",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 可執行檔的路徑。若為 null，將會從 cmake.cmakePath 推斷 (建議保留 null)。",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "平行測試作業的數目。使用零就會使用 cmake.parallelJobs 的值。",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "剖析警告與錯誤的編譯器輸出。",
@@ -113,6 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "安裝 MinGW 的目錄。",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "目錄路徑。",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "安裝 Emscripten 的目錄。",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "遞迴收集及合併 cmake.buildDirectory 中找到的所有compile_commands.js。",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "組態成功之後，將 compile_commands.json 複製到此位置。",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "開啟 CMake 專案目錄時自動進行組態。",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "在儲存 cmake.sourceDirectory 或 CMakeLists.txt 內容後，自動設定 CMake 專案目錄。",
@@ -136,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "專案大綱",
 	"cmake-tools.configuration.cmake.additionalKits.description": "自訂套件檔案的路徑陣列",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "啟用匯出 compile_commands.json。",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakePresets.json 來設定 CMake 設定、建置和測試的磁碟機。使用 CMakePresets.json 時，settings.json 中的套件、變體和某些設定會被忽略。"
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "使用 CMakePresets.json 來設定 CMake 設定、建置和測試的磁碟機。使用 CMakePresets.json 時，settings.json 中的套件、變體和某些設定會被忽略。",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "允許使用 JSON 延伸模組，例如 CMakePresets.json 中的註解。請注意，如果您使用非標準的 JSON，其他 IDE 或命令列可能會將您的 CMakePresets.json 檔案視為無效。"
 }

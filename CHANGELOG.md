@@ -1,12 +1,39 @@
 # What's New?
 
+## 1.9.1
+Bug fixes:
+- Fix presets using conditions with macros and inheritance. [#2185](https://github.com/microsoft/vscode-cmake-tools/issues/2185)
+- Parallelism no longer working in 1.9.0 for CMake < 3.14.0. [#2181](https://github.com/microsoft/vscode-cmake-tools/issues/2181)
+- `CMake: Compile Active File` command stopped working in v1.9.0. [#2180](https://github.com/microsoft/vscode-cmake-tools/issues/2180)
+- Exception after successful build when cpptools IntelliSense is disabled. [#2188](https://github.com/microsoft/vscode-cmake-tools/issues/2188)
+- Fix issue with presets (v3) and "toolchainFile". [#2179](https://github.com/microsoft/vscode-cmake-tools/issues/2179)
+- Don't add `-j` argument when `cmake.parallelJobs` is set to `1`. [#2187](https://github.com/microsoft/vscode-cmake-tools/issues/2187) [@mark-ulrich](https://github.com/mark-ulrich)
+
 ## 1.9.0
 Improvements:
 - Add support for CMakePresets version 3. [#1904](https://github.com/microsoft/vscode-cmake-tools/issues/1904)
+- Add diagnostic support for parsing IAR compiler output. [PR #2131](https://github.com/microsoft/vscode-cmake-tools/pull/2131) [@willson556](https://github.com/willson556)
+- Add "Log Diagnostics" command. [PR #2141](https://github.com/microsoft/vscode-cmake-tools/pull/2141)
+- Add build and configure commands to show cmake commands without running them. [PR #1767](https://github.com/microsoft/vscode-cmake-tools/pull/1767)
+- Implement support for merging multiple compile_commands in super-builds sub-folders of the build directory. [PR #2029](https://github.com/microsoft/vscode-cmake-tools/pull/2029) [@Felix-El](https://github.com/Felix-El)
+- Add `cmake.allowCommentsInPresetsFile` setting to allow JS style comments in CMakePresets files. [#2169](https://github.com/microsoft/vscode-cmake-tools/issues/2169)
 
 Bug fixes:
 - MSVC_VERSION is incorrect when cmake configures with clang-cl. [#1053](https://github.com/microsoft/vscode-cmake-tools/issues/1053) [@tklajnscek](https://github.com/tklajnscek)
 - Build error because `binaryDir` removed after configure. [#2128](https://github.com/microsoft/vscode-cmake-tools/issues/2128)
+- Configuration from build presets ignored by Intellisense and launch (when using multi config generators). [#2099](https://github.com/microsoft/vscode-cmake-tools/issues/2099)
+- Extra {0} output message when having preset with circular inherits. [#2118](https://github.com/microsoft/vscode-cmake-tools/issues/2118)
+- CMake-Tools does not reconfigure after a change of CMakeLists.txt in a subdirectory of root. [#1911](https://github.com/microsoft/vscode-cmake-tools/issues/1911) [@AbdullahAmrSobh](https://github.com/AbdullahAmrSobh)
+- Fixes msvc2015 detection when only vs2019 are installed. [#1955](https://github.com/microsoft/vscode-cmake-tools/issues/1955) [@lygstate](https://github.com/lygstate)
+- Allow for clang compilers to be set in presets without full path. [#1922](https://github.com/microsoft/vscode-cmake-tools/issues/1922)
+- Compiler flags containing spaces not passed correctly to IntelliSense. [#1414](https://github.com/microsoft/vscode-cmake-tools/issues/1414)
+- Don't scan the whole workspace for CMakeLists.txt, just a few folders. [#2127](https://github.com/microsoft/vscode-cmake-tools/issues/2127)
+- Regression with Visual Studio generator and non-default toolset. [#2147](https://github.com/microsoft/vscode-cmake-tools/issues/2147)
+- Debug shows "No compiler found in cache file." dialog. [#2121](https://github.com/microsoft/vscode-cmake-tools/issues/2121)
+- Unable to work with pre-configured projects (cache is deleted). [#2140](https://github.com/microsoft/vscode-cmake-tools/issues/2140)
+- Unknown C++ standard control flag: -std=gnu++2b. [#2150](https://github.com/microsoft/vscode-cmake-tools/issues/2150)
+- Select the most recently used build/test preset when configure preset changes. [#1927](https://github.com/microsoft/vscode-cmake-tools/issues/1927)
+- Re-enable build target selection when using presets. [#1872](https://github.com/microsoft/vscode-cmake-tools/issues/1872)
 
 ## 1.8.1
 Bug fixes:
