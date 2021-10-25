@@ -7,7 +7,8 @@ Bug fixes:
 - `CMake: Compile Active File` command stopped working in v1.9.0. [#2180](https://github.com/microsoft/vscode-cmake-tools/issues/2180)
 - Exception after successful build when cpptools IntelliSense is disabled. [#2188](https://github.com/microsoft/vscode-cmake-tools/issues/2188)
 - Fix issue with presets (v3) and "toolchainFile". [#2179](https://github.com/microsoft/vscode-cmake-tools/issues/2179)
-- Don't add `-j` argument when `cmake.parallelJobs` is set to `1`. [#2187](https://github.com/microsoft/vscode-cmake-tools/issues/2187) [@mark-ulrich](https://github.com/mark-ulrich)
+- Don't add `-j` argument when `cmake.parallelJobs` is set to `1`. [#1958](https://github.com/microsoft/vscode-cmake-tools/issues/1958) [@mark-ulrich](https://github.com/mark-ulrich)
+- Warn the user about CMAKE_BUILD_TYPE inconsistencies. [#2096](https://github.com/microsoft/vscode-cmake-tools/issues/2096)
 
 ## 1.9.0
 Improvements:
@@ -31,7 +32,7 @@ Bug fixes:
 - Regression with Visual Studio generator and non-default toolset. [#2147](https://github.com/microsoft/vscode-cmake-tools/issues/2147)
 - Debug shows "No compiler found in cache file." dialog. [#2121](https://github.com/microsoft/vscode-cmake-tools/issues/2121)
 - Unable to work with pre-configured projects (cache is deleted). [#2140](https://github.com/microsoft/vscode-cmake-tools/issues/2140)
-- Unknown C++ standard control flag: -std=gnu++2b. [#2150](https://github.com/microsoft/vscode-cmake-tools/issues/2150)
+- Unknown C/C++ standard control flags: -std=gnu++2b and -std=c2x. [#2150](https://github.com/microsoft/vscode-cmake-tools/issues/2150)
 - Select the most recently used build/test preset when configure preset changes. [#1927](https://github.com/microsoft/vscode-cmake-tools/issues/1927)
 - Re-enable build target selection when using presets. [#1872](https://github.com/microsoft/vscode-cmake-tools/issues/1872)
 
