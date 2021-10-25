@@ -92,7 +92,7 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion {
     return is_gnu ? 'gnu99' : 'c99';
   } else if (/(c|gnu)(11|1x|iso9899:2011)/.test(std)) {
     return is_gnu ? 'gnu11' : 'c11';
-  } else if (/(c|gnu)(17|18|iso9899:(2017|2018))/.test(std)) {
+  } else if (/(c|gnu)(17|18|2x|iso9899:(2017|2018))/.test(std)) {
     if (can_use_gnu) {
       // cpptools supports 'c17' in same version it supports GNU std.
       return is_gnu ? 'gnu17' : 'c17';
