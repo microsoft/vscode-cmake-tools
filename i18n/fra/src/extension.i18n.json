@@ -20,6 +20,7 @@
 	"configure.recommended": "Nous vous recommandons d'effectuer une reconfiguration après avoir mis à niveau la définition des kits.",
 	"using.cache.to.configure.workspace.on.open": "Utilisation du cache pour configurer l’espace de travail sur {0} ouvert",
 	"update.code.model.for.cpptools": "Mettre à jour le modèle de code pour cpptools",
+	"update.intellisense.disabled": "Impossible de mettre à jour le fournisseur de configuration, car C_Cpp.intelliSenseEngine est défini sur « Désactivé »",
 	"filed.to.open.cache.file.on.code.model.update": "Échec de l'ouverture du fichier cache CMake au moment de la mise à jour du modèle de code",
 	"opening.text.editor.for": "Ouverture de l'éditeur de texte pour {0}",
 	"no.kits.file.what.to.do": "Aucun fichier de kits n'est présent. Que voulez-vous faire ?",

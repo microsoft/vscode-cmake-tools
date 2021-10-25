@@ -20,6 +20,7 @@
 	"configure.recommended": "新しいキット定義にアップグレードした後に、再構成することをお勧めします。",
 	"using.cache.to.configure.workspace.on.open": "キャッシュを使って、オープンな {0} でワークスペースを構成します",
 	"update.code.model.for.cpptools": "cpptools のコード モデルの更新",
+	"update.intellisense.disabled": "C_Cpp.intelliSenseEngine が 'Disabled' に設定されているため、構成プロバイダーを更新しません",
 	"filed.to.open.cache.file.on.code.model.update": "コード モデルの更新時に CMake キャッシュ ファイルを開くことができませんでした",
 	"opening.text.editor.for": "{0} 用にテキスト エディターを開いています",
 	"no.kits.file.what.to.do": "キット ファイルが存在しません。どうしますか?",
