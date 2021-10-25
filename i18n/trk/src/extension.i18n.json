@@ -20,6 +20,7 @@
 	"configure.recommended": "Yeni bir set tanımına yükselttikten sonra yeniden yapılandırmanız önerilir.",
 	"using.cache.to.configure.workspace.on.open": "Açık {0} üzerindeki çalışma alanını yapılandırmak için önbellek kullanılıyor",
 	"update.code.model.for.cpptools": "cpptools için kod modelini güncelleştir",
+	"update.intellisense.disabled": "C_Cpp.intelliSenseEngine 'Devre dışı' olarak ayarlandığından yapılandırma sağlayıcısı güncelleştirilemiyor",
 	"filed.to.open.cache.file.on.code.model.update": "Kod modeli güncelleştirmesinde CMake önbellek dosyası açılamadı",
 	"opening.text.editor.for": "{0} için metin düzenleyici açılıyor",
 	"no.kits.file.what.to.do": "Set dosyası yok. Ne yapmak istiyorsunuz?",
