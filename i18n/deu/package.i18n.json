@@ -21,10 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Variante für alle Projekte auswählen",
 	"cmake-tools.command.cmake.configure.title": "Konfigurieren",
 	"cmake-tools.command.cmake.configureAll.title": "Alle Projekte konfigurieren",
-	"cmake-tools.command.cmake.showConfigureCommand.title": "Show Configure Command",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "Befehl \"Konfigurieren\" anzeigen",
 	"cmake-tools.command.cmake.build.title": "Build",
 	"cmake-tools.command.cmake.buildAll.title": "Alle Projekte erstellen",
-	"cmake-tools.command.cmake.showBuildCommand.title": "Show Build Command",
+	"cmake-tools.command.cmake.showBuildCommand.title": "Buildbefehl anzeigen",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(Intern) Ziel anhand des Namens erstellen",
 	"cmake-tools.command.cmake.compileFile.title": "Aktive Datei kompilieren",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Datei kompilieren",
@@ -80,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Zusätzliche Argumente, die beim Konfigurieren an CMake übergeben werden sollen.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Zusätzliche Argumente, die beim Erstellen an CMake übergeben werden.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Zusätzliche Argumente, die beim Erstellen an das zugrunde liegende Buildtool übergeben werden sollen.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Die Anzahl paralleler Buildaufträge. Verwenden Sie 0, um die Anzahl von CPUs automatisch zu ermitteln.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Die Anzahl paralleler Buildaufträge. Verwenden Sie 0, um die Anzahl von CPUs automatisch zu ermitteln. Das Festlegen auf 1 deaktiviert die Buildparallelität.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Pfad zur ausführbaren CTest-Datei. Bei NULL erfolgt ein Rückschluss von \"cmake.cmakePath\". (Die Beibehaltung von NULL wird empfohlen.)",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Die Anzahl paralleler Testaufträge. Verwenden Sie 0, um den Wert von \"cmake.parallelJobs\" zu verwenden.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Hiermit wird Compilerausgabe auf Warnungen und Fehler analysiert.",
@@ -115,7 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "Verzeichnisse, in denen MinGW möglicherweise installiert ist.",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "Pfad zu einem Verzeichnis.",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Verzeichnisse, in denen Emscripten möglicherweise installiert ist.",
-	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Recursively collect and merge all compile_commands.json found in the cmake.buildDirectory.",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Sammeln und zusammenführen Sie rekursiv alle compile_commands.json aus \"cmake.buildDirectory\".",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Hiermit wird \"compile_commands.json\" nach erfolgreicher Konfiguration an diesen Speicherort kopiert.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Hiermit werden CMake-Projektverzeichnisse beim Öffnen automatisch konfiguriert.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Hiermit werden CMake-Projektverzeichnisse automatisch konfiguriert, wenn cmake.sourceDirectory- oder CMakeLists.txt-Inhalte gespeichert werden.",
@@ -139,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "Projektgliederung",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Array aus Pfaden zu benutzerdefinierten Kit-Dateien",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Ermöglicht das Exportieren von \"compile_commands.json\".",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "Benutzen Sie \"CMakePresets.json\", um das Konfigurieren, Erstellen und Testen von \"CMake\" zu steuern. Bei Verwendung von \"CMakePresets.json\" werden Kits, Varianten und einige Einstellungen in \"settings.json\" ignoriert."
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "Benutzen Sie \"CMakePresets.json\", um das Konfigurieren, Erstellen und Testen von \"CMake\" zu steuern. Bei Verwendung von \"CMakePresets.json\" werden Kits, Varianten und einige Einstellungen in \"settings.json\" ignoriert.",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Hiermit wird die Verwendung von JSON-Erweiterungen, wie z. B. Kommentare in CMakePresets.json, zugelassen. Beachten Sie, dass Ihre CMakePresets.json-Datei von anderen IDEs als ungültig betrachtet werden kann, oder in der Befehlszeile, wenn Sie nicht standardmäßiges JSON verwenden."
 }
