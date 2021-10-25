@@ -743,7 +743,19 @@ class ExtensionManager implements vscode.Disposable {
         if (drv) {
           drv.isMultiConfig = isMultiConfig;
         }
-        const actualBuildType = isMultiConfig && cmt.useCMakePresets ? cmt.buildPreset?.configuration || null : cmt.activeVariant;
+        const actualBuildType = (() => {
+          if (cmt.useCMakePresets) {
+            if (isMultiConfig) {
+              return cmt.buildPreset?.configuration || null;
+            } else {
+              const buildType = cache.get('CMAKE_BUILD_TYPE');
+              return buildType ? buildType.as<string>() : null; // Single config generators set the build type during config, not build.
+            }
+          } else {
+            return cmt.activeVariant;
+          }
+        })();
+
         const clCompilerPath = await findCLCompilerPath(env);
         this._configProvider.cpptoolsVersion = cpptools.getVersion();
         let codeModelContent;
