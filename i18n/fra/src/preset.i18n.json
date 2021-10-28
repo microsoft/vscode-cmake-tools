@@ -22,7 +22,7 @@
 	"no.cl.toolset.version": "Configurer la présélection {0} : aucune version de l’ensemble d’outils spécifiée pour cl.exe, utilisation de la dernière version par défaut",
 	"unknown.toolset.option": "L’option d’ensemble d’outils non reconnu sera ignorée : {0}",
 	"config.preset.not.found": "Présélection de la configuration introuvable avec le nom {0}",
-	"specified.cl.not.found": "Configurer la présélection de configuration {0}: l’ensemble d’outils {1}.exe spécifié {2} et l’architecture {3} sont introuvables, vous devrez peut-être exécuter \"CMake : analyse pour compilateurs\" si cela existe sur votre ordinateur.",
+	"specified.cl.not.found": "Configurer la présélection de configuration {0}{1}: l’ensemble d’outils cl.exe spécifié {2} et l’architecture {3} sont introuvables, vous devrez peut-être exécuter \"CMake : analyse pour compilateurs\" si cela existe sur votre ordinateur.",
 	"ninja.not.set": "Ninja n’est pas défini sur PATH, tentative d’utilisation de {0}",
 	"circular.inherits.in.build.preset": "Les héritages circulaires sont hérités dans la build prédéfinie {0}",
 	"circular.inherits.in.test.preset": "Les héritages circulaires dans les {0} de test prédéfinis",

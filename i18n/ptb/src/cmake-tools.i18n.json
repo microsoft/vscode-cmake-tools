@@ -75,7 +75,7 @@
 	"generator.not.found": "Não é possível determinar o gerador do CMake a ser usado. Instale ou configure um gerador preferencial ou atualize settings.json, a configuração do seu Kit ou a variável PATH.",
 	"safely.constructing.cmaketools": "Construindo em segurança a nova instância de CMakeTools",
 	"initialization.complete": "Inicialização da instância CMakeTools concluída.",
-	"merge.and.copy.compile.commands": "A configuração de cmake.copyCompileCommands será ignorada enquanto cmake.mergedCompileCommands estiver definido.",
+	"merge.and.copy.compile.commands": "A configuração de CMake.CopyCompileCommands será ignorada enquanto CMake.mergedCompileCommands estiver definido.",
 	"failed.to.copy": "Falha ao copiar \"{0}\" para \"{1}\": {2}",
 	"failed.to.create.parent.directory": "Falha na tentativa de copiar \"{0}\" para \"{1}\" ao criar o diretório pai \"{2}\": {3}",
 	"configuring.project": "Configurando projeto",
