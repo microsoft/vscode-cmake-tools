@@ -36,6 +36,7 @@ export interface Preset {
   condition?: Condition | boolean | null;
 
   __expanded?: boolean; // Private field to indicate if we have already expanded this preset.
+  __inheritedPresetCondition?: boolean; // Private field to indicate the fully evaluated inherited preset condition.
 }
 
 export interface ValueStrategy {
@@ -145,9 +146,10 @@ function evaluateInheritedPresetConditions(preset: Preset, allPresets: Preset[],
   const evaluateParent = (parentName: string) => {
     const parent = getPresetByName(allPresets, parentName);
     if (parent && !references.has(parent.name)) {
-      return evaluatePresetCondition(parent, allPresets, references);
+      parent.__inheritedPresetCondition = evaluatePresetCondition(parent, allPresets, references);
     }
-    return false;
+
+    return parent ? parent.__inheritedPresetCondition : false;
   };
 
   references.add(preset.name);
