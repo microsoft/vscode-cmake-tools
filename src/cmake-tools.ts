@@ -1417,7 +1417,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
       if (!drv) {
         throw new Error(localize('failed.to.get.cmake.driver', 'Failed to get CMake driver'));
       }
-      const buildCmd = await drv.getCMakeBuildCommand(targets_);
+      const buildCmd = await drv.getCMakeBuildCommand(targets_ || await this.getDefaultBuildTargets());
       if (buildCmd) {
         log.showChannel();
         log.info(buildCmdStr(buildCmd.command, buildCmd.args));
