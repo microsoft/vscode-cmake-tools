@@ -9,5 +9,6 @@
 	"unknown.control.gflag.c": "Sinalizador de controle padrão C desconhecido: {0}",
 	"unknown.control.gflag": "Marca de controle padrão desconhecida: {0}",
 	"unknown language": "Idioma desconhecido: {0}",
+	"build.type.out.of.sync": "As configurações da build geradas não contêm a configuração de compilação ativa. Usando '{0}' para CMAKE_BUILD_TYPE em vez de '{1}' para se certificar que as configurações do IntelliSense possam ser encontradas",
 	"path.not.found.in.cmake.cache": "O caminho para o compilador de um ou mais arquivos de origem não foi localizado no cache do CMake. Se você está usando um arquivo de cadeia de ferramentas, isso provavelmente significa que será necessário especificar a opção CACHE ao definir o caminho do compilador C e/ou C++"
 }
