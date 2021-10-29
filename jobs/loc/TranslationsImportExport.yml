@@ -15,7 +15,7 @@ schedules:
   displayName: Daily 7 AM
   branches:
     include:
-    - develop
+    - main
   always: true
 
 pool:
