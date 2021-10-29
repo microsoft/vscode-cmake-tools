@@ -29,6 +29,7 @@ import * as nls from 'vscode-nls';
 import { majorVersionSemver, minorVersionSemver, parseTargetTriple, TargetTriple } from '@cmt/triple';
 import * as preset from '@cmt/preset';
 import * as codemodel from '@cmt/drivers/codemodel-driver-interface';
+import {DiagnosticsConfiguration} from '@cmt/folders';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -69,7 +70,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
    *
    * @returns The exit code from CMake
    */
-  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer): Promise<number>;
+  protected abstract doConfigure(extra_args: string[], consumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number>;
   protected abstract doCacheConfigure(): Promise<number>;
 
   private _isConfiguredAtLeastOnce = false;
@@ -316,6 +317,23 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     return {vars, variantVars};
+  }
+
+  static sourceDirExpansionOptions(workspaceFolderFspath: string | null): expand.ExpansionOptions {
+    const ws_root = util.lightNormalizePath(workspaceFolderFspath || '.');
+
+    // Fill in default replacements
+    const vars: expand.MinimalPresetContextVars = {
+      generator: 'generator',
+      workspaceFolder: ws_root,
+      workspaceFolderBasename: path.basename(ws_root),
+      workspaceHash: util.makeHashString(ws_root),
+      workspaceRoot: ws_root,
+      workspaceRootFolderName: path.basename(ws_root),
+      userHome: paths.userHome
+    };
+
+    return { vars };
   }
 
   getEffectiveSubprocessEnvironment(opts?: proc.ExecutionOptions): proc.EnvironmentVariables {
@@ -593,13 +611,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return cb();
   }
 
-  private async _refreshExpansions() {
-    log.debug('Run _refreshExpansions');
+  private async _refreshExpansions(showCommandOnly?: boolean) {
+    if (!showCommandOnly) {
+      log.debug('Run _refreshExpansions');
+    }
+
     return this.doRefreshExpansions(async () => {
-      log.debug('Run _refreshExpansions cb');
+      if (!showCommandOnly) {
+        log.debug('Run _refreshExpansions cb');
+      }
+
+      this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
+
       const opts = this.expansionOptions;
       opts.envOverride = await this.getConfigureEnvironment();
-      this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, opts));
 
       if (!this.useCMakePresets) {
         this._binaryDir = util.lightNormalizePath(await expand.expandString(this.config.buildDirectory, opts));
@@ -665,6 +690,9 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   get currentBuildType(): string {
     if (this.useCMakePresets) {
+      if ((this.isMultiConfig || this.isMultiConfFast) && this._buildPreset?.configuration) {
+        return this._buildPreset.configuration;
+      }
       const buildType = this._configurePreset?.cacheVariables?.['CMAKE_BUILD_TYPE'];
       if (util.isString(buildType)) {
         return buildType;
@@ -677,8 +705,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  get isMultiConf(): boolean {
-    return this.generatorName ? util.isMultiConfGenerator(this.generatorName) : false;
+  private _isMultiConfig: boolean = false;
+  get isMultiConfig(): boolean { return this._isMultiConfig; }
+  set isMultiConfig(v: boolean) { this._isMultiConfig = v; }
+
+  get isMultiConfFast(): boolean {
+    return this.generatorName ? util.isMultiConfGeneratorFast(this.generatorName) : false;
   }
 
   /**
@@ -747,7 +779,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       const result = await child.result;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
       return result.retc === 0;
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
       if (e2.code === 'ENOENT') {
@@ -850,7 +882,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       // Make sure that all the regexp in compilerAllowList are written in a way that match[2] is the indeed the version.
       // This number may change in future as we add more cases and index 2 might be difficult to ensure for all of them.
       return match ? match[captureGroup] : "error";
-    } catch (e) {
+    } catch (e: any) {
       const e2: NodeJS.ErrnoException = e;
       console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
       return "error";
@@ -1117,14 +1149,18 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
   public shouldUseCachedConfiguration(trigger: ConfigureTrigger): boolean {
     return (this.isCacheConfigSupported && !this.isConfiguredAtLeastOnce &&
-      trigger === ConfigureTrigger.configureOnOpen && !this.config.configureOnOpen) ?
+      trigger === ConfigureTrigger.configureWithCache && !this.config.configureOnOpen) ?
       true : false;
   }
 
-  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false): Promise<number> {
+  async configure(trigger: ConfigureTrigger, extra_args: string[], consumer?: proc.OutputConsumer, withoutCmakeSettings: boolean = false, showCommandOnly?: boolean): Promise<number> {
     // Check if the configuration is using cache in the first configuration and adjust the logging messages based on that.
-    const usingCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
+    const shouldUseCachedConfiguration: boolean = this.shouldUseCachedConfiguration(trigger);
 
+    if (trigger === ConfigureTrigger.configureWithCache && !shouldUseCachedConfiguration) {
+      log.debug(localize('no.cached.config', "No cached config could be used for IntelliSense"));
+      return -2;
+    }
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1137,14 +1173,16 @@ export abstract class CMakeDriver implements vscode.Disposable {
     try {
       // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
       // (example: cmake.sourceDirectory).
-      await this._refreshExpansions();
-      if (!usingCachedConfiguration) {
-        log.debug(localize('start.configure', 'Start configure'), extra_args);
-      } else {
-        log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
+      await this._refreshExpansions(showCommandOnly);
+      if (!showCommandOnly) {
+        if (!shouldUseCachedConfiguration) {
+          log.debug(localize('start.configure', 'Start configure'), extra_args);
+        } else {
+          log.debug(localize('use.cached.configuration', 'Use cached configuration'), extra_args);
+        }
       }
 
-      const pre_check_ok = await this._beforeConfigureOrBuild();
+      const pre_check_ok = await this._beforeConfigureOrBuild(showCommandOnly);
       if (!pre_check_ok) {
         return -2;
       }
@@ -1174,21 +1212,21 @@ export abstract class CMakeDriver implements vscode.Disposable {
             async (value: string) => expand.expandString(value, {...opts, envOverride: expanded_configure_env}));
         expanded_flags = await Promise.all(expanded_flags_promises);
       }
-      if (!usingCachedConfiguration) {
+      if (!shouldUseCachedConfiguration) {
         log.trace(localize('cmake.flags.are', 'CMake flags are {0}', JSON.stringify(expanded_flags)));
       }
 
       // A more complete round of expansions
-      await this._refreshExpansions();
+      await this._refreshExpansions(showCommandOnly);
 
       const timeStart: number = new Date().getTime();
       let retc: number;
-      if (usingCachedConfiguration) {
+      if (shouldUseCachedConfiguration) {
         retc = await this.doCacheConfigure();
         this._isConfiguredAtLeastOnce = true;
         return retc;
       } else {
-        retc = await this.doConfigure(expanded_flags, consumer);
+        retc = await this.doConfigure(expanded_flags, consumer, showCommandOnly);
         this._isConfiguredAtLeastOnce = true;
       }
       const timeEnd: number = new Date().getTime();
@@ -1197,18 +1235,20 @@ export abstract class CMakeDriver implements vscode.Disposable {
       let telemetryProperties: telemetry.Properties;
       if (this.useCMakePresets) {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
           Preset: this.useCMakePresets ? 'true' : 'false',
-          Trigger: trigger
+          Trigger: trigger,
+          ShowCommandOnly: showCommandOnly ? 'true' : 'false'
         };
       } else {
         telemetryProperties = {
-          CMakeExecutableVersion: cmakeVersion ? `${cmakeVersion.major}.${cmakeVersion.minor}.${cmakeVersion.patch}` : '',
+          CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
           CMakeGenerator: this.generatorName || '',
-          ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || '',
+          ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
-          Trigger: trigger
+          Trigger: trigger,
+          ShowCommandOnly: showCommandOnly ? 'true' : 'false'
         };
       }
 
@@ -1331,7 +1371,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
     const allowBuildTypeOnMultiConfig = config.get("cmake.setBuildTypeOnMultiConfig") || false;
 
-    if (!this.isMultiConf || (this.isMultiConf && allowBuildTypeOnMultiConfig)) {
+    if (!this.isMultiConfFast || (this.isMultiConfFast && allowBuildTypeOnMultiConfig)) {
       // Mutliconf generators do not need the CMAKE_BUILD_TYPE property
       settingMap.CMAKE_BUILD_TYPE = util.cmakeify(this.currentBuildType);
     }
@@ -1372,8 +1412,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     });
   }
 
-  async build(target?: string, consumer?: proc.OutputConsumer): Promise<number|null> {
-    log.debug(localize('start.build', 'Start build'), target || '');
+  async build(targets?: string[], consumer?: proc.OutputConsumer): Promise<number|null> {
+    log.debug(localize('start.build', 'Start build'), targets?.join(', ') || '');
     if (this.configRunning) {
       await this.preconditionHandler(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
       return -1;
@@ -1390,10 +1430,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
       return -1;
     }
     const timeStart: number = new Date().getTime();
-    const child = await this._doCMakeBuild(target, consumer);
+    const child = await this._doCMakeBuild(targets, consumer);
     const timeEnd: number = new Date().getTime();
     const telemetryProperties: telemetry.Properties | undefined = this.useCMakePresets ? undefined : {
-      ConfigType: this.isMultiConf ? 'MultiConf' : this.currentBuildType || ''
+      ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || ''
     };
     const telemetryMeasures: telemetry.Measures = {
       Duration: timeEnd - timeStart
@@ -1450,8 +1490,10 @@ export abstract class CMakeDriver implements vscode.Disposable {
    * configure. This should be called by a derived driver before any
    * configuration tasks are run
    */
-  private async _beforeConfigureOrBuild(): Promise<boolean> {
-    log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+  private async _beforeConfigureOrBuild(showCommandOnly?: boolean): Promise<boolean> {
+    if (!showCommandOnly) {
+      log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+    }
 
     if (!this.sourceDir) {
       log.debug(localize('source.directory.not.set', 'Source directory not set'), this.sourceDir);
@@ -1484,23 +1526,24 @@ export abstract class CMakeDriver implements vscode.Disposable {
    */
   private _currentBuildProcess: proc.Subprocess|null = null;
 
-  private correctAllTargetName(targetname: string) {
-    if (targetname === 'all' || targetname === 'ALL_BUILD') {
-      return this.allTargetName;
-    } else {
-      return targetname;
+  private correctAllTargetName(targetnames: string[]) {
+    for (let i = 0; i < targetnames.length; i++) {
+      if (targetnames[i] === 'all' || targetnames[i] === 'ALL_BUILD') {
+        targetnames[i] = this.allTargetName;
+      }
     }
+    return targetnames;
   }
 
-  async getCMakeBuildCommand(target?: string): Promise<proc.BuildCommand|null> {
+  async getCMakeBuildCommand(targets?: string[]): Promise<proc.BuildCommand|null> {
     if (this.useCMakePresets) {
       if (!this._buildPreset) {
         log.debug(localize('no.build.preset', 'No build preset selected'));
         return null;
       }
 
-      if (target) {
-        this._buildPreset.__targets = target;
+      if (targets && targets.length > 0) {
+        this._buildPreset.__targets = targets;
       } else {
         this._buildPreset.__targets = this._buildPreset.targets;
       }
@@ -1511,29 +1554,32 @@ export abstract class CMakeDriver implements vscode.Disposable {
 
       return {command: this.cmake.path, args, build_env: this._buildPreset.environment as proc.EnvironmentVariables};
     } else {
-      if (!target) {
+      if (!targets || targets.length === 0) {
         return null;
       }
 
       const gen = this.generatorName;
-      target = this.correctAllTargetName(target);
+      targets = this.correctAllTargetName(targets);
 
       const buildArgs: string[] = this.config.buildArgs.slice(0);
       const buildToolArgs: string[] = ['--'].concat(this.config.buildToolArgs);
 
-      // Prefer using CMake's build options to set parallelism over tool-specific switches.
-      // The feature is not available until version 3.14.
-      if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
-        buildArgs.push('-j');
-        if (this.config.numJobs) {
-          buildArgs.push(this.config.numJobs.toString());
-        }
-      } else {
-        if (gen) {
-          if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && target !== 'clean') {
-            buildToolArgs.push('-j', this.config.numJobs.toString());
-          } else if (/Visual Studio/.test(gen) && target !== 'clean') {
-            buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
+      // Only add '-j' argument if parallelJobs > 1
+      if (this.config.numJobs > 1) {
+        // Prefer using CMake's build options to set parallelism over tool-specific switches.
+        // The feature is not available until version 3.14.
+        if (this.cmake.version && util.versionGreaterOrEquals(this.cmake.version, util.parseVersion('3.14.0'))) {
+          buildArgs.push('-j');
+          if (this.config.numJobs) {
+            buildArgs.push(this.config.numJobs.toString());
+          }
+        } else {
+          if (gen) {
+            if (/(Unix|MinGW) Makefiles|Ninja/.test(gen) && targets !== ['clean']) {
+              buildToolArgs.push('-j', this.config.numJobs.toString());
+            } else if (/Visual Studio/.test(gen) &&  targets !== ['clean']) {
+              buildToolArgs.push('/maxcpucount:' + this.config.numJobs.toString());
+            }
           }
         }
       }
@@ -1542,7 +1588,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       ninja_env['NINJA_STATUS'] = '[%s/%t %p :: %e] ';
       const build_env = await this.getCMakeBuildCommandEnvironment(ninja_env);
 
-      const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', target]
+      const args = ['--build', this.binaryDir, '--config', this.currentBuildType, '--target', ...targets]
                       .concat(buildArgs, buildToolArgs);
       const opts = this.expansionOptions;
       const expanded_args_promises
@@ -1555,8 +1601,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
   }
 
-  private async _doCMakeBuild(target?: string, consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
-    const buildcmd = await this.getCMakeBuildCommand(target);
+  private async _doCMakeBuild(targets?: string[], consumer?: proc.OutputConsumer): Promise<proc.Subprocess|null> {
+    const buildcmd = await this.getCMakeBuildCommand(targets);
     if (buildcmd) {
       let outputEnc = this.config.outputLogEncoding;
       if (outputEnc === 'auto') {
@@ -1619,13 +1665,13 @@ export abstract class CMakeDriver implements vscode.Disposable {
     // Load up kit or presets before starting any drivers.
     if (useCMakePresets) {
       if (configurePreset) {
-        await this.setConfigurePreset(configurePreset);
+        await this._setConfigurePreset(configurePreset);
       }
       if (buildPreset) {
-        await this.setBuildPreset(buildPreset);
+        await this._setBuildPreset(buildPreset);
       }
       if (testPreset) {
-        await this.setTestPreset(testPreset);
+        await this._setTestPreset(testPreset);
       }
     } else if (kit) {
       await this._setKit(kit, preferredGenerators);
@@ -1650,4 +1696,17 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return inst;
   }
 
+  public getDiagnostics(): DiagnosticsConfiguration {
+    return {
+      folder: this.workspaceFolder || '',
+      cmakeVersion: this.cmake.version ? util.versionToString(this.cmake.version) : '',
+      configured: this._isConfiguredAtLeastOnce,
+      generator: this.generatorName || '',
+      usesPresets: this.useCMakePresets,
+      compilers: {
+        C: this.cmakeCacheEntries.get('CMAKE_C_COMPILER')?.value,
+        CXX: this.cmakeCacheEntries.get('CMAKE_CXX_COMPILER')?.value
+      }
+    };
+  }
 }

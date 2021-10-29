@@ -2,7 +2,7 @@
   "name": "cmake-tools",
   "displayName": "CMake Tools",
   "description": "Extended CMake support in Visual Studio Code",
-  "version": "1.8.0",
+  "version": "1.9.1",
   "publisher": "ms-vscode",
   "repository": {
     "type": "git",
@@ -37,6 +37,7 @@
     "onCommand:cmake.build",
     "onCommand:cmake.buildAll",
     "onCommand:cmake.buildWithTarget",
+    "onCommand:cmake.showBuildCommand",
     "onCommand:cmake.clean",
     "onCommand:cmake.cleanAll",
     "onCommand:cmake.cleanConfigure",
@@ -45,6 +46,7 @@
     "onCommand:cmake.cleanRebuildAll",
     "onCommand:cmake.configure",
     "onCommand:cmake.configureAll",
+    "onCommand:cmake.showConfigureCommand",
     "onCommand:cmake.ctest",
     "onCommand:cmake.ctestAll",
     "onCommand:cmake.debugTarget",
@@ -80,7 +82,10 @@
     "onCommand:cmake.stopAll",
     "onCommand:cmake.outline.configureAll",
     "onCommand:cmake.outline.buildAll",
-    "workspaceContains:**/CMakeLists.txt",
+    "workspaceContains:CMakeLists.txt",
+    "workspaceContains:*/CMakeLists.txt",
+    "workspaceContains:*/*/CMakeLists.txt",
+    "workspaceContains:*/*/*/CMakeLists.txt",
     "workspaceContains:.vscode/cmake-kits.json"
   ],
   "main": "./dist/main",
@@ -145,6 +150,12 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.logDiagnostics",
+        "title": "%cmake-tools.command.cmake.logDiagnostics.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.selectActiveFolder",
         "title": "%cmake-tools.command.cmake.selectActiveFolder.title%",
         "when": "cmake:enableFullFeatureSet",
@@ -192,6 +203,11 @@
         "category": "CMake"
       },
       {
+        "command": "cmake.showConfigureCommand",
+        "title": "%cmake-tools.command.cmake.showConfigureCommand.title%",
+        "category": "CMake"
+      },
+      {
         "command": "cmake.configureAll",
         "title": "%cmake-tools.command.cmake.configureAll.title%",
         "category": "CMake"
@@ -215,6 +231,12 @@
       {
         "command": "cmake.build",
         "title": "%cmake-tools.command.cmake.build.title%",
+        "when": "cmake:enableFullFeatureSet",
+        "category": "CMake"
+      },
+      {
+        "command": "cmake.showBuildCommand",
+        "title": "%cmake-tools.command.cmake.showBuildCommand.title%",
         "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
@@ -293,7 +315,7 @@
       {
         "command": "cmake.setDefaultTarget",
         "title": "%cmake-tools.command.cmake.setDefaultTarget.title%",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "category": "CMake"
       },
       {
@@ -483,7 +505,7 @@
       },
       {
         "command": "cmake.outline.setDefaultTarget",
-        "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+        "when": "cmake:enableFullFeatureSet",
         "title": "%cmake-tools.command.cmake.outline.setDefaultTarget.title%"
       },
       {
@@ -568,6 +590,9 @@
           "command": "cmake.configure"
         },
         {
+          "command": "cmake.showConfigureCommand"
+        },
+        {
           "when": "cmake:enableFullFeatureSet && !useCMakePresets",
           "command": "cmake.scanForKits"
         },
@@ -602,6 +627,10 @@
           "command": "cmake.build"
         },
         {
+          "when": "cmake:enableFullFeatureSet",
+          "command": "cmake.showBuildCommand"
+        },
+        {
           "command": "cmake.buildAll",
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet"
         },
@@ -630,7 +659,7 @@
           "when": "cmake:multiRoot && cmake:enableFullFeatureSet && !useCMakePresets"
         },
         {
-          "when": "cmake:enableFullFeatureSet && !useCMakePresets",
+          "when": "cmake:enableFullFeatureSet",
           "command": "cmake.setDefaultTarget"
         },
         {
@@ -859,7 +888,7 @@
         },
         {
           "command": "cmake.outline.setDefaultTarget",
-          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canRun=true|canBuild=true/ && viewItem =~ /isDefault=false/ && !useCMakePresets",
+          "when": "view == cmake.outline && cmake:enableFullFeatureSet && viewItem =~ /canRun=true|canBuild=true/ && viewItem =~ /isDefault=false/",
           "group": "2_targetState@1"
         },
         {
@@ -1002,7 +1031,7 @@
     },
     "configuration": {
       "type": "object",
-      "title": "CMake Tools configuration",
+      "title": "CMake Tools",
       "properties": {
         "cmake.autoSelectActiveFolder": {
           "type": "boolean",
@@ -1162,7 +1191,8 @@
               "gnuld",
               "msvc",
               "ghs",
-              "diab"
+              "diab",
+              "iar"
             ]
           },
           "default": [
@@ -1439,6 +1469,12 @@
           "default": [],
           "description": "%cmake-tools.configuration.cmake.emscriptenSearchDirs.description%",
           "scope": "window"
+        },
+        "cmake.mergedCompileCommands": {
+          "type": "string",
+          "default": null,
+          "description": "%cmake-tools.configuration.cmake.mergedCompileCommands.description%",
+          "scope": "resource"
         },
         "cmake.copyCompileCommands": {
           "type": "string",
@@ -1849,6 +1885,12 @@
           "default": "auto",
           "description": "%cmake-tools.configuration.cmake.useCMakePresets.description%",
           "scope": "resource"
+        },
+        "cmake.allowCommentsInPresetsFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "%cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description%",
+          "scope": "resource"
         }
       }
     },
@@ -1914,11 +1956,11 @@
       },
       {
         "fileMatch": "CMakePresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
       },
       {
         "fileMatch": "CMakeUserPresets.json",
-        "url": "cmake-tools-schema:///schemas/CMakePresets-schema.json"
+        "url": "cmake-tools-schema:///schemas/CMakePresets-v3-schema.json"
       }
     ]
   },
@@ -2014,7 +2056,8 @@
     "rimraf": "^3.0.2",
     "tmp": "^0.2.1",
     "vscode-cpptools": "^5.0.0",
-    "vscode-extension-telemetry": "^0.1.6",
+    "vscode-extension-telemetry": "^0.1.7",
+    "vscode-tas-client": "^0.1.22",
     "vscode-nls": "^5.0.0",
     "which": "~2.0.2",
     "xml2js": "^0.4.23"

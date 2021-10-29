@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Выбор предустановки сборки",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Выбор предустановки тестирования",
 	"cmake-tools.command.cmake.viewLog.title": "Открытие файла журнала средств CMake",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Журнал диагностики",
 	"cmake-tools.command.cmake.editKits.title": "Изменение локальных пользовательских пакетов CMake",
 	"cmake-tools.command.cmake.scanForKits.title": "Поиск наборов",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Поиск компиляторов",
@@ -20,8 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Выбор варианта для всех проектов",
 	"cmake-tools.command.cmake.configure.title": "Настроить",
 	"cmake-tools.command.cmake.configureAll.title": "Настройка всех проектов",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "Отображение команды настройки",
 	"cmake-tools.command.cmake.build.title": "Сборка",
 	"cmake-tools.command.cmake.buildAll.title": "Сборка всех проектов",
+	"cmake-tools.command.cmake.showBuildCommand.title": "Отображение команды сборки",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(Внутренняя функция.) Сборка целевого объекта по имени",
 	"cmake-tools.command.cmake.compileFile.title": "Компиляция активного файла",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Компилировать файл",
@@ -77,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Дополнительные аргументы для передачи CMake при настройке.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Дополнительные аргументы для передачи CMake при сборке.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Дополнительные аргументы для передачи инструменту сборки при сборке.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Число параллельных заданий сборки. Для автоматического обнаружения числа ЦП используйте нулевое значение.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Количество параллельных заданий сборки. Установите значение 0, чтобы автоматически определить количество ЦП. Если установить значение 1, параллельные сборки будут отключены.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Путь к исполняемому файлу CTest. Если он равен NULL, значение будет выводиться из cmake.cmakePath (рекомендуется оставить NULL).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Число параллельных тестовых заданий. Укажите нуль, чтобы использовать значение cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Анализ вывода компилятора на наличие предупреждений и ошибок.",
@@ -112,6 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "Каталоги, где возможна установка MinGW.",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "Путь к каталогу.",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Каталоги, где возможна установка Emscripten.",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Рекурсивный сбор и объединение всех compile_commands.json, найденных в cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Копирование сюда файла compile_commands.json после выполнения настройки.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Автоматическая настройка каталогов проекта CMake при их открытии.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Автоматически настраивать каталоги проекта CMake при сохранении содержимого в каталоге cmake.sourceDirectory или в файле CMakeLists.txt.",
@@ -135,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "Структура проекта",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Массив путей к файлам пользовательских наборов",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Включает exporting compile_commands.json.",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "Используйте CMakePresets.json для настройки конфигурации, сборки и тестирования CMake диска. При использовании CMakePresets.json наборы, варианты и некоторые параметры в settings.json будут пропущены."
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "Используйте CMakePresets.json для настройки конфигурации, сборки и тестирования CMake диска. При использовании CMakePresets.json наборы, варианты и некоторые параметры в settings.json будут пропущены.",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Разрешить использование расширений JSON, таких как комментарии, в CMakePresets.json. Обратите внимание, что файл CMakePresets.json может считаться недействительным в других IDE или в командной строке, если вы используете нестандартный JSON."
 }

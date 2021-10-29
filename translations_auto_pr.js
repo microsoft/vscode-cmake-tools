@@ -7,7 +7,7 @@ const path = require('path');
 const parseGitConfig = require('parse-git-config');
 
 const branchName = 'localization';
-const mergeTo = 'develop';
+const mergeTo = 'main';
 const commitComment = 'Localization - Translated Strings';
 const pullRequestTitle = '[Auto] Localization - Translated Strings';
 
@@ -101,7 +101,7 @@ if (!hasAnyChanges()) {
 
 console.log("Changes detected");
 
-console.log(`Ensure develop ref is up to date locally (git fetch)`);
+console.log(`Ensure main ref is up to date locally (git fetch)`);
 cp.execSync('git fetch');
 
 // Remove old localization branch, if any

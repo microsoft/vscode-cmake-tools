@@ -151,7 +151,7 @@ export interface CMakeToolsAPI extends Disposable {
   /**
    * The source directory, containing the root of the project
    */
-  readonly sourceDir: Thenable<string>;
+  readonly sourceDir: string;
   /**
    * The `CMakeLists.txt` at to the root of the project
    */
@@ -223,7 +223,7 @@ export interface CMakeToolsAPI extends Disposable {
    * active build target.
    * @returns the exit code of the build command
    */
-  build(target?: string): Thenable<number>;
+  build(targets?: string[]): Thenable<number>;
 
   /**
    * Installs the project

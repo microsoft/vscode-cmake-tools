@@ -37,6 +37,7 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
     testEnvironment: {},
     mingwSearchDirs: [],
     emscriptenSearchDirs: [],
+    mergedCompileCommands: null,
     copyCompileCommands: null,
     configureOnOpen: null,
     configureOnEdit: true,
@@ -56,7 +57,8 @@ function createConfig(conf: Partial<ExtensionConfigurationSettings>): Configurat
       advanced: {},
       visibility: "default"
     },
-    useCMakePresets: 'never'
+    useCMakePresets: 'never',
+    allowCommentsInPresetsFile: false
   });
   ret.updatePartial(conf);
   return ret;

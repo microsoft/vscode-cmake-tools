@@ -13,7 +13,9 @@ import * as ghs from './ghs';
 import * as diab from './diab';
 import * as gnu_ld from './gnu-ld';
 import * as mvsc from './msvc';
+import * as iar from './iar';
 import {FileDiagnostic, RawDiagnosticParser} from './util';
+import { ConfigurationReader } from '@cmt/config';
 
 export class Compilers {
   [compiler: string]: RawDiagnosticParser;
@@ -23,9 +25,12 @@ export class Compilers {
   diab = new diab.Parser();
   gnuLD = new gnu_ld.Parser();
   msvc = new mvsc.Parser();
+  iar = new iar.Parser();
 }
 
 export class CompileOutputConsumer implements OutputConsumer {
+  constructor(readonly config: ConfigurationReader) {}
+
   compilers = new Compilers();
 
   // Defer all output to the `error` method
@@ -65,9 +70,12 @@ export class CompileOutputConsumer implements OutputConsumer {
       MSVC: this.compilers.msvc.diagnostics,
       GHS: this.compilers.ghs.diagnostics,
       DIAB: this.compilers.diab.diagnostics,
-      link: this.compilers.gnuLD.diagnostics
+      link: this.compilers.gnuLD.diagnostics,
+      IAR: this.compilers.iar.diagnostics
     };
-    const arrs = util.objectPairs(by_source).map(([source, diags]) => diags.map(raw_diag => {
+    const arrs = util.objectPairs(by_source)
+      .filter(([source, _]) => this.config.enableOutputParsers?.includes(source.toLowerCase()) ?? false)
+      .map(([source, diags]) => diags.map(raw_diag => {
         const filepath = util.resolvePath(raw_diag.file, basePath);
         const severity = severity_of(raw_diag.severity);
         if (severity === undefined) {
@@ -105,7 +113,9 @@ export class CompileOutputConsumer implements OutputConsumer {
  * indicator.
  */
 export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
-  constructor(readonly logger: Logger|null) {}
+  constructor(readonly logger: Logger|null, config: ConfigurationReader) {
+    this.compileConsumer = new CompileOutputConsumer(config);
+  }
   /**
    * Event fired when the progress changes
    */
@@ -113,7 +123,7 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
   private readonly _onProgressEmitter = new vscode.EventEmitter<proc.ProgressData>();
   private readonly _percent_re = /\[.*?(\d+)\%.*?\]/;
 
-  readonly compileConsumer = new CompileOutputConsumer();
+  readonly compileConsumer: CompileOutputConsumer;
 
   dispose() { this._onProgressEmitter.dispose(); }
 

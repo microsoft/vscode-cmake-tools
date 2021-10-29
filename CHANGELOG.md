@@ -1,5 +1,86 @@
 # What's New?
 
+## 1.10.0
+Bug fixes:
+- Fix `Show Build Command` for folders that do not use CMake Presets. [#2211](https://github.com/microsoft/vscode-cmake-tools/issues/2211)
+
+## 1.9.1
+Bug fixes:
+- Fix presets using conditions with macros and inheritance. [#2185](https://github.com/microsoft/vscode-cmake-tools/issues/2185)
+- Parallelism no longer working in 1.9.0 for CMake < 3.14.0. [#2181](https://github.com/microsoft/vscode-cmake-tools/issues/2181)
+- `CMake: Compile Active File` command stopped working in v1.9.0. [#2180](https://github.com/microsoft/vscode-cmake-tools/issues/2180)
+- Exception after successful build when cpptools IntelliSense is disabled. [#2188](https://github.com/microsoft/vscode-cmake-tools/issues/2188)
+- Fix issue with presets (v3) and "toolchainFile". [#2179](https://github.com/microsoft/vscode-cmake-tools/issues/2179)
+- Don't add `-j` argument when `cmake.parallelJobs` is set to `1`. [#1958](https://github.com/microsoft/vscode-cmake-tools/issues/1958) [@mark-ulrich](https://github.com/mark-ulrich)
+- Warn the user about CMAKE_BUILD_TYPE inconsistencies. [#2096](https://github.com/microsoft/vscode-cmake-tools/issues/2096)
+
+## 1.9.0
+Improvements:
+- Add support for CMakePresets version 3. [#1904](https://github.com/microsoft/vscode-cmake-tools/issues/1904)
+- Add diagnostic support for parsing IAR compiler output. [PR #2131](https://github.com/microsoft/vscode-cmake-tools/pull/2131) [@willson556](https://github.com/willson556)
+- Add "Log Diagnostics" command. [PR #2141](https://github.com/microsoft/vscode-cmake-tools/pull/2141)
+- Add build and configure commands to show cmake commands without running them. [PR #1767](https://github.com/microsoft/vscode-cmake-tools/pull/1767)
+- Implement support for merging multiple compile_commands in super-builds sub-folders of the build directory. [PR #2029](https://github.com/microsoft/vscode-cmake-tools/pull/2029) [@Felix-El](https://github.com/Felix-El)
+- Add `cmake.allowCommentsInPresetsFile` setting to allow JS style comments in CMakePresets files. [#2169](https://github.com/microsoft/vscode-cmake-tools/issues/2169)
+
+Bug fixes:
+- MSVC_VERSION is incorrect when cmake configures with clang-cl. [#1053](https://github.com/microsoft/vscode-cmake-tools/issues/1053) [@tklajnscek](https://github.com/tklajnscek)
+- Build error because `binaryDir` removed after configure. [#2128](https://github.com/microsoft/vscode-cmake-tools/issues/2128)
+- Configuration from build presets ignored by Intellisense and launch (when using multi config generators). [#2099](https://github.com/microsoft/vscode-cmake-tools/issues/2099)
+- Extra {0} output message when having preset with circular inherits. [#2118](https://github.com/microsoft/vscode-cmake-tools/issues/2118)
+- CMake-Tools does not reconfigure after a change of CMakeLists.txt in a subdirectory of root. [#1911](https://github.com/microsoft/vscode-cmake-tools/issues/1911) [@AbdullahAmrSobh](https://github.com/AbdullahAmrSobh)
+- Fixes msvc2015 detection when only vs2019 are installed. [#1955](https://github.com/microsoft/vscode-cmake-tools/issues/1955) [@lygstate](https://github.com/lygstate)
+- Allow for clang compilers to be set in presets without full path. [#1922](https://github.com/microsoft/vscode-cmake-tools/issues/1922)
+- Compiler flags containing spaces not passed correctly to IntelliSense. [#1414](https://github.com/microsoft/vscode-cmake-tools/issues/1414)
+- Don't scan the whole workspace for CMakeLists.txt, just a few folders. [#2127](https://github.com/microsoft/vscode-cmake-tools/issues/2127)
+- Regression with Visual Studio generator and non-default toolset. [#2147](https://github.com/microsoft/vscode-cmake-tools/issues/2147)
+- Debug shows "No compiler found in cache file." dialog. [#2121](https://github.com/microsoft/vscode-cmake-tools/issues/2121)
+- Unable to work with pre-configured projects (cache is deleted). [#2140](https://github.com/microsoft/vscode-cmake-tools/issues/2140)
+- Unknown C/C++ standard control flags: -std=gnu++2b and -std=c2x. [#2150](https://github.com/microsoft/vscode-cmake-tools/issues/2150)
+- Select the most recently used build/test preset when configure preset changes. [#1927](https://github.com/microsoft/vscode-cmake-tools/issues/1927)
+- Re-enable build target selection when using presets. [#1872](https://github.com/microsoft/vscode-cmake-tools/issues/1872)
+
+## 1.8.1
+Bug fixes:
+- Command substitutions in launch.json are broken. [#2091](https://github.com/microsoft/vscode-cmake-tools/issues/2091)
+- `cmake.configureOnOpen` setting is ignored. [#2088](https://github.com/microsoft/vscode-cmake-tools/issues/2088)
+- User-defined preset not shown when inheriting from `CMakePresets.json`. [#2082](https://github.com/microsoft/vscode-cmake-tools/issues/2082)
+- Fix presets using server API. [#2026](https://github.com/microsoft/vscode-cmake-tools/issues/2026)
+
+## 1.8.0
+Improvements:
+- Last selected target isn't read on start up. [#1148](https://github.com/microsoft/vscode-cmake-tools/issues/1148)
+- Use cached cmake-file-api response to configure IntelliSense on startup. [#1149](https://github.com/microsoft/vscode-cmake-tools/issues/1149)
+- Show a quickPick of all the CMakeLists.txt inside the project (if none exists where "cmake.sourceDirectory" points at). [#533](https://github.com/microsoft/vscode-cmake-tools/issues/533)
+- Add command to get the active folder of a workspace. [#1715](https://github.com/microsoft/vscode-cmake-tools/issues/1715) [@guestieng](https://github.com/guestieng)
+- Task provider refactoring to best utilize latest updates from VSCode. [PR #1880](https://github.com/microsoft/vscode-cmake-tools/pull/1880)
+- Add docker container definition. [PR #1758](https://github.com/microsoft/vscode-cmake-tools/pull/1758)
+- Enhance the vsix build with package scripts in package.json. [PR #1752](https://github.com/microsoft/vscode-cmake-tools/pull/1752) [@lygstate](https://github.com/lygstate)
+
+Bug fixes:
+- Fix various presets field settings to be passed correctly on to CMake. [#2009](https://github.com/microsoft/vscode-cmake-tools/issues/2009)
+- Check for target architecture when reading toolchain FileAPI. [#1879](https://github.com/microsoft/vscode-cmake-tools/issues/1879)
+- Fix environment variable in debugging docs. [PR #1874](https://github.com/microsoft/vscode-cmake-tools/pull/1874) [@zariiii9003](https://github.com/zariiii9003)
+- Fix typo in variant docs. [PR #1970](https://github.com/microsoft/vscode-cmake-tools/pull/1970) [@melak47](https://github.com/melak47)
+- Update schema for preset cache variable CMAKE_BUILD_TYPE. [#1934](https://github.com/microsoft/vscode-cmake-tools/issues/1934)
+- Fix regression in ctestDefaultArgs (ctest hardcoded directives: -T, test, --output-on-failure). [#1956](https://github.com/microsoft/vscode-cmake-tools/issues/1956)
+- Don't throw when unknown diagnostics apepar. [#1796](https://github.com/microsoft/vscode-cmake-tools/issues/1796)
+- Add parse target triple to fix "bad clang binary" error. [#1916](https://github.com/microsoft/vscode-cmake-tools/issues/1916) [@lygstate](https://github.com/lygstate)
+- Include CMAKE_BUILD_TYPE in the generated text of configure preset. [#1847](https://github.com/microsoft/vscode-cmake-tools/issues/1847)
+- Show also the "hidden" presets in the "Inherit from configure presets" quick pick. [#1923](https://github.com/microsoft/vscode-cmake-tools/issues/1923)
+- Clang-cl diagnostics don't appear in Problems view. [#517](https://github.com/microsoft/vscode-cmake-tools/issues/517) [@ki-bo](https://github.com/ki-bo)
+- Fix duplication in name of MSVC versus LLVM Clang kit. [PR #1951](https://github.com/microsoft/vscode-cmake-tools/pull/1951) [@lygstate](https://github.com/lygstate)
+- Fixes output encoding in the vcvars setup process. [PR #1985](https://github.com/microsoft/vscode-cmake-tools/pull/1985) [@lygstate](https://github.com/lygstate)
+- Remove vendor support since the string expansion is wrong for it. [#1966](https://github.com/microsoft/vscode-cmake-tools/issues/1966)
+- Add configure preset environment to debug/launch. [#1884](https://github.com/microsoft/vscode-cmake-tools/issues/1884)
+- Fix msvc2015 detection when only vs2019 is installed. [#1905](https://github.com/microsoft/vscode-cmake-tools/issues/1905) [@lygstate](https://github.com/lygstate)
+- Prevent file index overwritting in multi-config generators. [#1800](https://github.com/microsoft/vscode-cmake-tools/issues/1800) [@andredsm](https://github.com/andredsm)
+- Various cache variables edit/save fixes. [PR #1826](https://github.com/microsoft/vscode-cmake-tools/pull/1826) [@aemseemann](https://github.com/aemseemann)
+- Use JSON as the language mode of preset files. [#2035](https://github.com/microsoft/vscode-cmake-tools/issues/2035)
+- Fix broken links to contributing file. [PR #2016](https://github.com/microsoft/vscode-cmake-tools/pull/2016) [@andredsm](https://github.com/andredsm)
+- Kit scan generates incorrect kits for VS 2022 [#2054](https://github.com/microsoft/vscode-cmake-tools/issues/2054)
+- Fix presets for msvc compilers with x86 outputs [PR #2072](https://github.com/microsoft/vscode-cmake-tools/pull/2072)
+
 ## 1.7.3
 Bug fixes:
 - Make sure CMake Tools configuration provider gets registered with presets on. [#1832](https://github.com/microsoft/vscode-cmake-tools/issues/1832)

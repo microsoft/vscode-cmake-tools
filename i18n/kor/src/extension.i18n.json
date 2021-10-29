@@ -20,6 +20,7 @@
 	"configure.recommended": "새 키트 정의로 업그레이드한 후 다시 구성하는 것이 좋습니다.",
 	"using.cache.to.configure.workspace.on.open": "열린 {0}에서 작업 영역을 구성하기 위해 캐시 사용 중",
 	"update.code.model.for.cpptools": "cpptools에 대한 코드 모델 업데이트",
+	"update.intellisense.disabled": "C_Cpp.intelliSenseEngine이 'Disabled'로 설정되어 있으므로 구성 공급자를 업데이트하지 않습니다.",
 	"filed.to.open.cache.file.on.code.model.update": "코드 모델 업데이트에서 CMake 캐시 파일을 열지 못함",
 	"opening.text.editor.for": "{0}의 텍스트 편집기를 여는 중",
 	"no.kits.file.what.to.do": "키트 파일이 없습니다. 원하는 작업을 선택하세요.",

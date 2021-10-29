@@ -20,6 +20,7 @@
 	"configure.recommended": "建議您在升級為新套件定義後重新設定。",
 	"using.cache.to.configure.workspace.on.open": "使用快取在開放式 {0} 上設定工作區",
 	"update.code.model.for.cpptools": "更新 cpptools 的程式碼模型",
+	"update.intellisense.disabled": "無法更新組態提供者，因為 C_Cpp.intelliSenseEngine 設為 '停用'",
 	"filed.to.open.cache.file.on.code.model.update": "無法在程式碼模型更新時開啟 CMake 快取檔案",
 	"opening.text.editor.for": "正在開啟 {0} 的文字編輯器",
 	"no.kits.file.what.to.do": "沒有套件檔案存在。要執行什麼作業?",

@@ -6,6 +6,7 @@
 {
 	"gdb.not.found": "Varsayılan arama yolunda ve {0} konumunda GDB bulunamıyor.",
 	"enable.pretty.printing": "GDB için düzgün yazdırmayı etkinleştir",
+	"invalid.miDebuggerPath.override": "'{1}' içindeki '{0}' bir hata ayıklayıcısının mutlak yolu olmalıdır (değişken genişletme şu anda desteklenmiyor). Alınan: '{2}'",
 	"no.compiler.found.in.cache": "Önbellek dosyasında derleyici bulunamadı.",
 	"unable.to.determine.debugger.for.compiler": "{0} derleyicisine karşılık gelen hata ayıklayıcısı otomatik olarak belirlenemiyor"
 }

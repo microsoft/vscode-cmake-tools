@@ -43,25 +43,43 @@ export class StateManager {
 
   async setConfigurePresetName(v: string|null) { await this._update('configurePresetName', v); }
 
-  /**
-   * The name of the workspace-local active build preset
-   */
-  get buildPresetName(): string|null {
-    const preset = this._get<string>('buildPresetName');
-    return preset || null;
+  private get cachedConfigurePresets(): string[] {
+    return this._get<string[]>('cachedConfigurePresets') || [];
   }
 
-  async setBuildPresetName(v: string|null) { await this._update('buildPresetName', v); }
-
-  /**
-   * The name of the workspace-local active test preset
-   */
-  get testPresetName(): string|null {
-    const preset = this._get<string>('testPresetName');
-    return preset || null;
+  private async addCachedConfigurePreset(preset: string) {
+    const configurePresets = this.cachedConfigurePresets;
+    if (configurePresets.indexOf(preset) >= 0) { return; }
+    configurePresets.push(preset);
+    return this._update('cachedConfigurePresets', configurePresets);
   }
 
-  async setTestPresetName(v: string|null) { await this._update('testPresetName', v); }
+  private async clearCachedConfigurePresets() {
+    const configurePresets = this.cachedConfigurePresets;
+    for (const preset of configurePresets) {
+      await this.setBuildPresetName(preset, null);
+      await this.setTestPresetName(preset, null);
+    }
+    return this._update('cachedConfigurePresets', null);
+  }
+
+  getBuildPresetName(configurePreset: string): string|null {
+    return this._get<string>(`buildPreset for ${configurePreset}`) || null;
+  }
+
+  async setBuildPresetName(configurePreset: string, v: string|null) {
+    await this.addCachedConfigurePreset(configurePreset);
+    await this._update(`buildPreset for ${configurePreset}`, v);
+  }
+
+  getTestPresetName(configurePreset: string): string|null {
+    return this._get<string>(`testPreset for ${configurePreset}`) || null;
+  }
+
+  async setTestPresetName(configurePreset: string, v: string|null) {
+    await this.addCachedConfigurePreset(configurePreset);
+    await this._update(`testPreset for ${configurePreset}`, v);
+  }
 
   /**
    * The name of the workspace-local active kit.
@@ -116,8 +134,7 @@ export class StateManager {
    */
   async reset() {
     await this.setConfigurePresetName(null);
-    await this.setBuildPresetName(null);
-    await this.setTestPresetName(null);
+    await this.clearCachedConfigurePresets();
     await this.setActiveVariantSettings(null);
     await this.setLaunchTargetName(null);
     await this.setDefaultBuildTarget(null);

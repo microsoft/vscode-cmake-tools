@@ -2,7 +2,7 @@ name: Build VSIX
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -31,6 +31,7 @@ jobs:
           find: "\"version\": \"(\\d+\\.\\d+\\.\\d+)\""
           replace: "\"version\": \"$1-${{ steps.get-short-sha.outputs.sha }}\""
           include: "package.json"
+          exclude: ".git"
 
       - name: Build the VSIX
         run:  |
