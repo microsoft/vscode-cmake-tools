@@ -1472,7 +1472,7 @@
         },
         "cmake.mergedCompileCommands": {
           "type": "string",
-          "default": null,
+          "default": "",
           "description": "%cmake-tools.configuration.cmake.mergedCompileCommands.description%",
           "scope": "resource"
         },
