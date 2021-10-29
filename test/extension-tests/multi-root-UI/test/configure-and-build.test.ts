@@ -26,7 +26,7 @@ if (process.env.TRAVIS_OS_NAME) {
 suite('Build', async () => {
   let testEnv: DefaultEnvironment;
   let compdb_cp_path: string;
-  let cmakeTools : CMakeTools;
+  let cmakeTools: CMakeTools;
 
   suiteSetup(async function(this: Mocha.Context) {
     this.timeout(100000);
@@ -49,7 +49,7 @@ suite('Build', async () => {
     this.timeout(100000);
 
     const kit = await getFirstSystemKit(cmakeTools);
-    console.log("Using following kit in next test: ", kit);
+    console.log("Using following kit in next test: ", kit.name);
     await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
     testEnv.projectFolder.buildDirectory.clear();
   });
@@ -125,12 +125,11 @@ suite('Build', async () => {
 
   test('Test kit switch after missing preferred generator', async function(this: Mocha.Context) {
     // Select compiler build node dependent
-    const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+    const os_compilers: {[osName: string]: {kitLabel: RegExp; compiler: string}[]} = {
       linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
       win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
     };
-    if (!(workername in os_compilers))
-      this.skip();
+    if (!(workername in os_compilers)) {this.skip(); }
     const compiler = os_compilers[workername];
 
     // Run test
@@ -150,12 +149,11 @@ suite('Build', async () => {
   test('Test kit switch between different preferred generators and compilers',
        async function(this: Mocha.Context) {
          // Select compiler build node dependent
-         const os_compilers: {[osName: string]: {kitLabel: RegExp, compiler: string}[]} = {
+         const os_compilers: {[osName: string]: {kitLabel: RegExp; compiler: string}[]} = {
            linux: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^Clang \d/, compiler: 'Clang'}],
            win32: [{kitLabel: /^GCC \d/, compiler: 'GNU'}, {kitLabel: /^VisualStudio/, compiler: 'MSVC'}]
          };
-         if (!(workername in os_compilers))
-           this.skip();
+         if (!(workername in os_compilers)) {this.skip(); }
          const compiler = os_compilers[workername];
 
          testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;

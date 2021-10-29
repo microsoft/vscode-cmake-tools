@@ -1,4 +1,3 @@
-
 import * as api from '@cmt/api';
 import {CMakeCache} from '@cmt/cache';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirstSystemKit} from '@test/util';
@@ -9,7 +8,7 @@ import CMakeTools from '@cmt/cmake-tools';
 
 suite('[Environment Variables in Variants]', async () => {
   let testEnv: DefaultEnvironment;
-  let cmakeTools : CMakeTools;
+  let cmakeTools: CMakeTools;
 
   setup(async function(this: Mocha.Context) {
     this.timeout(100000);
@@ -26,7 +25,7 @@ suite('[Environment Variables in Variants]', async () => {
     await clearExistingKitConfigurationFile();
 
     const kit = await getFirstSystemKit(cmakeTools);
-    console.log("Using following kit in next test: ", kit);
+    console.log("Using following kit in next test: ", kit.name);
     await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
 
     testEnv.projectFolder.buildDirectory.clear();

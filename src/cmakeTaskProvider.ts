@@ -26,7 +26,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
   static CMakeSourceStr: string = "CMake";
   static allTargetName: string = "all";
   private cmakeDriver?: CMakeDriver;
-  private defaultTarget: string = CMakeTaskProvider.allTargetName;
+  private defaultTargets: string[] = [CMakeTaskProvider.allTargetName];
 
   constructor() {
   }
@@ -38,9 +38,9 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
     }
   }
 
-  public updateDefaultTarget(defaultTarget: string | undefined) {
-    this.defaultTarget = defaultTarget ? defaultTarget :
-      this.cmakeDriver ? this.cmakeDriver.allTargetName : CMakeTaskProvider.allTargetName;
+  public updateDefaultTargets(defaultTargets: string[] | undefined) {
+    this.defaultTargets = (defaultTargets && defaultTargets.length > 0) ? defaultTargets :
+      this.cmakeDriver ? [this.cmakeDriver.allTargetName] : [CMakeTaskProvider.allTargetName];
   }
 
   public async provideTasks(): Promise<CMakeTask[]> {
@@ -66,7 +66,7 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
       const scope: vscode.WorkspaceFolder | vscode.TaskScope = vscode.TaskScope.Workspace;
       const resolvedTask: CMakeTask = new vscode.Task(definition, scope, definition.label, CMakeTaskProvider.CMakeSourceStr,
         new vscode.CustomExecution(async (resolvedDefinition: vscode.TaskDefinition): Promise<vscode.Pseudoterminal> =>
-          new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTarget, resolvedDefinition.options, this.cmakeDriver)
+          new CustomBuildTaskTerminal(resolvedDefinition.command, this.defaultTargets, resolvedDefinition.options, this.cmakeDriver)
         ), []); // TODO: add problem matcher
       return resolvedTask;
     }
@@ -81,7 +81,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal , proc.OutputCons
   public get onDidClose(): vscode.Event<number> { return this.closeEmitter.event; }
   private endOfLine: string = "\r\n";
 
-  constructor(private command: string, private defaultTarget: string, private options?: { cwd?: string }, private cmakeDriver?: CMakeDriver) {
+  constructor(private command: string, private defaultTargets: string[], private options?: { cwd?: string }, private cmakeDriver?: CMakeDriver) {
   }
 
   output(line: string): void {
@@ -113,7 +113,7 @@ class CustomBuildTaskTerminal implements vscode.Pseudoterminal , proc.OutputCons
     let args: string[] = [];
 
     if (this.cmakeDriver) {
-      buildCommand = await this.cmakeDriver.getCMakeBuildCommand(this.defaultTarget);
+      buildCommand = await this.cmakeDriver.getCMakeBuildCommand(this.defaultTargets);
       if (buildCommand) {
         cmakePath = buildCommand.command;
         args = buildCommand.args ? buildCommand.args : [];

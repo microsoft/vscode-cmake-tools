@@ -4,8 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import { platform } from 'os';
 
-import {EnvironmentVariables, execute} from '@cmt/proc';
+import {EnvironmentVariables, DebuggerEnvironmentVariable, execute} from '@cmt/proc';
 import rollbar from '@cmt/rollbar';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
@@ -289,7 +290,7 @@ async function _killTree(pid: number) {
     }
     try {
       process.kill(pid, 'SIGINT');
-    } catch (e) {
+    } catch (e: any) {
       if (e.code === 'ESRCH') {
         // Do nothing. We're okay.
       } else {
@@ -313,8 +314,11 @@ export function splitCommandLine(cmd: string): string[] {
   return quoted_args!.map(arg => arg.replace(/\\(")/g, '$1').replace(/^"(.*)"$/g, '$1'));
 }
 
-export function isMultiConfGenerator(gen: string): boolean {
-  return gen.includes('Visual Studio') || gen.includes('Xcode');
+/**
+ * This is an initial check without atually configuring. It may or may not be accurate.
+ */
+export function isMultiConfGeneratorFast(gen: string): boolean {
+  return gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config');
 }
 
 export class InvalidVersionString extends Error {}
@@ -325,17 +329,27 @@ export interface Version {
   patch: number;
 }
 export function parseVersion(str: string): Version {
-  const version_re = /(\d+)\.(\d+)\.(\d+)/;
+  const version_re = /(\d+)\.(\d+)\.(\d+)(.*)/;
   const mat = version_re.exec(str);
   if (!mat) {
     throw new InvalidVersionString(localize('invalid.version.string', 'Invalid version string {0}', str));
   }
   const [, major, minor, patch] = mat;
   return {
-    major: parseInt(major),
-    minor: parseInt(minor),
-    patch: parseInt(patch)
+    major: parseInt(major ?? '0'),
+    minor: parseInt(minor ?? '0'),
+    patch: parseInt(patch ?? '0')
   };
+}
+
+export function compareVersion(va: Version, vb: Version) {
+  if (va.major !== vb.major) {
+    return va.major - vb.major;
+  }
+  if (va.minor !== vb.minor) {
+    return va.minor - vb.minor;
+  }
+  return va.patch - vb.patch;
 }
 
 export function versionToString(ver: Version): string {
@@ -357,6 +371,16 @@ export function* flatMap<In, Out>(rng: Iterable<In>, fn: (item: In) => Iterable<
       yield other_elem;
     }
   }
+}
+
+export function makeDebuggerEnvironmentVars(env: EnvironmentVariables): DebuggerEnvironmentVariable[] {
+  const converted_env: DebuggerEnvironmentVariable[] = Object.entries(env).map(
+    ([key, value]) => ({
+      name: key,
+      value
+    })
+  );
+  return converted_env;
 }
 
 export function mergeEnvironment(...env: EnvironmentVariables[]): EnvironmentVariables {
@@ -612,6 +636,10 @@ export function isString(x: any): x is string {
   return Object.prototype.toString.call(x) === "[object String]";
 }
 
+export function isBoolean(x: any): x is boolean {
+  return x === true || x === false;
+}
+
 export function makeHashString(str: string): string {
     const crypto = require('crypto');
     const hash = crypto.createHash('sha256');
@@ -627,10 +655,8 @@ export function isArrayOfString(x: any): x is string[] {
   return isArray(x) && x.every(isString);
 }
 
-export function isNullOrUndefined(x?: any): boolean {
-  // Double equals provides the correct answer for 'null' and 'undefined'
-  // http://www.ecma-international.org/ecma-262/6.0/index.html#sec-abstract-equality-comparison
-  return x === null;
+export function isNullOrUndefined(x?: any): x is null | undefined {
+  return (x === null || x === undefined);
 }
 
 export function isWorkspaceFolder(x?: any): boolean {
@@ -683,3 +709,40 @@ export function getRelativePath(file: string, dir: string): string {
   const joinedPath = "${workspaceFolder}/".concat(relPathDir);
   return joinedPath;
 }
+
+// cl, clang, clang-cl, clang-cpp and clang++ are supported compilers.
+export function isSupportedCompiler(compilerName: string | undefined): string | undefined {
+  return  (compilerName === 'cl' || compilerName === 'cl.exe') ? 'cl' :
+          (compilerName === 'clang' || compilerName === 'clang.exe') ? 'clang' :
+          (compilerName === 'clang-cl' || compilerName === 'clang-cl.exe') ? 'clang-cl' :
+          (compilerName === 'clang-cpp' || compilerName === 'clang-cpp.exe') ? 'clang-cpp' :
+          (compilerName === 'clang++' || compilerName === 'clang++.exe') ? 'clang++' :
+          undefined;
+}
+
+async function getHostSystemName(): Promise<string> {
+  if (platform() === "win32") {
+    return "Windows";
+  } else {
+    const result = await execute('uname', ['-s']).result;
+    if (result.retc === 0) {
+      return result.stdout.trim();
+    } else {
+      return 'unknown';
+    }
+  }
+}
+
+function memoize<T>(fn: () => T) {
+  let result: T;
+
+  return () => {
+    if (result) {
+      return result;
+    } else {
+      return result = fn();
+    }
+  };
+}
+
+export const getHostSystemNameMemo = memoize(getHostSystemName);

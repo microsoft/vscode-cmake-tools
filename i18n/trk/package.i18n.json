@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Derleme Ön Ayarı Seçin",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Test Ön Ayarı Seçin",
 	"cmake-tools.command.cmake.viewLog.title": "CMake Araçları Günlük Dosyasını Aç",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Günlük Tanılama",
 	"cmake-tools.command.cmake.editKits.title": "Kullanıcı için Yerel CMake Setlerini Düzenle",
 	"cmake-tools.command.cmake.scanForKits.title": "Setler için Tara",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Derleyicileri Tara",
@@ -20,8 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Tüm Projeler için Varyant Seç",
 	"cmake-tools.command.cmake.configure.title": "Yapılandır",
 	"cmake-tools.command.cmake.configureAll.title": "Tüm Projeleri Yapılandır",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "Yapılandır Komutunu Göster",
 	"cmake-tools.command.cmake.build.title": "Derleme",
 	"cmake-tools.command.cmake.buildAll.title": "Tüm Projeleri Derle",
+	"cmake-tools.command.cmake.showBuildCommand.title": "Derleme Komutunu Göster",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(İç) Ada Göre Bir Hedefi Derle",
 	"cmake-tools.command.cmake.compileFile.title": "Etkin Dosyayı Derle",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Dosyayı Derle",
@@ -77,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Yapılandırma sırasında CMake'e geçirilecek ek bağımsız değişkenler.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Derleme sırasında CMake'e geçirilecek ek bağımsız değişkenler.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Derleme sırasında temel alınan derleme aracına geçirilecek ek bağımsız değişkenler.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Paralel derleme işlerinin sayısı. CPU sayısını otomatik olarak algılamak için sıfır kullanın.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Paralel derleme işlerinin sayısı. CPU sayısını otomatik olarak algılamak için sıfır kullanın. Bunu 1 olarak ayarlamak paralel derlemeyi devre dışı bırakır.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest yürütülebilir dosyasının yolu. Değer null ise cmake.cmakePath değerinden çıkarsanır. (null olarak bırakılması önerilir.)",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Paralel test işlerinin sayısı. cmake.parallelJobs değerini kullanmak için sıfır kullanın.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Uyarılar ve hatalar için derleyici çıkışını ayrıştır.",
@@ -112,6 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "MinGW'nin yüklü olabileceği dizinler.",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "Dizin yolu.",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten'in yüklü olabileceği dizinler.",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory içinde tüm compile_commands.json dosyalarını özyinelemeli olarak topla ve birleştir.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Başarılı bir yapılandırmadan sonra compile_commands.json dosyasını bu konuma kopyala.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake proje dizinleri açıldığında bu dizinleri otomatik olarak yapılandır.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory veya CMakeLists.txt içeriği kaydedildiğinde CMake proje dizinlerini otomatik olarak yapılandırın.",
@@ -135,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "Proje Ana Hattı",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Özel set dosyalarına yönelik yollar dizisi",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.js dosyasının dışarı aktarılmasını sağlar.",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMake yapılandırma, derleme ve test sürücüsünü yapılandırmak için CMakePresets.json kullanın. CMakePresets.json kullanılırken kitler, çeşitler ve settings.json'daki bazı ayarla yoksayılır."
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMake yapılandırma, derleme ve test sürücüsünü yapılandırmak için CMakePresets.json kullanın. CMakePresets.json kullanılırken kitler, çeşitler ve settings.json'daki bazı ayarla yoksayılır.",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "CMakePresets.json'daki yorumlar gibi JSON uzantılarının kullanımına izin verin. Standart olmayan JSON kullanıyorsanız, CMakePresets.json dosyanızın diğer IDE'ler tarafından veya komut satırında geçersiz sayılabileceğini lütfen unutmayın."
 }

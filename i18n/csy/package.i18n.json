@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Vybrat předvolbu sestavení",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Vybrat předvolbu testování",
 	"cmake-tools.command.cmake.viewLog.title": "Otevřít soubor protokolu nástrojů CMake Tools",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Protokolovat diagnostiku",
 	"cmake-tools.command.cmake.editKits.title": "Upravit sady CMake pro místní uživatele",
 	"cmake-tools.command.cmake.scanForKits.title": "Vyhledat sady",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Vyhledat kompilátory",
@@ -20,8 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Vybrat variantu pro všechny projekty",
 	"cmake-tools.command.cmake.configure.title": "Konfigurovat",
 	"cmake-tools.command.cmake.configureAll.title": "Nakonfigurovat všechny projekty",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "Zobrazení příkazu konfigurace",
 	"cmake-tools.command.cmake.build.title": "Build",
 	"cmake-tools.command.cmake.buildAll.title": "Sestavit všechny projekty",
+	"cmake-tools.command.cmake.showBuildCommand.title": "Zobrazení příkazu sestavení",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(Interní) Sestavit cíl podle názvu",
 	"cmake-tools.command.cmake.compileFile.title": "Zkompilovat aktivní soubor",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Zkompilovat soubor",
@@ -77,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Další argumenty, které se mají předat nástrojům CMake při konfigurování",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Další argumenty, které se mají předat nástrojům CMake při sestavování",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Další argumenty, které se mají předat základnímu nástroji pro sestavení při sestavování",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Počet souběžných úloh sestavení. Pomocí nuly automaticky zjistíte počet procesorů.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Počet paralelních úloh buildu. Pokud chcete automaticky zjistit počet procesorů, použijte nulu. Nastavením na 1 paralelismus buildu zakážete.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Cesta ke spustitelnému souboru CTest. Pokud je hodnota null, bude odvozena z parametru cmake.cmakePath (doporučeno ponechat hodnotu null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Počet paralelních testovacích úloh. Pokud chcete použít hodnotu cmake.parallelJobs, použijte nulu.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analyzovat výstup kompilátoru z hlediska upozornění a chyb",
@@ -112,6 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "Adresáře, ve kterých může být nainstalovaný MinGW",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "Cesta k adresáři",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Adresáře, ve kterých může být nainstalovaný Emscripten",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "Rekurzivně shromážděte a slučte všechny soubory compile_commands.json nalezené v adresáři cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Po úspěšné konfiguraci zkopírovat soubor compile_commands.json do tohoto umístění",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Automaticky konfigurovat adresáře projektu CMake při jejich otevření",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Automaticky nakonfigurovat adresáře projektu CMake, když se uloží obsah cmake.sourceDirectory nebo CMakeLists.txt",
@@ -135,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "Osnova projektu",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Pole cest k vlastním sadám souborů",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Umožňuje exportovat compile_commands.json.",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "Pomocí CMakePresets.json můžete řídit konfiguraci, sestavování a testování pomocí CMaku. Když budete používat CMakePresets.json, budou se ignorovat sady, varianty a některá další nastavení v souboru settings.json."
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "Pomocí CMakePresets.json můžete řídit konfiguraci, sestavování a testování pomocí CMaku. Když budete používat CMakePresets.json, budou se ignorovat sady, varianty a některá další nastavení v souboru settings.json.",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Povolte v CMakePresets.json používání rozšíření JSON, jako jsou třeba komentáře. Pokud použijete nestandardní JSON, ostatní prostředí IDE nebo příkazový řádek může soubor CMakePresets.json považovat za neplatný."
 }

@@ -5,7 +5,6 @@
  * to provide that extension with per-file configuration information.
  */ /** */
 
-import {CMakeCache} from '@cmt/cache';
 import * as codemodel_api from '@cmt/drivers/codemodel-driver-interface';
 import {createLogger} from '@cmt/logging';
 import rollbar from '@cmt/rollbar';
@@ -15,6 +14,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as cpt from 'vscode-cpptools';
 import * as nls from 'vscode-nls';
+import { TargetTypeString } from './drivers/cms-client';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -24,6 +24,30 @@ const log = createLogger('cpptools');
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
 type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
   | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
+
+export interface DiagnosticsCpptools {
+  isReady: boolean;
+  hasCodeModel: boolean;
+  activeBuildType: string;
+  buildTypesSeen: string[];
+  targetCount: number;
+  executablesCount: number;
+  librariesCount: number;
+  targets: DiagnosticsTarget[];
+  requests: string[];
+  responses: cpt.SourceFileConfigurationItem[];
+  partialMatches: DiagnosticsPartialMatch[];
+}
+
+export interface DiagnosticsTarget {
+  name: string;
+  type: TargetTypeString;
+}
+
+export interface DiagnosticsPartialMatch {
+  request: string;
+  matches: string | string[];
+}
 
 export interface CompileFlagInformation {
   extraDefinitions: string[];
@@ -42,7 +66,7 @@ interface TargetDefaults {
 
 function parseCppStandard(std: string, can_use_gnu: boolean): StandardVersion {
   const is_gnu = can_use_gnu && std.startsWith('gnu');
-  if (std.endsWith('++2a') || std.endsWith('++20') || std.endsWith('++latest')) {
+  if (std.endsWith('++2a') || std.endsWith('++2b') || std.endsWith('++20') || std.endsWith('++latest')) {
     return is_gnu ? 'gnu++20' : 'c++20';
   } else if (std.endsWith('++17') || std.endsWith('++1z')) {
     return is_gnu ? 'gnu++17' : 'c++17';
@@ -68,7 +92,7 @@ function parseCStandard(std: string, can_use_gnu: boolean): StandardVersion {
     return is_gnu ? 'gnu99' : 'c99';
   } else if (/(c|gnu)(11|1x|iso9899:2011)/.test(std)) {
     return is_gnu ? 'gnu11' : 'c11';
-  } else if (/(c|gnu)(17|18|iso9899:(2017|2018))/.test(std)) {
+  } else if (/(c|gnu)(17|18|2x|iso9899:(2017|2018))/.test(std)) {
     if (can_use_gnu) {
       // cpptools supports 'c17' in same version it supports GNU std.
       return is_gnu ? 'gnu17' : 'c17';
@@ -283,35 +307,6 @@ export function getIntelliSenseMode(cptVersion: cpt.Version, compiler_path: stri
 }
 
 /**
- * Type given when updating the configuration data stored in the file index.
- */
-export interface CodeModelParams {
-  /**
-   * The CMake codemodel content. This is the important one.
-   */
-  codeModelContent: codemodel_api.CodeModelContent;
-  /**
-   * The contents of the CMakeCache.txt, which also provides supplementary
-   * configuration information.
-   */
-  cache: CMakeCache;
-  /**
-   * The path to `cl.exe`, if necessary. VS generators will need this property
-   * because the compiler path is not available via the `kit` nor `cache`
-   * property.
-   */
-  clCompilerPath?: string|null;
-  /**
-   * The active target
-   */
-  activeTarget: string|null;
-  /**
-   * Workspace folder full path.
-   */
-  folder: string;
-}
-
-/**
  * The actual class that provides information to the cpptools extension. See
  * the `CustomConfigurationProvider` interface for information on how this class
  * should be used.
@@ -354,30 +349,48 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    * Test if we are able to provide a configuration for the given URI
    * @param uri The URI to look up
    */
-  async canProvideConfiguration(uri: vscode.Uri) { return !!this._getConfiguration(uri); }
+  async canProvideConfiguration(uri: vscode.Uri) {
+    this.requests.add(uri.toString());
+    return !!this._getConfiguration(uri);
+  }
+
+  private requests = new Set<string>();
+  private responses = new Map<string, cpt.SourceFileConfigurationItem>();
 
   /**
    * Get the configurations for the given URIs. URIs for which we have no
    * configuration are simply ignored.
    * @param uris The file URIs to look up
    */
-  async provideConfigurations(uris: vscode.Uri[]) { return util.dropNulls(uris.map(u => this._getConfiguration(u))); }
+  async provideConfigurations(uris: vscode.Uri[]) {
+    const configs = util.dropNulls(uris.map(u => this._getConfiguration(u)));
+    configs.forEach(config => {
+      this.responses.set(config.uri.toString(), config);
+    });
+    return configs;
+  }
 
   /**
    * A request to determine whether this provider can provide a code browsing configuration for the workspace folder.
    * @param token (optional) The cancellation token.
    * @returns 'true' if this provider can provider a code browsing configuration for the workspace folder.
    */
-  async canProvideBrowseConfiguration() { return true; }
+  async canProvideBrowseConfiguration() {
+    return true;
+  }
 
   /**
    * A request to get the code browsing configuration for the workspace folder.
    * @returns A [WorkspaceBrowseConfiguration](#WorkspaceBrowseConfiguration) with the information required to
    * construct the equivalent of `browse.path` from `c_cpp_properties.json`.
    */
-  async provideBrowseConfiguration() { return this._workspaceBrowseConfiguration; }
+  async provideBrowseConfiguration() {
+    return this._workspaceBrowseConfiguration;
+  }
 
-  async canProvideBrowseConfigurationsPerFolder() { return true; }
+  async canProvideBrowseConfigurationsPerFolder() {
+    return true;
+  }
 
   async provideFolderBrowseConfiguration(_uri: vscode.Uri): Promise<cpt.WorkspaceBrowseConfiguration> {
     return this._workspaceBrowseConfigurations.get(util.platformNormalizePath(_uri.fsPath)) ?? this._workspaceBrowseConfiguration;
@@ -402,12 +415,15 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _activeTarget: string|null = null;
 
+  private activeBuildType: string|null = null;
+  private buildTypesSeen = new Set<string>();
+
   /**
    * Create a source file configuration for the given file group.
    * @param fileGroup The file group from the code model to create config data for
    * @param opts Index update options
    */
-  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: CodeModelParams, target: TargetDefaults, sysroot: string):
+  private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: codemodel_api.CodeModelParams, target: TargetDefaults, sysroot: string):
       cpt.SourceFileConfiguration {
     // If the file didn't have a language, default to C++
     const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
@@ -427,8 +443,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
 
     const targetFromToolchains = comp_toolchains?.target;
-    const targetArchFromToolchains = targetFromToolchains
-      ? parseTargetArch(targetFromToolchains) : undefined;
+    const targetArchFromToolchains = targetFromToolchains ? parseTargetArch(targetFromToolchains) : undefined;
 
     const normalizedCompilerPath = util.platformNormalizePath(comp_path);
     const flags = fileGroup.compileFlags ? [...shlex.split(fileGroup.compileFlags)] : target.compileFlags;
@@ -445,7 +460,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
 
     if (sysroot) {
-      flags.push(`--sysroot=${sysroot}`);
+      flags.push('--sysroot=' + sysroot);
     }
 
     this._workspaceBrowseConfiguration = {
@@ -476,7 +491,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
    */
   private _updateFileGroup(sourceDir: string,
                            grp: codemodel_api.CodeModelFileGroup,
-                           opts: CodeModelParams,
+                           opts: codemodel_api.CodeModelParams,
                            target: TargetDefaults,
                            sysroot: string) {
     const configuration = this._buildConfigurationData(grp, opts, target, sysroot);
@@ -517,55 +532,120 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     this._cpptoolsVersion = value;
   }
 
+  private targets: DiagnosticsTarget[] = [];
+
   /**
    * Update the file index and code model
    * @param opts Update parameters
    */
-  updateConfigurationData(opts: CodeModelParams) {
+  updateConfigurationData(opts: codemodel_api.CodeModelParams) {
+    // Reset the counters for diagnostics
+    this.requests.clear();
+    this.responses.clear();
+    this.buildTypesSeen.clear();
+    this.targets = [];
+
     let hadMissingCompilers = false;
     this._workspaceBrowseConfiguration = {browsePath: []};
     this._activeTarget = opts.activeTarget;
+    this.activeBuildType = opts.activeBuildTypeVariant;
     for (const config of opts.codeModelContent.configurations) {
-      for (const project of config.projects) {
-        for (const target of project.targets) {
-          // Now some shenanigans since header files don't have config data:
-          // 1. Accumulate some "defaults" based on the set of all options for each file group
-          // 2. Pass these "defaults" down when rebuilding the config data
-          // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
-          const grps = target.fileGroups || [];
-          const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
-          const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
-          const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
-          const sysroot = target.sysroot || '';
-          for (const grp of target.fileGroups || []) {
-            try {
-              this._updateFileGroup(
-                  target.sourceDirectory || '',
-                  grp,
-                  opts,
-                  {
-                    name: target.name,
-                    compileFlags,
-                    includePath,
-                    defines
-                  },
-                  sysroot
-              );
-            } catch (e) {
-              if (e instanceof MissingCompilerException) {
-                hadMissingCompilers = true;
-              } else {
-                throw e;
+      this.buildTypesSeen.add(config.name);
+    }
+    if (this.buildTypesSeen.size > 0 && !this.buildTypesSeen.has(opts.activeBuildTypeVariant || "")) {
+      const configName = opts.codeModelContent.configurations[0].name;
+      log.warning(localize('build.type.out.of.sync',
+        "The build configurations generated do not contain the active build configuration. Using '{0}' for CMAKE_BUILD_TYPE instead of '{1}' to ensure that IntelliSense configurations can be found",
+        configName, opts.activeBuildTypeVariant));
+      opts.activeBuildTypeVariant = configName;
+    }
+    for (const config of opts.codeModelContent.configurations) {
+      // Update only the active build type variant.
+      if (config.name === opts.activeBuildTypeVariant) {
+        for (const project of config.projects) {
+          for (const target of project.targets) {
+            // Now some shenanigans since header files don't have config data:
+            // 1. Accumulate some "defaults" based on the set of all options for each file group
+            // 2. Pass these "defaults" down when rebuilding the config data
+            // 3. Any `fileGroup` that does not have the associated attribute will receive the `default`
+            const grps = target.fileGroups || [];
+            const includePath = [...new Set(util.flatMap(grps, grp => grp.includePath || []))].map(item => item.path);
+            const compileFlags = [...util.flatMap(grps, grp => shlex.split(grp.compileFlags || ''))];
+            const defines = [...new Set(util.flatMap(grps, grp => grp.defines || []))];
+            const sysroot = target.sysroot ? shlex.quote(target.sysroot) : '';
+            this.targets.push({ name: target.name, type: target.type });
+            for (const grp of target.fileGroups || []) {
+              try {
+                this._updateFileGroup(
+                    target.sourceDirectory || '',
+                    grp,
+                    opts,
+                    {
+                      name: target.name,
+                      compileFlags,
+                      includePath,
+                      defines
+                    },
+                    sysroot
+                );
+              } catch (e) {
+                if (e instanceof MissingCompilerException) {
+                  hadMissingCompilers = true;
+                } else {
+                  throw e;
+                }
               }
             }
           }
         }
+        break;
       }
     }
     if (hadMissingCompilers && this._lastUpdateSucceeded) {
-      vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
+      void vscode.window.showErrorMessage(localize('path.not.found.in.cmake.cache',
         'The path to the compiler for one or more source files was not found in the CMake cache. If you are using a toolchain file, this probably means that you need to specify the CACHE option when you set your C and/or C++ compiler path'));
     }
     this._lastUpdateSucceeded = !hadMissingCompilers;
+  }
+
+  private ready: boolean = false;
+  markAsReady() {
+    this.ready = true;
+  }
+
+  getDiagnostics(): DiagnosticsCpptools {
+    const partialMatches: DiagnosticsPartialMatch[] = [];
+    for (const request of this.requests) {
+      const uri = vscode.Uri.parse(request);
+      const configuration = this._getConfiguration(uri);
+      if (!configuration) {
+        const fileName = path.basename(uri.fsPath);
+        const matches = [];
+        for (const [key, _] of this._fileIndex) {
+          if (path.basename(key) === fileName) {
+            matches.push(key);
+          }
+        }
+        if (matches.length === 1) {
+          partialMatches.push({ request, matches: matches.toString() });
+        } else if (matches.length > 1) {
+          partialMatches.push({request, matches});
+        }
+      }
+    }
+
+    return {
+      isReady: this.ready,
+      hasCodeModel: this._fileIndex.size > 0,
+      activeBuildType: this.activeBuildType || "",
+      buildTypesSeen: [...this.buildTypesSeen.values()],
+      requests: [...this.requests.values() ],
+      responses: [...this.responses.values()],
+      partialMatches,
+      targetCount: this.targets.length,
+      executablesCount: this.targets.reduce<number>((acc, target) => target.type === 'EXECUTABLE' ? acc + 1 : acc, 0),
+      librariesCount: this.targets.reduce<number>((acc, target) => target.type.endsWith('LIBRARY') ? acc + 1 : acc, 0),
+      targets: this.targets.length < 20 ? this.targets : []
+    };
   }
 }

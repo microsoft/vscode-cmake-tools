@@ -3,6 +3,7 @@
  */ /** */
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
+import * as path from 'path';
 
 import * as util from '@cmt/util';
 import CMakeTools from '@cmt/cmake-tools';
@@ -10,45 +11,92 @@ import { KitsController } from '@cmt/kitsController';
 import rollbar from '@cmt/rollbar';
 import { disposeAll, setContextValue } from '@cmt/util';
 import { PresetsController } from '@cmt/presetsController';
+import { CMakeCommunicationMode, UseCMakePresets } from './config';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
+export interface DiagnosticsConfiguration {
+  folder: string;
+  cmakeVersion: string;
+  compilers: {C?: string; CXX?: string};
+  usesPresets: boolean;
+  generator: string;
+  configured: boolean;
+}
+
+export interface DiagnosticsSettings {
+  communicationMode: CMakeCommunicationMode;
+  useCMakePresets: UseCMakePresets;
+  configureOnOpen: boolean | null;
+}
+
 export class CMakeToolsFolder {
   private _wasUsingCMakePresets: boolean | undefined;
+  private _onDidOpenTextDocumentListener: vscode.Disposable | undefined;
+  private _disposables: vscode.Disposable[] = [];
 
   private readonly _onUseCMakePresetsChangedEmitter = new vscode.EventEmitter<boolean>();
 
   private constructor(readonly cmakeTools: CMakeTools,
                       readonly kitsController: KitsController,
-                      readonly presetsController: PresetsController) {
-    const useCMakePresetsChangedListener = async () => {
-      const usingCMakePresets = this.useCMakePresets;
-      if (usingCMakePresets !== this._wasUsingCMakePresets) {
-        this._wasUsingCMakePresets = usingCMakePresets;
-        setContextValue('useCMakePresets', usingCMakePresets);
-        await cmakeTools.setUseCMakePresets(usingCMakePresets);
-        await CMakeToolsFolder.initializeKitOrPresetsInCmt(this);
-        this._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
-      }
-    };
-    cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener);
-    presetsController.onPresetsChanged(useCMakePresetsChangedListener);
-    presetsController.onUserPresetsChanged(useCMakePresetsChangedListener);
-  }
+                      readonly presetsController: PresetsController) { }
 
   static async init(cmakeTools: CMakeTools) {
     const kitsController = await KitsController.init(cmakeTools);
-    const cmtFolder = new CMakeToolsFolder(cmakeTools, kitsController, await PresetsController.init(cmakeTools, kitsController));
-    const usingCMakePresets = cmtFolder.useCMakePresets;
-    cmtFolder._wasUsingCMakePresets = usingCMakePresets;
-    setContextValue('useCMakePresets', usingCMakePresets);
-    await cmakeTools.setUseCMakePresets(usingCMakePresets);
-    await CMakeToolsFolder.initializeKitOrPresetsInCmt(cmtFolder);
+    const presetsController = await PresetsController.init(cmakeTools, kitsController);
+    const cmtFolder = new CMakeToolsFolder(cmakeTools, kitsController, presetsController);
+
+    const useCMakePresetsChangedListener = async () => {
+      const usingCMakePresets = cmtFolder.useCMakePresets;
+      if (usingCMakePresets !== cmtFolder._wasUsingCMakePresets) {
+        cmtFolder._wasUsingCMakePresets = usingCMakePresets;
+        await setContextValue('useCMakePresets', usingCMakePresets);
+        await cmakeTools.setUseCMakePresets(usingCMakePresets);
+        await CMakeToolsFolder.initializeKitOrPresetsInCmt(cmtFolder);
+
+        if (usingCMakePresets) {
+          const setPresetsFileLanguageMode = (document: vscode.TextDocument) => {
+            const config = cmtFolder.cmakeTools.workspaceContext.config;
+            const fileName = path.basename(document.uri.fsPath);
+            if (fileName === 'CMakePresets.json' || fileName === 'CMakeUserPresets.json') {
+              if (config.allowCommentsInPresetsFile && document.languageId !== 'jsonc') {
+                // setTextDocumentLanguage will trigger onDidOpenTextDocument
+                void vscode.languages.setTextDocumentLanguage(document, 'jsonc');
+              } else if (!config.allowCommentsInPresetsFile && document.languageId !== 'json') {
+                void vscode.languages.setTextDocumentLanguage(document, 'json');
+              }
+            }
+          };
+
+          cmtFolder._onDidOpenTextDocumentListener = vscode.workspace.onDidOpenTextDocument(document =>
+            setPresetsFileLanguageMode(document)
+          );
+
+          vscode.workspace.textDocuments.forEach(document => setPresetsFileLanguageMode(document));
+        } else {
+          if (cmtFolder._onDidOpenTextDocumentListener) {
+            cmtFolder._onDidOpenTextDocumentListener.dispose();
+            cmtFolder._onDidOpenTextDocumentListener = undefined;
+          }
+        }
+
+        cmtFolder._onUseCMakePresetsChangedEmitter.fire(usingCMakePresets);
+      }
+    };
+
+    await useCMakePresetsChangedListener();
+
+    cmtFolder._disposables.push(cmakeTools.workspaceContext.config.onChange('useCMakePresets', useCMakePresetsChangedListener));
+    cmtFolder._disposables.push(presetsController.onPresetsChanged(useCMakePresetsChangedListener));
+    cmtFolder._disposables.push(presetsController.onUserPresetsChanged(useCMakePresetsChangedListener));
+
     return cmtFolder;
   }
 
-  get folder() { return this.cmakeTools.folder; }
+  get folder() {
+    return this.cmakeTools.folder;
+  }
 
   // Go through the decision tree here since there would be dependency issues if we do this in config.ts
   get useCMakePresets(): boolean {
@@ -63,9 +111,51 @@ export class CMakeToolsFolder {
     return this.cmakeTools.workspaceContext.config.useCMakePresets === 'always';
   }
 
-  get onUseCMakePresetsChanged() { return this._onUseCMakePresetsChangedEmitter.event; }
+  async getDiagnostics(): Promise<DiagnosticsConfiguration> {
+    try {
+      const drv = await this.cmakeTools.getCMakeDriverInstance();
+      if (drv) {
+        return drv.getDiagnostics();
+      }
+    } catch {
+    }
+    return {
+      folder: this.folder.name,
+      cmakeVersion: "unknown",
+      configured: false,
+      generator: "unknown",
+      usesPresets: false,
+      compilers: {}
+    };
+  }
+
+  async getSettingsDiagnostics(): Promise<DiagnosticsSettings> {
+    try {
+      const drv = await this.cmakeTools.getCMakeDriverInstance();
+      if (drv) {
+        return {
+          communicationMode: drv.config.cmakeCommunicationMode,
+          useCMakePresets: drv.config.useCMakePresets,
+          configureOnOpen: drv.config.configureOnOpen
+        };
+      }
+    } catch {
+    }
+    return {
+      communicationMode: 'automatic',
+      useCMakePresets: 'auto',
+      configureOnOpen: null
+    };
+  }
+
+  get onUseCMakePresetsChanged() {
+    return this._onUseCMakePresetsChangedEmitter.event;
+  }
 
   dispose() {
+    if (this._onDidOpenTextDocumentListener) {
+      this._onDidOpenTextDocumentListener.dispose();
+    }
     this.cmakeTools.dispose();
     this.kitsController.dispose();
   }
@@ -75,14 +165,6 @@ export class CMakeToolsFolder {
       const configurePreset = folder.cmakeTools.workspaceContext.state.configurePresetName;
       if (configurePreset) {
         await folder.presetsController.setConfigurePreset(configurePreset);
-      }
-      const buildPreset = folder.cmakeTools.workspaceContext.state.buildPresetName;
-      if (buildPreset) {
-        await folder.presetsController.setBuildPreset(buildPreset);
-      }
-      const testPreset = folder.cmakeTools.workspaceContext.state.testPresetName;
-      if (testPreset) {
-        await folder.presetsController.setTestPreset(testPreset);
       }
     } else {
       // Check if the CMakeTools remembers what kit it was last using in this dir:
@@ -161,6 +243,10 @@ export class CMakeToolsFolderController implements vscode.Disposable {
       }
     }
     return undefined;
+  }
+
+  getAll(): CMakeToolsFolder[] {
+    return [...this._instances.values()];
   }
 
   /**

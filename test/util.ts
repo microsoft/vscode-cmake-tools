@@ -9,7 +9,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 // re-exports:
-export {DefaultEnvironment} from './helpers/test/default-environment';
+export {DefaultEnvironment} from '@test/helpers/test/default-environment';
 
 chai.use(chaiAsPromised);
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import {CMakeTools} from '@cmt/cmake-tools';
 import {Kit, scanForKits} from '@cmt/kit';
 import {clearExistingKitConfigurationFile, DefaultEnvironment, expect} from '@test/util';
@@ -71,7 +72,7 @@ const DEFAULT_VS_KITS: KitEnvironment[] = [
     expectedDefaultGenerator: /^Visual Studio 11 2012/,
     path: [''],
     isVsNewerThan14: false
-  },
+  }
 ];
 
 const DEFAULT_CYGWIN_KITS: KitEnvironment[] =
@@ -190,12 +191,10 @@ interface SkipOptions {
 
 function skipTestIf(skipOptions: SkipOptions, testContext: any, context: CMakeContext): void {
   // Skip if kit is not available (matched by default name)
-  if (skipOptions.kitIsNotAvailable && !isKitAvailable(context))
-    testContext.skip();
+  if (skipOptions.kitIsNotAvailable && !isKitAvailable(context)) {testContext.skip(); }
 
   if ((skipOptions.preferredGeneratorIsAvailable && isPreferredGeneratorAvailable(context))
-      || (skipOptions.preferredGeneratorIsNotAvailable && !isPreferredGeneratorAvailable(context)))
-    testContext.skip();
+      || (skipOptions.preferredGeneratorIsNotAvailable && !isPreferredGeneratorAvailable(context))) {testContext.skip(); }
 }
 
 function makeExtensionTestSuite(name: string,
@@ -279,8 +278,8 @@ KITS_BY_PLATFORM[workername].forEach(buildSystem => {
              preferredGenerators: [
                'NMake Makefiles',
                'Unix Makefiles',
-               'MinGW Makefiles',
-             ],
+               'MinGW Makefiles'
+             ]
            });
            expect(await context.cmt.build()).to.eql(0);
            const result = await context.testEnv.result.getResultAsJson();

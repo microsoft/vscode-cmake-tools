@@ -75,6 +75,7 @@ export interface BuildCommand {
 }
 
 export interface EnvironmentVariables { [key: string]: string }
+export interface DebuggerEnvironmentVariable { name: string; value: string }
 
 export interface ExecutionOptions {
   environment?: EnvironmentVariables;
@@ -144,7 +145,7 @@ export function execute(command: string,
     // term.show(true);
     // term.sendText(cmdstr);
 
-    vscode.commands.executeCommand("workbench.action.tasks.build");
+    void vscode.commands.executeCommand("workbench.action.tasks.build");
 
     result = new Promise<ExecutionResult>((resolve) => {
       resolve({retc: 0, stdout: '', stderr: ''});
@@ -198,7 +199,7 @@ export function execute(command: string,
         });
         child.stderr?.on('data', (data: Uint8Array) => {
           rollbar.invoke(localize('processing.data.event.stderr', 'Processing "data" event from proc stderr'), {data, command, args}, () => {
-            const str = data.toString();
+            const str = iconv.decode(Buffer.from(data), encoding);
             const lines = str.split('\n').map(l => l.endsWith('\r') ? l.substr(0, l.length - 1) : l);
             while (lines.length > 1) {
               stderr_line_acc += lines[0];

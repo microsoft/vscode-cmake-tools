@@ -15,6 +15,8 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export interface IOption {
     key: string;    // same as CMake cache variable key names
     type: string;   // "Bool" for boolean and "String" for anything else for now
+    helpString: string;
+    choices: string[];
     value: string;  // value from the cache file or changed in the UI
     dirty: boolean; // if the variable was edited in the UI
 }
@@ -69,7 +71,7 @@ export class ConfigurationWebview {
     if (this.dirty) {
       telemetry.logEvent("editCMakeCache", {command: "saveCMakeCacheUI"});
       await this.saveCmakeCache(this._options);
-      vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
+      void vscode.window.showInformationMessage(localize('cmake.cache.saved', 'CMake options have been saved.'));
       // start configure
       this.save();
       this.dirty = false;
@@ -225,7 +227,7 @@ export class ConfigurationWebview {
         // Static cache entries are set automatically by CMake, overriding any value set by the user in this view.
         // Not useful to show these entries in the list.
         if (entry.type !== api.CacheEntryType.Static) {
-          options.push({ key: entry.key, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
+          options.push({ key: entry.key, helpString: entry.helpString, choices: entry.choices, type: (entry.type === api.CacheEntryType.Bool) ? "Bool" : "String", value: entry.value, dirty: false });
         }
       }
 
@@ -287,6 +289,10 @@ export class ConfigurationWebview {
             color: var(--vscode-settings-textInputForeground);
             background: var(--vscode-settings-textInputBackground);
             border: 1px solid var(--vscode-settings-textInputBorder);
+          }
+
+          .invalid-selection {
+            background-color: #4e2621;
           }
 
           .vscode-light .input-disabled {
@@ -421,16 +427,30 @@ export class ConfigurationWebview {
         </style>
         <script>
           const vscode = acquireVsCodeApi();
-          function toggleKey(id) {
-            const label = document.getElementById('LABEL_' + id);
-            label.textContent = label.textContent === 'ON' ? 'OFF' : 'ON';
-            const checkbox = document.getElementById(id);
-            vscode.postMessage({key: id, type: "Bool", value: checkbox.checked});
+          function updateCheckboxState(checkbox) {
+            checkbox.labels.forEach(label => label.textContent = checkbox.checked ? 'ON' : 'OFF');
+          }
+          function toggleKey(checkbox) {
+            updateCheckboxState(checkbox);
+            vscode.postMessage({key: checkbox.id, type: "Bool", value: checkbox.checked});
             document.getElementById('not-saved').classList.remove('invisible');
           }
-          function edit(id) {
-            const editbox = document.getElementById(id);
-            vscode.postMessage({key: id, type: "String", value: editbox.value});
+          function validateInput(editbox) {
+            const list = editbox.list;
+            if (list) {
+              let found = false;
+              for (const opt of list.options) {
+                if (opt.value === editbox.value) {
+                  found = true;
+                  break;
+                }
+              }
+              editbox.classList.toggle('invalid-selection', !found);
+            }
+          }
+          function edit(editbox) {
+            validateInput(editbox);
+            vscode.postMessage({key: editbox.id, type: "String", value: editbox.value});
             document.getElementById('not-saved').classList.remove('invisible');
           }
           function save() {
@@ -446,6 +466,17 @@ export class ConfigurationWebview {
                 tr.classList.remove('invisible');
               }
             }
+          }
+
+          window.onload = function() {
+            document.querySelectorAll('.cmake-input-bool').forEach(checkbox => {
+              updateCheckboxState(checkbox);
+              checkbox.onclick = () => toggleKey(checkbox);
+            });
+            document.querySelectorAll('.cmake-input-text').forEach(editbox => {
+              validateInput(editbox)
+              editbox.oninput = () => edit(editbox);
+            });
           }
         </script>
     </head>
@@ -468,26 +499,39 @@ export class ConfigurationWebview {
 
     // compile a list of table rows that contain the key and value pairs
     const tableRows = this._options.map(option => {
+
+      // HTML attributes may not contain literal double quotes or ambiguous ampersands
+      const escapeAttribute = (text: string) => text.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+      // Escape HTML special characters that may not occur literally in any text
+      const escapeHtml = (text: string) =>
+        escapeAttribute(text)
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/'/g, "&#039;")
+          .replace(/ /g, "&nbsp;"); // we are usually dealing with single line entities - avoid unintential line breaks
+
+      const id = escapeAttribute(option.key);
+      let editControls = '';
+
       if (option.type === "Bool") {
-        return `<tr class="content-tr">
-        <td></td>
-        <td>${option.key}</td>
-        <td>
-          <input class="cmake-input-bool" id="${option.key}" onclick="toggleKey('${option.key}')"
-                 type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
-          <label id="LABEL_${option.key}" for="${option.key}">${util.isTruthy(option.value) ? `ON` : `OFF`}</label>
-        </td>
-      </tr>`;
+        editControls = `<input class="cmake-input-bool" id="${id}" type="checkbox" ${util.isTruthy(option.value) ? 'checked' : ''}>
+          <label id="LABEL_${id}" for="${id}"/>`;
       } else {
-        return `<tr class="content-tr">
-        <td></td>
-        <td>${option.key}</td>
-        <td>
-          <input id="${option.key}" value="${option.value}" style="width: 90%;"
-                 type="text" oninput="edit('${option.key}')">
-        </td>
-      </tr>`;
+        const hasChoices = option.choices.length > 0;
+        if (hasChoices) {
+          editControls = `<datalist id="CHOICES_${id}">
+            ${option.choices.map(ch => `<option value="${escapeAttribute(ch)}">`).join()}
+          </datalist>`;
+        }
+        editControls += `<input class="cmake-input-text" id="${id}" value="${escapeAttribute(option.value)}" style="width: 90%;"
+          type="text" ${hasChoices ? `list="CHOICES_${id}"` : ''}>`;
       }
+
+      return `<tr class="content-tr">
+      <td></td>
+      <td title="${escapeAttribute(option.helpString)}">${escapeHtml(option.key)}</td>
+      <td>${editControls}</td>
+    </tr>`;
     });
 
     html = html.replace(key, tableRows.join(""));

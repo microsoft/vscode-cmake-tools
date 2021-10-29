@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
@@ -8,10 +9,10 @@ chai.use(chaiAsPromised);
 import {expect} from 'chai';
 import * as diags from '@cmt/diagnostics/build';
 import {OutputConsumer} from '../../src/proc';
+import {ExtensionConfigurationSettings, ConfigurationReader} from '../../src/config';
 import {platformPathEquivalent} from '@cmt/util';
 import {CMakeOutputConsumer} from '@cmt/diagnostics/cmake';
 import {populateCollection} from '@cmt/diagnostics/util';
-
 
 function feedLines(consumer: OutputConsumer, output: string[], error: string[]) {
   for (const line of output) {
@@ -24,17 +25,17 @@ function feedLines(consumer: OutputConsumer, output: string[], error: string[]) 
 
 suite('Diagnostics', async () => {
   let consumer = new CMakeOutputConsumer('dummyPath');
-  let build_consumer = new diags.CompileOutputConsumer();
+  let build_consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
   setup(() => {
     // FIXME: SETUP IS NOT BEING CALLED
     consumer = new CMakeOutputConsumer('dummyPath');
-    build_consumer = new diags.CompileOutputConsumer();
+    build_consumer = new diags.CompileOutputConsumer(new ConfigurationReader({} as ExtensionConfigurationSettings));
   });
   test('Waring-free CMake output', async () => {
     const cmake_output = [
       '-- Configuring done',
       '-- Generating done',
-      '-- Build files have been written to /foo/bar',
+      '-- Build files have been written to /foo/bar'
     ];
     feedLines(consumer, cmake_output, []);
   });
@@ -44,7 +45,7 @@ suite('Diagnostics', async () => {
       'CMake Warning at CMakeLists.txt:14 (message):',
       '  I am a warning!',
       '',
-      '',
+      ''
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
@@ -67,7 +68,7 @@ suite('Diagnostics', async () => {
       '  I am an error!',
       '',
       '',
-      '-- Extra suff',
+      '-- Extra suff'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(2);
@@ -91,7 +92,7 @@ suite('Diagnostics', async () => {
       '',
       '',
       '-- Configuring done',
-      '-- Generating done',
+      '-- Generating done'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
@@ -110,7 +111,7 @@ suite('Diagnostics', async () => {
       'This warning is for project developers.  Use -Wno-dev to suppress it.',
       '',
       '-- Configuring done',
-      '-- Generating done',
+      '-- Generating done'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(1);
@@ -132,7 +133,7 @@ suite('Diagnostics', async () => {
       '  I am an error!',
       '',
       '',
-      '-- Extra suff',
+      '-- Extra suff'
     ];
     feedLines(consumer, [], error_output);
     expect(consumer.diagnostics.length).to.eq(2);
@@ -410,5 +411,48 @@ suite('Diagnostics', async () => {
     expect(build_consumer.compilers.msvc.diagnostics[0].file).to.eq('C:\\foo\\bar\\include\\bar.hpp');
     expect(build_consumer.compilers.msvc.diagnostics[0].location.start.line).to.eq(66);
     expect(build_consumer.compilers.msvc.diagnostics[0].location.start.character).to.eq(0);
+  });
+
+  test('Parse IAR error', () => {
+    const lines = [
+      '      kjfdlkj kfjg;',
+      '      ^',
+      '"C:\\foo\\bar\\bar.c",147  Error[Pe020]:',
+      '          identifier "kjfdlkj" is undefined',
+      'a'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.compilers.iar.diagnostics).to.have.length(1);
+    const diagnostic = build_consumer.compilers.iar.diagnostics[0];
+
+    expect(diagnostic.file).to.eq('C:\\foo\\bar\\bar.c');
+    expect(diagnostic.location.start.line).to.eq(146);
+    expect(diagnostic.location.start.character).to.eq(4);
+    expect(diagnostic.code).to.eq('Pe020');
+    expect(diagnostic.message).to.eq('identifier "kjfdlkj" is undefined');
+    expect(diagnostic.severity).to.eq('error');
+  });
+
+  test('Parse IAR fatal error', () => {
+    const lines = [
+      '  #include <kjlkjl>',
+      '                   ^',
+      '"C:\\foo\\bar\\test.c",1  Fatal error[Pe1696]: cannot open source',
+      '          file "kjlkjl"',
+      '            searched: "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench',
+      '                      8.0\\arm\\inc\\"',
+      '            current directory: "C:\\Users\\user\\Documents"',
+      'Fatal error detected, aborting.'
+    ];
+    feedLines(build_consumer, [], lines);
+    expect(build_consumer.compilers.iar.diagnostics).to.have.length(1);
+    const diagnostic = build_consumer.compilers.iar.diagnostics[0];
+
+    expect(diagnostic.file).to.eq('C:\\foo\\bar\\test.c');
+    expect(diagnostic.location.start.line).to.eq(0);
+    expect(diagnostic.location.start.character).to.eq(17);
+    expect(diagnostic.code).to.eq('Pe1696');
+    expect(diagnostic.message).to.eq('cannot open source file "kjlkjl"\nsearched: "C:\\Program Files (x86)\\IAR Systems\\Embedded Workbench\n8.0\\arm\\inc\\"\ncurrent directory: "C:\\Users\\user\\Documents"');
+    expect(diagnostic.severity).to.eq('error');
   });
 });

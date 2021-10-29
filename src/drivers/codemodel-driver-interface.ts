@@ -1,3 +1,5 @@
+import { CMakeCache } from "@cmt/cache";
+
 export type TargetTypeString
     = ('STATIC_LIBRARY'|'MODULE_LIBRARY'|'SHARED_LIBRARY'|'OBJECT_LIBRARY'|'EXECUTABLE'|'UTILITY'|'INTERFACE_LIBRARY');
 
@@ -88,6 +90,9 @@ export interface CodeModelProject {
 export interface CodeModelConfiguration {
   /** List of project() from CMakeLists.txt */
   projects: CodeModelProject[];
+
+  /** Name of the active configuration in a multi-configuration generator.*/
+  name: string;
 }
 
 export interface CodeModelToolchain {
@@ -101,4 +106,37 @@ export interface CodeModelContent {
   configurations: CodeModelConfiguration[];
 
   toolchains: Map<string, CodeModelToolchain>;
+}
+
+/**
+ * Type given when updating the configuration data stored in the file index.
+ */
+ export interface CodeModelParams {
+  /**
+   * The CMake codemodel content. This is the important one.
+   */
+  codeModelContent: CodeModelContent;
+  /**
+   * The contents of the CMakeCache.txt, which also provides supplementary
+   * configuration information.
+   */
+  cache: CMakeCache;
+  /**
+   * The path to `cl.exe`, if necessary. VS generators will need this property
+   * because the compiler path is not available via the `kit` nor `cache`
+   * property.
+   */
+  clCompilerPath?: string|null;
+  /**
+   * The active target
+   */
+  activeTarget: string|null;
+  /**
+   * CMAKE_BUILD_TYPE for single config generators, and build config for multi config ones.
+   */
+  activeBuildTypeVariant: string|null;
+  /**
+   * Workspace folder full path.
+   */
+  folder: string;
 }

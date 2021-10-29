@@ -20,6 +20,7 @@
 	"configure.recommended": "Zaleca się przeprowadzenie ponownej konfiguracji po uaktualnieniu do nowej definicji zestawów.",
 	"using.cache.to.configure.workspace.on.open": "Używanie pamięci podręcznej do konfigurowania obszaru roboczego przy otwieraniu {0}",
 	"update.code.model.for.cpptools": "Aktualizuj model kodu dla narzędzi cpptools",
+	"update.intellisense.disabled": "Nie zaktualizowano dostawcy konfiguracji, ponieważ parametr C_Cpp.intelliSenseEngine jest ustawiony na wartość \"Disabled\"",
 	"filed.to.open.cache.file.on.code.model.update": "Nie można otworzyć pliku pamięci podręcznej narzędzia CMake podczas aktualizacji modelu kodu",
 	"opening.text.editor.for": "Otwieranie edytora tekstu dla pliku {0}",
 	"no.kits.file.what.to.do": "Żaden plik zestawów nie jest dostępny. Co chcesz zrobić?",

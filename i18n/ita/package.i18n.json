@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "Selezionare Set di impostazioni di compilazione",
 	"cmake-tools.command.cmake.selectTestPreset.title": "Selezionare Set di impostazioni di test",
 	"cmake-tools.command.cmake.viewLog.title": "Apri il file di log di CMake Tools",
+	"cmake-tools.command.cmake.logDiagnostics.title": "Registra diagnostica",
 	"cmake-tools.command.cmake.editKits.title": "Modifica i kit CMake locali dell'utente",
 	"cmake-tools.command.cmake.scanForKits.title": "Cerca kit",
 	"cmake-tools.command.cmake.scanForCompilers.title": "Analisi compilatori",
@@ -20,8 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "Seleziona la variante per tutti i progetti",
 	"cmake-tools.command.cmake.configure.title": "Configura",
 	"cmake-tools.command.cmake.configureAll.title": "Configura tutti i progetti",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "Visualizza comando di configurazione",
 	"cmake-tools.command.cmake.build.title": "Compila",
 	"cmake-tools.command.cmake.buildAll.title": "Compila tutti i progetti",
+	"cmake-tools.command.cmake.showBuildCommand.title": "Visualizza comando di compilazione",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(Interno) Compila una destinazione in base al nome",
 	"cmake-tools.command.cmake.compileFile.title": "Compila il file attivo",
 	"cmake-tools.command.cmake.outline.compileFile.title": "Compila file",
@@ -77,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "Argomenti aggiuntivi da passare a CMake durante la configurazione.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "Argomenti aggiuntivi da passare a CMake durante la compilazione.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "Argomenti aggiuntivi da passare allo strumento di compilazione sottostante durante la compilazione.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "Numero di processi di compilazione in parallelo. Usare zero per rilevare automaticamente il numero di CPU.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "Numero di processi di compilazione paralleli. Usare zero per rilevare automaticamente il numero di CPU. L'impostazione su 1 disabiliterà il parallelismo di compilazione.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "Percorso dell'eseguibile di CTest. Se è Null, verrà dedotto da cmake.cmakePath (è consigliabile lasciare Null).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "Numero di processi di test in parallelo. Specificare zero per usare il valore di cmake.parallelJobs.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "Analizza l'output del compilatore per individuare avvisi ed errori.",
@@ -112,6 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "Directory in cui è possibile installare MinGW.",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "Percorso di una directory.",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Directory in cui è possibile installare Emscripten.",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "È possibile raccogliere e unire in modo ricorsivo tutti i file compile_commands.json disponibili in cmake.buildDirectory.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "Copia compile_commands.json in questa posizione dopo una configurazione riuscita.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "Configura automaticamente le directory di progetto di CMake quando vengono aperte.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "Configura automaticamente le directory del progetto CMake quando si salva cmake.sourceDirectory o il contenuto di CMakeLists.txt.",
@@ -135,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "Struttura del progetto",
 	"cmake-tools.configuration.cmake.additionalKits.description": "Matrice di percorsi dei file di kit personalizzati",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Consente l'esportazione di compile_commands.json.",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "Usare CMakePresets.json per configurare l’unità CMake di configurazione, compilazione e test. Quando si usa CMakePresets.json alcuni kit, varianti e impostazioni in settings.json verranno ignorati."
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "Usare CMakePresets.json per configurare l’unità CMake di configurazione, compilazione e test. Quando si usa CMakePresets.json alcuni kit, varianti e impostazioni in settings.json verranno ignorati.",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Consente l'uso di estensioni JSON come i commenti in CMakePresets.json. Si noti che il file CMakePresets.json potrebbe essere considerato non valido da altri IDE o dalla riga di comando se si usa JSON non standard."
 }

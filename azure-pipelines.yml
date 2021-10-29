@@ -1,5 +1,5 @@
 name: $(Date:yyyyMMdd).$(Rev:r)
 pr:
-- 'develop'
+- 'main'
 jobs:
 - template: jobs/build.windows.yml

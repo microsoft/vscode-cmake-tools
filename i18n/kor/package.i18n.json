@@ -12,6 +12,7 @@
 	"cmake-tools.command.cmake.selectBuildPreset.title": "빌드 사전 설정 선택",
 	"cmake-tools.command.cmake.selectTestPreset.title": "테스트 사전 설정 선택",
 	"cmake-tools.command.cmake.viewLog.title": "CMake 도구 로그 파일 열기",
+	"cmake-tools.command.cmake.logDiagnostics.title": "진단 정보 로그",
 	"cmake-tools.command.cmake.editKits.title": "user-local CMake 키트 편집",
 	"cmake-tools.command.cmake.scanForKits.title": "키트 검색",
 	"cmake-tools.command.cmake.scanForCompilers.title": "컴파일러 검색",
@@ -20,8 +21,10 @@
 	"cmake-tools.command.cmake.setVariantAll.title": "모든 프로젝트의 변형 선택",
 	"cmake-tools.command.cmake.configure.title": "구성",
 	"cmake-tools.command.cmake.configureAll.title": "모든 프로젝트 구성",
+	"cmake-tools.command.cmake.showConfigureCommand.title": "구성 명령 표시",
 	"cmake-tools.command.cmake.build.title": "빌드",
 	"cmake-tools.command.cmake.buildAll.title": "모든 프로젝트 빌드",
+	"cmake-tools.command.cmake.showBuildCommand.title": "빌드 명령 표시",
 	"cmake-tools.command.cmake.buildNamedTarget.title": "(내부) 이름으로 대상 빌드",
 	"cmake-tools.command.cmake.compileFile.title": "활성 파일 컴파일",
 	"cmake-tools.command.cmake.outline.compileFile.title": "파일 컴파일",
@@ -77,7 +80,7 @@
 	"cmake-tools.configuration.cmake.configureArgs.description": "구성할 때 CMake에 전달할 추가 인수입니다.",
 	"cmake-tools.configuration.cmake.buildArgs.description": "빌드할 때 CMake에 전달할 추가 인수입니다.",
 	"cmake-tools.configuration.cmake.buildToolArgs.description": "빌드할 때 기본 빌드 도구에 전달할 추가 인수입니다.",
-	"cmake-tools.configuration.cmake.parallelJobs.description": "병렬 빌드 작업의 수입니다. CPU 수를 자동으로 검색하려면 0을 사용합니다.",
+	"cmake-tools.configuration.cmake.parallelJobs.description": "병렬 빌드 작업의 수입니다. CPU 수를 자동으로 검색하려면 0을 사용합니다. 이를 1로 설정하면 빌드 병렬 처리가 비활성화됩니다.",
 	"cmake-tools.configuration.cmake.ctestPath.description": "CTest 실행 파일의 경로입니다. Null인 경우 cmake.cmakePath에서 유추됩니다(null을 유지하는 것이 좋음).",
 	"cmake-tools.configuration.cmake.ctest.parallelJobs.description": "병렬 테스트 작업의 수입니다. cmake.parallelJobs 값을 사용하려면 0을 사용합니다.",
 	"cmake-tools.configuration.cmake.parseBuildDiagnostics.description": "경고 및 오류에 대한 컴파일러 출력을 구문 분석합니다.",
@@ -112,6 +115,7 @@
 	"cmake-tools.configuration.cmake.mingwSearchDirs.description": "MinGW를 설치할 수 있는 디렉터리입니다.",
 	"cmake-tools.configuration.cmake.searchDirs.items.description": "디렉터리 경로입니다.",
 	"cmake-tools.configuration.cmake.emscriptenSearchDirs.description": "Emscripten을 설치할 수 있는 디렉터리입니다.",
+	"cmake-tools.configuration.cmake.mergedCompileCommands.description": "cmake.buildDirectory에 있는 모든 compile_commands.json을 재귀적으로 수집하고 병합합니다.",
 	"cmake-tools.configuration.cmake.copyCompileCommands.description": "구성에 성공한 후 compile_commands.json을 이 위치로 복사합니다.",
 	"cmake-tools.configuration.cmake.configureOnOpen.description": "CMake 프로젝트 디렉터리를 열 때 자동으로 구성합니다.",
 	"cmake-tools.configuration.cmake.configureOnEdit.description": "cmake.sourceDirectory 또는 CMakeLists.txt 콘텐츠가 저장될 때 CMake 프로젝트 디렉터리를 자동으로 구성합니다.",
@@ -135,5 +139,6 @@
 	"cmake-tools.configuration.views.cmake.outline.description": "프로젝트 개요",
 	"cmake-tools.configuration.cmake.additionalKits.description": "사용자 지정 키트 파일의 경로 배열",
 	"cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "compile_commands.json 내보내기를 사용하도록 설정합니다.",
-	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMakePresets.json을 사용하여 드라이브 CMake 구성, 빌드 및 테스트를 구성합니다. CMakePresets.json을 사용할 때, 키트, 변형 및 settings.json의 일부 설정이 무시됩니다."
+	"cmake-tools.configuration.cmake.useCMakePresets.description": "CMakePresets.json을 사용하여 드라이브 CMake 구성, 빌드 및 테스트를 구성합니다. CMakePresets.json을 사용할 때, 키트, 변형 및 settings.json의 일부 설정이 무시됩니다.",
+	"cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "CMakePresets.json의 설명과 같은 JSON 확장 사용을 허용합니다. CMakePresets.json 파일은 다른 IDE에서 또는 비표준 JSON을 사용하는 경우 명령줄에서 유효하지 않은 것으로 간주될 수 있습니다."
 }

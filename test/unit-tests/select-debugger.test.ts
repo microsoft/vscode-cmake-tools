@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as path from 'path';
@@ -93,7 +94,7 @@ suite('Select debugger', async () => {
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
 
-    expect(Debugger.getDebugConfigurationFromCache(cache, target, 'linux')).to.be.rejectedWith(Error);
+    await expect(Debugger.getDebugConfigurationFromCache(cache, target, 'linux')).to.be.rejectedWith(Error);
   });
 
   test('Create debug config from cache - GCC 5 fallback test', async () => {
@@ -173,8 +174,9 @@ suite('Select debugger', async () => {
 
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+    const debuggerPath = getTestResourceFilePath('../fakebin/gdb');
 
-    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.MIModes.gdb, "../folder/debugger/gdb");
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.MIModes.gdb, debuggerPath);
     expect(config).to.not.be.null;
     if (!config) {
       throw new Error();
@@ -182,7 +184,7 @@ suite('Select debugger', async () => {
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('gdb');
     expect(config.type).to.be.eq('cppdbg');
-    expect(config['miDebuggerPath']).to.be.eq('../folder/debugger/gdb');
+    expect(config['miDebuggerPath']).to.be.eq(debuggerPath);
   });
 
   test('Create debug config from cache - debugger override', async () => {
@@ -209,8 +211,9 @@ suite('Select debugger', async () => {
 
     const target = {name: 'Test', path: 'Target'};
     const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
+    const debuggerPath = getTestResourceFilePath('../fakebin/lldb-mi');
 
-    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', undefined, "../folder/debugger/lldb-mi");
+    const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', undefined, debuggerPath);
     expect(config).to.not.be.null;
     if (!config) {
       throw new Error();
@@ -218,6 +221,6 @@ suite('Select debugger', async () => {
     expect(config.name).to.be.eq('Debug Test');
     expect(config['MIMode']).to.be.eq('lldb');
     expect(config.type).to.be.eq('cppdbg');
-    expect(config['miDebuggerPath']).to.be.eq('../folder/debugger/lldb-mi');
+    expect(config['miDebuggerPath']).to.be.eq(debuggerPath);
   });
 });
