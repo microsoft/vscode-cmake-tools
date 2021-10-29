@@ -1410,7 +1410,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
    * Implementation of `cmake.build`
    */
   async runBuild(targets_?: string[], showCommandOnly?: boolean): Promise<number> {
-    log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets_ && targets_.length > 0) ? targets_.join(', ') : '');
+    if (!showCommandOnly) {
+      log.info(localize('run.build', 'Building folder: {0}', this.folderName), (targets_ && targets_.length > 0) ? targets_.join(', ') : '');
+    }
     let drv: CMakeDriver | null;
     if (showCommandOnly) {
       drv = await this.getCMakeDriverInstance();
