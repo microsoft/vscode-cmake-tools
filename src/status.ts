@@ -1,10 +1,10 @@
-import {ConfigurationReader, StatusBarButtonVisibility as ButtonVisibility} from '@cmt/config';
-import {BasicTestResults} from '@cmt/ctest';
-import {SpecialKits} from '@cmt/kit';
+import { ConfigurationReader, StatusBarButtonVisibility as ButtonVisibility } from '@cmt/config';
+import { BasicTestResults } from '@cmt/ctest';
+import { SpecialKits } from '@cmt/kit';
 import * as vscode from 'vscode';
 import * as nls from 'vscode-nls';
 
-nls.config({messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone})();
+nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 
 // Helper functions
@@ -12,643 +12,643 @@ function hasCPPTools(): boolean { return vscode.extensions.getExtension('ms-vsco
 
 // Button class
 abstract class Button {
-  readonly settingsName: string|null = null;
-  protected readonly button: vscode.StatusBarItem;
-  private _forceHidden: boolean = false;
-  private _hidden: boolean = false;
-  private _text: string = '';
-  private _tooltip: string|null = null;
-  private _icon: string|null = null;
+    readonly settingsName: string | null = null;
+    protected readonly button: vscode.StatusBarItem;
+    private _forceHidden: boolean = false;
+    private _hidden: boolean = false;
+    private _text: string = '';
+    private _tooltip: string | null = null;
+    private _icon: string | null = null;
 
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    this.button = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, this.priority);
-  }
-
-  /**
-   * Only used in StatusBar class
-   */
-  set forceHidden(v: boolean) {
-    this._forceHidden = v;
-    this.update();
-  }
-
-  get hidden() { return this._hidden; }
-  set hidden(v: boolean) {
-    this._hidden = v;
-    this.update();
-  }
-
-  get text(): string { return this._text; }
-  set text(v: string) {
-    this._text = v;
-    this.update();
-  }
-
-  get bracketText(): string { return `[${this._text}]`; }
-
-  get tooltip(): string|null { return this._tooltip; }
-  set tooltip(v: string|null) {
-    this._tooltip = v;
-    this.update();
-  }
-
-  protected set icon(v: string|null) { this._icon = v ? `$(${v})` : null; }
-
-  protected set command(v: string|null) { this.button.command = v || undefined; }
-
-  dispose(): void { this.button.dispose(); }
-  update(): void {
-    if (!this._isVisible() || this._forceHidden) {
-      this.button.hide();
-      return;
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        this.button = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, this.priority);
     }
-    const text = this._getText(true);
-    if (text === '') {
-      this.button.hide();
-      return;
-    }
-    this.button.text = text;
-    this.button.tooltip = this._getTooltip() || undefined;
-    this.button.show();
-  }
 
-  protected getTextNormal(): string {
-    if (this._text.length > 0) {
-      return this.bracketText;
+    /**
+     * Only used in StatusBar class
+     */
+    set forceHidden(v: boolean) {
+        this._forceHidden = v;
+        this.update();
     }
-    return '';
-  }
-  protected getTextShort(): string { return this.getTextNormal(); }
-  protected getTextIcon(): string { return ''; }
 
-  protected getTooltipNormal(): string|null { return this._tooltip; }
-  protected getTooltipShort(): string|null {
-    const tooltip = this.getTooltipNormal();
-    const text = this.getTextNormal();
-    if (!tooltip && !text) {
-      return null;
+    get hidden() { return this._hidden; }
+    set hidden(v: boolean) {
+        this._hidden = v;
+        this.update();
     }
-    if (!tooltip || !text) {
-      return this.prependCMake(`${tooltip || text}`);
-    }
-    return this.prependCMake(`${text}\n${tooltip}`);
-  }
-  protected getTooltipIcon(): string|null { return this.getTooltipShort(); }
 
-  protected isVisible(): boolean { return !this.hidden; }
-  protected prependCMake(text: string|null): any {
-    if (!!text) {
-      return `CMake: ${text}`;
+    get text(): string { return this._text; }
+    set text(v: string) {
+        this._text = v;
+        this.update();
     }
-    return text;
-  }
 
-  private _isVisible(): boolean { return this.isVisible() && this._getVisibilitySetting() !== 'hidden'; }
-  private _getVisibilitySetting(): ButtonVisibility|null {
-    if (this.settingsName) {
-      const setting = Object(this.config.statusbar.advanced)[this.settingsName]?.visibility;
-      return setting || this.config.statusbar.visibility || null;
-    }
-    return this.config.statusbar.visibility || null;
-  }
+    get bracketText(): string { return `[${this._text}]`; }
 
-  private _getTooltip(): string|null {
-    const visibility = this._getVisibilitySetting();
-    switch (visibility) {
-    case 'hidden':
-      return null;
-    case 'icon':
-      return this.getTooltipIcon();
-    case 'compact':
-      return this.getTooltipShort();
-    default:
-      return this.getTooltipNormal();
+    get tooltip(): string | null { return this._tooltip; }
+    set tooltip(v: string | null) {
+        this._tooltip = v;
+        this.update();
     }
-  }
-  private _getText(icon: boolean = false): string {
-    const type = this._getVisibilitySetting();
-    let text: string;
-    switch (type) {
-    case 'icon':
-      text = this.getTextIcon();
-      break;
-    case 'compact':
-      text = this.getTextShort();
-      break;
-    default:
-      text = this.getTextNormal();
-      break;
+
+    protected set icon(v: string | null) { this._icon = v ? `$(${v})` : null; }
+
+    protected set command(v: string | null) { this.button.command = v || undefined; }
+
+    dispose(): void { this.button.dispose(); }
+    update(): void {
+        if (!this._isVisible() || this._forceHidden) {
+            this.button.hide();
+            return;
+        }
+        const text = this._getText(true);
+        if (text === '') {
+            this.button.hide();
+            return;
+        }
+        this.button.text = text;
+        this.button.tooltip = this._getTooltip() || undefined;
+        this.button.show();
     }
-    if (!icon) {
-      return text;
+
+    protected getTextNormal(): string {
+        if (this._text.length > 0) {
+            return this.bracketText;
+        }
+        return '';
     }
-    if (!this._icon) {
-      return text;
+    protected getTextShort(): string { return this.getTextNormal(); }
+    protected getTextIcon(): string { return ''; }
+
+    protected getTooltipNormal(): string | null { return this._tooltip; }
+    protected getTooltipShort(): string | null {
+        const tooltip = this.getTooltipNormal();
+        const text = this.getTextNormal();
+        if (!tooltip && !text) {
+            return null;
+        }
+        if (!tooltip || !text) {
+            return this.prependCMake(`${tooltip || text}`);
+        }
+        return this.prependCMake(`${text}\n${tooltip}`);
     }
-    if (text === '') {
-      return this._icon || '';
+    protected getTooltipIcon(): string | null { return this.getTooltipShort(); }
+
+    protected isVisible(): boolean { return !this.hidden; }
+    protected prependCMake(text: string | null): any {
+        if (!!text) {
+            return `CMake: ${text}`;
+        }
+        return text;
     }
-    return `${this._icon} ${text}`;
-  }
+
+    private _isVisible(): boolean { return this.isVisible() && this._getVisibilitySetting() !== 'hidden'; }
+    private _getVisibilitySetting(): ButtonVisibility | null {
+        if (this.settingsName) {
+            const setting = Object(this.config.statusbar.advanced)[this.settingsName]?.visibility;
+            return setting || this.config.statusbar.visibility || null;
+        }
+        return this.config.statusbar.visibility || null;
+    }
+
+    private _getTooltip(): string | null {
+        const visibility = this._getVisibilitySetting();
+        switch (visibility) {
+            case 'hidden':
+                return null;
+            case 'icon':
+                return this.getTooltipIcon();
+            case 'compact':
+                return this.getTooltipShort();
+            default:
+                return this.getTooltipNormal();
+        }
+    }
+    private _getText(icon: boolean = false): string {
+        const type = this._getVisibilitySetting();
+        let text: string;
+        switch (type) {
+            case 'icon':
+                text = this.getTextIcon();
+                break;
+            case 'compact':
+                text = this.getTextShort();
+                break;
+            default:
+                text = this.getTextNormal();
+                break;
+        }
+        if (!icon) {
+            return text;
+        }
+        if (!this._icon) {
+            return text;
+        }
+        if (text === '') {
+            return this._icon || '';
+        }
+        return `${this._icon} ${text}`;
+    }
 }
 
 class WorkspaceButton extends Button {
-  // private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
-  // private static readonly _toolTip = localize('active.folder.tooltip', 'Select Active folder');
-  // private static readonly _autoSelectToolTip = localize('active.folder.auto.tooltip', 'auto');
+    // private static readonly _autoSelectToolTip = localize('active.folder.auto.select.tooltip', 'Active folder');
+    // private static readonly _toolTip = localize('active.folder.tooltip', 'Select Active folder');
+    // private static readonly _autoSelectToolTip = localize('active.folder.auto.tooltip', 'auto');
 
-  settingsName = 'workspace';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.command = 'cmake.selectActiveFolder';
-    this.icon = 'folder-active';
-    this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active folder');
-  }
+    settingsName = 'workspace';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.selectActiveFolder';
+        this.icon = 'folder-active';
+        this.tooltip = localize('click.to.select.workspace.tooltip', 'Click to select the active folder');
+    }
 
-  // private _autoSelect: boolean = false;
-  set autoSelect(v: boolean) {
-    if (v) {}
-    // this._autoSelect = v;
-    // this.update();
-  }
+    // private _autoSelect: boolean = false;
+    set autoSelect(v: boolean) {
+        if (v) { }
+        // this._autoSelect = v;
+        // this.update();
+    }
 
-  protected getTooltipNormal(): string|null {
-    // if (this._autoSelect) {
-    //  return `${this.tooltip} (${WorkspaceButton._autoSelectToolTip})`;
-    // }
-    return this.tooltip;
-  }
-  protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
-  protected getTooltipIcon(): string|null { return super.getTooltipShort(); }
+    protected getTooltipNormal(): string | null {
+        // if (this._autoSelect) {
+        //  return `${this.tooltip} (${WorkspaceButton._autoSelectToolTip})`;
+        // }
+        return this.tooltip;
+    }
+    protected getTooltipShort(): string | null { return this.prependCMake(this.getTooltipNormal()); }
+    protected getTooltipIcon(): string | null { return super.getTooltipShort(); }
 
-  protected isVisible(): boolean {
-    return super.isVisible() && Boolean(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1);
-  }
+    protected isVisible(): boolean {
+        return super.isVisible() && Boolean(vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1);
+    }
 }
 
 class CMakeStatus extends Button {
-  private _statusMessage: string = localize('loading.status', 'Loading...');
+    private _statusMessage: string = localize('loading.status', 'Loading...');
 
-  settingsName = 'status';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.hidden = true;
-    this.command = 'cmake.setVariant';
-    this.icon = 'info';
-    this.text = localize('unconfigured', 'Unconfigured');
-    this.tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');
-  }
+    settingsName = 'status';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = true;
+        this.command = 'cmake.setVariant';
+        this.icon = 'info';
+        this.text = localize('unconfigured', 'Unconfigured');
+        this.tooltip = localize('click.to.select.variant.tooltip', 'Click to select the current build variant');
+    }
 
-  set statusMessage(v: string) {
-    this._statusMessage = v;
-    this.update();
-  }
+    set statusMessage(v: string) {
+        this._statusMessage = v;
+        this.update();
+    }
 
-  protected getTextNormal(): string { return this.prependCMake(`${this.bracketText}: ${this._statusMessage}`); }
-  protected getTextShort(): string { return this.bracketText; }
+    protected getTextNormal(): string { return this.prependCMake(`${this.bracketText}: ${this._statusMessage}`); }
+    protected getTextShort(): string { return this.bracketText; }
 
-  protected getTooltipShort(): string|null {
-    return this.prependCMake(`${this.bracketText} - ${this._statusMessage}\n${this.tooltip}`);
-  }
+    protected getTooltipShort(): string | null {
+        return this.prependCMake(`${this.bracketText} - ${this._statusMessage}\n${this.tooltip}`);
+    }
 }
 
 class KitSelection extends Button {
-  private static readonly _noActiveKit = localize('no.active.kit', 'No active kit');
-  private static readonly _noKitSelected = localize('no.kit.selected', 'No Kit Selected');
+    private static readonly _noActiveKit = localize('no.active.kit', 'No active kit');
+    private static readonly _noKitSelected = localize('no.kit.selected', 'No Kit Selected');
 
-  settingsName = 'kit';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.hidden = true;
-    this.command = 'cmake.selectKit';
-    this.icon = 'tools';
-    this.tooltip = localize('click.to.change.kit.tooltip', 'Click to change the active kit');
-  }
+    settingsName = 'kit';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = true;
+        this.command = 'cmake.selectKit';
+        this.icon = 'tools';
+        this.tooltip = localize('click.to.change.kit.tooltip', 'Click to change the active kit');
+    }
 
-  protected getTextNormal(): string {
-    const text = this.text;
-    if (text === SpecialKits.Unspecified) {
-      return KitSelection._noActiveKit;
+    protected getTextNormal(): string {
+        const text = this.text;
+        if (text === SpecialKits.Unspecified) {
+            return KitSelection._noActiveKit;
+        }
+        if (text.length === 0) {
+            return KitSelection._noKitSelected;
+        }
+        return this.bracketText;
     }
-    if (text.length === 0) {
-      return KitSelection._noKitSelected;
-    }
-    return this.bracketText;
-  }
 
-  protected getTextShort(): string {
-    let len = this.config.statusbar.advanced?.kit?.length || 0;
-    if (!Number.isInteger(len) || len <= 0) {
-      len = 20;
+    protected getTextShort(): string {
+        let len = this.config.statusbar.advanced?.kit?.length || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
     }
-    let text = this.getTextNormal();
-    if (len + 3 < text.length) {
-      text = `${text.substr(0, len)}...`;
-      if (text.startsWith('[')) {
-        text = `${text}]`;
-      }
-    }
-    return text;
-  }
 
-  protected getTooltipShort(): string|null {
-    if (this.getTextNormal() === this.getTextShort()) {
-      return this.prependCMake(this.getTooltipNormal());
+    protected getTooltipShort(): string | null {
+        if (this.getTextNormal() === this.getTextShort()) {
+            return this.prependCMake(this.getTooltipNormal());
+        }
+        return super.getTooltipShort();
     }
-    return super.getTooltipShort();
-  }
 }
 
 class BuildTargetSelectionButton extends Button {
-  settingsName = 'buildTarget';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.hidden = false;
-    this.command = 'cmake.setDefaultTarget';
-    this.tooltip = localize('set.active.target.tooltip', 'Set the default build target');
-  }
+    settingsName = 'buildTarget';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = false;
+        this.command = 'cmake.setDefaultTarget';
+        this.tooltip = localize('set.active.target.tooltip', 'Set the default build target');
+    }
 
-  protected getTooltipShort(): string|null { return this.prependCMake(this.tooltip); }
+    protected getTooltipShort(): string | null { return this.prependCMake(this.tooltip); }
 }
 class LaunchTargetSelectionButton extends Button {
-  settingsName = 'launchTarget';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.command = 'cmake.selectLaunchTarget';
-    this.tooltip = localize('select.target.tooltip', 'Select the target to launch');
-  }
+    settingsName = 'launchTarget';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.selectLaunchTarget';
+        this.tooltip = localize('select.target.tooltip', 'Select the target to launch');
+    }
 
-  protected getTooltipShort(): string|null { return this.prependCMake(this.tooltip); }
+    protected getTooltipShort(): string | null { return this.prependCMake(this.tooltip); }
 }
 
 class DebugButton extends Button {
-  settingsName = 'debug';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.command = 'cmake.debugTarget';
-    this.icon = 'bug';
-    this.tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
-  }
-
-  private _target: string|null = null;
-
-  set target(v: string|null) {
-    this._target = v;
-    this.update();
-  }
-
-  protected getTooltipNormal(): string|null {
-    if (!!this._target) {
-      return `${this.tooltip}: [${this._target}]`;
+    settingsName = 'debug';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.debugTarget';
+        this.icon = 'bug';
+        this.tooltip = localize('launch.debugger.tooltip', 'Launch the debugger for the selected target');
     }
-    return this.tooltip;
-  }
 
-  protected isVisible(): boolean { return super.isVisible() && hasCPPTools(); }
+    private _target: string | null = null;
+
+    set target(v: string | null) {
+        this._target = v;
+        this.update();
+    }
+
+    protected getTooltipNormal(): string | null {
+        if (!!this._target) {
+            return `${this.tooltip}: [${this._target}]`;
+        }
+        return this.tooltip;
+    }
+
+    protected isVisible(): boolean { return super.isVisible() && hasCPPTools(); }
 }
 
 class LaunchButton extends Button {
-  settingsName = 'launch';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.command = 'cmake.launchTarget';
-    this.icon = 'play';
-    this.tooltip = localize('launch.tooltip', 'Launch the selected target in the terminal window');
-  }
-
-  private _target: string|null = null;
-
-  set target(v: string|null) {
-    this._target = v;
-    this.update();
-  }
-
-  protected getTooltipNormal(): string|null {
-    if (!!this._target) {
-      return `${this.tooltip}: [${this._target}]`;
+    settingsName = 'launch';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.launchTarget';
+        this.icon = 'play';
+        this.tooltip = localize('launch.tooltip', 'Launch the selected target in the terminal window');
     }
-    return this.tooltip;
-  }
+
+    private _target: string | null = null;
+
+    set target(v: string | null) {
+        this._target = v;
+        this.update();
+    }
+
+    protected getTooltipNormal(): string | null {
+        if (!!this._target) {
+            return `${this.tooltip}: [${this._target}]`;
+        }
+        return this.tooltip;
+    }
 }
 
 class CTestButton extends Button {
-  settingsName = 'ctest';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.command = 'cmake.ctest';
-    this.tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
-  }
-
-  private _enabled: boolean = false;
-  private _results: BasicTestResults|null = null;
-  private _color: string = '';
-
-  set enabled(v: boolean) {
-    this._enabled = v;
-    this.update();
-  }
-  set results(v: BasicTestResults|null) {
-    this._results = v;
-    if (!v) {
-      this._color = '';
-    } else {
-      this._color = v.passing === v.total ? 'lightgreen' : 'yellow';
+    settingsName = 'ctest';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.ctest';
+        this.tooltip = localize('run.ctest.tests.tooltip', 'Run CTest tests');
     }
-    this.update();
-  }
 
-  update(): void {
-    if (this._results) {
-      const {passing, total} = this._results;
-      this.icon = passing === total ? 'check' : 'x';
-    } else {
-      this.icon = 'beaker';
-    }
-    if (this.config.statusbar.advanced?.ctest?.color === true) {
-      this.button.color = this._color;
-    } else {
-      this.button.color = '';
-    }
-    super.update();
-  }
+    private _enabled: boolean = false;
+    private _results: BasicTestResults | null = null;
+    private _color: string = '';
 
-  protected isVisible(): boolean { return super.isVisible() && this._enabled; }
+    set enabled(v: boolean) {
+        this._enabled = v;
+        this.update();
+    }
+    set results(v: BasicTestResults | null) {
+        this._results = v;
+        if (!v) {
+            this._color = '';
+        } else {
+            this._color = v.passing === v.total ? 'lightgreen' : 'yellow';
+        }
+        this.update();
+    }
 
-  protected getTextNormal(): string {
-    if (!this._results) {
-      this.button.color = '';
-      return localize('run.ctest', 'Run CTest');
+    update(): void {
+        if (this._results) {
+            const { passing, total } = this._results;
+            this.icon = passing === total ? 'check' : 'x';
+        } else {
+            this.icon = 'beaker';
+        }
+        if (this.config.statusbar.advanced?.ctest?.color === true) {
+            this.button.color = this._color;
+        } else {
+            this.button.color = '';
+        }
+        super.update();
     }
-    const {passing, total} = this._results;
-    if (total === 1) {
-      return localize('test.passing', '{0}/{1} test passing', passing, total);
-    }
-    return localize('tests.passing', '{0}/{1} tests passing', passing, total);
-  }
 
-  protected getTextShort(): string {
-    if (!this._results) {
-      return '';
-    }
-    const {passing, total} = this._results;
-    return `${passing}/${total}`;
-  }
+    protected isVisible(): boolean { return super.isVisible() && this._enabled; }
 
-  protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
-  protected getTooltipIcon() {
-    if (!!this._results) {
-      return this.prependCMake(`${this.getTextNormal()}\n${this.getTooltipNormal()}`);
+    protected getTextNormal(): string {
+        if (!this._results) {
+            this.button.color = '';
+            return localize('run.ctest', 'Run CTest');
+        }
+        const { passing, total } = this._results;
+        if (total === 1) {
+            return localize('test.passing', '{0}/{1} test passing', passing, total);
+        }
+        return localize('tests.passing', '{0}/{1} tests passing', passing, total);
     }
-    return this.getTooltipShort();
-  }
+
+    protected getTextShort(): string {
+        if (!this._results) {
+            return '';
+        }
+        const { passing, total } = this._results;
+        return `${passing}/${total}`;
+    }
+
+    protected getTooltipShort(): string | null { return this.prependCMake(this.getTooltipNormal()); }
+    protected getTooltipIcon() {
+        if (!!this._results) {
+            return this.prependCMake(`${this.getTextNormal()}\n${this.getTooltipNormal()}`);
+        }
+        return this.getTooltipShort();
+    }
 }
 
 class BuildButton extends Button {
-  private static readonly _build = localize('build', 'Build');
-  private static readonly _stop = localize('stop', 'Stop');
+    private static readonly _build = localize('build', 'Build');
+    private static readonly _stop = localize('stop', 'Stop');
 
-  settingsName = 'build';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.command = 'cmake.build';
-    this.tooltip = localize('build.tooltip', 'Build the selected target');
-  }
-
-  private _isBusy: boolean = false;
-  private _target: string|null = null;
-
-  set isBusy(v: boolean) {
-    this._isBusy = v;
-    this.button.command = v ? 'cmake.stop' : 'cmake.build';
-    this.icon = this._isBusy ? 'x' : 'gear';
-    this.text = this._isBusy ? BuildButton._stop : BuildButton._build;
-    // update implicitly called in set text.
-    // this.update();
-  }
-  set target(v: string|null) {
-    this._target = v;
-    this.update();
-  }
-
-  protected getTextNormal(): string { return this.text; }
-  protected getTextShort(): string { return ''; }
-
-  protected getTooltipNormal(): string|null {
-    if (!!this._target) {
-      return `${this.tooltip}: [${this._target}]`;
+    settingsName = 'build';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.command = 'cmake.build';
+        this.tooltip = localize('build.tooltip', 'Build the selected target');
     }
-    return this.tooltip;
-  }
-  protected getTooltipShort(): string|null { return this.prependCMake(this.getTooltipNormal()); }
 
-  protected isVisible(): boolean { return super.isVisible() && (this._isBusy || true); }
+    private _isBusy: boolean = false;
+    private _target: string | null = null;
+
+    set isBusy(v: boolean) {
+        this._isBusy = v;
+        this.button.command = v ? 'cmake.stop' : 'cmake.build';
+        this.icon = this._isBusy ? 'x' : 'gear';
+        this.text = this._isBusy ? BuildButton._stop : BuildButton._build;
+        // update implicitly called in set text.
+        // this.update();
+    }
+    set target(v: string | null) {
+        this._target = v;
+        this.update();
+    }
+
+    protected getTextNormal(): string { return this.text; }
+    protected getTextShort(): string { return ''; }
+
+    protected getTooltipNormal(): string | null {
+        if (!!this._target) {
+            return `${this.tooltip}: [${this._target}]`;
+        }
+        return this.tooltip;
+    }
+    protected getTooltipShort(): string | null { return this.prependCMake(this.getTooltipNormal()); }
+
+    protected isVisible(): boolean { return super.isVisible() && (this._isBusy || true); }
 }
 
 export class ConfigurePresetSelection extends Button {
-  private static readonly _noPresetSelected = localize('no.configure.preset.selected', 'No Configure Preset Selected');
+    private static readonly _noPresetSelected = localize('no.configure.preset.selected', 'No Configure Preset Selected');
 
-  settingsName = 'configurePreset';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.hidden = false;
-    this.command = 'cmake.selectConfigurePreset';
-    this.icon = 'tools';
-    this.tooltip = localize('click.to.change.configure.preset.tooltip', 'Click to change the active configure preset');
-  }
+    settingsName = 'configurePreset';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = false;
+        this.command = 'cmake.selectConfigurePreset';
+        this.icon = 'tools';
+        this.tooltip = localize('click.to.change.configure.preset.tooltip', 'Click to change the active configure preset');
+    }
 
-  protected getTextNormal(): string {
-    const text = this.text;
-    if (text.length === 0) {
-      return ConfigurePresetSelection._noPresetSelected;
+    protected getTextNormal(): string {
+        const text = this.text;
+        if (text.length === 0) {
+            return ConfigurePresetSelection._noPresetSelected;
+        }
+        return this.bracketText;
     }
-    return this.bracketText;
-  }
 
-  protected getTextShort(): string {
-    let len = this.config.statusbar.advanced?.configurePreset?.length || 0;
-    if (!Number.isInteger(len) || len <= 0) {
-      len = 20;
+    protected getTextShort(): string {
+        let len = this.config.statusbar.advanced?.configurePreset?.length || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
     }
-    let text = this.getTextNormal();
-    if (len + 3 < text.length) {
-      text = `${text.substr(0, len)}...`;
-      if (text.startsWith('[')) {
-        text = `${text}]`;
-      }
-    }
-    return text;
-  }
 
-  protected getTooltipShort(): string|null {
-    if (this.getTextNormal() === this.getTextShort()) {
-      return this.prependCMake(this.getTooltipNormal());
+    protected getTooltipShort(): string | null {
+        if (this.getTextNormal() === this.getTextShort()) {
+            return this.prependCMake(this.getTooltipNormal());
+        }
+        return super.getTooltipShort();
     }
-    return super.getTooltipShort();
-  }
 }
 
 export class BuildPresetSelection extends Button {
-  private static readonly _noPresetSelected = localize('no.build.preset.selected', 'No Build Preset Selected');
+    private static readonly _noPresetSelected = localize('no.build.preset.selected', 'No Build Preset Selected');
 
-  settingsName = 'buildPreset';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.hidden = false;
-    this.command = 'cmake.selectBuildPreset';
-    this.icon = 'tools';
-    this.tooltip = localize('click.to.change.build.preset.tooltip', 'Click to change the active build preset');
-  }
+    settingsName = 'buildPreset';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = false;
+        this.command = 'cmake.selectBuildPreset';
+        this.icon = 'tools';
+        this.tooltip = localize('click.to.change.build.preset.tooltip', 'Click to change the active build preset');
+    }
 
-  protected getTextNormal(): string {
-    const text = this.text;
-    if (text.length === 0) {
-      return BuildPresetSelection._noPresetSelected;
+    protected getTextNormal(): string {
+        const text = this.text;
+        if (text.length === 0) {
+            return BuildPresetSelection._noPresetSelected;
+        }
+        return this.bracketText;
     }
-    return this.bracketText;
-  }
 
-  protected getTextShort(): string {
-    let len = this.config.statusbar.advanced?.buildPreset?.length || 0;
-    if (!Number.isInteger(len) || len <= 0) {
-      len = 20;
+    protected getTextShort(): string {
+        let len = this.config.statusbar.advanced?.buildPreset?.length || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
     }
-    let text = this.getTextNormal();
-    if (len + 3 < text.length) {
-      text = `${text.substr(0, len)}...`;
-      if (text.startsWith('[')) {
-        text = `${text}]`;
-      }
-    }
-    return text;
-  }
 
-  protected getTooltipShort(): string|null {
-    if (this.getTextNormal() === this.getTextShort()) {
-      return this.prependCMake(this.getTooltipNormal());
+    protected getTooltipShort(): string | null {
+        if (this.getTextNormal() === this.getTextShort()) {
+            return this.prependCMake(this.getTooltipNormal());
+        }
+        return super.getTooltipShort();
     }
-    return super.getTooltipShort();
-  }
 }
 
 export class TestPresetSelection extends Button {
-  private static readonly _noPresetSelected = localize('no.test.preset.selected', 'No Test Preset Selected');
+    private static readonly _noPresetSelected = localize('no.test.preset.selected', 'No Test Preset Selected');
 
-  settingsName = 'testPreset';
-  constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
-    super(config, priority);
-    this.hidden = false;
-    this.command = 'cmake.selectTestPreset';
-    this.icon = 'tools';
-    this.tooltip = localize('click.to.change.test.preset.tooltip', 'Click to change the active test preset');
-  }
+    settingsName = 'testPreset';
+    constructor(protected readonly config: ConfigurationReader, protected readonly priority: number) {
+        super(config, priority);
+        this.hidden = false;
+        this.command = 'cmake.selectTestPreset';
+        this.icon = 'tools';
+        this.tooltip = localize('click.to.change.test.preset.tooltip', 'Click to change the active test preset');
+    }
 
-  protected getTextNormal(): string {
-    const text = this.text;
-    if (text.length === 0) {
-      return TestPresetSelection._noPresetSelected;
+    protected getTextNormal(): string {
+        const text = this.text;
+        if (text.length === 0) {
+            return TestPresetSelection._noPresetSelected;
+        }
+        return this.bracketText;
     }
-    return this.bracketText;
-  }
 
-  protected getTextShort(): string {
-    let len = this.config.statusbar.advanced?.testPreset?.length || 0;
-    if (!Number.isInteger(len) || len <= 0) {
-      len = 20;
+    protected getTextShort(): string {
+        let len = this.config.statusbar.advanced?.testPreset?.length || 0;
+        if (!Number.isInteger(len) || len <= 0) {
+            len = 20;
+        }
+        let text = this.getTextNormal();
+        if (len + 3 < text.length) {
+            text = `${text.substr(0, len)}...`;
+            if (text.startsWith('[')) {
+                text = `${text}]`;
+            }
+        }
+        return text;
     }
-    let text = this.getTextNormal();
-    if (len + 3 < text.length) {
-      text = `${text.substr(0, len)}...`;
-      if (text.startsWith('[')) {
-        text = `${text}]`;
-      }
-    }
-    return text;
-  }
 
-  protected getTooltipShort(): string|null {
-    if (this.getTextNormal() === this.getTextShort()) {
-      return this.prependCMake(this.getTooltipNormal());
+    protected getTooltipShort(): string | null {
+        if (this.getTextNormal() === this.getTextShort()) {
+            return this.prependCMake(this.getTooltipNormal());
+        }
+        return super.getTooltipShort();
     }
-    return super.getTooltipShort();
-  }
 }
 
 export class StatusBar implements vscode.Disposable {
-  private readonly _workspaceButton = new WorkspaceButton(this._config, 3.6);
+    private readonly _workspaceButton = new WorkspaceButton(this._config, 3.6);
 
-  private readonly _configurePresetButton = new ConfigurePresetSelection(this._config, 3.55);
-  private readonly _cmakeToolsStatusItem = new CMakeStatus(this._config, 3.5);
-  private readonly _kitSelectionButton = new KitSelection(this._config, 3.4);
+    private readonly _configurePresetButton = new ConfigurePresetSelection(this._config, 3.55);
+    private readonly _cmakeToolsStatusItem = new CMakeStatus(this._config, 3.5);
+    private readonly _kitSelectionButton = new KitSelection(this._config, 3.4);
 
-  private readonly _buildButton: BuildButton = new BuildButton(this._config, 3.35);
-  private readonly _buildPresetButton = new BuildPresetSelection(this._config, 3.33);
-  private readonly _buildTargetNameButton = new BuildTargetSelectionButton(this._config, 3.3);
+    private readonly _buildButton: BuildButton = new BuildButton(this._config, 3.35);
+    private readonly _buildPresetButton = new BuildPresetSelection(this._config, 3.33);
+    private readonly _buildTargetNameButton = new BuildTargetSelectionButton(this._config, 3.3);
 
-  private readonly _debugButton: DebugButton = new DebugButton(this._config, 3.22);
-  private readonly _launchButton = new LaunchButton(this._config, 3.21);
-  private readonly _launchTargetNameButton = new LaunchTargetSelectionButton(this._config, 3.2);
+    private readonly _debugButton: DebugButton = new DebugButton(this._config, 3.22);
+    private readonly _launchButton = new LaunchButton(this._config, 3.21);
+    private readonly _launchTargetNameButton = new LaunchTargetSelectionButton(this._config, 3.2);
 
-  private readonly _testPresetButton = new TestPresetSelection(this._config, 3.15);
-  private readonly _testButton = new CTestButton(this._config, 3.1);
+    private readonly _testPresetButton = new TestPresetSelection(this._config, 3.15);
+    private readonly _testButton = new CTestButton(this._config, 3.1);
 
-  private readonly _buttons: Button[];
+    private readonly _buttons: Button[];
 
-  constructor(private readonly _config: ConfigurationReader) {
-    this._buttons = [
-      this._workspaceButton,
-      this._cmakeToolsStatusItem,
-      this._kitSelectionButton,
-      this._buildTargetNameButton,
-      this._launchTargetNameButton,
-      this._debugButton,
-      this._buildButton,
-      this._testButton,
-      this._launchButton,
-      this._configurePresetButton,
-      this._buildPresetButton,
-      this._testPresetButton
-    ];
-    this._config.onChange('statusbar', () => this.update());
-    this.update();
-  }
+    constructor(private readonly _config: ConfigurationReader) {
+        this._buttons = [
+            this._workspaceButton,
+            this._cmakeToolsStatusItem,
+            this._kitSelectionButton,
+            this._buildTargetNameButton,
+            this._launchTargetNameButton,
+            this._debugButton,
+            this._buildButton,
+            this._testButton,
+            this._launchButton,
+            this._configurePresetButton,
+            this._buildPresetButton,
+            this._testPresetButton
+        ];
+        this._config.onChange('statusbar', () => this.update());
+        this.update();
+    }
 
-  dispose(): void { this._buttons.forEach(btn => btn.dispose()); }
-  update(): void { this._buttons.forEach(btn => btn.update()); }
+    dispose(): void { this._buttons.forEach(btn => btn.dispose()); }
+    update(): void { this._buttons.forEach(btn => btn.update()); }
 
-  setVisible(v: boolean): void { this._buttons.forEach(btn => btn.forceHidden = !v); }
+    setVisible(v: boolean): void { this._buttons.forEach(btn => btn.forceHidden = !v); }
 
-  setActiveFolderName(v: string): void { this._workspaceButton.text = v; }
-  setAutoSelectActiveFolder(autoSelectActiveFolder: boolean): void {
-    this._workspaceButton.autoSelect = autoSelectActiveFolder;
-  }
-  setVariantLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
-  setStatusMessage(v: string): void { this._cmakeToolsStatusItem.statusMessage = v; }
-  setBuildTargetName(v: string): void {
-    this._buildTargetNameButton.text = v;
-    this._buildButton.target = v;
-  }
-  setLaunchTargetName(v: string): void {
-    this._launchTargetNameButton.text = v;
-    this._launchButton.target = v;
-    this._debugButton.target = v;
-  }
-  setCTestEnabled(v: boolean): void { this._testButton.enabled = v; }
-  setTestResults(v: BasicTestResults|null): void { this._testButton.results = v; }
-  setIsBusy(v: boolean): void { this._buildButton.isBusy = v; }
-  setActiveKitName(v: string): void { this._kitSelectionButton.text = v; }
-  setConfigurePresetName(v: string): void { this._configurePresetButton.text = v; }
-  setBuildPresetName(v: string): void { this._buildPresetButton.text = v; }
-  setTestPresetName(v: string): void { this._testPresetButton.text = v; this.setCTestEnabled(true); }
+    setActiveFolderName(v: string): void { this._workspaceButton.text = v; }
+    setAutoSelectActiveFolder(autoSelectActiveFolder: boolean): void {
+        this._workspaceButton.autoSelect = autoSelectActiveFolder;
+    }
+    setVariantLabel(v: string): void { this._cmakeToolsStatusItem.text = v; }
+    setStatusMessage(v: string): void { this._cmakeToolsStatusItem.statusMessage = v; }
+    setBuildTargetName(v: string): void {
+        this._buildTargetNameButton.text = v;
+        this._buildButton.target = v;
+    }
+    setLaunchTargetName(v: string): void {
+        this._launchTargetNameButton.text = v;
+        this._launchButton.target = v;
+        this._debugButton.target = v;
+    }
+    setCTestEnabled(v: boolean): void { this._testButton.enabled = v; }
+    setTestResults(v: BasicTestResults | null): void { this._testButton.results = v; }
+    setIsBusy(v: boolean): void { this._buildButton.isBusy = v; }
+    setActiveKitName(v: string): void { this._kitSelectionButton.text = v; }
+    setConfigurePresetName(v: string): void { this._configurePresetButton.text = v; }
+    setBuildPresetName(v: string): void { this._buildPresetButton.text = v; }
+    setTestPresetName(v: string): void { this._testPresetButton.text = v; this.setCTestEnabled(true); }
 
-  hideLaunchButton(shouldHide: boolean = true): void { this._launchButton.hidden = shouldHide; }
-  hideDebugButton(shouldHide: boolean = true): void { this._debugButton.hidden = shouldHide; }
-  hideBuildButton(shouldHide: boolean = true): void { this._buildButton.hidden = shouldHide; }
+    hideLaunchButton(shouldHide: boolean = true): void { this._launchButton.hidden = shouldHide; }
+    hideDebugButton(shouldHide: boolean = true): void { this._debugButton.hidden = shouldHide; }
+    hideBuildButton(shouldHide: boolean = true): void { this._buildButton.hidden = shouldHide; }
 
-  useCMakePresets(isUsing: boolean = true): void {
-    this._cmakeToolsStatusItem.hidden = isUsing;
-    this._kitSelectionButton.hidden = isUsing;
-    this._configurePresetButton.hidden = !isUsing;
-    this._buildPresetButton.hidden = !isUsing;
-    this._testPresetButton.hidden = !isUsing;
-  }
+    useCMakePresets(isUsing: boolean = true): void {
+        this._cmakeToolsStatusItem.hidden = isUsing;
+        this._kitSelectionButton.hidden = isUsing;
+        this._configurePresetButton.hidden = !isUsing;
+        this._buildPresetButton.hidden = !isUsing;
+        this._testPresetButton.hidden = !isUsing;
+    }
 }
