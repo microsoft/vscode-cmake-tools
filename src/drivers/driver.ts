@@ -1137,6 +1137,59 @@ export abstract class CMakeDriver implements vscode.Disposable {
     return {name: allowedCompilerName, version};
   }
 
+  /**
+   * The list of generators CMake supports as of 3.21
+   */
+  private readonly cmakeGenerators = [
+    "Visual Studio 17 2022",
+    "Visual Studio 16 2019",
+    "Visual Studio 15 2017",
+    "Visual Studio 14 2015",
+    "Visual Studio 12 2013",
+    "Visual Studio 11 2012",
+    "Visual Studio 10 2010",
+    "Visual Studio 9 2008",
+    "Borland Makefiles",
+    "NMake Makefiles",
+    "NMake Makefiles JOM",
+    "MSYS Makefiles",
+    "MinGW Makefiles",
+    "Green Hills MULTI",
+    "Unix Makefiles",
+    "Ninja",
+    "Ninja Multi-Config",
+    "Watcom WMake",
+    "CodeBlocks - MinGW Makefiles",
+    "CodeBlocks - NMake Makefiles",
+    "CodeBlocks - NMake Makefiles JOM",
+    "CodeBlocks - Ninja",
+    "CodeBlocks - Unix Makefiles",
+    "CodeLite - MinGW Makefiles",
+    "CodeLite - NMake Makefiles",
+    "CodeLite - Ninja",
+    "CodeLite - Unix Makefiles",
+    "Eclipse CDT4 - NMake Makefiles",
+    "Eclipse CDT4 - MinGW Makefiles",
+    "Eclipse CDT4 - Ninja",
+    "Eclipse CDT4 - Unix Makefiles",
+    "Kate - MinGW Makefiles",
+    "Kate - NMake Makefiles",
+    "Kate - Ninja",
+    "Kate - Unix Makefiles",
+    "Sublime Text 2 - MinGW Makefiles",
+    "Sublime Text 2 - NMake Makefiles",
+    "Sublime Text 2 - Ninja",
+    "Sublime Text 2 - Unix Makefiles"
+  ];
+
+  private getGeneratorNameForTelemetry(): string {
+    const generator = this.generatorName;
+    if (generator) {
+      return this.cmakeGenerators.find(g => generator.startsWith(g)) ?? 'other';
+    }
+    return 'other';
+  }
+
   private countHiddenPresets(presets: preset.Preset[]): number {
     let count = 0;
     for (const p of presets) {
@@ -1236,7 +1289,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       if (this.useCMakePresets) {
         telemetryProperties = {
           CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
-          CMakeGenerator: this.generatorName || '',
+          CMakeGenerator: this.getGeneratorNameForTelemetry(),
           Preset: this.useCMakePresets ? 'true' : 'false',
           Trigger: trigger,
           ShowCommandOnly: showCommandOnly ? 'true' : 'false'
@@ -1244,7 +1297,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
       } else {
         telemetryProperties = {
           CMakeExecutableVersion: cmakeVersion ? util.versionToString(cmakeVersion) : '',
-          CMakeGenerator: this.generatorName || '',
+          CMakeGenerator: this.getGeneratorNameForTelemetry(),
           ConfigType: this.isMultiConfFast ? 'MultiConf' : this.currentBuildType || '',
           Toolchain: this._kit?.toolchainFile ? 'true' : 'false', // UseToolchain?
           Trigger: trigger,
