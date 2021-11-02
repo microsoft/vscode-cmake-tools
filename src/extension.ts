@@ -710,7 +710,7 @@ class ExtensionManager implements vscode.Disposable {
       }
     );
     rollbar.invokeAsync(localize('update.code.model.for.cpptools', 'Update code model for cpptools'), {}, async () => {
-      if (vscode.workspace.getConfiguration('C_Cpp').get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
+      if (vscode.workspace.getConfiguration('C_Cpp', folder.folder).get<string>('intelliSenseEngine')?.toLocaleLowerCase() === 'disabled') {
         log.debug(localize('update.intellisense.disabled', 'Not updating the configuration provider because C_Cpp.intelliSenseEngine is set to \'Disabled\''));
         return;
       }
