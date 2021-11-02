@@ -17,7 +17,7 @@ import { FileDiagnostic, oneLess } from './util';
  * in conjunction with `proc.execute`.
  */
 export class CMakeOutputConsumer implements OutputConsumer {
-    constructor(readonly sourceDir: string, readonly logger?: Logger) { }
+    constructor(readonly sourceDir: string, readonly logger?: Logger) {}
     /**
      * The diagnostics that this consumer has accumulated. It will be populated
      * during calls to `output()` and `error()`

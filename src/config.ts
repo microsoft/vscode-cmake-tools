@@ -154,7 +154,7 @@ type EmittersOf<T> = {
 export class ConfigurationReader implements vscode.Disposable {
     private _updateSubscription?: vscode.Disposable;
 
-    constructor(private readonly _configData: ExtensionConfigurationSettings) { }
+    constructor(private readonly _configData: ExtensionConfigurationSettings) {}
 
     get configData() { return this._configData; }
 

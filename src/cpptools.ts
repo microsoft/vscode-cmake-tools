@@ -55,7 +55,7 @@ export interface CompileFlagInformation {
     targetArch: Architecture;
 }
 
-class MissingCompilerException extends Error { }
+class MissingCompilerException extends Error {}
 
 interface TargetDefaults {
     name: string;
@@ -397,7 +397,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
     }
 
     /** No-op */
-    dispose() { }
+    dispose() {}
 
     /**
      * Version of Cpptools API

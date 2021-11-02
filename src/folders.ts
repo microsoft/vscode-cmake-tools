@@ -40,7 +40,7 @@ export class CMakeToolsFolder {
 
     private constructor(readonly cmakeTools: CMakeTools,
         readonly kitsController: KitsController,
-        readonly presetsController: PresetsController) { }
+        readonly presetsController: PresetsController) {}
 
     static async init(cmakeTools: CMakeTools) {
         const kitsController = await KitsController.init(cmakeTools);

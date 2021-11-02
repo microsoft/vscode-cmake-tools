@@ -167,7 +167,7 @@ class WorkspaceButton extends Button {
 
     // private _autoSelect: boolean = false;
     set autoSelect(v: boolean) {
-        if (v) { }
+        if (v) {}
         // this._autoSelect = v;
         // this.update();
     }

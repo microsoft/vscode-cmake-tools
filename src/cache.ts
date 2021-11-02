@@ -115,7 +115,7 @@ export class CMakeCache {
      */
     private constructor(private readonly _path: string,
         private readonly _exists: boolean,
-        private readonly _entries: Map<string, Entry>) { }
+        private readonly _entries: Map<string, Entry>) {}
 
     /**
      * `true` if the file exists when this instance was created.

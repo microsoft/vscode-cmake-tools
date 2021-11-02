@@ -11,7 +11,7 @@ import * as vscode from 'vscode';
  * invalid states.
  */
 export class StateManager {
-    constructor(readonly extensionContext: vscode.ExtensionContext, readonly folder: vscode.WorkspaceFolder) { }
+    constructor(readonly extensionContext: vscode.ExtensionContext, readonly folder: vscode.WorkspaceFolder) {}
 
     private _get<T>(key: string): T | undefined {
         return this.extensionContext.globalState.get<T>(this.folder.uri.fsPath + key);

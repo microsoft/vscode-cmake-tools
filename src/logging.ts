@@ -195,7 +195,7 @@ class SingletonLogger {
 }
 
 export class Logger {
-    constructor(readonly _tag: string) { }
+    constructor(readonly _tag: string) {}
     get tag() { return `[${this._tag}]`; }
     trace(...args: Stringable[]) { SingletonLogger.instance().trace(this.tag, ...args); }
     debug(...args: Stringable[]) { SingletonLogger.instance().debug(this.tag, ...args); }

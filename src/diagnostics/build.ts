@@ -29,7 +29,7 @@ export class Compilers {
 }
 
 export class CompileOutputConsumer implements OutputConsumer {
-    constructor(readonly config: ConfigurationReader) { }
+    constructor(readonly config: ConfigurationReader) {}
 
     compilers = new Compilers();
 

@@ -17,7 +17,7 @@ interface NamedItem {
  * Base class of nodes in all tree nodes
  */
 abstract class BaseNode {
-    constructor(public readonly id: string) { }
+    constructor(public readonly id: string) {}
 
     /**
      * Get the child nodes of this node
@@ -364,7 +364,7 @@ export class TargetNode extends BaseNode {
         this._rootDir.update({
             tree,
             context: ctx,
-            update: (_src, _cm) => { },
+            update: (_src, _cm) => {},
             create: newNode => newNode
         });
     }

@@ -21,7 +21,7 @@ interface IPackageInfo {
 export class ExperimentationTelemetry implements IExperimentationTelemetry {
     private sharedProperties: Record<string, string> = {};
 
-    constructor(private baseReporter: TelemetryReporter) { }
+    constructor(private baseReporter: TelemetryReporter) {}
 
     sendTelemetryEvent(eventName: string, properties?: Record<string, string>, measurements?: Record<string, number>): void {
         this.baseReporter.sendTelemetryEvent(

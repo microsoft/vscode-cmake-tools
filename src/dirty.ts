@@ -9,7 +9,7 @@ import { Stats } from 'fs';
 import * as path from 'path';
 
 export class InputFile {
-    constructor(readonly filePath: string, readonly mtime: Date | null) { }
+    constructor(readonly filePath: string, readonly mtime: Date | null) {}
 
     async checkOutOfDate(): Promise<boolean> {
         if (this.mtime === null) {
@@ -35,7 +35,7 @@ export class InputFile {
 }
 
 export class InputFileSet {
-    private constructor(readonly inputFiles: InputFile[]) { }
+    private constructor(readonly inputFiles: InputFile[]) {}
 
     async checkOutOfDate(): Promise<boolean> {
         for (const input of this.inputFiles) {

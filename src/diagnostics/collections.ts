@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
  */
 class LazyCollection implements vscode.Disposable {
     private _collection?: vscode.DiagnosticCollection;
-    constructor(readonly name: string) { }
+    constructor(readonly name: string) {}
 
     /**
      * Get the collection

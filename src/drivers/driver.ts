@@ -1630,7 +1630,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      * If called then the current process should be stopped.
      * This could be the configuration or the build process.
      */
-    async onStop(): Promise<void> { }
+    async onStop(): Promise<void> {}
 
     private m_stop_process = false;
     /**

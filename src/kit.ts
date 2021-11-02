@@ -676,7 +676,7 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
 
     try {
         await fs.unlink(envpath);
-    } catch (error) { }
+    } catch (error) {}
 
     const batContent = bat.join('\r\n');
     await fs.writeFile(batpath, batContent);
@@ -801,7 +801,7 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
     }
     try {
         await fs.unlink(environment_path); // delete the temp file if it exists
-    } catch (error) { }
+    } catch (error) {}
     await fs.writeFile(script_path, script); // write batch file
 
     const res = await proc.execute(run_command, [], null, { shell: true, silent: true }).result; // run script

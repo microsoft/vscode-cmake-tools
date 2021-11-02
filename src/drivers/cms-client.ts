@@ -134,14 +134,14 @@ export interface HandshakeParams {
 
 export interface HandshakeRequest extends CookiedMessage, HandshakeParams { type: 'handshake' }
 
-export interface HandshakeContent { }
+export interface HandshakeContent {}
 
 export interface HandshakeReply extends ReplyMessage, HandshakeContent { inReplyTo: 'handshake' }
 
 /**
  * GlobalSettings request gets some static information about the project setup.
  */
-export interface GlobalSettingsParams { }
+export interface GlobalSettingsParams {}
 
 export interface GlobalSettingsRequest extends CookiedMessage, GlobalSettingsParams { type: 'globalSettings' }
 
@@ -181,7 +181,7 @@ export interface SetGlobalSettingsParams {
 
 export interface SetGlobalSettingsRequest extends CookiedMessage, SetGlobalSettingsParams { type: 'setGlobalSettings' }
 
-export interface SetGlobalSettingsContent { }
+export interface SetGlobalSettingsContent {}
 
 export interface SetGlobalSettingsReply extends ReplyMessage, SetGlobalSettingsContent {
     inReplyTo: 'setGlobalSettings';
@@ -195,17 +195,17 @@ export interface ConfigureParams { cacheArguments: string[] }
 
 export interface ConfigureRequest extends CookiedMessage, ConfigureParams { type: 'configure' }
 
-export interface ConfigureContent { }
+export interface ConfigureContent {}
 export interface ConfigureReply extends ReplyMessage, ConfigureContent { inReplyTo: 'configure' }
 
 /**
  * Compute actually generates the build files from the configure step.
  */
-export interface ComputeParams { }
+export interface ComputeParams {}
 
 export interface ComputeRequest extends CookiedMessage, ComputeParams { type: 'compute' }
 
-export interface ComputeContent { }
+export interface ComputeContent {}
 
 export interface ComputeReply extends ReplyMessage, ComputeContent { inReplyTo: 'compute' }
 
@@ -214,7 +214,7 @@ export interface ComputeReply extends ReplyMessage, ComputeContent { inReplyTo: 
  * sources,
  * configurations, compile options, etc.
  */
-export interface CodeModelParams { }
+export interface CodeModelParams {}
 
 export interface CodeModelRequest extends CookiedMessage, CodeModelParams { type: 'codemodel' }
 
@@ -269,7 +269,7 @@ export interface CodeModelReply extends ReplyMessage, CodeModelContent { inReply
  * projects configuration output. Editting these will cause the configuration to
  * go out of date.
  */
-export interface CMakeInputsParams { }
+export interface CMakeInputsParams {}
 
 export interface CMakeInputsRequest extends CookiedMessage, CMakeInputsParams { type: 'cmakeInputs' }
 
@@ -284,7 +284,7 @@ export interface CMakeInputsReply extends ReplyMessage, CMakeInputsContent { inR
 /**
  * The cache request will respond with the contents of the CMake cache.
  */
-export interface CacheParams { }
+export interface CacheParams {}
 
 export interface CacheRequest extends CookiedMessage, CacheParams { type: 'cache' }
 
@@ -573,7 +573,7 @@ export class CMakeServerClient {
                 });
             });
             const exit_promise = new Promise<void>(resolve => { child.on('exit', () => { resolve(); }); });
-            this._endPromise = Promise.all([end_promise, exit_promise]).then(() => { });
+            this._endPromise = Promise.all([end_promise, exit_promise]).then(() => {});
             child.on('close', (retc: number, signal: string) => {
                 if (retc !== 0) {
                     log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));

@@ -16,7 +16,7 @@ type SubscriptionCallback<T> = (value: T) => void;
 type SubscriberFunction<T> = (fire: FirePolicy, cb: SubscriptionCallback<T>) => vscode.Disposable;
 
 export class Property<T> {
-    constructor(private _value: T) { }
+    constructor(private _value: T) {}
 
     private readonly _emitter = new vscode.EventEmitter<T>();
 

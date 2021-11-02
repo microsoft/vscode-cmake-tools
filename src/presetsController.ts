@@ -71,10 +71,10 @@ export class PresetsController {
             await presetsController.reapplyPresets();
 
             if (presetsController._presetsWatcher) {
-                presetsController._presetsWatcher.close().then(() => { }, () => { });
+                presetsController._presetsWatcher.close().then(() => {}, () => {});
             }
             if (presetsController._userPresetsWatcher) {
-                presetsController._userPresetsWatcher.close().then(() => { }, () => { });
+                presetsController._userPresetsWatcher.close().then(() => {}, () => {});
             }
 
             presetsController._presetsWatcher = chokidar.watch(presetsController.presetsPath, { ignoreInitial: true })
@@ -127,7 +127,7 @@ export class PresetsController {
         return presetsController;
     }
 
-    private constructor(private readonly _cmakeTools: CMakeTools, private readonly _kitsController: KitsController) { }
+    private constructor(private readonly _cmakeTools: CMakeTools, private readonly _kitsController: KitsController) {}
 
     get presetsPath() { return path.join(this._sourceDir, 'CMakePresets.json'); }
 
@@ -1011,10 +1011,10 @@ export class PresetsController {
 
     dispose() {
         if (this._presetsWatcher) {
-            this._presetsWatcher.close().then(() => { }, () => { });
+            this._presetsWatcher.close().then(() => {}, () => {});
         }
         if (this._userPresetsWatcher) {
-            this._userPresetsWatcher.close().then(() => { }, () => { });
+            this._userPresetsWatcher.close().then(() => {}, () => {});
         }
         if (this._sourceDirChangedSub) {
             this._sourceDirChangedSub.dispose();

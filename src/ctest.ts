@@ -23,7 +23,7 @@ export interface BasicTestResults {
     total: number;
 }
 
-interface SiteAttributes { }
+interface SiteAttributes {}
 
 type TestStatus = ('failed' | 'notrun' | 'passed');
 
@@ -295,7 +295,7 @@ class CTestOutputLogger implements OutputConsumer {
 }
 
 export class CTestDriver implements vscode.Disposable {
-    constructor(readonly ws: DirectoryContext) { }
+    constructor(readonly ws: DirectoryContext) {}
     private readonly _decorationManager = new DecorationManager();
 
     private _testingEnabled: boolean = false;

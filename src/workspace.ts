@@ -26,7 +26,7 @@ export class DirectoryContext {
          * The state management object associated with the directory.
          */
         public readonly state: StateManager
-    ) { }
+    ) {}
 
     /**
      * Create a context object for the given a workspace folder.

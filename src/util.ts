@@ -321,7 +321,7 @@ export function isMultiConfGeneratorFast(gen: string): boolean {
     return gen.includes('Visual Studio') || gen.includes('Xcode') || gen.includes('Multi-Config');
 }
 
-export class InvalidVersionString extends Error { }
+export class InvalidVersionString extends Error {}
 
 export interface Version {
     major: number;
@@ -529,7 +529,7 @@ export interface ProgressReport {
 export type ProgressHandle = vscode.Progress<ProgressReport>;
 
 export class DummyDisposable {
-    dispose() { }
+    dispose() {}
 }
 
 export function lexicographicalCompare(a: Iterable<string>, b: Iterable<string>): number {

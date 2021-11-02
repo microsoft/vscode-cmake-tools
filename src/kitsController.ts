@@ -55,7 +55,7 @@ export class KitsController {
     folderKits: Kit[] = [];
     additionalKits: Kit[] = [];
 
-    private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: chokidar.FSWatcher) { }
+    private constructor(readonly cmakeTools: CMakeTools, private readonly _kitsWatcher: chokidar.FSWatcher) {}
 
     static async expandAdditionalKitFiles(cmakeTools: CMakeTools): Promise<string[]> {
         const additionalKitFiles: string[] = cmakeTools.workspaceContext.config.additionalKits;
