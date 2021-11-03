@@ -27,7 +27,7 @@ module.exports = {
                 "format": ["PascalCase"]
             }
         ],
-        //"@typescript-eslint/indent": "error",
+        "@typescript-eslint/indent": "error",
         "@typescript-eslint/member-delimiter-style": [
             "error",
             {

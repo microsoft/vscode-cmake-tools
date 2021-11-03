@@ -638,8 +638,7 @@ const MSVC_ENVIRONMENT_VARIABLES = [
  * @param devbat Path to a VS environment batch file
  * @param args List of arguments to pass to the batch file
  */
-async function collectDevBatVars(hostArch: string, devbat: string, args: string[], major_version: number, common_dir: string):
-    Promise<Map<string, string> | undefined> {
+async function collectDevBatVars(hostArch: string, devbat: string, args: string[], major_version: number, common_dir: string): Promise<Map<string, string> | undefined> {
     const fname = Math.random().toString() + '.bat';
     const batfname = `vs-cmt-${fname}`;
     const envfname = batfname + '.env';

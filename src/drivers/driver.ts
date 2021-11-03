@@ -16,7 +16,7 @@ import { CMakeOutputConsumer } from '@cmt/diagnostics/cmake';
 import { RawDiagnosticParser } from '@cmt/diagnostics/util';
 import { ProgressMessage } from '@cmt/drivers/cms-client';
 import * as expand from '@cmt/expand';
-import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getKitEnvironmentVariablesObject } from '@cmt/kit';
+import { CMakeGenerator, effectiveKitEnvironment, Kit, kitChangeNeedsClean, KitDetect, getKitDetect, getKitEnvironmentVariablesObject, getVSKitEnvironment } from '@cmt/kit';
 import * as logging from '@cmt/logging';
 import paths from '@cmt/paths';
 import { fs } from '@cmt/pr';
@@ -342,8 +342,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return util.mergeEnvironment(cur_env, kit_env, (opts && opts.environment) ? opts.environment : {});
     }
 
-    executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions):
-        proc.Subprocess {
+    executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
         const environment = this.getEffectiveSubprocessEnvironment(options);
         const exec_options = { ...options, environment };
         return proc.execute(command, args, consumer, exec_options);
@@ -1325,6 +1324,26 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     telemetryProperties.CppCompilerName = cppCompilerVersion.name;
                     telemetryProperties.CppCompilerVersion = cppCompilerVersion.version;
                 }
+            } else if (this._kit?.visualStudio && this._kit.visualStudioArchitecture) {
+                const env = await getVSKitEnvironment(this._kit);
+                const dirs = env?.get('Path')?.split(';') ?? [];
+                let compilerPath = '';
+                for (const dir of dirs) {
+                    if (dir.indexOf('MSVC') > 0) {
+                        compilerPath = path.join(dir, 'cl.exe');
+                        break;
+                    }
+                }
+                if (compilerPath) {
+                    const compiler = await this.getCompilerVersion(compilerPath);
+                    telemetryProperties.CCompilerVersion = compiler.version;
+                    telemetryProperties.CppCompilerVersion = compiler.version;
+                } else {
+                    telemetryProperties.CCompilerVersion = 'unknown';
+                    telemetryProperties.CppCompilerVersion = 'unknown';
+                }
+                telemetryProperties.CCompilerName = 'cl';
+                telemetryProperties.CppCompilerName = 'cl';
             }
 
             if (this._kit?.visualStudioArchitecture) {

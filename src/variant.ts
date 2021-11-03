@@ -321,7 +321,7 @@ export class VariantManager implements vscode.Disposable {
             long: [acc.long, el.long].join(', '),
             env: util.mergeEnvironment(acc.env || {}, el.env || {})
         }),
-            init);
+        init);
     }
 
     get activeVariantOptions(): VariantOption {
@@ -408,8 +408,7 @@ export class VariantManager implements vscode.Disposable {
         return this.stateManager.activeVariantSettings;
     }
 
-    transformChoiceCombinationToKeywordSettings(choiceCombination: { settingKey: string; settingValue: string }[]):
-        Map<string, string> {
+    transformChoiceCombinationToKeywordSettings(choiceCombination: { settingKey: string; settingValue: string }[]): Map<string, string> {
         const keywords = new Map<string, string>();
         choiceCombination.forEach(kv => keywords.set(kv.settingKey, kv.settingValue));
         return keywords;

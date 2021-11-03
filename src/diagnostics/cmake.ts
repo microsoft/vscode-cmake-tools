@@ -57,12 +57,11 @@ export class CMakeOutputConsumer implements OutputConsumer {
          * a warning or error with blank lines
          */
         blankLines: number;
-    }
-        = {
-            state: 'init',
-            diag: null,
-            blankLines: 0
-        };
+    } = {
+        state: 'init',
+        diag: null,
+        blankLines: 0
+    };
     /**
      * Consume a line of stderr.
      * @param line The line from stderr
