@@ -705,8 +705,12 @@ export abstract class CMakeDriver implements vscode.Disposable {
     }
 
     private _isMultiConfig: boolean = false;
-    get isMultiConfig(): boolean { return this._isMultiConfig; }
-    set isMultiConfig(v: boolean) { this._isMultiConfig = v; }
+    get isMultiConfig(): boolean {
+        return this._isMultiConfig;
+    }
+    set isMultiConfig(v: boolean) {
+        this._isMultiConfig = v;
+    }
 
     get isMultiConfFast(): boolean {
         return this.generatorName ? util.isMultiConfGeneratorFast(this.generatorName) : false;

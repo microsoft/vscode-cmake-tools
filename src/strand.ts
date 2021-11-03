@@ -40,7 +40,9 @@ export class Strand {
                 try {
                     const result = await Promise.resolve(func());
                     resolve(result);
-                } catch (e) { reject(e); }
+                } catch (e) {
+                    reject(e);
+                }
             });
         });
     }

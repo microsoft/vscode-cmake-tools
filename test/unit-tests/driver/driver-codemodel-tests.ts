@@ -93,7 +93,9 @@ export function makeCodeModelDriverTestsuite(
             driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
             let code_model: null | codemodel_api.CodeModelContent = null;
             if (driver && !(driver instanceof LegacyCMakeDriver)) {
-                driver.onCodeModelChanged(cm => { code_model = cm; });
+                driver.onCodeModelChanged(cm => {
+                    code_model = cm;
+                });
             }
             expect(await driver.configure(ConfigureTrigger.runTests, args)).to.be.eq(0);
             return code_model;
@@ -110,7 +112,9 @@ export function makeCodeModelDriverTestsuite(
         }).timeout(90000);
 
         test('Test generation of code model with one configuration like make on linux', async () => {
-            if (process.platform === 'win32') { return; }
+            if (process.platform === 'win32') {
+                return;
+            }
 
             const codemodel_data = await generateCodeModelForConfiguredDriver();
             expect(codemodel_data).to.be.not.null;

@@ -21,7 +21,9 @@ const ENABLE_CMSERVER_PROTO_DEBUG = false;
 const MESSAGE_WRAPPER_RE = /\[== "CMake Server" ==\[([^]*?)\]== "CMake Server" ==\]\s*([^]*)/;
 
 export class StartupError extends global.Error {
-    constructor(public readonly retc: number) { super(localize('error.starting.cmake-server', 'Error starting up cmake-server')); }
+    constructor(public readonly retc: number) {
+        super(localize('error.starting.cmake-server', 'Error starting up cmake-server'));
+    }
 }
 
 export interface ProtocolVersion {
@@ -352,11 +354,15 @@ export class ServerError extends Error implements ErrorMessage {
         public inReplyTo = e.inReplyTo) {
         super(e.errorMessage);
     }
-    toString(): string { return `[cmake-server] ${this.errorMessage}`; }
+    toString(): string {
+        return `[cmake-server] ${this.errorMessage}`;
+    }
 }
 
 export class BadHomeDirectoryError extends Error {
-    constructor(readonly cached: string, readonly expecting: string, readonly badCachePath: string) { super(); }
+    constructor(readonly cached: string, readonly expecting: string, readonly badCachePath: string) {
+        super();
+    }
 }
 
 interface MessageResolutionCallbacks {
@@ -430,7 +436,9 @@ export class CMakeServerClient {
                 }
                 case 'progress': {
                     const prog = cookied as any as ProgressMessage;
-                    this._params.onProgress(prog).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onProgress'), e); });
+                    this._params.onProgress(prog).catch(e => {
+                        log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onProgress'), e);
+                    });
                     return;
                 }
             }
@@ -444,18 +452,24 @@ export class CMakeServerClient {
                     }
                 });
                 rollbar.takePromise('Unlink pipe', { pipe: this._pipeFilePath }, unlink_pr);
-                this._params.onHello(some as HelloMessage).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onHello'), e); });
+                this._params.onHello(some as HelloMessage).catch(e => {
+                    log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onHello'), e);
+                });
                 return;
             }
             case 'message': {
-                this._params.onMessage(some as MessageMessage).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onMessage'), e); });
+                this._params.onMessage(some as MessageMessage).catch(e => {
+                    log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onMessage'), e);
+                });
                 return;
             }
             case 'signal': {
                 const sig = some as SomeSignalMessage;
                 switch (sig.name) {
                     case 'dirty': {
-                        this._params.onDirty().catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onDirty'), e); });
+                        this._params.onDirty().catch(e => {
+                            log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onDirty'), e);
+                        });
                         return;
                     }
                     case 'fileChange': {
@@ -479,7 +493,7 @@ export class CMakeServerClient {
     private _sendRequest(type: string, params: any = {}): Promise<any> {
         const cookiedMessage = { type, ...params };
         const cookie = cookiedMessage.cookie = Math.random().toString();
-        const promise = new Promise((resolve, reject) => { this._promisesResolvers.set(cookie, { resolve, reject }); });
+        const promise = new Promise((resolve, reject) => this._promisesResolvers.set(cookie, { resolve, reject }));
         const jsonMessage = JSON.stringify(cookiedMessage);
         if (ENABLE_CMSERVER_PROTO_DEBUG) {
             log.debug(localize('sending.message.to.cmake-server', 'Sending message to cmake-server: {0}', jsonMessage));
@@ -572,13 +586,17 @@ export class CMakeServerClient {
                     resolve();
                 });
             });
-            const exit_promise = new Promise<void>(resolve => { child.on('exit', () => { resolve(); }); });
+            const exit_promise = new Promise<void>(resolve => {
+                child.on('exit', () => resolve());
+            });
             this._endPromise = Promise.all([end_promise, exit_promise]).then(() => {});
             child.on('close', (retc: number, signal: string) => {
                 if (retc !== 0) {
                     log.error(localize('connection.terminated.unexpectedly', 'The connection to cmake-server was terminated unexpectedly'));
                     log.error(localize('cmake-server.exited.with.status', 'cmake-server exited with status {0} ({1})', retc, signal));
-                    params.onCrash(retc, signal).catch(e => { log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onCrash'), e); });
+                    params.onCrash(retc, signal).catch(e => {
+                        log.error(localize('unhandled.error.in', 'Unhandled error in {0}', 'onCrash'), e);
+                    });
                 }
             });
         }, 1000);

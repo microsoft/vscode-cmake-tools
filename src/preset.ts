@@ -385,32 +385,50 @@ export function minCMakeVersion(folder: string) {
     return util.versionLess(min1, min2) ? min1 : min2;
 }
 
-export function configurePresets(folder: string) { return presetsFiles.get(folder)?.configurePresets || []; }
+export function configurePresets(folder: string) {
+    return presetsFiles.get(folder)?.configurePresets || [];
+}
 
-export function userConfigurePresets(folder: string) { return userPresetsFiles.get(folder)?.configurePresets || []; }
-
-/**
- * Don't use this function if you need to keep any changes in the presets
- */
-export function allConfigurePresets(folder: string) { return configurePresets(folder).concat(userConfigurePresets(folder)); }
-
-export function buildPresets(folder: string) { return presetsFiles.get(folder)?.buildPresets || []; }
-
-export function userBuildPresets(folder: string) { return userPresetsFiles.get(folder)?.buildPresets || []; }
+export function userConfigurePresets(folder: string) {
+    return userPresetsFiles.get(folder)?.configurePresets || [];
+}
 
 /**
  * Don't use this function if you need to keep any changes in the presets
  */
-export function allBuildPresets(folder: string) { return buildPresets(folder).concat(userBuildPresets(folder)); }
+export function allConfigurePresets(folder: string) {
+    return configurePresets(folder).concat(userConfigurePresets(folder));
+}
 
-export function testPresets(folder: string) { return presetsFiles.get(folder)?.testPresets || []; }
+export function buildPresets(folder: string) {
+    return presetsFiles.get(folder)?.buildPresets || [];
+}
 
-export function userTestPresets(folder: string) { return userPresetsFiles.get(folder)?.testPresets || []; }
+export function userBuildPresets(folder: string) {
+    return userPresetsFiles.get(folder)?.buildPresets || [];
+}
 
 /**
  * Don't use this function if you need to keep any changes in the presets
  */
-export function allTestPresets(folder: string) { return testPresets(folder).concat(userTestPresets(folder)); }
+export function allBuildPresets(folder: string) {
+    return buildPresets(folder).concat(userBuildPresets(folder));
+}
+
+export function testPresets(folder: string) {
+    return presetsFiles.get(folder)?.testPresets || [];
+}
+
+export function userTestPresets(folder: string) {
+    return userPresetsFiles.get(folder)?.testPresets || [];
+}
+
+/**
+ * Don't use this function if you need to keep any changes in the presets
+ */
+export function allTestPresets(folder: string) {
+    return testPresets(folder).concat(userTestPresets(folder));
+}
 
 export function getPresetByName<T extends Preset>(presets: T[], name: string): T | null {
     return presets.find(preset => preset.name === name) ?? null;

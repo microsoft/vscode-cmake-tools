@@ -34,7 +34,9 @@ export class CompileOutputConsumer implements OutputConsumer {
     compilers = new Compilers();
 
     // Defer all output to the `error` method
-    output(line: string) { this.error(line); }
+    output(line: string) {
+        this.error(line);
+    }
 
     error(line: string) {
         for (const cand in this.compilers) {
@@ -119,13 +121,17 @@ export class CMakeBuildConsumer implements OutputConsumer, vscode.Disposable {
     /**
      * Event fired when the progress changes
      */
-    get onProgress() { return this._onProgressEmitter.event; }
+    get onProgress() {
+        return this._onProgressEmitter.event;
+    }
     private readonly _onProgressEmitter = new vscode.EventEmitter<proc.ProgressData>();
     private readonly _percent_re = /\[.*?(\d+)\%.*?\]/;
 
     readonly compileConsumer: CompileOutputConsumer;
 
-    dispose() { this._onProgressEmitter.dispose(); }
+    dispose() {
+        this._onProgressEmitter.dispose();
+    }
 
     error(line: string) {
         this.compileConsumer.error(line);

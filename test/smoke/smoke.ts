@@ -67,9 +67,15 @@ class SmokeSuiteTestRegistry {
         private readonly _array: SmokeTest[]
     ) {}
 
-    setup(name: string, fn: SmokeTestFunction) { this._setups.push(new SmokeTest(`[setup ${name}]`, fn)); }
-    teardown(name: string, fn: SmokeTestFunction) { this._teardowns.push(new SmokeTest(`[teardown ${name}]`, fn)); }
-    smokeTest(name: string, fn: SmokeTestFunction) { this._array.push(new SmokeTest(name, fn)); }
+    setup(name: string, fn: SmokeTestFunction) {
+        this._setups.push(new SmokeTest(`[setup ${name}]`, fn));
+    }
+    teardown(name: string, fn: SmokeTestFunction) {
+        this._teardowns.push(new SmokeTest(`[teardown ${name}]`, fn));
+    }
+    smokeTest(name: string, fn: SmokeTestFunction) {
+        this._array.push(new SmokeTest(name, fn));
+    }
 }
 
 export type SmokeSuiteFunction = (suite: SmokeSuiteTestRegistry) => Result<void>;
@@ -125,12 +131,16 @@ export class SmokeSuiteRegistry {
     /**
      * Get the initializers for this registry.
      */
-    get inits() { return this._suitesInit; }
+    get inits() {
+        return this._suitesInit;
+    }
 
     /**
      * Clear all registered suites.
      */
-    reset() { this._suitesInit.splice(0, this.inits.length); }
+    reset() {
+        this._suitesInit.splice(0, this.inits.length);
+    }
 }
 
 /**
@@ -138,7 +148,9 @@ export class SmokeSuiteRegistry {
  * @param name The name of the suite to define
  * @param cb The defining callback
  */
-export function smokeSuite(name: string, cb: SmokeSuiteFunction): void { SUITE_REGISTRY.register(name, cb); }
+export function smokeSuite(name: string, cb: SmokeSuiteFunction): void {
+    SUITE_REGISTRY.register(name, cb);
+}
 
 /**
  * The global definer.

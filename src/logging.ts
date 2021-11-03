@@ -100,7 +100,9 @@ class OutputChannelManager implements vscode.Disposable {
     /**
      * Dispose all channels created by this manager
      */
-    dispose() { util.map(this._channels.values(), c => c.dispose()); }
+    dispose() {
+        util.map(this._channels.values(), c => c.dispose());
+    }
 }
 
 export const channelManager = new OutputChannelManager();
@@ -112,7 +114,9 @@ export interface Stringable {
 
 let _LOGGER: Promise<NodeJS.WritableStream>;
 
-export function logFilePath(): string { return path.join(paths.dataDir, 'log.txt'); }
+export function logFilePath(): string {
+    return path.join(paths.dataDir, 'log.txt');
+}
 
 async function _openLogFile() {
     if (!_LOGGER) {
@@ -135,7 +139,9 @@ async function _openLogFile() {
 class SingletonLogger {
     private readonly _logStream = _openLogFile();
 
-    private get _channel() { return channelManager.get('CMake/Build'); }
+    private get _channel() {
+        return channelManager.get('CMake/Build');
+    }
 
     private _log(level: LogLevel, ...args: Stringable[]) {
         const trace = vscode.workspace.getConfiguration('cmake').get('enableTraceLogging', false);
@@ -172,17 +178,35 @@ class SingletonLogger {
         }
     }
 
-    trace(...args: Stringable[]) { this._log(LogLevel.Trace, ...args); }
-    debug(...args: Stringable[]) { this._log(LogLevel.Debug, ...args); }
-    info(...args: Stringable[]) { this._log(LogLevel.Info, ...args); }
-    note(...args: Stringable[]) { this._log(LogLevel.Note, ...args); }
-    warning(...args: Stringable[]) { this._log(LogLevel.Warning, ...args); }
-    error(...args: Stringable[]) { this._log(LogLevel.Error, ...args); }
-    fatal(...args: Stringable[]) { this._log(LogLevel.Fatal, ...args); }
+    trace(...args: Stringable[]) {
+        this._log(LogLevel.Trace, ...args);
+    }
+    debug(...args: Stringable[]) {
+        this._log(LogLevel.Debug, ...args);
+    }
+    info(...args: Stringable[]) {
+        this._log(LogLevel.Info, ...args);
+    }
+    note(...args: Stringable[]) {
+        this._log(LogLevel.Note, ...args);
+    }
+    warning(...args: Stringable[]) {
+        this._log(LogLevel.Warning, ...args);
+    }
+    error(...args: Stringable[]) {
+        this._log(LogLevel.Error, ...args);
+    }
+    fatal(...args: Stringable[]) {
+        this._log(LogLevel.Fatal, ...args);
+    }
 
-    clearOutputChannel(): void { this._channel.clear(); }
+    clearOutputChannel(): void {
+        this._channel.clear();
+    }
 
-    showChannel(preserveFocus?: boolean): void { this._channel.show(preserveFocus); }
+    showChannel(preserveFocus?: boolean): void {
+        this._channel.show(preserveFocus);
+    }
 
     private static _inst: SingletonLogger | null = null;
 
@@ -196,16 +220,34 @@ class SingletonLogger {
 
 export class Logger {
     constructor(readonly _tag: string) {}
-    get tag() { return `[${this._tag}]`; }
-    trace(...args: Stringable[]) { SingletonLogger.instance().trace(this.tag, ...args); }
-    debug(...args: Stringable[]) { SingletonLogger.instance().debug(this.tag, ...args); }
-    info(...args: Stringable[]) { SingletonLogger.instance().info(this.tag, ...args); }
-    note(...args: Stringable[]) { SingletonLogger.instance().note(this.tag, ...args); }
-    warning(...args: Stringable[]) { SingletonLogger.instance().warning(this.tag, ...args); }
-    error(...args: Stringable[]) { SingletonLogger.instance().error(this.tag, ...args); }
-    fatal(...args: Stringable[]) { SingletonLogger.instance().fatal(this.tag, ...args); }
+    get tag() {
+        return `[${this._tag}]`;
+    }
+    trace(...args: Stringable[]) {
+        SingletonLogger.instance().trace(this.tag, ...args);
+    }
+    debug(...args: Stringable[]) {
+        SingletonLogger.instance().debug(this.tag, ...args);
+    }
+    info(...args: Stringable[]) {
+        SingletonLogger.instance().info(this.tag, ...args);
+    }
+    note(...args: Stringable[]) {
+        SingletonLogger.instance().note(this.tag, ...args);
+    }
+    warning(...args: Stringable[]) {
+        SingletonLogger.instance().warning(this.tag, ...args);
+    }
+    error(...args: Stringable[]) {
+        SingletonLogger.instance().error(this.tag, ...args);
+    }
+    fatal(...args: Stringable[]) {
+        SingletonLogger.instance().fatal(this.tag, ...args);
+    }
 
-    clearOutputChannel() { SingletonLogger.instance().clearOutputChannel(); }
+    clearOutputChannel() {
+        SingletonLogger.instance().clearOutputChannel();
+    }
 
     showChannel() {
         const reveal_log = vscode.workspace.getConfiguration('cmake').get<RevealLogKey>('revealLog', 'always');
@@ -219,7 +261,9 @@ export class Logger {
     }
 }
 
-export function createLogger(tag: string) { return new Logger(tag); }
+export function createLogger(tag: string) {
+    return new Logger(tag);
+}
 
 export async function showLogFile(): Promise<void> {
     await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(logFilePath()));

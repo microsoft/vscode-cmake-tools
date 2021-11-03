@@ -35,11 +35,15 @@ export class Property<T> {
         };
     }
 
-    get value() { return this._value; }
+    get value() {
+        return this._value;
+    }
     set(v: T) {
         this._value = v;
         this._emitter.fire(this._value);
     }
 
-    dispose() { this._emitter.dispose(); }
+    dispose() {
+        this._emitter.dispose();
+    }
 }

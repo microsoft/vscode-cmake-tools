@@ -50,7 +50,9 @@ export class KitsController {
     static specialKits: Kit[] = [];
 
     private static checkingHaveKits = false;
-    public static isScanningForKits() { return this.checkingHaveKits; }
+    public static isScanningForKits() {
+        return this.checkingHaveKits;
+    }
 
     folderKits: Kit[] = [];
     additionalKits: Kit[] = [];
@@ -120,7 +122,9 @@ export class KitsController {
         return KitsController.specialKits.concat(this.folderKits.concat(this.additionalKits.concat(KitsController.userKits)));
     }
 
-    get folder() { return this.cmakeTools.folder; }
+    get folder() {
+        return this.cmakeTools.folder;
+    }
 
     static async readUserKits(cmakeTools: CMakeTools | undefined, progress?: ProgressHandle) {
         if (undefined === cmakeTools) {
@@ -190,7 +194,9 @@ export class KitsController {
      * The path to the workspace-local kits file, dependent on the path to the
      * active workspace folder.
      */
-    private static _workspaceKitsPath(folder: vscode.WorkspaceFolder): string { return kitsPathForWorkspaceFolder(folder); }
+    private static _workspaceKitsPath(folder: vscode.WorkspaceFolder): string {
+        return kitsPathForWorkspaceFolder(folder);
+    }
 
     /**
      * Set the current kit for the specified workspace folder

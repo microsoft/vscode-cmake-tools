@@ -387,7 +387,9 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
         }).timeout(90000);
 
         test('Test Visual Studio kit with wrong all target name', async () => {
-            if (process.platform !== 'win32') { return; }
+            if (process.platform !== 'win32') {
+                return;
+            }
 
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
@@ -398,7 +400,9 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
         }).timeout(90000);
 
         test('Test Ninja kit with wrong all target name', async () => {
-            if (process.platform !== 'win32') { return; }
+            if (process.platform !== 'win32') {
+                return;
+            }
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 

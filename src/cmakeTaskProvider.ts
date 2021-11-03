@@ -77,8 +77,12 @@ export class CMakeTaskProvider implements vscode.TaskProvider {
 class CustomBuildTaskTerminal implements vscode.Pseudoterminal, proc.OutputConsumer {
     private writeEmitter = new vscode.EventEmitter<string>();
     private closeEmitter = new vscode.EventEmitter<number>();
-    public get onDidWrite(): vscode.Event<string> { return this.writeEmitter.event; }
-    public get onDidClose(): vscode.Event<number> { return this.closeEmitter.event; }
+    public get onDidWrite(): vscode.Event<string> {
+        return this.writeEmitter.event;
+    }
+    public get onDidClose(): vscode.Event<number> {
+        return this.closeEmitter.event;
+    }
     private endOfLine: string = "\r\n";
 
     constructor(private command: string, private defaultTargets: string[], private options?: { cwd?: string }, private cmakeDriver?: CMakeDriver) {

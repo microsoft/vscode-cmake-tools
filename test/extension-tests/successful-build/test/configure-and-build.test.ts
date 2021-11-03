@@ -132,7 +132,9 @@ suite('Build', async () => {
             linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
             win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
         };
-        if (!(workername in os_compilers)) { this.skip(); }
+        if (!(workername in os_compilers)) {
+            this.skip();
+        }
         const compiler = os_compilers[workername];
 
         // Run test
@@ -161,7 +163,9 @@ suite('Build', async () => {
                 { kitLabel: /^Generator switch test GCC no generator - Win/, generator: '' }
             ]
         };
-        if (!(workername in os_compilers)) { this.skip(); }
+        if (!(workername in os_compilers)) {
+            this.skip();
+        }
         // Remove all preferred generator (Remove config dependenies, auto detection)
         testEnv.config.updatePartial({ preferredGenerators: [] });
         const compiler = os_compilers[workername];
@@ -206,7 +210,9 @@ suite('Build', async () => {
                 linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
                 win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
             };
-            if (!(workername in os_compilers)) { this.skip(); }
+            if (!(workername in os_compilers)) {
+                this.skip();
+            }
             const compiler = os_compilers[workername];
 
             testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
@@ -235,7 +241,9 @@ suite('Build', async () => {
                     { kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
                 ]
             };
-            if (!(workername in os_compilers)) { this.skip(); }
+            if (!(workername in os_compilers)) {
+                this.skip();
+            }
             const compiler = os_compilers[workername];
 
             testEnv.config.updatePartial({ preferredGenerators: [] });
@@ -267,7 +275,9 @@ suite('Build', async () => {
                 { kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
             ]
         };
-        if (!(workername in os_compilers)) { this.skip(); }
+        if (!(workername in os_compilers)) {
+            this.skip();
+        }
         const compiler = os_compilers[workername];
 
         testEnv.config.updatePartial({ preferredGenerators: [] });

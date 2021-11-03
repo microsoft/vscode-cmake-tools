@@ -193,10 +193,18 @@ export class CMakeToolsFolderController implements vscode.Disposable {
         this._afterRemoveFolderEmitter
     ];
 
-    get onBeforeAddFolder() { return this._beforeAddFolderEmitter.event; }
-    get onAfterAddFolder() { return this._afterAddFolderEmitter.event; }
-    get onBeforeRemoveFolder() { return this._beforeRemoveFolderEmitter.event; }
-    get onAfterRemoveFolder() { return this._afterRemoveFolderEmitter.event; }
+    get onBeforeAddFolder() {
+        return this._beforeAddFolderEmitter.event;
+    }
+    get onAfterAddFolder() {
+        return this._afterAddFolderEmitter.event;
+    }
+    get onBeforeRemoveFolder() {
+        return this._beforeRemoveFolderEmitter.event;
+    }
+    get onAfterRemoveFolder() {
+        return this._afterRemoveFolderEmitter.event;
+    }
 
     /**
      * The active workspace folder. This controls several aspects of the extension,
@@ -207,7 +215,9 @@ export class CMakeToolsFolderController implements vscode.Disposable {
      * - Where we search for workspace-local kits
      */
     private _activeFolder?: CMakeToolsFolder;
-    get activeFolder() { return this._activeFolder; }
+    get activeFolder() {
+        return this._activeFolder;
+    }
     setActiveFolder(ws: vscode.WorkspaceFolder | undefined) {
         if (ws) {
             this._activeFolder = this.get(ws);
@@ -216,9 +226,13 @@ export class CMakeToolsFolderController implements vscode.Disposable {
         }
     }
 
-    get size() { return this._instances.size; }
+    get size() {
+        return this._instances.size;
+    }
 
-    get isMultiRoot() { return this.size > 1; }
+    get isMultiRoot() {
+        return this.size > 1;
+    }
 
     constructor(readonly extensionContext: vscode.ExtensionContext) {
         this._subscriptions = [
@@ -227,7 +241,9 @@ export class CMakeToolsFolderController implements vscode.Disposable {
         ];
     }
 
-    dispose() { disposeAll(this._subscriptions); }
+    dispose() {
+        disposeAll(this._subscriptions);
+    }
 
     /**
      * Get the CMakeTools instance associated with the given workspace folder, or undefined
@@ -336,5 +352,7 @@ export class CMakeToolsFolderController implements vscode.Disposable {
         inst.dispose();
     }
 
-    [Symbol.iterator]() { return this._instances.values(); }
+    [Symbol.iterator]() {
+        return this._instances.values();
+    }
 }

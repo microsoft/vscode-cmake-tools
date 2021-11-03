@@ -121,13 +121,17 @@ class Paths {
      * The directory where CMake Tools should store user-specific persistent
      * data.
      */
-    get dataDir(): string { return path.join(this.userLocalDir, 'CMakeTools'); }
+    get dataDir(): string {
+        return path.join(this.userLocalDir, 'CMakeTools');
+    }
 
     /**
      * The "roaming" directory where CMake Tools stores roaming configuration
      * data.
      */
-    get roamingDataDir(): string { return path.join(this.userRoamingDir, 'CMakeTools'); }
+    get roamingDataDir(): string {
+        return path.join(this.userRoamingDir, 'CMakeTools');
+    }
 
     /**
      * Get the platform-specific temporary directory

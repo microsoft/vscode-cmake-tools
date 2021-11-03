@@ -129,25 +129,39 @@ export class PresetsController {
 
     private constructor(private readonly _cmakeTools: CMakeTools, private readonly _kitsController: KitsController) {}
 
-    get presetsPath() { return path.join(this._sourceDir, 'CMakePresets.json'); }
+    get presetsPath() {
+        return path.join(this._sourceDir, 'CMakePresets.json');
+    }
 
-    get userPresetsPath() { return path.join(this._sourceDir, 'CMakeUserPresets.json'); }
+    get userPresetsPath() {
+        return path.join(this._sourceDir, 'CMakeUserPresets.json');
+    }
 
-    get folder() { return this._cmakeTools.folder; }
+    get folder() {
+        return this._cmakeTools.folder;
+    }
 
-    get folderFsPath() { return this.folder.uri.fsPath; }
+    get folderFsPath() {
+        return this.folder.uri.fsPath;
+    }
 
-    get presetsFileExist() { return this._presetsFileExists || this._userPresetsFileExists; }
+    get presetsFileExist() {
+        return this._presetsFileExists || this._userPresetsFileExists;
+    }
 
     /**
      * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
      */
-    onPresetsChanged(listener: () => any) { return this._presetsChangedEmitter.event(listener); }
+    onPresetsChanged(listener: () => any) {
+        return this._presetsChangedEmitter.event(listener);
+    }
 
     /**
      * Call configurePresets, buildPresets, or testPresets to get the latest presets when thie event is fired.
      */
-    onUserPresetsChanged(listener: () => any) { return this._userPresetsChangedEmitter.event(listener); }
+    onUserPresetsChanged(listener: () => any) {
+        return this._userPresetsChangedEmitter.event(listener);
+    }
 
     private readonly _setPresetsFile = (folder: string, presetsFile: preset.PresetsFile | undefined) => {
         preset.setPresetsFile(folder, presetsFile);
