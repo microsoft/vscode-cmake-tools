@@ -232,8 +232,8 @@ export class CMakeServerClientDriver extends CMakeDriver {
                 targetType: 'META'
             });
         }
-        return build_config.projects.reduce<RichTarget[]>((acc, project) => acc.concat(project.targets.map(
-            t => ({
+        return build_config.projects.reduce<RichTarget[]>(
+            (acc, project) => acc.concat(project.targets.map(t => ({
                 type: 'rich' as 'rich',
                 name: t.name,
                 filepath: t.artifacts && t.artifacts.length

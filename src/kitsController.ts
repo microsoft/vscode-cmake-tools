@@ -466,18 +466,16 @@ export class KitsController {
             interface FailOptions extends vscode.MessageItem {
                 do: 'retry' | 'cancel';
             }
-            const pr = vscode.window
-                .showErrorMessage<FailOptions>(
-                    `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
-                    {
-                        title: localize('retry.button', 'Retry'),
-                        do: 'retry'
-                    },
-                    {
-                        title: localize('cancel.button', 'Cancel'),
-                        do: 'cancel'
-                    }
-                )
+            const pr = vscode.window.showErrorMessage<FailOptions>(
+                `Failed to write kits file to disk: ${USER_KITS_FILEPATH}: ${e.toString()}`,
+                {
+                    title: localize('retry.button', 'Retry'),
+                    do: 'retry'
+                },
+                {
+                    title: localize('cancel.button', 'Cancel'),
+                    do: 'cancel'
+                })
                 .then(choice => {
                     if (!choice) {
                         return false;

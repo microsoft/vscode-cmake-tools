@@ -220,23 +220,13 @@ export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T 
 export function randint(min: number, max: number): number { return Math.floor(Math.random() * (max - min) + min); }
 
 export function product<T>(arrays: T[][]): T[][] {
-    // clang-format off
-    return arrays.reduce((acc, curr) =>
-        acc
+    return arrays.reduce(
+        (acc, curr) =>
             // Append each element of the current array to each list already accumulated
-            .map(
-                prev => curr.map(
-                    item => prev.concat(item)
-                )
-            )
-            .reduce(
+            acc.map(prev => curr.map(item => prev.concat(item)))
                 // Join all the lists
-                (a, b) => a.concat(b),
-                []
-            ),
-        [[]] as T[][]
-    );
-    // clang-format on
+                .reduce((a, b) => a.concat(b), []),
+        [[]] as T[][]);
 }
 
 export interface CMakeValue {
