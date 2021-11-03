@@ -10,7 +10,7 @@ type Result<T> = Thenable<T> | T;
 type TestResult<T> = Thenable<T> | T;
 
 export class SmokeContext {
-    constructor(readonly projectDir: vscode.WorkspaceFolder, readonly extensionPath: string) { }
+    constructor(readonly projectDir: vscode.WorkspaceFolder, readonly extensionPath: string) {}
 
     private readonly _extContext = new SmokeTestExtensionContext(this.extensionPath);
 
@@ -44,7 +44,7 @@ type SmokeTestFunction = (test: SmokeContext) => Result<void>;
  * The definition of a test.
  */
 export class SmokeTest {
-    constructor(readonly name: string, readonly fn: SmokeTestFunction) { }
+    constructor(readonly name: string, readonly fn: SmokeTestFunction) {}
 }
 
 /**
@@ -57,7 +57,7 @@ export class SmokeSuite {
         readonly setups: SmokeTest[],
         readonly teardowns: SmokeTest[],
         readonly tests: SmokeTest[]
-    ) { }
+    ) {}
 }
 
 class SmokeSuiteTestRegistry {
@@ -65,7 +65,7 @@ class SmokeSuiteTestRegistry {
         private readonly _setups: SmokeTest[],
         private readonly _teardowns: SmokeTest[],
         private readonly _array: SmokeTest[]
-    ) { }
+    ) {}
 
     setup(name: string, fn: SmokeTestFunction) { this._setups.push(new SmokeTest(`[setup ${name}]`, fn)); }
     teardown(name: string, fn: SmokeTestFunction) { this._teardowns.push(new SmokeTest(`[teardown ${name}]`, fn)); }
@@ -88,7 +88,7 @@ export class SmokeSuiteInit {
          * The definer function
          */
         readonly fn: SmokeSuiteFunction
-    ) { }
+    ) {}
 
     /**
      * Call the smoke test defining function and return the resulting definition

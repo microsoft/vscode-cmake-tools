@@ -90,7 +90,7 @@ export function makeCodeModelDriverTestsuite(
             const config = ConfigurationReader.create();
             const executable = await getCMakeExecutableInformation(cmakePath);
 
-            driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => { }, []);
+            driver = await driver_generator(executable, config, kitDefault, workspaceFolder, async () => {}, []);
             let code_model: null | codemodel_api.CodeModelContent = null;
             if (driver && !(driver instanceof LegacyCMakeDriver)) {
                 driver.onCodeModelChanged(cm => { code_model = cm; });

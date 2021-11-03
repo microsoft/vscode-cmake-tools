@@ -19,7 +19,7 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
     logPath: string = "";
     get extensionMode(): vscode.ExtensionMode { throw new Error(notImplementedErr); }
 
-    constructor() { }
+    constructor() {}
     public clean() {
         (this.workspaceState as TestMemento).clear();
         (this.globalState as StateMemento).clear();
@@ -42,7 +42,7 @@ export class SmokeTestExtensionContext implements vscode.ExtensionContext {
     get logPath() { return path.join(this.extensionPath, '.smoke-logs'); }
     get extensionMode(): vscode.ExtensionMode { throw new Error(notImplementedErr); }
 
-    constructor(public readonly extensionPath: string) { }
+    constructor(public readonly extensionPath: string) {}
     public clean() {
         (this.workspaceState as TestMemento).clear();
         (this.globalState as StateMemento).clear();

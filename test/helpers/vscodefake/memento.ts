@@ -34,6 +34,6 @@ export class StateMemento implements vscode.Memento {
     }
     public update(key: string, value: any): Thenable<void> { return this.storage[key] = value; }
     public containsKey(key: string): boolean { return this.storage.hasOwnProperty(key); }
-    public setKeysForSync(_keys: string[]): void { }
+    public setKeysForSync(_keys: string[]): void {}
     public clear() { this.storage = {}; }
 }
