@@ -1,7 +1,7 @@
 [
-{
-  "directory": "/home/clang-languageservice/build",
-  "command": "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp",
-  "file": "/home/clang-languageservice/main.cpp"
-}
+    {
+        "directory": "/home/clang-languageservice/build",
+        "command": "/usr/local/bin/clang++   -DBOOST_THREAD_VERSION=3 -isystem ../extern/nlohmann-json/src  -g   -std=gnu++11 -o CMakeFiles/clang-languageservice.dir/main.cpp.o -c /home/clang-languageservice/main.cpp",
+        "file": "/home/clang-languageservice/main.cpp"
+    }
 ]
