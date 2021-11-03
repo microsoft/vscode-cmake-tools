@@ -33,10 +33,8 @@ export class DefaultEnvironment {
 
     readonly sandbox = sinon.createSandbox();
     readonly projectFolder = new ProjectRootHelper(this.projectRoot, this.buildLocation);
-    readonly result: TestProgramResult
-        = new TestProgramResult(this.projectFolder.buildDirectory.location, this.executableResult);
-    readonly defaultKitLabel
-        = this._defaultKitLabelIn ? this._defaultKitLabelIn : (process.platform === 'win32' ? /^Visual/ : /\s\S/);
+    readonly result: TestProgramResult = new TestProgramResult(this.projectFolder.buildDirectory.location, this.executableResult);
+    readonly defaultKitLabel = this._defaultKitLabelIn ? this._defaultKitLabelIn : (process.platform === 'win32' ? /^Visual/ : /\s\S/);
     readonly vsContext: DefaultExtensionContext = new DefaultExtensionContext();
     private _config = ConfigurationReader.create(vscode.workspace.workspaceFolders![0]);
     public get config() { return this._config; }

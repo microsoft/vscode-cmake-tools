@@ -552,27 +552,24 @@ class ExtensionManager implements vscode.Disposable {
                     title: string;
                     persistMode: 'user' | 'workspace';
                 }
-                const persist_pr
-                    // Try to persist the user's selection to a `settings.json`
-                    = vscode.window
-                        .showInformationMessage<Choice2>(
-                            perist_message,
-                            {},
-                            { title: button_messages[0], persistMode: 'user' },
-                            { title: button_messages[1], persistMode: 'workspace' }
-                        )
-                        .then(async choice => {
-                            if (!choice) {
-                                // Use cancelled. Do nothing.
-                                return;
-                            }
-                            const config = vscode.workspace.getConfiguration(undefined, ws.uri);
-                            let config_target = vscode.ConfigurationTarget.Global;
-                            if (choice.persistMode === 'workspace') {
-                                config_target = vscode.ConfigurationTarget.WorkspaceFolder;
-                            }
-                            await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
-                        });
+                // Try to persist the user's selection to a `settings.json`
+                const persist_pr = vscode.window.showInformationMessage<Choice2>(
+                    perist_message,
+                    {},
+                    { title: button_messages[0], persistMode: 'user' },
+                    { title: button_messages[1], persistMode: 'workspace' })
+                    .then(async choice => {
+                        if (!choice) {
+                            // Use cancelled. Do nothing.
+                            return;
+                        }
+                        const config = vscode.workspace.getConfiguration(undefined, ws.uri);
+                        let config_target = vscode.ConfigurationTarget.Global;
+                        if (choice.persistMode === 'workspace') {
+                            config_target = vscode.ConfigurationTarget.WorkspaceFolder;
+                        }
+                        await config.update('cmake.configureOnOpen', chosen.doConfigure, config_target);
+                    });
                 rollbar.takePromise(localize('persist.config.on.open.setting', 'Persist config-on-open setting'), {}, persist_pr);
                 should_configure = chosen.doConfigure;
             }
@@ -683,17 +680,7 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     private _disposeSubs() {
-        for (const sub of [this._statusMessageSub,
-        this._targetNameSub,
-        this._buildTypeSub,
-        this._launchTargetSub,
-        this._ctestEnabledSub,
-        this._testResultsSub,
-        this._isBusySub,
-        this._activeConfigurePresetSub,
-        this._activeBuildPresetSub,
-        this._activeTestPresetSub
-        ]) {
+        for (const sub of [this._statusMessageSub, this._targetNameSub, this._buildTypeSub, this._launchTargetSub, this._ctestEnabledSub, this._testResultsSub, this._isBusySub, this._activeConfigurePresetSub, this._activeBuildPresetSub, this._activeTestPresetSub]) {
             sub.dispose();
         }
     }
@@ -838,10 +825,9 @@ class ExtensionManager implements vscode.Disposable {
     /**
      * Watches for changes to the kits file
      */
-    private readonly _kitsWatcher =
-        util.chokidarOnAnyChange(chokidar.watch(USER_KITS_FILEPATH,
-            { ignoreInitial: true }),
-            _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this._folders.activeFolder?.cmakeTools)));
+    private readonly _kitsWatcher = util.chokidarOnAnyChange(
+        chokidar.watch(USER_KITS_FILEPATH, { ignoreInitial: true }),
+        _ => rollbar.takePromise(localize('rereading.kits', 'Re-reading kits'), {}, KitsController.readUserKits(this._folders.activeFolder?.cmakeTools)));
 
     /**
      * Set the current kit for the specified workspace folder
@@ -1149,9 +1135,8 @@ class ExtensionManager implements vscode.Disposable {
     }
 
     configure(folder?: vscode.WorkspaceFolder, showCommandOnly?: boolean) {
-        return this.mapCMakeToolsFolder(cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure,
-            [],
-            showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
+        return this.mapCMakeToolsFolder(
+            cmt => cmt.configureInternal(ConfigureTrigger.commandConfigure, [], showCommandOnly ? ConfigureType.ShowCommandOnly : ConfigureType.Normal),
             folder, undefined, true);
     }
 
