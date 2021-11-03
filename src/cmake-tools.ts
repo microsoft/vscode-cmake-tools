@@ -482,15 +482,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                 await drv.asyncDispose();
             }
         }
-        for (const disp of [this._statusMessage,
-        this._targetName,
-        this._activeVariant,
-        this._ctestEnabled,
-        this._testResults,
-        this._isBusy,
-        this._variantManager,
-        this._ctestController
-        ]) {
+        for (const disp of [this._statusMessage, this._targetName, this._activeVariant, this._ctestEnabled, this._testResults, this._isBusy, this._variantManager, this._ctestController]) {
             disp.dispose();
         }
     }
@@ -1003,8 +995,8 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     this._cmakeDriver = Promise.resolve(null);
                     if (e instanceof BadHomeDirectoryError) {
                         void vscode.window
-                            .showErrorMessage(localize('source.directory.does.not.match',
-                                'The source directory "{0}" does not match the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.', e.expecting, e.cached),
+                            .showErrorMessage(
+                                localize('source.directory.does.not.match', 'The source directory "{0}" does not match the source directory in the CMake cache: {1}.  You will need to run a clean-configure to configure this project.', e.expecting, e.cached),
                                 {},
                                 { title: localize('clean.configure.title', 'Clean Configure') }
                             )
@@ -1280,16 +1272,16 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             if (!save_good) {
                 log.debug(localize('saving.open.files.failed', 'Saving open files failed'));
                 const yesButtonTitle: string = localize('yes.button', 'Yes');
-                const chosen = await vscode.window.showErrorMessage<
-                    vscode.MessageItem>(localize('not.saved.continue.anyway', 'Not all open documents were saved. Would you like to continue anyway?'),
-                        {
-                            title: yesButtonTitle,
-                            isCloseAffordance: false
-                        },
-                        {
-                            title: localize('no.button', 'No'),
-                            isCloseAffordance: true
-                        });
+                const chosen = await vscode.window.showErrorMessage<vscode.MessageItem>(
+                    localize('not.saved.continue.anyway', 'Not all open documents were saved. Would you like to continue anyway?'),
+                    {
+                        title: yesButtonTitle,
+                        isCloseAffordance: false
+                    },
+                    {
+                        title: localize('no.button', 'No'),
+                        isCloseAffordance: true
+                    });
                 return chosen !== undefined && (chosen.title === yesButtonTitle);
             }
         }

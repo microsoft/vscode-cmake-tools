@@ -22,8 +22,7 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 const log = createLogger('cpptools');
 
 type Architecture = 'x86' | 'x64' | 'arm' | 'arm64' | undefined;
-type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20"
-    | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
+type StandardVersion = "c89" | "c99" | "c11" | "c17" | "c++98" | "c++03" | "c++11" | "c++14" | "c++17" | "c++20" | "gnu89" | "gnu99" | "gnu11" | "gnu17" | "gnu++98" | "gnu++03" | "gnu++11" | "gnu++14" | "gnu++17" | "gnu++20" | undefined;
 
 export interface DiagnosticsCpptools {
     isReady: boolean;
@@ -423,8 +422,7 @@ export class CppConfigurationProvider implements cpt.CustomConfigurationProvider
      * @param fileGroup The file group from the code model to create config data for
      * @param opts Index update options
      */
-    private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: codemodel_api.CodeModelParams, target: TargetDefaults, sysroot: string):
-        cpt.SourceFileConfiguration {
+    private _buildConfigurationData(fileGroup: codemodel_api.CodeModelFileGroup, opts: codemodel_api.CodeModelParams, target: TargetDefaults, sysroot: string): cpt.SourceFileConfiguration {
         // If the file didn't have a language, default to C++
         const lang = fileGroup.language === "RC" ? undefined : fileGroup.language;
         // First try to get toolchain values directly reported by CMake. Check the

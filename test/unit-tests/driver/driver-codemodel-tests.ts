@@ -260,10 +260,7 @@ export function makeCodeModelDriverTestsuite(
             const codemodel_data = await generateCodeModelForConfiguredDriver([], sourceOutsideOfWorkspace);
             expect(codemodel_data).to.be.not.null;
 
-            for (const [target_name, target_subdir, sourcefile_name] of [['root_target', '', '../main.cpp'],
-            ['subdir_target', 'subdir', '../../main.cpp']] as
-                const) {
-
+            for (const [target_name, target_subdir, sourcefile_name] of [['root_target', '', '../main.cpp'], ['subdir_target', 'subdir', '../../main.cpp']] as const) {
                 const target = codemodel_data!.configurations[0].projects[0].targets.find(t => t.type === 'EXECUTABLE'
                     && t.name === target_name);
                 expect(target).to.be.not.undefined;

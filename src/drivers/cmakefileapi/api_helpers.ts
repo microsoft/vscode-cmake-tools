@@ -77,8 +77,7 @@ function findPropertyValue(cacheElement: index_api.Cache.CMakeCacheEntry, name: 
     return property_element ? property_element.value : '';
 }
 
-function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.CacheContent):
-    Map<string, api.CacheEntry> {
+function convertFileApiCacheToExtensionCache(cache_from_cmake: index_api.Cache.CacheContent): Map<string, api.CacheEntry> {
     return cache_from_cmake.entries.reduce((acc, el) => {
         const entry_type_translation_map: { [key: string]: api.CacheEntryType | undefined } = {
             BOOL: api.CacheEntryType.Bool,

@@ -342,8 +342,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return util.mergeEnvironment(cur_env, kit_env, (opts && opts.environment) ? opts.environment : {});
     }
 
-    executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions):
-        proc.Subprocess {
+    executeCommand(command: string, args?: string[], consumer?: proc.OutputConsumer, options?: proc.ExecutionOptions): proc.Subprocess {
         const environment = this.getEffectiveSubprocessEnvironment(options);
         const exec_options = { ...options, environment };
         return proc.execute(command, args, consumer, exec_options);
