@@ -37,9 +37,13 @@ export class DefaultEnvironment {
     readonly defaultKitLabel = this._defaultKitLabelIn ? this._defaultKitLabelIn : (process.platform === 'win32' ? /^Visual/ : /\s\S/);
     readonly vsContext: DefaultExtensionContext = new DefaultExtensionContext();
     private _config = ConfigurationReader.create(vscode.workspace.workspaceFolders![0]);
-    public get config() { return this._config; }
+    public get config() {
+        return this._config;
+    }
     private _wsContext = new DirectoryContext(vscode.workspace.workspaceFolders![0], this.config, new StateManager(this.vsContext, vscode.workspace.workspaceFolders![0]));
-    public get wsContext() { return this._wsContext; }
+    public get wsContext() {
+        return this._wsContext;
+    }
 
     readonly errorMessagesQueue: string[] = [];
     readonly vs_debug_start_debugging: sinon.SinonStub = this.sandbox.stub(vscode.debug, 'startDebugging');
@@ -56,7 +60,9 @@ export class DefaultEnvironment {
         this.sandbox.stub(vscode.window, 'showQuickPick').callsFake(fakeShowQuickPick);
     }
 
-    public teardown(): void { this.sandbox.verifyAndRestore(); }
+    public teardown(): void {
+        this.sandbox.verifyAndRestore();
+    }
 
     public clean(): void {
         this.errorMessagesQueue.length = 0;

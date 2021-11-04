@@ -43,8 +43,12 @@ export class LegacyCMakeDriver extends CMakeDriver {
     }
 
     private _needsReconfigure = true;
-    doConfigureSettingsChange() { this._needsReconfigure = true; }
-    async checkNeedsReconfigure(): Promise<boolean> { return this._needsReconfigure; }
+    doConfigureSettingsChange() {
+        this._needsReconfigure = true;
+    }
+    async checkNeedsReconfigure(): Promise<boolean> {
+        return this._needsReconfigure;
+    }
 
     async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
@@ -71,7 +75,9 @@ export class LegacyCMakeDriver extends CMakeDriver {
     }
 
     // Legacy disposal does nothing
-    async asyncDispose() { this._cacheWatcher.dispose(); }
+    async asyncDispose() {
+        this._cacheWatcher.dispose();
+    }
 
     async doConfigure(args_: string[], outputConsumer?: proc.OutputConsumer, showCommandOnly?: boolean): Promise<number> {
         // Dup args so we can modify them
@@ -147,16 +153,24 @@ export class LegacyCMakeDriver extends CMakeDriver {
             preferredGenerators);
     }
 
-    get targets() { return []; }
-    get executableTargets() { return []; }
-    get uniqueTargets() { return []; }
+    get targets() {
+        return [];
+    }
+    get executableTargets() {
+        return [];
+    }
+    get uniqueTargets() {
+        return [];
+    }
 
     /**
      * Watcher for the CMake cache file on disk.
      */
     private readonly _cacheWatcher = vscode.workspace.createFileSystemWatcher(this.cachePath);
 
-    get cmakeCache() { return this._cmakeCache; }
+    get cmakeCache() {
+        return this._cmakeCache;
+    }
     private _cmakeCache: CMakeCache | null = null;
 
     private async _reloadPostConfigure() {
@@ -184,6 +198,8 @@ export class LegacyCMakeDriver extends CMakeDriver {
     get codeModelContent(): CodeModelContent | null {
         return null;
     }
-    get onCodeModelChanged() { return new vscode.EventEmitter<null>().event; }
+    get onCodeModelChanged() {
+        return new vscode.EventEmitter<null>().event;
+    }
 
 }

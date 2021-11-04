@@ -15,7 +15,9 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 /**
  * Escape a string so it can be used as a regular expression
  */
-export function escapeStringForRegex(str: string): string { return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1'); }
+export function escapeStringForRegex(str: string): string {
+    return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1');
+}
 
 /**
  * Replace all occurrences of `needle` in `str` with `what`
@@ -217,7 +219,9 @@ export function find<T>(iter: Iterable<T>, predicate: (value: T) => boolean): T 
  * @param min Minimum value
  * @param max Maximum value
  */
-export function randint(min: number, max: number): number { return Math.floor(Math.random() * (max - min) + min); }
+export function randint(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min) + min);
+}
 
 export function product<T>(arrays: T[][]): T[][] {
     return arrays.reduce(
@@ -425,7 +429,9 @@ export function thisExtensionPackage(): PackageJSON {
     };
 }
 
-export function thisExtensionPath(): string { return thisExtension().extensionPath; }
+export function thisExtensionPath(): string {
+    return thisExtension().extensionPath;
+}
 
 export function dropNulls<T>(items: (T | null | undefined)[]): T[] {
     return items.filter(item => (item !== null && item !== undefined)) as T[];

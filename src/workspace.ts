@@ -43,10 +43,14 @@ export class DirectoryContext {
      * be used over `ConfigurationReader.cmakePath` because it will do additional
      * path expansion and searching.
      */
-    getCMakePath(overWriteCMakePathSetting?: string): Promise<string | null> { return paths.getCMakePath(this, overWriteCMakePathSetting); }
+    getCMakePath(overWriteCMakePathSetting?: string): Promise<string | null> {
+        return paths.getCMakePath(this, overWriteCMakePathSetting);
+    }
     /**
      * The CTest executable for the directory. See `cmakePath` for more
      * information.
      */
-    getCTestPath(overWriteCMakePathSetting?: string): Promise<string | null> { return paths.getCTestPath(this, overWriteCMakePathSetting); }
+    getCTestPath(overWriteCMakePathSetting?: string): Promise<string | null> {
+        return paths.getCTestPath(this, overWriteCMakePathSetting);
+    }
 }

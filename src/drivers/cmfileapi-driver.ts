@@ -166,8 +166,12 @@ export class CMakeFileApiDriver extends CMakeDriver {
         });
     }
 
-    doConfigureSettingsChange() { this._needsReconfigure = true; }
-    async checkNeedsReconfigure(): Promise<boolean> { return this._needsReconfigure; }
+    doConfigureSettingsChange() {
+        this._needsReconfigure = true;
+    }
+    async checkNeedsReconfigure(): Promise<boolean> {
+        return this._needsReconfigure;
+    }
 
     async doSetKit(need_clean: boolean, cb: () => Promise<void>): Promise<void> {
         this._needsReconfigure = true;
@@ -267,7 +271,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
         return true;
     }
 
-    private getCMakeFileApiPath() { return path.join(this.binaryDir, '.cmake', 'api', 'v1'); }
+    private getCMakeFileApiPath() {
+        return path.join(this.binaryDir, '.cmake', 'api', 'v1');
+    }
     private getCMakeReplyPath() {
         const api_path = this.getCMakeFileApiPath();
         return path.join(api_path, 'reply');
@@ -318,10 +324,16 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     private _codeModelContent: codemodel.CodeModelContent | null = null;
-    get codeModelContent() { return this._codeModelContent; }
+    get codeModelContent() {
+        return this._codeModelContent;
+    }
 
-    get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> { return this._cache; }
-    get generatorName(): string | null { return this._generatorInformation ? this._generatorInformation.name : null; }
+    get cmakeCacheEntries(): Map<string, api.CacheEntryProperties> {
+        return this._cache;
+    }
+    get generatorName(): string | null {
+        return this._generatorInformation ? this._generatorInformation.name : null;
+    }
     get targets(): api.Target[] {
         const targets = this._target_map.get(this.currentBuildType);
         if (targets) {
@@ -341,7 +353,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
     /**
      * List of unique targets known to CMake
      */
-    get uniqueTargets(): api.Target[] { return this.targets.reduce(targetReducer, []); }
+    get uniqueTargets(): api.Target[] {
+        return this.targets.reduce(targetReducer, []);
+    }
 
     get executableTargets(): ExecutableTarget[] {
         return this.uniqueTargets.filter(t => t.type === 'rich' && (t as api.RichTarget).targetType === 'EXECUTABLE')
@@ -352,7 +366,9 @@ export class CMakeFileApiDriver extends CMakeDriver {
     }
 
     private readonly _codeModelChanged = new vscode.EventEmitter<null | codemodel.CodeModelContent>();
-    get onCodeModelChanged() { return this._codeModelChanged.event; }
+    get onCodeModelChanged() {
+        return this._codeModelChanged.event;
+    }
 }
 
 /**

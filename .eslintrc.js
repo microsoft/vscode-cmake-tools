@@ -59,8 +59,7 @@ module.exports = {
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/await-thenable": "error",
         "arrow-body-style": "error",
-        // Note: You can use auto-fix to apply this rule only after making indentation rule available.
-        //"brace-style": "error",
+        "brace-style": "error",
         "comma-dangle": "error",
         "constructor-super": "error",
         "curly": "error",

@@ -41,7 +41,9 @@ export class StateManager {
         return preset || null;
     }
 
-    async setConfigurePresetName(v: string | null) { await this._update('configurePresetName', v); }
+    async setConfigurePresetName(v: string | null) {
+        await this._update('configurePresetName', v);
+    }
 
     private get cachedConfigurePresets(): string[] {
         return this._get<string[]>('cachedConfigurePresets') || [];
@@ -49,7 +51,9 @@ export class StateManager {
 
     private async addCachedConfigurePreset(preset: string) {
         const configurePresets = this.cachedConfigurePresets;
-        if (configurePresets.indexOf(preset) >= 0) { return; }
+        if (configurePresets.indexOf(preset) >= 0) {
+            return;
+        }
         configurePresets.push(preset);
         return this._update('cachedConfigurePresets', configurePresets);
     }
@@ -89,7 +93,9 @@ export class StateManager {
         return kit || null;
     }
 
-    async setActiveKitName(v: string | null) { await this._update('activeKitName', v); }
+    async setActiveKitName(v: string | null) {
+        await this._update('activeKitName', v);
+    }
 
     /**
      * The currently select build target
@@ -99,14 +105,18 @@ export class StateManager {
         return target || null;
     }
 
-    async setDefaultBuildTarget(s: string | null) { await this._update('activeBuildTarget', s); }
+    async setDefaultBuildTarget(s: string | null) {
+        await this._update('activeBuildTarget', s);
+    }
 
     get launchTargetName(): string | null {
         const name = this._get<string>('launchTargetName');
         return name || null;
     }
 
-    async setLaunchTargetName(t: string | null) { await this._update('launchTargetName', t); }
+    async setLaunchTargetName(t: string | null) {
+        await this._update('launchTargetName', t);
+    }
 
     /**
      * The keyword settings for the build variant

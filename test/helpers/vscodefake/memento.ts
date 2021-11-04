@@ -16,8 +16,12 @@ export class TestMemento implements vscode.Memento {
         this.storage.set(key, value);
         return Promise.resolve();
     }
-    public containsKey(key: string): boolean { return this.storage.hasOwnProperty(key); }
-    public clear() { this.storage.clear(); }
+    public containsKey(key: string): boolean {
+        return this.storage.hasOwnProperty(key);
+    }
+    public clear() {
+        this.storage.clear();
+    }
 }
 
 export class StateMemento implements vscode.Memento {
@@ -32,8 +36,14 @@ export class StateMemento implements vscode.Memento {
             return defaultValue;
         }
     }
-    public update(key: string, value: any): Thenable<void> { return this.storage[key] = value; }
-    public containsKey(key: string): boolean { return this.storage.hasOwnProperty(key); }
+    public update(key: string, value: any): Thenable<void> {
+        return this.storage[key] = value;
+    }
+    public containsKey(key: string): boolean {
+        return this.storage.hasOwnProperty(key);
+    }
     public setKeysForSync(_keys: string[]): void {}
-    public clear() { this.storage = {}; }
+    public clear() {
+        this.storage = {};
+    }
 }

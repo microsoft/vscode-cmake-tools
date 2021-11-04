@@ -156,7 +156,9 @@ export class ConfigurationReader implements vscode.Disposable {
 
     constructor(private readonly _configData: ExtensionConfigurationSettings) {}
 
-    get configData() { return this._configData; }
+    get configData() {
+        return this._configData;
+    }
 
     dispose() {
         if (this._updateSubscription) {
@@ -203,7 +205,9 @@ export class ConfigurationReader implements vscode.Disposable {
         return { ...data, ...(for_platform || {}) };
     }
 
-    update(newData: ExtensionConfigurationSettings): string[] { return this.updatePartial(newData); }
+    update(newData: ExtensionConfigurationSettings): string[] {
+        return this.updatePartial(newData);
+    }
     updatePartial(newData: Partial<ExtensionConfigurationSettings>, fireEvent: boolean = true): string[] {
         const keys: string[] = [];
         const old_values = { ...this.configData };
@@ -231,51 +235,121 @@ export class ConfigurationReader implements vscode.Disposable {
         return keys;
     }
 
-    get autoSelectActiveFolder(): boolean { return this.configData.autoSelectActiveFolder; }
-    get buildDirectory(): string { return this.configData.buildDirectory; }
-    get installPrefix(): string | null { return this.configData.installPrefix; }
-    get sourceDirectory(): string { return this.configData.sourceDirectory as string; }
-    get saveBeforeBuild(): boolean { return !!this.configData.saveBeforeBuild; }
-    get buildBeforeRun(): boolean { return this.configData.buildBeforeRun; }
-    get clearOutputBeforeBuild(): boolean { return !!this.configData.clearOutputBeforeBuild; }
-    get configureSettings(): any { return this.configData.configureSettings; }
-    get cacheInit() { return this.configData.cacheInit; }
-    get preferredGenerators(): string[] { return this.configData.preferredGenerators; }
-    get generator(): string | null { return this.configData.generator; }
-    get toolset(): string | null { return this.configData.toolset; }
-    get platform(): string | null { return this.configData.platform; }
-    get configureArgs(): string[] { return this.configData.configureArgs; }
-    get buildArgs(): string[] { return this.configData.buildArgs; }
-    get buildToolArgs(): string[] { return this.configData.buildToolArgs; }
-    get parallelJobs(): number { return this.configData.parallelJobs; }
-    get ctest_parallelJobs(): number | null { return this.configData.ctest.parallelJobs; }
-    get parseBuildDiagnostics(): boolean { return !!this.configData.parseBuildDiagnostics; }
-    get enableOutputParsers(): string[] | null { return this.configData.enabledOutputParsers; }
-    get raw_cmakePath(): string { return this.configData.cmakePath; }
-    get raw_ctestPath(): string { return this.configData.ctestPath; }
-    get debugConfig(): CppDebugConfiguration { return this.configData.debugConfig; }
-    get environment() { return this.configData.environment; }
-    get configureEnvironment() { return this.configData.configureEnvironment; }
-    get buildEnvironment() { return this.configData.buildEnvironment; }
-    get testEnvironment() { return this.configData.testEnvironment; }
-    get defaultVariants(): Object { return this.configData.defaultVariants; }
-    get ctestArgs(): string[] { return this.configData.ctestArgs; }
-    get ctestDefaultArgs(): string[] { return this.configData.ctestDefaultArgs; }
+    get autoSelectActiveFolder(): boolean {
+        return this.configData.autoSelectActiveFolder;
+    }
+    get buildDirectory(): string {
+        return this.configData.buildDirectory;
+    }
+    get installPrefix(): string | null {
+        return this.configData.installPrefix;
+    }
+    get sourceDirectory(): string {
+        return this.configData.sourceDirectory as string;
+    }
+    get saveBeforeBuild(): boolean {
+        return !!this.configData.saveBeforeBuild;
+    }
+    get buildBeforeRun(): boolean {
+        return this.configData.buildBeforeRun;
+    }
+    get clearOutputBeforeBuild(): boolean {
+        return !!this.configData.clearOutputBeforeBuild;
+    }
+    get configureSettings(): any {
+        return this.configData.configureSettings;
+    }
+    get cacheInit() {
+        return this.configData.cacheInit;
+    }
+    get preferredGenerators(): string[] {
+        return this.configData.preferredGenerators;
+    }
+    get generator(): string | null {
+        return this.configData.generator;
+    }
+    get toolset(): string | null {
+        return this.configData.toolset;
+    }
+    get platform(): string | null {
+        return this.configData.platform;
+    }
+    get configureArgs(): string[] {
+        return this.configData.configureArgs;
+    }
+    get buildArgs(): string[] {
+        return this.configData.buildArgs;
+    }
+    get buildToolArgs(): string[] {
+        return this.configData.buildToolArgs;
+    }
+    get parallelJobs(): number {
+        return this.configData.parallelJobs;
+    }
+    get ctest_parallelJobs(): number | null {
+        return this.configData.ctest.parallelJobs;
+    }
+    get parseBuildDiagnostics(): boolean {
+        return !!this.configData.parseBuildDiagnostics;
+    }
+    get enableOutputParsers(): string[] | null {
+        return this.configData.enabledOutputParsers;
+    }
+    get raw_cmakePath(): string {
+        return this.configData.cmakePath;
+    }
+    get raw_ctestPath(): string {
+        return this.configData.ctestPath;
+    }
+    get debugConfig(): CppDebugConfiguration {
+        return this.configData.debugConfig;
+    }
+    get environment() {
+        return this.configData.environment;
+    }
+    get configureEnvironment() {
+        return this.configData.configureEnvironment;
+    }
+    get buildEnvironment() {
+        return this.configData.buildEnvironment;
+    }
+    get testEnvironment() {
+        return this.configData.testEnvironment;
+    }
+    get defaultVariants(): Object {
+        return this.configData.defaultVariants;
+    }
+    get ctestArgs(): string[] {
+        return this.configData.ctestArgs;
+    }
+    get ctestDefaultArgs(): string[] {
+        return this.configData.ctestDefaultArgs;
+    }
     get configureOnOpen() {
         if (util.isCodespaces() && this.configData.configureOnOpen === null) {
             return true;
         }
         return this.configData.configureOnOpen;
     }
-    get configureOnEdit() { return this.configData.configureOnEdit; }
-    get skipConfigureIfCachePresent() { return this.configData.skipConfigureIfCachePresent; }
-    get useCMakeServer(): boolean { return this.configData.useCMakeServer; }
+    get configureOnEdit() {
+        return this.configData.configureOnEdit;
+    }
+    get skipConfigureIfCachePresent() {
+        return this.configData.skipConfigureIfCachePresent;
+    }
+    get useCMakeServer(): boolean {
+        return this.configData.useCMakeServer;
+    }
 
     /**
      * Use folder.useCMakePresets() to check the actual decision on if we are using CMake presets.
      */
-    get useCMakePresets(): UseCMakePresets { return this.configData.useCMakePresets; }
-    get allowCommentsInPresetsFile(): boolean { return this.configData.allowCommentsInPresetsFile; }
+    get useCMakePresets(): UseCMakePresets {
+        return this.configData.useCMakePresets;
+    }
+    get allowCommentsInPresetsFile(): boolean {
+        return this.configData.allowCommentsInPresetsFile;
+    }
 
     get cmakeCommunicationMode(): CMakeCommunicationMode {
         let communicationMode = this.configData.cmakeCommunicationMode;
@@ -304,15 +378,33 @@ export class ConfigurationReader implements vscode.Disposable {
         return ctest_jobs;
     }
 
-    get mingwSearchDirs(): string[] { return this.configData.mingwSearchDirs; }
-    get additionalKits(): string[] { return this.configData.additionalKits; }
-    get emscriptenSearchDirs(): string[] { return this.configData.emscriptenSearchDirs; }
-    get mergedCompileCommands(): string | null { return this.configData.mergedCompileCommands; }
-    get copyCompileCommands(): string | null { return this.configData.copyCompileCommands; }
-    get ignoreKitEnv(): boolean { return this.configData.ignoreKitEnv; }
-    get buildTask(): boolean { return this.configData.buildTask; }
-    get outputLogEncoding(): string { return this.configData.outputLogEncoding; }
-    get enableTraceLogging(): boolean { return this.configData.enableTraceLogging; }
+    get mingwSearchDirs(): string[] {
+        return this.configData.mingwSearchDirs;
+    }
+    get additionalKits(): string[] {
+        return this.configData.additionalKits;
+    }
+    get emscriptenSearchDirs(): string[] {
+        return this.configData.emscriptenSearchDirs;
+    }
+    get mergedCompileCommands(): string | null {
+        return this.configData.mergedCompileCommands;
+    }
+    get copyCompileCommands(): string | null {
+        return this.configData.copyCompileCommands;
+    }
+    get ignoreKitEnv(): boolean {
+        return this.configData.ignoreKitEnv;
+    }
+    get buildTask(): boolean {
+        return this.configData.buildTask;
+    }
+    get outputLogEncoding(): string {
+        return this.configData.outputLogEncoding;
+    }
+    get enableTraceLogging(): boolean {
+        return this.configData.enableTraceLogging;
+    }
 
     get loggingLevel(): LogLevelKey {
         if (process.env['CMT_LOGGING_LEVEL']) {
@@ -321,8 +413,12 @@ export class ConfigurationReader implements vscode.Disposable {
         return this.configData.loggingLevel;
     }
 
-    get touchbar(): TouchBarConfig { return this.configData.touchbar; }
-    get statusbar() { return this._configData.statusbar; }
+    get touchbar(): TouchBarConfig {
+        return this.configData.touchbar;
+    }
+    get statusbar() {
+        return this._configData.statusbar;
+    }
 
     private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),

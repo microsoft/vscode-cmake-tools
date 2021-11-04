@@ -42,12 +42,16 @@ class Collections {
     /**
      * The `DiagnosticCollection` for the CMake configure diagnostics.
      */
-    get cmake(): vscode.DiagnosticCollection { return this._cmake.getOrCreate(); }
+    get cmake(): vscode.DiagnosticCollection {
+        return this._cmake.getOrCreate();
+    }
 
     /**
      * The `DiagnosticCollection` for build diagnostics
      */
-    get build(): vscode.DiagnosticCollection { return this._build.getOrCreate(); }
+    get build(): vscode.DiagnosticCollection {
+        return this._build.getOrCreate();
+    }
 
     reset() {
         this._cmake.dispose();

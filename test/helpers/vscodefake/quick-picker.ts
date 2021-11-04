@@ -10,7 +10,9 @@ export class SelectKitPickerHandle implements QuickPickerHandleStrategy {
 
     constructor(public defaultKitLabel: RegExp, readonly excludeKitLabel?: RegExp) {}
 
-    public get identifier(): string { return 'Select a Kit'; }
+    public get identifier(): string {
+        return 'Select a Kit';
+    }
 
     public handleQuickPick(items: any): any {
         let defaultKit: string[] | undefined = items.filter((item: any) => {

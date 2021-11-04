@@ -148,7 +148,9 @@ interface CMakeContext {
 }
 
 // This exactly matches the kit name
-function exactKitCheck(kitName: string, defaultKit: RegExp): boolean { return defaultKit.test(kitName); }
+function exactKitCheck(kitName: string, defaultKit: RegExp): boolean {
+    return defaultKit.test(kitName);
+}
 
 // This only does a fuzzy check with the ability to exclude kits which have a substring included
 // in their name.
@@ -191,10 +193,14 @@ interface SkipOptions {
 
 function skipTestIf(skipOptions: SkipOptions, testContext: any, context: CMakeContext): void {
     // Skip if kit is not available (matched by default name)
-    if (skipOptions.kitIsNotAvailable && !isKitAvailable(context)) { testContext.skip(); }
+    if (skipOptions.kitIsNotAvailable && !isKitAvailable(context)) {
+        testContext.skip();
+    }
 
     if ((skipOptions.preferredGeneratorIsAvailable && isPreferredGeneratorAvailable(context))
-        || (skipOptions.preferredGeneratorIsNotAvailable && !isPreferredGeneratorAvailable(context))) { testContext.skip(); }
+        || (skipOptions.preferredGeneratorIsNotAvailable && !isPreferredGeneratorAvailable(context))) {
+        testContext.skip();
+    }
 }
 
 function makeExtensionTestSuite(name: string,

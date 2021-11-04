@@ -129,7 +129,9 @@ suite('Build', async () => {
             linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
             win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
         };
-        if (!(workername in os_compilers)) { this.skip(); }
+        if (!(workername in os_compilers)) {
+            this.skip();
+        }
         const compiler = os_compilers[workername];
 
         // Run test
@@ -153,7 +155,9 @@ suite('Build', async () => {
                 linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
                 win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
             };
-            if (!(workername in os_compilers)) { this.skip(); }
+            if (!(workername in os_compilers)) {
+                this.skip();
+            }
             const compiler = os_compilers[workername];
 
             testEnv.kitSelection.defaultKitLabel = compiler[0].kitLabel;
