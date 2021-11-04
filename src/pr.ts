@@ -104,9 +104,7 @@ export namespace fs {
             reader.on('open', _fd => {
                 const writer = fs_.createWriteStream(outpath);
                 writer.on('error', e => reject(e));
-                writer.on('open', _fd2 => {
-                    reader.pipe(writer);
-                });
+                writer.on('open', _fd2 => reader.pipe(writer));
                 writer.on('close', () => resolve());
             });
         });

@@ -4,7 +4,7 @@ import { TestMemento, StateMemento } from './memento';
 const notImplementedErr: string = 'Method not implemented.';
 export class DefaultExtensionContext implements vscode.ExtensionContext {
     get subscriptions(): { dispose(): any }[] {
-        return ([]);
+        return [];
     }
     workspaceState: vscode.Memento = new TestMemento();
     globalState: vscode.Memento & { setKeysForSync(keys: string[]): void } = new StateMemento();
@@ -48,7 +48,7 @@ export class DefaultExtensionContext implements vscode.ExtensionContext {
 
 export class SmokeTestExtensionContext implements vscode.ExtensionContext {
     get subscriptions(): { dispose(): any }[] {
-        return ([]);
+        return [];
     }
     workspaceState: vscode.Memento = new TestMemento();
     globalState: vscode.Memento & { setKeysForSync(keys: string[]): void } = new StateMemento();
