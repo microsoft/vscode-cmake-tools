@@ -9,7 +9,7 @@ import * as vscode from 'vscode';
 import { ConfigurationReader } from '@cmt/config';
 import * as logging from './logging';
 import { fs } from './pr';
-import { EnvironmentVariables } from './proc';
+import { Environment, EnvironmentUtils } from './environmentVariables';
 import rollbar from './rollbar';
 import { loadSchema } from './schema';
 import { StateManager } from './state';
@@ -55,7 +55,7 @@ export interface VarFileOption {
     /**
      * Environment variables to set for the option
      */
-    env?: EnvironmentVariables;
+    env?: Environment;
 }
 
 /**
@@ -323,7 +323,7 @@ export class VariantManager implements vscode.Disposable {
             settings: { ...acc.settings, ...el.settings },
             short: [acc.short, el.short].join(' ').trim(),
             long: [acc.long, el.long].join(', '),
-            env: util.mergeEnvironment(acc.env || {}, el.env || {})
+            env: EnvironmentUtils.merge([acc.env, el.env])
         }),
         init);
     }

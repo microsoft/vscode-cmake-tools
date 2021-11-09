@@ -6,9 +6,9 @@
 import * as vscode from 'vscode';
 
 import { createLogger } from './logging';
-import { EnvironmentVariables } from './proc';
-import { mergeEnvironment, normalizeEnvironmentVarname, replaceAll, fixPaths, errorToString } from './util';
+import { replaceAll, fixPaths, errorToString } from './util';
 import * as nls from 'vscode-nls';
+import { EnvironmentWithNull, EnvironmentUtils } from './environmentVariables';
 
 nls.config({ messageFormat: nls.MessageFormat.bundle, bundleFormat: nls.BundleFormat.standalone })();
 const localize: nls.LocalizeFunc = nls.loadMessageBundle();
@@ -73,7 +73,7 @@ export interface ExpansionOptions {
      * variables for the running process. Only environment variables in this key
      * will be expanded.
      */
-    envOverride?: EnvironmentVariables;
+    envOverride?: EnvironmentWithNull;
     /**
      * Variables for `${variant:var}`-style expansions.
      */
@@ -95,8 +95,8 @@ export interface ExpansionOptions {
  * @param opts Options for the expansion process
  * @returns A string with the variable references replaced
  */
-export async function expandString(tmpl: string, opts: ExpansionOptions) {
-    if (!tmpl) {
+export async function expandString<T>(tmpl: string | T, opts: ExpansionOptions): Promise<string | T> {
+    if (typeof tmpl !== 'string') {
         return tmpl;
     }
 
@@ -121,8 +121,8 @@ export async function expandString(tmpl: string, opts: ExpansionOptions) {
 }
 
 async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
-    const envPreNormalize = opts.envOverride ? opts.envOverride : process.env as EnvironmentVariables;
-    const env = mergeEnvironment(envPreNormalize);
+    const envPreNormalize = opts.envOverride ? opts.envOverride : process.env;
+    const env = EnvironmentUtils.create(envPreNormalize);
     const repls = opts.vars;
 
     // We accumulate a list of substitutions that we need to make, preventing
@@ -153,7 +153,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+        const repl = fixPaths(env[varname]) || '';
         subs.set(full, repl);
     }
 
@@ -161,7 +161,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re2.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+        const repl = fixPaths(env[varname]) || '';
         subs.set(full, repl);
     }
 
@@ -169,7 +169,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = env_re3.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(env[normalizeEnvironmentVarname(varname)]) || '';
+        const repl = fixPaths(env[varname]) || '';
         subs.set(full, repl);
     }
 
@@ -177,7 +177,7 @@ async function expandStringHelper(tmpl: string, opts: ExpansionOptions) {
     while ((mat = penv_re.exec(tmpl))) {
         const full = mat[0];
         const varname = mat[1];
-        const repl = fixPaths(process.env[normalizeEnvironmentVarname(varname)] || '') || '';
+        const repl = fixPaths(process.env[varname]) || '';
         subs.set(full, repl);
     }
 
