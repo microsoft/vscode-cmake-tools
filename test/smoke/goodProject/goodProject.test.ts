@@ -17,7 +17,9 @@ suite('Smoke test: good project', async () => {
                     await cmt.asyncDispose();
                 }
             });
-            suite.smokeTest('Successful configure', async () => { expect(await cmt.configure()).to.eq(0); });
+            suite.smokeTest('Successful configure', async () => {
+                expect(await cmt.configure()).to.eq(0);
+            });
         });
     });
 });

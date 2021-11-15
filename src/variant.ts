@@ -179,7 +179,9 @@ export class VariantManager implements vscode.Disposable {
      */
     private _variants: VariantCollection = { settings: [] };
 
-    get onActiveVariantChanged() { return this._activeVariantChanged.event; }
+    get onActiveVariantChanged() {
+        return this._activeVariantChanged.event;
+    }
     private readonly _activeVariantChanged = new vscode.EventEmitter<void>();
 
     /**
@@ -213,7 +215,7 @@ export class VariantManager implements vscode.Disposable {
         }
         util.chokidarOnAnyChange(
             this._variantFileWatcher,
-            filePath => { rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', filePath), () => this._reloadVariantsFile(filePath)); });
+            filePath => rollbar.invokeAsync(localize('reloading.variants.file', 'Reloading variants file {0}', filePath), () => this._reloadVariantsFile(filePath)));
 
         config.onChange('defaultVariants', () => {
             rollbar.invokeAsync(localize('reloading.variants.from.settings', 'Reloading variants from settings'), () => this._reloadVariantsFile());
@@ -282,7 +284,9 @@ export class VariantManager implements vscode.Disposable {
         this._variants = processVariantFileData(new_variants);
     }
 
-    get haveVariant(): boolean { return !!this.stateManager.activeVariantSettings; }
+    get haveVariant(): boolean {
+        return !!this.stateManager.activeVariantSettings;
+    }
 
     variantConfigurationOptionsForKWs(keywordSetting: Map<string, string>): VariantOption[] | string {
         const vars = this._variants;

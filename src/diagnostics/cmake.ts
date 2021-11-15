@@ -22,7 +22,9 @@ export class CMakeOutputConsumer implements OutputConsumer {
      * The diagnostics that this consumer has accumulated. It will be populated
      * during calls to `output()` and `error()`
      */
-    get diagnostics() { return this._diagnostics; }
+    get diagnostics() {
+        return this._diagnostics;
+    }
     private readonly _diagnostics = [] as FileDiagnostic[];
 
     /**

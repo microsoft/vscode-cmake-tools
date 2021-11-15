@@ -43,7 +43,7 @@ export class ConfigurationWebview {
             } else {
                 // If the global dirty state gets cleared, make sure all the entries
                 // of the cache table have their state dirty updated accordingly.
-                this._options.forEach(opt => { opt.dirty = false; });
+                this._options.forEach(opt => opt.dirty = false);
             }
         }
     }

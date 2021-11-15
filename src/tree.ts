@@ -141,9 +141,13 @@ export class DirectoryNode<Node extends BaseNode> extends BaseNode {
     private _subdirs = new Map<string, DirectoryNode<Node>>();
     private _leaves = new Map<string, Node>();
 
-    getOrderTuple() { return [this.id]; }
+    getOrderTuple() {
+        return [this.id];
+    }
 
-    get fsPath(): string { return path.join(this.parent, this.pathPart); }
+    get fsPath(): string {
+        return path.join(this.parent, this.pathPart);
+    }
 
     getChildren() {
         const ret: BaseNode[] = [];
@@ -215,11 +219,17 @@ export class SourceFileNode extends BaseNode {
         super(`${prefix}::${path.basename(filePath)}:${path.relative(sourcePath, path.dirname(filePath))}`);
     }
 
-    get name() { return path.basename(this.filePath); }
+    get name() {
+        return path.basename(this.filePath);
+    }
 
-    getChildren() { return []; }
+    getChildren() {
+        return [];
+    }
 
-    getOrderTuple() { return [this.name]; }
+    getOrderTuple() {
+        return [this.name];
+    }
 
     getTreeItem() {
         const item = new vscode.TreeItem(path.basename(this.filePath));
@@ -255,11 +265,15 @@ export class TargetNode extends BaseNode {
     private _isLaunch = false;
     private _fsPath: string = '';
 
-    getOrderTuple() { return [sortStringForType(this._type), this.name]; }
+    getOrderTuple() {
+        return [sortStringForType(this._type), this.name];
+    }
 
     private readonly _rootDir: DirectoryNode<SourceFileNode>;
 
-    getChildren() { return this._rootDir.getChildren(); }
+    getChildren() {
+        return this._rootDir.getChildren();
+    }
     getTreeItem() {
         try {
             const item = new vscode.TreeItem(this.name);
@@ -392,9 +406,13 @@ class ProjectNode extends BaseNode {
 
     private readonly _rootDir = new DirectoryNode<TargetNode>(this.id, '', '');
 
-    getOrderTuple() { return []; }
+    getOrderTuple() {
+        return [];
+    }
 
-    getChildren() { return this._rootDir.getChildren(); }
+    getChildren() {
+        return this._rootDir.getChildren();
+    }
 
     getTreeItem() {
         const item = new vscode.TreeItem(this.name, vscode.TreeItemCollapsibleState.Expanded);
@@ -455,7 +473,9 @@ export class WorkspaceFolderNode extends BaseNode {
         this._active = active;
     }
 
-    getOrderTuple() { return [this.id]; }
+    getOrderTuple() {
+        return [this.id];
+    }
 
     getTreeItem() {
         const item = new vscode.TreeItem(this.wsFolder.uri.fsPath, vscode.TreeItemCollapsibleState.Expanded);
@@ -473,7 +493,9 @@ export class WorkspaceFolderNode extends BaseNode {
     }
 
     private _codeModel: codemodel_api.CodeModelContent = { configurations: [], toolchains: new Map<string, codemodel_api.CodeModelToolchain>() };
-    get codeModel() { return this._codeModel; }
+    get codeModel() {
+        return this._codeModel;
+    }
     updateCodeModel(model: codemodel_api.CodeModelContent | null, ctx: TreeUpdateContext) {
         if (!model || model.configurations.length < 1) {
             this._children = [];
@@ -498,7 +520,9 @@ export class WorkspaceFolderNode extends BaseNode {
 
 export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode> {
     private readonly _changeEvent = new vscode.EventEmitter<BaseNode | null>();
-    get onDidChangeTreeData() { return this._changeEvent.event; }
+    get onDidChangeTreeData() {
+        return this._changeEvent.event;
+    }
 
     private readonly _folders = new Map<string, WorkspaceFolderNode>();
     private _selected_workspace?: WorkspaceFolderNode;
@@ -569,5 +593,7 @@ export class ProjectOutlineProvider implements vscode.TreeDataProvider<BaseNode>
         this._selected_workspace = new_node;
     }
 
-    async getTreeItem(node: BaseNode) { return node.getTreeItem(); }
+    async getTreeItem(node: BaseNode) {
+        return node.getTreeItem();
+    }
 }

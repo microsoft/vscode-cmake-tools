@@ -1,9 +1,13 @@
 import * as shlex from '@cmt/shlex';
 import { expect } from '@test/util';
 
-function splitWin(str: string): string[] { return [...shlex.split(str, { mode: 'windows' })]; }
+function splitWin(str: string): string[] {
+    return [...shlex.split(str, { mode: 'windows' })];
+}
 
-function splitUnix(str: string): string[] { return [...shlex.split(str, { mode: 'posix' })]; }
+function splitUnix(str: string): string[] {
+    return [...shlex.split(str, { mode: 'posix' })];
+}
 
 suite('shlex testing', () => {
     test('Windows shell splitting', () => {

@@ -24,7 +24,9 @@ const localize: nls.LocalizeFunc = nls.loadMessageBundle();
 export namespace fs {
 
     export function exists(fspath: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, _reject) => { fs_.exists(fspath, res => resolve(res)); });
+        return new Promise<boolean>((resolve, _reject) => {
+            fs_.exists(fspath, res => resolve(res));
+        });
     }
 
     export function existsSync(fspath: string): boolean {
@@ -102,7 +104,7 @@ export namespace fs {
             reader.on('open', _fd => {
                 const writer = fs_.createWriteStream(outpath);
                 writer.on('error', e => reject(e));
-                writer.on('open', _fd2 => { reader.pipe(writer); });
+                writer.on('open', _fd2 => reader.pipe(writer));
                 writer.on('close', () => resolve());
             });
         });

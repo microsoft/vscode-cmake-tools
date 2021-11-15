@@ -15,7 +15,11 @@ export class ProjectRootHelper {
         return path.normalize(path.join(this._locationOfThisClassFile, '../../../../'));
     }
 
-    public get buildDirectory(): BuildDirectoryHelper { return this._buildFolder; }
+    public get buildDirectory(): BuildDirectoryHelper {
+        return this._buildFolder;
+    }
 
-    public get location(): string { return this._projectRoot; }
+    public get location(): string {
+        return this._projectRoot;
+    }
 }

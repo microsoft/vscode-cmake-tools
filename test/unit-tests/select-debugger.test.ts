@@ -22,7 +22,9 @@ function getTestResourceFilePath(filename: string): string {
 suite('Select debugger', async () => {
     const sandbox: sinon.SinonSandbox = sinon.createSandbox();
 
-    teardown(() => { sandbox.verifyAndRestore(); });
+    teardown(() => {
+        sandbox.verifyAndRestore();
+    });
 
     function createExecuteReturn(retc: number, child?: ChildProcess): Subprocess {
         return {

@@ -12,7 +12,9 @@ export class TestProgramResult {
         this._result_file_location = platformNormalizePath(path.join(location, filename));
     }
 
-    public get isPresent(): boolean { return fs.existsSync(this._result_file_location); }
+    public get isPresent(): boolean {
+        return fs.existsSync(this._result_file_location);
+    }
 
     public async getResultAsJson(): Promise<any> {
         expect(this.isPresent).to.eq(true, 'Test programm result file was not found');

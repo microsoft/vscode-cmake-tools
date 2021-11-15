@@ -34,7 +34,9 @@ suite('Kits scan test', async () => {
     const mingwMakePath = path.join(fakebin, 'mingw32-make');
     const mingwMakePathBackup = path.join(fakebin, 'mingw32-make.bak');
 
-    async function disableMingwMake() { await fs.rename(mingwMakePath, mingwMakePathBackup); }
+    async function disableMingwMake() {
+        await fs.rename(mingwMakePath, mingwMakePathBackup);
+    }
 
     teardown(async () => {
         if (await fs.exists(mingwMakePathBackup)) {
@@ -140,7 +142,9 @@ suite('Kits scan test', async () => {
     });
 
     test('Detect an MinGW compiler file on linux', async () => {
-        if (process.platform === 'win32') { return; }
+        if (process.platform === 'win32') {
+            return;
+        }
 
         await disableMingwMake();
 
@@ -163,7 +167,9 @@ suite('Kits scan test', async () => {
 
     // Test is broken, the use of env path has changed
     test.skip('Detect an MinGW compiler file on windows', async () => {
-        if (process.platform !== 'win32') { return; }
+        if (process.platform !== 'win32') {
+            return;
+        }
 
         const compiler = path.join(fakebin, 'mingw32-gcc');
         const compkit = await kit.kitIfCompiler(compiler);
@@ -196,7 +202,9 @@ suite('Kits scan test', async () => {
 
     suite('Scan directory', async () => {
         let path_with_compilername = '';
-        setup(async () => { path_with_compilername = path.join(fakebin, 'gcc-4.3.2'); });
+        setup(async () => {
+            path_with_compilername = path.join(fakebin, 'gcc-4.3.2');
+        });
         teardown(async () => {
             if (await fs.exists(path_with_compilername)) {
                 await fs.rmdir(path_with_compilername);

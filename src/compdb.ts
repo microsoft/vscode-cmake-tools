@@ -35,7 +35,9 @@ export class CompilationDatabase {
         );
     }
 
-    get(fspath: string) { return this._infoByFilePath.get(util.platformNormalizePath(fspath)); }
+    get(fspath: string) {
+        return this._infoByFilePath.get(util.platformNormalizePath(fspath));
+    }
 
     public static async fromFilePaths(dbpaths: string[]): Promise<CompilationDatabase | null> {
         const db: ArgsCompileCommand[] = [];

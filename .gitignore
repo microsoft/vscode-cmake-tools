@@ -8,6 +8,7 @@ test/unit-tests/driver/workspace/test_project/bin/
 vscode-extensions-localization-export/
 vscode-translations-import/
 jobs/loc/LCL
+OneLocBuild
 .ci-build
 .DS_Store
 debug.log

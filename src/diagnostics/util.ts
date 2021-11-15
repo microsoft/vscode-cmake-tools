@@ -77,7 +77,9 @@ export function populateCollection(coll: vscode.DiagnosticCollection, fdiags: It
         return by_file;
     });
     // Insert the diags into the collection
-    diags_by_file.forEach((diags, filepath) => { coll.set(vscode.Uri.file(filepath), diags); });
+    diags_by_file.forEach((diags, filepath) => {
+        coll.set(vscode.Uri.file(filepath), diags);
+    });
 }
 
 /**
@@ -87,7 +89,9 @@ export abstract class RawDiagnosticParser {
     /**
      * Get the diagnostics which have been parsed by this object
      */
-    get diagnostics(): readonly RawDiagnostic[] { return this._diagnostics; }
+    get diagnostics(): readonly RawDiagnostic[] {
+        return this._diagnostics;
+    }
     private readonly _diagnostics: RawDiagnostic[] = [];
 
     /**

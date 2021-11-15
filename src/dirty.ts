@@ -29,7 +29,9 @@ export class InputFile {
         let stat: Stats;
         try {
             stat = await fs.stat(filePath);
-        } catch (_) { return new InputFile(filePath, null); }
+        } catch (_) {
+            return new InputFile(filePath, null);
+        }
         return new InputFile(filePath, stat.mtime);
     }
 }

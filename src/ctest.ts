@@ -197,7 +197,7 @@ export async function parseTestOutput(output: string): Promise<FailingTestDecora
 
 export class DecorationManager {
     constructor() {
-        vscode.window.onDidChangeActiveTextEditor(_ => { this._refreshActiveEditorDecorations(); });
+        vscode.window.onDidChangeActiveTextEditor(_ => this._refreshActiveEditorDecorations());
     }
 
     private readonly _failingTestDecorationType = vscode.window.createTextEditorDecorationType({
@@ -217,14 +217,18 @@ export class DecorationManager {
     });
 
     private _binaryDir: string = '';
-    get binaryDir(): string { return this._binaryDir; }
+    get binaryDir(): string {
+        return this._binaryDir;
+    }
     set binaryDir(v: string) {
         this._binaryDir = v;
         this._refreshActiveEditorDecorations();
     }
 
     private _showCoverageData: boolean = false;
-    get showCoverageData(): boolean { return this._showCoverageData; }
+    get showCoverageData(): boolean {
+        return this._showCoverageData;
+    }
     set showCoverageData(v: boolean) {
         this._showCoverageData = v;
         this._refreshAllEditorDecorations();
@@ -267,12 +271,16 @@ export class DecorationManager {
     }
 
     private _failingTestDecorations: FailingTestDecoration[] = [];
-    clearFailingTestDecorations() { this.failingTestDecorations = []; }
+    clearFailingTestDecorations() {
+        this.failingTestDecorations = [];
+    }
     addFailingTestDecoration(dec: FailingTestDecoration) {
         this._failingTestDecorations.push(dec);
         this._refreshActiveEditorDecorations();
     }
-    get failingTestDecorations(): FailingTestDecoration[] { return this._failingTestDecorations; }
+    get failingTestDecorations(): FailingTestDecoration[] {
+        return this._failingTestDecorations;
+    }
     set failingTestDecorations(v: FailingTestDecoration[]) {
         this._failingTestDecorations = v;
         this._refreshAllEditorDecorations();
@@ -290,8 +298,12 @@ export class DecorationManager {
 }
 
 class CTestOutputLogger implements OutputConsumer {
-    output(line: string) { log.info(line); }
-    error(line: string) { this.output(line); }
+    output(line: string) {
+        log.info(line);
+    }
+    error(line: string) {
+        this.output(line);
+    }
 }
 
 export class CTestDriver implements vscode.Disposable {
@@ -299,7 +311,9 @@ export class CTestDriver implements vscode.Disposable {
     private readonly _decorationManager = new DecorationManager();
 
     private _testingEnabled: boolean = false;
-    get testingEnabled(): boolean { return this._testingEnabled; }
+    get testingEnabled(): boolean {
+        return this._testingEnabled;
+    }
     set testingEnabled(v: boolean) {
         this._testingEnabled = v;
         this._testingEnabledEmitter.fire(v);
@@ -318,7 +332,9 @@ export class CTestDriver implements vscode.Disposable {
      * Holds the most recent test informations
      */
     private _tests: api.Test[] = [];
-    get tests(): api.Test[] { return this._tests; }
+    get tests(): api.Test[] {
+        return this._tests;
+    }
     set tests(v: api.Test[]) {
         this._tests = v;
         this._testsChangedEmitter.fire(v);
@@ -328,7 +344,9 @@ export class CTestDriver implements vscode.Disposable {
     readonly onTestsChanged = this._testsChangedEmitter.event;
 
     private _testResults: CTestResults | null = null;
-    get testResults(): CTestResults | null { return this._testResults; }
+    get testResults(): CTestResults | null {
+        return this._testResults;
+    }
     set testResults(v: CTestResults | null) {
         this._testResults = v;
         if (v) {

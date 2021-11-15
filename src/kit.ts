@@ -698,7 +698,9 @@ async function collectDevBatVars(hostArch: string, devbat: string, args: string[
         const env_bin = await fs.readFile(envpath);
         env = iconv.decode(env_bin, outputEncoding);
         await fs.unlink(envpath);
-    } catch (error) { log.error(error); }
+    } catch (error) {
+        log.error(error);
+    }
 
     if (!env) {
         env = '';
@@ -812,7 +814,9 @@ export async function getShellScriptEnvironment(kit: Kit, opts?: expand.Expansio
         /* When the script failed, envpath would not exist */
         env = await fs.readFile(environment_path, { encoding: 'utf8' });
         await fs.unlink(environment_path);
-    } catch (error) { log.error(error); }
+    } catch (error) {
+        log.error(error);
+    }
     if (!env || env === '') {
         console.log(`Error running ${kit.environmentSetupScript} with:`, output);
         return;
@@ -905,7 +909,9 @@ async function varsForVSInstallation(inst: VSInstallation, hostArch: string, tar
         // the VS{vs_version_number}COMNTOOLS environment variable to contain
         // the path to the Common7 directory.
         const vs_version = variables.get('VISUALSTUDIOVERSION');
-        if (vs_version) { variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir); }
+        if (vs_version) {
+            variables.set(`VS${vs_version.replace('.', '')}COMNTOOLS`, common_dir);
+        }
 
         // For Ninja and Makefile generators, CMake searches for some compilers
         // before it checks for cl.exe. We can force CMake to check cl.exe first by
@@ -1248,7 +1254,7 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
                 bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\bin");
                 bundled_clang_paths.push(vs_install.installationPath + "\\VC\\Tools\\Llvm\\x64\\bin");
             });
-            bundled_clang_paths.forEach(path_el => { clang_paths.add(path_el); });
+            bundled_clang_paths.forEach(path_el => clang_paths.add(path_el));
 
             // Scan for kits
             const vs_kits = scanForVSKits(pr);
