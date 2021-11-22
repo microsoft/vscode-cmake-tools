@@ -597,10 +597,10 @@ export function readDir(dirPath: string): Promise<string[]> {
     });
 }
 
-// Get the fs.stat using async function.
-export function getStat(filePath: string): Promise<fs.Stats | undefined> {
+// Get the fs.lstat using async function.
+export function getLStat(filePath: string): Promise<fs.Stats | undefined> {
     return new Promise((resolve) => {
-        fs.stat(filePath, (_err, stats) => {
+        fs.lstat(filePath, (_err, stats) => {
             if (stats) {
                 resolve(stats);
             } else {
@@ -684,9 +684,9 @@ async function recGetAllFilePaths(dir: string, regex: RegExp, files: string[], r
     for (const item of files) {
         const file = path.join(dir, item);
         try {
-            const status = await getStat(file);
+            const status = await getLStat(file);
             if (status) {
-                if (status.isDirectory()) {
+                if (status.isDirectory() && !status.isSymbolicLink()) {
                     result = await recGetAllFilePaths(file, regex, await readDir(file), result);
                 } else if (status.isFile() && regex.test(file)) {
                     result.push(file);
