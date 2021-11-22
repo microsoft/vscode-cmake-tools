@@ -42,7 +42,10 @@ export function cleanStack(stack?: string): string {
  * @param message The (single-line) string to clean
  * @returns A string with no potential absolute file paths in it
  */
-export function cleanString(message: string): string {
+export function cleanString(message?: string): string {
+    if (!message) {
+        return 'No message provided';
+    }
     const backSlash = message.indexOf('\\');
     const slash = message.indexOf('/');
     let first = backSlash === -1 ? slash : slash === -1 ? backSlash : backSlash < slash ? backSlash : slash;
