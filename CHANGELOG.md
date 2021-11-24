@@ -3,6 +3,7 @@
 ## 1.10.0
 Bug fixes:
 - Fix `Show Build Command` for folders that do not use CMake Presets. [#2211](https://github.com/microsoft/vscode-cmake-tools/issues/2211)
+- Fix IntelliSense usage of short name from variants file for buildType. [#2120](https://github.com/microsoft/vscode-cmake-tools/issues/2120)
 
 ## 1.9.1
 Bug fixes:
