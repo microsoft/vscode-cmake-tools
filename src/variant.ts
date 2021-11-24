@@ -368,12 +368,11 @@ export class VariantManager implements vscode.Disposable {
             settings: opt
         })));
         const product = util.product(variants);
-        const items: VariantCombination[]
-            = product.map(optionset => ({
-                label: optionset.map(o => o.settings.short).join(' + '),
-                keywordSettings: this.transformChoiceCombinationToKeywordSettings(optionset),
-                description: optionset.map(o => o.settings.long).join(' + ')
-            }));
+        const items: VariantCombination[] = product.map(optionset => ({
+            label: optionset.map(o => o.settings.short).join(' + '),
+            keywordSettings: this.transformChoiceCombinationToKeywordSettings(optionset),
+            description: optionset.map(o => o.settings.long).join(' + ')
+        }));
         if (name) {
             for (const item of items) {
                 if (name === item.label) {
@@ -382,8 +381,11 @@ export class VariantManager implements vscode.Disposable {
                 }
             }
             return false;
+        } else if (process.env['CMT_TESTING'] === '1') {
+            await this.publishActiveKeywordSettings(this.activeKeywordSetting ?? items[0].keywordSettings);
+            return true;
         } else {
-            const chosen = await vscode.window.showQuickPick(items);
+            const chosen = await vscode.window.showQuickPick(items, {placeHolder: localize('select.a.variant.placeholder', 'Select a build variant')});
             if (!chosen) {
                 return false;
             }
