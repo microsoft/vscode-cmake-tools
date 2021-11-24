@@ -393,12 +393,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     private readonly _targetName = new Property<string>(this._initTargetName);
 
     /**
-     * The current variant
+     * The current variant name for displaying to the UI (not the buildType)
      */
-    get activeVariant() {
+    get activeVariantName() {
         return this._activeVariant.value;
     }
-    get onActiveVariantChanged() {
+    get onActiveVariantNameChanged() {
         return this._activeVariant.changeEvent;
     }
     private readonly _activeVariant = new Property<string>('Unconfigured');
