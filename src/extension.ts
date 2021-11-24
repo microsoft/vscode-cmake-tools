@@ -804,7 +804,7 @@ class ExtensionManager implements vscode.Disposable {
             this._targetNameSub = cmt.onTargetNameChanged(FireNow, t => {
                 this._statusBar.setBuildTargetName(t);
             });
-            this._buildTypeSub = cmt.onActiveVariantChanged(FireNow, bt => this._statusBar.setVariantLabel(bt));
+            this._buildTypeSub = cmt.onActiveVariantNameChanged(FireNow, bt => this._statusBar.setVariantLabel(bt));
             this._launchTargetSub = cmt.onLaunchTargetNameChanged(FireNow, t => {
                 this._statusBar.setLaunchTargetName(t || '');
             });

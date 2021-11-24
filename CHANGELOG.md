@@ -1,9 +1,11 @@
 # What's New?
 
-## 1.10.0
+## 1.9.2
 Bug fixes:
+- Fix infinite recursion into symlinks. [#2257](https://github.com/microsoft/vscode-cmake-tools/issues/2257)
 - Fix `Show Build Command` for folders that do not use CMake Presets. [#2211](https://github.com/microsoft/vscode-cmake-tools/issues/2211)
-- Fix IntelliSense usage of short name from variants file for buildType. [#2120](https://github.com/microsoft/vscode-cmake-tools/issues/2120)
+- Fix presets not shown when a common dependency is inherited more than once. [#2210](https://github.com/microsoft/vscode-cmake-tools/issues/2210)
+- Fix IntelliSense usage of short name from variants file for buildType. [#2120](https://github.com/microsoft/vscode-cmake-tools/issues/2120) [@gost-serb](https://github.com/gost-serb)
 
 ## 1.9.1
 Bug fixes:
