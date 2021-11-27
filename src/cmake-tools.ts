@@ -518,9 +518,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         log.debug(localize('disposing.extension', 'Disposing CMakeTools extension'));
         this._disposeEmitter.fire();
         this._termCloseSub.dispose();
-        if (this._launchTerminal) {
-            this._launchTerminal.dispose();
-        }
+        this._launchTerminals.forEach(term => term.dispose());
         for (const sub of [this._generatorSub, this._preferredGeneratorsSub, this._communicationModeSub, this._sourceDirSub]) {
             sub.dispose();
         }
@@ -2131,11 +2129,12 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         return vscode.debug.activeDebugSession!;
     }
 
-    private _launchTerminal?: vscode.Terminal;
+    private _launchTerminals = new Map<number, vscode.Terminal>();
     // Watch for the user closing our terminal
-    private readonly _termCloseSub = vscode.window.onDidCloseTerminal(term => {
-        if (term === this._launchTerminal) {
-            this._launchTerminal = undefined;
+    private readonly _termCloseSub = vscode.window.onDidCloseTerminal(async term => {
+        const processId = await term.processId;
+        if (this._launchTerminals.has(processId!)) {
+            this._launchTerminals.delete(processId!);
         }
     });
 
@@ -2178,9 +2177,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             termOptions.shellPath = paths.windows.ComSpec;
         }
 
-        if (!this._launchTerminal) {
-            this._launchTerminal = vscode.window.createTerminal(termOptions);
-        }
+        const term = vscode.window.createTerminal(termOptions);
 
         let launchArgs = '';
         if (user_config && user_config.args) {
@@ -2188,9 +2185,13 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
         }
 
         const quoted = shlex.quote(executable.path);
-        this._launchTerminal.sendText(`${quoted} ${launchArgs}`);
-        this._launchTerminal.show(true);
-        return this._launchTerminal;
+        term.sendText(`${quoted} ${launchArgs}`);
+        term.show(true);
+
+        const processId = await term.processId;
+        this._launchTerminals.set(processId!, term);
+
+        return term;
     }
 
     /**
