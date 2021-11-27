@@ -190,5 +190,34 @@ suite('[Debug/Launch interface]', async () => {
         // Check that it is compiled as a new file
         expect(fs.existsSync(createdFileOnExecution)).to.be.true;
     }).timeout(60000);
+
+    test('Test launch target multiple times', async () => {
+        testEnv.config.updatePartial({ buildBeforeRun: false });
+
+        const executablesTargets = await cmt.executableTargets;
+        expect(executablesTargets.length).to.be.not.eq(0);
+        await cmt.setLaunchTargetByName(executablesTargets[0].name);
+
+        const launchProgramPath = await cmt.launchTargetPath();
+        expect(launchProgramPath).to.be.not.null;
+
+        // Remove file if not exists
+        const createdFileOnExecution = path.join(path.dirname(launchProgramPath!), 'test.txt');
+        if (fs.existsSync(createdFileOnExecution)) {
+            fs.unlinkSync(createdFileOnExecution);
+        }
+
+        const term1 = await cmt.launchTarget();
+        expect(term1).of.be.not.null;
+        expect(term1!.name).of.be.eq('CMake/Launch');
+        const term1Pid = await term1?.processId;
+
+        const term2 = await cmt.launchTarget();
+        expect(term2).of.be.not.null;
+        expect(term2!.name).of.be.eq('CMake/Launch');
+
+        const term2Pid = await term2?.processId;
+        expect(term1Pid).not.eq(term2Pid);
+    }).timeout(60000);
 });
 
