@@ -12,13 +12,13 @@ Explore the [CMake Tools documentation](README.md)
 
 ## What about CMake language support?
 
-CMake Tools was created separately from the [CMake extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake), which provides language coloring and autocompletion support.
+CMake Tools was created separately from the [CMake extension](https://marketplace.visualstudio.com/items?itemName=josetr.cmake-language-support-vscode), which provides language coloring and autocompletion support.
 
 ## How do I learn about CMake?
 
 CMake Tools is not the same as CMake. There are many great resources around to learn how to use CMake. See Jason Turner's [C++ Weekly - Intro to CMake](https://www.youtube.com/watch?v=HPMvU64RUTY) for a good video introduction.
 
-[CMake's documentation](https://marketplace.visualstudio.com/items?itemName=twxs.cmake) is also available.
+[CMake's documentation](https://marketplace.visualstudio.com/items?itemName=josetr.cmake-language-support-vscode) is also available.
 
 ## How does CMake Tools work with C and C++ IntelliSense?
 

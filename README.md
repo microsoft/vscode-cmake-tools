@@ -21,7 +21,7 @@
 for a new feature, create an issue on [the GitHub page](https://github.com/microsoft/vscode-cmake-tools)!
 
 This extension itself *does not* provide language support for the CMake
-scripting language. For that we recommend [this extension](https://marketplace.visualstudio.com/items?itemName=twxs.cmake).
+scripting language. For that we recommend [this extension](https://marketplace.visualstudio.com/items?itemName=josetr.cmake-language-support-vscode).
 
 ### Microsoft Open Source Code of Conduct
 

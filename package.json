@@ -2072,6 +2072,6 @@
     "hosted-git-info": "^3.0.8"
   },
   "extensionPack": [
-    "twxs.cmake"
+    "josetr.cmake-language-support-vscode"
   ]
 }
