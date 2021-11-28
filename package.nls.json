@@ -135,5 +135,7 @@
     "cmake-tools.configuration.cmake.additionalKits.description": "Array of paths to custom kit files",
     "cmake-tools.configuration.cmake.exportCompileCommandsFile.description": "Enables exporting compile_commands.json.",
     "cmake-tools.configuration.cmake.useCMakePresets.description": "Use CMakePresets.json to configure drive CMake configure, build, and test. When using CMakePresets.json, kits, variants, and some settings in settings.json will be ignored.",
-    "cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Allow the use of JSON extensions such as comments in CMakePresets.json. Please note that your CMakePresets.json file may be considered invalid by other IDEs or on the command line if you use non-standard JSON."
+    "cmake-tools.configuration.cmake.allowCommentsInPresetsFile.description": "Allow the use of JSON extensions such as comments in CMakePresets.json. Please note that your CMakePresets.json file may be considered invalid by other IDEs or on the command line if you use non-standard JSON.",
+    "cmake-tools.configuration.cmake.launch.allowParallel": "Allow launching multiple instances of the **same target** in parallel.",
+    "cmake-tools.configuration.cmake.launch.terminatePreviousInstance": "Controls what happens when you launch another instance of a target and `#cmake.launch.allowParallel#` is disabled. If enabled, the previous instance will first be terminated before launching the new one. Otherwise, the new instance will wait until the previous one has finished."
 }

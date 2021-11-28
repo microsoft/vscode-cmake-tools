@@ -138,6 +138,10 @@ export interface ExtensionConfigurationSettings {
     statusbar: StatusBarConfig;
     useCMakePresets: UseCMakePresets;
     allowCommentsInPresetsFile: boolean;
+    launch: {
+        allowParallel: boolean;
+        terminatePreviousInstance: boolean;
+    };
 }
 
 type EmittersOf<T> = {
@@ -420,6 +424,14 @@ export class ConfigurationReader implements vscode.Disposable {
         return this._configData.statusbar;
     }
 
+    get launch_allowParallel(): boolean {
+        return this.configData.launch.allowParallel;
+    }
+
+    get launch_terminatePreviousInstance(): boolean {
+        return this.configData.launch.terminatePreviousInstance;
+    }
+
     private readonly _emitters: EmittersOf<ExtensionConfigurationSettings> = {
         autoSelectActiveFolder: new vscode.EventEmitter<boolean>(),
         cmakePath: new vscode.EventEmitter<string>(),
@@ -469,7 +481,8 @@ export class ConfigurationReader implements vscode.Disposable {
         touchbar: new vscode.EventEmitter<TouchBarConfig>(),
         statusbar: new vscode.EventEmitter<StatusBarConfig>(),
         useCMakePresets: new vscode.EventEmitter<UseCMakePresets>(),
-        allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>()
+        allowCommentsInPresetsFile: new vscode.EventEmitter<boolean>(),
+        launch: new vscode.EventEmitter<{ allowParallel: boolean; terminatePreviousInstance: boolean }>()
     };
 
     /**

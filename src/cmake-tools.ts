@@ -2130,6 +2130,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
     }
 
     private _launchTerminals = new Map<number, vscode.Terminal>();
+    private _launchTerminalTargetName = '_CMAKE_TOOLS_LAUNCH_TERMINAL_TARGET_NAME';
     // Watch for the user closing our terminal
     private readonly _termCloseSub = vscode.window.onDidCloseTerminal(async term => {
         const processId = await term.processId;
@@ -2137,6 +2138,22 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             this._launchTerminals.delete(processId!);
         }
     });
+
+    private _createTerminal(options: vscode.TerminalOptions, executable: api.ExecutableTarget) {
+        if (!this.workspaceContext.config.launch_allowParallel) {
+            for (const [, term] of this._launchTerminals) {
+                const creationOptions = term.creationOptions! as vscode.TerminalOptions;
+                const executablePath = creationOptions.env![this._launchTerminalTargetName];
+                if (executablePath === executable.name) {
+                    if (this.workspaceContext.config.launch_terminatePreviousInstance) {
+                        term.sendText('\u0003');
+                    }
+                    return term;
+                }
+            }
+        }
+        return vscode.window.createTerminal(options);
+    }
 
     /**
      * Implementation of `cmake.launchTarget`
@@ -2166,6 +2183,9 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             launchEnv = util.mergeEnvironment(launchEnv, configure_preset_environment);
         }
 
+        // Add a way to retrieve the associated executable target with a launch terminal.
+        launchEnv[this._launchTerminalTargetName] = executable.name;
+
         const termOptions: vscode.TerminalOptions = {
             name: 'CMake/Launch',
             env: launchEnv,
@@ -2177,7 +2197,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
             termOptions.shellPath = paths.windows.ComSpec;
         }
 
-        const term = vscode.window.createTerminal(termOptions);
+        const term = this._createTerminal(termOptions, executable);
 
         let launchArgs = '';
         if (user_config && user_config.args) {
