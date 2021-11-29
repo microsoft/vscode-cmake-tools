@@ -21,7 +21,7 @@
     "native"
   ],
   "engines": {
-    "vscode": "^1.53.0"
+    "vscode": "^1.56.0"
   },
   "categories": [
     "Other"
@@ -2007,7 +2007,7 @@
     "@types/rimraf": "^3.0.0",
     "@types/sinon": "~9.0.10",
     "@types/tmp": "^0.2.0",
-    "@types/vscode": "1.53.0",
+    "@types/vscode": "1.56.0",
     "@types/which": "~2.0.0",
     "@types/xml2js": "^0.4.8",
     "@typescript-eslint/eslint-plugin": "^4.22.1",
