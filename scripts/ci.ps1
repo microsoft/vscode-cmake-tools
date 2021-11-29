@@ -102,6 +102,7 @@ Invoke-ChronicCommand "yarn lint" $yarn run lint
 # Run tests
 Invoke-TestPreparation -CMakePath $cmake_binary
 
+Invoke-ChronicCommand "yarn backendTests" $yarn run backendTests
 Invoke-ChronicCommand "yarn pretest" $yarn run pretest
 Invoke-ChronicCommand "yarn smokeTests" $yarn run smokeTests
 Invoke-ChronicCommand "yarn unitTests" $yarn run unitTests

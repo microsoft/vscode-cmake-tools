@@ -185,6 +185,8 @@
                 "--colors",
                 "-r",
                 "ts-node/register",
+                "-r",
+                "tsconfig-paths/register",
                 "${workspaceFolder}/test/backend-unit-tests/**/*.test.ts"
             ],
             "internalConsoleOptions": "openOnSessionStart"
