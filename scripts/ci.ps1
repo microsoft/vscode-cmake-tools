@@ -28,14 +28,8 @@ if ($PSVersionTable.PSVersion.Major -lt 6) {
 # The root directory of our repository:
 $REPO_DIR = Split-Path $PSScriptRoot -Parent
 
-$Package = Get-Content (Join-Path $REPO_DIR "package.json") | ConvertFrom-Json
-
-$CMakeToolsVersion = $Package.version
-
 # Import the utility modules
 Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
-
-$DOC_BUILD_DIR = Join-Path $REPO_DIR "build/docs"
 
 # Sanity check for yarn
 $yarn = Find-Program yarn
@@ -102,6 +96,7 @@ Invoke-ChronicCommand "yarn lint" $yarn run lint
 # Run tests
 Invoke-TestPreparation -CMakePath $cmake_binary
 
+Invoke-ChronicCommand "yarn backendTests" $yarn run backendTests
 Invoke-ChronicCommand "yarn pretest" $yarn run pretest
 Invoke-ChronicCommand "yarn smokeTests" $yarn run smokeTests
 Invoke-ChronicCommand "yarn unitTests" $yarn run unitTests
