@@ -1,6 +1,3 @@
-// eslint-disable-next-line import/no-unassigned-import
-import 'module-alias/register';
-
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
