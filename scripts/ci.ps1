@@ -28,14 +28,8 @@ if ($PSVersionTable.PSVersion.Major -lt 6) {
 # The root directory of our repository:
 $REPO_DIR = Split-Path $PSScriptRoot -Parent
 
-$Package = Get-Content (Join-Path $REPO_DIR "package.json") | ConvertFrom-Json
-
-$CMakeToolsVersion = $Package.version
-
 # Import the utility modules
 Import-Module (Join-Path $PSScriptRoot "cmt.psm1")
-
-$DOC_BUILD_DIR = Join-Path $REPO_DIR "build/docs"
 
 # Sanity check for yarn
 $yarn = Find-Program yarn
