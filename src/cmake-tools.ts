@@ -997,7 +997,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
                     await this.workspaceContext.state.setActiveKitName(kit.name);
                     this._statusMessage.set(localize('ready.status', 'Ready'));
                 } catch (error: any) {
-                    void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit "{0}".', error));
+                    void vscode.window.showErrorMessage(localize('unable.to.set.kit', 'Unable to set kit "{0}".', error.message));
                     this._statusMessage.set(localize('error.on.switch.status', 'Error on switch of kit ({0})', error.message));
                     this._cmakeDriver = Promise.resolve(null);
                     this._activeKit = null;
@@ -1362,9 +1362,7 @@ export class CMakeTools implements vscode.Disposable, api.CMakeToolsAPI {
      * Wraps pre/post configure logic around an actual configure function
      * @param cb The actual configure callback. Called to do the configure
      */
-    private async _doConfigure(type: ConfigureType,
-        progress: ProgressHandle,
-        cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
+    private async _doConfigure(type: ConfigureType, progress: ProgressHandle, cb: (consumer: CMakeOutputConsumer) => Promise<number>): Promise<number> {
         progress.report({ message: localize('saving.open.files', 'Saving open files') });
         if (!await this.maybeAutoSaveAll(type === ConfigureType.ShowCommandOnly)) {
             return -1;

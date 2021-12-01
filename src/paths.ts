@@ -5,6 +5,7 @@
 import { DirectoryContext } from '@cmt/workspace';
 import * as path from 'path';
 import * as which from 'which';
+import * as vscode from 'vscode';
 
 import { vsInstallations } from './installs/visual-studio';
 import { expandString } from './expand';
@@ -18,10 +19,16 @@ interface VSCMakePaths {
 
 class WindowsEnvironment {
     get AppData(): string | undefined {
+        if (process.env['CMT_TESTING'] === '1') {
+            return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');
+        }
         return process.env['APPDATA'];
     }
 
     get LocalAppData(): string | undefined {
+        if (process.env['CMT_TESTING'] === '1') {
+            return path.join(vscode.workspace.workspaceFolders![0].uri.fsPath, '.vscode');
+        }
         return process.env['LOCALAPPDATA'];
     }
 

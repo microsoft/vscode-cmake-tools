@@ -187,7 +187,7 @@ export class VariantManager implements vscode.Disposable {
     /**
      * Watches for changes to the variants file on the filesystem
      */
-    private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true });
+    private readonly _variantFileWatcher = chokidar.watch([], { ignoreInitial: true, followSymlinks: false });
 
     private customVariantsFileExists: boolean = false;
 

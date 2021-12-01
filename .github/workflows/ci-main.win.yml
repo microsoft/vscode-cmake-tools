@@ -1,0 +1,35 @@
+name: CI (Windows)
+
+on:
+  push:
+    branches:
+    - main
+    - bobbrow/windowsCI2
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-2019
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          # Set this option if you want the action to check for the latest available version that satisfies the version spec
+          check-latest: true
+
+      - name: Build the extension and run tests
+        run: pwsh -NonInteractive -NoProfile -NoLogo scripts/ci.ps1
+
+      - name: Upload test logs if tests failed
+        if: failure()
+        uses: actions/upload-artifact@v2.2.4
+        with:
+          name: TestLogs
+          path: test/**/log.txt
+          if-no-files-found: warn

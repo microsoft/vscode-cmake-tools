@@ -2,6 +2,7 @@
 import { CMakeTools, ConfigureTrigger } from '@cmt/cmake-tools';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
+import { ExtensionConfigurationSettings } from '@cmt/config';
 import { logFilePath } from '@cmt/logging';
 import {
     clearExistingKitConfigurationFile,
@@ -130,7 +131,7 @@ suite('Build', async () => {
         // Select compiler build node dependent
         const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
             linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
         };
         if (!(workername in os_compilers)) {
             this.skip();
@@ -159,8 +160,8 @@ suite('Build', async () => {
                 { kitLabel: /^Generator switch test GCC no generator$/, generator: '' }
             ],
             win32: [
-                { kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-                { kitLabel: /^Generator switch test GCC no generator - Win/, generator: '' }
+                {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
+                {kitLabel: /^Generator switch test VS 2019 no generator/, generator: ''}
             ]
         };
         if (!(workername in os_compilers)) {
@@ -208,7 +209,7 @@ suite('Build', async () => {
             // Select compiler build node dependent
             const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
                 linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-                win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+                win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
             };
             if (!(workername in os_compilers)) {
                 this.skip();
@@ -237,8 +238,8 @@ suite('Build', async () => {
                     { kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja' }
                 ],
                 win32: [
-                    { kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-                    { kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
+                    {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
+                    {kitLabel: /^Generator switch test VS 2019 no generator/, generator: ''}
                 ]
             };
             if (!(workername in os_compilers)) {
@@ -271,8 +272,8 @@ suite('Build', async () => {
                 { kitLabel: /^Generator switch test GCC Ninja$/, generator: 'Ninja' }
             ],
             win32: [
-                { kitLabel: /^Generator switch test GCC Mingw - Win/, generator: 'MinGW Makefiles' },
-                { kitLabel: /^Generator switch test GCC Ninja - Win/, generator: 'Ninja' }
+                {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
+                {kitLabel: /^Generator switch test VS 2019 no generator/, generator: ''}
             ]
         };
         if (!(workername in os_compilers)) {
@@ -336,6 +337,11 @@ suite('Build', async () => {
         let retc = await cmt.configureInternal(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
+        const newSettings: Partial<ExtensionConfigurationSettings> = {copyCompileCommands: compdb_cp_path};
+        if (process.platform === 'win32') {
+            newSettings.generator = 'Ninja';  // VS generators don't create compile_commands.json
+        }
+        testEnv.config.updatePartial(newSettings);
         testEnv.config.updatePartial({ copyCompileCommands: compdb_cp_path });
         retc = await cmt.configureInternal(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);

@@ -176,7 +176,7 @@ suite('Select debugger', async () => {
 
         const target = { name: 'Test', path: 'Target' };
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
-        const debuggerPath = getTestResourceFilePath('../fakebin/gdb');
+        const debuggerPath = getTestResourceFilePath(`../fakebin/gdb${process.platform === 'win32' ? '.exe' : ''}`);
 
         const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', Debugger.MIModes.gdb, debuggerPath);
         expect(config).to.not.be.null;
@@ -213,7 +213,7 @@ suite('Select debugger', async () => {
 
         const target = { name: 'Test', path: 'Target' };
         const cache = await CMakeCache.fromPath(getTestResourceFilePath('TestCMakeCache-gcc.txt'));
-        const debuggerPath = getTestResourceFilePath('../fakebin/lldb-mi');
+        const debuggerPath = getTestResourceFilePath(`../fakebin/lldb-mi${process.platform === 'win32' ? '.exe' : ''}`);
 
         const config = await Debugger.getDebugConfigurationFromCache(cache, target, 'darwin', undefined, debuggerPath);
         expect(config).to.not.be.null;

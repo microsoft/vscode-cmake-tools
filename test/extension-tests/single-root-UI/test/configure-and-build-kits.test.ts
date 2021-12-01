@@ -117,7 +117,7 @@ suite('Build using Kits and Variants', async () => {
         // Select compiler build node dependent
         const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
             linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-            win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+            win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
         };
         if (!(workername in os_compilers)) {
             this.skip();
@@ -143,7 +143,7 @@ suite('Build using Kits and Variants', async () => {
             // Select compiler build node dependent
             const os_compilers: { [osName: string]: { kitLabel: RegExp; compiler: string }[] } = {
                 linux: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }],
-                win32: [{ kitLabel: /^GCC \d/, compiler: 'GNU' }, { kitLabel: /^VisualStudio/, compiler: 'MSVC' }]
+                win32: [{ kitLabel: /^Visual Studio/, compiler: 'MSVC' }, { kitLabel: /^Clang \d/, compiler: 'Clang' }]
             };
             if (!(workername in os_compilers)) {
                 this.skip();

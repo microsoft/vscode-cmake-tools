@@ -160,7 +160,7 @@ export async function getCompilerVersion(vendor: CompilerVendorEnum, binPath: st
     }
     const exec = await proc.execute(binPath, ['-v'], undefined, { overrideLocale: true }).result;
     if (exec.retc !== 0) {
-        log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns non-zero): {1}', vendor, binPath));
+        log.debug(localize('bad.compiler.binary', 'Bad {0} binary ("-v" returns {1}): {2}', vendor, exec.retc, binPath));
         return null;
     }
     let version_re: RegExp;
@@ -374,6 +374,11 @@ export async function kitIfCompiler(bin: string, pr?: ProgressReporter): Promise
 }
 
 async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Promise<Ret | null>): Promise<Ret[]> {
+    if (process.platform === 'win32' && dir.indexOf('AppData') > 0 && dir.indexOf('Local') > 0) {
+        // This folder causes problems with tests on Windows.
+        log.debug(localize('skipping.scan.of.appdata', 'Skipping scan of %LocalAppData% folder'));
+        return [];
+    }
     if (!await fs.exists(dir)) {
         log.debug(localize('skipping.scan.of.not.existing.path', 'Skipping scan of not existing path {0}', dir));
         return [];
@@ -402,7 +407,9 @@ async function scanDirectory<Ret>(dir: string, mapper: (filePath: string) => Pro
         if (e.code === 'EACCESS' || e.code === 'EPERM') {
             return [];
         }
-        throw e;
+        console.log('unexpected file system error');
+        console.log(e);
+        return [];
     }
 
     const prs = await Promise.all(bins.map(b => mapper(b)));
@@ -877,7 +884,7 @@ const VsGenerators: { [key: string]: string } = {
 };
 
 async function varsForVSInstallation(inst: VSInstallation, hostArch: string, targetArch?: string): Promise<Map<string, string> | null> {
-    console.log(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
+    log.trace(`varsForVSInstallation path:'${inst.installationPath}' version:${inst.installationVersion} host arch:${hostArch} - target arch:${targetArch}`);
     const common_dir = path.join(inst.installationPath, 'Common7', 'Tools');
     const majorVersion = parseInt(inst.installationVersion);
     let vcvarsScript: string = 'vcvarsall.bat';
@@ -1185,6 +1192,7 @@ export async function findCLCompilerPath(env: Map<string, string>): Promise<stri
 }
 
 export interface KitScanOptions {
+    ignorePath?: boolean;
     scanDirs?: string[];
     minGWSearchDirs?: string[];
 }
@@ -1211,8 +1219,18 @@ export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitS
 
         // Search directories on `PATH` for compiler binaries
         if (process.env.hasOwnProperty('PATH')) {
-            const sep = isWin32 ? ';' : ':';
-            for (const dir of (process.env.PATH as string).split(sep)) {
+            if (opt && opt.ignorePath) {
+                log.debug(localize('skip.scan.path', 'Skipping scan of PATH'));
+            } else {
+                const sep = isWin32 ? ';' : ':';
+                for (const dir of (process.env.PATH as string).split(sep)) {
+                    scan_paths.add(dir);
+                }
+            }
+        }
+
+        if (opt?.scanDirs) {
+            for (const dir of opt.scanDirs) {
                 scan_paths.add(dir);
             }
         }

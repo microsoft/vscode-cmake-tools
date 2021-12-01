@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as rimraf from 'rimraf';
 import { CMakeFileApiDriver } from '@cmt/drivers/cmfileapi-driver';
-import { CMakeServerClientDriver } from '@cmt/drivers/cms-driver';
+import { CMakeServerClientDriver, NoGeneratorError } from '@cmt/drivers/cms-driver';
 
 chai.use(chaiString);
 
@@ -28,15 +28,10 @@ function cleanupBuildDir(build_dir: string): boolean {
     return !fs.existsSync(build_dir);
 }
 
-export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
-    config: ConfigurationReader,
-    kit: Kit | null,
-    workspaceFolder: string | null,
-    preconditionHandler: CMakePreconditionProblemSolver,
-    preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
+export function makeDriverTestsuite(driverName: string, driver_generator: (cmake: CMakeExecutable, config: ConfigurationReader, kit: Kit | null, workspaceFolder: string | null, preconditionHandler: CMakePreconditionProblemSolver, preferredGenerators: CMakeGenerator[]) => Promise<CMakeDriver>) {
     let driver: CMakeDriver | null = null;
 
-    suite('CMake-Driver tests', () => {
+    suite(`CMake ${driverName} driver tests`, () => {
         const cmakePath: string = process.env.CMAKE_EXECUTABLE ? process.env.CMAKE_EXECUTABLE : 'cmake';
         const defaultWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/test_project');
         const emptyWorkspaceFolder = getTestRootFilePath('test/unit-tests/driver/workspace/empty_project');
@@ -45,22 +40,21 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
         let kitDefault: Kit;
         if (process.platform === 'win32') {
             kitDefault = {
-                name: 'Visual Studio Community 2017 - amd64',
-                visualStudio: 'VisualStudio.15.0',
-                visualStudioArchitecture: 'amd64',
-                preferredGenerator: { name: 'Visual Studio 15 2017', platform: 'x64' }
+                name: 'Visual Studio Community 2019 - amd64',
+                visualStudio: 'VisualStudio.16.0',
+                visualStudioArchitecture: 'x64',
+                preferredGenerator: {name: 'Visual Studio 16 2019', platform: 'x64'}
             } as Kit;
         } else {
-            kitDefault
-                = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' } } as Kit;
+            kitDefault = { name: 'GCC', compilers: { C: 'gcc', CXX: 'g++' }, preferredGenerator: { name: 'Unix Makefiles' } } as Kit;
         }
 
         let kitNinja: Kit;
         if (process.platform === 'win32') {
             kitNinja = {
-                name: 'Visual Studio Community 2017 - amd64',
-                visualStudio: 'VisualStudio.15.0',
-                visualStudioArchitecture: 'amd64',
+                name: 'Visual Studio Community 2019 - amd64',
+                visualStudio: 'VisualStudio.16.0',
+                visualStudioArchitecture: 'x64',
                 preferredGenerator: { name: 'Ninja' }
             } as Kit;
         } else {
@@ -144,8 +138,14 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
             const kit = { name: 'GCC', preferredGenerator: { name: 'BlaBla' } } as Kit;
 
-            await expect(driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []))
-                .to.be.rejectedWith('No usable generator found.');
+            try {
+                await driver_generator(executable, config, kit, defaultWorkspaceFolder, async () => {}, []);
+                expect(false, 'configure did not detect the invalid generator').to.be.true;
+            } catch (e) {
+                if (!(e instanceof NoGeneratorError)) {
+                    expect(false, `configure threw the wrong Error type: ${typeof(e)}`).to.be.true;
+                }
+            }
         }).timeout(60000);
 
         test('Test compiler name reporting for telemetry', async () => {
@@ -182,15 +182,15 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
             // Set kit without a preferred generator
             await driver.setKit({ name: 'GCC' }, []);
-            expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(0);
+            expect(await driver.cleanConfigure(ConfigureTrigger.runTests, []), 'clean configure').to.be.eq(0);
             const kit1 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 
             // Set kit with a list of two default preferred generators, for comparison
             await driver.setKit({ name: 'GCC' }, [{ name: 'Ninja' }, { name: 'Unix Makefiles' }]);
-            expect(await driver.configure(ConfigureTrigger.runTests, [])).to.be.eq(0);
+            expect(await driver.configure(ConfigureTrigger.runTests, []), 'configure with Ninja').to.be.eq(0);
             const kit2 = driver.cmakeCacheEntries?.get('CMAKE_GENERATOR')!.value;
 
-            expect(kit1).to.be.equal(kit2);
+            expect(kit1, 'value of CMAKE_GENERATOR').to.be.equal(kit2);
         }).timeout(90000);
 
         test('Try build on empty dir', async () => {
@@ -202,8 +202,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
                 expect(e).to.be.eq(CMakePreconditionProblems.MissingCMakeListsFile);
                 called = true;
             };
-            driver
-                = await driver_generator(executable, config, kitDefault, emptyWorkspaceFolder, checkPreconditionHelper, []);
+            driver = await driver_generator(executable, config, kitDefault, emptyWorkspaceFolder, checkPreconditionHelper, []);
             expect(await driver.cleanConfigure(ConfigureTrigger.runTests, [])).to.be.eq(-2);
             expect(called).to.be.true;
         }).timeout(60000);
@@ -217,8 +216,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
                 expect(e).to.be.eq(CMakePreconditionProblems.ConfigureIsAlreadyRunning);
                 called = true;
             };
-            driver
-                = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
+            driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, checkPreconditionHelper, []);
             const configure1 = driver.configure(ConfigureTrigger.runTests, []);
             const configure2 = driver.configure(ConfigureTrigger.runTests, []);
 
@@ -417,7 +415,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
             driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
             await driver.configure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
-            expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
+            expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')?.value).to.be.eq('Hallo');
         }).timeout(90000);
 
         test('Test extra arguments on clean and configure', async () => {
@@ -426,7 +424,7 @@ export function makeDriverTestsuite(driver_generator: (cmake: CMakeExecutable,
 
             driver = await driver_generator(executable, config, kitDefault, defaultWorkspaceFolder, async () => {}, []);
             await driver.cleanConfigure(ConfigureTrigger.runTests, ['-DEXTRA_ARGS_TEST=Hallo']);
-            expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')!.value).to.be.eq('Hallo');
+            expect(driver.cmakeCacheEntries.get('extraArgsEnvironment')?.value).to.be.eq('Hallo');
         }).timeout(90000);
     });
 }

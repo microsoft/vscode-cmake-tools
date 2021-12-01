@@ -610,16 +610,8 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return cb();
     }
 
-    private async _refreshExpansions(showCommandOnly?: boolean) {
-        if (!showCommandOnly) {
-            log.debug('Run _refreshExpansions');
-        }
-
+    private async _refreshExpansions() {
         return this.doRefreshExpansions(async () => {
-            if (!showCommandOnly) {
-                log.debug('Run _refreshExpansions cb');
-            }
-
             this._sourceDirectory = await util.normalizeAndVerifySourceDir(await expand.expandString(this.config.sourceDirectory, CMakeDriver.sourceDirExpansionOptions(this.workspaceFolder)));
 
             const opts = this.expansionOptions;
@@ -1229,7 +1221,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         try {
             // _beforeConfigureOrBuild needs to refresh expansions early because it reads various settings
             // (example: cmake.sourceDirectory).
-            await this._refreshExpansions(showCommandOnly);
+            await this._refreshExpansions();
             if (!showCommandOnly) {
                 if (!shouldUseCachedConfiguration) {
                     log.debug(localize('start.configure', 'Start configure'), extra_args);
@@ -1273,7 +1265,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             }
 
             // A more complete round of expansions
-            await this._refreshExpansions(showCommandOnly);
+            await this._refreshExpansions();
 
             const timeStart: number = new Date().getTime();
             let retc: number;

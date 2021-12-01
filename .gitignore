@@ -4,7 +4,8 @@ dist/
 node_modules/
 out/
 test/fakebin/
-test/unit-tests/driver/workspace/test_project/bin/
+test/**/log.txt
+test/**/bin
 vscode-extensions-localization-export/
 vscode-translations-import/
 jobs/loc/LCL
