@@ -772,11 +772,11 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const child = this.executeCommand(program, args, undefined, { silent: true });
         try {
             const result = await child.result;
-            log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
+            log.trace(localize('command.version.test.return.code', '{0} returned code {1}', `${program} --version`, nullableValueToString(result.retc)));
             return result.retc === 0;
         } catch (e: any) {
             const e2: NodeJS.ErrnoException = e;
-            log.debug(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(e2.code)));
+            log.debug(localize('command.version.test.return.code', '{0} returned code {1}', `${program} --version`, nullableValueToString(e2.code)));
             if (e2.code === 'ENOENT') {
                 return false;
             }
@@ -859,8 +859,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this.configure(trigger, extra_args, consumer);
     }
 
-    async testCompilerVersion(program: string, cwd: string, arg: string | undefined,
-        regexp: RegExp, captureGroup: number): Promise<string | undefined> {
+    async testCompilerVersion(program: string, cwd: string, arg: string | undefined, regexp: RegExp, captureGroup: number): Promise<string | undefined> {
         const args = [];
         if (arg) {
             args.push(arg);
@@ -868,7 +867,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         const child = this.executeCommand(program, args, undefined, { silent: true, cwd });
         try {
             const result = await child.result;
-            console.log(localize('command.version.test.return.code', 'Command version test return code {0}', nullableValueToString(result.retc)));
+            log.trace(localize('command.version.test.return.code', '{0} returned code {1}', `${program} ${arg}`, nullableValueToString(result.retc)));
             // Various compilers will output into stdout, others in stderr.
             // It's safe to concat them into one string to search in, since it's enough to analyze
             // the first match (stderr can't print a different version than stdout).
@@ -879,7 +878,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
             return match ? match[captureGroup] : "error";
         } catch (e: any) {
             const e2: NodeJS.ErrnoException = e;
-            console.log(localize('compiler.version.return.code', 'Compiler version test return code {0}', nullableValueToString(e2.code)));
+            log.debug(localize('compiler.version.return.code', '{0} returned code {1}', `${program} ${arg}`, nullableValueToString(e2.code)));
             return "error";
         }
     }
@@ -1123,8 +1122,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
         // since some compilers can output their version without a specific switch.
         let version;
         if (compiler?.versionOutputRegexp) {
-            version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch,
-                RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
+            version = await this.testCompilerVersion(compilerName, compilerDir, compiler?.versionSwitch, RegExp(compiler.versionOutputRegexp, "mgi"), compiler.captureGroup) || "unknown";
         } else {
             version = "unknown";
         }

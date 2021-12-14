@@ -7,7 +7,7 @@ import { clearExistingKitConfigurationFile, DefaultEnvironment, expect, getFirst
 import { fs } from '@cmt/pr';
 import * as path from 'path';
 
-suite('[Environment Variables in Variants]', async () => {
+suite('Environment Variables in Variants', async () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 

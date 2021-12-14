@@ -8,7 +8,6 @@ import { expect } from 'chai';
 import * as chaiString from 'chai-string';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
 
 chai.use(chaiString);
 
@@ -22,9 +21,7 @@ function getTestRootFilePath(filename: string): string {
 }
 
 function cleanupBuildDir(build_dir: string): boolean {
-    if (fs.existsSync(build_dir)) {
-        rimraf.sync(build_dir);
-    }
+    fs.rmSync(build_dir, {recursive: true, force: true});
     return !fs.existsSync(build_dir);
 }
 

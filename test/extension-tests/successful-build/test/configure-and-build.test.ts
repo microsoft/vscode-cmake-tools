@@ -3,7 +3,6 @@ import { CMakeTools, ConfigureTrigger } from '@cmt/cmake-tools';
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
 import { ExtensionConfigurationSettings } from '@cmt/config';
-import { logFilePath } from '@cmt/logging';
 import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
@@ -14,15 +13,7 @@ import {
 } from '@test/util';
 import * as path from 'path';
 
-let workername: string = process.platform;
-
-if (process.env.APPVEYOR_BUILD_WORKER_IMAGE) {
-    workername = process.env.APPVEYOR_BUILD_WORKER_IMAGE;
-}
-
-if (process.env.TRAVIS_OS_NAME) {
-    workername = process.env.TRAVIS_OS_NAME;
-}
+const workername: string = process.platform;
 
 suite('Build', async () => {
     let cmt: CMakeTools;
@@ -51,7 +42,6 @@ suite('Build', async () => {
 
         cmt = await CMakeTools.create(testEnv.vsContext, testEnv.wsContext);
         const kit = await getFirstSystemKit(cmt);
-        console.log("Using following kit in next test: ", kit.name);
         await cmt.setKit(kit);
         testEnv.projectFolder.buildDirectory.clear();
     });
@@ -59,17 +49,6 @@ suite('Build', async () => {
     teardown(async function (this: Mocha.Context) {
         this.timeout(100000);
         await cmt.asyncDispose();
-        const logPath = logFilePath();
-        testEnv.clean();
-        if (await fs.exists(logPath)) {
-            if (this.currentTest?.state === "failed") {
-                const logContent = await fs.readFile(logPath);
-                logContent.toString().split('\n').forEach(line => {
-                    console.log(line);
-                });
-            }
-            await fs.writeFile(logPath, "");
-        }
     });
 
     suiteTeardown(async () => {
@@ -239,7 +218,7 @@ suite('Build', async () => {
                 ],
                 win32: [
                     {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
-                    {kitLabel: /^Generator switch test VS 2019 no generator/, generator: ''}
+                    {kitLabel: /^Generator switch test VS 2019 Ninja/, generator: 'Ninja'}
                 ]
             };
             if (!(workername in os_compilers)) {
@@ -273,7 +252,7 @@ suite('Build', async () => {
             ],
             win32: [
                 {kitLabel: /^Generator switch test VS 2019/, generator: 'Visual Studio 16 2019'},
-                {kitLabel: /^Generator switch test VS 2019 no generator/, generator: ''}
+                {kitLabel: /^Generator switch test VS 2019 no generator/, generator: 'Ninja'}
             ]
         };
         if (!(workername in os_compilers)) {

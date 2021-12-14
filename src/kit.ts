@@ -1019,7 +1019,7 @@ export async function scanForVSKits(pr?: ProgressReporter): Promise<Kit[]> {
     return ([] as Kit[]).concat(...vs_kits);
 }
 
-async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools: CMakeTools | undefined): Promise<Kit[]> {
+async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallation[], cmakeTools?: CMakeTools): Promise<Kit[]> {
     const kits = await scanDirectory(dir, async (binPath): Promise<Kit[] | null> => {
         const isClangGNUCLI = (path.basename(binPath, '.exe') === 'clang');
         const isClangCL = (path.basename(binPath, '.exe') === 'clang-cl');
@@ -1038,10 +1038,9 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
         if (isClangGNUCLI) {
             if (undefined === cmakeTools) {
                 log.error(localize("failed.to.scan.for.kits", "Failed to scan for kits: cmakeTools is undefined"));
-
                 return null;
             } else {
-                const cmake_executable = await cmakeTools?.getCMakeExecutable();
+                const cmake_executable = await cmakeTools.getCMakeExecutable();
                 if (undefined === cmake_executable.version) {
                     return null;
                 } else {
@@ -1080,7 +1079,7 @@ async function scanDirForClangForMSVCKits(dir: string, vsInstalls: VSInstallatio
     return ([] as Kit[]).concat(...kits);
 }
 
-export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools: CMakeTools | undefined): Promise<Promise<Kit[]>[]> {
+export async function scanForClangForMSVCKits(searchPaths: string[], cmakeTools?: CMakeTools): Promise<Promise<Kit[]>[]> {
     const vs_installs = await vsInstallations();
     const results = searchPaths.map(p => scanDirForClangForMSVCKits(p, vs_installs, cmakeTools));
     return results;
@@ -1201,7 +1200,7 @@ export interface KitScanOptions {
  * Search for Kits available on the platform.
  * @returns A list of Kits.
  */
-export async function scanForKits(cmakeTools: CMakeTools | undefined, opt?: KitScanOptions) {
+export async function scanForKits(cmakeTools?: CMakeTools, opt?: KitScanOptions) {
     const kit_options = opt || {};
 
     log.debug(localize('scanning.for.kits.on.system', 'Scanning for Kits on system'));

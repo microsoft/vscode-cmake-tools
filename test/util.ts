@@ -31,7 +31,7 @@ let AVAIL_KITS: Promise<Kit[]> | null = null;
 
 export async function getSystemKits(cmakeTools: CMakeTools): Promise<Kit[]> {
     if (AVAIL_KITS === null) {
-        AVAIL_KITS = scanForKits(cmakeTools);
+        AVAIL_KITS = scanForKits(cmakeTools, { ignorePath: process.platform === 'win32' });
     }
     return AVAIL_KITS;
 }

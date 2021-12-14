@@ -5,7 +5,7 @@ import { DefaultEnvironment, expect, getFirstSystemKit } from '@test/util';
 import * as fs from 'fs';
 import * as path from 'path';
 
-suite('[Debug/Launch interface]', async () => {
+suite('Debug/Launch interface', async () => {
     let cmt: CMakeTools;
     let testEnv: DefaultEnvironment;
 

@@ -69,6 +69,7 @@
             "env": {
                 "CMT_TESTING": "1",
                 "CMT_QUIET_CONSOLE": "1",
+                "TEST_FILTER": ".*"
             },
         },
         {
@@ -138,7 +139,11 @@
                 "tsconfig-paths/register",
                 "${workspaceFolder}/test/backend-unit-tests/**/*.test.ts"
             ],
-            "internalConsoleOptions": "openOnSessionStart"
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "CMT_TESTING": "1",
+                "CMT_QUIET_CONSOLE": "1"
+            }
         },
         {
             "name": "Launch Smoke Tests",

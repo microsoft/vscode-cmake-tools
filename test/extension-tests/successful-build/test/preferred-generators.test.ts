@@ -163,26 +163,17 @@ function fuzzyKitCheck(kitName: string, defaultKit: RegExp, excludeKit?: RegExp)
 // results, a fuzzy check.
 function isKitAvailable(context: CMakeContext): boolean {
     const kits = context.kits;
-    return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit))
-        ? true
-        : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit))
-            ? true
-            : false;
+    return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit)) ? true :
+        kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit)) ? true : false;
 }
 
 // Check if the kit provided by the buildSystem has a preferred generator
 // defined in the kits file.
 function isPreferredGeneratorAvailable(context: CMakeContext): boolean {
     const kits = context.kits;
-    return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit) && kit.preferredGenerator ? true
-        : false)
+    return kits.find(kit => exactKitCheck(kit.name, context.buildSystem.defaultKit) && kit.preferredGenerator)
         ? true
-        : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit)
-            && kit.preferredGenerator
-            ? true
-            : false)
-            ? true
-            : false;
+        : kits.find(kit => fuzzyKitCheck(kit.name, context.buildSystem.defaultKit, context.buildSystem.excludeKit) && kit.preferredGenerator) ? true : false;
 }
 
 interface SkipOptions {
@@ -227,7 +218,7 @@ function makeExtensionTestSuite(name: string,
             // No rescan of the tools is needed
             // No new kit selection is needed
             await clearExistingKitConfigurationFile();
-            context.kits = await scanForKits(context.cmt);
+            context.kits = await scanForKits(context.cmt, { ignorePath: process.platform === 'win32' });
             skipTestIf({ kitIsNotAvailable: true }, this, context);
         });
 

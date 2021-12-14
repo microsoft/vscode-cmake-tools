@@ -1,6 +1,5 @@
 import { fs } from '@cmt/pr';
 import { TestProgramResult } from '@test/helpers/testprogram/test-program-result';
-import { logFilePath } from '@cmt/logging';
 import {
     clearExistingKitConfigurationFile,
     DefaultEnvironment,
@@ -42,7 +41,6 @@ suite('Build using Kits and Variants', async () => {
         // This test will use all on the same kit.
         // No rescan of the tools is needed
         // No new kit selection is needed
-        await vscode.commands.executeCommand('cmake.scanForKits');
         await clearExistingKitConfigurationFile();
     });
 
@@ -50,7 +48,6 @@ suite('Build using Kits and Variants', async () => {
         this.timeout(100000);
 
         const kit = await getFirstSystemKit(cmakeTools);
-        console.log("Using following kit in next test: ", kit.name);
         await vscode.commands.executeCommand('cmake.setKitByName', kit.name);
         testEnv.projectFolder.buildDirectory.clear();
     });
@@ -58,17 +55,6 @@ suite('Build using Kits and Variants', async () => {
     teardown(async function (this: Mocha.Context) {
         this.timeout(100000);
         await vscode.workspace.getConfiguration('cmake', vscode.workspace.workspaceFolders![0].uri).update('useCMakePresets', 'auto');
-        const logPath = logFilePath();
-        testEnv.clean();
-        if (await fs.exists(logPath)) {
-            if (this.currentTest?.state === "failed") {
-                const logContent = await fs.readFile(logPath);
-                logContent.toString().split('\n').forEach(line => {
-                    console.log(line);
-                });
-            }
-            await fs.writeFile(logPath, "");
-        }
     });
 
     suiteTeardown(async () => {
