@@ -625,11 +625,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
                     this._installDir = util.lightNormalizePath(await expand.expandString(installPrefix, opts));
                 }
             }
-
-            const copyCompileCommands = this.config.copyCompileCommands;
-            if (copyCompileCommands) {
-                this._copyCompileCommandsPath = util.lightNormalizePath(await expand.expandString(copyCompileCommands, opts));
-            }
         });
     }
 
@@ -656,14 +651,6 @@ export abstract class CMakeDriver implements vscode.Disposable {
         return this._installDir;
     }
     private _installDir: string | null = null;
-
-    /**
-     * Path to copy compile_commands.json to
-     */
-    get copyCompileCommandsPath(): string | null {
-        return this._copyCompileCommandsPath;
-    }
-    private _copyCompileCommandsPath: string | null = null;
 
     /**
      * @brief Get the path to the CMakeCache file in the build directory
@@ -1560,7 +1547,7 @@ export abstract class CMakeDriver implements vscode.Disposable {
      */
     private async _beforeConfigureOrBuild(showCommandOnly?: boolean): Promise<boolean> {
         if (!showCommandOnly) {
-            log.debug(localize('running.pre-configure.checks', 'Runnnig pre-configure checks and steps'));
+            log.debug(localize('running.pre-configure.checks', 'Running pre-configure checks and steps'));
         }
 
         if (!this.sourceDir) {

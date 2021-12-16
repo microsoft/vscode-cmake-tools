@@ -317,7 +317,7 @@ suite('Build', async () => {
         if (process.platform === 'win32') {
             newSettings.generator = 'Ninja';  // VS generators don't create compile_commands.json
         }
-        let retc = await cmt.configureInternal(ConfigureTrigger.runTests);
+        let retc = await cmt.cleanConfigure(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
         expect(await fs.exists(compdb_cp_path), 'File still shouldn\'t be there').to.be.false;
         newSettings.copyCompileCommands = compdb_cp_path;
