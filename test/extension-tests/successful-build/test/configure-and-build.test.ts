@@ -316,6 +316,7 @@ suite('Build', async () => {
         const newSettings: Partial<ExtensionConfigurationSettings> = {};
         if (process.platform === 'win32') {
             newSettings.generator = 'Ninja';  // VS generators don't create compile_commands.json
+            testEnv.config.updatePartial(newSettings);
         }
         let retc = await cmt.cleanConfigure(ConfigureTrigger.runTests);
         expect(retc).to.eq(0);
